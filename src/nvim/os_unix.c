@@ -412,7 +412,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   fseek(fd, 0L, SEEK_SET);
   buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
-  // appropiate termination (not always NUL) is done below.
+  // appropriate termination (not always NUL) is done below.
   size_t readlen = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   os_remove((char *)tempname);

@@ -28,6 +28,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -1837,6 +1838,13 @@ change_indent (
 
     xfree(new_line);
   }
+
+  // change_indent seems to bec called twice, this combination only triggers
+  // once for both calls
+  if (new_cursor_col - vcol != 0) {
+    extmark_col_adjust(curbuf, curwin->w_cursor.lnum, 0, 0, amount,
+                       kExtmarkUndo);
+  }
 }
 
 /*
@@ -3048,7 +3056,9 @@ static void ins_compl_clear(void)
   XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = false;
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 /// Check that Insert completion is active.
@@ -4047,12 +4057,14 @@ static int ins_compl_get_exp(pos_T *ini)
 
       // Find up to TAG_MANY matches.  Avoids that an enormous number
       // of matches is found when compl_pattern is empty
+      g_tag_at_cursor = true;
       if (find_tags(compl_pattern, &num_matches, &matches,
                     TAG_REGEXP | TAG_NAMES | TAG_NOIC | TAG_INS_COMP
                     | (l_ctrl_x_mode != CTRL_X_NORMAL ? TAG_VERBOSE : 0),
                     TAG_MANY, curbuf->b_ffname) == OK && num_matches > 0) {
         ins_compl_add_matches(num_matches, matches, p_ic);
       }
+      g_tag_at_cursor = false;
       p_ic = save_p_ic;
       break;
 
@@ -4116,7 +4128,7 @@ static int ins_compl_get_exp(pos_T *ini)
                                      compl_direction,
                                      compl_pattern, 1L,
                                      SEARCH_KEEP + SEARCH_NFMSG,
-                                     RE_LAST, (linenr_T)0, NULL, NULL);
+                                     RE_LAST, NULL);
         }
         msg_silent--;
         if (!compl_started || set_match_pos) {
@@ -4303,7 +4315,9 @@ static void ins_compl_delete(void)
   // causes flicker, thus we can't do that.
   changed_cline_bef_curs();
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 // Insert the new text being completed.
@@ -4325,6 +4339,7 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
+  dict->dv_lock = VAR_FIXED;
   tv_dict_add_str(
       dict, S_LEN("word"),
       (const char *)EMPTY_IF_NULL(match->cp_str));
@@ -5479,10 +5494,10 @@ insertchar (
   if (c == NUL)             /* only formatting was wanted */
     return;
 
-  /* Check whether this character should end a comment. */
+  // Check whether this character should end a comment.
   if (did_ai && c == end_comment_pending) {
     char_u  *line;
-    char_u lead_end[COM_MAX_LEN];           /* end-comment string */
+    char_u lead_end[COM_MAX_LEN];  // end-comment string
     int middle_len, end_len;
     int i;
 
@@ -5490,39 +5505,40 @@ insertchar (
      * Need to remove existing (middle) comment leader and insert end
      * comment leader.  First, check what comment leader we can find.
      */
-    i = get_leader_len(line = get_cursor_line_ptr(), &p, FALSE, TRUE);
-    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {   /* Just checking */
-      /* Skip middle-comment string */
-      while (*p && p[-1] != ':')        /* find end of middle flags */
-        ++p;
+    i = get_leader_len(line = get_cursor_line_ptr(), &p, false, true);
+    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
+      // Skip middle-comment string
+      while (*p && p[-1] != ':') {  // find end of middle flags
+        p++;
+      }
       middle_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
-      /* Don't count trailing white space for middle_len */
-      while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1]))
-        --middle_len;
+      // Don't count trailing white space for middle_len
+      while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
+        middle_len--;
+      }
 
-      /* Find the end-comment string */
-      while (*p && p[-1] != ':')        /* find end of end flags */
-        ++p;
+      // Find the end-comment string
+      while (*p && p[-1] != ':') {  // find end of end flags
+        p++;
+      }
       end_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
-      /* Skip white space before the cursor */
+      // Skip white space before the cursor
       i = curwin->w_cursor.col;
       while (--i >= 0 && ascii_iswhite(line[i]))
         ;
       i++;
 
-      /* Skip to before the middle leader */
+      // Skip to before the middle leader
       i -= middle_len;
 
-      /* Check some expected things before we go on */
+      // Check some expected things before we go on
       if (i >= 0 && lead_end[end_len - 1] == end_comment_pending) {
-        /* Backspace over all the stuff we want to replace */
+        // Backspace over all the stuff we want to replace
         backspace_until_column(i);
 
-        /*
-         * Insert the end-comment string, except for the last
-         * character, which will get inserted as normal later.
-         */
+        // Insert the end-comment string, except for the last
+        // character, which will get inserted as normal later.
         ins_bytes_len(lead_end, end_len - 1);
       }
     }
@@ -5603,10 +5619,11 @@ insertchar (
       AppendCharToRedobuff(c);
     } else {
       ins_char(c);
-      if (flags & INSCHAR_CTRLV)
+      if (flags & INSCHAR_CTRLV) {
         redo_literal(c);
-      else
+      } else {
         AppendCharToRedobuff(c);
+      }
     }
   }
 }
@@ -6888,8 +6905,9 @@ static void mb_replace_pop_ins(int cc)
     for (i = 1; i < n; ++i)
       buf[i] = replace_pop();
     ins_bytes_len(buf, n);
-  } else
+  } else {
     ins_char(cc);
+  }
 
   if (enc_utf8)
     /* Handle composing chars. */
@@ -7999,9 +8017,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           Insstart_orig.col = curwin->w_cursor.col;
         }
 
-        if (State & VREPLACE_FLAG)
+        if (State & VREPLACE_FLAG) {
           ins_char(' ');
-        else {
+        } else {
           ins_str((char_u *)" ");
           if ((State & REPLACE_FLAG))
             replace_push(NUL);
@@ -8479,6 +8497,7 @@ static bool ins_tab(void)
   } else {  // otherwise use "tabstop"
     temp = (int)curbuf->b_p_ts;
   }
+
   temp -= get_nolist_virtcol() % temp;
 
   /*
@@ -8488,12 +8507,13 @@ static bool ins_tab(void)
    */
   ins_char(' ');
   while (--temp > 0) {
-    if (State & VREPLACE_FLAG)
+    if (State & VREPLACE_FLAG) {
       ins_char(' ');
-    else {
+    } else {
       ins_str((char_u *)" ");
-      if (State & REPLACE_FLAG)             /* no char replaced */
+      if (State & REPLACE_FLAG) {            // no char replaced
         replace_push(NUL);
+      }
     }
   }
 

@@ -52,7 +52,8 @@ set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
-set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -84,6 +85,10 @@ file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
+
+file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
+file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
+list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
 
 foreach(subdir
         os
@@ -141,6 +146,7 @@ set(CONV_SOURCES
   ex_cmds.c
   ex_docmd.c
   fileio.c
+  lua/treesitter.c
   mbyte.c
   memline.c
   message.c
@@ -172,6 +178,9 @@ if(NOT MSVC)
     set_source_files_properties(
       eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
+
+  # tree-sitter: inlined external project, we don't maintain it. #10124
+  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -209,6 +218,34 @@ function(get_preproc_output varname iname)
   endif()
 endfunction()
 
+# Handle generating version from Git.
+set(use_git_version 0)
+if(NVIM_VERSION_MEDIUM)
+  message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
+elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
+  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
+  find_program(GIT_EXECUTABLE git)
+  if(GIT_EXECUTABLE)
+    message(STATUS "Using NVIM_VERSION_MEDIUM from Git")
+    set(use_git_version 1)
+  else()
+    message(STATUS "Skipping version-string generation (cannot find git)")
+  endif()
+endif()
+if(use_git_version)
+  # Create a update_version_stamp target to update the version during build.
+  file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
+  add_custom_target(update_version_stamp ALL
+    COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
+      ${relbuild}/config/auto/versiondef_git.h
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
+else()
+  file(WRITE ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h "")
+endif()
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -237,12 +274,16 @@ foreach(sfile ${NVIM_SOURCES}
 
   get_preproc_output(PREPROC_OUTPUT ${gf_i})
 
+  set(depends "${HEADER_GENERATOR}" "${sfile}")
+  if(use_git_version AND "${f}" STREQUAL "version.c")
+    # Ensure auto/versiondef_git.h exists after "make clean".
+    list(APPEND depends update_version_stamp)
+  endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
-    DEPENDS "${HEADER_GENERATOR}" "${sfile}"
-    )
+    DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
@@ -277,11 +318,13 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE} vim_module
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
+      ${LUA_VIM_MODULE_SOURCE} vim_module
+      ${LUA_SHARED_MODULE_SOURCE} shared_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
-    ${VIM_MODULE_SOURCE}
+    ${LUA_VIM_MODULE_SOURCE}
+    ${LUA_SHARED_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -379,6 +422,7 @@ if(Iconv_LIBRARIES)
 endif()
 
 if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES netapi32)
   list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
@@ -395,6 +439,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBVTERM_LIBRARIES}
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
+  ${UTF8PROC_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -414,12 +459,13 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+set_property(TARGET nvim PROPERTY ENABLE_EXPORTS TRUE)
 
 if(ENABLE_LTO AND (POLICY CMP0069))
   include(CheckIPOSupported)
@@ -500,7 +546,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -525,7 +571,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

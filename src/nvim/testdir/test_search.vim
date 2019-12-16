@@ -57,7 +57,7 @@ func Test_search_cmdline()
   call feedkeys("/the".repeat("\<C-G>", 6)."\<cr>", 'tx')
   call assert_equal('  8 them', getline('.'))
   :1
-  " eigth match
+  " eighth match
   call feedkeys("/the".repeat("\<C-G>", 7)."\<cr>", 'tx')
   call assert_equal('  9 these', getline('.'))
   :1
@@ -99,7 +99,7 @@ func Test_search_cmdline()
   call feedkeys("/the".repeat("\<C-G>", 6)."\<cr>", 'tx')
   call assert_equal('  8 them', getline('.'))
   :1
-  " eigth match
+  " eighth match
   call feedkeys("/the".repeat("\<C-G>", 7)."\<cr>", 'tx')
   call assert_equal('  9 these', getline('.'))
   :1

@@ -35,5 +35,10 @@ fi
 # Compile dependencies.
 build_deps
 
+# Install cluacov for Lua coverage.
+if [[ "$USE_LUACOV" == 1 ]]; then
+  "${DEPS_BUILD_DIR}/usr/bin/luarocks" install cluacov
+fi
+
 rm -rf "${LOG_DIR}"
 mkdir -p "${LOG_DIR}"

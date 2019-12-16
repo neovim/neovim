@@ -545,7 +545,7 @@ local tracehelp = dedent([[
 local function child_sethook(wr)
   local trace_level = os.getenv('NVIM_TEST_TRACE_LEVEL')
   if not trace_level or trace_level == '' then
-    trace_level = 1
+    trace_level = 0
   else
     trace_level = tonumber(trace_level)
   end
@@ -708,7 +708,7 @@ local function check_child_err(rd)
     local eres = sc.read(rd, 2)
     if eres ~= '$\n' then
       if #trace == 0 then
-        err = '\nTest crashed, no trace available\n'
+        err = '\nTest crashed, no trace available (check NVIM_TEST_TRACE_LEVEL)\n'
       else
         err = '\nTest crashed, trace:\n' .. tracehelp
         for i = 1, #trace do

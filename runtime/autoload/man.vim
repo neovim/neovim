@@ -1,4 +1,4 @@
-" Maintainer: Anmol Sethi <anmol@aubble.com>
+" Maintainer: Anmol Sethi <hi@nhooyr.io>
 
 if exists('s:loaded_man')
   finish
@@ -64,33 +64,20 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
 
-  call s:push_tag()
-  let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
-
+  let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
   try
-    set eventignore+=BufReadCmd
+    set tagfunc=man#goto_tag
+    let l:target = l:name . '(' . l:sect . ')'
     if a:mods !~# 'tab' && s:find_man()
-      execute 'silent keepalt edit' fnameescape(bufname)
+      execute 'silent keepalt tag' l:target
     else
-      execute 'silent keepalt' a:mods 'split' fnameescape(bufname)
+      execute 'silent keepalt' a:mods 'stag' l:target
     endif
   finally
-    set eventignore-=BufReadCmd
-  endtry
-
-  try
-    let page = s:get_page(path)
-  catch
-    if a:mods =~# 'tab' || !s:find_man()
-      " a new window was opened
-      close
-    endif
-    call s:error(v:exception)
-    return
+    call setbufvar(l:buf, '&tagfunc', l:save_tfu)
   endtry
 
   let b:man_sect = sect
-  call s:put_page(page)
 endfunction
 
 function! man#read_page(ref) abort
@@ -152,7 +139,7 @@ function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
   " Hard-wrap: driven by `man`.
-  let manwidth = !get(g:,'man_hardwrap') ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
+  let manwidth = !get(g:,'man_hardwrap', 1) ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
@@ -163,6 +150,9 @@ endfunction
 function! s:put_page(page) abort
   setlocal modifiable
   setlocal noreadonly
+  setlocal noswapfile
+  " git-ls-files(1) is all one keyword/tag-target
+  setlocal iskeyword+=(,)
   silent keepjumps %delete _
   silent put =a:page
   while getline(1) =~# '^\s*$'
@@ -254,24 +244,6 @@ function! s:verify_exists(sect, name) abort
   return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
-let s:tag_stack = []
-
-function! s:push_tag() abort
-  let s:tag_stack += [{
-        \ 'buf':  bufnr('%'),
-        \ 'lnum': line('.'),
-        \ 'col':  col('.'),
-        \ }]
-endfunction
-
-function! man#pop_tag() abort
-  if !empty(s:tag_stack)
-    let tag = remove(s:tag_stack, -1)
-    execute 'silent' tag['buf'].'buffer'
-    call cursor(tag['lnum'], tag['col'])
-  endif
-endfunction
-
 " extracts the name and sect out of 'path/name.sect'
 function! s:extract_sect_and_name_path(path) abort
   let tail = fnamemodify(a:path, ':t')
@@ -284,20 +256,16 @@ function! s:extract_sect_and_name_path(path) abort
 endfunction
 
 function! s:find_man() abort
-  if &filetype ==# 'man'
-    return 1
-  elseif winnr('$') ==# 1
-    return 0
-  endif
-  let thiswin = winnr()
-  while 1
-    wincmd w
-    if &filetype ==# 'man'
+  let l:win = 1
+  while l:win <= winnr('$')
+    let l:buf = winbufnr(l:win)
+    if getbufvar(l:buf, '&filetype', '') ==# 'man'
+      execute l:win.'wincmd w'
       return 1
-    elseif thiswin ==# winnr()
-      return 0
     endif
+    let l:win += 1
   endwhile
+  return 0
 endfunction
 
 function! s:error(msg) abort
@@ -360,14 +328,18 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   return s:complete(sect, sect, name)
 endfunction
 
-function! s:complete(sect, psect, name) abort
+function! s:get_paths(sect, name) abort
   try
     let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
   catch
     call s:error(v:exception)
     return
   endtry
-  let pages = globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+  return globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+endfunction
+
+function! s:complete(sect, psect, name) abort
+  let pages = s:get_paths(a:sect, a:name)
   " We remove duplicates in case the same manpage in different languages was found.
   return uniq(sort(map(pages, 's:format_candidate(v:val, a:psect)'), 'i'))
 endfunction
@@ -387,6 +359,10 @@ function! s:format_candidate(path, psect) abort
 endfunction
 
 function! man#init_pager() abort
+  " https://github.com/neovim/neovim/issues/6828
+  let og_modifiable = &modifiable
+  setlocal modifiable
+
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -404,6 +380,31 @@ function! man#init_pager() abort
   if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
+
+  let &l:modifiable = og_modifiable
+endfunction
+
+function! man#goto_tag(pattern, flags, info) abort
+  let [l:sect, l:name] = man#extract_sect_and_name_ref(a:pattern)
+
+  let l:paths = s:get_paths(l:sect, l:name)
+  let l:structured = []
+
+  for l:path in l:paths
+    let l:n = s:extract_sect_and_name_path(l:path)[1]
+    let l:structured += [{ 'name': l:n, 'path': l:path }]
+  endfor
+
+  " sort by relevance - exact matches first, then the previous order
+  call sort(l:structured, { a, b -> a.name ==? l:name ? -1 : b.name ==? l:name ? 1 : 0 })
+
+  return map(l:structured, {
+  \  _, entry -> {
+  \      'name': entry.name,
+  \      'filename': 'man://' . entry.path,
+  \      'cmd': '1'
+  \    }
+  \  })
 endfunction
 
 call s:init()

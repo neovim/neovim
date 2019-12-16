@@ -585,13 +585,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
-    meths.command_output([[
+    meths.exec([[
         function! FlipFlop() abort
           if !exists('g:flip') | let g:flip = 0 | endif
           let g:flip = !g:flip
           return g:flip
         endfunction
-        ]])
+        ]], true)
     eq(1, meths.call_function('FlipFlop', {}))
     eq(0, meths.call_function('FlipFlop', {}))
     eq(1, meths.call_function('FlipFlop', {}))

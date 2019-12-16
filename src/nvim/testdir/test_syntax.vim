@@ -1,6 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
 source view_util.vim
+source screendump.vim
 
 func GetSyntaxItem(pat)
   let c = ''
@@ -501,9 +502,7 @@ func Test_syntax_c()
   endif
   call writefile([
 	\ '/* comment line at the top */',
-	\ '  int',
-	\ 'main(int argc, char **argv)// another comment',
-	\ '{',
+	\ 'int main(int argc, char **argv) { // another comment',
 	\ '#if 0',
 	\ '   int   not_used;',
 	\ '#else',
@@ -518,6 +517,7 @@ func Test_syntax_c()
 	\ '  for (int i = 0; i < count; ++i) {',
 	\ '    break;',
 	\ '  }',
+	\ "  Note: asdf",
 	\ '}',
 	\ ], 'Xtest.c')
 
@@ -526,7 +526,8 @@ func Test_syntax_c()
   let $COLORFGBG = '15;0'
 
   let buf = RunVimInTerminal('Xtest.c', {})
-  call VerifyScreenDump(buf, 'Test_syntax_c_01')
+  call term_sendkeys(buf, ":syn keyword Search Note\r")
+  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
   call StopVimInTerminal(buf)
 
   let $COLORFGBG = ''

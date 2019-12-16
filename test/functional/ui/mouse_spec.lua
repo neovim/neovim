@@ -12,7 +12,10 @@ describe('ui/mouse/input', function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('list', true)
-    meths.set_option('listchars', 'eol:$')
+    -- NB: this is weird, but mostly irrelevant to the test
+    -- So I didn't bother to change it
+    command('set listchars=eol:$')
+    command('setl listchars=nbsp:x')
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -26,6 +29,8 @@ describe('ui/mouse/input', function()
       },
       [4] = {reverse = true},
       [5] = {bold = true, reverse = true},
+      [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [7] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     command("set display-=msgsep")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -36,10 +41,6 @@ describe('ui/mouse/input', function()
       {0:~                        }|
                                |
     ]])
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('single left click moves cursor', function()
@@ -419,9 +420,9 @@ describe('ui/mouse/input', function()
         meths.set_option('showtabline', 2)
         screen:expect([[
           {fill:test-test2               }|
+          testing                  |
           mouse                    |
           support and selectio^n    |
-          {0:~                        }|
                                    |
         ]])
         meths.set_var('reply', {})
@@ -539,9 +540,9 @@ describe('ui/mouse/input', function()
     feed_command('tabprevious')  -- go to first tab
     screen:expect([[
       {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+      testing                  |
       mouse                    |
       support and selectio^n    |
-      {0:~                        }|
       :tabprevious             |
     ]])
     feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
@@ -620,12 +621,12 @@ describe('ui/mouse/input', function()
     meths.set_option('tags', './non-existent-tags-file')
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
-      E433: No tags file       |
-      E426: tag not found: test|
-      ing                      |
-      Press ENTER or type comma|
-      nd to continue^           |
-    ]],nil,true)
+      {6:E433: No tags file}       |
+      {6:E426: tag not found: test}|
+      {6:ing}                      |
+      {7:Press ENTER or type comma}|
+      {7:nd to continue}^           |
+    ]])
     feed('<cr>')
   end)
 
@@ -814,7 +815,8 @@ describe('ui/mouse/input', function()
 
       feed_command('set concealcursor=ni')
       feed_command('set nowrap')
-      feed_command('set shiftwidth=2 tabstop=4 list listchars=tab:>-')
+      feed_command('set shiftwidth=2 tabstop=4 list')
+      feed_command('setl listchars=tab:>-')
       feed_command('syntax match NonText "\\*" conceal')
       feed_command('syntax match NonText "cats" conceal cchar=X')
       feed_command('syntax match NonText "x" conceal cchar=>')

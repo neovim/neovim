@@ -66,12 +66,12 @@
 --      [1] = {reverse = true, bold = true},
 --      [2] = {reverse = true}
 --    })
---    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
 --
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
 local helpers = require('test.functional.helpers')(nil)
+local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
@@ -169,12 +169,11 @@ function Screen.new(width, height)
     ruler = {},
     hl_groups = {},
     _default_attr_ids = nil,
-    _default_attr_ignore = nil,
     _mouse_enabled = true,
     _attrs = {},
-    _hl_info = {},
+    _hl_info = {[0]={}},
     _attr_table = {[0]={{},{}}},
-    _clear_attrs = {},
+    _clear_attrs = nil,
     _new_attrs = false,
     _width = width,
     _height = height,
@@ -202,12 +201,8 @@ function Screen:get_default_attr_ids()
   return deepcopy(self._default_attr_ids)
 end
 
-function Screen:set_default_attr_ignore(attr_ignore)
-  self._default_attr_ignore = attr_ignore
-end
-
-function Screen:set_hlstate_cterm(val)
-  self._hlstate_cterm = val
+function Screen:set_rgb_cterm(val)
+  self._rgb_cterm = val
 end
 
 function Screen:attach(options, session)
@@ -223,7 +218,7 @@ function Screen:attach(options, session)
 
   self._session = session
   self._options = options
-  self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
+  self._clear_attrs = (not options.ext_linegrid) and {} or nil
   self:_handle_resize(self._width, self._height)
   self.uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
@@ -265,7 +260,7 @@ local ext_keys = {
 -- Asserts that the screen state eventually matches an expected state.
 --
 -- Can be called with positional args:
---    screen:expect(grid, [attr_ids, attr_ignore])
+--    screen:expect(grid, [attr_ids])
 --    screen:expect(condition)
 -- or keyword args (supports more options):
 --    screen:expect{grid=[[...]], cmdline={...}, condition=function() ... end}
@@ -274,7 +269,7 @@ local ext_keys = {
 -- grid:        Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
---              Lines containing only "{IGNORE}|" are skipped.
+--              "{MATCH:x}|" lines are matched against Lua pattern `x`.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -282,8 +277,6 @@ local ext_keys = {
 --              attributes in the final state are an error.
 --              Use screen:set_default_attr_ids() to define attributes for many
 --              expect() calls.
--- attr_ignore: Ignored text attributes, or `true` to ignore all. By default
---              nothing is ignored.
 -- condition:   Function asserting some arbitrary condition. Return value is
 --              ignored, throw an error (use eq() or similar) to signal failure.
 -- any:         Lua pattern string expected to match a screen line. NB: the
@@ -318,13 +311,13 @@ local ext_keys = {
 -- cmdline_block:  Expected ext_cmdline block (for function definitions)
 -- wildmenu_items: Expected items for ext_wildmenu
 -- wildmenu_pos:   Expected position for ext_wildmenu
-function Screen:expect(expected, attr_ids, attr_ignore, ...)
+function Screen:expect(expected, attr_ids, ...)
   local grid, condition = nil, nil
   local expected_rows = {}
   assert(next({...}) == nil, "invalid args to expect()")
   if type(expected) == "table" then
-    assert(not (attr_ids ~= nil or attr_ignore ~= nil))
-    local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
+    assert(not (attr_ids ~= nil))
+    local is_key = {grid=true, attr_ids=true, condition=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
                     reset=true, timeout=true, request_cb=true, hl_groups=true}
     for _, v in ipairs(ext_keys) do
@@ -337,14 +330,13 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
     end
     grid = expected.grid
     attr_ids = expected.attr_ids
-    attr_ignore = expected.attr_ignore
     condition = expected.condition
     assert(not (expected.any ~= nil and grid ~= nil))
   elseif type(expected) == "string" then
     grid = expected
     expected = {}
   elseif type(expected) == "function" then
-    assert(not (attr_ids ~= nil or attr_ignore ~= nil))
+    assert(not (attr_ids ~= nil))
     condition = expected
     expected = {}
   else
@@ -361,10 +353,9 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
   end
   local attr_state = {
       ids = attr_ids or self._default_attr_ids,
-      ignore = attr_ignore or self._default_attr_ignore,
   }
-  if self._options.ext_hlstate then
-    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
+  if self._options.ext_linegrid then
+    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
   end
   self._new_attrs = false
   self:_wait(function()
@@ -375,8 +366,8 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
       end
     end
 
-    if self._options.ext_hlstate and self._new_attrs then
-      attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
+    if self._options.ext_linegrid and self._new_attrs then
+      attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
     end
 
     local actual_rows = self:render(not expected.any, attr_state)
@@ -399,9 +390,10 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
         err_msg = "Expected screen height " .. #expected_rows
         .. ' differs from actual height ' .. #actual_rows .. '.'
       end
-      for i = 1, #expected_rows do
-         msg_expected_rows[i] = expected_rows[i]
-        if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
+      for i, row in ipairs(expected_rows) do
+        msg_expected_rows[i] = row
+        local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
+        if row ~= actual_rows[i] and (not m or not actual_rows[i]:match(m)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
@@ -584,7 +576,7 @@ asynchronous (feed(), nvim_input()) and synchronous API calls.
 
 
   if err then
-    assert(false, err)
+    busted.fail(err, 3)
   elseif did_warn then
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
@@ -614,17 +606,12 @@ function Screen:_redraw(updates)
     for i = 2, #update do
       local handler_name = '_handle_'..method
       local handler = self[handler_name]
-      if handler ~= nil then
-        local status, res = pcall(handler, self, unpack(update[i]))
-        if not status then
-          error(handler_name..' failed'
-            ..'\n  payload: '..inspect(update)
-            ..'\n  error:   '..tostring(res))
-        end
-      else
-        assert(self._on_event,
-          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
-        self._on_event(method, update[i])
+      assert(handler ~= nil, "missing handler: Screen:"..handler_name)
+      local status, res = pcall(handler, self, unpack(update[i]))
+      if not status then
+        error(handler_name..' failed'
+          ..'\n  payload: '..inspect(update)
+          ..'\n  error:   '..tostring(res))
       end
     end
     if k == #updates and method == "flush" then
@@ -632,10 +619,6 @@ function Screen:_redraw(updates)
     end
   end
   return did_flush
-end
-
-function Screen:set_on_event_handler(callback)
-  self._on_event = callback
 end
 
 function Screen:_handle_resize(width, height)
@@ -898,19 +881,16 @@ function Screen:_handle_grid_line(grid, row, col, items)
   assert(self._options.ext_linegrid)
   local line = self._grids[grid].rows[row+1]
   local colpos = col+1
-  local hl = self._clear_attrs
   local hl_id = 0
   for _,item in ipairs(items) do
     local text, hl_id_cell, count = unpack(item)
     if hl_id_cell ~= nil then
       hl_id = hl_id_cell
-      hl = self._attr_table[hl_id]
     end
     for _ = 1, (count or 1) do
       local cell = line[colpos]
       cell.text = text
       cell.hl_id = hl_id
-      cell.attrs = hl
       colpos = colpos+1
     end
   end
@@ -1070,6 +1050,7 @@ function Screen:_clear_row_section(grid, rownum, startcol, stopcol, invalid)
   for i = startcol, stopcol do
     row[i].text = (invalid and '�' or ' ')
     row[i].attrs = self._clear_attrs
+    row[i].hl_id = 0
   end
 end
 
@@ -1100,11 +1081,7 @@ function Screen:_row_repr(gridnr, rownr, attr_state, cursor)
     end
 
     if not did_window then
-      local attrs = row[i].attrs
-      if self._options.ext_linegrid then
-        attrs = attrs[(self._options.rgb and 1) or 2]
-      end
-      local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
+      local attr_id = self:_get_attr_id(attr_state, row[i].attrs, row[i].hl_id)
       if current_attr_id and attr_id ~= current_attr_id then
         -- close current attribute bracket
         table.insert(rv, '}')
@@ -1261,8 +1238,8 @@ function Screen:get_snapshot(attrs, ignore)
       attr_state.ids[i] = a
     end
   end
-  if self._options.ext_hlstate then
-    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids)
+  if self._options.ext_linegrid then
+    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids)
   end
 
   local lines = self:render(true, attr_state, true)
@@ -1299,8 +1276,8 @@ function Screen:print_snapshot(attrs, ignore)
     local attrstrs = {}
     for i, a in pairs(attr_state.ids) do
       local dict
-      if self._options.ext_hlstate then
-        dict = self:_pprint_hlstate(a)
+      if self._options.ext_linegrid then
+        dict = self:_pprint_hlitem(a)
       else
         dict = "{"..self:_pprint_attrs(a).."}"
       end
@@ -1328,37 +1305,41 @@ function Screen:_insert_hl_id(attr_state, hl_id)
     return attr_state.id_to_index[hl_id]
   end
   local raw_info = self._hl_info[hl_id]
-  local info = {}
-  if #raw_info > 1 then
-    for i, item in ipairs(raw_info) do
-      info[i] = self:_insert_hl_id(attr_state, item.id)
-    end
-  else
-    info[1] = {}
-    for k, v in pairs(raw_info[1]) do
-      if k ~= "id" then
-        info[1][k] = v
+  local info = nil
+  if self._options.ext_hlstate then
+    info = {}
+    if #raw_info > 1 then
+      for i, item in ipairs(raw_info) do
+        info[i] = self:_insert_hl_id(attr_state, item.id)
+      end
+    else
+      info[1] = {}
+      for k, v in pairs(raw_info[1]) do
+        if k ~= "id" then
+          info[1][k] = v
+        end
       end
     end
   end
 
   local entry = self._attr_table[hl_id]
   local attrval
-  if self._hlstate_cterm then
+  if self._rgb_cterm then
     attrval = {entry[1], entry[2], info} -- unpack() doesn't work
-  else
+  elseif self._options.ext_hlstate then
     attrval = {entry[1], info}
+  else
+    attrval = self._options.rgb and entry[1] or entry[2]
   end
-
 
   table.insert(attr_state.ids, attrval)
   attr_state.id_to_index[hl_id] = #attr_state.ids
   return #attr_state.ids
 end
 
-function Screen:hlstate_check_attrs(attrs)
+function Screen:linegrid_check_attrs(attrs)
   local id_to_index = {}
-  for i = 1,#self._attr_table do
+  for i, def_attr in pairs(self._attr_table) do
     local iinfo = self._hl_info[i]
     local matchinfo = {}
     if #iinfo > 1 then
@@ -1370,13 +1351,17 @@ function Screen:hlstate_check_attrs(attrs)
     end
     for k,v in pairs(attrs) do
       local attr, info, attr_rgb, attr_cterm
-      if self._hlstate_cterm then
+      if self._rgb_cterm then
         attr_rgb, attr_cterm, info = unpack(v)
         attr = {attr_rgb, attr_cterm}
-      else
+        info = info or {}
+      elseif self._options.ext_hlstate then
         attr, info = unpack(v)
+      else
+        attr = v
+        info = {}
       end
-      if self:_equal_attr_def(attr, self._attr_table[i]) then
+      if self:_equal_attr_def(attr, def_attr) then
         if #info == #matchinfo then
           local match = false
           if #info == 1 then
@@ -1397,24 +1382,32 @@ function Screen:hlstate_check_attrs(attrs)
         end
       end
     end
+    if self:_equal_attr_def(self._rgb_cterm and {{}, {}} or {}, def_attr) and #self._hl_info[i] == 0 then
+      id_to_index[i] = ""
+    end
   end
   return id_to_index
 end
 
 
-function Screen:_pprint_hlstate(item)
+function Screen:_pprint_hlitem(item)
     -- print(inspect(item))
-    local attrdict = "{"..self:_pprint_attrs(item[1]).."}, "
+    local multi = self._rgb_cterm or self._options.ext_hlstate
+    local cterm = (not self._rgb_cterm and not self._options.rgb)
+    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item, cterm).."}"
     local attrdict2, hlinfo
-    if self._hlstate_cterm then
-      attrdict2 = "{"..self:_pprint_attrs(item[2]).."}, "
+    local descdict = ""
+    if self._rgb_cterm then
+      attrdict2 = ", {"..self:_pprint_attrs(item[2], true).."}"
       hlinfo = item[3]
     else
       attrdict2 = ""
       hlinfo = item[2]
     end
-    local descdict = "{"..self:_pprint_hlinfo(hlinfo).."}"
-    return "{"..attrdict..attrdict2..descdict.."}"
+    if self._options.ext_hlstate then
+      descdict = ", {"..self:_pprint_hlinfo(hlinfo).."}"
+    end
+    return (multi and "{" or "")..attrdict..attrdict2..descdict..(multi and "}" or "")
 end
 
 function Screen:_pprint_hlinfo(states)
@@ -1434,13 +1427,15 @@ function Screen:_pprint_hlinfo(states)
 end
 
 
-function Screen:_pprint_attrs(attrs)
+function Screen:_pprint_attrs(attrs, cterm)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        elseif cterm then
+          desc = tostring(v)
         else
           desc = string.format("tonumber('0x%06x')",v)
         end
@@ -1464,9 +1459,11 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     return
   end
 
-  if self._options.ext_hlstate then
+  if self._options.ext_linegrid then
     local id = attr_state.id_to_index[hl_id]
-    if id ~= nil or hl_id == 0 then
+    if id == "" then -- sentinel for empty it
+      return nil
+    elseif id ~= nil then
       return id
     end
     if attr_state.mutable then
@@ -1476,9 +1473,7 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     end
     return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
   else
-    if self:_equal_attrs(attrs, {}) or
-        attr_state.ignore == true or
-        self:_attr_index(attr_state.ignore, attrs) ~= nil then
+    if self:_equal_attrs(attrs, {}) then
       -- ignore this attrs
       return nil
     end
@@ -1497,10 +1492,12 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
 end
 
 function Screen:_equal_attr_def(a, b)
-  if self._hlstate_cterm then
+  if self._rgb_cterm then
     return self:_equal_attrs(a[1],b[1]) and self:_equal_attrs(a[2],b[2])
-  else
+  elseif self._options.rgb then
     return self:_equal_attrs(a,b[1])
+  else
+    return self:_equal_attrs(a,b[2])
   end
 end
 
@@ -1510,7 +1507,8 @@ function Screen:_equal_attrs(a, b)
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
        a.special == b.special and a.blend == b.blend and
-       a.strikethrough == b.strikethrough
+       a.strikethrough == b.strikethrough and
+       a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end
 
 function Screen:_equal_info(a, b)

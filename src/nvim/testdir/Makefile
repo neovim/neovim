@@ -11,11 +11,10 @@ ROOT := ../../..
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := $(abspath ../../../Xtest-tmpdir)
+export TMPDIR := $(abspath Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
 	test42.out             \
-	test48.out             \
 	test64.out             \
 
 ifneq ($(OS),Windows_NT)
@@ -34,21 +33,23 @@ SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
 NEW_TESTS_ALOT := test_alot_utf8 test_alot
-NEW_TESTS_IN_ALOT := $(shell sed '/^source/ s/^source //;s/\.vim$$//' test_alot*.vim)
+NEW_TESTS_IN_ALOT := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' $(addsuffix .vim,$(NEW_TESTS_ALOT)))
+NEW_TESTS_IN_ALOT_LATIN := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' test_alot_latin.vim)
 # Ignored tests.
 # test_alot_latin: Nvim does not allow setting encoding.
 # test_autochdir: ported to Lua, but kept for easier merging.
 # test_eval_func: used as include in old-style test (test_eval.in).
 # test_listlbr: Nvim does not allow setting encoding.
 # test_largefile: uses too much resources to run on CI.
-NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
-  test_alot_latin \
+NEW_TESTS_IGNORE := \
+  test_alot_latin $(NEW_TESTS_IN_ALOT_LATIN) \
   test_autochdir \
   test_eval_func \
   test_listlbr \
   test_largefile \
 
-NEW_TESTS ?= $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
+NEW_TESTS := $(sort $(basename $(notdir $(wildcard test_*.vim))))
+NEW_TESTS_RES := $(addsuffix .res,$(filter-out $(NEW_TESTS_ALOT) $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(NEW_TESTS)) $(NEW_TESTS_ALOT))
 
 
 ifdef VALGRIND_GDB
@@ -112,6 +113,16 @@ fixff:
 	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
 	  dotest.in
 
+# Execute an individual new style test, e.g.:
+# 	make test_largefile
+$(NEW_TESTS):
+	rm -f $@.res test.log messages
+	@MAKEFLAGS=--no-print-directory $(MAKE) -f Makefile $@.res
+	@cat messages
+	@if test -f test.log; then \
+		exit 1; \
+	fi
+
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
 RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
@@ -172,7 +183,7 @@ newtests: newtestssilent
 	                 cat messages && cat test.log;                      \
 	             fi"
 
-newtestssilent: $(NEW_TESTS)
+newtestssilent: $(NEW_TESTS_RES)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*

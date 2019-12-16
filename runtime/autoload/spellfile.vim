@@ -13,6 +13,13 @@ let s:spellfile_URL = ''    " Start with nothing so that s:donedict is reset.
 
 " This function is used for the spellfile plugin.
 function! spellfile#LoadFile(lang)
+  " Check for sandbox/modeline. #11359
+  try
+    :!
+  catch /\<E12\>/
+    throw 'Cannot download spellfile in sandbox/modeline. Try ":set spell" from the cmdline.'
+  endtry
+
   " If the netrw plugin isn't loaded we silently skip everything.
   if !exists(":Nread")
     if &verbose

@@ -4720,18 +4720,19 @@ the same syntax file on all UIs.
 
 					*bold* *underline* *undercurl*
 					*inverse* *italic* *standout*
-					*strikethrough*
+					*nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
 		undercurl	curly underline
+		strikethrough
 		reverse
 		inverse		same as reverse
 		italic
 		standout
-		strikethrough
+		nocombine	override attributes instead of combining them
 		NONE		no attributes used (used to reset it)
 
 	Note that "bold" can be used here and by using a bold font.  They

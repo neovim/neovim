@@ -69,18 +69,6 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
-func Test_next_split_all()
-  " This was causing an illegal memory access.
-  n x
-  norm axxx
-  split
-  split
-  s/x
-  s/x
-  all
-  bwipe!
-endfunc
-
 func Test_window_quit()
   e Xa
   split Xb
@@ -117,15 +105,71 @@ func Test_window_vertical_split()
   bw
 endfunc
 
+" Test the ":wincmd ^" and "<C-W>^" commands.
 func Test_window_split_edit_alternate()
-  e Xa
-  e Xb
 
+  " Test for failure when the alternate buffer/file no longer exists.
+  edit Xfoo | %bw
+  call assert_fails(':wincmd ^', 'E23')
+
+  " Test for the expected behavior when we have two named buffers.
+  edit Xfoo | edit Xbar
   wincmd ^
-  call assert_equal('Xa', bufname(winbufnr(1)))
-  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xfoo', bufname(winbufnr(1)))
+  call assert_equal('Xbar', bufname(winbufnr(2)))
+  only
 
-  bw Xa Xb
+  " Test for the expected behavior when the alternate buffer is not named.
+  enew | let l:nr1 = bufnr('%')
+  edit Xfoo | let l:nr2 = bufnr('%')
+  wincmd ^
+  call assert_equal(l:nr1, winbufnr(1))
+  call assert_equal(l:nr2, winbufnr(2))
+  only
+
+  " FIXME: this currently fails on AppVeyor, but passes locally
+  if !has('win32')
+    " Test the Normal mode command.
+    call feedkeys("\<C-W>\<C-^>", 'tx')
+    call assert_equal(l:nr2, winbufnr(1))
+    call assert_equal(l:nr1, winbufnr(2))
+  endif
+
+  %bw!
+endfunc
+
+" Test the ":[count]wincmd ^" and "[count]<C-W>^" commands.
+func Test_window_split_edit_bufnr()
+
+  %bwipeout
+  let l:nr = bufnr('%') + 1
+  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92')
+  call assert_fails(':' . l:nr . 'wincmd ^', 'E16')
+  call assert_fails(':0wincmd ^', 'E16')
+
+  edit Xfoo | edit Xbar | edit Xbaz
+  let l:foo_nr = bufnr('Xfoo')
+  let l:bar_nr = bufnr('Xbar')
+  let l:baz_nr = bufnr('Xbaz')
+
+  " FIXME: this currently fails on AppVeyor, but passes locally
+  if !has('win32')
+    call feedkeys(l:foo_nr . "\<C-W>\<C-^>", 'tx')
+    call assert_equal('Xfoo', bufname(winbufnr(1)))
+    call assert_equal('Xbaz', bufname(winbufnr(2)))
+    only
+
+    call feedkeys(l:bar_nr . "\<C-W>\<C-^>", 'tx')
+    call assert_equal('Xbar', bufname(winbufnr(1)))
+    call assert_equal('Xfoo', bufname(winbufnr(2)))
+    only
+
+    execute l:baz_nr . 'wincmd ^'
+    call assert_equal('Xbaz', bufname(winbufnr(1)))
+    call assert_equal('Xbar', bufname(winbufnr(2)))
+  endif
+
+  %bw!
 endfunc
 
 func Test_window_preview()
@@ -446,6 +490,17 @@ func Test_window_newtab()
   %bw!
 endfunc
 
+func Test_next_split_all()
+  " This was causing an illegal memory access.
+  n x
+  norm axxx
+  split
+  split
+  s/x
+  s/x
+  all
+  bwipe!
+endfunc
 
 " Tests for adjusting window and contents
 func GetScreenStr(row)
@@ -483,6 +538,11 @@ func Test_window_contents()
 
   bwipeout!
   call test_garbagecollect_now()
+endfunc
+
+func Test_window_colon_command()
+  " This was reading invalid memory.
+  exe "norm! v\<C-W>:\<C-U>echo v:version"
 endfunc
 
 func Test_access_freed_mem()
@@ -700,6 +760,42 @@ func Test_relative_cursor_second_line_after_resize()
   let &so = so_save
 endfunc
 
+func Test_split_noscroll()
+  let so_save = &so
+  enew
+  call setline(1, range(1, 8))
+  normal 100%
+  split
+
+  1wincmd w
+  let winid1 = win_getid()
+  let info1 = getwininfo(winid1)[0]
+
+  2wincmd w
+  let winid2 = win_getid()
+  let info2 = getwininfo(winid2)[0]
+
+  call assert_equal(1, info1.topline)
+  call assert_equal(1, info2.topline)
+
+  " window that fits all lines by itself, but not when split: closing other
+  " window should restore fraction.
+  only!
+  call setline(1, range(1, &lines - 10))
+  exe &lines / 4
+  let winid1 = win_getid()
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+  new
+  redraw
+  close
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+
+  bwipe!
+  let &so = so_save
+endfunc
+
 " Tests for the winnr() function
 func Test_winnr()
   only | tabonly
@@ -743,11 +839,6 @@ func Test_winnr()
   call assert_equal(6, tabpagewinnr(1, 'l'))
 
   only | tabonly
-endfunc
-
-func Test_window_colon_command()
-  " This was reading invalid memory.
-  exe "norm! v\<C-W>:\<C-U>echo v:version"
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

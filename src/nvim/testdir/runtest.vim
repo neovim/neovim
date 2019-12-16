@@ -282,18 +282,23 @@ endif
 
 " Names of flaky tests.
 let s:flaky_tests = [
+      \ 'Test_autocmd_SafeState()',
       \ 'Test_cursorhold_insert()',
       \ 'Test_exit_callback_interval()',
       \ 'Test_map_timeout_with_timer_interrupt()',
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',
+      \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
       \ 'Test_quotestar()',
       \ 'Test_reltime()',
       \ 'Test_repeat_many()',
       \ 'Test_repeat_three()',
+      \ 'Test_state()',
       \ 'Test_stop_all_in_callback()',
+      \ 'Test_term_mouse_double_click_to_create_tab',
+      \ 'Test_term_mouse_multiple_clicks_to_visually_select()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',

@@ -35,7 +35,6 @@ describe('highlight: `:syntax manual`', function()
   end)
 
   after_each(function()
-    screen:detach()
     os.remove('Xtest-functional-ui-highlight.tmp.vim')
   end)
 
@@ -95,10 +94,6 @@ describe('highlight defaults', function()
     screen = Screen.new()
     screen:attach()
     command("set display-=msgsep")
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('window status bar', function()
@@ -346,17 +341,10 @@ describe('highlight defaults', function()
 end)
 
 describe('highlight', function()
-  local screen
-
-  before_each(function()
-    clear()
-    screen = Screen.new(25,10)
-    screen:attach()
-  end)
+  before_each(clear)
 
   it('visual', function()
-    screen:detach()
-    screen = Screen.new(20,4)
+    local screen = Screen.new(20,4)
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {background = Screen.colors.LightGrey},
@@ -389,8 +377,7 @@ describe('highlight', function()
   end)
 
   it('cterm=standout gui=standout', function()
-    screen:detach()
-    screen = Screen.new(20,5)
+    local screen = Screen.new(20,5)
     screen:attach()
     screen:set_default_attr_ids({
         [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -413,8 +400,7 @@ describe('highlight', function()
   end)
 
   it('strikethrough', function()
-    screen:detach()
-    screen = Screen.new(25,6)
+    local screen = Screen.new(25,6)
     screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword foo')
@@ -438,7 +424,56 @@ describe('highlight', function()
     })
   end)
 
+  it('nocombine', function()
+    local screen = Screen.new(25,6)
+    screen:set_default_attr_ids{
+      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+      [3] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
+      [4] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
+      [5] = {foreground = Screen.colors.Red},
+    }
+    screen:attach()
+    feed_command('syntax on')
+    feed_command('hi! Underlined cterm=underline gui=underline')
+    feed_command('syn keyword Underlined foobar')
+    feed_command('hi Search cterm=inverse,nocombine gui=inverse,nocombine')
+    insert([[
+      foobar
+      foobar
+      ]])
+    screen:expect{grid=[[
+      {1:foobar}                   |
+      {1:foobar}                   |
+      ^                         |
+      {2:~                        }|
+      {2:~                        }|
+                               |
+    ]]}
+
+    feed('/foo')
+    screen:expect{grid=[[
+      {3:foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
+                               |
+      {2:~                        }|
+      {2:~                        }|
+      /foo^                     |
+    ]]}
+    feed('<cr>')
+    screen:expect{grid=[[
+      {4:^foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
+                               |
+      {2:~                        }|
+      {2:~                        }|
+      {5:search hit...uing at TOP} |
+    ]]}
+  end)
+
   it('guisp (special/undercurl)', function()
+    local screen = Screen.new(25,10)
+    screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
     feed_command('syn keyword TmpKeyword1 special')
@@ -492,10 +527,6 @@ describe("'listchars' highlight", function()
     clear()
     screen = Screen.new(20,5)
     screen:attach()
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it("'cursorline' and 'cursorcolumn'", function()
@@ -654,6 +685,30 @@ describe("'listchars' highlight", function()
       {3:^¬}{1:                   }|
       {4:~                   }|
       :set cursorline     |
+    ]])
+  end)
+
+  it("'listchar' with wrap", function()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+    })
+    feed_command('set wrap')
+    feed_command('set listchars=eol:¬,precedes:< list')
+    feed('90ia<esc>')
+    screen:expect([[
+      {0:<}aaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa^a{0:¬}         |
+                          |
+    ]])
+    feed('0')
+    screen:expect([[
+      ^aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+                          |
     ]])
   end)
 

@@ -283,9 +283,9 @@ func Test_zz_affix()
         \ ])
 
   call LoadAffAndDic(g:test_data_aff7, g:test_data_dic7)
-  call RunGoodBad("meea1 meea\xE9 bar prebar barmeat prebarmeat  leadprebar lead tail leadtail  leadmiddletail",
+  call RunGoodBad("meea1 meezero meea\xE9 bar prebar barmeat prebarmeat  leadprebar lead tail leadtail  leadmiddletail",
         \ "bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead leadprobar",
-        \ ["bar", "barmeat", "lead", "meea1", "meea\xE9", "prebar", "prebarmeat", "tail"],
+        \ ["bar", "barmeat", "lead", "meea1", "meea\xE9", "meezero", "prebar", "prebarmeat", "tail"],
         \ [
         \   ["bad", ["bar", "lead", "tail"]],
         \   ["mee", ["meea1", "meea\xE9", "bar"]],
@@ -318,6 +318,19 @@ func Test_zz_Numbers()
         \ ["bar", "foo"],
         \ [
         \ ])
+endfunc
+
+" Affix flags
+func Test_zz_affix_flags()
+  call LoadAffAndDic(g:test_data_aff10, g:test_data_dic10)
+  call RunGoodBad("drink drinkable drinkables drinktable drinkabletable",
+	\ "bad: drinks drinkstable drinkablestable",
+        \ ["drink", "drinkable", "drinkables", "table"],
+        \ [['bad', []],
+	\ ['drinks', ['drink']],
+	\ ['drinkstable', ['drinktable', 'drinkable', 'drink table']],
+        \ ['drinkablestable', ['drinkabletable', 'drinkables table', 'drinkable table']],
+	\ ])
 endfunc
 
 function FirstSpellWord()
@@ -713,6 +726,9 @@ let g:test_data_aff7 = [
       \"SFX 61003 Y 1",
       \"SFX 61003 0 meat .",
       \"",
+      \"SFX 0 Y 1",
+      \"SFX 0 0 zero .",
+      \"",
       \"SFX 391 Y 1",
       \"SFX 391 0 a1 .",
       \"",
@@ -724,7 +740,7 @@ let g:test_data_aff7 = [
       \ ]
 let g:test_data_dic7 = [
       \"1234",
-      \"mee/391,111,9999",
+      \"mee/0,391,111,9999",
       \"bar/17,61003,123",
       \"lead/2",
       \"tail/123",
@@ -747,6 +763,21 @@ let g:test_data_dic9 = [
       \"1234",
       \"foo",
       \"bar",
+      \ ]
+let g:test_data_aff10 = [
+      \"COMPOUNDRULE se",
+      \"COMPOUNDPERMITFLAG p",
+      \"",
+      \"SFX A Y 1",
+      \"SFX A 0 able/Mp .",
+      \"",
+      \"SFX M Y 1",
+      \"SFX M 0 s .",
+      \ ]
+let g:test_data_dic10 = [
+      \"1234",
+      \"drink/As",
+      \"table/e",
       \ ]
 let g:test_data_aff_sal = [
       \"SET ISO8859-1",

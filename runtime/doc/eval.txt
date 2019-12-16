@@ -1217,7 +1217,7 @@ lambda expression				*expr-lambda* *lambda*
 {args -> expr1}		lambda expression
 
 A lambda expression creates a new unnamed function which returns the result of
-evaluating |expr1|.  Lambda expressions differ from |user-functions| in
+evaluating |expr1|.  Lambda expressions differ from |user-function|s in
 the following ways:
 
 1. The body of the lambda expression is an |expr1| and not a sequence of |Ex|
@@ -1547,10 +1547,12 @@ v:errmsg	Last given error message.
 	:if v:errmsg != ""
 	:  ... handle error
 <
-					*v:errors* *errors-variable*
+				*v:errors* *errors-variable* *assert-return*
 v:errors	Errors found by assert functions, such as |assert_true()|.
 		This is a list of strings.
 		The assert functions append an item when an assert fails.
+		The return value indicates this: a one is returned if an item
+		was added to v:errors, otherwise zero is returned.
 		To remove old results make it empty: >
 	:let v:errors = []
 <		If v:errors is set to anything but a list it is made an empty
@@ -1734,6 +1736,10 @@ v:lnum		Line number for the 'foldexpr' |fold-expr|, 'formatexpr' and
 		and 'guitabtooltip'.  Only valid while one of these
 		expressions is being evaluated.  Read-only when in the
 		|sandbox|.
+
+						*v:lua* *lua-variable*
+v:lua		Prefix for calling Lua functions from expressions.
+		See |v:lua-call| for more information.
 
 					*v:mouse_win* *mouse_win-variable*
 v:mouse_win	Window number for a mouse click obtained with |getchar()|.
@@ -1984,9 +1990,12 @@ v:windowid	Application-specific window "handle" which may be set by any
 		|window-ID|.
 
 ==============================================================================
-4. Builtin Functions					*functions*
+4. Builtin Functions				*vim-function* *functions*
 
-See |function-list| for a list grouped by what the function is used for.
+The Vimscript subsystem (referred to as "eval" internally) provides the
+following builtin functions.  Scripts can also define |user-function|s.
+
+See |function-list| to browse functions by topic.
 
 (Use CTRL-] on the function name to jump to the full explanation.)
 
@@ -2004,24 +2013,26 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr} [, {winid}])		String	{nr} entry of the argument list
 argv([-1, {winid}])		List	the argument list
-assert_beeps({cmd})		none	assert {cmd} causes a beep
+assert_beeps({cmd})		Number	assert {cmd} causes a beep
 assert_equal({exp}, {act} [, {msg}])
-				none	assert {exp} is equal to {act}
+				Number	assert {exp} is equal to {act}
+assert_equalfile({fname-one}, {fname-two})
+				Number	assert file contents is equal
 assert_exception({error} [, {msg}])
-				none	assert {error} is in v:exception
-assert_fails({cmd} [, {error}])	none	assert {cmd} fails
+				Number	assert {error} is in v:exception
+assert_fails({cmd} [, {error}])	Number	assert {cmd} fails
 assert_false({actual} [, {msg}])
-				none	assert {actual} is false
+				Number	assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none	assert {actual} is inside the range
+				Number	assert {actual} is inside the range
 assert_match({pat}, {text} [, {msg}])
-				none	assert {pat} matches {text}
+				Number	assert {pat} matches {text}
 assert_notequal({exp}, {act} [, {msg}])
-				none	assert {exp} is not equal {act}
+				Number	assert {exp} is not equal {act}
 assert_notmatch({pat}, {text} [, {msg}])
-				none	assert {pat} not matches {text}
-assert_report({msg})		none	report a test failure
-assert_true({actual} [, {msg}])	none	assert {actual} is true
+				Number	assert {pat} not matches {text}
+assert_report({msg})		Number	report a test failure
+assert_true({actual} [, {msg}])	Number	assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
 atan({expr})			Float	arc tangent of {expr}
 atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
@@ -2580,12 +2591,13 @@ argv([{nr} [, {winid}])
 assert_beeps({cmd})					*assert_beeps()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce a beep or visual bell.
-		Also see |assert_fails()|.
+		Also see |assert_fails()| and |assert-return|.
 
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
 		When {expected} and {actual} are not equal an error message is
-		added to |v:errors|.
+		added to |v:errors| and 1 is returned.  Otherwise zero is
+		returned |assert-return|.
 		There is no automatic conversion, the String "4" is different
 		from the Number 4.  And the number 4 is different from the
 		Float 4.0.  The value of 'ignorecase' is not used here, case
@@ -2597,9 +2609,17 @@ assert_equal({expected}, {actual}, [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
+							*assert_equalfile()*
+assert_equalfile({fname-one}, {fname-two})
+		When the files {fname-one} and {fname-two} do not contain
+		exactly the same text an error message is added to |v:errors|.
+		Also see |assert-return|.
+		When {fname-one} or {fname-two} does not exist the error will
+		mention that.
+
 assert_exception({error} [, {msg}])			*assert_exception()*
 		When v:exception does not contain the string {error} an error
-		message is added to |v:errors|.
+		message is added to |v:errors|.  Also see |assert-return|.
 		This can be used to assert that a command throws an exception.
 		Using the error number, followed by a colon, avoids problems
 		with translations: >
@@ -2612,7 +2632,7 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 
 assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
-		NOT produce an error.
+		NOT produce an error.  Also see |assert-return|.
 		When {error} is given it must match in |v:errmsg|.
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.
@@ -2620,6 +2640,7 @@ assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
 		A value is false when it is zero or |v:false|. When "{actual}"
 		is not a number or |v:false| the assert fails.
 		When {msg} is omitted an error in the form
@@ -2636,7 +2657,7 @@ assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
 								*assert_match()*
 assert_match({pattern}, {actual} [, {msg}])
 		When {pattern} does not match {actual} an error message is
-		added to |v:errors|.
+		added to |v:errors|.  Also see |assert-return|.
 
 		{pattern} is used as with |=~|: The matching is always done
 		like 'magic' was set and 'cpoptions' is empty, no matter what
@@ -2657,18 +2678,22 @@ assert_match({pattern}, {actual} [, {msg}])
 assert_notequal({expected}, {actual} [, {msg}])
 		The opposite of `assert_equal()`: add an error message to
 		|v:errors| when {expected} and {actual} are equal.
+		Also see |assert-return|.
 
 							*assert_notmatch()*
 assert_notmatch({pattern}, {actual} [, {msg}])
 		The opposite of `assert_match()`: add an error message to
 		|v:errors| when {pattern} matches {actual}.
+		Also see |assert-return|.
 
 assert_report({msg})					*assert_report()*
 		Report a test failure directly, using {msg}.
+		Always returns one.
 
 assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
 		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
 		A value is |TRUE| when it is a non-zero number or |v:true|.
 		When {actual} is not a number or |v:true| the assert fails.
 		When {msg} is omitted an error in the form "Expected True but
@@ -3525,7 +3550,7 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					string)
 			*funcname	built-in function (see |functions|)
 					or user defined function (see
-					|user-functions|). Also works for a
+					|user-function|). Also works for a
 					variable that is a Funcref.
 			varname		internal variable (see
 					|internal-variables|).  Also works
@@ -4479,8 +4504,7 @@ getftype({fname})					*getftype()*
 		systems that support it.  On some systems only "dir" and
 		"file" are returned.
 
-							*getjumplist()*
-getjumplist([{winnr} [, {tabnr}]])
+getjumplist([{winnr} [, {tabnr}]])			*getjumplist()*
 		Returns the |jumplist| for the specified window.
 
 		Without arguments use the current window.
@@ -4536,6 +4560,10 @@ getloclist({nr},[, {what}])				*getloclist()*
 		If the optional {what} dictionary argument is supplied, then
 		returns the items listed in {what} as a dictionary. Refer to
 		|getqflist()| for the supported items in {what}.
+		If {what} contains 'filewinid', then returns the id of the
+		window used to display files from the location list. This
+		field is applicable only when called from a location list
+		window.
 
 getmatches()						*getmatches()*
 		Returns a |List| with all matches previously defined for the
@@ -4699,7 +4727,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 getregtype([{regname}])					*getregtype()*
 		The result is a String, which is type of register {regname}.
 		The value will be one of:
-		    "v"			for |characterwise| text
+		    "v"			for |charwise| text
 		    "V"			for |linewise| text
 		    "<CTRL-V>{width}"	for |blockwise-visual| text
 		    ""			for an empty or unknown register
@@ -4941,9 +4969,11 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 <							*feature-list*
 		    List of supported pseudo-feature names:
 		        acl		|ACL| support
+			bsd		BSD system (not macOS, use "mac" for that).
 		        iconv		Can use |iconv()| for conversion.
 		        +shellslash	Can use backslashes in filenames (Windows)
 			clipboard	|clipboard| provider is available.
+			mac		MacOS system.
 			nvim		This is Nvim.
 			python2		Legacy Vim |python2| interface. |has-python|
 			python3		Legacy Vim |python3| interface. |has-python|
@@ -4953,6 +4983,7 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			unix		Unix system.
 			*vim_starting*	True during |startup|. 
 			win32		Windows system (32 or 64 bit).
+			win64		Windows system (64 bit).
 			wsl		WSL (Windows Subsystem for Linux) system
 
 							*has-patch*
@@ -5420,6 +5451,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
+		  env      : A dict of strings to append (or replace see
+		             |clear_env|) to the current environment.
+		  clear_env: If set, use the exact values passed in |env|
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     with the job over stdin and stdout. "on_stdout" is
 			     then ignored, but "on_stderr" can still be used.
@@ -6103,7 +6137,7 @@ mode([expr])	Return a string that indicates the current mode.
 
 		   n	    Normal
 		   no	    Operator-pending
-		   nov	    Operator-pending (forced characterwise |o_v|)
+		   nov	    Operator-pending (forced charwise |o_v|)
 		   noV	    Operator-pending (forced linewise |o_V|)
 		   noCTRL-V Operator-pending (forced blockwise |o_CTRL-V|)
 		   niI	    Normal using |i_CTRL-O| in |Insert-mode|
@@ -6640,7 +6674,7 @@ remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 		between (not at the end), like with join(expr, "\n").
 		If {idvar} is present and not empty, it is taken as the name
 		of a variable and a {serverid} for later use with
-		remote_read() is stored there.
+		|remote_read()| is stored there.
 		If {timeout} is given the read times out after this many
 		seconds.  Otherwise a timeout of 600 seconds is used.
 		See also |clientserver| |RemoteReply|.
@@ -7413,7 +7447,7 @@ setreg({regname}, {value} [, {options}])
 		If {options} contains "a" or {regname} is upper case,
 		then the value is appended.
 		{options} can also contain a register type specification:
-		    "c" or "v"	      |characterwise| mode
+		    "c" or "v"	      |charwise| mode
 		    "l" or "V"	      |linewise| mode
 		    "b" or "<CTRL-V>" |blockwise-visual| mode
 		If a number immediately follows "b" or "<CTRL-V>" then this is
@@ -9222,7 +9256,7 @@ Don't forget that "^" will only match at the first character of the String and
 "\n".
 
 ==============================================================================
-5. Defining functions					*user-functions*
+5. Defining functions					*user-function*
 
 New functions can be defined.  These can be called just like builtin
 functions.  The function executes a sequence of Ex commands.  Normal mode
@@ -9680,7 +9714,7 @@ This does NOT work: >
 			register, "@/" for the search pattern.
 			If the result of {expr1} ends in a <CR> or <NL>, the
 			register will be linewise, otherwise it will be set to
-			characterwise.
+			charwise.
 			This can be used to clear the last search pattern: >
 				:let @/ = ""
 <			This is different from searching for an empty string,
@@ -9762,6 +9796,54 @@ This does NOT work: >
 			Like above, but append/add/subtract the value for each
 			|List| item.
 
+						*:let=<<* *:let-heredoc*
+						*E990* *E991* *E172* *E221*
+:let {var-name} =<< [trim] {marker}
+text...
+text...
+{marker}
+			Set internal variable {var-name} to a List containing
+			the lines of text bounded by the string {marker}.
+			{marker} cannot start with a lower case character.
+			The last line should end only with the {marker} string
+			without any other character.  Watch out for white
+			space after {marker}!
+
+			Without "trim" any white space characters in the lines
+			of text are preserved.  If "trim" is specified before
+			{marker}, then indentation is stripped so you can do: >
+				let text =<< trim END
+				   if ok
+				     echo 'done'
+				   endif
+				END
+<			Results in: ["if ok", "  echo 'done'", "endif"]
+			The marker must line up with "let" and the indentation
+			of the first line is removed from all the text lines.
+			Specifically: all the leading indentation exactly
+			matching the leading indentation of the first
+			non-empty text line is stripped from the input lines.
+			All leading indentation exactly matching the leading
+			indentation before `let` is stripped from the line
+			containing {marker}.  Note that the difference between
+			space and tab matters here.
+
+			If {var-name} didn't exist yet, it is created.
+			Cannot be followed by another command, but can be
+			followed by a comment.
+
+			Examples: >
+				let var1 =<< END
+			Sample text 1
+			    Sample text 2
+			Sample text 3
+			END
+
+				let data =<< trim DATA
+				1 2 3 4
+				5 6 7 8
+				DATA
+<
 								*E121*
 :let {var-name}	..	List the value of variable {var-name}.  Multiple
 			variable names may be given.  Special names recognized

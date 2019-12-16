@@ -1,10 +1,11 @@
-$ErrorActionPreference = 'stop'
-Set-PSDebug -Strict -Trace 1
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 $isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
-$compileOption = $Matches.option
+$compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
 $bits = $Matches.bits
 $cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
@@ -23,7 +24,6 @@ $uploadToCodeCov = $false
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
-    Set-PSDebug -Off
     exit $LastExitCode
   }
 }
@@ -46,6 +46,10 @@ if ($compiler -eq 'MINGW') {
     $nvimCmakeVars['USE_GCOV'] = 'ON'
     $uploadToCodecov = $true
     $env:GCOV = "C:\msys64\mingw$bits\bin\gcov"
+
+    # Setup/build Lua coverage.
+    $env:USE_LUACOV = 1
+    $env:BUSTED_ARGS = "--coverage"
   }
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
@@ -94,6 +98,27 @@ npm.cmd install -g neovim
 Get-Command -CommandType Application neovim-node-host.cmd
 npm.cmd link neovim
 
+
+$env:TREE_SITTER_DIR = $env:USERPROFILE + "\tree-sitter-build"
+mkdir "$env:TREE_SITTER_DIR\bin"
+
+$xbits = if ($bits -eq '32') {'x86'} else {'x64'}
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-$xbits.gz" -OutFile tree-sitter.exe.gz
+C:\msys64\usr\bin\gzip -d tree-sitter.exe.gz
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2" -OutFile tree_sitter_c.zip
+Expand-Archive .\tree_sitter_c.zip -DestinationPath .
+cd tree-sitter-c-0.15.2
+..\tree-sitter.exe test
+if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
+  exit 1
+}
+
+if ($compiler -eq 'MSVC') {
+  # Required for LuaRocks (https://github.com/luarocks/luarocks/issues/1039#issuecomment-507296940).
+  $env:VCINSTALLDIR = "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/"
+}
+
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
@@ -113,25 +138,25 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 # Ensure that the "win32" feature is set.
 .\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
 
+if ($env:USE_LUACOV -eq 1) {
+  & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
+}
+
 # Functional tests
 # The $LastExitCode from MSBuild can't be trusted
 $failed = $false
-# Temporarily turn off tracing to reduce log file output
-Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
     $_ -match 'functional tests failed with error'; $_ }
-if ($failed) {
-  if ($uploadToCodecov) {
-    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-  }
-  exit $LastExitCode
-}
-Set-PSDebug -Strict -Trace 1
-
 
 if ($uploadToCodecov) {
+  if ($env:USE_LUACOV -eq 1) {
+    & $env:DEPS_PREFIX\bin\luacov.bat
+  }
   bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+}
+if ($failed) {
+  exit $LastExitCode
 }
 
 # Old tests

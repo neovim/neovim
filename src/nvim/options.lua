@@ -612,7 +612,7 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true={vi="internal,filler"}}
+      defaults={if_true={vi="internal,filler,closeoff"}}
     },
     {
       full_name='digraph', abbreviation='dg',
@@ -804,11 +804,12 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='onecomma', scope={'window'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
       redraw={'current_window'},
+      varname='p_fcs',
       defaults={if_true={vi=''}}
     },
     {
@@ -1299,6 +1300,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='jumpoptions', abbreviation='jop',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      varname='p_jop',
+      vim=true,
+      defaults={if_true={vim=''}}
+    },
+    {
       full_name='keymap', abbreviation='kmp',
       type='string', scope={'buffer'},
       normal_fname_chars=true,
@@ -1420,11 +1429,12 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='onecomma', scope={'window'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vim=true,
       alloced=true,
       redraw={'current_window'},
+      varname='p_lcs',
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {
@@ -2323,9 +2333,9 @@ return {
       full_name='startofline', abbreviation='sol',
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
+      vim=false,
       varname='p_sol',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='statusline', abbreviation='stl',
@@ -2386,6 +2396,14 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_syn',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='tagfunc', abbreviation='tfu',
+      type='string', scope={'buffer'},
+      vim=true,
+      vi_def=true,
+      varname='p_tfu',
       defaults={if_true={vi=""}}
     },
     {

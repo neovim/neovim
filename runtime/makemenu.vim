@@ -1,6 +1,6 @@
 " Script to define the syntax menu in synmenu.vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2018 May 17
+" Last Change:	2019 Dec 07
 
 " This is used by "make menu" in the src directory.
 edit <sfile>:p:h/synmenu.vim
@@ -101,6 +101,7 @@ SynMenu AB.AYacc:ayacc
 
 SynMenu AB.B:b
 SynMenu AB.Baan:baan
+SynMenu AB.Bash:bash
 SynMenu AB.Basic.FreeBasic:freebasic
 SynMenu AB.Basic.IBasic:ibasic
 SynMenu AB.Basic.QBasic:basic
@@ -128,8 +129,9 @@ SynMenu C.Century\ Term:cterm
 SynMenu C.CH\ script:ch
 SynMenu C.ChaiScript:chaiscript
 SynMenu C.ChangeLog:changelog
-SynMenu C.Cheetah\ template:cheetah
 SynMenu C.CHILL:chill
+SynMenu C.Cheetah\ template:cheetah
+SynMenu C.Chicken:chicken
 SynMenu C.ChordPro:chordpro
 SynMenu C.Clean:clean
 SynMenu C.Clever:cl
@@ -160,6 +162,7 @@ SynMenu C.Cyn++:cynpp
 SynMenu C.Cynlib:cynlib
 
 SynMenu DE.D:d
+SynMenu DE.Dart:dart
 SynMenu DE.Datascript:datascript
 SynMenu DE.Debian.Debian\ ChangeLog:debchangelog
 SynMenu DE.Debian.Debian\ Control:debcontrol
@@ -192,12 +195,14 @@ SynMenu DE.DTD:dtd
 SynMenu DE.DTML\ (Zope):dtml
 SynMenu DE.DTrace:dtrace
 SynMenu DE.Dts/dtsi:dts
+SynMenu DE.Dune:dune
 SynMenu DE.Dylan.Dylan:dylan
 SynMenu DE.Dylan.Dylan\ interface:dylanintr
 SynMenu DE.Dylan.Dylan\ lid:dylanlid
 
 SynMenu DE.EDIF:edif
 SynMenu DE.Eiffel:eiffel
+SynMenu DE.Eight:8th
 SynMenu DE.Elinks\ config:elinks
 SynMenu DE.Elm\ filter\ rules:elmfilt
 SynMenu DE.Embedix\ Component\ Description:ecd
@@ -307,6 +312,7 @@ SynMenu HIJK.Java.JavaCC:javacc
 SynMenu HIJK.Java.Java\ Server\ Pages:jsp
 SynMenu HIJK.Java.Java\ Properties:jproperties
 SynMenu HIJK.JavaScript:javascript
+SynMenu HIJK.JavaScriptReact:javascriptreact
 SynMenu HIJK.Jess:jess
 SynMenu HIJK.Jgraph:jgraph
 SynMenu HIJK.Jovial:jovial
@@ -365,6 +371,7 @@ SynMenu M.Mathematica:mma
 SynMenu M.Matlab:matlab
 SynMenu M.Maxima:maxima
 SynMenu M.MEL\ (for\ Maya):mel
+SynMenu M.Meson:meson
 SynMenu M.Messages\ (/var/log):messages
 SynMenu M.Metafont:mf
 SynMenu M.MetaPost:mp
@@ -467,6 +474,7 @@ SynMenu R.R.R\ help:rhelp
 SynMenu R.R.R\ noweb:rnoweb
 SynMenu R.Racc\ input:racc
 SynMenu R.Radiance:radiance
+SynMenu R.Raml:raml
 SynMenu R.Ratpoison:ratpoison
 SynMenu R.RCS.RCS\ log\ output:rcslog
 SynMenu R.RCS.RCS\ file:rcs
@@ -609,6 +617,8 @@ SynMenu T.Trustees:trustees
 SynMenu T.TSS.Command\ Line:tsscl
 SynMenu T.TSS.Geometry:tssgm
 SynMenu T.TSS.Optics:tssop
+SynMenu T.Typescript:typescript
+SynMenu T.TypescriptReact:typescriptreact
 
 SynMenu UV.Udev\ config:udevconf
 SynMenu UV.Udev\ permissions:udevperm
@@ -637,6 +647,7 @@ SynMenu UV.VSE\ JCL:vsejcl
 SynMenu WXYZ.WEB.CWEB:cweb
 SynMenu WXYZ.WEB.WEB:web
 SynMenu WXYZ.WEB.WEB\ Changes:change
+SynMenu WXYZ.WebAssembly:wast
 SynMenu WXYZ.Webmacro:webmacro
 SynMenu WXYZ.Website\ MetaLanguage:wml
 SynMenu WXYZ.wDiff:wdiff

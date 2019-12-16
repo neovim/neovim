@@ -116,10 +116,10 @@ static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
 { "bold", "standout", "underline", "undercurl",
-  "italic", "reverse", "inverse", "strikethrough", "NONE" };
+  "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
-  HL_INVERSE, HL_STRIKETHROUGH, 0 };
+  HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.
@@ -2460,11 +2460,8 @@ update_si_end(
     int force                  /* when TRUE overrule a previous end */
 )
 {
-  lpos_T startpos;
-  lpos_T endpos;
   lpos_T hl_endpos;
   lpos_T end_endpos;
-  int end_idx;
 
   /* return quickly for a keyword */
   if (sip->si_idx < 0)
@@ -2480,9 +2477,12 @@ update_si_end(
    * We need to find the end of the region.  It may continue in the next
    * line.
    */
-  end_idx = 0;
-  startpos.lnum = current_lnum;
-  startpos.col = startcol;
+  int end_idx = 0;
+  lpos_T startpos = {
+    .lnum = current_lnum,
+    .col = startcol,
+  };
+  lpos_T endpos = { 0 };
   find_endpos(sip->si_idx, &startpos, &endpos, &hl_endpos,
       &(sip->si_flags), &end_endpos, &end_idx, sip->si_extmatch);
 
@@ -7316,7 +7316,7 @@ static void set_hl_attr(int idx)
 
   sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
 
-  // a cursor style uses this syn_id, make sure its atribute is updated.
+  // a cursor style uses this syn_id, make sure its attribute is updated.
   if (cursor_mode_uses_syn_id(idx+1)) {
     ui_mode_info_set();
   }
@@ -7569,8 +7569,8 @@ void highlight_changed(void)
 {
   int id;
   char_u userhl[30];  // use 30 to avoid compiler warning
-  int id_SNC = -1;
   int id_S = -1;
+  int id_SNC = 0;
   int hlcnt;
 
   need_highlight_changed = FALSE;

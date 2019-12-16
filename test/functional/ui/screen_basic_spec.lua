@@ -915,6 +915,7 @@ local function screen_tests(linegrid)
 
   -- Regression test for #8357
   it('does not have artifacts after temporary chars in insert mode', function()
+    command('set timeoutlen=10000')
     command('inoremap jk <esc>')
     feed('ifooj')
     screen:expect([[

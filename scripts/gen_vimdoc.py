@@ -36,11 +36,12 @@ import shutil
 import textwrap
 import subprocess
 import collections
+import msgpack
 
 from xml.dom import minidom
 
-if sys.version_info[0] < 3:
-    print("use Python 3")
+if sys.version_info[0] < 3 or sys.version_info[1] < 5:
+    print("requires Python 3.5+")
     sys.exit(1)
 
 DEBUG = ('DEBUG' in os.environ)
@@ -84,7 +85,7 @@ CONFIG = {
         'append_only': [],
     },
     'lua': {
-        'filename': 'if_lua.txt',
+        'filename': 'lua.txt',
         'section_start_token': '*lua-vim*',
         'section_order': [
             'vim.lua',
@@ -453,7 +454,7 @@ def parse_source_xml(filename, mode):
     """
     global xrefs
     xrefs = set()
-    functions = []
+    functions = {}  # Map of func_name:docstring.
     deprecated_functions = []
 
     dom = minidom.parse(filename)
@@ -577,11 +578,13 @@ def parse_source_xml(filename, mode):
         if 'Deprecated' in xrefs:
             deprecated_functions.append(func_doc)
         elif name.startswith(CONFIG[mode]['func_name_prefix']):
-            functions.append(func_doc)
+            functions[name] = func_doc
 
         xrefs.clear()
 
-    return '\n\n'.join(functions), '\n\n'.join(deprecated_functions)
+    return ('\n\n'.join(list(functions.values())),
+            '\n\n'.join(deprecated_functions),
+            functions)
 
 
 def delete_lines_below(filename, tokenstr):
@@ -604,6 +607,13 @@ def gen_docs(config):
     Doxygen is called and configured through stdin.
     """
     for mode in CONFIG:
+        functions = {}  # Map of func_name:docstring.
+        mpack_file = os.path.join(
+                base_dir, 'runtime', 'doc',
+                CONFIG[mode]['filename'].replace('.txt', '.mpack'))
+        if os.path.exists(mpack_file):
+            os.remove(mpack_file)
+
         output_dir = out_dir.format(mode=mode)
         p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE)
         p.communicate(
@@ -645,14 +655,15 @@ def gen_docs(config):
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
-                functions, deprecated = parse_source_xml(
-                    os.path.join(base, '%s.xml' %
-                                 compound.getAttribute('refid')), mode)
+                functions_text, deprecated_text, fns = parse_source_xml(
+                    os.path.join(base, '{}.xml'.format(
+                                 compound.getAttribute('refid'))), mode)
+                # Collect functions from all modules (for the current `mode`).
+                functions = {**functions, **fns}
 
-                if not functions and not deprecated:
+                if not functions_text and not deprecated_text:
                     continue
-
-                if functions or deprecated:
+                else:
                     name = os.path.splitext(os.path.basename(filename))[0]
                     if name == 'ui':
                         name = name.upper()
@@ -665,12 +676,12 @@ def gen_docs(config):
                     if intro:
                         doc += '\n\n' + intro
 
-                    if functions:
-                        doc += '\n\n' + functions
+                    if functions_text:
+                        doc += '\n\n' + functions_text
 
-                    if INCLUDE_DEPRECATED and deprecated:
+                    if INCLUDE_DEPRECATED and deprecated_text:
                         doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
-                        doc += deprecated
+                        doc += deprecated_text
 
                     if doc:
                         filename = os.path.basename(filename)
@@ -713,6 +724,8 @@ def gen_docs(config):
         delete_lines_below(doc_file, CONFIG[mode]['section_start_token'])
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
+        with open(mpack_file, 'wb') as fp:
+            fp.write(msgpack.packb(functions, use_bin_type=True))
 
         shutil.rmtree(output_dir)
 

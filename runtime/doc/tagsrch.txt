@@ -838,4 +838,70 @@ Common arguments for the commands above:
 <	For a ":djump", ":dsplit", ":dlist" and ":dsearch" command the pattern
 	is used as a literal string, not as a search pattern.
 
+==============================================================================
+7. Using 'tagfunc'						*tag-function*
+
+It is possible to provide Vim with a function which will generate a list of
+tags used for commands like |:tag|, |:tselect| and Normal mode tag commands
+like |CTRL-]|.
+
+The function used for generating the taglist is specified by setting the
+'tagfunc' option.  The function will be called with three arguments:
+   a:pattern	The tag identifier used during the tag search.
+   a:flags	List of flags to control the function behavior.
+   a:info	Dict containing the following entries:
+		    buf_ffname	  Full filename which can be used for priority.
+		    user_data	  Custom data String, if stored in the tag
+				  stack previously by tagfunc.
+
+Currently two flags may be passed to the tag function:
+  'c'		The function was invoked by a normal command being processed
+	        (mnemonic: the tag function may use the context around the
+		cursor to perform a better job of generating the tag list.)
+  'i'		In Insert mode, the user was completing a tag (with
+		|i_CTRL-X_CTRL-]|).
+
+Note that when 'tagfunc' is set, the priority of the tags described in
+|tag-priority| does not apply.  Instead, the priority is exactly as the
+ordering of the elements in the list returned by the function.
+								*E987*
+The function should return a List of Dict entries.  Each Dict must at least
+include the following entries and each value must be a string:
+	name		Name of the tag.
+	filename	Name of the file where the tag is defined.  It is
+			either relative to the current directory or a full path.
+	cmd		Ex command used to locate the tag in the file.  This
+			can be either an Ex search pattern or a line number.
+Note that the format is similar to that of |taglist()|, which makes it possible
+to use its output to generate the result.
+The following fields are optional:
+	kind		Type of the tag.
+	user_data	String of custom data stored in the tag stack which
+			can be used to disambiguate tags between operations.
+
+If the function returns |v:null| instead of a List, a standard tag lookup will
+be performed instead.
+
+It is not allowed to change the tagstack from inside 'tagfunc'.  *E986* 
+
+The following is a hypothetical example of a function used for 'tagfunc'.  It
+uses the output of |taglist()| to generate the result: a list of tags in the
+inverse order of file names.
+>
+	function! TagFunc(pattern, flags, info)
+	  function! CompareFilenames(item1, item2)
+	    let f1 = a:item1['filename']
+	    let f2 = a:item2['filename']
+	    return f1 >=# f2 ?
+			\ -1 : f1 <=# f2 ? 1 : 0
+	  endfunction
+
+	  let result = taglist(a:pattern)
+	  call sort(result, "CompareFilenames")
+
+	  return result
+	endfunc
+	set tagfunc=TagFunc
+<
+
  vim:tw=78:ts=8:noet:ft=help:norl:

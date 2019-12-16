@@ -1,0 +1,46 @@
+" vim: set ft=vim sw=4 :
+
+" START_INDENT
+
+func Some()
+let x = 1
+endfunc
+
+let cmd =
+\ 'some '
+\ 'string'
+
+" END_INDENT
+
+" START_INDENT
+" INDENT_EXE let g:vim_indent_cont = 6
+
+let cmd =
+\ 'some '
+\ 'string'
+
+" END_INDENT
+
+" START_INDENT
+" INDENT_EXE unlet g:vim_indent_cont
+" INDENT_AT  this-line
+func Some()
+let f = x " this-line
+endfunc
+" END_INDENT
+
+" START_INDENT
+" INDENT_NEXT  next-line
+func Some()
+     " next-line
+let f = x
+endfunc
+" END_INDENT
+
+" START_INDENT
+" INDENT_PREV  prev-line
+func Some()
+let f = x
+" prev-line
+endfunc
+" END_INDENT

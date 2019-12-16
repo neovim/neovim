@@ -93,7 +93,7 @@ typedef struct {
   int out_fd;
   bool scroll_region_is_full_screen;
   bool can_change_scroll_region;
-  bool can_set_lr_margin;
+  bool can_set_lr_margin;  // smglr
   bool can_set_left_right_margin;
   bool can_scroll;
   bool can_erase_chars;
@@ -220,7 +220,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
   data->unibi_ext.set_underline_color = -1;
-  data->out_fd = 1;
+  data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
   const char *term = os_getenv("TERM");
@@ -234,7 +234,9 @@ static void terminfo_start(UI *ui)
   // Set up unibilium/terminfo.
   char *termname = NULL;
   if (term) {
+    os_env_var_lock();
     data->ut = unibi_from_term(term);
+    os_env_var_unlock();
     if (data->ut) {
       termname = xstrdup(term);
     }
@@ -296,6 +298,7 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Ask the terminal to send us the background color.
+  data->input.waiting_for_bg_response = 5;
   unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
@@ -312,6 +315,7 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+  flush_buf(ui);
 }
 
 static void terminfo_stop(UI *ui)
@@ -363,6 +367,7 @@ static void tui_terminal_after_startup(UI *ui)
   // Emit this after Nvim startup, not during.  This works around a tmux
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+  flush_buf(ui);
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -430,9 +435,6 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   }
   if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
-    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
-    // terminal response may not get processed until user hits a key.
-    loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
   }
   // "Passive" (I/O-driven) loop: TUI thread "main loop".
   while (!tui_is_stopped(ui)) {
@@ -513,20 +515,8 @@ static void update_attrs(UI *ui, int attr_id)
   }
   data->print_attr_id = attr_id;
   HlAttrs attrs = kv_A(data->attrs, (size_t)attr_id);
-
-  int fg = ui->rgb ? attrs.rgb_fg_color : (attrs.cterm_fg_color - 1);
-  if (fg == -1) {
-    fg = ui->rgb ? data->clear_attrs.rgb_fg_color
-                 : (data->clear_attrs.cterm_fg_color - 1);
-  }
-
-  int bg = ui->rgb ? attrs.rgb_bg_color : (attrs.cterm_bg_color - 1);
-  if (bg == -1) {
-    bg = ui->rgb ? data->clear_attrs.rgb_bg_color
-                 : (data->clear_attrs.cterm_bg_color - 1);
-  }
-
   int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
+
   bool bold = attr & HL_BOLD;
   bool italic = attr & HL_ITALIC;
   bool reverse = attr & HL_INVERSE;
@@ -594,14 +584,29 @@ static void update_attrs(UI *ui, int attr_id)
         unibi_out_ext(ui, data->unibi_ext.set_underline_color);
     }
   }
-  if (ui->rgb) {
+
+  int fg, bg;
+  if (ui->rgb && !(attr & HL_FG_INDEXED)) {
+    fg = ((attrs.rgb_fg_color != -1)
+          ? attrs.rgb_fg_color : data->clear_attrs.rgb_fg_color);
     if (fg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], (fg >> 16) & 0xff);  // red
       UNIBI_SET_NUM_VAR(data->params[1], (fg >> 8) & 0xff);   // green
       UNIBI_SET_NUM_VAR(data->params[2], fg & 0xff);          // blue
       unibi_out_ext(ui, data->unibi_ext.set_rgb_foreground);
     }
+  } else {
+    fg = (attrs.cterm_fg_color
+          ? attrs.cterm_fg_color - 1 : (data->clear_attrs.cterm_fg_color - 1));
+    if (fg != -1) {
+      UNIBI_SET_NUM_VAR(data->params[0], fg);
+      unibi_out(ui, unibi_set_a_foreground);
+    }
+  }
 
+  if (ui->rgb && !(attr & HL_BG_INDEXED)) {
+    bg = ((attrs.rgb_bg_color != -1)
+          ? attrs.rgb_bg_color : data->clear_attrs.rgb_bg_color);
     if (bg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xff);  // red
       UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xff);   // green
@@ -609,16 +614,14 @@ static void update_attrs(UI *ui, int attr_id)
       unibi_out_ext(ui, data->unibi_ext.set_rgb_background);
     }
   } else {
-    if (fg != -1) {
-      UNIBI_SET_NUM_VAR(data->params[0], fg);
-      unibi_out(ui, unibi_set_a_foreground);
-    }
-
+    bg = (attrs.cterm_bg_color
+          ? attrs.cterm_bg_color - 1 : (data->clear_attrs.cterm_bg_color - 1));
     if (bg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], bg);
       unibi_out(ui, unibi_set_a_background);
     }
   }
+
 
   data->default_attr = fg == -1 && bg == -1
     && !bold && !italic && !underline && !undercurl && !reverse && !standout
@@ -1598,6 +1601,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
+    } else {
+      // Fix things advertised via TERM=xterm, for non-xterm.
+      if (unibi_get_str(ut, unibi_set_lr_margin)) {
+        ILOG("Disabling smglr with TERM=xterm for non-xterm.");
+        unibi_set_str(ut, unibi_set_lr_margin, NULL);
+      }
     }
 
 #ifdef WIN32

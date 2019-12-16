@@ -26,27 +26,29 @@ func Test_Debugger()
   endif
 
   " Create a Vim script with some functions
-  call writefile([
-	      \ 'func Foo()',
-	      \ '  let var1 = 1',
-	      \ '  let var2 = Bar(var1) + 9',
-	      \ '  return var2',
-	      \ 'endfunc',
-	      \ 'func Bar(var)',
-	      \ '  let var1 = 2 + a:var',
-	      \ '  let var2 = Bazz(var1) + 4',
-	      \ '  return var2',
-	      \ 'endfunc',
-	      \ 'func Bazz(var)',
-	      \ '  try',
-	      \ '    let var1 = 3 + a:var',
-	      \ '    let var3 = "another var"',
-	      \ '    let var3 = "value2"',
-	      \ '  catch',
-	      \ '    let var4 = "exception"',
-	      \ '  endtry',
-	      \ '  return var1',
-	      \ 'endfunc'], 'Xtest.vim')
+  let lines =<< trim END
+	func Foo()
+	  let var1 = 1
+	  let var2 = Bar(var1) + 9
+	  return var2
+	endfunc
+	func Bar(var)
+	  let var1 = 2 + a:var
+	  let var2 = Bazz(var1) + 4
+	  return var2
+	endfunc
+	func Bazz(var)
+	  try
+	    let var1 = 3 + a:var
+	    let var3 = "another var"
+	    let var3 = "value2"
+	  catch
+	    let var4 = "exception"
+	  endtry
+	  return var1
+	endfunc
+  END
+  call writefile(lines, 'Xtest.vim')
 
   " Start Vim in a terminal
   let buf = RunVimInTerminal('-S Xtest.vim', {})
@@ -294,11 +296,13 @@ func Test_Debugger()
   " Tests for :breakadd file and :breakadd here
   " Breakpoints should be set before sourcing the file
 
-  call writefile([
-	      \ 'let var1 = 10',
-	      \ 'let var2 = 20',
-	      \ 'let var3 = 30',
-	      \ 'let var4 = 40'], 'Xtest.vim')
+  let lines =<< trim END
+	let var1 = 10
+	let var2 = 20
+	let var3 = 30
+	let var4 = 40
+  END
+  call writefile(lines, 'Xtest.vim')
 
   " Start Vim in a terminal
   let buf = RunVimInTerminal('Xtest.vim', {})

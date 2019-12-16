@@ -91,7 +91,9 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/pos.h"  // MAXLNUM
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -106,6 +108,7 @@
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/lib/kvec.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
@@ -222,9 +225,6 @@ int u_save_cursor(void)
  */
 int u_save(linenr_T top, linenr_T bot)
 {
-  if (undo_off)
-    return OK;
-
   if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
     return FAIL;        /* rely on caller to do error messages */
   }
@@ -243,10 +243,7 @@ int u_save(linenr_T top, linenr_T bot)
  */
 int u_savesub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
-  return u_savecommon(lnum - 1, lnum + 1, lnum + 1, FALSE);
+  return u_savecommon(lnum - 1, lnum + 1, lnum + 1, false);
 }
 
 /*
@@ -257,10 +254,7 @@ int u_savesub(linenr_T lnum)
  */
 int u_inssub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
-  return u_savecommon(lnum - 1, lnum, lnum + 1, FALSE);
+  return u_savecommon(lnum - 1, lnum, lnum + 1, false);
 }
 
 /*
@@ -272,9 +266,6 @@ int u_inssub(linenr_T lnum)
  */
 int u_savedel(linenr_T lnum, long nlines)
 {
-  if (undo_off)
-    return OK;
-
   return u_savecommon(lnum - 1, lnum + nlines,
       nlines == curbuf->b_ml.ml_line_count ? 2 : lnum, FALSE);
 }
@@ -384,6 +375,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
        * up the undo info when out of memory.
        */
       uhp = xmalloc(sizeof(u_header_T));
+      kv_init(uhp->uh_extmark);
 #ifdef U_DEBUG
       uhp->uh_magic = UH_MAGIC;
 #endif
@@ -2249,10 +2241,10 @@ static void u_undoredo(int undo, bool do_buf_event)
       xfree((char_u *)uep->ue_array);
     }
 
-    /* adjust marks */
+    // Adjust marks
     if (oldsize != newsize) {
       mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-                  (long)newsize - (long)oldsize, false);
+                  (long)newsize - (long)oldsize, false, kExtmarkNOOP);
       if (curbuf->b_op_start.lnum > top + oldsize) {
         curbuf->b_op_start.lnum += newsize - oldsize;
       }
@@ -2284,6 +2276,23 @@ static void u_undoredo(int undo, bool do_buf_event)
     uep->ue_next = newlist;
     newlist = uep;
   }
+
+  // Adjust Extmarks
+  ExtmarkUndoObject undo_info;
+  if (undo) {
+    for (i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
+      undo_info = kv_A(curhead->uh_extmark, i);
+      extmark_apply_undo(undo_info, undo);
+    }
+  // redo
+  } else {
+    for (i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
+      undo_info = kv_A(curhead->uh_extmark, i);
+      extmark_apply_undo(undo_info, undo);
+    }
+  }
+  // finish Adjusting extmarks
+
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
@@ -2828,6 +2837,8 @@ u_freeentries(
     u_freeentry(uep, uep->ue_size);
   }
 
+  kv_destroy(uhp->uh_extmark);
+
 #ifdef U_DEBUG
   uhp->uh_magic = 0;
 #endif
@@ -2901,9 +2912,6 @@ void u_undoline(void)
 {
   colnr_T t;
   char_u  *oldp;
-
-  if (undo_off)
-    return;
 
   if (curbuf->b_u_line_ptr == NULL
       || curbuf->b_u_line_lnum > curbuf->b_ml.ml_line_count) {
@@ -3021,4 +3029,35 @@ list_T *u_eval_tree(const u_header_T *const first_uhp)
   }
 
   return list;
+}
+
+// Given the buffer, Return the undo header. If none is set, set one first.
+// NULL will be returned if e.g undolevels = -1 (undo disabled)
+u_header_T *u_force_get_undo_header(buf_T *buf)
+{
+  u_header_T *uhp = NULL;
+  if (buf->b_u_curhead != NULL) {
+    uhp = buf->b_u_curhead;
+  } else if (buf->b_u_newhead) {
+    uhp = buf->b_u_newhead;
+  }
+  // Create the first undo header for the buffer
+  if (!uhp) {
+    // Undo is normally invoked in change code, which already has swapped
+    // curbuf.
+    buf_T *save_curbuf = curbuf;
+    curbuf = buf;
+    // Args are tricky: this means replace empty range by empty range..
+    u_savecommon(0, 1, 1, true);
+    curbuf = save_curbuf;
+
+    uhp = buf->b_u_curhead;
+    if (!uhp) {
+      uhp = buf->b_u_newhead;
+      if (get_undolevel() > 0 && !uhp) {
+        abort();
+      }
+    }
+  }
+  return uhp;
 }

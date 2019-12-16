@@ -53,6 +53,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -410,11 +411,11 @@ bool buf_valid(buf_T *buf)
 ///               caller should get a new buffer very soon!
 ///               The 'bufhidden' option can force freeing and deleting.
 /// @param abort_if_last
-///               If TRUE, do not close the buffer if autocommands cause
+///               If true, do not close the buffer if autocommands cause
 ///               there to be only one window with this buffer. e.g. when
 ///               ":quit" is supposed to close the window but autocommands
 ///               close all other windows.
-void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
+void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
@@ -816,6 +817,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   buf_delete_signs(buf, (char_u *)"*");  // delete any signs
+  extmark_free_all(buf);                 // delete any extmarks
   bufhl_clear_all(buf);                  // delete any highligts
   map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
@@ -929,7 +931,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
 
     // User selected Recover at ATTENTION prompt.
     msg_scroll = true;
-    ml_recover();
+    ml_recover(false);
     MSG_PUTS("\n");     // don't overwrite the last message
     cmdline_row = msg_row;
     do_modelines(0);
@@ -1236,7 +1238,7 @@ do_buffer(
               return FAIL;
             }
           } else {
-            EMSG2(_("E89: %s will be killed(add ! to override)"),
+            EMSG2(_("E89: %s will be killed (add ! to override)"),
                   (char *)buf->b_fname);
             return FAIL;
           }
@@ -1583,10 +1585,12 @@ void enter_buffer(buf_T *buf)
 
     open_buffer(false, NULL, 0);
   } else {
-    if (!msg_silent) {
+    if (!msg_silent && !shortmess(SHM_FILEINFO)) {
       need_fileinfo = true;             // display file info after redraw
     }
-    (void)buf_check_timestamp(curbuf, false);     // check if file changed
+    // check if file changed
+    (void)buf_check_timestamp(curbuf, false);
+
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
@@ -1947,6 +1951,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_path);
   clear_string_option(&buf->b_p_tags);
   clear_string_option(&buf->b_p_tc);
+  clear_string_option(&buf->b_p_tfu);
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
@@ -2689,7 +2694,7 @@ setfname(
     buf_T *buf,
     char_u *ffname,
     char_u *sfname,
-    int message                    // give message when buffer already exists
+    bool message                  // give message when buffer already exists
 )
 {
   buf_T       *obuf = NULL;
@@ -3796,14 +3801,20 @@ int build_stl_str_hl(
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
+      const int save_VIsual_active = VIsual_active;
       curwin = wp;
       curbuf = wp->w_buffer;
+      // Visual mode is only valid in the current window.
+      if (curwin != save_curwin) {
+        VIsual_active = false;
+      }
 
       // Note: The result stored in `t` is unused.
       str = eval_to_string_safe(out_p, &t, use_sandbox);
 
       curwin = save_curwin;
       curbuf = save_curbuf;
+      VIsual_active = save_VIsual_active;
 
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);
@@ -4629,7 +4640,8 @@ do_arg_all(
           if (i < alist->al_ga.ga_len
               && (AARGLIST(alist)[i].ae_fnum == buf->b_fnum
                   || path_full_compare(alist_name(&AARGLIST(alist)[i]),
-                                       buf->b_ffname, true) & kEqualFiles)) {
+                                       buf->b_ffname,
+                                       true, true) & kEqualFiles)) {
             int weight = 1;
 
             if (old_curtab == curtab) {
@@ -5179,6 +5191,13 @@ bool bt_help(const buf_T *const buf)
   return buf != NULL && buf->b_help;
 }
 
+// Return true if "buf" is a normal buffer, 'buftype' is empty.
+bool bt_normal(const buf_T *const buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return buf != NULL && buf->b_p_bt[0] == NUL;
+}
+
 // Return true if "buf" is the quickfix buffer.
 bool bt_quickfix(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -5487,6 +5506,7 @@ void bufhl_clear_line_range(buf_T *buf,
                             linenr_T line_start,
                             linenr_T line_end)
 {
+  // TODO(bfredl): implement kb_itr_interval to jump directly to the first line
   kbitr_t(bufhl) itr;
   BufhlLine *l, t = BUFHLLINE_INIT(line_start);
   if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
@@ -5612,6 +5632,86 @@ void bufhl_mark_adjust(buf_T* buf,
       l->line += amount_after;
     }
   }
+}
+
+/// Adjust a placed highlight for column changes and joined/broken lines
+bool bufhl_mark_col_adjust(buf_T *buf,
+                           linenr_T lnum,
+                           colnr_T mincol,
+                           long lnum_amount,
+                           long col_amount)
+{
+  bool moved = false;
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
+  if (!lineinfo) {
+    // Old line empty, nothing to do
+    return false;
+  }
+  // Create the new line below only if needed
+  BufhlLine *lineinfo2 = NULL;
+
+  colnr_T delcol = MAXCOL;
+  if (lnum_amount == 0 && col_amount < 0) {
+    delcol = mincol+(int)col_amount;
+  }
+
+  size_t newidx = 0;
+  for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
+    BufhlItem *item = &kv_A(lineinfo->items, i);
+    bool delete = false;
+    if (item->start >= mincol) {
+      moved = true;
+      item->start += (int)col_amount;
+      if (item->stop < MAXCOL) {
+        item->stop += (int)col_amount;
+      }
+      if (lnum_amount != 0) {
+        if (lineinfo2 == NULL) {
+          lineinfo2 = bufhl_tree_ref(&buf->b_bufhl_info,
+                                     lnum+lnum_amount, true);
+        }
+        kv_push(lineinfo2->items, *item);
+        delete = true;
+      }
+    } else {
+      if (item->start >= delcol) {
+        moved = true;
+        item->start = delcol;
+      }
+      if (item->stop == MAXCOL || item->stop+1 >= mincol) {
+        if (item->stop == MAXCOL) {
+          if (delcol < MAXCOL
+              && delcol > (colnr_T)STRLEN(ml_get_buf(buf, lnum, false))) {
+            delete = true;
+          }
+        } else {
+          moved = true;
+          item->stop += (int)col_amount;
+        }
+        assert(lnum_amount >= 0);
+        if (lnum_amount > 0) {
+          item->stop = MAXCOL;
+        }
+      } else if (item->stop+1 >= delcol) {
+        moved = true;
+        item->stop = delcol-1;
+      }
+      // we covered the entire range with a visual delete or something
+      if (item->stop < item->start) {
+        delete = true;
+      }
+    }
+
+    if (!delete) {
+      if (i != newidx) {
+        kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
+      }
+      newidx++;
+    }
+  }
+  kv_size(lineinfo->items) = newidx;
+
+  return moved;
 }
 
 

@@ -26,7 +26,8 @@ void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
   input->paste = 0;
-  input->in_fd = 0;
+  input->in_fd = STDIN_FILENO;
+  input->waiting_for_bg_response = 0;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
@@ -35,7 +36,7 @@ void tinput_init(TermInput *input, Loop *loop)
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
 #ifdef WIN32
-  if (!os_isatty(0)) {
+  if (!os_isatty(input->in_fd)) {
       const HANDLE conin_handle = CreateFile("CONIN$",
                                              GENERIC_READ | GENERIC_WRITE,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -45,8 +46,8 @@ void tinput_init(TermInput *input, Loop *loop)
       assert(input->in_fd != -1);
   }
 #else
-  if (!os_isatty(0) && os_isatty(2)) {
-    input->in_fd = 2;
+  if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
+    input->in_fd = STDERR_FILENO;
   }
 #endif
   input_global_fd_init(input->in_fd);
@@ -443,6 +444,9 @@ static void set_bg_deferred(void **argv)
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
 static bool handle_background_color(TermInput *input)
 {
+  if (input->waiting_for_bg_response <= 0) {
+    return false;
+  }
   size_t count = 0;
   size_t component = 0;
   size_t header_size = 0;
@@ -461,8 +465,13 @@ static bool handle_background_color(TermInput *input)
     header_size = 10;
     num_components = 4;
   } else {
+    input->waiting_for_bg_response--;
+    if (input->waiting_for_bg_response == 0) {
+      DLOG("did not get a response for terminal background query");
+    }
     return false;
   }
+  input->waiting_for_bg_response = 0;
   rbuffer_consumed(input->read_stream.buffer, header_size);
   RBUFFER_EACH(input->read_stream.buffer, c, i) {
     count = i + 1;
@@ -503,6 +512,12 @@ static bool handle_background_color(TermInput *input)
   }
   return true;
 }
+#ifdef UNIT_TESTING
+bool ut_handle_background_color(TermInput *input)
+{
+  return handle_background_color(input);
+}
+#endif
 
 static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
                            void *data, bool eof)

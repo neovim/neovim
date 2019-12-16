@@ -520,17 +520,18 @@ func Test_fold_create_marker_in_C()
   set fdm=marker fdl=9
   set filetype=c
 
-  let content = [
-	\ '/*',
-	\ ' * comment',
-	\ ' * ',
-	\ ' *',
-	\ ' */',
-	\ 'int f(int* p) {',
-	\ '    *p = 3;',
-	\ '    return 0;',
-	\ '}'
-	\]
+  let content =<< trim [CODE]
+    /*
+     * comment
+     * 
+     *
+     */
+    int f(int* p) {
+        *p = 3;
+        return 0;
+    }
+  [CODE]
+
   for c in range(len(content) - 1)
     bw!
     call append(0, content)
@@ -754,5 +755,17 @@ func Test_fold_delete_with_marker()
 
   set fdm&
   bwipe!
+  bwipe!
+endfunc
+
+func Test_fold_delete_with_marker_and_whichwrap()
+  new
+  let content1 = ['']
+  let content2 = ['folded line 1 "{{{1', '  test', '  test2', '  test3', '', 'folded line 2 "{{{1', '  test', '  test2', '  test3']
+  call setline(1, content1 + content2)
+  set fdm=marker ww+=l
+  normal! x
+  call assert_equal(content2, getline(1, '$'))
+  set fdm& ww&
   bwipe!
 endfunc

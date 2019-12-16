@@ -357,4 +357,18 @@ describe('VimL dictionary notifications', function()
     eq(2, eval('1+1')) -- Still alive?
   end)
 
+  it('does not cause use-after-free when unletting from callback', function()
+    source([[
+      let g:called = 0
+      function W(...) abort
+        unlet g:d
+        let g:called = 1
+      endfunction
+      let g:d = {}
+      call dictwatcheradd(g:d, '*', function('W'))
+      let g:d.foo = 123
+    ]])
+    eq(1, eval('g:called'))
+  end)
+
 end)

@@ -144,7 +144,6 @@ describe('eval-API', function()
       {5:~                                       }|
                                               |
     ]])
-    screen:detach()
   end)
 
   it('cannot be called from sandbox', function()

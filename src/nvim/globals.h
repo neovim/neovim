@@ -331,6 +331,7 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_NONE        -6      // don't set scriptID
 #define SID_LUA         -7      // for Lua scripts/chunks
 #define SID_API_CLIENT  -8      // for API clients
+#define SID_STR         -9      // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
@@ -399,11 +400,6 @@ EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
 EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
-
-/* Value set from 'diffopt'. */
-EXTERN int diff_context INIT(= 6);              /* context for folds */
-EXTERN int diff_foldcolumn INIT(= 2);           /* 'foldcolumn' for diff mode */
-EXTERN int diff_need_scrollbind INIT(= FALSE);
 
 /* The root of the menu hierarchy. */
 EXTERN vimmenu_T        *root_menu INIT(= NULL);
@@ -768,7 +764,6 @@ EXTERN int did_outofmem_msg INIT(= false);
 // set after out of memory msg
 EXTERN int did_swapwrite_msg INIT(= false);
 // set after swap write error msg
-EXTERN int undo_off INIT(= false);          // undo switched off for now
 EXTERN int global_busy INIT(= 0);           // set when :global is executing
 EXTERN int listcmd_busy INIT(= false);      // set when :argdo, :windo or
                                             // :bufdo is executing
@@ -787,7 +782,11 @@ EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
 EXTERN int postponed_split_tab INIT(= 0);       /* cmdmod.tab */
 EXTERN int g_do_tagpreview INIT(= 0);       /* for tag preview commands:
                                                height of preview window */
-EXTERN int replace_offset INIT(= 0);        /* offset for replace_push() */
+EXTERN int g_tag_at_cursor INIT(= false);  // whether the tag command comes
+                                           // from the command line (0) or was
+                                           // invoked as a normal command (1)
+
+EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
 EXTERN char_u   *escape_chars INIT(= (char_u *)" \t\\\"|");
 /* need backslash in cmd line */

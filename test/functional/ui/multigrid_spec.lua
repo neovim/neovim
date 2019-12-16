@@ -37,10 +37,6 @@ describe('ext_multigrid', function()
     })
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('default initial screen', function()
     screen:expect{grid=[[
     ## grid 1

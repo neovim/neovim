@@ -39,6 +39,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -658,10 +659,10 @@ void ex_sort(exarg_T *eap)
   deleted = (long)(count - (lnum - eap->line2));
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
-                false);
+                false, kExtmarkUndo);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false, kExtmarkUndo);
   }
   if (change_occurred || deleted != 0) {
     changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
@@ -874,10 +875,12 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * their final destination at the new text position -- webb
    */
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true, kExtmarkNoUndo);
+  extmark_adjust(curbuf, line1, line2, last_line - line2, 0L, kExtmarkNoUndo,
+                 true);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
+    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false, kExtmarkNoUndo);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, line1, line2, dest);
@@ -886,7 +889,8 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false);
+    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false,
+                       kExtmarkNoUndo);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, dest + 1, line1 - 1, line2);
@@ -897,7 +901,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, true);
+                     -(last_line - dest - extra), 0L, true, kExtmarkNoUndo);
+
+  u_extmark_move(curbuf, line1, line2, last_line, dest, num_lines, extra);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
@@ -1281,12 +1287,14 @@ static void do_filter(
       if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
         if (read_linecount >= linecount) {
           // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0L, false);
+          mark_adjust(line1, line2, linecount, 0L, false, kExtmarkUndo);
         } else {
           // move marks from old lines to new lines, delete marks
           // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false);
+          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false,
+                      kExtmarkUndo);
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false,
+                      kExtmarkUndo);
         }
       }
 
@@ -1579,7 +1587,7 @@ int rename_buffer(char_u *new_fname)
   xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
-  if (setfname(curbuf, new_fname, NULL, TRUE) == FAIL) {
+  if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
     curbuf->b_ffname = fname;
     curbuf->b_sfname = sfname;
     return FAIL;
@@ -2767,7 +2775,7 @@ void ex_append(exarg_T *eap)
       State = CMDLINE;
       theline = eap->getline(
           eap->cstack->cs_looplevel > 0 ? -1 :
-          NUL, eap->cookie, indent);
+          NUL, eap->cookie, indent, true);
       State = save_State;
     }
     lines_left = Rows - 1;
@@ -3214,6 +3222,189 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
+static void extmark_move_regmatch_single(lpos_T startpos,
+                                         lpos_T endpos,
+                                         linenr_T lnum,
+                                         int sublen)
+{
+  colnr_T mincol;
+  colnr_T endcol;
+  colnr_T col_amount;
+
+  mincol = startpos.col + 1;
+  endcol = endpos.col + 1;
+
+  // There are cases such as :s/^/x/ where this happens
+  // a delete is simply not required.
+  if (mincol + 1 <= endcol) {
+    extmark_col_adjust_delete(curbuf,
+                              lnum, mincol + 1, endcol, kExtmarkUndo, 0);
+  }
+
+  // Insert, sublen seems to be the value we need but + 1...
+  col_amount = sublen - 1;
+  extmark_col_adjust(curbuf, lnum, mincol, 0, col_amount, kExtmarkUndo);
+}
+
+static void extmark_move_regmatch_multi(ExtmarkSubMulti s, long i)
+{
+  colnr_T mincol;
+  linenr_T u_lnum;
+  mincol = s.startpos.col + 1;
+
+  linenr_T n_u_lnum = s.lnum + s.endpos.lnum - s.startpos.lnum;
+  colnr_T n_after_newline_in_pat = s.endpos.col;
+  colnr_T n_before_newline_in_pat =  mincol - s.cm_start.col;
+  long n_after_newline_in_sub;
+  if (!s.newline_in_sub) {
+    n_after_newline_in_sub = s.cm_end.col - s.cm_start.col;
+  } else {
+    n_after_newline_in_sub = s.cm_end.col;
+  }
+
+  if (s.newline_in_pat && !s.newline_in_sub) {
+    // -- Delete Pattern --
+    // 1. Move marks in the pattern
+    mincol = s.startpos.col + 1;
+    u_lnum = n_u_lnum;
+    assert(n_u_lnum == u_lnum);
+    extmark_copy_and_place(curbuf,
+                           s.lnum, mincol,
+                           u_lnum, n_after_newline_in_pat,
+                           s.lnum, mincol,
+                           kExtmarkUndo, true, NULL);
+    // 2. Move marks on last newline
+    mincol = mincol - n_before_newline_in_pat;
+    extmark_col_adjust(curbuf,
+                       u_lnum,
+                       n_after_newline_in_pat + 1,
+                       -s.newline_in_pat,
+                       mincol - n_after_newline_in_pat,
+                       kExtmarkUndo);
+    // Take care of the lines after
+    extmark_adjust(curbuf,
+                   u_lnum,
+                   u_lnum,
+                   MAXLNUM,
+                   -s.newline_in_pat,
+                   kExtmarkUndo,
+                   false);
+    // 1. first insert the text in the substitutaion
+    extmark_col_adjust(curbuf,
+                       s.lnum,
+                       mincol + 1,
+                       s.newline_in_sub,
+                       n_after_newline_in_sub,
+                       kExtmarkUndo);
+
+  } else {
+    // The data in sub_obj is as if the substituons above had already taken
+    // place. For our extmarks they haven't as we work from the bottom of the
+    // buffer up. Readjust the data.
+    n_u_lnum = s.lnum + s.endpos.lnum - s.startpos.lnum;
+    n_u_lnum = n_u_lnum - s.lnum_added;
+
+    // adjusted = L - (i-1)N
+    // where L = lnum value, N= lnum_added and i = iteration
+    linenr_T a_l_lnum = s.cm_start.lnum - ((i -1) * s.lnum_added);
+    linenr_T a_u_lnum = a_l_lnum + s.endpos.lnum;
+    assert(s.startpos.lnum == 0);
+
+    mincol = s.startpos.col + 1;
+    u_lnum = n_u_lnum;
+
+    if (!s.newline_in_pat && s.newline_in_sub) {
+      // -- Delete Pattern --
+      // 1. Move marks in the pattern
+      extmark_col_adjust_delete(curbuf,
+                                a_l_lnum,
+                                mincol + 1,
+                                s.endpos.col + 1,
+                                kExtmarkUndo,
+                                s.eol);
+
+     extmark_adjust(curbuf,
+                    a_u_lnum + 1,
+                    MAXLNUM,
+                    (long)s.newline_in_sub,
+                    0,
+                    kExtmarkUndo,
+                    false);
+     // 3. Insert
+     extmark_col_adjust(curbuf,
+                        a_l_lnum,
+                        mincol,
+                        s.newline_in_sub,
+                        (long)-mincol + 1 + n_after_newline_in_sub,
+                        kExtmarkUndo);
+    } else if (s.newline_in_pat && s.newline_in_sub) {
+      if (s.lnum_added >= 0) {
+        linenr_T u_col = n_after_newline_in_pat == 0
+                         ? 1 : n_after_newline_in_pat;
+        extmark_copy_and_place(curbuf,
+                               a_l_lnum, mincol,
+                               a_u_lnum, u_col,
+                               a_l_lnum, mincol,
+                               kExtmarkUndo, true, NULL);
+        // 2. Move marks on last newline
+        mincol = mincol - (colnr_T)n_before_newline_in_pat;
+        extmark_col_adjust(curbuf,
+                           a_u_lnum,
+                           (colnr_T)(n_after_newline_in_pat + 1),
+                           -s.newline_in_pat,
+                           mincol - n_after_newline_in_pat,
+                           kExtmarkUndo);
+         // TODO(timeyyy): nothing to do here if lnum_added = 0
+         extmark_adjust(curbuf,
+                        a_u_lnum + 1,
+                        MAXLNUM,
+                        (long)s.lnum_added,
+                        0,
+                        kExtmarkUndo,
+                        false);
+
+         extmark_col_adjust(curbuf,
+                            a_l_lnum,
+                            mincol + 1,
+                            s.newline_in_sub,
+                            (long)-mincol + n_after_newline_in_sub,
+                            kExtmarkUndo);
+      } else {
+        mincol = s.startpos.col + 1;
+        a_l_lnum = s.startpos.lnum + 1;
+        a_u_lnum = s.endpos.lnum + 1;
+        extmark_copy_and_place(curbuf,
+                               a_l_lnum, mincol,
+                               a_u_lnum, n_after_newline_in_pat,
+                               a_l_lnum, mincol,
+                               kExtmarkUndo, true, NULL);
+        // 2. Move marks on last newline
+        mincol = mincol - (colnr_T)n_before_newline_in_pat;
+        extmark_col_adjust(curbuf,
+                           a_u_lnum,
+                           (colnr_T)(n_after_newline_in_pat + 1),
+                           -s.newline_in_pat,
+                           mincol - n_after_newline_in_pat,
+                           kExtmarkUndo);
+        extmark_adjust(curbuf,
+                       a_u_lnum,
+                       a_u_lnum,
+                       MAXLNUM,
+                       s.lnum_added,
+                       kExtmarkUndo,
+                       false);
+        // 3. Insert
+        extmark_col_adjust(curbuf,
+                           a_l_lnum,
+                           mincol + 1,
+                           s.newline_in_sub,
+                           (long)-mincol + n_after_newline_in_sub,
+                           kExtmarkUndo);
+      }
+    }
+  }
+}
+
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
 ///
@@ -3260,6 +3451,17 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
   bool preview = (State & CMDPREVIEW);
+  extmark_sub_multi_vec_t extmark_sub_multi = KV_INITIAL_VALUE;
+  extmark_sub_single_vec_t extmark_sub_single = KV_INITIAL_VALUE;
+  linenr_T no_of_lines_changed = 0;
+  linenr_T newline_in_pat = 0;
+  linenr_T newline_in_sub = 0;
+
+  // inccommand tests fail without this check
+  if (!preview) {
+    // Required for Undo to work for extmarks.
+    u_save_cursor();
+  }
 
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3418,6 +3620,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   // Check for a match on each line.
   // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
+
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
        && (!preview || preview_lines.lines_needed <= (linenr_T)p_cwh
@@ -3524,6 +3727,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         // Note: If not first match on a line, column can't be known here
         current_match.start.lnum = sub_firstlnum;
 
+        // Match might be after the last line for "\n\zs" matching at
+        // the end of the last line.
+        if (lnum > curbuf->b_ml.ml_line_count) {
+          break;
+        }
         if (sub_firstline == NULL) {
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
         }
@@ -3630,7 +3838,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               for (; i <= (long)ec; ++i)
                 msg_putchar('^');
 
-              resp = getexmodeline('?', NULL, 0);
+              resp = getexmodeline('?', NULL, 0, true);
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);
@@ -3871,6 +4079,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
 
           ADJUST_SUB_FIRSTLNUM();
 
+
           // Now the trick is to replace CTRL-M chars with a real line
           // break.  This would make it impossible to insert a CTRL-M in
           // the text.  The line break can be avoided by preceding the
@@ -3885,7 +4094,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
-                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
+                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
+                            kExtmarkNOOP);
+
                 if (subflags.do_ask) {
                   appended_lines(lnum - 1, 1L);
                 } else {
@@ -3911,6 +4122,44 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           current_match.end.col = STRLEN(new_start);
           current_match.end.lnum = lnum;
         }
+
+        // Adjust extmarks, by delete and then insert
+        if (!preview) {
+          newline_in_pat = (regmatch.endpos[0].lnum
+                            - regmatch.startpos[0].lnum);
+          newline_in_sub = current_match.end.lnum - current_match.start.lnum;
+          if (newline_in_pat || newline_in_sub) {
+            ExtmarkSubMulti sub_multi;
+            no_of_lines_changed = newline_in_sub - newline_in_pat;
+
+            sub_multi.newline_in_pat = newline_in_pat;
+            sub_multi.newline_in_sub = newline_in_sub;
+            sub_multi.lnum = lnum;
+            sub_multi.lnum_added = no_of_lines_changed;
+            sub_multi.cm_start = current_match.start;
+            sub_multi.cm_end = current_match.end;
+
+            sub_multi.startpos = regmatch.startpos[0];
+            sub_multi.endpos = regmatch.endpos[0];
+            sub_multi.eol = extmark_eol_col(curbuf, lnum);
+
+            kv_push(extmark_sub_multi, sub_multi);
+            // Collect information required for moving extmarks WITHOUT \n, \r
+          } else {
+            no_of_lines_changed = 0;
+
+            if (regmatch.startpos[0].col != -1) {
+              ExtmarkSubSingle sub_single;
+              sub_single.sublen = sublen;
+              sub_single.lnum = lnum;
+              sub_single.startpos = regmatch.startpos[0];
+              sub_single.endpos = regmatch.endpos[0];
+
+              kv_push(extmark_sub_single, sub_single);
+            }
+          }
+        }
+
 
         // 4. If subflags.do_all is set, find next match.
         // Prevent endless loop with patterns that match empty
@@ -3978,7 +4227,7 @@ skip:
                 ml_delete(lnum, false);
               }
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                          (long)MAXLNUM, -nmatch_tl, false);
+                          (long)MAXLNUM, -nmatch_tl, false, kExtmarkNOOP);
               if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
               }
@@ -4153,6 +4402,35 @@ skip:
                                kv_last(preview_lines.subresults).end.lnum);
       }
     }
+  }
+  if (newline_in_pat || newline_in_sub) {
+    long n = (long)kv_size(extmark_sub_multi);
+    ExtmarkSubMulti sub_multi;
+    if (no_of_lines_changed < 0) {
+      for (i = 0; i < n; i++) {
+        sub_multi = kv_A(extmark_sub_multi, i);
+        extmark_move_regmatch_multi(sub_multi, i);
+      }
+    } else {
+      // Move extmarks in reverse order to avoid moving marks we just moved...
+      for (i = 0; i < n; i++) {
+        sub_multi = kv_Z(extmark_sub_multi, i);
+        extmark_move_regmatch_multi(sub_multi, n - i);
+      }
+    }
+    kv_destroy(extmark_sub_multi);
+  } else {
+    long n = (long)kv_size(extmark_sub_single);
+    ExtmarkSubSingle sub_single;
+    for (i = 0; i < n; i++) {
+      sub_single = kv_Z(extmark_sub_single, i);
+      extmark_move_regmatch_single(sub_single.startpos,
+                                   sub_single.endpos,
+                                   sub_single.lnum,
+                                   sub_single.sublen);
+    }
+
+    kv_destroy(extmark_sub_single);
   }
 
   kv_destroy(preview_lines.subresults);
@@ -4739,11 +5017,19 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
     // When the string starting with "expr-" and containing '?' and matches
-    // the table, it is taken literally.  Otherwise '?' is recognized as a
-    // wildcard.
+    // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
+    // is recognized as a wildcard.
     for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
       if (STRCMP(arg + 5, expr_table[i]) == 0) {
-        STRCPY(d, arg);
+        for (int si = 0, di = 0; ; si++) {
+          if (arg[si] == '~') {
+            d[di++] = '\\';
+          }
+          d[di++] = arg[si];
+          if (arg[si] == NUL) {
+            break;
+          }
+        }
         break;
       }
     }
@@ -4897,7 +5183,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   *matches = NULL;
   *num_matches = 0;
-  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
+  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE | TAG_NO_TAGFUNC;
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
@@ -5023,7 +5309,7 @@ void fix_help_buffer(void)
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         char_u *const rt = (char_u *)vim_getenv("VIMRUNTIME");
         if (rt != NULL
-            && path_full_compare(rt, NameBuff, false) != kEqualFiles) {
+            && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
           char_u      *s;
@@ -5233,7 +5519,7 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags
       || path_full_compare((char_u *)"$VIMRUNTIME/doc",
-                           dir, false) == kEqualFiles) {
+                           dir, false, true) == kEqualFiles) {
     s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
     GA_APPEND(char_u *, &ga, s);
@@ -5527,6 +5813,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
+  cmdmod.split = 0;               // disable :leftabove/botright modifiers
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
@@ -5573,6 +5860,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
       highest_num_line = kv_last(lines.subresults).end.lnum;
       col_width = log10(highest_num_line) + 1 + 3;
     }
+  } else {
+    // Failed to split the window, don't show 'inccommand' preview.
+    preview_buf = NULL;
   }
 
   char *str = NULL;  // construct the line to show in here
@@ -5585,7 +5875,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
-    if (split && preview_buf) {
+    if (preview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
 

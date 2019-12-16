@@ -3,10 +3,6 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  exit
-fi
-
 echo 'Python info:'
 (
   set -x
@@ -47,12 +43,12 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
 fi
 
 source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+nvm install 10
+nvm use 10
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
-  curl --retry 5 --silent --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+  curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
   mkdir -p "$HOME/.local/bin" /opt/cmake-custom
   bash /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
   ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"

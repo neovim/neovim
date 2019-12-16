@@ -115,14 +115,18 @@ typedef uint16_t disptick_T;  // display tick type
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
 
+#include "nvim/lib/kbtree.h"
+#include "nvim/mark_extended.h"
+
 /*
  * The taggy struct is used to store the information about a :tag command.
  */
 typedef struct taggy {
-  char_u      *tagname;         /* tag name */
-  fmark_T fmark;                /* cursor position BEFORE ":tag" */
-  int cur_match;                /* match number */
-  int cur_fnum;                 /* buffer number used for cur_match */
+  char_u      *tagname;         // tag name
+  fmark_T fmark;                // cursor position BEFORE ":tag"
+  int cur_match;                // match number
+  int cur_fnum;                 // buffer number used for cur_match
+  char_u *user_data;            // used with tagfunc
 } taggy_T;
 
 typedef struct buffblock buffblock_T;
@@ -647,6 +651,7 @@ struct file_buffer {
   char_u *b_p_cpt;              ///< 'complete'
   char_u *b_p_cfu;              ///< 'completefunc'
   char_u *b_p_ofu;              ///< 'omnifunc'
+  char_u *b_p_tfu;              ///< 'tagfunc'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
   int b_p_et;                   ///< 'expandtab'
@@ -803,6 +808,10 @@ struct file_buffer {
 
   kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 
+  PMap(uint64_t) *b_extmark_ns;         // extmark namespaces
+  kbtree_t(extmarklines) b_extlines;  // extmarks
+  kvec_t(ExtmarkLine *) b_extmark_move_space;  // temp space for extmarks
+
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
   kvec_t(uint64_t) update_channels;
@@ -909,19 +918,19 @@ typedef struct w_line {
  * or row (FR_ROW) layout or is a leaf, which has a window.
  */
 struct frame_S {
-  char fr_layout;               /* FR_LEAF, FR_COL or FR_ROW */
+  char fr_layout;               // FR_LEAF, FR_COL or FR_ROW
   int fr_width;
-  int fr_newwidth;              /* new width used in win_equal_rec() */
+  int fr_newwidth;              // new width used in win_equal_rec()
   int fr_height;
-  int fr_newheight;             /* new height used in win_equal_rec() */
-  frame_T     *fr_parent;       /* containing frame or NULL */
-  frame_T     *fr_next;         /* frame right or below in same parent, NULL
-                                   for first */
-  frame_T     *fr_prev;         /* frame left or above in same parent, NULL
-                                   for last */
-  /* fr_child and fr_win are mutually exclusive */
-  frame_T     *fr_child;        /* first contained frame */
-  win_T       *fr_win;          /* window that fills this frame */
+  int fr_newheight;             // new height used in win_equal_rec()
+  frame_T     *fr_parent;       // containing frame or NULL
+  frame_T     *fr_next;         // frame right or below in same parent, NULL
+                                // for last
+  frame_T     *fr_prev;         // frame left or above in same parent, NULL
+                                // for first
+  // fr_child and fr_win are mutually exclusive
+  frame_T     *fr_child;        // first contained frame
+  win_T       *fr_win;          // window that fills this frame
 };
 
 #define FR_LEAF 0       /* frame is a leaf */

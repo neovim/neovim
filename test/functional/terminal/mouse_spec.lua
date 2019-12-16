@@ -31,10 +31,6 @@ describe(':terminal mouse', function()
     ]])
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe('when the terminal has focus', function()
     it('will exit focus on mouse-scroll', function()
       eq('t', eval('mode()'))

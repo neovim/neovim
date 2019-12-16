@@ -178,6 +178,16 @@ void setpcmark(void)
     curwin->w_pcmark.lnum = 1;
   }
 
+  if (jop_flags & JOP_STACK) {
+    // If we're somewhere in the middle of the jumplist discard everything
+    // after the current index.
+    if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
+      // Discard the rest of the jumplist by cutting the length down to
+      // contain nothing beyond the current index.
+      curwin->w_jumplistlen = curwin->w_jumplistidx + 1;
+    }
+  }
+
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
     curwin->w_jumplistlen = JUMPLISTSIZE;
@@ -296,17 +306,17 @@ pos_T *movechangelist(int count)
  * - NULL if there is no mark called 'c'.
  * - -1 if mark is in other file and jumped there (only if changefile is TRUE)
  */
-pos_T *getmark_buf(buf_T *buf, int c, int changefile)
+pos_T *getmark_buf(buf_T *buf, int c, bool changefile)
 {
   return getmark_buf_fnum(buf, c, changefile, NULL);
 }
 
-pos_T *getmark(int c, int changefile)
+pos_T *getmark(int c, bool changefile)
 {
   return getmark_buf_fnum(curbuf, c, changefile, NULL);
 }
 
-pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
+pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
 {
   pos_T               *posp;
   pos_T               *startp, *endp;
@@ -616,7 +626,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 /*
  * print the marks
  */
-void do_marks(exarg_T *eap)
+void ex_marks(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   int i;
@@ -905,9 +915,10 @@ void mark_adjust(linenr_T line1,
                  linenr_T line2,
                  long amount,
                  long amount_after,
-                 bool end_temp)
+                 bool end_temp,
+                 ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp);
+  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp, op);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -916,14 +927,16 @@ void mark_adjust(linenr_T line1,
 // calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
 // for an example of why this may be necessary, see do_move().
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount,
-                        long amount_after, bool end_temp)
+                        long amount_after, bool end_temp,
+                        ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp);
+  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp, op);
 }
 
 static void mark_adjust_internal(linenr_T line1, linenr_T line2,
                                  long amount, long amount_after,
-                                 bool adjust_folds, bool end_temp)
+                                 bool adjust_folds, bool end_temp,
+                                 ExtmarkOp op)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -979,6 +992,9 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
 
     sign_mark_adjust(line1, line2, amount, amount_after);
     bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after, end_temp);
+    if (op != kExtmarkNOOP) {
+      extmark_adjust(curbuf, line1, line2, amount, amount_after, op, end_temp);
+    }
   }
 
   /* previous context mark */
@@ -1090,7 +1106,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
 // cursor is inside them.
 void mark_col_adjust(
     linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount,
-    int spaces_removed)
+    int spaces_removed,  ExtmarkOp op)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1108,6 +1124,13 @@ void mark_col_adjust(
   for (i = NMARKS; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum == fnum)
       col_adjust(&(namedfm[i].fmark.mark));
+  }
+
+  // Extmarks
+  if (op != kExtmarkNOOP) {
+    // TODO(timeyyy): consider spaces_removed? (behave like a delete)
+    extmark_col_adjust(curbuf, lnum, mincol, lnum_amount, col_amount,
+                       kExtmarkUndo);
   }
 
   /* last Insert position */
@@ -1191,7 +1214,20 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         break;
       }
     }
-    if (i >= wp->w_jumplistlen) {  // no duplicate
+    bool mustfree;
+    if (i >= wp->w_jumplistlen) {  // not duplicate
+      mustfree = false;
+    } else if (i > from + 1) {  // non-adjacent duplicate
+      // When the jump options include "stack", duplicates are only removed from
+      // the jumplist when they are adjacent.
+      mustfree = !(jop_flags & JOP_STACK);
+    } else {  // adjacent duplicate
+      mustfree = true;
+    }
+
+    if (mustfree) {
+      xfree(wp->w_jumplist[from].fname);
+    } else {
       if (to != from) {
         // Not using wp->w_jumplist[to++] = wp->w_jumplist[from] because
         // this way valgrind complains about overlapping source and destination
@@ -1199,8 +1235,6 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         wp->w_jumplist[to] = wp->w_jumplist[from];
       }
       to++;
-    } else {
-      xfree(wp->w_jumplist[from].fname);
     }
   }
   if (wp->w_jumplistidx == wp->w_jumplistlen) {

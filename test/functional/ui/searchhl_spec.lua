@@ -442,7 +442,7 @@ describe('search highlighting', function()
     feed_command("call matchadd('MyGroup', 'special')")
     feed_command("call matchadd('MyGroup2', 'text', 0)")
 
-    -- searchhl and matchadd matches are exclusive, only the higest priority
+    -- searchhl and matchadd matches are exclusive, only the highest priority
     -- is used (and matches with lower priorities are not combined)
     feed_command("/ial te")
     screen:expect([[

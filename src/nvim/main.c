@@ -27,6 +27,7 @@
 #include "nvim/highlight.h"
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
+#include "nvim/lua/executor.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
@@ -143,7 +144,6 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
-  log_init();
   loop_init(&main_loop, NULL);
   resize_events = multiqueue_new_child(main_loop.events);
 
@@ -219,6 +219,7 @@ void early_init(void)
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
   set_init_1();
+  log_init();
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
@@ -957,6 +958,7 @@ static void command_line_scan(mparm_T *parmp)
         case 'r':    // "-r" recovery mode
         case 'L': {  // "-L" recovery mode
           recoverymode = 1;
+          headless_mode = true;
           break;
         }
         case 's': {
@@ -1460,12 +1462,13 @@ static void create_windows(mparm_T *parmp)
   } else
     parmp->window_count = 1;
 
-  if (recoverymode) {                   /* do recover */
-    msg_scroll = TRUE;                  /* scroll message up */
-    ml_recover();
-    if (curbuf->b_ml.ml_mfp == NULL)     /* failed */
+  if (recoverymode) {                   // do recover
+    msg_scroll = true;                  // scroll message up
+    ml_recover(true);
+    if (curbuf->b_ml.ml_mfp == NULL) {   // failed
       getout(1);
-    do_modelines(0);                    /* do modelines */
+    }
+    do_modelines(0);                    // do modelines
   } else {
     // Open a buffer for windows that don't have one yet.
     // Commands in the vimrc might have loaded a file or split the window.
@@ -1513,7 +1516,7 @@ static void create_windows(mparm_T *parmp)
           /* We can't close the window, it would disturb what
            * happens next.  Clear the file name and set the arg
            * index to -1 to delete it later. */
-          setfname(curbuf, NULL, NULL, FALSE);
+          setfname(curbuf, NULL, NULL, false);
           curwin->w_arg_idx = -1;
           swap_exists_action = SEA_NONE;
         } else
@@ -1778,7 +1781,8 @@ static bool do_user_initialization(void)
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
-      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc,
+                                   false, true)
                  != kEqualFiles);
     }
     xfree(user_vimrc);
@@ -1805,7 +1809,7 @@ static bool do_user_initialization(void)
         do_exrc = p_exrc;
         if (do_exrc) {
           do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
-                                      false) != kEqualFiles);
+                                       false, true) != kEqualFiles);
         }
         xfree(vimrc);
         xfree(config_dirs);

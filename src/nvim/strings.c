@@ -953,11 +953,17 @@ int vim_vsnprintf_typval(
                                       - mb_string2cells((char_u *)str_arg));
                 }
                 if (precision) {
-                  const char *p1 = str_arg;
-                  for (size_t i = 0; i < precision && *p1; i++) {
-                    p1 += mb_ptr2len((const char_u *)p1);
+                  char_u  *p1;
+                  size_t  i = 0;
+
+                  for (p1 = (char_u *)str_arg; *p1;
+                       p1 += mb_ptr2len(p1)) {
+                    i += (size_t)utf_ptr2cells(p1);
+                    if (i > precision) {
+                      break;
+                    }
                   }
-                  str_arg_l = precision = (size_t)(p1 - str_arg);
+                  str_arg_l = precision = (size_t)(p1 - (char_u *)str_arg);
                 }
               }
               break;

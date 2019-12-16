@@ -24,10 +24,6 @@ describe("folded lines", function()
     })
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("work with more than one signcolumn", function()
     command("set signcolumn=yes:9")
     feed("i<cr><esc>")

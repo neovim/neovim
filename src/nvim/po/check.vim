@@ -47,6 +47,17 @@ let wsv = winsaveview()
 let error = 0
 
 while 1
+  let lnum = line('.')
+  if getline(lnum) =~ 'msgid "Text;.*;"'
+    if getline(lnum + 1) !~ '^msgstr "\([^;]\+;\)\+"'
+      echomsg 'Mismatching ; in line ' . (lnum + 1)
+      echomsg 'Did you forget the trailing semicolon?'
+      if error == 0
+	let error = lnum + 1
+      endif
+    endif
+  endif
+
   if getline(line('.') - 1) !~ "no-c-format"
     " go over the "msgid" and "msgid_plural" lines
     let prevfromline = 'foobar'
