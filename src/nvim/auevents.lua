@@ -21,9 +21,9 @@ return {
     'BufWritePre',            -- before writing a buffer
     'ChanInfo',               -- info was received about channel
     'ChanOpen',               -- channel was opened
-    'CmdLineChanged',         -- command line was modified
-    'CmdLineEnter',           -- after entering cmdline mode
-    'CmdLineLeave',           -- before leaving cmdline mode
+    'CmdlineChanged',         -- command line was modified
+    'CmdlineEnter',           -- after entering cmdline mode
+    'CmdlineLeave',           -- before leaving cmdline mode
     'CmdUndefined',           -- command undefined
     'CmdWinEnter',            -- after entering the cmdline window
     'CmdWinLeave',            -- before leaving the cmdline window

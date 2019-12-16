@@ -160,8 +160,8 @@ set(UNIBILIUM_SHA256 29815283c654277ef77a3adcc8840db79ddbb20a0f0b0c8f648bd8cd49a
 set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.21.1.tar.gz)
 set(LIBTERMKEY_SHA256 cecbf737f35d18f433c8d7864f63c0f878af41f8bd0255a3ebb16010dc044d5f)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/4a5fa43e0dbc0db4fe67d40d788d60852864df9e.tar.gz)
-set(LIBVTERM_SHA256 49b3cf2dcb988b887671b1011cfeac98ff81bb5c23fb4ac34b91a59524992935)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/7c72294d84ce20da4c27362dbd7fa4b08cfc91da.tar.gz)
+set(LIBVTERM_SHA256 f30c4d43e0c6db3e0912daf7188d98fbf6ee88f97589d72f6f304e5db48826a8)
 
 set(LUV_VERSION 1.30.0-0)
 set(LUV_URL https://github.com/luvit/luv/archive/${LUV_VERSION}.tar.gz)
@@ -177,8 +177,8 @@ set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.14/neovim-qt.zip)
-set(WINGUI_SHA256 dfcb1f7d25d4907dc1d4f20edd71ff9eb4762196225106bec01274dd668fb04c)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.15/neovim-qt.zip)
+set(WINGUI_SHA256 b519ecb80b60522d25043f2d076a55656f5fbe5adf7f7e2943e5d8b161043987)
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)

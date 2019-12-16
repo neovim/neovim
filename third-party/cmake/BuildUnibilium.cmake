@@ -40,6 +40,7 @@ else()
     BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                               PREFIX=${DEPS_INSTALL_DIR}
                               CFLAGS=-fPIC
+                              LDFLAGS+=-static
     INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
 endif()
 

@@ -306,6 +306,49 @@ describe('TUI', function()
     expect_child_buf_lines({''})
   end)
 
+  it('paste: select-mode', function()
+    feed_data('ithis is line 1\nthis is line 2\nline 3 is here\n\027')
+    wait_for_mode('n')
+    screen:expect{grid=[[
+      this is line 1                                    |
+      this is line 2                                    |
+      line 3 is here                                    |
+      {1: }                                                 |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Select-mode. Use <C-n> to move down.
+    feed_data('gg04lgh\14\14')
+    wait_for_mode('s')
+    feed_data('\027[200~')
+    feed_data('just paste it™')
+    feed_data('\027[201~')
+    screen:expect{grid=[[
+      thisjust paste it™{1:3} is here                       |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines{
+      'this is line 1',
+      'this is line 2',
+      'line 3 is here',
+      '',
+      }
+    -- Redo.
+    feed_data('\18')  -- <C-r>
+    expect_child_buf_lines{
+      'thisjust paste it™3 is here',
+      '',
+      }
+  end)
+
   it('paste: terminal mode', function()
     feed_data(':set statusline=^^^^^^^\n')
     feed_data(':terminal '..nvim_dir..'/tty-test\n')
@@ -539,7 +582,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
+      {8:paste: Error executing lua: vim.lua:200: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
@@ -576,6 +619,23 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('paste: less-than sign in cmdline  #11088', function()
+    local expected = '<'
+    feed_data(':')
+    wait_for_mode('c')
+    -- "bracketed paste"
+    feed_data('\027[200~'..expected..'\027[201~')
+    screen:expect{grid=[[
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :<{1: }                                               |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('paste: big burst of input', function()

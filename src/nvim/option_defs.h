@@ -518,10 +518,18 @@ EXTERN long p_pyx;              // 'pyxversion'
 EXTERN char_u *p_rdb;           // 'redrawdebug'
 EXTERN unsigned rdb_flags;
 # ifdef IN_OPTION_C
-static char *(p_rdb_values[]) = { "compositor", "nothrottle", NULL };
+static char *(p_rdb_values[]) = {
+  "compositor",
+  "nothrottle",
+  "invalid",
+  "nodelta",
+  NULL
+};
 # endif
 # define RDB_COMPOSITOR         0x001
 # define RDB_NOTHROTTLE         0x002
+# define RDB_INVALID            0x004
+# define RDB_NODELTA            0x008
 
 EXTERN long p_rdt;              // 'redrawtime'
 EXTERN int p_remap;             // 'remap'
