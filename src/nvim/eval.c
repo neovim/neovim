@@ -13972,6 +13972,13 @@ static void f_printf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "pum_getpos()" function
+static void f_pum_getpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_dict_alloc_ret(rettv);
+  pum_set_event_info(rettv->vval.v_dict);
+}
+
 /*
  * "pumvisible()" function
  */
