@@ -12651,7 +12651,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
   const char *libname = (char *) argvars[0].vval.v_string;
   const char *funcname = (char *) argvars[1].vval.v_string;
 
-  int in_type = argvars[2].v_type;
+  VarType in_type = argvars[2].v_type;
 
   // input variables
   char *str_in = (in_type == VAR_STRING)
@@ -12660,8 +12660,8 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
 
   // output variables
   char **str_out = (out_type == VAR_STRING)
-      ? (char **) &rettv->vval.v_string : NULL;
-  int64_t int_out = 0;
+      ? (char **)&rettv->vval.v_string : NULL;
+  int int_out = 0;
 
   bool success = os_libcall(libname, funcname,
                             str_in, int_in,
@@ -12673,7 +12673,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
   }
 
   if (out_type == VAR_NUMBER) {
-     rettv->vval.v_number = (int) int_out;
+     rettv->vval.v_number = (varnumber_T)int_out;
   }
 }
 
