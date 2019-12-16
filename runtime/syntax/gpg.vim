@@ -55,6 +55,9 @@ syn keyword gpgOption   contained skipwhite nextgroup=gpgArg
                         \ recipient s2k-cipher-algo s2k-digest-algo s2k-mode
                         \ secret-keyring set-filename set-policy-url status-fd
                         \ trusted-key verify-options keyid-format list-options
+                        \ hidden-encrypt-to display-charset 
+                        \ with-subkey-fingerprints default-sig-expire
+                        \ default-cert-level default-new-key-algo
 syn keyword gpgOption   contained skipwhite nextgroup=gpgArgError
                         \ allow-freeform-uid allow-non-selfsigned-uid
                         \ allow-secret-key-import always-trust
@@ -86,6 +89,7 @@ syn keyword gpgOption   contained skipwhite nextgroup=gpgArgError
                         \ show-policy-url show-session-key simple-sk-checksum
                         \ sk-comments skip-verify textmode throw-keyid
                         \ try-all-secrets use-agent use-embedded-filename
+                        \ with-subkey-fingerprints with-keygrip
                         \ utf8-strings verbose with-colons with-fingerprint
                         \ with-key-data yes
 
