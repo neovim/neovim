@@ -23652,7 +23652,7 @@ void ex_return(exarg_T *eap)
 int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 {
   int idx;
-  struct condstack *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (reanimate)
     /* Undo the return. */
