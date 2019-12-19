@@ -947,20 +947,21 @@ was last defined.  Example: >
 
 See |:verbose-cmd| for more information.
 
-:ab[breviate] {lhs}	list the abbreviations that start with {lhs}
+:ab[breviate] {lhs}	List the abbreviations that start with {lhs}
 			You may need to insert a CTRL-V (type it twice) to
 			avoid that a typed {lhs} is expanded, since
 			command-line abbreviations apply here.
 
 :ab[breviate] [<expr>] [<buffer>] {lhs} {rhs}
-			add abbreviation for {lhs} to {rhs}.  If {lhs} already
+			Add abbreviation for {lhs} to {rhs}.  If {lhs} already
 			existed it is replaced with the new {rhs}.  {rhs} may
 			contain spaces.
 			See |:map-<expr>| for the optional <expr> argument.
 			See |:map-<buffer>| for the optional <buffer> argument.
 
 						*:una* *:unabbreviate*
-:una[bbreviate] {lhs}	Remove abbreviation for {lhs} from the list.  If none
+:una[bbreviate] [<buffer>] {lhs}
+			Remove abbreviation for {lhs} from the list.  If none
 			is found, remove abbreviations in which {lhs} matches
 			with the {rhs}.  This is done so that you can even
 			remove abbreviations after expansion.  To avoid
@@ -968,30 +969,32 @@ See |:verbose-cmd| for more information.
 
 						*:norea* *:noreabbrev*
 :norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but no remapping for this {rhs}
+			Same as ":ab", but no remapping for this {rhs}
 
 						*:ca* *:cab* *:cabbrev*
 :ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Command-line mode only.
+			Same as ":ab", but for Command-line mode only.
 
 						*:cuna* *:cunabbrev*
-:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.
+:cuna[bbrev] [<buffer>] {lhs}
+			Same as ":una", but for Command-line mode only.
 
 						*:cnorea* *:cnoreabbrev*
 :cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Command-line mode only and no
+			Same as ":ab", but for Command-line mode only and no
 			remapping for this {rhs}
 
 						*:ia* *:iabbrev*
 :ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Insert mode only.
+			Same as ":ab", but for Insert mode only.
 
 						*:iuna* *:iunabbrev*
-:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.
+:iuna[bbrev] [<buffer>] {lhs}
+			Same as ":una", but for insert mode only.
 
 						*:inorea* *:inoreabbrev*
 :inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
-			same as ":ab", but for Insert mode only and no
+			Same as ":ab", but for Insert mode only and no
 			remapping for this {rhs}
 
 							*:abc* *:abclear*
