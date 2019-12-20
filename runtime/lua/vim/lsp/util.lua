@@ -820,6 +820,7 @@ function M.locations_to_items(locations)
           else
             col = vim.str_byteindex(line, pos.character)
           end
+          print(vim.inspect(location))
           table.insert(items, {
             filename = fname,
             lnum = row + 1,

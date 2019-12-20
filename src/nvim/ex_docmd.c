@@ -9403,6 +9403,7 @@ bool cmd_can_preview(char_u *cmd)
     case CMD_substitute:
     case CMD_smagic:
     case CMD_snomagic:
+    case CMD_global:
       // Only preview once the pattern delimiter has been typed
       if (*end && !ASCII_ISALNUM(*end)) {
         return true;

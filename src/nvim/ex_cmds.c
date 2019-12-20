@@ -4269,23 +4269,23 @@ static void global_exe_one(char_u *const cmd, const linenr_T lnum)
   }
 }
 
-/*
- * Execute a global command of the form:
- *
- * g/pattern/X : execute X on all lines where pattern matches
- * v/pattern/X : execute X on all lines where pattern does not match
- *
- * where 'X' is an EX command
- *
- * The command character (as well as the trailing slash) is optional, and
- * is assumed to be 'p' if missing.
- *
- * This is implemented in two passes: first we scan the file for the pattern and
- * set a mark for each line that (not) matches. Secondly we execute the command
- * for each line that has a mark. This is required because after deleting
- * lines we do not know where to search for the next match.
- */
-void ex_global(exarg_T *eap)
+/// Execute a global command of the form:
+///
+/// g/pattern/X : execute X on all lines where pattern matches
+/// v/pattern/X : execute X on all lines where pattern does not match
+///
+/// where 'X' is an EX command
+///
+/// The command character (as well as the trailing slash) is optional, and
+/// is assumed to be 'p' if missing.
+///
+/// This is implemented in two passes: first we scan the file for the pattern and
+/// set a mark for each line that (not) matches. Secondly we execute the command
+/// for each line that has a mark. This is required because after deleting
+/// lines we do not know where to search for the next match.
+///
+/// @return buffer used for 'inccommand' preview
+buf_T* do_global(exarg_T *eap, proftime_T timeout)
 {
   linenr_T lnum;                /* line number according to old situation */
   int ndone = 0;
@@ -4297,6 +4297,14 @@ void ex_global(exarg_T *eap)
   regmmatch_T regmatch;
   int match;
   int which_pat;
+  bool preview = (State & CMDPREVIEW);
+  PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
+  int got_quit = false;
+  static int pre_src_id = 0;  // Source id for the preview highlight
+  static int pre_hl_id = 0;
+  int save_b_changed = curbuf->b_changed;
+  pos_T old_cursor = curwin->w_cursor;
+  buf_T *orig_buf = curbuf;  // save to reset highlighting
 
   // When nesting the command works on one line.  This allows for
   // ":g/found/v/notfound/command".
@@ -4304,7 +4312,7 @@ void ex_global(exarg_T *eap)
                       || eap->line2 != curbuf->b_ml.ml_line_count)) {
     // will increment global_busy to break out of the loop
     EMSG(_("E147: Cannot do :global recursive with a range"));
-    return;
+    return NULL;
   }
 
   if (eap->forceit)                 /* ":global!" is like ":vglobal" */
@@ -4323,7 +4331,7 @@ void ex_global(exarg_T *eap)
     ++cmd;
     if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
       EMSG(_(e_backslash));
-      return;
+      return NULL;
     }
     if (*cmd == '&')
       which_pat = RE_SUBST;             /* use previous substitute pattern */
@@ -4333,7 +4341,7 @@ void ex_global(exarg_T *eap)
     pat = (char_u *)"";
   } else if (*cmd == NUL) {
     EMSG(_("E148: Regular expression missing from global"));
-    return;
+    return NULL;
   } else {
     delim = *cmd;               /* get the delimiter */
     if (delim)
@@ -4346,7 +4354,7 @@ void ex_global(exarg_T *eap)
 
   if (search_regcomp(pat, RE_BOTH, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
     EMSG(_(e_invcmd));
-    return;
+    return NULL;
   }
 
   if (global_busy) {
@@ -4372,6 +4380,7 @@ void ex_global(exarg_T *eap)
     // pass 2: execute the command for each line that has been marked
     if (got_int) {
       MSG(_(e_interr));
+      // return NULL;
     } else if (ndone == 0) {
       if (type == 'v') {
         smsg(_("Pattern found in every line: %s"), pat);
@@ -4383,7 +4392,83 @@ void ex_global(exarg_T *eap)
     }
     ml_clearmarked();         // clear rest of the marks
   }
+
+  // Show 'inccommand' preview if there are matched lines.
+  buf_T *preview_buf = NULL;
+  size_t subsize = preview_lines.subresults.size;
+  if (preview && !aborting()) {
+    if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
+      set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
+                               SID_NONE);
+    } else if (*p_icm != NUL &&  pat != NULL) {
+      if (pre_src_id == 0) {
+        // Get a unique new src_id, saved in a static
+        pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
+      }
+      if (pre_hl_id == 0) {
+        pre_hl_id = syn_check_group((char_u *)S_LEN("Substitute"));
+      }
+      curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
+      preview_buf = show_sub(eap, old_cursor, &preview_lines,
+                             pre_hl_id, pre_src_id);
+      if (subsize > 0) {
+        bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
+                               kv_last(preview_lines.subresults).end.lnum);
+      }
+    }
+  }
+
   vim_regfree(regmatch.regprog);
+  return preview_buf;
+}
+
+
+/// Shows the effects of the :substitute command being typed ('inccommand').
+/// If inccommand=split, shows a preview window and later restores the layout.
+void show_global(exarg_T *eap)
+{
+}
+
+void ex_global(exarg_T *eap)
+{
+  bool preview = (State & CMDPREVIEW);
+  if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
+
+    (void)do_global(eap, profile_zero());
+    return;
+  }
+
+  char_u *save_eap = eap->arg;
+  save_search_patterns();
+  int save_changedtick = buf_get_changedtick(curbuf);
+  time_t save_b_u_time_cur = curbuf->b_u_time_cur;
+  u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
+  long save_b_p_ul = curbuf->b_p_ul;
+  curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
+  block_autocmds();   // disable events before show_sub() opens window/buffer
+  emsg_off++;         // No error messages for live commands
+  // PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
+  // pos_T old_cursor = curwin->w_cursor;
+
+  buf_T *preview_buf = do_global(eap, profile_setlimit(p_rdt));
+
+  if (save_changedtick != buf_get_changedtick(curbuf)) {
+    if (!u_undo_and_forget(1)) { abort(); }
+    // Restore newhead. It is meaningless when curhead is valid, but we must
+    // restore it so that undotree() is identical before/after the preview.
+    curbuf->b_u_newhead = save_b_u_newhead;
+    curbuf->b_u_time_cur = save_b_u_time_cur;
+    buf_set_changedtick(curbuf, save_changedtick);
+  }
+  if (buf_valid(preview_buf)) {
+    // XXX: Must do this *after* u_undo_and_forget(), why?
+    close_windows(preview_buf, false);
+  }
+  curbuf->b_p_ul = save_b_p_ul;
+  eap->arg = save_eap;
+  restore_search_patterns();
+  emsg_off--;
+  unblock_autocmds();
 }
 
 /// Execute `cmd` on lines marked with ml_setmarked().

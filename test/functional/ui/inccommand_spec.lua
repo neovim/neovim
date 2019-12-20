@@ -2765,3 +2765,40 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
     AAAAAAA^     |
   ]])
 end)
+
+describe(":global, inccommand=split interactivity", function()
+  before_each(function()
+    clear()
+    common_setup(nil, "split", default_text)
+  end)
+
+  -- Test the tests: verify that the `1==bufnr('$')` assertion
+  -- in the "no preview" tests (below) actually means something.
+  it("previews interactive cmdline", function()
+    feed(':%g/tw/MO/g')
+    retry(nil, 1000, function()
+      eq(2, eval("bufnr('$')"))
+    end)
+  end)
+
+  it("no preview if invoked by a script", function()
+    source('%s/tw/MO/g')
+    wait()
+    eq(1, eval("bufnr('$')"))
+    -- sanity check: assert the buffer state
+    expect(default_text:gsub("tw", "MO"))
+  end)
+
+  it("no preview if invoked by feedkeys()", function()
+    -- in a script...
+    source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
+    wait()
+    -- or interactively...
+    feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
+    wait()
+    eq(1, eval("bufnr('$')"))
+    -- sanity check: assert the buffer state
+    expect(default_text:gsub("tw", "MO"))
+  end)
+end)
+
