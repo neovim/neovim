@@ -858,11 +858,6 @@ function lsp.omnifunc(findstart, base)
     end
   end
 
-  if findstart == 1 then
-    -- First, just return the current cursor column, we only really need that
-    return vim.fn.col('.')
-  end
-
   -- Then, perform standard completion request
   local _ = log.info() and log.info("base ", base)
 
@@ -881,6 +876,8 @@ function lsp.omnifunc(findstart, base)
     vim.fn.complete(textMatch+1, matches)
   end)
 
+  -- Return -2 to signal that we should continue completion so that we can
+  -- async complete.
   return -2
 end
 
