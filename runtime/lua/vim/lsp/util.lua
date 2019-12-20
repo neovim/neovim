@@ -19,21 +19,6 @@ local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
---- Find the longest shared prefix between prefix and word.
--- e.g. remove_prefix("123tes", "testing") == "ting"
-local function remove_prefix(prefix, word)
-  local max_prefix_length = math.min(#prefix, #word)
-  local prefix_length = 0
-  for i = 1, max_prefix_length do
-    local current_line_suffix = prefix:sub(-i)
-    local word_prefix = word:sub(1, i)
-    if current_line_suffix == word_prefix then
-      prefix_length = i
-    end
-  end
-  return word:sub(prefix_length + 1)
-end
-
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -163,14 +148,10 @@ end
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-function M.text_document_completion_list_to_complete_items(result, line_prefix)
+function M.text_document_completion_list_to_complete_items(result)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
-  end
-  -- Only initialize if we have some items.
-  if not line_prefix then
-    line_prefix = M.get_current_line_to_cursor()
   end
 
   local matches = {}
@@ -189,10 +170,8 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
     end
 
     local word = completion_item.insertText or completion_item.label
-
-    -- Ref: `:h complete-items`
     table.insert(matches, {
-      word = remove_prefix(line_prefix, word),
+      word = word,
       abbr = completion_item.label,
       kind = protocol.CompletionItemKind[completion_item.kind] or '',
       menu = completion_item.detail or '',
