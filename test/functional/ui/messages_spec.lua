@@ -861,7 +861,7 @@ describe('ui/builtin messages', function()
 
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
-       meths.command_output("hi ErrorMsg"))
+       meths.exec("hi ErrorMsg", true))
   end)
 
   it(':syntax list langGroup output', function()
@@ -900,7 +900,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                    match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
                    match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
                    links to Comment]],
-       meths.command_output('syntax list vimComment'))
+       meths.exec('syntax list vimComment', true))
     -- luacheck: pop
   end)
 

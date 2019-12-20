@@ -144,7 +144,6 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
-  log_init();
   loop_init(&main_loop, NULL);
   resize_events = multiqueue_new_child(main_loop.events);
 
@@ -220,6 +219,7 @@ void early_init(void)
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
   set_init_1();
+  log_init();
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype

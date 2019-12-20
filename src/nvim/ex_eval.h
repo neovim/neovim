@@ -4,42 +4,6 @@
 #include "nvim/pos.h"           // for linenr_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 
-/*
- * A list used for saving values of "emsg_silent".  Used by ex_try() to save the
- * value of "emsg_silent" if it was non-zero.  When this is done, the CSF_SILENT
- * flag below is set.
- */
-
-typedef struct eslist_elem eslist_T;
-struct eslist_elem {
-  int saved_emsg_silent;                /* saved value of "emsg_silent" */
-  eslist_T    *next;                    /* next element on the list */
-};
-
-/*
- * For conditional commands a stack is kept of nested conditionals.
- * When cs_idx < 0, there is no conditional command.
- */
-#define CSTACK_LEN      50
-
-struct condstack {
-  int cs_flags[CSTACK_LEN];             // CSF_ flags
-  char cs_pending[CSTACK_LEN];          // CSTP_: what's pending in ":finally"
-  union {
-    void    *csp_rv[CSTACK_LEN];        // return typeval for pending return
-    void    *csp_ex[CSTACK_LEN];        // exception for pending throw
-  }           cs_pend;
-  void        *cs_forinfo[CSTACK_LEN];  // info used by ":for"
-  int cs_line[CSTACK_LEN];              // line nr of ":while"/":for" line
-  int cs_idx;                           // current entry, or -1 if none
-  int cs_looplevel;                     // nr of nested ":while"s and ":for"s
-  int cs_trylevel;                      // nr of nested ":try"s
-  eslist_T    *cs_emsg_silent_list;     // saved values of "emsg_silent"
-  int cs_lflags;                        // loop flags: CSL_ flags
-};
-# define cs_rettv       cs_pend.csp_rv
-# define cs_exception   cs_pend.csp_ex
-
 /* There is no CSF_IF, the lack of CSF_WHILE, CSF_FOR and CSF_TRY means ":if"
  * was used. */
 # define CSF_TRUE       0x0001  /* condition was TRUE */
@@ -68,14 +32,6 @@ struct condstack {
 # define CSTP_CONTINUE  16      /* ":continue" is pending */
 # define CSTP_RETURN    24      /* ":return" is pending */
 # define CSTP_FINISH    32      /* ":finish" is pending */
-
-/*
- * Flags for the cs_lflags item in struct condstack.
- */
-# define CSL_HAD_LOOP    1      /* just found ":while" or ":for" */
-# define CSL_HAD_ENDLOOP 2      /* just found ":endwhile" or ":endfor" */
-# define CSL_HAD_CONT    4      /* just found ":continue" */
-# define CSL_HAD_FINA    8      /* just found ":finally" */
 
 /*
  * A list of error messages that can be converted to an exception.  "throw_msg"

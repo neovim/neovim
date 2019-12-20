@@ -14,6 +14,8 @@ updated.
 
 API ~
 *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+*nvim_command_output()*		Use |nvim_exec()| instead.
+*nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
 
 Commands ~
 *:rv*

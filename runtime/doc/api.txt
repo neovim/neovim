@@ -479,6 +479,29 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
+nvim_exec({src}, {output})                                       *nvim_exec()*
+                Executes Vimscript (multiline block of Ex-commands), like
+                anonymous |:source|.
+
+                Unlike |nvim_command()| this function supports heredocs,
+                script-scope (s:), etc.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {src}     Vimscript code
+                    {output}  Capture and return all (non-error, non-shell
+                              |:!|) output
+
+                Return: ~
+                    Output (non-error, non-shell |:!|) if `output` is true,
+                    else empty string.
+
+                See also: ~
+                    |execute()|
+                    |nvim_command()|
+
 nvim_command({command})                                       *nvim_command()*
                 Executes an ex-command.
 
@@ -487,6 +510,9 @@ nvim_command({command})                                       *nvim_command()*
 
                 Parameters: ~
                     {command}  Ex-command string
+
+                See also: ~
+                    |nvim_exec()|
 
 nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
                 Gets a highlight definition by name.
@@ -609,19 +635,9 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                     replace_termcodes
                     cpoptions
 
-nvim_command_output({command})                         *nvim_command_output()*
-                Executes an ex-command and returns its (non-error) output.
-                Shell |:!| output is not captured.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {command}  Ex-command string
-
 nvim_eval({expr})                                                *nvim_eval()*
-                Evaluates a VimL expression (:help expression). Dictionaries
-                and Lists are recursively expanded.
+                Evaluates a VimL |expression|. Dictionaries and Lists are
+                recursively expanded.
 
                 On execution error: fails with VimL error, does not update
                 v:errmsg.
@@ -632,7 +648,7 @@ nvim_eval({expr})                                                *nvim_eval()*
                 Return: ~
                     Evaluation result or expanded object
 
-nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
+nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Execute Lua code. Parameters (if any) are available as `...`
                 inside the chunk. The chunk can return a value.
 

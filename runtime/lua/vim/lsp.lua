@@ -859,29 +859,21 @@ function lsp.omnifunc(findstart, base)
   end
 
   if findstart == 1 then
+    -- First, just return the current cursor column, we only really need that
     return vim.fn.col('.')
   else
+    -- Then, perform standard completion request
+    log.info("base ", base)
+
     local pos = vim.api.nvim_win_get_cursor(0)
-    local line = assert(nvim_buf_get_lines(bufnr, pos[1]-1, pos[1], false)[1])
+    local line = vim.api.nvim_get_current_line()
+    local line_to_cursor = line:sub(1, pos[2])
     local _ = log.trace() and log.trace("omnifunc.line", pos, line)
-    local line_to_cursor = line:sub(1, pos[2]+1)
-    local _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
-    local params = {
-      textDocument = {
-        uri = vim.uri_from_bufnr(bufnr);
-      };
-      position = {
-        -- 0-indexed for both line and character
-        line = pos[1] - 1,
-        character = vim.str_utfindex(line, pos[2]),
-      };
-      -- The completion context. This is only available if the client specifies
-      -- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
-      -- context = nil or {
-      --  triggerKind = protocol.CompletionTriggerKind.Invoked;
-      --  triggerCharacter = nil or "";
-      -- };
-    }
+
+    -- Get the start postion of the current keyword
+    local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+    local params = util.make_position_params()
+
     -- TODO handle timeout error differently? Like via an error?
     local client_responses = lsp.buf_request_sync(bufnr, 'textDocument/completion', params) or {}
     local matches = {}
@@ -889,12 +881,15 @@ function lsp.omnifunc(findstart, base)
       -- TODO how to handle errors?
       if not response.error then
         local data = response.result
-        local completion_items = util.text_document_completion_list_to_complete_items(data or {}, line_to_cursor)
+        local completion_items = util.text_document_completion_list_to_complete_items(data or {})
         local _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
         vim.list_extend(matches, completion_items)
       end
     end
-    return matches
+
+    -- Instead of returning matches call complete instead
+    vim.fn.complete(textMatch+1, matches)
+    return {}
   end
 end
 

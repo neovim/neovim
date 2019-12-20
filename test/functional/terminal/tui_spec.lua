@@ -486,7 +486,7 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       _G.save_paste_fn = vim.paste
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
@@ -544,7 +544,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -563,7 +563,7 @@ describe('TUI', function()
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = function(lines, phase) return false end
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')

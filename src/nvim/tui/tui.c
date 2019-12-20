@@ -100,7 +100,7 @@ typedef struct {
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
-  bool busy, is_invisible;
+  bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool cursor_color_changed;
   bool is_starting;
@@ -198,6 +198,7 @@ static void terminfo_start(UI *ui)
   data->default_attr = false;
   data->can_clear_attr = false;
   data->is_invisible = true;
+  data->want_invisible = false;
   data->busy = false;
   data->cork = false;
   data->overflow = false;
@@ -1032,7 +1033,11 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 
   if (c.id != 0 && c.id < (int)kv_size(data->attrs) && ui->rgb) {
     HlAttrs aep = kv_A(data->attrs, c.id);
-    if (aep.rgb_ae_attr & HL_INVERSE) {
+
+    data->want_invisible = aep.hl_blend == 100;
+    if (data->want_invisible) {
+      unibi_out(ui, unibi_cursor_invisible);
+    } else if (aep.rgb_ae_attr & HL_INVERSE) {
       // We interpret "inverse" as "default" (no termcode for "inverse"...).
       // Hopefully the user's default cursor color is inverse.
       unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
@@ -1980,10 +1985,12 @@ static void flush_buf(UI *ui)
     assert(data->is_invisible);
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
-    bufp->base = data->norm;
-    bufp->len = UV_BUF_LEN(data->normlen);
-    bufp++;
-    data->is_invisible = data->busy;
+    if (!data->want_invisible) {
+      bufp->base = data->norm;
+      bufp->len = UV_BUF_LEN(data->normlen);
+      bufp++;
+    }
+    data->is_invisible = false;
   }
 
   uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),

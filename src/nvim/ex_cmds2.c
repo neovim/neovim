@@ -3428,7 +3428,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
                    last_set.channel_id);
       return IObuff;
     case SID_STR:
-      return (char_u *)_(":source (no file)");
+      return (char_u *)_("anonymous :source");
     default:
       *should_free = true;
       return home_replace_save(NULL,

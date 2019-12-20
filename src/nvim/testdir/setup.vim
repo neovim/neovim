@@ -72,6 +72,7 @@ set sidescroll=0
 set tags=./tags,tags
 set undodir^=.
 set wildoptions=
+set startofline
 
 " Use safer defaults for various directories (below $TMPDIR).
 for d in ['backupdir', 'directory', 'undodir', 'viewdir']
