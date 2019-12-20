@@ -881,7 +881,7 @@ function lsp.omnifunc(findstart, base)
     vim.fn.complete(textMatch+1, matches)
   end)
 
-  return {}
+  return -2
 end
 
 function lsp.client_is_stopped(client_id)
