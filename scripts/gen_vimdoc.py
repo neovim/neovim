@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Generates Nvim help docs from C docstrings, by parsing Doxygen XML.
+"""Generates Nvim help docs from C/Lua docstrings, using Doxygen.
+
+Also generates *.mpack files. To inspect the *.mpack structure:
+
+    :new | put=json_encode(msgpackparse(readfile('runtime/doc/api.mpack')))
+
+Flow:
+    gen_docs
+      extract_from_xml
+        fmt_node_as_vimhelp
+          fmt_params_map_as_vimhelp
+            render_node
+          para_as_map
+            render_node
 
 This would be easier using lxml and XSLT, but:
 
@@ -262,9 +275,9 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
 
 def update_params_map(parent, ret_map, width=62):
     """Updates `ret_map` with name:desc key-value pairs extracted
-    from a Doxygen <parameterlist>.
+    from Doxygen XML node `parent`.
     """
-    items = []
+    params = []
     for node in parent.childNodes:
         if node.nodeType == node.TEXT_NODE:
             continue
@@ -274,13 +287,13 @@ def update_params_map(parent, ret_map, width=62):
         name = get_text(name_node)
         if name in param_exclude:
             continue
-        items.append((name.strip(), node))
+        params.append((name.strip(), node))
     # `ret_map` is a name:desc map.
-    for name, node in items:
+    for name, node in params:
         desc = ''
         desc_node = get_child(node, 'parameterdescription')
         if desc_node:
-            desc = parse_parblock(desc_node, width=width,
+            desc = fmt_node_as_vimhelp(desc_node, width=width,
                                   indent=(' ' * len(name)))
             ret_map[name] = desc
     return ret_map
@@ -288,12 +301,12 @@ def update_params_map(parent, ret_map, width=62):
 
 def fmt_params_map_as_vimhelp(m, width=62):
     """Renders a params map as Vim :help text."""
-    name_length = 0
+    max_name_len = 0
     for name, desc in m.items():
-        name_length = max(name_length, len(name) + 4)
+        max_name_len = max(max_name_len, len(name) + 4)
     out = ''
     for name, desc in m.items():
-        name = '    {}'.format('{{{}}}'.format(name).ljust(name_length))
+        name = '    {}'.format('{{{}}}'.format(name).ljust(max_name_len))
         out += '{}{}\n'.format(name, desc)
     return out.rstrip()
 
@@ -446,45 +459,40 @@ def para_as_map(parent, indent='', width=62):
     return chunks
 
 
-def render_para(parent, indent='', width=62):
-    """Renders Doxygen <para> containing arbitrary nodes.
+def fmt_node_as_vimhelp(parent, width=62, indent=''):
+    """Renders (nested) Doxygen <para> nodes as Vim :help text.
 
     NB: Blank lines in a docstring manifest as <para> tags.
     """
-    para = para_as_map(parent, indent, width)
-
-    def has_nonexcluded_params(m):
-        """Returns true if any of the given params has at least
-        one non-excluded item."""
-        if fmt_params_map_as_vimhelp(m) != '':
-            return True
-
-    # Generate text from the gathered items.
-    chunks = [para['text']]
-    if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
-        chunks.append('\nParameters: ~')
-        chunks.append(fmt_params_map_as_vimhelp(para['params'], width=width))
-    if len(para['return']) > 0:
-        chunks.append('\nReturn: ~')
-        for s in para['return']:
-            chunks.append(s)
-    if len(para['seealso']) > 0:
-        chunks.append('\nSee also: ~')
-        for s in para['seealso']:
-            chunks.append(s)
-    for s in para['xrefs']:
-        chunks.append(s)
-
-    return clean_lines('\n'.join(chunks).strip())
-
-
-def parse_parblock(parent, prefix='', width=62, indent=''):
-    """Renders a nested block of <para> tags as Vim help text."""
-    paragraphs = []
+    rendered_blocks = []
     for child in parent.childNodes:
-        paragraphs.append(render_para(child, width=width, indent=indent))
-        paragraphs.append('')
-    return clean_lines('\n'.join(paragraphs).strip())
+        para = para_as_map(child, indent, width)
+
+        def has_nonexcluded_params(m):
+            """Returns true if any of the given params has at least
+            one non-excluded item."""
+            if fmt_params_map_as_vimhelp(m) != '':
+                return True
+
+        # Generate text from the gathered items.
+        chunks = [para['text']]
+        if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
+            chunks.append('\nParameters: ~')
+            chunks.append(fmt_params_map_as_vimhelp(para['params'], width=width))
+        if len(para['return']) > 0:
+            chunks.append('\nReturn: ~')
+            for s in para['return']:
+                chunks.append(s)
+        if len(para['seealso']) > 0:
+            chunks.append('\nSee also: ~')
+            for s in para['seealso']:
+                chunks.append(s)
+        for s in para['xrefs']:
+            chunks.append(s)
+
+        rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
+        rendered_blocks.append('')
+    return clean_lines('\n'.join(rendered_blocks).strip())
 
 
 def extract_from_xml(filename, mode, fmt_vimhelp):
@@ -653,8 +661,9 @@ def fmt_doxygen_xml_as_vimhelp(filename, mode):
     fns, deprecated_fns = extract_from_xml(filename, mode, True)
 
     for name, fn in fns.items():
+        # Generate Vim :help for parameters.
         if fn['desc_node']:
-            doc = parse_parblock(fn['desc_node'])
+            doc = fmt_node_as_vimhelp(fn['desc_node'])
         if not doc:
             doc = 'TODO: Documentation'
 
@@ -704,7 +713,8 @@ def delete_lines_below(filename, tokenstr):
 
 
 def gen_docs(config):
-    """Generate documentation.
+    """Generate formatted Vim :help docs and unformatted *.mpack files for use
+    by API clients.
 
     Doxygen is called and configured through stdin.
     """
@@ -748,7 +758,7 @@ def gen_docs(config):
 
             desc = find_first(minidom.parse(groupxml), 'detaileddescription')
             if desc:
-                doc = parse_parblock(desc)
+                doc = fmt_node_as_vimhelp(desc)
                 if doc:
                     intros[groupname] = doc
 
