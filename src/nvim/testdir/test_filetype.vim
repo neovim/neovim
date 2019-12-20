@@ -364,6 +364,7 @@ let s:filename_checks = {
     \ 'rcs': ['file,v'],
     \ 'readline': ['.inputrc', 'inputrc'],
     \ 'remind': ['.reminders', 'file.remind', 'file.rem'],
+    \ 'rego': ['file.rego'],
     \ 'resolv': ['resolv.conf'],
     \ 'reva': ['file.frt'],
     \ 'rexx': ['file.rex', 'file.orx', 'file.rxo', 'file.rxj', 'file.jrexx', 'file.rexxj', 'file.rexx', 'file.testGroup', 'file.testUnit'],
