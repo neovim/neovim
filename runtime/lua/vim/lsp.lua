@@ -861,36 +861,27 @@ function lsp.omnifunc(findstart, base)
   if findstart == 1 then
     -- First, just return the current cursor column, we only really need that
     return vim.fn.col('.')
-  else
-    -- Then, perform standard completion request
-    log.info("base ", base)
-
-    local pos = vim.api.nvim_win_get_cursor(0)
-    local line = vim.api.nvim_get_current_line()
-    local line_to_cursor = line:sub(1, pos[2])
-    local _ = log.trace() and log.trace("omnifunc.line", pos, line)
-
-    -- Get the start postion of the current keyword
-    local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
-    local params = util.make_position_params()
-
-    -- TODO handle timeout error differently? Like via an error?
-    local client_responses = lsp.buf_request_sync(bufnr, 'textDocument/completion', params) or {}
-    local matches = {}
-    for _, response in pairs(client_responses) do
-      -- TODO how to handle errors?
-      if not response.error then
-        local data = response.result
-        local completion_items = util.text_document_completion_list_to_complete_items(data or {})
-        local _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
-        vim.list_extend(matches, completion_items)
-      end
-    end
-
-    -- Instead of returning matches call complete instead
-    vim.fn.complete(textMatch+1, matches)
-    return {}
   end
+
+  -- Then, perform standard completion request
+  local _ = log.info() and log.info("base ", base)
+
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local line = vim.api.nvim_get_current_line()
+  local line_to_cursor = line:sub(1, pos[2])
+  local _ = log.trace() and log.trace("omnifunc.line", pos, line)
+
+  -- Get the start postion of the current keyword
+  local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local params = util.make_position_params()
+
+  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
+    if err then return end
+    local matches = util.text_document_completion_list_to_complete_items(result or {})
+    vim.fn.complete(textMatch+1, matches)
+  end)
+
+  return {}
 end
 
 function lsp.client_is_stopped(client_id)

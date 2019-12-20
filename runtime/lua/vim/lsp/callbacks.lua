@@ -62,9 +62,10 @@ M['textDocument/completion'] = function(_, _, result)
   local row, col = unpack(api.nvim_win_get_cursor(0))
   local line = assert(api.nvim_buf_get_lines(0, row-1, row, false)[1])
   local line_to_cursor = line:sub(col+1)
+  local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
 
-  local matches = util.text_document_completion_list_to_complete_items(result, line_to_cursor)
-  vim.fn.complete(col, matches)
+  local matches = util.text_document_completion_list_to_complete_items(result)
+  vim.fn.complete(textMatch+1, matches)
 end
 
 M['textDocument/hover'] = function(_, method, result)
