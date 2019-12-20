@@ -606,10 +606,10 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
             'annotations': list(annotations),
             'signature': signature,
             'parameters': params,
-            'parameters_doc': [],
+            'parameters_doc': collections.OrderedDict(),
             'doc': [],
-            'return': '',
-            'seealso': '',
+            'return': [],
+            'seealso': [],
         }
         if fmt_vimhelp:
             fn['desc_node'] = desc  # HACK :(
@@ -619,11 +619,12 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
                 if not m['text'] == '':
                     fn['doc'].append(m['text'])
             if 'params' in m:
-                fn['parameters_doc'] += m['params']
-            if 'return' in m:
-                fn['return'] = m['return']
-            if 'seealso' in m:
-                fn['seealso'] = m['xrefs']
+                # Merge OrderedDicts.
+                fn['parameters_doc'].update(m['params'])
+            if 'return' in m and len(m['return']) > 0:
+                fn['return'] += m['return']
+            if 'seealso' in m and len(m['xrefs']) > 0:
+                fn['seealso'].append(str(m['xrefs']))
 
         if INCLUDE_C_DECL:
             fn['c_decl'] = c_decl
