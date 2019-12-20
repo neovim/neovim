@@ -1237,10 +1237,12 @@ static void ask_for_terminal_bg(void **argv)
     if (!ui) {
       abort();
     }
-    TUIData *data = ui->data;
-    data->input.waiting_for_bg_response = 5;
-    unibi_out_ext(ui, data->unibi_ext.get_bg);
-    flush_buf(ui);
+    if (!tui_is_stopped(ui)) {
+      TUIData *data = ui->data;
+      data->input.waiting_for_bg_response = 5;
+      unibi_out_ext(ui, data->unibi_ext.get_bg);
+      flush_buf(ui);
+    }
   }
 }
 
