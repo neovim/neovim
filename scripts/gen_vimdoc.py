@@ -727,7 +727,7 @@ def gen_docs(config):
         if p.returncode:
             sys.exit(p.returncode)
 
-        doc_maps = {}
+        fn_maps = {}
         sections = {}
         intros = {}
         sep = '=' * text_width
@@ -756,7 +756,7 @@ def gen_docs(config):
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
-                mpack = extract_from_xml(os.path.join(base, '{}.xml'.format(
+                fn_map, _ = extract_from_xml(os.path.join(base, '{}.xml'.format(
                     compound.getAttribute('refid'))), mode, False)
 
                 functions_text, deprecated_text, fns = fmt_doxygen_xml_as_vimhelp(
@@ -798,7 +798,7 @@ def gen_docs(config):
                             title = '{} Functions'.format(name)
                             helptag = '*api-{}*'.format(name.lower())
                         sections[filename] = (title, helptag, doc)
-                        doc_maps[filename] = mpack
+                        fn_maps[filename] = fn_map
 
         if not sections:
             return
@@ -831,7 +831,7 @@ def gen_docs(config):
             fp.write(docs.encode('utf8'))
 
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(doc_maps, use_bin_type=True))
+            fp.write(msgpack.packb(fn_maps, use_bin_type=True))
 
         shutil.rmtree(output_dir)
 
