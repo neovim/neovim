@@ -3772,7 +3772,7 @@ int do_join(size_t count,
       curr = skipwhite(curr);
       if (*curr != NUL
           && *curr != ')'
-          && currsize != 0
+          && sumsize != 0
           && endcurr1 != TAB
           && (!has_format_option(FO_MBYTE_JOIN)
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))

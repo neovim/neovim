@@ -607,6 +607,9 @@ CompleteChanged 					*CompleteChanged*
 
 				It is not allowed to change the text |textlock|.
 
+  				The size and position of the popup are also
+ 				available by calling |pum_getpos()|.
+
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time
 				specified with 'updatetime'.  Not re-triggered

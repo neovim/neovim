@@ -169,6 +169,7 @@ Functions:
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
 
 Highlight groups:
+  |highlight-blend| controls blend level for a highlight group
   |expr-highlight| highlight groups (prefixed with "Nvim")
   |hl-NormalFloat| highlights floating window
   |hl-NormalNC| highlights non-current windows
@@ -207,6 +208,7 @@ Options:
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
   'wildoptions' `pum` flag to use popupmenu for wildmode completion
+  'winblend' pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
 
 Signs:
@@ -333,6 +335,11 @@ Macro/|recording| behavior
 
 Motion:
   The |jumplist| avoids useless/phantom jumps.
+
+  When the new option |jumpoptions| includes 'stack', the jumplist behaves
+  like the tagstack or history in a web browser--jumping from the middle of
+  the jumplist discards the locations after the jumped-from position
+  (|jumplist-stack|).
 
 Normal commands:
   |Q| is the same as |gQ|

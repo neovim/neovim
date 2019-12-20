@@ -19,26 +19,13 @@ local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
---- Find the longest shared prefix between prefix and word.
--- e.g. remove_prefix("123tes", "testing") == "ting"
-local function remove_prefix(prefix, word)
-  local max_prefix_length = math.min(#prefix, #word)
-  local prefix_length = 0
-  for i = 1, max_prefix_length do
-    local current_line_suffix = prefix:sub(-i)
-    local word_prefix = word:sub(1, i)
-    if current_line_suffix == word_prefix then
-      prefix_length = i
-    end
-  end
-  return word:sub(prefix_length + 1)
-end
-
--- TODO(ashkan) @performance this could do less copying.
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
-  local i_n = B[1] + 1
+  -- If it extends past the end, truncate it to the end. This is because the
+  -- way the LSP describes the range including the last newline is by
+  -- specifying a line number after what we would call the last line.
+  local i_n = math.min(B[1] + 1, #lines)
   if not (i_0 >= 1 and i_0 <= #lines and i_n >= 1 and i_n <= #lines) then
     error("Invalid range: "..vim.inspect{A = A; B = B; #lines, new_lines})
   end
@@ -103,7 +90,7 @@ function M.apply_text_edits(text_edits, bufnr)
   table.sort(cleaned, edit_sort_key)
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
-  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) == finish_line + 1
+  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
   if set_eol and #lines[#lines] ~= 0 then
     table.insert(lines, '')
   end
@@ -161,14 +148,10 @@ end
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-function M.text_document_completion_list_to_complete_items(result, line_prefix)
+function M.text_document_completion_list_to_complete_items(result)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
-  end
-  -- Only initialize if we have some items.
-  if not line_prefix then
-    line_prefix = M.get_current_line_to_cursor()
   end
 
   local matches = {}
@@ -187,10 +170,8 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
     end
 
     local word = completion_item.insertText or completion_item.label
-
-    -- Ref: `:h complete-items`
     table.insert(matches, {
-      word = remove_prefix(line_prefix, word),
+      word = word,
       abbr = completion_item.label,
       kind = protocol.CompletionItemKind[completion_item.kind] or '',
       menu = completion_item.detail or '',
@@ -336,9 +317,9 @@ end
 -- Check if a window with `unique_name` tagged is associated with the current
 -- buffer. If not, make a new preview.
 --
--- fn()'s return values will be passed directly to open_floating_preview in the
+-- fn()'s return bufnr, winnr
 -- case that a new floating window should be created.
-function M.focusable_preview(unique_name, fn)
+function M.focusable_float(unique_name, fn)
   if npcall(api.nvim_win_get_var, 0, unique_name) then
     return api.nvim_command("wincmd p")
   end
@@ -351,9 +332,127 @@ function M.focusable_preview(unique_name, fn)
       return
     end
   end
-  local pbufnr, pwinnr = M.open_floating_preview(fn())
-  api.nvim_win_set_var(pwinnr, unique_name, bufnr)
-  return pbufnr, pwinnr
+  local pbufnr, pwinnr = fn()
+  if pbufnr then
+    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
+    return pbufnr, pwinnr
+  end
+end
+
+-- Check if a window with `unique_name` tagged is associated with the current
+-- buffer. If not, make a new preview.
+--
+-- fn()'s return values will be passed directly to open_floating_preview in the
+-- case that a new floating window should be created.
+function M.focusable_preview(unique_name, fn)
+  return M.focusable_float(unique_name, function()
+    return M.open_floating_preview(fn())
+  end)
+end
+
+-- Convert markdown into syntax highlighted regions by stripping the code
+-- blocks and converting them into highlighted code.
+-- This will by default insert a blank line separator after those code block
+-- regions to improve readability.
+function M.fancy_floating_markdown(contents, opts)
+  local pad_left = opts and opts.pad_left
+  local pad_right = opts and opts.pad_right
+  local stripped = {}
+  local highlights = {}
+  do
+    local i = 1
+    while i <= #contents do
+      local line = contents[i]
+      -- TODO(ashkan): use a more strict regex for filetype?
+      local ft = line:match("^```([a-zA-Z0-9_]*)$")
+      -- local ft = line:match("^```(.*)$")
+      -- TODO(ashkan): validate the filetype here.
+      if ft then
+        local start = #stripped
+        i = i + 1
+        while i <= #contents do
+          line = contents[i]
+          if line == "```" then
+            i = i + 1
+            break
+          end
+          table.insert(stripped, line)
+          i = i + 1
+        end
+        table.insert(highlights, {
+          ft = ft;
+          start = start + 1;
+          finish = #stripped + 1 - 1;
+        })
+      else
+        table.insert(stripped, line)
+        i = i + 1
+      end
+    end
+  end
+  local width = 0
+  for i, v in ipairs(stripped) do
+    v = v:gsub("\r", "")
+    if pad_left then v = (" "):rep(pad_left)..v end
+    if pad_right then v = v..(" "):rep(pad_right) end
+    stripped[i] = v
+    width = math.max(width, #v)
+  end
+  if opts and opts.max_width then
+    width = math.min(opts.max_width, width)
+  end
+  -- TODO(ashkan): decide how to make this customizable.
+  local insert_separator = true
+  if insert_separator then
+    for i, h in ipairs(highlights) do
+      h.start = h.start + i - 1
+      h.finish = h.finish + i - 1
+      if h.finish + 1 <= #stripped then
+        table.insert(stripped, h.finish + 1, string.rep("─", width))
+      end
+    end
+  end
+
+  -- Make the floating window.
+  local height = #stripped
+  local bufnr = api.nvim_create_buf(false, true)
+  local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+
+  -- Switch to the floating window to apply the syntax highlighting.
+  -- This is because the syntax command doesn't accept a target.
+  local cwin = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(winnr)
+
+  vim.cmd("ownsyntax markdown")
+  local idx = 1
+  local function highlight_region(ft, start, finish)
+    if ft == '' then return end
+    local name = ft..idx
+    idx = idx + 1
+    local lang = "@"..ft:upper()
+    -- TODO(ashkan): better validation before this.
+    if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
+      return
+    end
+    vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start, finish + 1, lang))
+  end
+  -- Previous highlight region.
+  -- TODO(ashkan): this wasn't working for some reason, but I would like to
+  -- make sure that regions between code blocks are definitely markdown.
+  -- local ph = {start = 0; finish = 1;}
+  for _, h in ipairs(highlights) do
+    -- highlight_region('markdown', ph.finish, h.start)
+    highlight_region(h.ft, h.start, h.finish)
+    -- ph = h
+  end
+
+  vim.api.nvim_set_current_win(cwin)
+  return bufnr, winnr
+end
+
+function M.close_preview_autocmd(events, winnr)
+  api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
 function M.open_floating_preview(contents, filetype, opts)

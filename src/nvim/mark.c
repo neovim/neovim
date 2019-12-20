@@ -178,6 +178,16 @@ void setpcmark(void)
     curwin->w_pcmark.lnum = 1;
   }
 
+  if (jop_flags & JOP_STACK) {
+    // If we're somewhere in the middle of the jumplist discard everything
+    // after the current index.
+    if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
+      // Discard the rest of the jumplist by cutting the length down to
+      // contain nothing beyond the current index.
+      curwin->w_jumplistlen = curwin->w_jumplistidx + 1;
+    }
+  }
+
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
     curwin->w_jumplistlen = JUMPLISTSIZE;
@@ -1204,7 +1214,20 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         break;
       }
     }
-    if (i >= wp->w_jumplistlen) {  // no duplicate
+    bool mustfree;
+    if (i >= wp->w_jumplistlen) {  // not duplicate
+      mustfree = false;
+    } else if (i > from + 1) {  // non-adjacent duplicate
+      // When the jump options include "stack", duplicates are only removed from
+      // the jumplist when they are adjacent.
+      mustfree = !(jop_flags & JOP_STACK);
+    } else {  // adjacent duplicate
+      mustfree = true;
+    }
+
+    if (mustfree) {
+      xfree(wp->w_jumplist[from].fname);
+    } else {
       if (to != from) {
         // Not using wp->w_jumplist[to++] = wp->w_jumplist[from] because
         // this way valgrind complains about overlapping source and destination
@@ -1212,8 +1235,6 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         wp->w_jumplist[to] = wp->w_jumplist[from];
       }
       to++;
-    } else {
-      xfree(wp->w_jumplist[from].fname);
     }
   }
   if (wp->w_jumplistidx == wp->w_jumplistlen) {

@@ -1300,6 +1300,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='jumpoptions', abbreviation='jop',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      varname='p_jop',
+      vim=true,
+      defaults={if_true={vim=''}}
+    },
+    {
       full_name='keymap', abbreviation='kmp',
       type='string', scope={'buffer'},
       normal_fname_chars=true,

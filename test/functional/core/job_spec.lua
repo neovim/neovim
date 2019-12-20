@@ -26,6 +26,7 @@ describe('jobs', function()
 
   before_each(function()
     clear()
+
     channel = nvim('get_api_info')[1]
     nvim('set_var', 'channel', channel)
     source([[
@@ -46,6 +47,57 @@ describe('jobs', function()
     \ 'user': 0
     \ }
     ]])
+  end)
+
+  it('must specify env option as a dict', function()
+    command("let g:job_opts.env = v:true")
+    local _, err = pcall(function()
+      if iswin() then
+        nvim('command', "let j = jobstart('set', g:job_opts)")
+      else
+        nvim('command', "let j = jobstart('env', g:job_opts)")
+      end
+    end)
+    ok(string.find(err, "E475: Invalid argument: env") ~= nil)
+  end)
+
+  it('append environment #env', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    if iswin() then
+      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+    else
+      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+    end
+
+    expect_msg_seq({
+      {'notification', 'stdout', {0, {'hello world abc', ''}}},
+    })
+  end)
+
+  it('replace environment #env', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    nvim('command', "let g:job_opts.clear_env = 1")
+
+    -- libuv ensures that certain "required" environment variables are
+    -- preserved if the user doesn't provide them in a custom environment
+    -- https://github.com/libuv/libuv/blob/635e0ce6073c5fbc96040e336b364c061441b54b/src/win/process.c#L672
+    -- https://github.com/libuv/libuv/blob/635e0ce6073c5fbc96040e336b364c061441b54b/src/win/process.c#L48-L60
+    --
+    -- Rather than expecting a completely empty environment, ensure that $VAR
+    -- is *not* in the environment but $TOTO is.
+    if iswin() then
+      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+      expect_msg_seq({
+        {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
+      })
+    else
+      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+      expect_msg_seq({
+        {'notification', 'stdout', {0, {'hello world', ''}}}
+      })
+    end
   end)
 
   it('uses &shell and &shellcmdflag if passed a string', function()
