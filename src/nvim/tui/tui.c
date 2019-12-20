@@ -298,9 +298,6 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.save_title);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
-  // Ask the terminal to send us the background color.
-  data->input.waiting_for_bg_response = 5;
-  unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
@@ -429,6 +426,8 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 
   loop_schedule_deferred(&main_loop,
                          event_create(show_termcap_event, 1, data->ut));
+  loop_schedule_deferred(&main_loop,
+                         event_create(ask_for_terminal_bg, 1, ui));
 
   // "Active" loop: first ~100 ms of startup.
   for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
@@ -1228,6 +1227,21 @@ static void show_termcap_event(void **argv)
   terminfo_info_msg(ut);
   verbose_leave();
   verbose_stop();  // flush now
+}
+
+/// Ask the terminal to send us the background color.
+static void ask_for_terminal_bg(void **argv)
+{
+  if (!option_was_set("bg")) {
+    UI *const ui = argv[0];
+    if (!ui) {
+      abort();
+    }
+    TUIData *data = ui->data;
+    data->input.waiting_for_bg_response = 5;
+    unibi_out_ext(ui, data->unibi_ext.get_bg);
+    flush_buf(ui);
+  }
 }
 
 #ifdef UNIX
