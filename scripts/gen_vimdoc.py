@@ -435,9 +435,11 @@ def para_as_map(parent, indent='', width=62):
         chunks['seealso'].append(render_node(
             child, '', indent=indent, width=width))
     for child in groups['xrefs']:
-        title = get_text(get_child(child, 'xreftitle'))
+        # XXX: Add a space (or any char) to `title` here, otherwise xrefs
+        # ("Deprecated" section) acts very weird...
+        title = get_text(get_child(child, 'xreftitle')) + ' '
         xrefs.add(title)
-        xrefdesc = render_para(get_child(child, 'xrefdescription'), width=width)
+        xrefdesc = get_text(get_child(child, 'xrefdescription'))
         chunks['xrefs'].append(doc_wrap(xrefdesc, prefix='{}: '.format(title),
                                         width=width) + '\n')
 
@@ -496,7 +498,7 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
     fmt_doxygen_xml_as_vimhelp(). (TODO: ugly :)
     """
     global xrefs
-    xrefs = set()
+    xrefs.clear()
     functions = {}  # Map of func_name:docstring.
     deprecated_functions = {}  # Map of func_name:docstring.
 
@@ -623,8 +625,8 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
                 fn['parameters_doc'].update(m['params'])
             if 'return' in m and len(m['return']) > 0:
                 fn['return'] += m['return']
-            if 'seealso' in m and len(m['xrefs']) > 0:
-                fn['seealso'].append(str(m['xrefs']))
+            if 'seealso' in m and len(m['seealso']) > 0:
+                fn['seealso'] += m['seealso']
 
         if INCLUDE_C_DECL:
             fn['c_decl'] = c_decl
