@@ -245,6 +245,25 @@ describe('ui/cursor', function()
       eq('normal', screen.mode)
     end)
 
+    -- update the highlight again to hide cursor
+    helpers.command('hi Cursor blend=100')
+
+    for _, m in ipairs(expected_mode_info) do
+      if m.hl_id then
+          m.attr = {background = Screen.colors.Red, blend = 100}
+      end
+    end
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      test                     |
+    ]], condition=function()
+      eq(expected_mode_info, screen._mode_info)
+    end
+    }
+
     -- Another cursor style.
     meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173'
       ..',ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42')

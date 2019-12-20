@@ -296,25 +296,23 @@ int do_cmdline_cmd(const char *cmd)
                     DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
-/*
- * do_cmdline(): execute one Ex command line
- *
- * 1. Execute "cmdline" when it is not NULL.
- *    If "cmdline" is NULL, or more lines are needed, fgetline() is used.
- * 2. Split up in parts separated with '|'.
- *
- * This function can be called recursively!
- *
- * flags:
- * DOCMD_VERBOSE  - The command will be included in the error message.
- * DOCMD_NOWAIT   - Don't call wait_return() and friends.
- * DOCMD_REPEAT   - Repeat execution until fgetline() returns NULL.
- * DOCMD_KEYTYPED - Don't reset KeyTyped.
- * DOCMD_EXCRESET - Reset the exception environment (used for debugging).
- * DOCMD_KEEPLINE - Store first typed line (for repeating with ".").
- *
- * return FAIL if cmdline could not be executed, OK otherwise
- */
+/// do_cmdline(): execute one Ex command line
+///
+/// 1. Execute "cmdline" when it is not NULL.
+///    If "cmdline" is NULL, or more lines are needed, fgetline() is used.
+/// 2. Split up in parts separated with '|'.
+///
+/// This function can be called recursively!
+///
+/// flags:
+///   DOCMD_VERBOSE  - The command will be included in the error message.
+///   DOCMD_NOWAIT   - Don't call wait_return() and friends.
+///   DOCMD_REPEAT   - Repeat execution until fgetline() returns NULL.
+///   DOCMD_KEYTYPED - Don't reset KeyTyped.
+///   DOCMD_EXCRESET - Reset the exception environment (used for debugging).
+///   DOCMD_KEEPLINE - Store first typed line (for repeating with ".").
+///
+/// @return FAIL if cmdline could not be executed, OK otherwise
 int do_cmdline(char_u *cmdline, LineGetter fgetline,
                void *cookie, /* argument for fgetline() */
                int flags)
@@ -327,13 +325,13 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   int count = 0;                        /* line number count */
   int did_inc = FALSE;                  /* incremented RedrawingDisabled */
   int retval = OK;
-  struct condstack cstack;              /* conditional stack */
-  garray_T lines_ga;                    /* keep lines for ":while"/":for" */
-  int current_line = 0;                 /* active line in lines_ga */
-  char_u      *fname = NULL;            /* function or script name */
-  linenr_T    *breakpoint = NULL;       /* ptr to breakpoint field in cookie */
-  int         *dbg_tick = NULL;         /* ptr to dbg_tick field in cookie */
-  struct dbg_stuff debug_saved;         /* saved things for debug mode */
+  cstack_T cstack;                      // conditional stack
+  garray_T lines_ga;                    // keep lines for ":while"/":for"
+  int current_line = 0;                 // active line in lines_ga
+  char_u   *fname = NULL;               // function or script name
+  linenr_T *breakpoint = NULL;          // ptr to breakpoint field in cookie
+  int      *dbg_tick = NULL;            // ptr to dbg_tick field in cookie
+  struct dbg_stuff debug_saved;         // saved things for debug mode
   int initial_trylevel;
   struct msglist      **saved_msg_list = NULL;
   struct msglist      *private_msg_list;
@@ -363,7 +361,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     EMSG(_("E169: Command too recursive"));
     // When converting to an exception, we do not include the command name
     // since this is not an error of the specific command.
-    do_errthrow((struct condstack *)NULL, (char_u *)NULL);
+    do_errthrow((cstack_T *)NULL, (char_u *)NULL);
     msg_list = saved_msg_list;
     return FAIL;
   }
@@ -421,13 +419,12 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   // If force_abort is set, we cancel everything.
   did_emsg = false;
 
-  /*
-   * KeyTyped is only set when calling vgetc().  Reset it here when not
-   * calling vgetc() (sourced command lines).
-   */
+  // KeyTyped is only set when calling vgetc().  Reset it here when not
+  // calling vgetc() (sourced command lines).
   if (!(flags & DOCMD_KEYTYPED)
-      && !getline_equal(fgetline, cookie, getexline))
+      && !getline_equal(fgetline, cookie, getexline)) {
     KeyTyped = false;
+  }
 
   /*
    * Continue executing command lines:
@@ -1548,7 +1545,7 @@ static bool parse_one_cmd(
  */
 static char_u * do_one_cmd(char_u **cmdlinep,
                            int flags,
-                           struct condstack *cstack,
+                           cstack_T *cstack,
                            LineGetter fgetline,
                            void *cookie /* argument for fgetline() */
                            )

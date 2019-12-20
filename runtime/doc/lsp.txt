@@ -3,7 +3,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Nvim Language Server Protocol (LSP) API                                *lsp*
+Nvim Language Server Protocol (LSP) API                  *lsp*
 
 Nvim is a client to the Language Server Protocol:
 
@@ -12,25 +12,61 @@ Nvim is a client to the Language Server Protocol:
                                       Type |gO| to see the table of contents.
 
 ================================================================================
-LSP API                                                                *lsp-api*
+LANGUAGE SERVER PROTOCOL (LSP) CLIENT                   *lsp-intro*
 
-Neovim exposes a API for the language server protocol. To get the real benefits
-of this API, a language server must be installed.
-Many examples can be found here:
+The `vim.lsp` Lua module provides a flexible API for consuming LSP servers.
 
+To use LSP in practice, a language server must be installed.
   https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-After installing a language server to your machine, you must let Neovim know
-how to start and interact with that language server.
+After installing a language server to your machine, you must tell Nvim how to
+start and interact with that language server.
+- Easy way: use the configs provided here by the nvim-lsp plugin.
+  https://github.com/neovim/nvim-lsp
+- Low-level way: use |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|
+  directly.  Useful if you want to build advanced LSP plugins based on the
+  Nvim LSP module. |lsp-advanced-js-example|
 
-To do so, you can either:
-- Use https://github.com/neovim/nvim-lsp and one of the existing servers there
-  or set up a new one using the `nvim_lsp/skeleton` interface (and contribute
-  it if you find it useful). This uses |vim.lsp.start_client()| under the
-  hood.
-- Or |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|. These are the
-  backbone of the LSP API. These are easy to use enough for basic or more
-  complex configurations such as in |lsp-advanced-js-example|.
+                                                        *lsp-config*
+Nvim LSP client will automatically provide inline diagnostics when available.
+|lsp-callbacks|  But you probably want to use other features too, such as
+go-to-definition, "hover", etc.  Example config: >
+
+  nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
+  nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
+  nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
+  nnoremap <silent> gD    <cmd>lua vim.lsp.buf.implementation()<CR>
+  nnoremap <silent> <c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+  nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
+
+<
+                                                        *vim.lsp.omnifunc()*
+Nvim provides the vim.lsp.omnifunc 'omnifunc' handler which allows
+|i_CTRL-X_CTRL-O| to consume LSP completion features. Example config (note the
+use of |v:lua| to call Lua from Vimscript): >
+
+  " Use LSP omni-completion in Python files.
+  autocmd Filetype python setlocal omnifunc=v:lua.vim.lsp.omnifunc
+
+
+FAQ ~
+
+> How to force-reload LSP?
+
+Stop all clients, then reload the buffer. >
+
+  :lua vim.lsp.stop_all_clients()
+  :edit
+
+> Why isn't completion working?
+
+In the buffer where you want to use LSP, check that 'omnifunc' is set to
+"v:lua.vim.lsp.omnifunc": >
+
+  :verbose set omnifunc?
+
+Some other plugin may be overriding the option. To avoid that, you could set
+the option in an |after-directory| ftplugin, e.g. "after/ftplugin/python.vim".
 
 ================================================================================
                                                            *lsp-core-api*
@@ -75,7 +111,7 @@ vim.lsp.start_client({config})
  
   `capabilities`
     A {table} which will be used instead of
-    `vim.lsp.protocol.make_client_capabilities()` which contains neovim's
+    `vim.lsp.protocol.make_client_capabilities()` which contains Nvim's
     default capabilities and passed to the language server on initialization.
     You'll probably want to use make_client_capabilities() and modify the
     result.
@@ -264,11 +300,11 @@ vim.lsp.rpc_response_error({code}, [{message}], [{data}])
 LSP CALLBACKS                                           *lsp-callbacks*
 
 DEFAULT CALLBACKS ~
-                                                   *vim.lsp.default_callbacks*
-The `vim.lsp.default_callbacks` table defines default callbacks used when
+                                                   *vim.lsp.callbacks*
+The `vim.lsp.callbacks` table defines default callbacks used when
 creating a new client. Keys are LSP method names: >
 
-  :lua print(vim.inspect(vim.tbl_keys(vim.lsp.default_callbacks)))
+  :lua print(vim.inspect(vim.tbl_keys(vim.lsp.callbacks)))
 
 These LSP requests/notifications are defined by default:
 
@@ -276,7 +312,7 @@ These LSP requests/notifications are defined by default:
   window/logMessage
   window/showMessage
 
-You can check these via `vim.tbl_keys(vim.lsp.default_callbacks)`.
+You can check these via `vim.tbl_keys(vim.lsp.callbacks)`.
 
 These will be used preferrentially in `vim.lsp.buf` methods when handling
 requests. They will also be used when responding to server requests and
@@ -285,16 +321,16 @@ notifications.
 Use cases:
 - Users can modify this to customize to their preferences.
 - UI plugins can modify this by assigning to
-  `vim.lsp.default_callbacks[method]` so as to provide more specialized
+  `vim.lsp.callbacks[method]` so as to provide more specialized
   handling, allowing you to leverage the UI capabilities available. UIs should
   try to be conscientious of any existing changes the user may have set
   already by checking for existing values.
 
 Any callbacks passed directly to `request` methods on a server client will
-have the highest precedence, followed by the `default_callbacks`.
+have the highest precedence, followed by the `callbacks`.
 
 You can override the default handlers,
-- globally: by modifying the `vim.lsp.default_callbacks` table
+- globally: by modifying the `vim.lsp.callbacks` table
 - per-client: by passing the {callbacks} table parameter to
   |vim.lsp.start_client|
 
@@ -305,7 +341,7 @@ Each handler has this signature: >
 Callbacks are functions which are called in a variety of situations by the
 client. Their signature is `function(err, method, params, client_id)` They can
 be set by the {callbacks} parameter for |vim.lsp.start_client| or via the
-|vim.lsp.default_callbacks|.
+|vim.lsp.callbacks|.
 
 Handlers are called for:
 - Notifications from the server (`err` is always `nil`).
@@ -420,51 +456,9 @@ vim.lsp.get_log_path()
 vim.lsp.log_levels
   Log level dictionary with reverse lookup as well.
  
-  Can be used to lookup the number from the name or the name from the number.
-  Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
-  Level numbers begin with 'trace' at 0
+  Can be used to lookup the number from the name or vice-versa.
+  Levels: "trace" (0), "debug" (1), "info" (2), "warn" (3), "error" (4)
 
-================================================================================
-                                                                  *lsp-omnifunc*
-                                                            *vim.lsp.omnifunc()*
-vim.lsp.omnifunc({findstart}, {base})
-
-To configure omnifunc, add the following in your init.vim:
->
-  " Configure for python
-  autocmd Filetype python setl omnifunc=v:lua.vim.lsp.omnifunc
-
-  " Or with on_attach
-  start_client {
-    ...
-    on_attach = function(client, bufnr)
-      vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-    end;
-  }
-
-  " This is optional, but you may find it useful
-  autocmd CompleteDone * pclose
-<
-================================================================================
-LSP FUNCTIONS                                                *lsp-vim-functions*
-
-To use the functions from vim, it is recommended to use |v:lua| to interface
-with the Lua functions. No direct vim functions are provided, but the
-interface is still easy to use from mappings.
-
-These methods can be used in mappings and are the equivalent of using the
-request from lua as follows:
-
->
-  " Example config
-  autocmd Filetype rust,python,go,c,cpp setl omnifunc=v:lua.vim.lsp.omnifunc
-  nnoremap <silent> ;dc <cmd>lua vim.lsp.buf.declaration()<CR>
-  nnoremap <silent> ;df <cmd>lua vim.lsp.buf.definition()<CR>
-  nnoremap <silent> ;h  <cmd>lua vim.lsp.buf.hover()<CR>
-  nnoremap <silent> ;i  <cmd>lua vim.lsp.buf.implementation()<CR>
-  nnoremap <silent> ;s  <cmd>lua vim.lsp.buf.signature_help()<CR>
-  nnoremap <silent> ;td <cmd>lua vim.lsp.buf.type_definition()<CR>
-<
 ================================================================================
 LSP EXAMPLE                                            *lsp-advanced-js-example*
 

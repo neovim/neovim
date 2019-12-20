@@ -52,10 +52,10 @@ describe('UI receives option updates', function()
     local evs = {}
     screen = Screen.new(20,5)
     -- Override mouse_on/mouse_off handlers.
-    function screen._handle_mouse_on()
+    function screen:_handle_mouse_on()
       table.insert(evs, 'mouse_on')
     end
-    function screen._handle_mouse_off()
+    function screen:_handle_mouse_off()
       table.insert(evs, 'mouse_off')
     end
     screen:attach()

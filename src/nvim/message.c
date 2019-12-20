@@ -1378,7 +1378,7 @@ static void msg_home_replace_attr(char_u *fname, int attr)
 
 /*
  * Output 'len' characters in 'str' (including NULs) with translation
- * if 'len' is -1, output upto a NUL character.
+ * if 'len' is -1, output up to a NUL character.
  * Use attributes 'attr'.
  * Return the number of characters it takes on the screen.
  */
@@ -1501,7 +1501,7 @@ void msg_make(char_u *arg)
   }
 }
 
-/// Output the string 'str' upto a NUL character.
+/// Output the string 'str' up to a NUL character.
 /// Return the number of characters it takes on the screen.
 ///
 /// If K_SPECIAL is encountered, then it is taken in conjunction with the

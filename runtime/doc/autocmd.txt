@@ -559,16 +559,14 @@ CmdlineLeave			Before leaving the command-line (including
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for
-				this special type of window.  This is
-				triggered _instead_ of BufEnter and WinEnter.
+				this special type of window.
 				<afile> is set to a single character,
 				indicating the type of command-line.
 				|cmdwin-char|
 							*CmdwinLeave*
 CmdwinLeave			Before leaving the command-line window.
 				Useful to clean up any global setting done
-				with CmdwinEnter.  This is triggered _instead_
-				of BufLeave and WinLeave.
+				with CmdwinEnter.
 				<afile> is set to a single character,
 				indicating the type of command-line.
 				|cmdwin-char|
@@ -608,6 +606,9 @@ CompleteChanged 					*CompleteChanged*
 				    scrollbar		TRUE if visible
 
 				It is not allowed to change the text |textlock|.
+
+  				The size and position of the popup are also
+ 				available by calling |pum_getpos()|.
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time

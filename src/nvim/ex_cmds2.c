@@ -3015,10 +3015,77 @@ static FILE *fopen_noinh_readbin(char *filename)
   return fdopen(fd_tmp, READBIN);
 }
 
+typedef struct {
+  char_u *buf;
+  size_t offset;
+} GetStrLineCookie;
 
-/// Read the file "fname" and execute its lines as EX commands.
+/// Get one full line from a sourced string (in-memory, no file).
+/// Called by do_cmdline() when it's called from do_source_str().
+///
+/// @return pointer to allocated line, or NULL for end-of-file or
+///         some error.
+static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
+{
+  GetStrLineCookie *p = cookie;
+  size_t i = p->offset;
+  if (strlen((char *)p->buf) <= p->offset) {
+    return NULL;
+  }
+  while (!(p->buf[i] == '\n' || p->buf[i] == '\0')) {
+    i++;
+  }
+  char buf[2046];
+  char *dst;
+  dst = xstpncpy(buf, (char *)p->buf + p->offset, i - p->offset);
+  if ((uint32_t)(dst - buf) != i - p->offset) {
+    smsg(_(":source error parsing command %s"), p->buf);
+    return NULL;
+  }
+  buf[i - p->offset] = '\0';
+  p->offset = i + 1;
+  return (char_u *)xstrdup(buf);
+}
+
+/// Executes lines in `src` as Ex commands.
+///
+/// @see do_source()
+int do_source_str(const char *cmd, const char *traceback_name)
+{
+  char_u *save_sourcing_name = sourcing_name;
+  linenr_T save_sourcing_lnum = sourcing_lnum;
+  char_u sourcing_name_buf[256];
+  if (save_sourcing_name == NULL) {
+    sourcing_name = (char_u *)traceback_name;
+  } else {
+    snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
+             "%s called at %s:%"PRIdLINENR, traceback_name, save_sourcing_name,
+             save_sourcing_lnum);
+    sourcing_name = sourcing_name_buf;
+  }
+  sourcing_lnum = 0;
+
+  GetStrLineCookie cookie = {
+    .buf = (char_u *)cmd,
+    .offset = 0,
+  };
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid = SID_STR;
+  current_sctx.sc_seq = 0;
+  current_sctx.sc_lnum = save_sourcing_lnum;
+  int retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
+                          DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
+  current_sctx = save_current_sctx;
+  sourcing_lnum = save_sourcing_lnum;
+  sourcing_name = save_sourcing_name;
+  return retval;
+}
+
+/// Reads the file `fname` and executes its lines as Ex commands.
 ///
 /// This function may be called recursively!
+///
+/// @see do_source_str
 ///
 /// @param fname
 /// @param check_other  check for .vimrc and _vimrc
@@ -3360,6 +3427,8 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
                    _("API client (channel id %" PRIu64 ")"),
                    last_set.channel_id);
       return IObuff;
+    case SID_STR:
+      return (char_u *)_("anonymous :source");
     default:
       *should_free = true;
       return home_replace_save(NULL,

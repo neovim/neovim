@@ -3,7 +3,10 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed = helpers.clear, helpers.feed
+local clear = helpers.clear
+local command = helpers.command
+local eq = helpers.eq
+local feed = helpers.feed
 
 describe('example', function()
   local screen
@@ -32,5 +35,38 @@ describe('example', function()
       {0:~                   }|
                           |
     ]])
+  end)
+
+  it('override UI event-handler', function()
+    -- Example: override the "tabline_update" UI event handler.
+    --
+    -- screen.lua defines default handlers for UI events, but tests
+    -- may sometimes want to override a handler.
+
+    -- The UI must declare that it wants to handle the UI events.
+    -- For this example, we enable `ext_tabline`:
+    screen:detach()
+    screen = Screen.new(25, 5)
+    screen:attach({rgb=true, ext_tabline=true})
+
+    -- From ":help ui" we find that `tabline_update` receives `curtab` and
+    -- `tabs` objects. So we declare the UI handler like this:
+    local event_tabs, event_curtab
+    function screen:_handle_tabline_update(curtab, tabs)
+      event_curtab, event_tabs = curtab, tabs
+    end
+
+    -- Create a tabpage...
+    command('tabedit foo')
+
+    -- Use screen:expect{condition=…} to check the result.
+    screen:expect{condition=function()
+      eq({ id = 2 }, event_curtab)
+      eq({
+          {tab = { id = 1 }, name = '[No Name]'},
+          {tab = { id = 2 }, name = 'foo'},
+        },
+        event_tabs)
+    end}
   end)
 end)

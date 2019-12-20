@@ -16,6 +16,8 @@ local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
+local tmpname = helpers.tmpname
+local write_file = helpers.write_file
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -74,9 +76,127 @@ describe('API', function()
     eq({mode='i', blocking=false}, nvim("get_mode"))
   end)
 
+  describe('nvim_exec', function()
+    it('one-line input', function()
+      nvim('exec', "let x1 = 'a'", false)
+      eq('a', nvim('get_var', 'x1'))
+    end)
+
+    it(':verbose set {option}?', function()
+      nvim('exec', 'set nowrap', false)
+      eq('nowrap\n\tLast set from anonymous :source',
+        nvim('exec', 'verbose set wrap?', true))
+    end)
+
+    it('multiline input', function()
+      -- Heredoc + empty lines.
+      nvim('exec', "let x2 = 'a'\n", false)
+      eq('a', nvim('get_var', 'x2'))
+      nvim('exec','lua <<EOF\n\n\n\ny=3\n\n\nEOF', false)
+      eq(3, nvim('eval', "luaeval('y')"))
+
+      eq('', nvim('exec', 'lua <<EOF\ny=3\nEOF', false))
+      eq(3, nvim('eval', "luaeval('y')"))
+
+      -- Multiple statements
+      nvim('exec', 'let x1=1\nlet x2=2\nlet x3=3\n', false)
+      eq(1, nvim('eval', 'x1'))
+      eq(2, nvim('eval', 'x2'))
+      eq(3, nvim('eval', 'x3'))
+
+      -- Functions
+      nvim('exec', 'function Foo()\ncall setline(1,["xxx"])\nendfunction', false)
+      eq(nvim('get_current_line'), '')
+      nvim('exec', 'call Foo()', false)
+      eq(nvim('get_current_line'), 'xxx')
+
+      -- Autocmds
+      nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
+      nvim('command', 'new foo')
+      eq('Hello', request('nvim_eval', 'g:x1'))
+    end)
+
+    it('non-ASCII input', function()
+      nvim('exec', [=[
+        new
+        exe "normal! i ax \n Ax "
+        :%s/ax/--a1234--/g | :%s/Ax/--A1234--/g
+      ]=], false)
+      nvim('command', '1')
+      eq(' --a1234-- ', nvim('get_current_line'))
+      nvim('command', '2')
+      eq(' --A1234-- ', nvim('get_current_line'))
+
+      nvim('exec', [[
+        new
+        call setline(1,['xxx'])
+        call feedkeys('r')
+        call feedkeys('ñ', 'xt')
+      ]], false)
+      eq('ñxx', nvim('get_current_line'))
+    end)
+
+    it('execution error', function()
+      eq('Vim:E492: Not an editor command: bogus_command',
+        pcall_err(request, 'nvim_exec', 'bogus_command', false))
+      eq('', nvim('eval', 'v:errmsg'))  -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+
+      eq('Vim(buffer):E86: Buffer 23487 does not exist',
+        pcall_err(request, 'nvim_exec', 'buffer 23487', false))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+    end)
+
+    it('recursion', function()
+      local fname = tmpname()
+      write_file(fname, 'let x1 = "set from :source file"\n')
+      -- nvim_exec
+      --   :source
+      --     nvim_exec
+      request('nvim_exec', [[
+        let x2 = substitute('foo','o','X','g')
+        let x4 = 'should be overwritten'
+        call nvim_exec("source ]]..fname..[[\nlet x3 = substitute('foo','foo','set by recursive nvim_exec','g')\nlet x5='overwritten'\nlet x4=x5\n", v:false)
+      ]], false)
+      eq('set from :source file', request('nvim_get_var', 'x1'))
+      eq('fXX', request('nvim_get_var', 'x2'))
+      eq('set by recursive nvim_exec', request('nvim_get_var', 'x3'))
+      eq('overwritten', request('nvim_get_var', 'x4'))
+      eq('overwritten', request('nvim_get_var', 'x5'))
+      os.remove(fname)
+    end)
+
+    it('traceback', function()
+      local fname = tmpname()
+      write_file(fname, 'echo "hello"\n')
+      local sourcing_fname = tmpname()
+      write_file(sourcing_fname, 'call nvim_exec("source '..fname..'", v:false)\n')
+      meths.exec('set verbose=2', false)
+      local traceback_output = 'line 0: sourcing "'..sourcing_fname..'"\n'..
+        'line 0: sourcing "'..fname..'"\n'..
+        'hello\n'..
+        'finished sourcing '..fname..'\n'..
+        'continuing in nvim_exec() called at '..sourcing_fname..':1\n'..
+        'finished sourcing '..sourcing_fname..'\n'..
+        'continuing in nvim_exec() called at nvim_exec():0'
+      eq(traceback_output,
+        meths.exec('call nvim_exec("source '..sourcing_fname..'", v:false)', true))
+      os.remove(fname)
+      os.remove(sourcing_fname)
+    end)
+
+    it('returns output', function()
+      eq('this is spinal tap',
+         nvim('exec', 'lua <<EOF\n\n\nprint("this is spinal tap")\n\n\nEOF', true))
+      eq('', nvim('exec', 'echo', true))
+      eq('foo 42', nvim('exec', 'echo "foo" 42', true))
+    end)
+  end)
+
   describe('nvim_command', function()
     it('works', function()
-      local fname = helpers.tmpname()
+      local fname = tmpname()
       nvim('command', 'new')
       nvim('command', 'edit '..fname)
       nvim('command', 'normal itesting\napi')
@@ -313,41 +433,44 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_execute_lua', function()
+  describe('nvim_exec_lua', function()
     it('works', function()
-      meths.execute_lua('vim.api.nvim_set_var("test", 3)', {})
+      meths.exec_lua('vim.api.nvim_set_var("test", 3)', {})
       eq(3, meths.get_var('test'))
 
-      eq(17, meths.execute_lua('a, b = ...\nreturn a + b', {10,7}))
+      eq(17, meths.exec_lua('a, b = ...\nreturn a + b', {10,7}))
 
-      eq(NIL, meths.execute_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq(NIL, meths.exec_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq("xy", meths.exec_lua('return xx(...)', {'x','y'}))
+
+      -- Deprecated name: nvim_execute_lua.
       eq("xy", meths.execute_lua('return xx(...)', {'x','y'}))
     end)
 
     it('reports errors', function()
       eq([[Error loading lua: [string "<nvim>"]:1: '=' expected near '+']],
-        pcall_err(meths.execute_lua, 'a+*b', {}))
+        pcall_err(meths.exec_lua, 'a+*b', {}))
 
       eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol near '1']],
-        pcall_err(meths.execute_lua, '1+2', {}))
+        pcall_err(meths.exec_lua, '1+2', {}))
 
       eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol]],
-        pcall_err(meths.execute_lua, 'aa=bb\0', {}))
+        pcall_err(meths.exec_lua, 'aa=bb\0', {}))
 
       eq([[Error executing lua: [string "<nvim>"]:1: attempt to call global 'bork' (a nil value)]],
-        pcall_err(meths.execute_lua, 'bork()', {}))
+        pcall_err(meths.exec_lua, 'bork()', {}))
 
       eq('Error executing lua: [string "<nvim>"]:1: did\nthe\nfail',
-        pcall_err(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
+        pcall_err(meths.exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
     it('uses native float values', function()
-      eq(2.5, meths.execute_lua("return select(1, ...)", {2.5}))
-      eq("2.5", meths.execute_lua("return vim.inspect(...)", {2.5}))
+      eq(2.5, meths.exec_lua("return select(1, ...)", {2.5}))
+      eq("2.5", meths.exec_lua("return vim.inspect(...)", {2.5}))
 
       -- "special" float values are still accepted as return values.
-      eq(2.5, meths.execute_lua("return vim.api.nvim_eval('2.5')", {}))
-      eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.execute_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
+      eq(2.5, meths.exec_lua("return vim.api.nvim_eval('2.5')", {}))
+      eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.exec_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
     end)
   end)
 
@@ -453,7 +576,7 @@ describe('API', function()
       eq({0,3,14,0}, funcs.getpos('.'))
     end)
     it('vim.paste() failure', function()
-      nvim('execute_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
+      nvim('exec_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
       eq([[Error executing lua: [string "<nvim>"]:1: fake fail]],
         pcall_err(request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1))
     end)
@@ -677,7 +800,7 @@ describe('API', function()
       ok(nil ~= string.find(rv, 'noequalalways\n'..
         '\tLast set from API client %(channel id %d+%)'))
 
-      nvim('execute_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
+      nvim('exec_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
       status, rv = pcall(nvim, 'command_output',
         'verbose set equalalways?')
       eq(true, status)
@@ -1680,7 +1803,7 @@ describe('API', function()
       eq('  1 %a   "[No Name]"                    line 1\n'..
          '  3  h   "[Scratch]"                    line 0\n'..
          '  4  h   "[Scratch]"                    line 0',
-         meths.command_output("ls"))
+         meths.exec('ls', true))
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
 

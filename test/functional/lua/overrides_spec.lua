@@ -299,14 +299,11 @@ describe('package.path/package.cpath', function()
     end
     return new_paths
   end
-  local function execute_lua(cmd, ...)
-    return meths.execute_lua(cmd, {...})
-  end
   local function eval_lua(expr, ...)
-    return meths.execute_lua('return ' .. expr, {...})
+    return meths.exec_lua('return '..expr, {...})
   end
   local function set_path(which, value)
-    return execute_lua('package[select(1, ...)] = select(2, ...)', which, value)
+    return exec_lua('package[select(1, ...)] = select(2, ...)', which, value)
   end
 
   it('contains directories from &runtimepath on first invocation', function()

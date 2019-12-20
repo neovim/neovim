@@ -277,6 +277,10 @@ setmetatable(vim, {
   __index = __index
 })
 
+-- An easier alias for commands.
+vim.cmd = vim.api.nvim_command
+
+-- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   local a = vim.api
   local validate = vim.validate
@@ -315,7 +319,14 @@ do
   vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
-  vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
+  local function getenv(k)
+    local v = vim.fn.getenv(k)
+    if v == vim.NIL then
+      return nil
+    end
+    return v
+  end
+  vim.env = make_meta_accessor(getenv, vim.fn.setenv)
   -- TODO(ashkan) if/when these are available from an API, generate them
   -- instead of hardcoding.
   local window_options = {
@@ -363,9 +374,9 @@ do
       if winnr == nil and type(k) == "number" then
         return new_win_opt_accessor(k)
       end
-      return a.nvim_win_get_option(winnr or nil, k)
+      return a.nvim_win_get_option(winnr or 0, k)
     end
-    local function set(k, v) return a.nvim_win_set_option(winnr or nil, k, v) end
+    local function set(k, v) return a.nvim_win_set_option(winnr or 0, k, v) end
     return make_meta_accessor(get, set)
   end
   vim.wo = new_win_opt_accessor(nil)

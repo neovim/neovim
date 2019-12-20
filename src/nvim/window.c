@@ -4372,9 +4372,10 @@ static void win_goto_hor(bool left, long count)
   }
 }
 
-/*
- * Make window "wp" the current window.
- */
+/// Make window `wp` the current window.
+///
+/// @warning Autocmds may close the window immediately, so caller must check
+///          win_valid(wp).
 void win_enter(win_T *wp, bool undo_sync)
 {
   win_enter_ext(wp, undo_sync, false, false, true, true);

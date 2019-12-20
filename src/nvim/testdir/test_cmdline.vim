@@ -619,6 +619,8 @@ func Check_cmdline(cmdtype)
   return ''
 endfunc
 
+set cpo&
+
 func Test_getcmdtype()
   call feedkeys(":MyCmd a\<C-R>=Check_cmdline(':')\<CR>\<Esc>", "xt")
 
@@ -657,6 +659,37 @@ func Test_getcmdwintype()
   call assert_equal(':', a)
 
   call assert_equal('', getcmdwintype())
+endfunc
+
+func Test_getcmdwin_autocmd()
+  let s:seq = []
+  augroup CmdWin
+  au WinEnter * call add(s:seq, 'WinEnter ' .. win_getid())
+  au WinLeave * call add(s:seq, 'WinLeave ' .. win_getid())
+  au BufEnter * call add(s:seq, 'BufEnter ' .. bufnr())
+  au BufLeave * call add(s:seq, 'BufLeave ' .. bufnr())
+  au CmdWinEnter * call add(s:seq, 'CmdWinEnter ' .. win_getid())
+  au CmdWinLeave * call add(s:seq, 'CmdWinLeave ' .. win_getid())
+
+  let org_winid = win_getid()
+  let org_bufnr = bufnr()
+  call feedkeys("q::let a = getcmdwintype()\<CR>:let s:cmd_winid = win_getid()\<CR>:let s:cmd_bufnr = bufnr()\<CR>:q\<CR>", 'x!')
+  call assert_equal(':', a)
+  call assert_equal([
+	\ 'WinLeave ' .. org_winid,
+	\ 'WinEnter ' .. s:cmd_winid,
+	\ 'BufLeave ' .. org_bufnr,
+	\ 'BufEnter ' .. s:cmd_bufnr,
+	\ 'CmdWinEnter ' .. s:cmd_winid,
+	\ 'CmdWinLeave ' .. s:cmd_winid,
+	\ 'BufLeave ' .. s:cmd_bufnr,
+	\ 'WinLeave ' .. s:cmd_winid,
+	\ 'WinEnter ' .. org_winid,
+	\ 'BufEnter ' .. org_bufnr,
+	\ ], s:seq)
+
+  au!
+  augroup END
 endfunc
 
 func Test_verbosefile()
@@ -718,4 +751,7 @@ func Test_cmdline_overstrike()
   let &encoding = encoding_save
 endfunc
 
-set cpo&
+func Test_cmdwin_feedkeys()
+  " This should not generate E488
+  call feedkeys("q:\<CR>", 'x')
+endfunc
