@@ -203,13 +203,17 @@ class ProjectBreakpoints( object ):
 
     awaiting = 0
 
-    def response_handler( source, msg ):
-      if msg:
-        self._breakpoints_handler.AddBreakpoints( source, msg )
+    def response_received():
       nonlocal awaiting
       awaiting = awaiting - 1
       if awaiting == 0 and doneHandler:
         doneHandler()
+
+    def response_handler( source, msg ):
+      if msg:
+        self._breakpoints_handler.AddBreakpoints( source, msg )
+      response_received()
+
 
 
     # TODO: add the _configured_breakpoints to line_breakpoints
@@ -244,7 +248,8 @@ class ProjectBreakpoints( object ):
             'breakpoints': breakpoints,
           },
           'sourceModified': False, # TODO: We can actually check this
-        }
+        },
+        failure_handler = lambda *_: response_received()
       )
 
     # TODO: Add the _configured_breakpoints to function breakpoints
@@ -261,7 +266,8 @@ class ProjectBreakpoints( object ):
               for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
             ],
           }
-        }
+        },
+        failure_handler = lambda *_: response_received()
       )
 
     if self._exception_breakpoints is None:
@@ -274,7 +280,8 @@ class ProjectBreakpoints( object ):
         {
           'command': 'setExceptionBreakpoints',
           'arguments': self._exception_breakpoints
-        }
+        },
+        failure_handler = lambda *_: response_received()
       )
 
     if awaiting == 0 and doneHandler:
