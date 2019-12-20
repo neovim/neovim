@@ -729,7 +729,7 @@ def gen_docs(config):
         if p.returncode:
             sys.exit(p.returncode)
 
-        fn_maps = {}
+        fn_map_full = {}  # Collects all functions as each module is processed.
         sections = {}
         intros = {}
         sep = '=' * text_width
@@ -800,7 +800,7 @@ def gen_docs(config):
                             title = '{} Functions'.format(name)
                             helptag = '*api-{}*'.format(name.lower())
                         sections[filename] = (title, helptag, doc)
-                        fn_maps[filename] = fn_map
+                        fn_map_full.update(fn_map)
 
         if not sections:
             return
@@ -833,7 +833,7 @@ def gen_docs(config):
             fp.write(docs.encode('utf8'))
 
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(fn_maps, use_bin_type=True))
+            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
 
         shutil.rmtree(output_dir)
 
