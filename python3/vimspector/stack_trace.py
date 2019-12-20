@@ -172,8 +172,9 @@ class StackTraceView( object ):
       if 'line' in frame and frame[ 'line' ] > 0:
         self._currentFrame = frame
         return self._session.SetCurrentFrame( self._currentFrame )
+      return False
 
-    source = frame.get( 'source', {} )
+    source = frame.get( 'source' ) or {}
     if source.get( 'sourceReference', 0 ) > 0:
       def handle_resolved_source( resolved_source ):
         frame[ 'source' ] = resolved_source
