@@ -459,11 +459,13 @@ function M.fancy_floating_markdown(contents, opts)
     vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start, finish + 1, lang))
   end
   -- Previous highlight region.
-  local ph = {start = 0; finish = 1;}
+  -- TODO(ashkan): this wasn't working for some reason, but I would like to
+  -- make sure that regions between code blocks are definitely markdown.
+  -- local ph = {start = 0; finish = 1;}
   for _, h in ipairs(highlights) do
     -- highlight_region('markdown', ph.finish, h.start)
     highlight_region(h.ft, h.start, h.finish)
-    ph = h
+    -- ph = h
   end
 
   vim.api.nvim_set_current_win(cwin)
