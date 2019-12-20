@@ -4138,6 +4138,8 @@ getbufinfo([{dict}])
 			hidden		TRUE if the buffer is hidden.
 			listed		TRUE if the buffer is listed.
 			lnum		current line number in buffer.
+			linecount	number of lines in the buffer (only
+					valid when loaded)
 			loaded		TRUE if the buffer is loaded.
 			name		full path to the file in the buffer.
 			signs		list of signs placed in the buffer.
