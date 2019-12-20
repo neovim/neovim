@@ -1299,6 +1299,9 @@ au BufNewFile,BufRead *.reg
 " Renderman Interface Bytestream
 au BufNewFile,BufRead *.rib			setf rib
 
+" Rego Policy Language
+au BufNewFile,BufRead *.rego			setf rego
+
 " Rexx
 au BufNewFile,BufRead *.rex,*.orx,*.rxo,*.rxj,*.jrexx,*.rexxj,*.rexx,*.testGroup,*.testUnit	setf rexx
 
