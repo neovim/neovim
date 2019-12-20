@@ -829,7 +829,7 @@ describe('API: buffer events:', function()
   it('when :terminal lines change', function()
     local buffer_lines = {}
     local expected_lines = {}
-    command('terminal "'..nvim_prog..'" -u NONE -i NONE -n -c "set shortmess+=A"')
+    command('terminal "'..nvim_prog..'" -u NONE -i NONE -n -c "set bg=dark shortmess+=A"')
     local b = nvim('get_current_buf')
     ok(buffer('attach', b, true, {}))
 
