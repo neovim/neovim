@@ -526,11 +526,11 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
     for (size_t j = 0; j < y_size; j++) {
       if (j) {
         // terminate the previous line
-        #ifdef UNIX
+# ifdef UNIX
          terminal_send(curbuf->terminal, "\n", 1);
-        #else
+# else
          terminal_send(curbuf->terminal, "\r", 1);
-        #endif
+# endif
       }
       terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
     }
