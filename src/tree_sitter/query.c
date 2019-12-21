@@ -224,7 +224,7 @@ static void stream_scan_identifier(Stream *stream) {
  * CaptureListPool
  ******************/
 
-static CaptureListPool capture_list_pool_new() {
+static CaptureListPool capture_list_pool_new(void) {
   return (CaptureListPool) {
     .list = array_new(),
     .usage_map = UINT32_MAX,
@@ -269,7 +269,7 @@ static void capture_list_pool_release(CaptureListPool *self, uint16_t id) {
  * SymbolTable
  **************/
 
-static SymbolTable symbol_table_new() {
+static SymbolTable symbol_table_new(void) {
   return (SymbolTable) {
     .characters = array_new(),
     .slices = array_new(),
