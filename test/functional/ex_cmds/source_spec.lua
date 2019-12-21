@@ -26,9 +26,15 @@ describe(':source', function()
       'let a = 3\n'..
       'let a = 4\n')
     wait()
+
     -- Source the 2nd line only
     feed('ggjV')
     feed_command(':source')
     eq('3', meths.exec('echo a', true))
+
+    -- Source from 2nd line to end of file
+    feed('ggjVG')
+    feed_command(':source')
+    eq('4', meths.exec('echo a', true))
   end)
 end)
