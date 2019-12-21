@@ -870,9 +870,12 @@ function lsp.omnifunc(findstart, base)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
   local params = util.make_position_params()
 
+  local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
-    if err then return end
-    local matches = util.text_document_completion_list_to_complete_items(result or {})
+    if err or not result then return end
+    local matches = util.text_document_completion_list_to_complete_items(result)
+    -- TODO(ashkan): is this the best way to do this?
+    vim.list_extend(items, matches)
     vim.fn.complete(textMatch+1, matches)
   end)
 
