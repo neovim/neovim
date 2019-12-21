@@ -876,7 +876,7 @@ function lsp.omnifunc(findstart, base)
     local matches = util.text_document_completion_list_to_complete_items(result)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
-    vim.fn.complete(textMatch+1, matches)
+    vim.fn.complete(textMatch+1, items)
   end)
 
   -- Return -2 to signal that we should continue completion so that we can
