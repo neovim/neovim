@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local command = helpers.command
 local insert = helpers.insert
-local wait = helpers.wait
 local eq = helpers.eq
 local clear = helpers.clear
 local meths = helpers.meths
@@ -15,7 +14,6 @@ describe(':source', function()
 
   it('current buffer', function()
     insert('let a = 2')
-    wait()
     command('source')
     eq('2', meths.exec('echo a', true))
   end)
@@ -25,7 +23,6 @@ describe(':source', function()
       'let a = 2\n'..
       'let a = 3\n'..
       'let a = 4\n')
-    wait()
 
     -- Source the 2nd line only
     feed('ggjV')
@@ -43,7 +40,6 @@ describe(':source', function()
       'lua << EOF\n'..
       'y = 4\n'..
       'EOF\n')
-    wait()
 
     command('source')
     eq('4', meths.exec('echo luaeval("y")', true))
