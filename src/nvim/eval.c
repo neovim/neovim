@@ -24076,7 +24076,7 @@ void option_last_set_msg(LastSet last_set)
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
     if (last_set.script_ctx.sc_lnum > 0) {
-      MSG_PUTS(_(" line "));
+      MSG_PUTS(_(line_msg));
       msg_outnum((long)last_set.script_ctx.sc_lnum);
     }
     if (should_free) {
