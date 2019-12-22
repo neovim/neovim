@@ -60,6 +60,12 @@
 #define ADD(array, item) \
   kv_push(array, item)
 
+#define FIXED_TEMP_ARRAY(name, fixsize) \
+  Array name = ARRAY_DICT_INIT; \
+  Object name##__items[fixsize]; \
+  args.size = fixsize; \
+  args.items = name##__items; \
+
 #define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
 
 /// Create a new String instance, putting data in allocated memory

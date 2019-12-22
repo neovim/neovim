@@ -26,6 +26,11 @@ typedef struct {
   TSTree *tree;  // internal tree, used for editing/reparsing
 } TSLua_parser;
 
+typedef struct {
+  TSQueryCursor *cursor;
+  int predicated_match;
+} TSLua_cursor;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/treesitter.c.generated.h"
 #endif
@@ -66,6 +71,20 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
+  { "_rawquery", node_rawquery },
+  { NULL, NULL }
+};
+
+static struct luaL_Reg query_meta[] = {
+  { "__gc", query_gc },
+  { "__tostring", query_tostring },
+  { "inspect", query_inspect },
+  { NULL, NULL }
+};
+
+// cursor is not exposed, but still needs garbage collection
+static struct luaL_Reg querycursor_meta[] = {
+  { "__gc", querycursor_gc },
   { NULL, NULL }
 };
 
@@ -96,6 +115,8 @@ void tslua_init(lua_State *L)
   build_meta(L, "treesitter_parser", parser_meta);
   build_meta(L, "treesitter_tree", tree_meta);
   build_meta(L, "treesitter_node", node_meta);
+  build_meta(L, "treesitter_query", query_meta);
+  build_meta(L, "treesitter_querycursor", querycursor_meta);
 }
 
 int tslua_register_lang(lua_State *L)
@@ -276,13 +297,33 @@ static int parser_parse_buf(lua_State *L)
   }
   TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
+
+  uint32_t n_ranges = 0;
+  TSRange *changed = p->tree ? ts_tree_get_changed_ranges(p->tree, new_tree,
+                                                          &n_ranges) : NULL;
   if (p->tree) {
     ts_tree_delete(p->tree);
   }
   p->tree = new_tree;
 
   tslua_push_tree(L, p->tree);
-  return 1;
+
+  lua_createtable(L, n_ranges, 0);
+  for (size_t i = 0; i < n_ranges; i++) {
+    lua_createtable(L, 4, 0);
+    lua_pushinteger(L, changed[i].start_point.row);
+    lua_rawseti(L, -2, 1);
+    lua_pushinteger(L, changed[i].start_point.column);
+    lua_rawseti(L, -2, 2);
+    lua_pushinteger(L, changed[i].end_point.row);
+    lua_rawseti(L, -2, 3);
+    lua_pushinteger(L, changed[i].end_point.column);
+    lua_rawseti(L, -2, 4);
+
+    lua_rawseti(L, -2, i+1);
+  }
+  xfree(changed);
+  return 2;
 }
 
 static int parser_tree(lua_State *L)
@@ -383,7 +424,7 @@ static int tree_root(lua_State *L)
     return 0;
   }
   TSNode root = ts_tree_root_node(tree);
-  push_node(L, root);
+  push_node(L, root, 1);
   return 1;
 }
 
@@ -394,18 +435,19 @@ static int tree_root(lua_State *L)
 /// top of stack must either be the tree this node belongs to or another node
 /// of the same tree! This value is not popped. Can only be called inside a
 /// cfunction with the tslua environment.
-static void push_node(lua_State *L, TSNode node)
+static void push_node(lua_State *L, TSNode node, int uindex)
 {
+  assert(uindex > 0 || uindex < -LUA_MINSTACK);
   if (ts_node_is_null(node)) {
-    lua_pushnil(L);  // [src, nil]
+    lua_pushnil(L);  // [nil]
     return;
   }
-  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
+  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [udata]
   *ud = node;
-  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [src, udata, meta]
-  lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2);  // [src, udata, reftable]
-  lua_setfenv(L, -2);  // [src, udata]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
+  lua_getfenv(L, uindex);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
 }
 
 static bool node_check(lua_State *L, TSNode *res)
@@ -586,8 +628,7 @@ static int node_child(lua_State *L)
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_child(node, (uint32_t)num);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -600,8 +641,7 @@ static int node_named_child(lua_State *L)
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_named_child(node, (uint32_t)num);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -617,8 +657,7 @@ static int node_descendant_for_range(lua_State *L)
                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -634,8 +673,7 @@ static int node_named_descendant_for_range(lua_State *L)
                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_named_descendant_for_point_range(node, start, end);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -646,7 +684,254 @@ static int node_parent(lua_State *L)
     return 0;
   }
   TSNode parent = ts_node_parent(node);
-  push_node(L, parent);
+  push_node(L, parent, 1);
   return 1;
 }
 
+/// assumes the match table being on top of the stack
+static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
+{
+  for (int i = 0; i < match->capture_count; i++) {
+    push_node(L, match->captures[i].node, nodeidx);
+    lua_rawseti(L, -2, match->captures[i].index+1);
+  }
+}
+
+static int query_next_match(lua_State *L)
+{
+  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
+  TSQueryCursor *cursor = ud->cursor;
+
+  TSQuery *query = query_check(L, lua_upvalueindex(3));
+  TSQueryMatch match;
+  if (ts_query_cursor_next_match(cursor, &match)) {
+    lua_pushinteger(L, match.pattern_index+1);  // [index]
+    lua_createtable(L, ts_query_capture_count(query), 2);  // [index, match]
+    set_match(L, &match, lua_upvalueindex(2));
+    return 2;
+  }
+  return 0;
+}
+
+
+static int query_next_capture(lua_State *L)
+{
+  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
+  TSQueryCursor *cursor = ud->cursor;
+
+  TSQuery *query = query_check(L, lua_upvalueindex(3));
+
+  if (ud->predicated_match > -1) {
+    lua_getfield(L, lua_upvalueindex(4), "active");
+    bool active = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    if (!active) {
+      ts_query_cursor_remove_match(cursor, ud->predicated_match);
+    }
+    ud->predicated_match = -1;
+  }
+
+  TSQueryMatch match;
+  uint32_t capture_index;
+  if (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+    TSQueryCapture capture = match.captures[capture_index];
+
+    lua_pushinteger(L, capture.index+1);  // [index]
+    push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
+
+    uint32_t n_pred;
+    ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
+    if (n_pred > 0 && capture_index == 0) {
+      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
+      set_match(L, &match, lua_upvalueindex(2));
+      lua_pushinteger(L, match.pattern_index+1);
+      lua_setfield(L, -2, "pattern");
+
+      if (match.capture_count > 1) {
+        ud->predicated_match = match.id;
+        lua_pushboolean(L, false);
+        lua_setfield(L, -2, "active");
+      }
+      return 3;
+    }
+    return 2;
+  }
+  return 0;
+}
+
+static int node_rawquery(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSQuery *query = query_check(L, 2);
+  // TODO(bfredl): these are expensive allegedly,
+  // use a reuse list later on?
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_exec(cursor, query, node);
+
+  bool captures = lua_toboolean(L, 3);
+
+  if (lua_gettop(L) >= 4) {
+    int start = luaL_checkinteger(L, 4);
+    int end = lua_gettop(L) >= 5 ? luaL_checkinteger(L, 5) : MAXLNUM;
+    ts_query_cursor_set_point_range(cursor,
+                                    (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
+  }
+
+  TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
+  ud->cursor = cursor;
+  ud->predicated_match = -1;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_querycursor");
+  lua_setmetatable(L, -2);  // [udata]
+  lua_pushvalue(L, 1);  // [udata, node]
+
+  // include query separately, as to keep a ref to it for gc
+  lua_pushvalue(L, 2);  // [udata, node, query]
+
+  if (captures) {
+    // placeholder for match state
+    lua_createtable(L, ts_query_capture_count(query), 2);  // [u, n, q, match]
+    lua_pushcclosure(L, query_next_capture, 4);  // [closure]
+  } else {
+    lua_pushcclosure(L, query_next_match, 3);  // [closure]
+  }
+
+  return 1;
+}
+
+static int querycursor_gc(lua_State *L)
+{
+  TSLua_cursor *ud = luaL_checkudata(L, 1, "treesitter_querycursor");
+  ts_query_cursor_delete(ud->cursor);
+  return 0;
+}
+
+// Query methods
+
+int ts_lua_parse_query(lua_State *L)
+{
+  if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+    return luaL_error(L, "string expected");
+  }
+
+  const char *lang_name = lua_tostring(L, 1);
+  TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
+  if (!lang) {
+    return luaL_error(L, "no such language: %s", lang_name);
+  }
+
+  size_t len;
+  const char *src = lua_tolstring(L, 2, &len);
+
+  uint32_t error_offset;
+  TSQueryError error_type;
+  TSQuery *query = ts_query_new(lang, src, len, &error_offset, &error_type);
+
+  if (!query) {
+    return luaL_error(L, "query: %s at position %d",
+                      query_err_string(error_type), (int)error_offset);
+  }
+
+  TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
+  *ud = query;
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_query");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
+  return 1;
+}
+
+
+static const char *query_err_string(TSQueryError err) {
+  switch (err) {
+    case TSQueryErrorSyntax: return "invalid syntax";
+    case TSQueryErrorNodeType: return "invalid node type";
+    case TSQueryErrorField: return "invalid field";
+    case TSQueryErrorCapture: return "invalid capture";
+    default: return "error";
+  }
+}
+
+static TSQuery *query_check(lua_State *L, int index)
+{
+  TSQuery **ud = luaL_checkudata(L, index, "treesitter_query");
+  return *ud;
+}
+
+static int query_gc(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  if (!query) {
+    return 0;
+  }
+
+  ts_query_delete(query);
+  return 0;
+}
+
+static int query_tostring(lua_State *L)
+{
+  lua_pushstring(L, "<query>");
+  return 1;
+}
+
+static int query_inspect(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  if (!query) {
+    return 0;
+  }
+
+  uint32_t n_pat = ts_query_pattern_count(query);
+  lua_createtable(L, 0, 2);  // [retval]
+  lua_createtable(L, n_pat, 1);  // [retval, patterns]
+  for (size_t i = 0; i < n_pat; i++) {
+    uint32_t len;
+    const TSQueryPredicateStep *step = ts_query_predicates_for_pattern(query,
+                                                                       i, &len);
+    if (len == 0) {
+      continue;
+    }
+    lua_createtable(L, len/4, 1);  // [retval, patterns, pat]
+    lua_createtable(L, 3, 0);  // [retval, patterns, pat, pred]
+    int nextpred = 1;
+    int nextitem = 1;
+    for (size_t k = 0; k < len; k++) {
+      if (step[k].type == TSQueryPredicateStepTypeDone) {
+        lua_rawseti(L, -2, nextpred++);  // [retval, patterns, pat]
+        lua_createtable(L, 3, 0);  // [retval, patterns, pat, pred]
+        nextitem = 1;
+        continue;
+      }
+
+      if (step[k].type == TSQueryPredicateStepTypeString) {
+        uint32_t strlen;
+        const char *str = ts_query_string_value_for_id(query, step[k].value_id,
+                                                       &strlen);
+        lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
+      } else if (step[k].type == TSQueryPredicateStepTypeCapture) {
+        lua_pushnumber(L, step[k].value_id+1);  // [..., pat, pred, item]
+      } else {
+        abort();
+      }
+      lua_rawseti(L, -2, nextitem++);  // [retval, patterns, pat, pred]
+    }
+    // last predicate should have ended with TypeDone
+    lua_pop(L, 1);  // [retval, patters, pat]
+    lua_rawseti(L, -2, i+1);  // [retval, patterns]
+  }
+  lua_setfield(L, -2, "patterns");  // [retval]
+
+  uint32_t n_captures = ts_query_capture_count(query);
+  lua_createtable(L, n_captures, 0);  // [retval, captures]
+  for (size_t i = 0; i < n_captures; i++) {
+    uint32_t strlen;
+    const char *str = ts_query_capture_name_for_id(query, i, &strlen);
+    lua_pushlstring(L, str, strlen);  // [retval, captures, capture]
+    lua_rawseti(L, -2, i+1);
+  }
+  lua_setfield(L, -2, "captures");  // [retval]
+
+  return 1;
+}

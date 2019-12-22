@@ -4,6 +4,9 @@ local Screen = require('test.functional.ui.screen')
 local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
 local meths = helpers.meths
+local funcs = helpers.funcs
+local pcall_err = helpers.pcall_err
+local ok = helpers.ok
 
 describe('API: highlight',function()
   local expected_rgb = {
@@ -109,5 +112,21 @@ describe('API: highlight',function()
     eq({ underline = true, standout = true, },
        meths.get_hl_by_name('cursorline', 0));
 
+  end)
+
+  it('nvim_get_hl_id_by_name', function()
+    -- precondition: use a hl group that does not yet exist
+    eq('Invalid highlight name: Shrubbery', pcall_err(meths.get_hl_by_name, "Shrubbery", true))
+    eq(0, funcs.hlID("Shrubbery"))
+
+    local hl_id = meths.get_hl_id_by_name("Shrubbery")
+    ok(hl_id > 0)
+    eq(hl_id, funcs.hlID("Shrubbery"))
+
+    command('hi Shrubbery guifg=#888888 guibg=#888888')
+    eq({foreground=tonumber("0x888888"), background=tonumber("0x888888")},
+       meths.get_hl_by_id(hl_id, true))
+    eq({foreground=tonumber("0x888888"), background=tonumber("0x888888")},
+       meths.get_hl_by_name("Shrubbery", true))
   end)
 end)

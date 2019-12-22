@@ -157,7 +157,7 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      executor_exec_lua_cb(cb.on_detach, "detach", args, false);
+      executor_exec_lua_cb(cb.on_detach, "detach", args, false, NULL);
       textlock--;
     }
     free_update_callbacks(cb);
@@ -265,7 +265,7 @@ void buf_updates_send_changes(buf_T *buf,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true);
+      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -293,10 +293,7 @@ void buf_updates_changedtick(buf_T *buf)
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
     if (cb.on_changedtick != LUA_NOREF) {
-      Array args = ARRAY_DICT_INIT;
-      Object items[2];
-      args.size = 2;
-      args.items = items;
+      FIXED_TEMP_ARRAY(args, 2);
 
       // the first argument is always the buffer handle
       args.items[0] = BUFFER_OBJ(buf->handle);
@@ -306,7 +303,7 @@ void buf_updates_changedtick(buf_T *buf)
 
       textlock++;
       Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
-                                        args, true);
+                                        args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {

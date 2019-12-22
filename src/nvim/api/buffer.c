@@ -169,21 +169,21 @@ Boolean nvim_buf_attach(uint64_t channel_id,
         goto error;
       }
       cb.on_lines = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_changedtick = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_detach", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_detach = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("utf_sizes", k.data)) {
       if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
@@ -229,6 +229,90 @@ Boolean nvim_buf_detach(uint64_t channel_id,
 
   buf_updates_unregister(buf, channel_id);
   return true;
+}
+
+static void buf_clear_luahl(buf_T *buf, bool force)
+{
+  if (buf->b_luahl || force) {
+    executor_free_luaref(buf->b_luahl_start);
+    executor_free_luaref(buf->b_luahl_window);
+    executor_free_luaref(buf->b_luahl_line);
+    executor_free_luaref(buf->b_luahl_end);
+  }
+  buf->b_luahl_start = LUA_NOREF;
+  buf->b_luahl_window = LUA_NOREF;
+  buf->b_luahl_line = LUA_NOREF;
+  buf->b_luahl_end = LUA_NOREF;
+}
+
+/// Unstabilized interface for defining syntax hl in lua.
+///
+/// This is not yet safe for general use, lua callbacks will need to
+/// be restricted, like textlock and probably other stuff.
+///
+/// The API on_line/nvim__put_attr is quite raw and not intended to be the
+/// final shape. Ideally this should operate on chunks larger than a single
+/// line to reduce interpreter overhead, and generate annotation objects
+/// (bufhl/virttext) on the fly but using the same representation.
+void nvim__buf_set_luahl(uint64_t channel_id, Buffer buffer,
+                         DictionaryOf(LuaRef) opts, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return;
+  }
+
+  redraw_buf_later(buf, NOT_VALID);
+  buf_clear_luahl(buf, false);
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_start", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_start = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_window", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_window = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+  buf->b_luahl = true;
+  return;
+error:
+  buf_clear_luahl(buf, true);
+  buf->b_luahl = false;
+}
+
+void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last,
+                            Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  redraw_buf_range_later(buf, (linenr_T)first+1, (linenr_T)last);
 }
 
 /// Sets a buffer line
@@ -1112,7 +1196,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
         return rv;
       }
       limit = v->data.integer;
-      v->data.integer = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return rv;
