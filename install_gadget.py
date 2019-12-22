@@ -37,7 +37,7 @@ import functools
 import time
 
 try:
-  from io import BytesIO ## for Python 3
+  from io import BytesIO # for Python 3
 except ImportError:
   from BytesIO import BytesIO
 

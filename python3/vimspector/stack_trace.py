@@ -169,11 +169,11 @@ class StackTraceView( object ):
 
   def _JumpToFrame( self, frame ):
     def do_jump():
-      if 'line' in frame and frame[ 'line' ]:
+      if 'line' in frame and frame[ 'line' ] > 0:
         self._currentFrame = frame
         return self._session.SetCurrentFrame( self._currentFrame )
 
-    source = frame[ 'source' ]
+    source = frame.get( 'source', {} )
     if source.get( 'sourceReference', 0 ) > 0:
       def handle_resolved_source( resolved_source ):
         frame[ 'source' ] = resolved_source
