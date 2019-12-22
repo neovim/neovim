@@ -58,3 +58,7 @@ if [[ -n "$CMAKE_URL" ]]; then
     exit 1
   }
 fi
+
+echo "Install perl"
+curl -L https://install.perlbrew.pl | bash
+perlbrew install --notest perl-5.30.1

@@ -48,3 +48,7 @@ else
   gcc -m32 -o "$TREE_SITTER_DIR/bin/c.so" -shared parser.c -I.
 fi
 test -f "$TREE_SITTER_DIR/bin/c.so"
+
+echo "Install neovim perl dist"
+export PATH="~/perl5/bin:$PATH"
+cpanm install Neovim-Ext
