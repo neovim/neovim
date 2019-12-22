@@ -2977,11 +2977,35 @@ static void cmd_source(char_u *fname, exarg_T *eap)
   }
 }
 
+typedef struct {
+  linenr_T curr_lnum;
+  const linenr_T final_lnum;
+} GetBufferLineCookie;
+
+/// Get one line from the current selection in the buffer.
+/// Called by do_cmdline() when it's called from cmd_source_buffer().
+///
+/// @return pointer to allocated line, or NULL for end-of-file or
+///         some error.
+static char_u *get_buffer_line(int c, void *cookie, int indent, bool do_concat)
+{
+  GetBufferLineCookie *p = cookie;
+  if (p->curr_lnum > p->final_lnum) {
+    return NULL;
+  }
+  char_u *curr_line = ml_get(p->curr_lnum);
+  p->curr_lnum++;
+  return (char_u *)xstrdup((const char *)curr_line);
+}
+
 static void cmd_source_buffer(exarg_T *eap)
 {
-  for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    do_source_str((const char *)ml_get(lnum), ":source (no file)");
-  }
+  GetBufferLineCookie cookie = {
+      .curr_lnum = eap->line1,
+      .final_lnum = eap->line2,
+  };
+  source_using_linegetter((void *)&cookie, get_buffer_line,
+                          ":source (no file)");
 }
 
 /// ":source" and associated commands.
@@ -3055,10 +3079,9 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)xstrdup(buf);
 }
 
-/// Executes lines in `src` as Ex commands.
-///
-/// @see do_source()
-int do_source_str(const char *cmd, const char *traceback_name)
+static int source_using_linegetter(void *cookie,
+                                   LineGetter fgetline,
+                                   const char *traceback_name)
 {
   char_u *save_sourcing_name = sourcing_name;
   linenr_T save_sourcing_lnum = sourcing_lnum;
@@ -3073,20 +3096,30 @@ int do_source_str(const char *cmd, const char *traceback_name)
   }
   sourcing_lnum = 0;
 
-  GetStrLineCookie cookie = {
-    .buf = (char_u *)cmd,
-    .offset = 0,
-  };
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
-  int retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
+  void *save_funccalp = save_funccal();
+  int retval = do_cmdline(NULL, fgetline, cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  current_sctx = save_current_sctx;
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
+  current_sctx = save_current_sctx;
+  restore_funccal(save_funccalp);
   return retval;
+}
+
+/// Executes lines in `src` as Ex commands.
+///
+/// @see do_source()
+int do_source_str(const char *cmd, const char *traceback_name)
+{
+  GetStrLineCookie cookie = {
+      .buf = (char_u *)cmd,
+      .offset = 0,
+  };
+  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name);
 }
 
 /// Reads the file `fname` and executes its lines as Ex commands.
