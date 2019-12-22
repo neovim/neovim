@@ -750,3 +750,8 @@ func Test_cmdline_overstrike()
 
   let &encoding = encoding_save
 endfunc
+
+func Test_cmdwin_feedkeys()
+  " This should not generate E488
+  call feedkeys("q:\<CR>", 'x')
+endfunc

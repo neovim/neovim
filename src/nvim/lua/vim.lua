@@ -374,9 +374,9 @@ do
       if winnr == nil and type(k) == "number" then
         return new_win_opt_accessor(k)
       end
-      return a.nvim_win_get_option(winnr or nil, k)
+      return a.nvim_win_get_option(winnr or 0, k)
     end
-    local function set(k, v) return a.nvim_win_set_option(winnr or nil, k, v) end
+    local function set(k, v) return a.nvim_win_set_option(winnr or 0, k, v) end
     return make_meta_accessor(get, set)
   end
   vim.wo = new_win_opt_accessor(nil)

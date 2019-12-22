@@ -5360,7 +5360,7 @@ static bool vim_settempdir(char *tempdir)
 char_u *vim_tempname(void)
 {
   // Temp filename counter.
-  static uint32_t temp_count;
+  static uint64_t temp_count;
 
   char_u *tempdir = vim_gettempdir();
   if (!tempdir) {
@@ -5371,7 +5371,7 @@ char_u *vim_tempname(void)
   // and nobody else creates a file in it.
   char_u template[TEMP_FILE_PATH_MAXLEN];
   snprintf((char *)template, TEMP_FILE_PATH_MAXLEN,
-           "%s%" PRIu32, tempdir, temp_count++);
+           "%s%" PRIu64, tempdir, temp_count++);
   return vim_strsave(template);
 }
 

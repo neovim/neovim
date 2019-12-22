@@ -158,7 +158,7 @@ jobs:
       env:
         - CLANG_SANITIZER=TSAN
         - *common-job-env
-    - if: false
+    - if: type != pull_request
       name: snap
       os: linux
       env:
@@ -188,6 +188,12 @@ jobs:
         script: ci/snap/deploy.sh
         on:
           branch: master
+  allow_failures:
+    - env:
+      - LC_ALL: C.UTF-8
+      - LANG: C.UTF-8
+      - SNAPCRAFT_ENABLE_SILENT_REPORT: y
+      - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
   fast_finish: true
 
 before_install: ci/before_install.sh

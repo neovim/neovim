@@ -878,7 +878,9 @@ static int command_line_execute(VimState *state, int key)
   }
 
   if (s->c == cedit_key || s->c == K_CMDWIN) {
-    if (ex_normal_busy == 0 && got_int == false) {
+    // TODO(vim): why is ex_normal_busy checked here?
+    if ((s->c == K_CMDWIN || ex_normal_busy == 0)
+        && got_int == false) {
       // Open a window to edit the command line (and history).
       s->c = open_cmdwin();
       s->some_key_typed = true;

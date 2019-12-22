@@ -314,6 +314,9 @@ func RunVimPiped(before, after, arguments, pipecmd)
     let args .= ' -S Xafter.vim'
   endif
 
+  " Optionally run Vim under valgrind
+  " let cmd = 'valgrind --tool=memcheck --leak-check=yes --num-callers=25 --log-file=valgrind ' . cmd
+
   exe "silent !" . a:pipecmd . cmd . args . ' ' . a:arguments
 
   if len(a:before) > 0

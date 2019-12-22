@@ -2280,6 +2280,7 @@ pathshorten({expr})		String	shorten directory names in a path
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
+pum_getpos()			Dict	position and size of pum if visible
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
 py3eval({expr})			any	evaluate |python3| expression
@@ -3119,6 +3120,9 @@ complete_info([{what}])
 		If the optional {what} list argument is supplied, then only
 		the items listed in {what} are returned.  Unsupported items in
 		{what} are silently ignored.
+
+		To get the position of the popup menu, see |pum_getpos()|. It's
+ 		also available in |v:event| during the |CompleteChanged| event.
 
 		Examples: >
 			" Get all items
@@ -4134,6 +4138,8 @@ getbufinfo([{dict}])
 			hidden		TRUE if the buffer is hidden.
 			listed		TRUE if the buffer is listed.
 			lnum		current line number in buffer.
+			linecount	number of lines in the buffer (only
+					valid when loaded)
 			loaded		TRUE if the buffer is loaded.
 			name		full path to the file in the buffer.
 			signs		list of signs placed in the buffer.
@@ -5451,6 +5457,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
+		  env      : A dict of strings to append (or replace see
+		             |clear_env|) to the current environment.
+		  clear_env: If set, use the exact values passed in |env|
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     with the job over stdin and stdout. "on_stdout" is
 			     then ignored, but "on_stderr" can still be used.
@@ -6517,6 +6526,19 @@ printf({fmt}, {expr1} ...)				*printf()*
 		of "%" items.  If there are not sufficient or too many
 		arguments an error is given.  Up to 18 arguments can be used.
 
+
+pum_getpos()						*pum_getpos()*
+ 		If the popup menu (see |ins-completion-menu|) is not visible,
+ 		returns an empty |Dictionary|, otherwise, returns a
+ 		|Dictionary| with the following keys:
+ 			height		nr of items visible
+ 			width		screen cells
+ 			row		top screen row (0 first row)
+ 			col		leftmost screen column (0 first col)
+ 			size		total nr of items
+ 			scrollbar	|TRUE| if visible
+
+  		The values are the same as in |v:event| during |CompleteChanged|.
 
 pumvisible()						*pumvisible()*
 		Returns non-zero when the popup menu is visible, zero
