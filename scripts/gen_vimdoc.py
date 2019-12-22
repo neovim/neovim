@@ -141,7 +141,7 @@ def debug_this(cond, o):
         try:
             name = o.nodeName
             o = o.toprettyxml(indent='  ', newl='\n')
-        except:
+        except Exception:
             pass
     if ((callable(cond) and cond())
             or (not callable(cond) and cond in o)):
@@ -271,8 +271,6 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
     return result
 
 
-
-
 def update_params_map(parent, ret_map, width=62):
     """Updates `ret_map` with name:desc key-value pairs extracted
     from Doxygen XML node `parent`.
@@ -293,8 +291,7 @@ def update_params_map(parent, ret_map, width=62):
         desc = ''
         desc_node = get_child(node, 'parameterdescription')
         if desc_node:
-            desc = fmt_node_as_vimhelp(desc_node, width=width,
-                                  indent=(' ' * len(name)))
+            desc = fmt_node_as_vimhelp(desc_node, width=width, indent=(" " * len(name)))
             ret_map[name] = desc
     return ret_map
 
@@ -399,8 +396,9 @@ def para_as_map(parent, indent='', width=62):
     }
 
     if is_inline(parent):
-        chunks['text'] = clean_lines(doc_wrap(render_node(parent, ''),
-            indent=indent, width=width).strip())
+        chunks["text"] = clean_lines(
+            doc_wrap(render_node(parent, ""), indent=indent, width=width).strip()
+        )
 
     # Ordered dict of ordered lists.
     groups = collections.OrderedDict([
@@ -606,7 +604,7 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
         desc = find_first(member, 'detaileddescription')
         if desc:
             for child in desc.childNodes:
-                paras.append(para_as_map(child))  #, width=width, indent=indent))
+                paras.append(para_as_map(child))
             if DEBUG:
                 print(textwrap.indent(
                     re.sub(r'\n\s*\n+', '\n',
