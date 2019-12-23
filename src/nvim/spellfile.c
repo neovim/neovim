@@ -1238,17 +1238,14 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     p = xmalloc(1);
     p[0] = NUL;
     smp->sm_lead = p;
+    smp->sm_lead_w = mb_str2wide(smp->sm_lead);
     smp->sm_leadlen = 0;
     smp->sm_oneof = NULL;
+    smp->sm_oneof_w = NULL;
     smp->sm_rules = p;
     smp->sm_to = NULL;
-    if (has_mbyte) {
-      smp->sm_lead_w = mb_str2wide(smp->sm_lead);
-      smp->sm_leadlen = 0;
-      smp->sm_oneof_w = NULL;
-      smp->sm_to_w = NULL;
-    }
-    ++gap->ga_len;
+    smp->sm_to_w = NULL;
+    gap->ga_len++;
   }
 
   // Fill the first-index table.
@@ -1713,7 +1710,6 @@ read_tree_node (
       if (c == BY_NOFLAGS && !prefixtree) {
         // No flags, all regions.
         idxs[idx] = 0;
-        c = 0;
       } else if (c != BY_INDEX) {
         if (prefixtree) {
           // Read the optional pflags byte, the prefix ID and the

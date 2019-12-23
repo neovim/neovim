@@ -3106,7 +3106,7 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
     case 0:
       break;
     case 1:
-      result = 1;  // invalid arguments
+      // invalid arguments
       goto free_and_return;
     default:
       assert(false && "Unknown return code from str_to_mapargs!");

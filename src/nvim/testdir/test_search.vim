@@ -1,6 +1,7 @@
 " Test for the search command
 
 source shared.vim
+source screendump.vim
 
 func Test_search_cmdline()
   " See test/functional/legacy/search_spec.lua
@@ -547,6 +548,36 @@ func Test_incsearch_with_change()
 
   call StopVimInTerminal(buf)
   call delete('Xis_change_script')
+endfunc
+
+func Test_incsearch_scrolling()
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call assert_equal(0, &scrolloff)
+  call writefile([
+	\ 'let dots = repeat(".", 120)',
+	\ 'set incsearch cmdheight=2 scrolloff=0',
+	\ 'call setline(1, [dots, dots, dots, "", "target", dots, dots])',
+	\ 'normal gg',
+	\ 'redraw',
+	\ ], 'Xscript')
+  let buf = RunVimInTerminal('-S Xscript', {'rows': 9, 'cols': 70})
+  " Need to send one key at a time to force a redraw
+  call term_sendkeys(buf, '/')
+  sleep 100m
+  call term_sendkeys(buf, 't')
+  sleep 100m
+  call term_sendkeys(buf, 'a')
+  sleep 100m
+  call term_sendkeys(buf, 'r')
+  sleep 100m
+  call term_sendkeys(buf, 'g')
+  call VerifyScreenDump(buf, 'Test_incsearch_scrolling_01', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
 endfunc
 
 func Test_search_undefined_behaviour()

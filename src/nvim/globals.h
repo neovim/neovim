@@ -1059,6 +1059,8 @@ EXTERN char_u e_floatexchange[] INIT(=N_(
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 
+EXTERN char line_msg[] INIT(= N_(" line "));
+
 // For undo we need to know the lowest time possible.
 EXTERN time_t starttime;
 

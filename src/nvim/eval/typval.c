@@ -2732,16 +2732,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
       return n;
     }
     case VAR_SPECIAL: {
-      switch (tv->vval.v_special) {
-        case kSpecialVarTrue: {
-          return 1;
-        }
-        case kSpecialVarFalse:
-        case kSpecialVarNull: {
-          return 0;
-        }
-      }
-      break;
+      return tv->vval.v_special == kSpecialVarTrue ? 1 : 0;
     }
     case VAR_UNKNOWN: {
       emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
