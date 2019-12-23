@@ -420,11 +420,11 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #endif
   tinput_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
-  ask_for_terminal_bg(ui);
 
   // Allow main thread to continue, we are ready to handle UI callbacks.
   CONTINUE(bridge);
 
+  ask_for_terminal_bg(ui);
   loop_schedule_deferred(&main_loop,
                          event_create(show_termcap_event, 1, data->ut));
 
