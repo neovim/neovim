@@ -2537,8 +2537,6 @@ parse_match(
       tagp->command_end = p;
       if (p > tagp->command && p[-1] == '|') {
         tagp->command_end = p - 1;  // drop trailing bar
-      } else {
-        tagp->command_end = p;
       }
       p += 2;  // skip ";\""
       if (*p++ == TAB) {
