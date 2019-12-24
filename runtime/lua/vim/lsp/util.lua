@@ -577,7 +577,9 @@ local function highlight_range(bufnr, ns, hiname, start, finish)
 end
 
 do
-  local all_buffer_diagnostics = {}
+  local diagnostics_manager = buffer_manager{
+    buf_init = function() return {} end;
+  }
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
@@ -617,44 +619,46 @@ do
   end
 
   function M.show_line_diagnostics()
-    local bufnr = api.nvim_get_current_buf()
-    local line = api.nvim_win_get_cursor(0)[1] - 1
-    -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
-    -- if #marks == 0 then
-    --   return
-    -- end
-    -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-    local lines = {"Diagnostics:"}
-    local highlights = {{0, "Bold"}}
+    M.popup("line_diagnostics", function()
+      local bufnr = api.nvim_get_current_buf()
+      local line = api.nvim_win_get_cursor(0)[1] - 1
+      -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
+      -- if #marks == 0 then
+      --   return
+      -- end
+      -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+      local lines = {"Diagnostics:"}
+      local highlights = {{0, "Bold"}}
 
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_diagnostics then return end
-    local line_diagnostics = buffer_diagnostics[line]
-    if not line_diagnostics then return end
+      local buffer_diagnostics = diagnostics_manager.get(bufnr)
+      if not buffer_diagnostics then return end
+      local line_diagnostics = buffer_diagnostics[line]
+      if not line_diagnostics then return end
 
-    for i, diagnostic in ipairs(line_diagnostics) do
-    -- for i, mark in ipairs(marks) do
-    --   local mark_id = mark[1]
-    --   local diagnostic = buffer_diagnostics[mark_id]
+      for i, diagnostic in ipairs(line_diagnostics) do
+      -- for i, mark in ipairs(marks) do
+      --   local mark_id = mark[1]
+      --   local diagnostic = buffer_diagnostics[mark_id]
 
-      -- TODO(ashkan) make format configurable?
-      local prefix = string.format("%d. ", i)
-      local hiname = severity_highlights[diagnostic.severity]
-      local message_lines = split_lines(diagnostic.message)
-      table.insert(lines, prefix..message_lines[1])
-      table.insert(highlights, {#prefix + 1, hiname})
-      for j = 2, #message_lines do
-        table.insert(lines, message_lines[j])
-        table.insert(highlights, {0, hiname})
+        -- TODO(ashkan) make format configurable?
+        local prefix = string.format("%d. ", i)
+        local hiname = severity_highlights[diagnostic.severity]
+        local message_lines = split_lines(diagnostic.message)
+        table.insert(lines, prefix..message_lines[1])
+        table.insert(highlights, {#prefix + 1, hiname})
+        for j = 2, #message_lines do
+          table.insert(lines, message_lines[j])
+          table.insert(highlights, {0, hiname})
+        end
       end
-    end
-    local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
-    for i, hi in ipairs(highlights) do
-      local prefixlen, hiname = unpack(hi)
-      -- Start highlight after the prefix
-      api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-    end
-    return popup_bufnr, winnr
+      local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
+      for i, hi in ipairs(highlights) do
+        local prefixlen, hiname = unpack(hi)
+        -- Start highlight after the prefix
+        api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+      end
+      return popup_bufnr, winnr
+    end)
   end
 
   function M.buf_diagnostics_save_positions(bufnr, diagnostics)
@@ -662,20 +666,7 @@ do
       bufnr = {bufnr, 'n', true};
       diagnostics = {diagnostics, 't', true};
     }
-    if not diagnostics then return end
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-
-    if not all_buffer_diagnostics[bufnr] then
-      -- Clean up our data when the buffer unloads.
-      api.nvim_buf_attach(bufnr, false, {
-        on_detach = function(b)
-          all_buffer_diagnostics[b] = nil
-        end
-      })
-    end
-    all_buffer_diagnostics[bufnr] = {}
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-
+    local buffer_diagnostics = diagnostics_manager.attach(0)
     for _, diagnostic in ipairs(diagnostics) do
       local start = diagnostic.range.start
       -- local mark_id = api.nvim_buf_set_extmark(bufnr, diagnostic_ns, 0, start.line, 0, {})
@@ -687,6 +678,7 @@ do
       end
       table.insert(line_diagnostics, diagnostic)
     end
+    return buffer_diagnostics
   end
 
 
@@ -704,15 +696,10 @@ do
   end
 
   function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
-    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
-      M.buf_diagnostics_save_positions(bufnr, diagnostics)
-    end
-    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
-      return
-    end
-    for line, line_diags in pairs(buffer_line_diagnostics) do
+    local buffer_diagnostics = diagnostics_manager.get(bufnr)
+        or M.buf_diagnostics_save_positions(bufnr, diagnostics)
+
+    for line, line_diags in pairs(buffer_diagnostics) do
       local virt_texts = {}
       for i = 1, #line_diags - 1 do
         table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})

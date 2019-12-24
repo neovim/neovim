@@ -34,6 +34,7 @@ local function buffer_manager(config)
     local buffer_lookup = lookup[bufnr]
     if not buffer_lookup then
       -- TODO(ashkan): pcall?
+      -- TODO(ashkan): use `true` as a default or throw error?
       buffer_lookup = config.buf_init(bufnr, ...) or error("Failed to setup buffer "..bufnr)
       lookup[bufnr] = buffer_lookup
       api.nvim_buf_attach(bufnr, false, {
