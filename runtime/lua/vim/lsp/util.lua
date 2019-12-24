@@ -13,14 +13,6 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
-local function ok_or_nil(status, ...)
-  if not status then return end
-  return ...
-end
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
-end
-
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -311,6 +303,7 @@ end
 local popup_manager = buffer_manager{
   buf_init = function(bufnr, value)
     local bo = vim.bo[bufnr]
+    -- luacheck: ignore
     bo.bufhidden = 'wipe'
     return value
   end;
