@@ -1,3 +1,4 @@
+local vim = vim
 local uv = vim.loop
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
@@ -376,6 +377,22 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       -- Server Result
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)
+
+      -- Do not surface RequestCancelled to users, it is RPC-internal.
+      if decoded.error
+        and decoded.error.code == protocol.ErrorCodes.RequestCancelled then
+        local _ = log.debug() and log.debug("Received cancellation ack", decoded)
+        local result_id = tonumber(decoded.id)
+        -- Clear any callback since this is cancelled now.
+        -- This is safe to do assuming that these conditions hold:
+        -- - The server will not send a result callback after this cancellation.
+        -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
+        -- client will ignore the result themselves.
+        if result_id then
+          message_callbacks[result_id] = nil
+        end
+        return
+      end
 
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
