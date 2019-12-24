@@ -6382,6 +6382,10 @@ ex_win_close(
   int need_hide;
   buf_T       *buf = win->w_buffer;
 
+  if (!buf) {
+    win_close(win, false);
+    return;
+  }
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
