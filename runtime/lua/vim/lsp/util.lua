@@ -4,6 +4,8 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 
+local buffer_manager = require 'vim.util.buffer_manager'
+
 local M = {}
 
 local split = vim.split
@@ -306,23 +308,30 @@ function M.jump_to_location(location)
   return true
 end
 
-local function find_window_by_var(name, value)
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if npcall(api.nvim_win_get_var, win, name) == value then
-      return win
-    end
+local popup_manager = buffer_manager{
+  buf_init = function(bufnr, value)
+    local bo = vim.bo[bufnr]
+    bo.bufhidden = 'wipe'
+    return value
+  end;
+  on_detach = function(_, v)
+    pcall(api.nvim_win_close, v.winnr, true)
+  end;
+}
+
+-- Close all popups which belong to us.
+function M.close_popups()
+  for _, v in popup_manager.iter() do
+    pcall(api.nvim_win_close, v.winnr, true)
   end
 end
 
 -- Close all popups which belong to us.
-function M.close_popups()
-  -- Our popups are identified by windows which have a w: variable which uses
-  -- the callback method as the variable name.
-  for _, win in ipairs(api.nvim_list_wins()) do
-    for k in pairs(vim.lsp.callbacks) do
-      if npcall(api.nvim_win_get_var, win, k) then
-        api.nvim_win_close(win, true)
-      end
+function M.close_popup_by_name(name)
+  for _, v in popup_manager.iter() do
+    if v.name == name then
+      pcall(api.nvim_win_close, v.winnr, true)
+      return
     end
   end
 end
@@ -333,21 +342,25 @@ end
 -- fn()'s return bufnr, winnr
 -- case that a new floating window should be created.
 function M.focusable_float(unique_name, fn)
-  if npcall(api.nvim_win_get_var, 0, unique_name) then
-    return api.nvim_command("wincmd p")
-  end
   local bufnr = api.nvim_get_current_buf()
-  do
-    local win = find_window_by_var(unique_name, bufnr)
-    if win then
-      api.nvim_set_current_win(win)
-      api.nvim_command("stopinsert")
+  if popup_manager.get(bufnr) then
+    return vim.cmd("wincmd p")
+  end
+
+  for _, v in popup_manager.iter() do
+    if v.name == unique_name then
+      vim.cmd("stopinsert")
+      api.nvim_set_current_win(v.winnr)
       return
     end
   end
+
   local pbufnr, pwinnr = fn()
   if pbufnr then
-    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
+    popup_manager.attach(pbufnr, {
+      name = unique_name;
+      winnr = pwinnr;
+    })
     return pbufnr, pwinnr
   end
 end
@@ -362,6 +375,24 @@ function M.focusable_preview(unique_name, fn)
     return M.open_floating_preview(fn())
   end)
 end
+
+function M.popup(name, fn)
+  local events = {"CursorMoved","CursorMovedI","BufHidden","InsertCharPre"}
+  return M.focusable_float(name, function()
+    local buf, win = fn()
+    if buf then
+      M.close_popups()
+      vim.cmd(string.format(
+        "autocmd %s <buffer> ++once lua vim.lsp.util.close_popup_by_name(%q)",
+        table.concat(events, ','),
+        name
+      ))
+    end
+    return buf, win
+  end)
+end
+
+local rep = string.rep
 
 -- Convert markdown into syntax highlighted regions by stripping the code
 -- blocks and converting them into highlighted code.
@@ -406,8 +437,8 @@ function M.fancy_floating_markdown(contents, opts)
   local width = 0
   for i, v in ipairs(stripped) do
     v = v:gsub("\r", "")
-    if pad_left then v = (" "):rep(pad_left)..v end
-    if pad_right then v = v..(" "):rep(pad_right) end
+    if pad_left then v = rep(" ", pad_left)..v end
+    if pad_right then v = v..rep(" ", pad_right) end
     stripped[i] = v
     width = math.max(width, #v)
   end
@@ -421,7 +452,7 @@ function M.fancy_floating_markdown(contents, opts)
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
-        table.insert(stripped, h.finish + 1, string.rep("─", width))
+        table.insert(stripped, h.finish + 1, rep("─", width))
       end
     end
   end
@@ -430,12 +461,12 @@ function M.fancy_floating_markdown(contents, opts)
   local height = #stripped
   local bufnr = api.nvim_create_buf(false, true)
   local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
   -- Switch to the floating window to apply the syntax highlighting.
   -- This is because the syntax command doesn't accept a target.
-  local cwin = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(winnr)
+  local cwin = api.nvim_get_current_win()
+  api.nvim_set_current_win(winnr)
 
   vim.cmd("ownsyntax markdown")
   local idx = 1
@@ -460,12 +491,8 @@ function M.fancy_floating_markdown(contents, opts)
     -- ph = h
   end
 
-  vim.api.nvim_set_current_win(cwin)
+  api.nvim_set_current_win(cwin)
   return bufnr, winnr
-end
-
-function M.close_preview_autocmd(events, winnr)
-  api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
 function M.open_floating_preview(contents, filetype, opts)
@@ -507,33 +534,33 @@ function M.open_floating_preview(contents, filetype, opts)
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
 
-  M.close_preview_autocmd({"CursorMoved","CursorMovedI","BufHidden","InsertCharPre"}, floating_winnr)
   return floating_bufnr, floating_winnr
 end
 
-local function validate_lsp_position(pos)
-  validate { pos = {pos, 't'} }
-  validate {
-    line = {pos.line, 'n'};
-    character = {pos.character, 'n'};
-  }
-  return true
-end
+-- local function validate_lsp_position(pos)
+--   validate { pos = {pos, 't'} }
+--   validate {
+--     line = {pos.line, 'n'};
+--     character = {pos.character, 'n'};
+--   }
+--   return true
+-- end
 
-function M.open_floating_peek_preview(bufnr, start, finish, opts)
-  validate {
-    bufnr = {bufnr, 'n'};
-    start = {start, validate_lsp_position, 'valid start Position'};
-    finish = {finish, validate_lsp_position, 'valid finish Position'};
-    opts = { opts, 't', true };
-  }
-  local width = math.max(finish.character - start.character + 1, 1)
-  local height = math.max(finish.line - start.line + 1, 1)
-  local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
-  api.nvim_win_set_cursor(floating_winnr, {start.line+1, start.character})
-  api.nvim_command("autocmd CursorMoved * ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
-  return floating_winnr
-end
+-- function M.open_floating_peek_preview(bufnr, start, finish, opts)
+--   validate {
+--     bufnr = {bufnr, 'n'};
+--     start = {start, validate_lsp_position, 'valid start Position'};
+--     finish = {finish, validate_lsp_position, 'valid finish Position'};
+--     opts = { opts, 't', true };
+--   }
+--   local width = math.max(finish.character - start.character + 1, 1)
+--   local height = math.max(finish.line - start.line + 1, 1)
+--   local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
+--   -- TODO(ashkan): Use proper byte offset
+--   api.nvim_win_set_cursor(floating_winnr, {finish.line + 1, finish.character})
+--   api.nvim_win_set_cursor(floating_winnr, {start.line + 1, start.character})
+--   return floating_winnr
+-- end
 
 
 local function highlight_range(bufnr, ns, hiname, start, finish)
