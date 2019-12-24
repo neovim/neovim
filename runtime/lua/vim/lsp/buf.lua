@@ -161,5 +161,20 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+function M.code_action(context)
+  context = context or { diagnostics = util.get_line_diagnostics() }
+  local params = util.make_range_params()
+  params.context = context
+  request('textDocument/codeAction', params)
+end
+
+function M.execute_command(command)
+  validate {
+    command = { command.command, 's' },
+    arguments = { command.arguments, 't', true }
+  }
+  request('workspace/executeCommand', command)
+end
+
 return M
 -- vim:sw=2 ts=2 et

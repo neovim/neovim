@@ -720,19 +720,24 @@ do
     return severity_highlights[severity]
   end
 
-  function M.show_line_diagnostics()
+  function M.get_line_diagnostics()
     local bufnr = api.nvim_get_current_buf()
     local line = api.nvim_win_get_cursor(0)[1] - 1
+
+    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_diagnostics then return end
+    local line_diagnostics = buffer_diagnostics[line]
+    return line_diagnostics or {}
+  end
+
+  function M.show_line_diagnostics()
     -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
     -- if #marks == 0 then
     --   return
     -- end
     local lines = {"Diagnostics:"}
     local highlights = {{0, "Bold"}}
-
-    local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
-    if not buffer_diagnostics then return end
-    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics)[line]
+    local line_diagnostics = M.get_line_diagnostics()
     if not line_diagnostics then return end
 
     for i, diagnostic in ipairs(line_diagnostics) do
@@ -1044,14 +1049,26 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 local str_utfindex = vim.str_utfindex
-function M.make_position_params()
+local function make_position_param()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   col = str_utfindex(line, col)
+  return { line = row; character = col; }
+end
+
+function M.make_position_params()
   return {
     textDocument = M.make_text_document_params();
-    position = { line = row; character = col; }
+    position = make_position_param()
+  }
+end
+
+function M.make_range_params()
+  local position = make_position_param()
+  return {
+    textDocument = { uri = vim.uri_from_bufnr(0) },
+    range = { start = position; ["end"] = position; }
   }
 end
 

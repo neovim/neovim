@@ -3,12 +3,36 @@ local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
+local buf = require 'vim.lsp.buf'
 
 local M = {}
 
 local function err_message(...)
   api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
   api.nvim_command("redraw")
+end
+
+M['textDocument/codeAction'] = function(_, _, actions)
+  if vim.tbl_isempty(actions) then
+    log.info("No code actions available")
+    return
+  end
+  util.choice_preview(
+    "LspCodeActionChoice",
+    actions,
+    function(action)
+      return action.title
+    end,
+    function(action)
+      -- textDocument/codeAction can return either Command[] or CodeAction[].
+      -- We handle both in the same way by extracting the command
+      local command = action
+      if type(action.command) == table then
+        command = action.command
+      end
+      buf.execute_command(command)
+    end
+  )
 end
 
 M['workspace/applyEdit'] = function(_, _, workspace_edit)
