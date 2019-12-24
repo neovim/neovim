@@ -12,6 +12,12 @@ local function err_message(...)
   api.nvim_command("redraw")
 end
 
+M['workspace/executeCommand'] = function(err, _)
+  if err then
+    error("Could not execute code action: "..err.message)
+  end
+end
+
 M['textDocument/codeAction'] = function(_, _, actions)
   if vim.tbl_isempty(actions) then
     log.info("No code actions available")
