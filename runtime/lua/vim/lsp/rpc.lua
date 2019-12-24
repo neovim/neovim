@@ -378,8 +378,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)
 
-      -- For RequestCancelled, we want to ignore the handlers since this is an
-      -- RPC internal handling code and we shouldn't report this to users.
+      -- Do not surface RequestCancelled to users, it is RPC-internal.
       if decoded.error
         and decoded.error.code == protocol.ErrorCodes.RequestCancelled then
         local _ = log.debug() and log.debug("Received cancellation ack", decoded)
