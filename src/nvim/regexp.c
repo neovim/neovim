@@ -3575,6 +3575,7 @@ theend:
  * Create a new extmatch and mark it as referenced once.
  */
 static reg_extmatch_T *make_extmatch(void)
+  FUNC_ATTR_NONNULL_RET
 {
   reg_extmatch_T *em = xcalloc(1, sizeof(reg_extmatch_T));
   em->refcnt = 1;
