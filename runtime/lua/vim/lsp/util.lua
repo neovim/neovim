@@ -314,6 +314,19 @@ local function find_window_by_var(name, value)
   end
 end
 
+-- Close all popups which belong to us.
+function M.close_popups()
+  -- Our popups are identified by windows which have a w: variable which uses
+  -- the callback method as the variable name.
+  for _, win in ipairs(api.nvim_list_wins()) do
+    for k in pairs(vim.lsp.callbacks) do
+      if npcall(api.nvim_win_get_var, win, k) then
+        api.nvim_win_close(win, true)
+      end
+    end
+  end
+end
+
 -- Check if a window with `unique_name` tagged is associated with the current
 -- buffer. If not, make a new preview.
 --
@@ -493,8 +506,8 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  -- TODO make InsertCharPre disappearing optional?
-  api.nvim_command("autocmd CursorMoved,BufHidden,InsertCharPre <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+
+  M.close_preview_autocmd({"CursorMoved","CursorMovedI","BufHidden","InsertCharPre"}, floating_winnr)
   return floating_bufnr, floating_winnr
 end
 

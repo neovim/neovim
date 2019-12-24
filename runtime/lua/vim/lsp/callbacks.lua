@@ -69,6 +69,7 @@ M['textDocument/completion'] = function(_, _, result)
 end
 
 M['textDocument/hover'] = function(_, method, result)
+  util.close_popups()
   util.focusable_float(method, function()
     if not (result and result.contents) then
       -- return { 'No information available' }
@@ -83,7 +84,7 @@ M['textDocument/hover'] = function(_, method, result)
     local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
       pad_left = 1; pad_right = 1;
     })
-    util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
+    util.close_preview_autocmd({"CursorMovedI", "CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
 end
@@ -166,6 +167,7 @@ local function signature_help_to_preview_contents(input)
 end
 
 M['textDocument/signatureHelp'] = function(_, method, result)
+  util.close_popups()
   util.focusable_preview(method, function()
     if not (result and result.signatures and result.signatures[1]) then
       return { 'No signature available' }
