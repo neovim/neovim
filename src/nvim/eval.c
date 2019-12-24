@@ -6626,8 +6626,6 @@ call_func(
         error = ERROR_NONE;
         executor_call_lua((const char *)funcname, len,
                           argvars, argcount, rettv);
-      } else {
-        error = ERROR_UNKNOWN;
       }
     } else if (!builtin_function((const char *)rfname, -1)) {
       // User defined function.
@@ -11797,7 +11795,6 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     case kCdScopeGlobal:
       // The global scope never has a local directory
-      rettv->vval.v_number = 0;
       break;
     case kCdScopeInvalid:
       // We should never get here
@@ -11909,16 +11906,12 @@ static void f_histget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_histnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int i;
-
   const char *const history = tv_get_string_chk(&argvars[0]);
-
-  i = history == NULL ? HIST_CMD - 1 : get_histtype(history, strlen(history),
-                                                    false);
+  HistoryType i = history == NULL
+    ? HIST_INVALID
+    : get_histtype(history, strlen(history), false);
   if (i != HIST_INVALID) {
     i = get_history_idx(i);
-  } else {
-    i = -1;
   }
   rettv->vval.v_number = i;
 }
@@ -12543,6 +12536,9 @@ static char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
   char *exe_resolved = NULL;
   if (!arg0 || !os_can_exe(arg0, &exe_resolved, true)) {
     if (arg0 && executable) {
+      char buf[IOSIZE];
+      snprintf(buf, sizeof(buf), "'%s' is not executable", arg0);
+      EMSG3(_(e_invargNval), "cmd", buf);
       *executable = false;
     }
     return NULL;
@@ -17736,9 +17732,7 @@ static void f_strridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  if (lastmatch == NULL) {
-    rettv->vval.v_number = -1;
-  } else {
+  if (lastmatch != NULL) {
     rettv->vval.v_number = (varnumber_T)(lastmatch - haystack);
   }
 }
@@ -24076,7 +24070,7 @@ void option_last_set_msg(LastSet last_set)
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
     if (last_set.script_ctx.sc_lnum > 0) {
-      MSG_PUTS(_(" line "));
+      MSG_PUTS(_(line_msg));
       msg_outnum((long)last_set.script_ctx.sc_lnum);
     }
     if (should_free) {

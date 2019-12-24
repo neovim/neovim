@@ -15,6 +15,7 @@
 [![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
 [![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
+[![nvim](https://snapcraft.io//nvim/badge.svg)](https://snapcraft.io/nvim)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 

@@ -126,6 +126,13 @@ typedef off_t off_T;
  */
 EXTERN int mod_mask INIT(= 0x0);                /* current key modifiers */
 
+
+// TODO(bfredl): for the final interface this should find a more suitable
+// location.
+EXTERN sattr_T *lua_attr_buf INIT(= NULL);
+EXTERN size_t lua_attr_bufsize INIT(= 0);
+EXTERN bool lua_attr_active INIT(= false);
+
 /*
  * Cmdline_row is the row where the command line starts, just below the
  * last window.
@@ -1051,6 +1058,8 @@ EXTERN char_u e_floatexchange[] INIT(=N_(
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
+
+EXTERN char line_msg[] INIT(= N_(" line "));
 
 // For undo we need to know the lowest time possible.
 EXTERN time_t starttime;

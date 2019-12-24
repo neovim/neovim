@@ -16,7 +16,7 @@ typedef struct {
   Length token_start_position;
   Length token_end_position;
 
-  TSRange * included_ranges;
+  TSRange *included_ranges;
   size_t included_range_count;
   size_t current_included_range_index;
 

@@ -161,6 +161,8 @@ typedef struct command_line_state {
   int       init_topfill;
   linenr_T  old_botline;
   linenr_T  init_botline;
+  int       old_empty_rows;
+  int       init_empty_rows;
   pos_T     match_start;
   pos_T     match_end;
   int did_incsearch;
@@ -253,6 +255,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->init_topline = curwin->w_topline;
   s->init_topfill = curwin->w_topfill;
   s->init_botline = curwin->w_botline;
+  s->init_empty_rows = curwin->w_empty_rows;
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -275,6 +278,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->old_topline = curwin->w_topline;
   s->old_topfill = curwin->w_topfill;
   s->old_botline = curwin->w_botline;
+  s->old_empty_rows = curwin->w_empty_rows;
 
   assert(indent >= 0);
 
@@ -449,6 +453,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     curwin->w_topline = s->old_topline;
     curwin->w_topfill = s->old_topfill;
     curwin->w_botline = s->old_botline;
+    curwin->w_empty_rows = s->old_empty_rows;
     highlight_match = false;
     validate_cursor();          // needed for TAB
     redraw_all_later(SOME_VALID);
@@ -1118,6 +1123,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     s->old_topline = curwin->w_topline;
     s->old_topfill = curwin->w_topfill;
     s->old_botline = curwin->w_botline;
+    s->old_empty_rows = curwin->w_empty_rows;
     update_screen(NOT_VALID);
     redrawcmdline();
   } else {
@@ -1243,6 +1249,7 @@ static int command_line_handle_key(CommandLineState *s)
         s->old_topline = s->init_topline;
         s->old_topfill = s->init_topfill;
         s->old_botline = s->init_botline;
+        s->old_empty_rows = s->init_empty_rows;
       }
       redrawcmd();
     } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
@@ -1876,6 +1883,7 @@ static int command_line_changed(CommandLineState *s)
     curwin->w_topline = s->old_topline;
     curwin->w_topfill = s->old_topfill;
     curwin->w_botline = s->old_botline;
+    curwin->w_empty_rows = s->old_empty_rows;
     changed_cline_bef_curs();
     update_topline();
 

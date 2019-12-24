@@ -594,6 +594,102 @@ tsnode:named_descendant_for_range(start_row, start_col, end_row, end_col)
 	Get the smallest named node within this node that spans the given
 	range of (row, column) positions
 
+Query methods						*lua-treesitter-query*
+
+Tree-sitter queries are supported, with some limitations. Currently, the only
+supported match predicate is `eq?` (both comparing a capture against a string
+and two captures against each other).
+
+vim.treesitter.parse_query(lang, query)
+						*vim.treesitter.parse_query(()*
+	Parse the query as a string. (If the query is in a file, the caller
+        should read the contents into a string before calling).
+
+query:iter_captures(node, bufnr, start_row, end_row)
+							*query:iter_captures()*
+	Iterate over all captures from all matches inside a `node`.
+	`bufnr` is needed if the query contains predicates, then the caller
+	must ensure to use a freshly parsed tree consistent with the current
+	text of the buffer. `start_row` and `end_row` can be used to limit
+	matches inside a row range (this is typically used with root node
+	as the node, i e to get syntax highlight matches in the current
+	viewport)
+
+	The iterator returns two values, a numeric id identifying the capture
+	and the captured node. The following example shows how to get captures
+	by name:
+>
+	for id, node in query:iter_captures(tree:root(), bufnr, first, last) do
+	  local name = query.captures[id] -- name of the capture in the query
+	  -- typically useful info about the node:
+	  local type = node:type() -- type of the captured node
+	  local row1, col1, row2, col2 = node:range() -- range of the capture
+	  ... use the info here ...
+	end
+<
+query:iter_matches(node, bufnr, start_row, end_row)
+							*query:iter_matches()*
+	Iterate over all matches within a node. The arguments are the same as
+	for |query:iter_captures()| but the iterated values are different:
+	an (1-based) index of the pattern in the query, and a table mapping
+	capture indices to nodes. If the query has more than one pattern
+	the capture table might be sparse, and e.g. `pairs` should be used and not
+	`ipairs`. Here an example iterating over all captures in
+	every match:
+>
+	for pattern, match in cquery:iter_matches(tree:root(), bufnr, first, last) do
+	  for id,node in pairs(match) do
+	    local name = query.captures[id]
+	    -- `node` was captured by the `name` capture in the match
+	    ... use the info here ...
+	  end
+	end
+>
+Treesitter syntax highlighting (WIP)		    *lua-treesitter-highlight*
+
+NOTE: This is a partially implemented feature, and not usable as a default
+solution yet. What is documented here is a temporary interface indented
+for those who want to experiment with this feature and contribute to
+its development.
+
+Highlights are defined in the same query format as in the tree-sitter highlight
+crate, which some limitations and additions. Set a highlight query for a
+buffer with this code: >
+
+    local query = [[
+      "for" @keyword
+      "if" @keyword
+      "return" @keyword
+
+      (string_literal) @string
+      (number_literal) @number
+      (comment) @comment
+
+      (preproc_function_def name: (identifier) @function)
+
+      ; ... more definitions
+    ]]
+
+    highlighter = vim.treesitter.TSHighlighter.new(query, bufnr, lang)
+    -- alternatively, to use the current buffer and its filetype:
+    -- highlighter = vim.treesitter.TSHighlighter.new(query)
+
+    -- Don't recreate the highlighter for the same buffer, instead
+    -- modify the query like this:
+    local query2 = [[ ... ]]
+    highlighter:set_query(query2)
+
+As mentioned above the supported predicate is currently only `eq?`. `match?`
+predicates behave like matching always fails. As an addition a capture which
+begin with an upper-case letter like `@WarningMsg` will map directly to this
+highlight group, if defined. Also if the predicate begins with upper-case and
+contains a dot only the part before the first will be interpreted as the
+highlight group. As an example, this warns of a binary expression with two
+identical identifiers, highlighting both as |hl-WarningMsg|: >
+
+    ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
+     (eq? @WarningMsg.left @WarningMsg.right))
+
 ------------------------------------------------------------------------------
 VIM							*lua-builtin*
 
