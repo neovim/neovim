@@ -540,6 +540,11 @@ nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
                 See also: ~
                     nvim_get_hl_by_name
 
+nvim_get_hl_id_by_name({name})                      *nvim_get_hl_id_by_name()*
+                Gets a highlight group by name
+
+                similar to |hlID()|, but allocates a new ID if not present.
+
 nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 Sends input-keys to Nvim, subject to various quirks controlled
                 by `mode` flags. This is a blocking call, unlike
@@ -903,7 +908,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                     {buffer}  Buffer to display, or 0 for current buffer
                     {enter}   Enter the window (make it the current window)
                     {config}  Map defining the window configuration. Keys:
-                              •  `relative` : Sets the window layout to "floating", placed
+                              • `relative`: Sets the window layout to "floating", placed
                                 at (row,col) coordinates relative to:
                                 • "editor" The global editor grid
                                 • "win" Window given by the `win` field, or
@@ -1504,6 +1509,13 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
                 TODO: Documentation
 
+nvim__put_attr({id}, {c0}, {c1})                            *nvim__put_attr()*
+                Set attrs in nvim__buf_set_lua_hl callbacks
+
+                TODO(bfredl): This is rather pedestrian. The final interface
+                should probably be derived from a reformed bufhl/virttext
+                interface with full support for multi-line ranges etc
+
 
 ==============================================================================
 Buffer Functions                                                  *api-buffer*
@@ -1598,6 +1610,22 @@ nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 See also: ~
                     |nvim_buf_attach()|
                     |api-lua-detach| for detaching Lua callbacks
+
+nvim__buf_set_luahl({buffer}, {opts})                  *nvim__buf_set_luahl()*
+                Unstabilized interface for defining syntax hl in lua.
+
+                This is not yet safe for general use, lua callbacks will need
+                to be restricted, like textlock and probably other stuff.
+
+                The API on_line/nvim__put_attr is quite raw and not intended
+                to be the final shape. Ideally this should operate on chunks
+                larger than a single line to reduce interpreter overhead, and
+                generate annotation objects (bufhl/virttext) on the fly but
+                using the same representation.
+
+                                                    *nvim__buf_redraw_range()*
+nvim__buf_redraw_range({buffer}, {first}, {last})
+                TODO: Documentation
 
                                                         *nvim_buf_get_lines()*
 nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
