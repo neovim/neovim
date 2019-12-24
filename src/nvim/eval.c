@@ -12536,6 +12536,9 @@ static char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
   char *exe_resolved = NULL;
   if (!arg0 || !os_can_exe(arg0, &exe_resolved, true)) {
     if (arg0 && executable) {
+      char buf[IOSIZE];
+      snprintf(buf, sizeof(buf), "'%s' is not executable", arg0);
+      EMSG3(_(e_invargNval), "cmd", buf);
       *executable = false;
     }
     return NULL;
