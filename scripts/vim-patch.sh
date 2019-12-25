@@ -399,9 +399,11 @@ declare -A tokens
 declare -A vim_commit_tags
 
 _set_tokens_and_tags() {
+  set +u  # Avoid "unbound variable" with bash < 4.4 below.
   if [[ -n "${tokens[*]}" ]]; then
     return
   fi
+  set -u
 
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
   for token in $(list_vimpatch_tokens); do
