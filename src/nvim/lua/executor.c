@@ -1031,18 +1031,18 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
 
-static int nlua_create_ex_command(lua_State* L) FUNC_API_SINCE(8)
+static int nlua_create_ex_command(lua_State *L) FUNC_API_SINCE(8)
 {
   luaL_checktype(L, 2, LUA_TFUNCTION);
-  // luaL_checktype(L, 2, LUA_TBOOLEAN);
+  if (!(lua_isnone(L, 3) || lua_isnil(L, 3))) {
+    luaL_checktype(L, 3, LUA_TBOOLEAN);
+  }
   size_t name_len;
-  const char* name = luaL_checklstring(L, 1, &name_len);
-  // bool force = lua_toboolean(L, 2);
-  bool force = true;
+  const char *name = luaL_checklstring(L, 1, &name_len);
   LuaRef callback = nlua_ref(L, 2);
-  const char* name_copy = xmalloc(name_len);
-  memcpy((void*)name_copy, name, name_len);
+  bool force = lua_toboolean(L, 3);
+  const char *name_copy = xmalloc(name_len);
+  memcpy((void *)name_copy, name, name_len);
   define_lua_command(name_copy, name_len, force, callback);
   return 0;
 }
-

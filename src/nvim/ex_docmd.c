@@ -5463,7 +5463,8 @@ void define_lua_command(const char *name,
   /* else if (*val == '+') */
   /*   *argt |= (EXTRA | NEEDARG); */
   // TODO(ashkan): flags?
-  uc_add_command((char_u*)name, name_len, (char_u*)"", EX_LUA_CB|BANG|EXTRA, -1, 0, EXPAND_NOTHING, (char_u*)"",
+  uc_add_command((char_u *)name, name_len, (char_u *)"",
+                 EX_LUA_CB | BANG | EXTRA, -1, 0, EXPAND_NOTHING, (char_u *)"",
                  ADDR_LINES, force, callback);
 }
 
@@ -5928,8 +5929,8 @@ static void do_ucmd(exarg_T *eap)
     if (eap->forceit == 1) {
       lua_pushliteral(L, "bang");
       lua_pushboolean(L, eap->forceit == 1);
+      lua_rawset(L, -3);
     }
-    lua_rawset(L, -3);
     lua_pcall(L, 2, 0, 0);
     return;
   }
