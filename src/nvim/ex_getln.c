@@ -3575,7 +3575,7 @@ static int ccheck_abbr(int c)
 
   // Do not consider '<,'> be part of the mapping, skip leading whitespace.
   // Actually accepts any mark.
-  while (ascii_iswhite(ccline.cmdbuff[spos]) && spos < ccline.cmdlen) {
+  while (spos < ccline.cmdlen && ascii_iswhite(ccline.cmdbuff[spos])) {
     spos++;
   }
   if (ccline.cmdlen - spos > 5
