@@ -4945,17 +4945,21 @@ help_heuristic(
    * If the match is more than 2 chars from the start, multiply by 200 to
    * put it after matches at the start.
    */
-  if (ASCII_ISALNUM(matched_string[offset]) && offset > 0
-      && ASCII_ISALNUM(matched_string[offset - 1]))
+  if (offset > 0
+      && ASCII_ISALNUM(matched_string[offset])
+      && ASCII_ISALNUM(matched_string[offset - 1])) {
     offset += 10000;
-  else if (offset > 2)
+  } else if (offset > 2) {
     offset *= 200;
-  if (wrong_case)
+  }
+  if (wrong_case) {
     offset += 5000;
-  /* Features are less interesting than the subjects themselves, but "+"
-   * alone is not a feature. */
-  if (matched_string[0] == '+' && matched_string[1] != NUL)
+  }
+  // Features are less interesting than the subjects themselves, but "+"
+  // alone is not a feature.
+  if (matched_string[0] == '+' && matched_string[1] != NUL) {
     offset += 100;
+  }
   return (int)(100 * num_letters + STRLEN(matched_string) + offset);
 }
 
