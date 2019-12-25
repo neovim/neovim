@@ -4513,7 +4513,7 @@ static void qf_get_nth_below_entry(qfline_T *entry,
                                    linenr_T n)
 {
   while (n-- > 0 && !got_int) {
-    qfline_T *first_entry = entry;
+    // qfline_T *first_entry = entry;
     int first_errornr = *errornr;
 
     // Treat all the entries on the same line in this file as one
@@ -4523,7 +4523,7 @@ static void qf_get_nth_below_entry(qfline_T *entry,
         || entry->qf_next->qf_fnum != entry->qf_fnum) {
       // If multiple entries are on the same line, then use the first
       // entry
-      entry = first_entry;
+      // entry = first_entry;
       *errornr = first_errornr;
       break;
     }

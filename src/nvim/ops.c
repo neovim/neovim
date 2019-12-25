@@ -1672,17 +1672,6 @@ setmarks:
       extmark_col_adjust_delete(curbuf, lnum, mincol, endcol,
                                 kExtmarkUndo, 0);
     }
-
-  // Delete characters within one line,
-  // The case with multiple lines is handled by do_join
-  } else if (oap->motion_type == kMTCharWise && oap->line_count == 1) {
-    // + 1 to change to buf mode, then plus 1 to fit function requirements
-    endcol = oap->end.col + 1 + 1;
-
-    lnum = curwin->w_cursor.lnum;
-    if (oap->is_VIsual == false) {
-      endcol = MAX(endcol - 1, mincol);
-    }
   }
   return OK;
 }
