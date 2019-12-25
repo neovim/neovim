@@ -91,6 +91,7 @@ typedef struct ucmd {
   int uc_addr_type;             // The command's address type
   sctx_T uc_script_ctx;         // SCTX where the command was defined
   char_u      *uc_compl_arg;    // completion argument if any
+  LuaRef lua_cb;                // A lua callback
 } ucmd_T;
 
 #define UC_BUFFER       1       /* -buffer: local to current buffer */
@@ -4970,7 +4971,7 @@ char_u *get_command_name(expand_T *xp, int idx)
 
 static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
                           uint32_t argt, long def, int flags, int compl,
-                          char_u *compl_arg, int addr_type, int force)
+                          char_u *compl_arg, int addr_type, int force, LuaRef lua_cb)
 {
   ucmd_T      *cmd = NULL;
   char_u      *p;
@@ -5014,8 +5015,13 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
         goto fail;
       }
 
-      XFREE_CLEAR(cmd->uc_rep);
-      XFREE_CLEAR(cmd->uc_compl_arg);
+      if (cmd->uc_argt & EX_LUA_CB) {
+        lua_State* L = executor_enter_lua();
+        nlua_unref(L, cmd->lua_cb);
+      } else {
+        XFREE_CLEAR(cmd->uc_rep);
+        XFREE_CLEAR(cmd->uc_compl_arg);
+      }
       break;
     }
 
@@ -5046,6 +5052,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
   cmd->uc_script_ctx.sc_lnum += sourcing_lnum;
   cmd->uc_compl_arg = compl_arg;
   cmd->uc_addr_type = addr_type;
+  cmd->lua_cb = lua_cb;
 
   return OK;
 
@@ -5438,8 +5445,26 @@ static void ex_command(exarg_T *eap)
     return;
   } else {
     uc_add_command(name, end - name, p, argt, def, flags, compl, compl_arg,
-                   addr_type_arg, eap->forceit);
+                   addr_type_arg, eap->forceit, 0);
   }
+}
+
+void define_lua_command(const char *name,
+                        size_t name_len,
+                        bool force,
+                        LuaRef callback)
+{
+  /* else if (*val == '1') */
+  /*   *argt |= (EXTRA | NOSPC | NEEDARG); */
+  /* else if (*val == '*') */
+  /*   *argt |= EXTRA; */
+  /* else if (*val == '?') */
+  /*   *argt |= (EXTRA | NOSPC); */
+  /* else if (*val == '+') */
+  /*   *argt |= (EXTRA | NEEDARG); */
+  // TODO(ashkan): flags?
+  uc_add_command((char_u*)name, name_len, (char_u*)"", EX_LUA_CB|BANG|EXTRA, -1, 0, EXPAND_NOTHING, (char_u*)"",
+                 ADDR_LINES, force, callback);
 }
 
 /*
@@ -5454,8 +5479,13 @@ void ex_comclear(exarg_T *eap)
 
 static void free_ucmd(ucmd_T* cmd) {
   xfree(cmd->uc_name);
-  xfree(cmd->uc_rep);
-  xfree(cmd->uc_compl_arg);
+  if (cmd->uc_argt & EX_LUA_CB) {
+    lua_State* L = executor_enter_lua();
+    nlua_unref(L, cmd->lua_cb);
+  } else {
+    xfree(cmd->uc_rep);
+    xfree(cmd->uc_compl_arg);
+  }
 }
 
 /*
@@ -5889,6 +5919,20 @@ static void do_ucmd(exarg_T *eap)
     cmd = USER_CMD(eap->useridx);
   else
     cmd = USER_CMD_GA(&curbuf->b_ucmds, eap->useridx);
+
+  if (cmd->uc_argt & EX_LUA_CB) {
+    lua_State* L = executor_enter_lua();
+    nlua_pushref(L, cmd->lua_cb);
+    lua_pushlstring(L, (const char*)eap->arg, STRLEN(eap->arg));
+    lua_newtable(L);
+    if (eap->forceit == 1) {
+      lua_pushliteral(L, "bang");
+      lua_pushboolean(L, eap->forceit == 1);
+    }
+    lua_rawset(L, -3);
+    lua_pcall(L, 2, 0, 0);
+    return;
+  }
 
   /*
    * Replace <> in the command by the arguments.

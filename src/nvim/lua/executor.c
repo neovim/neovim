@@ -327,6 +327,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
+  // create_command
+  lua_pushcfunction(lstate, &nlua_create_ex_command);
+  lua_setfield(lstate, -2, "create_command");
+
   lua_setglobal(lstate, "vim");
 
   {
@@ -868,6 +872,13 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
   }
 }
 
+/// Enter the lua interpreter.
+lua_State* executor_enter_lua(void)
+  FUNC_ATTR_NONNULL_RET
+{
+  return nlua_enter();
+}
+
 /// check if the current execution context is safe for calling deferred API
 /// methods. Luv callbacks are unsafe as they are called inside the uv loop.
 bool nlua_is_deferred_safe(lua_State *lstate)
@@ -1019,3 +1030,19 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, ts_lua_parse_query);
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
+
+static int nlua_create_ex_command(lua_State* L) FUNC_API_SINCE(8)
+{
+  luaL_checktype(L, 2, LUA_TFUNCTION);
+  // luaL_checktype(L, 2, LUA_TBOOLEAN);
+  size_t name_len;
+  const char* name = luaL_checklstring(L, 1, &name_len);
+  // bool force = lua_toboolean(L, 2);
+  bool force = true;
+  LuaRef callback = nlua_ref(L, 2);
+  const char* name_copy = xmalloc(name_len);
+  memcpy((void*)name_copy, name, name_len);
+  define_lua_command(name_copy, name_len, force, callback);
+  return 0;
+}
+

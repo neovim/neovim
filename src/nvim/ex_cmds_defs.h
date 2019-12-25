@@ -62,6 +62,7 @@
                                  * curbuf_lock is set */
 #define MODIFY       0x200000   /* forbidden in non-'modifiable' buffer */
 #define EXFLAGS      0x400000   /* allow flags after count in argument */
+#define EX_LUA_CB    0x800000   /* the command is defined by a lua callback */
 #define FILES   (XFILE | EXTRA) /* multiple extra files allowed */
 #define WORD1   (EXTRA | NOSPC) /* one extra word allowed */
 #define FILE1   (FILES | NOSPC) /* 1 file allowed, defaults to current file */
