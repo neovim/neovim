@@ -576,6 +576,7 @@ function M.open_floating_peek_preview(bufnr, start, finish, opts)
     width = math.max(len, width)
   end
   local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
+  -- luacheck: ignore
   vim.wo[floating_winnr].wrap = false
   local col = start.character
   if col > 0 then
