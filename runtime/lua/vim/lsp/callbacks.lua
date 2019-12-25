@@ -181,28 +181,29 @@ M['textDocument/signatureHelp'] = function(_, method, result)
   end)
 end
 
--- M['textDocument/peekDefinition'] = function(_, method, result, _)
---   if not (result and result[1]) then return end
---   util.popup(method, function()
---     local loc = result[1]
---     local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
---     local start = loc.range.start
---     local finish = loc.range["end"]
---     local winnr = util.open_floating_peek_preview(bufnr, start, finish)
---     local headbuf, headwin = util.open_floating_preview({"Peek:"}, nil, {
---       offset_y = -(finish.line - start.line + 1);
---       width = finish.character - start.character + 2;
---     })
---     api.nvim_buf_attach(headbuf, false, {
---       on_detach = function()
---         api.nvim_win_close(winnr, true)
---       end
---     })
---     -- TODO(ashkan) change highlight group?
---     api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, 0, -1)
---     return headbuf, headwin
---   end)
--- end
+M['textDocument/peekDefinition'] = function(_, method, result, _)
+  if not (result and result[1]) then return end
+  util.popup(method, function()
+    local loc = result[1]
+    local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
+    local start = loc.range.start
+    local finish = loc.range["end"]
+    local winnr, width, height = util.open_floating_peek_preview(bufnr, start, finish)
+    local headbuf, headwin = util.open_floating_preview({"Peek:"}, nil, {
+      -- offset_y = -height;
+      width = math.max(width, 5),
+      height = height+1;
+    })
+    api.nvim_buf_attach(headbuf, false, {
+      on_detach = function()
+        api.nvim_win_close(winnr, true)
+      end
+    })
+    -- TODO(ashkan) change highlight group?
+    api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, 0, -1)
+    return headbuf, headwin
+  end)
+end
 
 local function log_message(_, _, result, client_id)
   local message_type = result.type

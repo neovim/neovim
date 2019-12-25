@@ -19,7 +19,7 @@ local function buffer_manager(config)
   }
   local lookup = {}
   local function on_detach(_, bufnr)
-    if config.on_detach then
+    if lookup[bufnr] then
       pcall(config.on_detach, bufnr, lookup[bufnr])
     end
     lookup[bufnr] = nil
@@ -27,10 +27,15 @@ local function buffer_manager(config)
 
   local R = {}
 
-  function R.attach(bufnr, ...)
+  local function resolve_bufnr(bufnr)
     if bufnr == 0 or bufnr == nil then
-      bufnr = api.nvim_get_current_buf()
+      return api.nvim_get_current_buf()
     end
+    return bufnr
+  end
+
+  function R.attach(bufnr, ...)
+    bufnr = resolve_bufnr(bufnr)
     local buffer_lookup = lookup[bufnr]
     if not buffer_lookup then
       -- TODO(ashkan): pcall?
@@ -54,7 +59,12 @@ local function buffer_manager(config)
   end
 
   function R.get(bufnr)
-    return lookup[bufnr]
+    return lookup[resolve_bufnr(bufnr)]
+  end
+
+  function R.set(bufnr, value)
+    assert(value ~= nil)
+    lookup[resolve_bufnr(bufnr)] = value
   end
 
   return R

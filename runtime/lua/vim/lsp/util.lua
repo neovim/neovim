@@ -13,6 +13,13 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
+local function resolve_bufnr(bufnr)
+  if bufnr == 0 or bufnr == nil then
+    return api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -530,31 +537,59 @@ function M.open_floating_preview(contents, filetype, opts)
   return floating_bufnr, floating_winnr
 end
 
--- local function validate_lsp_position(pos)
---   validate { pos = {pos, 't'} }
---   validate {
---     line = {pos.line, 'n'};
---     character = {pos.character, 'n'};
---   }
---   return true
--- end
+local function validate_lsp_position(pos)
+  validate { pos = {pos, 't'} }
+  validate {
+    line = {pos.line, 'n'};
+    character = {pos.character, 'n'};
+  }
+  return true
+end
 
--- function M.open_floating_peek_preview(bufnr, start, finish, opts)
---   validate {
---     bufnr = {bufnr, 'n'};
---     start = {start, validate_lsp_position, 'valid start Position'};
---     finish = {finish, validate_lsp_position, 'valid finish Position'};
---     opts = { opts, 't', true };
---   }
---   local width = math.max(finish.character - start.character + 1, 1)
---   local height = math.max(finish.line - start.line + 1, 1)
---   local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
---   -- TODO(ashkan): Use proper byte offset
---   api.nvim_win_set_cursor(floating_winnr, {finish.line + 1, finish.character})
---   api.nvim_win_set_cursor(floating_winnr, {start.line + 1, start.character})
---   return floating_winnr
--- end
+local function win_execute(winnr, fn)
+  if not api.nvim_win_is_valid(winnr) then return end
+  local cwin = api.nvim_get_current_win()
+  api.nvim_set_current_win(winnr)
+  pcall(fn)
+  api.nvim_set_current_win(cwin)
+end
 
+function M.open_floating_peek_preview(bufnr, start, finish, opts)
+  validate {
+    bufnr = {bufnr, 'n'};
+    start = {start, validate_lsp_position, 'valid start Position'};
+    finish = {finish, validate_lsp_position, 'valid finish Position'};
+    opts = { opts, 't', true };
+  }
+  local height = math.max(finish.line - start.line + 1, 1)
+  local width = 0
+  for i, line in ipairs(api.nvim_buf_get_lines(bufnr, start.line, finish.line + 1, false)) do
+    local len
+    if i == height then
+      len = finish.character
+    else
+      len = #line
+    end
+    if i == 1 then
+      len = len - start.character
+    end
+    width = math.max(len, width)
+  end
+  local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
+  vim.wo[floating_winnr].wrap = false
+  local col = start.character
+  if col > 0 then
+    local line = api.nvim_buf_get_lines(bufnr, start.line, start.line + 1, true)[1]
+    col = vim.str_byteindex(line, start.character)
+  end
+  -- TODO(ashkan): Use proper byte offset
+  api.nvim_win_set_cursor(floating_winnr, {start.line + 1, col})
+  win_execute(floating_winnr, function()
+    -- Align the top left
+    vim.cmd "normal! ztzs"
+  end)
+  return floating_winnr, width, height
+end
 
 local function highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
@@ -603,8 +638,8 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-    api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
+    -- bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    api.nvim_buf_clear_namespace(bufnr or 0, diagnostic_ns, 0, -1)
   end
 
   function M.get_severity_highlight_name(severity)
@@ -659,7 +694,9 @@ do
       bufnr = {bufnr, 'n', true};
       diagnostics = {diagnostics, 't', true};
     }
-    local buffer_diagnostics = diagnostics_manager.attach(0)
+    bufnr = resolve_bufnr(bufnr)
+    diagnostics_manager.set(bufnr, {})
+    local buffer_diagnostics = diagnostics_manager.attach(bufnr)
     for _, diagnostic in ipairs(diagnostics) do
       local start = diagnostic.range.start
       -- local mark_id = api.nvim_buf_set_extmark(bufnr, diagnostic_ns, 0, start.line, 0, {})
@@ -673,7 +710,6 @@ do
     end
     return buffer_diagnostics
   end
-
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
