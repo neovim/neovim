@@ -335,7 +335,7 @@ void nvim_input_mouse(String button, String action, String modifier,
     if (strequal(action.data, "down")) {
       code = KE_MOUSEUP;
     } else if (strequal(action.data, "up")) {
-      code = KE_MOUSEDOWN;
+      // code = KE_MOUSEDOWN
     } else if (strequal(action.data, "left")) {
       code = KE_MOUSERIGHT;
     } else if (strequal(action.data, "right")) {
