@@ -3249,7 +3249,6 @@ static void extmark_move_regmatch_single(lpos_T startpos,
 static void extmark_move_regmatch_multi(ExtmarkSubMulti s, long i)
 {
   colnr_T mincol;
-  linenr_T u_lnum;
   mincol = s.startpos.col + 1;
 
   linenr_T n_u_lnum = s.lnum + s.endpos.lnum - s.startpos.lnum;
@@ -3266,7 +3265,7 @@ static void extmark_move_regmatch_multi(ExtmarkSubMulti s, long i)
     // -- Delete Pattern --
     // 1. Move marks in the pattern
     mincol = s.startpos.col + 1;
-    u_lnum = n_u_lnum;
+    linenr_T u_lnum = n_u_lnum;
     assert(n_u_lnum == u_lnum);
     extmark_copy_and_place(curbuf,
                            s.lnum, mincol,
@@ -3311,7 +3310,6 @@ static void extmark_move_regmatch_multi(ExtmarkSubMulti s, long i)
     assert(s.startpos.lnum == 0);
 
     mincol = s.startpos.col + 1;
-    u_lnum = n_u_lnum;
 
     if (!s.newline_in_pat && s.newline_in_sub) {
       // -- Delete Pattern --
@@ -4947,17 +4945,21 @@ help_heuristic(
    * If the match is more than 2 chars from the start, multiply by 200 to
    * put it after matches at the start.
    */
-  if (ASCII_ISALNUM(matched_string[offset]) && offset > 0
-      && ASCII_ISALNUM(matched_string[offset - 1]))
+  if (offset > 0
+      && ASCII_ISALNUM(matched_string[offset])
+      && ASCII_ISALNUM(matched_string[offset - 1])) {
     offset += 10000;
-  else if (offset > 2)
+  } else if (offset > 2) {
     offset *= 200;
-  if (wrong_case)
+  }
+  if (wrong_case) {
     offset += 5000;
-  /* Features are less interesting than the subjects themselves, but "+"
-   * alone is not a feature. */
-  if (matched_string[0] == '+' && matched_string[1] != NUL)
+  }
+  // Features are less interesting than the subjects themselves, but "+"
+  // alone is not a feature.
+  if (matched_string[0] == '+' && matched_string[1] != NUL) {
     offset += 100;
+  }
   return (int)(100 * num_letters + STRLEN(matched_string) + offset);
 }
 

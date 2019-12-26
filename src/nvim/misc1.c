@@ -277,7 +277,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         // whitespace.  Otherwise we would think we are inside a
         // comment if the middle part appears somewhere in the middle
         // of the line.  E.g. for C the "*" appears often.
-        for (j = 0; ascii_iswhite(line[j]) && j <= i; j++) {
+        for (j = 0; j <= i && ascii_iswhite(line[j]); j++) {
         }
         if (j < i) {
           continue;

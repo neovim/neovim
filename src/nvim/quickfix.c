@@ -1341,9 +1341,10 @@ static int qf_parse_fmt_t(regmatch_T *rmp, int midx, qffields_T *fields)
 
 /// Parse the match for '%+' format pattern. The whole matching line is included
 /// in the error string.  Return the matched line in "fields->errmsg".
-static int qf_parse_fmt_plus(char_u *linebuf,
-                             size_t linelen,
-                             qffields_T *fields)
+static void qf_parse_fmt_plus(const char_u *linebuf,
+                              size_t linelen,
+                              qffields_T *fields)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (linelen >= fields->errmsglen) {
     // linelen + null terminator
@@ -1351,7 +1352,6 @@ static int qf_parse_fmt_plus(char_u *linebuf,
     fields->errmsglen = linelen + 1;
   }
   STRLCPY(fields->errmsg, linebuf, linelen + 1);
-  return QF_OK;
 }
 
 /// Parse the match for error message ('%m') pattern in regmatch.
@@ -1508,7 +1508,7 @@ static int qf_parse_match(char_u *linebuf, size_t linelen, efm_T *fmt_ptr,
       status = qf_parse_fmt_f(regmatch, midx, fields, idx);
     } else if (i == 5) {
       if (fmt_ptr->flags == '+' && !qf_multiscan) {  // %+
-        status = qf_parse_fmt_plus(linebuf, linelen, fields);
+        qf_parse_fmt_plus(linebuf, linelen, fields);
       } else if (midx > 0) {  // %m
         status = qf_parse_fmt_m(regmatch, midx, fields);
       }
@@ -4513,7 +4513,7 @@ static void qf_get_nth_below_entry(qfline_T *entry,
                                    linenr_T n)
 {
   while (n-- > 0 && !got_int) {
-    qfline_T *first_entry = entry;
+    // qfline_T *first_entry = entry;
     int first_errornr = *errornr;
 
     // Treat all the entries on the same line in this file as one
@@ -4523,7 +4523,7 @@ static void qf_get_nth_below_entry(qfline_T *entry,
         || entry->qf_next->qf_fnum != entry->qf_fnum) {
       // If multiple entries are on the same line, then use the first
       // entry
-      entry = first_entry;
+      // entry = first_entry;
       *errornr = first_errornr;
       break;
     }

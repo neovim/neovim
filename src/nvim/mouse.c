@@ -479,7 +479,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
   if (*gridp == msg_grid.handle) {
-    rowp += msg_grid_pos;
+    // rowp += msg_grid_pos;  // PVS: dead store #11612
     *gridp = DEFAULT_GRID_HANDLE;
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);

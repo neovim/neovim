@@ -2175,17 +2175,14 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
  * Return MAXCOL if not, otherwise return the column.
  * TODO: skip strings.
  */
-static int check_linecomment(char_u *line)
+static int check_linecomment(const char_u *line)
 {
-  char_u  *p;
-
-  p = line;
-  /* skip Lispish one-line comments */
+  const char_u *p = line;  // scan from start
+  // skip Lispish one-line comments
   if (curbuf->b_p_lisp) {
     if (vim_strchr(p, ';') != NULL) {   /* there may be comments */
       int in_str = FALSE;       /* inside of string */
 
-      p = line;                 /* scan from start */
       while ((p = vim_strpbrk(p, (char_u *)"\";")) != NULL) {
         if (*p == '"') {
           if (in_str) {

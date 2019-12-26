@@ -2305,13 +2305,10 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
                  || TOLOWER_ASC(printer_opts[OPT_PRINT_COLLATE].string[0]) ==
                  'y');
   if (prt_collate) {
-    /* TODO: Get number of collated copies wanted. */
-    psettings->n_collated_copies = 1;
+    // TODO(vim): Get number of collated copies wanted.
   } else {
-    /* TODO: Get number of uncollated copies wanted and update the cached
-     * count.
-     */
-    prt_num_copies = 1;
+    // TODO(vim): Get number of uncollated copies wanted and update the cached
+    // count.
   }
 
   psettings->jobname = jobname;
