@@ -266,10 +266,8 @@ void os_copy_fullenv(char **env, size_t env_size)
   extern char         **environ;
 # endif
 
-  size_t i = 0;
-  while (environ[i] != NULL && i < env_size) {
+  for (size_t i = 0; i < env_size && environ[i] != NULL; i++) {
     env[i] = xstrdup(environ[i]);
-    i++;
   }
 #endif
 }
