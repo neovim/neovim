@@ -326,7 +326,7 @@ function M.close_popups()
   end
 end
 
--- Close all popups which belong to us.
+-- Close a popup by its name.
 function M.close_popup_by_name(name)
   for _, v in popup_manager.iter() do
     if v.name == name then
@@ -639,7 +639,6 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    -- bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr or 0, diagnostic_ns, 0, -1)
   end
 
