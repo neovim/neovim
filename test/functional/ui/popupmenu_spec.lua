@@ -739,16 +739,16 @@ describe('builtin popupmenu', function()
       ee                              |
       ff                              |
       gg                              |
-      {s:aa             }                 |
-      {n:bb             }{3:iew][+]          }|
-      {n:cc             }                 |
-      {n:dd             }                 |
-      {n:ee             }                 |
-      {n:ff             }                 |
-      {n:gg             }                 |
-      {n:hh             }                 |
-      {n:ii             }                 |
-      {n:jj             }                 |
+      hh                              |
+      {s:aa             }{c: }{3:ew][+]          }|
+      {n:bb             }{c: }                |
+      {n:cc             }{c: }                |
+      {n:dd             }{c: }                |
+      {n:ee             }{c: }                |
+      {n:ff             }{c: }                |
+      {n:gg             }{c: }                |
+      {n:hh             }{c: }                |
+      {n:ii             }{s: }                |
       aa^                              |
       {4:[No Name] [+]                   }|
       {2:-- }{5:match 1 of 10}                |
