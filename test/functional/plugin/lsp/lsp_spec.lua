@@ -139,7 +139,6 @@ describe('Language Client API', function()
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
         exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).stop()")
-        eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
         for _ = 1, 20 do
           helpers.sleep(10)
           if exec_lua("return #lsp.get_active_clients()") == 0 then
