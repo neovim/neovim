@@ -637,7 +637,7 @@ def extract_from_xml(filename, mode, fmt_vimhelp):
         if INCLUDE_C_DECL:
             fn['c_decl'] = c_decl
 
-        if 'Deprecated' in xrefs:
+        if 'Deprecated' in str(xrefs):
             deprecated_functions[name] = fn
         elif name.startswith(CONFIG[mode]['func_name_prefix']):
             functions[name] = fn
