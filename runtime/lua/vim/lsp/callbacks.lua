@@ -27,7 +27,10 @@ M['textDocument/codeAction'] = function(_, _, actions)
     "LspCodeActionChoice",
     actions,
     function(action)
-      return action.title
+      -- Escape newlines in action titles title
+      local title = action.title:gsub('\r\n', '\\r\\n')
+      title = title:gsub('\n', '\\n')
+      return title
     end,
     function(action)
       -- textDocument/codeAction can return either Command[] or CodeAction[].
