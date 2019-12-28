@@ -697,16 +697,6 @@ function lsp.get_client_by_id(client_id)
   return active_clients[client_id]
 end
 
--- Look up an active client by its name, returns nil if it is not yet initialized
--- or is not a valid name.
--- @param client_name string the client name.
-function lsp.get_client_by_name(client_name)
-  for _, client in pairs(active_clients) do
-    if client.name == client_name then return client end
-  end
-  return nil
-end
-
 -- Stop a client by its id, optionally with force.
 -- You can also use the `stop()` function on a client if you already have
 -- access to it.
