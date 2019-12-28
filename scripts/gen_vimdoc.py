@@ -145,7 +145,7 @@ def debug_this(cond, o):
         except Exception:
             pass
     if ((callable(cond) and cond())
-            or (not callable(cond) and cond == True)
+            or (not callable(cond) and cond)
             or (not callable(cond) and cond in o)):
         raise RuntimeError('xxx: {}\n{}'.format(name, o))
 
@@ -312,8 +312,8 @@ def update_params_map(parent, ret_map, width=62):
         desc = ''
         desc_node = get_child(node, 'parameterdescription')
         if desc_node:
-            desc = fmt_node_as_vimhelp(desc_node, width=width,
-                                  indent=(' ' * max_name_len))
+            desc = fmt_node_as_vimhelp(
+                    desc_node, width=width, indent=(' ' * max_name_len))
             ret_map[name] = desc
     return ret_map
 
@@ -321,8 +321,10 @@ def update_params_map(parent, ret_map, width=62):
 def render_node(n, text, prefix='', indent='', width=62):
     """Renders a node as Vim help text, recursively traversing all descendants."""
     global fmt_vimhelp
+
     def ind(s):
         return s if fmt_vimhelp else ''
+
     text = ''
     # space_preceding = (len(text) > 0 and ' ' == text[-1][-1])
     # text += (int(not space_preceding) * ' ')
@@ -666,6 +668,8 @@ def extract_from_xml(filename, mode, width):
 
         xrefs.clear()
 
+    fns = collections.OrderedDict(sorted(fns.items()))
+    deprecated_fns = collections.OrderedDict(sorted(deprecated_fns.items()))
     return (fns, deprecated_fns)
 
 
@@ -864,6 +868,7 @@ def main(config):
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
+        fn_map_full = collections.OrderedDict(sorted(fn_map_full.items()))
         with open(mpack_file, 'wb') as fp:
             fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
 
