@@ -1486,7 +1486,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See 'preserveindent'.
 
 						*'cpoptions'* *'cpo'* *cpo*
-'cpoptions' 'cpo'	string	(Vim default: "aABceFs",
+'cpoptions' 'cpo'	string	(Vim default: "aABceFs_",
 				 Vi default: all flags)
 			global
 	A sequence of single character flags.  When a character is present
