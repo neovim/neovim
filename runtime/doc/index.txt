@@ -222,6 +222,8 @@ tag		char	      note action in Normal mode	~
 |CTRL-]|	CTRL-]		   :ta to ident under cursor
 |CTRL-^|	CTRL-^		   edit Nth alternate file (equivalent to
 				   ":e #N")
+|CTRL-<Tab>|	CTRL-<Tab>	   same as `g<Tab>` : go to last accessed tab
+				   page
 		CTRL-_		   not used
 
 |<Space>|	<Space>		1  same as "l"
@@ -570,6 +572,8 @@ tag		command		   action in Normal mode	~
 				   following the file name.
 |CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
 |CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
+|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as `g<Tab>` : go to last accessed tab
+				   page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of
 				   identifier under the cursor
@@ -788,6 +792,7 @@ tag		char	      note action in Normal mode	~
 |g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
 		g<MiddleMouse>	   same as <C-MiddleMouse>
 |g<RightMouse>|	g<RightMouse>	   same as <C-RightMouse>
+|g<Tab>|	g<Tab>		   go to last accessed tab page
 |g<Up>|		g<Up>		1  same as "gk"
 
 ==============================================================================

@@ -18172,6 +18172,10 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (arg != NULL) {
       if (strcmp(arg, "$") == 0) {
         nr = tabpage_index(NULL) - 1;
+      } else if (strcmp(arg, "#") == 0) {
+        nr = valid_tabpage(lastused_tabpage)
+             ? tabpage_index(lastused_tabpage)
+             : nr;
       } else {
         EMSG2(_(e_invexpr2), arg);
       }
