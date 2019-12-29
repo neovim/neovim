@@ -3121,8 +3121,9 @@ complete_info([{what}])
 		the items listed in {what} are returned.  Unsupported items in
 		{what} are silently ignored.
 
-		To get the position of the popup menu, see |pum_getpos()|. It's
- 		also available in |v:event| during the |CompleteChanged| event.
+		To get the position and size of the popup menu, see
+		|pum_getpos()|. It's also available in |v:event| during the
+		|CompleteChanged| event.
 
 		Examples: >
 			" Get all items
