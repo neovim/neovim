@@ -369,6 +369,18 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
   end)
 
+  it('vim.tbl_find', function()
+    eq(2, exec_lua([[return vim.tbl_find({ 1, 2, 3 }, 2)]]))
+    eq(NIL, exec_lua([[return vim.tbl_find({ 1, 2, 3 }, 4)]]))
+    eq(NIL, exec_lua([[return vim.tbl_find({}, 2)]]))
+    eq(2, exec_lua([[return vim.tbl_find({ a=1, b=2, c=3 }, 2)]]))
+    eq(NIL, exec_lua([[return vim.tbl_find({ a=1, b=2, c=3 }, 4)]]))
+    eq({ a=3, b=4 },
+      exec_lua([[return vim.tbl_find({{ a=1, b=2 }, { a=3, b=4 }, { a=5, b=6 }}, function(t) return t.b == 4 end)]]))
+    eq(NIL, exec_lua([[return vim.tbl_find({{ a=1, b=2 }, { a=3, b=4 }}, function(t) return t.b == 5 end)]]))
+    eq('Error executing lua: .../shared.lua: t: expected table, got number', pcall_err(exec_lua, [[return vim.tbl_find(2, 2)]]))
+  end)
+
   it('vim.deep_equal', function()
     eq(true, exec_lua [[ return vim.deep_equal({a=1}, {a=1}) ]])
     eq(true, exec_lua [[ return vim.deep_equal({a={b=1}}, {a={b=1}}) ]])

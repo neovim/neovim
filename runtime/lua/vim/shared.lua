@@ -311,6 +311,19 @@ function vim.tbl_islist(t)
   end
 end
 
+--- Returns the first element from the table that matches the second argument.
+---
+--@param t table
+--@param o Any object. If f is callable, apply the element to f, otherwise compare the element to f.
+function vim.tbl_find(t, o)
+  vim.validate{t={t, 't'}}
+  local cmp = vim.is_callable(o) and o or function(v) return o == v end
+  for _, v in pairs(t) do
+    if cmp(v) then return v end
+  end
+  return nil
+end
+
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 --@see https://www.lua.org/pil/20.2.html
