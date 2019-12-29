@@ -1648,10 +1648,6 @@ fun! s:NetrwOptionsSave(vt)
   if g:netrw_keepdir
    let {a:vt}netrw_dirkeep  = getcwd()
   endif
-  if has("clipboard")
-   sil! let {a:vt}netrw_starkeep = @*
-   sil! let {a:vt}netrw_pluskeep = @+
-  endif
   sil! let {a:vt}netrw_slashkeep= @/
 
 "  call Decho("settings buf#".bufnr("%")."<".bufname("%").">: ".((&l:ma == 0)? "no" : "")."ma ".((&l:mod == 0)? "no" : "")."mod ".((&l:bl == 0)? "no" : "")."bl ".((&l:ro == 0)? "no" : "")."ro fo=".&l:fo." a:vt=".a:vt,'~'.expand("<slnum>"))
@@ -1799,10 +1795,6 @@ fun! s:NetrwOptionsRestore(vt)
     call s:NetrwLcd(dirkeep)
     unlet {a:vt}netrw_dirkeep
    endif
-  endif
-  if has("clipboard")
-   call s:NetrwRestoreSetting(a:vt."netrw_starkeep","@*")
-   call s:NetrwRestoreSetting(a:vt."netrw_pluskeep","@+")
   endif
   call s:NetrwRestoreSetting(a:vt."netrw_slashkeep","@/")
 
