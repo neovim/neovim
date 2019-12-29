@@ -72,9 +72,8 @@ the option in an |after-directory| ftplugin, e.g. "after/ftplugin/python.vim".
                                                            *lsp-core-api*
 These are the core api functions for working with clients. You will mainly be
 using |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()| for operations
-and |vim.lsp.get_client_by_id()| and |vim.lsp.get_client_by_name()| to retrieve
-a client by its id or name after it has initialized (or {config.on_init}. see
-below)
+and |vim.lsp.get_client_by_id()| to retrieve a client by its id after it has
+initialized (or {config.on_init}. see below)
 
                                                         *vim.lsp.start_client()*
 
@@ -266,11 +265,6 @@ vim.lsp.get_client_by_id({client_id})
   Look up an active client by its id, returns nil if it is not yet initialized
   or is not a valid id. Returns |lsp-client|
 
-                                                  *vim.lsp.get_client_by_name()*
-vim.lsp.get_client_by_name({client_name})
-
-  Look up an active client by its name, returns nil if it is not yet initialized
-  or is not a valid name. Returns |lsp-client|
                                                          *vim.lsp.stop_client()*
 vim.lsp.stop_client({client_id}, [{force}])
 

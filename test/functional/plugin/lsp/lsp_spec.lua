@@ -111,7 +111,6 @@ describe('Language Client API', function()
       exec_lua([=[
         lsp = require('vim.lsp')
         local test_name, fixture_filename = ...
-        TEST_NAME = test_name
         TEST_RPC_CLIENT_ID = lsp.start_client {
           cmd = {
             vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
@@ -119,7 +118,6 @@ describe('Language Client API', function()
             "-c", "luafile "..fixture_filename;
           };
           root_dir = vim.loop.cwd();
-          name = test_name;
         }
       ]=], test_name, lsp_test_rpc_server_file)
     end)
@@ -139,7 +137,6 @@ describe('Language Client API', function()
         end
         eq(1, exec_lua("return #lsp.get_active_clients()"))
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
-        eq(false, exec_lua("return lsp.get_client_by_name(TEST_NAME) == nil"))
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
         exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).stop()")
         for _ = 1, 20 do
@@ -149,7 +146,6 @@ describe('Language Client API', function()
           end
         end
         eq(true, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
-        eq(true, exec_lua("return lsp.get_client_by_name(TEST_NAME) == nil"))
       end)
     end)
   end)
