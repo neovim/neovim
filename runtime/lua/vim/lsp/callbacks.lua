@@ -196,6 +196,25 @@ M['textDocument/peekDefinition'] = function(_, _, result, _)
   api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
 end
 
+M['textDocument/documentHighlight'] = function(_, _, result, _)
+  if not result then return end
+  local bufnr = api.nvim_get_current_buf()
+  for _, reference in ipairs(result) do
+    local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
+    local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
+    if reference["kind"] == 1 then
+      -- text
+      util.highlight_range(bufnr, util.reference_ns, "LspReferenceText", start_pos, end_pos)
+    elseif reference["kind"] == 2 then
+      -- read
+      util.highlight_range(bufnr, util.reference_ns, "LspReferenceRead", start_pos, end_pos)
+    elseif reference["kind"] == 3 then
+      -- write 
+      util.highlight_range(bufnr, util.reference_ns, "LspReferenceWrite", start_pos, end_pos)
+    end
+  end
+end
+
 local function log_message(_, _, result, client_id)
   local message_type = result.type
   local message = result.message

@@ -552,7 +552,7 @@ function M.open_floating_peek_preview(bufnr, start, finish, opts)
 end
 
 
-local function highlight_range(bufnr, ns, hiname, start, finish)
+function M.highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
     -- TODO care about encoding here since this is in byte index?
     api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], finish[2])
@@ -569,6 +569,7 @@ do
   local all_buffer_diagnostics = {}
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
+  M.reference_ns = api.nvim_create_namespace("vim_lsp_references")
 
   local underline_highlight_name = "LspDiagnosticsUnderline"
   vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
@@ -604,6 +605,12 @@ do
     validate { bufnr = {bufnr, 'n', true} }
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
+  end
+
+  function M.buf_clear_references(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    api.nvim_buf_clear_namespace(bufnr, M.reference_ns, 0, -1)
   end
 
   function M.get_severity_highlight_name(severity)

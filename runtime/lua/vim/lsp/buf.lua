@@ -134,5 +134,10 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
+function M.document_highlight(context)
+  local params = util.make_position_params()
+  request('textDocument/documentHighlight', params)
+end
+
 return M
 -- vim:sw=2 ts=2 et
