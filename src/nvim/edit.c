@@ -638,7 +638,7 @@ static int insert_check(VimState *state)
 
 static int insert_execute(VimState *state, int key)
 {
-  if (key == K_IGNORE) {
+  if (key == K_IGNORE || key == K_NOP) {
     return -1;  // get another key
   }
   InsertState *s = (InsertState *)state;
