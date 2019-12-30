@@ -2019,4 +2019,42 @@ describe('builtin popupmenu', function()
       {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
     ]])
   end)
+
+  it("'pumheight'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumheight=2")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word           }{c: }{1:                }|
+      {n:choice         }{s: }{1:                }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+
+  it("'pumwidth'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumwidth=8")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word    }{1:                        }|
+      {n:choice  }{1:                        }|
+      {n:text    }{1:                        }|
+      {n:thing   }{1:                        }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
 end)
