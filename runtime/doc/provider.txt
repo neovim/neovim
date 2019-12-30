@@ -58,12 +58,14 @@ If you run into problems, uninstall _both_ then install "pynvim" again: >
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python_host_prog*
 Command to start Python 2 (executable, not directory). Setting this makes
-startup faster. Useful for working with virtualenvs.  >
+startup faster. Useful for working with virtualenvs. Must be set before any
+check for has("python2").  >
     let g:python_host_prog  = '/path/to/python'
 <
 						*g:python3_host_prog*
 Command to start Python 3 (executable, not directory). Setting this makes
-startup faster. Useful for working with virtualenvs.  >
+startup faster. Useful for working with virtualenvs. Must be set before any
+check for has("python3").  >
     let g:python3_host_prog = '/path/to/python3'
 <
 						*g:loaded_python_provider*
