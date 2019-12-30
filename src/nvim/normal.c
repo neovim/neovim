@@ -874,8 +874,10 @@ static void normal_finish_command(NormalState *s)
     s->old_mapped_len = typebuf_maplen();
   }
 
-  // If an operation is pending, handle it...
-  do_pending_operator(&s->ca, s->old_col, false);
+  // If an operation is pending, handle it.  But not for K_IGNORE.
+  if (s->ca.cmdchar != K_IGNORE) {
+    do_pending_operator(&s->ca, s->old_col, false);
+  }
 
   // Wait for a moment when a message is displayed that will be overwritten
   // by the mode message.
