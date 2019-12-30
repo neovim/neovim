@@ -19,6 +19,8 @@ exit_suite --continue
 
 enter_suite tests
 
+source ~/.nvm/nvm.sh
+nvm use 10
 export TREE_SITTER_DIR=$HOME/tree-sitter-build/
 
 if test "$CLANG_SANITIZER" != "TSAN" ; then
