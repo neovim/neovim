@@ -552,7 +552,7 @@ function M.open_floating_peek_preview(bufnr, start, finish, opts)
 end
 
 
-function M.highlight_range(bufnr, ns, hiname, start, finish)
+function highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
     -- TODO care about encoding here since this is in byte index?
     api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], finish[2])
