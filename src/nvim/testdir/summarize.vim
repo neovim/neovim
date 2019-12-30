@@ -1,6 +1,7 @@
 if 1
   " This is executed only with the eval feature
   set nocompatible
+  set viminfo=
   func Count(match, type)
     if a:type ==# 'executed'
       let g:executed += (a:match+0)
