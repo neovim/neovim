@@ -92,10 +92,10 @@ GADGETS = {
              '${version}/${file_name}',
     },
     'all': {
-      'version': '2019.10.41019',
+      'version': '2019.11.50794',
       'file_name': 'ms-python-release.vsix',
       'checksum':
-        '38e8bf782fc6d2dc904868add2e1e5dc66197a06a902f6d17e15f96d4e9bf16b',
+        '6a9edf9ecabed14aac424e6007858068204a3638bf3bb4f235bd6035d823acc6',
     },
     'adapters': {
       "vscode-python": {
