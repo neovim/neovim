@@ -739,16 +739,16 @@ describe('builtin popupmenu', function()
       ee                              |
       ff                              |
       gg                              |
-      {s:aa             }                 |
-      {n:bb             }{3:iew][+]          }|
-      {n:cc             }                 |
-      {n:dd             }                 |
-      {n:ee             }                 |
-      {n:ff             }                 |
-      {n:gg             }                 |
-      {n:hh             }                 |
-      {n:ii             }                 |
-      {n:jj             }                 |
+      hh                              |
+      {s:aa             }{c: }{3:ew][+]          }|
+      {n:bb             }{c: }                |
+      {n:cc             }{c: }                |
+      {n:dd             }{c: }                |
+      {n:ee             }{c: }                |
+      {n:ff             }{c: }                |
+      {n:gg             }{c: }                |
+      {n:hh             }{c: }                |
+      {n:ii             }{s: }                |
       aa^                              |
       {4:[No Name] [+]                   }|
       {2:-- }{5:match 1 of 10}                |
@@ -1156,10 +1156,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1204,10 +1204,10 @@ describe('builtin popupmenu', function()
     feed('<c-p>')
     screen:expect([[
       some long prefix before the text|
-      {1:^~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{s: text  }|
-      {1:~                        }{n: thing }|
+      {n:^word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {s:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1301,10 +1301,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -2017,6 +2017,44 @@ describe('builtin popupmenu', function()
       laborum.                                                    |
       {8:~                                                           }|
       {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
+    ]])
+  end)
+
+  it("'pumheight'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumheight=2")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word           }{c: }{1:                }|
+      {n:choice         }{s: }{1:                }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+
+  it("'pumwidth'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumwidth=8")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word    }{1:                        }|
+      {n:choice  }{1:                        }|
+      {n:text    }{1:                        }|
+      {n:thing   }{1:                        }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
     ]])
   end)
 end)

@@ -733,6 +733,28 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
+func Test_popup_and_previewwindow_dump()
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call writefile([
+    \ 'set previewheight=9',
+    \ 'silent! pedit',
+    \ 'call setline(1, map(repeat(["ab"], 10), "v:val. v:key"))',
+    \ 'exec "norm! G\<C-E>\<C-E>"',
+	\ ], 'Xscript')
+  let buf = RunVimInTerminal('-S Xscript', {})
+
+  " Test that popup and previewwindow do not overlap.
+  call term_sendkeys(buf, "o\<C-X>\<C-N>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_popup_and_previewwindow_01', {})
+
+  call term_sendkeys(buf, "\<Esc>u")
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
+endfunc
+
 func Test_popup_position()
   if !CanRunVimInTerminal()
     return
@@ -762,6 +784,15 @@ func Test_popup_position()
   call term_sendkeys(buf, "GA\<C-N>")
   call VerifyScreenDump(buf, 'Test_popup_position_03', {'rows': 8})
 
+  " completed text wider than the window and 'pumwidth' smaller than available
+  " space
+  call term_sendkeys(buf, "\<Esc>u")
+  call term_sendkeys(buf, ":set pumwidth=20\<CR>")
+  call term_sendkeys(buf, "ggI123456789_\<Esc>")
+  call term_sendkeys(buf, "jI123456789_\<Esc>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_popup_position_04', {'rows': 10})
+  
   call term_sendkeys(buf, "\<Esc>u")
   call StopVimInTerminal(buf)
   call delete('Xtest')

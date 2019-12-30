@@ -536,7 +536,7 @@ static int command_line_check(VimState *state)
 
 static int command_line_execute(VimState *state, int key)
 {
-  if (key == K_IGNORE) {
+  if (key == K_IGNORE || key == K_NOP) {
     return -1;  // get another key
   }
 

@@ -1816,6 +1816,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='pumblend', abbreviation='pb',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'ui_option'},
+      varname='p_pb',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pumheight', abbreviation='ph',
       type='number', scope={'global'},
       vi_def=true,
@@ -1823,12 +1831,11 @@ return {
       defaults={if_true={vi=0}}
     },
     {
-      full_name='pumblend', abbreviation='pb',
+      full_name='pumwidth', abbreviation='pw',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'ui_option'},
-      varname='p_pb',
-      defaults={if_true={vi=0}}
+      varname='p_pw',
+      defaults={if_true={vi=15}}
     },
     {
       full_name='pyxversion', abbreviation='pyx',

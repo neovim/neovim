@@ -430,9 +430,11 @@ _set_tokens_and_tags() {
 list_missing_vimpatches() {
   local -a missing_vim_patches=()
   _set_missing_vimpatches "$@"
+  set +u  # Avoid "unbound variable" with bash < 4.4 below.
   for line in "${missing_vim_patches[@]}"; do
     printf '%s\n' "$line"
   done
+  set -u
 }
 
 # Sets / appends to missing_vim_patches (useful to avoid a subshell when

@@ -3121,8 +3121,9 @@ complete_info([{what}])
 		the items listed in {what} are returned.  Unsupported items in
 		{what} are silently ignored.
 
-		To get the position of the popup menu, see |pum_getpos()|. It's
- 		also available in |v:event| during the |CompleteChanged| event.
+		To get the position and size of the popup menu, see
+		|pum_getpos()|. It's also available in |v:event| during the
+		|CompleteChanged| event.
 
 		Examples: >
 			" Get all items
@@ -3770,6 +3771,8 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 		and "\..." notation |expr-quote|. For example,
 		feedkeys("\<CR>") simulates pressing of the <Enter> key. But
 		feedkeys('\<CR>') pushes 5 characters.
+		A special code that might be useful is <Ignore>, it exits the
+		wait for a character without doing anything.  *<Ignore>*
 
 		{mode} is a String, which can contain these character flags:
 		'm'	Remap keys. This is default.  If {mode} is absent,
