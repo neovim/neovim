@@ -1,6 +1,7 @@
 if 1
   " This is executed only with the eval feature
   set nocompatible
+  set viminfo=
   func Count(match, type)
     if a:type ==# 'executed'
       let g:executed += (a:match+0)
@@ -8,7 +9,7 @@ if 1
       let g:failed += a:match+0
     elseif a:type ==# 'skipped'
       let g:skipped += 1
-      call extend(g:skipped_output, ["\t".a:match])
+      call extend(g:skipped_output, ["\t" .. a:match])
     endif
   endfunc
 
@@ -18,6 +19,10 @@ if 1
   let g:skipped_output = []
   let g:failed_output = []
   let output = [""]
+
+  if $TEST_FILTER != ''
+    call extend(g:skipped_output, ["\tAll tests not matching $TEST_FILTER: '" .. $TEST_FILTER .. "'"])
+  endif
 
   try
     " This uses the :s command to just fetch and process the output of the
