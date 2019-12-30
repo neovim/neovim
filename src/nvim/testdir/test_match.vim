@@ -1,6 +1,8 @@
 " Test for :match, :2match, :3match, clearmatches(), getmatches(), matchadd(),
 " matchaddpos(), matcharg(), matchdelete(), and setmatches().
 
+source screendump.vim
+
 function Test_match()
   highlight MyGroup1 term=bold ctermbg=red guibg=red
   highlight MyGroup2 term=italic ctermbg=green guibg=green
@@ -247,5 +249,27 @@ func Test_matchaddpos_using_negative_priority()
   nohl
   set hlsearch&
 endfunc
+
+func Test_matchdelete_other_window()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  let lines =<< trim END
+    call setline(1, 'Hello Vim world')
+    let mid = matchadd('Error', 'world', 1)
+    let winid = win_getid()
+    new
+  END
+  call writefile(lines, 'XscriptMatchDelete')
+  let buf = RunVimInTerminal('-S XscriptMatchDelete', #{rows: 12})
+  call term_wait(buf)
+  call term_sendkeys(buf, ":call matchdelete(mid, winid)\<CR>")
+  call VerifyScreenDump(buf, 'Test_matchdelete_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchDelete')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
