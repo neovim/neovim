@@ -861,6 +861,9 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 
 
 
+deep_equal({a}, {b})                                        *vim.deep_equal()*
+                TODO: Documentation
+
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
                 copied as in a typical Lua assignment, whereas table objects
@@ -889,6 +892,45 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                     https://www.lua.org/pil/20.2.html
                     http://lua-users.org/wiki/StringLibraryTutorial
 
+is_callable({f})                                           *vim.is_callable()*
+                Returns true if object `f` can be called as a function.
+
+                Parameters: ~
+                    {f}  Any object
+
+                Return: ~
+                    true if `f` is callable, else false
+
+list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
+                Extends a list-like table with the values of another list-like
+                table.
+
+                NOTE: This mutates dst!
+
+                Parameters: ~
+                    {dst}     list which will be modified and appended to.
+                    {src}     list from which values will be inserted.
+                    {start}   Start index on src. defaults to 1
+                    {finish}  Final index on src. defaults to #src
+
+                Return: ~
+                    dst
+
+                See also: ~
+                    |vim.tbl_extend()|
+
+pesc({s})                                                         *vim.pesc()*
+                Escapes magic chars in a Lua pattern string.
+
+                Parameters: ~
+                    {s}  String to escape
+
+                Return: ~
+                    %-escaped pattern string
+
+                See also: ~
+                    https://github.com/rxi/lume
+
 split({s}, {sep}, {plain})                                       *vim.split()*
                 Splits a string at each instance of a separator.
 
@@ -909,6 +951,62 @@ split({s}, {sep}, {plain})                                       *vim.split()*
 
                 See also: ~
                     |vim.gsplit()|
+
+tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
+                Add the reverse lookup values to an existing table. For
+                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A =
+                1 }`
+
+                Parameters: ~
+                    {o}  table The table to add the reverse to.
+
+tbl_contains({t}, {value})                                *vim.tbl_contains()*
+                Checks if a list-like (vector) table contains `value` .
+
+                Parameters: ~
+                    {t}      Table to check
+                    {value}  Value to compare
+
+                Return: ~
+                    true if `t` contains `value`
+
+tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
+                Merges two or more map-like tables.
+
+                Parameters: ~
+                    {behavior}  Decides what to do if a key is found in more
+                                than one map:
+                                • "error": raise an error
+                                • "keep": use value from the leftmost map
+                                • "force": use value from the rightmost map
+                    {...}       Two or more map-like tables.
+
+                See also: ~
+                    |extend()|
+
+tbl_flatten({t})                                           *vim.tbl_flatten()*
+                Creates a copy of a list-like table such that any nested
+                tables are "unrolled" and appended to the result.
+
+                Parameters: ~
+                    {t}  List-like table
+
+                Return: ~
+                    Flattened copy of the given list-like table.
+
+                See also: ~
+                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
+
+tbl_isempty({t})                                           *vim.tbl_isempty()*
+                See also: ~
+                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua@paramt Table to check
+
+tbl_islist({t})                                             *vim.tbl_islist()*
+                Table
+
+                Return: ~
+                    true: A non-empty array, false: A non-empty table, nil: An
+                    empty table
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
@@ -933,83 +1031,6 @@ tbl_values({t})                                             *vim.tbl_values()*
                 Return: ~
                     list of values
 
-tbl_contains({t}, {value})                                *vim.tbl_contains()*
-                Checks if a list-like (vector) table contains `value` .
-
-                Parameters: ~
-                    {t}      Table to check
-                    {value}  Value to compare
-
-                Return: ~
-                    true if `t` contains `value`
-
-tbl_isempty({t})                                           *vim.tbl_isempty()*
-                See also: ~
-                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua@paramt Table to check
-
-tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
-                Merges two or more map-like tables.
-
-                Parameters: ~
-                    {behavior}  Decides what to do if a key is found in more
-                                than one map:
-                                • "error": raise an error
-                                • "keep": use value from the leftmost map
-                                • "force": use value from the rightmost map
-                    {...}       Two or more map-like tables.
-
-                See also: ~
-                    |extend()|
-
-deep_equal({a}, {b})                                        *vim.deep_equal()*
-                TODO: Documentation
-
-tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
-                Add the reverse lookup values to an existing table. For
-                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A =
-                1 }`
-
-                Parameters: ~
-                    {o}  table The table to add the reverse to.
-
-list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
-                Extends a list-like table with the values of another list-like
-                table.
-
-                NOTE: This mutates dst!
-
-                Parameters: ~
-                    {dst}     list which will be modified and appended to.
-                    {src}     list from which values will be inserted.
-                    {start}   Start index on src. defaults to 1
-                    {finish}  Final index on src. defaults to #src
-
-                Return: ~
-                    dst
-
-                See also: ~
-                    |vim.tbl_extend()|
-
-tbl_flatten({t})                                           *vim.tbl_flatten()*
-                Creates a copy of a list-like table such that any nested
-                tables are "unrolled" and appended to the result.
-
-                Parameters: ~
-                    {t}  List-like table
-
-                Return: ~
-                    Flattened copy of the given list-like table.
-
-                See also: ~
-                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
-
-tbl_islist({t})                                             *vim.tbl_islist()*
-                Table
-
-                Return: ~
-                    true: A non-empty array, false: A non-empty table, nil: An
-                    empty table
-
 trim({s})                                                         *vim.trim()*
                 Trim whitespace (Lua pattern "%s") from both sides of a
                 string.
@@ -1022,18 +1043,6 @@ trim({s})                                                         *vim.trim()*
 
                 See also: ~
                     https://www.lua.org/pil/20.2.html
-
-pesc({s})                                                         *vim.pesc()*
-                Escapes magic chars in a Lua pattern string.
-
-                Parameters: ~
-                    {s}  String to escape
-
-                Return: ~
-                    %-escaped pattern string
-
-                See also: ~
-                    https://github.com/rxi/lume
 
 validate({opt})                                               *vim.validate()*
                 Validates a parameter specification (types and values).
@@ -1084,14 +1093,5 @@ validate({opt})                                               *vim.validate()*
                                 valid
                               • msg: (optional) error string if validation
                                 fails
-
-is_callable({f})                                           *vim.is_callable()*
-                Returns true if object `f` can be called as a function.
-
-                Parameters: ~
-                    {f}  Any object
-
-                Return: ~
-                    true if `f` is callable, else false
 
  vim:tw=78:ts=8:ft=help:norl:
