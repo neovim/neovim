@@ -893,21 +893,22 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   return request_results
 end
 
---- Sends a notification to all servers attached to the buffer.
----
---@param bufnr (optional, number) Buffer handle, or 0 for current
---@param method (string) LSP method name
---@param params (string) Parameters to send to the server
----
---@returns nil
+--- Send a notification to a server
+-- @param bufnr [number] (optional): The number of the buffer
+-- @param method [string]: Name of the request method
+-- @param params [string]: Arguments to send to the server
+--
+-- @returns true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
   validate {
     bufnr    = { bufnr, 'n', true };
     method   = { method, 's' };
   }
+  local resp = false
   for_each_buffer_client(bufnr, function(client, _client_id)
-    client.rpc.notify(method, params)
+    if client.rpc.notify(method, params) then resp = true end
   end)
+  return resp
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
