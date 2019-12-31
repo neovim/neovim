@@ -10,6 +10,7 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
@@ -228,7 +229,7 @@ describe("shell command :!", function()
       ]])
     end)
   end)
-  if iswin() or eval('executable("pwsh")') == 1 then
+  if has_powershell() then
     it('powershell supports literal strings', function()
       set_shell_powershell()
       local screen = Screen.new(30, 4)
