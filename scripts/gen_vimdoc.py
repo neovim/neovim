@@ -55,6 +55,7 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 5:
     sys.exit(1)
 
 DEBUG = ('DEBUG' in os.environ)
+TARGET = os.environ.get('TARGET', None)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
 INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
 
@@ -69,6 +70,7 @@ lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
 
 CONFIG = {
     'api': {
+        'mode': 'c',
         'filename': 'api.txt',
         # String used to find the start of the generated part of the doc.
         'section_start_token': '*api-global*',
@@ -85,17 +87,24 @@ CONFIG = {
         # file patterns used by doxygen
         'file_patterns': '*.h *.c',
         # Only function with this prefix are considered
-        'func_name_prefix': 'nvim_',
+        'fn_name_prefix': 'nvim_',
         # Section name overrides.
         'section_name': {
             'vim.c': 'Global',
         },
+        # For generated section names.
+        'section_fmt': lambda name: f'{name} Functions',
+        # Section helptag.
+        'helptag_fmt': lambda name: f'*api-{name.lower()}*',
+        # Per-function helptag.
+        'fn_helptag_fmt': lambda fstem, name: f'*{name}()*',
         # Module name overrides (for Lua).
         'module_override': {},
         # Append the docs for these modules, do not start a new section.
         'append_only': [],
     },
     'lua': {
+        'mode': 'lua',
         'filename': 'lua.txt',
         'section_start_token': '*lua-vim*',
         'section_order': [
@@ -107,8 +116,13 @@ CONFIG = {
             os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
         ]),
         'file_patterns': '*.lua',
-        'func_name_prefix': '',
-        'section_name': {},
+        'fn_name_prefix': '',
+        'section_name': {
+            'lsp.lua': 'core',
+        },
+        'section_fmt': lambda name: f'Lua module: {name.lower()}',
+        'helptag_fmt': lambda name: f'*lua-{name.lower()}*',
+        'fn_helptag_fmt': lambda fstem, name: f'*{fstem}.{name}()*',
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
@@ -116,6 +130,44 @@ CONFIG = {
         'append_only': [
             'shared.lua',
         ],
+    },
+    'lsp': {
+        'mode': 'lua',
+        'filename': 'lsp.txt',
+        'section_start_token': '*lsp-core*',
+        'section_order': [
+            'lsp.lua',
+            'protocol.lua',
+            'buf.lua',
+            'callbacks.lua',
+            'log.lua',
+            'rpc.lua',
+            'util.lua'
+        ],
+        'files': ' '.join([
+            os.path.join(base_dir, 'runtime/lua/vim/lsp'),
+            os.path.join(base_dir, 'runtime/lua/vim/lsp.lua'),
+        ]),
+        'file_patterns': '*.lua',
+        'fn_name_prefix': '',
+        'section_name': {},
+        'section_fmt': lambda name: ('Lua module: vim.lsp'
+            if name.lower() == 'lsp'
+            else f'Lua module: vim.lsp.{name.lower()}'),
+        'helptag_fmt': lambda name: ('*lsp-core*'
+            if name.lower() == 'lsp'
+            else f'*lsp-{name.lower()}*'),
+        'fn_helptag_fmt': lambda fstem, name: (f'*vim.lsp.{name}()*'
+            if fstem == 'lsp' and name != 'client'
+            else ('*vim.lsp.client*'
+                # HACK. TODO(justinmk): class/structure support in lua2dox
+                if 'lsp.client' == f'{fstem}.{name}'
+                else f'*vim.lsp.{fstem}.{name}()*')),
+        'module_override': {
+            # Combine  are exposed on the `vim` module.
+            'shared': 'vim',
+        },
+        'append_only': [],
     },
 }
 
@@ -567,12 +619,12 @@ def extract_from_xml(filename, mode, width):
 
         if not fmt_vimhelp:
             pass
-        elif mode == 'lua':
-            fstem = compoundname.split('.')[0]
-            fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
-            vimtag = '*{}.{}()*'.format(fstem, name)
         else:
-            vimtag = '*{}()*'.format(name)
+            fstem = '?'
+            if '.' in compoundname:
+                fstem = compoundname.split('.')[0]
+                fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
+            vimtag = CONFIG[mode]['fn_helptag_fmt'](fstem, name)
 
         params = []
         type_length = 0
@@ -583,8 +635,8 @@ def extract_from_xml(filename, mode, width):
             declname = get_child(param, 'declname')
             if declname:
                 param_name = get_text(declname).strip()
-            elif mode == 'lua':
-                # that's how it comes out of lua2dox
+            elif CONFIG[mode]['mode'] == 'lua':
+                # XXX: this is what lua2dox gives us...
                 param_name = param_type
                 param_type = ''
 
@@ -614,7 +666,7 @@ def extract_from_xml(filename, mode, width):
                                      '    ')
 
             # Minimum 8 chars between signature and vimtag
-            lhs = (width - 8) - len(prefix)
+            lhs = (width - 8) - len(vimtag)
 
             if len(prefix) + len(suffix) > lhs:
                 signature = vimtag.rjust(width) + '\n'
@@ -663,7 +715,7 @@ def extract_from_xml(filename, mode, width):
 
         if 'Deprecated' in str(xrefs):
             deprecated_fns[name] = fn
-        elif name.startswith(CONFIG[mode]['func_name_prefix']):
+        elif name.startswith(CONFIG[mode]['fn_name_prefix']):
             fns[name] = fn
 
         xrefs.clear()
@@ -714,7 +766,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, mode):
 
         if 'Deprecated' in xrefs:
             deprecated_fns_txt[name] = func_doc
-        elif name.startswith(CONFIG[mode]['func_name_prefix']):
+        elif name.startswith(CONFIG[mode]['fn_name_prefix']):
             fns_txt[name] = func_doc
 
         xrefs.clear()
@@ -730,9 +782,13 @@ def delete_lines_below(filename, tokenstr):
     """
     lines = open(filename).readlines()
     i = 0
+    found = False
     for i, line in enumerate(lines, 1):
         if tokenstr in line:
+            found = True
             break
+    if not found:
+        raise RuntimeError(f'not found: "{tokenstr}"')
     i = max(0, i - 2)
     with open(filename, 'wt') as fp:
         fp.writelines(lines[0:i])
@@ -747,6 +803,8 @@ def main(config):
     Doxygen is called and configured through stdin.
     """
     for mode in CONFIG:
+        if TARGET is not None and mode != TARGET:
+            continue
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
             CONFIG[mode]['filename'].replace('.txt', '.mpack'))
@@ -754,7 +812,10 @@ def main(config):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(mode=mode)
-        p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE)
+        p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE,
+                # silence warnings
+                # runtime/lua/vim/lsp.lua:209: warning: argument 'trace' of command @param is not found in the argument list
+                stderr=subprocess.DEVNULL)
         p.communicate(
             config.format(
                 input=CONFIG[mode]['files'],
@@ -806,15 +867,11 @@ def main(config):
                 if not functions_text and not deprecated_text:
                     continue
                 else:
-                    name = os.path.splitext(os.path.basename(filename))[0]
-                    if name == 'ui':
-                        name = name.upper()
-                    else:
-                        name = name.title()
-
+                    name = os.path.splitext(
+                            os.path.basename(filename))[0].lower()
+                    sectname = name.upper() if name == 'ui' else name.title()
                     doc = ''
-
-                    intro = intros.get('api-%s' % name.lower())
+                    intro = intros.get(f'api-{name}')
                     if intro:
                         doc += '\n\n' + intro
 
@@ -822,33 +879,28 @@ def main(config):
                         doc += '\n\n' + functions_text
 
                     if INCLUDE_DEPRECATED and deprecated_text:
-                        doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
+                        doc += f'\n\n\nDeprecated {sectname} Functions: ~\n\n'
                         doc += deprecated_text
 
                     if doc:
                         filename = os.path.basename(filename)
-                        name = CONFIG[mode]['section_name'].get(filename, name)
-
-                        if mode == 'lua':
-                            title = 'Lua module: {}'.format(name.lower())
-                            helptag = '*lua-{}*'.format(name.lower())
-                        else:
-                            title = '{} Functions'.format(name)
-                            helptag = '*api-{}*'.format(name.lower())
+                        sectname = CONFIG[mode]['section_name'].get(
+                                filename, sectname)
+                        title = CONFIG[mode]['section_fmt'](sectname)
+                        helptag = CONFIG[mode]['helptag_fmt'](sectname)
                         sections[filename] = (title, helptag, doc)
                         fn_map_full.update(fn_map)
 
-        if not sections:
-            return
+        assert sections
+        if len(sections) > len(CONFIG[mode]['section_order']):
+            raise RuntimeError(
+                'found new modules "{}"; update the "section_order" map'.format(
+                    set(sections).difference(CONFIG[mode]['section_order'])))
 
         docs = ''
 
         i = 0
         for filename in CONFIG[mode]['section_order']:
-            if filename not in sections:
-                raise RuntimeError(
-                    'found new module "{}"; update the "section_order" map'.format(
-                        filename))
             title, helptag, section_doc = sections.pop(filename)
             i += 1
             if filename not in CONFIG[mode]['append_only']:

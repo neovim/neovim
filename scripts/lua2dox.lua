@@ -17,61 +17,28 @@
 --   Free Software Foundation, Inc.,                                       --
 --   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             --
 ----------------------------------------------------------------------------]]
---[[!
-\file
-\brief a hack lua2dox converter
-]]
 
 --[[!
-\mainpage
+Lua-to-Doxygen converter
 
-Introduction
-------------
-
-A hack lua2dox converter
-Version 0.2
-
-This lets us make Doxygen output some documentation to let
-us develop this code.
-
-It is partially cribbed from the functionality of lua2dox
-(http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm).
-Found on CPAN when looking for something else; kinda handy.
-
-Improved from lua2dox to make the doxygen output more friendly.
-Also it runs faster in lua rather than Perl.
-
-Because this Perl based system is called "lua2dox"., I have decided to add ".lua" to the name
-to keep the two separate.
+Partially from lua2dox
+http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 
 Running
 -------
 
-<ol>
-<li>  Ensure doxygen is installed on your system and that you are familiar with its use.
-Best is to try to make and document some simple C/C++/PHP to see what it produces.
-You can experiment with the enclosed example code.
+This file "lua2dox.lua" gets called by "lua2dox_filter" (bash).
 
-<li> Run "doxygen -g" to create a default Doxyfile.
+Doxygen must be on your system. You can experiment like so:
 
-Then alter it to let it recognise lua. Add the two following lines:
-
-\code{.bash}
-FILE_PATTERNS   = *.lua
-
-FILTER_PATTERNS = *.lua=lua2dox_filter
-\endcode
-
-
-Either add them to the end or find the appropriate entry in Doxyfile.
-
-There are other lines that you might like to alter, but see further documentation for details.
-
-<li> When Doxyfile is edited run "doxygen"
+- Run "doxygen -g" to create a default Doxyfile.
+- Then alter it to let it recognise lua. Add the two following lines:
+    FILE_PATTERNS   = *.lua
+    FILTER_PATTERNS = *.lua=lua2dox_filter
+- Then run "doxygen".
 
 The core function reads the input file (filename or stdin) and outputs some pseudo C-ish language.
 It only has to be good enough for doxygen to see it as legal.
-Therefore our lua interpreter is fairly limited, but "good enough".
 
 One limitation is that each line is treated separately (except for long comments).
 The implication is that class and function declarations must be on the same line.
@@ -81,40 +48,8 @@ so it will probably not document accurately if we do do this.
 
 However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
-</ol>
-
-Installation
-------------
-
-Here for linux or unix-like, for any other OS you need to refer to other documentation.
-
-This file is "lua2dox.lua". It gets called by "lua2dox_filter"(bash).
-Somewhere in your path (e.g. "~/bin" or "/usr/local/bin") put a link to "lua2dox_filter".
-
-Documentation
--------------
-
-Read the external documentation that should be part of this package.
-For example look for the "README" and some .PDFs.
-
 ]]
 
--- we won't use our library code, so this becomes more portable
-
--- require 'elijah_fix_require'
--- require 'elijah_class'
--- 
---! \brief ``declare'' as class
---! 
---! use as:
---! \code{.lua}
---! TWibble = class()
---! function TWibble.init(this,Str)
---! 	this.str = Str
---! 	-- more stuff here
---! end
---! \endcode
---! 
 function class(BaseClass, ClassInitialiser)
   local newClass = {}    -- a new class newClass
   if not ClassInitialiser and type(BaseClass) == 'function' then
@@ -165,8 +100,6 @@ function class(BaseClass, ClassInitialiser)
   return newClass
 end
 
--- require 'elijah_clock'
-
 --! \class TCore_Clock
 --! \brief a clock
 TCore_Clock = class()
@@ -201,9 +134,6 @@ function TCore_Clock.getTimeStamp(this,T0)
 end
 
 
---require 'elijah_io'
-
---! \class TCore_IO
 --! \brief io to console
 --! 
 --! pseudo class (no methods, just to keep documentation tidy)
@@ -224,8 +154,6 @@ function TCore_IO_writeln(Str)
   io.write("\n")
 end
 
-
---require 'elijah_string'
 
 --! \brief trims a string
 function string_trim(Str)
@@ -257,8 +185,6 @@ function string_split(Str, Pattern)
 end
 
 
---require 'elijah_commandline'
-
 --! \class TCore_Commandline
 --! \brief reads/parses commandline
 TCore_Commandline = class()
@@ -278,9 +204,6 @@ function TCore_Commandline.getRaw(this,Key,Default)
   end
   return val
 end
-
-
---require 'elijah_debug'
 
 -------------------------------
 --! \brief file buffer
