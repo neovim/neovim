@@ -22,6 +22,8 @@ echo "Install neovim RubyGem."
 gem install --no-document --version ">= 0.8.0" neovim
 
 echo "Install neovim npm package"
+source ~/.nvm/nvm.sh
+nvm use 10
 npm install -g neovim
 npm link neovim
 

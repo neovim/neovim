@@ -6622,7 +6622,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
     prev->next = m;
   m->next = cur;
 
-  redraw_later(rtype);
+  redraw_win_later(wp, rtype);
   return id;
 
 fail:
@@ -6680,7 +6680,7 @@ int match_delete(win_T *wp, int id, int perr)
     rtype = VALID;
   }
   xfree(cur);
-  redraw_later(rtype);
+  redraw_win_later(wp, rtype);
   return 0;
 }
 
@@ -6698,7 +6698,7 @@ void clear_matches(win_T *wp)
     xfree(wp->w_match_head);
     wp->w_match_head = m;
   }
-  redraw_later(SOME_VALID);
+  redraw_win_later(wp, SOME_VALID);
 }
 
 /*
