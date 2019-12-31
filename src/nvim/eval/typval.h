@@ -798,7 +798,7 @@ static inline bool tv_get_float_chk(const typval_T *const tv,
     *ret_f = (float_T)tv->vval.v_number;
     return true;
   }
-  emsgf(_("E808: Number or Float required"));
+  emsgf("%s", _("E808: Number or Float required"));
   return false;
 }
 

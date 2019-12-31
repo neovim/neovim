@@ -625,7 +625,7 @@ spell_load_file (
   switch (scms_ret) {
     case SP_FORMERROR:
     case SP_TRUNCERROR: {
-      emsgf(_("E757: This does not look like a spell file"));
+      emsgf("%s", _("E757: This does not look like a spell file"));
       goto endFAIL;
     }
     case SP_OTHERERROR: {
@@ -2654,8 +2654,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   }
 
   if (compsylmax != 0) {
-    if (syllable == NULL)
-      smsg(_("COMPOUNDSYLMAX used without SYLLABLE"));
+    if (syllable == NULL) {
+      smsg("%s", _("COMPOUNDSYLMAX used without SYLLABLE"));
+    }
     aff_check_number(spin->si_compsylmax, compsylmax, "COMPOUNDSYLMAX");
     spin->si_compsylmax = compsylmax;
   }
