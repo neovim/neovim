@@ -971,19 +971,6 @@ function lsp.buf_get_clients(bufnr)
  return result
 end
 
---- Prints debug info about the current buffer clients.
----
---- Result of this function cannot be relied upon and may change.
-function lsp.buf_print_debug_info(bufnr)
-  print(vim.inspect(lsp.buf_get_clients(bufnr)))
-end
-
--- Print some debug information about all LSP related things.
--- The output of this function should not be relied upon and may change.
-function lsp.print_debug_info()
-  print(vim.inspect({ clients = active_clients }))
-end
-
 -- Log level dictionary with reverse lookup as well.
 --
 -- Can be used to lookup the number from the name or the

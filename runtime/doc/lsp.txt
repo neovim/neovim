@@ -320,9 +320,6 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
                 Return: ~
                     nil
 
-buf_print_debug_info({bufnr})                 *vim.lsp.buf_print_debug_info()*
-                TODO: Documentation
-
                                                        *vim.lsp.buf_request()*
 buf_request({bufnr}, {method}, {params}, {callback})
                 Sends an async request for all active clients attached to the
@@ -477,9 +474,6 @@ once({fn})                                                    *vim.lsp.once()*
                 TODO: Documentation
 
 optional_validator({fn})                        *vim.lsp.optional_validator()*
-                TODO: Documentation
-
-print_debug_info()                                *vim.lsp.print_debug_info()*
                 TODO: Documentation
 
 request({method}, {params}, {callback})                    *vim.lsp.request()*
