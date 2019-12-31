@@ -3,6 +3,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local iswin = helpers.iswin
+local retry = helpers.retry
 local NIL = helpers.NIL
 
 -- Use these to get access to a coroutine so that I can run async tests and use
@@ -11,9 +13,8 @@ local run, stop = helpers.run, helpers.stop
 
 if helpers.pending_win32(pending) then return end
 
-local is_windows = require'luv'.os_uname().sysname == "Windows"
 local lsp_test_rpc_server_file = "test/functional/fixtures/lsp-test-rpc-server.lua"
-if is_windows then
+if iswin() then
   lsp_test_rpc_server_file = lsp_test_rpc_server_file:gsub("/", "\\")
 end
 
@@ -101,8 +102,8 @@ local function test_rpc_server(config)
   end
 end
 
-describe('Language Client API', function()
-  describe('server_name is specified', function()
+describe('LSP', function()
+  describe('server_name specified', function()
     before_each(function()
       clear()
       -- Run an instance of nvim on the file which contains our "scripts".
@@ -111,14 +112,17 @@ describe('Language Client API', function()
       exec_lua([=[
         lsp = require('vim.lsp')
         local test_name, fixture_filename = ...
-        TEST_RPC_CLIENT_ID = lsp.start_client {
-          cmd = {
-            vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
-            "-c", string.format("lua TEST_NAME = %q", test_name),
-            "-c", "luafile "..fixture_filename;
-          };
-          root_dir = vim.loop.cwd();
-        }
+        function test__start_client()
+          return lsp.start_client {
+            cmd = {
+              vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
+              "-c", string.format("lua TEST_NAME = %q", test_name),
+              "-c", "luafile "..fixture_filename;
+            };
+            root_dir = vim.loop.cwd();
+          }
+        end
+        TEST_CLIENT1 = test__start_client()
       ]=], test_name, lsp_test_rpc_server_file)
     end)
 
@@ -127,25 +131,48 @@ describe('Language Client API', function()
      -- exec_lua("lsp.stop_all_clients(true)")
     end)
 
-    describe('start_client and stop_client', function()
-      it('should return true', function()
-        for _ = 1, 20 do
-          helpers.sleep(10)
-          if exec_lua("return #lsp.get_active_clients()") > 0 then
-            break
-          end
-        end
-        eq(1, exec_lua("return #lsp.get_active_clients()"))
-        eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
-        eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
-        exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).stop()")
-        for _ = 1, 20 do
-          helpers.sleep(10)
-          if exec_lua("return #lsp.get_active_clients()") == 0 then
-            break
-          end
-        end
-        eq(true, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
+    it('start_client(), stop_client()', function()
+      retry(nil, 4000, function()
+        eq(1, exec_lua('return #lsp.get_active_clients()'))
+      end)
+      eq(2, exec_lua([[
+        TEST_CLIENT2 = test__start_client()
+        return TEST_CLIENT2
+      ]]))
+      eq(3, exec_lua([[
+        TEST_CLIENT3 = test__start_client()
+        return TEST_CLIENT3
+      ]]))
+      retry(nil, 4000, function()
+        eq(3, exec_lua('return #lsp.get_active_clients()'))
+      end)
+
+      eq(false, exec_lua('return lsp.get_client_by_id(TEST_CLIENT1) == nil'))
+      eq(false, exec_lua('return lsp.get_client_by_id(TEST_CLIENT1).is_stopped()'))
+      exec_lua('return lsp.get_client_by_id(TEST_CLIENT1).stop()')
+      retry(nil, 4000, function()
+        eq(2, exec_lua('return #lsp.get_active_clients()'))
+      end)
+      eq(true, exec_lua('return lsp.get_client_by_id(TEST_CLIENT1) == nil'))
+
+      exec_lua('lsp.stop_client({TEST_CLIENT2, TEST_CLIENT3})')
+      retry(nil, 4000, function()
+        eq(0, exec_lua('return #lsp.get_active_clients()'))
+      end)
+    end)
+
+    it('stop_client() also works on client objects', function()
+      exec_lua([[
+        TEST_CLIENT2 = test__start_client()
+        TEST_CLIENT3 = test__start_client()
+      ]])
+      retry(nil, 4000, function()
+        eq(3, exec_lua('return #lsp.get_active_clients()'))
+      end)
+      -- Stop all clients.
+      exec_lua('lsp.stop_client(lsp.get_active_clients())')
+      retry(nil, 4000, function()
+        eq(0, exec_lua('return #lsp.get_active_clients()'))
       end)
     end)
   end)

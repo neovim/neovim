@@ -510,32 +510,27 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
                     |vim.lsp.log_levels|
 
 start_client({config})                                *vim.lsp.start_client()*
-                Start a client and initialize it. Its arguments are passed via
-                a configuration object.
+                Starts and initializes a client with the given configuration.
 
-                Mandatory parameters:
-
-                root_dir: {string} specifying the directory where the LSP
-                server will base as its rootUri on initialization.
-
-                cmd: {string} or {list} which is the base command to execute
-                for the LSP. A string will be run using 'shell' and a list
-                will be interpreted as a bare command with arguments passed.
-                This is the same as |jobstart()|.
+                Parameters `cmd` and `root_dir` are required.
 
                 Parameters: ~
-                    {cmd_cwd}          {string} specifying the directory to
-                                       launch the `cmd` process. This is not
-                                       related to `root_dir` . By default,
-                                       |getcwd()| is used.
-                    {cmd_env}          {table} specifying the environment
-                                       flags to pass to the LSP on spawn. This
-                                       can be specified using keys like a map
-                                       or as a list with `k=v` pairs or both.
-                                       Non-string values are coerced to a
-                                       string. For example: `{
-                                       "PRODUCTION=true"; "TEST=123"; PORT =
-                                       8080; HOST = "0.0.0.0"; }` .
+                    {root_dir}         (required, string) Directory where the
+                                       LSP server will base its rootUri on
+                                       initialization.
+                    {cmd}              (required, string or list treated like
+                                       |jobstart()|) Base command that
+                                       initiates the LSP client.
+                    {cmd_cwd}          (string, default=|getcwd()|) Directory
+                                       to launch the `cmd` process. Not
+                                       related to `root_dir` .
+                    {cmd_env}          (table) Environment flags to pass to
+                                       the LSP on spawn. Can be specified
+                                       using keys like a map or as a list with `k=v` pairs or both. Non-string values are
+                                       coerced to string. Example: >
+
+                 { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
+<
                     {capabilities}     Map overriding the default capabilities
                                        defined by
                                        |vim.lsp.protocol.make_client_capabilities()|,
@@ -560,20 +555,18 @@ start_client({config})                                *vim.lsp.start_client()*
                                          help with this.
                                        • Default callback for client requests
                                          not explicitly specifying a callback.
-                    {init_options}     values to pass in the initialization
+                    {init_options}     Values to pass in the initialization
                                        request as `initializationOptions` .
                                        See `initialize` in the LSP spec.
-                    {name}             string used in log messages. Defaults
-                                       to {client_id}
-                    {offset_encoding}  One of "utf-8", "utf-16", or "utf-32"
-                                       which is the encoding that the LSP
-                                       server expects. By default, it is
-                                       "utf-16" as specified in the LSP
-                                       specification. The client does not
-                                       verify this is correct.
+                    {name}             (string, default=client-id) Name in log
+                                       messages.
+                    {offset_encoding}  (default="utf-16") One of "utf-8",
+                                       "utf-16", or "utf-32" which is the
+                                       encoding that the LSP server expects.
+                                       Client does not verify this is correct.
                     {on_error}         Callback with parameters (code, ...),
                                        invoked when the client operation
-                                       throws an error. {code} is a number
+                                       throws an error. `code` is a number
                                        describing the error. Other arguments
                                        may be passed depending on the error
                                        kind. See |vim.lsp.client_errors| for
@@ -622,24 +615,23 @@ start_client({config})                                *vim.lsp.start_client()*
 stop({force})                                                 *vim.lsp.stop()*
                 TODO: Documentation
 
-stop_all_clients({force})                         *vim.lsp.stop_all_clients()*
-                Stops all clients.
-
-                Parameters: ~
-                    {force}  boolean (optional) shutdown forcefully
-
 stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
-                Stops a client.
+                Stops a client(s).
 
                 You can also use the `stop()` function on a |vim.lsp.client|
-                object.
+                object. To stop all clients:
+>
+
+                 vim.lsp.stop_client(lsp.get_active_clients())
+<
 
                 By default asks the server to shutdown, unless stop was
                 requested already for this client, then force-shutdown is
                 attempted.
 
                 Parameters: ~
-                    {client_id}  client id number
+                    {client_id}  client id or |vim.lsp.client| object, or list
+                                 thereof
                     {force}      boolean (optional) shutdown forcefully
 
                                     *vim.lsp.text_document_did_open_handler()*
