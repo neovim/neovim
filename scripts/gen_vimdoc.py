@@ -63,7 +63,7 @@ fmt_vimhelp = False  # HACK
 text_width = 78
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
-out_dir = os.path.join(base_dir, 'tmp-{mode}-doc')
+out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
 filter_cmd = '%s %s' % (sys.executable, script_path)
 seen_funcs = set()
 lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
@@ -151,15 +151,19 @@ CONFIG = {
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {},
-        'section_fmt': lambda name: ('Lua module: vim.lsp'
+        'section_fmt': lambda name: (
+            'Lua module: vim.lsp'
             if name.lower() == 'lsp'
             else f'Lua module: vim.lsp.{name.lower()}'),
-        'helptag_fmt': lambda name: ('*lsp-core*'
+        'helptag_fmt': lambda name: (
+            '*lsp-core*'
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (f'*vim.lsp.{name}()*'
+        'fn_helptag_fmt': lambda fstem, name: (
+            f'*vim.lsp.{name}()*'
             if fstem == 'lsp' and name != 'client'
-            else ('*vim.lsp.client*'
+            else (
+                '*vim.lsp.client*'
                 # HACK. TODO(justinmk): class/structure support in lua2dox
                 if 'lsp.client' == f'{fstem}.{name}'
                 else f'*vim.lsp.{fstem}.{name}()*')),
@@ -568,7 +572,7 @@ def fmt_node_as_vimhelp(parent, width=62, indent=''):
     return clean_lines('\n'.join(rendered_blocks).strip())
 
 
-def extract_from_xml(filename, mode, width):
+def extract_from_xml(filename, target, width):
     """Extracts Doxygen info as maps without formatting the text.
 
     Returns two maps:
@@ -623,8 +627,8 @@ def extract_from_xml(filename, mode, width):
             fstem = '?'
             if '.' in compoundname:
                 fstem = compoundname.split('.')[0]
-                fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[mode]['fn_helptag_fmt'](fstem, name)
+                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
+            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
 
         params = []
         type_length = 0
@@ -635,7 +639,7 @@ def extract_from_xml(filename, mode, width):
             declname = get_child(param, 'declname')
             if declname:
                 param_name = get_text(declname).strip()
-            elif CONFIG[mode]['mode'] == 'lua':
+            elif CONFIG[target]['mode'] == 'lua':
                 # XXX: this is what lua2dox gives us...
                 param_name = param_type
                 param_type = ''
@@ -715,7 +719,7 @@ def extract_from_xml(filename, mode, width):
 
         if 'Deprecated' in str(xrefs):
             deprecated_fns[name] = fn
-        elif name.startswith(CONFIG[mode]['fn_name_prefix']):
+        elif name.startswith(CONFIG[target]['fn_name_prefix']):
             fns[name] = fn
 
         xrefs.clear()
@@ -725,7 +729,7 @@ def extract_from_xml(filename, mode, width):
     return (fns, deprecated_fns)
 
 
-def fmt_doxygen_xml_as_vimhelp(filename, mode):
+def fmt_doxygen_xml_as_vimhelp(filename, target):
     """Entrypoint for generating Vim :help from from Doxygen XML.
 
     Returns 3 items:
@@ -736,7 +740,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, mode):
     fmt_vimhelp = True
     fns_txt = {}  # Map of func_name:vim-help-text.
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
-    fns, _ = extract_from_xml(filename, mode, width=text_width)
+    fns, _ = extract_from_xml(filename, target, width=text_width)
 
     for name, fn in fns.items():
         # Generate Vim :help for parameters.
@@ -766,7 +770,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, mode):
 
         if 'Deprecated' in xrefs:
             deprecated_fns_txt[name] = func_doc
-        elif name.startswith(CONFIG[mode]['fn_name_prefix']):
+        elif name.startswith(CONFIG[target]['fn_name_prefix']):
             fns_txt[name] = func_doc
 
         xrefs.clear()
@@ -802,26 +806,28 @@ def main(config):
 
     Doxygen is called and configured through stdin.
     """
-    for mode in CONFIG:
-        if TARGET is not None and mode != TARGET:
+    for target in CONFIG:
+        if TARGET is not None and target != TARGET:
             continue
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
-            CONFIG[mode]['filename'].replace('.txt', '.mpack'))
+            CONFIG[target]['filename'].replace('.txt', '.mpack'))
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
 
-        output_dir = out_dir.format(mode=mode)
-        p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE,
+        output_dir = out_dir.format(target=target)
+        p = subprocess.Popen(
+                ['doxygen', '-'],
+                stdin=subprocess.PIPE,
                 # silence warnings
-                # runtime/lua/vim/lsp.lua:209: warning: argument 'trace' of command @param is not found in the argument list
+                # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
                 stderr=subprocess.DEVNULL)
         p.communicate(
             config.format(
-                input=CONFIG[mode]['files'],
+                input=CONFIG[target]['files'],
                 output=output_dir,
                 filter=filter_cmd,
-                file_patterns=CONFIG[mode]['file_patterns'])
+                file_patterns=CONFIG[target]['file_patterns'])
             .encode('utf8')
         )
         if p.returncode:
@@ -858,11 +864,11 @@ def main(config):
             if filename.endswith('.c') or filename.endswith('.lua'):
                 # Extract unformatted (*.mpack).
                 fn_map, _ = extract_from_xml(os.path.join(base, '{}.xml'.format(
-                    compound.getAttribute('refid'))), mode, width=9999)
+                    compound.getAttribute('refid'))), target, width=9999)
                 # Extract formatted (:help).
                 functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
                     os.path.join(base, '{}.xml'.format(
-                                 compound.getAttribute('refid'))), mode)
+                                 compound.getAttribute('refid'))), target)
 
                 if not functions_text and not deprecated_text:
                     continue
@@ -884,26 +890,26 @@ def main(config):
 
                     if doc:
                         filename = os.path.basename(filename)
-                        sectname = CONFIG[mode]['section_name'].get(
+                        sectname = CONFIG[target]['section_name'].get(
                                 filename, sectname)
-                        title = CONFIG[mode]['section_fmt'](sectname)
-                        helptag = CONFIG[mode]['helptag_fmt'](sectname)
+                        title = CONFIG[target]['section_fmt'](sectname)
+                        helptag = CONFIG[target]['helptag_fmt'](sectname)
                         sections[filename] = (title, helptag, doc)
                         fn_map_full.update(fn_map)
 
         assert sections
-        if len(sections) > len(CONFIG[mode]['section_order']):
+        if len(sections) > len(CONFIG[target]['section_order']):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
-                    set(sections).difference(CONFIG[mode]['section_order'])))
+                    set(sections).difference(CONFIG[target]['section_order'])))
 
         docs = ''
 
         i = 0
-        for filename in CONFIG[mode]['section_order']:
+        for filename in CONFIG[target]['section_order']:
             title, helptag, section_doc = sections.pop(filename)
             i += 1
-            if filename not in CONFIG[mode]['append_only']:
+            if filename not in CONFIG[target]['append_only']:
                 docs += sep
                 docs += '\n%s%s' % (title,
                                     helptag.rjust(text_width - len(title)))
@@ -914,9 +920,9 @@ def main(config):
         docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
 
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
-                                CONFIG[mode]['filename'])
+                                CONFIG[target]['filename'])
 
-        delete_lines_below(doc_file, CONFIG[mode]['section_start_token'])
+        delete_lines_below(doc_file, CONFIG[target]['section_start_token'])
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
