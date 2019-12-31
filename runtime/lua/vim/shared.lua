@@ -167,7 +167,7 @@ end
 --@param ... Two or more map-like tables.
 function vim.tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
-    error('invalid "behavior": '..tostring(behavior))
+    error(string.format('invalid "behavior": %s\n%s', tostring(behavior), debug.traceback()))
   end
   local ret = {}
   for i = 1, select('#', ...) do
@@ -176,7 +176,7 @@ function vim.tbl_extend(behavior, ...)
       for k, v in pairs(tbl) do
         if behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
-            error('key found in more than one map: '..k)
+            error(string.format('key found in more than one map: %s\n%s', k, debug.traceback()))
           end  -- Else behavior is "keep".
         else
           ret[k] = v
@@ -219,7 +219,7 @@ function vim.tbl_add_reverse_lookup(o)
   for _, k in ipairs(keys) do
     local v = o[k]
     if o[v] then
-      error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
+      error(string.format("The reverse lookup found an existing value for %q while processing key %q\n%s", tostring(v), tostring(k), debug.traceback()))
     end
     o[v] = k
   end
@@ -390,7 +390,7 @@ vim.validate = (function()
   local function _type_name(t)
     local tname = type_names[t]
     if tname == nil then
-      error(string.format('invalid type name: %s', tostring(t)))
+      error(string.format('invalid type name: %s\n%s', tostring(t), debug.traceback()))
     end
     return tname
   end
@@ -399,9 +399,9 @@ vim.validate = (function()
   end
 
   return function(opt)
-    assert(type(opt) == 'table', string.format('opt: expected table, got %s', type(opt)))
+    assert(type(opt) == 'table', string.format('opt: expected table, got %s\n%s', type(opt), debug.traceback()))
     for param_name, spec in pairs(opt) do
-      assert(type(spec) == 'table', string.format('%s: expected table, got %s', param_name, type(spec)))
+      assert(type(spec) == 'table', string.format('%s: expected table, got %s\n%s', param_name, type(spec), debug.traceback() ))
 
       local val = spec[1]   -- Argument value.
       local t = spec[2]     -- Type name, or callable.
@@ -409,10 +409,10 @@ vim.validate = (function()
 
       if not vim.is_callable(t) then  -- Check type name.
         if (not optional or val ~= nil) and not _is_type(val, _type_name(t)) then
-          error(string.format("%s: expected %s, got %s", param_name, _type_name(t), type(val)))
+          error(string.format("%s: expected %s, got %s\n%s", param_name, _type_name(t), type(val), debug.traceback()))
         end
       elseif not t(val) then  -- Check user-provided validation function.
-        error(string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val))
+        error(string.format("%s: expected %s, got %s\n%s", param_name, (spec[3] or '?'), val, debug.traceback()))
       end
     end
     return true
