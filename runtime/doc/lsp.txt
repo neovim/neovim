@@ -1,36 +1,45 @@
-*lsp.txt*   Nvim LSP API
+*lsp.txt*   LSP
+
 
                             NVIM REFERENCE MANUAL
 
 
-Nvim Language Server Protocol (LSP) API                  *lsp*
+LSP client/framework                                     *lsp*
 
-Nvim is a client to the Language Server Protocol:
-
+Nvim supports the Language Server Protocol (LSP), which means it acts as
+a client to LSP servers and includes a Lua framework `vim.lsp` for building
+enhanced LSP tools.
   https://microsoft.github.io/language-server-protocol/
+
+LSP facilitates features like go-to-definition, find-references, hover,
+completion, rename, format, refactor, etc., using semantic whole-project
+analysis (unlike |ctags|).
 
                                       Type |gO| to see the table of contents.
 
-================================================================================
-LANGUAGE SERVER PROTOCOL (LSP) CLIENT                   *lsp-intro*
+==============================================================================
+QUICKSTART                                              *lsp-quickstart*
 
-The `vim.lsp` Lua module provides a flexible API for consuming LSP servers.
+Nvim provides a LSP client, but the servers are provided by third parties.
+Follow these steps to get LSP features:
 
-To use LSP in practice, a language server must be installed.
-  https://microsoft.github.io/language-server-protocol/implementors/servers/
+  1. Install the nvim-lsp plugin.  It provides common configuration for
+     various servers so you can get started quickly.
+     https://github.com/neovim/nvim-lsp
+  2. Install a language server.  Try ":LspInstall <tab>" or use your system
+     package manager to install the relevant language server:
+     https://microsoft.github.io/language-server-protocol/implementors/servers/
+  3. Add `nvim_lsp.xx.setup{…}` to your vimrc, where "xx" is the name of the
+     relevant config.  See the nvim-lsp README for details.
 
-After installing a language server to your machine, you must tell Nvim how to
-start and interact with that language server.
-- Easy way: use the configs provided here by the nvim-lsp plugin.
-  https://github.com/neovim/nvim-lsp
-- Low-level way: use |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|
-  directly.  Useful if you want to build advanced LSP plugins based on the
-  Nvim LSP module. |lsp-advanced-js-example|
+To check LSP clients attached to the current buffer:  >
 
+  :lua print(vim.inspect(vim.lsp.buf_get_clients()))
+<
                                                         *lsp-config*
-Nvim LSP client will automatically provide inline diagnostics when available.
-|lsp-callbacks|  But you probably want to use other features too, such as
-go-to-definition, "hover", etc.  Example config: >
+Inline diagnostics are enabled automatically, e.g. syntax errors will be
+annotated in the buffer.  But you probably want to use other features like
+go-to-definition, hover, etc.  Example config: >
 
   nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
   nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
@@ -71,6 +80,14 @@ the option in an |after-directory| ftplugin, e.g. "after/ftplugin/python.vim".
 
 ================================================================================
                                                            *lsp-core-api*
+
+The `vim.lsp` Lua module is a framework for building LSP plugins.
+
+  1. Start with |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|.
+  2. Peek at the API: >
+     :lua print(vim.inspect(vim.lsp))
+<  3. See |lsp-advanced-js-example| for a full example.
+
 These are the core api functions for working with clients. You will mainly be
 using |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()| for operations
 and |vim.lsp.get_client_by_id()| to retrieve a client by its id after it has
@@ -149,17 +166,17 @@ vim.lsp.start_client({config})
     `vim.lsp.client_errors[code]` can be used to retrieve a human
     understandable string.
  
-  `before_init(initialize_params, config)`
-    A function which is called *before* the request `initialize` is completed.
-    `initialize_params` contains the parameters we are sending to the server
-    and `config` is the config that was passed to `start_client()` for
-    convenience. You can use this to modify parameters before they are sent.
+  `before_init(params, config)`
+    Callback invoked before the LSP "initialize" phase, where `params`
+    contains the parameters being sent to the server and `config` is the
+    config that was passed to `start_client()`. You can use this to modify
+    parameters before they are sent.
  
-  `on_init(client, initialize_result)`
-    A function which is called after the request `initialize` is completed.
-    `initialize_result` contains `capabilities` and anything else the server
-    may send. For example, `clangd` sends `initialize_result.offsetEncoding`
-    if `capabilities.offsetEncoding` was sent to it. You can *only* modify the
+  `on_init(client, result)`
+    Callback invoked after the LSP "initialize" phase, where `result` is
+    a table of `capabilities` and anything else the server may send. For
+    example, clangd sends `initialize_result.offsetEncoding` if
+    `capabilities.offsetEncoding` was sent to it. You can only modify the
     `client.offset_encoding` here before any notifications are sent.
  
   `on_attach(client, bufnr)`
@@ -180,12 +197,10 @@ vim.lsp.start_client({config})
     You can use |vim.lsp.get_client_by_id()| to get the actual client object.
     See |lsp-client| for what the client structure will be.
  
-  NOTE: The client is only available *after* it has been initialized, which
+  NOTE: The client is only available after it has been initialized, which
   may happen after a small delay (or never if there is an error).  For this
   reason, you may want to use `on_init` to do any actions once the client has
   been initialized.
-
-                                                                    *lsp-client*
 
 The client object has some methods and members related to using the client.
 
@@ -357,10 +372,9 @@ Handlers are called for:
 ================================================================================
 VIM.LSP.PROTOCOL                                              *vim.lsp.protocol*
 
-The `vim.lsp.protocol` module provides constants defined in the LSP
-specification, and helper functions for creating protocol-related objects.
-
-  https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
+Module `vim.lsp.protocol` defines constants dictated by the LSP specification,
+and helper functions for creating protocol-related objects.
+https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 
 Useful examples are `vim.lsp.protocol.ErrorCodes`. These objects allow reverse
 lookup by either the number or string name.
@@ -383,8 +397,9 @@ TODO: Describe the utils here for handling/applying things from LSP.
 
 ================================================================================
                                                                *lsp-buf-methods*
-There are methods which operate on the buffer level for all of the active
-clients attached to the buffer.
+
+The "vim.lsp.buf_" functions perform operations for all LSP clients attached
+to the given buffer.
 
                                                          *vim.lsp.buf_request()*
 vim.lsp.buf_request({bufnr}, {method}, {params}, [{callback}])
@@ -462,6 +477,9 @@ vim.lsp.log_levels
 
 ================================================================================
 LSP EXAMPLE                                            *lsp-advanced-js-example*
+
+This example is for plugin authors who want to work with "vim.lsp" framework.
+If you only want to use (not develop) LSP features, see |lsp-quickstart|.
 
 For more advanced configurations where just filtering by filetype isn't
 sufficient, you can use the `vim.lsp.start_client()` and
@@ -573,4 +591,11 @@ The example will:
   vim.api.nvim_command [[autocmd BufReadPost * lua check_start_javascript_lsp()]]
 <
 
-vim:tw=78:ts=8:ft=help:norl:
+
+
+================================================================================
+LSP API                                                *lsp-api*
+
+
+
+ vim:tw=78:ts=8:ft=help:norl:
