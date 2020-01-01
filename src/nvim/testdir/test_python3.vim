@@ -174,8 +174,13 @@ func Test_Catch_Exception_Message()
 endfunc
 
 func Test_unicode()
+  throw 'skipped: Nvim only supports "utf-8" for "encoding" option'
   " this crashed Vim once
-  " set encoding=utf32
+  set encoding=utf32
   py3 print('hello')
-  " set encoding=utf8
+  set encoding=debug
+  py3 print('hello')
+  set encoding=euc-tw
+  py3 print('hello')
+  set encoding=utf8
 endfunc
