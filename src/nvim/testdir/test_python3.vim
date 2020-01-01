@@ -164,3 +164,18 @@ func Test_Write_To_Current_Buffer_Fixes_Cursor_Str()
 
   bwipe!
 endfunction
+
+func Test_Catch_Exception_Message()
+  try
+    py3 raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
+endfunc
+
+func Test_unicode()
+  " this crashed Vim once
+  " set encoding=utf32
+  py3 print('hello')
+  " set encoding=utf8
+endfunc
