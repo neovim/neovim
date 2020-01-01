@@ -504,9 +504,13 @@ function module.source(code)
   return fname
 end
 
+function module.has_powershell()
+  return module.eval('executable("'..(iswin() and 'powershell' or 'pwsh')..'")') == 1
+end
+
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
-  assert(module.eval('executable("'..shell..'")'))
+  assert(module.has_powershell())
   local cmd = 'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'

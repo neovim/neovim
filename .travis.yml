@@ -86,6 +86,8 @@ addons:
       - xclip
   homebrew:
     update: false
+    casks:
+      - powershell
     packages:
       - ccache
       - ninja
@@ -115,9 +117,12 @@ jobs:
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'deb [arch=amd64] https://packages.microsoft.com/ubuntu/16.04/prod xenial main'
+              key_url: 'https://packages.microsoft.com/keys/microsoft.asc'
           packages:
             - *common-apt-packages
             - gcc-9
+            - powershell
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint
       os: linux
