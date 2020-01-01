@@ -248,7 +248,7 @@ out how to start it, and configure that in an `adapters` entry in either your
 The simplest way in practice is to install or start Visusal Studio Code and use
 its extension manager to install the relevant extension. You can then configure
 the adapter manually in the `adapters` section of your `.vimspector.json` or in
-a `gagets.json`. 
+a `gadgets.json`. 
 
 PRs are always welcome to add configuration to do this to `install_gadget.py`.
 
@@ -266,13 +266,32 @@ Where os is one of:
 * `linux`
 * `windows` (though note: Windows is not supported)
 
-The format is the same as `.vimspector.json`, but only the `gagets` key is used:
+The format is the same as `.vimspector.json`, but only the `adapters` key is
+used:
 
 Example:
 
 ```json
 {
   "adapters": {
+    "lldb-vscode": {
+      "variables": {
+        "LLVM": {
+          "shell": "brew --prefix llvm"
+        }
+      },
+      "attach": {
+        "pidProperty": "pid",
+        "pidSelect": "ask"
+      },
+      "command": [
+        "${LLVM}/bin/lldb-vscode"
+      ],
+      "env": {
+        "LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY": "YES"
+      },
+      "name": "lldb"
+    },
     "vscode-cpptools": {
       "attach": {
         "pidProperty": "processId", 
@@ -295,6 +314,11 @@ Example:
 ```
 
 The gadget file is automatically written by `install_gadget.py`.
+
+Vimspector will also load any fies matching:
+`</path/to/vimspector>/gadgets/<os>/.gadgets.d/*.json`. These have the same
+format as `.gadgets.json` but are not overwritten when running
+`install_gadget.py`.
 
 # About
 
@@ -477,7 +501,43 @@ Current tested with the following debug adapters.
 
 * C++: [vscode-cpptools](https://github.com/Microsoft/vscode-cpptools)
 
-Example `.vimspector.json`
+***NOTE FOR macOS USERS***: Currently VSCode cpptools does *not* work on macOS
+(see this issue: https://github.com/microsoft/vscode-cpptools/issues/3829).
+Therefore it is highly recommended to use `lldb-vscode`, which comes with llvm.
+Here's how:
+
+* Install llvm with HomeBrew: `brew install llvm`
+* Create a file named
+  `/path/to/vimspector/gadgets/macos/.gadgets.d/lldb-vscode.json`:
+
+```json
+
+{
+  "adapters": {
+    "lldb-vscode": {
+      "variables": {
+        "LLVM": {
+          "shell": "brew --prefix llvm"
+        }
+      },
+      "attach": {
+        "pidProperty": "pid",
+        "pidSelect": "ask"
+      },
+      "command": [
+        "${LLVM}/bin/lldb-vscode"
+      ],
+      "env": {
+        "LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY": "YES"
+      },
+      "name": "lldb"
+    }
+  }
+}
+```
+
+Example `.vimspector.json` (works with both `vscode-cpptools` and `lldb-vscode`.
+For `lldb-vscode` replace the name of the adapter with `lldb-vscode`):
 
 ```
 {
