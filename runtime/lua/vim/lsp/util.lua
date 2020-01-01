@@ -567,7 +567,6 @@ end
 
 do
   local all_buffer_diagnostics = {}
-  local all_buffer_diagnostics_counts = {}
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
