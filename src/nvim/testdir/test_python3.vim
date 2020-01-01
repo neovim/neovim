@@ -174,8 +174,22 @@ func Test_Catch_Exception_Message()
 endfunc
 
 func Test_unicode()
+  throw 'skipped: Nvim does not support "termencoding" option and only supports "utf-8" for "encoding" option'
   " this crashed Vim once
-  " set encoding=utf32
+  if &tenc != ''
+    throw "Skipped: 'termencoding' is not empty"
+  endif
+
+  set encoding=utf32
   py3 print('hello')
-  " set encoding=utf8
+
+  if !has('win32')
+    set encoding=debug
+    py3 print('hello')
+  endif
+
+  set encoding=euc-tw
+  py3 print('hello')
+
+  set encoding=utf8
 endfunc
