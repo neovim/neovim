@@ -23,15 +23,8 @@ local function request(method, params, callback)
   return vim.lsp.buf_request(0, method, params, callback)
 end
 
-local function notify(method, params)
-  validate {
-    method = {method, 's'};
-  }
-  return vim.lsp.buf_notify(0, method, params)
-end
-
 function M.server_ready()
-  return not not notify("window/progress", {})
+  return not not vim.lsp.buf_notify(0, "window/progress", {})
 end
 
 function M.hover()

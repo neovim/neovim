@@ -567,7 +567,6 @@ end
 
 do
   local all_buffer_diagnostics = {}
-  local all_buffer_diagnostics_counts = {}
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
@@ -726,51 +725,17 @@ do
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
-  function M.buf_diagnostics_statusline(bufnr, diagnostics)
-    all_buffer_diagnostics_counts[bufnr] = { errors=0, warnings=0, hints=0, info=0 }
-    for _, diagnostic in ipairs(diagnostics) do
-      if diagnostic.severity == 1 then
-        all_buffer_diagnostics_counts[bufnr]['errors'] = all_buffer_diagnostics_counts[bufnr]['errors'] + 1
-      elseif diagnostic.severity == 2 then
-        all_buffer_diagnostics_counts[bufnr]['warnings'] = all_buffer_diagnostics_counts[bufnr]['warnings'] + 1
-      elseif diagnostic.severity == 3 then
-        all_buffer_diagnostics_counts[bufnr]['info'] = all_buffer_diagnostics_counts[bufnr]['info'] + 1
-      elseif diagnostic.severity == 4 then
-        all_buffer_diagnostics_counts[bufnr]['hints'] = all_buffer_diagnostics_counts[bufnr]['hints'] + 1
+  function M.buf_diagnostics_count(kind)
+    local bufnr = vim.api.nvim_get_current_buf()
+    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_line_diagnostics then return end
+    local count = 0
+    for _, line_diags in pairs(buffer_line_diagnostics) do
+      for _, diag in ipairs(line_diags) do
+        if protocol.DiagnosticSeverity[kind] == diag.severity then count = count + 1 end
       end
     end
-  end
-  function M.buf_diagnostics_error_count()
-      local bufnr = vim.api.nvim_get_current_buf()
-      if all_buffer_diagnostics_counts[bufnr] ~= nil then
-          return all_buffer_diagnostics_counts[bufnr]['errors']
-      else
-          return '-'
-      end
-  end
-  function M.buf_diagnostics_warning_count()
-      local bufnr = vim.api.nvim_get_current_buf()
-      if all_buffer_diagnostics_counts[bufnr] ~= nil then
-          return all_buffer_diagnostics_counts[bufnr]['warnings']
-      else
-          return '-'
-      end
-  end
-  function M.buf_diagnostics_info_count()
-      local bufnr = vim.api.nvim_get_current_buf()
-      if all_buffer_diagnostics_counts[bufnr] ~= nil then
-          return all_buffer_diagnostics_counts[bufnr]['info']
-      else
-          return '-'
-      end
-  end
-  function M.buf_diagnostics_hint_count()
-      local bufnr = vim.api.nvim_get_current_buf()
-      if all_buffer_diagnostics_counts[bufnr] ~= nil then
-          return all_buffer_diagnostics_counts[bufnr]['hints']
-      else
-          return '-'
-      end
+    return count
   end
 end
 
