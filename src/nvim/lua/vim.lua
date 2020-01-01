@@ -243,6 +243,10 @@ function vim.schedule_wrap(cb)
   end)
 end
 
+function vim.empty_dict()
+  return setmetatable({}, vim._empty_dict_mt)
+end
+
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
   __index = function(t, key)

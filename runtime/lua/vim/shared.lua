@@ -275,9 +275,15 @@ function vim.tbl_flatten(t)
 end
 
 -- Determine whether a Lua table can be treated as an array.
+--
+-- An empty table `{}` will default to being treated as an array.
+-- Use `vim.emtpy_dict()` to create a table treated as an
+-- empty dict. Empty tables returned by `rpcrequest()` and
+-- `vim.fn` functions can be checked using this function
+-- whether they represent empty API arrays and vimL lists.
 ---
 --@params Table
---@returns true: A non-empty array, false: A non-empty table, nil: An empty table
+--@returns true: An array-like table, false: A dict-like or mixed table
 function vim.tbl_islist(t)
   if type(t) ~= 'table' then
     return false
@@ -296,7 +302,12 @@ function vim.tbl_islist(t)
   if count > 0 then
     return true
   else
-    return nil
+    -- TODO(bfredl): in the future, we will always be inside nvim
+    -- then this check can be deleted.
+    if vim._empty_dict_mt == nil then
+      return nil
+    end
+    return getmetatable(t) ~= vim._empty_dict_mt
   end
 end
 

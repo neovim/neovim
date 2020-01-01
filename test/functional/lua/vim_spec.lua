@@ -354,7 +354,8 @@ describe('lua stdlib', function()
   end)
 
   it('vim.tbl_islist', function()
-    eq(NIL, exec_lua("return vim.tbl_islist({})"))
+    eq(true, exec_lua("return vim.tbl_islist({})"))
+    eq(false, exec_lua("return vim.tbl_islist(vim.empty_dict())"))
     eq(true, exec_lua("return vim.tbl_islist({'a', 'b', 'c'})"))
     eq(false, exec_lua("return vim.tbl_islist({'a', '32', a='hello', b='baz'})"))
     eq(false, exec_lua("return vim.tbl_islist({1, a='hello', b='baz'})"))
@@ -458,6 +459,19 @@ describe('lua stdlib', function()
     ]]))
     eq({3, 'aa', true, NIL}, exec_lua([[return ret]]))
 
+    eq({{}, {}, false, true}, exec_lua([[
+      vim.rpcrequest(chan, 'nvim_exec', 'let xx = {}\nlet yy = []', false)
+      local dict = vim.rpcrequest(chan, 'nvim_eval', 'xx')
+      local list = vim.rpcrequest(chan, 'nvim_eval', 'yy')
+      return {dict, list, vim.tbl_islist(dict), vim.tbl_islist(list)}
+     ]]))
+
+     exec_lua([[
+       vim.rpcrequest(chan, 'nvim_set_var', 'aa', {})
+       vim.rpcrequest(chan, 'nvim_set_var', 'bb', vim.empty_dict())
+     ]])
+     eq({1, 1}, eval('[type(g:aa) == type([]), type(g:bb) == type({})]'))
+
     -- error handling
     eq({false, 'Invalid channel: 23'},
        exec_lua([[return {pcall(vim.rpcrequest, 23, 'foo')}]]))
@@ -486,7 +500,7 @@ describe('lua stdlib', function()
     })
     screen:attach()
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      timer = vim.loop.new_timer()
       timer:start(20, 0, function ()
         -- notify ok (executed later when safe)
         vim.rpcnotify(chan, 'nvim_set_var', 'yy', {3, vim.NIL})
@@ -505,6 +519,32 @@ describe('lua stdlib', function()
     ]]}
     feed('<cr>')
     eq({3, NIL}, meths.get_var('yy'))
+
+    exec_lua([[timer:close()]])
+  end)
+
+  it('vim.empty_dict()', function()
+    eq({true, false, true, true}, exec_lua([[
+      vim.api.nvim_set_var('listy', {})
+      vim.api.nvim_set_var('dicty', vim.empty_dict())
+      local listy = vim.fn.eval("listy")
+      local dicty = vim.fn.eval("dicty")
+      return {vim.tbl_islist(listy), vim.tbl_islist(dicty), next(listy) == nil, next(dicty) == nil}
+    ]]))
+
+    -- vim.empty_dict() gives new value each time
+    -- equality is not overriden (still by ref)
+    -- non-empty table uses the usual heuristics (ignores the tag)
+    eq({false, {"foo"}, {namey="bar"}}, exec_lua([[
+      local aa = vim.empty_dict()
+      local bb = vim.empty_dict()
+      local equally = (aa == bb)
+      aa[1] = "foo"
+      bb["namey"] = "bar"
+      return {equally, aa, bb}
+    ]]))
+
+    eq("{ {}, vim.empty_dict() }", exec_lua("return vim.inspect({{}, vim.empty_dict()})"))
   end)
 
   it('vim.validate', function()

@@ -156,6 +156,13 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
             && other_keys_num == 0
             && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
+      if (tsize == 0 && lua_getmetatable(lstate, -1)) {
+        nlua_pushref(lstate, nlua_empty_dict_ref);
+        if (lua_rawequal(lstate, -2, -1)) {
+          ret.type = kObjectTypeDictionary;
+        }
+        lua_pop(lstate, 2);
+      }
     } else if (ret.string_keys_num == tsize) {
       ret.type = kObjectTypeDictionary;
     } else {
@@ -465,6 +472,8 @@ static bool typval_conv_special = false;
         nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary); \
       } else { \
         lua_createtable(lstate, 0, 0); \
+        nlua_pushref(lstate, nlua_empty_dict_ref); \
+        lua_setmetatable(lstate, -2); \
       } \
     } while (0)
 
@@ -695,6 +704,10 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict,
     nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary);
   } else {
     lua_createtable(lstate, 0, (int)dict.size);
+    if (dict.size == 0 && !special) {
+      nlua_pushref(lstate, nlua_empty_dict_ref);
+      lua_setmetatable(lstate, -2);
+    }
   }
   for (size_t i = 0; i < dict.size; i++) {
     nlua_push_String(lstate, dict.items[i].key, special);
