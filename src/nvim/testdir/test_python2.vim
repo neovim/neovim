@@ -164,3 +164,11 @@ func Test_Write_To_Current_Buffer_Fixes_Cursor_Str()
 
   bwipe!
 endfunction
+
+func Test_Catch_Exception_Message()
+  try
+    py raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
+endfunc
