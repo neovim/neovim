@@ -339,6 +339,8 @@ notation	meaning		    equivalent	decimal value(s)	~
 
 <EOL>		end-of-line (can be <CR>, <LF> or <CR><LF>,
 		depends on system and 'fileformat')	*<EOL>*
+<Ignore>	cancel wait-for-character		*<Ignore>*
+<NOP>		no-op: do nothing (useful in mappings)	*<Nop>*
 
 <Up>		cursor-up			*cursor-up* *cursor_up*
 <Down>		cursor-down			*cursor-down* *cursor_down*

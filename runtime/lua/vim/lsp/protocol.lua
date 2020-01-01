@@ -603,6 +603,8 @@ export interface WorkspaceClientCapabilities {
 }
 --]=]
 
+--- Gets a new ClientCapabilities object describing the LSP client
+--- capabilities.
 function protocol.make_client_capabilities()
   return {
     textDocument = {
@@ -821,6 +823,8 @@ interface ServerCapabilities {
   experimental?: any;
 }
 --]]
+
+--- Creates a normalized object describing LSP server capabilities.
 function protocol.resolve_capabilities(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties

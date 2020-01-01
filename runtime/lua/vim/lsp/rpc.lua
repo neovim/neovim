@@ -166,9 +166,14 @@ local function format_rpc_error(err)
   return table.concat(message_parts, ' ')
 end
 
+--- Creates an RPC response object/table.
+---
+--@param code RPC error code defined in `vim.lsp.protocol.ErrorCodes`
+--@param message (optional) arbitrary message to send to server
+--@param data (optional) arbitrary data to send to server
 local function rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
-  local code_name = assert(protocol.ErrorCodes[code], 'Invalid rpc error code')
+  local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
   return setmetatable({
     code = code;
     message = message or code_name;

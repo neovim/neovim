@@ -195,20 +195,20 @@ Normal commands:
   "Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
 
 Options:
-  'cpoptions' flags: |cpo-_|
-  'display' flag `msgsep` to minimize scrolling when showing messages
-  'guicursor' works in the terminal
-  'fillchars' local to window. flags: `msgsep` (see 'display' above) and `eob`
-              for |hl-EndOfBuffer| marker
-  'inccommand' shows interactive results for |:substitute|-like commands
-  'listchars' local to window
-  'pumblend' pseudo-transparent popupmenu
+  'cpoptions'   flags: |cpo-_|
+  'display'     flags: "msgsep" minimizes scrolling when showing messages
+  'guicursor'   works in the terminal
+  'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
+                marker, "foldopen", "foldsep", "foldclose"
+  'inccommand'  shows interactive results for |:substitute|-like commands
+  'listchars'   local to window
+  'pumblend'    pseudo-transparent popupmenu
   'scrollback'
-  'signcolumn' supports up to 9 dynamic/fixed columns
-  'statusline' supports unlimited alignment sections
-  'tabline' %@Func@foo%X can call any function on mouse-click
-  'wildoptions' `pum` flag to use popupmenu for wildmode completion
-  'winblend' pseudo-transparency in floating windows |api-floatwin|
+  'signcolumn'  supports up to 9 dynamic/fixed columns
+  'statusline'  supports unlimited alignment sections
+  'tabline'     %@Func@foo%X can call any function on mouse-click
+  'wildoptions' "pum" flag to use popupmenu for wildmode completion
+  'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
 
 Signs:
@@ -336,16 +336,12 @@ Macro/|recording| behavior
 Motion:
   The |jumplist| avoids useless/phantom jumps.
 
-  When the new option |jumpoptions| includes 'stack', the jumplist behaves
-  like the tagstack or history in a web browser--jumping from the middle of
-  the jumplist discards the locations after the jumped-from position
-  (|jumplist-stack|).
-
 Normal commands:
   |Q| is the same as |gQ|
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
+  |jumpoptions| "stack" behavior
 
 Shell:
   Shell output (|:!|, |:make|, …) is always routed through the UI, so it

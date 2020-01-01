@@ -671,21 +671,20 @@ being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
 							*E471*  >
   Argument required
 
-This happens when an Ex command with mandatory argument(s) was executed, but
-no argument has been specified.
+Ex command was executed without a mandatory argument(s).
 
 							*E474* *E475* *E983*  >
   Invalid argument
   Invalid argument: {arg}
   Duplicate argument: {arg}
 
-Ex command or function has been executed, but an invalid argument was
-specified.  Or a non-executable command was given to |system()|.
+Ex command or function was given an invalid argument. Or |jobstart()| or
+|system()| was given a non-executable command.
 
 							*E488*  >
   Trailing characters
 
-An argument has been added to an Ex command that does not permit one.
+An argument was given to an Ex command that does not permit one.
 
 							*E477* *E478*  >
   No ! allowed

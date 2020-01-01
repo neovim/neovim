@@ -569,7 +569,8 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     occurred, the values from all preceding calls will still
                     be returned.
 
-nvim_call_dict_function({dict}, {fn}, {args})      *nvim_call_dict_function()*
+                                                   *nvim_call_dict_function()*
+nvim_call_dict_function({dict}, {fn}, {args})
                 Calls a VimL |Dictionary-function| with the given arguments.
 
                 On execution error: fails with VimL error, does not update
@@ -1878,7 +1879,8 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Return: ~
                     Variable value
 
-nvim_buf_get_virtual_text({buffer}, {lnum})      *nvim_buf_get_virtual_text()*
+                                                 *nvim_buf_get_virtual_text()*
+nvim_buf_get_virtual_text({buffer}, {lnum})
                 Get the virtual text (annotation) for a buffer line.
 
                 The virtual text is returned as list of lists, whereas the
@@ -2300,7 +2302,8 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
                 Return: ~
                     List of windows in `tabpage`
 
-nvim_tabpage_set_var({tabpage}, {name}, {value})      *nvim_tabpage_set_var()*
+                                                      *nvim_tabpage_set_var()*
+nvim_tabpage_set_var({tabpage}, {name}, {value})
                 Sets a tab-scoped (t:) variable
 
                 Parameters: ~

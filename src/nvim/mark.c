@@ -179,8 +179,8 @@ void setpcmark(void)
   }
 
   if (jop_flags & JOP_STACK) {
-    // If we're somewhere in the middle of the jumplist discard everything
-    // after the current index.
+    // jumpoptions=stack: if we're somewhere in the middle of the jumplist
+    // discard everything after the current index.
     if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
       // Discard the rest of the jumplist by cutting the length down to
       // contain nothing beyond the current index.
@@ -1214,14 +1214,14 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         break;
       }
     }
+
     bool mustfree;
-    if (i >= wp->w_jumplistlen) {  // not duplicate
+    if (i >= wp->w_jumplistlen) {   // not duplicate
       mustfree = false;
-    } else if (i > from + 1) {  // non-adjacent duplicate
-      // When the jump options include "stack", duplicates are only removed from
-      // the jumplist when they are adjacent.
+    } else if (i > from + 1) {      // non-adjacent duplicate
+      // jumpoptions=stack: remove duplicates only when adjacent.
       mustfree = !(jop_flags & JOP_STACK);
-    } else {  // adjacent duplicate
+    } else {                        // adjacent duplicate
       mustfree = true;
     }
 

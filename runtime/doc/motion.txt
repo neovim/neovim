@@ -1105,7 +1105,7 @@ Finally, navigate to a different webpage, new.com.  The history is
 - third.com
 - new.com <--
 
-When the jumpoptions includes "stack", this is the behavior of neovim as well.
+When the jumpoptions includes "stack", this is the behavior of Nvim as well.
 That is, given a jumplist like the following in which CTRL-O has been used to
 move back three times to location X
 
@@ -1117,8 +1117,8 @@ move back three times to location X
    2   213    2 src/nvim/mark.c
    3   181    0 src/nvim/mark.c
 
-jumping to location Y results in the locations after the current locations being
-removed:
+jumping to (new) location Y results in the locations after the current
+locations being removed:
 
  jump line  col file/text
    3  1260    8 src/nvim/mark.c
