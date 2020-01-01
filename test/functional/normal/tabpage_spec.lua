@@ -21,5 +21,18 @@ describe('tabpage', function()
 
     eq(1, eval('tabpagenr()'))
   end)
+
+  it('retreats to the previous page via <C-W>gT', function()
+    -- add some tabpages
+    command('tabnew')
+    command('tabnew')
+    command('tabnew')
+
+    eq(4, eval('tabpagenr()'))
+
+    feed('<C-W>gT')
+
+    eq(3, eval('tabpagenr()'))
+  end)
 end)
 
