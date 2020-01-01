@@ -6211,7 +6211,7 @@ void win_grid_alloc(win_T *wp)
       || grid->Rows != rows
       || grid->Columns != cols) {
     if (want_allocation) {
-      grid_alloc(grid, rows, cols, wp->w_grid.valid, wp->w_grid.valid);
+      grid_alloc(grid, rows, cols, wp->w_grid.valid, false);
       grid->valid = true;
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
