@@ -31,10 +31,7 @@ local function notify(method, params)
 end
 
 function M.server_ready()
-  if notify("window/progress", {}) then
-      return true
-  end
-  return false
+  return not not notify("window/progress", {})
 end
 
 function M.hover()

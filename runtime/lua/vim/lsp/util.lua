@@ -739,7 +739,6 @@ do
         all_buffer_diagnostics_counts[bufnr]['hints'] = all_buffer_diagnostics_counts[bufnr]['hints'] + 1
       end
     end
-    vim.api.nvim_command("doautocmd User LSPStatusLineChanged")
   end
   function M.buf_diagnostics_error_count()
       local bufnr = vim.api.nvim_get_current_buf()
