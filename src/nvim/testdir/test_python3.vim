@@ -172,3 +172,10 @@ func Test_Catch_Exception_Message()
     call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
   endtry
 endfunc
+
+func Test_unicode()
+  " this crashed Vim once
+  " set encoding=utf32
+  py3 print('hello')
+  " set encoding=utf8
+endfunc
