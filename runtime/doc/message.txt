@@ -69,7 +69,7 @@ See `:messages` above.
 LIST OF MESSAGES
 			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
-			*E323* *E341* *E473* *E570* *E685* *E950*  >
+			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
   makemap: Illegal mode
   Cannot create BalloonEval with both message and callback

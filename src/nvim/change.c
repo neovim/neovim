@@ -757,7 +757,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
   // If "count" is negative the caller must be doing something wrong.
   if (count < 1) {
-    IEMSGN("E950: Invalid count for del_bytes(): %ld", count);
+    IEMSGN("E292: Invalid count for del_bytes(): %ld", count);
     return FAIL;
   }
 
