@@ -176,8 +176,9 @@ endfunc
 func Test_unicode()
   throw 'skipped: Nvim does not support "termencoding" option and only supports "utf-8" for "encoding" option'
   " this crashed Vim once
-  let save_tenc = &tenc
-  set tenc=
+  if &tenc != ''
+    throw "Skipped: 'termencoding' is not empty"
+  endif
 
   set encoding=utf32
   py3 print('hello')
@@ -189,5 +190,4 @@ func Test_unicode()
   py3 print('hello')
 
   set encoding=utf8
-  let &tenc = save_tenc
 endfunc
