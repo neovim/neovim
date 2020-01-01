@@ -174,7 +174,7 @@ name: >
   vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
 
 ================================================================================
-LSP Highlight groups                                      *lsp-highlight-groups*
+LSP HIGHLIGHT GROUPS                                      *lsp-highlight-groups*
 
                                                         *hl-LspDiagnosticsError*
 LspDiagnosticsError       used for 'Error' diagnostic virtual text
