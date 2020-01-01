@@ -202,14 +202,11 @@ M['textDocument/documentHighlight'] = function(_, _, result, _)
   for _, reference in ipairs(result) do
     local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
     local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
-    if reference["kind"] == 1 then
-      -- text
+    if reference["kind"] == protocol.DocumentHighlightKind.Text then
       util.highlight_range(bufnr, util.reference_ns, "LspReferenceText", start_pos, end_pos)
-    elseif reference["kind"] == 2 then
-      -- read
+    elseif reference["kind"] == protocol.DocumentHighlightKind.Read then
       util.highlight_range(bufnr, util.reference_ns, "LspReferenceRead", start_pos, end_pos)
-    elseif reference["kind"] == 3 then
-      -- write 
+    elseif reference["kind"] == protocol.DocumentHighlightKind.Write then
       util.highlight_range(bufnr, util.reference_ns, "LspReferenceWrite", start_pos, end_pos)
     end
   end
