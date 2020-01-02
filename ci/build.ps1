@@ -1,3 +1,4 @@
+param([switch]$NoTests)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -80,38 +81,41 @@ elseif ($compiler -eq 'MSVC') {
   }
 }
 
-# Setup python (use AppVeyor system python)
-C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
-C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
-# Disambiguate python3
-move c:\Python35\python.exe c:\Python35\python3.exe
-$env:PATH = "C:\Python35;C:\Python27;$env:PATH"
-# Sanity check
-python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
-python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+if (-not $NoTests) {
+  # Setup python (use AppVeyor system python)
+  C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
+  C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
+  # Disambiguate python3
+  move c:\Python35\python.exe c:\Python35\python3.exe
+  $env:PATH = "C:\Python35;C:\Python27;$env:PATH"
+  # Sanity check
+  python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+  python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
-$env:PATH = "C:\Ruby24\bin;$env:PATH"
-gem.cmd install neovim
-Get-Command -CommandType Application neovim-ruby-host.bat
+  $env:PATH = "C:\Ruby24\bin;$env:PATH"
+  gem.cmd install neovim
+  Get-Command -CommandType Application neovim-ruby-host.bat
 
-npm.cmd install -g neovim
-Get-Command -CommandType Application neovim-node-host.cmd
-npm.cmd link neovim
+  npm.cmd install -g neovim
+  Get-Command -CommandType Application neovim-node-host.cmd
+  npm.cmd link neovim
 
 
-$env:TREE_SITTER_DIR = $env:USERPROFILE + "\tree-sitter-build"
-mkdir "$env:TREE_SITTER_DIR\bin"
+  $env:TREE_SITTER_DIR = $env:USERPROFILE + "\tree-sitter-build"
+  mkdir "$env:TREE_SITTER_DIR\bin"
 
-$xbits = if ($bits -eq '32') {'x86'} else {'x64'}
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-$xbits.gz" -OutFile tree-sitter.exe.gz
-C:\msys64\usr\bin\gzip -d tree-sitter.exe.gz
+  $xbits = if ($bits -eq '32') {'x86'} else {'x64'}
+  Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-$xbits.gz" -OutFile tree-sitter.exe.gz
+  C:\msys64\usr\bin\gzip -d tree-sitter.exe.gz
 
-Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2" -OutFile tree_sitter_c.zip
-Expand-Archive .\tree_sitter_c.zip -DestinationPath .
-cd tree-sitter-c-0.15.2
-..\tree-sitter.exe test
-if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
-  exit 1
+  Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2" -OutFile tree_sitter_c.zip
+  Expand-Archive .\tree_sitter_c.zip -DestinationPath .
+  cd tree-sitter-c-0.15.2
+  ..\tree-sitter.exe test
+  if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
+    exit 1
+  }
+
 }
 
 if ($compiler -eq 'MSVC') {
@@ -142,33 +146,35 @@ if ($env:USE_LUACOV -eq 1) {
   & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
 }
 
-# Functional tests
-# The $LastExitCode from MSBuild can't be trusted
-$failed = $false
-cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
-  foreach { $failed = $failed -or
-    $_ -match 'functional tests failed with error'; $_ }
+if (-not $NoTests) {
+  # Functional tests
+  # The $LastExitCode from MSBuild can't be trusted
+  $failed = $false
+  cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
+    foreach { $failed = $failed -or
+      $_ -match 'functional tests failed with error'; $_ }
 
-if ($uploadToCodecov) {
-  if ($env:USE_LUACOV -eq 1) {
-    & $env:DEPS_PREFIX\bin\luacov.bat
+  if ($uploadToCodecov) {
+    if ($env:USE_LUACOV -eq 1) {
+      & $env:DEPS_PREFIX\bin\luacov.bat
+    }
+    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
   }
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-}
-if ($failed) {
-  exit $LastExitCode
-}
+  if ($failed) {
+    exit $LastExitCode
+  }
 
-# Old tests
-# Add MSYS to path, required for e.g. `find` used in test scripts.
-# But would break functionaltests, where its `more` would be used then.
-$OldPath = $env:PATH
-$env:PATH = "C:\msys64\usr\bin;$env:PATH"
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
-$env:PATH = $OldPath
+  # Old tests
+  # Add MSYS to path, required for e.g. `find` used in test scripts.
+  # But would break functionaltests, where its `more` would be used then.
+  $OldPath = $env:PATH
+  $env:PATH = "C:\msys64\usr\bin;$env:PATH"
+  & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
+  $env:PATH = $OldPath
 
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  if ($uploadToCodecov) {
+    bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  }
 }
 
 # Build artifacts
