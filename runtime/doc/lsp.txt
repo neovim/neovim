@@ -290,6 +290,12 @@ The example will:
 <
 
 
+==============================================================================
+AUTOCOMMANDS                                                *lsp-autocommands*
+
+                                                       *LspDiagnosticsChanged*
+LspDiagnosticsChanged           After receiving publishDiagnostics server response
+
 
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
@@ -333,7 +339,7 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
                     {params}  (string) Parameters to send to the server
 
                 Return: ~
-                    nil
+                    true if any client returns true; false otherwise
 
                                                        *vim.lsp.buf_request()*
 buf_request({bufnr}, {method}, {params}, {callback})
@@ -751,6 +757,10 @@ rename({new_name})                                      *vim.lsp.buf.rename()*
 request({method}, {params}, {callback})                *vim.lsp.buf.request()*
                 TODO: Documentation
 
+server_ready()                                    *vim.lsp.buf.server_ready()*
+                Sends a notification through all clients associated with current
+                buffer and returns `true` if server responds.
+
 signature_help()                                *vim.lsp.buf.signature_help()*
                 TODO: Documentation
 
@@ -896,6 +906,30 @@ apply_workspace_edit({workspace_edit})
 
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
                 TODO: Documentation
+ 
+                                        *vim.lsp.util.buf_diagnostics_count()*
+buf_diagnostics_count({kind})
+                Returns the number of diagnostics of given kind for current buffer.
+                Useful for showing diagnostics counts in statusline. eg:
+
+>
+    function! LspStatus() abort
+        let sl = ''
+        if luaeval('server_ready()')
+            let sl.='%#MyStatuslineLSP#E:'
+            let sl.='%#MyStatuslineLSPErrors#%{luaeval("buf_diagnostics_count(\"Error\")")}'
+            let sl.='%#MyStatuslineLSP# W:'
+            let sl.='%#MyStatuslineLSPWarnings#%{luaeval("buf_diagnostics_count(\"Warning\")")}'
+        else
+            let sl.='%#MyStatuslineLSPErrors#off'
+        endif
+        return sl
+    endfunction
+    let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus() 
+<
+
+                Parameters: ~
+                    {kind}       Diagnostic severity kind: Error, Warning, Information or Hint.
 
                                *vim.lsp.util.buf_diagnostics_save_positions()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
