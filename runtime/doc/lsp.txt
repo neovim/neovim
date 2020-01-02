@@ -741,6 +741,17 @@ declaration()                                      *vim.lsp.buf.declaration()*
 definition()                                        *vim.lsp.buf.definition()*
                 TODO: Documentation
 
+document_highlight()                        *vim.lsp.buf.document_highlight()*
+                Send request to server to resolve document highlights for the 
+                current text document position. This request can be associated
+                to key mapping or to events such as `CursorHold`, eg:
+>
+vim.api.nvim_command [[autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()]]
+vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
+vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.util.buf_clear_references()]]
+<
+
+
 formatting({options})                               *vim.lsp.buf.formatting()*
                 TODO: Documentation
 
@@ -916,6 +927,9 @@ apply_workspace_edit({workspace_edit})
                 TODO: Documentation
 
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
+                TODO: Documentation
+
+buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 TODO: Documentation
 
                                *vim.lsp.util.buf_diagnostics_save_positions()*
