@@ -20,28 +20,29 @@ end
 
 M['textDocument/codeAction'] = function(_, _, actions)
   if vim.tbl_isempty(actions) then
-    log.info("No code actions available")
+    print("No code actions available")
     return
   end
-  util.choice_preview(
-    "LspCodeActionChoice",
-    actions,
-    function(action)
-      -- Escape newlines in action titles title
-      local title = action.title:gsub('\r\n', '\\r\\n')
-      title = title:gsub('\n', '\\n')
-      return title
-    end,
-    function(action)
-      -- textDocument/codeAction can return either Command[] or CodeAction[].
-      -- We handle both in the same way by extracting the command
-      local command = action
-      if type(action.command) == table then
-        command = action.command
-      end
-      buf.execute_command(command)
-    end
-  )
+
+  local option_strings = {"Code Actions:"}
+  for i, action in ipairs(actions) do
+    local title = action.title:gsub('\r\n', '\\r\\n')
+    title = title:gsub('\n', '\\n')
+    table.insert(option_strings, string.format("%d. %s", i, title))
+  end
+
+  local choice = vim.fn.inputlist(option_strings)
+  if choice < 1 or choice > #actions then
+    return
+  end
+  local action_chosen = actions[choice]
+  -- textDocument/codeAction can return either Command[] or CodeAction[].
+  -- We handle both in the same way by extracting the command
+  local command = action_chosen
+  if type(action_chosen.command) == table then
+    command = action_chosen.command
+  end
+  buf.execute_command(command)
 end
 
 M['workspace/applyEdit'] = function(_, _, workspace_edit)
