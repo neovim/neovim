@@ -1365,6 +1365,9 @@ Dictionary copy_dictionary(Dictionary dict)
 Object copy_object(Object obj)
 {
   switch (obj.type) {
+    case kObjectTypeBuffer:
+    case kObjectTypeTabpage:
+    case kObjectTypeWindow:
     case kObjectTypeNil:
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
