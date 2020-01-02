@@ -23,6 +23,7 @@ Reporting problems
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
 - Include `cmake --system-information` for build-related issues.
+- Consider using one of the [templates] for reporting issues.
 
 Developer guidelines
 --------------------
@@ -234,3 +235,4 @@ as context, use the `-W` argument as well.
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
+[templates]: https://github.com/neovim/neovim/tree/master/.github/ISSUE_TEMPLATE
