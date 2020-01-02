@@ -137,6 +137,7 @@ Special issues ~
 
 Programming language support ~
 |indent.txt|	automatic indenting for C and other languages
+|lsp.txt|         Language Server Protocol (LSP)
 |syntax.txt|	syntax highlighting
 |filetype.txt|	settings done specifically for a type of file
 |quickfix.txt|	commands for a quick edit-compile-fix cycle
@@ -169,7 +170,7 @@ Versions ~
 Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
 |pi_health.txt|    Healthcheck framework
-|pi_matchit.txt|   Extended "%" matching
+|pi_matchit.txt|   Extended |%| matching
 |pi_msgpack.txt|   msgpack utilities
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens

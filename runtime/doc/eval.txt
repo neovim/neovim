@@ -2520,6 +2520,9 @@ and({expr}, {expr})					*and()*
 api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
 
+		View it in a nice human-readable format: >
+		       :lua print(vim.inspect(vim.fn.api_info()))
+
 append({lnum}, {text})					*append()*
 		When {text} is a |List|: Append each item of the |List| as a
 		text line below line {lnum} in the current buffer.
@@ -5453,35 +5456,41 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 
 							*jobstart-options*
 		{opts} is a dictionary with these keys:
-		  |on_stdout|: stdout event handler (function name or |Funcref|)
-		  stdout_buffered : read stdout in |channel-buffered| mode.
-		  |on_stderr|: stderr event handler (function name or |Funcref|)
-		  stderr_buffered : read stderr in |channel-buffered| mode.
-		  |on_exit|  : exit event handler (function name or |Funcref|)
-		  cwd      : Working directory of the job; defaults to
-		             |current-directory|.
-		  env      : A dict of strings to append (or replace see
-		             |clear_env|) to the current environment.
-		  clear_env: If set, use the exact values passed in |env|
-		  rpc      : If set, |msgpack-rpc| will be used to communicate
-			     with the job over stdin and stdout. "on_stdout" is
-			     then ignored, but "on_stderr" can still be used.
-		  pty      : If set, the job will be connected to a new pseudo
-			     terminal and the job streams are connected to the
-			     master file descriptor. "on_stderr" is ignored,
-			     "on_stdout" receives all output.
-
-		  width    : (pty only) Width of the terminal screen
-		  height   : (pty only) Height of the terminal screen
-		  TERM     : (pty only) $TERM environment variable
-		  detach   : (non-pty only) Detach the job process: it will
-			     not be killed when Nvim exits. If the process
-			     exits before Nvim, "on_exit" will be invoked.
+		  clear_env:  (boolean) `env` defines the job environment
+			      exactly, instead of merging current environment.
+		  cwd:	      (string, default=|current-directory|) Working
+			      directory of the job.
+		  detach:     (boolean) Detach the job process: it will not be
+			      killed when Nvim exits. If the process exits
+			      before Nvim, `on_exit` will be invoked.
+		  env:	      (dict) Map of environment variable name:value
+			      pairs extending (or replacing if |clear_env|)
+			      the current environment.
+		  height:     (number) Height of the `pty` terminal.
+		  |on_exit|:    (function) Callback invoked when the job exits.
+		  |on_stdout|:  (function) Callback invoked when the job emits
+			      stdout data.
+		  |on_stderr|:  (function) Callback invoked when the job emits
+			      stderr data.
+		  pty:	      (boolean) Connect the job to a new pseudo
+			      terminal, and its streams to the master file
+			      descriptor. Then  `on_stderr` is ignored,
+			      `on_stdout` receives all output.
+		  rpc:	      (boolean) Use |msgpack-rpc| to communicate with
+			      the job over stdio. Then `on_stdout` is ignored,
+			      but `on_stderr` can still be used.
+		  stderr_buffered: (boolean) Collect data until EOF (stream closed)
+			      before invoking `on_stderr`. |channel-buffered|
+		  stdout_buffered: (boolean) Collect data until EOF (stream
+			      closed) before invoking `on_stdout`. |channel-buffered|
+		  TERM:	      (string) Sets the `pty` $TERM environment variable.
+		  width:      (number) Width of the `pty` terminal.
 
 		{opts} is passed as |self| dictionary to the callback; the
 		caller may set other keys to pass application-specific data.
+
 		Returns:
-		  - The channel ID on success
+		  - |channel-id| on success
 		  - 0 on invalid arguments
 		  - -1 if {cmd}[0] is not executable.
 		See also |job-control|, |channel|, |msgpack-rpc|.

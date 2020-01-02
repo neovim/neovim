@@ -65,10 +65,11 @@ Pull requests (PRs)
 Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
 For Comment) and `[RDY]` (Ready).
 
-- `[RFC]` is assumed by default, i.e. you are requesting a review.
-- Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-  is still in flux.
-- Add `[RDY]` if you are _done_ and only waiting on merge.
+1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
+   noise to merge commit messages).
+2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
+   is still in flux.
+3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
 
 ### Commit messages
 
