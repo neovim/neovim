@@ -459,6 +459,7 @@ EXTERN frame_T  *topframe;      /* top of the window frame tree */
  * one in the list, "curtab" is the current one.
  */
 EXTERN tabpage_T    *first_tabpage;
+EXTERN tabpage_T    *lastused_tabpage;
 EXTERN tabpage_T    *curtab;
 EXTERN int redraw_tabline INIT(= FALSE);           /* need to redraw tabline */
 
