@@ -4737,6 +4737,13 @@ bool get_tty_option(char *name, char **value)
     return true;
   }
 
+  if (strequal(name, "tenc") || strequal(name, "termencoding")) {
+    if (value) {
+      *value = xstrdup("utf-8");
+    }
+    return true;
+  }
+
   if (strequal(name, "ttytype")) {
     if (value) {
       *value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
