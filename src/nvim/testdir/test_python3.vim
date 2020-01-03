@@ -174,7 +174,6 @@ func Test_Catch_Exception_Message()
 endfunc
 
 func Test_unicode()
-  throw 'skipped: Nvim does not support "termencoding" option and only supports "utf-8" for "encoding" option'
   " this crashed Vim once
   if &tenc != ''
     throw "Skipped: 'termencoding' is not empty"
