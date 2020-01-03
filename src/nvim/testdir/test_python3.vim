@@ -185,10 +185,10 @@ func Test_unicode()
   if !has('win32')
     set encoding=debug
     py3 print('hello')
-  endif
 
-  set encoding=euc-tw
-  py3 print('hello')
+    set encoding=euc-tw
+    py3 print('hello')
+  endif
 
   set encoding=utf8
 endfunc
