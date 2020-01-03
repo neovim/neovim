@@ -172,9 +172,10 @@ function! s:clipboard.set(lines, regtype, reg) abort
   if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
-    " xclip does not close stdout when receiving input via stdin
+    " xclip does not close stdout,stderr when receiving input via stdin
     if argv[0] ==# 'xclip'
       call jobclose(jobid, 'stdout')
+      call jobclose(jobid, 'stderr')
     endif
     let selection.owner = jobid
     let ret = 1
