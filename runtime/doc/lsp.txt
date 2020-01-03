@@ -953,6 +953,18 @@ buf_diagnostics_underline({bufnr}, {diagnostics})
 buf_diagnostics_virtual_text({bufnr}, {diagnostics})
                 TODO: Documentation
 
+                                 *vim.lsp.util.buf_diagnostics_signs()*
+buf_diagnostics_signs({bufnr}, {diagnostics})
+                Place signs for each diagnostic in the sign column.
+                Sign characters can be customized with the following options:
+>
+let g:LspDiagnosticsErrorSign = 'E'
+let g:spDiagnosticsWarningSign = 'W'
+let g:LspDiagnosticsInformationSign = 'I'
+let g:LspDiagnosticsHintSign = 'H'
+<
+
+
 character_offset({buf}, {row}, {col})        *vim.lsp.util.character_offset()*
                 TODO: Documentation
 

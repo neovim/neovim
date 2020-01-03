@@ -570,7 +570,7 @@ do
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
   local reference_ns = api.nvim_create_namespace("vim_lsp_references")
-
+  local sign_ns = 'vim_lsp_signs'
   local underline_highlight_name = "LspDiagnosticsUnderline"
   vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
   for kind, _ in pairs(protocol.DiagnosticSeverity) do
@@ -603,6 +603,12 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+
+    -- clear sign group
+    vim.fn.sign_unplace(sign_ns, {buffer=bufnr})
+
+    -- clear virtual text namespace
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
   end
 
@@ -755,7 +761,19 @@ do
     end
     return count
   end
-end
+  function M.buf_diagnostics_signs(bufnr, diagnostics)
+    for _, diagnostic in ipairs(diagnostics) do
+      if diagnostic.severity == protocol.DiagnosticSeverity.Error then
+        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsErrorSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
+      elseif diagnostic.severity == protocol.DiagnosticSeverity.Warning then
+        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsWarningSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
+      elseif diagnostic.severity == protocol.DiagnosticSeverity.Information then
+        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsInformationSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
+      elseif diagnostic.severity == protocol.DiagnosticSeverity.Hint then
+        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsHintSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
+      end
+    end
+  end
 
 local position_sort = sort_by_key(function(v)
   return {v.start.line, v.start.character}
