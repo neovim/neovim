@@ -725,7 +725,10 @@ do
     local line = api.nvim_win_get_cursor(0)[1] - 1
 
     local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_diagnostics then return end
+    if not buffer_diagnostics then
+      return {}
+    end
+
     local line_diagnostics = buffer_diagnostics[line]
     return line_diagnostics or {}
   end
