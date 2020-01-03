@@ -39,6 +39,7 @@ function! s:try_cmd(cmd, ...) abort
   let out = systemlist(argv, (a:0 ? a:1 : ['']), 1)
   if v:shell_error
     if !exists('s:did_error_try_cmd')
+    \ && (argv[0] isnot# 'xclip' || empty(out) || out[0] !~# 'Error: target STRING not available')
       echohl WarningMsg
       echomsg "clipboard: error: ".(len(out) ? out[0] : v:shell_error)
       echohl None
