@@ -287,7 +287,7 @@ func Test_map_timeout_with_timer_interrupt()
   set timeout timeoutlen=200
 
   func ExitCb(job, status)
-    let g:timer = timer_start(1, {_ -> feedkeys("3\<Esc>", 't')})
+    let g:timer = timer_start(1, {-> feedkeys("3\<Esc>", 't')})
   endfunc
 
   call job_start([&shell, &shellcmdflag, 'echo'], {'exit_cb': 'ExitCb'})
