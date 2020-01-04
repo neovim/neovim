@@ -260,9 +260,11 @@ func Test_getchar_zero()
     return
   endif
 
+  " Measure the elapsed time to avoid a hang when it fails.
+  let start = reltime()
   let id = timer_start(20, {id -> feedkeys('x', 'L')})
   let c = 0
-  while c == 0
+  while c == 0 && reltimefloat(reltime(start)) < 0.2
     let c = getchar(0)
     sleep 10m
   endwhile
