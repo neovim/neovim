@@ -254,13 +254,20 @@ func Test_peek_and_get_char()
 endfunc
 
 func Test_getchar_zero()
-  call timer_start(20, {id -> feedkeys('x', 'L')})
+  if has('win32')
+    " Console: no low-level input
+    " GUI: somehow doesn't work
+    return
+  endif
+
+  let id = timer_start(20, {id -> feedkeys('x', 'L')})
   let c = 0
   while c == 0
     let c = getchar(0)
     sleep 10m
   endwhile
   call assert_equal('x', nr2char(c))
+  call timer_stop(id)
 endfunc
 
 func Test_ex_mode()
@@ -268,7 +275,7 @@ func Test_ex_mode()
   func Foo(...)
 
   endfunc
-  let timer =  timer_start(40, function('g:Foo'), {'repeat':-1})
+  let timer = timer_start(40, function('g:Foo'), {'repeat':-1})
   " This used to throw error E749.
   exe "normal Qsleep 100m\rvi\r"
   call timer_stop(timer)
