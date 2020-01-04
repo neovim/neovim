@@ -253,6 +253,16 @@ func Test_peek_and_get_char()
   call timer_stop(intr)
 endfunc
 
+func Test_getchar_zero()
+  call timer_start(20, {id -> feedkeys('x', 'L')})
+  let c = 0
+  while c == 0
+    let c = getchar(0)
+    sleep 10m
+  endwhile
+  call assert_equal('x', nr2char(c))
+endfunc
+
 func Test_ex_mode()
   " Function with an empty line.
   func Foo(...)
