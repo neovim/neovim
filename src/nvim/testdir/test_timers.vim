@@ -5,6 +5,7 @@ if !has('timers')
 endif
 
 source shared.vim
+source screendump.vim
 source load.vim
 
 func MyHandler(timer)
@@ -261,6 +262,37 @@ func Test_ex_mode()
   " This used to throw error E749.
   exe "normal Qsleep 100m\rvi\r"
   call timer_stop(timer)
+endfunc
+
+func Test_restore_count()
+  if !CanRunVimInTerminal()
+    return
+  endif
+  " Check that v:count is saved and restored, not changed by a timer.
+  call writefile([
+        \ 'nnoremap <expr><silent> L v:count ? v:count . "l" : "l"',
+        \ 'func Doit(id)',
+        \ '  normal 3j',
+        \ 'endfunc',
+        \ 'call timer_start(100, "Doit")',
+	\ ], 'Xtrcscript')
+  call writefile([
+        \ '1-1234',
+        \ '2-1234',
+        \ '3-1234',
+	\ ], 'Xtrctext')
+  let buf = RunVimInTerminal('-S Xtrcscript Xtrctext', {})
+
+  " Wait for the timer to move the cursor to the third line.
+  call WaitForAssert({-> assert_equal(3, term_getcursor(buf)[0])})
+  call assert_equal(1, term_getcursor(buf)[1])
+  " Now check that v:count has not been set to 3
+  call term_sendkeys(buf, 'L')
+  call WaitForAssert({-> assert_equal(2, term_getcursor(buf)[1])})
+
+  call StopVimInTerminal(buf)
+  call delete('Xtrcscript')
+  call delete('Xtrctext')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
