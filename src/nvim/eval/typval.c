@@ -1306,7 +1306,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 dict_T *tv_dict_alloc(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  dict_T *const d = xmalloc(sizeof(dict_T));
+  dict_T *const d = xcalloc(1, sizeof(dict_T));
 
   // Add the dict to the list of dicts for garbage collection.
   if (gc_first_dict != NULL) {

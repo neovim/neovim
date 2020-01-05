@@ -1518,7 +1518,7 @@ int vgetc(void)
    * collection in the first next vgetc().  It's disabled after that to
    * avoid internally used Lists and Dicts to be freed.
    */
-  may_garbage_collect = FALSE;
+  may_garbage_collect = false;
 
   return c;
 }
