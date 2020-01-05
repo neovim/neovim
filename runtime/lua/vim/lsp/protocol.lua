@@ -663,19 +663,19 @@ function protocol.make_client_capabilities()
       documentHighlight = {
         dynamicRegistration = false
       };
-      -- documentSymbol = {
-      --   dynamicRegistration = false;
-      --   symbolKind = {
-      --     valueSet = (function()
-      --       local res = {}
-      --       for k in pairs(protocol.SymbolKind) do
-      --         if type(k) == 'string' then table.insert(res, k) end
-      --       end
-      --       return res
-      --     end)();
-      --   };
-      --   hierarchicalDocumentSymbolSupport = false;
-      -- };
+      documentSymbol = {
+        dynamicRegistration = false;
+        symbolKind = {
+          valueSet = (function()
+            local res = {}
+            for k in pairs(protocol.SymbolKind) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+        hierarchicalDocumentSymbolSupport = false;
+      };
     };
     workspace = nil;
     experimental = nil;

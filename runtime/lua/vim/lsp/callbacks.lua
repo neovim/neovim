@@ -42,6 +42,31 @@ M['textDocument/references'] = function(_, _, result)
   api.nvim_command("wincmd p")
 end
 
+M['textDocument/documentSymbol'] = function(_, _, result)
+  if not result or vim.tbl_isempty(result) then return end
+
+  -- result type is eather DocumentSymbol[] or SymbolInformation[]
+  -- SymbolInformation type has location key which is Location type.
+  local lines, jump_list = util.symbols_to_lines(result)
+  local current_winid = vim.fn.win_getid()
+  local winnr = vim.api.nvim_command("vertical botright 30split nvim_lsp_symbols")
+  local bufnr = vim.api.nvim_win_get_buf(winnr)
+
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+  vim.api.nvim_buf_set_option(bufnr, 'readonly', true)
+  vim.api.nvim_buf_set_option(bufnr, 'modifiable', false)
+  vim.api.nvim_buf_set_option(bufnr, 'buftype', 'nofile')
+  vim.api.nvim_buf_set_option(bufnr, 'buflisted', false)
+  vim.api.nvim_win_set_option(winnr, 'list', false)
+  vim.api.nvim_win_set_option(winnr, 'spell', false)
+  vim.api.nvim_win_set_option(winnr, 'number', false)
+  vim.api.nvim_win_set_option(winnr, 'relativenumber', false)
+
+  vim.api.nvim_buf_set_var(bufnr, "jump_list", jump_list)
+  vim.api.nvim_buf_set_var(bufnr, "document_winid", current_winid)
+  vim.api.nvim_set_keymap("n", '<CR>', ':lua vim.lsp.util.goto_symbol()<CR>', { silent = true })
+end
+
 M['textDocument/rename'] = function(_, _, result)
   if not result then return end
   util.apply_workspace_edit(result)

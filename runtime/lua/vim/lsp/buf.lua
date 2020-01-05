@@ -132,5 +132,10 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
+function M.document_symbol()
+  local params = { textDocument = util.make_text_document_params() }
+  request('textDocument/documentSymbol', params)
+end
+
 return M
 -- vim:sw=2 ts=2 et

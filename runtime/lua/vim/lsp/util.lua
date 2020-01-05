@@ -758,6 +758,83 @@ function M.set_qflist(locations)
   })
 end
 
+function M.symbols_to_lines(symbols)
+  local function _symbols_to_grouped_items(_symbols)
+    local items = {}
+    for _, symbol in ipairs(_symbols) do
+      if symbol.location then -- SymbolInformation type
+        local range = symbol.location.range
+        local kind = protocol.SymbolKind[symbol.kind]
+        if not items[kind] then items[kind] = {} end
+        table.insert(items[kind], {
+          fname = vim.uri_to_fname(symbol.location.uri),
+          lnum = range.start.line + 1,
+          col = range.start.character + 1,
+          kind = kind,
+          text = symbol.name,
+        })
+      elseif symbol.range then -- DocumentSymbole type
+        local kind = protocol.SymbolKind[symbol.kind]
+        if not items[kind] then items[kind] = {} end
+        table.insert(items[kind], {
+          lnum = symbol.range.start.line + 1,
+          col = symbol.range.start.character + 1,
+          kind = kind,
+          detail = symbol.detail or '',
+          text = symbol.name,
+        })
+        if symbol.children then
+          for _, child in ipairs(symbol) do
+            for k, v in pairs(_symbols_to_grouped_items(child, items)) do
+              if not items[k] then items[k] = {} end
+              vim.list_extend(items[k], v)
+            end
+          end
+        end
+      end
+    end
+    return items
+  end
+
+  local function _build_kind_name_line(kind_name)
+    return kind_name
+  end
+
+  local function _build_item_line(item)
+    return "\t"..item.text
+  end
+
+  local grouped_items = _symbols_to_grouped_items(symbols)
+  local lines = {}
+  local jump_list = {}
+  jump_list[vim.type_idx] = vim.types.array
+
+  for kind_name, items in pairs(grouped_items) do
+    table.insert(lines, _build_kind_name_line(kind_name))
+    table.insert(jump_list, 0)
+    for _, item in ipairs(items) do
+      table.insert(lines, _build_item_line(item))
+      table.insert(jump_list, item)
+    end
+    table.insert(lines, '')
+    table.insert(jump_list, 0)
+  end
+
+  return lines, jump_list
+end
+
+function M.goto_symbol()
+  local current_lnum = vim.fn.line(".")
+  local jump_list = vim.api.nvim_buf_get_var(0, "jump_list")
+  local symbol = jump_list[current_lnum]
+  if not (symbol == 0) then
+    local winid = vim.api.nvim_buf_get_var(0, "document_winid")
+    vim.api.nvim_command("echom '"..vim.inspect(winid).."'")
+    vim.fn.win_gotoid(winid)
+    vim.fn.cursor({ symbol.lnum, symbol.col })
+  end
+end
+
 -- Remove empty lines from the beginning and end.
 function M.trim_empty_lines(lines)
   local start = 1
@@ -810,9 +887,13 @@ function M.make_position_params()
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   col = str_utfindex(line, col)
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) };
+    textDocument = M.make_text_document_params();
     position = { line = row; character = col; }
   }
+end
+
+function M.make_text_document_params()
+  return { uri = vim.uri_from_bufnr(0) }
 end
 
 -- @param buf buffer handle or 0 for current.
