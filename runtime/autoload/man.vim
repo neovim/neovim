@@ -398,6 +398,11 @@ function! man#goto_tag(pattern, flags, info) abort
   " sort by relevance - exact matches first, then the previous order
   call sort(l:structured, { a, b -> a.name ==? l:name ? -1 : b.name ==? l:name ? 1 : 0 })
 
+  if &cscopetag
+    " return only a single entry so we work well with :cstag (#11675)
+    let l:structured = l:structured[:0]
+  endif
+
   return map(l:structured, {
   \  _, entry -> {
   \      'name': entry.name,
