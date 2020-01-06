@@ -591,3 +591,10 @@ func Test_cursorline_with_visualmode()
   call StopVimInTerminal(buf)
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
+
+func Test_1_highlight_Normalgroup_exists()
+  " This test must come before the Test_cursorline test, as it appears this
+  " defines the Normal highlighting group anyway.
+  let hlNormal = HighlightArgs('Normal')
+  call assert_match('hi Normal\s*clear', hlNormal)
+endfunc
