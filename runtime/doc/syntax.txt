@@ -4920,6 +4920,8 @@ Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
 							*hl-Cursor*
 Cursor		character under the cursor
+lCursor		the character under the cursor when |language-mapping|
+		is used (see 'guicursor')
 							*hl-CursorIM*
 CursorIM	like Cursor, but used when in IME mode |CursorIM|
 							*hl-CursorColumn*

@@ -241,15 +241,15 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
       keys_esc = keys.data;
   }
   ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-      insert ? 0 : typebuf.tb_len, !typed, false);
+              insert ? 0 : typebuf.tb_len, !typed, false);
+  if (vgetc_busy) {
+    typebuf_was_filled = true;
+  }
 
   if (escape_csi) {
       xfree(keys_esc);
   }
 
-  if (vgetc_busy) {
-    typebuf_was_filled = true;
-  }
   if (execute) {
     int save_msg_scroll = msg_scroll;
 

@@ -254,15 +254,14 @@ func Test_peek_and_get_char()
 endfunc
 
 func Test_getchar_zero()
-  if has('win32')
+  if has('win32') && !has('gui_running')
     " Console: no low-level input
-    " GUI: somehow doesn't work
     return
   endif
 
   " Measure the elapsed time to avoid a hang when it fails.
   let start = reltime()
-  let id = timer_start(20, {id -> feedkeys('x', 'L')})
+  let id = timer_start(20, {-> feedkeys('x', 'L')})
   let c = 0
   while c == 0 && reltimefloat(reltime(start)) < 0.2
     let c = getchar(0)
@@ -312,6 +311,32 @@ func Test_restore_count()
   call StopVimInTerminal(buf)
   call delete('Xtrcscript')
   call delete('Xtrctext')
+endfunc
+
+" Test that the garbage collector isn't triggered if a timer callback invokes
+" vgetc().
+func Test_nocatch_garbage_collect()
+  " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
+  return
+  " 'uptimetime. must be bigger than the timer timeout
+  set ut=200
+  call test_garbagecollect_soon()
+  call test_override('no_wait_return', 0)
+  func CauseAnError(id)
+    " This will show an error and wait for Enter.
+    let a = {'foo', 'bar'}
+  endfunc
+  func FeedChar(id)
+    call feedkeys('x', 't')
+  endfunc
+  call timer_start(300, 'FeedChar')
+  call timer_start(100, 'CauseAnError')
+  let x = getchar()
+
+  set ut&
+  call test_override('no_wait_return', 1)
+  delfunc CauseAnError
+  delfunc FeedChar
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

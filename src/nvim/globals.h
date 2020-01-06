@@ -325,7 +325,7 @@ EXTERN except_T *caught_stack INIT(= NULL);
 /// we do garbage collection before waiting for a char at the toplevel.
 /// "garbage_collect_at_exit" indicates garbagecollect(1) was called.
 ///
-EXTERN int may_garbage_collect INIT(= false);
+EXTERN bool may_garbage_collect INIT(= false);
 EXTERN int want_garbage_collect INIT(= false);
 EXTERN int garbage_collect_at_exit INIT(= false);
 

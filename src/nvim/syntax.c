@@ -5959,6 +5959,7 @@ static const char *highlight_init_both[] = {
   "IncSearch    cterm=reverse gui=reverse",
   "ModeMsg      cterm=bold gui=bold",
   "NonText      ctermfg=Blue gui=bold guifg=Blue",
+  "Normal       cterm=NONE gui=NONE",
   "PmenuSbar    ctermbg=Grey guibg=Grey",
   "StatusLine   cterm=reverse,bold gui=reverse,bold",
   "StatusLineNC cterm=reverse gui=reverse",
@@ -6010,7 +6011,6 @@ static const char *highlight_init_light[] = {
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
-  "Normal       gui=NONE",
   NULL
 };
 
@@ -6044,7 +6044,6 @@ static const char *highlight_init_dark[] = {
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
-  "Normal       gui=NONE",
   NULL
 };
 

@@ -5920,7 +5920,7 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
   if (**arg != '}') {
     EMSG2(_("E723: Missing end of Dictionary '}': %s"), *arg);
 failret:
-    if (evaluate) {
+    if (d != NULL) {
       tv_dict_free(d);
     }
     return FAIL;

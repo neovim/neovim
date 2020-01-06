@@ -52,7 +52,7 @@ if has('timers')
     au CursorHoldI * let g:triggered += 1
     set updatetime=500
     call job_start(has('win32') ? 'cmd /c echo:' : 'echo',
-          \ {'exit_cb': {j, s -> timer_start(1000, 'ExitInsertMode')}})
+          \ {'exit_cb': {-> timer_start(1000, 'ExitInsertMode')}})
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     unlet g:triggered

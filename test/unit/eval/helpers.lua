@@ -406,7 +406,7 @@ end
 local alloc_logging_helpers = {
   list = function(l) return {func='calloc', args={1, ffi.sizeof('list_T')}, ret=void(l)} end,
   li = function(li) return {func='malloc', args={ffi.sizeof('listitem_T')}, ret=void(li)} end,
-  dict = function(d) return {func='malloc', args={ffi.sizeof('dict_T')}, ret=void(d)} end,
+  dict = function(d) return {func='calloc', args={1, ffi.sizeof('dict_T')}, ret=void(d)} end,
   di = function(di, size)
     size = alloc_len(size, function() return di.di_key end)
     return {func='malloc', args={ffi.offsetof('dictitem_T', 'di_key') + size + 1}, ret=void(di)}

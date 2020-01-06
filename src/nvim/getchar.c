@@ -1518,7 +1518,7 @@ int vgetc(void)
    * collection in the first next vgetc().  It's disabled after that to
    * avoid internally used Lists and Dicts to be freed.
    */
-  may_garbage_collect = FALSE;
+  may_garbage_collect = false;
 
   return c;
 }
@@ -1562,7 +1562,7 @@ int vpeekc(void)
 {
   if (old_char != -1)
     return old_char;
-  return vgetorpeek(FALSE);
+  return vgetorpeek(false);
 }
 
 /*
@@ -1615,20 +1615,20 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    Also stores the result of mappings.
 ///    Also used for the ":normal" command.
 /// 3. from the user
-///    This may do a blocking wait if "advance" is TRUE.
+///    This may do a blocking wait if "advance" is true.
 ///
-/// if "advance" is TRUE (vgetc()):
+/// if "advance" is true (vgetc()):
 ///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
-/// if "advance" is FALSE (vpeekc()):
+/// if "advance" is false (vpeekc()):
 ///    Just look whether there is a character available.
 ///    Return NUL if not.
 ///
 /// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
-static int vgetorpeek(int advance)
+static int vgetorpeek(bool advance)
 {
   int c, c1;
   int keylen;
@@ -1721,7 +1721,7 @@ static int vgetorpeek(int advance)
           // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
           // If inchar() returns TRUE (script file was active) or we
-          // are inside a mapping, get out of insert mode.
+          // are inside a mapping, get out of Insert mode.
           // Otherwise we behave like having gotten a CTRL-C.
           // As a result typing CTRL-C in insert mode will
           // really insert a CTRL-C.
@@ -2324,7 +2324,7 @@ static int vgetorpeek(int advance)
       }             /* for (;;) */
     }           /* if (!character from stuffbuf) */
 
-    /* if advance is FALSE don't loop on NULs */
+    // if advance is false don't loop on NULs
   } while (c < 0 || (advance && c == NUL));
 
   /*
