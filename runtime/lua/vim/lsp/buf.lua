@@ -134,9 +134,22 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
-function M.document_highlight(context)
+--- Send request to server to resolve document highlights for the 
+--- current text document position. This request can be associated
+--- to key mapping or to events such as `CursorHold`, eg:
+---
+--- <pre>
+--- vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
+--- vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
+--- vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
+--- </pre>
+function M.document_highlight()
   local params = util.make_position_params()
   request('textDocument/documentHighlight', params)
+end
+
+function M.clear_references()
+  util.buf_clear_references()
 end
 
 return M

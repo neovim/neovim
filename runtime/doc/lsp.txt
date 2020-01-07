@@ -179,19 +179,19 @@ LSP HIGHLIGHT GROUPS                                      *lsp-highlight-groups*
                                                         *hl-LspDiagnosticsError*
 LspDiagnosticsError       used for "Error" diagnostic virtual text
                                                       *hl-LspDiagnosticsWarning*
-LspDiagnosticsWarning     used for 'Warning' diagnostic virtual text
+LspDiagnosticsWarning     used for "Warning" diagnostic virtual text
                                                   *hl-LspDiagnosticsInformation*
-LspDiagnosticInformation  used for 'Information' diagnostic virtual text
+LspDiagnosticInformation  used for "Information" diagnostic virtual text
                                                          *hl-LspDiagnosticsHint*
-LspDiagnosticHint         used for 'Hint' diagnostic virtual text
+LspDiagnosticHint         used for "Hint" diagnostic virtual text
                                                     *hl-LspDiagnosticsUnderline*
 LspDiagnosticsUnderline   used for text with diagnostic information
                                                            *hl-LspReferenceText*
-LspReferenceText          used for highlighting 'text' references
+LspReferenceText          used for highlighting "text" references
                                                            *hl-LspReferenceRead*
-LspReferenceRead          used for highlighting 'read' references
+LspReferenceRead          used for highlighting "read" references
                                                           *hl-LspReferenceWrite*
-LspReferenceWrite         used for highlighting 'write' references
+LspReferenceWrite         used for highlighting "write" references
 
 
 ================================================================================
@@ -742,15 +742,7 @@ definition()                                        *vim.lsp.buf.definition()*
                 TODO: Documentation
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
-                Send request to server to resolve document highlights for the 
-                current text document position. This request can be associated
-                to key mapping or to events such as `CursorHold`, eg:
->
-vim.api.nvim_command [[autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()]]
-vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
-vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.util.buf_clear_references()]]
-<
-
+                TODO: Documentation
 
 formatting({options})                               *vim.lsp.buf.formatting()*
                 TODO: Documentation

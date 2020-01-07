@@ -603,13 +603,13 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    bufnr = api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
   end
 
   function M.buf_clear_references(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    bufnr = api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr, M.reference_ns, 0, -1)
   end
 
