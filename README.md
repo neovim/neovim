@@ -489,7 +489,7 @@ CLI for the debug adapter. Support for this varies amongt adapters.
 * Commit the request with `<CR>`
 * The request and subsequent result are printed.
 
-NOTE: See also [Watches][#watches] above.
+NOTE: See also [Watches](#watches) above.
 
 ## Closing debugger
 
