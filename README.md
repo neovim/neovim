@@ -133,7 +133,7 @@ Alternatively, you can clone the repo and select which gadgets are installed:
 
 Vimspector requires:
 
-* Vim version 8.1 with at least patch 1264
+* Vim (*not neovim*) version 8.1 with at least patch 1264
 * One of the following operating systems:
   * Linux
   * macOS Mojave or pater
@@ -147,8 +147,17 @@ Why such a new vim ? Well 2 reasons:
 Why no Windows support? Because it's effort and it's not a priority for the
 author. PRs are welcome.
 
-Which Linux versions? I only test on Ubuntu 18.04 and later and RHEL 6.5 and
-RHEL 7.6.
+Which Linux versions? I only test on Ubuntu 18.04 and later and RHEL 7.
+
+Why not neovim? A few fiddly reasons (not philosophy):
+
+* neovim doesn't implement some features Vimspector relies on
+* neovim's Python API is not compatible with Vim's
+* I don't personally use or test with neovim, and doing so doubles the 
+effort required.
+
+If enough people +1 [this issue](https://github.com/puremourning/vimspector/issues/29),
+I will consider it.
 
 ## Language dependencies
 
