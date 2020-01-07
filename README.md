@@ -32,7 +32,7 @@ For a tutorial and usage overview, take a look at the
       * [Variables and scopes](#variables-and-scopes)
       * [Watches](#watches)
       * [Stack Traces](#stack-traces)
-      * [Program Output:](#program-output)
+      * [Program Output](#program-output)
          * [Console](#console)
    * [Debug adapter configuration](#debug-adapter-configuration)
       * [Supported Languages](#supported-languages-1)
@@ -473,7 +473,7 @@ new watch expression.
 * In the threads window, use `<CR>` to expand/collapse.
 * Use `<CR>` on a stack frame to jump to it.
 
-## Program Output:
+## Program Output
 
 * In the outputs window use the WinBar to select the output channel.
 * The debugee prints to the stdout channel.
