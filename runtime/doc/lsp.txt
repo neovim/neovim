@@ -959,7 +959,7 @@ buf_diagnostics_signs({bufnr}, {diagnostics})
                 Sign characters can be customized with the following options:
 >
 let g:LspDiagnosticsErrorSign = 'E'
-let g:spDiagnosticsWarningSign = 'W'
+let g:LspDiagnosticsWarningSign = 'W'
 let g:LspDiagnosticsInformationSign = 'I'
 let g:LspDiagnosticsHintSign = 'H'
 <
