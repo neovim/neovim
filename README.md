@@ -34,6 +34,7 @@ For a tutorial and usage overview, take a look at the
       * [Stack Traces](#stack-traces)
       * [Program Output](#program-output)
          * [Console](#console)
+      * [Closing debugger](#closing-debugger)
    * [Debug adapter configuration](#debug-adapter-configuration)
       * [Supported Languages](#supported-languages-1)
       * [Partially supported](#partially-supported)
@@ -489,6 +490,13 @@ CLI for the debug adapter. Support for this varies amongt adapters.
 * The request and subsequent result are printed.
 
 NOTE: See also [Watches][#watches] above.
+
+## Closing debugger
+
+To close the debugger, use:
+
+* `Reset` button when mouse support is enabled in vim (`set mouse=a`)
+* `call vimspector#Reset()`
 
 # Debug adapter configuration
 
