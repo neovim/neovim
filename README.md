@@ -32,8 +32,9 @@ For a tutorial and usage overview, take a look at the
       * [Variables and scopes](#variables-and-scopes)
       * [Watches](#watches)
       * [Stack Traces](#stack-traces)
-      * [Program Output:](#program-output)
+      * [Program Output](#program-output)
          * [Console](#console)
+      * [Closing debugger](#closing-debugger)
    * [Debug adapter configuration](#debug-adapter-configuration)
       * [Supported Languages](#supported-languages-1)
       * [Partially supported](#partially-supported)
@@ -482,7 +483,7 @@ new watch expression.
 * In the threads window, use `<CR>` to expand/collapse.
 * Use `<CR>` on a stack frame to jump to it.
 
-## Program Output:
+## Program Output
 
 * In the outputs window use the WinBar to select the output channel.
 * The debugee prints to the stdout channel.
@@ -497,7 +498,14 @@ CLI for the debug adapter. Support for this varies amongt adapters.
 * Commit the request with `<CR>`
 * The request and subsequent result are printed.
 
-NOTE: See also [Watches][#watches] above.
+NOTE: See also [Watches](#watches) above.
+
+## Closing debugger
+
+To close the debugger, use:
+
+* `Reset` button when mouse support is enabled in vim (`set mouse=a`)
+* `call vimspector#Reset()`
 
 # Debug adapter configuration
 
