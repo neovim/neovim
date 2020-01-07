@@ -25,7 +25,7 @@ APP_DIR="$APP.AppDir"
 ########################################################################
 
 # Build and install nvim into the AppImage
-make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr -DCMAKE_INSTALL_MANDIR=man"
+make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr -DCMAKE_INSTALL_MANDIR=man"
 make install
 
 ########################################################################

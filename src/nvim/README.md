@@ -29,7 +29,7 @@ alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`.
 UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+    make CMAKE_FLAGS="-DMIN_LOG_LEVEL=0"
 
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages:
@@ -50,9 +50,9 @@ Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
 
 Build Nvim with sanitizer instrumentation (choose one):
 
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_MSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_TSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_MSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_TSAN=ON"
 
 Create a directory to store logs:
 

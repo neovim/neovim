@@ -135,7 +135,7 @@ cd $buildDir
 # Build Neovim
 mkdir build
 cd build
-cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) $env:CMAKE_FLAGS .. ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 .\bin\nvim --version ; exitIfFailed
 
