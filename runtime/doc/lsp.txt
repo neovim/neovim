@@ -177,7 +177,7 @@ name: >
 LSP HIGHLIGHT GROUPS                                      *lsp-highlight-groups*
 
                                                         *hl-LspDiagnosticsError*
-LspDiagnosticsError       used for 'Error' diagnostic virtual text
+LspDiagnosticsError       used for "Error" diagnostic virtual text
                                                       *hl-LspDiagnosticsWarning*
 LspDiagnosticsWarning     used for 'Warning' diagnostic virtual text
                                                   *hl-LspDiagnosticsInformation*
