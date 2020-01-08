@@ -25,11 +25,6 @@ _vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
 EOF
 endfunction
 
-function! s:_OnServerError( channel, data ) abort
-  echom 'Channel received error: ' . a:data
-  redraw
-endfunction
-
 function! s:_OnClose( channel ) abort
   echom 'Channel closed'
   redraw

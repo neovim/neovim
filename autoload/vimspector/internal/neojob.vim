@@ -1,5 +1,5 @@
 " vimspector - A multi-language debugging system for Vim
-" Copyright 2018 Ben Jackson
+" Copyright 2020 Ben Jackson
 "
 " Licensed under the Apache License, Version 2.0 (the "License");
 " you may not use this file except in compliance with the License.
