@@ -455,11 +455,13 @@ def ToUnicode( b ):
 def Call( vimscript_function, *args ):
   call = vimscript_function + '('
   for index, arg in enumerate( args ):
+    if index > 0:
+      call += ', '
+
     arg_name = 'vimspector_internal_arg_{}'.format( index )
     vim.vars[ arg_name ] = arg
     call += 'g:' + arg_name
-    if index:
-      call += ','
 
   call += ')'
-  vim.eval( call )
+  _logger.debug( 'Calling: {}'.format( call ) )
+  return vim.eval( call )

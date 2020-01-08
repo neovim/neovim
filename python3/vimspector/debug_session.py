@@ -798,8 +798,8 @@ class DebugSession( object ):
     buffer_number = self._codeView.LaunchTerminal( params )
 
     response = {
-      'processId': vim.eval( 'job_info( term_getjob( {} ) )'
-                             '.process'.format( buffer_number ) )
+      'processId': int( utils.Call( 'vimspector#internal#term#GetPID',
+                                    buffer_number ) )
     }
 
     self._connection.DoResponse( message, None, response )

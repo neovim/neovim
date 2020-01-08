@@ -214,8 +214,8 @@ class CodeView( object ):
     if self._terminal_window is not None:
       assert self._terminal_buffer_number
       if ( self._terminal_window.buffer.number == self._terminal_buffer_number
-           and 'finished' in vim.eval( 'term_getstatus( {} )'.format(
-             self._terminal_buffer_number ) ) ):
+           and int( utils.Call( 'vimspector#internal#term#IsFinished',
+                                self._terminal_buffer_number ) ) ):
         window_for_start = self._terminal_window
         options[ 'curwin' ] = 1
 
@@ -224,13 +224,9 @@ class CodeView( object ):
     with utils.TemporaryVimOptions( { 'splitright': True,
                                       'equalalways': False } ):
       with utils.LetCurrentWindow( window_for_start ):
-        # TODO/FIXME: Do something about closing this when we reset ?
-        vim_cmd =  'term_start( {}, {} )'.format( json.dumps( args ),
-                                                  json.dumps( options ) )
-
-        self._logger.debug( 'Start terminal: {}'.format( vim_cmd ) )
-
-        buffer_number = int( vim.eval( vim_cmd ) )
+        buffer_number = int( utils.Call( 'vimspector#internal#term#Start',
+                                         args,
+                                         options ) )
         terminal_window = vim.current.window
 
     if buffer_number is None or buffer_number <= 0:

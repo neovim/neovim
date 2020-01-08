@@ -30,7 +30,7 @@ endfunction
 function! s:_OnExit( channel, status ) abort
   echom 'Channel exit with status ' . a:status
   redraw
-  unlet s:job 
+  unlet s:job
   py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
