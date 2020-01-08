@@ -706,7 +706,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
     case VTERM_PROP_TITLE: {
       buf_T *buf = handle_get_buffer(term->buf_handle);
-      buf_set_term_title(buf, val->string);
+      buf_set_term_title(buf, (char*)((val->string).str));
       break;
     }
 
