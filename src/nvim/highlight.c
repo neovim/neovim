@@ -642,11 +642,11 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
       PUT(hl, "special", INTEGER_OBJ(ae.rgb_sp_color));
     }
   } else {
-    if (cterm_normal_fg_color != ae.cterm_fg_color) {
+    if (cterm_normal_fg_color != ae.cterm_fg_color && ae.cterm_fg_color != 0) {
       PUT(hl, "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
     }
 
-    if (cterm_normal_bg_color != ae.cterm_bg_color) {
+    if (cterm_normal_bg_color != ae.cterm_bg_color && ae.cterm_bg_color != 0) {
       PUT(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
   }

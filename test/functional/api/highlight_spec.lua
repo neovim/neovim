@@ -70,6 +70,22 @@ describe('API: highlight',function()
     eq(false, err)
     eq('Invalid highlight id: -1',
        string.match(emsg, 'Invalid.*'))
+
+    -- Test highlight group without ctermbg value.
+    command('hi Normal ctermfg=red ctermbg=yellow')
+    command('hi NewConstant ctermfg=green guifg=white guibg=blue')
+    hl_id = eval("hlID('NewConstant')")
+    eq({foreground = 10,}, meths.get_hl_by_id(hl_id, false))
+
+    -- Test highlight group without ctermfg value.
+    command('hi clear NewConstant')
+    command('hi NewConstant ctermbg=Magenta guifg=white guibg=blue')
+    eq({background = 13,}, meths.get_hl_by_id(hl_id, false))
+
+    -- Test highlight group with ctermfg and ctermbg values.
+    command('hi clear NewConstant')
+    command('hi NewConstant ctermfg=green ctermbg=Magenta guifg=white guibg=blue')
+    eq({foreground = 10, background = 13,}, meths.get_hl_by_id(hl_id, false))
   end)
 
   it("nvim_get_hl_by_name", function()
