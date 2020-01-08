@@ -56,9 +56,10 @@ def OpenFileInCurrentWindow( file_name ):
   return vim.buffers[ buffer_number ]
 
 
-def SetUpCommandBuffer( cmd, name ):
+def SetUpCommandBuffer( cmd, name, api_prefix ):
   bufs = vim.eval(
-    'vimspector#internal#job#StartCommandWithLog( {}, "{}" )'.format(
+    'vimspector#internal#{}job#StartCommandWithLog( {}, "{}" )'.format(
+      api_prefix,
       json.dumps( cmd ),
       name ) )
 
@@ -72,8 +73,9 @@ def SetUpCommandBuffer( cmd, name ):
   return [ vim.buffers[ int( b ) ] for b in bufs ]
 
 
-def CleanUpCommand( name ):
-  return vim.eval( 'vimspector#internal#job#CleanUpCommand( "{}" )'.format(
+def CleanUpCommand( name, api_prefix ):
+  return vim.eval( 'vimspector#internal#{}job#CleanUpCommand( "{}" )'.format(
+    api_prefix,
     name ) )
 
 

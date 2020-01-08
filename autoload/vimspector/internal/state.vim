@@ -20,9 +20,10 @@ set cpoptions&vim
 " }}}
 
 function! vimspector#internal#state#Reset() abort
+  let prefix = ''
     py3 << EOF
 from vimspector import debug_session
-_vimspector_session = debug_session.DebugSession()
+_vimspector_session = debug_session.DebugSession( vim.eval( 'prefix' ) )
 EOF
 endfunction
 

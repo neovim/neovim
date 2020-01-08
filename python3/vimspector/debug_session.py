@@ -41,11 +41,14 @@ USER_CHOICES = {}
 
 
 class DebugSession( object ):
-  def __init__( self ):
+  def __init__( self, api_prefix ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
+    self._api_prefix = api_prefix
+
     self._logger.info( "**** INITIALISING NEW VIMSPECTOR SESSION ****" )
+    self._logger.info( "API is: {}".format( api_prefix ) )
     self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
     self._logger.info( 'gadgetDir = %s',
                        install.GetGadgetDir( VIMSPECTOR_HOME,
@@ -405,7 +408,7 @@ class DebugSession( object ):
     self._uiTab = vim.current.tabpage
 
     # Code window
-    self._codeView = code.CodeView( vim.current.window )
+    self._codeView = code.CodeView( vim.current.window, self._api_prefix )
 
     # Call stack
     with utils.TemporaryVimOptions( { 'splitright':  False,
@@ -441,7 +444,8 @@ class DebugSession( object ):
       vim.command( '10spl' )
       vim.command( 'enew' )
       self._outputView = output.OutputView( self._connection,
-                                            vim.current.window )
+                                            vim.current.window,
+                                            self._api_prefix )
 
   def ClearCurrentFrame( self ):
     self.SetCurrentFrame( None )
@@ -481,6 +485,8 @@ class DebugSession( object ):
       if self._adapter[ 'port' ] == 'ask':
         port = utils.AskForInput( 'Enter port to connect to: ' )
         self._adapter[ 'port' ] = port
+
+    self._connection_type = self._api_prefix + self._connection_type
 
     # TODO: Do we actually need to copy and update or does Vim do that?
     env = os.environ.copy()
@@ -795,11 +801,12 @@ class DebugSession( object ):
       self._logger.debug( 'Defaulting working directory to %s',
                           params[ 'cwd' ] )
 
-    buffer_number = self._codeView.LaunchTerminal( params )
+    term_id = self._codeView.LaunchTerminal( params )
 
     response = {
-      'processId': int( utils.Call( 'vimspector#internal#term#GetPID',
-                                    buffer_number ) )
+      'processId': int( utils.Call(
+        'vimspector#internal#{}term#GetPID'.format( self._api_prefix ),
+        term_id ) )
     }
 
     self._connection.DoResponse( message, None, response )

@@ -127,7 +127,7 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
   let l:index = len( s:commands[ a:category ] )
 
   call add( s:commands[ a:category ], job_start(
-        \ a:cmd, 
+        \ a:cmd,
         \ {
         \   'out_io': 'buffer',
         \   'in_io': 'null',
