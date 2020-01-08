@@ -1073,9 +1073,8 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 
 static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
                             Integer startcol, Integer endcol,
-                            Integer rows, Integer cols)
+                            Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
-  (void)cols;  // unused
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   int top = (int)startrow, bot = (int)endrow-1;

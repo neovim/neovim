@@ -2007,7 +2007,7 @@ getcmdline (
     int firstc,
     long count,              // only used for incremental search
     int indent,              // indent for inside conditionals
-    bool do_concat           // unused
+    bool do_concat FUNC_ATTR_UNUSED
 )
 {
   // Be prepared for situations where cmdline can be invoked recursively.
