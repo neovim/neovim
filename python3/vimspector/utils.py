@@ -57,19 +57,19 @@ def OpenFileInCurrentWindow( file_name ):
 
 
 def SetUpCommandBuffer( cmd, name ):
-  bufs = vim.bindeval(
+  bufs = vim.eval(
     'vimspector#internal#job#StartCommandWithLog( {}, "{}" )'.format(
       json.dumps( cmd ),
       name ) )
 
   if bufs is None:
     raise RuntimeError( "Unable to start job {}: {}".format( cmd, name ) )
-  elif not all( b > 0 for b in bufs ):
+  elif not all( int( b ) > 0 for b in bufs ):
     raise RuntimeError( "Unable to get all streams for job {}: {}".format(
       name,
       cmd ) )
 
-  return [ vim.buffers[ b ] for b in bufs ]
+  return [ vim.buffers[ int( b ) ] for b in bufs ]
 
 
 def CleanUpCommand( name ):
