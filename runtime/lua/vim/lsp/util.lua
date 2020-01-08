@@ -549,7 +549,9 @@ do
   local underline_highlight_name = "LspDiagnosticsUnderline"
   vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
   for kind, _ in pairs(protocol.DiagnosticSeverity) do
-    vim.cmd(string.format("highlight default link %s%s %s", underline_highlight_name, kind, underline_highlight_name))
+    if type(kind) == 'string' then
+      vim.cmd(string.format("highlight default link %s%s %s", underline_highlight_name, kind, underline_highlight_name))
+    end
   end
 
   local severity_highlights = {}

@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
+local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
@@ -709,14 +710,9 @@ describe('LSP', function()
   end)
 end)
 
-describe('LSP util', function()
+describe('LSP', function()
   before_each(function()
     clear()
-    insert(dedent([[
-      First line of text
-      Second line of text
-      Third line of text
-      Fourth line of text]]))
   end)
 
   local function make_edit(y_0, x_0, y_1, x_1, text)
@@ -729,8 +725,29 @@ describe('LSP util', function()
     }
   end
 
+  it('highlight groups', function()
+    eq({'LspDiagnosticsError',
+        'LspDiagnosticsHint',
+        'LspDiagnosticsInformation',
+        'LspDiagnosticsUnderline',
+        'LspDiagnosticsUnderlineError',
+        'LspDiagnosticsUnderlineHint',
+        'LspDiagnosticsUnderlineInformation',
+        'LspDiagnosticsUnderlineWarning',
+        'LspDiagnosticsWarning',
+      },
+      exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
+  end)
+
   describe('apply_edits', function()
-    it('should apply simple edits', function()
+    before_each(function()
+      insert(dedent([[
+        First line of text
+        Second line of text
+        Third line of text
+        Fourth line of text]]))
+    end)
+    it('applies apply simple edits', function()
       local edits = {
         make_edit(0, 0, 0, 0, {"123"});
         make_edit(1, 0, 1, 1, {"2"});
@@ -744,8 +761,7 @@ describe('LSP util', function()
         'Fourth line of text';
       }, buf_lines(1))
     end)
-
-    it('should apply complex edits', function()
+    it('applies complex edits', function()
       local edits = {
         make_edit(0, 0, 0, 0, {"", "12"});
         make_edit(0, 0, 0, 0, {"3", "foo"});

@@ -57,24 +57,39 @@ use of |v:lua| to call Lua from Vimscript): >
   autocmd Filetype python setlocal omnifunc=v:lua.vim.lsp.omnifunc
 
 
-FAQ ~
+================================================================================
+FAQ                                                     *lsp-faq*
 
-> How to force-reload LSP?
-
-Stop all clients, then reload the buffer. >
+- Q: How to force-reload LSP?
+  A: Stop all clients, then reload the buffer. >
 
   :lua vim.lsp.stop_all_clients()
   :edit
 
-> Why isn't completion working?
-
-In the buffer where you want to use LSP, check that 'omnifunc' is set to
-"v:lua.vim.lsp.omnifunc": >
+- Q: Why isn't completion working?
+  A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
+  "v:lua.vim.lsp.omnifunc": >
 
   :verbose set omnifunc?
 
-Some other plugin may be overriding the option. To avoid that, you could set
-the option in an |after-directory| ftplugin, e.g. "after/ftplugin/python.vim".
+<  Some other plugin may be overriding the option. To avoid that, you could
+  set the option in an |after-directory| ftplugin, e.g.
+  "after/ftplugin/python.vim".
+
+================================================================================
+LSP HIGHLIGHT                                           *lsp-highlight*
+
+When LSP is activated these highlight groups are defined:
+
+  LspDiagnosticsError
+  LspDiagnosticsHint
+  LspDiagnosticsInformation
+  LspDiagnosticsUnderline
+  LspDiagnosticsUnderlineError
+  LspDiagnosticsUnderlineHint
+  LspDiagnosticsUnderlineInformation
+  LspDiagnosticsUnderlineWarning
+  LspDiagnosticsWarning
 
 ================================================================================
 LSP API                                                 *lsp-api*
