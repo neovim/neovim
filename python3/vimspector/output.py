@@ -101,7 +101,7 @@ class OutputView( object ):
         vim.command( 'bdelete! {0}'.format( tab_buffer.buf.number ) )
       except vim.error as e:
         # FIXME: For now just ignore the "no buffers were deleted" error
-        if 'E516' not in e:
+        if 'E516' not in str( e ):
           raise
 
     self._buffers = {}

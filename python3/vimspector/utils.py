@@ -104,7 +104,7 @@ def SetUpHiddenBuffer( buf, name ):
 def SetUpPromptBuffer( buf, name, prompt, callback, hidden=False ):
   # This feature is _super_ new, so only enable when available
   if not int( vim.eval( "exists( '*prompt_setprompt' )" ) ):
-    return SetUpScratchBuffer( buf, name )
+    return SetUpHiddenBuffer( buf, name )
 
   buf.options[ 'buftype' ] = 'prompt'
   buf.options[ 'swapfile' ] = False

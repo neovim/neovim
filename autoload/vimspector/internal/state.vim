@@ -19,8 +19,13 @@ let s:save_cpo = &cpoptions
 set cpoptions&vim
 " }}}
 
+let s:is_neovim = has( 'nvim' )
+
 function! vimspector#internal#state#Reset() abort
   let prefix = ''
+  if s:is_neovim
+    let prefix='neo'
+  endif
     py3 << EOF
 from vimspector import debug_session
 _vimspector_session = debug_session.DebugSession( vim.eval( 'prefix' ) )
