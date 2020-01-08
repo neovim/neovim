@@ -941,8 +941,10 @@ static int command_line_execute(VimState *state, int key)
       // if 'wildmode' contains "list" may still need to list
       if (s->xpc.xp_numfiles > 1
           && !s->did_wild_list
-          && (wim_flags[s->wim_index] & WIM_LIST)) {
-        (void)showmatches(&s->xpc, false);
+          && ((wim_flags[s->wim_index] & WIM_LIST)
+              || (p_wmnu && (wim_flags[s->wim_index] & WIM_FULL) != 0))) {
+        (void)showmatches(&s->xpc, p_wmnu
+                          && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
         redrawcmd();
         s->did_wild_list = true;
       }
