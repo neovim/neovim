@@ -4715,8 +4715,7 @@ ExpandFromContext (
     int free_pat = FALSE;
     int i;
 
-    /* for ":set path=" and ":set tags=" halve backslashes for escaped
-     * space */
+    // for ":set path=" and ":set tags=" halve backslashes for escaped space
     if (xp->xp_backslash != XP_BS_NONE) {
       free_pat = TRUE;
       pat = vim_strsave(pat);
@@ -4984,8 +4983,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   int ret;
   bool did_curdir = false;
 
-  /* for ":set path=" and ":set tags=" halve backslashes for escaped
-   * space */
+  // for ":set path=" and ":set tags=" halve backslashes for escaped space
   pat = vim_strsave(filepat);
   for (i = 0; pat[i]; ++i)
     if (pat[i] == '\\' && pat[i + 1] == ' ')
