@@ -39,35 +39,11 @@ function! s:_OnClose( channel ) abort
   redraw
 endfunction
 
-function! s:_Send( msg ) abort
-  if ! exists( 's:job' )
-    echom "Can't send message: Job was not initialised correctly"
-    redraw
-    return 0
-  endif
-
-  if job_status( s:job ) !=# 'run'
-    echom "Can't send message: Job is not running"
-    redraw
-    return 0
-  endif
-
-  let ch = job_getchannel( s:job )
-  if ch ==# 'channel fail'
-    echom 'Channel was closed unexpectedly!'
-    redraw
-    return 0
-  endif
-
-  call ch_sendraw( ch, a:msg )
-  return 1
-endfunction
-
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
     echom 'Not starging: Job is already running'
     redraw
-    return v:none
+    return v:false
   endif
 
   let s:job = job_start( a:config[ 'command' ],
@@ -91,10 +67,34 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
   if job_status( s:job ) !=# 'run'
     echom 'Unable to start job, status is: ' . job_status( s:job )
     redraw
-    return v:none
+    return v:false
   endif
 
-  return funcref( 's:_Send' )
+  return v:true
+endfunction
+
+function! vimspector#internal#job#Send( msg ) abort
+  if ! exists( 's:job' )
+    echom "Can't send message: Job was not initialised correctly"
+    redraw
+    return 0
+  endif
+
+  if job_status( s:job ) !=# 'run'
+    echom "Can't send message: Job is not running"
+    redraw
+    return 0
+  endif
+
+  let ch = job_getchannel( s:job )
+  if ch ==# 'channel fail'
+    echom 'Channel was closed unexpectedly!'
+    redraw
+    return 0
+  endif
+
+  call ch_sendraw( ch, a:msg )
+  return 1
 endfunction
 
 function! vimspector#internal#job#StopDebugSession() abort

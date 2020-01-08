@@ -449,3 +449,17 @@ def ToUnicode( b ):
   if isinstance( b, bytes ):
     return b.decode( 'utf-8' )
   return b
+
+
+# Call a vimscript function with suplied arguments.
+def Call( vimscript_function, *args ):
+  call = vimscript_function + '('
+  for index, arg in enumerate( args ):
+    arg_name = 'vimspector_internal_arg_{}'.format( index )
+    vim.vars[ arg_name ] = arg
+    call += 'g:' + arg_name
+    if index:
+      call += ','
+
+  call += ')'
+  vim.eval( call )
