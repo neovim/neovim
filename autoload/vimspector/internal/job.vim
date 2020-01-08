@@ -115,15 +115,6 @@ function! vimspector#internal#job#Reset() abort
   call vimspector#internal#job#StopDebugSession()
 endfunction
 
-function! vimspector#internal#job#ForceRead() abort
-  if exists( 's:job' )
-    let data = ch_readraw( job_getchannel( s:job ), { 'timeout': 1000 } )
-    if data !=# ''
-      call s:_OnServerData( job_getchannel( s:job ), data )
-    endif
-  endif
-endfunction
-
 function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
   if ! exists( 's:commands' )
     let s:commands = {}

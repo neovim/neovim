@@ -97,15 +97,6 @@ function! vimspector#internal#channel#Reset() abort
   endif
 endfunction
 
-function! vimspector#internal#channel#ForceRead() abort
-  if exists( 's:ch' )
-    let data = ch_readraw( s:ch, { 'timeout': 1000 } )
-    if data !=# ''
-      call s:_OnServerData( s:ch, data )
-    endif
-  endif
-endfunction
-
 " Boilerplate {{{
 let &cpoptions=s:save_cpo
 unlet s:save_cpo
