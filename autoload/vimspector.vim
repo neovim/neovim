@@ -116,7 +116,8 @@ function! vimspector#ListBreakpoints() abort
 endfunction
 
 function! vimspector#CompleteOutput( ArgLead, CmdLine, CursorPos ) abort
-  return py3eval( '_vimspector_session.GetOutputBuffers()' )
+  let buffers = py3eval( '_vimspector_session.GetOutputBuffers()' )
+  return join( buffers, "\n" )
 endfunction
 
 function! vimspector#CompleteExpr( ArgLead, CmdLine, CursorPos ) abort

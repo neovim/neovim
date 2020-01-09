@@ -74,7 +74,7 @@ endif
 command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
       \ VimspectorWatch
       \ call vimspector#AddWatch( <f-args> )
-command! -bar -nargs=1 -complete=customlist,vimspector#CompleteOutput
+command! -bar -nargs=1 -complete=custom,vimspector#CompleteOutput
       \ VimspectorShowOutput
       \ call vimspector#ShowOutput( <f-args> )
 command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
