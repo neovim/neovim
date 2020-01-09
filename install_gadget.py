@@ -498,14 +498,14 @@ def MakeSymlink( in_folder, link, pointing_to ):
 
 def CloneRepoTo( url, ref, destination ):
   RemoveIfExists( destination )
+  git_in_repo = [ 'git', '-C', destination ]
   subprocess.check_call( [ 'git', 'clone', url, destination ] )
-  subprocess.check_call( [ 'git', '-C', destination, 'checkout', ref ] )
-  subprocess.check_call( [ 'git', 'submodule', 'sync', '--recursive' ] )
-  subprocess.check_call( [ 'git',
-                           'submodule',
-                           'update',
-                           '--init',
-                           '--recursive' ] )
+  subprocess.check_call( git_in_repo + [ 'checkout', ref ] )
+  subprocess.check_call( git_in_repo + [ 'submodule', 'sync', '--recursive' ] )
+  subprocess.check_call( git_in_repo + [ 'submodule',
+                                         'update',
+                                         '--init',
+                                         '--recursive' ] )
 
 
 OS = install.GetOS()
