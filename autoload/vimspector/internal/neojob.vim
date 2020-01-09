@@ -119,7 +119,6 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
     let last_line = last_line_list[ 0 ]
   endif
 
-
   call s:MakeBufferWritable( buffer )
   try
     call setbufline( buffer, '$', last_line . a:data[ 0 ] )
@@ -129,6 +128,17 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
     call setbufvar( buffer, '&modified', 0 )
   endtry
 
+  " if the buffer is visible, scroll it
+  let w = bufwinnr( buffer )
+  if w > 0
+    let cw = winnr()
+    try
+      execute w . 'wincmd w'
+      normal G
+    finally
+      execute cw . 'wincmd w'
+    endtry
+  endif
 endfunction
 
 function! s:SetUpHiddenBuffer( buffer ) abort
