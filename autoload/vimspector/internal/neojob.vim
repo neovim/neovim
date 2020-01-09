@@ -102,22 +102,51 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
   if a:data == ['']
     return
   endif
+
   if a:event ==# 'stdout'
     let buffer = s:commands[ a:category ][ a:id ].stdout
   elseif a:event ==# 'stderr'
     let buffer = s:commands[ a:category ][ a:id ].stderr
   endif
 
+  call bufload( buffer )
+
   let last_line_list = getbufline( buffer, '$' )
+
   if len( last_line_list ) == 0
     let last_line = ''
   else
     let last_line = last_line_list[ 0 ]
   endif
 
-  call setbufline( buffer, '$', last_line . a:data[ 0 ] )
-  call appendbufline( buffer, '$', a:data[ 1: ] )
+
+  call s:MakeBufferWritable( buffer )
+  try
+    call setbufline( buffer, '$', last_line . a:data[ 0 ] )
+    call appendbufline( buffer, '$', a:data[ 1: ] )
+  finally
+    call s:MakeBufferReadOnly( buffer )
+    call setbufvar( buffer, '&modified', 0 )
+  endtry
+
 endfunction
+
+function! s:SetUpHiddenBuffer( buffer ) abort
+  call setbufvar( a:buffer, '&hidden', 1 )
+  call setbufvar( a:buffer, '&bufhidden', 'hide' )
+  call s:MakeBufferReadOnly( a:buffer )
+endfunction
+
+function! s:MakeBufferReadOnly( buffer ) abort
+  call setbufvar( a:buffer, '&modifiable', 0 )
+  call setbufvar( a:buffer, '&readonly', 1 )
+endfunction
+
+function! s:MakeBufferWritable( buffer ) abort
+  call setbufvar( a:buffer, '&readonly', 0 )
+  call setbufvar( a:buffer, '&modifiable', 1 )
+endfunction
+
 
 let s:commands = {}
 
@@ -128,6 +157,12 @@ function! vimspector#internal#neojob#StartCommandWithLog( cmd, category ) abort
 
   let stdout_buf = bufnr( '_vimspector_log_' . a:category . '_out', v:true )
   let stderr_buf = bufnr( '_vimspector_log_' . a:category . '_err', v:true )
+
+  " FIXME: This largely duplicates the same stuff in the python layer, but we
+  " don't want to potentially mess up Vim behaviour where the job output is
+  " attached to a buffer set up by Vim. So we sort o mimic that here.
+  call s:SetUpHiddenBuffer( stdout_buf )
+  call s:SetUpHiddenBuffer( stderr_buf )
 
   let id = jobstart(a:cmd,
         \          {
