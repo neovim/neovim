@@ -559,6 +559,11 @@ function module.wait()
   session:request('nvim_eval', '1')
 end
 
+function module.buf_lines(bufnr)
+  return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
+end
+
+--@see buf_lines()
 function module.curbuf_contents()
   module.wait()  -- Before inspecting the buffer, process all input.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')

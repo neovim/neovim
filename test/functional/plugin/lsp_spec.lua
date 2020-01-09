@@ -1,8 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
+local buf_lines = helpers.buf_lines
+local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local insert = helpers.insert
 local iswin = helpers.iswin
 local retry = helpers.retry
 local NIL = helpers.NIL
@@ -704,5 +707,82 @@ describe('LSP', function()
       }
     end)
 
+  end)
+end)
+
+describe('LSP', function()
+  before_each(function()
+    clear()
+  end)
+
+  local function make_edit(y_0, x_0, y_1, x_1, text)
+    return {
+      range = {
+        start = { line = y_0, character = x_0 };
+        ["end"] = { line = y_1, character = x_1 };
+      };
+      newText = type(text) == 'table' and table.concat(text, '\n') or (text or "");
+    }
+  end
+
+  it('highlight groups', function()
+    eq({'LspDiagnosticsError',
+        'LspDiagnosticsHint',
+        'LspDiagnosticsInformation',
+        'LspDiagnosticsUnderline',
+        'LspDiagnosticsUnderlineError',
+        'LspDiagnosticsUnderlineHint',
+        'LspDiagnosticsUnderlineInformation',
+        'LspDiagnosticsUnderlineWarning',
+        'LspDiagnosticsWarning',
+      },
+      exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
+  end)
+
+  describe('apply_edits', function()
+    before_each(function()
+      insert(dedent([[
+        First line of text
+        Second line of text
+        Third line of text
+        Fourth line of text]]))
+    end)
+    it('applies apply simple edits', function()
+      local edits = {
+        make_edit(0, 0, 0, 0, {"123"});
+        make_edit(1, 0, 1, 1, {"2"});
+        make_edit(2, 0, 2, 2, {"3"});
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        '123First line of text';
+        '2econd line of text';
+        '3ird line of text';
+        'Fourth line of text';
+      }, buf_lines(1))
+    end)
+    it('applies complex edits', function()
+      local edits = {
+        make_edit(0, 0, 0, 0, {"", "12"});
+        make_edit(0, 0, 0, 0, {"3", "foo"});
+        make_edit(0, 1, 0, 1, {"bar", "123"});
+        make_edit(0, #"First ", 0, #"First line of text", {"guy"});
+        make_edit(1, 0, 1, #'Second', {"baz"});
+        make_edit(2, #'Th', 2, #"Third", {"e next"});
+        make_edit(3, #'', 3, #"Fourth", {"another line of text", "before this"});
+        make_edit(3, #'Fourth', 3, #"Fourth line of text", {"!"});
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        '';
+        '123';
+        'fooFbar';
+        '123irst guy';
+        'baz line of text';
+        'The next line of text';
+        'another line of text';
+        'before this!';
+      }, buf_lines(1))
+    end)
   end)
 end)

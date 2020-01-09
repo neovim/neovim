@@ -547,7 +547,12 @@ do
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
   local underline_highlight_name = "LspDiagnosticsUnderline"
-  api.nvim_command(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
+  vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
+  for kind, _ in pairs(protocol.DiagnosticSeverity) do
+    if type(kind) == 'string' then
+      vim.cmd(string.format("highlight default link %s%s %s", underline_highlight_name, kind, underline_highlight_name))
+    end
+  end
 
   local severity_highlights = {}
 
@@ -657,13 +662,21 @@ do
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
-      local start = diagnostic.range.start
+      local start = diagnostic.range["start"]
       local finish = diagnostic.range["end"]
 
+      local hlmap = {
+        [protocol.DiagnosticSeverity.Error]='Error',
+        [protocol.DiagnosticSeverity.Warning]='Warning',
+        [protocol.DiagnosticSeverity.Information]='Information',
+        [protocol.DiagnosticSeverity.Hint]='Hint',
+      }
+
       -- TODO care about encoding here since this is in byte index?
-      highlight_range(bufnr, diagnostic_ns, underline_highlight_name,
-          {start.line, start.character},
-          {finish.line, finish.character}
+      highlight_range(bufnr, diagnostic_ns,
+        underline_highlight_name..hlmap[diagnostic.severity],
+        {start.line, start.character},
+        {finish.line, finish.character}
       )
     end
   end
