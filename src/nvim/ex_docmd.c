@@ -10397,8 +10397,6 @@ bool cmd_can_preview(char_u *cmd)
 Dictionary commands_array(buf_T *buf)
 {
   Dictionary rv = ARRAY_DICT_INIT;
-  Object obj = NIL;
-  (void)obj;  // Avoid "dead assignment" warning.
   char str[20];
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
 
@@ -10429,7 +10427,7 @@ Dictionary commands_array(buf_T *buf)
     PUT(d, "complete_arg", cmd->uc_compl_arg == NULL
         ? NIL : STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
 
-    obj = NIL;
+    Object obj = NIL;
     if (cmd->uc_argt & COUNT) {
       if (cmd->uc_def >= 0) {
         snprintf(str, sizeof(str), "%" PRId64, (int64_t)cmd->uc_def);

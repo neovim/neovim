@@ -3760,7 +3760,6 @@ find_decl (
   bool retval = true;
   bool incll;
   int searchflags = flags_arg;
-  bool valid;
 
   pat = xmalloc(len + 7);
 
@@ -3795,8 +3794,6 @@ find_decl (
   /* Search forward for the identifier, ignore comment lines. */
   clearpos(&found_pos);
   for (;; ) {
-    valid = false;
-    (void)valid;  // Avoid "dead assignment" warning.
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
                  pat, 1L, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
@@ -3831,7 +3828,7 @@ find_decl (
       curwin->w_cursor.col = 0;
       continue;
     }
-    valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
+    bool valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
 
     // If the current position is not a valid identifier and a previous match is
     // present, favor that one instead.
