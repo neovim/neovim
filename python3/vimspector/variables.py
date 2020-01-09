@@ -346,8 +346,9 @@ class VariablesView( object ):
     draw()
 
   def ShowBalloon( self, frame, expression ):
+    """Callback to display variable under cursor `:h ballonexpr`"""
     if not self._connection:
-      return
+      return ''
 
     def handler( message ):
       # TODO: this result count be expandable, but we have no way to allow the
@@ -366,7 +367,7 @@ class VariablesView( object ):
       display = [ reason ]
       utils.DisplayBaloon( self._is_term, display )
 
-
+    # Send async request
     self._connection.DoRequest( handler, {
       'command': 'evaluate',
       'arguments': {
@@ -375,6 +376,9 @@ class VariablesView( object ):
         'context': 'hover',
       }
     }, failure_handler )
+
+    # Return working (meanwhile)
+    return '...'
 
 
   def SetSyntax( self, syntax ):

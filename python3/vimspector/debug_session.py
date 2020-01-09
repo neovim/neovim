@@ -359,16 +359,22 @@ class DebugSession( object ):
     self._variablesView.DeleteWatch()
 
   def ShowBalloon( self, winnr, expression ):
-    if self._stackTraceView.GetCurrentFrame() is None:
-      return
+    """Proxy: ballonexpr -> variables.ShowBallon"""
+    frame = self._stackTraceView.GetCurrentFrame()
+    # Check if RIP is in a frame
+    if frame is None:
+      self._logger.debug( 'Balloon: Not in a stack frame' )
+      return ''
 
-    if winnr == int( self._codeView._window.number ):
-      self._variablesView.ShowBalloon( self._stackTraceView.GetCurrentFrame(),
-                                       expression )
-    else:
+    # Check if cursor in code window
+    if winnr != int( self._codeView._window.number ):
       self._logger.debug( 'Winnr %s is not the code window %s',
                           winnr,
                           self._codeView._window.number )
+      return ''
+
+    # Return variable aware function
+    return self._variablesView.ShowBalloon( frame, expression )
 
   def ExpandFrameOrThread( self ):
     self._stackTraceView.ExpandFrameOrThread()
