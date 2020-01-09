@@ -4113,8 +4113,9 @@ void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds, int trigger_leav
 // Go to the last accessed tab page, if there is one.
 void goto_tabpage_lastused(void)
 {
-  if (valid_tabpage(lastused_tabpage)) {
-    goto_tabpage_tp(lastused_tabpage, true, true);
+  int index = tabpage_index(lastused_tabpage);
+  if (index < tabpage_index(NULL)) {
+    goto_tabpage(index);
   }
 }
 

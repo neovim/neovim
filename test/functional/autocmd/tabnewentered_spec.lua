@@ -439,32 +439,32 @@ describe('tabpage/previous', function()
     does_not_switch_to_previous_after_closing_current_tab('<C-Tab>'))
 
   local function does_not_switch_to_previous_after_entering_operator_pending(characters)
-      return function()
-          -- Add three tabs for a total of four
-          command('tabnew')
-          command('tabnew')
-          command('tabnew')
+    return function()
+      -- Add three tabs for a total of four
+      command('tabnew')
+      command('tabnew')
+      command('tabnew')
 
-          -- The previous tab is now the third.
-          eq(3, eval('tabpagenr(\'#\')'))
+      -- The previous tab is now the third.
+      eq(3, eval('tabpagenr(\'#\')'))
 
-          -- Enter operator pending mode.
-          feed('d')
-          eq('no', eval('mode(1)'))
+      -- Enter operator pending mode.
+      feed('d')
+      eq('no', eval('mode(1)'))
 
-          -- At this point switching to the previous tab should have no effect
-          -- other than leaving operator pending mode.
-          feed(characters)
+      -- At this point switching to the previous tab should have no effect
+      -- other than leaving operator pending mode.
+      feed(characters)
 
-          -- Attempting to switch tabs returns us to normal mode.
-          eq('n', eval('mode()'))
+      -- Attempting to switch tabs returns us to normal mode.
+      eq('n', eval('mode()'))
 
-          -- The current tab is still the fourth.
-          eq(4, eval('tabpagenr()'))
+      -- The current tab is still the fourth.
+      eq(4, eval('tabpagenr()'))
 
-          -- The previous tab is still the third.
-          eq(3, eval('tabpagenr(\'#\')'))
-      end
+      -- The previous tab is still the third.
+      eq(3, eval('tabpagenr(\'#\')'))
+    end
   end
   it('does not switch to previous via g<Tab> after entering operator pending',
     does_not_switch_to_previous_after_entering_operator_pending('g<Tab>'))
@@ -480,4 +480,40 @@ describe('tabpage/previous', function()
   --   does_not_switch_to_previous_after_entering_operator_pending('<C-W>g<Tab>'))
   it('does not switch to previous via <C-Tab> after entering operator pending',
     does_not_switch_to_previous_after_entering_operator_pending('<C-Tab>'))
+
+  local function cmdline_win_prevents_tab_switch(characters, completion_visible)
+    return function()
+      -- Add three tabs for a total of four
+      command('tabnew')
+      command('tabnew')
+      command('tabnew')
+
+      -- The previous tab is now the third.
+      eq(3, eval('tabpagenr(\'#\')'))
+
+      -- Edit : command line in command-line window
+      feed('q:')
+
+      local cmdline_win_id = eval('win_getid()')
+
+      -- At this point switching to the previous tab should have no effect.
+      feed(characters)
+
+      -- Attempting to switch tabs maintains the current window.
+      eq(cmdline_win_id, eval('win_getid()'))
+      eq(completion_visible, eval('complete_info().pum_visible'))
+
+      -- The current tab is still the fourth.
+      eq(4, eval('tabpagenr()'))
+
+      -- The previous tab is still the third.
+      eq(3, eval('tabpagenr(\'#\')'))
+    end
+  end
+  it('cmdline-win prevents tab switch via g<Tab>',
+    cmdline_win_prevents_tab_switch('g<Tab>', 0))
+  it('cmdline-win prevents tab switch via <C-W>g<Tab>',
+    cmdline_win_prevents_tab_switch('<C-W>g<Tab>', 1))
+  it('cmdline-win prevents tab switch via <C-Tab>',
+    cmdline_win_prevents_tab_switch('<C-Tab>', 0))
 end)
