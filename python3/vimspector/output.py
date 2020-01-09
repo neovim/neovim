@@ -206,3 +206,6 @@ class OutputView( object ):
                    tab_buffer.index,
                    utils.Escape( category ),
                    '*' if tab_buffer.flag else '' ) )
+
+  def GetCategories( self ):
+    return [ category for category in self._buffers.keys() ]

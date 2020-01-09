@@ -26,6 +26,7 @@ if exists( 'g:loaded_vimpector' )
   call s:restore_cpo()
   finish
 endif
+"}}}
 
 " TODO:
 "   - Check Vim version (for jobs)
@@ -36,28 +37,54 @@ let g:loaded_vimpector = 1
 
 let s:mappings = get( g:, 'vimspector_enable_mappings', '' )
 
+nnoremap <Plug>VimspectorContinue       :<c-u>call vimspector#Continue()<CR>
+nnoremap <Plug>VimspectorStop           :<c-u>call vimspector#Stop()<CR>
+nnoremap <Plug>VimspectorRestart        :<c-u>call vimspector#Restart()<CR>
+nnoremap <Plug>VimspectorPause          :<c-u>call vimspector#Pause()<CR>
+nnoremap <Plug>VimspectorToggleBreakpoint
+      \ :<c-u>call vimspector#ToggleBreakpoint()<CR>
+nnoremap <Plug>VimspectorAddFunctionBreakpoint
+      \ :<c-u>call vimspector#AddFunctionBreakpoint( expand( '<cexpr>' ) )<CR>
+nnoremap <Plug>VimspectorStopOver       :<c-u>call vimspector#StepOver()<CR>
+nnoremap <Plug>VimspectorStepInto       :<c-u>call vimspector#StepInto()<CR>
+nnoremap <Plug>VimspectorStepOut        :<c-u>call vimspector#StepOut()<CR>
+
 if s:mappings ==# 'VISUAL_STUDIO'
-  nnoremap <F5>         :call vimspector#Continue()<CR>
-  nnoremap <S-F5>       :call vimspector#Stop()<CR>
-  nnoremap <C-S-F5>     :call vimspector#Restart()<CR>
-  nnoremap <F6>         :call vimspector#Pause()<CR>
-  nnoremap <F9>         :call vimspector#ToggleBreakpoint()<CR>
-  nnoremap <S-F9>       :call vimspector#AddFunctionBreakpoint( expand( '<cexpr>' ) )<CR>
-  nnoremap <F10>        :call vimspector#StepOver()<CR>
-  nnoremap <F11>        :call vimspector#StepInto()<CR>
-  nnoremap <S-F11>      :call vimspector#StepOut()<CR>
+  nmap <F5>         <Plug>VimspectorContinue
+  nmap <S-F5>       <Plug>VimspectorStop
+  nmap <C-S-F5>     <Plug>VimspectorRestart
+  nmap <F6>         <Plug>VimspectorPause
+  nmap <F9>         <Plug>VimspectorToggleBreakpoint
+  nmap <S-F9>       <Plug>VimspectorAddFunctionBreakpoint
+  nmap <F10>        <Plug>VimspectorStepOver
+  nmap <F11>        <Plug>VimspectorStepInto
+  nmap <S-F11>      <Plug>VimspectorStepOut
 elseif s:mappings ==# 'HUMAN'
-  nnoremap <F5>         :call vimspector#Continue()<CR>
-  nnoremap <F3>         :call vimspector#Stop()<CR>
-  nnoremap <F4>         :call vimspector#Restart()<CR>
-  nnoremap <F6>         :call vimspector#Pause()<CR>
-  nnoremap <F9>         :call vimspector#ToggleBreakpoint()<CR>
-  nnoremap <F8>         :call vimspector#AddFunctionBreakpoint( expand( '<cexpr>' ) )<CR>
-  nnoremap <F10>        :call vimspector#StepOver()<CR>
-  nnoremap <F11>        :call vimspector#StepInto()<CR>
-  nnoremap <F12>        :call vimspector#StepOut()<CR>
+  nmap <F5>         <Plug>VimspectorContinue
+  nmap <F3>         <Plug>VimspectorStop
+  nmap <F4>         <Plug>VimspectorRestart
+  nmap <F6>         <Plug>VimspectorPause
+  nmap <F9>         <Plug>VimspectorToggleBreakpoint
+  nmap <F8>         <Plug>VimspectorAddFunctionBreakpoint
+  nmap <F10>        <Plug>VimspectorStepOver
+  nmap <F11>        <Plug>VimspectorStepInto
+  nmap <F12>        <Plug>VimspectorStepOut
 endif
-"}}}
 
+command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
+      \ VimspectorWatch
+      \ call vimspector#AddWatch( <f-args> )
+command! -bar -nargs=1 -complete=customlist,vimspector#CompleteOutput
+      \ VimspectorShowOutput
+      \ call vimspector#ShowOutput( <f-args> )
+command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
+      \ VimspectorEval
+      \ call vimspector#Evaluate( <f-args> )
+command! -bar
+      \ VimspectorReset
+      \ call vimspector#Reset()
 
+" boilerplate {{{
 call s:restore_cpo()
+" }}}
+

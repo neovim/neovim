@@ -96,6 +96,11 @@ function! vimspector#AddWatchPrompt( expr ) abort
   call vimspector#AddWatch( a:expr )
 endfunction
 
+function! vimspector#Evaluate( expr ) abort
+  py3 _vimspector_session.ShowOutput( 'Console' )
+  py3 _vimspector_session.EvaluateConsole( vim.eval( 'a:expr' ) )
+endfunction
+
 function! vimspector#EvaluateConsole( expr ) abort
   stopinsert
   setlocal nomodified
@@ -108,6 +113,14 @@ endfunction
 
 function! vimspector#ListBreakpoints() abort
   py3 _vimspector_session.ListBreakpoints()
+endfunction
+
+function! vimspector#CompleteOutput( ArgLead, CmdLine, CursorPos ) abort
+  return py3eval( '_vimspector_session.GetOutputBuffers()' )
+endfunction
+
+function! vimspector#CompleteExpr( ArgLead, CmdLine, CursorPos ) abort
+  return []
 endfunction
 
 " Boilerplate {{{

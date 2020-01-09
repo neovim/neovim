@@ -126,8 +126,8 @@ function! vimspector#internal#neojob#StartCommandWithLog( cmd, category ) abort
     let s:commands[ a:category ] = {}
   endif
 
-  let stdout_buf = bufnr( '_vimspector_log_' . a:category . '_out', 1 )
-  let stderr_buf = bufnr( '_vimspector_log_' . a:category . '_err', 1 )
+  let stdout_buf = bufnr( '_vimspector_log_' . a:category . '_out', v:true )
+  let stderr_buf = bufnr( '_vimspector_log_' . a:category . '_err', v:true )
 
   let id = jobstart(a:cmd,
         \          {

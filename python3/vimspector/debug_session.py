@@ -403,6 +403,9 @@ class DebugSession( object ):
   def ShowOutput( self, category ):
     self._outputView.ShowOutput( category )
 
+  def GetOutputBuffers( self ):
+    return self._outputView.GetCategories()
+
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
