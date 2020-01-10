@@ -19,13 +19,14 @@ let s:save_cpo = &cpoptions
 set cpoptions&vim
 " }}}
 
+" Returns: py.ShowBalloon( winnr, expresssion )
 function! vimspector#internal#balloon#BalloonExpr() abort
   " winnr + 1 because for *no good reason* winnr is 0 based here unlike
   " everywhere else
   " int() because for *no good reason* winnr is a string.
-  py3 _vimspector_session.ShowBalloon( int( vim.eval( 'v:beval_winnr' ) ) + 1,
-        \ vim.eval( 'v:beval_text' ) )
-  return '...'
+  return py3eval('_vimspector_session.ShowBalloon('
+        \ . 'int( vim.eval( "v:beval_winnr" ) ) + 1,'
+        \ . 'vim.eval( "v:beval_text" ) )' )
 endfunction
 
 " Boilerplate {{{
