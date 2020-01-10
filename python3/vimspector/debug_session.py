@@ -509,7 +509,7 @@ class DebugSession( object ):
 
     # TODO: Use the 'tarminate' request if supportsTerminateRequest set
 
-  
+
   def _PrepareAttach( self, adapter_config, launch_config ):
     atttach_config = adapter_config.get( 'attach' )
 

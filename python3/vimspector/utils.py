@@ -323,6 +323,7 @@ def SetBufferContents( buf, lines, modified=False ):
 def IsCurrent( window, buf ):
   return vim.current.window == window and vim.current.window.buffer == buf
 
+
 def ExpandReferencesInObject( obj, mapping, user_choices ):
   if isinstance( obj, dict ):
     ExpandReferencesInDict( obj, mapping, user_choices )
@@ -335,6 +336,7 @@ def ExpandReferencesInObject( obj, mapping, user_choices ):
     obj = ExpandReferencesInString( obj, mapping, user_choices )
 
   return obj
+
 
 def ExpandReferencesInString( orig_s, mapping, user_choices):
   s = os.path.expanduser( orig_s )
@@ -368,6 +370,7 @@ def ExpandReferencesInString( orig_s, mapping, user_choices):
       break
 
   return s
+
 
 # TODO: Should we just run the substitution on the whole JSON string instead?
 # That woul dallow expansion in bool and number values, such as ports etc. ?
