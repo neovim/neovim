@@ -107,6 +107,26 @@ GADGETS = {
       }
     },
   },
+  'vscode-java-debug': {
+    'language': 'java',
+    'enabled': False,
+    'download': {
+      'url': 'https://github.com/microsoft/vscode-java-debug/releases/download/'
+             '${version}/${file_name}',
+    },
+    'all': {
+      'version': '0.23.0',
+      'file_name': 'vscode-java-debug-0.23.0.vsix',
+      'checksum':
+        '',
+    },
+    'adapters': {
+      "vscode-java": {
+        "name": "vscode-java",
+        "port": "ask",
+      }
+    },
+  },
   'tclpro': {
     'language': 'tcl',
     'repo': {

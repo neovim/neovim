@@ -115,10 +115,6 @@ class OutputView( object ):
     self._ShowOutput( category )
 
   def Evaluate( self, frame, expression ):
-    if not frame:
-      self.Print( 'Console', 'There is no current stack frame' )
-      return
-
     console = self._buffers[ 'Console' ].buf
     utils.AppendToBuffer( console, 'Evaluating: ' + expression )
 
@@ -132,14 +128,18 @@ class OutputView( object ):
 
       utils.AppendToBuffer( console, '  Result: ' + result )
 
-    self._connection.DoRequest( print_result, {
+    request = {
       'command': 'evaluate',
       'arguments': {
         'expression': expression,
         'context': 'repl',
-        'frameId': frame[ 'id' ],
       }
-    } )
+    }
+
+    if frame:
+      request[ 'arguments' ][ 'frameId' ] = frame[ 'id' ]
+
+    self._connection.DoRequest( print_result, request )
 
   def _ToggleFlag( self, category, flag ):
     if self._buffers[ category ].flag != flag:

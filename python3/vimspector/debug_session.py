@@ -473,10 +473,11 @@ class DebugSession( object ):
     if 'cwd' not in self._adapter:
       self._adapter[ 'cwd' ] = os.getcwd()
 
+    vim.vars[ '_vimspector_adapter_spec' ] = self._adapter
     channel_send_func = vim.bindeval(
-      "vimspector#internal#{}#StartDebugSession( {} )".format(
-        self._connection_type,
-        json.dumps( self._adapter ) ) )
+        "vimspector#internal#{}#StartDebugSession( "
+        "  g:_vimspector_adapter_spec "
+        ")".format( self._connection_type ) )
 
     if channel_send_func is None:
       self._logger.error( "Unable to start debug server" )
@@ -508,8 +509,8 @@ class DebugSession( object ):
 
     # TODO: Use the 'tarminate' request if supportsTerminateRequest set
 
-  def _PrepareAttach( self, adapter_config, launch_config ):
 
+  def _PrepareAttach( self, adapter_config, launch_config ):
     atttach_config = adapter_config.get( 'attach' )
 
     if not atttach_config:
@@ -520,13 +521,9 @@ class DebugSession( object ):
       # e.g. expand variables when we use them, not all at once. This would
       # remove the whole %PID% hack.
       remote = atttach_config[ 'remote' ]
-      ssh = [ 'ssh' ]
+      ssh = self._GetSSHCommand( remote )
 
-      if 'account' in remote:
-        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
-      else:
-        ssh.append( remote[ 'host' ] )
-
+      # FIXME: Why does this not use self._GetCommands ?
       cmd = ssh + remote[ 'pidCommand' ]
 
       self._logger.debug( 'Getting PID: %s', cmd )
@@ -574,12 +571,7 @@ class DebugSession( object ):
 
     if 'remote' in run_config:
       remote = run_config[ 'remote' ]
-      ssh = [ 'ssh' ]
-      if 'account' in remote:
-        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
-      else:
-        ssh.append( remote[ 'host' ] )
-
+      ssh = self._GetSSHCommand( remote )
       commands = self._GetCommands( remote, 'run' )
 
       for index, command in enumerate( commands ):
@@ -597,6 +589,16 @@ class DebugSession( object ):
         self._logger.debug( 'Running remote app: %s', full_cmd )
         self._outputView.RunJobWithOutput( 'Remote{}'.format( index ),
                                            full_cmd )
+
+
+  def _GetSSHCommand( self, remote ):
+    ssh = [ 'ssh' ] + remote.get( 'ssh', {} ).get( 'args', [] )
+    if 'account' in remote:
+      ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
+    else:
+      ssh.append( remote[ 'host' ] )
+
+    return ssh
 
 
   def _GetCommands( self, remote, pfx ):

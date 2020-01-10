@@ -324,57 +324,59 @@ def IsCurrent( window, buf ):
   return vim.current.window == window and vim.current.window.buffer == buf
 
 
+def ExpandReferencesInObject( obj, mapping, user_choices ):
+  if isinstance( obj, dict ):
+    ExpandReferencesInDict( obj, mapping, user_choices )
+  elif isinstance( obj, list ):
+    for i, _ in enumerate( obj ):
+      # FIXME: We are assuming that it is a list of string, but could be a
+      # list of list of a list of dict, etc.
+      obj[ i ] = ExpandReferencesInObject( obj[ i ], mapping, user_choices )
+  elif isinstance( obj, str ):
+    obj = ExpandReferencesInString( obj, mapping, user_choices )
+
+  return obj
+
+
+def ExpandReferencesInString( orig_s, mapping, user_choices):
+  s = os.path.expanduser( orig_s )
+  s = os.path.expandvars( s )
+
+  # Parse any variables passed in in mapping, and ask for any that weren't,
+  # storing the result in mapping
+  bug_catcher = 0
+  while bug_catcher < 100:
+    ++bug_catcher
+
+    try:
+      s = string.Template( s ).substitute( mapping )
+      break
+    except KeyError as e:
+      # HACK: This is seemingly the only way to get the key. str( e ) returns
+      # the key surrounded by '' for unknowable reasons.
+      key = e.args[ 0 ]
+      default_value = user_choices.get( key, None )
+      mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ),
+                                    default_value )
+      user_choices[ key ] = mapping[ key ]
+      _logger.debug( "Value for %s not set in %s (from %s): set to %s",
+                     key,
+                     s,
+                     orig_s,
+                     mapping[ key ] )
+    except ValueError as e:
+      UserMessage( 'Invalid $ in string {}: {}'.format( s, e ),
+                   persist = True )
+      break
+
+  return s
+
+
 # TODO: Should we just run the substitution on the whole JSON string instead?
 # That woul dallow expansion in bool and number values, such as ports etc. ?
 def ExpandReferencesInDict( obj, mapping, user_choices ):
-  def expand_refs_in_string( orig_s ):
-    s = os.path.expanduser( orig_s )
-    s = os.path.expandvars( s )
-
-    # Parse any variables passed in in mapping, and ask for any that weren't,
-    # storing the result in mapping
-    bug_catcher = 0
-    while bug_catcher < 100:
-      ++bug_catcher
-
-      try:
-        s = string.Template( s ).substitute( mapping )
-        break
-      except KeyError as e:
-        # HACK: This is seemingly the only way to get the key. str( e ) returns
-        # the key surrounded by '' for unknowable reasons.
-        key = e.args[ 0 ]
-        default_value = user_choices.get( key, None )
-        mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ),
-                                      default_value )
-        user_choices[ key ] = mapping[ key ]
-        _logger.debug( "Value for %s not set in %s (from %s): set to %s",
-                       key,
-                       s,
-                       orig_s,
-                       mapping[ key ] )
-      except ValueError as e:
-        UserMessage( 'Invalid $ in string {}: {}'.format( s, e ),
-                     persist = True )
-        break
-
-    return s
-
-  def expand_refs_in_object( obj ):
-    if isinstance( obj, dict ):
-      ExpandReferencesInDict( obj, mapping, user_choices )
-    elif isinstance( obj, list ):
-      for i, _ in enumerate( obj ):
-        # FIXME: We are assuming that it is a list of string, but could be a
-        # list of list of a list of dict, etc.
-        obj[ i ] = expand_refs_in_object( obj[ i ] )
-    elif isinstance( obj, str ):
-      obj = expand_refs_in_string( obj )
-
-    return obj
-
   for k in obj.keys():
-    obj[ k ] = expand_refs_in_object( obj[ k ] )
+    obj[ k ] = ExpandReferencesInObject( obj[ k ], mapping, user_choices )
 
 
 def ParseVariables( variables_list, mapping, user_choices ):
@@ -416,7 +418,9 @@ def ParseVariables( variables_list, mapping, user_choices ):
           raise ValueError(
             "Unsupported variable defn {}: Missing 'shell'".format( n ) )
       else:
-        new_variables[ n ] = v
+        new_variables[ n ] = ExpandReferencesInObject( v,
+                                                       mapping,
+                                                       user_choices )
 
   return new_variables
 
