@@ -1414,6 +1414,7 @@ bool check_changed_any(bool hidden, bool unload)
   size_t bufcount = 0;
   int         *bufnrs;
 
+  // Make a list of all buffers, with the most important ones first.
   FOR_ALL_BUFFERS(buf) {
     bufcount++;
   }
@@ -1426,14 +1427,15 @@ bool check_changed_any(bool hidden, bool unload)
 
   // curbuf
   bufnrs[bufnum++] = curbuf->b_fnum;
-  // buf in curtab
+
+  // buffers in current tab
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != curbuf) {
       add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
     }
   }
 
-  // buf in other tab
+  // buffers in other tabs
   FOR_ALL_TABS(tp) {
     if (tp != curtab) {
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -1442,7 +1444,7 @@ bool check_changed_any(bool hidden, bool unload)
     }
   }
 
-  // any other buf
+  // any other buffer
   FOR_ALL_BUFFERS(buf) {
     add_bufnum(bufnrs, &bufnum, buf->b_fnum);
   }
@@ -1471,6 +1473,7 @@ bool check_changed_any(bool hidden, bool unload)
     goto theend;
   }
 
+  // Get here if "buf" cannot be abandoned.
   ret = true;
   exiting = false;
   // When ":confirm" used, don't give an error message.
