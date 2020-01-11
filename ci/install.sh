@@ -50,3 +50,6 @@ else
   gcc -m32 -o "$TREE_SITTER_DIR/bin/c.so" -shared parser.c -I.
 fi
 test -f "$TREE_SITTER_DIR/bin/c.so"
+
+sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
+perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'

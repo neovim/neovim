@@ -71,6 +71,7 @@ addons:
       - build-essential
       - clang
       - cmake
+      - cpanminus
       - cscope
       - gcc-multilib
       - gdb
@@ -90,7 +91,9 @@ addons:
       - powershell
     packages:
       - ccache
+      - cpanminus
       - ninja
+      - perl
 
 jobs:
   include:

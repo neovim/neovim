@@ -44,7 +44,6 @@ fi
 
 source ~/.nvm/nvm.sh
 nvm install 10
-nvm use 10
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
