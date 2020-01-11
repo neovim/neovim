@@ -2373,7 +2373,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  fold:c	'·' or '-'	filling 'foldtext'
 	  foldopen:c	'-'		mark the beginning of a fold
 	  foldclose:c	'+'		show a closed fold
-	  foldsep:c	'|'		open fold middle marker
+	  foldsep:c	'│' or '|'      open fold middle marker
 	  diff:c	'-'		deleted lines of the 'diff' option
 	  msgsep:c	' '		message separator 'display'
 	  eob:c		'~'		empty lines at the end of a buffer
@@ -2382,7 +2382,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
-	If 'ambiwidth' is "double" then "vert" and "fold" default to
+	If 'ambiwidth' is "double" then "vert", "foldsep" and "fold" default to
 	single-byte alternatives.
 
 	Example: >
