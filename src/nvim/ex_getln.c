@@ -136,6 +136,15 @@ struct cmdline_info {
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
 
+typedef struct {
+  colnr_T   vs_curswant;
+  colnr_T   vs_leftcol;
+  linenr_T  vs_topline;
+  int       vs_topfill;
+  linenr_T  vs_botline;
+  int       vs_empty_rows;
+} viewstate_T;
+
 typedef struct command_line_state {
   VimState state;
   int firstc;
@@ -151,18 +160,8 @@ typedef struct command_line_state {
   int histype;                          // history type to be used
   pos_T     search_start;               // where 'incsearch' starts searching
   pos_T     save_cursor;
-  colnr_T   old_curswant;
-  colnr_T   init_curswant;
-  colnr_T   old_leftcol;
-  colnr_T   init_leftcol;
-  linenr_T  old_topline;
-  linenr_T  init_topline;
-  int       old_topfill;
-  int       init_topfill;
-  linenr_T  old_botline;
-  linenr_T  init_botline;
-  int       old_empty_rows;
-  int       init_empty_rows;
+  viewstate_T init_viewstate;
+  viewstate_T old_viewstate;
   pos_T     match_start;
   pos_T     match_end;
   int did_incsearch;
@@ -230,6 +229,28 @@ static int compl_selected;
 
 static int cmd_hkmap = 0;  // Hebrew mapping during command line
 
+static void save_viewstate(viewstate_T *vs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  vs->vs_curswant = curwin->w_curswant;
+  vs->vs_leftcol = curwin->w_leftcol;
+  vs->vs_topline = curwin->w_topline;
+  vs->vs_topfill = curwin->w_topfill;
+  vs->vs_botline = curwin->w_botline;
+  vs->vs_empty_rows = curwin->w_empty_rows;
+}
+
+static void restore_viewstate(viewstate_T *vs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  curwin->w_curswant = vs->vs_curswant;
+  curwin->w_leftcol = vs->vs_leftcol;
+  curwin->w_topline = vs->vs_topline;
+  curwin->w_topfill = vs->vs_topfill;
+  curwin->w_botline = vs->vs_botline;
+  curwin->w_empty_rows = vs->vs_empty_rows;
+}
+
 /// Internal entry point for cmdline mode.
 ///
 /// caller must use save_cmdline and restore_cmdline. Best is to use
@@ -240,22 +261,18 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   static int cmdline_level = 0;
   cmdline_level++;
 
-  CommandLineState state, *s = &state;
-  memset(s, 0, sizeof(CommandLineState));
-  s->firstc = firstc;
-  s->count = count;
-  s->indent = indent;
-  s->save_msg_scroll = msg_scroll;
-  s->save_State = State;
+  CommandLineState state = {
+    .firstc = firstc,
+    .count = count,
+    .indent = indent,
+    .save_msg_scroll = msg_scroll,
+    .save_State = State,
+    .ignore_drag_release = true,
+    .match_start = curwin->w_cursor,
+  };
+  CommandLineState *s = &state;
   s->save_p_icm = vim_strsave(p_icm);
-  s->ignore_drag_release = true;
-  s->match_start = curwin->w_cursor;
-  s->init_curswant = curwin->w_curswant;
-  s->init_leftcol = curwin->w_leftcol;
-  s->init_topline = curwin->w_topline;
-  s->init_topfill = curwin->w_topfill;
-  s->init_botline = curwin->w_botline;
-  s->init_empty_rows = curwin->w_empty_rows;
+  save_viewstate(&state.init_viewstate);
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -273,12 +290,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;        // may be restored later
   s->search_start = curwin->w_cursor;
-  s->old_curswant = curwin->w_curswant;
-  s->old_leftcol = curwin->w_leftcol;
-  s->old_topline = curwin->w_topline;
-  s->old_topfill = curwin->w_topfill;
-  s->old_botline = curwin->w_botline;
-  s->old_empty_rows = curwin->w_empty_rows;
+  save_viewstate(&state.old_viewstate);
 
   assert(indent >= 0);
 
@@ -448,12 +460,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
       }
       curwin->w_cursor = s->search_start;  // -V519
     }
-    curwin->w_curswant = s->old_curswant;
-    curwin->w_leftcol = s->old_leftcol;
-    curwin->w_topline = s->old_topline;
-    curwin->w_topfill = s->old_topfill;
-    curwin->w_botline = s->old_botline;
-    curwin->w_empty_rows = s->old_empty_rows;
+    restore_viewstate(&s->old_viewstate);
     highlight_match = false;
     validate_cursor();          // needed for TAB
     redraw_all_later(SOME_VALID);
@@ -1118,12 +1125,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     update_topline();
     validate_cursor();
     highlight_match = true;
-    s->old_curswant = curwin->w_curswant;
-    s->old_leftcol = curwin->w_leftcol;
-    s->old_topline = curwin->w_topline;
-    s->old_topfill = curwin->w_topfill;
-    s->old_botline = curwin->w_botline;
-    s->old_empty_rows = curwin->w_empty_rows;
+    save_viewstate(&s->old_viewstate);
     update_screen(NOT_VALID);
     redrawcmdline();
   } else {
@@ -1244,12 +1246,7 @@ static int command_line_handle_key(CommandLineState *s)
         s->search_start = s->save_cursor;
         // save view settings, so that the screen won't be restored at the
         // wrong position
-        s->old_curswant = s->init_curswant;
-        s->old_leftcol = s->init_leftcol;
-        s->old_topline = s->init_topline;
-        s->old_topfill = s->init_topfill;
-        s->old_botline = s->init_botline;
-        s->old_empty_rows = s->init_empty_rows;
+        s->old_viewstate = s->init_viewstate;
       }
       redrawcmd();
     } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
@@ -1879,11 +1876,7 @@ static int command_line_changed(CommandLineState *s)
 
     // first restore the old curwin values, so the screen is
     // positioned in the same way as the actual search command
-    curwin->w_leftcol = s->old_leftcol;
-    curwin->w_topline = s->old_topline;
-    curwin->w_topfill = s->old_topfill;
-    curwin->w_botline = s->old_botline;
-    curwin->w_empty_rows = s->old_empty_rows;
+    restore_viewstate(&s->old_viewstate);
     changed_cline_bef_curs();
     update_topline();
 
@@ -1944,11 +1937,7 @@ static int command_line_changed(CommandLineState *s)
 
     // Restore the window "view".
     curwin->w_cursor   = s->save_cursor;
-    curwin->w_curswant = s->old_curswant;
-    curwin->w_leftcol  = s->old_leftcol;
-    curwin->w_topline  = s->old_topline;
-    curwin->w_topfill  = s->old_topfill;
-    curwin->w_botline  = s->old_botline;
+    restore_viewstate(&s->old_viewstate);
     update_topline();
 
     redrawcmdline();
