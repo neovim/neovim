@@ -120,3 +120,45 @@ describe('log', function()
     end)
   end)
 end)
+
+describe('logging', function()
+  describe('$NVIM_LOG_FILE', function()
+    local xdgdir = 'Xtest-startup-xdg-logpath'
+    local xdgstatedir = t.is_os('win') and xdgdir .. '/nvim-data' or xdgdir .. '/nvim'
+    after_each(function()
+      os.remove('Xtest-logpath')
+      n.rmdir(xdgdir)
+    end)
+
+    it('is used if expansion succeeds', function()
+      clear({ env = {
+        NVIM_LOG_FILE = 'Xtest-logpath',
+      } })
+      eq('Xtest-logpath', n.eval('$NVIM_LOG_FILE'))
+    end)
+
+    it('defaults to stdpath("log")/nvim.log if empty', function()
+      eq(true, t.mkdir(xdgdir) and t.mkdir(xdgstatedir))
+      clear({
+        env = {
+          XDG_STATE_HOME = xdgdir,
+          NVIM_LOG_FILE = '', -- Empty is invalid.
+        },
+      })
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(n.eval('$NVIM_LOG_FILE')))
+    end)
+
+    it('defaults to stdpath("log")/nvim.log if invalid', function()
+      eq(true, t.mkdir(xdgdir) and t.mkdir(xdgstatedir))
+      clear({
+        env = {
+          XDG_STATE_HOME = xdgdir,
+          NVIM_LOG_FILE = '.', -- Any directory is invalid.
+        },
+      })
+      eq(xdgstatedir .. '/logs/nvim.log', t.fix_slashes(n.eval('$NVIM_LOG_FILE')))
+      -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
+      expect_exit(command, 'qall!')
+    end)
+  end)
+end)
