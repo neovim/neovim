@@ -1234,6 +1234,7 @@ normalchar:
       // Unmapped ALT/META chord behaves like ESC+c. #8213
       stuffcharReadbuff(ESC);
       stuffcharReadbuff(s->c);
+      u_sync(false);
       break;
     }
 
