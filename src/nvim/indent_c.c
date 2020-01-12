@@ -461,6 +461,9 @@ cin_iscase (
   if (cin_starts_with(s, "case")) {
     for (s += 4; *s; ++s) {
       s = cin_skipcomment(s);
+      if (*s == NUL) {
+        break;
+      }
       if (*s == ':') {
         if (s[1] == ':')                /* skip over "::" for C++ */
           ++s;
