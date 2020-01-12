@@ -36,7 +36,8 @@ $scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'
   Invoke-Expression $scoop
 }
 
-scoop install nodejs-lts perl
+scoop install diffutils nodejs-lts perl
+diff3 --version
 node --version
 npm.cmd --version
 perl --version
@@ -76,7 +77,7 @@ if ($compiler -eq 'MINGW') {
   # in MSYS2, but we cannot build inside the MSYS2 shell.
   $cmakeGenerator = 'Ninja'
   $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake', 'diffutils').ForEach({
+  $mingwPackages = @('ninja', 'cmake').ForEach({
     "mingw-w64-$arch-$_"
   })
 
