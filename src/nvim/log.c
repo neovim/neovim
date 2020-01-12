@@ -113,10 +113,13 @@ void log_unlock(void)
 /// @param func_name  Function name, or NULL
 /// @param line_num   Source line number, or -1
 /// @param eol        Append linefeed "\n"
+/// @param join       Replace line endings with SPACE
+/// @param trunc      Truncate to this length
 /// @param fmt        printf-style format string
 bool logmsg(int log_level, const char *context, const char *func_name,
-            int line_num, bool eol, const char *fmt, ...)
-  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
+            int line_num, bool join, size_t trunc, bool eol,
+            const char *fmt, ...)
+  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(8, 9)
 {
   if (log_level < MIN_LOG_LEVEL) {
     return false;
@@ -139,7 +142,7 @@ bool logmsg(int log_level, const char *context, const char *func_name,
   va_list args;
   va_start(args, fmt);
   ret = v_do_log_to_file(log_file, log_level, context, func_name, line_num,
-                         eol, fmt, args);
+                         join, trunc, eol, fmt, args);
   va_end(args);
 
   if (log_file != stderr && log_file != stdout) {
@@ -178,8 +181,8 @@ FILE *open_log_file(void)
   // Disallow recursion. (This only matters for log_path_init; for logmsg and
   // friends we use a mutex: log_lock).
   if (opening_log_file) {
-    do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true,
-                   "Cannot LOG() recursively.");
+    do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, false,
+                   0, true, "Cannot LOG() recursively.");
     return stderr;
   }
 
@@ -198,7 +201,8 @@ FILE *open_log_file(void)
   //  - LOG() is called before early_init()
   //  - Directory does not exist
   //  - File is not writable
-  do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true,
+  do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, false, 0,
+                 true,
                  "Logging to stderr, failed to open $" LOG_FILE_ENV ": %s",
                  log_file_path);
   return stderr;
@@ -228,8 +232,8 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name,
   // Now we have a command string like:
   //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
 
-  do_log_to_file(log_file, DEBUG_LOG_LEVEL, NULL, func_name, line_num, true,
-                 "trace:");
+  do_log_to_file(log_file, DEBUG_LOG_LEVEL, NULL, func_name, line_num, false,
+                 0, true, "trace:");
   FILE *fp = popen(cmdbuf, "r");
   char linebuf[IOSIZE];
   while (fgets(linebuf, sizeof(linebuf) - 1, fp) != NULL) {
@@ -258,22 +262,22 @@ end:
 #endif
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
-                           const char *func_name, int line_num, bool eol,
-                           const char *fmt, ...)
-  FUNC_ATTR_PRINTF(7, 8)
+                           const char *func_name, int line_num, bool join,
+                           size_t trunc, bool eol, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(9, 10)
 {
   va_list args;
   va_start(args, fmt);
   bool ret = v_do_log_to_file(log_file, log_level, context, func_name,
-                              line_num, eol, fmt, args);
+                              line_num, join, trunc, eol, fmt, args);
   va_end(args);
 
   return ret;
 }
 
-static bool v_do_log_to_file(FILE *log_file, int log_level,
-                             const char *context, const char *func_name,
-                             int line_num, bool eol, const char *fmt,
+static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
+                             const char *func_name, int line_num, bool join,
+                             size_t trunc, bool eol, const char *fmt,
                              va_list args)
 {
   static const char *log_levels[] = {
@@ -303,20 +307,35 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   }
 #endif
 
-  // Print the log message.
+  int len = 0;  // Total length.
   int64_t pid = os_get_pid();
-  int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
-              log_levels[log_level], date_time, millis, pid,
-              (context == NULL ? "?:" : context))
-    : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
-              log_levels[log_level], date_time, millis, pid,
-              (context == NULL ? "" : context),
-              func_name, line_num);
-  if (rv < 0) {
-    return false;
+  // Format the log-message "prefix".
+  int prefixlen = (line_num == -1 || func_name == NULL)
+    ? snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-5" PRId64 " %s",
+               log_levels[log_level], date_time, millis, pid,
+               (context == NULL ? "?:" : context))
+    : snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
+               log_levels[log_level], date_time, millis, pid,
+               (context == NULL ? "" : context),
+               func_name, line_num);
+
+  // Append the caller-provided stuff to log message prefix.
+  if (prefixlen >= 0 && (size_t)prefixlen < sizeof(os_buf)) {
+    len = vsnprintf(os_buf + prefixlen, sizeof(os_buf) - (size_t)prefixlen,
+                    fmt, args);
+    len = len >= 0 && (size_t)len > sizeof(os_buf) ? sizeof(os_buf) : MAX(0, len);
+    len += prefixlen;
   }
-  if (vfprintf(log_file, fmt, args) < 0) {
+  // Scrub CRLF if requested.
+  if (join && len - prefixlen > 0) {
+    memchrsub(os_buf + prefixlen, '\n', ' ', (size_t)len - (size_t)prefixlen);
+    memchrsub(os_buf + prefixlen, '\r', ' ', (size_t)len - (size_t)prefixlen);
+  }
+  // Write result to file (truncate if specified).
+  int rv = (trunc > 0)
+    ? fprintf(log_file, "%.*s", (int)trunc + prefixlen, os_buf)
+    : fprintf(log_file, "%s", os_buf);
+  if (rv < 0) {
     return false;
   }
   if (eol) {

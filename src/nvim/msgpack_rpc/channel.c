@@ -620,7 +620,7 @@ static void complete_call(msgpack_object *obj, Channel *channel)
 
 static void call_set_error(Channel *channel, char *msg, int loglevel)
 {
-  LOG(loglevel, "RPC: %s", msg);
+  LOG(loglevel, false, 0, "RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
