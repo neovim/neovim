@@ -299,6 +299,8 @@ describe('TUI', function()
     feed_data('u')
     expect_child_buf_lines({'"pasted from terminal"'})
     feed_data('u')
+    expect_child_buf_lines({'""'})
+    feed_data('u')
     expect_child_buf_lines({''})
   end)
 
