@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local assert_visible = helpers.assert_visible
 local dedent = helpers.dedent
-local neq = helpers.neq
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
@@ -19,98 +19,86 @@ local source = helpers.source
 describe('autocmd', function()
   before_each(clear)
 
-  it(':tabnew triggers events in the correct order', function()
+  it(':tabnew, :split, :close events order, <afile>', function()
     local expected = {
-      'WinLeave',
-      'TabLeave',
-      'WinEnter',
-      'TabNew',
-      'TabEnter',
-      'BufLeave',
-      'BufEnter'
+      {'WinLeave', ''},
+      {'TabLeave', ''},
+      {'WinEnter', ''},
+      {'TabNew', 'testfile1'},    -- :tabnew
+      {'TabEnter', ''},
+      {'BufLeave', ''},
+      {'BufEnter', 'testfile1'},  -- :split
+      {'WinLeave', 'testfile1'},
+      {'WinEnter', 'testfile1'},
+      {'WinLeave', 'testfile1'},
+      {'WinClosed', '1002'},      -- :close, WinClosed <afile> = window-id
+      {'WinEnter', 'testfile1'},
+      {'WinLeave', 'testfile1'},  -- :bdelete
+      {'WinEnter', 'testfile1'},
+      {'BufLeave', 'testfile1'},
+      {'BufEnter', 'testfile2'},
+      {'WinClosed', '1000'},
     }
-    command('let g:foo = []')
-    command('autocmd BufEnter * :call add(g:foo, "BufEnter")')
-    command('autocmd BufLeave * :call add(g:foo, "BufLeave")')
-    command('autocmd TabEnter * :call add(g:foo, "TabEnter")')
-    command('autocmd TabLeave * :call add(g:foo, "TabLeave")')
-    command('autocmd TabNew   * :call add(g:foo, "TabNew")')
-    command('autocmd WinEnter * :call add(g:foo, "WinEnter")')
-    command('autocmd WinLeave * :call add(g:foo, "WinLeave")')
-    command('tabnew')
-    assert.same(expected, eval('g:foo'))
-  end)
-
-  it(':close triggers WinClosed event', function()
-    command('let g:triggered = 0')
-    command('new')
-    command('autocmd WinClosed <buffer> :let g:triggered+=1')
-    eq(0, eval('g:triggered'))
+    command('let g:evs = []')
+    command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
+    command('autocmd BufLeave * :call add(g:evs, ["BufLeave", expand("<afile>")])')
+    command('autocmd TabEnter * :call add(g:evs, ["TabEnter", expand("<afile>")])')
+    command('autocmd TabLeave * :call add(g:evs, ["TabLeave", expand("<afile>")])')
+    command('autocmd TabNew   * :call add(g:evs, ["TabNew", expand("<afile>")])')
+    command('autocmd WinEnter * :call add(g:evs, ["WinEnter", expand("<afile>")])')
+    command('autocmd WinLeave * :call add(g:evs, ["WinLeave", expand("<afile>")])')
+    command('autocmd WinClosed * :call add(g:evs, ["WinClosed", expand("<afile>")])')
+    command('tabnew testfile1')
+    command('split')
     command('close')
-    eq(1, eval('g:triggered'))
+    command('new testfile2')
+    command('bdelete 1')
+    eq(expected, eval('g:evs'))
   end)
 
-  it('WinClosed event exposes window id as <afile>', function()
-    command('new')
-    local id = meths.get_current_win().id
-    helpers.nvim('command', 'au! WinClosed * echom "winclosed:".expand("<afile>").":".expand("<amatch>").":".win_getid()')
-    eq(string.format("winclosed:%s:%s:%s", id, id, id), helpers.nvim('exec', 'close', true))
-  end)
-
-  it(':bdelete triggers WinClosed event', function()
+  it('WinClosed is non-recursive', function()
     command('let g:triggered = 0')
-    command('autocmd WinClosed <buffer> :let g:triggered+=1')
-    local first_buffer = eval("bufnr('%')")
-    command('new')
-    command('bdelete ' .. first_buffer )
+    command('autocmd WinClosed * :let g:triggered+=1 | :bdelete 2')
+    command('new testfile2')
+    command('new testfile3')
+
+    -- All 3 buffers are visible.
+    assert_visible(1, true)
+    assert_visible(2, true)
+    assert_visible(3, true)
+
+    -- Trigger WinClosed, which also deletes buffer/window 2.
+    command('bdelete 1')
+
+    -- Buffers 1 and 2 were closed but WinClosed was triggered only once.
     eq(1, eval('g:triggered'))
+    assert_visible(1, false)
+    assert_visible(2, false)
+    assert_visible(3, true)
   end)
 
-  it(':close triggers WinClosed event in another tab', function()
-    command('let g:triggered = 0')
-    local current_buffer = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :let g:triggered+=1')
-    command('tabnew')
-    command('bdelete ' .. current_buffer)
-    eq(1, eval('g:triggered'))
-  end)
-
-  it('WinClosed events are not recursive in different window', function()
-    command('let g:triggered = 0')
-    local first_buffer = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :let g:triggered+=1')
+  it('WinClosed from a different tabpage', function()
+    command('let g:evs = []')
+    command('edit tesfile1')
+    command('autocmd WinClosed <buffer> :call add(g:evs, ["WinClosed", expand("<abuf>")])')
+    local buf1 = eval("bufnr('%')")
     command('new')
-    local second_buffer = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :bdelete ' .. first_buffer)
-    command('new')
-    neq(-1, funcs.bufwinnr(first_buffer))
-    command('bdelete ' .. second_buffer )
-    eq(0, eval('g:triggered'))
-
-    -- first event was triggered, second wasn't
-    eq(-1, funcs.bufwinnr(first_buffer))
-  end)
-
-  it('WinClosed events are not recursive in the same window', function()
-    command('let g:triggered = 0')
-    command('new')
-    local second_buffer = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :let g:triggered+=1 | bdelete ' .. second_buffer)
-    neq(-1, funcs.bufwinnr(second_buffer))
-    eq(0, eval('g:triggered'))
-    command('bdelete ' .. second_buffer )
-    eq(-1, funcs.bufwinnr(second_buffer))
-    eq(1, eval('g:triggered'))
-  end)
-
-  it('WinClosed events are not recursive in different tab', function()
-    command('let g:triggered = 0')
-    command('new')
-    local second_buffer = eval("bufnr('%')")
-    command('autocmd WinClosed <buffer> :let g:triggered+=1 | bdelete ' .. second_buffer)
-    command('tabnew')
-    command('bdelete ' .. second_buffer )
-    eq(1, eval('g:triggered'))
+    local buf2 = eval("bufnr('%')")
+    command('autocmd WinClosed <buffer> :call add(g:evs, ["WinClosed", expand("<abuf>")])'
+      -- Attempt recursion.
+      ..' | bdelete '..buf2)
+    command('tabedit testfile2')
+    command('tabedit testfile3')
+    command('bdelete '..buf2)
+    -- Non-recursive: only triggered once.
+    eq({
+      {'WinClosed', '2'},
+    }, eval('g:evs'))
+    command('bdelete '..buf1)
+    eq({
+      {'WinClosed', '2'},
+      {'WinClosed', '1'},
+    }, eval('g:evs'))
   end)
 
   it('v:vim_did_enter is 1 after VimEnter', function()

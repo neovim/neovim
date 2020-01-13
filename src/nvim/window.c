@@ -2695,8 +2695,7 @@ static void do_autocmd_winclosed(win_T *win)
     return;
   }
   recursive = true;
-
-  char_u winid[10];
+  char_u winid[NUMBUFLEN];
   vim_snprintf((char *)winid, sizeof(winid), "%i", win->handle);
   apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
   recursive = false;
