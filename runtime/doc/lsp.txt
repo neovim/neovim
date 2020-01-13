@@ -49,9 +49,9 @@ go-to-definition, hover, etc.  Example config: >
   nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
   nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
 
-Nvim provides the vim.lsp.omnifunc 'omnifunc' handler which allows
-|i_CTRL-X_CTRL-O| to consume LSP completion features. Example config (note the
-use of |v:lua| to call Lua from Vimscript): >
+Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
+|i_CTRL-X_CTRL-O| to consume LSP completion. Example config (note the use of
+|v:lua| to call Lua from Vimscript): >
 
   " Use LSP omni-completion in Python files.
   autocmd Filetype python setlocal omnifunc=v:lua.vim.lsp.omnifunc
@@ -477,7 +477,23 @@ notify({...})                                               *vim.lsp.notify()*
                 TODO: Documentation
 
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
-                TODO: Documentation
+                Implements 'omnifunc' compatible LSP completion.
+
+                Parameters: ~
+                    {findstart}  0 or 1, decides behavior
+                    {base}       If findstart=0, text to match against
+
+                Return: ~
+                    (number) Decided by`findstart`:
+                    • findstart=0: column where the completion starts, or -2
+                      or -3
+                    • findstart=1: list of matches (actually just calls
+                      |complete()|)
+
+                See also: ~
+                    |complete-functions|
+                    |complete-items|
+                    |CompleteDone|
 
 on_error({code}, {err})                                   *vim.lsp.on_error()*
                 TODO: Documentation

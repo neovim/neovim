@@ -251,7 +251,6 @@ Name			triggered by ~
 
 	Buffers
 |BufAdd|		just after adding a buffer to the buffer list
-|BufCreate|		just after adding a buffer to the buffer list
 |BufDelete|		before deleting a buffer from the buffer list
 |BufWipeout|		before completely deleting a buffer
 
@@ -367,32 +366,29 @@ Name			triggered by ~
 
 The alphabetical list of autocommand events:		*autocmd-events-abc*
 
-							*BufCreate* *BufAdd*
-BufAdd or BufCreate		Just after creating a new buffer which is
+							*BufAdd*
+BufAdd				Just after creating a new buffer which is
 				added to the buffer list, or adding a buffer
-				to the buffer list.
-				Also used just after a buffer in the buffer
-				list has been renamed.
-				The BufCreate event is for historic reasons.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being created "<afile>".
+				to the buffer list, a buffer in the buffer
+				list was renamed.
+				Before |BufEnter|.
+				NOTE: Current buffer "%" may be different from
+				the buffer being created "<afile>".
 							*BufDelete*
 BufDelete			Before deleting a buffer from the buffer list.
 				The BufUnload may be called first (if the
 				buffer was loaded).
 				Also used just before a buffer in the buffer
 				list is renamed.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being deleted "<afile>" and "<abuf>".
-				Don't change to another buffer, it will cause
-				problems.
+				NOTE: Current buffer "%" may be different from
+				the buffer being deleted "<afile>" and "<abuf>".
+				Do not change to another buffer.
 							*BufEnter*
 BufEnter			After entering a buffer.  Useful for setting
 				options for a file type.  Also executed when
 				starting to edit a buffer, after the
-				BufReadPost autocommands.
+				After |BufAdd|.
+				After |BufReadPost|.
 							*BufFilePost*
 BufFilePost			After changing the name of the current buffer
 				with the ":file" or ":saveas" command.
@@ -405,9 +401,8 @@ BufHidden			Just before a buffer becomes hidden.  That is,
 				the buffer, but the buffer is not unloaded or
 				deleted.  Not used for ":qa" or ":q" when
 				exiting Vim.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being unloaded "<afile>".
+				NOTE: current buffer "%" may be different from
+				the buffer being unloaded "<afile>".
 							*BufLeave*
 BufLeave			Before leaving to another buffer.  Also when
 				leaving or closing the current window and the
@@ -418,9 +413,8 @@ BufNew				Just after creating a new buffer.  Also used
 				just after a buffer has been renamed.  When
 				the buffer is added to the buffer list BufAdd
 				will be triggered too.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being created "<afile>".
+				NOTE: Current buffer "%" may be different from
+				the buffer being created "<afile>".
 							*BufNewFile*
 BufNewFile			When starting to edit a file that doesn't
 				exist.  Can be used to read in a skeleton
@@ -451,13 +445,11 @@ BufUnload			Before unloading a buffer.  This is when the
 				may be after a BufWritePost and before a
 				BufDelete.  Also used for all buffers that are
 				loaded when Vim is going to exit.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being unloaded "<afile>".
-				Don't change to another buffer or window, it
-				will cause problems!
-				When exiting and v:dying is 2 or more this
-				event is not triggered.
+				NOTE: Current buffer "%" may be different from
+				the buffer being unloaded "<afile>".
+				Do not change to another buffer or window!
+				Not triggered when exiting and v:dying is 2 or
+				more.
 							*BufWinEnter*
 BufWinEnter			After a buffer is displayed in a window.  This
 				can be when the buffer is loaded (after
@@ -476,11 +468,10 @@ BufWinLeave			Before a buffer is removed from a window.
 				Not when it's still visible in another window.
 				Also triggered when exiting.  It's triggered
 				before BufUnload or BufHidden.
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being unloaded "<afile>".
-				When exiting and v:dying is 2 or more this
-				event is not triggered.
+				NOTE: Current buffer "%" may be different from
+				the buffer being unloaded "<afile>".
+				Not triggered when exiting and v:dying is 2 or
+				more.
 							*BufWipeout*
 BufWipeout			Before completely deleting a buffer.  The
 				BufUnload and BufDelete events may be called
@@ -488,11 +479,9 @@ BufWipeout			Before completely deleting a buffer.  The
 				buffer list).  Also used just before a buffer
 				is renamed (also when it's not in the buffer
 				list).
-				NOTE: When this autocommand is executed, the
-				current buffer "%" may be different from the
-				buffer being deleted "<afile>".
-				Don't change to another buffer, it will cause
-				problems.
+				NOTE: Current buffer "%" may be different from
+				the buffer being deleted "<afile>".
+				Do not change to another buffer.
 						*BufWrite* *BufWritePre*
 BufWrite or BufWritePre		Before writing the whole buffer to a file.
 							*BufWriteCmd*

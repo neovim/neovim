@@ -914,7 +914,18 @@ function lsp.buf_notify(bufnr, method, params)
   end)
 end
 
---- Function which can be called to generate omnifunc compatible completion.
+--- Implements 'omnifunc' compatible LSP completion.
+---
+--@see |complete-functions|
+--@see |complete-items|
+--@see |CompleteDone|
+---
+--@param findstart 0 or 1, decides behavior
+--@param base If findstart=0, text to match against
+---
+--@return (number) Decided by `findstart`:
+--- - findstart=0: column where the completion starts, or -2 or -3
+--- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)
   local _ = log.debug() and log.debug("omnifunc.findstart", { findstart = findstart, base = base })
 
@@ -936,7 +947,7 @@ function lsp.omnifunc(findstart, base)
   local line_to_cursor = line:sub(1, pos[2])
   local _ = log.trace() and log.trace("omnifunc.line", pos, line)
 
-  -- Get the start postion of the current keyword
+  -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
   local params = util.make_position_params()
 

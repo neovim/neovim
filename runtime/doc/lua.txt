@@ -885,6 +885,16 @@ deepcopy({orig})                                              *vim.deepcopy()*
                 Return: ~
                     New table of copied keys and (nested) values.
 
+endswith({s}, {suffix})                                       *vim.endswith()*
+                Tests if `s` ends with `suffix` .
+
+                Parameters: ~
+                    {s}       (string) a string
+                    {suffix}  (string) a suffix
+
+                Return: ~
+                    (boolean) true if `suffix` is a suffix of s
+
 gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                 Splits a string at each instance of a separator.
 
@@ -961,6 +971,16 @@ split({s}, {sep}, {plain})                                       *vim.split()*
 
                 See also: ~
                     |vim.gsplit()|
+
+startswith({s}, {prefix})                                   *vim.startswith()*
+                Tests if `s` starts with `prefix` .
+
+                Parameters: ~
+                    {s}       (string) a string
+                    {prefix}  (string) a prefix
+
+                Return: ~
+                    (boolean) true if `prefix` is a prefix of s
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For

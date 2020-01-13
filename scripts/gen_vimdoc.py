@@ -167,10 +167,7 @@ CONFIG = {
                 # HACK. TODO(justinmk): class/structure support in lua2dox
                 if 'lsp.client' == f'{fstem}.{name}'
                 else f'*vim.lsp.{fstem}.{name}()*')),
-        'module_override': {
-            # Combine  are exposed on the `vim` module.
-            'shared': 'vim',
-        },
+        'module_override': {},
         'append_only': [],
     },
 }
@@ -821,7 +818,7 @@ def main(config):
                 stdin=subprocess.PIPE,
                 # silence warnings
                 # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-                stderr=subprocess.DEVNULL)
+                stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL))
         p.communicate(
             config.format(
                 input=CONFIG[target]['files'],

@@ -190,6 +190,9 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 {count}<C-PageDown>
 {count}gt	Go to tab page {count}.  The first tab page has number one.
 
+CTRL-<Tab>					*CTRL-<Tab>*
+CTRL-W g<Tab>					*g<Tab>* *CTRL-W_g<Tab>*
+g<Tab>		Go to previous (last accessed) tab page.
 
 :tabp[revious]				*:tabp* *:tabprevious* *gT* *:tabN*
 :tabN[ext]				*:tabNext* *CTRL-<PageUp>*

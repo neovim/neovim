@@ -28,6 +28,7 @@ Environment Variables ~
 			$NVIM_LISTEN_ADDRESS is ignored.
 
 Events ~
+*BufCreate*		Use |BufAdd| instead.
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
 *GUIEnter*		Never fired; use |UIEnter| instead.
