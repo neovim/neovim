@@ -768,7 +768,7 @@ function module.new_pipename()
 end
 
 function module.missing_provider(provider)
-  if provider == 'ruby' or provider == 'node' then
+  if provider == 'ruby' or provider == 'node' or provider == 'perl' then
     local prog = module.funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
