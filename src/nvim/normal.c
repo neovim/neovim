@@ -4458,16 +4458,16 @@ dozet:
   case 'r':
     curwin->w_p_fdl += cap->count1;
     {
-      int d = getDeepestNesting();
+      int d = getDeepestNesting(curwin);
       if (curwin->w_p_fdl >= d) {
         curwin->w_p_fdl = d;
       }
     }
     break;
 
-  /* "zR": open all folds */
-  case 'R':   curwin->w_p_fdl = getDeepestNesting();
-    old_fdl = -1;                       /* force an update */
+  case 'R':     //  "zR": open all folds
+    curwin->w_p_fdl = getDeepestNesting(curwin);
+    old_fdl = -1;                       // force an update
     break;
 
   case 'j':     /* "zj" move to next fold downwards */

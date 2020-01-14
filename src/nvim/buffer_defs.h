@@ -166,11 +166,11 @@ typedef struct {
   char_u *wo_briopt;
 # define w_p_briopt w_onebuf_opt.wo_briopt /* 'breakindentopt' */
   int wo_diff;
-# define w_p_diff w_onebuf_opt.wo_diff  /* 'diff' */
-  long wo_fdc;
-# define w_p_fdc w_onebuf_opt.wo_fdc    /* 'foldcolumn' */
-  int wo_fdc_save;
-# define w_p_fdc_save w_onebuf_opt.wo_fdc_save  /* 'foldenable' saved for diff mode */
+# define w_p_diff w_onebuf_opt.wo_diff  // 'diff'
+  char_u *wo_fdc;
+# define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
+  char_u *wo_fdc_save;
+# define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode
   int wo_fen;
 # define w_p_fen w_onebuf_opt.wo_fen    /* 'foldenable' */
   int wo_fen_save;

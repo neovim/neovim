@@ -72,7 +72,7 @@ describe(':set validation', function()
     should_fail('updatetime', -1, 'E487')
 
     should_fail('foldlevel', -5, 'E487')
-    should_fail('foldcolumn', 13, 'E474')
+    should_fail('foldcolumn', '13', 'E474')
     should_fail('conceallevel', 4, 'E474')
     should_fail('numberwidth', 21, 'E474')
     should_fail('numberwidth', 0, 'E487')
