@@ -14,6 +14,7 @@
 #include <math.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/buffer.h"
 #include "nvim/log.h"
 #include "nvim/vim.h"
@@ -659,10 +660,10 @@ void ex_sort(exarg_T *eap)
   deleted = (long)(count - (lnum - eap->line2));
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
-                false, kExtmarkUndo);
+                kExtmarkUndo);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false, kExtmarkUndo);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkUndo);
   }
   if (change_occurred || deleted != 0) {
     changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
@@ -875,12 +876,10 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * their final destination at the new text position -- webb
    */
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true, kExtmarkNoUndo);
-  extmark_adjust(curbuf, line1, line2, last_line - line2, 0L, kExtmarkNoUndo,
-                 true);
+  mark_adjust_nofold(line1, line2, last_line - line2, 0L, kExtmarkNOOP);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false, kExtmarkNoUndo);
+    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, line1, line2, dest);
@@ -889,8 +888,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false,
-                       kExtmarkNoUndo);
+    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, dest + 1, line1 - 1, line2);
@@ -901,9 +899,15 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, true, kExtmarkNoUndo);
+                     -(last_line - dest - extra), 0L, kExtmarkNOOP);
 
-  u_extmark_move(curbuf, line1, line2, last_line, dest, num_lines, extra);
+  // extmarks are handled separately
+  int size = line2-line1+1;
+  int off = dest >= line2 ? -size : 0;
+  extmark_move_region(curbuf, line1-1, 0,
+                      line2-line1+1, 0,
+                      dest+off, 0, kExtmarkUndo);
+
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
@@ -1285,16 +1289,19 @@ static void do_filter(
 
     if (do_in) {
       if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+        // TODO(bfredl): Currently not active for extmarks. What would we
+        // do if columns don't match, assume added/deleted bytes at the
+        // end of each line?
         if (read_linecount >= linecount) {
           // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0L, false, kExtmarkUndo);
+          mark_adjust(line1, line2, linecount, 0L, kExtmarkNOOP);
         } else {
           // move marks from old lines to new lines, delete marks
           // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false,
-                      kExtmarkUndo);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false,
-                      kExtmarkUndo);
+          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L,
+                      kExtmarkNOOP);
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L,
+                      kExtmarkNOOP);
         }
       }
 
@@ -3222,186 +3229,6 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
-static void extmark_move_regmatch_single(lpos_T startpos,
-                                         lpos_T endpos,
-                                         linenr_T lnum,
-                                         int sublen)
-{
-  colnr_T mincol;
-  colnr_T endcol;
-  colnr_T col_amount;
-
-  mincol = startpos.col + 1;
-  endcol = endpos.col + 1;
-
-  // There are cases such as :s/^/x/ where this happens
-  // a delete is simply not required.
-  if (mincol + 1 <= endcol) {
-    extmark_col_adjust_delete(curbuf,
-                              lnum, mincol + 1, endcol, kExtmarkUndo, 0);
-  }
-
-  // Insert, sublen seems to be the value we need but + 1...
-  col_amount = sublen - 1;
-  extmark_col_adjust(curbuf, lnum, mincol, 0, col_amount, kExtmarkUndo);
-}
-
-static void extmark_move_regmatch_multi(ExtmarkSubMulti s, long i)
-{
-  colnr_T mincol;
-  mincol = s.startpos.col + 1;
-
-  linenr_T n_u_lnum = s.lnum + s.endpos.lnum - s.startpos.lnum;
-  colnr_T n_after_newline_in_pat = s.endpos.col;
-  colnr_T n_before_newline_in_pat =  mincol - s.cm_start.col;
-  long n_after_newline_in_sub;
-  if (!s.newline_in_sub) {
-    n_after_newline_in_sub = s.cm_end.col - s.cm_start.col;
-  } else {
-    n_after_newline_in_sub = s.cm_end.col;
-  }
-
-  if (s.newline_in_pat && !s.newline_in_sub) {
-    // -- Delete Pattern --
-    // 1. Move marks in the pattern
-    mincol = s.startpos.col + 1;
-    linenr_T u_lnum = n_u_lnum;
-    assert(n_u_lnum == u_lnum);
-    extmark_copy_and_place(curbuf,
-                           s.lnum, mincol,
-                           u_lnum, n_after_newline_in_pat,
-                           s.lnum, mincol,
-                           kExtmarkUndo, true, NULL);
-    // 2. Move marks on last newline
-    mincol = mincol - n_before_newline_in_pat;
-    extmark_col_adjust(curbuf,
-                       u_lnum,
-                       n_after_newline_in_pat + 1,
-                       -s.newline_in_pat,
-                       mincol - n_after_newline_in_pat,
-                       kExtmarkUndo);
-    // Take care of the lines after
-    extmark_adjust(curbuf,
-                   u_lnum,
-                   u_lnum,
-                   MAXLNUM,
-                   -s.newline_in_pat,
-                   kExtmarkUndo,
-                   false);
-    // 1. first insert the text in the substitutaion
-    extmark_col_adjust(curbuf,
-                       s.lnum,
-                       mincol + 1,
-                       s.newline_in_sub,
-                       n_after_newline_in_sub,
-                       kExtmarkUndo);
-
-  } else {
-    // The data in sub_obj is as if the substituons above had already taken
-    // place. For our extmarks they haven't as we work from the bottom of the
-    // buffer up. Readjust the data.
-    n_u_lnum = s.lnum + s.endpos.lnum - s.startpos.lnum;
-    n_u_lnum = n_u_lnum - s.lnum_added;
-
-    // adjusted = L - (i-1)N
-    // where L = lnum value, N= lnum_added and i = iteration
-    linenr_T a_l_lnum = s.cm_start.lnum - ((i -1) * s.lnum_added);
-    linenr_T a_u_lnum = a_l_lnum + s.endpos.lnum;
-    assert(s.startpos.lnum == 0);
-
-    mincol = s.startpos.col + 1;
-
-    if (!s.newline_in_pat && s.newline_in_sub) {
-      // -- Delete Pattern --
-      // 1. Move marks in the pattern
-      extmark_col_adjust_delete(curbuf,
-                                a_l_lnum,
-                                mincol + 1,
-                                s.endpos.col + 1,
-                                kExtmarkUndo,
-                                s.eol);
-
-     extmark_adjust(curbuf,
-                    a_u_lnum + 1,
-                    MAXLNUM,
-                    (long)s.newline_in_sub,
-                    0,
-                    kExtmarkUndo,
-                    false);
-     // 3. Insert
-     extmark_col_adjust(curbuf,
-                        a_l_lnum,
-                        mincol,
-                        s.newline_in_sub,
-                        (long)-mincol + 1 + n_after_newline_in_sub,
-                        kExtmarkUndo);
-    } else if (s.newline_in_pat && s.newline_in_sub) {
-      if (s.lnum_added >= 0) {
-        linenr_T u_col = n_after_newline_in_pat == 0
-                         ? 1 : n_after_newline_in_pat;
-        extmark_copy_and_place(curbuf,
-                               a_l_lnum, mincol,
-                               a_u_lnum, u_col,
-                               a_l_lnum, mincol,
-                               kExtmarkUndo, true, NULL);
-        // 2. Move marks on last newline
-        mincol = mincol - (colnr_T)n_before_newline_in_pat;
-        extmark_col_adjust(curbuf,
-                           a_u_lnum,
-                           (colnr_T)(n_after_newline_in_pat + 1),
-                           -s.newline_in_pat,
-                           mincol - n_after_newline_in_pat,
-                           kExtmarkUndo);
-         // TODO(timeyyy): nothing to do here if lnum_added = 0
-         extmark_adjust(curbuf,
-                        a_u_lnum + 1,
-                        MAXLNUM,
-                        (long)s.lnum_added,
-                        0,
-                        kExtmarkUndo,
-                        false);
-
-         extmark_col_adjust(curbuf,
-                            a_l_lnum,
-                            mincol + 1,
-                            s.newline_in_sub,
-                            (long)-mincol + n_after_newline_in_sub,
-                            kExtmarkUndo);
-      } else {
-        mincol = s.startpos.col + 1;
-        a_l_lnum = s.startpos.lnum + 1;
-        a_u_lnum = s.endpos.lnum + 1;
-        extmark_copy_and_place(curbuf,
-                               a_l_lnum, mincol,
-                               a_u_lnum, n_after_newline_in_pat,
-                               a_l_lnum, mincol,
-                               kExtmarkUndo, true, NULL);
-        // 2. Move marks on last newline
-        mincol = mincol - (colnr_T)n_before_newline_in_pat;
-        extmark_col_adjust(curbuf,
-                           a_u_lnum,
-                           (colnr_T)(n_after_newline_in_pat + 1),
-                           -s.newline_in_pat,
-                           mincol - n_after_newline_in_pat,
-                           kExtmarkUndo);
-        extmark_adjust(curbuf,
-                       a_u_lnum,
-                       a_u_lnum,
-                       MAXLNUM,
-                       s.lnum_added,
-                       kExtmarkUndo,
-                       false);
-        // 3. Insert
-        extmark_col_adjust(curbuf,
-                           a_l_lnum,
-                           mincol + 1,
-                           s.newline_in_sub,
-                           (long)-mincol + n_after_newline_in_sub,
-                           kExtmarkUndo);
-      }
-    }
-  }
-}
 
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
@@ -3449,11 +3276,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
   bool preview = (State & CMDPREVIEW);
-  extmark_sub_multi_vec_t extmark_sub_multi = KV_INITIAL_VALUE;
-  extmark_sub_single_vec_t extmark_sub_single = KV_INITIAL_VALUE;
-  linenr_T no_of_lines_changed = 0;
-  linenr_T newline_in_pat = 0;
-  linenr_T newline_in_sub = 0;
 
   // inccommand tests fail without this check
   if (!preview) {
@@ -4010,9 +3832,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           goto skip;
         }
 
+
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (!preview || has_second_delim) {
+          long lnum_start = lnum;  // save the start lnum
           save_ma = curbuf->b_p_ma;
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
@@ -4060,7 +3884,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
 
           // Finally, at this point we can know where the match actually will
           // start in the new text
-          current_match.start.col = new_end - new_start;
+          int start_col = new_end - new_start;
+          current_match.start.col = start_col;
 
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
@@ -4092,8 +3917,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
-                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
-                            kExtmarkNOOP);
+                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
 
                 if (subflags.do_ask) {
                   appended_lines(lnum - 1, 1L);
@@ -4117,45 +3941,21 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               p1 += (*mb_ptr2len)(p1) - 1;
             }
           }
-          current_match.end.col = STRLEN(new_start);
+          size_t new_endcol = STRLEN(new_start);
+          current_match.end.col = new_endcol;
           current_match.end.lnum = lnum;
-        }
 
-        // Adjust extmarks, by delete and then insert
-        if (!preview) {
-          newline_in_pat = (regmatch.endpos[0].lnum
-                            - regmatch.startpos[0].lnum);
-          newline_in_sub = current_match.end.lnum - current_match.start.lnum;
-          if (newline_in_pat || newline_in_sub) {
-            ExtmarkSubMulti sub_multi;
-            no_of_lines_changed = newline_in_sub - newline_in_pat;
-
-            sub_multi.newline_in_pat = newline_in_pat;
-            sub_multi.newline_in_sub = newline_in_sub;
-            sub_multi.lnum = lnum;
-            sub_multi.lnum_added = no_of_lines_changed;
-            sub_multi.cm_start = current_match.start;
-            sub_multi.cm_end = current_match.end;
-
-            sub_multi.startpos = regmatch.startpos[0];
-            sub_multi.endpos = regmatch.endpos[0];
-            sub_multi.eol = extmark_eol_col(curbuf, lnum);
-
-            kv_push(extmark_sub_multi, sub_multi);
-            // Collect information required for moving extmarks WITHOUT \n, \r
-          } else {
-            no_of_lines_changed = 0;
-
-            if (regmatch.startpos[0].col != -1) {
-              ExtmarkSubSingle sub_single;
-              sub_single.sublen = sublen;
-              sub_single.lnum = lnum;
-              sub_single.startpos = regmatch.startpos[0];
-              sub_single.endpos = regmatch.endpos[0];
-
-              kv_push(extmark_sub_single, sub_single);
+          // TODO(bfredl): adjust in preview, because decorations?
+          // this has some robustness issues, will look into later.
+          if (!preview) {
+            lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
+            int matchcols = end.col - ((end.lnum == start.lnum)
+                                       ? start.col : 0);
+            int subcols = new_endcol - ((lnum == lnum_start) ? start_col : 0);
+            extmark_splice(curbuf, lnum_start-1, start_col,
+                           end.lnum-start.lnum, matchcols,
+                           lnum-lnum_start, subcols, kExtmarkUndo);
             }
-          }
         }
 
 
@@ -4225,7 +4025,7 @@ skip:
                 ml_delete(lnum, false);
               }
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                          (long)MAXLNUM, -nmatch_tl, false, kExtmarkNOOP);
+                          (long)MAXLNUM, -nmatch_tl, kExtmarkNOOP);
               if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
               }
@@ -4387,7 +4187,7 @@ skip:
     } else if (*p_icm != NUL &&  pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
-        pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
+        pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
       }
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group((char_u *)S_LEN("Substitute"));
@@ -4396,39 +4196,10 @@ skip:
       preview_buf = show_sub(eap, old_cursor, &preview_lines,
                              pre_hl_id, pre_src_id);
       if (subsize > 0) {
-        bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
-                               kv_last(preview_lines.subresults).end.lnum);
+        extmark_clear(orig_buf, pre_src_id, eap->line1-1, 0,
+                      kv_last(preview_lines.subresults).end.lnum-1, MAXCOL);
       }
     }
-  }
-  if (newline_in_pat || newline_in_sub) {
-    long n = (long)kv_size(extmark_sub_multi);
-    ExtmarkSubMulti sub_multi;
-    if (no_of_lines_changed < 0) {
-      for (i = 0; i < n; i++) {
-        sub_multi = kv_A(extmark_sub_multi, i);
-        extmark_move_regmatch_multi(sub_multi, i);
-      }
-    } else {
-      // Move extmarks in reverse order to avoid moving marks we just moved...
-      for (i = 0; i < n; i++) {
-        sub_multi = kv_Z(extmark_sub_multi, i);
-        extmark_move_regmatch_multi(sub_multi, n - i);
-      }
-    }
-    kv_destroy(extmark_sub_multi);
-  } else {
-    long n = (long)kv_size(extmark_sub_single);
-    ExtmarkSubSingle sub_single;
-    for (i = 0; i < n; i++) {
-      sub_single = kv_Z(extmark_sub_single, i);
-      extmark_move_regmatch_single(sub_single.startpos,
-                                   sub_single.endpos,
-                                   sub_single.lnum,
-                                   sub_single.sublen);
-    }
-
-    kv_destroy(extmark_sub_single);
   }
 
   kv_destroy(preview_lines.subresults);

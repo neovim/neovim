@@ -87,6 +87,7 @@
 #include "nvim/highlight.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -621,6 +622,9 @@ bool win_cursorline_standout(const win_T *wp)
   return wp->w_p_cul
     || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
 }
+
+static DecorationState decorations;
+bool decorations_active = false;
 
 /*
  * Update a single window.
@@ -1221,6 +1225,7 @@ static void win_update(win_T *wp)
                          : (wp->w_topline + wp->w_height_inner));
     args.items[0] = WINDOW_OBJ(wp->handle);
     args.items[1] = BUFFER_OBJ(buf->handle);
+    // TODO(bfredl): we are not using this, but should be first drawn line?
     args.items[2] = INTEGER_OBJ(wp->w_topline-1);
     args.items[3] = INTEGER_OBJ(knownmax);
     // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
@@ -1231,6 +1236,8 @@ static void win_update(win_T *wp)
       api_clear_error(&err);
     }
   }
+
+  decorations_active = extmark_decorations_reset(buf, &decorations);
 
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
@@ -2250,8 +2257,7 @@ win_line (
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
-  BufhlLineInfo bufhl_info;             // bufhl data for this line
-  bool has_bufhl = false;               // this buffer has highlight matches
+  bool has_decorations = false;         // this buffer has decorations
   bool do_virttext = false;             // draw virtual text for this line
 
   /* draw_state: items that are drawn in sequence: */
@@ -2315,13 +2321,11 @@ win_line (
       }
     }
 
-    if (bufhl_start_line(wp->w_buffer, lnum, &bufhl_info)) {
-      if (kv_size(bufhl_info.line->items)) {
-        has_bufhl = true;
+    if (decorations_active) {
+      has_decorations = extmark_decorations_line(wp->w_buffer, lnum-1,
+                                                 &decorations);
+      if (has_decorations) {
         extra_check = true;
-      }
-      if (kv_size(bufhl_info.line->virt_text)) {
-        do_virttext = true;
       }
     }
 
@@ -3515,19 +3519,25 @@ win_line (
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (has_bufhl && v > 0) {
-          int bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
-          if (bufhl_attr != 0) {
+        if (has_decorations && v > 0) {
+          int extmark_attr = extmark_decorations_col(wp->w_buffer, (colnr_T)v-1,
+                                                     &decorations);
+          if (extmark_attr != 0) {
             if (!attr_pri) {
-              char_attr = hl_combine_attr(char_attr, bufhl_attr);
+              char_attr = hl_combine_attr(char_attr, extmark_attr);
             } else {
-              char_attr = hl_combine_attr(bufhl_attr, char_attr);
+              char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
           }
         }
 
+        // TODO(bfredl): luahl should reuse the "active decorations" buffer
         if (buf->b_luahl && v > 0 && v < (long)lua_attr_bufsize+1) {
-          char_attr = hl_combine_attr(char_attr, lua_attr_buf[v-1]);
+          if (!attr_pri) {
+            char_attr = hl_combine_attr(char_attr, lua_attr_buf[v-1]);
+          } else {
+            char_attr = hl_combine_attr(lua_attr_buf[v-1], char_attr);
+          }
         }
 
         if (wp->w_buffer->terminal) {
@@ -4008,6 +4018,19 @@ win_line (
       if (draw_color_col)
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
+      VirtText virt_text = KV_INITIAL_VALUE;
+      if (luatext) {
+        kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
+        do_virttext = true;
+      } else if (has_decorations) {
+        VirtText *vp = extmark_decorations_virt_text(wp->w_buffer,
+                                                     &decorations);
+        if (vp) {
+          virt_text = *vp;
+          do_virttext = true;
+        }
+      }
+
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
@@ -4018,14 +4041,6 @@ win_line (
         int rightmost_vcol = 0;
         int i;
 
-        VirtText virt_text;
-        if (luatext) {
-          virt_text = (VirtText)KV_INITIAL_VALUE;
-          kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
-        } else {
-          virt_text = do_virttext ? bufhl_info.line->virt_text
-                                  : (VirtText)KV_INITIAL_VALUE;
-        }
         size_t virt_pos = 0;
         LineState s = LINE_STATE((char_u *)"");
         int virt_attr = 0;

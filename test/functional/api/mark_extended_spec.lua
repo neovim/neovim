@@ -11,6 +11,11 @@ local insert = helpers.insert
 local feed = helpers.feed
 local clear = helpers.clear
 local command = helpers.command
+local meths = helpers.meths
+
+local function expect(contents)
+  return eq(contents, helpers.curbuf_contents())
+end
 
 local function check_undo_redo(ns, mark, sr, sc, er, ec) --s = start, e = end
   local rv = curbufmeths.get_extmark_by_id(ns, mark)
@@ -37,9 +42,36 @@ local function get_extmarks(ns_id, start, end_, opts)
   return curbufmeths.get_extmarks(ns_id, start, end_, opts)
 end
 
+local function batch_set(ns_id, positions)
+  local ids = {}
+  for _, pos in ipairs(positions) do
+    table.insert(ids, set_extmark(ns_id, 0, pos[1], pos[2]))
+  end
+  return ids
+end
+
+local function batch_check(ns_id, ids, positions)
+  local actual, expected = {}, {}
+  for i,id in ipairs(ids) do
+    expected[id] = positions[i]
+  end
+  for _, mark in pairs(get_extmarks(ns_id, 0, -1, {})) do
+    actual[mark[1]] = {mark[2], mark[3]}
+  end
+  eq(expected, actual)
+end
+
+local function batch_check_undo_redo(ns_id, ids, before, after)
+  batch_check(ns_id, ids, after)
+  feed("u")
+  batch_check(ns_id, ids, before)
+  feed("<c-r>")
+  batch_check(ns_id, ids, after)
+end
+
 describe('API/extmarks', function()
   local screen
-  local marks, positions, ns_string2, ns_string, init_text, row, col
+  local marks, positions, init_text, row, col
   local ns, ns2
 
   before_each(function()
@@ -47,22 +79,18 @@ describe('API/extmarks', function()
     marks = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
     positions = {{0, 0,}, {0, 2}, {0, 3}}
 
-    ns_string = "my-fancy-plugin"
-    ns_string2 = "my-fancy-plugin2"
     init_text = "12345"
     row = 0
     col = 2
 
     clear()
-    screen = Screen.new(15, 10)
-    screen:attach()
 
     insert(init_text)
-    ns = request('nvim_create_namespace', ns_string)
-    ns2 = request('nvim_create_namespace', ns_string2)
+    ns = request('nvim_create_namespace', "my-fancy-plugin")
+    ns2 = request('nvim_create_namespace', "my-fancy-plugin2")
   end)
 
-  it('adds, updates  and deletes marks #extmarks', function()
+  it('adds, updates  and deletes marks', function()
     local rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(marks[1], rv)
     rv = curbufmeths.get_extmark_by_id(ns, marks[1])
@@ -92,7 +120,7 @@ describe('API/extmarks', function()
     eq(false, curbufmeths.del_extmark(ns, 1000))
   end)
 
-  it('can clear a specific namespace range #extmarks', function()
+  it('can clear a specific namespace range', function()
     set_extmark(ns, 1, 0, 1)
     set_extmark(ns2, 1, 0, 1)
     -- force a new undo buffer
@@ -102,13 +130,13 @@ describe('API/extmarks', function()
     eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
     feed('u')
     eq({{1, 0, 1}}, get_extmarks(ns, {0, 0}, {-1, -1}))
-    eq({{1, 0, 1}}, get_extmarks(ns2, {0, 0}, {-1, -1}))
+    eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
     feed('<c-r>')
     eq({{1, 0, 1}}, get_extmarks(ns, {0, 0}, {-1, -1}))
     eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
   end)
 
-  it('can clear a namespace range using 0,-1 #extmarks', function()
+  it('can clear a namespace range using 0,-1', function()
     set_extmark(ns, 1, 0, 1)
     set_extmark(ns2, 1, 0, 1)
     -- force a new undo buffer
@@ -117,14 +145,16 @@ describe('API/extmarks', function()
     eq({}, get_extmarks(ns, {0, 0}, {-1, -1}))
     eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
     feed('u')
-    eq({{1, 0, 1}}, get_extmarks(ns, {0, 0}, {-1, -1}))
-    eq({{1, 0, 1}}, get_extmarks(ns2, {0, 0}, {-1, -1}))
+    eq({}, get_extmarks(ns, {0, 0}, {-1, -1}))
+    eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
     feed('<c-r>')
     eq({}, get_extmarks(ns, {0, 0}, {-1, -1}))
     eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
   end)
 
-  it('querying for information and ranges #extmarks', function()
+  it('querying for information and ranges', function()
+    --marks = {1, 2, 3}
+    --positions = {{0, 0,}, {0, 2}, {0, 3}}
     -- add some more marks
     for i, m in ipairs(marks) do
       if positions[i] ~= nil then
@@ -242,7 +272,7 @@ describe('API/extmarks', function()
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
   end)
 
-  it('querying for information with limit #extmarks', function()
+  it('querying for information with limit', function()
     -- add some more marks
     for i, m in ipairs(marks) do
       if positions[i] ~= nil then
@@ -267,7 +297,7 @@ describe('API/extmarks', function()
     eq(3, table.getn(rv))
   end)
 
-  it('get_marks works when mark col > upper col #extmarks', function()
+  it('get_marks works when mark col > upper col', function()
     feed('A<cr>12345<esc>')
     feed('A<cr>12345<esc>')
     set_extmark(ns, 10, 0, 2)       -- this shouldn't be found
@@ -281,7 +311,7 @@ describe('API/extmarks', function()
        get_extmarks(ns, {0, 3}, {2, 0}))
   end)
 
-  it('get_marks works in reverse when mark col < lower col #extmarks', function()
+  it('get_marks works in reverse when mark col < lower col', function()
     feed('A<cr>12345<esc>')
     feed('A<cr>12345<esc>')
     set_extmark(ns, 10, 0, 1) -- this shouldn't be found
@@ -296,27 +326,27 @@ describe('API/extmarks', function()
        rv)
   end)
 
-  it('get_marks limit=0 returns nothing #extmarks', function()
+  it('get_marks limit=0 returns nothing', function()
     set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     local rv = get_extmarks(ns, {-1, -1}, {-1, -1}, {limit=0})
     eq({}, rv)
   end)
 
 
-  it('marks move with line insertations #extmarks', function()
+  it('marks move with line insertations', function()
     set_extmark(ns, marks[1], 0, 0)
     feed("yyP")
     check_undo_redo(ns, marks[1], 0, 0, 1, 0)
   end)
 
-  it('marks move with multiline insertations #extmarks', function()
+  it('marks move with multiline insertations', function()
     feed("a<cr>22<cr>33<esc>")
     set_extmark(ns, marks[1], 1, 1)
     feed('ggVGyP')
     check_undo_redo(ns, marks[1], 1, 1, 4, 1)
   end)
 
-  it('marks move with line join #extmarks', function()
+  it('marks move with line join', function()
     -- do_join in ops.c
     feed("a<cr>222<esc>")
     set_extmark(ns, marks[1], 1, 0)
@@ -324,7 +354,9 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 0, 0, 6)
   end)
 
-  it('join works when no marks are present #extmarks', function()
+  it('join works when no marks are present', function()
+    screen = Screen.new(15, 10)
+    screen:attach()
     feed("a<cr>1<esc>")
     feed('kJ')
     -- This shouldn't seg fault
@@ -342,7 +374,7 @@ describe('API/extmarks', function()
     ]])
   end)
 
-  it('marks move with multiline join #extmarks', function()
+  it('marks move with multiline join', function()
     -- do_join in ops.c
     feed("a<cr>222<cr>333<cr>444<esc>")
     set_extmark(ns, marks[1], 3, 0)
@@ -350,14 +382,14 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 3, 0, 1, 8)
   end)
 
-  it('marks move with line deletes #extmarks', function()
+  it('marks move with line deletes', function()
     feed("a<cr>222<cr>333<cr>444<esc>")
     set_extmark(ns, marks[1], 2, 1)
     feed('ggjdd')
     check_undo_redo(ns, marks[1], 2, 1, 1, 1)
   end)
 
-  it('marks move with multiline deletes #extmarks', function()
+  it('marks move with multiline deletes', function()
     feed("a<cr>222<cr>333<cr>444<esc>")
     set_extmark(ns, marks[1], 3, 0)
     feed('gg2dd')
@@ -367,7 +399,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 3, 0, 0, 0)
   end)
 
-  it('marks move with open line #extmarks', function()
+  it('marks move with open line', function()
     -- open_line in misc1.c
     -- testing marks below are also moved
     feed("yyP")
@@ -381,8 +413,10 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 2, 4, 3, 4)
   end)
 
-  it('marks move with char inserts #extmarks', function()
+  it('marks move with char inserts', function()
     -- insertchar in edit.c (the ins_str branch)
+    screen = Screen.new(15, 10)
+    screen:attach()
     set_extmark(ns, marks[1], 0, 3)
     feed('0')
     insert('abc')
@@ -400,11 +434,11 @@ describe('API/extmarks', function()
     ]])
     local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
     eq({0, 6}, rv)
-    -- check_undo_redo(ns, marks[1], 0, 2, 0, 5)
+    check_undo_redo(ns, marks[1], 0, 3, 0, 6)
   end)
 
   -- gravity right as definted in tk library
-  it('marks have gravity right #extmarks', function()
+  it('marks have gravity right', function()
     -- insertchar in edit.c (the ins_str branch)
     set_extmark(ns, marks[1], 0, 2)
     feed('03l')
@@ -417,7 +451,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 2, 0, 2)
   end)
 
-  it('we can insert multibyte chars #extmarks', function()
+  it('we can insert multibyte chars', function()
     -- insertchar in edit.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 2)
@@ -426,7 +460,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 2, 1, 5)
   end)
 
-  it('marks move with blockwise inserts #extmarks', function()
+  it('marks move with blockwise inserts', function()
     -- op_insert in ops.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 2)
@@ -434,7 +468,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 2, 1, 3)
   end)
 
-  it('marks move with line splits (using enter) #extmarks', function()
+  it('marks move with line splits (using enter)', function()
     -- open_line in misc1.c
     -- testing marks below are also moved
     feed("yyP")
@@ -445,14 +479,14 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 1, 4, 2, 4)
   end)
 
-  it('marks at last line move on insert new line #extmarks', function()
+  it('marks at last line move on insert new line', function()
     -- open_line in misc1.c
     set_extmark(ns, marks[1], 0, 4)
     feed('0i<cr><esc>')
     check_undo_redo(ns, marks[1], 0, 4, 1, 4)
   end)
 
-  it('yet again marks move with line splits #extmarks', function()
+  it('yet again marks move with line splits', function()
     -- the first test above wasn't catching all errors..
     feed("A67890<esc>")
     set_extmark(ns, marks[1], 0, 4)
@@ -460,7 +494,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 4, 1, 0)
   end)
 
-  it('and one last time line splits... #extmarks', function()
+  it('and one last time line splits...', function()
     set_extmark(ns, marks[1], 0, 1)
     set_extmark(ns, marks[2], 0, 2)
     feed("02li<cr><esc>")
@@ -468,7 +502,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 2, 1, 0)
   end)
 
-  it('multiple marks move with mark splits #extmarks', function()
+  it('multiple marks move with mark splits', function()
     set_extmark(ns, marks[1], 0, 1)
     set_extmark(ns, marks[2], 0, 3)
     feed("0li<cr><esc>")
@@ -476,21 +510,21 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 3, 1, 2)
   end)
 
-  it('deleting right before a mark works #extmarks', function()
+  it('deleting right before a mark works', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 2)
     feed('0lx')
     check_undo_redo(ns, marks[1], 0, 2, 0, 1)
   end)
 
-  it('deleting on a mark works #extmarks', function()
+  it('deleting right after a mark works', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 2)
     feed('02lx')
     check_undo_redo(ns, marks[1], 0, 2, 0, 2)
   end)
 
-  it('marks move with char deletes #extmarks', function()
+  it('marks move with char deletes', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 2)
     feed('02dl')
@@ -500,7 +534,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 0, 0, 0)
   end)
 
-  it('marks move with char deletes over a range #extmarks', function()
+  it('marks move with char deletes over a range', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -513,7 +547,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 3, 0, 3)
   end)
 
-  it('deleting marks at end of line works #extmarks', function()
+  it('deleting marks at end of line works', function()
     -- mark_extended.c/extmark_col_adjust_delete
     set_extmark(ns, marks[1], 0, 4)
     feed('$x')
@@ -525,7 +559,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 4, 0, 4)
   end)
 
-  it('marks move with blockwise deletes #extmarks', function()
+  it('marks move with blockwise deletes', function()
     -- op_delete in ops.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 4)
@@ -533,7 +567,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 4, 1, 1)
   end)
 
-  it('marks move with blockwise deletes over a range #extmarks', function()
+  it('marks move with blockwise deletes over a range', function()
     -- op_delete in ops.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 0, 1)
@@ -550,7 +584,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[3], 1, 2, 1, 2)
   end)
 
-  it('works with char deletes over multilines #extmarks', function()
+  it('works with char deletes over multilines', function()
     feed('a<cr>12345<cr>test-me<esc>')
     set_extmark(ns, marks[1], 2, 5)
     feed('gg')
@@ -558,7 +592,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 2, 5, 0, 0)
   end)
 
-  it('marks outside of deleted range move with visual char deletes #extmarks', function()
+  it('marks outside of deleted range move with visual char deletes', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 3)
     feed('0vx<esc>')
@@ -577,7 +611,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 0, 0, 0)
   end)
 
-  it('marks outside of deleted range move with char deletes #extmarks', function()
+  it('marks outside of deleted range move with char deletes', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 3)
     feed('0x<esc>')
@@ -597,7 +631,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 3, 0, 3)
   end)
 
-  it('marks move with P(backward) paste #extmarks', function()
+  it('marks move with P(backward) paste', function()
     -- do_put in ops.c
     feed('0iabc<esc>')
     set_extmark(ns, marks[1], 0, 7)
@@ -605,15 +639,15 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 7, 0, 15)
   end)
 
-  it('marks move with p(forward) paste #extmarks', function()
+  it('marks move with p(forward) paste', function()
     -- do_put in ops.c
     feed('0iabc<esc>')
     set_extmark(ns, marks[1], 0, 7)
     feed('0veyp')
-    check_undo_redo(ns, marks[1], 0, 7, 0, 14)
+    check_undo_redo(ns, marks[1], 0, 7, 0, 15)
   end)
 
-  it('marks move with blockwise P(backward) paste #extmarks', function()
+  it('marks move with blockwise P(backward) paste', function()
     -- do_put in ops.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 4)
@@ -621,42 +655,84 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 4, 1, 7)
   end)
 
-  it('marks move with blockwise p(forward) paste #extmarks', function()
+  it('marks move with blockwise p(forward) paste', function()
     -- do_put in ops.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 4)
     feed('<c-v>hhkyp<esc>')
-    check_undo_redo(ns, marks[1], 1, 4, 1, 6)
+    check_undo_redo(ns, marks[1], 1, 4, 1, 7)
   end)
 
-  it('replace works #extmarks', function()
+  describe('multiline regions', function()
+    before_each(function()
+      feed('dd')
+      -- Achtung: code has been spiced with some unicode,
+      -- to make life more interesting.
+      -- luacheck whines about TABs inside strings for whatever reason.
+      -- luacheck: push ignore 621
+      insert([[
+        static int nlua_rpcrequest(lua_State *lstate)
+        {
+          Ïf (!nlua_is_deferred_safe(lstate)) {
+        	// strictly not allowed
+            Яetörn luaL_error(lstate, e_luv_api_disabled, "rpcrequest");
+          }
+          return nlua_rpc(lstate, true);
+        }]])
+      -- luacheck: pop
+    end)
+
+    it('delete', function()
+      local pos1 = {
+        {2, 4}, {2, 12}, {2, 13}, {2, 14}, {2, 25},
+        {4, 8}, {4, 10}, {4, 20},
+        {5, 3}, {6, 10}
+      }
+      local ids = batch_set(ns, pos1)
+      batch_check(ns, ids, pos1)
+      feed('3Gfiv2+ftd')
+      batch_check_undo_redo(ns, ids, pos1, {
+        {2, 4}, {2, 12}, {2, 13}, {2, 13}, {2, 13},
+        {2, 13}, {2, 15}, {2, 25},
+        {3, 3}, {4, 10}
+      })
+    end)
+
+    -- TODO(bfredl): add more tests!
+  end)
+
+  it('replace works', function()
     set_extmark(ns, marks[1], 0, 2)
     feed('0r2')
     check_undo_redo(ns, marks[1], 0, 2, 0, 2)
   end)
 
-  it('blockwise replace works #extmarks', function()
+  it('blockwise replace works', function()
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 0, 2)
     feed('0<c-v>llkr1<esc>')
-    check_undo_redo(ns, marks[1], 0, 2, 0, 2)
+    check_undo_redo(ns, marks[1], 0, 2, 0, 3)
   end)
 
-  it('shift line #extmarks', function()
+  it('shift line', function()
     -- shift_line in ops.c
     feed(':set shiftwidth=4<cr><esc>')
     set_extmark(ns, marks[1], 0, 2)
     feed('0>>')
     check_undo_redo(ns, marks[1], 0, 2, 0, 6)
+    expect('    12345')
 
     feed('>>')
-    check_undo_redo(ns, marks[1], 0, 6, 0, 10)
+    -- this is counter-intuitive. But what happens
+    -- is that 4 spaces gets extended to one tab (== 8 spaces)
+    check_undo_redo(ns, marks[1], 0, 6, 0, 3)
+    expect('\t12345')
 
     feed('<LT><LT>') -- have to escape, same as <<
-    check_undo_redo(ns, marks[1], 0, 10, 0, 6)
+    check_undo_redo(ns, marks[1], 0, 3, 0, 6)
   end)
 
-  it('blockwise shift #extmarks', function()
+  it('blockwise shift', function()
     -- shift_block in ops.c
     feed(':set shiftwidth=4<cr><esc>')
     feed('a<cr>12345<esc>')
@@ -664,13 +740,14 @@ describe('API/extmarks', function()
     feed('0<c-v>k>')
     check_undo_redo(ns, marks[1], 1, 2, 1, 6)
     feed('<c-v>j>')
-    check_undo_redo(ns, marks[1], 1, 6, 1, 10)
+    expect('\t12345\n\t12345')
+    check_undo_redo(ns, marks[1], 1, 6, 1, 3)
 
     feed('<c-v>j<LT>')
-    check_undo_redo(ns, marks[1], 1, 10, 1, 6)
+    check_undo_redo(ns, marks[1], 1, 3, 1, 6)
   end)
 
-  it('tab works with expandtab #extmarks', function()
+  it('tab works with expandtab', function()
     -- ins_tab in edit.c
     feed(':set expandtab<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
@@ -679,7 +756,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 2, 0, 6)
   end)
 
-  it('tabs work #extmarks', function()
+  it('tabs work', function()
     -- ins_tab in edit.c
     feed(':set noexpandtab<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
@@ -692,7 +769,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 4, 0, 6)
   end)
 
-  it('marks move when using :move #extmarks', function()
+  it('marks move when using :move', function()
     set_extmark(ns, marks[1], 0, 0)
     feed('A<cr>2<esc>:1move 2<cr><esc>')
     check_undo_redo(ns, marks[1], 0, 0, 1, 0)
@@ -701,7 +778,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 0, 0, 0)
   end)
 
-  it('marks move when using :move part 2 #extmarks', function()
+  it('marks move when using :move part 2', function()
     -- make sure we didn't get lucky with the math...
     feed('A<cr>2<cr>3<cr>4<cr>5<cr>6<esc>')
     set_extmark(ns, marks[1], 1, 0)
@@ -712,7 +789,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 3, 0, 1, 0)
   end)
 
-  it('undo and redo of set and unset marks #extmarks', function()
+  it('undo and redo of set and unset marks', function()
     -- Force a new undo head
     feed('o<esc>')
     set_extmark(ns, marks[1], 0, 1)
@@ -722,7 +799,7 @@ describe('API/extmarks', function()
 
     feed("u")
     local rv = get_extmarks(ns, {0, 0}, {-1, -1})
-    eq(1, table.getn(rv))
+    eq(3, table.getn(rv))
 
     feed("<c-r>")
     rv = get_extmarks(ns, {0, 0}, {-1, -1})
@@ -735,20 +812,22 @@ describe('API/extmarks', function()
     eq(1, table.getn(rv))
     feed("u")
     feed("<c-r>")
-    check_undo_redo(ns, marks[1], 0, 1, positions[1][1], positions[1][2])
+    -- old value is NOT kept in history
+    check_undo_redo(ns, marks[1], positions[1][1], positions[1][2], positions[1][1], positions[1][2])
 
     -- Test unset
     feed('o<esc>')
     curbufmeths.del_extmark(ns, marks[3])
     feed("u")
     rv = get_extmarks(ns, {0, 0}, {-1, -1})
-    eq(3, table.getn(rv))
+    -- undo does NOT restore deleted marks
+    eq(2, table.getn(rv))
     feed("<c-r>")
     rv = get_extmarks(ns, {0, 0}, {-1, -1})
     eq(2, table.getn(rv))
   end)
 
-  it('undo and redo of marks deleted during edits #extmarks', function()
+  it('undo and redo of marks deleted during edits', function()
     -- test extmark_adjust
     feed('A<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 2)
@@ -756,7 +835,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 1, 2, 1, 0)
   end)
 
-  it('namespaces work properly #extmarks', function()
+  it('namespaces work properly', function()
     local rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(1, rv)
     rv = set_extmark(ns2, marks[1], positions[1][1], positions[1][2])
@@ -802,7 +881,7 @@ describe('API/extmarks', function()
     eq(2, table.getn(rv))
   end)
 
-  it('mark set can create unique identifiers #extmarks', function()
+  it('mark set can create unique identifiers', function()
     -- create mark with id 1
     eq(1, set_extmark(ns, 1, positions[1][1], positions[1][2]))
     -- ask for unique id, it should be the next one, i e 2
@@ -817,7 +896,7 @@ describe('API/extmarks', function()
     eq(8, set_extmark(ns, 0, positions[1][1], positions[1][2]))
   end)
 
-  it('auto indenting with enter works #extmarks', function()
+  it('auto indenting with enter works', function()
     -- op_reindent in ops.c
     feed(':set cindent<cr><esc>')
     feed(':set autoindent<cr><esc>')
@@ -835,7 +914,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 12, 1, 3)
   end)
 
-  it('auto indenting entire line works #extmarks', function()
+  it('auto indenting entire line works', function()
     feed(':set cindent<cr><esc>')
     feed(':set autoindent<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
@@ -852,7 +931,7 @@ describe('API/extmarks', function()
     eq({1, 3}, rv)
   end)
 
-  it('removing auto indenting with <C-D> works #extmarks', function()
+  it('removing auto indenting with <C-D> works', function()
     feed(':set cindent<cr><esc>')
     feed(':set autoindent<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
@@ -868,7 +947,7 @@ describe('API/extmarks', function()
     eq({0, 1}, rv)
   end)
 
-  it('indenting multiple lines with = works #extmarks', function()
+  it('indenting multiple lines with = works', function()
     feed(':set cindent<cr><esc>')
     feed(':set autoindent<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
@@ -880,7 +959,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 2, 1, 2, 5)
   end)
 
-  it('substitutes by deleting inside the replace matches #extmarks_sub', function()
+  it('substitutes by deleting inside the replace matches', function()
     -- do_sub in ex_cmds.c
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -889,7 +968,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 3, 0, 4)
   end)
 
-  it('substitutes when insert text > deleted #extmarks_sub', function()
+  it('substitutes when insert text > deleted', function()
     -- do_sub in ex_cmds.c
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -898,7 +977,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 3, 0, 5)
   end)
 
-  it('substitutes when marks around eol #extmarks_sub', function()
+  it('substitutes when marks around eol', function()
     -- do_sub in ex_cmds.c
     set_extmark(ns, marks[1], 0, 4)
     set_extmark(ns, marks[2], 0, 5)
@@ -907,7 +986,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 5, 0, 7)
   end)
 
-  it('substitutes over range insert text > deleted #extmarks_sub', function()
+  it('substitutes over range insert text > deleted', function()
     -- do_sub in ex_cmds.c
     feed('A<cr>x34xx<esc>')
     feed('A<cr>xxx34<esc>')
@@ -920,7 +999,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[3], 2, 4, 2, 6)
   end)
 
-  it('substitutes multiple matches in a line #extmarks_sub', function()
+  it('substitutes multiple matches in a line', function()
     -- do_sub in ex_cmds.c
     feed('ddi3x3x3<esc>')
     set_extmark(ns, marks[1], 0, 0)
@@ -932,7 +1011,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[3], 0, 4, 0, 8)
   end)
 
-  it('substitions over multiple lines with newline in pattern #extmarks_sub', function()
+  it('substitions over multiple lines with newline in pattern', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -947,7 +1026,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 2, 0, 1, 0)
   end)
 
-  it('inserting #extmarks_sub', function()
+  it('inserting', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -964,7 +1043,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[6], 1, 2, 0, 5)
   end)
 
-  it('substitions with multiple newlines in pattern #extmarks_sub', function()
+  it('substitions with multiple newlines in pattern', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 4)
     set_extmark(ns, marks[2], 0, 5)
@@ -979,7 +1058,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 2, 0, 0, 6)
   end)
 
-  it('substitions over multiple lines with replace in substition #extmarks_sub', function()
+  it('substitions over multiple lines with replace in substition', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 1)
     set_extmark(ns, marks[2], 0, 2)
@@ -997,7 +1076,7 @@ describe('API/extmarks', function()
     eq({1, 3}, curbufmeths.get_extmark_by_id(ns, marks[3]))
   end)
 
-  it('substitions over multiple lines with replace in substition #extmarks_sub', function()
+  it('substitions over multiple lines with replace in substition', function()
     feed('A<cr>x3<cr>xx<esc>')
     set_extmark(ns, marks[1], 1, 0)
     set_extmark(ns, marks[2], 1, 1)
@@ -1008,7 +1087,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[3], 1, 2, 2, 0)
   end)
 
-  it('substitions over multiple lines with replace in substition #extmarks_sub', function()
+  it('substitions over multiple lines with replace in substition', function()
     feed('A<cr>x3<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 1)
     set_extmark(ns, marks[2], 0, 2)
@@ -1026,7 +1105,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[3], 0, 4, 1, 3)
   end)
 
-  it('substitions with newline in match and sub, delta is 0 #extmarks_sub', function()
+  it('substitions with newline in match and sub, delta is 0', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -1043,7 +1122,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[6], 2, 0, 2, 0)
   end)
 
-  it('substitions with newline in match and sub, delta > 0 #extmarks_sub', function()
+  it('substitions with newline in match and sub, delta > 0', function()
     feed('A<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -1060,7 +1139,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[6], 2, 0, 3, 0)
   end)
 
-  it('substitions with newline in match and sub, delta < 0 #extmarks_sub', function()
+  it('substitions with newline in match and sub, delta < 0', function()
     feed('A<cr>67890<cr>xx<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -1079,7 +1158,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[7], 3, 0, 2, 0)
   end)
 
-  it('substitions with backrefs, newline inserted into sub #extmarks_sub', function()
+  it('substitions with backrefs, newline inserted into sub', function()
     feed('A<cr>67890<cr>xx<cr>xx<esc>')
     set_extmark(ns, marks[1], 0, 3)
     set_extmark(ns, marks[2], 0, 4)
@@ -1096,7 +1175,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[6], 2, 0, 3, 0)
   end)
 
-  it('substitions a ^ #extmarks_sub', function()
+  it('substitions a ^', function()
     set_extmark(ns, marks[1], 0, 0)
     set_extmark(ns, marks[2], 0, 1)
     feed([[:s:^:x<cr>]])
@@ -1104,7 +1183,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[2], 0, 1, 0, 2)
   end)
 
-  it('using <c-a> without increase in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-a> without increase in order of magnitude', function()
     -- do_addsub in ops.c
     feed('ddiabc998xxx<esc>Tc')
     set_extmark(ns, marks[1], 0, 2)
@@ -1120,7 +1199,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 7, 0, 7)
   end)
 
-  it('using <c-a> when increase in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-a> when increase in order of magnitude', function()
     -- do_addsub in ops.c
     feed('ddiabc999xxx<esc>Tc')
     set_extmark(ns, marks[1], 0, 2)
@@ -1136,7 +1215,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 7, 0, 8)
   end)
 
-  it('using <c-a> when negative and without decrease in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-a> when negative and without decrease in order of magnitude', function()
     feed('ddiabc-999xxx<esc>T-')
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -1151,7 +1230,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 8, 0, 8)
   end)
 
-  it('using <c-a> when negative and decrease in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-a> when negative and decrease in order of magnitude', function()
     feed('ddiabc-1000xxx<esc>T-')
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -1166,7 +1245,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 9, 0, 8)
   end)
 
-  it('using <c-x> without decrease in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-x> without decrease in order of magnitude', function()
     -- do_addsub in ops.c
     feed('ddiabc999xxx<esc>Tc')
     set_extmark(ns, marks[1], 0, 2)
@@ -1182,7 +1261,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 7, 0, 7)
   end)
 
-  it('using <c-x> when decrease in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-x> when decrease in order of magnitude', function()
     -- do_addsub in ops.c
     feed('ddiabc1000xxx<esc>Tc')
     set_extmark(ns, marks[1], 0, 2)
@@ -1198,7 +1277,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 8, 0, 7)
   end)
 
-  it('using <c-x> when negative and without increase in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-x> when negative and without increase in order of magnitude', function()
     feed('ddiabc-998xxx<esc>T-')
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -1213,7 +1292,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 0, 8, 0, 8)
   end)
 
-  it('using <c-x> when negative and increase in order of magnitude #extmarks_inc_dec', function()
+  it('using <c-x> when negative and increase in order of magnitude', function()
     feed('ddiabc-999xxx<esc>T-')
     set_extmark(ns, marks[1], 0, 2)
     set_extmark(ns, marks[2], 0, 3)
@@ -1236,7 +1315,7 @@ describe('API/extmarks', function()
     eq("Invalid ns_id", pcall_err(curbufmeths.get_extmark_by_id, ns_invalid, marks[1]))
   end)
 
-  it('when col = line-length, set the mark on eol #extmarks', function()
+  it('when col = line-length, set the mark on eol', function()
     set_extmark(ns, marks[1], 0, -1)
     local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
     eq({0, init_text:len()}, rv)
@@ -1246,19 +1325,19 @@ describe('API/extmarks', function()
     eq({0, init_text:len()}, rv)
   end)
 
-  it('when col = line-length, set the mark on eol #extmarks', function()
+  it('when col = line-length, set the mark on eol', function()
     local invalid_col = init_text:len() + 1
     eq("col value outside range", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
   end)
 
-  it('fails when line > line_count #extmarks', function()
+  it('fails when line > line_count', function()
     local invalid_col = init_text:len() + 1
     local invalid_lnum = 3
     eq('line value outside range', pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
     eq({}, curbufmeths.get_extmark_by_id(ns, marks[1]))
   end)
 
-  it('bug from check_col in extmark_set #extmarks_sub', function()
+  it('bug from check_col in extmark_set', function()
     -- This bug was caused by extmark_set always using check_col. check_col
     -- always uses the current buffer. This wasn't working during undo so we
     -- now use check_col and check_lnum only when they are required.
@@ -1281,6 +1360,16 @@ describe('API/extmarks', function()
     request('nvim_buf_set_lines', buf, 0, -1, 1, {"", ""})
     local id = bufmeths.set_extmark(buf, ns, 0, 1, 0, {})
     eq({{id, 1, 0}}, bufmeths.get_extmarks(buf, ns, 0, -1, {}))
+  end)
+
+  it('does not crash with append/delete/undo seqence', function()
+     meths.exec([[
+      let ns = nvim_create_namespace('myplugin')
+      call nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+      call append(0, '')
+      %delete
+      undo]],false)
+    eq(2, meths.eval('1+1')) -- did not crash
   end)
 end)
 
@@ -1326,12 +1415,12 @@ describe('Extmarks buffer api with many marks', function()
     return marks
   end
 
-  it("can get marks #extmarks", function()
+  it("can get marks", function()
     eq(ns_marks[ns1], get_marks(ns1))
     eq(ns_marks[ns2], get_marks(ns2))
   end)
 
-  it("can clear all marks in ns #extmarks", function()
+  it("can clear all marks in ns", function()
     curbufmeths.clear_namespace(ns1, 0, -1)
     eq({}, get_marks(ns1))
     eq(ns_marks[ns2], get_marks(ns2))
@@ -1340,7 +1429,7 @@ describe('Extmarks buffer api with many marks', function()
     eq({}, get_marks(ns2))
   end)
 
-  it("can clear line range #extmarks", function()
+  it("can clear line range", function()
     curbufmeths.clear_namespace(ns1, 10, 20)
     for id, mark in pairs(ns_marks[ns1]) do
       if 10 <= mark[1] and mark[1] < 20 then
@@ -1351,7 +1440,7 @@ describe('Extmarks buffer api with many marks', function()
     eq(ns_marks[ns2], get_marks(ns2))
   end)
 
-  it("can delete line #extmarks", function()
+  it("can delete line", function()
     feed('10Gdd')
     for _, marks in pairs(ns_marks) do
       for id, mark in pairs(marks) do
@@ -1366,7 +1455,7 @@ describe('Extmarks buffer api with many marks', function()
     eq(ns_marks[ns2], get_marks(ns2))
   end)
 
-  it("can delete lines #extmarks", function()
+  it("can delete lines", function()
     feed('10G10dd')
     for _, marks in pairs(ns_marks) do
       for id, mark in pairs(marks) do
@@ -1381,7 +1470,7 @@ describe('Extmarks buffer api with many marks', function()
     eq(ns_marks[ns2], get_marks(ns2))
   end)
 
-  it("can wipe buffer #extmarks", function()
+  it("can wipe buffer", function()
     command('bwipe!')
     eq({}, get_marks(ns1))
     eq({}, get_marks(ns2))

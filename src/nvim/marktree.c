@@ -1095,6 +1095,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 
 void marktree_check(MarkTree *b)
 {
+#ifndef NDEBUG
   if (b->root == NULL) {
     assert(b->n_keys == 0);
     assert(b->n_nodes == 0);
@@ -1107,9 +1108,15 @@ void marktree_check(MarkTree *b)
   size_t nkeys = check_node(b, b->root, &dummy, &last_right);
   assert(b->n_keys == nkeys);
   assert(b->n_keys == map_size(b->id2node));
+#else
+  // Do nothing, as assertions are required
+  (void)b;
+#endif
 }
 
-size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
+#ifndef NDEBUG
+static size_t check_node(MarkTree *b, mtnode_t *x,
+                         mtpos_t *last, bool *last_right)
 {
   assert(x->n <= 2 * T - 1);
   // TODO(bfredl): too strict if checking "in repair" post-delete tree.
@@ -1153,6 +1160,7 @@ size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
   }
   return n_keys;
 }
+#endif
 
 char *mt_inspect_rec(MarkTree *b)
 {

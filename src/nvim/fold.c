@@ -22,6 +22,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -1610,6 +1611,7 @@ static void foldAddMarker(linenr_T lnum, const char_u *marker, size_t markerlen)
   // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
   line = ml_get(lnum);
   size_t line_len = STRLEN(line);
+  size_t added = 0;
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
     // Check if the line ends with an unclosed comment
@@ -1619,12 +1621,19 @@ static void foldAddMarker(linenr_T lnum, const char_u *marker, size_t markerlen)
     // Append the marker to the end of the line
     if (p == NULL || line_is_comment) {
       STRLCPY(newline + line_len, marker, markerlen + 1);
+      added = markerlen;
     } else {
       STRCPY(newline + line_len, cms);
       memcpy(newline + line_len + (p - cms), marker, markerlen);
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
+      added = markerlen + STRLEN(cms)-2;
     }
     ml_replace(lnum, newline, false);
+    if (added) {
+      extmark_splice(curbuf, (int)lnum-1, (int)line_len,
+                     0, 0,
+                     0, (int)added, kExtmarkUndo);
+    }
   }
 }
 
@@ -1692,6 +1701,9 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
       ml_replace(lnum, newline, false);
+      extmark_splice(curbuf, (int)lnum-1, (int)(p - line),
+                     0, (int)len,
+                     0, 0, kExtmarkUndo);
     }
     break;
   }

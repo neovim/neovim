@@ -44,7 +44,8 @@
 
 #define INITIALIZER(T, U) T##_##U##_initializer
 #define INITIALIZER_DECLARE(T, U, ...) const U INITIALIZER(T, U) = __VA_ARGS__
-#define DEFAULT_INITIALIZER {0}
+#define DEFAULT_INITIALIZER { 0 }
+#define SSIZE_INITIALIZER { -1 }
 
 #define MAP_IMPL(T, U, ...) \
   INITIALIZER_DECLARE(T, U, __VA_ARGS__); \
@@ -178,10 +179,16 @@ MAP_IMPL(int, int, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
+MAP_IMPL(uint64_t, ssize_t, SSIZE_INITIALIZER)
+MAP_IMPL(uint64_t, uint64_t, DEFAULT_INITIALIZER)
+#define EXTMARK_NS_INITIALIZER { 0, 0 }
+MAP_IMPL(uint64_t, ExtmarkNs, EXTMARK_NS_INITIALIZER)
+#define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
+#define EXTMARK_ITEM_INITIALIZER { 0, 0, 0, KVEC_INITIALIZER }
+MAP_IMPL(uint64_t, ExtmarkItem, EXTMARK_ITEM_INITIALIZER)
 MAP_IMPL(handle_T, ptr_t, DEFAULT_INITIALIZER)
 #define MSGPACK_HANDLER_INITIALIZER { .fn = NULL, .fast = false }
 MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
-#define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
 MAP_IMPL(HlEntry, int, DEFAULT_INITIALIZER)
 MAP_IMPL(String, handle_T, 0)
 

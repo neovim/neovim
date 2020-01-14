@@ -6,6 +6,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/mark_defs.h"
+#include "nvim/mark_extended_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos.h"
 #include "nvim/os/time.h"

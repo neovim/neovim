@@ -1826,10 +1826,13 @@ change_indent (
 
     /* We only put back the new line up to the cursor */
     new_line[curwin->w_cursor.col] = NUL;
+    int new_col = curwin->w_cursor.col;
 
     // Put back original line
     ml_replace(curwin->w_cursor.lnum, orig_line, false);
     curwin->w_cursor.col = orig_col;
+
+    curbuf_splice_pending++;
 
     /* Backspace from cursor to start of line */
     backspace_until_column(0);
@@ -1838,13 +1841,16 @@ change_indent (
     ins_bytes(new_line);
 
     xfree(new_line);
-  }
 
-  // change_indent seems to bec called twice, this combination only triggers
-  // once for both calls
-  if (new_cursor_col - vcol != 0) {
-    extmark_col_adjust(curbuf, curwin->w_cursor.lnum, 0, 0, amount,
-                       kExtmarkUndo);
+    curbuf_splice_pending--;
+
+    // TODO(bfredl): test for crazy edge cases, like we stand on a TAB or
+    // something? does this even do the right text change then?
+    int delta = orig_col - new_col;
+    extmark_splice(curbuf, curwin->w_cursor.lnum-1, new_col,
+                   0, delta < 0 ? -delta : 0,
+                   0, delta > 0 ? delta : 0,
+                   kExtmarkUndo);
   }
 }
 
