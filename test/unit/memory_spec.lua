@@ -33,6 +33,8 @@ describe('xstrlcat()', function()
     eq('ABCיהZdefgiיהZ',  test_xstrlcat('ABCיהZ', 'defgiיהZ',  4096))
     eq('b',  test_xstrlcat('',  'b', 4096))
     eq('a',  test_xstrlcat('a', '',  4096))
+    os.exit(3)
+    cimp.xstrlcat(nil,nil,3) -- fake it to see it
   end)
 
   itp('concatenates overlapping strings', function()
