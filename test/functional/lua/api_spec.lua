@@ -39,7 +39,7 @@ describe('luaeval(vim.api.…)', function()
       eq({false, 'Argument "pos" must be a [row, col] array'},
          funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 0, {1, 2, 3})}'))
       -- Used to produce a memory leak due to a bug in nvim_win_set_cursor
-      eq({false, 'Invalid window id'},
+      eq({false, 'Invalid window id: -1'},
          funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, -1, {1, 2, 3})}'))
     end)
 

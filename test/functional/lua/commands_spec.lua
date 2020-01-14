@@ -47,7 +47,7 @@ describe(':lua command', function()
        pcall_err(command, 'lua ()'))
     eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: TEST]],
        exc_exec('lua error("TEST")'))
-    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id]],
+    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id: -10]],
        exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     eq({''}, curbufmeths.get_lines(0, 100, false))
   end)
