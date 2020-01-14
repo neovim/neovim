@@ -24,6 +24,10 @@ describe('api/tabpage', function()
       nvim('set_current_win', win3)
       eq(win3, tabpage('get_win', tab2))
     end)
+
+    it('validates args', function()
+      eq('Invalid tabpage id: 23', pcall_err(tabpage, 'list_wins', 23))
+    end)
   end)
 
   describe('{get,set,del}_var', function()

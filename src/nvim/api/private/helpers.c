@@ -631,7 +631,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
+    api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
   }
 
   return rv;
@@ -646,7 +646,7 @@ win_T *find_window_by_handle(Window window, Error *err)
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid window id");
+    api_set_error(err, kErrorTypeValidation, "Invalid window id: %d", window);
   }
 
   return rv;
@@ -661,7 +661,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id");
+    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id: %d", tabpage);
   }
 
   return rv;
