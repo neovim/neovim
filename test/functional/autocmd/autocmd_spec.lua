@@ -50,6 +50,13 @@ describe('autocmd', function()
     eq(1, eval('g:triggered'))
   end)
 
+  it('WinClosed event exposes window id as <afile>', function()
+    command('new')
+    local id = meths.get_current_win().id
+    helpers.nvim('command', 'au! WinClosed * echom "winclosed:".expand("<afile>").":".expand("<amatch>").":".win_getid()')
+    eq(string.format("winclosed:%s:%s:%s", id, id, id), helpers.nvim('exec', 'close', true))
+  end)
+
   it(':bdelete triggers WinClosed event', function()
     command('let g:triggered = 0')
     command('autocmd WinClosed <buffer> :let g:triggered+=1')
