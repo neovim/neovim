@@ -443,7 +443,8 @@ Object nvim_eval(String expr, Error *err)
   if (!try_end(err)) {
     if (ok == FAIL) {
       // Should never happen, try_end() should get the error. #8371
-      api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
+      api_set_error(err, kErrorTypeException,
+                    "Failed to evaluate expression: '%.*s'", 256, expr.data);
     } else {
       rv = vim_to_object(&rettv);
     }
