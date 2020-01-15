@@ -71,7 +71,7 @@ for t in ${TESTS}; do
   rm -rf $TESTLOGDIR
   mkdir -p $TESTLOGDIR
   ${RUN_VIM} --version > ${TESTLOGDIR}/vimversion
-  for l in messages debuglog *.log; do
+  for l in messages debuglog test.log *.testlog; do
     # In CI we can't view the output files, so we just have to cat them
     if [ -f $l ]; then
       if [ "$VIMSPECTOR_TEST_STDOUT" ]; then
