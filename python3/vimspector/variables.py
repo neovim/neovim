@@ -105,6 +105,9 @@ class VariablesView( object ):
     for k, v in self._oldoptions.items():
       vim.options[ k ] = v
 
+    vim.command( 'bdelete! ' + str( self._watch.win.buffer.number ) )
+    vim.command( 'bdelete! ' + str( self._vars.win.buffer.number ) )
+
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):
       old_scopes = self._scopes
