@@ -45,7 +45,7 @@ nnoremap <Plug>VimspectorToggleBreakpoint
       \ :<c-u>call vimspector#ToggleBreakpoint()<CR>
 nnoremap <Plug>VimspectorAddFunctionBreakpoint
       \ :<c-u>call vimspector#AddFunctionBreakpoint( expand( '<cexpr>' ) )<CR>
-nnoremap <Plug>VimspectorStopOver       :<c-u>call vimspector#StepOver()<CR>
+nnoremap <Plug>VimspectorStepOver       :<c-u>call vimspector#StepOver()<CR>
 nnoremap <Plug>VimspectorStepInto       :<c-u>call vimspector#StepInto()<CR>
 nnoremap <Plug>VimspectorStepOut        :<c-u>call vimspector#StepOut()<CR>
 
