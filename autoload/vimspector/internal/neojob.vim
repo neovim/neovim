@@ -111,17 +111,17 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
 
   call bufload( buffer )
 
-  let last_line_list = getbufline( buffer, '$' )
-
-  if len( last_line_list ) == 0
-    let last_line = ''
-  else
-    let last_line = last_line_list[ 0 ]
-  endif
+  let numlines = py3eval( "len( vim.buffers[ int( vim.eval( 'buffer' ) ) ] )" )
+  let last_line = getbufline( buffer, '$' )[ 0 ]
 
   call s:MakeBufferWritable( buffer )
   try
-    call setbufline( buffer, '$', last_line . a:data[ 0 ] )
+    if numlines == 1 && last_line ==# ''
+      call setbufline( buffer, 1, a:data[ 0 ] )
+    else
+      call setbufline( buffer, '$', last_line . a:data[ 0 ] )
+    endif
+
     call appendbufline( buffer, '$', a:data[ 1: ] )
   finally
     call s:MakeBufferReadOnly( buffer )
@@ -134,7 +134,7 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
     let cw = winnr()
     try
       execute w . 'wincmd w'
-      normal G
+      normal Gz.
     finally
       execute cw . 'wincmd w'
     endtry
@@ -144,6 +144,7 @@ endfunction
 function! s:SetUpHiddenBuffer( buffer ) abort
   call setbufvar( a:buffer, '&hidden', 1 )
   call setbufvar( a:buffer, '&bufhidden', 'hide' )
+  call setbufvar( a:buffer, '&wrap', 0 )
   call s:MakeBufferReadOnly( a:buffer )
 endfunction
 
