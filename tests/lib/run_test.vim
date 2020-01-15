@@ -211,7 +211,6 @@ func AfterTheTest()
     let logfile = s:testid_filesafe . '.vimspector.log'
     call writefile( log, logfile, 's' )
     call add( s:messages, 'Wrote log for failed test: ' . logfile )
-    call extend( s:messages, log )
   endif
 endfunc
 
