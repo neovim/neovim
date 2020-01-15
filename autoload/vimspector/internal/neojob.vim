@@ -48,11 +48,11 @@ function! vimspector#internal#neojob#StartDebugSession( config ) abort
         \                    'on_stderr': funcref( 's:_OnEvent' ),
         \                    'on_exit': funcref( 's:_OnEvent' ),
         \                    'cwd': a:config[ 'cwd' ],
+        \                    'env': a:config[ 'env' ],
         \                }
         \              )
 
   " FIXME: Missing in neovim 0.4. But in master:
-  "      \                    'env': a:config[ 'env' ],
   "
 
   " FIXME: error handling ?
@@ -82,14 +82,12 @@ endfunction
 
 function! vimspector#internal#neojob#StopDebugSession() abort
   if !exists( 's:job' )
-    echom "Not stopping session: Job doesn't exist"
-    redraw
     return
   endif
 
   if s:JobIsRunning( s:job )
-      echom 'Terminating job'
-      redraw
+    echom 'Terminating job'
+    redraw
     call jobstop( s:job )
   endif
 endfunction
@@ -145,6 +143,7 @@ function! s:SetUpHiddenBuffer( buffer ) abort
   call setbufvar( a:buffer, '&hidden', 1 )
   call setbufvar( a:buffer, '&bufhidden', 'hide' )
   call setbufvar( a:buffer, '&wrap', 0 )
+  call setbufvar( a:buffer, '&swapfile', 0 )
   call s:MakeBufferReadOnly( a:buffer )
 endfunction
 
