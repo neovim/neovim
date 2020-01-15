@@ -4,7 +4,7 @@
 "
 " To execute only specific test functions, add a second argument.  It will be
 " matched against the names of the Test_ funtion.  E.g.:
-"	../vim -u NONE -S runtest.vim test_channel.vim open_delay
+"	../vim -Nu NONE vimrc -S lib/run_test.vim test_channel.vim open_delay
 " The output can be found in the "messages" file.
 "
 " The test script may contain anything, only functions that start with
@@ -26,8 +26,16 @@
 " It will be called after each Test_ function.
 "
 " When debugging a test it can be useful to add messages to v:errors:
-"	call add(v:errors, "this happened")
+"   call add(v:errors, "this happened")
+"
+" But for real debug logging:
+"   call ch_log( ",,,message..." )
+" Then view it in 'debuglog'
 
+" Let a test take up to 1 minute
+let s:single_test_timeout = 60000
+
+" Restrict the runtimepath to the exact minimum needed for testing
 set rtp=$PWD/lib,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
 if has('packages')
   let &packpath = &rtp
@@ -37,7 +45,7 @@ call ch_logfile( 'debuglog', 'w' )
 
 " For consistency run all tests with 'nocompatible' set.
 " This also enables use of line continuation.
-set nocp viminfo+=nviminfo
+set nocp
 
 " Use utf-8 by default, instead of whatever the system default happens to be.
 " Individual tests can overrule this at the top of the file.
@@ -47,10 +55,22 @@ set encoding=utf-8
 set nomore
 
 " Output all messages in English.
-lang mess C
+lang messages C
 
 " Always use forward slashes.
 set shellslash
+
+func s:TestFailed()
+    let log = readfile( expand( '~/.vimspector.log' ) )
+    let logfile = s:testid_filesafe . '_vimspector.log.testlog'
+    call writefile( log, logfile, 's' )
+    call add( s:messages, 'Wrote log for failed test: ' . logfile )
+endfunc
+
+func! Abort( timer_id )
+  call assert_report( 'Test timed out!!!' )
+  qa!
+endfunc
 
 func RunTheTest(test)
   echo 'Executing ' . a:test
@@ -107,40 +127,38 @@ func RunTheTest(test)
 
   call add(s:messages, 'Executing ' . a:test)
   let s:done += 1
+  let timer = timer_start( s:single_test_timeout, funcref( 'Abort' ) )
 
-  if a:test =~ 'Test_nocatch_'
-    " Function handles errors itself.  This avoids skipping commands after the
-    " error.
+  try
+    let s:test = a:test
+    let s:testid = g:testpath . ':' . a:test
+
+    let test_filesafe = substitute( a:test, '[)(,:]', '_', 'g' )
+    let s:testid_filesafe = g:testpath . '_' . test_filesafe
+
+    au VimLeavePre * call EarlyExit(s:test)
     exe 'call ' . a:test
-  else
-    try
-      let s:test = a:test
-      let s:testid = g:testpath . ':' . a:test
-      let test_filesafe = substitute( a:test, ')', '_', 'g' )
-      let test_filesafe = substitute( test_filesafe, '(', '_', 'g' )
-      let test_filesafe = substitute( test_filesafe, ',', '_', 'g' )
-      let test_filesafe = substitute( test_filesafe, ':', '_', 'g' )
-      let s:testid_filesafe = g:testpath . '_' . test_filesafe
-      au VimLeavePre * call EarlyExit(s:test)
-      exe 'call ' . a:test
-      au! VimLeavePre
-    catch /^\cskipped/
-      call add(s:messages, '    Skipped')
-      call add(s:skipped,
-            \ 'SKIPPED ' . a:test
-            \ . ': '
-            \ . substitute(v:exception, '^\S*\s\+', '',  ''))
-    catch
-      call add(v:errors,
-            \ 'Caught exception in ' . a:test
-            \ . ': '
-            \ . v:exception
-            \ . ' @ '
-            \ . g:testpath
-            \ . ':'
-            \ . v:throwpoint)
-    endtry
-  endif
+    au! VimLeavePre
+  catch /^\cskipped/
+    call add(s:messages, '    Skipped')
+    call add(s:skipped,
+          \ 'SKIPPED ' . a:test
+          \ . ': '
+          \ . substitute(v:exception, '^\S*\s\+', '',  ''))
+  catch
+    call add(v:errors,
+          \ 'Caught exception in ' . a:test
+          \ . ': '
+          \ . v:exception
+          \ . ' @ '
+          \ . g:testpath
+          \ . ':'
+          \ . v:throwpoint)
+
+    call s:TestFailed()
+  endtry
+
+  call timer_stop( timer )
 
   " In case 'insertmode' was set and something went wrong, make sure it is
   " reset to avoid trouble with anything else.
@@ -203,23 +221,16 @@ endfunc
 func AfterTheTest()
   if len(v:errors) > 0
     let s:fail += 1
+    call s:TestFailed()
     call add(s:errors, 'Found errors in ' . s:testid . ':')
     call extend(s:errors, v:errors)
     let v:errors = []
-
-    let log = readfile( expand( '~/.vimspector.log' ) )
-    let logfile = s:testid_filesafe . '.vimspector.log'
-    call writefile( log, logfile, 's' )
-    call add( s:messages, 'Wrote log for failed test: ' . logfile )
   endif
 endfunc
 
 func EarlyExit(test)
   " It's OK for the test we use to test the quit detection.
-  if a:test != 'Test_zz_quit_detected()'
-    call add(v:errors, 'Test caused Vim to exit: ' . a:test)
-  endif
-
+  call add(v:errors, 'Test caused Vim to exit: ' . a:test)
   call FinishTesting()
 endfunc
 
@@ -232,17 +243,19 @@ func FinishTesting()
 
   if s:fail == 0
     " Success, create the .res file so that make knows it's done.
-    exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
-    write
+    call writefile( [], g:testname . '.res', 's' )
   endif
 
   if len(s:errors) > 0
     " Append errors to test.log
-    split test.log
-    call append(line('$'), '')
-    call append(line('$'), 'From ' . g:testpath . ':')
-    call append(line('$'), s:errors)
-    write
+    let l = []
+    if filereadable( 'test.log' )
+      let l = readfile( 'test.log' )
+    endif
+    call writefile( l->extend( [ '', 'From ' . g:testpath . ':' ] )
+                  \  ->extend( s:errors ),
+                  \ 'test.log',
+                  \ 's' )
   endif
 
   if s:done == 0
@@ -263,11 +276,14 @@ func FinishTesting()
   call extend(s:messages, s:skipped)
 
   " Append messages to the file "messages"
-  split messages
-  call append(line('$'), '')
-  call append(line('$'), 'From ' . g:testpath . ':')
-  call append(line('$'), s:messages)
-  write
+  let l = []
+  if filereadable( 'messages' )
+    let l = readfile( 'messages' )
+  endif
+  call writefile( l->extend( [ '', 'From ' . g:testpath . ':' ] )
+                \  ->extend( s:messages ),
+                \ 'messages',
+                \ 's' )
 
   if s:fail > 0
     cquit!
@@ -316,6 +332,7 @@ endif
 for s:test in sort(s:tests)
   " Silence, please!
   set belloff=all
+
   call RunTheTest(s:test)
   call AfterTheTest()
 endfor
