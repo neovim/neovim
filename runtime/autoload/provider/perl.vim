@@ -6,18 +6,14 @@ let s:loaded_perl_provider = 1
 
 function! provider#perl#Detect() abort
   " use g:perl_host_prof if set or check if perl is on the path
-  let prog = get(g:, 'perl_host_prog', executable('perl') ? 'perl' : '')
-
-  " if perl is available, make sure the required module is available
-  if prog != ''
-    let job_id = jobstart(prog.' -MNeovim::Ext -e "exit 0"', {'stdout_buffered': v:true})
-    let result = jobwait([job_id])
-	if result[0] != 0
-      let prog = ''
-    endif
+  let prog = exepath(get(g:, 'perl_host_prog', 'perl'))
+  if empty(prog)
+    return ''
   endif
 
-  return prog
+  " if perl is available, make sure the required module is available
+  call system([prog, '-W', '-MNeovim::Ext', '-e', ''])
+  return v:shell_error ? '' : prog
 endfunction
 
 function! provider#perl#Prog() abort
