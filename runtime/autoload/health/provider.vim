@@ -566,7 +566,7 @@ function! s:check_node() abort
   endif
   let node_v = get(split(s:system('node -v'), "\n"), 0, '')
   call health#report_info('Node.js: '. node_v)
-  if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
+  if s:shell_error || s:version_cmp(node_v[1:], '6.0.0') < 0
     call health#report_warn('Neovim node.js host does not support '.node_v)
     " Skip further checks, they are nonsense if nodejs is too old.
     return
@@ -623,10 +623,51 @@ function! s:check_node() abort
   endif
 endfunction
 
+function! s:check_perl() abort
+  call health#report_start('Perl provider (optional)')
+
+  if s:disabled_via_loaded_var('perl')
+    return
+  endif
+
+  if !executable('perl') || !executable('cpanm')
+    call health#report_warn(
+          \ '`perl` and `cpanm` must be in $PATH.',
+          \ ['Install Perl and cpanminus and verify that `perl` and `cpanm` commands work.'])
+    return
+  endif
+  let perl_v = get(split(s:system(['perl', '-W', '-e', 'print $^V']), "\n"), 0, '')
+  call health#report_info('Perl: '. perl_v)
+  if s:shell_error
+    call health#report_warn('Neovim perl host does not support '.perl_v)
+    " Skip further checks, they are nonsense if perl is too old.
+    return
+  endif
+
+  let host = provider#perl#Detect()
+  if empty(host)
+    call health#report_warn('Missing "Neovim::Ext" cpan package.',
+          \ ['Run in shell: cpanm Neovim::Ext'])
+    return
+  endif
+  call health#report_info('Neovim perl host: '. host)
+
+  let current_perl_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
+  let current_perl = s:system(current_perl_cmd)
+  if s:shell_error
+    call health#report_error('Failed to run: '. string(current_perl_cmd),
+          \ ['Report this issue with the output of: ', string(current_perl_cmd)])
+    return
+  endif
+
+  call health#report_ok('"Neovim::Ext" cpan package is installed: '. current_perl)
+endfunction
+
 function! health#provider#check() abort
   call s:check_clipboard()
   call s:check_python(2)
   call s:check_python(3)
   call s:check_ruby()
   call s:check_node()
+  call s:check_perl()
 endfunction
