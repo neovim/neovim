@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -88,6 +89,7 @@ int get_indent_str(char_u *ptr, int ts, int list)
 //  SIN_CHANGED:    call changed_bytes() if the line was changed.
 //  SIN_INSERT: insert the indent in front of the line.
 //  SIN_UNDO:   save line for undo before changing it.
+//  SIN_NOMARK: don't move extmarks (because just after ml_append or something)
 //  @param size measured in spaces
 // Returns true if the line was changed.
 int set_indent(int size, int flags)
@@ -205,6 +207,7 @@ int set_indent(int size, int flags)
   // If 'preserveindent' and 'expandtab' are both set keep the original
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
+  int skipcols = 0;  // number of columns (in bytes) that were presved
   if (orig_char_len != -1) {
     int newline_size;  // = orig_char_len + size - ind_done + line_len
     STRICT_ADD(orig_char_len, size, &newline_size, int);
@@ -219,6 +222,7 @@ int set_indent(int size, int flags)
     ind_len = orig_char_len + todo;
     p = oldline;
     s = newline;
+    skipcols = orig_char_len;
 
     while (orig_char_len > 0) {
       *s++ = *p++;
@@ -263,6 +267,7 @@ int set_indent(int size, int flags)
           ind_done++;
         }
         *s++ = *p++;
+        skipcols++;
       }
 
       // Fill to next tabstop with a tab, if possible.
@@ -290,6 +295,13 @@ int set_indent(int size, int flags)
   // Replace the line (unless undo fails).
   if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursor.lnum) == OK)) {
     ml_replace(curwin->w_cursor.lnum, newline, false);
+    if (!(flags & SIN_NOMARK)) {
+      extmark_splice(curbuf,
+                     (int)curwin->w_cursor.lnum-1, skipcols,
+                     0, (int)(p-oldline) - skipcols,
+                     0, (int)(s-newline) - skipcols,
+                     kExtmarkUndo);
+    }
 
     if (flags & SIN_CHANGED) {
       changed_bytes(curwin->w_cursor.lnum, 0);

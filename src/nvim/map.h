@@ -4,9 +4,9 @@
 #include <stdbool.h>
 
 #include "nvim/map_defs.h"
+#include "nvim/mark_extended_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
-#include "nvim/bufhl_defs.h"
 #include "nvim/highlight_defs.h"
 
 #if defined(__NetBSD__)
@@ -38,6 +38,18 @@ MAP_DECLS(int, int)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
+MAP_DECLS(uint64_t, ssize_t)
+MAP_DECLS(uint64_t, uint64_t)
+
+// NB: this is the only way to define a struct both containing and contained
+// in a map...
+typedef struct ExtmarkNs {  // For namespacing extmarks
+  Map(uint64_t, uint64_t) *map;  // For fast lookup
+  uint64_t free_id;         // For automatically assigning id's
+} ExtmarkNs;
+
+MAP_DECLS(uint64_t, ExtmarkNs)
+MAP_DECLS(uint64_t, ExtmarkItem)
 MAP_DECLS(handle_T, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
 MAP_DECLS(HlEntry, int)
@@ -52,6 +64,8 @@ MAP_DECLS(String, handle_T)
 #define map_ref(T, U) map_##T##_##U##_ref
 #define map_del(T, U) map_##T##_##U##_del
 #define map_clear(T, U) map_##T##_##U##_clear
+
+#define map_size(map) ((map)->table->size)
 
 #define pmap_new(T) map_new(T, ptr_t)
 #define pmap_free(T) map_free(T, ptr_t)

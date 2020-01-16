@@ -42,6 +42,8 @@ typedef struct {
 #include "nvim/map.h"
 // for kvec
 #include "nvim/lib/kvec.h"
+// for marktree
+#include "nvim/marktree.h"
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -109,14 +111,9 @@ typedef uint16_t disptick_T;  // display tick type
 #include "nvim/syntax_defs.h"
 // for signlist_T
 #include "nvim/sign_defs.h"
-// for bufhl_*_T
-#include "nvim/bufhl_defs.h"
 
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
-
-#include "nvim/lib/kbtree.h"
-#include "nvim/mark_extended.h"
 
 /*
  * The taggy struct is used to store the information about a :tag command.
@@ -461,11 +458,15 @@ typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 
 typedef struct {
   LuaRef on_lines;
+  LuaRef on_bytes;
   LuaRef on_changedtick;
   LuaRef on_detach;
   bool utf_sizes;
 } BufUpdateCallbacks;
-#define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, false }
+#define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+                                    LUA_NOREF, false }
+
+EXTERN int curbuf_splice_pending INIT(= 0);
 
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
@@ -804,13 +805,9 @@ struct file_buffer {
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
-  BufhlInfo b_bufhl_info;       // buffer stored highlights
-
-  kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
-
-  PMap(uint64_t) *b_extmark_ns;         // extmark namespaces
-  kbtree_t(extmarklines) b_extlines;  // extmarks
-  kvec_t(ExtmarkLine *) b_extmark_move_space;  // temp space for extmarks
+  MarkTree b_marktree[1];
+  Map(uint64_t, ExtmarkItem) *b_extmark_index;
+  Map(uint64_t, ExtmarkNs) *b_extmark_ns;         // extmark namespaces
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.

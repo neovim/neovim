@@ -281,6 +281,54 @@ void buf_updates_send_changes(buf_T *buf,
   kv_size(buf->update_callbacks) = j;
 }
 
+void buf_updates_send_splice(buf_T *buf,
+                             linenr_T start_line, colnr_T start_col,
+                             linenr_T oldextent_line, colnr_T oldextent_col,
+                             linenr_T newextent_line, colnr_T newextent_col)
+{
+  if (!buf_updates_active(buf)) {
+    return;
+  }
+
+  // notify each of the active callbakcs
+  size_t j = 0;
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    bool keep = true;
+    if (cb.on_bytes != LUA_NOREF) {
+      Array args = ARRAY_DICT_INIT;
+      Object items[8];
+      args.size = 8;
+      args.items = items;
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      // next argument is b:changedtick
+      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+
+      args.items[2] = INTEGER_OBJ(start_line);
+      args.items[3] = INTEGER_OBJ(start_col);
+      args.items[4] = INTEGER_OBJ(oldextent_line);
+      args.items[5] = INTEGER_OBJ(oldextent_col);
+      args.items[6] = INTEGER_OBJ(newextent_line);
+      args.items[7] = INTEGER_OBJ(newextent_col);
+
+      textlock++;
+      Object res = executor_exec_lua_cb(cb.on_bytes, "bytes", args, true, NULL);
+      textlock--;
+
+      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+        free_update_callbacks(cb);
+        keep = false;
+      }
+    }
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    }
+  }
+  kv_size(buf->update_callbacks) = j;
+}
 void buf_updates_changedtick(buf_T *buf)
 {
   // notify each of the active channels

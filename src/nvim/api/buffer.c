@@ -170,6 +170,14 @@ Boolean nvim_buf_attach(uint64_t channel_id,
       }
       cb.on_lines = v->data.luaref;
       v->data.luaref = LUA_NOREF;
+    } else if (is_lua && strequal("_on_bytes", k.data)) {
+      // NB: undocumented, untested and incomplete interface!
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      cb.on_bytes = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
@@ -201,6 +209,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 error:
   // TODO(bfredl): ASAN build should check that the ref table is empty?
   executor_free_luaref(cb.on_lines);
+  executor_free_luaref(cb.on_bytes);
   executor_free_luaref(cb.on_changedtick);
   executor_free_luaref(cb.on_detach);
   return false;
@@ -639,7 +648,6 @@ void nvim_buf_set_lines(uint64_t channel_id,
               (linenr_T)(end - 1),
               MAXLNUM,
               (long)extra,
-              false,
               kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
@@ -1119,12 +1127,12 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     return rv;
   }
 
-  Extmark *extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
-  if (!extmark) {
+  ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+  if (extmark.row < 0) {
     return rv;
   }
-  ADD(rv, INTEGER_OBJ((Integer)extmark->line->lnum-1));
-  ADD(rv, INTEGER_OBJ((Integer)extmark->col-1));
+  ADD(rv, INTEGER_OBJ((Integer)extmark.row));
+  ADD(rv, INTEGER_OBJ((Integer)extmark.col));
   return rv;
 }
 
@@ -1204,43 +1212,39 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
 
   if (limit == 0) {
     return rv;
+  } else if (limit < 0) {
+    limit = INT64_MAX;
   }
 
 
   bool reverse = false;
 
-  linenr_T l_lnum;
+  int l_row;
   colnr_T l_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_lnum, &l_col, err)) {
+  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
     return rv;
   }
 
-  linenr_T u_lnum;
+  int u_row;
   colnr_T u_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_lnum, &u_col, err)) {
+  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
     return rv;
   }
 
-  if (l_lnum > u_lnum || (l_lnum == u_lnum && l_col > u_col)) {
+  if (l_row > u_row || (l_row == u_row && l_col > u_col)) {
     reverse = true;
-    linenr_T tmp_lnum = l_lnum;
-    l_lnum = u_lnum;
-    u_lnum = tmp_lnum;
-    colnr_T tmp_col = l_col;
-    l_col = u_col;
-    u_col = tmp_col;
   }
 
 
-  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_lnum, l_col, u_lnum,
+  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_row, l_col, u_row,
                                    u_col, (int64_t)limit, reverse);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
     Array mark = ARRAY_DICT_INIT;
-    Extmark *extmark = kv_A(marks, i);
-    ADD(mark, INTEGER_OBJ((Integer)extmark->mark_id));
-    ADD(mark, INTEGER_OBJ(extmark->line->lnum-1));
-    ADD(mark, INTEGER_OBJ(extmark->col-1));
+    ExtmarkInfo extmark = kv_A(marks, i);
+    ADD(mark, INTEGER_OBJ((Integer)extmark.mark_id));
+    ADD(mark, INTEGER_OBJ(extmark.row));
+    ADD(mark, INTEGER_OBJ(extmark.col));
     ADD(rv, ARRAY_OBJ(mark));
   }
 
@@ -1301,17 +1305,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
   }
 
   uint64_t id_num;
-  if (id == 0) {
-    id_num = extmark_free_id_get(buf, (uint64_t)ns_id);
-  } else if (id > 0) {
+  if (id >= 0) {
     id_num = (uint64_t)id;
   } else {
     api_set_error(err, kErrorTypeValidation, _("Invalid mark id"));
     return 0;
   }
 
-  extmark_set(buf, (uint64_t)ns_id, id_num,
-              (linenr_T)line+1, (colnr_T)col+1, kExtmarkUndo);
+  id_num = extmark_set(buf, (uint64_t)ns_id, id_num,
+                       (int)line, (colnr_T)col, kExtmarkUndo);
 
   return (Integer)id_num;
 }
@@ -1339,7 +1341,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
     return false;
   }
 
-  return extmark_del(buf, (uint64_t)ns_id, (uint64_t)id, kExtmarkUndo);
+  return extmark_del(buf, (uint64_t)ns_id, (uint64_t)id);
 }
 
 /// Adds a highlight to buffer.
@@ -1373,7 +1375,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer ns_id,
+                               Integer src_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -1398,14 +1400,31 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
+  uint64_t ns_id = src2ns(&src_id);
+
+  if (!(0 <= line && line < buf->b_ml.ml_line_count)) {
+    // safety check, we can't add marks outside the range
+    return src_id;
+  }
+
   int hlg_id = 0;
   if (hl_group.size > 0) {
     hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  } else {
+    return src_id;
   }
 
-  ns_id = bufhl_add_hl(buf, (int)ns_id, hlg_id, (linenr_T)line+1,
-                       (colnr_T)col_start+1, (colnr_T)col_end);
-  return ns_id;
+  int end_line = (int)line;
+  if (col_end == MAXCOL) {
+    col_end = 0;
+    end_line++;
+  }
+
+  ns_id = extmark_add_decoration(buf, ns_id, hlg_id,
+                                 (int)line, (colnr_T)col_start,
+                                 end_line, (colnr_T)col_end,
+                                 VIRTTEXT_EMPTY);
+  return src_id;
 }
 
 /// Clears namespaced objects (highlights, extmarks, virtual text) from
@@ -1439,12 +1458,9 @@ void nvim_buf_clear_namespace(Buffer buffer,
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
   }
-
-  bufhl_clear_line_range(buf, (int)ns_id, (int)line_start+1, (int)line_end);
-  extmark_clear(buf, ns_id == -1 ? 0 : (uint64_t)ns_id,
-                (linenr_T)line_start+1,
-                (linenr_T)line_end,
-                kExtmarkUndo);
+  extmark_clear(buf, (ns_id < 0 ? 0 : (uint64_t)ns_id),
+                (int)line_start, 0,
+                (int)line_end-1, MAXCOL);
 }
 
 /// Clears highlights and virtual text from namespace and range of lines
@@ -1465,6 +1481,43 @@ void nvim_buf_clear_highlight(Buffer buffer,
   FUNC_API_SINCE(1)
 {
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
+}
+
+static VirtText parse_virt_text(Array chunks, Error *err)
+{
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  return virt_text;
+
+free_exit:
+  clear_virttext(&virt_text);
+  return virt_text;
 }
 
 
@@ -1496,7 +1549,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_set_virtual_text(Buffer buffer,
-                                  Integer ns_id,
+                                  Integer src_id,
                                   Integer line,
                                   Array chunks,
                                   Dictionary opts,
@@ -1518,41 +1571,26 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     return 0;
   }
 
-  VirtText virt_text = KV_INITIAL_VALUE;
-  for (size_t i = 0; i < chunks.size; i++) {
-    if (chunks.items[i].type != kObjectTypeArray) {
-      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
-      goto free_exit;
-    }
-    Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
-      goto free_exit;
-    }
+  uint64_t ns_id = src2ns(&src_id);
 
-    String str = chunk.items[0].data.string;
-    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
-
-    int hl_id = 0;
-    if (chunk.size == 2) {
-      String hl = chunk.items[1].data.string;
-      if (hl.size > 0) {
-        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
-      }
-    }
-    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  VirtText virt_text = parse_virt_text(chunks, err);
+  if (ERROR_SET(err)) {
+    return 0;
   }
 
-  ns_id = bufhl_add_virt_text(buf, (int)ns_id, (linenr_T)line+1,
-                              virt_text);
-  return ns_id;
 
-free_exit:
-  kv_destroy(virt_text);
-  return 0;
+  VirtText *existing = extmark_find_virttext(buf, (int)line, ns_id);
+
+  if (existing) {
+    clear_virttext(existing);
+    *existing = virt_text;
+    return src_id;
+  }
+
+  extmark_add_decoration(buf, ns_id, 0,
+                         (int)line, 0, -1, -1,
+                         virt_text);
+  return src_id;
 }
 
 /// Get the virtual text (annotation) for a buffer line.
@@ -1570,7 +1608,7 @@ free_exit:
 /// @param line     Line to get the virtual text from (zero-indexed)
 /// @param[out] err Error details, if any
 /// @return         List of virtual text chunks
-Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
+Array nvim_buf_get_virtual_text(Buffer buffer, Integer line, Error *err)
   FUNC_API_SINCE(7)
 {
   Array chunks = ARRAY_DICT_INIT;
@@ -1580,20 +1618,20 @@ Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
     return chunks;
   }
 
-  if (lnum < 0 || lnum >= MAXLNUM) {
+  if (line < 0 || line >= MAXLNUM) {
     api_set_error(err, kErrorTypeValidation, "Line number outside range");
     return chunks;
   }
 
-  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, (linenr_T)(lnum + 1),
-                                       false);
-  if (!lineinfo) {
+  VirtText *virt_text = extmark_find_virttext(buf, (int)line, 0);
+
+  if (!virt_text) {
     return chunks;
   }
 
-  for (size_t i = 0; i < lineinfo->virt_text.size; i++) {
+  for (size_t i = 0; i < virt_text->size; i++) {
     Array chunk = ARRAY_DICT_INIT;
-    VirtTextChunk *vtc = &lineinfo->virt_text.items[i];
+    VirtTextChunk *vtc = &virt_text->items[i];
     ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
     if (vtc->hl_id > 0) {
       ADD(chunk, STRING_OBJ(cstr_to_string(
@@ -1603,6 +1641,59 @@ Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
   }
 
   return chunks;
+}
+
+Integer nvim__buf_add_decoration(Buffer buffer, Integer ns_id, String hl_group,
+                                 Integer start_row, Integer start_col,
+                                 Integer end_row, Integer end_col,
+                                 Array virt_text,
+                                 Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    return 0;
+  }
+
+
+  if (start_row < 0 || start_row >= MAXLNUM || end_row > MAXCOL) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return 0;
+  }
+
+  if (start_col < 0 || start_col > MAXCOL || end_col > MAXCOL) {
+    api_set_error(err, kErrorTypeValidation, "Column value outside range");
+    return 0;
+  }
+  if (end_row < 0 || end_col < 0) {
+    end_row = -1;
+    end_col = -1;
+  }
+
+  if (start_row >= buf->b_ml.ml_line_count
+      || end_row >= buf->b_ml.ml_line_count) {
+    // safety check, we can't add marks outside the range
+    return 0;
+  }
+
+  int hlg_id = 0;
+  if (hl_group.size > 0) {
+    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  }
+
+  VirtText vt = parse_virt_text(virt_text, err);
+  if (ERROR_SET(err)) {
+    return 0;
+  }
+
+  uint64_t mark_id = extmark_add_decoration(buf, (uint64_t)ns_id, hlg_id,
+                                            (int)start_row, (colnr_T)start_col,
+                                            (int)end_row, (colnr_T)end_col, vt);
+  return (Integer)mark_id;
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)
@@ -1625,6 +1716,16 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // NB: this should be zero at any time API functions are called,
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+
+  u_header_T *uhp = NULL;
+  if (buf->b_u_curhead != NULL) {
+    uhp = buf->b_u_curhead;
+  } else if (buf->b_u_newhead) {
+    uhp = buf->b_u_newhead;
+  }
+  if (uhp) {
+    PUT(rv, "uhp_extmark_size", INTEGER_OBJ((Integer)kv_size(uhp->uh_extmark)));
+  }
 
   return rv;
 }

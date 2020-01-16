@@ -363,15 +363,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 ///
 /// Like changed_bytes() but also adjust extmark for "added" bytes.
 /// When "added" is negative text was deleted.
-static void inserted_bytes(linenr_T lnum, colnr_T col, int added)
+static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
-  if (added > 0) {
-    extmark_col_adjust(curbuf, lnum, col+1, 0, added, kExtmarkUndo);
-  } else if (added < 0) {
-    // TODO(bfredl): next revision of extmarks should handle both these
-    // with the same entry point. Also with more sane params..
-    extmark_col_adjust_delete(curbuf, lnum, col+2,
-                              col+(-added)+1, kExtmarkUndo, 0);
+  if (curbuf_splice_pending == 0) {
+    extmark_splice(curbuf, (int)lnum-1, col, 0, old, 0, new, kExtmarkUndo);
   }
 
   changed_bytes(lnum, col);
@@ -391,7 +386,10 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there. But it's still needed in diff mode.
   if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false, kExtmarkUndo);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, kExtmarkUndo);
+  } else {
+    extmark_adjust(curbuf, lnum + 1, (linenr_T)MAXLNUM, count, 0L,
+                   kExtmarkUndo);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
@@ -409,7 +407,7 @@ void deleted_lines(linenr_T lnum, long count)
 /// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false,
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count,
               kExtmarkUndo);
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
@@ -648,7 +646,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
   ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
-  inserted_bytes(lnum, (colnr_T)col, (int)(newlen - oldlen));
+  inserted_bytes(lnum, (colnr_T)col, (int)oldlen, (int)newlen);
 
   // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
   // show the match for right parens and braces.
@@ -694,7 +692,7 @@ void ins_str(char_u *s)
   assert(bytes >= 0);
   memmove(newp + col + newlen, oldp + col, (size_t)bytes);
   ml_replace(lnum, newp, false);
-  inserted_bytes(lnum, col, newlen);
+  inserted_bytes(lnum, col, 0, newlen);
   curwin->w_cursor.col += newlen;
 }
 
@@ -815,7 +813,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
 
   // mark the buffer as changed and prepare for displaying
-  inserted_bytes(lnum, col, -count);
+  inserted_bytes(lnum, col, count, 0);
 
   return OK;
 }
@@ -1583,6 +1581,7 @@ int open_line(
     end_comment_pending = NUL;  // turns out there was no leader
   }
 
+  curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
   if (dir == BACKWARD) {
     curwin->w_cursor.lnum--;
@@ -1597,7 +1596,7 @@ int open_line(
     // be marks there. But still needed in diff mode.
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
         || curwin->w_p_diff) {
-      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L,
                   kExtmarkUndo);
     }
     did_append = true;
@@ -1638,7 +1637,7 @@ int open_line(
       // it.  It gets restored at the function end.
       curbuf->b_p_pi = true;
     } else {
-      (void)set_indent(newindent, SIN_INSERT);
+      (void)set_indent(newindent, SIN_INSERT|SIN_NOMARK);
     }
     less_cols -= curwin->w_cursor.col;
 
@@ -1687,12 +1686,13 @@ int open_line(
         if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
                           curwin->w_cursor.col + less_cols_off,
-                          1L, (long)-less_cols, 0, kExtmarkNOOP);
+                          1L, (long)-less_cols, 0);
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
-        extmark_col_adjust(curbuf, lnum, mincol, 1L, (long)-less_cols,
-                           kExtmarkUndo);
+        int cols_added = mincol-1+less_cols_off-less_cols;
+        extmark_splice(curbuf, (int)lnum-1, mincol-1, 0, less_cols_off,
+                       1, cols_added, kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
@@ -1704,7 +1704,10 @@ int open_line(
   }
   if (did_append) {
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
+    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1,
+                   0, 0, 0, 1, 0, kExtmarkUndo);
   }
+  curbuf_splice_pending--;
 
   curwin->w_cursor.col = newcol;
   curwin->w_cursor.coladd = 0;
