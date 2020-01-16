@@ -16018,7 +16018,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const name = tv_get_string_chk(argvars);
   if (name != NULL) {
     if (list2fpos(&argvars[1], &pos, &fnum, &curswant) == OK) {
-      if (--pos.col < 0) {
+      if (pos.col != MAXCOL && --pos.col < 0) {
         pos.col = 0;
       }
       if (name[0] == '.' && name[1] == NUL) {
@@ -19045,6 +19045,15 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   fp = var2fpos(&argvars[0], FALSE, &fnum);
   if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
       && fnum == curbuf->b_fnum) {
+    // Limit the column to a valid value, getvvcol() doesn't check.
+    if (fp->col < 0) {
+      fp->col = 0;
+    } else {
+      const size_t len = STRLEN(ml_get(fp->lnum));
+      if (fp->col > (colnr_T)len) {
+        fp->col = (colnr_T)len;
+      }
+    }
     getvvcol(curwin, fp, NULL, NULL, &vcol);
     ++vcol;
   }
