@@ -6145,8 +6145,8 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
 static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 {
   salitem_T   *smp = (salitem_T *)slang->sl_sal.ga_data;
-  int word[MAXWLEN];
-  int wres[MAXWLEN];
+  int word[MAXWLEN] = { 0 };
+  int wres[MAXWLEN] = { 0 };
   int l;
   int         *ws;
   int         *pf;
