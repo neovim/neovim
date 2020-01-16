@@ -23,6 +23,9 @@
 #include "nvim/misc1.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
+#ifdef FEAT_WIN_SHORTNAME
+# include "nvim/os/path_win.h"
+#endif
 #include "nvim/os/shell.h"
 #include "nvim/os_unix.h"
 #include "nvim/quickfix.h"
@@ -520,7 +523,11 @@ bool path_has_exp_wildcard(const char_u *p)
 #else
     const char *wildcards = "*?[";  // Windows.
 #endif
-    if (vim_strchr((char_u *) wildcards, *p) != NULL) {
+    if (vim_strchr((char_u *)wildcards, *p) != NULL
+#ifdef FEAT_WIN_SHORTNAME
+        || (*p == '~' && p[1] != NUL)
+#endif
+        ) {
       return true;
     }
   }
@@ -662,6 +669,12 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     return 0;
   }
 
+#ifdef FEAT_WIN_SHORTNAME
+  // If '~' is included in the pattern, it is also necessary to match the
+  // short filename, so record whether or not '~' is included in the pattern.
+  bool has_tilde = vim_strchr(s, '~') != NULL;
+#endif
+
   /* If "**" is by itself, this is the first time we encounter it and more
    * is following then find matches without any directory. */
   if (!didstar && stardepth < 100 && starstar && e - s == 2
@@ -679,13 +692,36 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     // Find all matching entries.
     char_u *name;
     scandir_next_with_dots(NULL);  // initialize
+#ifdef FEAT_WIN_SHORTNAME
+    // A buffer for creating a shortfile name. A buffer separate from buf is
+    // required because the leading part of the path may be converted to a
+    // shortfile name.
+    char_u *sbuf = xmalloc(MAXPATHL);
+    size_t path_len = (size_t)(s - buf);
+#endif
     while ((name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
+#ifdef FEAT_WIN_SHORTNAME
+      // In Windows, it is necessary to check whether the shortfile name
+      // matches the pattern, so assign the short filename to sname.
+      char_u *sname = NULL;
+      if (has_tilde) {
+        xstrlcpy((char *)s, (char *)name, MAXPATHL - path_len);
+        if (path_to_short((char *)buf, (char *)sbuf, MAXPATHL)) {
+          sname = path_tail(sbuf);
+        }
+      }
+#endif
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
                && name[1] != NUL
                && (name[1] != '.' || name[2] != NUL)))  // -V557
-          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
+          && ((regmatch.regprog != NULL
+               && (vim_regexec(&regmatch, name, 0)
+#ifdef FEAT_WIN_SHORTNAME
+                   || (sname != NULL && vim_regexec(&regmatch, sname, 0))
+#endif
+                   ))  // NOLINT(whitespace/parens)
               || ((flags & EW_NOTWILD)
                   && fnamencmp(path + (s - buf), name, e - s) == 0))) {
         STRCPY(s, name);
@@ -723,6 +759,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
       }
     }
     os_closedir(&dir);
+#ifdef FEAT_WIN_SHORTNAME
+    xfree(sbuf);
+#endif
   }
 
   xfree(buf);
@@ -1765,6 +1804,9 @@ char *fix_fname(const char *fname)
 # ifdef BACKSLASH_IN_FILENAME
       || strstr(fname, "\\\\") != NULL
 # endif
+# ifdef WIN32
+      || vim_strchr((char_u *)fname, '~') != NULL
+#endif
       )
     return FullName_save(fname, false);
 
@@ -2265,7 +2307,15 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len,
     }
   }
   xfree(relative_directory);
+#ifndef FEAT_WIN_SHORTNAME
   return append_path((char *)buf, end_of_path, len);
+#else
+  if (append_path((char *)buf, end_of_path, len) == OK
+      && path_to_long((char *)buf, (char *)buf, len)) {
+    return OK;
+  }
+  return FAIL;
+#endif
 }
 
 /// Check if file `fname` is a full (absolute) path.

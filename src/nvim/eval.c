@@ -64,6 +64,9 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#ifdef FEAT_WIN_SHORTNAME
+# include "nvim/os/path_win.h"
+#endif
 #include "nvim/popupmnu.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
@@ -24118,6 +24121,10 @@ modify_fname(
   char_u dirname[MAXPATHL];
   int c;
   int has_fullname = 0;
+#ifdef FEAT_WIN_SHORTNAME
+  char_u *fname_start = *fnamep;
+  bool has_shortname = false;
+#endif
 
 repeat:
   /* ":p" - full path/file_name */
@@ -24166,6 +24173,18 @@ repeat:
         return -1;
     }
 
+#ifdef FEAT_WIN_SHORTNAME
+    if (vim_strchr(*fnamep, '~') != NULL) {
+      // Expand 8.3 filename to full path.  Needed to make sure the same
+      // file does not have two different names.
+      char_u *lfname = (char_u *)path_to_long_save((char *)(*fnamep));
+      if (lfname != NULL) {
+          xfree(*bufp);  // free any allocated file name
+          *bufp = *fnamep = lfname;
+      }
+    }
+#endif
+
     /* Append a path separator to a directory. */
     if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
@@ -24178,13 +24197,16 @@ repeat:
     }
   }
 
-  /* ":." - path relative to the current directory */
-  /* ":~" - path relative to the home directory */
-  /* ":8" - shortname path - postponed till after */
+  // ":." - path relative to the current directory
+  // ":~" - path relative to the home directory
+  // ":8" - shortname path - postponed till after
   while (src[*usedlen] == ':'
          && ((c = src[*usedlen + 1]) == '.' || c == '~' || c == '8')) {
     *usedlen += 2;
     if (c == '8') {
+#ifdef FEAT_WIN_SHORTNAME
+      has_shortname = true;  // Postpone this.
+#endif
       continue;
     }
     pbuf = NULL;
@@ -24253,8 +24275,49 @@ repeat:
   /* ":8" - shortname  */
   if (src[*usedlen] == ':' && src[*usedlen + 1] == '8') {
     *usedlen += 2;
+#ifdef FEAT_WIN_SHORTNAME
+    has_shortname = true;
+#endif
   }
 
+#ifdef FEAT_WIN_SHORTNAME
+  //  Handle ":8" after we have done 'heads' and before we do 'tails'.
+  if (has_shortname) {
+    // Copy the string if it is shortened by :h and when it wasn't copied
+    // yet, because we are going to change it in place.  Avoids changing
+    // the buffer name for "%:8".
+    if (*fnamelen < STRLEN(*fnamep) || *fnamep == fname_start) {
+      p = vim_strnsave(*fnamep, *fnamelen);
+      xfree(*bufp);
+      *bufp = *fnamep = p;
+    }
+
+    // Split into two implementations - makes it easier.  First is where
+    // there isn't a full name already, second is where there is.
+    if (!has_fullname && !path_is_absolute(*fnamep)) {
+      if (!path_short_for_partial((char **)fnamep, (char **)bufp, *fnamelen)) {
+        return -1;
+      }
+    } else {
+      if (os_path_exists(*fnamep)) {
+        // Simple case, already have the full-name.
+        char_u *sfname = (char_u *)path_to_short_save((char *)(*fnamep));
+        if (sfname == NULL) {
+          return -1;
+        }
+        xfree(*bufp);
+        *fnamep = *bufp = sfname;
+      } else {
+        // Couldn't find the filename, search the paths.
+        if (!path_short_for_invalid_fname((char **)fnamep,
+                                          (char **)bufp, *fnamelen)) {
+          return -1;
+        }
+      }
+    }
+    *fnamelen = STRLEN(*bufp);
+  }
+#endif
 
   /* ":t" - tail, just the basename */
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 't') {

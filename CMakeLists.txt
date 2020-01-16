@@ -437,6 +437,12 @@ find_package(LIBVTERM 0.1 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 if(WIN32)
+  option(FEAT_WIN_SHORTNAME "Enable the DOS short filename handling" ON)
+else()
+  option(FEAT_WIN_SHORTNAME "Enable the DOS short filename handling" OFF)
+endif()
+
+if(WIN32)
   find_package(Winpty 0.4.3 REQUIRED)
   include_directories(SYSTEM ${WINPTY_INCLUDE_DIRS})
 endif()
