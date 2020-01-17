@@ -76,6 +76,9 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#ifdef WIN32
+# include "nvim/os/pty_conpty_win.h"
+#endif
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"

@@ -11,6 +11,10 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
+#ifdef WIN32
+# include "nvim/os/pty_conpty_win.h"
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/path.h"
 #include "nvim/ascii.h"
 
@@ -469,8 +473,20 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 
   Channel *channel = channel_alloc(kChannelStreamStdio);
 
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, 0, 0);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, 1, 0);
+  int stdin_dup_fd = STDIN_FILENO;
+  int stdout_dup_fd = STDOUT_FILENO;
+#ifdef WIN32
+  // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
+  // stdin and stdout with CONIN$ and CONOUT$, respectively.
+  if (embedded_mode && os_has_conpty_working()) {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+    os_replace_stdin_to_conin();
+    stdout_dup_fd = os_dup(STDOUT_FILENO);
+    os_replace_stdout_and_stderr_to_conout();
+  }
+#endif
+  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
+  wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
 
   if (rpc) {
     rpc_start(channel);
