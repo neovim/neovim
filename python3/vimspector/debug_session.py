@@ -406,6 +406,26 @@ class DebugSession( object ):
   def GetOutputBuffers( self ):
     return self._outputView.GetCategories()
 
+  def GetCompletionsSync( self, text_line, column_in_bytes ):
+    if not self._server_capabilities.get( 'supportsCompletionsRequest' ):
+      return []
+
+    response = self._connection.DoRequestSync( {
+      'command': 'completions',
+      'arguments': {
+        'frameId': self._stackTraceView.GetCurrentFrame()[ 'id' ],
+        # TODO: encoding ? bytes/codepoints
+        'text': text_line,
+        'column': column_in_bytes
+      }
+    } )
+    # TODO:
+    #  - start / length
+    #  - sortText
+    return [ i.get( 'text' ) or i[ 'label' ]
+             for i in response[ 'body' ][ 'targets' ] ]
+
+
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage

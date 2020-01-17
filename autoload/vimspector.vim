@@ -121,7 +121,10 @@ function! vimspector#CompleteOutput( ArgLead, CmdLine, CursorPos ) abort
 endfunction
 
 function! vimspector#CompleteExpr( ArgLead, CmdLine, CursorPos ) abort
-  return []
+  return join( py3eval( '_vimspector_session.GetCompletionsSync( '
+                      \.'  vim.eval( "a:CmdLine" ),'
+                      \.'  int( vim.eval( "a:CursorPos" ) ) )' ),
+             \ "\n" )
 endfunction
 
 " Boilerplate {{{

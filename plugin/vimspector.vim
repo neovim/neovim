@@ -71,13 +71,13 @@ elseif s:mappings ==# 'HUMAN'
   nmap <F12>        <Plug>VimspectorStepOut
 endif
 
-command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
+command! -bar -nargs=1 -complete=custom,vimspector#CompleteExpr
       \ VimspectorWatch
       \ call vimspector#AddWatch( <f-args> )
 command! -bar -nargs=1 -complete=custom,vimspector#CompleteOutput
       \ VimspectorShowOutput
       \ call vimspector#ShowOutput( <f-args> )
-command! -bar -nargs=1 -complete=customlist,vimspector#CompleteExpr
+command! -bar -nargs=1 -complete=custom,vimspector#CompleteExpr
       \ VimspectorEval
       \ call vimspector#Evaluate( <f-args> )
 command! -bar
