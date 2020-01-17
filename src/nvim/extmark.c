@@ -756,17 +756,18 @@ VirtText *extmark_find_virttext(buf_T *buf, int row, uint64_t ns_id)
   return NULL;
 }
 
-
+// TODO: use decoration_state prefix
 bool extmark_decorations_reset(buf_T *buf, DecorationState *state)
 {
   state->row = -1;
-  return buf->b_extmark_index;
+  kv_size(state->active) = 0;
+  // TODO: for tmp decorations!
+  return buf->b_extmark_index || true;
 }
 
 
 bool extmark_decorations_start(buf_T *buf, int top_row, DecorationState *state)
 {
-  kv_size(state->active) = 0;
   state->top_row = top_row;
   marktree_itr_get(buf->b_marktree, top_row, 0, state->itr);
   if (!state->itr->node) {
