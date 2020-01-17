@@ -207,9 +207,37 @@ GADGETS = {
              'download/${version}/${file_name}',
     },
     'all': {
-      'file_name': 'bash-debug-0.3.5.vsix',
-      'version': 'v0.3.5',
+      'file_name': 'bash-debug-0.3.6.vsix',
+      'version': 'v0.3.6',
       'checksum': '',
+    },
+    'do': lambda name, root: InstallBashDebug( name, root ),
+    'adapters': {
+      "vscode-bash": {
+        "name": "bashdb",
+        "command": [
+          "node",
+          "${gadgetDir}/vscode-bash-debug/out/bashDebug.js"
+        ],
+        "variables": {
+          "BASHDB_HOME": "${gadgetDir}/vscode-bash-debug/bashdb_dir"
+        },
+        "configuration": {
+          "request": "launch",
+          "type": "bashdb",
+          "program": "${file}",
+          "args": [],
+          "env": {},
+          "pathBash": "bash",
+          "pathBashdb": "${BASHDB_HOME}/bashdb",
+          "pathBashdbLib": "${BASHDB_HOME}",
+          "pathCat": "cat",
+          "pathMkfifo": "mkfifo",
+          "pathPkill": "pkill",
+          "cwd": "${workspaceRoot}",
+          "terminalKind": "integrated",
+        }
+      }
     }
   },
   'vscode-go': {
@@ -315,6 +343,11 @@ def InstallCppTools( name, root ):
         if os.path.exists( file_path ):
           MakeExecutable( os.path.join( extension, binary ) )
 
+  MakeExtensionSymlink( name, root )
+
+
+def InstallBashDebug( name, root ):
+  MakeExecutable( os.path.join( root, 'extension', 'bashdb_dir', 'bashdb' ) )
   MakeExtensionSymlink( name, root )
 
 
