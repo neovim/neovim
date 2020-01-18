@@ -22,10 +22,13 @@ typedef kvec_t(ExtmarkInfo) ExtmarkArray;
 typedef struct {
   int start_row;
   colnr_T start_col;
-  int oldextent_row;
-  colnr_T oldextent_col;
-  int newextent_row;
-  colnr_T newextent_col;
+  int old_row;
+  colnr_T old_col;
+  int new_row;
+  colnr_T new_col;
+  size_t start_byte;
+  size_t old_byte;
+  size_t new_byte;
 } ExtmarkSplice;
 
 // adjust marks after :move operation

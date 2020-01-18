@@ -430,15 +430,15 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
     if (undo) {
       extmark_splice(curbuf,
                      splice.start_row, splice.start_col,
-                     splice.newextent_row, splice.newextent_col,
-                     splice.oldextent_row, splice.oldextent_col,
+                     splice.new_row, splice.new_col,
+                     splice.old_row, splice.old_col,
                      kExtmarkNoUndo);
 
     } else {
       extmark_splice(curbuf,
                      splice.start_row, splice.start_col,
-                     splice.oldextent_row, splice.oldextent_col,
-                     splice.newextent_row, splice.newextent_col,
+                     splice.old_row, splice.old_col,
+                     splice.new_row, splice.new_col,
                      kExtmarkNoUndo);
     }
   // kExtmarkSavePos
@@ -504,29 +504,29 @@ void extmark_adjust(buf_T *buf,
 
 void extmark_splice(buf_T *buf,
                     int start_row, colnr_T start_col,
-                    int oldextent_row, colnr_T oldextent_col,
-                    int newextent_row, colnr_T newextent_col,
+                    int old_row, colnr_T old_col,
+                    int new_row, colnr_T new_col,
                     ExtmarkOp undo)
 {
   buf_updates_send_splice(buf, start_row, start_col,
-                          oldextent_row, oldextent_col,
-                          newextent_row, newextent_col);
+                          old_row, old_col,
+                          new_row, new_col);
 
-  if (undo == kExtmarkUndo && (oldextent_row > 0 || oldextent_col > 0)) {
+  if (undo == kExtmarkUndo && (old_row > 0 || old_col > 0)) {
     // Copy marks that would be effected by delete
     // TODO(bfredl): Be "smart" about gravity here, left-gravity at the
     // beginning and right-gravity at the end need not be preserved.
     // Also be smart about marks that already have been saved (important for
     // merge!)
-    int end_row = start_row + oldextent_row;
-    int end_col = (oldextent_row ? 0 : start_col) + oldextent_col;
+    int end_row = start_row + old_row;
+    int end_col = (old_row ? 0 : start_col) + old_col;
     u_extmark_copy(buf, start_row, start_col, end_row, end_col);
   }
 
 
   marktree_splice(buf->b_marktree, start_row, start_col,
-                  oldextent_row, oldextent_col,
-                  newextent_row, newextent_col);
+                  old_row, old_col,
+                  new_row, new_col);
 
   if (undo == kExtmarkUndo) {
     u_header_T  *uhp = u_force_get_undo_header(buf);
@@ -538,25 +538,25 @@ void extmark_splice(buf_T *buf,
     // TODO(bfredl): this is quite rudimentary. We merge small (within line)
     // inserts with each other and small deletes with each other. Add full
     // merge algorithm later.
-    if (oldextent_row == 0 && newextent_row == 0 && kv_size(uhp->uh_extmark))  {
+    if (old_row == 0 && new_row == 0 && kv_size(uhp->uh_extmark))  {
       ExtmarkUndoObject *item = &kv_A(uhp->uh_extmark,
                                       kv_size(uhp->uh_extmark)-1);
       if (item->type == kExtmarkSplice) {
         ExtmarkSplice *splice = &item->data.splice;
-        if (splice->start_row == start_row && splice->oldextent_row == 0
-            && splice->newextent_row == 0) {
-          if (oldextent_col == 0 && start_col >= splice->start_col
-              && start_col <= splice->start_col+splice->newextent_col) {
-            splice->newextent_col += newextent_col;
+        if (splice->start_row == start_row && splice->old_row == 0
+            && splice->new_row == 0) {
+          if (old_col == 0 && start_col >= splice->start_col
+              && start_col <= splice->start_col+splice->new_col) {
+            splice->new_col += new_col;
             merged = true;
-          } else if (newextent_col == 0
-                     && start_col == splice->start_col+splice->newextent_col) {
-            splice->oldextent_col += oldextent_col;
+          } else if (new_col == 0
+                     && start_col == splice->start_col+splice->new_col) {
+            splice->old_col += old_col;
             merged = true;
-          } else if (newextent_col == 0
-                     && start_col + oldextent_col == splice->start_col) {
+          } else if (new_col == 0
+                     && start_col + old_col == splice->start_col) {
             splice->start_col = start_col;
-            splice->oldextent_col += oldextent_col;
+            splice->old_col += old_col;
             merged = true;
           }
         }
@@ -567,10 +567,10 @@ void extmark_splice(buf_T *buf,
       ExtmarkSplice splice;
       splice.start_row = start_row;
       splice.start_col = start_col;
-      splice.oldextent_row = oldextent_row;
-      splice.oldextent_col = oldextent_col;
-      splice.newextent_row = newextent_row;
-      splice.newextent_col = newextent_col;
+      splice.old_row = old_row;
+      splice.old_col = old_col;
+      splice.new_row = new_row;
+      splice.new_col = new_col;
 
       kv_push(uhp->uh_extmark,
               ((ExtmarkUndoObject){ .type = kExtmarkSplice,
@@ -581,10 +581,10 @@ void extmark_splice(buf_T *buf,
 
 void extmark_splice_cols(buf_T *buf,
                          int start_row, colnr_T start_col,
-                         colnr_T oldextent, colnr_T newextent,
+                         colnr_T old_col, colnr_T new_col,
                          ExtmarkOp undo)
 {
-  extmark_splice(buf, start_row, start_col, 0, oldextent, 0, newextent, undo);
+  extmark_splice(buf, start_row, start_col, 0, old_col, 0, new_col, undo);
 }
 
 void extmark_move_region(buf_T *buf,
