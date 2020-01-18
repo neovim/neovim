@@ -20,6 +20,7 @@ before_each(function()
 end)
 
 describe('perl host', function()
+  if helpers.pending_win32(pending) then return end
   teardown(function ()
     os.remove('Xtest-perl-hello.pl')
     os.remove('Xtest-perl-hello-plugin.pl')
