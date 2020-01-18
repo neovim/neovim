@@ -3,11 +3,9 @@
 
 #include <inttypes.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
-#include <limits.h>
 
 #include "nvim/types.h"
 #include "nvim/hashtab.h"
@@ -162,19 +160,20 @@ struct listwatch_S {
 };
 
 /// Structure to hold info about a list
+/// Order of members is optimized to reduce padding.
 struct listvar_S {
   listitem_T *lv_first;  ///< First item, NULL if none.
   listitem_T *lv_last;  ///< Last item, NULL if none.
-  int lv_refcount;  ///< Reference count.
-  int lv_len;  ///< Number of items.
   listwatch_T *lv_watch;  ///< First watcher, NULL if none.
-  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
   listitem_T *lv_idx_item;  ///< When not NULL item at index "lv_idx".
-  int lv_copyID;  ///< ID used by deepcopy().
   list_T *lv_copylist;  ///< Copied list used by deepcopy().
-  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
   list_T *lv_used_next;  ///< next list in used lists list.
   list_T *lv_used_prev;  ///< Previous list in used lists list.
+  int lv_refcount;  ///< Reference count.
+  int lv_len;  ///< Number of items.
+  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
+  int lv_copyID;  ///< ID used by deepcopy().
+  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
 };
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.
@@ -247,6 +246,18 @@ typedef int scid_T;
 /// Format argument for scid_T
 #define PRIdSCID "d"
 
+// SCript ConteXt (SCTX): identifies a script line.
+// When sourcing a script "sc_lnum" is zero, "sourcing_lnum" is the current
+// line number. When executing a user function "sc_lnum" is the line where the
+// function was defined, "sourcing_lnum" is the line number inside the
+// function.  When stored with a function, mapping, option, etc. "sc_lnum" is
+// the line number in the script "sc_sid".
+typedef struct {
+  scid_T sc_sid;     // script ID
+  int sc_seq;        // sourcing sequence number
+  linenr_T sc_lnum;  // line number
+} sctx_T;
+
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
 
@@ -259,6 +270,7 @@ struct ufunc {
   garray_T     uf_args;          ///< arguments
   garray_T     uf_lines;         ///< function lines
   int          uf_profiling;     ///< true when func is being profiled
+  int          uf_prof_initialized;
   // Profiling the function as a whole.
   int          uf_tm_count;      ///< nr of calls
   proftime_T   uf_tm_total;      ///< time spent in function + children
@@ -273,7 +285,7 @@ struct ufunc {
   proftime_T   uf_tml_wait;      ///< start wait time for current line
   int          uf_tml_idx;       ///< index of line being timed; -1 if none
   int          uf_tml_execed;    ///< line being timed was executed
-  scid_T       uf_script_ID;     ///< ID of script where function was defined,
+  sctx_T       uf_script_ctx;    ///< SCTX where function was defined,
                                  ///< used for s: variables
   int          uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T   *uf_scoped;       ///< l: local variables for closure
@@ -413,17 +425,34 @@ static inline void list_log(const list_T *const l,
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
+static inline void tv_list_ref(list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE;
+
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
 ///
-/// @param[in]  l  List to modify.
+/// @param[in,out]  l  List to modify.
 static inline void tv_list_ref(list_T *const l)
 {
   if (l == NULL) {
     return;
   }
   l->lv_refcount++;
+}
+
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a list as the return value
+///
+/// @param[out]  tv  Object to receive the list
+/// @param[in,out]  l  List to pass to the object
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+{
+  tv->v_type = VAR_LIST;
+  tv->vval.v_list = l;
+  tv_list_ref(l);
 }
 
 static inline VarLockStatus tv_list_locked(const list_T *const l)
@@ -586,6 +615,22 @@ static inline listitem_T *tv_list_last(const list_T *const l)
   }
   list_log(l, l->lv_last, NULL, "last");
   return l->lv_last;
+}
+
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a dictionary as the return value
+///
+/// @param[out]  tv  Object to receive the dictionary
+/// @param[in,out]  d  Dictionary to pass to the object
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+{
+  tv->v_type = VAR_DICT;
+  tv->vval.v_dict = d;
+  if (d != NULL) {
+    d->dv_refcount++;
+  }
 }
 
 static inline long tv_dict_len(const dict_T *const d)
@@ -753,7 +798,7 @@ static inline bool tv_get_float_chk(const typval_T *const tv,
     *ret_f = (float_T)tv->vval.v_number;
     return true;
   }
-  emsgf(_("E808: Number or Float required"));
+  emsgf("%s", _("E808: Number or Float required"));
   return false;
 }
 

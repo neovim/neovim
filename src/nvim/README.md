@@ -23,14 +23,18 @@ Logs
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-You can use `LOG_CALLSTACK();` anywhere in the source to log the current
-stacktrace. To log in an alternate file, e.g. stderr, use
-`LOG_CALLSTACK_TO_FILE(FILE*)`. (Currently Linux-only.)
+Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
+alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`.
 
-UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
+UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
     make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+
+Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
+filter the log, e.g. at DEBUG level you might want to exclude UI messages:
+
+    tail -F ~/.local/share/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
 
 Build with ASAN
 ---------------
@@ -40,28 +44,32 @@ Behavior Sanitizer: UBSan, Memory Sanitizer: MSan, Thread Sanitizer: TSan) is
 a good way to catch undefined behavior, leaks and other errors as soon as they
 happen.  It's significantly faster than Valgrind.
 
-Requires clang 3.4 or later:
+Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
 
     clang --version
 
-Build Nvim with sanitizer instrumentation:
+Build Nvim with sanitizer instrumentation (choose one):
 
     CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_MSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_TSAN=ON"
 
 Create a directory to store logs:
 
     mkdir -p "$HOME/logs"
 
-Enable the sanitizer(s) via these environment variables:
+Configure the sanitizer(s) via these environment variables:
 
     # Change to detect_leaks=1 to detect memory leaks (slower).
     export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
-    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
+    # Show backtraces in the logs.
+    export UBSAN_OPTIONS=print_stacktrace=1
+    export MSAN_OPTIONS="log_path=${HOME}/logs/tsan"
+    export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
 
-    export MSAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
-    export TSAN_OPTIONS="external_symbolizer_path=/usr/lib/llvm-5.0/bin/llvm-symbolizer log_path=${HOME}/logs/tsan"
+Logs will be written to `${HOME}/logs/*san.PID` then.
 
-Logs will be written to `${HOME}/logs/*san.PID`.
+For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
 
 TUI debugging
 -------------
@@ -276,3 +284,25 @@ Since Nvim inherited its code from Vim, the states are not prepared to receive
 "arbitrary events", so we use a special key to represent those (When a state
 receives an "arbitrary event", it normally doesn't do anything other update the
 screen).
+
+Main loop
+---------
+
+The `Loop` structure (which describes `main_loop`) abstracts multiple queues
+into one loop:
+
+    uv_loop_t uv;
+    MultiQueue *events;
+    MultiQueue *thread_events;
+    MultiQueue *fast_events;
+
+`loop_poll_events` checks `Loop.uv` and `Loop.fast_events` whenever Nvim is
+idle, and also at `os_breakcheck` intervals.
+
+MultiQueue is cool because you can attach throw-away "child queues" trivially.
+For example `do_os_system()` does this (for every spawned process!) to
+automatically route events onto the `main_loop`:
+
+    Process *proc = &uvproc.process;
+    MultiQueue *events = multiqueue_new_child(main_loop.events);
+    proc->events = events;

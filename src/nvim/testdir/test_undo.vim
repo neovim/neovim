@@ -4,28 +4,88 @@
 " Also tests :earlier and :later.
 
 func Test_undotree()
-  exe "normal Aabc\<Esc>"
+  new
+
+  normal! Aabc
   set ul=100
-  exe "normal Adef\<Esc>"
-  set ul=100
-  undo
   let d = undotree()
-  call assert_true(d.seq_last > 0)
-  call assert_true(d.seq_cur > 0)
-  call assert_true(d.seq_cur < d.seq_last)
-  call assert_true(len(d.entries) > 0)
-  " TODO: check more members of d
+  call assert_equal(1, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(1, len(d.entries))
+  call assert_equal(1, d.entries[0].newhead)
+  call assert_equal(1, d.entries[0].seq)
+  call assert_true(d.entries[0].time <= d.time_cur)
+
+  normal! Adef
+  set ul=100
+  let d = undotree()
+  call assert_equal(2, d.seq_last)
+  call assert_equal(2, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(2, d.entries[1].seq)
+  call assert_true(d.entries[1].time <= d.time_cur)
+
+  undo
+  set ul=100
+  let d = undotree()
+  call assert_equal(2, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(1, d.entries[1].curhead)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(2, d.entries[1].seq)
+  call assert_true(d.entries[1].time == d.time_cur)
+
+  normal! Aghi
+  set ul=100
+  let d = undotree()
+  call assert_equal(3, d.seq_last)
+  call assert_equal(3, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(2, d.entries[1].alt[0].seq)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(3, d.entries[1].seq)
+  call assert_true(d.entries[1].time <= d.time_cur)
+
+  undo
+  set ul=100
+  let d = undotree()
+  call assert_equal(3, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(2, d.entries[1].alt[0].seq)
+  call assert_equal(1, d.entries[1].curhead)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(3, d.entries[1].seq)
+  call assert_true(d.entries[1].time == d.time_cur)
 
   w! Xtest
-  call assert_equal(d.save_last + 1, undotree().save_last)
+  let d = undotree()
+  call assert_equal(1, d.save_cur)
+  call assert_equal(1, d.save_last)
   call delete('Xtest')
-  bwipe Xtest
+  bwipe! Xtest
 endfunc
 
 func FillBuffer()
   for i in range(1,13)
     put=i
-    " Set 'undolevels' to split undo. 
+    " Set 'undolevels' to split undo.
     exe "setg ul=" . &g:ul
   endfor
 endfunc
@@ -135,19 +195,19 @@ func Test_undolist()
   new
   set ul=100
 
-  let a=execute('undolist')
+  let a = execute('undolist')
   call assert_equal("\nNothing to undo", a)
 
   " 1 leaf (2 changes).
   call feedkeys('achange1', 'xt')
   call feedkeys('achange2', 'xt')
-  let a=execute('undolist')
+  let a = execute('undolist')
   call assert_match("^\nnumber changes  when  *saved\n *2  *2 .*$", a)
 
   " 2 leaves.
   call feedkeys('u', 'xt')
   call feedkeys('achange3\<Esc>', 'xt')
-  let a=execute('undolist')
+  let a = execute('undolist')
   call assert_match("^\nnumber changes  when  *saved\n *2  *2  *.*\n *3  *2 .*$", a)
   close!
 endfunc
@@ -178,10 +238,41 @@ func Test_undojoin()
   call assert_equal(['aaaa', 'bbbb', 'cccc'], getline(2, '$'))
   call feedkeys("u", 'xt')
   call assert_equal(['aaaa'], getline(2, '$'))
-  close!
+  bwipe!
+endfunc
+
+func Test_undojoin_redo()
+  new
+  call setline(1, ['first line', 'second line'])
+  call feedkeys("ixx\<Esc>", 'xt')
+  call feedkeys(":undojoin | redo\<CR>", 'xt')
+  call assert_equal('xxfirst line', getline(1))
+  call assert_equal('second line', getline(2))
+  bwipe!
+endfunc
+
+" undojoin not allowed after undo
+func Test_undojoin_after_undo()
+  new
+  call feedkeys("ixx\<Esc>u", 'xt')
+  call assert_fails(':undojoin', 'E790:')
+  bwipe!
+endfunc
+
+" undojoin is a noop when no change yet, or when 'undolevels' is negative
+func Test_undojoin_noop()
+  new
+  call feedkeys(":undojoin\<CR>", 'xt')
+  call assert_equal([''], getline(1, '$'))
+  setlocal undolevels=-1
+  call feedkeys("ixx\<Esc>u", 'xt')
+  call feedkeys(":undojoin\<CR>", 'xt')
+  call assert_equal(['xx'], getline(1, '$'))
+  bwipe!
 endfunc
 
 func Test_undo_write()
+  call delete('Xtest')
   split Xtest
   call feedkeys("ione one one\<Esc>", 'xt')
   w!
@@ -266,11 +357,27 @@ func Test_undofile_earlier()
   call delete('Xundofile')
 endfunc
 
+func Test_wundo_errors()
+  new
+  call setline(1, 'hello')
+  call assert_fails('wundo! Xdoesnotexist/Xundofile', 'E828:')
+  bwipe!
+endfunc
+
+func Test_rundo_errors()
+  call assert_fails('rundo XfileDoesNotExist', 'E822:')
+
+  call writefile(['abc'], 'Xundofile')
+  call assert_fails('rundo Xundofile', 'E823:')
+
+  call delete('Xundofile')
+endfunc
+
 " Test for undo working properly when executing commands from a register.
 " Also test this in an empty buffer.
 func Test_cmd_in_reg_undo()
   enew!
-  let @a="Ox\<Esc>jAy\<Esc>kdd"
+  let @a = "Ox\<Esc>jAy\<Esc>kdd"
   edit +/^$ test_undo.vim
   normal @au
   call assert_equal(0, &modified)
@@ -279,7 +386,25 @@ func Test_cmd_in_reg_undo()
   normal @au
   call assert_equal(0, &modified)
   only!
-  let @a=''
+  let @a = ''
+endfunc
+
+" undo or redo are noop if there is nothing to undo or redo
+func Test_undo_redo_noop()
+  new
+  call assert_fails('undo 2', 'E830:')
+
+  message clear
+  undo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at oldest change', messages[-1])
+
+  message clear
+  redo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at newest change', messages[-1])
+
+  bwipe!
 endfunc
 
 func Test_redo_empty_line()
@@ -288,3 +413,284 @@ func Test_redo_empty_line()
   exe "norm."
   bwipe!
 endfunc
+
+" This used to cause an illegal memory access
+func Test_undo_append()
+  new
+  call feedkeys("axx\<Esc>v", 'xt')
+  undo
+  norm o
+  quit
+endfunc
+
+funct Test_undofile()
+  " Test undofile() without setting 'undodir'.
+  if has('persistent_undo')
+    call assert_equal(fnamemodify('.Xundofoo.un~', ':p'), undofile('Xundofoo'))
+  else
+    call assert_equal('', undofile('Xundofoo'))
+  endif
+  call assert_equal('', undofile(''))
+
+  " Test undofile() with 'undodir' set to to an existing directory.
+  call mkdir('Xundodir')
+  set undodir=Xundodir
+  let cwd = getcwd()
+  if has('win32')
+    " Replace windows drive such as C:... into C%...
+    let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
+  endif
+  let cwd = substitute(cwd . '/Xundofoo', '/', '%', 'g')
+  if has('persistent_undo')
+    call assert_equal('Xundodir/' . cwd, undofile('Xundofoo'))
+  else
+    call assert_equal('', undofile('Xundofoo'))
+  endif
+  call assert_equal('', undofile(''))
+  call delete('Xundodir', 'd')
+
+  " Test undofile() with 'undodir' set to a non-existing directory.
+  " call assert_equal('', undofile('Xundofoo'))
+
+  if isdirectory('/tmp')
+    set undodir=/tmp
+    if has('osx')
+      call assert_equal('/tmp/%private%tmp%file', undofile('///tmp/file'))
+    else
+      call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+    endif
+  endif
+
+  set undodir&
+endfunc
+
+func Test_undo_0()
+  new
+  set ul=100
+  normal i1
+  undo
+  normal i2
+  undo
+  normal i3
+
+  undo 0
+  let d = undotree()
+  call assert_equal('', getline(1))
+  call assert_equal(0, d.seq_cur)
+
+  redo
+  let d = undotree()
+  call assert_equal('3', getline(1))
+  call assert_equal(3, d.seq_cur)
+
+  undo 2
+  undo 0
+  let d = undotree()
+  call assert_equal('', getline(1))
+  call assert_equal(0, d.seq_cur)
+
+  redo
+  let d = undotree()
+  call assert_equal('2', getline(1))
+  call assert_equal(2, d.seq_cur)
+
+  undo 1
+  undo 0
+  let d = undotree()
+  call assert_equal('', getline(1))
+  call assert_equal(0, d.seq_cur)
+
+  redo
+  let d = undotree()
+  call assert_equal('1', getline(1))
+  call assert_equal(1, d.seq_cur)
+
+  bwipe!
+endfunc
+
+" Tests for the undo file
+" Explicitly break changes up in undo-able pieces by setting 'undolevels'.
+func Test_undofile_2()
+  set undolevels=100 undofile
+  edit Xtestfile
+  call append(0, 'this is one line')
+  call cursor(1, 1)
+
+  " first a simple one-line change.
+  set undolevels=100
+  s/one/ONE/
+  set undolevels=100
+  write
+  bwipe!
+  edit Xtestfile
+  undo
+  call assert_equal('this is one line', getline(1))
+
+  " change in original file fails check
+  set noundofile
+  edit! Xtestfile
+  s/line/Line/
+  write
+  set undofile
+  bwipe!
+  edit Xtestfile
+  undo
+  call assert_equal('this is ONE Line', getline(1))
+
+  " add 10 lines, delete 6 lines, undo 3
+  set undofile
+  call setbufline(0, 1, ['one', 'two', 'three', 'four', 'five', 'six',
+	      \ 'seven', 'eight', 'nine', 'ten'])
+  set undolevels=100
+  normal 3Gdd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  write
+  bwipe!
+  edit Xtestfile
+  normal uuu
+  call assert_equal(['one', 'two', 'six', 'seven', 'eight', 'nine', 'ten'],
+	      \ getline(1, '$'))
+
+  " Test that reading the undofiles when setting undofile works
+  set noundofile undolevels=0
+  exe "normal i\n"
+  undo
+  edit! Xtestfile
+  set undofile undolevels=100
+  normal uuuuuu
+  call assert_equal(['one', 'two', 'three', 'four', 'five', 'six', 'seven',
+	      \ 'eight', 'nine', 'ten'], getline(1, '$'))
+
+  bwipe!
+  call delete('Xtestfile')
+  let ufile = has('vms') ? '_un_Xtestfile' : '.Xtestfile.un~'
+  call delete(ufile)
+  set undofile& undolevels&
+endfunc
+
+" Test 'undofile' using a file encrypted with 'zip' crypt method
+func Test_undofile_cryptmethod_zip()
+  throw 'skipped: Nvim does not support cryptmethod'
+  edit Xtestfile
+  set undofile cryptmethod=zip
+  call append(0, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'])
+  call cursor(5, 1)
+
+  set undolevels=100
+  normal kkkdd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  " encrypt the file using key 'foobar'
+  call feedkeys("foobar\nfoobar\n")
+  X
+  write!
+  bwipe!
+
+  call feedkeys("foobar\n")
+  edit Xtestfile
+  set key=
+  normal uu
+  call assert_equal(['monday', 'wednesday', 'thursday', 'friday', ''],
+                    \ getline(1, '$'))
+
+  bwipe!
+  call delete('Xtestfile')
+  let ufile = has('vms') ? '_un_Xtestfile' : '.Xtestfile.un~'
+  call delete(ufile)
+  set undofile& undolevels& cryptmethod&
+endfunc
+
+" Test 'undofile' using a file encrypted with 'blowfish' crypt method
+func Test_undofile_cryptmethod_blowfish()
+  throw 'skipped: Nvim does not support cryptmethod'
+  edit Xtestfile
+  set undofile cryptmethod=blowfish
+  call append(0, ['jan', 'feb', 'mar', 'apr', 'jun'])
+  call cursor(5, 1)
+
+  set undolevels=100
+  exe 'normal kk0ifoo '
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  exe 'normal ibar '
+  set undolevels=100
+  " encrypt the file using key 'foobar'
+  call feedkeys("foobar\nfoobar\n")
+  X
+  write!
+  bwipe!
+
+  call feedkeys("foobar\n")
+  edit Xtestfile
+  set key=
+  call search('bar')
+  call assert_equal('bar apr', getline('.'))
+  undo
+  call assert_equal('apr', getline('.'))
+  undo
+  call assert_equal('foo mar', getline('.'))
+  undo
+  call assert_equal('mar', getline('.'))
+
+  bwipe!
+  call delete('Xtestfile')
+  let ufile = has('vms') ? '_un_Xtestfile' : '.Xtestfile.un~'
+  call delete(ufile)
+  set undofile& undolevels& cryptmethod&
+endfunc
+
+" Test 'undofile' using a file encrypted with 'blowfish2' crypt method
+func Test_undofile_cryptmethod_blowfish2()
+  throw 'skipped: Nvim does not support cryptmethod'
+  edit Xtestfile
+  set undofile cryptmethod=blowfish2
+  call append(0, ['jan', 'feb', 'mar', 'apr', 'jun'])
+  call cursor(5, 1)
+
+  set undolevels=100
+  exe 'normal kk0ifoo '
+  set undolevels=100
+  normal dd
+  set undolevels=100
+  exe 'normal ibar '
+  set undolevels=100
+  " encrypt the file using key 'foo2bar'
+  call feedkeys("foo2bar\nfoo2bar\n")
+  X
+  write!
+  bwipe!
+
+  call feedkeys("foo2bar\n")
+  edit Xtestfile
+  set key=
+  call search('bar')
+  call assert_equal('bar apr', getline('.'))
+  normal u
+  call assert_equal('apr', getline('.'))
+  normal u
+  call assert_equal('foo mar', getline('.'))
+  normal u
+  call assert_equal('mar', getline('.'))
+
+  bwipe!
+  call delete('Xtestfile')
+  let ufile = has('vms') ? '_un_Xtestfile' : '.Xtestfile.un~'
+  call delete(ufile)
+  set undofile& undolevels& cryptmethod&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

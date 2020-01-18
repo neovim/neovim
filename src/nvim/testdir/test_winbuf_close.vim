@@ -122,3 +122,65 @@ func Test_winbuf_close()
   call delete('Xtest2')
   call delete('Xtest3')
 endfunc
+
+" Test that ":close" will respect 'winfixheight' when possible.
+func Test_winfixheight_on_close()
+  set nosplitbelow nosplitright
+
+  split | split | vsplit
+
+  $wincmd w
+  setlocal winfixheight
+  let l:height = winheight(0)
+
+  3close
+
+  call assert_equal(l:height, winheight(0))
+
+  %bwipeout!
+  setlocal nowinfixheight splitbelow& splitright&
+endfunc
+
+" Test that ":close" will respect 'winfixwidth' when possible.
+func Test_winfixwidth_on_close()
+  set nosplitbelow nosplitright
+
+  vsplit | vsplit | split
+
+  $wincmd w
+  setlocal winfixwidth
+  let l:width = winwidth(0)
+
+  3close
+
+  call assert_equal(l:width, winwidth(0))
+
+  %bwipeout!
+  setlocal nowinfixwidth splitbelow& splitright&
+endfunction
+
+" Test that 'winfixheight' will be respected even there is non-leaf frame
+fun! Test_winfixheight_non_leaf_frame()
+  vsplit
+  botright 11new
+  let l:wid = win_getid()
+  setlocal winfixheight
+  call assert_equal(11, winheight(l:wid))
+  botright new
+  bwipe!
+  call assert_equal(11, winheight(l:wid))
+  %bwipe!
+endf
+
+" Test that 'winfixwidth' will be respected even there is non-leaf frame
+fun! Test_winfixwidth_non_leaf_frame()
+  split
+  topleft 11vnew
+  let l:wid = win_getid()
+  setlocal winfixwidth
+  call assert_equal(11, winwidth(l:wid))
+  topleft new
+  bwipe!
+  call assert_equal(11, winwidth(l:wid))
+  %bwipe!
+endf

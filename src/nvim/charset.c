@@ -14,7 +14,6 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/farsi.h"
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
@@ -30,7 +29,7 @@
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"
-
+#include "nvim/cursor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.c.generated.h"
@@ -112,12 +111,6 @@ int buf_init_chartab(buf_T *buf, int global)
       g_chartab[c++] = 1 + CT_PRINT_CHAR;
     }
 
-    if (p_altkeymap) {
-      while (c < YE) {
-        g_chartab[c++] = 1 + CT_PRINT_CHAR;
-      }
-    }
-
     while (c < 256) {
       if (c >= 0xa0) {
         // UTF-8: bytes 0xa0 - 0xff are printable (latin1)
@@ -173,7 +166,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int((char_u **)&p);
+        c = getdigits_int((char_u **)&p, true, 0);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -183,7 +176,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int((char_u **)&p);
+          c2 = getdigits_int((char_u **)&p, true, 0);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }
@@ -217,8 +210,7 @@ int buf_init_chartab(buf_T *buf, int global)
         // "C".
         if (!do_isalpha
             || mb_islower(c)
-            || mb_isupper(c)
-            || (p_altkeymap && (F_isalpha(c) || F_isdigit(c)))) {
+            || mb_isupper(c)) {
           if (i == 0) {
             // (re)set ID flag
             if (tilde) {
@@ -230,9 +222,7 @@ int buf_init_chartab(buf_T *buf, int global)
             // (re)set printable
             // For double-byte we keep the cell width, so
             // that we can detect it from the first byte.
-            if (((c < ' ')
-                 || (c > '~')
-                 || (p_altkeymap && (F_isalpha(c) || F_isdigit(c))))) {
+            if (((c < ' ') || (c > '~'))) {
               if (tilde) {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
                                          + ((dy_flags & DY_UHEX) ? 4 : 2));
@@ -331,14 +321,14 @@ size_t transstr_len(const char *const s)
   while (*p) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         len += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];
           len += transchar_hex(hexbuf, pcc[i]);
         }
       }
@@ -370,20 +360,20 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
   while (*p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      if (buf_p + l >= buf_e) {
-        break;
+      if (buf_p + l > buf_e) {
+        break;  // Exceeded `buf` size.
       }
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         memmove(buf_p, p, l);
         buf_p += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];  // <up to 6 bytes>NUL
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
-          if (buf_p + hexlen >= buf_e) {
+          if (buf_p + hexlen > buf_e) {
             break;
           }
           memmove(buf_p, hexbuf, hexlen);
@@ -394,6 +384,9 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
     } else {
       const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
+      if (buf_p + tb_len > buf_e) {
+        break;  // Exceeded `buf` size.
+      }
       memmove(buf_p, tb, tb_len);
       buf_p += tb_len;
     }
@@ -537,8 +530,7 @@ char_u *transchar(int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))
-                                || (p_altkeymap && F_ischar(c))))
+  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))))
       || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = (char_u)c;
@@ -746,8 +738,8 @@ int vim_strnsize(char_u *s, int len)
 ///
 /// @return Number of characters.
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
-  if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) { \
-    const int ts = (int) (buf)->b_p_ts; \
+  if (*(p) == TAB && (!(wp)->w_p_list || wp->w_p_lcs_chars.tab1)) { \
+    const int ts = (int)(buf)->b_p_ts; \
     return (ts - (int)(col % ts)); \
   } else { \
     return ptr2cells(p); \
@@ -804,7 +796,7 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 
   for (char_u *s = line;
        *s != NUL && (len == MAXCOL || s < line + len);
-       mb_ptr_adv(s)) {
+       MB_PTR_ADV(s)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
   }
 
@@ -826,7 +818,7 @@ bool vim_isIDc(int c)
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
 /// @param  c  character to check
-bool vim_iswordc(int c)
+bool vim_iswordc(const int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return vim_iswordc_buf(c, curbuf);
@@ -842,7 +834,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return (c >= 0x100
-          ? (utf_class(c) >= 2)
+          ? (utf_class_tab(c, chartab) >= 2)
           : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
 }
 
@@ -852,7 +844,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
 ///
 /// @param  c    character to check
 /// @param  buf  buffer whose keywords to use
-bool vim_iswordc_buf(int c, buf_T *buf)
+bool vim_iswordc_buf(const int c, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
   return vim_iswordc_tab(c, buf->b_chartab);
@@ -863,13 +855,10 @@ bool vim_iswordc_buf(int c, buf_T *buf)
 /// @param  p  pointer to the multi-byte character
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp(char_u *p)
+bool vim_iswordp(const char_u *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
-  }
-  return GET_CHARTAB(curbuf, *p) != 0;
+  return vim_iswordp_buf(p, curbuf);
 }
 
 /// Just like vim_iswordc_buf() but uses a pointer to the (multi-byte)
@@ -879,13 +868,15 @@ bool vim_iswordp(char_u *p)
 /// @param  buf  buffer whose keywords to use
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp_buf(char_u *p, buf_T *buf)
+bool vim_iswordp_buf(const char_u *const p, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
+  int c = *p;
+
+  if (MB_BYTE2LEN(c) > 1) {
+    c = utf_ptr2char(p);
   }
-  return GET_CHARTAB(buf, *p) != 0;
+  return vim_iswordc_buf(c, buf);
 }
 
 /// Check that "c" is a valid file-name character.
@@ -971,7 +962,7 @@ int lbr_chartabsize_adv(char_u *line, char_u **s, colnr_T col)
   int retval;
 
   retval = lbr_chartabsize(line, *s, col);
-  mb_ptr_adv(*s);
+  MB_PTR_ADV(*s);
   return retval;
 }
 
@@ -1018,14 +1009,14 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // needs a break here
   if (wp->w_p_lbr
       && vim_isbreak(c)
-      && !vim_isbreak(s[1])
+      && !vim_isbreak((int)s[1])
       && wp->w_p_wrap
-      && (wp->w_width != 0)) {
+      && (wp->w_width_inner != 0)) {
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
     numberextra = win_col_off(wp);
     col2 = col;
-    colmax = (colnr_T)(wp->w_width - numberextra - col_adj);
+    colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
 
     if (col >= colmax) {
         colmax += col_adj;
@@ -1038,11 +1029,11 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
     for (;;) {
       ps = s;
-      mb_ptr_adv(s);
+      MB_PTR_ADV(s);
       c = *s;
 
       if (!(c != NUL
-            && (vim_isbreak(c) || col2 == col || !vim_isbreak(*ps)))) {
+            && (vim_isbreak(c) || col2 == col || !vim_isbreak((int)(*ps))))) {
         break;
       }
 
@@ -1074,9 +1065,9 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     numberextra = numberwidth;
     col += numberextra + mb_added;
 
-    if (col >= (colnr_T)wp->w_width) {
-      col -= wp->w_width;
-      numberextra = wp->w_width - (numberextra - win_col_off2(wp));
+    if (col >= (colnr_T)wp->w_width_inner) {
+      col -= wp->w_width_inner;
+      numberextra = wp->w_width_inner - (numberextra - win_col_off2(wp));
       if (col >= numberextra && numberextra > 0) {
         col %= numberextra;
       }
@@ -1095,16 +1086,16 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       numberwidth -= win_col_off2(wp);
     }
 
-    if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width)) {
-      added = 0;
-
+    if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width_inner)) {
       if (*p_sbr != NUL) {
-        if (size + sbrlen + numberwidth > (colnr_T)wp->w_width) {
+        if (size + sbrlen + numberwidth > (colnr_T)wp->w_width_inner) {
           // Calculate effective window width.
-          int width = (colnr_T)wp->w_width - sbrlen - numberwidth;
-          int prev_width = col ? ((colnr_T)wp->w_width - (sbrlen + col)) : 0;
-          if (width == 0) {
-            width = (colnr_T)wp->w_width;
+          int width = (colnr_T)wp->w_width_inner - sbrlen - numberwidth;
+          int prev_width = col ? ((colnr_T)wp->w_width_inner - (sbrlen + col))
+                               : 0;
+
+          if (width <= 0) {
+            width = 1;
           }
           added += ((size - prev_width) / width) * vim_strsize(p_sbr);
           if ((size - prev_width) % width) {
@@ -1146,7 +1137,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 {
   int n;
 
-  if ((*s == TAB) && (!wp->w_p_list || lcs_tab1)) {
+  if ((*s == TAB) && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     n = (int)wp->w_buffer->b_p_ts;
     return n - (col % n);
   }
@@ -1173,11 +1164,11 @@ bool in_win_border(win_T *wp, colnr_T vcol)
   int width1;             // width of first line (after line number)
   int width2;             // width of further lines
 
-  if (wp->w_width == 0) {
+  if (wp->w_width_inner == 0) {
     // there is no border
     return false;
   }
-  width1 = wp->w_width - win_col_off(wp);
+  width1 = wp->w_width_inner - win_col_off(wp);
 
   if ((int)vcol < width1 - 1) {
     return false;
@@ -1238,7 +1229,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set
   // use a simple loop.
   // Also use this when 'list' is set but tabs take their normal size.
-  if ((!wp->w_p_list || (lcs_tab1 != NUL))
+  if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
       && !wp->w_p_lbr
       && (*p_sbr == NUL)
       && !wp->w_p_bri ) {
@@ -1283,7 +1274,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   } else {
     for (;;) {
@@ -1304,7 +1295,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   }
 
@@ -1342,7 +1333,11 @@ colnr_T getvcol_nolist(pos_T *posp)
   colnr_T vcol;
 
   curwin->w_p_list = false;
-  getvcol(curwin, posp, NULL, &vcol, NULL);
+  if (posp->coladd) {
+    getvvcol(curwin, posp, NULL, &vcol, NULL);
+  } else {
+    getvcol(curwin, posp, NULL, &vcol, NULL);
+  }
   curwin->w_p_list = list_save;
   return vcol;
 }
@@ -1373,7 +1368,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
     ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
-      int c = (*mb_ptr2char)(ptr + pos->col);
+      int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
         if (coladd > endadd) {
@@ -1457,6 +1452,18 @@ char_u *skipwhite(const char_u *q)
     p++;
   }
   return (char_u *)p;
+}
+
+// getwhitecols: return the number of whitespace
+// columns (bytes) at the start of a given line
+intptr_t getwhitecols_curline(void)
+{
+  return getwhitecols(get_cursor_line_ptr());
+}
+
+intptr_t getwhitecols(const char_u *p)
+{
+  return skipwhite(p) - p;
 }
 
 /// Skip over digits
@@ -1586,59 +1593,69 @@ char_u* skiptowhite_esc(char_u *p) {
   return p;
 }
 
-/// Get a number from a string and skip over it, signalling overflows
+/// Gets a number from a string and skips over it, signalling overflow.
 ///
 /// @param[out]  pp  A pointer to a pointer to char_u.
 ///                  It will be advanced past the read number.
 /// @param[out]  nr  Number read from the string.
 ///
-/// @return OK on success, FAIL on error/overflow
-int getdigits_safe(char_u **pp, intmax_t *nr)
+/// @return true on success, false on error/overflow
+bool try_getdigits(char_u **pp, intmax_t *nr)
 {
   errno = 0;
   *nr = strtoimax((char *)(*pp), (char **)pp, 10);
-
-  if ((*nr == INTMAX_MIN || *nr == INTMAX_MAX)
-      && errno == ERANGE) {
-    return FAIL;
+  if (errno == ERANGE && (*nr == INTMAX_MIN || *nr == INTMAX_MAX)) {
+    return false;
   }
-
-  return OK;
+  return true;
 }
 
-/// Get a number from a string and skip over it.
+/// Gets a number from a string and skips over it.
 ///
-/// @param[out]  pp  A pointer to a pointer to char_u.
+/// @param[out]  pp  Pointer to a pointer to char_u.
 ///                  It will be advanced past the read number.
+/// @param strict    Abort on overflow.
+/// @param def       Default value, if parsing fails or overflow occurs.
 ///
-/// @return Number read from the string.
-intmax_t getdigits(char_u **pp)
+/// @return Number read from the string, or `def` on parse failure or overflow.
+intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 {
   intmax_t number;
-  int ret = getdigits_safe(pp, &number);
-
-  (void)ret;  // Avoid "unused variable" warning in Release build
-  assert(ret == OK);
-
-  return number;
+  int ok = try_getdigits(pp, &number);
+  if (strict && !ok) {
+    abort();
+  }
+  return ok ? number : def;
 }
 
-/// Get an int number from a string. Like getdigits(), but restricted to `int`.
-int getdigits_int(char_u **pp)
+/// Gets an int number from a string.
+///
+/// @see getdigits
+int getdigits_int(char_u **pp, bool strict, int def)
 {
-  intmax_t number = getdigits(pp);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_INT
-  assert(number >= INT_MIN && number <= INT_MAX);
+  if (strict) {
+    assert(number >= INT_MIN && number <= INT_MAX);
+  } else if (!(number >= INT_MIN && number <= INT_MAX)) {
+    return def;
+  }
 #endif
   return (int)number;
 }
 
-/// Get a long number from a string. Like getdigits(), but restricted to `long`.
-long getdigits_long(char_u **pp)
+/// Gets a long number from a string.
+///
+/// @see getdigits
+long getdigits_long(char_u **pp, bool strict, long def)
 {
-  intmax_t number = getdigits(pp);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_LONG
-  assert(number >= LONG_MIN && number <= LONG_MAX);
+  if (strict) {
+    assert(number >= LONG_MIN && number <= LONG_MAX);
+  } else if (!(number >= LONG_MIN && number <= LONG_MAX)) {
+    return def;
+  }
 #endif
   return (long)number;
 }
@@ -1769,9 +1786,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     while (!STRING_ENDED(ptr) && (cond)) { \
+      const uvarnumber_T digit = (uvarnumber_T)(conv); \
       /* avoid ubsan error for overflow */ \
-      if (un < UVARNUMBER_MAX / base) { \
-        un = base * un + (uvarnumber_T)(conv); \
+      if (un < UVARNUMBER_MAX / base \
+          || (un == UVARNUMBER_MAX / base \
+              && (base != 10 || digit <= UVARNUMBER_MAX % 10))) { \
+        un = base * un + digit; \
       } else { \
         un = UVARNUMBER_MAX; \
       } \
@@ -1888,7 +1908,8 @@ void backslash_halve(char_u *p)
 /// @param p
 ///
 /// @return String with the number of backslashes halved.
-char_u* backslash_halve_save(char_u *p)
+char_u *backslash_halve_save(const char_u *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   // TODO(philix): simplify and improve backslash_halve_save algorithm
   char_u *res = vim_strsave(p);

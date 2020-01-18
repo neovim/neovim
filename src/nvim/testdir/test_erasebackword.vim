@@ -1,10 +1,5 @@
 
 func Test_erasebackword()
-  if !has('multi_byte')
-    return
-  endif
-
-  set encoding=utf-8
   enew
 
   exe "normal o wwwこんにちわ世界ワールドvim \<C-W>"
@@ -21,5 +16,4 @@ func Test_erasebackword()
   call assert_equal('', getline('.'))
 
   enew!
-  set encoding&
 endfunc

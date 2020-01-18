@@ -229,7 +229,10 @@ int file_fsync(FileDescriptor *const fp)
     return flush_error;
   }
   const int fsync_error = os_fsync(fp->fd);
-  if (fsync_error != UV_EINVAL && fsync_error != UV_EROFS) {
+  if (fsync_error != UV_EINVAL
+      && fsync_error != UV_EROFS
+      // fsync not supported on this storage.
+      && fsync_error != UV_ENOTSUP) {
     return fsync_error;
   }
   return 0;

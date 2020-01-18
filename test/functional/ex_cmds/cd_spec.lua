@@ -286,6 +286,15 @@ describe("getcwd()", function ()
     command("call delete('../"..directories.global.."', 'd')")
     eq("", helpers.eval("getcwd()"))
   end)
+
+  it("works with 'autochdir' after local directory was set (#9892)", function()
+    local curdir = cwd()
+    command('lcd ' .. directories.global)
+    command('lcd -')
+    command('set autochdir')
+    command('edit ' .. directories.global .. '/foo')
+    eq(curdir .. pathsep .. directories.global, cwd())
+  end)
 end)
 
 

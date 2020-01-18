@@ -24,6 +24,7 @@
 #include "nvim/message.h"
 #include "nvim/assert.h"
 #include "nvim/misc1.h"
+#include "nvim/option.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
@@ -110,7 +111,7 @@ bool os_isrealdir(const char *name)
 
 /// Check if the given path is a directory or not.
 ///
-/// @return `true` if `fname` is a directory.
+/// @return `true` if `name` is a directory.
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -124,6 +125,25 @@ bool os_isdir(const char_u *name)
   }
 
   return true;
+}
+
+/// Check if the given path is a directory and is executable.
+/// Gives the same results as `os_isdir()` on Windows.
+///
+/// @return `true` if `name` is a directory and executable.
+bool os_isdir_executable(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int32_t mode = os_getperm((const char *)name);
+  if (mode < 0) {
+    return false;
+  }
+
+#ifdef WIN32
+  return (S_ISDIR(mode));
+#else
+  return (S_ISDIR(mode) && (S_IXUSR & mode));
+#endif
 }
 
 /// Check what `name` is:
@@ -207,58 +227,46 @@ int os_exepath(char *buffer, size_t *size)
   return uv_exepath(buffer, size);
 }
 
-/// Checks if the given path represents an executable file.
+/// Checks if the file `name` is executable.
 ///
-/// @param[in]  name     Name of the executable.
-/// @param[out] abspath  Path of the executable, if found and not `NULL`.
-/// @param[in] use_path  If 'false', only check if "name" is executable
+/// @param[in]  name     Filename to check.
+/// @param[out,allocated] abspath  Returns resolved exe path, if not NULL.
+/// @param[in] use_path  Also search $PATH.
 ///
-/// @return `true` if `name` is executable and
+/// @return true if `name` is executable and
 ///   - can be found in $PATH,
 ///   - is relative to current dir or
 ///   - is absolute.
 ///
 /// @return `false` otherwise.
-bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
+bool os_can_exe(const char *name, char **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute(name);
-#ifndef WIN32
-  // If the filename is "qualified" (relative or absolute) do not check $PATH.
-  no_path |= (name[0] == '.'
-              && (name[1] == '/' || (name[1] == '.' && name[2] == '/')));
-#endif
-
-  if (no_path) {
+  if (!use_path || gettail_dir(name) != name) {
 #ifdef WIN32
-    const char *pathext = os_getenv("PATHEXT");
-    if (!pathext) {
-      pathext = ".com;.exe;.bat;.cmd";
-    }
-    bool ok = is_executable((char *)name) || is_executable_ext((char *)name,
-                                                               pathext);
+    if (is_executable_ext(name, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
-    const bool ok = ((const char_u *)gettail_dir((const char *)name) != name
-                     && is_executable((char *)name));
+    if ((use_path || gettail_dir(name) != name)
+        && is_executable(name, abspath)) {
 #endif
-    if (ok) {
-      if (abspath != NULL) {
-        *abspath = save_abs_path(name);
-      }
       return true;
+    } else {
+      return false;
     }
-    return false;
   }
 
   return is_executable_in_path(name, abspath);
 }
 
 /// Returns true if `name` is an executable file.
-static bool is_executable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+///
+/// @param[in]            name     Filename to check.
+/// @param[out,allocated] abspath  Returns full exe path, if not NULL.
+static bool is_executable(const char *name, char **abspath)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  int32_t mode = os_getperm((const char *)name);
+  int32_t mode = os_getperm(name);
 
   if (mode < 0) {
     return false;
@@ -267,36 +275,63 @@ static bool is_executable(const char *name)
 #ifdef WIN32
   // Windows does not have exec bit; just check if the file exists and is not
   // a directory.
-  return (S_ISREG(mode));
+  const bool ok = S_ISREG(mode);
 #else
-  return (S_ISREG(mode) && (S_IXUSR & mode));
+  int r = -1;
+  if (S_ISREG(mode)) {
+    RUN_UV_FS_FUNC(r, uv_fs_access, name, X_OK, NULL);
+  }
+  const bool ok = (r == 0);
 #endif
+  if (ok && abspath != NULL) {
+    *abspath = save_abs_path(name);
+  }
+  return ok;
 }
 
 #ifdef WIN32
-/// Appends file extensions from `pathext` to `name` and returns true if any
-/// such combination is executable.
-static bool is_executable_ext(char *name, const char *pathext)
-  FUNC_ATTR_NONNULL_ALL
+/// Checks if file `name` is executable under any of these conditions:
+/// - extension is in $PATHEXT and `name` is executable
+/// - result of any $PATHEXT extension appended to `name` is executable
+static bool is_executable_ext(const char *name, char **abspath)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  const bool is_unix_shell = strstr((char *)path_tail(p_sh), "sh") != NULL;
+  char *nameext = strrchr(name, '.');
+  size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
   char *buf_end = xstrchrnul(os_buf, '\0');
-  for (const char *ext = pathext; *ext; ext++) {
-    // Skip the extension if there is no suffix after a '.'.
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+  const char *ext = pathext;
+  while (*ext) {
+    // If $PATHEXT itself contains dot:
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
+      if (is_executable(name, abspath)) {
+        return true;
+      }
+      // Skip it.
       ext++;
+      if (*ext) {
+        ext++;
+      }
       continue;
     }
 
-    const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
-    STRLCPY(buf_end, ext, ext_end - ext + 1);
+    const char *ext_end = ext;
+    size_t ext_len =
+      copy_option_part((char_u **)&ext_end, (char_u *)buf_end,
+                       sizeof(os_buf) - (size_t)(buf_end - os_buf), ENV_SEPSTR);
+    if (ext_len != 0) {
+      bool in_pathext = nameext_len == ext_len
+        && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
 
-    if (is_executable(os_buf)) {
-      return true;
-    }
-
-    if (*ext_end != ENV_SEPCHAR) {
-      break;
+      if (((in_pathext || is_unix_shell) && is_executable(name, abspath))
+          || is_executable(os_buf, abspath)) {
+        return true;
+      }
     }
     ext = ext_end;
   }
@@ -304,13 +339,13 @@ static bool is_executable_ext(char *name, const char *pathext)
 }
 #endif
 
-/// Checks if a file is inside the `$PATH` and is executable.
+/// Checks if a file is in `$PATH` and is executable.
 ///
-/// @param[in]  name The name of the executable.
-/// @param[out] abspath  Path of the executable, if found and not `NULL`.
+/// @param[in]  name  Filename to check.
+/// @param[out] abspath  Returns resolved executable path, if not NULL.
 ///
 /// @return `true` if `name` is an executable inside `$PATH`.
-static bool is_executable_in_path(const char_u *name, char_u **abspath)
+static bool is_executable_in_path(const char *name, char **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *path_env = os_getenv("PATH");
@@ -321,22 +356,13 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #ifdef WIN32
   // Prepend ".;" to $PATH.
   size_t pathlen = strlen(path_env);
-  char *path = memcpy(xmallocz(pathlen + 3), "." ENV_SEPSTR, 2);
+  char *path = memcpy(xmallocz(pathlen + 2), "." ENV_SEPSTR, 2);
   memcpy(path + 2, path_env, pathlen);
 #else
   char *path = xstrdup(path_env);
 #endif
 
-  size_t buf_len = STRLEN(name) + strlen(path) + 2;
-
-#ifdef WIN32
-  const char *pathext = os_getenv("PATHEXT");
-  if (!pathext) {
-    pathext = ".com;.exe;.bat;.cmd";
-  }
-  buf_len += strlen(pathext);
-#endif
-
+  size_t buf_len = strlen(name) + strlen(path) + 2;
   char *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
@@ -348,18 +374,13 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 
     // Combine the $PATH segment with `name`.
     STRLCPY(buf, p, e - p + 1);
-    append_path(buf, (char *)name, buf_len);
+    append_path(buf, name, buf_len);
 
 #ifdef WIN32
-    bool ok = is_executable(buf) || is_executable_ext(buf, pathext);
+    if (is_executable_ext(buf, abspath)) {
 #else
-    bool ok = is_executable(buf);
+    if (is_executable(buf, abspath)) {
 #endif
-    if (ok) {
-      if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_abs_path((char_u *)buf);
-      }
-
       rv = true;
       goto end;
     }
@@ -383,10 +404,11 @@ end:
 /// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
 /// error code is returned, and no file is created or modified.
 ///
+/// @param path Filename
 /// @param flags Bitwise OR of flags defined in <fcntl.h>
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
-/// @return file descriptor, or libuv error code on failure
+/// @return file descriptor, or negative error code on failure
 int os_open(const char *path, int flags, int mode)
 {
   if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
@@ -395,6 +417,68 @@ int os_open(const char *path, int flags, int mode)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
+}
+
+/// Compatibility wrapper conforming to fopen(3).
+///
+/// Windows: works with UTF-16 filepaths by delegating to libuv (os_open).
+///
+/// Future: remove this, migrate callers to os/fileio.c ?
+///         But file_open_fd does not support O_RDWR yet.
+///
+/// @param path  Filename
+/// @param flags  String flags, one of { r w a r+ w+ a+ rb wb ab }
+/// @return FILE pointer, or NULL on error.
+FILE *os_fopen(const char *path, const char *flags)
+{
+  assert(flags != NULL && strlen(flags) > 0 && strlen(flags) <= 2);
+  int iflags = 0;
+  // Per table in fopen(3) manpage.
+  if (flags[1] == '\0' || flags[1] == 'b') {
+    switch (flags[0]) {
+      case 'r':
+        iflags = O_RDONLY;
+        break;
+      case 'w':
+        iflags = O_WRONLY | O_CREAT | O_TRUNC;
+        break;
+      case 'a':
+        iflags = O_WRONLY | O_CREAT | O_APPEND;
+        break;
+      default:
+        abort();
+    }
+#ifdef WIN32
+    if (flags[1] == 'b') {
+      iflags |= O_BINARY;
+    }
+#endif
+  } else {
+    // char 0 must be one of ('r','w','a').
+    // char 1 is always '+' ('b' is handled above).
+    assert(flags[1] == '+');
+    switch (flags[0]) {
+      case 'r':
+        iflags = O_RDWR;
+        break;
+      case 'w':
+        iflags = O_RDWR | O_CREAT | O_TRUNC;
+        break;
+      case 'a':
+        iflags = O_RDWR | O_CREAT | O_APPEND;
+        break;
+      default:
+        abort();
+    }
+  }
+  // Per open(2) manpage.
+  assert((iflags|O_RDONLY) || (iflags|O_WRONLY) || (iflags|O_RDWR));
+  // Per fopen(3) manpage: default to 0666, it will be umask-adjusted.
+  int fd = os_open(path, iflags, 0666);
+  if (fd < 0) {
+    return NULL;
+  }
+  return fdopen(fd, flags);
 }
 
 /// Sets file descriptor `fd` to close-on-exec.
@@ -620,11 +704,26 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
   return (ptrdiff_t)written_bytes;
 }
 
+/// Copies a file from `path` to `new_path`.
+///
+/// @see http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_copyfile
+///
+/// @param path Path of file to be copied
+/// @param path_new Path of new file
+/// @param flags Bitwise OR of flags defined in <uv.h>
+/// @return 0 on success, or libuv error code on failure.
+int os_copy(const char *path, const char *new_path, int flags)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_copyfile, path, new_path, flags, NULL);
+  return r;
+}
+
 /// Flushes file modifications to disk.
 ///
 /// @param fd the file descriptor of the file to flush to disk.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or libuv error code on failure.
 int os_fsync(int fd)
 {
   int r;
@@ -674,12 +773,24 @@ int os_setperm(const char *const name, int perm)
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
-/// Changes the ownership of the file referred to by the open file descriptor.
+/// Changes the owner and group of a file, like chown(2).
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or libuv error code on failure.
 ///
-/// @note If the `owner` or `group` is specified as `-1`, then that ID is not
-/// changed.
+/// @note If `owner` or `group` is -1, then that ID is not changed.
+int os_chown(const char *path, uv_uid_t owner, uv_gid_t group)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_chown, path, owner, group, NULL);
+  return r;
+}
+
+/// Changes the owner and group of the file referred to by the open file
+/// descriptor, like fchown(2).
+///
+/// @return 0 on success, or libuv error code on failure.
+///
+/// @note If `owner` or `group` is -1, then that ID is not changed.
 int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 {
   int r;
@@ -694,6 +805,22 @@ bool os_path_exists(const char_u *path)
 {
   uv_stat_t statbuf;
   return os_stat((char *)path, &statbuf) == kLibuvSuccess;
+}
+
+/// Sets file access and modification times.
+///
+/// @see POSIX utime(2)
+///
+/// @param path   File path.
+/// @param atime  Last access time.
+/// @param mtime  Last modification time.
+///
+/// @return 0 on success, or negative error code.
+int os_file_settime(const char *path, double atime, double mtime)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_utime, path, atime, mtime, NULL);
+  return r;
 }
 
 /// Check if a file is readable.
@@ -765,12 +892,12 @@ int os_mkdir_recurse(const char *const dir, int32_t mode,
   // We're done when it's "/" or "c:/".
   const size_t dirlen = strlen(dir);
   char *const curdir = xmemdupz(dir, dirlen);
-  char *const past_head = (char *) get_past_head((char_u *) curdir);
+  char *const past_head = (char *)get_past_head((char_u *)curdir);
   char *e = curdir + dirlen;
   const char *const real_end = e;
   const char past_head_save = *past_head;
-  while (!os_isdir((char_u *) curdir)) {
-    e = (char *) path_tail_with_sep((char_u *) curdir);
+  while (!os_isdir((char_u *)curdir)) {
+    e = (char *)path_tail_with_sep((char_u *)curdir);
     if (e <= past_head) {
       *past_head = NUL;
       break;
@@ -922,7 +1049,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 ///
 /// @return `true` if the two FileInfos represent the same file.
 bool os_fileinfo_id_equal(const FileInfo *file_info_1,
-                           const FileInfo *file_info_2)
+                          const FileInfo *file_info_2)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
@@ -1052,13 +1179,11 @@ char *os_resolve_shortcut(const char *fname)
   hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
-    WCHAR *p;
-    const int conversion_result = utf8_to_utf16(fname, &p);
-    if (conversion_result != 0) {
-      EMSG2("utf8_to_utf16 failed: %d", conversion_result);
-    }
-
-    if (p != NULL) {
+    wchar_t *p;
+    const int r = utf8_to_utf16(fname, -1, &p);
+    if (r != 0) {
+      EMSG2("utf8_to_utf16 failed: %d", r);
+    } else if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
       hr = pslw->lpVtbl->QueryInterface(
           pslw, &IID_IPersistFile, (void **)&ppf);
@@ -1080,12 +1205,12 @@ char *os_resolve_shortcut(const char *fname)
 #  endif
 
       // Get the path to the link target.
-      ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
+      ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        const int conversion_result = utf16_to_utf8(wsz, &rfname);
-        if (conversion_result != 0) {
-          EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
+        const int r2 = utf16_to_utf8(wsz, -1, &rfname);
+        if (r2 != 0) {
+          EMSG2("utf16_to_utf8 failed: %d", r2);
         }
       }
 
@@ -1109,127 +1234,3 @@ shortcut_end:
 }
 
 #endif
-
-int os_translate_sys_error(int sys_errno)
-{
-#ifdef HAVE_UV_TRANSLATE_SYS_ERROR
-  return uv_translate_sys_error(sys_errno);
-#elif defined(WIN32)
-  // TODO(equalsraf): libuv does not yet expose uv_translate_sys_error()
-  // in its public API, include a version here until it can be used.
-  // See https://github.com/libuv/libuv/issues/79
-# ifndef ERROR_SYMLINK_NOT_SUPPORTED
-#  define ERROR_SYMLINK_NOT_SUPPORTED 1464
-# endif
-
-  if (sys_errno <= 0) {
-    return sys_errno;  // If < 0 then it's already a libuv error
-  }
-
-  switch (sys_errno) {
-    case ERROR_NOACCESS:                    return UV_EACCES;
-    case WSAEACCES:                         return UV_EACCES;
-    case ERROR_ADDRESS_ALREADY_ASSOCIATED:  return UV_EADDRINUSE;
-    case WSAEADDRINUSE:                     return UV_EADDRINUSE;
-    case WSAEADDRNOTAVAIL:                  return UV_EADDRNOTAVAIL;
-    case WSAEAFNOSUPPORT:                   return UV_EAFNOSUPPORT;
-    case WSAEWOULDBLOCK:                    return UV_EAGAIN;
-    case WSAEALREADY:                       return UV_EALREADY;
-    case ERROR_INVALID_FLAGS:               return UV_EBADF;
-    case ERROR_INVALID_HANDLE:              return UV_EBADF;
-    case ERROR_LOCK_VIOLATION:              return UV_EBUSY;
-    case ERROR_PIPE_BUSY:                   return UV_EBUSY;
-    case ERROR_SHARING_VIOLATION:           return UV_EBUSY;
-    case ERROR_OPERATION_ABORTED:           return UV_ECANCELED;
-    case WSAEINTR:                          return UV_ECANCELED;
-    case ERROR_NO_UNICODE_TRANSLATION:      return UV_ECHARSET;
-    case ERROR_CONNECTION_ABORTED:          return UV_ECONNABORTED;
-    case WSAECONNABORTED:                   return UV_ECONNABORTED;
-    case ERROR_CONNECTION_REFUSED:          return UV_ECONNREFUSED;
-    case WSAECONNREFUSED:                   return UV_ECONNREFUSED;
-    case ERROR_NETNAME_DELETED:             return UV_ECONNRESET;
-    case WSAECONNRESET:                     return UV_ECONNRESET;
-    case ERROR_ALREADY_EXISTS:              return UV_EEXIST;
-    case ERROR_FILE_EXISTS:                 return UV_EEXIST;
-    case ERROR_BUFFER_OVERFLOW:             return UV_EFAULT;
-    case WSAEFAULT:                         return UV_EFAULT;
-    case ERROR_HOST_UNREACHABLE:            return UV_EHOSTUNREACH;
-    case WSAEHOSTUNREACH:                   return UV_EHOSTUNREACH;
-    case ERROR_INSUFFICIENT_BUFFER:         return UV_EINVAL;
-    case ERROR_INVALID_DATA:                return UV_EINVAL;
-    case ERROR_INVALID_PARAMETER:           return UV_EINVAL;
-    case ERROR_SYMLINK_NOT_SUPPORTED:       return UV_EINVAL;
-    case WSAEINVAL:                         return UV_EINVAL;
-    case WSAEPFNOSUPPORT:                   return UV_EINVAL;
-    case WSAESOCKTNOSUPPORT:                return UV_EINVAL;
-    case ERROR_BEGINNING_OF_MEDIA:          return UV_EIO;
-    case ERROR_BUS_RESET:                   return UV_EIO;
-    case ERROR_CRC:                         return UV_EIO;
-    case ERROR_DEVICE_DOOR_OPEN:            return UV_EIO;
-    case ERROR_DEVICE_REQUIRES_CLEANING:    return UV_EIO;
-    case ERROR_DISK_CORRUPT:                return UV_EIO;
-    case ERROR_EOM_OVERFLOW:                return UV_EIO;
-    case ERROR_FILEMARK_DETECTED:           return UV_EIO;
-    case ERROR_GEN_FAILURE:                 return UV_EIO;
-    case ERROR_INVALID_BLOCK_LENGTH:        return UV_EIO;
-    case ERROR_IO_DEVICE:                   return UV_EIO;
-    case ERROR_NO_DATA_DETECTED:            return UV_EIO;
-    case ERROR_NO_SIGNAL_SENT:              return UV_EIO;
-    case ERROR_OPEN_FAILED:                 return UV_EIO;
-    case ERROR_SETMARK_DETECTED:            return UV_EIO;
-    case ERROR_SIGNAL_REFUSED:              return UV_EIO;
-    case WSAEISCONN:                        return UV_EISCONN;
-    case ERROR_CANT_RESOLVE_FILENAME:       return UV_ELOOP;
-    case ERROR_TOO_MANY_OPEN_FILES:         return UV_EMFILE;
-    case WSAEMFILE:                         return UV_EMFILE;
-    case WSAEMSGSIZE:                       return UV_EMSGSIZE;
-    case ERROR_FILENAME_EXCED_RANGE:        return UV_ENAMETOOLONG;
-    case ERROR_NETWORK_UNREACHABLE:         return UV_ENETUNREACH;
-    case WSAENETUNREACH:                    return UV_ENETUNREACH;
-    case WSAENOBUFS:                        return UV_ENOBUFS;
-    case ERROR_BAD_PATHNAME:                return UV_ENOENT;
-    case ERROR_DIRECTORY:                   return UV_ENOENT;
-    case ERROR_FILE_NOT_FOUND:              return UV_ENOENT;
-    case ERROR_INVALID_NAME:                return UV_ENOENT;
-    case ERROR_INVALID_DRIVE:               return UV_ENOENT;
-    case ERROR_INVALID_REPARSE_DATA:        return UV_ENOENT;
-    case ERROR_MOD_NOT_FOUND:               return UV_ENOENT;
-    case ERROR_PATH_NOT_FOUND:              return UV_ENOENT;
-    case WSAHOST_NOT_FOUND:                 return UV_ENOENT;
-    case WSANO_DATA:                        return UV_ENOENT;
-    case ERROR_NOT_ENOUGH_MEMORY:           return UV_ENOMEM;
-    case ERROR_OUTOFMEMORY:                 return UV_ENOMEM;
-    case ERROR_CANNOT_MAKE:                 return UV_ENOSPC;
-    case ERROR_DISK_FULL:                   return UV_ENOSPC;
-    case ERROR_EA_TABLE_FULL:               return UV_ENOSPC;
-    case ERROR_END_OF_MEDIA:                return UV_ENOSPC;
-    case ERROR_HANDLE_DISK_FULL:            return UV_ENOSPC;
-    case ERROR_NOT_CONNECTED:               return UV_ENOTCONN;
-    case WSAENOTCONN:                       return UV_ENOTCONN;
-    case ERROR_DIR_NOT_EMPTY:               return UV_ENOTEMPTY;
-    case WSAENOTSOCK:                       return UV_ENOTSOCK;
-    case ERROR_NOT_SUPPORTED:               return UV_ENOTSUP;
-    case ERROR_BROKEN_PIPE:                 return UV_EOF;
-    case ERROR_ACCESS_DENIED:               return UV_EPERM;
-    case ERROR_PRIVILEGE_NOT_HELD:          return UV_EPERM;
-    case ERROR_BAD_PIPE:                    return UV_EPIPE;
-    case ERROR_NO_DATA:                     return UV_EPIPE;
-    case ERROR_PIPE_NOT_CONNECTED:          return UV_EPIPE;
-    case WSAESHUTDOWN:                      return UV_EPIPE;
-    case WSAEPROTONOSUPPORT:                return UV_EPROTONOSUPPORT;
-    case ERROR_WRITE_PROTECT:               return UV_EROFS;
-    case ERROR_SEM_TIMEOUT:                 return UV_ETIMEDOUT;
-    case WSAETIMEDOUT:                      return UV_ETIMEDOUT;
-    case ERROR_NOT_SAME_DEVICE:             return UV_EXDEV;
-    case ERROR_INVALID_FUNCTION:            return UV_EISDIR;
-    case ERROR_META_EXPANSION_TOO_LONG:     return UV_E2BIG;
-    default:                                return UV_UNKNOWN;
-  }
-#else
-  const int error = -errno;
-  STATIC_ASSERT(-EINTR == UV_EINTR, "Need to translate error codes");
-  STATIC_ASSERT(-EAGAIN == UV_EAGAIN, "Need to translate error codes");
-  STATIC_ASSERT(-ENOMEM == UV_ENOMEM, "Need to translate error codes");
-  return error;
-#endif
-}

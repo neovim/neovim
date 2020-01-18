@@ -7,8 +7,8 @@
 
 #include "nvim/iconv.h"
 #include "nvim/func_attr.h"
-#include "nvim/os/os_defs.h"  // For WCHAR, indirect
-#include "nvim/types.h" // for char_u
+#include "nvim/os/os_defs.h"  // For indirect
+#include "nvim/types.h"  // for char_u
 
 /*
  * Return byte length of character that starts with byte "b".
@@ -18,13 +18,6 @@
  */
 #define MB_BYTE2LEN(b)         utf8len_tab[b]
 #define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
-
-/// Maximum value for 'maxcombine'
-///
-/// At most that number of composing characters may be attached to the leading
-/// character by various `utfc_*` functions. Note that some functions do not
-/// have this limit.
-enum { MAX_MCO = 6 };
 
 // max length of an unicode char
 #define MB_MAXCHAR     6
@@ -47,15 +40,8 @@ enum { MAX_MCO = 6 };
 
 // TODO(bfredl): eventually we should keep only one of the namings
 #define mb_ptr2len utfc_ptr2len
-#define mb_ptr2len_len utfc_ptr2len_len
 #define mb_char2len utf_char2len
-#define mb_char2bytes utf_char2bytes
-#define mb_ptr2cells utf_ptr2cells
-#define mb_ptr2cells_len utf_ptr2cells_len
 #define mb_char2cells utf_char2cells
-#define mb_off2cells utf_off2cells
-#define mb_ptr2char utf_ptr2char
-#define mb_head_off utf_head_off
 
 /// Flags for vimconv_T
 typedef enum {
@@ -77,7 +63,7 @@ typedef enum {
 typedef struct {
   int vc_type;  ///< Zero or more ConvFlags.
   int vc_factor;  ///< Maximal expansion factor.
-# ifdef USE_ICONV
+# ifdef HAVE_ICONV
   iconv_t vc_fd;  ///< Value for CONV_ICONV.
 # endif
   bool vc_fail;  ///< What to do with invalid characters: if true, fail,

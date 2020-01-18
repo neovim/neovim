@@ -3212,7 +3212,7 @@ msgstr "E216: Grupo ou evento inexistente: %s"
 #: ../fileio.c:6002
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autocomandos ---"
@@ -5306,7 +5306,7 @@ msgstr "Aviso: região %s não é suportada"
 
 #: ../spell.c:4366
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Lendo arquivo de afixos %s..."
 
 #: ../spell.c:4405 ../spell.c:5451 ../spell.c:5956
@@ -5506,8 +5506,8 @@ msgstr "Foram ignoradas %d palavra(s) com caracteres não-ASCII em %s"
 
 #: ../spell.c:5931
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lendo arquivo de palavras %s ..."
+msgid "Reading word file %s..."
+msgstr "Lendo arquivo de palavras %s..."
 
 #: ../spell.c:5971
 #, c-format
@@ -6169,7 +6169,7 @@ msgstr "-q [arq.erro]   editar arquivo e abrir no primeiro erro"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

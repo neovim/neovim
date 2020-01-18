@@ -1,6 +1,8 @@
-# Italian Translation for Vim
+# Italian translation for Vim
 #
-# FIRST AUTHOR Antonio Colombo <azc100@gmail.com>, 2000
+# Antonio Colombo <azc100@gmail.com>, 2000
+# Vlad Sandrini <vlad.gently@gmail.com>, 2002
+# Luciano Montanaro <mikelima@cirulla.net>, 2006
 #
 # Ogni commento è benvenuto...
 # Every remark is very welcome...
@@ -884,7 +886,6 @@ msgstr "E730: uso di Lista come Stringa"
 msgid "E731: using Dictionary as a String"
 msgstr "E731: uso di Dizionario come Stringa"
 
-# nuovo
 msgid "E908: using an invalid value as a String"
 msgstr "E908: uso di un valore non valido come Stringa"
 
@@ -1417,6 +1418,11 @@ msgstr "E904: l'ultimo argomento per espressione/chiamata dev'essere numerico"
 msgid "E904: third argument for call must be a list"
 msgstr "E904: il terzo argomento della chiamata dev'essere una Lista"
 
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld riga: "
+msgstr[1] "+-%s%3ld righe: "
+
 #, c-format
 msgid "E905: received unknown command: %s"
 msgstr "E905: recevuto comando non conosciuto: %s"
@@ -1428,6 +1434,13 @@ msgstr "E630: %s(): scrittura in mancanza di connessione"
 #, c-format
 msgid "E631: %s(): write failed"
 msgstr "E631: %s(): scrittura non riuscita"
+
+msgid "Oldval = \"%s\""
+msgstr "Vecchioval = \"%s\""
+
+#, c-format
+msgid "Newval = \"%s\""
+msgstr "Nuovoval = \"%s\""
 
 #, c-format
 msgid "frame at highest level: %d"
@@ -2520,7 +2533,7 @@ msgid ""
 "--- Auto-Commands ---"
 msgstr ""
 "\n"
-"--- Auto-Comandi ---"
+"--- Autocomandi ---"
 
 #: ../fileio.c:6293
 #, c-format
@@ -3437,11 +3450,11 @@ msgstr "-q [errorfile]  apri file col primo errore"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
-"  uso:"
+"  Uso:"
 
 #: ../main.c:2189
 msgid " vim [arguments] "
@@ -4839,6 +4852,9 @@ msgstr ""
 "\n"
 "Non posso impostare il contesto di sicurezza per "
 
+msgid "E954: 24-bit colors are not supported on this environment"
+msgstr "E954: colori a 24-bit non supportati in questo ambiente"
+
 #, c-format
 msgid "E151: No match: %s"
 msgstr "E151: Nessuna corrispondenza: %s"
@@ -5151,9 +5167,9 @@ msgstr "E876: (NFA regexp) Non c'è spazio per immagazzinare l'intero NFA "
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
-"Non posso aprire il file temporaneo per la scrittura, mostro su stderr ... "
+"Non posso aprire il file temporaneo per la scrittura, mostro su stderr... "
 
 #: ../regexp_nfa.c:4840
 #, c-format
@@ -5391,14 +5407,17 @@ msgstr "E944: Intervallo invertito nella classe di caratteri"
 msgid "E945: Range too large in character class"
 msgstr "E945: Intervallo troppo ampio nella classe di caratteri"
 
+msgid "E926: Current location list was changed"
+msgstr "E926: La lista delle locazioni corrente è stata cambiata"
+
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
 msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Lettura file affissi %s ..."
+msgid "Reading affix file %s..."
+msgstr "Lettura file affissi %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5560,8 +5579,8 @@ msgstr "Il valore di %s è diverso da quello usato in un altro file .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Lettura file dizionario %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Lettura file dizionario %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5595,8 +5614,8 @@ msgstr "%d parole con caratteri non-ASCII ignorate in %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lettura file parole %s ..."
+msgid "Reading word file %s..."
+msgstr "Lettura file parole %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5665,8 +5684,8 @@ msgstr "Conteggio totale delle parole: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Scrivo file di suggerimenti %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Scrivo file di suggerimenti %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5692,8 +5711,8 @@ msgstr "Avviso: specificati sia composizione sia NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Scrivo file ortografico %s ..."
+msgid "Writing spell file %s..."
+msgstr "Scrivo file ortografico %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

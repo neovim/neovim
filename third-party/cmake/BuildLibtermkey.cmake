@@ -11,9 +11,6 @@ ExternalProject_Add(libtermkey
   -DTARGET=libtermkey
   -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
   -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-  PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey init
-    COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey apply --ignore-whitespace
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libtermkey-Add-support-for-Windows.patch 
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libtermkeyCMakeLists.txt
       ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
@@ -51,9 +48,9 @@ ExternalProject_Add(libtermkey
                               PREFIX=${DEPS_INSTALL_DIR}
                               PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
                               CFLAGS=-fPIC
+                              LDFLAGS+=-static
                               ${DEFAULT_MAKE_CFLAGS}
                               install)
 endif()
 
 list(APPEND THIRD_PARTY_DEPS libtermkey)
-add_dependencies(libtermkey unibilium)

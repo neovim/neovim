@@ -7,9 +7,8 @@
 if exists('g:loaded_python3_provider')
   finish
 endif
-let g:loaded_python3_provider = 1
-
 let [s:prog, s:err] = provider#pythonx#Detect(3)
+let g:loaded_python3_provider = empty(s:prog) ? 1 : 2
 
 function! provider#python3#Prog() abort
   return s:prog
@@ -18,11 +17,6 @@ endfunction
 function! provider#python3#Error() abort
   return s:err
 endfunction
-
-if s:prog == ''
-  " Detection failed
-  finish
-endif
 
 " The Python3 provider plugin will run in a separate instance of the Python3
 " host.

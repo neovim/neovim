@@ -298,25 +298,25 @@ Exceptions:
   spell file is used.
 
 For example, with these values:
-	'runtimepath' is "~/.config/nvim,/usr/share/vim70,~/.config/nvim/after"
+	'runtimepath' is "~/.config/nvim,/usr/share/nvim/runtime/,~/.config/nvim/after"
 	'encoding'    is "iso-8859-2"
 	'spelllang'   is "pl"
 
 Vim will look for:
 1. ~/.config/nvim/spell/pl.iso-8859-2.spl
-2. /usr/share/vim70/spell/pl.iso-8859-2.spl
+2. /usr/share/nvim/runtime/spell/pl.iso-8859-2.spl
 3. ~/.config/nvim/spell/pl.iso-8859-2.add.spl
-4. /usr/share/vim70/spell/pl.iso-8859-2.add.spl
+4. /usr/share/nvim/runtime/spell/pl.iso-8859-2.add.spl
 5. ~/.config/nvim/after/spell/pl.iso-8859-2.add.spl
 
 This assumes 1. is not found and 2. is found.
 
 If 'encoding' is "latin1" Vim will look for:
 1. ~/.config/nvim/spell/pl.latin1.spl
-2. /usr/share/vim70/spell/pl.latin1.spl
+2. /usr/share/nvim/runtime/spell/pl.latin1.spl
 3. ~/.config/nvim/after/spell/pl.latin1.spl
 4. ~/.config/nvim/spell/pl.ascii.spl
-5. /usr/share/vim70/spell/pl.ascii.spl
+5. /usr/share/nvim/runtime/spell/pl.ascii.spl
 6. ~/.config/nvim/after/spell/pl.ascii.spl
 
 This assumes none of them are found (Polish doesn't make sense when leaving
@@ -558,7 +558,7 @@ When the Myspell files are updated you can merge the differences:
 	nvim -d xx_YY.orig.dic xx_YY.new.dic
 3. Take over the changes you like in xx_YY.dic.
    You may also need to change xx_YY.aff.
-4. Rename xx_YY.new.dic to xx_YY.orig.dic and xx_YY.new.aff to xx_YY.new.aff.
+4. Rename xx_YY.new.dic to xx_YY.orig.dic and xx_YY.new.aff to xx_YY.orig.aff.
 
 
 SPELL FILE VERSIONS					*E770* *E771* *E772*
@@ -1562,6 +1562,10 @@ CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		Forbid three identical characters when compounding.  Not
 		supported.
 
+CHECKSHARPS  (Hunspell))			*spell-CHECKSHARPS*
+		SS letter pair in uppercased (German) words may be upper case
+		sharp s (ß). Not supported.
+
 COMPLEXPREFIXES  (Hunspell)				*spell-COMPLEXPREFIXES*
 		Enables using two prefixes.  Not supported.
 
@@ -1575,12 +1579,21 @@ COMPOUNDFIRST	(Hunspell)				*spell-COMPOUNDFIRST*
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDBEGIN	(Hunspell)				*spell-COMPOUNDBEGIN*
+		Words signed with COMPOUNDBEGIN may be first elements in
+		compound words.
+		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
+
+COMPOUNDLAST	(Hunspell)				*spell-COMPOUNDLAST*
+		Words signed with COMPOUNDLAST may be last elements in
+		compound words.
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDEND	(Hunspell)				*spell-COMPOUNDEND*
-		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
+		Probably the same as COMPOUNDLAST
 
 COMPOUNDMIDDLE	(Hunspell)				*spell-COMPOUNDMIDDLE*
+		Words signed with COMPOUNDMIDDLE may be middle elements in
+		compound words.
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDRULES	(Hunspell)				*spell-COMPOUNDRULES*
@@ -1733,4 +1746,4 @@ This isn't ideal, because the longer Vim is running the higher the counts
 become.  But in practice it is a noticeable improvement over not using the word
 count.
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

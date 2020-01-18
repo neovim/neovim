@@ -3,7 +3,6 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -75,11 +74,12 @@ find_start_comment (  /* XXX */
 /// Find the start of a comment or raw string, not knowing if we are in a
 /// comment or raw string right now.
 /// Search starts at w_cursor.lnum and goes backwards.
+/// If is_raw is given and returns start of raw_string, sets it to true.
 ///
 /// @returns NULL when not inside a comment or raw string.
 ///
 /// @note "CORS" -> Comment Or Raw String
-static pos_T *ind_find_start_CORS(void)
+static pos_T *ind_find_start_CORS(linenr_T *is_raw)
 {
   // XXX
   static pos_T comment_pos_copy;
@@ -96,6 +96,9 @@ static pos_T *ind_find_start_CORS(void)
   // If comment_pos is before rs_pos the raw string is inside the comment.
   // If rs_pos is before comment_pos the comment is inside the raw string.
   if (comment_pos == NULL || (rs_pos != NULL && lt(*rs_pos, *comment_pos))) {
+    if (is_raw != NULL && rs_pos != NULL) {
+      *is_raw = rs_pos->lnum;
+    }
     return rs_pos;
   }
   return comment_pos;
@@ -384,8 +387,9 @@ int cin_islabel(void)
      * it.
      */
     curwin->w_cursor.col = 0;
-    if ((trypos = ind_find_start_CORS()) != NULL) /* XXX */
+    if ((trypos = ind_find_start_CORS(NULL)) != NULL) {   // XXX
       curwin->w_cursor = *trypos;
+    }
 
     line = get_cursor_line_ptr();
     if (cin_ispreproc(line))          /* ignore #defines, #if, etc. */
@@ -1401,10 +1405,12 @@ static pos_T *find_start_brace(void)
     pos = NULL;
     /* ignore the { if it's in a // or / *  * / comment */
     if ((colnr_T)cin_skip2pos(trypos) == trypos->col
-            && (pos = ind_find_start_CORS()) == NULL) /* XXX */
+        && (pos = ind_find_start_CORS(NULL)) == NULL) {   // XXX
       break;
-    if (pos != NULL)
+    }
+    if (pos != NULL) {
       curwin->w_cursor.lnum = pos->lnum;
+    }
   }
   curwin->w_cursor = cursor_save;
   return trypos;
@@ -1443,7 +1449,7 @@ retry:
       pos_copy = *trypos;           /* copy trypos, findmatch will change it */
       trypos = &pos_copy;
       curwin->w_cursor = *trypos;
-      if ((trypos_wk = ind_find_start_CORS()) != NULL) { /* XXX */
+      if ((trypos_wk = ind_find_start_CORS(NULL)) != NULL) {  // XXX
         ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum
             - trypos_wk->lnum);
         if (ind_maxp_wk > 0) {
@@ -1669,25 +1675,27 @@ void parse_cino(buf_T *buf)
 
   for (p = buf->b_p_cino; *p; ) {
     l = p++;
-    if (*p == '-')
-      ++p;
-    char_u *digits_start = p;             /* remember where the digits start */
-    int n = getdigits_int(&p);
+    if (*p == '-') {
+      p++;
+    }
+    char_u *digits_start = p;   // remember where the digits start
+    int n = getdigits_int(&p, true, 0);
     divider = 0;
-    if (*p == '.') {        /* ".5s" means a fraction */
+    if (*p == '.') {        // ".5s" means a fraction.
       fraction = atoi((char *)++p);
       while (ascii_isdigit(*p)) {
-        ++p;
-        if (divider)
+        p++;
+        if (divider) {
           divider *= 10;
-        else
+        } else {
           divider = 10;
+        }
       }
     }
-    if (*p == 's') {        /* "2s" means two times 'shiftwidth' */
-      if (p == digits_start)
-        n = sw;         /* just "s" is one 'shiftwidth' */
-      else {
+    if (*p == 's') {        // "2s" means two times 'shiftwidth'.
+      if (p == digits_start) {
+        n = sw;             // just "s" is one 'shiftwidth'.
+      } else {
         n *= sw;
         if (divider)
           n += (sw * fraction + divider / 2) / divider;
@@ -1793,6 +1801,7 @@ int get_c_indent(void)
   int cont_amount = 0;              /* amount for continuation line */
   int original_line_islabel;
   int added_to_amount = 0;
+  linenr_T raw_string_start = 0;
   cpp_baseclass_cache_T cache_cpp_baseclass = { false, { MAXLNUM, 0 } };
 
   /* make a copy, value is changed below */
@@ -1903,15 +1912,15 @@ int get_c_indent(void)
       int what = 0;
 
       while (*p != NUL && *p != ':') {
-        if (*p == COM_START || *p == COM_END || *p == COM_MIDDLE)
+        if (*p == COM_START || *p == COM_END || *p == COM_MIDDLE) {
           what = *p++;
-        else if (*p == COM_LEFT || *p == COM_RIGHT)
+        } else if (*p == COM_LEFT || *p == COM_RIGHT) {
           align = *p++;
-        else if (ascii_isdigit(*p) || *p == '-') {
-          off = getdigits_int(&p);
+        } else if (ascii_isdigit(*p) || *p == '-') {
+          off = getdigits_int(&p, true, 0);
+        } else {
+          p++;
         }
-        else
-          ++p;
       }
 
       if (*p == ':')
@@ -2059,8 +2068,8 @@ int get_c_indent(void)
           }
           curwin->w_cursor.lnum = lnum;
 
-          /* Skip a comment or raw string. XXX */
-          if ((trypos = ind_find_start_CORS()) != NULL) {
+          // Skip a comment or raw string. XXX
+          if ((trypos = ind_find_start_CORS(NULL)) != NULL) {
             lnum = trypos->lnum + 1;
             continue;
           }
@@ -2443,7 +2452,7 @@ int get_c_indent(void)
                * If we're in a comment or raw string now, skip to
                * the start of it.
                */
-              trypos = ind_find_start_CORS();
+              trypos = ind_find_start_CORS(NULL);
               if (trypos != NULL) {
                 curwin->w_cursor.lnum = trypos->lnum + 1;
                 curwin->w_cursor.col = 0;
@@ -2552,7 +2561,7 @@ int get_c_indent(void)
 
                 /* If we're in a comment or raw string now, skip
                  * to the start of it. */
-                trypos = ind_find_start_CORS();
+                trypos = ind_find_start_CORS(NULL);
                 if (trypos != NULL) {
                   curwin->w_cursor.lnum = trypos->lnum + 1;
                   curwin->w_cursor.col = 0;
@@ -2581,11 +2590,10 @@ int get_c_indent(void)
             break;
           }
 
-          /*
-           * If we're in a comment or raw string now, skip to the start
-           * of it.
-           */					    /* XXX */
-          if ((trypos = ind_find_start_CORS()) != NULL) {
+          // If we're in a comment or raw string now, skip to the start
+          // of it.
+          // XXX
+          if ((trypos = ind_find_start_CORS(&raw_string_start)) != NULL) {
             curwin->w_cursor.lnum = trypos->lnum + 1;
             curwin->w_cursor.col = 0;
             continue;
@@ -3096,7 +3104,8 @@ int get_c_indent(void)
                   }
                   if (lookfor != LOOKFOR_TERM
                       && lookfor != LOOKFOR_JS_KEY
-                      && lookfor != LOOKFOR_COMMA) {
+                      && lookfor != LOOKFOR_COMMA
+                      && raw_string_start != curwin->w_cursor.lnum) {
                     lookfor = LOOKFOR_UNTERM;
                   }
                 }
@@ -3351,11 +3360,10 @@ term_again:
 
     l = get_cursor_line_ptr();
 
-    /*
-     * If we're in a comment or raw string now, skip to the start
-     * of it.
-     */						/* XXX */
-    if ((trypos = ind_find_start_CORS()) != NULL) {
+    // If we're in a comment or raw string now, skip to the start
+    // of it.
+    // XXX
+    if ((trypos = ind_find_start_CORS(NULL)) != NULL) {
       curwin->w_cursor.lnum = trypos->lnum + 1;
       curwin->w_cursor.col = 0;
       continue;

@@ -3,8 +3,8 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2017 Sep 30
-" included patch from Christian Brabandt to make use of the strikethrough attributes
+" Last Change:          2018 Apr 7
+" Included patch from Jorge Maldonado Ventura to fix rendering
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -77,6 +77,29 @@ syn keyword htmlArg contained size src start target text type url
 syn keyword htmlArg contained usemap ismap valign value vlink vspace width wrap
 syn match   htmlArg contained "\<\(http-equiv\|href\|title\)="me=e-1
 
+" aria attributes
+syn match htmlArg contained "\<\(aria-activedescendant\|aria-atomic\)\>"
+syn match htmlArg contained "\<\(aria-autocomplete\|aria-busy\|aria-checked\)\>"
+syn match htmlArg contained "\<\(aria-colcount\|aria-colindex\|aria-colspan\)\>"
+syn match htmlArg contained "\<\(aria-controls\|aria-current\)\>"
+syn match htmlArg contained "\<\(aria-describedby\|aria-details\)\>"
+syn match htmlArg contained "\<\(aria-disabled\|aria-dropeffect\)\>"
+syn match htmlArg contained "\<\(aria-errormessage\|aria-expanded\)\>"
+syn match htmlArg contained "\<\(aria-flowto\|aria-grabbed\|aria-haspopup\)\>"
+syn match htmlArg contained "\<\(aria-hidden\|aria-invalid\)\>"
+syn match htmlArg contained "\<\(aria-keyshortcuts\|aria-label\)\>"
+syn match htmlArg contained "\<\(aria-labelledby\|aria-level\|aria-live\)\>"
+syn match htmlArg contained "\<\(aria-modal\|aria-multiline\)\>"
+syn match htmlArg contained "\<\(aria-multiselectable\|aria-orientation\)\>"
+syn match htmlArg contained "\<\(aria-owns\|aria-placeholder\|aria-posinset\)\>"
+syn match htmlArg contained "\<\(aria-pressed\|aria-readonly\|aria-relevant\)\>"
+syn match htmlArg contained "\<\(aria-required\|aria-roledescription\)\>"
+syn match htmlArg contained "\<\(aria-rowcount\|aria-rowindex\|aria-rowspan\)\>"
+syn match htmlArg contained "\<\(aria-selected\|aria-setsize\|aria-sort\)\>"
+syn match htmlArg contained "\<\(aria-valuemax\|aria-valuemin\)\>"
+syn match htmlArg contained "\<\(aria-valuenow\|aria-valuetext\)\>"
+syn keyword htmlArg contained role
+
 " Netscape extensions
 syn keyword htmlTagName contained frame noframes frameset nobr blink
 syn keyword htmlTagName contained layer ilayer nolayer spacer
@@ -100,11 +123,11 @@ syn keyword htmlArg contained summary tabindex valuetype version
 " html 5 arg names
 syn keyword htmlArg contained allowfullscreen async autocomplete autofocus
 syn keyword htmlArg contained autoplay challenge contenteditable contextmenu
-syn keyword htmlArg contained controls crossorigin default dirname download
-syn keyword htmlArg contained draggable dropzone form formaction formenctype
-syn keyword htmlArg contained formmethod formnovalidate formtarget hidden
-syn keyword htmlArg contained high icon inputmode keytype kind list loop low
-syn keyword htmlArg contained max min minlength muted nonce novalidate open
+syn keyword htmlArg contained controls crossorigin default dialog dirname
+syn keyword htmlArg contained download draggable dropzone form formaction
+syn keyword htmlArg contained formenctype formmethod formnovalidate formtarget
+syn keyword htmlArg contained hidden high icon inputmode keytype kind list loop
+syn keyword htmlArg contained low max min minlength muted nonce novalidate open
 syn keyword htmlArg contained optimum pattern placeholder poster preload
 syn keyword htmlArg contained radiogroup required reversed sandbox spellcheck
 syn keyword htmlArg contained sizes srcset srcdoc srclang step title translate
@@ -136,47 +159,47 @@ if !exists("html_no_rendering")
   " rendering
   syn cluster htmlTop contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,javaScript,@htmlPreproc
 
-  syn region htmlStrike start="<del\>" end="</del>"me=e-6 contains=@htmlTop
-  syn region htmlStrike start="<strike\>" end="</strike>"me=e-9 contains=@htmlTop
+  syn region htmlStrike start="<del\>" end="</del\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlStrike start="<strike\>" end="</strike\_s*>"me=s-1 contains=@htmlTop
 
-  syn region htmlBold start="<b\>" end="</b>"me=e-4 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
-  syn region htmlBold start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
-  syn region htmlBoldUnderline contained start="<u\>" end="</u>"me=e-4 contains=@htmlTop,htmlBoldUnderlineItalic
-  syn region htmlBoldItalic contained start="<i\>" end="</i>"me=e-4 contains=@htmlTop,htmlBoldItalicUnderline
-  syn region htmlBoldItalic contained start="<em\>" end="</em>"me=e-5 contains=@htmlTop,htmlBoldItalicUnderline
-  syn region htmlBoldUnderlineItalic contained start="<i\>" end="</i>"me=e-4 contains=@htmlTop
-  syn region htmlBoldUnderlineItalic contained start="<em\>" end="</em>"me=e-5 contains=@htmlTop
-  syn region htmlBoldItalicUnderline contained start="<u\>" end="</u>"me=e-4 contains=@htmlTop,htmlBoldUnderlineItalic
+  syn region htmlBold start="<b\>" end="</b\_s*>"me=s-1 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
+  syn region htmlBold start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
+  syn region htmlBoldUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@htmlTop,htmlBoldUnderlineItalic
+  syn region htmlBoldItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@htmlTop,htmlBoldItalicUnderline
+  syn region htmlBoldItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@htmlTop,htmlBoldItalicUnderline
+  syn region htmlBoldUnderlineItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlBoldUnderlineItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlBoldItalicUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@htmlTop,htmlBoldUnderlineItalic
 
-  syn region htmlUnderline start="<u\>" end="</u>"me=e-4 contains=@htmlTop,htmlUnderlineBold,htmlUnderlineItalic
-  syn region htmlUnderlineBold contained start="<b\>" end="</b>"me=e-4 contains=@htmlTop,htmlUnderlineBoldItalic
-  syn region htmlUnderlineBold contained start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop,htmlUnderlineBoldItalic
-  syn region htmlUnderlineItalic contained start="<i\>" end="</i>"me=e-4 contains=@htmlTop,htmlUnderlineItalicBold
-  syn region htmlUnderlineItalic contained start="<em\>" end="</em>"me=e-5 contains=@htmlTop,htmlUnderlineItalicBold
-  syn region htmlUnderlineItalicBold contained start="<b\>" end="</b>"me=e-4 contains=@htmlTop
-  syn region htmlUnderlineItalicBold contained start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop
-  syn region htmlUnderlineBoldItalic contained start="<i\>" end="</i>"me=e-4 contains=@htmlTop
-  syn region htmlUnderlineBoldItalic contained start="<em\>" end="</em>"me=e-5 contains=@htmlTop
+  syn region htmlUnderline start="<u\>" end="</u\_s*>"me=s-1 contains=@htmlTop,htmlUnderlineBold,htmlUnderlineItalic
+  syn region htmlUnderlineBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@htmlTop,htmlUnderlineBoldItalic
+  syn region htmlUnderlineBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop,htmlUnderlineBoldItalic
+  syn region htmlUnderlineItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@htmlTop,htmlUnderlineItalicBold
+  syn region htmlUnderlineItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@htmlTop,htmlUnderlineItalicBold
+  syn region htmlUnderlineItalicBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlUnderlineItalicBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlUnderlineBoldItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlUnderlineBoldItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@htmlTop
 
-  syn region htmlItalic start="<i\>" end="</i>"me=e-4 contains=@htmlTop,htmlItalicBold,htmlItalicUnderline
-  syn region htmlItalic start="<em\>" end="</em>"me=e-5 contains=@htmlTop
-  syn region htmlItalicBold contained start="<b\>" end="</b>"me=e-4 contains=@htmlTop,htmlItalicBoldUnderline
-  syn region htmlItalicBold contained start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop,htmlItalicBoldUnderline
-  syn region htmlItalicBoldUnderline contained start="<u\>" end="</u>"me=e-4 contains=@htmlTop
-  syn region htmlItalicUnderline contained start="<u\>" end="</u>"me=e-4 contains=@htmlTop,htmlItalicUnderlineBold
-  syn region htmlItalicUnderlineBold contained start="<b\>" end="</b>"me=e-4 contains=@htmlTop
-  syn region htmlItalicUnderlineBold contained start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop
+  syn region htmlItalic start="<i\>" end="</i\_s*>"me=s-1 contains=@htmlTop,htmlItalicBold,htmlItalicUnderline
+  syn region htmlItalic start="<em\>" end="</em\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlItalicBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@htmlTop,htmlItalicBoldUnderline
+  syn region htmlItalicBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop,htmlItalicBoldUnderline
+  syn region htmlItalicBoldUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlItalicUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@htmlTop,htmlItalicUnderlineBold
+  syn region htmlItalicUnderlineBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlItalicUnderlineBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop
 
   syn match htmlLeadingSpace "^\s\+" contained
-  syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a>"me=e-4 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLeadingSpace,javaScript,@htmlPreproc
-  syn region htmlH1 start="<h1\>" end="</h1>"me=e-5 contains=@htmlTop
-  syn region htmlH2 start="<h2\>" end="</h2>"me=e-5 contains=@htmlTop
-  syn region htmlH3 start="<h3\>" end="</h3>"me=e-5 contains=@htmlTop
-  syn region htmlH4 start="<h4\>" end="</h4>"me=e-5 contains=@htmlTop
-  syn region htmlH5 start="<h5\>" end="</h5>"me=e-5 contains=@htmlTop
-  syn region htmlH6 start="<h6\>" end="</h6>"me=e-5 contains=@htmlTop
-  syn region htmlHead start="<head\>" end="</head>"me=e-7 end="<body\>"me=e-5 end="<h[1-6]\>"me=e-3 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,htmlTitle,javaScript,cssStyle,@htmlPreproc
-  syn region htmlTitle start="<title\>" end="</title>"me=e-8 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,@htmlPreproc
+  syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a\_s*>"me=s-1 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLeadingSpace,javaScript,@htmlPreproc
+  syn region htmlH1 start="<h1\>" end="</h1\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlH2 start="<h2\>" end="</h2\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlH3 start="<h3\>" end="</h3\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlH4 start="<h4\>" end="</h4\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlH5 start="<h5\>" end="</h5\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlH6 start="<h6\>" end="</h6\_s*>"me=s-1 contains=@htmlTop
+  syn region htmlHead start="<head\>" end="</head\_s*>"me=s-1 end="<body\>"me=s-1 end="<h[1-6]\>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,htmlTitle,javaScript,cssStyle,@htmlPreproc
+  syn region htmlTitle start="<title\>" end="</title\_s*>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,@htmlPreproc
 endif
 
 syn keyword htmlTagName         contained noscript

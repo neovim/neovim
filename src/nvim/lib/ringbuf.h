@@ -136,14 +136,14 @@ static inline void funcprefix##_rb_free(TypeName##RingBuffer *const rb) \
   RINGBUF_FORALL(rb, RBType, rbitem) { \
     rbfree(rbitem); \
   } \
-  xfree(rb->buf); \
+  XFREE_CLEAR(rb->buf); \
 } \
 \
 static inline void funcprefix##_rb_dealloc(TypeName##RingBuffer *const rb) \
   REAL_FATTR_UNUSED; \
 static inline void funcprefix##_rb_dealloc(TypeName##RingBuffer *const rb) \
 { \
-  xfree(rb->buf); \
+  XFREE_CLEAR(rb->buf); \
 } \
 \
 static inline void funcprefix##_rb_push(TypeName##RingBuffer *const rb, \

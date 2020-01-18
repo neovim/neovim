@@ -8,9 +8,9 @@ local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
-local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
+local pcall_err = helpers.pcall_err
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -31,7 +31,7 @@ local function is_visible(str)
     return false
 end
 
-describe('api/win', function()
+describe('API/win', function()
   before_each(clear)
 
   describe('get_buf', function()
@@ -42,6 +42,21 @@ describe('api/win', function()
       eq(curbuf(), window('get_buf', nvim('list_wins')[2]))
       neq(window('get_buf', nvim('list_wins')[1]),
         window('get_buf', nvim('list_wins')[2]))
+    end)
+  end)
+
+  describe('set_buf', function()
+    it('works', function()
+      nvim('command', 'new')
+      local windows = nvim('list_wins')
+      neq(window('get_buf', windows[2]), window('get_buf', windows[1]))
+      window('set_buf', windows[2], window('get_buf', windows[1]))
+      eq(window('get_buf', windows[2]), window('get_buf', windows[1]))
+    end)
+
+    it('validates args', function()
+      eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
+      eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
   end)
 
@@ -58,8 +73,7 @@ describe('api/win', function()
 
     it('does not leak memory when using invalid window ID with invalid pos',
     function()
-      eq({false, 'Invalid window id'},
-         meth_pcall(meths.win_set_cursor, 1, {"b\na"}))
+      eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
@@ -108,6 +122,29 @@ describe('api/win', function()
       neq(win, curwin())
     end)
 
+    it('remembers what column it wants to be in', function()
+      insert("first line")
+      feed('o<esc>')
+      insert("second line")
+
+      feed('gg')
+      wait() -- let nvim process the 'gg' command
+
+      -- cursor position is at beginning
+      local win = curwin()
+      eq({1, 0}, window('get_cursor', win))
+
+      -- move cursor to column 5
+      window('set_cursor', win, {1, 5})
+
+      -- move down a line
+      feed('j')
+      wait() -- let nvim process the 'j' command
+
+      -- cursor is still in column 5
+      eq({2, 5}, window('get_cursor', win))
+    end)
+
   end)
 
   describe('{get,set}_height', function()
@@ -146,11 +183,11 @@ describe('api/win', function()
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
-      eq({false, 'Key does not exist: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      eq('Key not found: lua', pcall_err(curwinmeths.del_var, 'lua'))
       curwinmeths.set_var('lua', 1)
       command('lockvar w:lua')
-      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
-      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.set_var, 'lua', 1))
+      eq('Key is locked: lua', pcall_err(curwinmeths.del_var, 'lua'))
+      eq('Key is locked: lua', pcall_err(curwinmeths.set_var, 'lua', 1))
     end)
 
     it('window_set_var returns the old value', function()
@@ -173,10 +210,19 @@ describe('api/win', function()
     it('works', function()
       curwin('set_option', 'colorcolumn', '4,3')
       eq('4,3', curwin('get_option', 'colorcolumn'))
+      command("set modified hidden")
+      command("enew") -- edit new buffer, window option is preserved
+      eq('4,3', curwin('get_option', 'colorcolumn'))
+
       -- global-local option
       curwin('set_option', 'statusline', 'window-status')
       eq('window-status', curwin('get_option', 'statusline'))
       eq('', nvim('get_option', 'statusline'))
+      command("set modified")
+      command("enew") -- global-local: not preserved in new buffer
+      eq("Failed to get value for option 'statusline'",
+        pcall_err(curwin, 'get_option', 'statusline'))
+      eq('', eval('&l:statusline')) -- confirm local value was not copied
     end)
   end)
 
@@ -245,6 +291,60 @@ describe('api/win', function()
       ok(window('is_valid', win))
       nvim('command', 'close')
       ok(not window('is_valid', win))
+    end)
+  end)
+
+  describe('close', function()
+    it('can close current window', function()
+      local oldwin = meths.get_current_win()
+      command('split')
+      local newwin = meths.get_current_win()
+      meths.win_close(newwin,false)
+      eq({oldwin}, meths.list_wins())
+    end)
+
+    it('can close noncurrent window', function()
+      local oldwin = meths.get_current_win()
+      command('split')
+      local newwin = meths.get_current_win()
+      meths.win_close(oldwin,false)
+      eq({newwin}, meths.list_wins())
+    end)
+
+    it('handles changed buffer', function()
+      local oldwin = meths.get_current_win()
+      insert('text')
+      command('new')
+      local newwin = meths.get_current_win()
+      eq("Vim:E37: No write since last change (add ! to override)",
+         pcall_err(meths.win_close, oldwin,false))
+      eq({newwin,oldwin}, meths.list_wins())
+    end)
+
+    it('handles changed buffer with force', function()
+      local oldwin = meths.get_current_win()
+      insert('text')
+      command('new')
+      local newwin = meths.get_current_win()
+      meths.win_close(oldwin,true)
+      eq({newwin}, meths.list_wins())
+    end)
+
+    it('in cmdline-window #9767', function()
+      command('split')
+      eq(2, #meths.list_wins())
+      local oldwin = meths.get_current_win()
+      -- Open cmdline-window.
+      feed('q:')
+      eq(3, #meths.list_wins())
+      eq(':', funcs.getcmdwintype())
+      -- Vim: not allowed to close other windows from cmdline-window.
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_close, oldwin, true))
+      -- Close cmdline-window.
+      meths.win_close(0,true)
+      eq(2, #meths.list_wins())
+      eq('', funcs.getcmdwintype())
     end)
   end)
 end)

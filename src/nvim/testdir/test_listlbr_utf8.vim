@@ -194,6 +194,21 @@ func Test_multibyte_sign_and_colorcolumn()
   call s:close_windows()
 endfunc
 
+func Test_colorcolumn_priority()
+  call s:test_windows('setl cc=4 cuc hls')
+  call setline(1, ["xxyy", ""])
+  norm! gg
+  exe "normal! /xxyy\<CR>"
+  norm! G
+  redraw!
+  let line_attr = s:screen_attr(1, [1, &cc])
+  " Search wins over CursorColumn
+  call assert_equal(line_attr[1], line_attr[0])
+  " Search wins over Colorcolumn
+  call assert_equal(line_attr[2], line_attr[3])
+  call s:close_windows('setl hls&vim')
+endfunc
+
 func Test_illegal_byte_and_breakat()
   call s:test_windows("setl sbr= brk+=<")
   vert resize 18

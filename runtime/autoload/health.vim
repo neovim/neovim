@@ -30,7 +30,7 @@ function! health#check(plugin_names) abort
         \ : s:to_fn_names(a:plugin_names)
 
   tabnew
-  setlocal wrap breakindent
+  setlocal wrap breakindent linebreak
   setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
   setlocal keywordprg=:help

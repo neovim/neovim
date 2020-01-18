@@ -256,4 +256,4 @@ decompression.  You might need to install the programs first.
 
 Next chapter: |usr_24.txt|  Inserting quickly
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

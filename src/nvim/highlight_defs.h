@@ -8,21 +8,28 @@
 typedef int32_t RgbValue;
 
 /// Highlighting attribute bits.
+///
+/// sign bit should not be used here, as it identifies invalid highlight
 typedef enum {
-  HL_INVERSE     = 0x01,
-  HL_BOLD        = 0x02,
-  HL_ITALIC      = 0x04,
-  HL_UNDERLINE   = 0x08,
-  HL_UNDERCURL   = 0x10,
-  HL_STANDOUT    = 0x20,
+  HL_INVERSE         = 0x01,
+  HL_BOLD            = 0x02,
+  HL_ITALIC          = 0x04,
+  HL_UNDERLINE       = 0x08,
+  HL_UNDERCURL       = 0x10,
+  HL_STANDOUT        = 0x20,
+  HL_STRIKETHROUGH   = 0x40,
+  HL_NOCOMBINE       = 0x80,
+  HL_BG_INDEXED    = 0x0100,
+  HL_FG_INDEXED    = 0x0200,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes
 /// for both TUI and GUI.
 typedef struct attr_entry {
-  int16_t rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
+  int hl_blend;
 } HlAttrs;
 
 #define HLATTRS_INIT (HlAttrs) { \
@@ -33,6 +40,7 @@ typedef struct attr_entry {
   .rgb_sp_color = -1, \
   .cterm_fg_color = 0, \
   .cterm_bg_color = 0, \
+  .hl_blend = -1, \
 }
 
 /// Values for index in highlight_attr[].
@@ -81,13 +89,15 @@ typedef enum {
   , HLF_TP          // tabpage line
   , HLF_TPS         // tabpage line selected
   , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursurcolumn'
-  , HLF_CUL         // 'cursurline'
+  , HLF_CUC         // 'cursorcolumn'
+  , HLF_CUL         // 'cursorline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
   , HLF_0           // Whitespace
   , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
   , HLF_MSGSEP      // message separator line
+  , HLF_NFLOAT      // Floating window
+  , HLF_MSG         // Message area
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
@@ -140,10 +150,13 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_0] = "Whitespace",
   [HLF_INACTIVE] = "NormalNC",
   [HLF_MSGSEP] = "MsgSeparator",
+  [HLF_NFLOAT] = "NormalFloat",
+  [HLF_MSG] = "MsgArea",
 });
 
 
 EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
+EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user
 EXTERN int cterm_normal_fg_color INIT(= 0);
@@ -151,5 +164,22 @@ EXTERN int cterm_normal_bg_color INIT(= 0);
 EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);
 EXTERN RgbValue normal_sp INIT(= -1);
+
+typedef enum {
+  kHlUnknown,
+  kHlUI,
+  kHlSyntax,
+  kHlTerminal,
+  kHlCombine,
+  kHlBlend,
+  kHlBlendThrough,
+} HlKind;
+
+typedef struct {
+  HlAttrs attr;
+  HlKind kind;
+  int id1;
+  int id2;
+} HlEntry;
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

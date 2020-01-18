@@ -3,9 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, eq = helpers.command, helpers.funcs, helpers.eq
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear
+local reset, clear = shada_helpers.reset, shada_helpers.clear
 
 local setreg = function(name, contents, typ)
   if type(contents) == 'string' then
@@ -52,9 +50,8 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    set_additional_cmd('set shada=\'0,<0')
     nvim_command('qall')
-    reset()
+    reset('set shada=\'0,<0')
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
     eq({{'bca', 'abc', 'cba'}, '\0223'}, getreg('b'))
@@ -76,9 +73,8 @@ describe('ShaDa support code', function()
     setreg('c', {'d', 'e', ''}, 'c')
     setreg('l', {'a', 'b', 'cde'}, 'l')
     setreg('b', {'bca', 'abc', 'cba'}, 'b3')
-    set_additional_cmd('set shada=\'0,\\"0')
     nvim_command('qall')
-    reset()
+    reset('set shada=\'0,\\"0')
     eq({{'d', 'e', ''}, 'v'}, getreg('c'))
     eq({{'a', 'b', 'cde'}, 'V'}, getreg('l'))
     eq({{'bca', 'abc', 'cba'}, '\0223'}, getreg('b'))
@@ -142,7 +138,6 @@ describe('ShaDa support code', function()
     reset()
     -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
     setreg('e', {'\171«'}, 'c')
-    set_additional_cmd('')
     nvim_command('qall')
     reset()
     eq({{'\171«'}, 'v'}, getreg('e'))

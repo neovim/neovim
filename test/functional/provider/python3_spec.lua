@@ -5,11 +5,19 @@ local expect, write_file = helpers.expect, helpers.write_file
 local feed_command = helpers.feed_command
 local source = helpers.source
 local missing_provider = helpers.missing_provider
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('python3') then
-    pending('Python 3 (or the neovim module) is broken/missing', function() end)
+  local reason = missing_provider('python3')
+  if reason then
+    it(':python3 reports E319 if provider is missing', function()
+      local expected = [[Vim%(py3.*%):E319: No "python3" provider found.*]]
+      matches(expected, pcall_err(command, 'py3 print("foo")'))
+      matches(expected, pcall_err(command, 'py3file foo'))
+    end)
+    pending(string.format('Python 3 (or the pynvim module) is broken/missing (%s)', reason), function() end)
     return
   end
 end
@@ -22,6 +30,10 @@ describe('python3 provider', function()
 
   it('feature test', function()
     eq(1, eval('has("python3")'))
+    eq(1, eval('has("python3_compiled")'))
+    eq(1, eval('has("python3_dynamic")'))
+    eq(0, eval('has("python3_dynamic_")'))
+    eq(0, eval('has("python3_")'))
   end)
 
   it('python3_execute', function()
@@ -34,8 +46,8 @@ describe('python3 provider', function()
     -- mostly bogus.
     local very_long_symbol = string.rep('a', 1200)
     feed_command(':silent! py3 print('..very_long_symbol..' b)')
-    -- Truncated error message would not contain this (last) line.
-    eq('SyntaxError: invalid syntax', eval('v:errmsg'))
+    -- Error message will contain this (last) line.
+    eq('Error invoking \'python_execute\' on channel 3 (python3-script-host):\n  File "<string>", line 1\n    print('..very_long_symbol..' b)\n          '..string.rep(' ',1200)..' ^\nSyntaxError: invalid syntax', eval('v:errmsg'))
   end)
 
   it('python3_execute with nested commands', function()
@@ -84,7 +96,14 @@ describe('python3 provider', function()
     eq({1, 2, {['key'] = 'val'}}, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
   end)
 
+  it('pyxeval #10758', function()
+    eq(0, eval([[&pyxversion]]))
+    eq(3, eval([[pyxeval('sys.version_info[:3][0]')]]))
+    eq(3, eval([[&pyxversion]]))
+  end)
+
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
+    helpers.add_builddir_to_rtp()
     source([=[
       python3 << EOF
       import vim

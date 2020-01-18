@@ -2,9 +2,9 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local clear, command, eq, neq, eval, wait, spawn =
+local clear, command, eq, neq, eval, wait =
   helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval,
-  helpers.wait, helpers.spawn
+  helpers.wait
 
 describe('storing global variables in ShaDa files', function()
   local tempname = 'Xtest-functional-legacy-074'
@@ -14,9 +14,7 @@ describe('storing global variables in ShaDa files', function()
   end)
 
   it('is working', function()
-    local nvim2 = spawn({helpers.nvim_prog, '-u', 'NONE',
-                                 '-i', 'Xviminfo', '--embed'})
-    helpers.set_session(nvim2)
+    clear{args_rm={'-i'}, args={'-i', 'Xviminfo'}}
 
     local test_dict = {foo = 1, bar = 0, longvarible = 1000}
     local test_list = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,

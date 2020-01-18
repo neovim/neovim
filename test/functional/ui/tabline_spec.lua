@@ -10,15 +10,9 @@ describe('ui/ext_tabline', function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_tabline=true})
-    screen:set_on_event_handler(function(name, data)
-      if name == "tabline_update" then
-        event_curtab, event_tabs = unpack(data)
-      end
-    end)
-  end)
-
-  after_each(function()
-    screen:detach()
+    function screen:_handle_tabline_update(curtab, tabs)
+      event_curtab, event_tabs = curtab, tabs
+    end
   end)
 
   it('publishes UI events', function()
@@ -28,27 +22,27 @@ describe('ui/ext_tabline', function()
       {tab = { id = 1 }, name = '[No Name]'},
       {tab = { id = 2 }, name = 'another-tab'},
     }
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
                                |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({ id = 2 }, event_curtab)
       eq(expected_tabs, event_tabs)
-    end)
+    end}
 
     command("tabNext")
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
                                |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({ id = 1 }, event_curtab)
       eq(expected_tabs, event_tabs)
-    end)
+    end}
   end)
 end)

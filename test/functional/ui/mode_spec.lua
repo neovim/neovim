@@ -2,8 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, eval = helpers.command, helpers.eval
-local eq = helpers.eq
+local command = helpers.command
+local retry = helpers.retry
 
 describe('ui mode_change event', function()
   local screen
@@ -21,207 +21,174 @@ describe('ui mode_change event', function()
   end)
 
   it('works in normal mode', function()
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
 
     feed('d')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("operator", screen.mode)
-    end)
+    ]], mode="operator"}
 
     feed('<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
   end)
 
   it('works in insert mode', function()
     feed('i')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
       {2:-- INSERT --}             |
-    ]],nil,nil,function ()
-      eq("insert", screen.mode)
-    end)
+    ]], mode="insert"}
 
     feed('word<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       wor^d                     |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]], nil, nil, function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
 
+    local matchtime = 0
     command("set showmatch")
-    eq(eval('&matchtime'), 5) -- tenths of seconds
-    feed('a(stuff')
-    screen:expect([[
-      word(stuff^               |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], nil, nil, function ()
-      eq("insert", screen.mode)
-    end)
+    retry(nil, nil, function()
+      matchtime = matchtime + 1
+      local screen_timeout = 1000 * matchtime  -- fail faster for retry.
 
-    feed(')')
-    screen:expect([[
-      word^(stuff)              |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], nil, nil, function ()
-      eq("showmatch", screen.mode)
-    end)
+      command("set matchtime=" .. matchtime) -- tenths of seconds
+      feed('a(stuff')
+      screen:expect{grid=[[
+        word(stuff^               |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="insert", timeout=screen_timeout}
 
-    screen:sleep(400)
-    screen:expect([[
-      word(stuff)^              |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], nil, nil, function ()
-      eq("insert", screen.mode)
+      feed(')')
+      screen:expect{grid=[[
+        word^(stuff)              |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="showmatch", timeout=screen_timeout}
+
+      screen:expect{grid=[[
+        word(stuff)^              |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="insert", timeout=screen_timeout}
     end)
   end)
 
   it('works in replace mode', function()
     feed('R')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
       {2:-- REPLACE --}            |
-    ]], nil, nil, function ()
-      eq("replace", screen.mode)
-    end)
+    ]], mode="replace"}
 
     feed('word<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       wor^d                     |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]], nil, nil, function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
   end)
 
   it('works in cmdline mode', function()
     feed(':')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {0:~                        }|
       {0:~                        }|
       :^                        |
-    ]],nil,nil,function ()
-      eq("cmdline_normal", screen.mode)
-    end)
+    ]], mode="cmdline_normal"}
 
     feed('x<left>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {0:~                        }|
       {0:~                        }|
       :^x                       |
-    ]],nil,nil,function ()
-      eq("cmdline_insert", screen.mode)
-    end)
+    ]], mode="cmdline_insert"}
 
     feed('<insert>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {0:~                        }|
       {0:~                        }|
       :^x                       |
-    ]],nil,nil,function ()
-      eq("cmdline_replace", screen.mode)
-    end)
+    ]], mode="cmdline_replace"}
 
 
     feed('<right>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {0:~                        }|
       {0:~                        }|
       :x^                       |
-    ]],nil,nil,function ()
-      eq("cmdline_normal", screen.mode)
-    end)
+    ]], mode="cmdline_normal"}
 
     feed('<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
   end)
 
-  it('works in visal mode', function()
+  it('works in visual mode', function()
     insert("text")
     feed('v')
-    screen:expect([[
+    screen:expect{grid=[[
       tex^t                     |
       {0:~                        }|
       {0:~                        }|
       {2:-- VISUAL --}             |
-    ]],nil,nil,function ()
-      eq("visual", screen.mode)
-    end)
+    ]], mode="visual"}
 
     feed('<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       tex^t                     |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
 
     command('set selection=exclusive')
     feed('v')
-    screen:expect([[
+    screen:expect{grid=[[
       tex^t                     |
       {0:~                        }|
       {0:~                        }|
       {2:-- VISUAL --}             |
-    ]],nil,nil,function ()
-      eq("visual_select", screen.mode)
-    end)
+    ]], mode="visual_select"}
 
     feed('<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       tex^t                     |
       {0:~                        }|
       {0:~                        }|
                                |
-    ]],nil,nil,function ()
-      eq("normal", screen.mode)
-    end)
+    ]], mode="normal"}
   end)
 end)
 

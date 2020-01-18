@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2016 Oct 10
+" Last Change:  2018 Oct 10
 "
 "	OPTIONS:
 "
@@ -146,6 +146,8 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 	end
 
 	try
+		let eventignore = &eventignore
+		let &eventignore = 'all'
 		let winheight = winheight(0)
 		let winnr = winnr()
 
@@ -216,6 +218,7 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 		endif
 	finally
 		silent! exec winnr.'resize '.winheight
+		let &eventignore = eventignore
 	endtry
 endfunction
 " }}}
@@ -1393,23 +1396,28 @@ function! phpcomplete#GetCallChainReturnType(classname_candidate, class_candidat
 			for classstructure in classcontents
 				let docblock_target_pattern = 'function\s\+&\?'.method.'\>\|\(public\|private\|protected\|var\).\+\$'.method.'\>\|@property.\+\$'.method.'\>'
 				let doc_str = phpcomplete#GetDocBlock(split(classstructure.content, '\n'), docblock_target_pattern)
-				if doc_str != ''
+				let return_type_hint = phpcomplete#GetFunctionReturnTypeHint(split(classstructure.content, '\n'), 'function\s\+&\?'.method.'\>')
+				if doc_str != '' || return_type_hint != ''
 					break
 				endif
 			endfor
-			if doc_str != ''
+			if doc_str != '' || return_type_hint != ''
 				let docblock = phpcomplete#ParseDocBlock(doc_str)
-				if has_key(docblock.return, 'type') || has_key(docblock.var, 'type') || len(docblock.properties) > 0
-					let type = has_key(docblock.return, 'type') ? docblock.return.type : has_key(docblock.var, 'type') ? docblock.var.type : ''
+				if has_key(docblock.return, 'type') || has_key(docblock.var, 'type') || len(docblock.properties) > 0 || return_type_hint != ''
+					if return_type_hint == ''
+						let type = has_key(docblock.return, 'type') ? docblock.return.type : has_key(docblock.var, 'type') ? docblock.var.type : ''
 
-					if type == ''
-						for property in docblock.properties
-							if property.description =~? method
-								let type = property.type
-								break
-							endif
-						endfor
-					endif
+						if type == ''
+							for property in docblock.properties
+								if property.description =~? method
+									let type = property.type
+									break
+								endif
+							endfor
+						endif
+					else
+						let type = return_type_hint
+					end
 
 					" there's a namespace in the type, threat the type as FQCN
 					if type =~ '\\'
@@ -1483,7 +1491,7 @@ function! phpcomplete#GetMethodStack(line) " {{{
 			continue
 		endif
 
-		" if it's looks like a string
+		" if it looks like a string
 		if current_char == "'" || current_char == '"'
 			" and it is not escaped
 			if prev_char != '\' || (prev_char == '\' && prev_prev_char == '\')
@@ -1587,9 +1595,11 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 		elseif function_file != '' && filereadable(function_file)
 			let file_lines = readfile(function_file)
 			let docblock_str = phpcomplete#GetDocBlock(file_lines, 'function\s*&\?\<'.function_name.'\>')
+			let return_type_hint = phpcomplete#GetFunctionReturnTypeHint(file_lines, 'function\s*&\?'.function_name.'\>')
 			let docblock = phpcomplete#ParseDocBlock(docblock_str)
-			if has_key(docblock.return, 'type')
-				let classname_candidate = docblock.return.type
+			let type = has_key(docblock.return, 'type') ? docblock.return.type : return_type_hint
+			if type != ''
+				let classname_candidate = type
 				let [class_candidate_namespace, function_imports] = phpcomplete#GetCurrentNameSpace(file_lines)
 				" try to expand the classname of the returned type with the context got from the function's source file
 
@@ -1821,9 +1831,11 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				elseif function_file != '' && filereadable(function_file)
 					let file_lines = readfile(function_file)
 					let docblock_str = phpcomplete#GetDocBlock(file_lines, 'function\s*&\?\<'.function_name.'\>')
+					let return_type_hint = phpcomplete#GetFunctionReturnTypeHint(file_lines, 'function\s*&\?'.function_name.'\>')
 					let docblock = phpcomplete#ParseDocBlock(docblock_str)
-					if has_key(docblock.return, 'type')
-						let classname_candidate = docblock.return.type
+					let type = has_key(docblock.return, 'type') ? docblock.return.type : return_type_hint
+					if type != ''
+						let classname_candidate = type
 						let [class_candidate_namespace, function_imports] = phpcomplete#GetCurrentNameSpace(file_lines)
 						" try to expand the classname of the returned type with the context got from the function's source file
 						let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, class_candidate_namespace, function_imports)
@@ -2413,6 +2425,44 @@ function! phpcomplete#ParseDocBlock(docblock) " {{{
 endfunction
 " }}}
 
+function! phpcomplete#GetFunctionReturnTypeHint(sccontent, search)
+	let i = 0
+	let l = 0
+	let function_line_start = -1
+	let function_line_end = -1
+	let sccontent_len = len(a:sccontent)
+	let return_type = ''
+
+	while (i < sccontent_len)
+		let line = a:sccontent[i]
+		" search for a function declaration
+		if line =~? a:search
+			let l = i
+			let function_line_start = i
+			" now search for the first { where the function body starts
+			while l < sccontent_len
+				let line = a:sccontent[l]
+				if line =~? '\V{'
+					let function_line_end = l
+					break
+				endif
+				let l += 1
+			endwhile
+			break
+		endif
+		let i += 1
+	endwhile
+
+	" now grab the lines that holds the function declaration line
+	if function_line_start != -1 && function_line_end != -1
+		let function_line = join(a:sccontent[function_line_start :function_line_end], " ")
+		let class_name_pattern = '[a-zA-Z_\x7f-\xff\\][a-zA-Z_0-9\x7f-\xff\\]*'
+		let return_type = matchstr(function_line, '\c\s*:\s*\zs'.class_name_pattern.'\ze\s*{')
+	endif
+	return return_type
+
+endfunction
+
 function! phpcomplete#GetTypeFromDocBlockParam(docblock_type) " {{{
 	if a:docblock_type !~ '|'
 		return a:docblock_type
@@ -2572,7 +2622,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 			" find kind flags from tags or built in methods for the objects we extracted
 			" they can be either classes, interfaces or namespaces, no other thing is importable in php
 			for [key, import] in items(imports)
-				" if theres a \ in the name we have it's definetly not a built in thing, look for tags
+				" if theres a \ in the name we have it's definitely not a built in thing, look for tags
 				if import.name =~ '\\'
 					let patched_ctags_detected = 0
 					let [classname, namespace_for_classes] = phpcomplete#ExpandClassName(import.name, '\', {})

@@ -2,7 +2,7 @@
 " Language:     LaTeX
 " Maintainer:   Yichao Zhou <broken.zhou AT gmail.com>
 " Created:      Sat, 16 Feb 2002 16:50:19 +0100
-" Version: 0.9.4
+" Version: 1.0.0
 "   Please email me if you found something I can do.  Comments, bug report and
 "   feature request are welcome.
 
@@ -62,6 +62,8 @@
 "               (*) Fix a bug between g:tex_noindent_env and g:tex_indent_items
 "                   Now g:tex_noindent_env='document\|verbatim\|itemize' (Emacs
 "                   style) is supported.  Thanks Miles Wheeler for reporting.
+"               2018/02/07 by Yichao Zhou <broken.zhou AT gmail.com>
+"               (*) Make indentation more smart in the normal mode
 "
 " }}}
 
@@ -91,19 +93,14 @@
 "   If this variable is set, item-environments are indented like Emacs does
 "   it, i.e., continuation lines are indented with a shiftwidth.
 "
-"   NOTE: I've already set the variable below; delete the corresponding line
-"   if you don't like this behaviour.
-"
-"   Per default, it is unset.
-"
-"              set                                unset
-"   ----------------------------------------------------------------
-"       \begin{itemize}                      \begin{itemize}
-"         \item blablabla                      \item blablabla
-"           bla bla bla                        bla bla bla
-"         \item blablabla                      \item blablabla
-"           bla bla bla                        bla bla bla
-"       \end{itemize}                        \end{itemize}
+"              set                      unset
+"   ------------------------------------------------------
+"       \begin{itemize}            \begin{itemize}
+"         \item blablabla            \item blablabla
+"           bla bla bla              bla bla bla
+"         \item blablabla            \item blablabla
+"           bla bla bla              bla bla bla
+"       \end{itemize}              \end{itemize}
 "
 "
 " * g:tex_items
@@ -290,8 +287,9 @@ function! GetTeXIndent() " {{{
         endif
     endif
 
-    if stay
-        " If there is no obvious indentation hint, we trust our user.
+    if stay && mode() == 'i'
+        " If there is no obvious indentation hint, and indentation is triggered
+        " in insert mode, we trust our user.
         if empty(cline)
             return ind
         else

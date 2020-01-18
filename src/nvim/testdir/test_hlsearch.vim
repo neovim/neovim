@@ -4,7 +4,6 @@ function! Test_hlsearch()
   new
   call setline(1, repeat(['aaa'], 10))
   set hlsearch nolazyredraw
-  let r=[]
   " redraw is needed to make hlsearch highlight the matches
   exe "normal! /aaa\<CR>" | redraw
   let r1 = screenattr(1, 1)
@@ -32,3 +31,35 @@ function! Test_hlsearch()
   call getchar(1)
   enew!
 endfunction
+
+func Test_hlsearch_hangs()
+  if !has('reltime') || !has('float')
+    return
+  endif
+
+  " This pattern takes a long time to match, it should timeout.
+  new
+  call setline(1, ['aaa', repeat('abc ', 100000), 'ccc'])
+  let start = reltime()
+  set hlsearch nolazyredraw redrawtime=101
+  let @/ = '\%#=1a*.*X\@<=b*'
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+  set nohlsearch redrawtime&
+  bwipe!
+endfunc
+
+func Test_hlsearch_eol_highlight()
+  new
+  call append(1, repeat([''], 9))
+  set hlsearch nolazyredraw
+  exe "normal! /$\<CR>" | redraw
+  let attr = screenattr(1, 1)
+  for row in range(2, 10)
+    call assert_equal(attr, screenattr(row, 1), 'in line ' . row)
+  endfor
+  set nohlsearch
+  bwipe!
+endfunc

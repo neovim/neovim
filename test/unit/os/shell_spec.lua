@@ -25,6 +25,7 @@ describe('shell functions', function()
     local res = cimported.shell_build_argv(
         cmd and to_cstr(cmd),
         extra_args and to_cstr(extra_args))
+    -- `res` is zero-indexed (C pointer, not Lua table)!
     local argc = 0
     local ret = {}
     -- Explicitly free everything, so if it is not in allocated memory it will
@@ -36,6 +37,26 @@ describe('shell functions', function()
     end
     cimported.xfree(res)
     return ret
+  end
+
+  local function shell_argv_to_str(argv_table)
+    -- C string array (char **).
+    local argv = (argv_table
+                  and ffi.new("char*[?]", #argv_table+1)
+                  or NULL)
+
+    local argc = 1
+    while argv_table ~= nil and argv_table[argc] ~= nil do
+      -- `argv` is zero-indexed (C pointer, not Lua table)!
+      argv[argc - 1] = to_cstr(argv_table[argc])
+      argc = argc + 1
+    end
+    if argv_table ~= nil then
+      argv[argc - 1] = NULL
+    end
+
+    local res = cimported.shell_argv_to_str(argv)
+    return ffi.string(res)
   end
 
   local function os_system(cmd, input)
@@ -150,5 +171,15 @@ describe('shell functions', function()
       eq(ffi.string(argv[2]), 'echo -n some text')
       eq(nil, argv[3])
     end)
+  end)
+
+  itp('shell_argv_to_str', function()
+    eq('', shell_argv_to_str({ nil }))
+    eq("''", shell_argv_to_str({ '' }))
+    eq("'foo' '' 'bar'", shell_argv_to_str({ 'foo', '', 'bar' }))
+    eq("'/bin/sh' '-c' 'abc  def'", shell_argv_to_str({'/bin/sh', '-c', 'abc  def'}))
+    eq("'abc  def' 'ghi  jkl'", shell_argv_to_str({'abc  def', 'ghi  jkl'}))
+    eq("'/bin/sh' '-c' 'abc  def' '"..('x'):rep(225).."...",
+       shell_argv_to_str({'/bin/sh', '-c', 'abc  def', ('x'):rep(999)}))
   end)
 end)

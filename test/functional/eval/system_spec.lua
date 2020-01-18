@@ -7,6 +7,8 @@ local eq, call, clear, eval, feed_command, feed, nvim =
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
+local os_kill = helpers.os_kill
+local pcall_err = helpers.pcall_err
 
 local Screen = require('test.functional.ui.screen')
 
@@ -23,14 +25,6 @@ local function delete_file(name)
   end
 end
 
--- Some tests require the xclip program and a x server.
-local xclip = nil
-do
-  if os.getenv('DISPLAY') then
-    xclip = (os.execute('command -v xclip > /dev/null 2>&1') == 0)
-  end
-end
-
 describe('system()', function()
   before_each(clear)
 
@@ -39,8 +33,9 @@ describe('system()', function()
       return nvim_dir..'/printargs-test' .. (iswin() and '.exe' or '')
     end
 
-    it('sets v:shell_error if cmd[0] is not executable', function()
-      call('system', { 'this-should-not-exist' })
+    it('throws error if cmd[0] is not executable', function()
+      eq("Vim:E475: Invalid value for argument cmd: 'this-should-not-exist' is not executable",
+        pcall_err(call, 'system', { 'this-should-not-exist' }))
       eq(-1, eval('v:shell_error'))
     end)
 
@@ -55,7 +50,8 @@ describe('system()', function()
       eq(0, eval('v:shell_error'))
 
       -- Provoke a non-zero v:shell_error.
-      call('system', { 'this-should-not-exist' })
+      eq("Vim:E475: Invalid value for argument cmd: 'this-should-not-exist' is not executable",
+        pcall_err(call, 'system', { 'this-should-not-exist' }))
       local old_val = eval('v:shell_error')
       eq(-1, old_val)
 
@@ -91,7 +87,7 @@ describe('system()', function()
 
     it('does NOT run in shell', function()
       if iswin() then
-        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'echo', '%PATH%'])"))
+        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'Write-Output', '%PATH%'])"))
       else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
@@ -124,13 +120,8 @@ describe('system()', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new()
       screen:attach()
-    end)
-
-    after_each(function()
-      screen:detach()
     end)
 
     if iswin() then
@@ -141,7 +132,7 @@ describe('system()', function()
         eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
         eq(0, eval('v:shell_error'))
         eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
-        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command Write-Output ''\^"a b\^"''')]]))
       end
 
       it('with shell=cmd.exe', function()
@@ -177,9 +168,9 @@ describe('system()', function()
 
       it('works with powershell', function()
         helpers.set_shell_powershell()
-        eq('a\nb\n', eval([[system('echo a b')]]))
+        eq('a\nb\n', eval([[system('Write-Output a b')]]))
         eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
-        eq('a b\n', eval([[system('echo "a b"')]]))
+        eq('a b\n', eval([[system('Write-Output "a b"')]]))
       end)
     end
 
@@ -201,6 +192,41 @@ describe('system()', function()
         ~                                                    |
         :call system("echo")                                 |
       ]])
+    end)
+
+    it('prints verbose information', function()
+      nvim('set_option', 'shell', 'fake_shell')
+      nvim('set_option', 'shellcmdflag', 'cmdflag')
+
+      screen:try_resize(72, 14)
+      feed(':4verbose echo system("echo hi")<cr>')
+      if iswin() then
+        screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' '"echo hi"'"]]}
+      else
+        screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' 'echo hi'"]]}
+      end
+      feed('<cr>')
+    end)
+
+    it('self and total time recorded separately', function()
+      local tempfile = helpers.tmpname()
+
+      feed(':function! AlmostNoSelfTime()<cr>')
+      feed('echo system("echo hi")<cr>')
+      feed('endfunction<cr>')
+
+      feed(':profile start ' .. tempfile .. '<cr>')
+      feed(':profile func AlmostNoSelfTime<cr>')
+      feed(':call AlmostNoSelfTime()<cr>')
+      feed(':profile dump<cr>')
+
+      feed(':edit ' .. tempfile .. '<cr>')
+
+      local command_total_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[2])
+      local command_self_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[3])
+
+      helpers.neq(nil, command_total_time)
+      helpers.neq(nil, command_self_time)
     end)
 
     it('`yes` interrupted with CTRL-C', function()
@@ -241,7 +267,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Nvim                     |
+        Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)
   end)
@@ -344,15 +370,10 @@ describe('system()', function()
     end)
   end)
 
-  describe("with a program that doesn't close stdout", function()
-    if not xclip then
-      pending('missing `xclip`', function() end)
-    else
-      it('will exit properly after passing input', function()
-        eq('', eval([[system('xclip -i -loops 1 -selection clipboard', 'clip-data')]]))
-        eq('clip-data', eval([[system('xclip -o -selection clipboard')]]))
-      end)
-    end
+  it("with a program that doesn't close stdout will exit properly after passing input", function()
+    local out = eval(string.format("system('%s', 'clip-data')", nvim_dir..'/streams-test'))
+    assert(out:sub(0, 5) == 'pid: ', out)
+    os_kill(out:match("%d+"))
   end)
 end)
 
@@ -386,13 +407,12 @@ describe('systemlist()', function()
     local screen
 
     before_each(function()
-        clear()
-        screen = Screen.new()
-        screen:attach()
+      screen = Screen.new()
+      screen:attach()
     end)
 
     after_each(function()
-        screen:detach()
+      screen:detach()
     end)
 
     it('`echo` and waits for its return', function()
@@ -448,7 +468,7 @@ describe('systemlist()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Nvim                     |
+        Type  :qa  and press <Enter> to exit Nvim            |
       ]])
     end)
   end)
@@ -529,16 +549,9 @@ describe('systemlist()', function()
     end)
   end)
 
-  describe("with a program that doesn't close stdout", function()
-    if not xclip then
-      pending('missing `xclip`', function() end)
-    else
-      it('will exit properly after passing input', function()
-        eq({}, eval(
-          "systemlist('xclip -i -loops 1 -selection clipboard', ['clip', 'data'])"))
-        eq({'clip', 'data'}, eval(
-          "systemlist('xclip -o -selection clipboard')"))
-      end)
-    end
+  it("with a program that doesn't close stdout will exit properly after passing input", function()
+    local out = eval(string.format("systemlist('%s', 'clip-data')", nvim_dir..'/streams-test'))
+    assert(out[1]:sub(0, 5) == 'pid: ', out)
+    os_kill(out[1]:match("%d+"))
   end)
 end)

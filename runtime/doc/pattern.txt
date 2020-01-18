@@ -141,6 +141,17 @@ use <Esc> to abandon the search.
 All matches for the last used search pattern will be highlighted if you set
 the 'hlsearch' option.  This can be suspended with the |:nohlsearch| command.
 
+When 'shortmess' does not include the "S" flag, Vim will automatically show an
+index, on which the cursor is. This can look like this: >
+
+  [1/5]		Cursor is on first of 5 matches.
+  [1/>99]	Cursor is on first of more than 99 matches.
+  [>99/>99]	Cursor is after 99 match of more than 99 matches.
+  [?/??]	Unknown how many matches exists, generating the
+		statistics was aborted because of search timeout.
+
+Note: the count does not take offset into account.
+
 When no match is found you get the error: *E486* Pattern not found
 Note that for the |:global| command this behaves like a normal message, for Vi
 compatibility.  For the |:s| command the "e" flag can be used to avoid the
@@ -282,6 +293,14 @@ the "#" is under your left hand middle finger (search to the left and up) and
 the "*" is under your right hand middle finger (search to the right and down).
 (this depends on your keyboard layout though).
 
+								*E956*
+In very rare cases a regular expression is used recursively.  This can happen
+when executing a pattern takes a long time and when checking for messages on
+channels a callback is invoked that also uses a pattern or an autocommand is
+triggered.  In most cases this should be fine, but if a pattern is in use when
+it's used again it fails.  Usually this means there is something wrong with
+the pattern.
+
 ==============================================================================
 2. The definition of a pattern		*search-pattern* *pattern* *[pattern]*
 					*regular-expression* *regexp* *Pattern*
@@ -379,11 +398,11 @@ Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.
 Use of "\M" makes the pattern after it be interpreted as if 'nomagic' is used.
 							*/\v* */\V*
-Use of "\v" means that in the pattern after it all ASCII characters except
-'0'-'9', 'a'-'z', 'A'-'Z' and '_' have a special meaning.  "very magic"
+Use of "\v" means that after it, all ASCII characters except '0'-'9', 'a'-'z',
+'A'-'Z' and '_' have special meaning: "very magic"
 
-Use of "\V" means that in the pattern after it only the backslash and the
-terminating character (/ or ?) has a special meaning.  "very nomagic"
+Use of "\V" means that after it, only a backslash and terminating character
+(usually / or ?) have special meaning: "very nomagic"
 
 Examples:
 after:	  \v	   \m	    \M	     \V		matches ~
@@ -888,7 +907,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	becomes invalid.  Vim doesn't automatically update the matches.
 	Similar to moving the cursor for "\%#" |/\%#|.
 
-						*/\%l* */\%>l* */\%<l*
+						*/\%l* */\%>l* */\%<l* *E951*
 \%23l	Matches in a specific line.
 \%<23l	Matches above a specific line (lower line number).
 \%>23l	Matches below a specific line (higher line number).
@@ -1071,25 +1090,27 @@ x	A single character, with no special meaning, matches itself
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:
-			  Name		Contents ~
-*[:alnum:]*		  [:alnum:]     ASCII letters and digits
-*[:alpha:]*		  [:alpha:]     ASCII letters
-*[:blank:]*		  [:blank:]     space and tab characters
-*[:cntrl:]*		  [:cntrl:]     control characters
-*[:digit:]*		  [:digit:]     decimal digits
-*[:graph:]*		  [:graph:]     printable characters excluding space
-*[:lower:]*		  [:lower:]     lowercase letters (all letters when
+		  Name	      Func	Contents ~
+*[:alnum:]*	  [:alnum:]   isalnum	ASCII letters and digits
+*[:alpha:]*	  [:alpha:]   isalpha  	ASCII letters
+*[:blank:]*	  [:blank:]     	space and tab
+*[:cntrl:]*	  [:cntrl:]   iscntrl 	ASCII control characters
+*[:digit:]*	  [:digit:]     	decimal digits '0' to '9'
+*[:graph:]*	  [:graph:]   isgraph	ASCII printable characters excluding
+					space
+*[:lower:]*	  [:lower:]   (1)	lowercase letters (all letters when
 					'ignorecase' is used)
-*[:print:]*		  [:print:]     printable characters including space
-*[:punct:]*		  [:punct:]     ASCII punctuation characters
-*[:space:]*		  [:space:]     whitespace characters
-*[:upper:]*		  [:upper:]     uppercase letters (all letters when
+*[:print:]*	  [:print:]   (2) 	printable characters including space
+*[:punct:]*	  [:punct:]   ispunct	ASCII punctuation characters
+*[:space:]*	  [:space:]     	whitespace characters: space, tab, CR,
+					NL, vertical tab, form feed
+*[:upper:]*	  [:upper:]   (3)	uppercase letters (all letters when
 					'ignorecase' is used)
-*[:xdigit:]*		  [:xdigit:]    hexadecimal digits
-*[:return:]*		  [:return:]	the <CR> character
-*[:tab:]*		  [:tab:]	the <Tab> character
-*[:escape:]*		  [:escape:]	the <Esc> character
-*[:backspace:]*		  [:backspace:]	the <BS> character
+*[:xdigit:]*	  [:xdigit:]    	hexadecimal digits: 0-9, a-f, A-F
+*[:return:]*	  [:return:]		the <CR> character
+*[:tab:]*	  [:tab:]		the <Tab> character
+*[:escape:]*	  [:escape:]		the <Esc> character
+*[:backspace:]*	  [:backspace:]		the <BS> character
 	  The brackets in character class expressions are additional to the
 	  brackets delimiting a collection.  For example, the following is a
 	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
@@ -1100,6 +1121,13 @@ x	A single character, with no special meaning, matches itself
 	  regexp engine.  See |two-engines|.  In the future these items may
 	  work for multi-byte characters.  For now, to get all "alpha"
 	  characters you can use: [[:lower:][:upper:]].
+
+	  The "Func" column shows what library function is used.  The
+	  implementation depends on the system.  Otherwise:
+	  (1) Uses islower() for ASCII and Vim builtin rules for other
+	  characters.
+	  (2) Uses Vim builtin rules
+	  (3) As with (1) but using isupper()
 							*/[[=* *[==]*
 	- An equivalence class.  This means that characters are matched that
 	  have almost the same meaning, e.g., when ignoring accents.  This
@@ -1139,7 +1167,8 @@ x	A single character, with no special meaning, matches itself
 	- Matching with a collection can be slow, because each character in
 	  the text has to be compared with each character in the collection.
 	  Use one of the other atoms above when possible.  Example: "\d" is
-	  much faster than "[0-9]" and matches the same characters.
+	  much faster than "[0-9]" and matches the same characters.  However,
+	  the new |NFA| regexp engine deals with this better than the old one.
 
 						*/\%[]* *E69* *E70* *E369*
 \%[]	A sequence of optionally matched atoms.  This always matches.
@@ -1160,7 +1189,6 @@ x	A single character, with no special meaning, matches itself
 	To include a "[" use "[[]" and for "]" use []]", e.g.,: >
 		/index\%[[[]0[]]]
 <	matches "index" "index[", "index[0" and "index[0]".
-	{not available when compiled without the |+syntax| feature}
 
 				*/\%d* */\%x* */\%o* */\%u* */\%U* *E678*
 
@@ -1172,7 +1200,7 @@ x	A single character, with no special meaning, matches itself
 \%u20AC	Matches the character specified with up to four hexadecimal
 	characters.
 \%U1234abcd	Matches the character specified with up to eight hexadecimal
-	characters.
+	characters, up to 0x7fffffff
 
 ==============================================================================
 7. Ignoring case in a pattern					*/ignorecase*
@@ -1381,4 +1409,4 @@ Finally, these constructs are unique to Perl:
 		":2match" for another plugin.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

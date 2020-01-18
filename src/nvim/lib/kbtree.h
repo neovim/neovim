@@ -25,12 +25,19 @@
  * SUCH DAMAGE.
  */
 
+// Gotchas
+// -------
+//
+// if you delete from a kbtree while iterating over it you must use
+// kb_del_itr and not kb_del otherwise the iterator might point to freed memory.
+
 #ifndef NVIM_LIB_KBTREE_H
 #define NVIM_LIB_KBTREE_H
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "nvim/memory.h"
 
@@ -71,7 +78,7 @@
 			*top++ = (b)->root;											\
 			while (top != stack) {										\
 				x = *--top;												\
-				if (x->is_internal == 0) { xfree(x); continue; }			\
+				if (x->is_internal == 0) { XFREE_CLEAR(x); continue; }			\
 				for (i = 0; i <= x->n; ++i)								\
 					if (__KB_PTR(b, x)[i]) {							\
 						if (top - stack == (int)max) {		        	\
@@ -81,10 +88,10 @@
 						}												\
 						*top++ = __KB_PTR(b, x)[i];						\
 					}													\
-				xfree(x);												\
+				XFREE_CLEAR(x);												\
 			}															\
 		}																\
-		xfree(stack);											\
+		XFREE_CLEAR(stack);											\
 	} while (0)
 
 #define __KB_GET_AUX1(name, key_t, kbnode_t, __cmp)								\
@@ -252,7 +259,7 @@
 				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				xfree(z);												\
+				XFREE_CLEAR(z);												\
 				return __kb_delp_aux_##name(b, y, k, s);				\
 			}															\
 		}																\
@@ -280,7 +287,7 @@
 				memmove(&__KB_KEY(key_t, x)[i - 1], &__KB_KEY(key_t, x)[i], (unsigned int)(x->n - i) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i], &__KB_PTR(b, x)[i + 1], (unsigned int)(x->n - i) * sizeof(void*)); \
 				--x->n;													\
-				xfree(xp);												\
+				XFREE_CLEAR(xp);												\
 				xp = y;													\
 			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n == T - 1) { \
 				__KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];	\
@@ -290,7 +297,7 @@
 				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				xfree(y);												\
+				XFREE_CLEAR(y);												\
 			}															\
 		}																\
 		return __kb_delp_aux_##name(b, xp, k, s);						\
@@ -305,7 +312,7 @@
 			--b->n_nodes;												\
 			x = b->root;												\
 			b->root = __KB_PTR(b, x)[0];								\
-			xfree(x);													\
+			XFREE_CLEAR(x);													\
 		}																\
 		return ret;														\
 	}																	\
@@ -317,7 +324,7 @@
 #define __KB_ITR(name, key_t, kbnode_t) \
 	static inline void kb_itr_first_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		itr->p = 0; \
+		itr->p = NULL; \
 		if (b->n_keys == 0) return; \
 		itr->p = itr->stack; \
 		itr->p->x = b->root; itr->p->i = 0; \
@@ -329,30 +336,37 @@
 	} \
 	static inline int kb_itr_next_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		if (itr->p < itr->stack) return 0; \
+		if (itr->p == NULL) return 0; \
 		for (;;) { \
 			++itr->p->i; \
+			assert(itr->p->i <= 21); \
 			while (itr->p->x && itr->p->i <= itr->p->x->n) { \
 				itr->p[1].i = 0; \
 				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
 				++itr->p; \
 			} \
+			if (itr->p == itr->stack) { \
+				itr->p = NULL; \
+				return 0; \
+			} \
 			--itr->p; \
-			if (itr->p < itr->stack) return 0; \
 			if (itr->p->x && itr->p->i < itr->p->x->n) return 1; \
 		} \
 	} \
 	static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		if (itr->p < itr->stack) return 0; \
+		if (itr->p == NULL) return 0; \
 		for (;;) { \
 			while (itr->p->x && itr->p->i >= 0) { \
 				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
 				itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1; \
 				++itr->p; \
 			} \
+			if (itr->p == itr->stack) { \
+				itr->p = NULL; \
+				return 0; \
+			} \
 			--itr->p; \
-			if (itr->p < itr->stack) return 0; \
 			--itr->p->i; \
 			if (itr->p->x && itr->p->i >= 0) return 1; \
 		} \
@@ -371,9 +385,11 @@
 			itr->p->i = i; \
 			if (i >= 0 && r == 0) return 1; \
 			++itr->p->i; \
+			assert(itr->p->i <= 21); \
 			itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
 			++itr->p; \
 		} \
+		itr->p->i = 0; \
 		return 0; \
 	} \
 	static inline int kb_itr_get_##name(kbtree_##name##_t *b, key_t k, kbitr_##name##_t *itr) \

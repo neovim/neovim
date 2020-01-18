@@ -511,4 +511,4 @@ else:
 
 Next chapter: |usr_05.txt|  Set your settings
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

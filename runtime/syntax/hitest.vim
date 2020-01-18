@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	none; used to see highlighting
 " Maintainer:	Ronald Schild <rs@scutum.de>
-" Last Change:	2017 Jul 28
+" Last Change:	2019 Jun 06
 " Version:	5.4n.1
+" Additional Changes By: Lifepillar, Bram
 
 " To see your current highlight settings, do
 "    :so $VIMRUNTIME/syntax/hitest.vim
@@ -12,6 +13,7 @@ let s:hidden      = &hidden
 let s:lazyredraw  = &lazyredraw
 let s:more	  = &more
 let s:report      = &report
+let s:whichwrap   = &whichwrap
 let s:shortmess   = &shortmess
 let s:wrapscan    = &wrapscan
 let s:register_a  = @a
@@ -19,10 +21,11 @@ let s:register_se = @/
 
 " set global options
 set hidden lazyredraw nomore report=99999 shortmess=aoOstTW wrapscan
+set whichwrap&
 
 " print current highlight settings into register a
 redir @a
-highlight
+silent highlight
 redir END
 
 " Open a new window if the current one isn't empty
@@ -34,12 +37,15 @@ endif
 edit Highlight\ test
 
 " set local options
-setlocal autoindent noexpandtab formatoptions=t shiftwidth=16 noswapfile tabstop=16
+setlocal autoindent noexpandtab formatoptions=t shiftwidth=18 noswapfile tabstop=18
 let &textwidth=&columns
 
 " insert highlight settings
 % delete
 put a
+
+" remove cleared groups
+silent! g/ cleared$/d
 
 " remove the colored xxx items
 g/xxx /s///e
@@ -47,12 +53,16 @@ g/xxx /s///e
 " remove color settings (not needed here)
 global! /links to/ substitute /\s.*$//e
 
+" Move split 'links to' lines to the same line
+% substitute /^\(\w\+\)\n\s*\(links to.*\)/\1\t\2/e
+
 " move linked groups to the end of file
 global /links to/ move $
 
 " move linked group names to the matching preferred groups
+" TODO: this fails if the group linked to isn't defined
 % substitute /^\(\w\+\)\s*\(links to\)\s*\(\w\+\)$/\3\t\2 \1/e
-global /links to/ normal mz3ElD0#$p'zdd
+silent! global /links to/ normal mz3ElD0#$p'zdd
 
 " delete empty lines
 global /^ *$/ delete
@@ -124,6 +134,7 @@ let &lazyredraw  = s:lazyredraw
 let &more	 = s:more
 let &report	 = s:report
 let &shortmess	 = s:shortmess
+let &whichwrap   = s:whichwrap
 let &wrapscan	 = s:wrapscan
 let @a		 = s:register_a
 
@@ -133,6 +144,6 @@ let @/ = s:register_se
 
 " remove variables
 unlet s:hidden s:lazyredraw s:more s:report s:shortmess
-unlet s:wrapscan s:register_a s:register_se
+unlet s:whichwrap s:wrapscan s:register_a s:register_se
 
 " vim: ts=8

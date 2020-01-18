@@ -10,10 +10,10 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local has_powershell = helpers.has_powershell
+local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen
   before_each(function()
     clear()
@@ -32,10 +32,10 @@ describe("shell command :!", function()
 
   after_each(function()
     child_session.feed_data("\3") -- Ctrl-C
-    screen:detach()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()
+    if helpers.pending_win32(pending) then return end
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
@@ -51,29 +51,31 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
-      pending("[Unreliable on Travis macOS.]", function() end)
-      return
+    if 'openbsd' == helpers.uname() then
+      pending('FIXME #10804')
     end
-
-    screen.timeout = 20000  -- Avoid false failure on slow systems.
-    child_session.feed_data(
-      ":!for i in $(seq 2 3000); do echo XXXXXXXXXX $i; done\n")
+    child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.
-    screen:expect("\n.", nil, nil, nil, true)
+    -- Avoid false failure on slow systems.
+    screen:expect{any="\n%.", timeout=20000}
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
     screen:expect([[
-      XXXXXXXXXX 2997                                   |
-      XXXXXXXXXX 2998                                   |
-      XXXXXXXXXX 2999                                   |
-      XXXXXXXXXX 3000                                   |
+      29997: foo                                        |
+      29998: foo                                        |
+      29999: foo                                        |
+      30000: foo                                        |
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]], {
+      -- test/functional/helpers.lua defaults to background=light.
+      [1] = {reverse = true},
+      [3] = {bold = true},
+      [10] = {foreground = 2},
+    })
   end)
 end)
 
@@ -92,10 +94,9 @@ describe("shell command :!", function()
     eq(2, eval('1+1'))  -- Still alive?
   end)
 
-  it([[handles control codes]], function()
+  it('handles control codes', function()
     if iswin() then
-      pending('missing printf', function() end)
-      return
+      pending('missing printf')
     end
     local screen = Screen.new(50, 4)
     screen:attach()
@@ -111,18 +112,18 @@ describe("shell command :!", function()
     feed([[<CR>]])
     -- Print BELL control code. #4338
     screen.bell = false
-    feed([[:!printf '\x07\x07\x07\x07text'<CR>]])
-    screen:expect([[
+    feed([[:!printf '\007\007\007\007text'<CR>]])
+    screen:expect{grid=[[
       ~                                                 |
-      :!printf '\x07\x07\x07\x07text'                   |
+      :!printf '\007\007\007\007text'                   |
       text                                              |
       Press ENTER or type command to continue^           |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq(true, screen.bell)
-    end)
+    end}
     feed([[<CR>]])
     -- Print BS control code.
-    feed([[:echo system('printf ''\x08\n''')<CR>]])
+    feed([[:echo system('printf ''\010\n''')<CR>]])
     screen:expect([[
       ~                                                 |
       ^H                                                |
@@ -188,7 +189,7 @@ describe("shell command :!", function()
     it('handles binary and multibyte data', function()
       feed_command('!cat test/functional/fixtures/shell_data.txt')
       screen.bell = false
-      screen:expect([[
+      screen:expect{grid=[[
                                                              |
         {1:~                                                    }|
         {4:                                                     }|
@@ -199,9 +200,9 @@ describe("shell command :!", function()
         t       {2:<ff>}                                         |
                                                              |
         {3:Press ENTER or type command to continue}^              |
-    ]], nil, nil, function()
+      ]], condition=function()
         eq(true, screen.bell)
-      end)
+      end}
     end)
 
     it('handles multibyte sequences split over buffer boundaries', function()
@@ -228,4 +229,23 @@ describe("shell command :!", function()
       ]])
     end)
   end)
+  if has_powershell() then
+    it('powershell supports literal strings', function()
+      set_shell_powershell()
+      local screen = Screen.new(30, 4)
+      screen:attach()
+      feed_command([[!'Write-Output $a']])
+      screen:expect{any='\nWrite%-Output %$a', timeout=10000}
+      feed_command([[!$a = 1; Write-Output '$a']])
+      screen:expect{any='\n%$a', timeout=10000}
+      feed_command([[!"Write-Output $a"]])
+      screen:expect{any='\nWrite%-Output', timeout=10000}
+      feed_command([[!$a = 1; Write-Output "$a"]])
+      screen:expect{any='\n1', timeout=10000}
+      feed_command(iswin()
+        and [[!& 'C:\\Windows\\system32\\cmd.exe' /c 'echo $a']]
+        or  [[!& '/bin/sh' -c 'echo ''$a''']])
+      screen:expect{any='\n%$a', timeout=10000}
+    end)
+  end
 end)

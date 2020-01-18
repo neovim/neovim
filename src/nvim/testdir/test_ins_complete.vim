@@ -142,6 +142,19 @@ function Test_CompleteDoneDict()
   au! CompleteDone
 endfunc
 
+func Test_CompleteDone_undo()
+  au CompleteDone * call append(0, "prepend1")
+  new
+  call setline(1, ["line1", "line2"])
+  call feedkeys("Go\<C-X>\<C-N>\<CR>\<ESC>", "tx")
+  call assert_equal(["prepend1", "line1", "line2", "line1", ""],
+              \     getline(1, '$'))
+  undo
+  call assert_equal(["line1", "line2"], getline(1, '$'))
+  bwipe!
+  au! CompleteDone
+endfunc
+
 function! s:CompleteDone_CompleteFuncDictNoUserData( findstart, base )
   if a:findstart
     return 0
@@ -216,4 +229,77 @@ function Test_CompleteDoneList()
 
   let s:called_completedone = 0
   au! CompleteDone
+endfunc
+
+func Test_omni_dash()
+  func Omni(findstart, base)
+    if a:findstart
+        return 5
+    else
+        echom a:base
+	return ['-help', '-v']
+    endif
+  endfunc
+  set omnifunc=Omni
+  new
+  exe "normal Gofind -\<C-x>\<C-o>"
+  call assert_equal("\n-\nmatch 1 of 2", execute(':2mess'))
+
+  bwipe!
+  delfunc Omni
+  set omnifunc=
+endfunc
+
+func Test_completefunc_args()
+  let s:args = []
+  func! CompleteFunc(findstart, base)
+    let s:args += [[a:findstart, empty(a:base)]]
+  endfunc
+  new
+
+  set completefunc=CompleteFunc
+  call feedkeys("i\<C-X>\<C-U>\<Esc>", 'x')
+  call assert_equal([1, 1], s:args[0])
+  call assert_equal(0, s:args[1][0])
+  set completefunc=
+
+  let s:args = []
+  set omnifunc=CompleteFunc
+  call feedkeys("i\<C-X>\<C-O>\<Esc>", 'x')
+  call assert_equal([1, 1], s:args[0])
+  call assert_equal(0, s:args[1][0])
+  set omnifunc=
+
+  bwipe!
+  unlet s:args
+  delfunc CompleteFunc
+endfunc
+
+" Check that when using feedkeys() typeahead does not interrupt searching for
+" completions.
+func Test_compl_feedkeys()
+  new
+  set completeopt=menuone,noselect
+  call feedkeys("ajump ju\<C-X>\<C-N>\<C-P>\<ESC>", "tx")
+  call assert_equal("jump jump", getline(1))
+  bwipe!
+  set completeopt&
+endfunc
+
+func Test_compl_in_cmdwin()
+  set wildmenu wildchar=<Tab>
+  com! -nargs=1 -complete=command GetInput let input = <q-args>
+  com! -buffer TestCommand echo 'TestCommand'
+
+  let input = ''
+  call feedkeys("q:iGetInput T\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('TestCommand', input)
+
+  let input = ''
+  call feedkeys("q::GetInput T\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('T', input)
+
+  delcom TestCommand
+  delcom GetInput
+  set wildmenu& wildchar&
 endfunc

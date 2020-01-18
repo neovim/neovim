@@ -4,26 +4,17 @@
 #  MSGPACK_INCLUDE_DIRS - The msgpack include directories
 #  MSGPACK_LIBRARIES - The libraries needed to use msgpack
 
-if(NOT USE_BUNDLED_MSGPACK)
-  find_package(PkgConfig)
-  if (PKG_CONFIG_FOUND)
-    pkg_search_module(PC_MSGPACK QUIET
-      msgpackc>=${Msgpack_FIND_VERSION}
-      msgpack>=${Msgpack_FIND_VERSION})
-  endif()
-else()
-  set(PC_MSGPACK_INCLUDEDIR)
-  set(PC_MSGPACK_INCLUDE_DIRS)
-  set(PC_MSGPACK_LIBDIR)
-  set(PC_MSGPACK_LIBRARY_DIRS)
-  set(LIMIT_SEARCH NO_DEFAULT_PATH)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_search_module(PC_MSGPACK QUIET
+    msgpackc>=${Msgpack_FIND_VERSION}
+    msgpack>=${Msgpack_FIND_VERSION})
 endif()
 
 set(MSGPACK_DEFINITIONS ${PC_MSGPACK_CFLAGS_OTHER})
 
 find_path(MSGPACK_INCLUDE_DIR msgpack/version_master.h
-  HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS})
 
 if(MSGPACK_INCLUDE_DIR)
   file(READ ${MSGPACK_INCLUDE_DIR}/msgpack/version_master.h msgpack_version_h)
@@ -33,13 +24,6 @@ if(MSGPACK_INCLUDE_DIR)
   set(MSGPACK_VERSION_STRING "${MSGPACK_VERSION_MAJOR}.${MSGPACK_VERSION_MINOR}.${MSGPACK_VERSION_REVISION}")
 else()
   set(MSGPACK_VERSION_STRING)
-endif()
-
-# If we're asked to use static linkage, add libmsgpack{,c}.a as a preferred library name.
-if(MSGPACK_USE_STATIC)
-  list(APPEND MSGPACK_NAMES
-    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpackc${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpack${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
 if(MSVC)
@@ -53,8 +37,7 @@ find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   # Check each directory for all names to avoid using headers/libraries from
   # different places.
   NAMES_PER_DIR
-  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS})
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
 

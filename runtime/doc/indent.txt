@@ -56,12 +56,13 @@ typing certain characters or commands in certain contexts.  Note that this not
 only triggers C-indenting.  When 'indentexpr' is not empty 'indentkeys' is
 used instead.  The format of 'cinkeys' and 'indentkeys' is equal.
 
-The default is "0{,0},0),:,0#,!^F,o,O,e" which specifies that indenting occurs
-as follows:
+The default is "0{,0},0),0],:,0#,!^F,o,O,e" which specifies that indenting
+occurs as follows:
 
 	"0{"	if you type '{' as the first character in a line
 	"0}"	if you type '}' as the first character in a line
 	"0)"	if you type ')' as the first character in a line
+	"0]"	if you type ']' as the first character in a line
 	":"	if you type ':' after a label or case statement
 	"0#"	if you type '#' as the first character in a line
 	"!^F"	if you type CTRL-F (which is not inserted)
@@ -410,10 +411,10 @@ The examples below assume a 'shiftwidth' of 4.
 							*cino-(*
 	(N    When in unclosed parentheses, indent N characters from the line
 	      with the unclosed parentheses.  Add a 'shiftwidth' for every
-	      unclosed parentheses.  When N is 0 or the unclosed parentheses
-	      is the first non-white character in its line, line up with the
-	      next non-white character after the unclosed parentheses.
-	      (default 'shiftwidth' * 2).
+	      extra unclosed parentheses.  When N is 0 or the unclosed
+	      parentheses is the first non-white character in its line, line
+	      up with the next non-white character after the unclosed
+	      parentheses.  (default 'shiftwidth' * 2).
 
 		cino=			  cino=(0 >
 		  if (c1 && (c2 ||	    if (c1 && (c2 ||
@@ -424,7 +425,8 @@ The examples below assume a 'shiftwidth' of 4.
 		     {			       {
 <
 							*cino-u*
-	uN    Same as (N, but for one level deeper.  (default 'shiftwidth').
+	uN    Same as (N, but for one nesting level deeper.
+	      (default 'shiftwidth').
 
 		cino=			  cino=u2 >
 		  if (c123456789	    if (c123456789
@@ -583,8 +585,9 @@ The basics for using flexible indenting are explained in section |30.3| of the
 user manual.
 
 If you want to write your own indent file, it must set the 'indentexpr'
-option.  Setting the 'indentkeys' option is often useful.  See the
-$VIMRUNTIME/indent directory for examples.
+option.  Setting the 'indentkeys' option is often useful.
+See the $VIMRUNTIME/indent/README.txt file for hints.
+See the $VIMRUNTIME/indent directory for examples.
 
 
 REMARKS ABOUT SPECIFIC INDENT FILES ~
@@ -597,14 +600,14 @@ the use of square and curly brackets, and otherwise by community convention.
 These conventions are not universally followed, so the Clojure indent script
 offers a few configurable options, listed below.
 
-If the current vim does not include searchpairpos(), the indent script falls
+If the current vim does not include |searchpairpos()|, the indent script falls
 back to normal 'lisp' indenting, and the following options are ignored.
 
 							*g:clojure_maxlines*
 
-Set maximum scan distance of searchpairpos(). Larger values trade performance
-for correctness when dealing with very long forms. A value of 0 will scan
-without limits.
+Set maximum scan distance of |searchpairpos()|. Larger values trade
+performance for correctness when dealing with very long forms. A value of 0
+will scan without limits.
 >
 	" Default
 	let g:clojure_maxlines = 100
@@ -894,7 +897,7 @@ NOTE:	Indenting will be a bit slower if this option is used because some
 	optimizations won't be available.
 -------------
 
-							*PHP_vintage_case_default_indent*
+					*PHP_vintage_case_default_indent*
 To indent 'case:' and 'default:' statements in switch() blocks: >
     :let g:PHP_vintage_case_default_indent = 1
 
@@ -902,6 +905,60 @@ In PHP braces are not required inside 'case/default' blocks therefore 'case:'
 and 'default:' are indented at the same level than the 'switch()' to avoid
 meaningless indentation. You can use the above option to return to the
 traditional way.
+-------------
+
+							*PHP_noArrowMatching*
+By default the indent script will indent multi-line chained calls by matching
+the position of the '->': >
+
+    $user_name_very_long->name()
+                        ->age()
+                        ->info();
+
+You can revert to the classic way of indenting by setting this option to 1: >
+    :let g:PHP_noArrowMatching = 1
+
+You will obtain the following result: >
+
+    $user_name_very_long->name()
+        ->age()
+        ->info();
+
+-------------
+
+					*PHP_IndentFunctionCallParameters*
+Extra indentation levels to add to parameters in multi-line function calls. >
+    let g:PHP_IndentFunctionCallParameters = 1
+
+Function call arguments will indent 1 extra level. For two-space indentation: >
+
+    function call_the_thing(
+      $with_this,
+      $and_that
+    ) {
+      $this->do_the_thing(
+          $with_this,
+          $and_that
+      );
+    }
+
+-------------
+
+				*PHP_IndentFunctionDeclarationParameters*
+Extra indentation levels to add to arguments in multi-line function definitions. >
+    let g:PHP_IndentFunctionDeclarationParameters = 1
+
+Function arguments in declarations will indent 1 extra level. For two-space indentation: >
+
+    function call_the_thing(
+        $with_this,
+        $and_that
+    ) {
+      $this->do_the_thing(
+        $with_this,
+        $and_that
+      );
+    }
 
 
 PYTHON							*ft-python-indent*
@@ -911,11 +968,21 @@ given are the defaults.  Note that the variables are set to an expression, so
 that you can change the value of 'shiftwidth' later.
 
 Indent after an open paren: >
-	let g:pyindent_open_paren = '&sw * 2'
+	let g:pyindent_open_paren = 'shiftwidth() * 2'
 Indent after a nested paren: >
-	let g:pyindent_nested_paren = '&sw'
+	let g:pyindent_nested_paren = 'shiftwidth()'
 Indent for a continuation line: >
-	let g:pyindent_continue = '&sw * 2'
+	let g:pyindent_continue = 'shiftwidth() * 2'
+
+The method uses |searchpair()| to look back for unclosed parenthesis.  This
+can sometimes be slow, thus it timeouts after 150 msec.  If you notice the
+indenting isn't correct, you can set a larger timeout in msec: >
+	let g:pyindent_searchpair_timeout = 500
+
+If looking back for unclosed parenthesis is still too slow, especially during
+a copy-paste operation, or if you don't need indenting inside multi-line
+parentheses, you can completely disable this feature: >
+	let g:pyindent_disable_parentheses_indenting = 1
 
 
 R								*ft-r-indent*
@@ -954,6 +1021,11 @@ Below is an example of indentation with and without this option enabled:
        paste(x)                                      paste(x)
    }                                             }
 <
+The code will be indented after lines that match the pattern
+`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`. If you want indentation after
+lines that match a different pattern, you should set the appropriate value of
+`r_indent_op_pattern` in your |vimrc|.
+
 
 SHELL							*ft-sh-indent*
 
@@ -1004,7 +1076,7 @@ Furthermore, setting the variable b:verilog_indent_width to change the
 indenting width (default is 'shiftwidth'): >
 
   let b:verilog_indent_width = 4
-  let b:verilog_indent_width = &sw * 2
+  let b:verilog_indent_width = shiftwidth() * 2
 
 In addition, you can turn the verbose mode for debug issue: >
 
@@ -1127,9 +1199,9 @@ VIM							*ft-vim-indent*
 For indenting Vim scripts there is one variable that specifies the amount of
 indent for a continuation line, a line that starts with a backslash: >
 
-	:let g:vim_indent_cont = &sw * 3
+	:let g:vim_indent_cont = shiftwidth() * 3
 
 Three times shiftwidth is the default value.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -27,6 +27,9 @@ You can see the name of the current swap file being used with the command:
 
 	:sw[apname]					*:sw* *:swapname*
 
+Or you can use the |swapname()| function, which also allows for seeing the
+swap file name of other buffers.
+
 The name of the swap file is normally the same as the file you are editing,
 with the extension ".swp".
 - On Unix, a '.' is prepended to swap file names in the same directory as the
@@ -170,4 +173,4 @@ Once you are sure the recovery is ok delete the swap file.  Otherwise, you
 will continue to get warning messages that the ".swp" file already exists.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

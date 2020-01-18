@@ -20,7 +20,7 @@
 if &cp || exists("g:loaded_netrwPlugin")
  finish
 endif
-let g:loaded_netrwPlugin = "v156"
+let g:loaded_netrwPlugin = "v165"
 let s:keepcpo = &cpo
 set cpo&vim
 "DechoRemOn
@@ -42,14 +42,14 @@ augroup END
 " Network Browsing Reading Writing: {{{2
 augroup Network
  au!
- au BufReadCmd   file://*											call netrw#FileUrlRead(expand("<amatch>"))
- au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
+ au BufReadCmd   file://*											call netrw#FileUrlEdit(expand("<amatch>"))
+ au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
  au FileReadCmd  ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
  au BufWriteCmd  ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
  au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
- try                                                       
+ try
   au SourceCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
- catch /^Vim\%((\a\+)\)\=:E216/                            
+ catch /^Vim\%((\a\+)\)\=:E216/
   au SourcePre   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
  endtry
 augroup END
@@ -59,7 +59,7 @@ com! -count=1 -nargs=*	Nread		let s:svpos= winsaveview()<bar>call netrw#NetRead(
 com! -range=% -nargs=*	Nwrite		let s:svpos= winsaveview()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call winrestview(s:svpos)
 com! -nargs=*		NetUserPass	call NetUserPass(<f-args>)
 com! -nargs=*	        Nsource		let s:svpos= winsaveview()<bar>call netrw#NetSource(<f-args>)<bar>call winrestview(s:svpos)
-com! -nargs=?		Ntree		call netrw#SetTreetop(<q-args>)
+com! -nargs=?		Ntree		call netrw#SetTreetop(1,<q-args>)
 
 " Commands: :Explore, :Sexplore, Hexplore, Vexplore, Lexplore {{{2
 com! -nargs=* -bar -bang -count=0 -complete=dir	Explore		call netrw#Explore(<count>,0,0+<bang>0,<q-args>)
@@ -103,7 +103,7 @@ fun! s:LocalBrowse(dirname)
   " Unfortunate interaction -- only DechoMsg debugging calls can be safely used here.
   " Otherwise, the BufEnter event gets triggered when attempts to write to
   " the DBG buffer are made.
-  
+
   if !exists("s:vimentered")
    " If s:vimentered doesn't exist, then the VimEnter event hasn't fired.  It will,
    " and so s:VimEnter() will then be calling this routine, but this time with s:vimentered defined.
@@ -129,19 +129,15 @@ fun! s:LocalBrowse(dirname)
   elseif isdirectory(a:dirname)
 "   call Decho("(LocalBrowse) dirname<".a:dirname."> ft=".&ft."  (isdirectory, not amiga)")
 "   call Dredir("LocalBrowse ft last set: ","verbose set ft")
-"   call Decho("(s:LocalBrowse) COMBAK#23: buf#".bufnr("%")." file<".expand("%")."> line#".line(".")." col#".col("."))
    sil! call netrw#LocalBrowseCheck(a:dirname)
-"   call Decho("(s:LocalBrowse) COMBAK#24: buf#".bufnr("%")." file<".expand("%")."> line#".line(".")." col#".col("."))
    if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
     exe w:netrw_bannercnt
-"    call Decho("(s:LocalBrowse) COMBAK#25: buf#".bufnr("%")." file<".expand("%")."> line#".line(".")." col#".col("."))
    endif
 
   else
    " not a directory, ignore it
 "   call Decho("(LocalBrowse) dirname<".a:dirname."> not a directory, ignoring...")
   endif
-"  call Decho("(s:LocalBrowse) COMBAK#26: buf#".bufnr("%")." file<".expand("%")."> line#".line(".")." col#".col("."))
 
 "  call Dret("s:LocalBrowse")
 endfun

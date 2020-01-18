@@ -34,11 +34,10 @@ typedef enum {
   kInputEof
 } InbufPollResult;
 
-static Stream read_stream = {.closed = true};
+static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
-static int events_enabled = 0;
 static bool blocking = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -50,7 +49,12 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-/// Gets the file from which input was gathered at startup.
+void input_global_fd_init(int fd)
+{
+  global_fd = fd;
+}
+
+/// Global TTY (or pipe for "-es") input stream, before UI starts.
 int input_global_fd(void)
 {
   return global_fd;
@@ -62,9 +66,9 @@ void input_start(int fd)
     return;
   }
 
-  global_fd = fd;
+  input_global_fd_init(fd);
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
-  rstream_start(&read_stream, read_cb, NULL);
+  rstream_start(&read_stream, input_read_cb, NULL);
 }
 
 void input_stop(void)
@@ -84,7 +88,7 @@ static void cursorhold_event(void **argv)
   did_cursorhold = true;
 }
 
-static void create_cursorhold_event(void)
+static void create_cursorhold_event(bool events_enabled)
 {
   // If events are enabled and the queue has any items, this function should not
   // have been called(inbuf_poll would return kInputAvail)
@@ -94,8 +98,12 @@ static void create_cursorhold_event(void)
   multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
-// Low level input function
-int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
+/// Low level input function
+///
+/// wait until either the input buffer is non-empty or , if `events` is not NULL
+/// until `events` is non-empty.
+int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt,
+              MultiQueue *events)
 {
   if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -103,16 +111,21 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 
   InbufPollResult result;
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms)) == kInputNone) {
+    if ((result = inbuf_poll(ms, events)) == kInputNone) {
       return 0;
     }
   } else {
-    if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
+    if ((result = inbuf_poll((int)p_ut, events)) == kInputNone) {
+      if (read_stream.closed && silent_mode) {
+        // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
+        read_error_exit();
+      }
+
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
-        create_cursorhold_event();
+        create_cursorhold_event(events == main_loop.events);
       } else {
         before_blocking();
-        result = inbuf_poll(-1);
+        result = inbuf_poll(-1, events);
       }
     }
   }
@@ -129,7 +142,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
   }
 
   // If there are events, return the keys directly
-  if (maxlen && pending_events()) {
+  if (maxlen && pending_events(events)) {
     return push_event_key(buf, maxlen);
   }
 
@@ -143,7 +156,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 // Check if a character is available for reading
 bool os_char_avail(void)
 {
-  return inbuf_poll(0) == kInputAvail;
+  return inbuf_poll(0, NULL) == kInputAvail;
 }
 
 // Check for CTRL-C typed by reading all available characters.
@@ -160,15 +173,6 @@ void os_breakcheck(void)
   updating_screen = save_us;
 }
 
-void input_enable_events(void)
-{
-  events_enabled++;
-}
-
-void input_disable_events(void)
-{
-  events_enabled--;
-}
 
 /// Test whether a file descriptor refers to a terminal.
 ///
@@ -231,6 +235,53 @@ size_t input_enqueue(String keys)
   return rv;
 }
 
+static uint8_t check_multiclick(int code, int grid, int row, int col)
+{
+  static int orig_num_clicks = 0;
+  static int orig_mouse_code = 0;
+  static int orig_mouse_grid = 0;
+  static int orig_mouse_col = 0;
+  static int orig_mouse_row = 0;
+  static uint64_t orig_mouse_time = 0;  // time of previous mouse click
+
+  if (code == KE_LEFTRELEASE || code == KE_RIGHTRELEASE
+      || code == KE_MIDDLERELEASE) {
+    return 0;
+  }
+  uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+
+  // compute the time elapsed since the previous mouse click and
+  // convert p_mouse from ms to ns
+  uint64_t timediff = mouse_time - orig_mouse_time;
+  uint64_t mouset = (uint64_t)p_mouset * 1000000;
+  if (code == orig_mouse_code
+      && timediff < mouset
+      && orig_num_clicks != 4
+      && orig_mouse_grid == grid
+      && orig_mouse_col == col
+      && orig_mouse_row == row) {
+    orig_num_clicks++;
+  } else {
+    orig_num_clicks = 1;
+  }
+  orig_mouse_code = code;
+  orig_mouse_grid = grid;
+  orig_mouse_col = col;
+  orig_mouse_row = row;
+  orig_mouse_time = mouse_time;
+
+  uint8_t modifiers = 0;
+  if (orig_num_clicks == 2) {
+    modifiers |= MOD_MASK_2CLICK;
+  } else if (orig_num_clicks == 3) {
+    modifiers |= MOD_MASK_3CLICK;
+  } else if (orig_num_clicks == 4) {
+    modifiers |= MOD_MASK_4CLICK;
+  }
+  return modifiers;
+}
+
+
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)
 static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
@@ -264,53 +315,20 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
       // Make sure the mouse position is valid.  Some terminals may
       // return weird values.
       if (col >= Columns) {
-        col = (int)Columns - 1;
+        col = Columns - 1;
       }
       if (row >= Rows) {
-        row = (int)Rows - 1;
+        row = Rows - 1;
       }
+      mouse_grid = 0;
       mouse_row = row;
       mouse_col = col;
     }
     *ptr += advance;
   }
 
-  static int orig_num_clicks = 0;
-  if (mouse_code != KE_LEFTRELEASE && mouse_code != KE_RIGHTRELEASE
-      && mouse_code != KE_MIDDLERELEASE) {
-      static int orig_mouse_code = 0;
-      static int orig_mouse_col = 0;
-      static int orig_mouse_row = 0;
-      static uint64_t orig_mouse_time = 0;  // time of previous mouse click
-      uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
-
-      // compute the time elapsed since the previous mouse click and
-      // convert p_mouse from ms to ns
-      uint64_t timediff = mouse_time - orig_mouse_time;
-      uint64_t mouset = (uint64_t)p_mouset * 1000000;
-      if (mouse_code == orig_mouse_code
-          && timediff < mouset
-          && orig_num_clicks != 4
-          && orig_mouse_col == mouse_col
-          && orig_mouse_row == mouse_row) {
-        orig_num_clicks++;
-      } else {
-        orig_num_clicks = 1;
-      }
-      orig_mouse_code = mouse_code;
-      orig_mouse_col = mouse_col;
-      orig_mouse_row = mouse_row;
-      orig_mouse_time = mouse_time;
-  }
-
-  uint8_t modifiers = 0;
-  if (orig_num_clicks == 2) {
-    modifiers |= MOD_MASK_2CLICK;
-  } else if (orig_num_clicks == 3) {
-    modifiers |= MOD_MASK_3CLICK;
-  } else if (orig_num_clicks == 4) {
-    modifiers |= MOD_MASK_4CLICK;
-  }
+  uint8_t modifiers = check_multiclick(mouse_code, mouse_grid,
+                                       mouse_row, mouse_col);
 
   if (modifiers) {
     if (buf[1] != KS_MODIFIER) {
@@ -329,31 +347,67 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   return bufsize;
 }
 
+size_t input_enqueue_mouse(int code, uint8_t modifier,
+                           int grid, int row, int col)
+{
+  modifier |= check_multiclick(code, grid, row, col);
+  uint8_t buf[7], *p = buf;
+  if (modifier) {
+    p[0] = K_SPECIAL;
+    p[1] = KS_MODIFIER;
+    p[2] = modifier;
+    p += 3;
+  }
+  p[0] = K_SPECIAL;
+  p[1] = KS_EXTRA;
+  p[2] = (uint8_t)code;
+
+  mouse_grid = grid;
+  mouse_row = row;
+  mouse_col = col;
+
+  size_t written = 3 + (size_t)(p-buf);
+  rbuffer_write(input_buffer, (char *)buf, written);
+  return written;
+}
+
 /// @return true if the main loop is blocked and waiting for input.
 bool input_blocking(void)
 {
   return blocking;
 }
 
-static bool input_poll(int ms)
+// This is a replacement for the old `WaitForChar` function in os_unix.c
+static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
 {
+  if (input_ready(events)) {
+    return kInputAvail;
+  }
+
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+  if ((ms == - 1 || ms > 0) && events == NULL && !input_eof) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
+  DLOG("blocking... events_enabled=%d events_pending=%d", events != NULL,
+       events && !multiqueue_empty(events));
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms,
+                            input_ready(events) || input_eof);
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
   }
 
-  return input_ready();
+  if (input_ready(events)) {
+    return kInputAvail;
+  } else {
+    return input_eof ? kInputEof : kInputNone;
+  }
 }
 
 void input_done(void)
@@ -366,21 +420,11 @@ bool input_available(void)
   return rbuffer_size(input_buffer) != 0;
 }
 
-// This is a replacement for the old `WaitForChar` function in os_unix.c
-static InbufPollResult inbuf_poll(int ms)
-{
-  if (input_ready() || input_poll(ms)) {
-    return kInputAvail;
-  }
-
-  return input_eof ? kInputEof : kInputNone;
-}
-
-static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
-    bool at_eof)
+static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+                          bool at_eof)
 {
   if (at_eof) {
-    input_eof = true;
+    input_done();
   }
 
   assert(rbuffer_space(input_buffer) >= rbuffer_size(buf));
@@ -398,7 +442,7 @@ static void process_interrupts(void)
 
   size_t consume_count = 0;
   RBUFFER_EACH_REVERSE(input_buffer, c, i) {
-    if ((uint8_t)c == 3) {
+    if ((uint8_t)c == Ctrl_C) {
       got_int = true;
       consume_count = i;
       break;
@@ -406,7 +450,7 @@ static void process_interrupts(void)
   }
 
   if (got_int && consume_count) {
-    // Remove everything typed before the CTRL-C
+    // Remove all unprocessed input (typeahead) before the CTRL-C.
     rbuffer_consumed(input_buffer, consume_count);
   }
 }
@@ -428,23 +472,24 @@ static int push_event_key(uint8_t *buf, int maxlen)
 }
 
 // Check if there's pending input
-static bool input_ready(void)
+static bool input_ready(MultiQueue *events)
 {
   return (typebuf_was_filled             // API call filled typeahead
           || rbuffer_size(input_buffer)  // Input buffer filled
-          || pending_events());          // Events must be processed
+          || pending_events(events));          // Events must be processed
 }
 
 // Exit because of an input read error.
 static void read_error_exit(void)
 {
-  if (silent_mode)      /* Normal way to exit for "ex -s" */
+  if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);
+  }
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
   preserve_exit();
 }
 
-static bool pending_events(void)
+static bool pending_events(MultiQueue *events)
 {
-  return events_enabled && !multiqueue_empty(main_loop.events);
+  return events && !multiqueue_empty(events);
 }

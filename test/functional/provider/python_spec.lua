@@ -13,11 +13,19 @@ local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local curbufmeths = helpers.curbufmeths
 local missing_provider = helpers.missing_provider
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('python') then
-    pending('Python 2 (or the neovim module) is broken/missing', function() end)
+  local reason = missing_provider('python')
+  if reason then
+    it(':python reports E319 if provider is missing', function()
+      local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
+      matches(expected, pcall_err(command, 'py print("foo")'))
+      matches(expected, pcall_err(command, 'pyfile foo'))
+    end)
+    pending(string.format('Python 2 (or the pynvim module) is broken/missing (%s)', reason), function() end)
     return
   end
 end
@@ -30,6 +38,10 @@ end)
 describe('python feature test', function()
   it('works', function()
     eq(1, funcs.has('python'))
+    eq(1, funcs.has('python_compiled'))
+    eq(1, funcs.has('python_dynamic'))
+    eq(0, funcs.has('python_dynamic_'))
+    eq(0, funcs.has('python_'))
   end)
 end)
 

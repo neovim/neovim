@@ -107,6 +107,32 @@ function! Test_substitute_variants()
   endfor
 endfunction
 
+" Test the l, p, # flags.
+func Test_substitute_flags_lp()
+  new
+  call setline(1, "abc\tdef\<C-h>ghi")
+
+  let a = execute('s/a/a/p')
+  call assert_equal("\nabc     def^Hghi", a)
+
+  let a = execute('s/a/a/l')
+  call assert_equal("\nabc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/p#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/l#')
+  call assert_equal("\n  1 abc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/')
+  call assert_equal("", a)
+
+  bwipe!
+endfunc
+
 func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile
@@ -123,6 +149,7 @@ func Run_SubCmd_Tests(tests)
   for t in a:tests
     let start = line('.') + 1
     let end = start + len(t[2]) - 1
+    " TODO: why is there a one second delay the first time we get here?
     exe "normal o" . t[0]
     call cursor(start, 1)
     exe t[1]
@@ -214,7 +241,7 @@ func Test_sub_cmd_3()
   call Run_SubCmd_Tests(tests)
 endfunc
 
-" Test for submatch() on :substitue.
+" Test for submatch() on :substitute.
 func Test_sub_cmd_4()
   set magic&
   set cpo&
@@ -320,4 +347,383 @@ func Test_sub_cmd_8()
 
   enew!
   set titlestring&
+endfunc
+
+" Test %s/\n// which is implemented as a special case to use a
+" more efficient join rather than doing a regular substitution.
+func Test_substitute_join()
+  new
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//g')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//p')
+  call assert_equal("\nfoo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//l')
+  call assert_equal("\nfoo^Ibarbar^Hfoo$", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//#')
+  call assert_equal("\n  1 foo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  bwipe!
+endfunc
+
+func Test_substitute_count()
+  new
+  call setline(1, ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo'])
+  2
+
+  s/foo/bar/3
+  call assert_equal(['foo foo', 'bar foo', 'bar foo', 'bar foo', 'foo foo'],
+  \                 getline(1, '$'))
+
+  call assert_fails('s/foo/bar/0', 'E939:')
+
+  bwipe!
+endfunc
+
+" Test substitute 'n' flag (report number of matches, do not substitute).
+func Test_substitute_flag_n()
+  new
+  let lines = ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo']
+  call setline(1, lines)
+
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/n'))
+  call assert_equal("\n6 matches on 3 lines", execute('2,4s/foo/bar/gn'))
+
+  " c flag (confirm) should be ignored when using n flag.
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/nc'))
+
+  " No substitution should have been done.
+  call assert_equal(lines, getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_substitute_errors()
+  new
+  call setline(1, 'foobar')
+
+  call assert_fails('s/FOO/bar/', 'E486:')
+  call assert_fails('s/foo/bar/@', 'E488:')
+  call assert_fails('s/\(/bar/', 'E476:')
+
+  setl nomodifiable
+  call assert_fails('s/foo/bar/', 'E21:')
+
+  bwipe!
+endfunc
+
+" Test for *sub-replace-special* and *sub-replace-expression* on substitute().
+func Test_sub_replace_1()
+  " Run the tests with 'magic' on
+  set magic
+  set cpo&
+  call assert_equal('AA', substitute('A', 'A', '&&', ''))
+  call assert_equal('&', substitute('B', 'B', '\&', ''))
+  call assert_equal('C123456789987654321', substitute('C123456789', 'C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\0\9\8\7\6\5\4\3\2\1', ''))
+  call assert_equal('d', substitute('D', 'D', 'd', ''))
+  call assert_equal('~', substitute('E', 'E', '~', ''))
+  call assert_equal('~', substitute('F', 'F', '\~', ''))
+  call assert_equal('Gg', substitute('G', 'G', '\ugg', ''))
+  call assert_equal('Hh', substitute('H', 'H', '\Uh\Eh', ''))
+  call assert_equal('iI', substitute('I', 'I', '\lII', ''))
+  call assert_equal('jJ', substitute('J', 'J', '\LJ\EJ', ''))
+  call assert_equal('Kk', substitute('K', 'K', '\Uk\ek', ''))
+  call assert_equal("l\<C-V>\<C-M>l",
+			\ substitute('lLl', 'L', "\<C-V>\<C-M>", ''))
+  call assert_equal("m\<C-M>m", substitute('mMm', 'M', '\r', ''))
+  call assert_equal("n\<C-V>\<C-M>n",
+			\ substitute('nNn', 'N', "\\\<C-V>\<C-M>", ''))
+  call assert_equal("o\no", substitute('oOo', 'O', '\n', ''))
+  call assert_equal("p\<C-H>p", substitute('pPp', 'P', '\b', ''))
+  call assert_equal("q\tq", substitute('qQq', 'Q', '\t', ''))
+  call assert_equal('r\r', substitute('rRr', 'R', '\\', ''))
+  call assert_equal('scs', substitute('sSs', 'S', '\c', ''))
+  call assert_equal("u\nu", substitute('uUu', 'U', "\n", ''))
+  call assert_equal("v\<C-H>v", substitute('vVv', 'V', "\b", ''))
+  call assert_equal("w\\w", substitute('wWw', 'W', "\\", ''))
+  call assert_equal("x\<C-M>x", substitute('xXx', 'X', "\r", ''))
+  call assert_equal("YyyY", substitute('Y', 'Y', '\L\uyYy\l\EY', ''))
+  call assert_equal("zZZz", substitute('Z', 'Z', '\U\lZzZ\u\Ez', ''))
+endfunc
+
+func Test_sub_replace_2()
+  " Run the tests with 'magic' off
+  set nomagic
+  set cpo&
+  call assert_equal('AA', substitute('A', 'A', '&&', ''))
+  call assert_equal('&', substitute('B', 'B', '\&', ''))
+  call assert_equal('C123456789987654321', substitute('C123456789', 'C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\0\9\8\7\6\5\4\3\2\1', ''))
+  call assert_equal('d', substitute('D', 'D', 'd', ''))
+  call assert_equal('~', substitute('E', 'E', '~', ''))
+  call assert_equal('~', substitute('F', 'F', '\~', ''))
+  call assert_equal('Gg', substitute('G', 'G', '\ugg', ''))
+  call assert_equal('Hh', substitute('H', 'H', '\Uh\Eh', ''))
+  call assert_equal('iI', substitute('I', 'I', '\lII', ''))
+  call assert_equal('jJ', substitute('J', 'J', '\LJ\EJ', ''))
+  call assert_equal('Kk', substitute('K', 'K', '\Uk\ek', ''))
+  call assert_equal("l\<C-V>\<C-M>l",
+			\ substitute('lLl', 'L', "\<C-V>\<C-M>", ''))
+  call assert_equal("m\<C-M>m", substitute('mMm', 'M', '\r', ''))
+  call assert_equal("n\<C-V>\<C-M>n",
+			\ substitute('nNn', 'N', "\\\<C-V>\<C-M>", ''))
+  call assert_equal("o\no", substitute('oOo', 'O', '\n', ''))
+  call assert_equal("p\<C-H>p", substitute('pPp', 'P', '\b', ''))
+  call assert_equal("q\tq", substitute('qQq', 'Q', '\t', ''))
+  call assert_equal('r\r', substitute('rRr', 'R', '\\', ''))
+  call assert_equal('scs', substitute('sSs', 'S', '\c', ''))
+  call assert_equal("t\<C-M>t", substitute('tTt', 'T', "\r", ''))
+  call assert_equal("u\nu", substitute('uUu', 'U', "\n", ''))
+  call assert_equal("v\<C-H>v", substitute('vVv', 'V', "\b", ''))
+  call assert_equal('w\w', substitute('wWw', 'W', "\\", ''))
+  call assert_equal('XxxX', substitute('X', 'X', '\L\uxXx\l\EX', ''))
+  call assert_equal('yYYy', substitute('Y', 'Y', '\U\lYyY\u\Ey', ''))
+endfunc
+
+func Test_sub_replace_3()
+  set magic&
+  set cpo&
+  call assert_equal('a\a', substitute('aAa', 'A', '\="\\"', ''))
+  call assert_equal('b\\b', substitute('bBb', 'B', '\="\\\\"', ''))
+  call assert_equal("c\rc", substitute('cCc', 'C', "\\=\"\r\"", ''))
+  call assert_equal("d\\\rd", substitute('dDd', 'D', "\\=\"\\\\\r\"", ''))
+  call assert_equal("e\\\\\re", substitute('eEe', 'E', "\\=\"\\\\\\\\\r\"", ''))
+  call assert_equal('f\rf', substitute('fFf', 'F', '\="\\r"', ''))
+  call assert_equal('j\nj', substitute('jJj', 'J', '\="\\n"', ''))
+  call assert_equal("k\<C-M>k", substitute('kKk', 'K', '\="\r"', ''))
+  call assert_equal("l\nl", substitute('lLl', 'L', '\="\n"', ''))
+endfunc
+
+" Test for submatch() on substitute().
+func Test_sub_replace_4()
+  set magic&
+  set cpo&
+  call assert_equal('a\a', substitute('aAa', 'A',
+		\ '\=substitute(submatch(0), ".", "\\", "")', ''))
+  call assert_equal('b\b', substitute('bBb', 'B',
+		\ '\=substitute(submatch(0), ".", "\\\\", "")', ''))
+  call assert_equal("c\<C-V>\<C-M>c", substitute('cCc', 'C', '\=substitute(submatch(0), ".", "\<C-V>\<C-M>", "")', ''))
+  call assert_equal("d\<C-V>\<C-M>d", substitute('dDd', 'D', '\=substitute(submatch(0), ".", "\\\<C-V>\<C-M>", "")', ''))
+  call assert_equal("e\\\<C-V>\<C-M>e", substitute('eEe', 'E', '\=substitute(submatch(0), ".", "\\\\\<C-V>\<C-M>", "")', ''))
+  call assert_equal("f\<C-M>f", substitute('fFf', 'F', '\=substitute(submatch(0), ".", "\\r", "")', ''))
+  call assert_equal("j\nj", substitute('jJj', 'J', '\=substitute(submatch(0), ".", "\\n", "")', ''))
+  call assert_equal("k\rk", substitute('kKk', 'K', '\=substitute(submatch(0), ".", "\r", "")', ''))
+  call assert_equal("l\nl", substitute('lLl', 'L', '\=substitute(submatch(0), ".", "\n", "")', ''))
+endfunc
+
+func Test_sub_replace_5()
+  set magic&
+  set cpo&
+  call assert_equal('A123456789987654321', substitute('A123456789',
+		\ 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
+		\ '\=submatch(0) . submatch(9) . submatch(8) . ' .
+		\ 'submatch(7) . submatch(6) . submatch(5) . ' .
+		\ 'submatch(4) . submatch(3) . submatch(2) . submatch(1)',
+		\ ''))
+   call assert_equal("[['A123456789'], ['9'], ['8'], ['7'], ['6'], " .
+		\ "['5'], ['4'], ['3'], ['2'], ['1']]",
+		\ substitute('A123456789',
+		\ 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
+		\ '\=string([submatch(0, 1), submatch(9, 1), ' .
+		\ 'submatch(8, 1), submatch(7, 1), submatch(6, 1), ' .
+		\ 'submatch(5, 1), submatch(4, 1), submatch(3, 1), ' .
+		\ 'submatch(2, 1), submatch(1, 1)])',
+		\ ''))
+endfunc
+
+func Test_sub_replace_6()
+  set magic&
+  " set cpo+=/
+  call assert_equal('a', substitute('A', 'A', 'a', ''))
+  call assert_equal('%', substitute('B', 'B', '%', ''))
+  " set cpo-=/
+  call assert_equal('c', substitute('C', 'C', 'c', ''))
+  call assert_equal('%', substitute('D', 'D', '%', ''))
+endfunc
+
+func Test_sub_replace_7()
+  set magic&
+  set cpo&
+  call assert_equal('AA', substitute('AA', 'A.', '\=submatch(0)', ''))
+  call assert_equal("B\nB", substitute("B\nB", 'B.', '\=submatch(0)', ''))
+  call assert_equal("['B\n']B", substitute("B\nB", 'B.', '\=string(submatch(0, 1))', ''))
+  call assert_equal('-abab', substitute('-bb', '\zeb', 'a', 'g'))
+  call assert_equal('c-cbcbc', substitute('-bb', '\ze', 'c', 'g'))
+endfunc
+
+" Test for *:s%* on :substitute.
+func Test_sub_replace_8()
+  new
+  set magic&
+  set cpo&
+  $put =',,X'
+  s/\(^\|,\)\ze\(,\|X\)/\1N/g
+  call assert_equal('N,,NX', getline("$"))
+  $put =',,Y'
+  let cmd = ':s/\(^\|,\)\ze\(,\|Y\)/\1N/gc'
+  call feedkeys(cmd . "\<CR>a", "xt")
+  call assert_equal('N,,NY', getline("$"))
+  :$put =',,Z'
+  let cmd = ':s/\(^\|,\)\ze\(,\|Z\)/\1N/gc'
+  call feedkeys(cmd . "\<CR>yy", "xt")
+  call assert_equal('N,,NZ', getline("$"))
+  enew! | close
+endfunc
+
+func Test_sub_replace_9()
+  new
+  set magic&
+  set cpo&
+  $put ='xxx'
+  call feedkeys(":s/x/X/gc\<CR>yyq", "xt")
+  call assert_equal('XXx', getline("$"))
+  enew! | close
+endfunc
+
+func Test_sub_replace_10()
+   set magic&
+   set cpo&
+   call assert_equal('a1a2a3a', substitute('123', '\zs', 'a', 'g'))
+   call assert_equal('aaa', substitute('123', '\zs.', 'a', 'g'))
+   call assert_equal('1a2a3a', substitute('123', '.\zs', 'a', 'g'))
+   call assert_equal('a1a2a3a', substitute('123', '\ze', 'a', 'g'))
+   call assert_equal('a1a2a3', substitute('123', '\ze.', 'a', 'g'))
+   call assert_equal('aaa', substitute('123', '.\ze', 'a', 'g'))
+   call assert_equal('aa2a3a', substitute('123', '1\|\ze', 'a', 'g'))
+   call assert_equal('1aaa', substitute('123', '1\zs\|[23]', 'a', 'g'))
+endfunc
+
+func Test_sub_cmd_9()
+  new
+  let input = ['1 aaa', '2 aaa', '3 aaa']
+  call setline(1, input)
+  func Foo()
+    return submatch(0)
+  endfunc
+  %s/aaa/\=Foo()/gn
+  call assert_equal(input, getline(1, '$'))
+  call assert_equal(1, &modifiable)
+
+  delfunc Foo
+  bw!
+endfunc
+
+func Test_nocatch_sub_failure_handling()
+  " normal error results in all replacements 
+  func Foo()
+    foobar
+  endfunc
+  new
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  %s/aaa/\=Foo()/g
+  call assert_equal(['1 0', '2 0', '3 0'], getline(1, 3))
+
+  " Trow without try-catch causes abort after the first line.
+  " We cannot test this, since it would stop executing the test script.
+
+  " try/catch does not result in any changes
+  func! Foo()
+    throw 'error'
+  endfunc
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  let error_caught = 0
+  try
+    %s/aaa/\=Foo()/g
+  catch
+    let error_caught = 1
+  endtry
+  call assert_equal(1, error_caught)
+  call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
+
+  " Same, but using "n" flag so that "sandbox" gets set
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  let error_caught = 0
+  try
+    %s/aaa/\=Foo()/gn
+  catch
+    let error_caught = 1
+  endtry
+  call assert_equal(1, error_caught)
+  call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
+
+  delfunc Foo
+  bwipe!
+endfunc
+
+" Test ":s/pat/sub/" with different ~s in sub.
+func Test_replace_with_tilde()
+  new
+  " Set the last replace string to empty
+  s/^$//
+  call append(0, ['- Bug in "vPPPP" on this text:'])
+  normal gg
+  s/u/~u~/
+  call assert_equal('- Bug in "vPPPP" on this text:', getline(1))
+  s/i/~u~/
+  call assert_equal('- Bug uuun "vPPPP" on this text:', getline(1))
+  s/o/~~~/
+  call assert_equal('- Bug uuun "vPPPP" uuuuuuuuun this text:', getline(1))
+  close!
+endfunc
+
+func Test_replace_keeppatterns()
+  new
+  a
+foobar
+
+substitute foo asdf
+
+one two
+.
+
+  normal gg
+  /^substitute
+  s/foo/bar/
+  call assert_equal('foo', @/)
+  call assert_equal('substitute bar asdf', getline('.'))
+
+  /^substitute
+  keeppatterns s/asdf/xyz/
+  call assert_equal('^substitute', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+
+  exe "normal /bar /e\<CR>"
+  call assert_equal(15, col('.'))
+  normal -
+  keeppatterns /xyz
+  call assert_equal('bar ', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+  exe "normal 0dn"
+  call assert_equal('xyz', getline('.'))
+
+  close!
+endfunc
+
+func Test_sub_beyond_end()
+  new
+  call setline(1, '#')
+  let @/ = '^#\n\zs'
+  s///e
+  call assert_equal('#', getline(1))
+  bwipe!
 endfunc

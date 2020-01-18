@@ -7,6 +7,7 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/eval.h"
+#include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ascii.h"
 #include "nvim/macros.h"

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:             Vim help file
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2008-07-09
+" Latest Revision:      2018-12-29
 
 if exists("b:did_ftplugin")
   finish

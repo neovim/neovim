@@ -1,20 +1,20 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
 assert(#arg == 7)
-input = io.open(arg[2], 'rb')
-proto_output = io.open(arg[3], 'wb')
-call_output = io.open(arg[4], 'wb')
-remote_output = io.open(arg[5], 'wb')
-bridge_output = io.open(arg[6], 'wb')
-metadata_output = io.open(arg[7], 'wb')
+local input = io.open(arg[2], 'rb')
+local proto_output = io.open(arg[3], 'wb')
+local call_output = io.open(arg[4], 'wb')
+local remote_output = io.open(arg[5], 'wb')
+local bridge_output = io.open(arg[6], 'wb')
+local metadata_output = io.open(arg[7], 'wb')
 
-c_grammar = require('generators.c_grammar')
+local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
-function write_signature(output, ev, prefix, notype)
+local function write_signature(output, ev, prefix, notype)
   output:write('('..prefix)
   if prefix == "" and #ev.parameters == 0 then
     output:write('void')
@@ -32,7 +32,7 @@ function write_signature(output, ev, prefix, notype)
   output:write(')')
 end
 
-function write_arglist(output, ev, need_copy)
+local function write_arglist(output, ev, need_copy)
   output:write('  Array args = ARRAY_DICT_INIT;\n')
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
@@ -51,10 +51,10 @@ function write_arglist(output, ev, need_copy)
 end
 
 for i = 1, #events do
-  ev = events[i]
+  local ev = events[i]
   assert(ev.return_type == 'void')
 
-  if ev.since == nil then
+  if ev.since == nil and not ev.noexport then
     print("Ui event "..ev.name.." lacks since field.\n")
     os.exit(1)
   end
@@ -65,7 +65,7 @@ for i = 1, #events do
     write_signature(proto_output, ev, 'UI *ui')
     proto_output:write(';\n')
 
-    if not ev.remote_impl then
+    if not ev.remote_impl and not ev.noexport then
       remote_output:write('static void remote_ui_'..ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
@@ -74,13 +74,12 @@ for i = 1, #events do
       remote_output:write('}\n\n')
     end
 
-    if not ev.bridge_impl then
-
-      send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
-      argc = 1
+    if not ev.bridge_impl and not ev.noexport then
+      local send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
+      local argc = 1
       for j = 1, #ev.parameters do
         local param = ev.parameters[j]
-        copy = 'copy_'..param[2]
+        local copy = 'copy_'..param[2]
         if param[1] == 'String' then
           send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..');\n'
           argv = argv..', '..copy..'.data, INT2PTR('..copy..'.size)'
@@ -132,30 +131,46 @@ for i = 1, #events do
     end
   end
 
-  call_output:write('void ui_call_'..ev.name)
-  write_signature(call_output, ev, '')
-  call_output:write('\n{\n')
-  if ev.remote_only then
-    write_arglist(call_output, ev, false)
-    call_output:write('  UI_LOG('..ev.name..', 0);\n')
-    call_output:write('  ui_event("'..ev.name..'", args);\n')
-  else
-    call_output:write('  UI_CALL')
-    write_signature(call_output, ev, ev.name, true)
-    call_output:write(";\n")
+  if not (ev.remote_only and ev.remote_impl) then
+    call_output:write('void ui_call_'..ev.name)
+    write_signature(call_output, ev, '')
+    call_output:write('\n{\n')
+    if ev.remote_only then
+      write_arglist(call_output, ev, false)
+      call_output:write('  UI_LOG('..ev.name..');\n')
+      call_output:write('  ui_event("'..ev.name..'", args);\n')
+    elseif ev.compositor_impl then
+      call_output:write('  UI_CALL')
+      write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)
+      call_output:write(";\n")
+    else
+      call_output:write('  UI_CALL')
+      write_signature(call_output, ev, 'true, '..ev.name..', ui', true)
+      call_output:write(";\n")
+    end
+    call_output:write("}\n\n")
   end
-  call_output:write("}\n\n")
 
+  if ev.compositor_impl then
+    call_output:write('void ui_composed_call_'..ev.name)
+    write_signature(call_output, ev, '')
+    call_output:write('\n{\n')
+    call_output:write('  UI_CALL')
+    write_signature(call_output, ev, 'ui->composed, '..ev.name..', ui', true)
+    call_output:write(";\n")
+    call_output:write("}\n\n")
+  end
 end
 
 proto_output:close()
 call_output:close()
 remote_output:close()
+bridge_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
-exported_attributes = {'name', 'parameters',
+local exported_attributes = {'name', 'parameters',
                        'since', 'deprecated_since'}
-exported_events = {}
+local exported_events = {}
 for _,ev in ipairs(events) do
   local ev_exported = {}
   for _,attr in ipairs(exported_attributes) do
@@ -166,10 +181,12 @@ for _,ev in ipairs(events) do
       p[1] = 'Dictionary'
     end
   end
-  exported_events[#exported_events+1] = ev_exported
+  if not ev.noexport then
+    exported_events[#exported_events+1] = ev_exported
+  end
 end
 
-packed = mpack.pack(exported_events)
-dump_bin_array = require("generators.dump_bin_array")
+local packed = mpack.pack(exported_events)
+local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(metadata_output, 'ui_events_metadata', packed)
 metadata_output:close()

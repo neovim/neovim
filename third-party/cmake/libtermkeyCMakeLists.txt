@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.12)
 project(libtermkey)
 
 add_definitions(-D _CRT_SECURE_NO_WARNINGS)
 add_definitions(-DHAVE_UNIBILIUM)
 if(NOT MSVC)
-  add_definitions(-std=c99)
+  add_compile_options(-std=c99)
 endif()
 
 include_directories(${PROJECT_BINARY_DIR}/t)

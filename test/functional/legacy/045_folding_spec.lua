@@ -14,9 +14,6 @@ describe('folding', function()
     screen = Screen.new(20, 8)
     screen:attach()
   end)
-  after_each(function()
-    screen:detach()
-  end)
 
   it('creation, opening, moving (to the end) and closing', function()
     insert([[

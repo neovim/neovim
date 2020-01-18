@@ -1,9 +1,9 @@
 " Vim indent file
 " Language:	Tera Term Language (TTL)
-"		Based on Tera Term Version 4.92
+"		Based on Tera Term Version 4.100
 " Maintainer:	Ken Takata
 " URL:		https://github.com/k-takata/vim-teraterm
-" Last Change:	2017 Jun 13
+" Last Change:	2018-08-31
 " Filenames:	*.ttl
 " License:	VIM License
 

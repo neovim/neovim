@@ -44,6 +44,7 @@ func Test_tagcase()
   endfor
 
   call delete('Xtags')
+  set tags&
   set ic&
   setg tc&
   setl tc&

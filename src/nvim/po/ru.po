@@ -2458,7 +2458,7 @@ msgstr "E216: Несуществующая группа или событие: %
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Автокоманды ---"
@@ -2482,7 +2482,7 @@ msgstr "E218: слишком глубоко вложенные автокома�
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Автокоманды для \"%s\""
 
 #: ../fileio.c:7149
@@ -3382,7 +3382,7 @@ msgstr ""
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5102,7 +5102,7 @@ msgstr "E876: (рег. выражение НКА) недостаточно ме�
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Невозможно открыть файл временного журнала для записи, вывод на stderr..."
 
@@ -5345,8 +5345,8 @@ msgstr "Предупреждение: регион %s не поддержива�
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Чтение файла аффиксов %s ..."
+msgid "Reading affix file %s..."
+msgstr "Чтение файла аффиксов %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5509,8 +5509,8 @@ msgstr "%s имеет другое значение, чем в файле .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Чтение файла словаря %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Чтение файла словаря %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5544,8 +5544,8 @@ msgstr "Пропущено %d слов с не ASCII символами в %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Чтение файла слов %s ..."
+msgid "Reading word file %s..."
+msgstr "Чтение файла слов %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5614,7 +5614,7 @@ msgstr "Общее количество слов: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "Запись файла предложения исправлений правописания %s"
 
 #: ../spell.c:7707 ../spell.c:7927
@@ -5641,8 +5641,8 @@ msgstr "Предупреждение: оба составные и указан�
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Запись файла правописания %s ..."
+msgid "Writing spell file %s..."
+msgstr "Запись файла правописания %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

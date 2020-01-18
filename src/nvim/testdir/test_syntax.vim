@@ -1,6 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
 source view_util.vim
+source screendump.vim
 
 func GetSyntaxItem(pat)
   let c = ''
@@ -112,6 +113,15 @@ func Test_syntime()
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
   bd
+endfunc
+
+func Test_syntime_completion()
+  if !has('profile')
+    return
+  endif
+
+  call feedkeys(":syntime \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clear off on report', @:)
 endfunc
 
 func Test_syntax_list()
@@ -301,11 +311,19 @@ func Test_syntax_arg_skipped()
 
   syn clear
 endfunc
- 
-func Test_invalid_arg()
+
+func Test_syntax_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
-  call assert_fails('syntax conceal asdf', 'E390:')
+  if has('conceal')
+    call assert_fails('syntax conceal asdf', 'E390:')
+  endif
   call assert_fails('syntax spell asdf', 'E390:')
+  call assert_fails('syntax clear @ABCD', 'E391:')
+  call assert_fails('syntax include @Xxx', 'E397:')
+  call assert_fails('syntax region X start="{"', 'E399:')
+  call assert_fails('syntax sync x', 'E404:')
+  call assert_fails('syntax keyword Abc a[', 'E789:')
+  call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
 endfunc
 
 func Test_syn_sync()
@@ -346,6 +364,50 @@ func Test_invalid_name()
   hi clear @Wrong
 endfunc
 
+func Test_ownsyntax()
+  new Xfoo
+  call setline(1, '#define FOO')
+  syntax on
+  set filetype=c
+  ownsyntax perl
+  call assert_equal('perlComment', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c',    b:current_syntax)
+  call assert_equal('perl', w:current_syntax)
+
+  " A new split window should have the original syntax.
+  split
+  call assert_equal('cDefine', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c', b:current_syntax)
+  call assert_equal(0, exists('w:current_syntax'))
+
+  wincmd x
+  call assert_equal('perlComment', synIDattr(synID(line("."), col("."), 1), "name"))
+
+  syntax off
+  set filetype&
+  %bw!
+endfunc
+
+func Test_ownsyntax_completion()
+  call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"ownsyntax java javacc javascript javascriptreact', @:)
+endfunc
+
+func Test_highlight_invalid_arg()
+  if has('gui_running')
+    call assert_fails('hi XXX guifg=xxx', 'E254:')
+  endif
+  call assert_fails('hi DoesNotExist', 'E411:')
+  call assert_fails('hi link', 'E412:')
+  call assert_fails('hi link a', 'E412:')
+  call assert_fails('hi link a b c', 'E413:')
+  call assert_fails('hi XXX =', 'E415:')
+  call assert_fails('hi XXX cterm', 'E416:')
+  call assert_fails('hi XXX cterm=', 'E417:')
+  call assert_fails('hi XXX cterm=DoesNotExist', 'E418:')
+  call assert_fails('hi XXX ctermfg=DoesNotExist', 'E421:')
+  call assert_fails('hi XXX xxx=White', 'E423:')
+endfunc
 
 func Test_conceal()
   if !has('conceal')
@@ -381,4 +443,139 @@ func Test_conceal()
   syn clear
   set conceallevel&
   bw!
+endfunc
+
+func Test_bg_detection()
+  if has('gui_running')
+    return
+  endif
+  " auto-detection of &bg, make sure sure it isn't set anywhere before
+  " this test
+  hi Normal ctermbg=0
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=4
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=12
+  call assert_equal('light', &bg)
+  hi Normal ctermbg=15
+  call assert_equal('light', &bg)
+
+  " manually-set &bg takes precedence over auto-detection
+  set bg=light
+  hi Normal ctermbg=4
+  call assert_equal('light', &bg)
+  set bg=dark
+  hi Normal ctermbg=12
+  call assert_equal('dark', &bg)
+
+  hi Normal ctermbg=NONE
+endfunc
+
+func Test_synstack_synIDtrans()
+  new
+  setfiletype c
+  syntax on
+  call setline(1, ' /* A comment with a TODO */')
+
+  call assert_equal([], synstack(1, 1))
+
+  norm f/
+  call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Comment'],        map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fA
+  call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment'],  map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fT
+  call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  syn clear
+  bw!
+endfunc
+
+" Check highlighting for a small piece of C code with a screen dump.
+func Test_syntax_c()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ '/* comment line at the top */',
+	\ 'int main(int argc, char **argv) { // another comment',
+	\ '#if 0',
+	\ '   int   not_used;',
+	\ '#else',
+	\ '   int   used;',
+	\ '#endif',
+	\ '   printf("Just an example piece of C code\n");',
+	\ '   return 0x0ff;',
+	\ '}',
+	\ '   static void',
+	\ 'myFunction(const double count, struct nothing, long there) {',
+	\ '  // 123: nothing to read here',
+	\ '  for (int i = 0; i < count; ++i) {',
+	\ '    break;',
+	\ '  }',
+	\ "  Note: asdf",
+	\ '}',
+	\ ], 'Xtest.c')
+
+  " This makes the default for 'background' use "dark", check that the
+  " response to t_RB corrects it to "light".
+  let $COLORFGBG = '15;0'
+
+  let buf = RunVimInTerminal('Xtest.c', {})
+  call term_sendkeys(buf, ":syn keyword Search Note\r")
+  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
+  call StopVimInTerminal(buf)
+
+  let $COLORFGBG = ''
+  call delete('Xtest.c')
+endfun
+
+" Using \z() in a region with NFA failing should not crash.
+func Test_syn_wrong_z_one()
+  new
+  call setline(1, ['just some text', 'with foo and bar to match with'])
+  syn region FooBar start="foo\z(.*\)bar" end="\z1"
+  " call test_override("nfa_fail", 1)
+  redraw!
+  redraw!
+  " call test_override("ALL", 0)
+  bwipe!
+endfunc
+
+func Test_syntax_hangs()
+  if !has('reltime') || !has('float') || !has('syntax')
+    return
+  endif
+
+  " This pattern takes a long time to match, it should timeout.
+  new
+  call setline(1, ['aaa', repeat('abc ', 1000), 'ccc'])
+  let start = reltime()
+  set nolazyredraw redrawtime=101
+  syn match Error /\%#=1a*.*X\@<=b*/
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  " second time syntax HL is disabled
+  let start = reltime()
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed < 0.1)
+
+  " after CTRL-L the timeout flag is reset
+  let start = reltime()
+  exe "normal \<C-L>"
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  set redrawtime&
+  bwipe!
 endfunc

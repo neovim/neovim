@@ -77,7 +77,7 @@
 /// @param flags  Flags for open() call.
 ///
 /// @return - The open memory file, on success.
-///         - NULL, on failure.
+///         - NULL, on failure (e.g. file does not exist).
 memfile_T *mf_open(char_u *fname, int flags)
 {
   memfile_T *mfp = xmalloc(sizeof(memfile_T));
@@ -719,10 +719,8 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 /// Frees mf_fname and mf_ffname.
 void mf_free_fnames(memfile_T *mfp)
 {
-  xfree(mfp->mf_fname);
-  xfree(mfp->mf_ffname);
-  mfp->mf_fname = NULL;
-  mfp->mf_ffname = NULL;
+  XFREE_CLEAR(mfp->mf_fname);
+  XFREE_CLEAR(mfp->mf_ffname);
 }
 
 /// Set the simple file name and the full file name of memfile's swapfile, out
@@ -785,9 +783,6 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
   }
 
   (void)os_set_cloexec(mfp->mf_fd);
-#ifdef HAVE_SELINUX
-  mch_copy_sec(fname, mfp->mf_fname);
-#endif
 
   return true;
 }

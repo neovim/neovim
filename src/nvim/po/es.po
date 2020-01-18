@@ -2525,7 +2525,7 @@ msgstr "E216: No existe tal grupo o evento: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Auto-órdenes ---"
@@ -2549,7 +2549,7 @@ msgstr "E218: La auto-orden se anida en exceso"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Auto-órdenes para \"%s\""
 
 #: ../fileio.c:7149
@@ -3464,7 +3464,7 @@ msgstr "-q [fich. err.] Editar el archivo con el primer error"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5413,7 +5413,7 @@ msgstr "Advertencia: la región %s no es compatible"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Leyendo el archivo de afijos \"%s\"..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
@@ -5578,8 +5578,8 @@ msgstr "El valor %s difiere de los que se usa en otro archivo .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Leyendo el archivo de diccionario %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Leyendo el archivo de diccionario %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5613,8 +5613,8 @@ msgstr "Ignorando %d palabra(s) con caracteres no-ASCII en %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Leyendo archivo de palabras \"%s\" ..."
+msgid "Reading word file %s..."
+msgstr "Leyendo archivo de palabras \"%s\"..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5683,8 +5683,8 @@ msgstr "Número total de palabras: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Escribiendo el archivo de sugerencias %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Escribiendo el archivo de sugerencias %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5711,8 +5711,8 @@ msgstr "Advertencia: Se especificó \"compounding\" y NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Escribiendo archivo de ortografía \"%s\" ..."
+msgid "Writing spell file %s..."
+msgstr "Escribiendo archivo de ortografía \"%s\"..."
 
 #: ../spell.c:7925
 msgid "Done!"

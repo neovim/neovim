@@ -80,19 +80,51 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 void shell_free_argv(char **argv)
 {
   char **p = argv;
-
   if (p == NULL) {
     // Nothing was allocated, return
     return;
   }
-
   while (*p != NULL) {
     // Free each argument
     xfree(*p);
     p++;
   }
-
   xfree(argv);
+}
+
+/// Joins shell arguments from `argv` into a new string.
+/// If the result is too long it is truncated with ellipsis ("...").
+///
+/// @returns[allocated] `argv` joined to a string.
+char *shell_argv_to_str(char **const argv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t n = 0;
+  char **p = argv;
+  char *rv = xcalloc(256, sizeof(*rv));
+  const size_t maxsize = (256 * sizeof(*rv));
+  if (*p == NULL) {
+    return rv;
+  }
+  while (*p != NULL) {
+    xstrlcat(rv, "'", maxsize);
+    xstrlcat(rv, *p, maxsize);
+    n = xstrlcat(rv,  "' ", maxsize);
+    if (n >= maxsize) {
+      break;
+    }
+    p++;
+  }
+  if (n < maxsize) {
+    rv[n - 1] = '\0';
+  } else {
+    // Command too long, show ellipsis: "/bin/bash 'foo' 'bar'..."
+    rv[maxsize - 4] = '.';
+    rv[maxsize - 3] = '.';
+    rv[maxsize - 2] = '.';
+    rv[maxsize - 1] = '\0';
+  }
+  return rv;
 }
 
 /// Calls the user-configured 'shell' (p_sh) for running a command or wildcard
@@ -101,6 +133,8 @@ void shell_free_argv(char **argv)
 /// @param cmd The command to execute, or NULL to run an interactive shell.
 /// @param opts Options that control how the shell will work.
 /// @param extra_args Extra arguments to the shell, or NULL.
+///
+/// @return shell command exit code
 int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
@@ -371,8 +405,11 @@ static bool out_data_decide_throttle(size_t size)
     return false;
   } else if (!visit) {
     started = os_hrtime();
-  } else if (visit % 20 == 0) {
+  } else {
     uint64_t since = os_hrtime() - started;
+    if (since < (visit * 0.1L * NS_1_SECOND)) {
+      return true;
+    }
     if (since > (3 * NS_1_SECOND)) {
       received = visit = 0;
       return false;
@@ -381,17 +418,16 @@ static bool out_data_decide_throttle(size_t size)
 
   visit++;
   // Pulse "..." at the bottom of the screen.
-  size_t tick = (visit % 20 == 0)
-                ? 3  // Force all dots "..." on last visit.
-                : (visit % 4);
-  pulse_msg[0] = (tick == 0) ? ' ' : '.';
-  pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
-  pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
+  size_t tick = visit % 4;
+  pulse_msg[0] = (tick > 0) ? '.' : ' ';
+  pulse_msg[1] = (tick > 1) ? '.' : ' ';
+  pulse_msg[2] = (tick > 2) ? '.' : ' ';
   if (visit == 1) {
-    msg_putchar('\n');
+    msg_puts("[...]\n");
   }
   msg_putchar('\r');  // put cursor at start of line
   msg_puts(pulse_msg);
+  msg_putchar('\r');
   ui_flush();
   return true;
 }
@@ -450,8 +486,8 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void out_data_append_to_screen(char *output, size_t *count,
-                                      bool eof)
+static void out_data_append_to_screen(char *output, size_t *count, bool eof)
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = output, *end = output + *count;
   while (p < end) {
@@ -466,7 +502,7 @@ static void out_data_append_to_screen(char *output, size_t *count,
       //    incomplete UTF-8 sequence that could be composing with the last
       //    complete sequence.
       // This will be corrected when we switch to vterm based implementation
-      int i = *p ? mb_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
+      int i = *p ? utfc_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
       if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end-p)) {
         *count = (size_t)(p - output);
         goto end;
@@ -491,7 +527,7 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
       && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
-  } else {
+  } else if (ptr != NULL) {
     out_data_append_to_screen(ptr, &cnt, eof);
   }
 

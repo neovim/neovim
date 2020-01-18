@@ -7,23 +7,20 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/suite.sh"
 
-# Don't cache pip's log and selfcheck.
-rm -rf "${HOME}/.cache/pip/log"
-rm -f "${HOME}/.cache/pip/selfcheck.json"
-
 echo "before_cache.sh: cache size"
-du -d 2 "${HOME}/.cache" | sort -n
+du -chd 1 "${HOME}/.cache" | sort -rh | head -20
 
 echo "before_cache.sh: ccache stats"
 ccache -s 2>/dev/null || true
+# Do not keep ccache stats (uploaded to cache otherwise; reset initially anyway).
+find "${HOME}/.ccache" -name stats -delete
 
 # Update the third-party dependency cache only if the build was successful.
 if ended_successfully; then
-  rm -rf "${HOME}/.cache/nvim-deps"
-  mv "${DEPS_BUILD_DIR}" "${HOME}/.cache/nvim-deps"
-
-  rm -rf "${HOME}/.cache/nvim-deps-downloads"
-  mv "${DEPS_DOWNLOAD_DIR}" "${HOME}/.cache/nvim-deps-downloads"
+  # Do not cache downloads.  They should not be needed with up-to-date deps.
+  rm -rf "${DEPS_BUILD_DIR}/build/downloads"
+  rm -rf "${CACHE_NVIM_DEPS_DIR}"
+  mv "${DEPS_BUILD_DIR}" "${CACHE_NVIM_DEPS_DIR}"
 
   touch "${CACHE_MARKER}"
   echo "Updated third-party dependencies (timestamp: $(_stat "${CACHE_MARKER}"))."

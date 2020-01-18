@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language:             Haskell
+" Maintainer:           Daniel Campoverde <alx@sillybytes.net>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2008-07-09
+" Latest Revision:      2018-08-27
 
 if exists("b:did_ftplugin")
   finish
@@ -15,6 +16,7 @@ let b:undo_ftplugin = "setl com< cms< fo<"
 
 setlocal comments=s1fl:{-,mb:-,ex:-},:-- commentstring=--\ %s
 setlocal formatoptions-=t formatoptions+=croql
+setlocal omnifunc=haskellcomplete#Complete
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

@@ -47,7 +47,7 @@ endif
 
 function! GetAwkIndent()
 
-   " Find previous line and get it's indentation
+   " Find previous line and get its indentation
    let prev_lineno = s:Get_prev_line( v:lnum )
    if prev_lineno == 0
       return 0

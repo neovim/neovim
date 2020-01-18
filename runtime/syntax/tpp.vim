@@ -1,11 +1,11 @@
 " Vim syntax file
-" Language:	tpp - Text Presentation Program
-" Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
-" Former Maintainer:	Gerfried Fuchs <alfie@ist.org>
-" Last Change:	2007-10-14
-" URL: http://git.debian.org/?p=pkg-vim/vim.git;a=blob_plain;f=runtime/syntax/tpp.vim;hb=debian
-" Filenames:	*.tpp
-" License:	BSD
+" Language: tpp - Text Presentation Program
+" Maintainer: Debian Vim Maintainers
+" Former Maintainer: Gerfried Fuchs <alfie@ist.org>
+" Last Change: 2018 Dec 27
+" URL: https://salsa.debian.org/vim-team/vim-debian/master/syntax/tpp.vim
+" Filenames: *.tpp
+" License: BSD
 "
 " XXX This file is in need of a new maintainer, Debian VIM Maintainers maintain
 "     it only because patches have been submitted for it by Debian users and the
@@ -18,11 +18,11 @@
 " SPAM is _NOT_ welcome - be ready to be reported!
 
 " quit when a syntax file was already loaded
-if exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
-if !exists("main_syntax")
+if !exists('main_syntax')
   let main_syntax = 'tpp'
 endif
 
@@ -46,7 +46,7 @@ syn region tppNewPageOption start="^--newpage" end="$" contains=tppNewPageOption
 syn region tppPageLocalOption start="^--\%(heading\|center\|right\|huge\|sethugefont\|exec\)" end="$" contains=tppPageLocalOptionKey oneline
 syn region tppAbstractOption start="^--\%(author\|title\|date\|footer\)" end="$" contains=tppAbstractOptionKey oneline
 
-if main_syntax != 'sh'
+if main_syntax !=# 'sh'
   " shell command
   syn include @tppShExec syntax/sh.vim
   unlet b:current_syntax
@@ -78,6 +78,6 @@ hi def link tppNewPageOption		Error
 hi def link tppTimeOption			Error
 
 
-let b:current_syntax = "tpp"
+let b:current_syntax = 'tpp'
 
 " vim: ts=8 sw=2

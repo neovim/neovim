@@ -40,4 +40,15 @@ extern bool entered_free_all_mem;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.h.generated.h"
 #endif
+
+#define XFREE_CLEAR(ptr) \
+  do { \
+    /* Take the address to avoid double evaluation. #1375 */ \
+    void **ptr_ = (void **)&(ptr); \
+    xfree(*ptr_); \
+    /* coverity[dead-store] */ \
+    *ptr_ = NULL; \
+    (void)(*ptr_); \
+  } while (0)
+
 #endif  // NVIM_MEMORY_H

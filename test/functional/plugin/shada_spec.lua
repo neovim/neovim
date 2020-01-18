@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local clear = helpers.clear
 local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.eq, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
   helpers.funcs, helpers.feed, helpers.curbuf
@@ -7,11 +8,12 @@ local read_file = helpers.read_file
 
 local mpack = require('mpack')
 
-local plugin_helpers = require('test.functional.plugin.helpers')
-local reset = plugin_helpers.reset
-
 local shada_helpers = require('test.functional.shada.helpers')
 local get_shada_rw = shada_helpers.get_shada_rw
+
+local function reset(shada_file)
+  clear{ args={'-u', 'NORC', '-i', shada_file or 'NONE', }}
+end
 
 local mpack_eq = function(expected, mpack_result)
   local mpack_keys = {'type', 'timestamp', 'length', 'value'}
@@ -1356,8 +1358,6 @@ describe('autoload/shada.vim', function()
       nvim_command('unlet g:__actual')
     end
 
-    assert:set_parameter('TableFormatLevel', 100)
-
     it('works with multiple items', function()
       strings2sd_eq({{
         type=11, timestamp=0, data={
@@ -2141,7 +2141,7 @@ describe('plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
   local eol = helpers.iswin() and '\r\n' or '\n'
   before_each(function()
-    reset()
+    -- Note: reset() is called explicitly in each test.
     os.remove(fname)
     os.remove(fname .. '.tst')
     os.remove(fname_tmp)
@@ -2157,273 +2157,263 @@ describe('plugin/shada.vim', function()
     mpack_eq(expected, mpack_result)
   end
 
-  describe('event BufReadCmd', function()
-    it('works', function()
-      wshada('\004\000\009\147\000\196\002ab\196\001a')
-      wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
-      nvim_command('edit ' .. fname)
-      eq({
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "a"',
-      }, nvim_eval('getline(1, "$")'))
-      eq(false, curbuf('get_option', 'modified'))
-      eq('shada', curbuf('get_option', 'filetype'))
-      nvim_command('edit ' .. fname_tmp)
-      eq({
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "b"',
-      }, nvim_eval('getline(1, "$")'))
-      eq(false, curbuf('get_option', 'modified'))
-      eq('shada', curbuf('get_option', 'filetype'))
-      eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
-      neq({
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "a"',
-      }, nvim_eval('getline(1, "$")'))
-      neq(true, curbuf('get_option', 'modified'))
-    end)
+  it('event BufReadCmd', function()
+    reset()
+    wshada('\004\000\009\147\000\196\002ab\196\001a')
+    wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
+    nvim_command('edit ' .. fname)
+    eq({
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "a"',
+    }, nvim_eval('getline(1, "$")'))
+    eq(false, curbuf('get_option', 'modified'))
+    eq('shada', curbuf('get_option', 'filetype'))
+    nvim_command('edit ' .. fname_tmp)
+    eq({
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "b"',
+    }, nvim_eval('getline(1, "$")'))
+    eq(false, curbuf('get_option', 'modified'))
+    eq('shada', curbuf('get_option', 'filetype'))
+    eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
+    neq({
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "a"',
+    }, nvim_eval('getline(1, "$")'))
+    neq(true, curbuf('get_option', 'modified'))
   end)
 
-  describe('event FileReadCmd', function()
-    it('works', function()
-      wshada('\004\000\009\147\000\196\002ab\196\001a')
-      wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
-      nvim_command('$read ' .. fname)
-      eq({
-        '',
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "a"',
-      }, nvim_eval('getline(1, "$")'))
-      eq(true, curbuf('get_option', 'modified'))
-      neq('shada', curbuf('get_option', 'filetype'))
-      nvim_command('1,$read ' .. fname_tmp)
-      eq({
-        '',
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "a"',
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "b"',
-      }, nvim_eval('getline(1, "$")'))
-      eq(true, curbuf('get_option', 'modified'))
-      neq('shada', curbuf('get_option', 'filetype'))
-      curbuf('set_option', 'modified', false)
-      eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
-      eq({
-        '',
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "a"',
-        'History entry with timestamp ' .. epoch .. ':',
-        '  @ Description_  Value',
-        '  - history type  CMD',
-        '  - contents      "ab"',
-        '  -               "b"',
-      }, nvim_eval('getline(1, "$")'))
-      neq(true, curbuf('get_option', 'modified'))
-    end)
+  it('event FileReadCmd', function()
+    reset()
+    wshada('\004\000\009\147\000\196\002ab\196\001a')
+    wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
+    nvim_command('$read ' .. fname)
+    eq({
+      '',
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "a"',
+    }, nvim_eval('getline(1, "$")'))
+    eq(true, curbuf('get_option', 'modified'))
+    neq('shada', curbuf('get_option', 'filetype'))
+    nvim_command('1,$read ' .. fname_tmp)
+    eq({
+      '',
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "a"',
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "b"',
+    }, nvim_eval('getline(1, "$")'))
+    eq(true, curbuf('get_option', 'modified'))
+    neq('shada', curbuf('get_option', 'filetype'))
+    curbuf('set_option', 'modified', false)
+    eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
+    eq({
+      '',
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "a"',
+      'History entry with timestamp ' .. epoch .. ':',
+      '  @ Description_  Value',
+      '  - history type  CMD',
+      '  - contents      "ab"',
+      '  -               "b"',
+    }, nvim_eval('getline(1, "$")'))
+    neq(true, curbuf('get_option', 'modified'))
   end)
 
-  describe('event BufWriteCmd', function()
-    it('works', function()
-      nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_lines', 0, 1, true, {
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-      })
-      nvim_command('w ' .. fname .. '.tst')
-      nvim_command('w ' .. fname)
-      nvim_command('w ' .. fname_tmp)
-      eq('++opt not supported', exc_exec('w! ++enc=latin1 ' .. fname))
-      eq(table.concat({
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-      }, eol) .. eol, read_file(fname .. '.tst'))
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }}, fname)
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }}, fname_tmp)
-    end)
+  it('event BufWriteCmd', function()
+    reset()
+    nvim('set_var', 'shada#add_own_header', 0)
+    curbuf('set_lines', 0, 1, true, {
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+    })
+    nvim_command('w ' .. fname .. '.tst')
+    nvim_command('w ' .. fname)
+    nvim_command('w ' .. fname_tmp)
+    eq('++opt not supported', exc_exec('w! ++enc=latin1 ' .. fname))
+    eq(table.concat({
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+    }, eol) .. eol, read_file(fname .. '.tst'))
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }}, fname)
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }}, fname_tmp)
   end)
 
-  describe('event FileWriteCmd', function()
-    it('works', function()
-      if helpers.pending_win32(pending) then return end
-      nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_lines', 0, 1, true, {
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-      })
-      nvim_command('1,3w ' .. fname .. '.tst')
-      nvim_command('1,3w ' .. fname)
-      nvim_command('1,3w ' .. fname_tmp)
-      eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
-      eq(table.concat({
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-      }, eol) .. eol, read_file(fname .. '.tst'))
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={n=('A'):byte()},
-      }}, fname)
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={n=('A'):byte()},
-      }}, fname_tmp)
-    end)
+  it('event FileWriteCmd', function()
+    reset()
+    nvim('set_var', 'shada#add_own_header', 0)
+    curbuf('set_lines', 0, 1, true, {
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+    })
+    nvim_command('1,3w ' .. fname .. '.tst')
+    nvim_command('1,3w ' .. fname)
+    nvim_command('1,3w ' .. fname_tmp)
+    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
+    eq(table.concat({
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+    }, eol) .. eol, read_file(fname .. '.tst'))
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={n=('A'):byte()},
+    }}, fname)
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={n=('A'):byte()},
+    }}, fname_tmp)
   end)
 
-  describe('event FileAppendCmd', function()
-    it('works', function()
-      nvim('set_var', 'shada#add_own_header', 0)
-      curbuf('set_lines', 0, 1, true, {
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-      })
-      funcs.writefile({''}, fname .. '.tst', 'b')
-      funcs.writefile({''}, fname, 'b')
-      funcs.writefile({''}, fname_tmp, 'b')
-      nvim_command('1,3w >> ' .. fname .. '.tst')
-      nvim_command('1,3w >> ' .. fname)
-      nvim_command('1,3w >> ' .. fname_tmp)
-      nvim_command('w >> ' .. fname .. '.tst')
-      nvim_command('w >> ' .. fname)
-      nvim_command('w >> ' .. fname_tmp)
-      eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 >> ' .. fname))
-      eq(table.concat({
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-        'Jump with timestamp ' .. epoch .. ':',
-        '  % Key________  Description  Value',
-        '  + n            name         \'A\'',
-        '  + f            file name    ["foo"]',
-        '  + l            line number  2',
-        '  + c            column       -200',
-      }, eol) .. eol, read_file(fname .. '.tst'))
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }}, fname)
-      shada_eq({{
-        timestamp=0,
-        type=8,
-        value={n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }, {
-        timestamp=0,
-        type=8,
-        value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
-      }}, fname_tmp)
-    end)
+  it('event FileAppendCmd', function()
+    reset()
+    nvim('set_var', 'shada#add_own_header', 0)
+    curbuf('set_lines', 0, 1, true, {
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+    })
+    funcs.writefile({''}, fname .. '.tst', 'b')
+    funcs.writefile({''}, fname, 'b')
+    funcs.writefile({''}, fname_tmp, 'b')
+    nvim_command('1,3w >> ' .. fname .. '.tst')
+    nvim_command('1,3w >> ' .. fname)
+    nvim_command('1,3w >> ' .. fname_tmp)
+    nvim_command('w >> ' .. fname .. '.tst')
+    nvim_command('w >> ' .. fname)
+    nvim_command('w >> ' .. fname_tmp)
+    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 >> ' .. fname))
+    eq(table.concat({
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+      'Jump with timestamp ' .. epoch .. ':',
+      '  % Key________  Description  Value',
+      '  + n            name         \'A\'',
+      '  + f            file name    ["foo"]',
+      '  + l            line number  2',
+      '  + c            column       -200',
+    }, eol) .. eol, read_file(fname .. '.tst'))
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }}, fname)
+    shada_eq({{
+      timestamp=0,
+      type=8,
+      value={n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }, {
+      timestamp=0,
+      type=8,
+      value={c=-200, f={'foo'}, l=2, n=('A'):byte()},
+    }}, fname_tmp)
   end)
 
-  describe('event SourceCmd', function()
-    before_each(function()
-      reset(fname)
-    end)
-    it('works', function()
-      wshada('\004\000\006\146\000\196\002ab')
-      wshada_tmp('\004\001\006\146\000\196\002bc')
-      eq(0, exc_exec('source ' .. fname))
-      eq(0, exc_exec('source ' .. fname_tmp))
-      eq('bc', funcs.histget(':', -1))
-      eq('ab', funcs.histget(':', -2))
-    end)
+  it('event SourceCmd', function()
+    reset(fname)
+    wshada('\004\000\006\146\000\196\002ab')
+    wshada_tmp('\004\001\006\146\000\196\002bc')
+    eq(0, exc_exec('source ' .. fname))
+    eq(0, exc_exec('source ' .. fname_tmp))
+    eq('bc', funcs.histget(':', -1))
+    eq('ab', funcs.histget(':', -2))
   end)
 end)
 
@@ -2544,6 +2534,7 @@ describe('syntax/shada.vim', function()
   it('works', function()
     nvim_command('syntax on')
     nvim_command('setlocal syntax=shada')
+    nvim_command('set laststatus&')
     curbuf('set_lines', 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',
       '  % Key  Value',
@@ -2880,4 +2871,3 @@ describe('syntax/shada.vim', function()
     eq(exp, act)
   end)
 end)
-

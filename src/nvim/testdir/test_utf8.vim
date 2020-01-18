@@ -1,7 +1,4 @@
 " Tests for Unicode manipulations
-if !has('multi_byte')
-  finish
-endif
  
 
 " Visual block Insert adjusts for multi-byte char

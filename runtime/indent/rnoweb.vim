@@ -21,7 +21,7 @@ else
   let s:TeXIndent = function(substitute(&indentexpr, "()", "", ""))
 endif
 
-unlet b:did_indent
+unlet! b:did_indent
 runtime indent/r.vim
 let s:RIndent = function(substitute(&indentexpr, "()", "", ""))
 let b:did_indent = 1

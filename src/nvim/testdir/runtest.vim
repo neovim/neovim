@@ -26,17 +26,22 @@
 " It will be called after each Test_ function.
 "
 " When debugging a test it can be useful to add messages to v:errors:
-" 	call add(v:errors, "this happened")
+"	call add(v:errors, "this happened")
 
 
 " Check that the screen size is at least 24 x 80 characters.
 if &lines < 24 || &columns < 80 
-  let error = 'Screen size too small! Tests require at least 24 lines with 80 characters'
+  let error = 'Screen size too small! Tests require at least 24 lines with 80 characters, got ' .. &lines .. ' lines with ' .. &columns .. ' characters'
   echoerr error
   split test.log
   $put =error
-  w
-  cquit
+  write
+  split messages
+  call append(line('$'), '')
+  call append(line('$'), 'From ' . expand('%') . ':')
+  call append(line('$'), error)
+  write
+  qa!
 endif
 
 " Common with all tests on all systems.
@@ -46,13 +51,22 @@ source setup.vim
 " This also enables use of line continuation.
 set nocp viminfo+=nviminfo
 
-" Use utf-8 or latin1 by default, instead of whatever the system default
-" happens to be.  Individual tests can overrule this at the top of the file.
-if has('multi_byte')
-  set encoding=utf-8
-else
-  set encoding=latin1
-endif
+" Use utf-8 by default, instead of whatever the system default happens to be.
+" Individual tests can overrule this at the top of the file.
+set encoding=utf-8
+
+" REDIR_TEST_TO_NULL has a very permissive SwapExists autocommand which is for
+" the test_name.vim file itself. Replace it here with a more restrictive one,
+" so we still catch mistakes.
+let s:test_script_fname = expand('%')
+au! SwapExists * call HandleSwapExists()
+func HandleSwapExists()
+  " Only ignore finding a swap file for the test script (the user might be
+  " editing it and do ":make test_name") and the output file.
+  if expand('<afile>') == 'messages' || expand('<afile>') =~ s:test_script_fname
+    let v:swapchoice = 'e'
+  endif
+endfunc
 
 " Avoid stopping at the "hit enter" prompt
 set nomore
@@ -60,14 +74,17 @@ set nomore
 " Output all messages in English.
 lang mess C
 
+" Nvim: append runtime from build dir, which contains the generated doc/tags.
+let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
+
 " Always use forward slashes.
-" set shellslash
+set shellslash
 
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 
 " Support function: get the alloc ID by name.
-function GetAllocId(name)
+func GetAllocId(name)
   exe 'split ' . s:srcdir . '/alloc.h'
   let top = search('typedef enum')
   if top == 0
@@ -79,6 +96,11 @@ function GetAllocId(name)
   endif
   close
   return lnum - top - 1
+endfunc
+
+func CanRunVimInTerminal()
+  " Nvim: always false, we use Lua screen-tests instead.
+  return 0
 endfunc
 
 func RunTheTest(test)
@@ -116,7 +138,10 @@ func RunTheTest(test)
     exe 'call ' . a:test
   else
     try
+      let s:test = a:test
+      au VimLeavePre * call EarlyExit(s:test)
       exe 'call ' . a:test
+      au! VimLeavePre
     catch /^\cskipped/
       call add(s:messages, '    Skipped')
       call add(s:skipped, 'SKIPPED ' . a:test . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
@@ -124,6 +149,10 @@ func RunTheTest(test)
       call add(v:errors, 'Caught exception in ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
     endtry
   endif
+
+  " In case 'insertmode' was set and something went wrong, make sure it is
+  " reset to avoid trouble with anything else.
+  set noinsertmode
 
   if exists("*TearDown")
     try
@@ -133,8 +162,9 @@ func RunTheTest(test)
     endtry
   endif
 
-  " Clear any autocommands
+  " Clear any autocommands and put back the catch-all for SwapExists.
   au!
+  au SwapExists * call HandleSwapExists()
 
   " Close any extra tab pages and windows and make the current one not modified.
   while tabpagenr('$') > 1
@@ -166,12 +196,24 @@ func AfterTheTest()
   endif
 endfunc
 
+func EarlyExit(test)
+  " It's OK for the test we use to test the quit detection.
+  if a:test != 'Test_zz_quit_detected()'
+    call add(v:errors, 'Test caused Vim to exit: ' . a:test)
+  endif
+
+  call FinishTesting()
+endfunc
+
 " This function can be called by a test if it wants to abort testing.
 func FinishTesting()
   call AfterTheTest()
 
   " Don't write viminfo on exit.
   set viminfo=
+
+  " Clean up files created by setup.vim
+  call delete('XfakeHOME', 'rf')
 
   if s:fail == 0
     " Success, create the .res file so that make knows it's done.
@@ -188,7 +230,11 @@ func FinishTesting()
     write
   endif
 
-  let message = 'Executed ' . s:done . (s:done > 1 ? ' tests' : ' test')
+  if s:done == 0
+    let message = 'NO tests executed'
+  else
+    let message = 'Executed ' . s:done . (s:done > 1 ? ' tests' : ' test')
+  endif
   echo message
   call add(s:messages, message)
   if s:fail > 0
@@ -225,6 +271,9 @@ if expand('%') =~ 'test_vimscript.vim'
 else
   try
     source %
+  catch /^\cskipped/
+    call add(s:messages, '    Skipped')
+    call add(s:skipped, 'SKIPPED ' . expand('%') . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
   catch
     let s:fail += 1
     call add(s:errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
@@ -232,19 +281,32 @@ else
 endif
 
 " Names of flaky tests.
-let s:flaky = [
+let s:flaky_tests = [
+      \ 'Test_autocmd_SafeState()',
+      \ 'Test_cursorhold_insert()',
       \ 'Test_exit_callback_interval()',
+      \ 'Test_map_timeout_with_timer_interrupt()',
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',
+      \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
+      \ 'Test_quotestar()',
       \ 'Test_reltime()',
+      \ 'Test_repeat_many()',
+      \ 'Test_repeat_three()',
+      \ 'Test_state()',
+      \ 'Test_stop_all_in_callback()',
+      \ 'Test_term_mouse_double_click_to_create_tab',
+      \ 'Test_term_mouse_multiple_clicks_to_visually_select()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',
       \ 'Test_with_partial_callback()',
-      \ 'Test_lambda_with_timer()',
       \ ]
+
+" Pattern indicating a common flaky test failure.
+let s:flaky_errors_re = 'StopVimInTerminal\|VerifyScreenDump'
 
 " Locate Test_ functions and execute them.
 redir @q
@@ -257,32 +319,59 @@ if argc() > 1
   let s:tests = filter(s:tests, 'v:val =~ argv(1)')
 endif
 
+" If the environment variable $TEST_FILTER is set then filter the function
+" names against it.
+if $TEST_FILTER != ''
+  let s:tests = filter(s:tests, 'v:val =~ $TEST_FILTER')
+endif
+
 " Execute the tests in alphabetical order.
 for s:test in sort(s:tests)
   " Silence, please!
   set belloff=all
+  let prev_error = ''
+  let total_errors = []
+  let run_nr = 1
 
   call RunTheTest(s:test)
 
-  if len(v:errors) > 0 && index(s:flaky, s:test) >= 0
-    call add(s:messages, 'Found errors in ' . s:test . ':')
-    call extend(s:messages, v:errors)
-    call add(s:messages, 'Flaky test failed, running it again')
-    let first_run = v:errors
+  " Repeat a flaky test.  Give up when:
+  " - it fails again with the same message
+  " - it fails five times (with a different mesage)
+  if len(v:errors) > 0
+        \ && (index(s:flaky_tests, s:test) >= 0
+        \      || v:errors[0] =~ s:flaky_errors_re)
+    while 1
+      call add(s:messages, 'Found errors in ' . s:test . ':')
+      call extend(s:messages, v:errors)
 
-    " Flakiness is often caused by the system being very busy.  Sleep a couple
-    " of seconds to have a higher chance of succeeding the second time.
-    sleep 2
+      call add(total_errors, 'Run ' . run_nr . ':')
+      call extend(total_errors, v:errors)
 
-    let v:errors = []
-    call RunTheTest(s:test)
-    if len(v:errors) > 0
-      let second_run = v:errors
-      let v:errors = ['First run:']
-      call extend(v:errors, first_run)
-      call add(v:errors, 'Second run:')
-      call extend(v:errors, second_run)
-    endif
+      if run_nr == 5 || prev_error == v:errors[0]
+        call add(total_errors, 'Flaky test failed too often, giving up')
+        let v:errors = total_errors
+        break
+      endif
+
+      call add(s:messages, 'Flaky test failed, running it again')
+
+      " Flakiness is often caused by the system being very busy.  Sleep a
+      " couple of seconds to have a higher chance of succeeding the second
+      " time.
+      sleep 2
+
+      let prev_error = v:errors[0]
+      let v:errors = []
+      let run_nr += 1
+
+      call RunTheTest(s:test)
+
+      if len(v:errors) == 0
+        " Test passed on rerun.
+        break
+      endif
+    endwhile
   endif
 
   call AfterTheTest()

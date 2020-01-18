@@ -19,7 +19,7 @@ typedef size_t hash_T;
 #define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL \
                             || (hi)->hi_key == (char_u *)&hash_removed)
 
-/// A hastable item.
+/// Hashtable item.
 ///
 /// Each item has a NUL terminated string key.
 /// A key can appear only once in the table.
@@ -81,10 +81,10 @@ typedef struct hashtable_S {
       size_t hi##todo_ = hi##ht_->ht_used; \
       for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
+          hi##todo_--; \
           { \
             code \
           } \
-          hi##todo_--; \
         } \
       } \
     } while (0)

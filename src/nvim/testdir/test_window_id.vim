@@ -101,3 +101,23 @@ func Test_win_getid_curtab()
   call assert_equal(win_getid(1), win_getid(1, 1))
   tabclose!
 endfunc
+
+func Test_winlayout()
+  let w1 = win_getid()
+  call assert_equal(['leaf', w1], winlayout())
+
+  split
+  let w2 = win_getid()
+  call assert_equal(['col', [['leaf', w2], ['leaf', w1]]], winlayout())
+
+  split
+  let w3 = win_getid()
+  call assert_equal(['col', [['leaf', w3], ['leaf', w2], ['leaf', w1]]], winlayout())
+
+  2wincmd w
+  vsplit
+  let w4 = win_getid()
+  call assert_equal(['col', [['leaf', w3], ['row', [['leaf', w4], ['leaf', w2]]], ['leaf', w1]]], winlayout())
+
+  only!
+endfunc

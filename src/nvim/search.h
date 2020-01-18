@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/types.h"
+#include "nvim/vim.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/normal.h"
@@ -69,6 +69,15 @@ typedef struct spat {
   SearchOffset off;     ///< Pattern offset.
   dict_T *additional_data;  ///< Additional data from ShaDa file.
 } SearchPattern;
+
+/// Optional extra arguments for searchit().
+typedef struct {
+    linenr_T    sa_stop_lnum;  ///< stop after this line number when != 0
+    proftime_T  *sa_tm;        ///< timeout limit or NULL
+    int         sa_timed_out;  ///< set when timed out
+    int         sa_wrapped;    ///< search wrapped around
+} searchit_arg_T;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"

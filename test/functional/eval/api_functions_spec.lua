@@ -4,9 +4,10 @@ local lfs = require('lfs')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
-local insert = helpers.insert
+local insert, pcall_err = helpers.insert, helpers.pcall_err
+local meths = helpers.meths
 
-describe('api functions', function()
+describe('eval-API', function()
   before_each(clear)
 
   it("work", function()
@@ -34,16 +35,16 @@ describe('api functions', function()
     eq('Vim(call):E119: Not enough arguments for function: nvim_set_option', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
-    eq('Vim(call):Wrong type for argument 4, expecting Boolean', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 4, expecting Boolean', err)
 
     err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq('Vim(call):Wrong type for argument 5, expecting ArrayOf(String)', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 5, expecting ArrayOf(String)', err)
 
     err = exc_exec('call nvim_buf_get_number("0")')
-    eq('Vim(call):Wrong type for argument 1, expecting Buffer', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 1, expecting Buffer', err)
 
     err = exc_exec('call nvim_buf_line_count(17)')
-    eq('Vim(call):Invalid buffer id', err)
+    eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
 
@@ -143,6 +144,11 @@ describe('api functions', function()
       {5:~                                       }|
                                               |
     ]])
-    screen:detach()
+  end)
+
+  it('cannot be called from sandbox', function()
+    eq('Vim(call):E48: Not allowed in sandbox',
+       pcall_err(command, "sandbox call nvim_input('ievil')"))
+    eq({''}, meths.buf_get_lines(0, 0, -1, true))
   end)
 end)

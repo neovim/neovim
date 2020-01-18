@@ -11,112 +11,44 @@ ROOT := ../../..
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := $(abspath ../../../Xtest-tmpdir)
+export TMPDIR := $(abspath Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
-           test14.out             \
-           test24.out             \
-           test37.out             \
-           test40.out             \
-           test42.out             \
-           test48.out             \
-           test52.out             \
-           test64.out             \
+	test42.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
-           test17.out             \
-           test49.out             \
+	test49.out             \
 
+endif
+
+ifeq ($(OS),Windows_NT)
+  FIXFF = fixff
+else
+  FIXFF =
 endif
 
 SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
-# Keep test_alot*.res as the last one, sort the others.
-NEW_TESTS ?= \
-	    test_arabic.res \
-	    test_autocmd.res \
-	    test_bufwintabinfo.res \
-	    test_changedtick.res \
-	    test_charsearch.res \
-	    test_cindent.res \
-	    test_close_count.res \
-	    test_cmdline.res \
-	    test_command_count.res \
-	    test_cscope.res \
-	    test_curswant.res \
-	    test_digraph.res \
-	    test_edit.res \
-	    test_erasebackword.res \
-	    test_exists.res \
-	    test_diffmode.res \
-	    test_farsi.res \
-	    test_file_size.res \
-	    test_filter_map.res \
-	    test_find_complete.res \
-	    test_fixeol.res \
-	    test_findfile.res \
-	    test_fnameescape.res \
-	    test_fold.res \
-	    test_ga.res \
-	    test_glob2regpat.res \
-	    test_gf.res \
-	    test_gn.res \
-	    test_hardcopy.res \
-	    test_help_tagjump.res \
-	    test_hide.res \
-	    test_history.res \
-	    test_hlsearch.res \
-	    test_increment.res \
-	    test_increment_dbcs.res \
-	    test_ins_complete.res \
-	    test_lambda.res \
-	    test_langmap.res \
-	    test_let.res \
-	    test_lineending.res \
-	    test_listdict.res \
-	    test_listchars.res \
-	    test_makeencoding.res \
-	    test_marks.res \
-	    test_match.res \
-	    test_matchadd_conceal.res \
-	    test_mksession.res \
-	    test_nested_function.res \
-	    test_normal.res \
-	    test_number.res \
-	    test_options.res \
-	    test_profile.res \
-	    test_put.res \
-	    test_quickfix.res \
-	    test_recover.res \
-	    test_retab.res \
-	    test_scrollbind.res \
-	    test_search.res \
-	    test_signs.res \
-	    test_smartindent.res \
-	    test_spell.res \
-	    test_stat.res \
-	    test_startup.res \
-	    test_substitute.res \
-	    test_syntax.res \
-	    test_system.res \
-	    test_tab.res \
-	    test_tabpage.res \
-	    test_textobjects.res \
-	    test_timers.res \
-	    test_undo.res \
-	    test_usercommands.res \
-	    test_vimscript.res \
-	    test_visual.res \
-	    test_winbuf_close.res \
-	    test_window_id.res \
-	    test_writefile.res \
-	    test_alot_latin.res \
-	    test_alot_utf8.res \
-	    test_alot.res
+NEW_TESTS_ALOT := test_alot_utf8 test_alot
+NEW_TESTS_IN_ALOT := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' $(addsuffix .vim,$(NEW_TESTS_ALOT)))
+NEW_TESTS_IN_ALOT_LATIN := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' test_alot_latin.vim)
+# Ignored tests.
+# test_alot_latin: Nvim does not allow setting encoding.
+# test_autochdir: ported to Lua, but kept for easier merging.
+# test_eval_func: used as include in old-style test (test_eval.in).
+# test_listlbr: Nvim does not allow setting encoding.
+# test_largefile: uses too much resources to run on CI.
+NEW_TESTS_IGNORE := \
+  test_alot_latin $(NEW_TESTS_IN_ALOT_LATIN) \
+  test_autochdir \
+  test_eval_func \
+  test_listlbr \
+  test_largefile \
 
-SCRIPTS_GUI := test16.out
+NEW_TESTS := $(sort $(basename $(notdir $(wildcard test_*.vim))))
+NEW_TESTS_RES := $(addsuffix .res,$(filter-out $(NEW_TESTS_ALOT) $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(NEW_TESTS)) $(NEW_TESTS_ALOT))
 
 
 ifdef VALGRIND_GDB
@@ -147,50 +79,74 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) newtests report
-
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
+nongui: nolog $(FIXFF) $(SCRIPTS) newtests report
 
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
 	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
+	$(RUN_VIMTEST) $(NO_INITS) -u NONE -S summarize.vim messages
 	@echo
 	@echo 'Test results:'
-	@/bin/sh -c "if test -f test.log; then \
-	                 cat test.log;         \
-	                 echo TEST FAILURE;    \
-	                 exit 1;               \
-	             else                      \
-	                 echo ALL DONE;        \
-	             fi"
+	@cat test_result.log
+	@/bin/sh -c "if test -f test.log; \
+		then echo TEST FAILURE; exit 1; \
+		else echo ALL DONE; \
+		fi"
 
 test1.out: $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
+$(SCRIPTS): $(NVIM_PRG) test1.out
+
+NO_PLUGINS = --noplugin --headless
+# In vim, if the -u command line option is specified, compatible is turned on
+# and viminfo is not read. Unlike vim, neovim reads viminfo and requires the
+# -i command line option.
+NO_INITS = -U NONE -i NONE $(NO_PLUGINS)
+
+# TODO: find a way to avoid changing the distributed files.
+fixff:
+	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
+	  *.in *.ok
+	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
+	  dotest.in
+
+# Execute an individual new style test, e.g.:
+# 	make test_largefile
+$(NEW_TESTS):
+	rm -f $@.res test.log messages
+	@MAKEFLAGS=--no-print-directory $(MAKE) -f Makefile $@.res
+	@cat messages
+	@if test -f test.log; then \
+		exit 1; \
+	fi
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
 RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
+# Delete files that may interfere with running tests.  This includes some files
+# that may result from working on the tests, not only from running them.
+CLEAN_FILES := *.out \
+  *.failed          \
+  *.res             \
+  *.rej             \
+  *.orig            \
+  *.tlog            \
+  test.log          \
+  test_result.log   \
+  messages          \
+  $(RM_ON_RUN)      \
+  $(RM_ON_START)    \
+  valgrind.*        \
+  .*.swp            \
+  .*.swo            \
+  .gdbinit          \
+  $(TMPDIR)         \
+  del
 clean:
-	-rm -rf *.out          \
-	        *.failed       \
-	        *.res          \
-	        *.rej          \
-	        *.orig         \
-	        *.tlog         \
-	        test.log       \
-	        messages       \
-	        $(RM_ON_RUN)   \
-	        $(RM_ON_START) \
-	        valgrind.*     \
-	        .*.swp         \
-	        .*.swo         \
-	        .gdbinit       \
-	        $(TMPDIR)      \
-	        del
+	$(RM) -rf $(CLEAN_FILES)
 
 test1.out: .gdbinit test1.in
 	@echo "[OLDTEST-PREP] Running test1"
@@ -208,6 +164,7 @@ test1.out: .gdbinit test1.in
 	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
 	@rm -rf X* test.ok viminfo
 
+# Explicit dependencies.
 test49.out: test49.vim
 
 nolog:
@@ -218,16 +175,17 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
 	                 cat messages && cat test.log;                      \
 	             fi"
 
-newtestssilent: $(NEW_TESTS)
+newtestssilent: $(NEW_TESTS_RES)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
+	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) -u NONE -S runtest.vim $*.vim

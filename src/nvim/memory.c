@@ -9,42 +9,26 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/context.h"
 #include "nvim/eval.h"
+#include "nvim/highlight.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/ui.h"
-
-#ifdef HAVE_JEMALLOC
-// Force je_ prefix on jemalloc functions.
-# define JEMALLOC_NO_DEMANGLE
-# include <jemalloc/jemalloc.h>
-#endif
+#include "nvim/sign.h"
+#include "nvim/api/vim.h"
 
 #ifdef UNIT_TESTING
 # define malloc(size) mem_malloc(size)
 # define calloc(count, size) mem_calloc(count, size)
 # define realloc(ptr, size) mem_realloc(ptr, size)
 # define free(ptr) mem_free(ptr)
-# ifdef HAVE_JEMALLOC
-MemMalloc mem_malloc = &je_malloc;
-MemFree mem_free = &je_free;
-MemCalloc mem_calloc = &je_calloc;
-MemRealloc mem_realloc = &je_realloc;
-# else
 MemMalloc mem_malloc = &malloc;
 MemFree mem_free = &free;
 MemCalloc mem_calloc = &calloc;
 MemRealloc mem_realloc = &realloc;
-# endif
-#else
-# ifdef HAVE_JEMALLOC
-#  define malloc(size) je_malloc(size)
-#  define calloc(count, size) je_calloc(count, size)
-#  define realloc(ptr, size) je_realloc(ptr, size)
-#  define free(ptr) je_free(ptr)
-# endif
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -66,7 +50,7 @@ void try_to_free_memory(void)
   trying_to_free = true;
 
   // free any scrollback text
-  clear_sb_text();
+  clear_sb_text(true);
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
 
@@ -127,7 +111,9 @@ void *xmalloc(size_t size)
   return ret;
 }
 
-/// free wrapper that returns delegates to the backing memory manager
+/// free() wrapper that delegates to the backing memory manager
+///
+/// @note Use XFREE_CLEAR() instead, if possible.
 void xfree(void *ptr)
 {
   free(ptr);
@@ -590,8 +576,13 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (!ONE_WINDOW)
+
+  if (!ONE_WINDOW) {
+    // to keep things simple, don't perform this
+    // ritual inside a float
+    curwin = firstwin;
     do_cmdline_cmd("only!");
+  }
 
   /* Free all spell info. */
   spell_free_all();
@@ -618,7 +609,6 @@ void free_all_mem(void)
 
   /* Obviously named calls. */
   free_all_autocmds();
-  free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
@@ -633,7 +623,7 @@ void free_all_mem(void)
   free_signs();
   set_expr_line(NULL);
   diff_clear(curtab);
-  clear_sb_text();            /* free any scrollback text */
+  clear_sb_text(true);            // free any scrollback text
 
   /* Free some global vars. */
   xfree(last_cmdline);
@@ -656,7 +646,10 @@ void free_all_mem(void)
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
 
-  free_cmdline_buf();
+  // Free all option values.  Must come after closing windows.
+  free_all_options();
+
+  free_arshape_buf();
 
   /* Clear registers. */
   clear_registers();
@@ -678,6 +671,8 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+  api_vim_free_all_mem();
+  ctx_free_all();
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that
   // were freed already.
@@ -693,11 +688,13 @@ void free_all_mem(void)
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
 
-  /* screenlines (can't display anything now!) */
-  free_screenlines();
+  // free screenlines (can't display anything now!)
+  screen_free_all_mem();
 
-  clear_hl_tables();
+  clear_hl_tables(false);
   list_free_log();
+
+  check_quickfix_busy();
 }
 
 #endif

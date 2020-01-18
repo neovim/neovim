@@ -73,6 +73,97 @@ function Test_cmdmods()
   unlet g:mods
 endfunction
 
+func SaveCmdArgs(...)
+  let g:args = a:000
+endfunc
+
+func Test_f_args()
+  command -nargs=* TestFArgs call SaveCmdArgs(<f-args>)
+
+  TestFArgs
+  call assert_equal([], g:args)
+
+  TestFArgs one two three
+  call assert_equal(['one', 'two', 'three'], g:args)
+
+  TestFArgs one\\two three
+  call assert_equal(['one\two', 'three'], g:args)
+
+  TestFArgs one\ two three
+  call assert_equal(['one two', 'three'], g:args)
+
+  TestFArgs one\"two three
+  call assert_equal(['one\"two', 'three'], g:args)
+
+  delcommand TestFArgs
+endfunc
+
+func Test_q_args()
+  command -nargs=* TestQArgs call SaveCmdArgs(<q-args>)
+
+  TestQArgs
+  call assert_equal([''], g:args)
+
+  TestQArgs one two three
+  call assert_equal(['one two three'], g:args)
+
+  TestQArgs one\\two three
+  call assert_equal(['one\\two three'], g:args)
+
+  TestQArgs one\ two three
+  call assert_equal(['one\ two three'], g:args)
+
+  TestQArgs one\"two three
+  call assert_equal(['one\"two three'], g:args)
+
+  delcommand TestQArgs
+endfunc
+
+func Test_reg_arg()
+  command -nargs=* -reg TestRegArg call SaveCmdArgs("<reg>", "<register>")
+
+  TestRegArg
+  call assert_equal(['', ''], g:args)
+
+  TestRegArg x
+  call assert_equal(['x', 'x'], g:args)
+
+  delcommand TestRegArg
+endfunc
+
+func Test_no_arg()
+  command -nargs=* TestNoArg call SaveCmdArgs("<args>", "<>", "<x>", "<lt>")
+
+  TestNoArg
+  call assert_equal(['', '<>', '<x>', '<'], g:args)
+
+  TestNoArg one
+  call assert_equal(['one', '<>', '<x>', '<'], g:args)
+
+  delcommand TestNoArg
+endfunc
+
+func Test_range_arg()
+  command -range TestRangeArg call SaveCmdArgs(<range>, <line1>, <line2>)
+  new
+  call setline(1, range(100))
+  let lnum = line('.')
+
+  TestRangeArg
+  call assert_equal([0, lnum, lnum], g:args)
+
+  99TestRangeArg
+  call assert_equal([1, 99, 99], g:args)
+
+  88,99TestRangeArg
+  call assert_equal([2, 88, 99], g:args)
+
+  call assert_fails('102TestRangeArg', 'E16:')
+
+  bwipe!
+  delcommand TestRangeArg
+endfunc
+
 func Test_Ambiguous()
   command Doit let g:didit = 'yes'
   command Dothat let g:didthat = 'also'
@@ -88,6 +179,9 @@ func Test_Ambiguous()
   Do
   call assert_equal('also', g:didthat)
   delcommand Dothat
+
+  " Nvim removed the ":Ni!" easter egg in 87e107d92.
+  call assert_fails("\x4ei\041", 'E492: Not an editor command: Ni!')
 endfunc
 
 func Test_CmdUndefined()
@@ -107,10 +201,10 @@ func Test_CmdErrors()
   call assert_fails('com! docmd :', 'E183:')
   call assert_fails('com! \<Tab> :', 'E182:')
   call assert_fails('com! _ :', 'E182:')
-  call assert_fails('com! X :', 'E841:')
   call assert_fails('com! - DoCmd :', 'E175:')
   call assert_fails('com! -xxx DoCmd :', 'E181:')
   call assert_fails('com! -addr DoCmd :', 'E179:')
+  call assert_fails('com! -addr=asdf DoCmd :', 'E180:')
   call assert_fails('com! -complete DoCmd :', 'E179:')
   call assert_fails('com! -complete=xxx DoCmd :', 'E180:')
   call assert_fails('com! -complete=custom DoCmd :', 'E467:')
@@ -205,4 +299,16 @@ func Test_CmdCompletion()
 
   com! -complete=customlist,CustomComp DoCmd :
   call assert_fails("call feedkeys(':DoCmd \<C-D>', 'tx')", 'E117:')
+endfunc
+
+func CallExecute(A, L, P)
+  " Drop first '\n'
+  return execute('echo "hi"')[1:]
+endfunc
+
+func Test_use_execute_in_completion()
+  command! -nargs=* -complete=custom,CallExecute DoExec :
+  call feedkeys(":DoExec \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoExec hi', @:)
+  delcommand DoExec
 endfunc

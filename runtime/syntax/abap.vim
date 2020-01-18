@@ -1,11 +1,10 @@
 " Vim ABAP syntax file
 "    Language: SAP - ABAP/R4
-"    Revision: 2.1
 "  Maintainer: Marius Piedallu van Wyk <lailoken@gmail.com>
-" Last Change: 2013 Jun 13
+" Last Change: 2018 Dec 12
 "     Comment: Thanks to EPI-USE Labs for all your assistance. :)
 
-" quit when a syntax file was already loaded
+" Quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
@@ -55,6 +54,7 @@ syn match   abapComplexStatement "\<RESPECTING\W\+BLANKS\>"
 syn match   abapComplexStatement "\<SEPARATED\W\+BY\>"
 syn match   abapComplexStatement "\<USING\(\W\+EDIT\W\+MASK\)\?\>"
 syn match   abapComplexStatement "\<WHERE\(\W\+LINE\)\?\>"
+syn match   abapComplexStatement "\<GET\W\+\(TIME\(\W\+STAMP\)\?\(\W\+FIELD\)\?\|PF-STATUS\|BADI\|BIT\|CONNECTION\|CURSOR\|REFERENCE\W\+OF\)\>"
 syn match   abapComplexStatement "\<RADIOBUTTON\W\+GROUP\>"
 syn match   abapComplexStatement "\<REF\W\+TO\>"
 syn match   abapComplexStatement "\<\(PUBLIC\|PRIVATE\|PROTECTED\)\(\W\+SECTION\)\?\>"
@@ -109,7 +109,7 @@ syn keyword abapStatement CALL CASE CATCH CHECK CLASS CLEAR CLOSE CNT COLLECT CO
 syn keyword abapStatement DATA DEFINE DEFINITION DEFERRED DELETE DESCRIBE DETAIL DIVIDE DO
 syn keyword abapStatement ELSE ELSEIF ENDAT ENDCASE ENDCLASS ENDDO ENDEXEC ENDFORM ENDFUNCTION ENDIF ENDIFEND ENDINTERFACE ENDLOOP ENDMETHOD ENDMODULE ENDON ENDPROVIDE ENDSELECT ENDTRY ENDWHILE EVENT EVENTS EXEC EXIT EXPORT EXPORTING EXTRACT
 syn keyword abapStatement FETCH FIELDS FORM FORMAT FREE FROM FUNCTION
-syn keyword abapStatement GENERATE GET
+syn keyword abapStatement GENERATE
 syn keyword abapStatement HIDE
 syn keyword abapStatement IF IMPORT IMPORTING INDEX INFOTYPES INITIALIZATION INTERFACE INTERFACES INPUT INSERT IMPLEMENTATION 
 syn keyword abapStatement LEAVE LIKE LINE LOAD LOCAL LOOP
@@ -147,7 +147,7 @@ syn keyword abapSpecial  TRUE FALSE NULL SPACE
 syn region abapInclude   start="include" end="." contains=abapComment
 
 " Types
-syn keyword abapTypes    c n i p f d t x string xstring decfloat16 decfloat34
+syn keyword abapTypes    c n i int8 p f d t x string xstring decfloat16 decfloat34
 
 " Atritmitic operators
 syn keyword abapOperator abs sign ceil floor trunc frac acos asin atan cos sin tan
@@ -194,4 +194,3 @@ hi def link abapHex            Number
 let b:current_syntax = "abap"
 
 " vim: ts=8 sw=2
-

@@ -76,15 +76,10 @@ matches the EXE (same date).
 If you built the executable yourself with the Microsoft Visual C++ compiler,
 then the PDB was built with the EXE.
 
-Alternatively, if you have the source files, you can import Make_ivc.mak into
-Visual Studio as a workspace.  Then select a debug configuration, build and
-you can do all kinds of debugging (set breakpoints, watch variables, etc.).
-
 If you have Visual Studio, use that instead of the VC Toolkit and WinDbg.
 
-For other compilers, you should always use the corresponding debugger: TD for
-a Vim executable compiled with the Borland compiler; gdb (see above
-|debug-gcc|) for the Cygwin and MinGW compilers.
+For other compilers, you should always use the corresponding debugger: gdb
+(see above |debug-gcc|) for the Cygwin and MinGW compilers.
 
 
 								*debug-vs2005*
@@ -112,7 +107,7 @@ line numbers.  Double-click one of the lines and the Find Source dialog will
 appear.  Navigate to the directory where the Vim source is (if you have it.)
 
 If you don't know how to debug this any further, follow the instructions
-at ":help bug-reports".  Paste the call stack into the bug report.
+at ":help bug-report".  Paste the call stack into the bug report.
 
 If you have a non-free version of Visual Studio, you can save a minidump via
 the Debug menu and send it with the bug report.  A minidump is a small file
@@ -162,12 +157,8 @@ In WinDbg: choose Open Crash Dump on the File menu. Follow the instructions in
 							*get-ms-debuggers*
 3.5 Obtaining Microsoft Debugging Tools ~
 
-The Debugging Tools for Windows (including WinDbg) can be downloaded from
-    http://www.microsoft.com/whdc/devtools/debugging/default.mspx
-This includes the WinDbg debugger.
-
-Visual C++ 2005 Express Edition can be downloaded for free from:
-    http://msdn.microsoft.com/vstudio/express/visualC/default.aspx
+Visual Studio 2017 Community Edition can be downloaded for free from:
+    https://visualstudio.microsoft.com/downloads/
 
 =========================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

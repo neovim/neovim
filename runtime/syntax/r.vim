@@ -5,7 +5,7 @@
 " 		      Tom Payne <tom@tompayne.org>
 " Contributor:        Johannes Ranke <jranke@uni-bremen.de>
 " Homepage:           https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	      Sat Apr 08, 2017  07:01PM
+" Last Change:	      Wed Aug 01, 2018  10:10PM
 " Filenames:	      *.R *.r *.Rhistory *.Rt
 "
 " NOTE: The highlighting of R functions might be defined in
@@ -43,15 +43,17 @@ endif
 if exists("g:r_syntax_folding") && g:r_syntax_folding
   setlocal foldmethod=syntax
 endif
-if !exists("g:r_syntax_hl_roxygen")
-  let g:r_syntax_hl_roxygen = 1
-endif
+
+let g:r_syntax_hl_roxygen = get(g:, 'r_syntax_hl_roxygen', 1)
 
 syn case match
 
 " Comment
 syn match rCommentTodo contained "\(BUG\|FIXME\|NOTE\|TODO\):"
-syn match rComment contains=@Spell,rCommentTodo,rOBlock "#.*"
+syn match rTodoParen contained "\(BUG\|FIXME\|NOTE\|TODO\)\s*(.\{-})\s*:" contains=rTodoKeyw,rTodoInfo transparent
+syn keyword rTodoKeyw BUG FIXME NOTE TODO contained
+syn match rTodoInfo "(\zs.\{-}\ze)" contained
+syn match rComment contains=@Spell,rCommentTodo,rTodoParen,rOBlock "#.*"
 
 " Roxygen
 if g:r_syntax_hl_roxygen
@@ -65,7 +67,7 @@ if g:r_syntax_hl_roxygen
 
   " First we match all roxygen blocks as containing only a title. In case an
   " empty roxygen line ending the title or a tag is found, this will be
-  " overriden later by the definitions of rOBlock.
+  " overridden later by the definitions of rOBlock.
   syn match rOTitleBlock "\%^\(\s*#\{1,2}' .*\n\)\{1,}" contains=rOCommentKey,rOTitleTag
   syn match rOTitleBlock "^\s*\n\(\s*#\{1,2}' .*\n\)\{1,}" contains=rOCommentKey,rOTitleTag
 
@@ -91,7 +93,7 @@ if g:r_syntax_hl_roxygen
   syn match rOTitle "^\s*\n\(\s*#\{1,2}' .*\n\)\{-1,}\s*#\{1,2}'\s*$" contained contains=rOCommentKey,rOTitleTag
   syn match rOTitleTag contained "@title"
 
-  syn match rOCommentKey "#\{1,2}'" contained
+  syn match rOCommentKey "^\s*#\{1,2}'" contained
   syn region rOExamples start="^#\{1,2}' @examples.*"rs=e+1,hs=e+1 end="^\(#\{1,2}' @.*\)\@=" end="^\(#\{1,2}'\)\@!" contained contains=rOTag fold
 
   " rOTag list generated from the lists in
@@ -256,6 +258,7 @@ if exists("g:r_syntax_folding")
   syn region rRegion matchgroup=Delimiter start=/(/ matchgroup=Delimiter end=/)/ transparent contains=ALLBUT,rError,rBraceError,rCurlyError fold
   syn region rRegion matchgroup=Delimiter start=/{/ matchgroup=Delimiter end=/}/ transparent contains=ALLBUT,rError,rBraceError,rParenError fold
   syn region rRegion matchgroup=Delimiter start=/\[/ matchgroup=Delimiter end=/]/ transparent contains=ALLBUT,rError,rCurlyError,rParenError fold
+  syn region rSection matchgroup=Title start=/^#.*[-=#]\{4,}/ end=/^#.*[-=#]\{4,}/ms=s-2,me=s-1 transparent contains=ALL fold
 else
   syn region rRegion matchgroup=Delimiter start=/(/ matchgroup=Delimiter end=/)/ transparent contains=ALLBUT,rError,rBraceError,rCurlyError
   syn region rRegion matchgroup=Delimiter start=/{/ matchgroup=Delimiter end=/}/ transparent contains=ALLBUT,rError,rBraceError,rParenError
@@ -282,13 +285,8 @@ endif
 if g:r_syntax_fun_pattern == 1
   syn match rFunction '[0-9a-zA-Z_\.]\+\s*\ze('
 else
-  if !exists("g:R_hi_fun")
-    let g:R_hi_fun = 1
-  endif
-  if g:R_hi_fun
-    " Nvim-R:
-    runtime R/functions.vim
-  endif
+  " Nvim-R:
+  runtime R/functions.vim
 endif
 
 syn match rDollar display contained "\$"
@@ -311,7 +309,7 @@ syn keyword rType array category character complex double function integer list 
 
 " Name of object with spaces
 if &filetype != "rmd" && &filetype != "rrst"
-  syn region rNameWSpace start="`" end="`"
+  syn region rNameWSpace start="`" end="`" contains=rSpaceFun
 endif
 
 if &filetype == "rhelp"
@@ -331,7 +329,10 @@ hi def link rAssign      Statement
 hi def link rBoolean     Boolean
 hi def link rBraceError  Error
 hi def link rComment     Comment
+hi def link rTodoParen   Comment
+hi def link rTodoInfo    SpecialComment
 hi def link rCommentTodo Todo
+hi def link rTodoKeyw    Todo
 hi def link rComplex     Number
 hi def link rConditional Conditional
 hi def link rConstant    Constant
@@ -341,6 +342,7 @@ hi def link rDollar      SpecialChar
 hi def link rError       Error
 hi def link rFloat       Float
 hi def link rFunction    Function
+hi def link rSpaceFun    Function
 hi def link rHelpIdent   Identifier
 hi def link rhPreProc    PreProc
 hi def link rhSection    PreCondit

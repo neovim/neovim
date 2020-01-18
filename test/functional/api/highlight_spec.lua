@@ -4,8 +4,11 @@ local Screen = require('test.functional.ui.screen')
 local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
 local meths = helpers.meths
+local funcs = helpers.funcs
+local pcall_err = helpers.pcall_err
+local ok = helpers.ok
 
-describe('highlight api',function()
+describe('API: highlight',function()
   local expected_rgb = {
     background = Screen.colors.Yellow,
     foreground = Screen.colors.Red,
@@ -25,6 +28,7 @@ describe('highlight api',function()
     reverse = true,
     undercurl = true,
     underline = true,
+    strikethrough = true,
   }
 
   before_each(function()
@@ -46,7 +50,7 @@ describe('highlight api',function()
     eq('Invalid highlight id: 30000', string.match(emsg, 'Invalid.*'))
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,undercurl,italic,reverse')
+    command('hi NewHighlight gui=underline,bold,undercurl,italic,reverse,strikethrough')
     eq(expected_rgb2, nvim("get_hl_by_id", hl_id, true))
 
     -- Test nil argument.
@@ -66,6 +70,22 @@ describe('highlight api',function()
     eq(false, err)
     eq('Invalid highlight id: -1',
        string.match(emsg, 'Invalid.*'))
+
+    -- Test highlight group without ctermbg value.
+    command('hi Normal ctermfg=red ctermbg=yellow')
+    command('hi NewConstant ctermfg=green guifg=white guibg=blue')
+    hl_id = eval("hlID('NewConstant')")
+    eq({foreground = 10,}, meths.get_hl_by_id(hl_id, false))
+
+    -- Test highlight group without ctermfg value.
+    command('hi clear NewConstant')
+    command('hi NewConstant ctermbg=Magenta guifg=white guibg=blue')
+    eq({background = 13,}, meths.get_hl_by_id(hl_id, false))
+
+    -- Test highlight group with ctermfg and ctermbg values.
+    command('hi clear NewConstant')
+    command('hi NewConstant ctermfg=green ctermbg=Magenta guifg=white guibg=blue')
+    eq({foreground = 10, background = 13,}, meths.get_hl_by_id(hl_id, false))
   end)
 
   it("nvim_get_hl_by_name", function()
@@ -108,5 +128,21 @@ describe('highlight api',function()
     eq({ underline = true, standout = true, },
        meths.get_hl_by_name('cursorline', 0));
 
+  end)
+
+  it('nvim_get_hl_id_by_name', function()
+    -- precondition: use a hl group that does not yet exist
+    eq('Invalid highlight name: Shrubbery', pcall_err(meths.get_hl_by_name, "Shrubbery", true))
+    eq(0, funcs.hlID("Shrubbery"))
+
+    local hl_id = meths.get_hl_id_by_name("Shrubbery")
+    ok(hl_id > 0)
+    eq(hl_id, funcs.hlID("Shrubbery"))
+
+    command('hi Shrubbery guifg=#888888 guibg=#888888')
+    eq({foreground=tonumber("0x888888"), background=tonumber("0x888888")},
+       meths.get_hl_by_id(hl_id, true))
+    eq({foreground=tonumber("0x888888"), background=tonumber("0x888888")},
+       meths.get_hl_by_name("Shrubbery", true))
   end)
 end)

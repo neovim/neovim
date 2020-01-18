@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:	JSON
-" Maintainer:	Eli Parra <eli@elzr.com>
-" Last Change:	2014 Aug 23
+" Maintainer:	vacancy
+" Previous Maintainer:	Eli Parra <eli@elzr.com>
+" Last Change:	2019 Jul 08
 " Version:      0.12
 
 if !exists("main_syntax")
@@ -16,8 +17,19 @@ syntax match   jsonNoise           /\%(:\|,\)/
 
 " NOTE that for the concealing to work your conceallevel should be set to 2
 
+" Syntax: JSON Keywords
+" Separated into a match and region because a region by itself is always greedy
+syn match  jsonKeywordMatch /"\([^"]\|\\\"\)\+"[[:blank:]\r\n]*\:/ contains=jsonKeyword
+if has('conceal')
+   syn region  jsonKeyword matchgroup=jsonQuote start=/"/  end=/"\ze[[:blank:]\r\n]*\:/ concealends contained
+else
+   syn region  jsonKeyword matchgroup=jsonQuote start=/"/  end=/"\ze[[:blank:]\r\n]*\:/ contained
+endif
+
 " Syntax: Strings
 " Separated into a match and region because a region by itself is always greedy
+" Needs to come after keywords or else a json encoded string will break the
+" syntax
 syn match  jsonStringMatch /"\([^"]\|\\\"\)\+"\ze[[:blank:]\r\n]*[,}\]]/ contains=jsonString
 if has('conceal')
 	syn region  jsonString oneline matchgroup=jsonQuote start=/"/  skip=/\\\\\|\\"/  end=/"/ concealends contains=jsonEscape contained
@@ -28,14 +40,6 @@ endif
 " Syntax: JSON does not allow strings with single quotes, unlike JavaScript.
 syn region  jsonStringSQError oneline  start=+'+  skip=+\\\\\|\\"+  end=+'+
 
-" Syntax: JSON Keywords
-" Separated into a match and region because a region by itself is always greedy
-syn match  jsonKeywordMatch /"\([^"]\|\\\"\)\+"[[:blank:]\r\n]*\:/ contains=jsonKeyword
-if has('conceal')
-   syn region  jsonKeyword matchgroup=jsonQuote start=/"/  end=/"\ze[[:blank:]\r\n]*\:/ concealends contained
-else
-   syn region  jsonKeyword matchgroup=jsonQuote start=/"/  end=/"\ze[[:blank:]\r\n]*\:/ contained
-endif
 
 " Syntax: Escape sequences
 syn match   jsonEscape    "\\["\\/bfnrt]" contained

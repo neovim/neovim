@@ -8,7 +8,7 @@ local exit_altscreen = thelpers.exit_altscreen
 
 if helpers.pending_win32(pending) then return end
 
-describe('terminal altscreen', function()
+describe(':terminal altscreen', function()
   local screen
 
   before_each(function()

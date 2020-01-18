@@ -74,7 +74,7 @@ describe('glob() and globpath()', function()
   teardown(function()
     if helpers.iswin() then
       os.execute('del /q/f Xxx{ Xxx$')
-      os.execute('rd /q sautest')
+      os.execute('rd /q /s sautest')
     else
       os.execute("rm -rf sautest Xxx{ Xxx$")
     end

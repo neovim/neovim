@@ -1,12 +1,12 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required (VERSION 2.8.7)
-project(NVIM_DEPS)
+cmake_minimum_required (VERSION 2.8.12)
+project(NVIM_DEPS C)
 
 # Needed for: check_c_compiler_flag()
 include(CheckCCompilerFlag)
 
 # Point CMake at any custom modules we may ship
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
 # In Windows/MSVC CMAKE_BUILD_TYPE changes the paths/linking of the build
 # recipes (libuv, msgpack), make sure it is set
@@ -30,12 +30,12 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ${USE_BUNDLED})
-option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
+option(USE_BUNDLED_UTF8PROC "Use the bundled utf8proc." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
@@ -45,8 +45,10 @@ option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
 else()
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
@@ -81,10 +83,34 @@ if(CMAKE_GENERATOR MATCHES "Makefiles")
   set(MAKE_PRG "$(MAKE)")
 endif()
 
+if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
+  find_program(MAKE_PRG NAMES mingw32-make)
+  if(NOT MAKE_PRG)
+    message(FATAL_ERROR "GNU Make for mingw32 is required to build the dependecies.")
+  else()
+    message(STATUS "Found GNU Make for mingw32: ${MAKE_PRG}")
+  endif()
+endif()
+
 if(CMAKE_C_COMPILER_ARG1)
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+endif()
+
+if(USE_BUNDLED_GPERF)
+  enable_language(CXX)
+endif()
+
+if(CMAKE_CXX_COMPILER)
+  set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+endif()
+
+if(CMAKE_OSX_SYSROOT)
+  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  if(DEPS_CXX_COMPILER)
+    set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  endif()
 endif()
 
 # Cross compiling: use these for dependencies built for the
@@ -96,59 +122,68 @@ if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   set(HOSTDEPS_BIN_DIR "${HOSTDEPS_INSTALL_DIR}/bin")
   set(HOSTDEPS_LIB_DIR "${HOSTDEPS_INSTALL_DIR}/lib")
   set(HOSTDEPS_C_COMPILER "${HOST_C_COMPILER}")
+  set(HOSTDEPS_CXX_COMPILER "${HOST_CXX_COMPILER}")
 else()
   set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
   set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
   set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
   set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
+  set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
 endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.12.0.tar.gz)
-set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca1250)
+if(WIN32)
+  # "nvim" branch of https://github.com/neovim/libuv
+  set(LIBUV_URL https://github.com/neovim/libuv/archive/d5ff3004d26b9bb863b76247399a9c72a0ff184c.tar.gz)
+  set(LIBUV_SHA256 0f5dfd92269713ed275273966ed73578fc68db669c509b01210cd58c1cf6361d)
+else()
+  # blueyed/nvim-fixes (for *BSD build fixes).
+  set(LIBUV_URL https://github.com/blueyed/libuv/archive/2af4cf2.tar.gz)
+  set(LIBUV_SHA256 SKIP)
+endif()
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-2.1.5/msgpack-2.1.5.tar.gz)
-set(MSGPACK_SHA256 6126375af9b204611b9d9f154929f4f747e4599e6ae8443b337915dcf2899d2b)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
+set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
 
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/7dbf0b05f1228c1c719866db5e5f3d58f87f74c8.tar.gz)
-set(LUAJIT_SHA256 cbae019b5e396164eb5f0d07777b55cc03931bb944f83c61a010c053c9f5fd5b)
+# https://github.com/LuaJIT/LuaJIT/tree/v2.1
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/f0e865dd4861520258299d0f2a56491bd9d602e1.tar.gz)
+set(LUAJIT_SHA256 ad5077bd861241bf5e50ae4bf543d291c5fcffab95ccc3218401131f503e45bd)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
 
-# NOTE: Version must match LUAROCKS_VERSION in third-party/cmake/BuildLuarocks.cmake
-set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v2.4.3.tar.gz)
-set(LUAROCKS_SHA256 ea1881d6954f2a98c34f93674571c8f0cbdbc28dedb3fa3cb56b6a91886d1a99)
+set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v3.2.1.tar.gz)
+set(LUAROCKS_SHA256 0cab9f79311083f33e4d8f5a76021604f1d3f7141ce9a2ef1d8b717d92058370)
 
-set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v2.0.0.tar.gz)
-set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116bc1c1)
+set(UNIBILIUM_URL https://github.com/neovim/unibilium/archive/92d929f.tar.gz)
+set(UNIBILIUM_SHA256 29815283c654277ef77a3adcc8840db79ddbb20a0f0b0c8f648bd8cd49a02e4b)
 
-set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
-set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
+set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.22.tar.gz)
+set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3014600)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
-set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afbd796)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/65dbda3ed214f036ee799d18b2e693a833a0e591.tar.gz)
+set(LIBVTERM_SHA256 95d3c7e86336fbd40dfd7a0aa0a795320bb71bc957ea995ea0e549c96d20db3a)
 
-set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.5.0/jemalloc-4.5.0.tar.bz2)
-set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f6780)
+set(LUV_VERSION 1.30.1-1)
+set(LUV_URL https://github.com/luvit/luv/archive/${LUV_VERSION}.tar.gz)
+set(LUV_SHA256 2b17921e2e18094df6221e3cd291c82d4569e50d8c081518d3e775dceae267cf)
 
-set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
-set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
+set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.7.tar.gz)
+set(LUA_COMPAT53_SHA256 bec3a23114a3d9b3218038309657f0f506ad10dfbc03bb54e91da7e5ffdba0a2)
 
-set(GPERF_URL https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz)
+set(GPERF_URL https://github.com/neovim/deps/raw/ff5b4b18a87397a8564016071ae64f64bcd8c635/opt/gperf-3.1.tar.gz)
 set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
 # 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.8/neovim-qt.zip)
-set(WINGUI_SHA256 260efc686423e2529360b6a45c8e241fbbf276c8de6b04d44f45ab5b6fe8df8f)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.15/neovim-qt.zip)
+set(WINGUI_SHA256 b519ecb80b60522d25043f2d076a55656f5fbe5adf7f7e2943e5d8b161043987)
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
-
 set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
 set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
@@ -158,12 +193,21 @@ set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee
 set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.8.1.tar.gz)
 set(GETTEXT_SHA256 ff942af0e438ced4a8b0ea4b0b6e0d6d657157c5e2364de57baa279c1c125c43)
 
+set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
+set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
+
+set(UTF8PROC_URL https://github.com/JuliaStrings/utf8proc/archive/v2.2.0.tar.gz)
+set(UTF8PROC_SHA256 3f8fd1dbdb057ee5ba584a539d5cd1b3952141c0338557cb0bdf8cb9cfed5dbf)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
 
 if(USE_BUNDLED_LIBTERMKEY)
   include(BuildLibtermkey)
+  if(USE_BUNDLED_UNIBILIUM)
+    add_dependencies(libtermkey unibilium)
+  endif()
 endif()
 
 if(USE_BUNDLED_LIBVTERM)
@@ -190,10 +234,6 @@ if(USE_BUNDLED_LUAROCKS)
   include(BuildLuarocks)
 endif()
 
-if(USE_BUNDLED_JEMALLOC)
-  include(BuildJeMalloc)
-endif()
-
 if(USE_BUNDLED_LUV)
   include(BuildLuv)
 endif()
@@ -206,14 +246,23 @@ if(USE_BUNDLED_GETTEXT)
   include(BuildGettext)
 endif()
 
-include(GetBinaryDeps)
+if(USE_BUNDLED_LIBICONV)
+  include(BuildLibiconv)
+endif()
+
+if(USE_BUNDLED_UTF8PROC)
+  include(BuildUtf8proc)
+endif()
 
 if(WIN32)
+  include(GetBinaryDeps)
+
   GetBinaryDep(TARGET wintools
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
   GetBinaryDep(TARGET wingui
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+      COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
 
   include(TargetArch)
   GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"

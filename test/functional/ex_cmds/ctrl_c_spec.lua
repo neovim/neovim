@@ -11,7 +11,7 @@ describe("CTRL-C (mapped)", function()
   it("interrupts :global", function()
     -- Crashes luajit.
     if helpers.skip_fragile(pending,
-      os.getenv("TRAVIS") or os.getenv("APPVEYOR")) then
+      helpers.isCI('travis') or helpers.isCI('appveyor')) then
       return
     end
 
@@ -43,7 +43,7 @@ describe("CTRL-C (mapped)", function()
       feed(":global/^/p<CR>")
       screen:sleep(ms)
       feed("<C-C>")
-      screen:expect([[Interrupt]], nil, nil, nil, true)
+      screen:expect{any="Interrupt"}
     end
 
     -- The test is time-sensitive. Try different sleep values.

@@ -37,9 +37,9 @@ for _, c in ipairs({'l', 'c'}) do
       -- Second line of each entry (i.e. `nr=-1, …`) was obtained from actual
       -- results. First line (i.e. `{lnum=…`) was obtained from legacy test.
       local list = {
-        {lnum=700, col=10, text='Line 700',
+        {lnum=700, col=10, text='Line 700', module='',
          nr=-1, bufnr=2, valid=1, pattern='', vcol=0, ['type']=''},
-        {lnum=800, col=15, text='Line 800',
+        {lnum=800, col=15, text='Line 800', module='',
          nr=-1, bufnr=3, valid=1, pattern='', vcol=0, ['type']=''},
       }
       eq(list, getlist())
@@ -58,7 +58,7 @@ for _, c in ipairs({'l', 'c'}) do
       ]]):format(file))
       command(('%s %s'):format(addfcmd, file))
       list[#list + 1] = {
-        lnum=900, col=30, text='Line 900',
+        lnum=900, col=30, text='Line 900', module='',
         nr=-1, bufnr=5, valid=1, pattern='', vcol=0, ['type']='',
       }
       eq(list, getlist())
@@ -71,9 +71,9 @@ for _, c in ipairs({'l', 'c'}) do
       command('enew!')
       command(('%s %s'):format(getfcmd, file))
       list = {
-        {lnum=222, col=77, text='Line 222',
+        {lnum=222, col=77, text='Line 222', module='',
          nr=-1, bufnr=2, valid=1, pattern='', vcol=0, ['type']=''},
-        {lnum=333, col=88, text='Line 333',
+        {lnum=333, col=88, text='Line 333', module='',
          nr=-1, bufnr=3, valid=1, pattern='', vcol=0, ['type']=''},
       }
       eq(list, getlist())

@@ -1,12 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
+local insert = helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local eval = helpers.eval
 
 
-describe('dictionary change notifications', function()
+describe('VimL dictionary notifications', function()
   local channel
 
   before_each(function()
@@ -338,4 +339,36 @@ describe('dictionary change notifications', function()
       eq({'notification', '2', {'foo', {old = 'baz', new = 'bar'}}}, next_msg())
     end)
   end)
+
+  it('for b:changedtick', function()
+    source([[
+      function! OnTickChanged(dict, key, value)
+        call rpcnotify(g:channel, 'SendChangeTick', a:key, a:value)
+      endfunction
+      call dictwatcheradd(b:, 'changedtick', 'OnTickChanged')
+    ]])
+
+    insert('t');
+    eq({'notification', 'SendChangeTick', {'changedtick', {old = 2, new = 3}}},
+       next_msg())
+
+    command([[call dictwatcherdel(b:, 'changedtick', 'OnTickChanged')]])
+    insert('t');
+    eq(2, eval('1+1')) -- Still alive?
+  end)
+
+  it('does not cause use-after-free when unletting from callback', function()
+    source([[
+      let g:called = 0
+      function W(...) abort
+        unlet g:d
+        let g:called = 1
+      endfunction
+      let g:d = {}
+      call dictwatcheradd(g:d, '*', function('W'))
+      let g:d.foo = 123
+    ]])
+    eq(1, eval('g:called'))
+  end)
+
 end)

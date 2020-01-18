@@ -3409,7 +3409,7 @@ msgstr "-q [ftxerrors]  edita el fitxer on hi ha el primer error"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5349,8 +5349,8 @@ msgstr "Atenció: la regió %s no està suportada"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Llegint el fitxer d'afixos %s ..."
+msgid "Reading affix file %s..."
+msgstr "Llegint el fitxer d'afixos %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5548,8 +5548,8 @@ msgstr "%d paraula/es ignorada/es amb caràcters no-ASCII a %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Llegint el fitxer de paraules %s ..."
+msgid "Reading word file %s..."
+msgstr "Llegint el fitxer de paraules %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5619,8 +5619,8 @@ msgstr "Nombre total de paraules: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Escrivint el fitxer de suggeriments %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Escrivint el fitxer de suggeriments %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5646,8 +5646,8 @@ msgstr "Atenció: s'ha especificat composició i NOBREAK alhora"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Escrivint el fitxer d'ortografia %s ..."
+msgid "Writing spell file %s..."
+msgstr "Escrivint el fitxer d'ortografia %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

@@ -17,7 +17,10 @@ describe('search cmdline', function()
     screen = Screen.new(20, 3)
     screen:attach()
     screen:set_default_attr_ids({
-      inc = {reverse = true}
+      inc = {reverse = true},
+      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      tilde = { bold = true, foreground = Screen.colors.Blue1 },
     })
   end)
 
@@ -92,6 +95,7 @@ describe('search cmdline', function()
           9 {inc:the}se           |
         /the^                |
       ]])
+      screen.bell = false
       feed('<C-G>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
@@ -100,11 +104,13 @@ describe('search cmdline', function()
           /the^                |
         ]])
       else
-        screen:expect([[
+        screen:expect{grid=[[
             8 them            |
             9 {inc:the}se           |
           /the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
         feed('<CR>')
         eq({0, 0, 0, 0}, funcs.getpos('"'))
       end
@@ -120,6 +126,7 @@ describe('search cmdline', function()
          10 foobar          |
         ?the^                |
       ]])
+      screen.bell = false
       if wrapscan == 'wrapscan' then
         feed('<C-G>')
         screen:expect([[
@@ -135,11 +142,13 @@ describe('search cmdline', function()
         ]])
       else
         feed('<C-G>')
-        screen:expect([[
+        screen:expect{grid=[[
             9 {inc:the}se           |
            10 foobar          |
           ?the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
         feed('<CR>')
         screen:expect([[
             9 ^these           |
@@ -173,6 +182,7 @@ describe('search cmdline', function()
           3 the             |
         ?the^                |
       ]])
+      screen.bell = false
       feed('<C-T>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
@@ -181,11 +191,13 @@ describe('search cmdline', function()
           ?the^                |
         ]])
       else
-        screen:expect([[
+        screen:expect{grid=[[
             2 {inc:the}se           |
             3 the             |
           ?the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
       end
     end
 
@@ -395,15 +407,7 @@ describe('search cmdline', function()
   end)
 
   it('keeps the view after deleting a char from the search', function()
-    screen:detach()
-    screen = Screen.new(20, 6)
-    screen:attach()
-    screen:set_default_attr_ids({
-      inc = {reverse = true}
-    })
-    screen:set_default_attr_ignore({
-      {bold=true, reverse=true}, {bold=true, foreground=Screen.colors.Blue1}
-    })
+    screen:try_resize(20, 6)
     tenlines()
 
     feed('/foo')
@@ -439,14 +443,7 @@ describe('search cmdline', function()
   end)
 
   it('restores original view after failed search', function()
-    screen:detach()
-    screen = Screen.new(40, 3)
-    screen:attach()
-    screen:set_default_attr_ids({
-      inc = {reverse = true},
-      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
+    screen:try_resize(40, 3)
     tenlines()
     feed('0')
     feed('/foo')
@@ -475,15 +472,7 @@ describe('search cmdline', function()
 
   it("CTRL-G with 'incsearch' and ? goes in the right direction", function()
     -- oldtest: Test_search_cmdline4().
-    screen:detach()
-    screen = Screen.new(40, 4)
-    screen:attach()
-    screen:set_default_attr_ids({
-      inc = {reverse = true},
-      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      tilde = { bold = true, foreground = Screen.colors.Blue1 },
-    })
+    screen:try_resize(40, 4)
     command('enew!')
     funcs.setline(1, {'  1 the first', '  2 the second', '  3 the third'})
     command('set laststatus=0 shortmess+=s')

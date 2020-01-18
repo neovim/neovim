@@ -10,22 +10,27 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
+#include "nvim/mark_extended.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/getchar.h"
+#include "nvim/fileio.h"
 #include "nvim/ui.h"
 
 /// Helper structure for vim_to_object
@@ -122,6 +127,7 @@ bool try_end(Error *err)
 
   // Set by emsg(), affects aborting().  See also enter_cleanup().
   did_emsg = false;
+  force_abort = false;
 
   if (got_int) {
     if (current_exception) {
@@ -161,7 +167,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key '%s' not found", key.data);
+    api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     return (Object)OBJECT_INIT;
   }
 
@@ -183,43 +189,35 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
                     bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
-
-  if (dict->dv_lock) {
-    api_set_error(err, kErrorTypeException, "Dictionary is locked");
-    return rv;
-  }
-
-  if (key.size == 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Empty variable names aren't allowed");
-    return rv;
-  }
-
-  if (key.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "Key length is too high");
-    return rv;
-  }
-
   dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di != NULL) {
     if (di->di_flags & DI_FLAGS_RO) {
       api_set_error(err, kErrorTypeException, "Key is read-only: %s", key.data);
       return rv;
-    } else if (di->di_flags & DI_FLAGS_FIX) {
-      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
-      return rv;
     } else if (di->di_flags & DI_FLAGS_LOCK) {
       api_set_error(err, kErrorTypeException, "Key is locked: %s", key.data);
       return rv;
+    } else if (del && (di->di_flags & DI_FLAGS_FIX)) {
+      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
+      return rv;
     }
+  } else if (dict->dv_lock) {
+    api_set_error(err, kErrorTypeException, "Dictionary is locked");
+    return rv;
+  } else if (key.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "Key name is empty");
+    return rv;
+  } else if (key.size > INT_MAX) {
+    api_set_error(err, kErrorTypeValidation, "Key name is too long");
+    return rv;
   }
 
   if (del) {
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key does not exist: %s",
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
                     key.data);
     } else {
       // Return the old value
@@ -283,9 +281,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
                                       type, from);
 
   if (!flags) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
                   name.data);
     return rv;
   }
@@ -302,15 +298,14 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.data = stringval;
       rv.data.string.size = strlen(stringval);
     } else {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to get value for option \"%s\"",
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get value for option '%s'",
                     name.data);
     }
   } else {
     api_set_error(err,
                   kErrorTypeException,
-                  "Unknown type for option \"%s\"",
+                  "Unknown type for option '%s'",
                   name.data);
   }
 
@@ -335,24 +330,20 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
                   name.data);
     return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to unset option \"%s\"",
+      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'",
                     name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
       api_set_error(err,
                     kErrorTypeException,
-                    "Cannot unset option \"%s\" "
+                    "Cannot unset option '%s' "
                     "because it doesn't have a global value",
                     name.data);
       return;
@@ -369,7 +360,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     if (value.type != kObjectTypeBoolean) {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "Option \"%s\" requires a boolean value",
+                    "Option '%s' requires a Boolean value",
                     name.data);
       return;
     }
@@ -377,17 +368,15 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires an integer value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires an integer value",
                     name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Value for option \"%s\" is outside range",
+      api_set_error(err, kErrorTypeValidation,
+                    "Value for option '%s' is out of range",
                     name.data);
       return;
     }
@@ -395,9 +384,8 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     numval = (int)value.data.integer;
   } else {
     if (value.type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires a string value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires a string value",
                     name.data);
       return;
     }
@@ -405,15 +393,19 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     stringval = (char *)value.data.string.data;
   }
 
-  const scid_T save_current_SID = current_SID;
-  current_SID = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid =
+    channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  current_sctx.sc_lnum = 0;
   current_channel_id = channel_id;
 
-  const int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
+                        ? 0 : (type == SREQ_GLOBAL)
+                              ? OPT_GLOBAL : OPT_LOCAL;
   set_option_value_for(name.data, numval, stringval,
                        opt_flags, type, to, err);
 
-  current_SID = save_current_SID;
+  current_sctx = save_current_sctx;
 }
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
@@ -639,7 +631,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
+    api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
   }
 
   return rv;
@@ -654,7 +646,7 @@ win_T *find_window_by_handle(Window window, Error *err)
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid window id");
+    api_set_error(err, kErrorTypeValidation, "Invalid window id: %d", window);
   }
 
   return rv;
@@ -669,7 +661,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id");
+    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id: %d", tabpage);
   }
 
   return rv;
@@ -728,6 +720,12 @@ String cbuf_to_string(const char *buf, size_t size)
   };
 }
 
+String cstrn_to_string(const char *str, size_t maxsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return cbuf_to_string(str, strnlen(str, maxsize));
+}
+
 /// Creates a String using the given C string. Unlike
 /// cstr_to_string this function DOES NOT copy the C string.
 ///
@@ -740,6 +738,323 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
     return (String)STRING_INIT;
   }
   return (String){ .data = str, .size = strlen(str) };
+}
+
+/// Return the owned memory of a ga as a String
+///
+/// Reinitializes the ga to a valid empty state.
+String ga_take_string(garray_T *ga)
+{
+  String str = { .data = (char *)ga->ga_data, .size = (size_t)ga->ga_len };
+  ga->ga_data = NULL;
+  ga->ga_len = 0;
+  ga->ga_maxlen = 0;
+  return str;
+}
+
+/// Creates "readfile()-style" ArrayOf(String) from a binary string.
+///
+/// - Lines break at \n (NL/LF/line-feed).
+/// - NUL bytes are replaced with NL.
+/// - If the last byte is a linebreak an extra empty list item is added.
+///
+/// @param input  Binary string
+/// @param crlf  Also break lines at CR and CRLF.
+/// @return [allocated] String array
+Array string_to_array(const String input, bool crlf)
+{
+  Array ret = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < input.size; i++) {
+    const char *start = input.data + i;
+    const char *end = start;
+    size_t line_len = 0;
+    for (; line_len < input.size - i; line_len++) {
+      end = start + line_len;
+      if (*end == NL || (crlf && *end == CAR)) {
+        break;
+      }
+    }
+    i += line_len;
+    if (crlf && *end == CAR && i + 1 < input.size && *(end + 1) == NL) {
+      i += 1;  // Advance past CRLF.
+    }
+    String s = {
+      .size = line_len,
+      .data = xmemdupz(start, line_len),
+    };
+    memchrsub(s.data, NUL, NL, line_len);
+    ADD(ret, STRING_OBJ(s));
+    // If line ends at end-of-buffer, add empty final item.
+    // This is "readfile()-style", see also ":help channel-lines".
+    if (i + 1 == input.size && (*end == NL || (crlf && *end == CAR))) {
+      ADD(ret, STRING_OBJ(STRING_INIT));
+    }
+  }
+
+  return ret;
+}
+
+/// Set, tweak, or remove a mapping in a mode. Acts as the implementation for
+/// functions like @ref nvim_buf_set_keymap.
+///
+/// Arguments are handled like @ref nvim_set_keymap unless noted.
+/// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
+///                   buffer, or -1 to signify global behavior ("all buffers")
+/// @param  is_unmap  When true, removes the mapping that matches {lhs}.
+void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
+                   String rhs, Dictionary opts, Error *err)
+{
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
+
+  char_u *lhs_buf = NULL;
+  char_u *rhs_buf = NULL;
+
+  bool global = (buffer == -1);
+  if (global) {
+    buffer = 0;
+  }
+  buf_T *target_buf = find_buffer_by_handle(buffer, err);
+
+  MapArguments parsed_args;
+  memset(&parsed_args, 0, sizeof(parsed_args));
+  if (parse_keymap_opts(opts, &parsed_args, err)) {
+    goto fail_and_free;
+  }
+  parsed_args.buffer = !global;
+
+  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
+                     (char_u *)rhs.data, rhs.size,
+                     CPO_TO_CPO_FLAGS, &parsed_args);
+
+  if (parsed_args.lhs_len > MAXMAPLEN) {
+    err_msg = "LHS exceeds maximum map length: %s";
+    err_arg = lhs.data;
+    err_type = kErrorTypeValidation;
+    goto fail_with_message;
+  }
+
+  if (mode.size > 1) {
+    err_msg = "Shortname is too long: %s";
+    err_arg = mode.data;
+    err_type = kErrorTypeValidation;
+    goto fail_with_message;
+  }
+  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
+  char_u *p = (char_u *)((mode.size) ? mode.data : "m");
+  if (STRNCMP(p, "!", 2) == 0) {
+    mode_val = get_map_mode(&p, true);  // mapmode-ic
+  } else {
+    mode_val = get_map_mode(&p, false);
+    if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
+        && mode.size > 0) {
+      // get_map_mode() treats unrecognized mode shortnames as ":map".
+      // This is an error unless the given shortname was empty string "".
+      err_msg = "Invalid mode shortname: \"%s\"";
+      err_arg = (char *)p;
+      err_type = kErrorTypeValidation;
+      goto fail_with_message;
+    }
+  }
+
+  if (parsed_args.lhs_len == 0) {
+    err_msg = "Invalid (empty) LHS";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto fail_with_message;
+  }
+
+  bool is_noremap = parsed_args.noremap;
+  assert(!(is_unmap && is_noremap));
+
+  if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
+    if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
+      parsed_args.rhs_is_noop = true;
+    } else {
+      // the given RHS was nonempty and not a <Nop>, but was parsed as if it
+      // were empty?
+      assert(false && "Failed to parse nonempty RHS!");
+      err_msg = "Parsing of nonempty RHS failed: %s";
+      err_arg = rhs.data;
+      err_type = kErrorTypeException;
+      goto fail_with_message;
+    }
+  } else if (is_unmap && parsed_args.rhs_len) {
+    err_msg = "Gave nonempty RHS in unmap command: %s";
+    err_arg = (char *)parsed_args.rhs;
+    err_type = kErrorTypeValidation;
+    goto fail_with_message;
+  }
+
+  // buf_do_map() reads noremap/unmap as its own argument.
+  int maptype_val = 0;
+  if (is_unmap) {
+    maptype_val = 1;
+  } else if (is_noremap) {
+    maptype_val = 2;
+  }
+
+  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
+    case 0:
+      break;
+    case 1:
+      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+      goto fail_and_free;
+    case 2:
+      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+      goto fail_and_free;
+    case 5:
+      api_set_error(err, kErrorTypeException,
+                    "E227: mapping already exists for %s", parsed_args.lhs);
+      goto fail_and_free;
+    default:
+      assert(false && "Unrecognized return code!");
+      goto fail_and_free;
+  }  // switch
+
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
+
+  return;
+
+fail_with_message:
+  api_set_error(err, err_type, err_msg, err_arg);
+
+fail_and_free:
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
+  return;
+}
+
+/// Read in the given opts, setting corresponding flags in `out`.
+///
+/// @param opts A dictionary passed to @ref nvim_set_keymap or
+///             @ref nvim_buf_set_keymap.
+/// @param[out]   out  MapArguments object in which to set parsed
+///                    |:map-arguments| flags.
+/// @param[out]   err  Error details, if any.
+///
+/// @returns Zero on success, nonzero on failure.
+Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
+{
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
+
+  out->buffer = false;
+  out->nowait = false;
+  out->silent = false;
+  out->script = false;
+  out->expr = false;
+  out->unique = false;
+
+  for (size_t i = 0; i < opts.size; i++) {
+    KeyValuePair *key_and_val = &opts.items[i];
+    char *optname = key_and_val->key.data;
+
+    if (key_and_val->value.type != kObjectTypeBoolean) {
+      err_msg = "Gave non-boolean value for an opt: %s";
+      err_arg = optname;
+      err_type = kErrorTypeValidation;
+      goto fail_with_message;
+    }
+
+    bool was_valid_opt = false;
+    switch (optname[0]) {
+      // note: strncmp up to and including the null terminator, so that
+      // "nowaitFoobar" won't match against "nowait"
+
+      // don't recognize 'buffer' as a key; user shouldn't provide <buffer>
+      // when calling nvim_set_keymap or nvim_buf_set_keymap, since it can be
+      // inferred from which function they called
+      case 'n':
+        if (STRNCMP(optname, "noremap", 8) == 0) {
+          was_valid_opt = true;
+          out->noremap = key_and_val->value.data.boolean;
+        } else if (STRNCMP(optname, "nowait", 7) == 0) {
+          was_valid_opt = true;
+          out->nowait = key_and_val->value.data.boolean;
+        }
+        break;
+      case 's':
+        if (STRNCMP(optname, "silent", 7) == 0) {
+          was_valid_opt = true;
+          out->silent = key_and_val->value.data.boolean;
+        } else if (STRNCMP(optname, "script", 7) == 0) {
+          was_valid_opt = true;
+          out->script = key_and_val->value.data.boolean;
+        }
+        break;
+      case 'e':
+        if (STRNCMP(optname, "expr", 5) == 0) {
+          was_valid_opt = true;
+          out->expr = key_and_val->value.data.boolean;
+        }
+        break;
+      case 'u':
+        if (STRNCMP(optname, "unique", 7) == 0) {
+          was_valid_opt = true;
+          out->unique = key_and_val->value.data.boolean;
+        }
+        break;
+      default:
+        break;
+    }  // switch
+    if (!was_valid_opt) {
+      err_msg = "Invalid key: %s";
+      err_arg = optname;
+      err_type = kErrorTypeValidation;
+      goto fail_with_message;
+    }
+  }  // for
+
+  return 0;
+
+fail_with_message:
+  api_set_error(err, err_type, err_msg, err_arg);
+  return 1;
+}
+
+/// Collects `n` buffer lines into array `l`, optionally replacing newlines
+/// with NUL.
+///
+/// @param buf Buffer to get lines from
+/// @param n Number of lines to collect
+/// @param replace_nl Replace newlines ("\n") with NUL
+/// @param start Line number to start from
+/// @param[out] l Lines are copied here
+/// @param err[out] Error, if any
+/// @return true unless `err` was set
+bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl,
+                       Array *l, Error *err)
+{
+  for (size_t i = 0; i < n; i++) {
+    int64_t lnum = start + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      if (err != NULL) {
+        api_set_error(err, kErrorTypeValidation, "Line index is too high");
+      }
+      return false;
+    }
+
+    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    if (replace_nl) {
+      // Vim represents NULs as NLs, but this may confuse clients.
+      strchrsub(str.data.string.data, '\n', '\0');
+    }
+
+    l->items[i] = str;
+  }
+
+  return true;
 }
 
 /// Converts from type Object to a VimL value.
@@ -882,6 +1197,10 @@ void api_free_object(Object value)
       api_free_dictionary(value.data.dictionary);
       break;
 
+    case kObjectTypeLuaRef:
+      executor_free_luaref(value.data.luaref);
+      break;
+
     default:
       abort();
   }
@@ -965,7 +1284,9 @@ static void init_ui_event_metadata(Dictionary *metadata)
   Array ui_options = ARRAY_DICT_INIT;
   ADD(ui_options, STRING_OBJ(cstr_to_string("rgb")));
   for (UIExtension i = 0; i < kUIExtCount; i++) {
-    ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+    if (ui_ext_names[i][0] != '_') {
+      ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+    }
   }
   PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
 }
@@ -1030,10 +1351,23 @@ Array copy_array(Array array)
   return rv;
 }
 
+Dictionary copy_dictionary(Dictionary dict)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < dict.size; i++) {
+    KeyValuePair item = dict.items[i];
+    PUT(rv, item.key.data, copy_object(item.value));
+  }
+  return rv;
+}
+
 /// Creates a deep clone of an object
 Object copy_object(Object obj)
 {
   switch (obj.type) {
+    case kObjectTypeBuffer:
+    case kObjectTypeTabpage:
+    case kObjectTypeWindow:
     case kObjectTypeNil:
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
@@ -1047,12 +1381,7 @@ Object copy_object(Object obj)
       return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
-      Dictionary rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.dictionary.size; i++) {
-        KeyValuePair item = obj.data.dictionary.items[i];
-        PUT(rv, item.key.data, copy_object(item.value));
-      }
-      return DICTIONARY_OBJ(rv);
+      return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
     }
     default:
       abort();
@@ -1069,7 +1398,7 @@ static void set_option_value_for(char *key,
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  bufref_T save_curbuf =  { NULL, 0, 0 };
+  aco_save_T aco;
 
   try_start();
   switch (opt_type)
@@ -1090,9 +1419,9 @@ static void set_option_value_for(char *key,
       restore_win(save_curwin, save_curtab, true);
       break;
     case SREQ_BUF:
-      switch_buffer(&save_curbuf, (buf_T *)from);
+      aucmd_prepbuf(&aco, (buf_T *)from);
       set_option_value_err(key, numval, stringval, opt_flags, err);
-      restore_buffer(&save_curbuf);
+      aucmd_restbuf(&aco);
       break;
     case SREQ_GLOBAL:
       set_option_value_err(key, numval, stringval, opt_flags, err);
@@ -1125,7 +1454,7 @@ static void set_option_value_err(char *key,
 }
 
 void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;
@@ -1180,4 +1509,73 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   tv_dict_free(dict);
 
   return mappings;
+}
+
+// Is the Namespace in use?
+bool ns_initialized(uint64_t ns)
+{
+  if (ns < 1) {
+    return false;
+  }
+  return ns < (uint64_t)next_namespace_id;
+}
+
+/// Gets the line and column of an extmark.
+///
+/// Extmarks may be queried by position, name or even special names
+/// in the future such as "cursor".
+///
+/// @param[out] lnum extmark line
+/// @param[out] colnr extmark column
+///
+/// @return true if the extmark was found, else false
+bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
+                                *row, colnr_T *col, Error *err)
+{
+  // Check if it is mark id
+  if (obj.type == kObjectTypeInteger) {
+    Integer id = obj.data.integer;
+    if (id == 0) {
+        *row = 0;
+        *col = 0;
+        return true;
+    } else if (id == -1) {
+        *row = MAXLNUM;
+        *col = MAXCOL;
+        return true;
+    } else if (id < 0) {
+      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
+      return false;
+    }
+
+    ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+    if (extmark.row >= 0) {
+      *row = extmark.row;
+      *col = extmark.col;
+      return true;
+    } else {
+      api_set_error(err, kErrorTypeValidation, _("No mark with requested id"));
+      return false;
+    }
+
+  // Check if it is a position
+  } else if (obj.type == kObjectTypeArray) {
+    Array pos = obj.data.array;
+    if (pos.size != 2
+        || pos.items[0].type != kObjectTypeInteger
+        || pos.items[1].type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation,
+                    _("Position must have 2 integer elements"));
+      return false;
+    }
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
+    return true;
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  _("Position must be a mark id Integer or position Array"));
+    return false;
+  }
 }

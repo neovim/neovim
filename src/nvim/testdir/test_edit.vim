@@ -37,12 +37,10 @@ func! Test_edit_01()
   call assert_equal([''], getline(1,'$'))
   %d
   " 4) delete a multibyte character
-  if has("multi_byte")
-    call setline(1, "\u0401")
-    call feedkeys("i\<del>\<esc>", 'tnix')
-    call assert_equal([''], getline(1,'$'))
-    %d
-  endif
+  call setline(1, "\u0401")
+  call feedkeys("i\<del>\<esc>", 'tnix')
+  call assert_equal([''], getline(1,'$'))
+  %d
   " 5.1) delete linebreak with 'bs' option containing eol
   let _bs=&bs
   set bs=eol
@@ -314,6 +312,33 @@ func! Test_edit_11()
   bw!
 endfunc
 
+func! Test_edit_11_indentexpr()
+  " Test that indenting kicks in
+  new
+  " Use indentexpr instead of cindenting
+  func! Do_Indent()
+    let pline=prevnonblank(v:lnum)
+    if empty(getline(v:lnum))
+      if getline(pline) =~ 'if\|then'
+        return shiftwidth()
+      else
+        return 0
+      endif
+    else
+        return 0
+    endif
+  endfunc
+  setl indentexpr=Do_Indent() indentkeys+=0=then,0=fi
+  call setline(1, ['if [ $this ]'])
+  call cursor(1, 1)
+  call feedkeys("othen\<cr>that\<cr>fi", 'tnix')
+  call assert_equal(['if [ $this ]', "then", "\<tab>that", "fi"], getline(1, '$'))
+  set cinkeys&vim indentkeys&vim
+  set nocindent indentexpr=
+  delfu Do_Indent
+  bw!
+endfunc
+
 func! Test_edit_12()
   " Test changing indent in replace mode
   new
@@ -375,8 +400,19 @@ func! Test_edit_13()
     call feedkeys("A {\<cr>more\<cr>}\<esc>", 'tnix')
     call assert_equal(["\tabc {", "\t\tmore", "\t}"], getline(1, '$'))
     set smartindent& autoindent&
-    bw!
+    bwipe!
   endif
+
+  " Test autoindent removing indent of blank line.
+  new
+  call setline(1, '    foo bar baz')
+  set autoindent
+  exe "normal 0eea\<CR>\<CR>\<Esc>"
+  call assert_equal("    foo bar", getline(1))
+  call assert_equal("", getline(2))
+  call assert_equal("    baz", getline(3))
+  set autoindent&
+  bwipe!
 endfunc
 
 func! Test_edit_CR()
@@ -414,7 +450,7 @@ endfunc
 
 func! Test_edit_CTRL_()
   " disabled for Windows builds, why?
-  if !has("multi_byte") || !has("rightleft") || has("win32")
+  if !has("rightleft") || has("win32")
     return
   endif
   let _encoding=&encoding
@@ -501,7 +537,7 @@ func! Test_edit_CTRL_I()
   " Tab in completion mode
   let path=expand("%:p:h")
   new
-  call setline(1, [path."/", ''])
+  call setline(1, [path. "/", ''])
   call feedkeys("Arunt\<c-x>\<c-f>\<tab>\<cr>\<esc>", 'tnix')
   call assert_match('runtest\.vim', getline(1))
   %d
@@ -582,7 +618,7 @@ func! Test_edit_CTRL_K()
   endtry
   call delete('Xdictionary.txt')
 
-  if has("multi_byte") && !has("nvim")
+  if exists('*test_override')
     call test_override("char_avail", 1)
     set showcmd
     %d
@@ -605,11 +641,11 @@ func! Test_edit_CTRL_L()
   call feedkeys("cct\<c-x>\<c-l>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<esc>", 'tnix')
-  call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
-  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'two', '', '', ''], getline(1, '$'))
-  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
+  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'three', '', '', ''], getline(1, '$'))
+  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
+  call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-p>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'two', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-p>\<c-p>\<esc>", 'tnix')
@@ -1311,6 +1347,14 @@ func! Test_edit_rightleft()
   bw!
 endfunc
 
+func Test_edit_backtick()
+  next a\`b c
+  call assert_equal('a`b', expand('%'))
+  next
+  call assert_equal('c', expand('%'))
+  call assert_equal('a\`b c', expand('##'))
+endfunc
+
 func Test_edit_quit()
   edit foo.txt
   split
@@ -1323,3 +1367,135 @@ func Test_edit_quit()
   only
 endfunc
 
+func Test_edit_complete_very_long_name()
+  if !has('unix')
+    " Long directory names only work on Unix.
+    return
+  endif
+
+  let dirname = getcwd() . "/Xdir"
+  let longdirname = dirname . repeat('/' . repeat('d', 255), 4)
+  try
+    call mkdir(longdirname, 'p')
+  catch /E739:/
+    " Long directory name probably not supported.
+    call delete(dirname, 'rf')
+    return
+  endtry
+
+  " Try to get the Vim window position before setting 'columns', so that we can
+  " move the window back to where it was.
+  let winposx = getwinposx()
+  let winposy = getwinposy()
+
+  if winposx >= 0 && winposy >= 0 && !has('gui_running')
+    " We did get the window position, but xterm may report the wrong numbers.
+    " Move the window to the reported position and compute any offset.
+    exe 'winpos ' . winposx . ' ' . winposy
+    sleep 100m
+    let x = getwinposx()
+    if x >= 0
+      let winposx += winposx - x
+    endif
+    let y = getwinposy()
+    if y >= 0
+      let winposy += winposy - y
+    endif
+  endif
+
+  let save_columns = &columns
+  " Need at least about 1100 columns to reproduce the problem.
+  set columns=2000
+  set noswapfile
+
+  let longfilename = longdirname . '/' . repeat('a', 255)
+  call writefile(['Totum', 'Table'], longfilename)
+  new
+  exe "next Xfile " . longfilename
+  exe "normal iT\<C-N>"
+
+  bwipe!
+  exe 'bwipe! ' . longfilename
+  call delete(dirname, 'rf')
+  let &columns = save_columns
+  if winposx >= 0 && winposy >= 0
+    exe 'winpos ' . winposx . ' ' . winposy
+  endif
+  set swapfile&
+endfunc
+
+func Test_edit_alt()
+  " Keeping the cursor line didn't happen when the first line has indent.
+  new
+  call setline(1, ['  one', 'two', 'three'])
+  w XAltFile
+  $
+  call assert_equal(3, line('.'))
+  e Xother
+  e #
+  call assert_equal(3, line('.'))
+
+  bwipe XAltFile
+  call delete('XAltFile')
+endfunc
+
+func Test_leave_insert_autocmd()
+  new
+  au InsertLeave * let g:did_au = 1
+  let g:did_au = 0
+  call feedkeys("afoo\<Esc>", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('foo', getline(1))
+
+  let g:did_au = 0
+  call feedkeys("Sbar\<C-C>", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bar', getline(1))
+
+  inoremap x xx<Esc>
+  let g:did_au = 0
+  call feedkeys("Saax", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('aaxx', getline(1))
+
+  inoremap x xx<C-C>
+  let g:did_au = 0
+  call feedkeys("Sbbx", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bbxx', getline(1))
+
+  bwipe!
+  au! InsertLeave
+  iunmap x
+endfunc
+
+" Test for inserting characters using CTRL-V followed by a number.
+func Test_edit_special_chars()
+  new
+
+  if has("ebcdic")
+    let t = "o\<C-V>193\<C-V>xc2\<C-V>o303 \<C-V>90a\<C-V>xfg\<C-V>o578\<Esc>"
+  else
+    let t = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
+  endif
+
+  exe "normal " . t
+  call assert_equal("ABC !a\<C-O>g\<C-G>8", getline(2))
+
+  close!
+endfunc
+
+func Test_edit_startinsert()
+  new
+  set backspace+=start
+  call setline(1, 'foobar')
+  call feedkeys("A\<C-U>\<Esc>", 'xt')
+  call assert_equal('', getline(1))
+
+  call setline(1, 'foobar')
+  call feedkeys(":startinsert!\<CR>\<C-U>\<Esc>", 'xt')
+  call assert_equal('', getline(1))
+
+  set backspace&
+  bwipe!
+endfunc

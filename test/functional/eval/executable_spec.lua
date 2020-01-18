@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call, iswin, write_file =
-  helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file
+local eq, clear, call, iswin, write_file, command =
+  helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file,
+  helpers.command
+local eval = helpers.eval
 
 describe('executable()', function()
   before_each(clear)
@@ -20,15 +22,10 @@ describe('executable()', function()
     -- Windows: siblings are in Nvim's "pseudo-$PATH".
     local expected = iswin() and 1 or 0
     if iswin() then
-      -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
-      clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
       eq('arg1=lemon;arg2=sky;arg3=tree;',
          call('system', sibling_exe..' lemon sky tree'))
     end
-    local is_executable = call('executable', sibling_exe)
-    if iswin() and is_executable ~= expected then
-      pending('XXX: sometimes fails on AppVeyor')
-    end
+    eq(expected, call('executable', sibling_exe))
   end)
 
   describe('exec-bit', function()
@@ -48,18 +45,17 @@ describe('executable()', function()
     end)
 
     it('not set', function()
-      local expected = iswin() and 1 or 0
-      eq(expected, call('executable', 'Xtest_not_executable'))
-      eq(expected, call('executable', './Xtest_not_executable'))
+      eq(0, call('executable', 'Xtest_not_executable'))
+      eq(0, call('executable', './Xtest_not_executable'))
     end)
 
     it('set, unqualified and not in $PATH', function()
-      local expected = iswin() and 1 or 0
-      eq(expected, call('executable', 'Xtest_executable'))
+      eq(0, call('executable', 'Xtest_executable'))
     end)
 
     it('set, qualified as a path', function()
-      eq(1, call('executable', './Xtest_executable'))
+      local expected = iswin() and 0 or 1
+      eq(expected, call('executable', './Xtest_executable'))
     end)
   end)
 end)
@@ -100,10 +96,16 @@ describe('executable() (Windows)', function()
     eq(0, call('executable', '.\\test_executable_zzz'))
   end)
 
+  it('system([…]), jobstart([…]) use $PATHEXT #9569', function()
+    -- Invoking `cmdscript` should find/execute `cmdscript.cmd`.
+    eq('much success\n', call('system', {'test/functional/fixtures/cmdscript'}))
+    assert(0 < call('jobstart', {'test/functional/fixtures/cmdscript'}))
+  end)
+
   it('full path with extension', function()
     -- Some executable we can expect in the test env.
     local exe = 'printargs-test'
-    local exedir = helpers.eval("fnamemodify(v:progpath, ':h')")
+    local exedir = eval("fnamemodify(v:progpath, ':h')")
     local exepath = exedir..'/'..exe..'.exe'
     eq(1, call('executable', exepath))
     eq('arg1=lemon;arg2=sky;arg3=tree;',
@@ -113,7 +115,7 @@ describe('executable() (Windows)', function()
   it('full path without extension', function()
     -- Some executable we can expect in the test env.
     local exe = 'printargs-test'
-    local exedir = helpers.eval("fnamemodify(v:progpath, ':h')")
+    local exedir = eval("fnamemodify(v:progpath, ':h')")
     local exepath = exedir..'/'..exe
     eq('arg1=lemon;arg2=sky;arg3=tree;',
        call('system', exepath..' lemon sky tree'))
@@ -136,21 +138,66 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', '.\\test_executable_zzz'))
   end)
 
-  it('returns 1 for any existing filename', function()
+  it("with weird $PATHEXT", function()
+    clear({env={PATHEXT=';'}})
+    eq(0, call('executable', '.\\test_executable_zzz'))
+    clear({env={PATHEXT=';;;.zzz;;'}})
+    eq(1, call('executable', '.\\test_executable_zzz'))
+  end)
+
+  it("unqualified filename, Unix-style 'shell'", function()
     clear({env={PATHEXT=''}})
+    command('set shell=sh')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
     end
     eq(1, call('executable', 'test_executable_zzz.zzz'))
   end)
 
-  it('returns 1 for any existing path (backslashes)', function()
+  it("relative path, Unix-style 'shell' (backslashes)", function()
     clear({env={PATHEXT=''}})
+    command('set shell=bash.exe')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
       eq(1, call('executable', './test_executable_'..ext..'.'..ext))
     end
     eq(1, call('executable', '.\\test_executable_zzz.zzz'))
     eq(1, call('executable', './test_executable_zzz.zzz'))
+  end)
+
+  it('unqualified filename, $PATHEXT contains dot', function()
+    clear({env={PATHEXT='.;.zzz'}})
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+    clear({env={PATHEXT='.zzz;.'}})
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+  end)
+
+  it('relative path, $PATHEXT contains dot (backslashes)', function()
+    clear({env={PATHEXT='.;.zzz'}})
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
+      eq(1, call('executable', './test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', '.\\test_executable_zzz.zzz'))
+    eq(1, call('executable', './test_executable_zzz.zzz'))
+  end)
+
+  it('ignores case of extension', function()
+    clear({env={PATHEXT='.ZZZ'}})
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+  end)
+
+  it('relative path does not search $PATH', function()
+    clear({env={PATHEXT=''}})
+    eq(0, call('executable', './System32/notepad.exe'))
+    eq(0, call('executable', '.\\System32\\notepad.exe'))
+    eq(0, call('executable', '../notepad.exe'))
+    eq(0, call('executable', '..\\notepad.exe'))
   end)
 end)

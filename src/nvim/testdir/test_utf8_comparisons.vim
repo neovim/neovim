@@ -1,10 +1,6 @@
 " Tests for case-insensitive UTF-8 comparisons (utf_strnicmp() in mbyte.c)
 " Also test "g~ap".
 
-if !has("multi_byte")
-  finish
-endif
-
 function! Ch(a, op, b, expected)
   call assert_equal(eval(printf('"%s" %s "%s"', a:a, a:op, a:b)), a:expected,
         \ printf('"%s" %s "%s" should return %d', a:a, a:op, a:b, a:expected))

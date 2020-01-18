@@ -2021,7 +2021,7 @@ msgstr "E216: Níl a leithéid de ghrúpa nó theagmhas: %s"
 #. Highlight title
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Uathorduithe ---"
@@ -2040,7 +2040,7 @@ msgid "E218: autocommand nesting too deep"
 msgstr "E218: uathordú neadaithe ródhomhain"
 
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Uathorduithe do \"%s\""
 
 #, c-format
@@ -2953,7 +2953,7 @@ msgstr "-q [comhadearr] cuir comhad leis an chéad earráid in eagar"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -3071,8 +3071,8 @@ msgstr "-f\t\t\tNá húsáid newcli chun fuinneog a oscailt"
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <gléas>\t\tBain úsáid as <gléas> do I/A"
 
-msgid "-A\t\t\tstart in Arabic mode"
-msgstr "-A\t\t\ttosaigh sa mhód Araibise"
+msgid "-A\t\t\tStart in Arabic mode"
+msgstr "-A\t\t\tTosaigh sa mhód Araibise"
 
 msgid "-H\t\t\tStart in Hebrew mode"
 msgstr "-H\t\t\tTosaigh sa mhód Eabhraise"
@@ -4797,8 +4797,8 @@ msgstr "E55: %s) corr"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: ní cheadaítear \\z( anseo"
 
-msgid "E67: \\z1 et al. not allowed here"
-msgstr "E67: ní cheadaítear \\z1 et al. anseo"
+msgid "E67: \\z1 - \\z9 not allowed here"
+msgstr "E67: ní cheadaítear \\z1 - \\z9 anseo"
 
 #, c-format
 msgid "E69: Missing ] after %s%%["
@@ -4911,8 +4911,8 @@ msgid "E870: (NFA regexp) Error reading repetition limits"
 msgstr "E870: (slonn NFA) Earráid agus teorainneacha athdhéanta á léamh"
 
 #. Can't have a multi follow a multi.
-msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr "E871: (slonn NFA) Ní cheadaítear ilchodach tar éis ilchodach!"
+msgid "E871: (NFA regexp) Can't have a multi follow a multi"
+msgstr "E871: (slonn NFA) Ní cheadaítear ilchodach tar éis ilchodach"
 
 #. Too many `('
 msgid "E872: (NFA regexp) Too many '('"
@@ -4924,7 +4924,7 @@ msgstr "E879: (slonn NFA) An iomarca \\z("
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (slonn NFA) críochnú neamhoiriúnach"
 
-msgid "E874: (NFA) Could not pop the stack !"
+msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (NFA) Níorbh fhéidir an chruach a phlobadh!"
 
 msgid ""
@@ -4943,7 +4943,7 @@ msgstr ""
 "thrasnaíl!"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Níorbh fhéidir logchomhad sealadach a oscailt le scríobh ann, á thaispeáint "
 "ar stderr..."
@@ -5178,7 +5178,7 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: earráid agus comhad .sug á léamh: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Comhad foircinn %s á léamh..."
 
 #, c-format
@@ -5314,8 +5314,8 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "Tá difear idir luach %s agus an luach i gcomhad .aff eile"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Foclóir %s á léamh ..."
+msgid "Reading dictionary file %s..."
+msgstr "Foclóir %s á léamh..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5342,8 +5342,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "Rinneadh neamhshuim ar %d focal le carachtair neamh-ASCII i %s"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Comhad focail %s á léamh ..."
+msgid "Reading word file %s..."
+msgstr "Comhad focail %s á léamh..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5404,8 +5404,8 @@ msgid "Total number of words: %d"
 msgstr "Líon iomlán na bhfocal: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Comhad moltaí %s á scríobh ..."
+msgid "Writing suggestion file %s..."
+msgstr "Comhad moltaí %s á scríobh..."
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5425,8 +5425,8 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Rabhadh: sonraíodh comhfhocail agus NOBREAK araon"
 
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Comhad litrithe %s á scríobh ..."
+msgid "Writing spell file %s..."
+msgstr "Comhad litrithe %s á scríobh..."
 
 msgid "Done!"
 msgstr "Críochnaithe!"

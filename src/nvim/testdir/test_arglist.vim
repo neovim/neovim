@@ -121,10 +121,7 @@ func Test_argument()
 
   call assert_equal(['d', 'c', 'b', 'a', 'c'], g:buffers)
 
-  redir => result
-  ar
-  redir END
-  call assert_true(result =~# 'a b \[c] d')
+  call assert_equal("\na   b   [c] d   ", execute(':args'))
 
   .argd
   call assert_equal(['a', 'b', 'd'], argv())
@@ -153,6 +150,25 @@ func Test_argument()
 
   let &hidden = save_hidden
 
+  let save_columns = &columns
+  let &columns = 79
+  exe 'args ' .. join(range(1, 81))
+  call assert_equal(join([
+        \ '',
+        \ '[1] 6   11  16  21  26  31  36  41  46  51  56  61  66  71  76  81  ',
+        \ '2   7   12  17  22  27  32  37  42  47  52  57  62  67  72  77  ',
+        \ '3   8   13  18  23  28  33  38  43  48  53  58  63  68  73  78  ',
+        \ '4   9   14  19  24  29  34  39  44  49  54  59  64  69  74  79  ',
+        \ '5   10  15  20  25  30  35  40  45  50  55  60  65  70  75  80  ',
+        \ ], "\n"),
+        \ execute('args'))
+
+  " No trailing newline with one item per row.
+  let long_arg = repeat('X', 81)
+  exe 'args ' .. long_arg
+  call assert_equal("\n[".long_arg.']', execute('args'))
+  let &columns = save_columns
+
   " Setting argument list should fail when the current buffer has unsaved
   " changes
   %argd
@@ -168,6 +184,43 @@ func Test_argument()
 
   %argdelete
   call assert_fails('argument', 'E163:')
+endfunc
+
+func Test_list_arguments()
+  " Clean the argument list
+  arga a | %argd
+
+  " four args half the screen width makes two lines with two columns
+  let aarg = repeat('a', &columns / 2 - 4)
+  let barg = repeat('b', &columns / 2 - 4)
+  let carg = repeat('c', &columns / 2 - 4)
+  let darg = repeat('d', &columns / 2 - 4)
+  exe 'argadd ' aarg barg carg darg
+
+  redir => result
+  args
+  redir END
+  call assert_match('\[' . aarg . '] \+' . carg . '\n' . barg . ' \+' . darg, trim(result))
+
+  " if one arg is longer than half the screen make one column
+  exe 'argdel' aarg
+  let aarg = repeat('a', &columns / 2 + 2)
+  exe '0argadd' aarg
+  redir => result
+  args
+  redir END
+  call assert_match(aarg . '\n\[' . barg . ']\n' . carg . '\n' . darg, trim(result))
+
+  %argdelete
+endfunc
+
+func Test_args_with_quote()
+  " Only on Unix can a file name include a double quote.
+  if has('unix')
+    args \"foobar
+    call assert_equal('"foobar', argv(0))
+    %argdelete
+  endif
 endfunc
 
 " Test for 0argadd and 0argedit
@@ -231,13 +284,53 @@ func Test_arglistid()
   call assert_equal(0, arglistid())
 endfunc
 
-" Test for argv()
+" Tests for argv() and argc()
 func Test_argv()
   call Reset_arglist()
   call assert_equal([], argv())
   call assert_equal("", argv(2))
+  call assert_equal(0, argc())
   argadd a b c d
+  call assert_equal(4, argc())
   call assert_equal('c', argv(2))
+
+  let w1_id = win_getid()
+  split
+  let w2_id = win_getid()
+  arglocal
+  args e f g
+  tabnew
+  let w3_id = win_getid()
+  split
+  let w4_id = win_getid()
+  argglobal
+  tabfirst
+  call assert_equal(4, argc(w1_id))
+  call assert_equal('b', argv(1, w1_id))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, w1_id))
+
+  call assert_equal(3, argc(w2_id))
+  call assert_equal('f', argv(1, w2_id))
+  call assert_equal(['e', 'f', 'g'], argv(-1, w2_id))
+
+  call assert_equal(3, argc(w3_id))
+  call assert_equal('e', argv(0, w3_id))
+  call assert_equal(['e', 'f', 'g'], argv(-1, w3_id))
+
+  call assert_equal(4, argc(w4_id))
+  call assert_equal('c', argv(2, w4_id))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, w4_id))
+
+  call assert_equal(4, argc(-1))
+  call assert_equal(3, argc())
+  call assert_equal('d', argv(3, -1))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, -1))
+  tabonly | only | enew!
+  " Negative test cases
+  call assert_equal(-1, argc(100))
+  call assert_equal('', argv(1, 100))
+  call assert_equal([], argv(-1, 100))
+  call assert_equal('', argv(10, -1))
 endfunc
 
 " Test for the :argedit command
@@ -280,6 +373,18 @@ func Test_argedit()
   %argd
   bwipe! C
   bwipe! D
+
+  " :argedit reuses the current buffer if it is empty
+  %argd
+  " make sure to use a new buffer number for x when it is loaded
+  bw! x
+  new
+  let a = bufnr()
+  argedit x
+  call assert_equal(a, bufnr())
+  call assert_equal('x', bufname())
+  %argd
+  bw! x
 endfunc
 
 " Test for the :argdelete command
@@ -294,6 +399,18 @@ func Test_argdelete()
   call assert_equal(['b'], argv())
   call assert_fails('argdelete', 'E471:')
   call assert_fails('1,100argdelete', 'E16:')
+  %argd
+endfunc
+
+func Test_argdelete_completion()
+  args foo bar
+
+  call feedkeys(":argdelete \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete bar foo', @:)
+
+  call feedkeys(":argdelete x \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete x bar foo', @:)
+
   %argd
 endfunc
 
@@ -352,4 +469,20 @@ func Test_arg_all_expand()
   next notexist Xx\ x runtest.vim
   call assert_equal('notexist Xx\ x runtest.vim', expand('##'))
   call delete('Xx x')
+endfunc
+
+func Test_large_arg()
+  " Argument longer or equal to the number of columns used to cause
+  " access to invalid memory.
+  exe 'argadd ' .repeat('x', &columns)
+  args
+endfunc
+
+func Test_argdo()
+  next! Xa.c Xb.c Xc.c
+  new
+  let l = []
+  argdo call add(l, expand('%'))
+  call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
+  bwipe Xa.c Xb.c Xc.c
 endfunc

@@ -1,4 +1,4 @@
-" Test various aspects of the Vim language.
+" Test various aspects of the Vim script language.
 " Most of this was formerly in test49.
 
 "-------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ com! -nargs=1	     Xout     call Xout(<args>)
 "
 " Create a script that consists of the body of the function a:funcname.
 " Replace any ":return" by a ":finish", any argument variable by a global
-" variable, and and every ":call" by a ":source" for the next following argument
+" variable, and every ":call" by a ":source" for the next following argument
 " in the variable argument list.  This function is useful if similar tests are
 " to be made for a ":return" from a function call or a ":finish" in a script
 " file.
@@ -1061,6 +1061,7 @@ func Test_echo_and_string()
     let l = split(result, "\n")
     call assert_equal(["{'a': [], 'b': []}",
 		     \ "{'a': [], 'b': []}"], l)
+endfunc
 
 "-------------------------------------------------------------------------------
 " Test 94:  64-bit Numbers					    {{{1
@@ -1238,10 +1239,12 @@ func Test_endfunction_trailing()
 
     set verbose=1
     exe "func Xtest()\necho 'hello'\nendfunc \" garbage"
+    call assert_notmatch('W22:', split(execute('1messages'), "\n")[0])
     call assert_true(exists('*Xtest'))
     delfunc Xtest
 
-    call assert_fails("func Xtest()\necho 'hello'\nendfunc garbage", 'E946')
+    exe "func Xtest()\necho 'hello'\nendfunc garbage"
+    call assert_match('W22:', split(execute('1messages'), "\n")[0])
     call assert_true(exists('*Xtest'))
     delfunc Xtest
     set verbose=0
@@ -1271,8 +1274,212 @@ func Test_user_command_with_bang()
     delcommand Nieuw
 endfunc
 
+" Test for script-local function
+func <SID>DoLast()
+  call append(line('$'), "last line")
+endfunc
+
+func s:DoNothing()
+  call append(line('$'), "nothing line")
+endfunc
+
+func Test_script_local_func()
+  set nocp nomore viminfo+=nviminfo
+  new
+  nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
+
+  normal _x
+  call assert_equal('nothing line', getline(2))
+  call assert_equal('last line', getline(3))
+  enew! | close
+endfunc
+
+func Test_compound_assignment_operators()
+    " Test for number
+    let x = 1
+    let x += 10
+    call assert_equal(11, x)
+    let x -= 5
+    call assert_equal(6, x)
+    let x *= 4
+    call assert_equal(24, x)
+    let x /= 3
+    call assert_equal(8, x)
+    let x %= 3
+    call assert_equal(2, x)
+    let x .= 'n'
+    call assert_equal('2n', x)
+
+    " Test special cases: division or modulus with 0.
+    let x = 1
+    let x /= 0
+    if has('num64')
+        call assert_equal(0x7FFFFFFFFFFFFFFF, x)
+    else
+        call assert_equal(0x7fffffff, x)
+    endif
+
+    let x = -1
+    let x /= 0
+    if has('num64')
+        call assert_equal(-0x7FFFFFFFFFFFFFFF, x)
+    else
+        call assert_equal(-0x7fffffff, x)
+    endif
+
+    let x = 0
+    let x /= 0
+    if has('num64')
+        call assert_equal(-0x7FFFFFFFFFFFFFFF - 1, x)
+    else
+        call assert_equal(-0x7FFFFFFF - 1, x)
+    endif
+
+    let x = 1
+    let x %= 0
+    call assert_equal(0, x)
+
+    let x = -1
+    let x %= 0
+    call assert_equal(0, x)
+
+    let x = 0
+    let x %= 0
+    call assert_equal(0, x)
+
+    " Test for string
+    let x = 'str'
+    let x .= 'ing'
+    call assert_equal('string', x)
+    let x += 1
+    call assert_equal(1, x)
+    let x -= 1.5
+    call assert_equal(-0.5, x)
+
+    if has('float')
+        " Test for float
+        let x = 0.5
+        let x += 4.5
+        call assert_equal(5.0, x)
+        let x -= 1.5
+        call assert_equal(3.5, x)
+        let x *= 3.0
+        call assert_equal(10.5, x)
+        let x /= 2.5
+        call assert_equal(4.2, x)
+        call assert_fails('let x %= 0.5', 'E734')
+        call assert_fails('let x .= "f"', 'E734')
+    endif
+
+    " Test for environment variable
+    let $FOO = 1
+    call assert_fails('let $FOO += 1', 'E734')
+    call assert_fails('let $FOO -= 1', 'E734')
+    call assert_fails('let $FOO *= 1', 'E734')
+    call assert_fails('let $FOO /= 1', 'E734')
+    call assert_fails('let $FOO %= 1', 'E734')
+    let $FOO .= 's'
+    call assert_equal('1s', $FOO)
+    unlet $FOO
+
+    " Test for option variable (type: number)
+    let &scrolljump = 1
+    let &scrolljump += 5
+    call assert_equal(6, &scrolljump)
+    let &scrolljump -= 2
+    call assert_equal(4, &scrolljump)
+    let &scrolljump *= 3
+    call assert_equal(12, &scrolljump)
+    let &scrolljump /= 2
+    call assert_equal(6, &scrolljump)
+    let &scrolljump %= 5
+    call assert_equal(1, &scrolljump)
+    call assert_fails('let &scrolljump .= "j"', 'E734')
+    set scrolljump&vim
+
+    " Test for register
+    let @/ = 1
+    call assert_fails('let @/ += 1', 'E734')
+    call assert_fails('let @/ -= 1', 'E734')
+    call assert_fails('let @/ *= 1', 'E734')
+    call assert_fails('let @/ /= 1', 'E734')
+    call assert_fails('let @/ %= 1', 'E734')
+    let @/ .= 's'
+    call assert_equal('1s', @/)
+    let @/ = ''
+endfunc
+
+func Test_function_defined_line()
+    if has('gui_running')
+        " Can't catch the output of gvim.
+        return
+    endif
+
+    let lines =<< trim [CODE]
+    " F1
+    func F1()
+        " F2
+        func F2()
+            "
+            "
+            "
+            return
+        endfunc
+        " F3
+        execute "func F3()\n\n\n\nreturn\nendfunc"
+        " F4
+        execute "func F4()\n
+                    \\n
+                    \\n
+                    \\n
+                    \return\n
+                    \endfunc"
+    endfunc
+    " F5
+    execute "func F5()\n\n\n\nreturn\nendfunc"
+    " F6
+    execute "func F6()\n
+                \\n
+                \\n
+                \\n
+                \return\n
+                \endfunc"
+    call F1()
+    verbose func F1
+    verbose func F2
+    verbose func F3
+    verbose func F4
+    verbose func F5
+    verbose func F6
+    qall!
+    [CODE]
+
+    call writefile(lines, 'Xtest.vim')
+    let res = system(v:progpath .. ' --clean -es -X -S Xtest.vim')
+    call assert_equal(0, v:shell_error)
+
+    let m = matchstr(res, 'function F1()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 2$', m)
+
+    let m = matchstr(res, 'function F2()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 4$', m)
+
+    let m = matchstr(res, 'function F3()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 11$', m)
+
+    let m = matchstr(res, 'function F4()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 13$', m)
+
+    let m = matchstr(res, 'function F5()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 21$', m)
+
+    let m = matchstr(res, 'function F6()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 23$', m)
+
+    call delete('Xtest.vim')
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
-" vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
 "-------------------------------------------------------------------------------

@@ -1,7 +1,4 @@
 " Tests for expressions using utf-8.
-if !has('multi_byte')
-  finish
-endif
 
 func Test_strgetchar()
   call assert_equal(char2nr('á'), strgetchar('áxb', 0))

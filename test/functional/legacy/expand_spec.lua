@@ -62,6 +62,14 @@ describe('expand file name', function()
         call delete('Xdir ~ dir', 'd')
         call assert_false(isdirectory('Xdir ~ dir'))
       endfunc
+
+      func Test_expand_tilde_filename()
+        split ~
+        call assert_equal('~', expand('%'))
+        call assert_notequal(expand('%:p'), expand('~/'))
+        call assert_match('\~', expand('%:p'))
+        bwipe!
+      endfunc
     ]])
   end)
 
@@ -72,6 +80,11 @@ describe('expand file name', function()
 
   it('works with tilde', function()
     call('Test_with_tilde')
+    expected_empty()
+  end)
+
+  it('does not expand tilde if it is a filename', function()
+    call('Test_expand_tilde_filename')
     expected_empty()
   end)
 end)

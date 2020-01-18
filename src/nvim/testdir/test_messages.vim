@@ -38,3 +38,46 @@ function Test_messages()
     let &more = oldmore
   endtry
 endfunction
+
+ " Patch 7.4.1696 defined the "clearmode()" command for clearing the mode
+" indicator (e.g., "-- INSERT --") when ":stopinsert" is invoked.  Message
+" output could then be disturbed when 'cmdheight' was greater than one.
+" This test ensures that the bugfix for this issue remains in place.
+function! Test_stopinsert_does_not_break_message_output()
+  set cmdheight=2
+  redraw!
+
+   stopinsert | echo 'test echo'
+  call assert_equal(116, screenchar(&lines - 1, 1))
+  call assert_equal(32, screenchar(&lines, 1))
+  redraw!
+
+   stopinsert | echomsg 'test echomsg'
+  call assert_equal(116, screenchar(&lines - 1, 1))
+  call assert_equal(32, screenchar(&lines, 1))
+  redraw!
+
+   set cmdheight&
+endfunction
+
+func Test_message_completion()
+  call feedkeys(":message \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"message clear', @:)
+endfunc
+
+func Test_echospace()
+  set noruler noshowcmd laststatus=1
+  call assert_equal(&columns - 1, v:echospace)
+  split
+  call assert_equal(&columns - 1, v:echospace)
+  set ruler
+  call assert_equal(&columns - 1, v:echospace)
+  close
+  call assert_equal(&columns - 19, v:echospace)
+  set showcmd noruler
+  call assert_equal(&columns - 12, v:echospace)
+  set showcmd ruler
+  call assert_equal(&columns - 29, v:echospace)
+
+  set ruler& showcmd&
+endfunc

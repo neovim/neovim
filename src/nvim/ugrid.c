@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <limits.h>
 
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/ugrid.h"
@@ -16,8 +17,6 @@
 
 void ugrid_init(UGrid *grid)
 {
-  grid->attrs = HLATTRS_INIT;
-  grid->clear_attrs = HLATTRS_INIT;
   grid->cells = NULL;
 }
 
@@ -34,23 +33,18 @@ void ugrid_resize(UGrid *grid, int width, int height)
     grid->cells[i] = xcalloc((size_t)width, sizeof(UCell));
   }
 
-  grid->top = 0;
-  grid->bot = height - 1;
-  grid->left = 0;
-  grid->right = width - 1;
-  grid->row = grid->col = 0;
   grid->width = width;
   grid->height = height;
 }
 
 void ugrid_clear(UGrid *grid)
 {
-  clear_region(grid, grid->top, grid->bot, grid->left, grid->right);
+  clear_region(grid, 0, grid->height-1, 0, grid->width-1, 0);
 }
 
-void ugrid_eol_clear(UGrid *grid)
+void ugrid_clear_chunk(UGrid *grid, int row, int col, int endcol, sattr_T attr)
 {
-  clear_region(grid, grid->row, grid->row, grid->col, grid->right);
+  clear_region(grid, row, row, col, endcol-1, attr);
 }
 
 void ugrid_goto(UGrid *grid, int row, int col)
@@ -59,25 +53,17 @@ void ugrid_goto(UGrid *grid, int row, int col)
   grid->col = col;
 }
 
-void ugrid_set_scroll_region(UGrid *grid, int top, int bot, int left, int right)
-{
-  grid->top = top;
-  grid->bot = bot;
-  grid->left = left;
-  grid->right = right;
-}
-
-void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
+void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
 {
   // Compute start/stop/step for the loop below
   int start, stop, step;
   if (count > 0) {
-    start = grid->top;
-    stop = grid->bot - count + 1;
+    start = top;
+    stop = bot - count + 1;
     step = 1;
   } else {
-    start = grid->bot;
-    stop = grid->top - count - 1;
+    start = bot;
+    stop = top - count - 1;
     step = -1;
   }
 
@@ -85,46 +71,24 @@ void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
 
   // Copy cell data
   for (i = start; i != stop; i += step) {
-    UCell *target_row = grid->cells[i] + grid->left;
-    UCell *source_row = grid->cells[i + count] + grid->left;
+    UCell *target_row = grid->cells[i] + left;
+    UCell *source_row = grid->cells[i + count] + left;
+    assert(right >= left && left >= 0);
     memcpy(target_row, source_row,
-        sizeof(UCell) * (size_t)(grid->right - grid->left + 1));
+           sizeof(UCell) * ((size_t)right - (size_t)left + 1));
   }
-
-  // clear cells in the emptied region,
-  if (count > 0) {
-    *clear_top = stop;
-    *clear_bot = stop + count - 1;
-  } else {
-    *clear_bot = stop;
-    *clear_top = stop + count + 1;
-  }
-  clear_region(grid, *clear_top, *clear_bot, grid->left, grid->right);
 }
 
-UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
+static void clear_region(UGrid *grid, int top, int bot, int left, int right,
+                         sattr_T attr)
 {
-  UCell *cell = grid->cells[grid->row] + grid->col;
-  cell->data[size] = 0;
-  cell->attrs = grid->attrs;
-  assert(size <= CELLBYTES);
-
-  if (text) {
-    memcpy(cell->data, text, size);
+  for (int row = top; row <= bot; row++) {
+    UGRID_FOREACH_CELL(grid, row, left, right+1, {
+      cell->data[0] = ' ';
+      cell->data[1] = 0;
+      cell->attr = attr;
+    });
   }
-
-  grid->col += 1;
-  return cell;
-}
-
-static void clear_region(UGrid *grid, int top, int bot, int left, int right)
-{
-  HlAttrs clear_attrs = grid->clear_attrs;
-  UGRID_FOREACH_CELL(grid, top, bot, left, right, {
-    cell->data[0] = ' ';
-    cell->data[1] = 0;
-    cell->attrs = clear_attrs;
-  });
 }
 
 static void destroy_cells(UGrid *grid)
@@ -133,8 +97,7 @@ static void destroy_cells(UGrid *grid)
     for (int i = 0; i < grid->height; i++) {
       xfree(grid->cells[i]);
     }
-    xfree(grid->cells);
-    grid->cells = NULL;
+    XFREE_CLEAR(grid->cells);
   }
 }
 

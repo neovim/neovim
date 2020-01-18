@@ -2,9 +2,9 @@
 " Language:	Mutt setup files
 " Original:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
 " Maintainer:	Kyle Wheeler <kyle-muttrc.vim@memoryhole.net>
-" Last Change:	18 August 2016
+" Last Change:	21 May 2018
 
-" This file covers mutt version 1.7.0
+" This file covers mutt version 1.10.0
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -104,142 +104,175 @@ syn match   muttrcKeyName	contained "<F[0-9]\+>"
 syn keyword muttrcVarBool	skipwhite contained 
 			\ allow_8bit allow_ansi arrow_cursor ascii_chars askbcc askcc attach_split
 			\ auto_tag autoedit beep beep_new bounce_delivered braille_friendly
-			\ check_mbox_size check_new collapse_unread confirmappend confirmcreate
-			\ crypt_autoencrypt crypt_autopgp crypt_autosign crypt_autosmime
-			\ crypt_confirmhook crypt_opportunistic_encrypt crypt_replyencrypt
-			\ crypt_replysign crypt_replysignencrypted crypt_timestamp crypt_use_gpgme
-			\ crypt_use_pka delete_untag digest_collapse duplicate_threads edit_hdrs
-			\ edit_headers encode_from envelope_from fast_reply fcc_clear followup_to
-			\ force_name forw_decode forw_decrypt forw_quote forward_decode forward_decrypt
-			\ forward_quote hdrs header help hidden_host hide_limited hide_missing
-			\ hide_thread_subject hide_top_limited hide_top_missing honor_disposition
-			\ idn_decode idn_encode ignore_linear_white_space ignore_list_reply_to
-			\ imap_check_subscribed imap_list_subscribed imap_passive imap_peek
-			\ imap_servernoise implicit_autoview include_onlyfirst keep_flagged
+			\ browser_abbreviate_mailboxes change_folder_next check_mbox_size check_new
+			\ collapse_unread confirmappend confirmcreate crypt_autoencrypt crypt_autopgp
+			\ crypt_autosign crypt_autosmime crypt_confirmhook crypt_opportunistic_encrypt
+			\ crypt_replyencrypt crypt_replysign crypt_replysignencrypted crypt_timestamp
+			\ crypt_use_gpgme crypt_use_pka delete_untag digest_collapse duplicate_threads
+			\ edit_hdrs edit_headers encode_from envelope_from fast_reply fcc_clear
+			\ flag_safe followup_to force_name forw_decode forw_decrypt forw_quote
+			\ forward_decode forward_decrypt forward_quote hdrs header
+			\ header_color_partial help hidden_host hide_limited hide_missing
+			\ hide_thread_subject hide_top_limited hide_top_missing history_remove_dups
+			\ honor_disposition idn_decode idn_encode ignore_linear_white_space
+			\ ignore_list_reply_to imap_check_subscribed imap_list_subscribed imap_passive
+			\ imap_peek imap_servernoise implicit_autoview include_onlyfirst keep_flagged
 			\ mail_check_recent mail_check_stats mailcap_sanitize maildir_check_cur
 			\ maildir_header_cache_verify maildir_trash mark_old markers menu_move_off
 			\ menu_scroll message_cache_clean meta_key metoo mh_purge mime_forward_decode
-			\ narrow_tree pager_stop pgp_auto_decode pgp_auto_traditional pgp_autoencrypt
-			\ pgp_autoinline pgp_autosign pgp_check_exit pgp_create_traditional
-			\ pgp_ignore_subkeys pgp_long_ids pgp_replyencrypt pgp_replyinline pgp_replysign
-			\ pgp_replysignencrypted pgp_retainable_sigs pgp_show_unusable pgp_strict_enc
-			\ pgp_use_gpg_agent pipe_decode pipe_split pop_auth_try_all pop_last
-			\ postpone_encrypt postpone_encrypt_as print_decode print_split prompt_after
-			\ read_only reflow_space_quotes reflow_text reflow_wrap reply_self resolve
-			\ resume_draft_files resume_edited_draft_files reverse_alias reverse_name
-			\ reverse_realname rfc2047_parameters save_address save_empty save_name score
-			\ sidebar_folder_indent sidebar_new_mail_only sidebar_next_new_wrap
-			\ sidebar_short_path sidebar_sort sidebar_visible sig_dashes sig_on_top
-			\ smart_wrap smime_ask_cert_label smime_decrypt_use_default_key smime_is_default
-			\ sort_re ssl_force_tls ssl_use_sslv2 ssl_use_sslv3 ssl_use_tlsv1
-			\ ssl_usesystemcerts ssl_verify_dates ssl_verify_host status_on_top strict_mime
-			\ strict_threads suspend text_flowed thorough_search thread_received tilde
-			\ ts_enabled uncollapse_jump use_8bitmime use_domain use_envelope_from use_from
-			\ use_idn use_ipv6 user_agent wait_key weed wrap_search write_bcc
+			\ mime_type_query_first narrow_tree pager_stop pgp_auto_decode
+			\ pgp_auto_traditional pgp_autoencrypt pgp_autoinline pgp_autosign
+			\ pgp_check_exit pgp_create_traditional pgp_ignore_subkeys pgp_long_ids
+			\ pgp_replyencrypt pgp_replyinline pgp_replysign pgp_replysignencrypted
+			\ pgp_retainable_sigs pgp_self_encrypt pgp_self_encrypt_as pgp_show_unusable
+			\ pgp_strict_enc pgp_use_gpg_agent pipe_decode pipe_split pop_auth_try_all
+			\ pop_last postpone_encrypt postpone_encrypt_as print_decode print_split
+			\ prompt_after read_only reflow_space_quotes reflow_text reflow_wrap
+			\ reply_self resolve resume_draft_files resume_edited_draft_files
+			\ reverse_alias reverse_name reverse_realname rfc2047_parameters save_address
+			\ save_empty save_name score sidebar_folder_indent sidebar_new_mail_only
+			\ sidebar_next_new_wrap sidebar_short_path sidebar_sort sidebar_visible
+			\ sig_dashes sig_on_top smart_wrap smime_ask_cert_label
+			\ smime_decrypt_use_default_key smime_is_default smime_self_encrypt
+			\ smime_self_encrypt_as sort_re ssl_force_tls ssl_use_sslv2 ssl_use_sslv3
+			\ ssl_use_tlsv1 ssl_usesystemcerts ssl_verify_dates ssl_verify_host
+			\ ssl_verify_partial_chains status_on_top strict_mime strict_threads suspend
+			\ text_flowed thorough_search thread_received tilde ts_enabled uncollapse_jump
+			\ use_8bitmime use_domain use_envelope_from use_from use_idn use_ipv6
+			\ uncollapse_new user_agent wait_key weed wrap_search write_bcc
 			\ nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarBool	skipwhite contained 
-			\ noallow_8bit noallow_ansi noarrow_cursor noascii_chars noaskbcc noaskcc noattach_split
-			\ noauto_tag noautoedit nobeep nobeep_new nobounce_delivered nobraille_friendly
-			\ nocheck_mbox_size nocheck_new nocollapse_unread noconfirmappend noconfirmcreate
-			\ nocrypt_autoencrypt nocrypt_autopgp nocrypt_autosign nocrypt_autosmime
-			\ nocrypt_confirmhook nocrypt_opportunistic_encrypt nocrypt_replyencrypt
-			\ nocrypt_replysign nocrypt_replysignencrypted nocrypt_timestamp nocrypt_use_gpgme
-			\ nocrypt_use_pka nodelete_untag nodigest_collapse noduplicate_threads noedit_hdrs
-			\ noedit_headers noencode_from noenvelope_from nofast_reply nofcc_clear nofollowup_to
-			\ noforce_name noforw_decode noforw_decrypt noforw_quote noforward_decode noforward_decrypt
-			\ noforward_quote nohdrs noheader nohelp nohidden_host nohide_limited nohide_missing
-			\ nohide_thread_subject nohide_top_limited nohide_top_missing nohonor_disposition
-			\ noidn_decode noidn_encode noignore_linear_white_space noignore_list_reply_to
-			\ noimap_check_subscribed noimap_list_subscribed noimap_passive noimap_peek
-			\ noimap_servernoise noimplicit_autoview noinclude_onlyfirst nokeep_flagged
-			\ nomail_check_recent nomail_check_stats nomailcap_sanitize nomaildir_check_cur
-			\ nomaildir_header_cache_verify nomaildir_trash nomark_old nomarkers nomenu_move_off
-			\ nomenu_scroll nomessage_cache_clean nometa_key nometoo nomh_purge nomime_forward_decode
-			\ nonarrow_tree nopager_stop nopgp_auto_decode nopgp_auto_traditional nopgp_autoencrypt
+			\ noallow_8bit noallow_ansi noarrow_cursor noascii_chars noaskbcc noaskcc
+			\ noattach_split noauto_tag noautoedit nobeep nobeep_new nobounce_delivered
+			\ nobraille_friendly nobrowser_abbreviate_mailboxes nochange_folder_next
+			\ nocheck_mbox_size nocheck_new nocollapse_unread noconfirmappend
+			\ noconfirmcreate nocrypt_autoencrypt nocrypt_autopgp nocrypt_autosign
+			\ nocrypt_autosmime nocrypt_confirmhook nocrypt_opportunistic_encrypt
+			\ nocrypt_replyencrypt nocrypt_replysign nocrypt_replysignencrypted
+			\ nocrypt_timestamp nocrypt_use_gpgme nocrypt_use_pka nodelete_untag
+			\ nodigest_collapse noduplicate_threads noedit_hdrs noedit_headers
+			\ noencode_from noenvelope_from nofast_reply nofcc_clear noflag_safe
+			\ nofollowup_to noforce_name noforw_decode noforw_decrypt noforw_quote
+			\ noforward_decode noforward_decrypt noforward_quote nohdrs noheader
+			\ noheader_color_partial nohelp nohidden_host nohide_limited nohide_missing
+			\ nohide_thread_subject nohide_top_limited nohide_top_missing
+			\ nohistory_remove_dups nohonor_disposition noidn_decode noidn_encode
+			\ noignore_linear_white_space noignore_list_reply_to noimap_check_subscribed
+			\ noimap_list_subscribed noimap_passive noimap_peek noimap_servernoise
+			\ noimplicit_autoview noinclude_onlyfirst nokeep_flagged nomail_check_recent
+			\ nomail_check_stats nomailcap_sanitize nomaildir_check_cur
+			\ nomaildir_header_cache_verify nomaildir_trash nomark_old nomarkers
+			\ nomenu_move_off nomenu_scroll nomessage_cache_clean nometa_key nometoo
+			\ nomh_purge nomime_forward_decode nomime_type_query_first nonarrow_tree
+			\ nopager_stop nopgp_auto_decode nopgp_auto_traditional nopgp_autoencrypt
 			\ nopgp_autoinline nopgp_autosign nopgp_check_exit nopgp_create_traditional
-			\ nopgp_ignore_subkeys nopgp_long_ids nopgp_replyencrypt nopgp_replyinline nopgp_replysign
-			\ nopgp_replysignencrypted nopgp_retainable_sigs nopgp_show_unusable nopgp_strict_enc
-			\ nopgp_use_gpg_agent nopipe_decode nopipe_split nopop_auth_try_all nopop_last
-			\ nopostpone_encrypt nopostpone_encrypt_as noprint_decode noprint_split noprompt_after
-			\ noread_only noreflow_space_quotes noreflow_text noreflow_wrap noreply_self noresolve
-			\ noresume_draft_files noresume_edited_draft_files noreverse_alias noreverse_name
-			\ noreverse_realname norfc2047_parameters nosave_address nosave_empty nosave_name noscore
-			\ nosidebar_folder_indent nosidebar_new_mail_only nosidebar_next_new_wrap
-			\ nosidebar_short_path nosidebar_sort nosidebar_visible nosig_dashes nosig_on_top
-			\ nosmart_wrap nosmime_ask_cert_label nosmime_decrypt_use_default_key nosmime_is_default
-			\ nosort_re nossl_force_tls nossl_use_sslv2 nossl_use_sslv3 nossl_use_tlsv1
-			\ nossl_usesystemcerts nossl_verify_dates nossl_verify_host nostatus_on_top nostrict_mime
-			\ nostrict_threads nosuspend notext_flowed nothorough_search nothread_received notilde
-			\ nots_enabled nouncollapse_jump nouse_8bitmime nouse_domain nouse_envelope_from nouse_from
-			\ nouse_idn nouse_ipv6 nouser_agent nowait_key noweed nowrap_search nowrite_bcc
+			\ nopgp_ignore_subkeys nopgp_long_ids nopgp_replyencrypt nopgp_replyinline
+			\ nopgp_replysign nopgp_replysignencrypted nopgp_retainable_sigs
+			\ nopgp_self_encrypt nopgp_self_encrypt_as nopgp_show_unusable
+			\ nopgp_strict_enc nopgp_use_gpg_agent nopipe_decode nopipe_split
+			\ nopop_auth_try_all nopop_last nopostpone_encrypt nopostpone_encrypt_as
+			\ noprint_decode noprint_split noprompt_after noread_only
+			\ noreflow_space_quotes noreflow_text noreflow_wrap noreply_self noresolve
+			\ noresume_draft_files noresume_edited_draft_files noreverse_alias
+			\ noreverse_name noreverse_realname norfc2047_parameters nosave_address
+			\ nosave_empty nosave_name noscore nosidebar_folder_indent
+			\ nosidebar_new_mail_only nosidebar_next_new_wrap nosidebar_short_path
+			\ nosidebar_sort nosidebar_visible nosig_dashes nosig_on_top nosmart_wrap
+			\ nosmime_ask_cert_label nosmime_decrypt_use_default_key nosmime_is_default
+			\ nosmime_self_encrypt nosmime_self_encrypt_as nosort_re nossl_force_tls
+			\ nossl_use_sslv2 nossl_use_sslv3 nossl_use_tlsv1 nossl_usesystemcerts
+			\ nossl_verify_dates nossl_verify_host nossl_verify_partial_chains
+			\ nostatus_on_top nostrict_mime nostrict_threads nosuspend notext_flowed
+			\ nothorough_search nothread_received notilde nots_enabled nouncollapse_jump
+			\ nouse_8bitmime nouse_domain nouse_envelope_from nouse_from nouse_idn
+			\ nouse_ipv6 nouncollapse_new nouser_agent nowait_key noweed nowrap_search
+			\ nowrite_bcc
 			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarBool	skipwhite contained
-			\ invallow_8bit invallow_ansi invarrow_cursor invascii_chars invaskbcc invaskcc invattach_split
-			\ invauto_tag invautoedit invbeep invbeep_new invbounce_delivered invbraille_friendly
-			\ invcheck_mbox_size invcheck_new invcollapse_unread invconfirmappend invconfirmcreate
-			\ invcrypt_autoencrypt invcrypt_autopgp invcrypt_autosign invcrypt_autosmime
-			\ invcrypt_confirmhook invcrypt_opportunistic_encrypt invcrypt_replyencrypt
-			\ invcrypt_replysign invcrypt_replysignencrypted invcrypt_timestamp invcrypt_use_gpgme
-			\ invcrypt_use_pka invdelete_untag invdigest_collapse invduplicate_threads invedit_hdrs
-			\ invedit_headers invencode_from invenvelope_from invfast_reply invfcc_clear invfollowup_to
-			\ invforce_name invforw_decode invforw_decrypt invforw_quote invforward_decode invforward_decrypt
-			\ invforward_quote invhdrs invheader invhelp invhidden_host invhide_limited invhide_missing
-			\ invhide_thread_subject invhide_top_limited invhide_top_missing invhonor_disposition
-			\ invidn_decode invidn_encode invignore_linear_white_space invignore_list_reply_to
-			\ invimap_check_subscribed invimap_list_subscribed invimap_passive invimap_peek
-			\ invimap_servernoise invimplicit_autoview invinclude_onlyfirst invkeep_flagged
-			\ invmail_check_recent invmail_check_stats invmailcap_sanitize invmaildir_check_cur
-			\ invmaildir_header_cache_verify invmaildir_trash invmark_old invmarkers invmenu_move_off
-			\ invmenu_scroll invmessage_cache_clean invmeta_key invmetoo invmh_purge invmime_forward_decode
-			\ invnarrow_tree invpager_stop invpgp_auto_decode invpgp_auto_traditional invpgp_autoencrypt
-			\ invpgp_autoinline invpgp_autosign invpgp_check_exit invpgp_create_traditional
-			\ invpgp_ignore_subkeys invpgp_long_ids invpgp_replyencrypt invpgp_replyinline invpgp_replysign
-			\ invpgp_replysignencrypted invpgp_retainable_sigs invpgp_show_unusable invpgp_strict_enc
-			\ invpgp_use_gpg_agent invpipe_decode invpipe_split invpop_auth_try_all invpop_last
-			\ invpostpone_encrypt invpostpone_encrypt_as invprint_decode invprint_split invprompt_after
-			\ invread_only invreflow_space_quotes invreflow_text invreflow_wrap invreply_self invresolve
-			\ invresume_draft_files invresume_edited_draft_files invreverse_alias invreverse_name
-			\ invreverse_realname invrfc2047_parameters invsave_address invsave_empty invsave_name invscore
-			\ invsidebar_folder_indent invsidebar_new_mail_only invsidebar_next_new_wrap
-			\ invsidebar_short_path invsidebar_sort invsidebar_visible invsig_dashes invsig_on_top
-			\ invsmart_wrap invsmime_ask_cert_label invsmime_decrypt_use_default_key invsmime_is_default
-			\ invsort_re invssl_force_tls invssl_use_sslv2 invssl_use_sslv3 invssl_use_tlsv1
-			\ invssl_usesystemcerts invssl_verify_dates invssl_verify_host invstatus_on_top invstrict_mime
-			\ invstrict_threads invsuspend invtext_flowed invthorough_search invthread_received invtilde
-			\ invts_enabled invuncollapse_jump invuse_8bitmime invuse_domain invuse_envelope_from invuse_from
-			\ invuse_idn invuse_ipv6 invuser_agent invwait_key invweed invwrap_search invwrite_bcc
+			\ invallow_8bit invallow_ansi invarrow_cursor invascii_chars invaskbcc
+			\ invaskcc invattach_split invauto_tag invautoedit invbeep invbeep_new
+			\ invbounce_delivered invbraille_friendly invbrowser_abbreviate_mailboxes
+			\ invchange_folder_next invcheck_mbox_size invcheck_new invcollapse_unread
+			\ invconfirmappend invconfirmcreate invcrypt_autoencrypt invcrypt_autopgp
+			\ invcrypt_autosign invcrypt_autosmime invcrypt_confirmhook
+			\ invcrypt_opportunistic_encrypt invcrypt_replyencrypt invcrypt_replysign
+			\ invcrypt_replysignencrypted invcrypt_timestamp invcrypt_use_gpgme
+			\ invcrypt_use_pka invdelete_untag invdigest_collapse invduplicate_threads
+			\ invedit_hdrs invedit_headers invencode_from invenvelope_from invfast_reply
+			\ invfcc_clear invflag_safe invfollowup_to invforce_name invforw_decode
+			\ invforw_decrypt invforw_quote invforward_decode invforward_decrypt
+			\ invforward_quote invhdrs invheader invheader_color_partial invhelp
+			\ invhidden_host invhide_limited invhide_missing invhide_thread_subject
+			\ invhide_top_limited invhide_top_missing invhistory_remove_dups
+			\ invhonor_disposition invidn_decode invidn_encode
+			\ invignore_linear_white_space invignore_list_reply_to
+			\ invimap_check_subscribed invimap_list_subscribed invimap_passive
+			\ invimap_peek invimap_servernoise invimplicit_autoview invinclude_onlyfirst
+			\ invkeep_flagged invmail_check_recent invmail_check_stats invmailcap_sanitize
+			\ invmaildir_check_cur invmaildir_header_cache_verify invmaildir_trash
+			\ invmark_old invmarkers invmenu_move_off invmenu_scroll
+			\ invmessage_cache_clean invmeta_key invmetoo invmh_purge
+			\ invmime_forward_decode invmime_type_query_first invnarrow_tree invpager_stop
+			\ invpgp_auto_decode invpgp_auto_traditional invpgp_autoencrypt
+			\ invpgp_autoinline invpgp_autosign invpgp_check_exit
+			\ invpgp_create_traditional invpgp_ignore_subkeys invpgp_long_ids
+			\ invpgp_replyencrypt invpgp_replyinline invpgp_replysign
+			\ invpgp_replysignencrypted invpgp_retainable_sigs invpgp_self_encrypt
+			\ invpgp_self_encrypt_as invpgp_show_unusable invpgp_strict_enc
+			\ invpgp_use_gpg_agent invpipe_decode invpipe_split invpop_auth_try_all
+			\ invpop_last invpostpone_encrypt invpostpone_encrypt_as invprint_decode
+			\ invprint_split invprompt_after invread_only invreflow_space_quotes
+			\ invreflow_text invreflow_wrap invreply_self invresolve invresume_draft_files
+			\ invresume_edited_draft_files invreverse_alias invreverse_name
+			\ invreverse_realname invrfc2047_parameters invsave_address invsave_empty
+			\ invsave_name invscore invsidebar_folder_indent invsidebar_new_mail_only
+			\ invsidebar_next_new_wrap invsidebar_short_path invsidebar_sort
+			\ invsidebar_visible invsig_dashes invsig_on_top invsmart_wrap
+			\ invsmime_ask_cert_label invsmime_decrypt_use_default_key invsmime_is_default
+			\ invsmime_self_encrypt invsmime_self_encrypt_as invsort_re invssl_force_tls
+			\ invssl_use_sslv2 invssl_use_sslv3 invssl_use_tlsv1 invssl_usesystemcerts
+			\ invssl_verify_dates invssl_verify_host invssl_verify_partial_chains
+			\ invstatus_on_top invstrict_mime invstrict_threads invsuspend invtext_flowed
+			\ invthorough_search invthread_received invtilde invts_enabled
+			\ invuncollapse_jump invuse_8bitmime invuse_domain invuse_envelope_from
+			\ invuse_from invuse_idn invuse_ipv6 invuncollapse_new invuser_agent
+			\ invwait_key invweed invwrap_search invwrite_bcc
 			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarQuad	skipwhite contained
-			\ abort_nosubject abort_unmodified bounce copy crypt_verify_sig delete
-			\ fcc_attach forward_edit honor_followup_to include mime_forward
+			\ abort_nosubject abort_unmodified abort_noattach bounce copy crypt_verify_sig
+			\ delete fcc_attach forward_edit honor_followup_to include mime_forward
 			\ mime_forward_rest mime_fwd move pgp_mime_auto pgp_verify_sig pop_delete
 			\ pop_reconnect postpone print quit recall reply_to ssl_starttls
 			\ nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarQuad	skipwhite contained
-			\ noabort_nosubject noabort_unmodified nobounce nocopy nocrypt_verify_sig nodelete
-			\ nofcc_attach noforward_edit nohonor_followup_to noinclude nomime_forward
-			\ nomime_forward_rest nomime_fwd nomove nopgp_mime_auto nopgp_verify_sig nopop_delete
-			\ nopop_reconnect nopostpone noprint noquit norecall noreply_to nossl_starttls
+			\ noabort_nosubject noabort_unmodified noabort_noattach nobounce nocopy
+			\ nocrypt_verify_sig nodelete nofcc_attach noforward_edit nohonor_followup_to
+			\ noinclude nomime_forward nomime_forward_rest nomime_fwd nomove
+			\ nopgp_mime_auto nopgp_verify_sig nopop_delete nopop_reconnect nopostpone
+			\ noprint noquit norecall noreply_to nossl_starttls
 			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarQuad	skipwhite contained
-			\ invabort_nosubject invabort_unmodified invbounce invcopy invcrypt_verify_sig invdelete
-			\ invfcc_attach invforward_edit invhonor_followup_to invinclude invmime_forward
-			\ invmime_forward_rest invmime_fwd invmove invpgp_mime_auto invpgp_verify_sig invpop_delete
-			\ invpop_reconnect invpostpone invprint invquit invrecall invreply_to invssl_starttls
+			\ invabort_nosubject invabort_unmodified invabort_noattach invbounce invcopy
+			\ invcrypt_verify_sig invdelete invfcc_attach invforward_edit
+			\ invhonor_followup_to invinclude invmime_forward invmime_forward_rest
+			\ invmime_fwd invmove invpgp_mime_auto invpgp_verify_sig invpop_delete
+			\ invpop_reconnect invpostpone invprint invquit invrecall invreply_to
+			\ invssl_starttls
 			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn keyword muttrcVarNum	skipwhite contained
-			\ connect_timeout history imap_keepalive imap_pipeline_depth mail_check
-			\ mail_check_stats_interval menu_context net_inc pager_context pager_index_lines
-			\ pgp_timeout pop_checkinterval read_inc save_history score_threshold_delete
-			\ score_threshold_flag score_threshold_read search_context sendmail_wait
-			\ sidebar_width sleep_time smime_timeout ssl_min_dh_prime_bits time_inc timeout
-			\ wrap wrap_headers wrapmargin write_inc
+			\ connect_timeout error_history history imap_keepalive imap_pipeline_depth
+			\ imap_poll_timeout mail_check mail_check_stats_interval menu_context net_inc
+			\ pager_context pager_index_lines pgp_timeout pop_checkinterval read_inc
+			\ save_history score_threshold_delete score_threshold_flag
+			\ score_threshold_read search_context sendmail_wait sidebar_width sleep_time
+			\ smime_timeout ssl_min_dh_prime_bits time_inc timeout wrap wrap_headers
+			\ wrapmargin write_inc
 			\ nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn match muttrcFormatErrors contained /%./
@@ -284,7 +317,7 @@ syn match muttrcAliasFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\
 syn match muttrcQueryFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[acent%]/
 syn match muttrcQueryFormatConditionals contained /%?[e]?/ nextgroup=muttrcFormatConditionals2
 " The following info was pulled from mutt_attach_fmt in recvattach.c
-syn match muttrcAttachFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[CcDdefImMnQstTuX%]/
+syn match muttrcAttachFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[CcDdeFfImMnQstTuX%]/
 syn match muttrcAttachFormatEscapes contained /%[>|*]./
 syn match muttrcAttachFormatConditionals contained /%?[CcdDefInmMQstTuX]?/ nextgroup=muttrcFormatConditionals2
 syn match muttrcFormatConditionals2 contained /[^?]*?/
@@ -308,7 +341,7 @@ syn match muttrcPGPFormatConditionals contained /%?[nkualfct]?/
 syn match muttrcPGPCmdFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[pfsar%]/
 syn match muttrcPGPCmdFormatConditionals contained /%?[pfsar]?/ nextgroup=muttrcFormatConditionals2
 " The following info was pulled from status_format_str in status.c
-syn match muttrcStatusFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[bdfFhlLmMnopPrsStuvV%]/
+syn match muttrcStatusFormatEscapes contained /%\%(\%(-\?[0-9]\+\)\?\%(\.[0-9]\+\)\?\)\?[:_]\?[bdfFhlLmMnopPRrsStuvV%]/
 syn match muttrcStatusFormatEscapes contained /%[>|*]./
 syn match muttrcStatusFormatConditionals contained /%?[bdFlLmMnoptuV]?/ nextgroup=muttrcFormatConditionals2
 " This matches the documentation, but directly contradicts the code 
@@ -357,27 +390,27 @@ syn match muttrcVPrefix		contained /[?&]/ nextgroup=muttrcVarBool,muttrcVarQuad,
 
 syn match muttrcVarStr		contained skipwhite 'my_[a-zA-Z0-9_]\+' nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 syn keyword muttrcVarStr	contained skipwhite
-			\ alias_file assumed_charset attach_charset attach_sep certificate_file charset
-			\ config_charset content_type default_hook display_filter dotlock_program
-			\ dsn_notify dsn_return editor entropy_file envelope_from_address escape folder
-			\ forw_format forward_format from gecos_mask hdr_format header_cache
-			\ header_cache_compress header_cache_pagesize history_file hostname
-			\ imap_authenticators imap_delim_chars imap_headers imap_idle imap_login
-			\ imap_pass imap_user indent_str indent_string ispell locale mailcap_path mask
-			\ mbox mbox_type message_cachedir mh_seq_flagged mh_seq_replied mh_seq_unseen
-			\ mixmaster msg_format pager pgp_decryption_okay pgp_good_sign
-			\ pgp_mime_signature_description pgp_mime_signature_filename pgp_sign_as
-			\ pgp_sort_keys pipe_sep pop_authenticators pop_host pop_pass pop_user
-			\ post_indent_str post_indent_string postpone_encrypt_as postponed preconnect
-			\ print_cmd print_command query_command quote_regexp realname record
-			\ reply_regexp send_charset sendmail shell sidebar_delim sidebar_delim_chars
-			\ sidebar_divider_char sidebar_format sidebar_indent_string sidebar_sort_method
-			\ signature simple_search smileys smime_ca_location smime_certificates
-			\ smime_default_key smime_encrypt_with smime_keys smime_sign_as
-			\ smime_sign_digest_alg smtp_authenticators smtp_pass smtp_url sort sort_alias
-			\ sort_aux sort_browser spam_separator spoolfile ssl_ca_certificates_file
-			\ ssl_ciphers ssl_client_cert status_chars tmpdir to_chars trash ts_icon_format
-			\ ts_status_format tunnel visual
+			\ abort_noattach_regexp alias_file assumed_charset attach_charset attach_sep
+			\ attribution_locale certificate_file charset config_charset content_type
+			\ default_hook display_filter dotlock_program dsn_notify dsn_return editor
+		        \ entropy_file envelope_from_address escape folder forw_format
+		        \ forward_attribution_intro forward_attribution_trailer forward_format from gecos_mask
+		        \ hdr_format header_cache header_cache_compress header_cache_pagesize history_file
+		        \ hostname imap_authenticators imap_delim_chars imap_headers imap_idle imap_login
+		        \ imap_pass imap_user indent_str indent_string ispell locale mailcap_path
+		        \ mark_macro_prefix mask mbox mbox_type message_cachedir mh_seq_flagged mh_seq_replied
+		        \ mh_seq_unseen mime_type_query_command mixmaster msg_format new_mail_command pager
+		        \ pgp_default_key pgp_decryption_okay pgp_good_sign pgp_mime_signature_description
+		        \ pgp_mime_signature_filename pgp_sign_as pgp_sort_keys pipe_sep pop_authenticators
+		        \ pop_host pop_pass pop_user post_indent_str post_indent_string postpone_encrypt_as
+		        \ postponed preconnect print_cmd print_command query_command quote_regexp realname
+		        \ record reply_regexp send_charset sendmail shell sidebar_delim sidebar_delim_chars
+		        \ sidebar_divider_char sidebar_format sidebar_indent_string sidebar_sort_method
+		        \ signature simple_search smileys smime_ca_location smime_certificates
+		        \ smime_default_key smime_encrypt_with smime_keys smime_sign_as smime_sign_digest_alg
+		        \ smtp_authenticators smtp_pass smtp_url sort sort_alias sort_aux sort_browser
+		        \ spam_separator spoolfile ssl_ca_certificates_file ssl_ciphers ssl_client_cert
+		        \ status_chars tmpdir to_chars trash ts_icon_format ts_status_format tunnel visual
 			\ nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 " Present in 1.4.2.1 (pgp_create_traditional was a bool then)
@@ -396,6 +429,7 @@ syn keyword muttrcCommand	skipwhite
 			\ mailto_allow mime_lookup my_hdr pgp-hook push score sidebar_whitelist source
 			\ unalternative_order unalternative_order unauto_view ungroup unhdr_order
 			\ unignore unmailboxes unmailto_allow unmime_lookup unmono unmy_hdr unscore
+			\ unsidebar_whitelist
 syn keyword muttrcCommand	skipwhite charset-hook nextgroup=muttrcRXString
 syn keyword muttrcCommand	skipwhite unhook nextgroup=muttrcHooks
 
@@ -430,7 +464,7 @@ syn match muttrcVariableInner	contained "\$[a-zA-Z_-]\+"
 syn match muttrcEscapedVariable	contained "\\\$[a-zA-Z_-]\+"
 
 syn match muttrcBadAction	contained "[^<>]\+" contains=muttrcEmail
-syn match muttrcFunction	contained "\<\%(attach\|bounce\|copy\|delete\|display\|flag\|forward\|parent\|pipe\|postpone\|print\|purge\|recall\|resend\|save\|send\|tag\|undelete\)-message\>"
+syn match muttrcFunction	contained "\<\%(attach\|bounce\|copy\|delete\|display\|flag\|forward\|mark\|parent\|pipe\|postpone\|print\|purge\|recall\|resend\|root\|save\|send\|tag\|undelete\)-message\>"
 syn match muttrcFunction	contained "\<\%(delete\|next\|previous\|read\|tag\|break\|undelete\)-thread\>"
 syn match muttrcFunction	contained "\<link-threads\>"
 syn match muttrcFunction	contained "\<\%(backward\|capitalize\|downcase\|forward\|kill\|upcase\)-word\>"
@@ -442,10 +476,12 @@ syn match muttrcFunction	contained "\<current-\%(bottom\|middle\|top\)\>"
 syn match muttrcFunction	contained "\<decode-\%(copy\|save\)\>"
 syn match muttrcFunction	contained "\<delete-\%(char\|pattern\|subthread\)\>"
 syn match muttrcFunction	contained "\<display-\%(address\|toggle-weed\)\>"
-syn match muttrcFunction	contained "\<edit\%(-\%(bcc\|cc\|description\|encoding\|fcc\|file\|from\|headers\|mime\|reply-to\|subject\|to\|type\)\)\?\>"
+syn match muttrcFunction	contained "\<echo\>"
+syn match muttrcFunction	contained "\<edit\%(-\%(bcc\|cc\|description\|encoding\|fcc\|file\|from\|headers\|label\|mime\|reply-to\|subject\|to\|type\)\)\?\>"
 syn match muttrcFunction	contained "\<enter-\%(command\|mask\)\>"
+syn match muttrcFunction	contained "\<error-history\>"
 syn match muttrcFunction	contained "\<half-\%(up\|down\)\>"
-syn match muttrcFunction	contained "\<history-\%(up\|down\)\>"
+syn match muttrcFunction	contained "\<history-\%(up\|down\|search\)\>"
 syn match muttrcFunction	contained "\<kill-\%(eol\|eow\|line\)\>"
 syn match muttrcFunction	contained "\<next-\%(line\|new\%(-then-unread\)\?\|page\|subthread\|undeleted\|unread\|unread-mailbox\)\>"
 syn match muttrcFunction	contained "\<previous-\%(line\|new\%(-then-unread\)\?\|page\|subthread\|undeleted\|unread\)\>"
@@ -458,6 +494,9 @@ syn match muttrcFunction	contained "\<sidebar-\%(next\|next-new\|open\|page-down
 syn match muttrcFunction	contained "\<toggle-\%(mailboxes\|new\|quoted\|subscribed\|unlink\|write\)\>"
 syn match muttrcFunction	contained "\<undelete-\%(pattern\|subthread\)\>"
 syn match muttrcFunction	contained "\<collapse-\%(parts\|thread\|all\)\>"
+syn match muttrcFunction	contained "\<rename-attachment\>"
+syn match muttrcFunction	contained "\<subjectrx\>"
+syn match muttrcFunction	contained "\<\%(un\)\?setenv\>"
 syn match muttrcFunction	contained "\<view-\%(attach\|attachments\|file\|mailcap\|name\|text\)\>"
 syn match muttrcFunction	contained "\<\%(backspace\|backward-char\|bol\|bottom\|bottom-page\|buffy-cycle\|clear-flag\|complete\%(-query\)\?\|copy-file\|create-alias\|detach-file\|eol\|exit\|extract-keys\|\%(imap-\)\?fetch-mail\|forget-passphrase\|forward-char\|group-reply\|help\|ispell\|jump\|limit\|list-reply\|mail\|mail-key\|mark-as-new\|middle-page\|new-mime\|noop\|pgp-menu\|query\|query-append\|quit\|quote-char\|read-subthread\|redraw-screen\|refresh\|rename-file\|reply\|select-new\|set-flag\|shell-escape\|skip-quoted\|sort\|subscribe\|sync-mailbox\|top\|top-page\|transpose-chars\|unsubscribe\|untag-pattern\|verify-key\|what-key\|write-fcc\)\>"
 syn keyword muttrcFunction	contained imap-logout-all
@@ -559,6 +598,7 @@ syn match muttrcOptPattern contained skipwhite /[.]/ nextgroup=muttrcString,mutt
 syn region muttrcPattern contained matchgroup=Type keepend skipwhite start=+"+ skip=+\\"+ end=+"+ contains=muttrcSimplePat,muttrcUnHighlightSpace,muttrcSimplePatMetas
 syn region muttrcPattern contained matchgroup=Type keepend skipwhite start=+'+ skip=+\\'+ end=+'+ contains=muttrcSimplePat,muttrcUnHighlightSpace,muttrcSimplePatMetas
 syn region muttrcPattern contained keepend skipwhite start=+[~](+ end=+)+ skip=+\\)+ contains=muttrcSimplePat
+syn region muttrcPattern contained keepend skipwhite start=+[~][<>](+ end=+)+ skip=+\\)+ contains=muttrcSimplePat
 syn match muttrcPattern contained skipwhite /[~][A-Za-z]/ contains=muttrcSimplePat
 syn match muttrcPattern contained skipwhite /[.]/
 syn region muttrcPatternInner contained keepend start=+"[~=%!(^]+ms=s+1 skip=+\\"+ end=+"+me=e-1 contains=muttrcSimplePat,muttrcUnHighlightSpace,muttrcSimplePatMetas

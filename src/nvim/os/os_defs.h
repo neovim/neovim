@@ -32,10 +32,11 @@
 # include <strings.h>
 #endif
 
-/// Function to convert libuv error to char * error description
-///
-/// negative libuv error codes are returned by a number of os functions.
+/// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror
+
+/// Converts system error code to libuv error code.
+#define os_translate_sys_error uv_translate_sys_error
 
 #ifdef WIN32
 # define os_strtok strtok_s

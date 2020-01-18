@@ -14,6 +14,10 @@ typedef int colnr_T;
 enum { MAXLNUM = 0x7fffffff };
 /// Maximal column number, 31 bits
 enum { MAXCOL = 0x7fffffff };
+// Minimum line number
+enum { MINLNUM = 1 };
+// minimum column number
+enum { MINCOL = 1 };
 
 /*
  * position in file or buffer
@@ -24,7 +28,6 @@ typedef struct {
   colnr_T coladd;
 } pos_T;
 
-# define INIT_POS_T(l, c, ca) {l, c, ca}
 
 /*
  * Same, but without coladd.

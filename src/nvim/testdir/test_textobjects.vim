@@ -46,8 +46,43 @@ func Test_quote_selection_selection_exclusive()
   new
   call setline(1, "a 'bcde' f")
   set selection=exclusive
+
   exe "norm! fdvhi'y"
   call assert_equal('bcde', @")
+
+  let @"='dummy'
+  exe "norm! $gevi'y"
+  call assert_equal('bcde', @")
+
+  let @"='dummy'
+  exe "norm! 0fbhvi'y"
+  call assert_equal('bcde', @")
+
+  set selection&vim
+  bw!
+endfunc
+
+func Test_quote_selection_selection_exclusive_abort()
+  new
+  set selection=exclusive
+  call setline(1, "'abzzc'")
+  let exp_curs = [0, 1, 6, 0]
+  call cursor(1,1)
+  exe 'norm! fcdvi"'
+  " make sure to end visual mode to have a clear state
+  exe "norm! \<esc>"
+  call assert_equal(exp_curs, getpos('.'))
+  call cursor(1,1)
+  exe 'norm! fcvi"'
+  exe "norm! \<esc>"
+  call assert_equal(exp_curs, getpos('.'))
+  call cursor(1,2)
+  exe 'norm! vfcoi"'
+  exe "norm! \<esc>"
+  let exp_curs = [0, 1, 2, 0]
+  let exp_visu = [0, 1, 7, 0]
+  call assert_equal(exp_curs, getpos('.'))
+  call assert_equal(exp_visu, getpos("'>"))
   set selection&vim
   bw!
 endfunc
@@ -121,6 +156,23 @@ func Test_string_html_objects()
   enew!
 endfunc
 
+func Test_empty_html_tag()
+  new
+  call setline(1, '<div></div>')
+  normal 0citxxx
+  call assert_equal('<div>xxx</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<cityyy
+  call assert_equal('<div>yyy</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<vitsaaa
+  call assert_equal('aaa', getline(1))
+
+  bwipe!
+endfunc
+
 " Tests for match() and matchstr()
 func Test_match()
   call assert_equal("b", matchstr("abcd", ".", 0, 2))
@@ -151,4 +203,92 @@ func Test_match()
   call assert_equal(2 , match('abc', '\zs', 2, 1))
   call assert_equal(3 , match('abc', '\zs', 3, 1))
   call assert_equal(-1, match('abc', '\zs', 4, 1))
+endfunc
+
+" This was causing an illegal memory access
+func Test_inner_tag()
+  new
+  norm ixxx
+  call feedkeys("v", 'xt')
+  insert
+x
+x
+.
+  norm it
+  q!
+endfunc
+
+func Test_sentence()
+  enew!
+  call setline(1, 'A sentence.  A sentence?  A sentence!')
+
+  normal yis
+  call assert_equal('A sentence.', @")
+  normal yas
+  call assert_equal('A sentence.  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence?', @")
+  normal yas
+  call assert_equal('A sentence?  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence!', @")
+  normal yas
+  call assert_equal('  A sentence!', @")
+
+  normal 0
+  normal 2yis
+  call assert_equal('A sentence.  ', @")
+  normal 3yis
+  call assert_equal('A sentence.  A sentence?', @")
+  normal 2yas
+  call assert_equal('A sentence.  A sentence?  ', @")
+
+  %delete _
+endfunc
+
+func Test_sentence_with_quotes()
+  enew!
+  call setline(1, 'A "sentence."  A sentence.')
+
+  normal yis
+  call assert_equal('A "sentence."', @")
+  normal yas
+  call assert_equal('A "sentence."  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence.', @")
+  normal yas
+  call assert_equal('  A sentence.', @")
+
+  %delete _
+endfunc
+
+func! Test_sentence_with_cursor_on_delimiter()
+  enew!
+  call setline(1, "A '([sentence.])'  A sentence.")
+
+  normal! 15|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 15|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  normal! 16|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 16|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  normal! 17|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 17|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  %delete _
 endfunc

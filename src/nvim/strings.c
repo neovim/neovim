@@ -27,6 +27,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -50,16 +51,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/eval/encode.h"
 
-#ifdef __MINGW32__
-# undef fpclassify
-# define fpclassify __fpclassify
-# undef isnan
-# define isnan _isnan
-#endif
-
-/*
- * Copy "string" into newly allocated memory.
- */
+/// Copy "string" into newly allocated memory.
 char_u *vim_strsave(const char_u *string)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
@@ -207,7 +199,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
 
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
-  for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
+  for (const char_u *p = string; *p != NUL; MB_PTR_ADV(p)) {
 #ifdef WIN32
     if (!p_ssl) {
       if (*p == '"') {
@@ -344,14 +336,17 @@ char *strcase_save(const char *const orig, bool upper)
 
   char *p = res;
   while (*p != NUL) {
-    int l;
-
     int c = utf_ptr2char((const char_u *)p);
+    int l = utf_ptr2len((const char_u *)p);
+    if (c == 0) {
+      // overlong sequence, use only the first byte
+      c = *p;
+      l = 1;
+    }
     int uc = upper ? mb_toupper(c) : mb_tolower(c);
 
     // Reallocate string when byte count changes.  This is rare,
     // thus it's OK to do another malloc()/free().
-    l = utf_ptr2len((const char_u *)p);
     int newl = utf_char2len(uc);
     if (newl != l) {
       // TODO(philix): use xrealloc() in strup_save()
@@ -453,25 +448,6 @@ char_u *vim_strchr(const char_u *const string, const int c)
     u8char[len] = NUL;
     return (char_u *)strstr((const char *)string, u8char);
   }
-}
-
-/*
- * Search for last occurrence of "c" in "string".
- * Return NULL if not found.
- * Does not handle multi-byte char for "c"!
- */
-char_u *vim_strrchr(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *retval = NULL;
-  const char_u *p = string;
-
-  while (*p) {
-    if (*p == c)
-      retval = p;
-    mb_ptr_adv(p);
-  }
-  return (char_u *) retval;
 }
 
 /*
@@ -702,13 +678,14 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
 // are discarded. If "str_m" is greater than zero it is guaranteed
 // the resulting string will be NUL-terminated.
 
-// vim_vsnprintf() can be invoked with either "va_list" or a list of
+// vim_vsnprintf_typval() can be invoked with either "va_list" or a list of
 // "typval_T".  When the latter is not used it must be NULL.
 
 /// Append a formatted value to the string
 ///
-/// @see vim_vsnprintf().
+/// @see vim_vsnprintf_typval().
 int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   const size_t len = strlen(str);
   size_t space;
@@ -720,7 +697,7 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
   }
   va_list ap;
   va_start(ap, fmt);
-  const int str_l = vim_vsnprintf(str + len, space, fmt, ap, NULL);
+  const int str_l = vim_vsnprintf(str + len, space, fmt, ap);
   va_end(ap);
   return str_l;
 }
@@ -734,10 +711,11 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
 /// @return Number of bytes excluding NUL byte that would be written to the
 ///         string if str_m was greater or equal to the return value.
 int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   va_list ap;
   va_start(ap, fmt);
-  const int str_l = vim_vsnprintf(str, str_m, fmt, ap, NULL);
+  const int str_l = vim_vsnprintf(str, str_m, fmt, ap);
   va_end(ap);
   return str_l;
 }
@@ -758,6 +736,10 @@ static const char *infinity_str(bool positive, char fmt_spec,
   return table[idx];
 }
 
+int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap)
+{
+  return vim_vsnprintf_typval(str, str_m, fmt, ap, NULL);
+}
 
 /// Write formatted value to the string
 ///
@@ -770,8 +752,8 @@ static const char *infinity_str(bool positive, char fmt_spec,
 ///
 /// @return Number of bytes excluding NUL byte that would be written to the
 ///         string if str_m was greater or equal to the return value.
-int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
-                  typval_T *const tvs)
+int vim_vsnprintf_typval(
+    char *str, size_t str_m, const char *fmt, va_list ap, typval_T *const tvs)
 {
   size_t str_l = 0;
   bool str_avail = str_l < str_m;
@@ -971,11 +953,17 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                                       - mb_string2cells((char_u *)str_arg));
                 }
                 if (precision) {
-                  const char *p1 = str_arg;
-                  for (size_t i = 0; i < precision && *p1; i++) {
-                    p1 += mb_ptr2len((const char_u *)p1);
+                  char_u  *p1;
+                  size_t  i = 0;
+
+                  for (p1 = (char_u *)str_arg; *p1;
+                       p1 += mb_ptr2len(p1)) {
+                    i += (size_t)utf_ptr2cells(p1);
+                    if (i > precision) {
+                      break;
+                    }
                   }
-                  str_arg_l = precision = (size_t)(p1 - str_arg);
+                  str_arg_l = precision = (size_t)(p1 - (char_u *)str_arg);
                 }
               }
               break;
@@ -1013,10 +1001,13 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           } else if (fmt_spec == 'd') {
             // signed
             switch (length_modifier) {
-              case '\0':
+              case '\0': {
+                arg = (int)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
+                break;
+              }
               case 'h': {
-                // char and short arguments are passed as int
-                arg = (tvs ? (int)tv_nr(tvs, &arg_idx) : va_arg(ap, int));
+                // char and short arguments are passed as int16_t
+                arg = (int16_t)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
                 break;
               }
               case 'l': {
@@ -1045,11 +1036,16 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           } else {
             // unsigned
             switch (length_modifier) {
-              case '\0':
+              case '\0': {
+                uarg = (unsigned int)(tvs
+                                      ? tv_nr(tvs, &arg_idx)
+                                      : va_arg(ap, unsigned int));
+                break;
+              }
               case 'h': {
-                uarg = (tvs
-                        ? (unsigned)tv_nr(tvs, &arg_idx)
-                        : va_arg(ap, unsigned));
+                uarg = (uint16_t)(tvs
+                                  ? tv_nr(tvs, &arg_idx)
+                                  : va_arg(ap, unsigned int));
                 break;
               }
               case 'l': {
@@ -1220,19 +1216,20 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               remove_trailing_zeroes = true;
             }
 
-            if (isinf(f)
+            if (xisinf(f)
                 || (strchr("fF", fmt_spec) != NULL && abs_f > 1.0e307)) {
               xstrlcpy(tmp, infinity_str(f > 0.0, fmt_spec,
                                          force_sign, space_for_positive),
                        sizeof(tmp));
               str_arg_l = strlen(tmp);
               zero_padding = 0;
-            } else if (isnan(f)) {
+            } else if (xisnan(f)) {
               // Not a number: nan or NAN
               memmove(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan", 4);
               str_arg_l = 3;
               zero_padding = 0;
             } else {
+              // Regular float number
               format[0] = '%';
               size_t l = 1;
               if (force_sign) {
@@ -1253,11 +1250,10 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               }
 
               // Cast to char to avoid a conversion warning on Ubuntu 12.04.
+              assert(l + 1 < sizeof(format));
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
-              // Regular float number
-              assert(l + 1 < sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
 

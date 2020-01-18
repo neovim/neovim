@@ -11,10 +11,10 @@
 #include <unistd.h>
 #endif
 
-static void wait(void)
+static void flush_wait(void)
 {
-  fflush(stdout);
-  usleep(10*1000);
+  fflush(NULL);
+  usleep(10*1000);  // Wait 10 ms.
 }
 
 static void help(void)
@@ -33,13 +33,15 @@ static void help(void)
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
-  puts("  shell-test REP {byte} \"line line line\"");
-  puts("    Prints \"{lnr}: line line line\\n\" to stdout {byte} times.");
-  puts("    I.e. for `shell-test REP ab \"test\"'");
-  puts("      0: test");
+  puts("  shell-test REP N {text}");
+  puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, taking N milliseconds.");
+  puts("    Example:");
+  puts("      shell-test REP 97 \"foo bar\"");
+  puts("      0: foo bar");
   puts("      ...");
-  puts("      96: test");
-  puts("    will be printed because byte `a' is equal to 97.");
+  puts("      96: foo bar");
+  puts("  shell-test INTERACT");
+  puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
 }
 
 int main(int argc, char **argv)
@@ -65,34 +67,66 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", argv[2]);
       }
     } else if (strcmp(argv[1], "REP") == 0) {
-      if (argc < 4) {
-        fprintf(stderr, "Not enough REP arguments\n");
+      if (argc != 4) {
+        fprintf(stderr, "REP expects exactly 3 arguments\n");
         return 4;
       }
-      uint8_t number = (uint8_t) *argv[2];
-      for (uint8_t i = 0; i < number; i++) {
-        printf("%d: %s\n", (int) i, argv[3]);
+      int count = 0;
+      if (sscanf(argv[2], "%d", &count) != 1) {
+        fprintf(stderr, "Invalid count: %s\n", argv[2]);
+        return 4;
+      }
+      for (int i = 0; i < count; i++) {
+        printf("%d: %s\n", i, argv[3]);
+        if (i % 100 == 0) {
+          usleep(1000);  // Wait 1 ms (simulate typical output).
+        }
+        fflush(NULL);
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
       // test split-up UTF-8 sequence
-      printf("\xc3"); wait();
-      printf("\xa5\n"); wait();
+      printf("\xc3"); flush_wait();
+      printf("\xa5\n"); flush_wait();
 
       // split up a 2+2 grapheme clusters all possible ways
-      printf("ref: \xc3\xa5\xcc\xb2\n"); wait();
+      printf("ref: \xc3\xa5\xcc\xb2\n"); flush_wait();
 
-      printf("1: \xc3"); wait();
-      printf("\xa5\xcc\xb2\n"); wait();
+      printf("1: \xc3"); flush_wait();
+      printf("\xa5\xcc\xb2\n"); flush_wait();
 
-      printf("2: \xc3\xa5"); wait();
-      printf("\xcc\xb2\n"); wait();
+      printf("2: \xc3\xa5"); flush_wait();
+      printf("\xcc\xb2\n"); flush_wait();
 
-      printf("3: \xc3\xa5\xcc"); wait();
-      printf("\xb2\n"); wait();
+      printf("3: \xc3\xa5\xcc"); flush_wait();
+      printf("\xb2\n"); flush_wait();
+    } else if (strcmp(argv[1], "INTERACT") == 0) {
+      char input[256];
+      char cmd[100];
+      int arg;
+      int input_argc;
+
+      while (1) {
+        fprintf(stderr, "interact $ ");
+
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+          break;  // EOF
+        }
+
+        input_argc = sscanf(input, "%99s %d", cmd, &arg);
+        if(1 == input_argc) {
+          arg = 0;
+        }
+        if (strcmp(cmd, "exit") == 0) {
+            return arg;
+        } else {
+          fprintf(stderr, "command not found: %s\n", cmd);
+        }
+      }
     } else {
-      fprintf(stderr, "Unknown first argument\n");
+      fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;
     }
+    fflush(NULL);
     return 0;
   } else if (argc == 1) {
     fprintf(stderr, "ready $ ");

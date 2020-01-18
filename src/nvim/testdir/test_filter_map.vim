@@ -79,3 +79,8 @@ func Test_filter_map_dict_expr_funcref()
   endfunc
   call assert_equal({"foo": "f", "bar": "b", "baz": "b"}, map(copy(dict), function('s:filter4')))
 endfunc
+
+func Test_map_fails()
+  call assert_fails('call map([1], "42 +")', 'E15:')
+  call assert_fails('call filter([1], "42 +")', 'E15:')
+endfunc

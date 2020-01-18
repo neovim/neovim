@@ -2471,10 +2471,10 @@ msgstr "E216: onbekende groep of 'event': %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 
 #: ../fileio.c:6293
 #, c-format
@@ -2495,8 +2495,8 @@ msgstr "E218: hierarchie van aanroepen autocommands te diep"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
-msgstr "%s 'Auto commands' voor \"%s\""
+msgid "%s Autocommands for \"%s\""
+msgstr "%s 'Autocommands' voor \"%s\""
 
 #: ../fileio.c:7149
 #, c-format
@@ -3389,7 +3389,7 @@ msgstr "-q [foutbestand]  bewerk bestand dat eerste fout bevat"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

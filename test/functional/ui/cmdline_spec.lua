@@ -1,545 +1,504 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
+local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
-local ok = helpers.ok
 local command = helpers.command
 
-describe('external cmdline', function()
+local function new_screen(opt)
+  local screen = Screen.new(25, 5)
+  screen:attach(opt)
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue1},
+    [2] = {reverse = true},
+    [3] = {bold = true, reverse = true},
+    [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+  })
+  return screen
+end
+
+local function test_cmdline(linegrid)
   local screen
-  local last_level = 0
-  local cmdline = {}
-  local block = nil
-  local wild_items = nil
-  local wild_selected = nil
 
   before_each(function()
     clear()
-    cmdline, block = {}, nil
-    screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_cmdline=true})
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {reverse = true},
-      [3] = {bold = true, reverse = true},
-    })
-    screen:set_on_event_handler(function(name, data)
-      if name == "cmdline_show" then
-        local content, pos, firstc, prompt, indent, level = unpack(data)
-        ok(level > 0)
-        cmdline[level] = {content=content, pos=pos, firstc=firstc,
-                          prompt=prompt, indent=indent}
-        last_level = level
-      elseif name == "cmdline_hide" then
-        local level = data[1]
-        cmdline[level] = nil
-      elseif name == "cmdline_special_char" then
-        local char, shift, level = unpack(data)
-        cmdline[level].special = {char, shift}
-      elseif name == "cmdline_pos" then
-        local pos, level = unpack(data)
-        cmdline[level].pos = pos
-      elseif name == "cmdline_block_show" then
-        block = data[1]
-      elseif name == "cmdline_block_append" then
-        block[#block+1] = data[1]
-      elseif name == "cmdline_block_hide" then
-        block = nil
-      elseif name == "wildmenu_show" then
-        wild_items = data[1]
-      elseif name == "wildmenu_select" then
-        wild_selected = data[1]
-      elseif name == "wildmenu_hide" then
-        wild_items, wild_selected = nil, nil
-      end
-    end)
+    screen = new_screen({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
   end)
-
-  after_each(function()
-    screen:detach()
-  end)
-
-  local function expect_cmdline(level, expected)
-    local attr_ids = screen._default_attr_ids
-    local attr_ignore = screen._default_attr_ignore
-    local actual = ''
-    for _, chunk in ipairs(cmdline[level] and cmdline[level].content or {}) do
-      local attrs, text = chunk[1], chunk[2]
-      if screen:_equal_attrs(attrs, {}) then
-        actual = actual..text
-      else
-        local attr_id = screen:_get_attr_id(attr_ids, attr_ignore, attrs)
-        actual =  actual..'{' .. attr_id .. ':' .. text .. '}'
-      end
-    end
-    eq(expected, actual)
-  end
 
   it('works', function()
     feed(':')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq(1, last_level)
-      eq({{
-        content = { { {}, "" } },
-        firstc = ":",
-        indent = 0,
-        pos = 0,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{""}},
+      pos = 0,
+    }}}
 
     feed('sign')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign"}},
+      pos = 4,
+    }}}
 
     feed('<Left>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign" } },
-        firstc = ":",
-        indent = 0,
-        pos = 3,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign"}},
+      pos = 3,
+    }}}
 
     feed('<bs>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sin" } },
-        firstc = ":",
-        indent = 0,
-        pos = 2,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sin"}},
+      pos = 2,
+    }}}
 
     feed('<Esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({}, cmdline)
-    end)
+    ]]}
   end)
 
-  it("redraws statusline on entering", function()
-    command('set laststatus=2')
-    command('set statusline=%{mode()}')
-    feed(':')
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {3:c^                        }|
-                               |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "" } },
+  describe("redraws statusline on entering", function()
+    before_each(function()
+      command('set laststatus=2')
+      command('set statusline=%{mode()}')
+    end)
+
+    it('from normal mode', function()
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:n                        }|
+                                 |
+      ]]}
+
+      feed(':')
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:c                        }|
+                                 |
+      ]], cmdline={{
         firstc = ":",
-        indent = 0,
+        content = {{""}},
         pos = 0,
-        prompt = ""
-      }}, cmdline)
+      }}}
+    end)
+
+    it('from normal mode when : is mapped', function()
+      command('nnoremap ; :')
+
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:n                        }|
+                                 |
+      ]]}
+
+      feed(';')
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:c                        }|
+                                 |
+      ]], cmdline={{
+        firstc = ":",
+        content = {{""}},
+        pos = 0,
+      }}}
+    end)
+
+    it('but not with scrolled messages', function()
+      screen:try_resize(35,10)
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect{grid=[[
+                                           |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
+      ]]}
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect{grid=[[
+                                           |
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
+      ]]}
+
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect{grid=[[
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
+      ]]}
+
+      feed('<cr>')
+      screen:expect{grid=[[
+        ^                                   |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:n                                  }|
+                                           |
+      ]]}
     end)
   end)
 
   it("works with input()", function()
     feed(':call input("input", "default")<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "default" } },
-        firstc = "",
-        indent = 0,
-        pos = 7,
-        prompt = "input"
-      }}, cmdline)
-    end)
-    feed('<cr>')
-    screen:expect([[
-      ^                         |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-                               |
-    ]], nil, nil, function()
-      eq({}, cmdline)
-    end)
+    ]], cmdline={{
+      prompt = "input",
+      content = {{"default"}},
+      pos = 7,
+    }}}
 
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]]}
   end)
 
   it("works with special chars and nested cmdline", function()
     feed(':xx<c-r>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "xx" } },
-        firstc = ":",
-        indent = 0,
-        pos = 2,
-        prompt = "",
-        special = {'"', true},
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"xx"}},
+      pos = 2,
+      special = {'"', true},
+    }}}
 
     feed('=')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "xx" } },
-        firstc = ":",
-        indent = 0,
-        pos = 2,
-        prompt = "",
-        special = {'"', true},
-      },{
-        content = { { {}, "" } },
-        firstc = "=",
-        indent = 0,
-        pos = 0,
-        prompt = "",
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"xx"}},
+      pos = 2,
+      special = {'"', true},
+    }, {
+      firstc = "=",
+      content = {{""}},
+      pos = 0,
+    }}}
 
     feed('1+2')
     local expectation = {{
-        content = { { {}, "xx" } },
-        firstc = ":",
-        indent = 0,
-        pos = 2,
-        prompt = "",
-        special = {'"', true},
-      },{
-        content = {
-          { {}, "1" },
-          { {}, "+" },
-          { {}, "2" },
-        },
-        firstc = "=",
-        indent = 0,
-        pos = 3,
-        prompt = "",
-      }}
-    screen:expect([[
+      firstc = ":",
+      content = {{"xx"}},
+      pos = 2,
+      special = {'"', true},
+    }, {
+      firstc = "=",
+      content = {{"1"}, {"+"}, {"2"}},
+      pos = 3,
+    }}
+
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq(expectation, cmdline)
-    end)
+    ]], cmdline=expectation}
 
     -- erase information, so we check if it is retransmitted
-    cmdline = {}
-    command("redraw!")
-    -- redraw! forgets cursor position. Be OK with that, as UI should indicate
-    -- focus is at external cmdline anyway.
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+    command("mode")
+    screen:expect{grid=[[
       ^                         |
-    ]], nil, nil, function()
-      eq(expectation, cmdline)
-    end)
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline=expectation, reset=true}
 
 
     feed('<cr>')
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+    screen:expect{grid=[[
       ^                         |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "xx3" } },
-        firstc = ":",
-        indent = 0,
-        pos = 3,
-        prompt = "",
-      }}, cmdline)
-    end)
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"xx3"}},
+      pos = 3,
+    }}}
 
     feed('<esc>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({}, cmdline)
-    end)
+    ]]}
   end)
 
   it("works with function definitions", function()
     feed(':function Foo()<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "" } },
-        firstc = ":",
-        indent = 2,
-        pos = 0,
-        prompt = "",
-      }}, cmdline)
-      eq({ { { {}, 'function Foo()'} } }, block)
-    end)
+    ]], cmdline={{
+      indent = 2,
+      firstc = ":",
+      content = {{""}},
+      pos = 0,
+    }}, cmdline_block = {
+      {{'function Foo()'}},
+    }}
 
     feed('line1<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({ { { {}, 'function Foo()'} },
-           { { {}, '  line1'} } }, block)
-    end)
+    ]], cmdline={{
+      indent = 2,
+      firstc = ":",
+      content = {{""}},
+      pos = 0,
+    }}, cmdline_block = {
+      {{'function Foo()'}},
+      {{'  line1'}},
+    }}
 
-    block = {}
-    command("redraw!")
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+    command("mode")
+    screen:expect{grid=[[
       ^                         |
-    ]], nil, nil, function()
-      eq({ { { {}, 'function Foo()'} },
-           { { {}, '  line1'} } }, block)
-    end)
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      indent = 2,
+      firstc = ":",
+      content = {{""}},
+      pos = 0,
+    }}, cmdline_block = {
+      {{'function Foo()'}},
+      {{'  line1'}},
+    }, reset=true}
 
     feed('endfunction<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq(nil, block)
-    end)
+    ]]}
 
     -- Try once more, to check buffer is reinitialized. #8007
     feed(':function Bar()<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "" } },
-        firstc = ":",
-        indent = 2,
-        pos = 0,
-        prompt = "",
-      }}, cmdline)
-      eq({ { { {}, 'function Bar()'} } }, block)
-    end)
+    ]], cmdline={{
+      indent = 2,
+      firstc = ":",
+      content = {{""}},
+      pos = 0,
+    }}, cmdline_block = {
+      {{'function Bar()'}},
+    }}
 
     feed('endfunction<cr>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq(nil, block)
-    end)
+    ]]}
+
   end)
 
   it("works with cmdline window", function()
     feed(':make')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "make" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"make"}},
+      pos = 4,
+    }}}
 
     feed('<c-f>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {2:[No Name]                }|
       {1::}make^                    |
       {3:[Command Line]           }|
                                |
-    ]], nil, nil, function()
-      eq({}, cmdline)
-    end)
+    ]]}
 
     -- nested cmdline
     feed(':yank')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {2:[No Name]                }|
       {1::}make^                    |
       {3:[Command Line]           }|
                                |
-    ]], nil, nil, function()
-      eq({nil, {
-        content = { { {}, "yank" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
+    ]], cmdline={nil, {
+      firstc = ":",
+      content = {{"yank"}},
+      pos = 4,
+    }}}
 
-    cmdline = {}
-    command("redraw!")
-    screen:expect([[
+    command("mode")
+    screen:expect{grid=[[
                                |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
+                               |
+    ]], cmdline={nil, {
+      firstc = ":",
+      content = {{"yank"}},
+      pos = 4,
+    }}, reset=true}
+
+    feed("<c-c>")
+    screen:expect{grid=[[
+                               |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
+                               |
+    ]]}
+
+    feed("<c-c>")
+    screen:expect{grid=[[
+      ^                         |
       {2:[No Name]                }|
       {1::}make                    |
       {3:[Command Line]           }|
-      ^                         |
-    ]], nil, nil, function()
-      eq({nil, {
-        content = { { {}, "yank" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"make"}},
+      pos = 4,
+    }}}
 
-    feed("<c-c>")
-    screen:expect([[
-                               |
-      {2:[No Name]                }|
-      {1::}make^                    |
-      {3:[Command Line]           }|
-                               |
-    ]], nil, nil, function()
-      eq({}, cmdline)
-    end)
-
-    feed("<c-c>")
-    screen:expect([[
-                               |
-      {2:[No Name]                }|
-      {1::}make^                    |
-      {3:[Command Line]           }|
-                               |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "make" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
-
-    cmdline = {}
     command("redraw!")
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+    screen:expect{grid=[[
       ^                         |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "make" } },
-        firstc = ":",
-        indent = 0,
-        pos = 4,
-        prompt = ""
-      }}, cmdline)
-    end)
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"make"}},
+      pos = 4,
+    }}}
   end)
 
   it('works with inputsecret()', function()
     feed(":call inputsecret('secret:')<cr>abc123")
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "******" } },
-        firstc = "",
-        indent = 0,
-        pos = 6,
-        prompt = "secret:"
-      }}, cmdline)
-    end)
+    ]], cmdline={{
+      prompt = "secret:",
+      content = {{"******"}},
+      pos = 6,
+    }}}
   end)
 
   it('works with highlighted cmdline', function()
@@ -571,23 +530,21 @@ describe('external cmdline', function()
     screen:set_default_attr_ids({
       RBP1={background = Screen.colors.Red},
       RBP2={background = Screen.colors.Yellow},
-      RBP3={background = Screen.colors.Green},
-      RBP4={background = Screen.colors.Blue},
       EOB={bold = true, foreground = Screen.colors.Blue1},
-      ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      SK={foreground = Screen.colors.Blue},
-      PE={bold = true, foreground = Screen.colors.SeaGreen4}
     })
     feed('<f5>(a(b)a)')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
                                |
-    ]], nil, nil, function()
-      expect_cmdline(1, '{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
-    end)
+    ]], cmdline={{
+      prompt = '>',
+      content = {{'(', 'RBP1'}, {'a'}, {'(', 'RBP2'}, {'b'},
+                 { ')', 'RBP2'}, {'a'}, {')', 'RBP1'}},
+      pos = 7,
+    }}}
   end)
 
   it('works together with ext_wildmenu', function()
@@ -605,98 +562,283 @@ describe('external cmdline', function()
     screen:set_option('ext_wildmenu', true)
     feed(':sign <tab>')
 
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign define"} },
-        firstc = ":",
-        indent = 0,
-        pos = 11,
-        prompt = ""
-      }}, cmdline)
-      eq(expected, wild_items)
-      eq(0, wild_selected)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, wildmenu_items=expected, wildmenu_pos=0}
 
     feed('<tab>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign jump"} },
-        firstc = ":",
-        indent = 0,
-        pos = 9,
-        prompt = ""
-      }}, cmdline)
-      eq(expected, wild_items)
-      eq(1, wild_selected)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign jump"}},
+      pos = 9,
+    }}, wildmenu_items=expected, wildmenu_pos=1}
 
     feed('<left><left>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign "} },
-        firstc = ":",
-        indent = 0,
-        pos = 5,
-        prompt = ""
-      }}, cmdline)
-      eq(expected, wild_items)
-      eq(-1, wild_selected)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign "}},
+      pos = 5,
+    }}, wildmenu_items=expected, wildmenu_pos=-1}
 
     feed('<right>')
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign define"} },
-        firstc = ":",
-        indent = 0,
-        pos = 11,
-        prompt = ""
-      }}, cmdline)
-      eq(expected, wild_items)
-      eq(0, wild_selected)
-    end)
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, wildmenu_items=expected, wildmenu_pos=0}
 
     feed('a')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign definea"}},
+      pos = 12,
+    }}}
+  end)
+
+  it('works together with ext_popupmenu', function()
+    local expected = {
+        {'define', '', '', ''},
+        {'jump', '', '', ''},
+        {'list', '', '', ''},
+        {'place', '', '', ''},
+        {'undefine', '', '', ''},
+        {'unplace', '', '', ''},
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign jump"}},
+      pos = 9,
+    }}, popupmenu={items=expected, pos=1, anchor={-1, 0, 5}}}
+
+    feed('<left><left>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign "}},
+      pos = 5,
+    }}, popupmenu={items=expected, pos=-1, anchor={-1, 0, 5}}}
+
+    feed('<right>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('a')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign definea"}},
+      pos = 12,
+    }}}
+    feed('<esc>')
+
+    -- check positioning with multibyte char in pattern
+    command("e långfile1")
+    command("sp långfile2")
+    feed(':b lå<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {3:långfile2                }|
+                               |
+      {2:långfile1                }|
+                               |
+    ]], popupmenu={
+      anchor = { -1, 0, 2 },
+      items = {{ "långfile1", "", "", "" }, { "långfile2", "", "", "" }},
+      pos = 0
+    }, cmdline={{
+      content = {{ "b långfile1" }},
+      firstc = ":",
+      pos = 12
+    }}}
+  end)
+
+  it('ext_wildmenu takes precedence over ext_popupmenu', function()
+    local expected = {
+      'define',
+      'jump',
+      'list',
+      'place',
+      'undefine',
+      'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_wildmenu', true)
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, wildmenu_items=expected, wildmenu_pos=0}
+  end)
+
+  it("doesn't send invalid events when aborting mapping #10000", function()
+    command('cnoremap ab c')
+
+    feed(':xa')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      content = { { "x" } },
+      firstc = ":",
+      pos = 1,
+      special = { "a", false }
+    }}}
+
+    -- This used to send an invalid event where pos where larger than the total
+    -- length of content. Checked in _handle_cmdline_show.
+    feed('<esc>')
     screen:expect([[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "sign definea"} },
-        firstc = ":",
-        indent = 0,
-        pos = 12,
-        prompt = ""
-      }}, cmdline)
-      eq(nil, wild_items)
-      eq(nil, wild_selected)
-    end)
+    ]])
+  end)
+
+end
+
+-- the representation of cmdline and cmdline_block contents changed with ext_linegrid
+-- (which uses indexed highlights) so make sure to test both
+describe('ui/ext_cmdline', function() test_cmdline(true) end)
+describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)
+
+describe('cmdline redraw', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = new_screen({rgb=true})
+  end)
+
+  it('with timer', function()
+    feed(':012345678901234567890123456789')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]]}
+    command('call timer_start(0, {-> 1})')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]], unchanged=true, timeout=100}
+  end)
+
+  it('with <Cmd>', function()
+    if 'openbsd' == helpers.uname() then
+      pending('FIXME #10804')
+    end
+    command('cmap a <Cmd>call sin(0)<CR>')  -- no-op
+    feed(':012345678901234567890123456789')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]]}
+    feed('a')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]], unchanged=true}
   end)
 end)

@@ -8,6 +8,7 @@ import locale
 import io
 import sys
 
+
 def set_output_encoding(enc=None):
     """Set the encoding of stdout and stderr
 
@@ -20,7 +21,7 @@ def set_output_encoding(enc=None):
 
     def get_text_writer(fo, **kwargs):
         kw = dict(kwargs)
-        kw.setdefault('errors', 'backslashreplace') # use \uXXXX style
+        kw.setdefault('errors', 'backslashreplace')  # use \uXXXX style
         kw.setdefault('closefd', False)
 
         if sys.version_info[0] < 3:
@@ -29,6 +30,7 @@ def set_output_encoding(enc=None):
             writer = io.open(fo.fileno(), mode='w', newline='', **kw)
             write = writer.write    # save the original write() function
             enc = locale.getpreferredencoding()
+
             def convwrite(s):
                 if isinstance(s, bytes):
                     write(s.decode(enc))    # convert to unistr

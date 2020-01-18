@@ -7,8 +7,8 @@
 Terminal emulator				*terminal* *terminal-emulator*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
-presented as a special buffer type, asynchronously updated from the virtual
-terminal as data is received from the program connected to it.
+presented as a special 'buftype', asynchronously updated as data is received
+from the connected program.
 
 Terminal buffers behave like normal buffers, except:
 - With 'modifiable', lines can be edited but not deleted.
@@ -23,11 +23,11 @@ Terminal buffers behave like normal buffers, except:
 ==============================================================================
 Start						*terminal-start*
 
-There are 3 ways to create a terminal buffer:
+There are several ways to create a terminal buffer:
 
-- By invoking the |:terminal| ex command.
-- By calling the |termopen()| function.
-- By editing a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
+- Invoke the |:terminal| command.
+- Call the |termopen()| function.
+- Edit a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
   For example:
 >
     :edit term://bash
@@ -35,7 +35,7 @@ There are 3 ways to create a terminal buffer:
 <
     Note: The "term://" pattern is handled by a BufReadCmd handler, so the
     |autocmd-nested| modifier is required to use it in an autocmd. >
-        autocmd VimEnter * nested split term://sh
+        autocmd VimEnter * ++nested split term://sh
 <    This is only mentioned for reference; use |:terminal| instead.
 
 When the terminal starts, the buffer contents are updated and the buffer is
@@ -88,7 +88,7 @@ Mouse input has the following behavior:
 Configuration					*terminal-configuration*
 
 Options:		'modified', 'scrollback'
-Events:			|TermOpen|, |TermClose|
+Events:			|TermOpen|, |TermEnter|, |TermLeave|, |TermClose|
 Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
 
 Terminal sets local defaults for some options, which may differ from your
@@ -98,32 +98,291 @@ global configuration.
 - 'wrap' is disabled
 
 You can change the defaults with a TermOpen autocommand: >
-	au TermOpen * setlocal list
+    au TermOpen * setlocal list
 
 TERMINAL COLORS ~
 
-The `{g,b}:terminal_color_$NUM` variables control the terminal color palette,
-where `$NUM` is the color index between 0 and 255 inclusive. This setting only
-affects UIs with RGB capabilities; for normal terminals the color index is
-just forwarded. The variables are read only during |TermOpen|.
+The `{g,b}:terminal_color_x` variables control the terminal color palette,
+where `x` is the color index between 0 and 255 inclusive.  The variables are
+read during |TermOpen|. The value must be a color name or hexadecimal string.
+Example: >
+    let g:terminal_color_4 = '#ff0000'
+    let g:terminal_color_5 = 'green'
+Only works for RGB UIs (see 'termguicolors'); for 256-color terminals the
+color index is just forwarded.
+
+Editor highlighting (|syntax-highlighting|, |highlight-groups|, etc.) has
+higher precedence: it is applied after terminal colors are resolved.
 
 ==============================================================================
 Status Variables				*terminal-status*
 
-Terminal buffers maintain some information about the terminal in buffer-local
-variables:
-
-- *b:term_title* The settable title of the terminal, typically displayed in
-  the window title or tab title of a graphical terminal emulator. Programs
-  running in the terminal can set this title via an escape sequence.
-- |'channel'| The nvim channel ID for the underlying PTY.
-  |chansend()| can be used to send input to the terminal.
-- *b:terminal_job_pid* The PID of the top-level process running in the
-  terminal.
-
-These variables are initialized before TermOpen, so you can use them in
-a local 'statusline'. Example: >
+Terminal buffers maintain some buffer-local variables and options. The values
+are initialized before TermOpen, so you can use them in a local 'statusline'.
+Example: >
     :autocmd TermOpen * setlocal statusline=%{b:term_title}
-<
+
+- *b:term_title*  Terminal title (user-writable), typically displayed in the
+  window title or tab title of a graphical terminal emulator. Terminal
+  programs can set this by emitting an escape sequence.
+- |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
+  input to the terminal.
+
+Use |jobwait()| to check if the terminal job has finished: >
+    let running = jobwait([&channel], 0)[0] == -1
+
 ==============================================================================
+:Termdebug plugin				*terminal-debug*
+
+The Terminal debugging plugin can be used to debug a program with gdb and view
+the source code in a Vim window.  Since this is completely contained inside
+Vim this also works remotely over an ssh connection.
+
+Starting ~
+							*termdebug-starting*
+Load the plugin with this command: >
+	packadd termdebug
+<							*:Termdebug*
+To start debugging use `:Termdebug` or `:TermdebugCommand` followed by the
+command name, for example: >
+	:Termdebug vim
+
+This opens two windows:
+
+gdb window	A terminal window in which "gdb vim" is executed.  Here you
+		can directly interact with gdb.  The buffer name is "!gdb".
+
+program window	A terminal window for the executed program.  When "run" is
+		used in gdb the program I/O will happen in this window, so
+		that it does not interfere with controlling gdb.  The buffer
+		name is "gdb program".
+
+The current window is used to show the source code.  When gdb pauses the
+source file location will be displayed, if possible.  A sign is used to
+highlight the current position, using highlight group debugPC.	 
+
+If the buffer in the current window is modified, another window will be opened
+to display the current gdb position.
+
+Focus the terminal of the executed program to interact with it.  This works
+the same as any command running in a terminal window.
+
+When the debugger ends, typically by typing "quit" in the gdb window, the two
+opened windows are closed.
+
+Only one debugger can be active at a time.
+							*:TermdebugCommand*
+If you want to give specific commands to the command being debugged, you can
+use the `:TermdebugCommand` command followed by the command name and
+additional parameters. >
+	:TermdebugCommand vim --clean -c ':set nu'
+
+Both the `:Termdebug` and `:TermdebugCommand` support an optional "!" bang
+argument to start the command right away, without pausing at the gdb window
+(and cursor will be in the debugged window).  For example: >
+	:TermdebugCommand! vim --clean
+
+To attach gdb to an already running executable or use a core file, pass extra
+arguments.  E.g.: >
+	:Termdebug vim core
+	:Termdebug vim 98343
+
+If no argument is given, you'll end up in a gdb window, in which you need to
+specify which command to run using e.g. the gdb `file` command.
+
+
+Example session ~
+							*termdebug-example*
+Start in the Vim "src" directory and build Vim: >
+	% make
+Start Vim: >
+	% ./vim
+Load the termdebug plugin and start debugging Vim: >
+	:packadd termdebug
+	:Termdebug vim
+You should now have three windows:
+    source  - where you started
+    gdb	    - you can type gdb commands here
+    program - the executed program will use this window
+
+Put focus on the gdb window and type: >
+	break ex_help
+	run
+Vim will start running in the program window. Put focus there and type: >
+	:help gui
+Gdb will run into the ex_help breakpoint.  The source window now shows the 
+ex_cmds.c file.  A red "1 " marker will appear in the signcolumn where the
+breakpoint was set.  The line where the debugger stopped is highlighted.  You
+can now step through the program.  You will see the highlighting move as the
+debugger executes a line of source code.
+
+Run ":Next" a few times until the for loop is highlighted.  Put the cursor on
+the end of "eap->arg", then call ":Eval".  You will see this displayed:
+	"eap->arg": 0x555555e68855 "gui" ~
+This way you can inspect the value of local variables.  You can also focus the
+gdb window and use a "print" command, e.g.: >
+	print *eap
+If mouse pointer movements are working, Vim will also show a balloon when the
+mouse rests on text that can be evaluated by gdb.
+You can also use the "K" mapping that will either use neovim floating windows
+if available to show the results or print below the status bar.
+
+Now go back to the source window and put the cursor on the first line after
+the for loop, then type: >
+	:Break
+You will see a "1" marker appear, this indicates the new breakpoint.  Now
+run ":Cont" command and the code until the breakpoint will be executed.
+
+You can type more advanced commands in the gdb window.  For example, type: >
+	watch curbuf
+Now run ":Cont" (or type "cont" in the gdb window). Execution
+will now continue until the value of "curbuf" changes, which is in do_ecmd().
+To remove this watchpoint again type in the gdb window: >
+	delete 3
+
+You can see the stack by typing in the gdb window: >
+	where
+Move through the stack frames, e.g. with: >
+	frame 3
+The source window will show the code, at the point where the call was made to
+a deeper level.
+
+
+Stepping through code ~
+							*termdebug-stepping*
+Put focus on the gdb window to type commands there.  Some common ones are:
+- CTRL-C	interrupt the program
+- next		execute the current line and stop at the next line
+- step		execute the current line and stop at the next statement,
+		entering functions
+- finish	execute until leaving the current function
+- where		show the stack
+- frame N	go to the Nth stack frame
+- continue	continue execution
+
+						*:Run* *:Arguments*
+In the window showing the source code these commands can be used to control
+gdb:
+ `:Run` [args]	    run the program with [args] or the previous arguments
+ `:Arguments` {args}  set arguments for the next `:Run`
+
+ *:Break*	set a breakpoint at the current line; a sign will be displayed
+ *:Clear*	delete the breakpoint at the current line
+
+ *:Step*	execute the gdb "step" command
+ *:Over*	execute the gdb "next" command (`:Next` is a Vim command)
+ *:Finish*	execute the gdb "finish" command
+ *:Continue*	execute the gdb "continue" command
+ *:Stop*	interrupt the program
+
+If gdb stops at a source line and there is no window currently showing the
+source code, a new window will be created for the source code.  This also
+happens if the buffer in the source code window has been modified and can't be
+abandoned.
+
+Gdb gives each breakpoint a number.  In Vim the number shows up in the sign
+column, with a red background.  You can use these gdb commands:
+- info break	list breakpoints
+- delete N	delete breakpoint N
+You can also use the `:Clear` command if the cursor is in the line with the
+breakpoint, or use the "Clear breakpoint" right-click menu entry.
+
+
+Inspecting variables ~
+					*termdebug-variables* *:Evaluate*
+ `:Evaluate`	    evaluate the expression under the cursor
+ `K`		    same
+ `:Evaluate` {expr}   evaluate {expr}
+ `:'<,'>Evaluate`     evaluate the Visually selected text
+
+This is similar to using "print" in the gdb window.
+You can usually shorten `:Evaluate` to `:Ev`.
+
+
+Other commands ~
+							*termdebug-commands*
+ *:Gdb*	     jump to the gdb window
+ *:Program*    jump to the window with the running program
+ *:Source*     jump to the window with the source code, create it if there
+	     isn't one
+
+
+Communication ~
+						*termdebug-communication*
+There is another, hidden, buffer, which is used for Vim to communicate with
+gdb.  The buffer name is "gdb communication".  Do not delete this buffer, it
+will break the debugger.
+
+Gdb has some weird behavior, the plugin does its best to work around that.
+For example, after typing "continue" in the gdb window a CTRL-C can be used to
+interrupt the running program.  But after using the MI command
+"-exec-continue"  pressing CTRL-C does not interrupt.  Therefore you will see
+"continue" being used for the `:Continue` command, instead of using the
+communication channel.
+
+
+Customizing ~
+
+GDB command						 *termdebug-customizing*
+
+To change the name of the gdb command, set the "termdebugger" variable before
+invoking `:Termdebug`: >
+	let termdebugger = "mygdb"
+
+To not use neovim floating windows for previewing variable evaluation, set the
+`g:termdebug_useFloatingHover` variable like this: >
+	let g:termdebug_useFloatingHover = 0
+
+If you are a mouse person, you can also define a mapping using your right
+click to one of the terminal command like evaluate the variable under the
+cursor: >
+      	nnoremap <RightMouse> :Evaluate<CR>
+or set/unset a breakpoint: >
+	nnoremap <RightMouse> :Break<CR>
+
+<							*gdb-version*
+Only debuggers fully compatible with gdb will work.  Vim uses the GDB/MI
+interface.  The "new-ui" command  requires gdb version 7.12 or later.  if you
+get this error:
+	Undefined command: "new-ui". Try "help".~
+Then your gdb is too old.
+
+
+Colors						*hl-debugPC* *hl-debugBreakpoint*
+
+The color of the signs can be adjusted with these highlight groups:
+- debugPC		the current position
+- debugBreakpoint	a breakpoint
+
+The defaults are, when 'background' is "light":
+  hi debugPC term=reverse ctermbg=lightblue guibg=lightblue
+  hi debugBreakpoint term=reverse ctermbg=red guibg=red
+
+When 'background' is "dark":
+  hi debugPC term=reverse ctermbg=darkblue guibg=darkblue
+  hi debugBreakpoint term=reverse ctermbg=red guibg=red
+
+
+Shorcuts						*termdebug_shortcuts*
+
+You can define your own shortcuts (mappings) to control gdb, that can work in
+any window, using the TermDebugSendCommand() function.  Example: >
+	map ,w :call TermDebugSendCommand('where')<CR>
+The argument is the gdb command.
+
+
+Vim window width						*termdebug_wide*
+
+To change the width of the Vim window when debugging starts, and use a
+vertical split: >
+  let g:termdebug_wide = 163
+This will set &columns to 163 when `:Termdebug` is used.  The value is restored
+when quitting the debugger.
+If g:termdebug_wide is set and &columns is already larger than
+g:termdebug_wide then a vertical split will be used without changing &columns.
+Set it to 1 to get a vertical split without every changing &columns (useful
+for when the terminal can't be resized by Vim).
+
+
+
  vim:tw=78:ts=8:noet:ft=help:norl:

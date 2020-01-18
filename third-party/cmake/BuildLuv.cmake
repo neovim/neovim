@@ -15,8 +15,26 @@ function(BuildLuv)
     message(FATAL_ERROR "Must pass at least one of CONFIGURE_COMMAND, BUILD_COMMAND, INSTALL_COMMAND")
   endif()
 
+  ExternalProject_Add(lua-compat-5.3
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${LUA_COMPAT53_URL}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+      -DURL=${LUA_COMPAT53_URL}
+      -DEXPECTED_SHA256=${LUA_COMPAT53_SHA256}
+      -DTARGET=lua-compat-5.3
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    PATCH_COMMAND ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND "")
+
   ExternalProject_Add(luv-static
     PREFIX ${DEPS_BUILD_DIR}
+    DEPENDS lua-compat-5.3
     URL ${LUV_URL}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luv
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
@@ -24,7 +42,9 @@ function(BuildLuv)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luv
       -DURL=${LUV_URL}
       -DEXPECTED_SHA256=${LUV_SHA256}
-      -DTARGET=luv
+      -DTARGET=luv-static
+      # The source is shared with BuildLuarocks (with USE_BUNDLED_LUV).
+      -DSRC_DIR=${DEPS_BUILD_DIR}/src/luv
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     PATCH_COMMAND "${_luv_PATCH_COMMAND}"
@@ -35,19 +55,12 @@ endfunction()
 
 set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
-  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
+  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
 
 # Replace luv default rockspec with the alternate one under the "rockspecs"
 # directory
 set(LUV_PATCH_COMMAND
     ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
-if(MINGW)
-  set(LUV_PATCH_COMMAND
-    ${LUV_PATCH_COMMAND}
-    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} init
-    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} apply --ignore-whitespace
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/luv-Add-missing-definitions-for-MinGW.patch)
-endif()
 
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}
@@ -57,6 +70,25 @@ set(LUV_CONFIGURE_COMMAND_COMMON
   -DWITH_SHARED_LIBUV=ON
   -DBUILD_SHARED_LIBS=OFF
   -DBUILD_MODULE=OFF)
+
+if(USE_BUNDLED_LUAJIT)
+  list(APPEND LUV_CONFIGURE_COMMAND_COMMON -DWITH_LUA_ENGINE=LuaJit)
+elseif(USE_BUNDLED_LUA)
+  list(APPEND LUV_CONFIGURE_COMMAND_COMMON -DWITH_LUA_ENGINE=Lua)
+else()
+  find_package(LuaJit)
+  if(LUAJIT_FOUND)
+    list(APPEND LUV_CONFIGURE_COMMAND_COMMON -DWITH_LUA_ENGINE=LuaJit)
+  else()
+    list(APPEND LUV_CONFIGURE_COMMAND_COMMON -DWITH_LUA_ENGINE=Lua)
+  endif()
+endif()
+
+if(USE_BUNDLED_LIBUV)
+  set(LUV_CONFIGURE_COMMAND_COMMON
+    ${LUV_CONFIGURE_COMMAND_COMMON}
+    -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
+endif()
 
 if(MINGW AND CMAKE_CROSSCOMPILING)
   get_filename_component(TOOLCHAIN ${CMAKE_TOOLCHAIN_FILE} REALPATH)
@@ -88,9 +120,12 @@ endif()
 
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
         (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
-  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
+        set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
+          "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3"
+          "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
 else()
-  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build .)
+  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
+    "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3" --build .)
 endif()
 set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install)
 

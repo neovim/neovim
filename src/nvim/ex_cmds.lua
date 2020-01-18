@@ -28,15 +28,15 @@ local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
 
-local ADDR_LINES            =  0
-local ADDR_WINDOWS          =  1
-local ADDR_ARGUMENTS        =  2
-local ADDR_LOADED_BUFFERS   =  3
-local ADDR_BUFFERS          =  4
-local ADDR_TABS             =  5
-local ADDR_TABS_RELATIVE    =  6
-local ADDR_QUICKFIX         =  7
-local ADDR_OTHER            =  99
+local ADDR_LINES            =  0    -- buffer line numbers
+local ADDR_WINDOWS          =  1    -- window number
+local ADDR_ARGUMENTS        =  2    -- argument number
+local ADDR_LOADED_BUFFERS   =  3    -- buffer number of loaded buffer
+local ADDR_BUFFERS          =  4    -- buffer number
+local ADDR_TABS             =  5    -- tab page number
+local ADDR_TABS_RELATIVE    =  6    -- Tab page that only relative
+local ADDR_QUICKFIX         =  7    -- quickfix list entry number
+local ADDR_OTHER            =  99   -- something else
 
 -- The following table is described in ex_cmds_defs.h file.
 return {
@@ -323,6 +323,12 @@ return {
     func='ex_abclear',
   },
   {
+    command='cabove',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
+  },
+  {
     command='caddbuffer',
     flags=bit.bor(RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
@@ -357,6 +363,12 @@ return {
     flags=bit.bor(BANG, RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cbuffer',
+  },
+  {
+    command='cbelow',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
   },
   {
     command='cbottom',
@@ -601,6 +613,12 @@ return {
     func='ex_wrongmodifier',
   },
   {
+    command='const',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_const',
+  },
+  {
     command='copen',
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
     addr_type=ADDR_LINES,
@@ -698,7 +716,7 @@ return {
   },
   {
     command='delfunction',
-    flags=bit.bor(NEEDARG, WORD1, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delfunction',
   },
@@ -752,7 +770,7 @@ return {
   },
   {
     command='digraphs',
-    flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_digraphs',
   },
@@ -1004,7 +1022,7 @@ return {
   },
   {
     command='function',
-    flags=bit.bor(EXTRA, BANG, CMDWIN),
+    flags=bit.bor(EXTRA, BANG, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_function',
   },
@@ -1267,6 +1285,12 @@ return {
     func='ex_last',
   },
   {
+    command='labove',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
+  },
+  {
     command='language',
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
@@ -1301,6 +1325,12 @@ return {
     flags=bit.bor(BANG, RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cbuffer',
+  },
+  {
+    command='lbelow',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
   },
   {
     command='lbottom',
@@ -1626,7 +1656,7 @@ return {
     command='marks',
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='do_marks',
+    func='ex_marks',
   },
   {
     command='match',
@@ -1705,24 +1735,6 @@ return {
     flags=bit.bor(RANGE, NOTADR, BANG, FILES, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_next',
-  },
-  {
-    command='nbkey',
-    flags=bit.bor(EXTRA, NOTADR, NEEDARG),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='nbclose',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='nbstart',
-    flags=bit.bor(WORD1, TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
   },
   {
     command='new',
@@ -1959,18 +1971,6 @@ return {
     func='ex_previous',
   },
   {
-    command='promptfind',
-    flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='promptrepl',
-    flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
     command='profile',
     flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
@@ -2097,6 +2097,30 @@ return {
     func='ex_py3file',
   },
   {
+    command='pyx',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyx',
+  },
+  {
+    command='pyxdo',
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyxdo',
+  },
+  {
+    command='pythonx',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyx',
+  },
+  {
+    command='pyxfile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyxfile',
+  },
+  {
     command='quit',
     flags=bit.bor(BANG, RANGE, COUNT, NOTADR, TRLBAR, CMDWIN),
     addr_type=ADDR_WINDOWS,
@@ -2151,6 +2175,12 @@ return {
     func='ex_redrawstatus',
   },
   {
+    command='redrawtabline',
+    flags=bit.bor(TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_redrawtabline',
+  },
+  {
     command='registers',
     flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
@@ -2158,7 +2188,7 @@ return {
   },
   {
     command='resize',
-    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1),
+    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_resize',
   },
@@ -2326,8 +2356,8 @@ return {
   },
   {
     command='scriptnames',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR, CMDWIN),
+    addr_type=ADDR_OTHER,
     func='ex_scriptnames',
   },
   {
@@ -2799,6 +2829,12 @@ return {
     func='ex_tag',
   },
   {
+    command='tmenu',
+    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_menu',
+  },
+  {
     command='tmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
@@ -2809,12 +2845,6 @@ return {
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_mapclear',
-  },
-  {
-    command='tmenu',
-    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_menu',
   },
   {
     command='tnext',
@@ -2859,16 +2889,16 @@ return {
     func='ex_tag',
   },
   {
-    command='tunmap',
-    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_unmap',
-  },
-  {
     command='tunmenu',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_menu',
+  },
+  {
+    command='tunmap',
+    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_unmap',
   },
   {
     command='undo',
@@ -3076,13 +3106,13 @@ return {
   },
   {
     command='wincmd',
-    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR),
+    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR, CMDWIN),
     addr_type=ADDR_WINDOWS,
     func='ex_wincmd',
   },
   {
     command='windo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
     addr_type=ADDR_WINDOWS,
     func='ex_listdo',
   },
@@ -3115,12 +3145,6 @@ return {
     flags=bit.bor(BANG, FILE1, ARGOPT, DFLALL, TRLBAR),
     addr_type=ADDR_LINES,
     func='do_wqall',
-  },
-  {
-    command='wsverb',
-    flags=bit.bor(EXTRA, NOTADR, NEEDARG),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
   },
   {
     command='wshada',

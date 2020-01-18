@@ -538,8 +538,8 @@ a 16 bit and a 32 bit number (e.g., for a Unicode character): >
 *24.9*	Digraphs
 
 Some characters are not on the keyboard.  For example, the copyright character
-(©).  To type these characters in Vim, you use digraphs, where two characters
-represent one.  To enter a ©, for example, you press three keys: >
+(Â©).  To type these characters in Vim, you use digraphs, where two characters
+represent one.  To enter a Â©, for example, you press three keys: >
 
 	CTRL-K Co
 
@@ -549,12 +549,12 @@ To find out what digraphs are available, use the following command: >
 
 Vim will display the digraph table.  Here are three lines of it:
 
-  AC ~_ 159  NS |  160  !I ¡  161  Ct ¢  162  Pd £  163  Cu ¤  164  Ye ¥  165 ~
-  BB ¦  166  SE §  167  ': ¨  168  Co ©  169  -a ª  170  << «  171  NO ¬  172 ~
-  -- ­  173  Rg ®  174  'm ¯  175  DG °  176  +- ±  177  2S ²  178  3S ³  179 ~
+  AC ~_ 159  NS |  160  !I Â¡  161  Ct Â¢  162  Pd Â£  163  Cu Â¤  164  Ye Â¥  165 ~
+  BB Â¦  166  SE Â§  167  ': Â¨  168  Co Â©  169  -a Âª  170  << Â«  171  NO Â¬  172 ~
+  -- Â­  173  Rg Â®  174  'm Â¯  175  DG Â°  176  +- Â±  177  2S Â²  178  3S Â³  179 ~
 
 This shows, for example, that the digraph you get by typing CTRL-K Pd is the
-character (£).  This is character number 163 (decimal).
+character (Â£).  This is character number 163 (decimal).
    Pd is short for Pound.  Most digraphs are selected to give you a hint about
 the character they will produce.  If you look through the list you will
 understand the logic.
@@ -569,9 +569,9 @@ that combination.  Thus CTRL-K dP also works.  Since there is no digraph for
 
 You can define your own digraphs.  Example: >
 
-	:digraph a" ä
+	:digraph a" Ã¤
 
-This defines that CTRL-K a" inserts an ä character.  You can also specify the
+This defines that CTRL-K a" inserts an Ã¤ character.  You can also specify the
 character with a decimal number.  This defines the same digraph: >
 
 	:digraph a" 228
@@ -603,4 +603,4 @@ This deletes up to the third word into register g.
 
 Next chapter: |usr_25.txt|  Editing formatted text
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

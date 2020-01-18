@@ -1,6 +1,6 @@
 " Vim script language tests
 " Author:	Servatius Brandt <Servatius.Brandt@fujitsu-siemens.com>
-" Last Change:	2016 Feb 07
+" Last Change:	2019 May 24
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
@@ -178,7 +178,7 @@ endif
 "		next Xpath value.  No new Xnext value is prepared.  The argument
 "		should be 2^(n-1) for the nth Xloop command inside the loop.
 "		If the loop has only one Xloop command, the argument can be
-"		ommitted (default: 1).
+"		omitted (default: 1).
 "
 "	- Use XloopNEXT before ":continue" and ":endwhile".  This computes a new
 "	  Xnext value for the next execution of the loop by multiplying the old
@@ -9005,5 +9005,4 @@ Xcheck 50443995
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
-" vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
 "-------------------------------------------------------------------------------

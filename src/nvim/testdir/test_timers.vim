@@ -5,6 +5,8 @@ if !has('timers')
 endif
 
 source shared.vim
+source screendump.vim
+source load.vim
 
 func MyHandler(timer)
   let g:val += 1
@@ -20,9 +22,9 @@ func Test_oneshot()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 100, slept)
+    call assert_inrange(40, LoadAdjust(120), slept)
   else
-    call assert_inrange(20, 100, slept)
+    call assert_inrange(20, 120, slept)
   endif
 endfunc
 
@@ -32,18 +34,22 @@ func Test_repeat_three()
   let slept = WaitFor('g:val == 3')
   call assert_equal(3, g:val)
   if has('reltime')
-    call assert_inrange(120, 250, slept)
+    call assert_inrange(120, LoadAdjust(250), slept)
   else
     call assert_inrange(80, 200, slept)
   endif
 endfunc
 
 func Test_repeat_many()
+  call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
+  if has('mac')
+    sleep 200m
+  endif
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange(2, 4, g:val)
+  call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(5), g:val)
 endfunc
 
 func Test_with_partial_callback()
@@ -57,7 +63,7 @@ func Test_with_partial_callback()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 130, slept)
+    call assert_inrange(40, LoadAdjust(130), slept)
   else
     call assert_inrange(20, 100, slept)
   endif
@@ -89,6 +95,7 @@ func Test_info()
 endfunc
 
 func Test_stopall()
+  call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
   let info = timer_info()
@@ -119,7 +126,7 @@ func Test_paused()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(0, 100, slept)
+    call assert_inrange(0, LoadAdjust(140), slept)
   else
     call assert_inrange(0, 10, slept)
   endif
@@ -135,7 +142,7 @@ endfunc
 func Test_delete_myself()
   let g:called = 0
   let t = timer_start(10, 'StopMyself', {'repeat': -1})
-  call WaitFor('g:called == 2')
+  call WaitForAssert({-> assert_equal(2, g:called)})
   call assert_equal(2, g:called)
   call assert_equal([], timer_info(t))
 endfunc
@@ -161,13 +168,175 @@ func StopTimerAll(timer)
 endfunc
 
 func Test_stop_all_in_callback()
+  call timer_stopall()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
   call assert_equal(1, len(info))
+  if has('mac')
+    sleep 100m
+  endif
   sleep 40m
   let info = timer_info()
   call assert_equal(0, len(info))
 endfunc
 
+func FeedkeysCb(timer)
+  call feedkeys("hello\<CR>", 'nt')
+endfunc
+
+func InputCb(timer)
+  call timer_start(10, 'FeedkeysCb')
+  let g:val = input('?')
+  call Resume()
+endfunc
+
+func Test_input_in_timer()
+  let g:val = ''
+  call timer_start(10, 'InputCb')
+  call Standby(1000)
+  call assert_equal('hello', g:val)
+endfunc
+
+func FuncWithError(timer)
+  let g:call_count += 1
+  if g:call_count == 4
+    return
+  endif
+  doesnotexist
+endfunc
+
+func Test_timer_errors()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithError', {'repeat': -1})
+  " Timer will be stopped after failing 3 out of 3 times.
+  call WaitForAssert({-> assert_equal(3, g:call_count)})
+  sleep 50m
+  call assert_equal(3, g:call_count)
+endfunc
+
+func FuncWithCaughtError(timer)
+  let g:call_count += 1
+  try
+    doesnotexist
+  catch
+    " nop
+  endtry
+endfunc
+
+func Test_timer_catch_error()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithCaughtError', {'repeat': 4})
+  " Timer will not be stopped.
+  call WaitForAssert({-> assert_equal(4, g:call_count)})
+  sleep 50m
+  call assert_equal(4, g:call_count)
+endfunc
+
+func FeedAndPeek(timer)
+  call test_feedinput('a')
+  call getchar(1)
+endfunc
+
+func Interrupt(timer)
+  call test_feedinput("\<C-C>")
+endfunc
+
+func Test_peek_and_get_char()
+  throw 'skipped: Nvim does not support test_feedinput()'
+  if !has('unix') && !has('gui_running')
+    return
+  endif
+  call timer_start(0, 'FeedAndPeek')
+  let intr = timer_start(100, 'Interrupt')
+  let c = getchar()
+  call assert_equal(char2nr('a'), c)
+  call timer_stop(intr)
+endfunc
+
+func Test_getchar_zero()
+  if has('win32') && !has('gui_running')
+    " Console: no low-level input
+    return
+  endif
+
+  " Measure the elapsed time to avoid a hang when it fails.
+  let start = reltime()
+  let id = timer_start(20, {-> feedkeys('x', 'L')})
+  let c = 0
+  while c == 0 && reltimefloat(reltime(start)) < 0.2
+    let c = getchar(0)
+    sleep 10m
+  endwhile
+  call assert_equal('x', nr2char(c))
+  call timer_stop(id)
+endfunc
+
+func Test_ex_mode()
+  " Function with an empty line.
+  func Foo(...)
+
+  endfunc
+  let timer = timer_start(40, function('g:Foo'), {'repeat':-1})
+  " This used to throw error E749.
+  exe "normal Qsleep 100m\rvi\r"
+  call timer_stop(timer)
+endfunc
+
+func Test_restore_count()
+  if !CanRunVimInTerminal()
+    return
+  endif
+  " Check that v:count is saved and restored, not changed by a timer.
+  call writefile([
+        \ 'nnoremap <expr><silent> L v:count ? v:count . "l" : "l"',
+        \ 'func Doit(id)',
+        \ '  normal 3j',
+        \ 'endfunc',
+        \ 'call timer_start(100, "Doit")',
+	\ ], 'Xtrcscript')
+  call writefile([
+        \ '1-1234',
+        \ '2-1234',
+        \ '3-1234',
+	\ ], 'Xtrctext')
+  let buf = RunVimInTerminal('-S Xtrcscript Xtrctext', {})
+
+  " Wait for the timer to move the cursor to the third line.
+  call WaitForAssert({-> assert_equal(3, term_getcursor(buf)[0])})
+  call assert_equal(1, term_getcursor(buf)[1])
+  " Now check that v:count has not been set to 3
+  call term_sendkeys(buf, 'L')
+  call WaitForAssert({-> assert_equal(2, term_getcursor(buf)[1])})
+
+  call StopVimInTerminal(buf)
+  call delete('Xtrcscript')
+  call delete('Xtrctext')
+endfunc
+
+" Test that the garbage collector isn't triggered if a timer callback invokes
+" vgetc().
+func Test_nocatch_garbage_collect()
+  " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
+  return
+  " 'uptimetime. must be bigger than the timer timeout
+  set ut=200
+  call test_garbagecollect_soon()
+  call test_override('no_wait_return', 0)
+  func CauseAnError(id)
+    " This will show an error and wait for Enter.
+    let a = {'foo', 'bar'}
+  endfunc
+  func FeedChar(id)
+    call feedkeys('x', 't')
+  endfunc
+  call timer_start(300, 'FeedChar')
+  call timer_start(100, 'CauseAnError')
+  let x = getchar()
+
+  set ut&
+  call test_override('no_wait_return', 1)
+  delfunc CauseAnError
+  delfunc FeedChar
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

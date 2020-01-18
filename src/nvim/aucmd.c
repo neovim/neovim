@@ -6,10 +6,32 @@
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/ui.h"
+#include "nvim/aucmd.h"
+#include "nvim/eval.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "aucmd.c.generated.h"
 #endif
+
+void do_autocmd_uienter(uint64_t chanid, bool attached)
+{
+  static bool recursive = false;
+
+  if (recursive) {
+    return;  // disallow recursion
+  }
+  recursive = true;
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  assert(chanid < VARNUMBER_MAX);
+  tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE,
+                 NULL, NULL, false, curbuf);
+  tv_dict_clear(dict);
+
+  recursive = false;
+}
 
 static void focusgained_event(void **argv)
 {
@@ -26,7 +48,6 @@ void aucmd_schedule_focusgained(bool gained)
 }
 
 static void do_autocmd_focusgained(bool gained)
-  FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;
 
@@ -38,4 +59,3 @@ static void do_autocmd_focusgained(bool gained)
                  NULL, NULL, false, curbuf);
   recursive = false;
 }
-

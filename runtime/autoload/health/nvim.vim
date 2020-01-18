@@ -4,6 +4,14 @@ function! s:check_config() abort
   let ok = v:true
   call health#report_start('Configuration')
 
+  let vimrc = empty($MYVIMRC) ? stdpath('config').'/init.vim' : $MYVIMRC
+  if !filereadable(vimrc)
+    let ok = v:false
+    let has_vim = filereadable(expand('~/.vimrc'))
+    call health#report_warn((-1 == getfsize(vimrc) ? 'Missing' : 'Unreadable').' user config file: '.vimrc,
+          \[ has_vim ? ':help nvim-from-vim' : ':help init.vim' ])
+  endif
+
   " If $VIM is empty we don't care. Else make sure it is valid.
   if !empty($VIM) && !filereadable($VIM.'/runtime/doc/nvim.txt')
     let ok = v:false
@@ -17,11 +25,26 @@ function! s:check_config() abort
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
   endif
 
+  if v:ctype ==# 'C'
+    let ok = v:false
+    call health#report_error('Locale does not support UTF-8. Unicode characters may not display correctly.'
+          \                  .printf("\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s", $LANG, $LC_ALL, $LC_CTYPE),
+          \ [ 'If using tmux, try the -u option.',
+          \   'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.' ,
+          \   'Configure your system locale.' ])
+  endif
+
   if &paste
     let ok = v:false
     call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
           \ [ 'Remove `set paste` from your init.vim, if applicable.',
           \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
+  endif
+
+  let shadafile = (empty(&shadafile) || &shadafile ==# 'NONE') ? stdpath('data').'/shada/main.shada' : &shadafile
+  if !empty(shadafile) && (!filereadable(shadafile) || !filewritable(shadafile))
+    let ok = v:false
+    call health#report_error('shada file is not '.(filereadable(shadafile) ? 'writeable' : 'readable').":\n".shadafile)
   endif
 
   if ok
@@ -100,7 +123,7 @@ function! s:check_performance() abort
   else
     call health#report_info(buildtype)
     call health#report_warn(
-          \ 'Non-optimized build-type. Nvim will be slower.',
+          \ 'Non-optimized '.(has('debug')?'(DEBUG) ':'').'build. Nvim will be slower.',
           \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
@@ -152,6 +175,17 @@ function! s:check_tmux() abort
           \ '$TERM should be "screen-256color" or "tmux-256color" in tmux. Colors might look wrong.',
           \ ["Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal \"screen-256color\"",
           \  s:suggest_faq])
+  endif
+
+  " check for RGB capabilities
+  let info = system('tmux server-info')
+  let has_tc = stridx(info, " Tc: (flag) true") != -1
+  let has_rgb = stridx(info, " RGB: (flag) true") != -1
+  if !has_tc && !has_rgb
+    call health#report_warn(
+          \ "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
+          \ ["Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-overrides ',XXX:RGB'",
+          \  "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'"])
   endif
 endfunction
 

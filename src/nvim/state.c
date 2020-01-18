@@ -46,14 +46,12 @@ getkey:
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
-      input_enable_events();
       // Flush screen updates before blocking
       ui_flush();
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
       // mapping engine.
-      (void)os_inchar(NULL, 0, -1, 0);
-      input_disable_events();
+      (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
       key = !multiqueue_empty(main_loop.events)
             ? K_EVENT
@@ -64,6 +62,10 @@ getkey:
       may_sync_undo();
     }
 
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+    log_key(DEBUG_LOG_LEVEL, key);
+#endif
+
     int execute_result = s->execute(s, key);
     if (!execute_result) {
       break;
@@ -73,13 +75,13 @@ getkey:
   }
 }
 
-/// Return TRUE if in the current mode we need to use virtual.
-int virtual_active(void)
+/// Return true if in the current mode we need to use virtual.
+bool virtual_active(void)
 {
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"
   // being used.
-  if (virtual_op != MAYBE) {
+  if (virtual_op != kNone) {
     return virtual_op;
   }
   return ve_flags == VE_ALL
@@ -107,7 +109,7 @@ int get_real_state(void)
 /// @returns[allocated] mode string
 char *get_mode(void)
 {
-  char *buf = xcalloc(3, sizeof(char));
+  char *buf = xcalloc(4, sizeof(char));
 
   if (VIsual_active) {
     if (VIsual_select) {
@@ -137,7 +139,7 @@ char *get_mode(void)
       }
       if (ins_compl_active()) {
         buf[1] = 'c';
-      } else if (ctrl_x_mode == 1) {
+      } else if (ctrl_x_mode_not_defined_yet()) {
         buf[1] = 'x';
       }
     }
@@ -154,6 +156,12 @@ char *get_mode(void)
     buf[0] = 'n';
     if (finish_op) {
       buf[1] = 'o';
+      // to be able to detect force-linewise/blockwise/charwise operations
+      buf[2] = (char)motion_force;
+    } else if (restart_edit == 'I' || restart_edit == 'R'
+               || restart_edit == 'V') {
+      buf[1] = 'i';
+      buf[2] = (char)restart_edit;
     }
   }
 

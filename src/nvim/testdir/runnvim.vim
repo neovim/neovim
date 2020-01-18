@@ -7,6 +7,13 @@ function s:logger.on_exit(id, data, event)
   call add(self.d_events, [a:event, ['']])
 endfunction
 
+" Replace non-printable chars by special sequence, or "<%x>".
+let s:escaped_char = {"\n": '\n', "\r": '\r', "\t": '\t'}
+function! s:escape_non_printable(char) abort
+  let r = get(s:escaped_char, a:char)
+  return r is 0 ? printf('<%x>', char2nr(a:char)) : r
+endfunction
+
 function Main()
   let argc = +$NVIM_TEST_ARGC
   let args = []
@@ -20,15 +27,14 @@ function Main()
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')
-  bwipeout!
+  bwipeout!  " kills the job always.
   let stringified_events = map(s:logger.d_events,
         \'v:val[0] . ": " . ' .
         \'join(map(v:val[1], '.
         \         '''substitute(v:val, '.
         \                      '"\\v\\C(\\p@!.|\\<)", '.
-        \                      '"\\=printf(\"<%x>\", '.
-        \                                 'char2nr(submatch(0)))", '.
-        \                      '"")''), '.
+        \                      '"\\=s:escape_non_printable(submatch(0))", '.
+        \                      '"g")''), '.
         \     '''\n'')')
   call setline(1, [
         \ 'Job exited with code ' . results[0],
@@ -43,9 +49,6 @@ function Main()
         \])
   write
   if results[0] != 0
-    if results[0] != -1
-      call jobstop(job)
-    endif
     cquit
   else
     qall

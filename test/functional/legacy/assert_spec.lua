@@ -3,6 +3,7 @@ local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
 local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec
+local eval = helpers.eval
 
 local function expected_errors(errors)
   eq(errors, nvim.get_vvar('errors'))
@@ -16,6 +17,15 @@ describe('assert function:', function()
 
   before_each(function()
     clear()
+  end)
+
+  describe('assert_beeps', function()
+    it('works', function()
+      call('assert_beeps', 'normal h')
+      expected_empty()
+      call('assert_beeps', 'normal 0')
+      expected_errors({'command did not beep: normal 0'})
+    end)
   end)
 
   -- assert_equal({expected}, {actual}, [, {msg}])
@@ -38,18 +48,18 @@ describe('assert function:', function()
     end)
 
     it('should not change v:errors when expected is equal to actual', function()
-      call('assert_equal', '', '')
-      call('assert_equal', 'string', 'string')
+      eq(0, call('assert_equal', '', ''))
+      eq(0, call('assert_equal', 'string', 'string'))
       expected_empty()
     end)
 
     it('should change v:errors when expected is not equal to actual', function()
-      call('assert_equal', 0, {0})
+      eq(1, call('assert_equal', 0, {0}))
       expected_errors({'Expected 0 but got [0]'})
     end)
 
     it('should change v:errors when expected is not equal to actual', function()
-      call('assert_equal', 0, "0")
+      eq(1, call('assert_equal', 0, "0"))
       expected_errors({"Expected 0 but got '0'"})
     end)
 
@@ -77,18 +87,23 @@ describe('assert function:', function()
       eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
          exc_exec('call CheckAssert()'))
     end)
+
+    it('can specify a message and get a message about what failed', function()
+      call('assert_equal', 'foo', 'bar', 'testing')
+      expected_errors({"testing: Expected 'foo' but got 'bar'"})
+    end)
   end)
 
   -- assert_notequal({expected}, {actual}[, {msg}])
   describe('assert_notequal', function()
     it('should not change v:errors when expected differs from actual', function()
-      call('assert_notequal', 'foo', 4)
-      call('assert_notequal', {1, 2, 3}, 'foo')
+      eq(0, call('assert_notequal', 'foo', 4))
+      eq(0, call('assert_notequal', {1, 2, 3}, 'foo'))
       expected_empty()
     end)
 
     it('should change v:errors when expected is equal to actual', function()
-      call('assert_notequal', 'foo', 'foo')
+      eq(1, call('assert_notequal', 'foo', 'foo'))
       expected_errors({"Expected not equal to 'foo'"})
     end)
   end)
@@ -96,13 +111,13 @@ describe('assert function:', function()
   -- assert_false({actual}, [, {msg}])
   describe('assert_false', function()
     it('should not change v:errors when actual is false', function()
-      call('assert_false', 0)
-      call('assert_false', false)
+      eq(0, call('assert_false', 0))
+      eq(0, call('assert_false', false))
       expected_empty()
     end)
 
     it('should change v:errors when actual is not false', function()
-      call('assert_false', 1)
+      eq(1, call('assert_false', 1))
       expected_errors({'Expected False but got 1'})
     end)
 
@@ -115,14 +130,14 @@ describe('assert function:', function()
   -- assert_true({actual}, [, {msg}])
   describe('assert_true', function()
     it('should not change v:errors when actual is true', function()
-      call('assert_true', 1)
-      call('assert_true', -1) -- In Vim script, non-zero Numbers are TRUE.
-      call('assert_true', true)
+      eq(0, call('assert_true', 1))
+      eq(0, call('assert_true', -1))  -- In Vim script, non-zero Numbers are TRUE.
+      eq(0, call('assert_true', true))
       expected_empty()
     end)
 
     it('should change v:errors when actual is not true', function()
-      call('assert_true', 1.5)
+      eq(1, call('assert_true', 1.5))
       expected_errors({'Expected True but got 1.5'})
     end)
   end)
@@ -164,10 +179,10 @@ describe('assert function:', function()
         call assert_true('', 'file two')
       ]])
       expected_errors({
-        tmpname_one .. " line 1: 'equal assertion failed'",
-        tmpname_one .. " line 2: 'true  assertion failed'",
-        tmpname_one .. " line 3: 'false assertion failed'",
-        tmpname_two .. " line 1: 'file two'",
+        tmpname_one .. " line 1: equal assertion failed: Expected 1 but got 100",
+        tmpname_one .. " line 2: true  assertion failed: Expected False but got 'true'",
+        tmpname_one .. " line 3: false assertion failed: Expected True but got 'false'",
+        tmpname_two .. " line 1: file two: Expected True but got ''",
       })
     end)
 
@@ -198,7 +213,7 @@ describe('assert function:', function()
 
     it('should set v:errors to msg when given and match fails', function()
       call('assert_match', 'bar.*foo', 'foobar', 'wrong')
-      expected_errors({"'wrong'"})
+      expected_errors({"wrong: Pattern 'bar.*foo' does not match 'foobar'"})
     end)
   end)
 
@@ -219,19 +234,30 @@ describe('assert function:', function()
   -- assert_fails({cmd}, [, {error}])
   describe('assert_fails', function()
     it('should change v:errors when error does not match v:errmsg', function()
-      command([[call assert_fails('xxx', {})]])
+      eq(1, eval([[assert_fails('xxx', {})]]))
       command([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
       expected_errors({"Expected {} but got 'E731: using Dictionary as a String'"})
     end)
 
     it('should not change v:errors when cmd errors', function()
-      call('assert_fails', 'NonexistentCmd')
+      eq(0, eval([[assert_fails('NonexistentCmd')]]))
       expected_empty()
     end)
 
     it('should change v:errors when cmd succeeds', function()
-      call('assert_fails', 'call empty("")')
+      eq(1, eval([[assert_fails('call empty("")', '')]]))
       expected_errors({'command did not fail: call empty("")'})
+    end)
+
+    it('can specify and get a message about what failed', function()
+      eq(1, eval([[assert_fails('xxx', {}, 'stupid')]]))
+      command([[call assert_match("stupid: Expected {} but got 'E731:", v:errors[0])]])
+      expected_errors({"stupid: Expected {} but got 'E731: using Dictionary as a String'"})
+    end)
+
+    it('can specify and get a message even when cmd succeeds', function()
+      eq(1, eval([[assert_fails('echo', '', 'echo command')]]))
+      expected_errors({'command did not fail: echo command'})
     end)
   end)
 
@@ -263,7 +289,7 @@ describe('assert function:', function()
   -- assert_report({msg})
   describe('assert_report()', function()
     it('should add a message to v:errors', function()
-      command("call assert_report('something is wrong')")
+      eq(1, call('assert_report', 'something is wrong'))
       command("call assert_match('something is wrong', v:errors[0])")
       command('call remove(v:errors, 0)')
       expected_empty()
@@ -277,7 +303,7 @@ describe('assert function:', function()
         try
           nocommand
         catch
-          call assert_exception('E492')
+          call assert_equal(0, assert_exception('E492'))
         endtry
       ]])
       expected_empty()
@@ -290,9 +316,9 @@ describe('assert function:', function()
         catch
           try
             " illegal argument, get NULL for error
-            call assert_exception([])
+            call assert_equal(1, assert_exception([]))
           catch
-            call assert_exception('E730')
+            call assert_equal(0, assert_exception('E730'))
           endtry
         endtry
       ]])

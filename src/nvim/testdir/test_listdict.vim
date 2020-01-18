@@ -106,6 +106,43 @@ func Test_list_range_assign()
   call assert_equal([1, 2], l)
 endfunc
 
+" Test removing items in list
+func Test_list_func_remove()
+  " Test removing 1 element
+  let l = [1, 2, 3, 4]
+  call assert_equal(1, remove(l, 0))
+  call assert_equal([2, 3, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal(2, remove(l, 1))
+  call assert_equal([1, 3, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal(4, remove(l, -1))
+  call assert_equal([1, 2, 3], l)
+
+  " Test removing range of element(s)
+  let l = [1, 2, 3, 4]
+  call assert_equal([3], remove(l, 2, 2))
+  call assert_equal([1, 2, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal([2, 3], remove(l, 1, 2))
+  call assert_equal([1, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal([2, 3], remove(l, -3, -2))
+  call assert_equal([1, 4], l)
+
+  " Test invalid cases
+  let l = [1, 2, 3, 4]
+  call assert_fails("call remove(l, 5)", 'E684:')
+  call assert_fails("call remove(l, 1, 5)", 'E684:')
+  call assert_fails("call remove(l, 3, 2)", 'E16:')
+  call assert_fails("call remove(1, 0)", 'E712:')
+  call assert_fails("call remove(l, l)", 'E745:')
+endfunc
+
 " Tests for Dictionary type
 
 func Test_dict()
@@ -220,6 +257,17 @@ func Test_script_local_dict_func()
   call insert(g:dict.foo, function('strlen'))
   call assert_equal('g:dict.func-4', g:dict.func())
   unlet g:dict
+endfunc
+
+" Test removing items in la dictionary
+func Test_dict_func_remove()
+  let d = {1:'a', 2:'b', 3:'c'}
+  call assert_equal('b', remove(d, 2))
+  call assert_equal({1:'a', 3:'c'}, d)
+
+  call assert_fails("call remove(d, 1, 2)", 'E118:')
+  call assert_fails("call remove(d, 'a')", 'E716:')
+  call assert_fails("call remove(d, [])", 'E730:')
 endfunc
 
 " Nasty: remove func from Dict that's being called (works)
@@ -452,17 +500,20 @@ endfunc
 
 " No remove() of write-protected scope-level variable
 func! Tfunc(this_is_a_long_parameter_name)
-  call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E795')
+  call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742')
 endfun
 func Test_dict_scope_var_remove()
   call Tfunc('testval')
 endfunc
 
 " No extend() of write-protected scope-level variable
+func Test_dict_scope_var_extend()
+  call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
+endfunc
 func! Tfunc(this_is_a_long_parameter_name)
   call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
 endfunc
-func Test_dict_scope_var_extend()
+func Test_dict_scope_var_extend_overwrite()
   call Tfunc('testval')
 endfunc
 
@@ -587,17 +638,139 @@ func Test_listdict_compare_complex()
 endfunc
 
 func Test_listdict_extend()
+  " Test extend() with lists
+
   " Pass the same List to extend()
-  let l = [1, 2, 3, 4, 5]
-  call extend(l, l)
-  call assert_equal([1, 2, 3, 4, 5, 1, 2, 3, 4, 5], l)
+  let l = [1, 2, 3]
+  call assert_equal([1, 2, 3, 1, 2, 3], extend(l, l))
+  call assert_equal([1, 2, 3, 1, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call assert_equal([1, 2, 3, 4, 5, 6], extend(l, [4, 5, 6]))
+  call assert_equal([1, 2, 3, 4, 5, 6], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 0)
+  call assert_equal([4, 5, 6, 1, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 1)
+  call assert_equal([1, 4, 5, 6, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 3)
+  call assert_equal([1, 2, 3, 4, 5, 6], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], -1)
+  call assert_equal([1, 2, 4, 5, 6, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], -3)
+  call assert_equal([4, 5, 6, 1, 2,  3], l)
+
+  let l = [1, 2, 3]
+  call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
+  call assert_fails("call extend(l, [4, 5, 6], -4)", 'E684:')
+  call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+
+  " Test extend() with dictionaries.
 
   " Pass the same Dict to extend()
   let d = { 'a': {'b': 'B'}}
   call extend(d, d)
   call assert_equal({'a': {'b': 'B'}}, d)
 
-  " Pass the same Dict to extend() with "error"
-  call assert_fails("call extend(d, d, 'error')", 'E737:')
-  call assert_equal({'a': {'b': 'B'}}, d)
+  let d = {'a': 'A', 'b': 'B'}
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, extend(d, {'b': 0, 'c':'C'}))
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call extend(d, {'a': 'A', 'b': 0, 'c': 'C'}, "force")
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call extend(d, {'b': 0, 'c':'C'}, "keep")
+  call assert_equal({'a': 'A', 'b': 'B', 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  call assert_equal({'a': 'A', 'b': 'B'}, d)
+
+  call assert_fails("call extend([1, 2], 1)", 'E712:')
+  call assert_fails("call extend([1, 2], {})", 'E712:')
+endfunc
+
+func s:check_scope_dict(x, fixed)
+  func s:gen_cmd(cmd, x)
+    return substitute(a:cmd, '\<x\ze:', a:x, 'g')
+  endfunc
+
+  let cmd = s:gen_cmd('let x:foo = 1', a:x)
+  if a:fixed
+    call assert_fails(cmd, 'E461')
+  else
+    exe cmd
+    exe s:gen_cmd('call assert_equal(1, x:foo)', a:x)
+  endif
+
+  let cmd = s:gen_cmd('let x:["bar"] = 2', a:x)
+  if a:fixed
+    call assert_fails(cmd, 'E461')
+  else
+    exe cmd
+    exe s:gen_cmd('call assert_equal(2, x:bar)', a:x)
+  endif
+
+  let cmd = s:gen_cmd('call extend(x:, {"baz": 3})', a:x)
+  if a:fixed
+    call assert_fails(cmd, 'E742')
+  else
+    exe cmd
+    exe s:gen_cmd('call assert_equal(3, x:baz)', a:x)
+  endif
+
+  if a:fixed
+    if a:x ==# 'a'
+      call assert_fails('unlet a:x', 'E795')
+      call assert_fails('call remove(a:, "x")', 'E742')
+    elseif a:x ==# 'v'
+      call assert_fails('unlet v:count', 'E795')
+      call assert_fails('call remove(v:, "count")', 'E742')
+    endif
+  else
+    exe s:gen_cmd('unlet x:foo', a:x)
+    exe s:gen_cmd('unlet x:bar', a:x)
+    exe s:gen_cmd('call remove(x:, "baz")', a:x)
+  endif
+
+  delfunc s:gen_cmd
+endfunc
+
+func Test_scope_dict()
+  " Test for g:
+  call s:check_scope_dict('g', v:false)
+
+  " Test for s:
+  call s:check_scope_dict('s', v:false)
+
+  " Test for l:
+  call s:check_scope_dict('l', v:false)
+
+  " Test for a:
+  call s:check_scope_dict('a', v:true)
+
+  " Test for b:
+  call s:check_scope_dict('b', v:false)
+
+  " Test for w:
+  call s:check_scope_dict('w', v:false)
+
+  " Test for t:
+  call s:check_scope_dict('t', v:false)
+
+  " Test for v:
+  call s:check_scope_dict('v', v:true)
 endfunc

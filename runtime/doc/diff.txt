@@ -5,7 +5,7 @@
 
 
 							*diff* *diff-mode*
-This file describes the |+diff| feature: Showing differences between two to
+This file describes the diff feature: Showing differences between two to
 eight versions of the same file.
 
 The basics are explained in section |08.7| of the user manual.
@@ -27,7 +27,9 @@ The second and following arguments may also be a directory name.  Vim will
 then append the file name of the first argument to the directory name to find
 the file.
 
-This only works when a standard "diff" command is available.  See 'diffexpr'.
+By default an internal diff library will be used.  When 'diffopt' or
+'diffexpr' has been set an external "diff" command will be used.  This only
+works when such a diff program is available.
 
 Diffs are local to the current tab page |tab-page|.  You can't see diffs with
 a window in another tab page.  This does make it possible to have several
@@ -165,7 +167,7 @@ loaded.  Since Vim doesn't allow having two buffers for the same file, you
 need another buffer.  This command is useful: >
 	 command DiffOrig vert new | set buftype=nofile | read ++edit # | 0d_
 		\ | diffthis | wincmd p | diffthis
-(this is in |vimrc_example.vim|).  Use ":DiffOrig" to see the differences
+Use ":DiffOrig" to see the differences
 between the current buffer and the file it was loaded from.
 
 A buffer that is unloaded cannot be used for the diff.  But it does work for
@@ -173,7 +175,7 @@ hidden buffers.  You can use ":hide" to close a window without unloading the
 buffer.  If you don't want a buffer to remain used for the diff do ":set
 nodiff" before hiding it.
 
-							*:dif* *:diffupdate*
+						*:dif* *:diff* *:diffupdate*
 :dif[fupdate][!]		Update the diff highlighting and folds.
 
 Vim attempts to keep the differences updated when you make changes to the
@@ -323,7 +325,7 @@ After setting this variable, reload the syntax script: >
 FINDING THE DIFFERENCES					*diff-diffexpr*
 
 The 'diffexpr' option can be set to use something else than the standard
-"diff" program to compare two files and find the differences.
+"diff" program to compare two files and find the differences. *E959*
 
 When 'diffexpr' is empty, Vim uses this command to find the differences
 between file1 and file2: >
@@ -332,8 +334,9 @@ between file1 and file2: >
 
 The ">" is replaced with the value of 'shellredir'.
 
-The output of "diff" must be a normal "ed" style diff.  Do NOT use a context
-diff.  This example explains the format that Vim expects: >
+The output of "diff" must be a normal "ed" style diff or a unified diff.  Do
+NOT use a context diff.  This example explains the format that Vim expects for
+the "ed" style diff: >
 
 	1a2
 	> bbb
@@ -372,11 +375,15 @@ Example (this does almost the same as 'diffexpr' being empty): >
 	   endif
 	   silent execute "!diff -a --binary " . opt . v:fname_in . " " . v:fname_new .
 		\  " > " . v:fname_out
+	   redraw!
 	endfunction
 
 The "-a" argument is used to force comparing the files as text, comparing as
 binaries isn't useful.  The "--binary" argument makes the files read in binary
 mode, so that a CTRL-Z doesn't end the text on DOS.
+
+The `redraw!` command may not be needed, depending on whether executing a
+shell command shows something on the display or not.
 
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
@@ -429,4 +436,4 @@ evaluating 'patchexpr'.  This hopefully avoids that files in the current
 directory are accidentally patched.  Vim will also delete files starting with
 v:fname_in and ending in ".rej" and ".orig".
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

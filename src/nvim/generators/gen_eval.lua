@@ -1,4 +1,4 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 local nvimsrcdir = arg[1]
 local autodir = arg[2]
@@ -8,9 +8,9 @@ local funcs_file = arg[4]
 if nvimsrcdir == '--help' then
   print([[
 Usage:
-  lua geneval.lua src/nvim build/src/nvim/auto
+  lua gen_eval.lua src/nvim build/src/nvim/auto
 
-Will generate build/src/nvim/auto/funcs.generated.h with definition of functions 
+Will generate build/src/nvim/auto/funcs.generated.h with definition of functions
 static const array.
 ]])
   os.exit(0)
@@ -23,9 +23,9 @@ local funcsfname = autodir .. '/funcs.generated.h'
 local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
 
 local funcs = require('eval').funcs
-local metadata = mpack.unpack(io.open(arg[3], 'rb'):read("*all"))
-for i,fun in ipairs(metadata) do
-  if not fun.remote_only then
+local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
+for _,fun in ipairs(metadata) do
+  if not (fun.remote_only or fun.lua_only) then
     funcs[fun.name] = {
       args=#fun.parameters,
       func='api_wrapper',
@@ -53,14 +53,14 @@ VimLFuncDef;
 ]])
 
 for name, def in pairs(funcs) do
-  args = def.args or 0
+  local args = def.args or 0
   if type(args) == 'number' then
     args = {args, args}
   elseif #args == 1 then
     args[2] = 'MAX_FUNC_ARGS'
   end
-  func = def.func or ('f_' .. name)
-  data = def.data or "NULL"
+  local func = def.func or ('f_' .. name)
+  local data = def.data or "NULL"
   gperfpipe:write(('%s,  %s, %s, &%s, (FunPtr)%s\n')
                   :format(name, args[1], args[2], func, data))
 end

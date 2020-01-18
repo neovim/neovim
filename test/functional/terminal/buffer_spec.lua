@@ -5,8 +5,9 @@ local wait = helpers.wait
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
+local command= helpers.command
 
-describe('terminal buffer', function()
+describe(':terminal buffer', function()
   local screen
 
   before_each(function()
@@ -59,7 +60,7 @@ describe('terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = nvim('command_output', 'swapname'):gsub('\n', '')
+      local swapfile = nvim('exec', 'swapname', true):gsub('\n', '')
       eq(nil, io.open(swapfile))
     end)
 
@@ -158,14 +159,15 @@ describe('terminal buffer', function()
   end)
 
   it('handles loss of focus gracefully', function()
-    if helpers.pending_win32(pending) then return end
     -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
     feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-
+    local exitcmd = helpers.iswin()
+      and "['cmd', '/c', 'exit']"
+      or "['sh', '-c', 'exit']"
     source([[
     function! SplitWindow(id, data, event)
       new
@@ -173,7 +175,7 @@ describe('terminal buffer', function()
     endfunction
 
     startinsert
-    call jobstart(['sh', '-c', 'exit'], {'on_exit': function("SplitWindow")})
+    call jobstart(]]..exitcmd..[[, {'on_exit': function("SplitWindow")})
     call feedkeys("\<C-\>", 't')  " vim will expect <C-n>, but be exited out of
                                   " the terminal before it can be entered.
     ]])
@@ -201,6 +203,44 @@ describe('terminal buffer', function()
     feed([[<C-\><C-n>]])
     feed_command('bdelete!')
   end)
+
+  describe('handles confirmations', function()
+    it('with :confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('confirm bdelete')
+      screen:expect{any='Close "term://'}
+    end)
+
+    it('with &confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('bdelete')
+      screen:expect{any='E89'}
+      feed('<cr>')
+      eq('terminal', eval('&buftype'))
+      feed_command('set confirm | bdelete')
+      screen:expect{any='Close "term://'}
+      feed('y')
+      neq('terminal', eval('&buftype'))
+    end)
+  end)
+
+  it('it works with set rightleft #11438', function()
+    local columns = eval('&columns')
+    feed(string.rep('a', columns))
+    command('set rightleft')
+    screen:expect([[
+                                               ydaer ytt|
+      {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('bdelete!')
+  end)
 end)
 
 describe('No heap-buffer-overflow when using', function()
@@ -220,7 +260,7 @@ describe('No heap-buffer-overflow when using', function()
     feed('$')
     -- Let termopen() modify the buffer
     feed_command('call termopen("echo")')
-    wait()
+    eq(2, eval('1+1')) -- check nvim still running
     feed_command('bdelete!')
   end)
 end)

@@ -38,7 +38,7 @@ N is used to indicate an optional count that can be given before the command.
 |l|	N  l		right (also: <Space> or <Right> key)
 |0|	   0		to first character in the line (also: <Home> key)
 |^|	   ^		to first non-blank character in the line
-|$|	N  $		to the last character in the line (N-1 lines lower)
+|$|	N  $		to the next EOL (end of line) position
 			   (also: <End> key)
 |g0|	   g0		to first character in screen line (differs from "0"
 			   when lines wrap)
@@ -47,6 +47,7 @@ N is used to indicate an optional count that can be given before the command.
 |g$|	N  g$		to last character in screen line (differs from "$"
 			   when lines wrap)
 |gm|	   gm		to middle of the screen line
+|gM|	   gM		to middle of the line
 |bar|	N  |		to column N (default: 1)
 |f|	N  f{char}	to the Nth occurrence of {char} to the right
 |F|	N  F{char}	to the Nth occurrence of {char} to the left
@@ -597,7 +598,6 @@ In Insert or Command-line mode:
 Short explanation of each option:		*option-list*
 'aleph'		  'al'	    ASCII code of the letter Aleph (Hebrew)
 'allowrevins'	  'ari'     allow CTRL-_ in Insert and Command-line mode
-'altkeymap'	  'akm'     for default second language (Farsi/Hebrew)
 'ambiwidth'	  'ambw'    what to do with Unicode chars of ambiguous width
 'autochdir'	  'acd'     change directory to the file in the current window
 'arabic'	  'arab'    for Arabic as a default second language
@@ -614,7 +614,8 @@ Short explanation of each option:		*option-list*
 'backupext'	  'bex'     extension used for the backup file
 'backupskip'	  'bsk'     no backup for files that match these patterns
 'balloondelay'	  'bdlay'   delay in mS before a balloon may pop up
-'ballooneval'	  'beval'   switch on balloon evaluation
+'ballooneval'	  'beval'     switch on balloon evaluation in the GUI
+'balloonevalterm' 'bevalterm' switch on balloon evaluation in the terminal
 'balloonexpr'	  'bexpr'   expression to show in balloon
 'belloff'	  'bo'	    do not ring the bell for these reasons
 'binary'	  'bin'     read/write/edit file in binary mode
@@ -687,7 +688,6 @@ Short explanation of each option:		*option-list*
 'filetype'	  'ft'	    type of file, used for autocommands
 'fillchars'	  'fcs'     characters to use for displaying special items
 'fixendofline'	  'fixeol'  make sure last line in file has <EOL>
-'fkmap'		  'fk'	    Farsi keyboard mapping
 'foldclose'	  'fcl'     close a fold when the cursor leaves it
 'foldcolumn'	  'fdc'     width of the column used to indicate folds
 'foldenable'	  'fen'     set to display all folds open
@@ -743,6 +743,7 @@ Short explanation of each option:		*option-list*
 'iskeyword'	  'isk'     characters included in keywords
 'isprint'	  'isp'     printable characters
 'joinspaces'	  'js'	    two spaces after a period with a join command
+'jumpoptions'	  'jop'     specifies how jumping is done
 'keymap'	  'kmp'     name of a keyboard mapping
 'keymodel'	  'km'	    enable starting/stopping selection with keys
 'keywordprg'	  'kp'	    program to use for the "K" command
@@ -772,6 +773,7 @@ Short explanation of each option:		*option-list*
 'menuitems'	  'mis'     maximum number of items in a menu
 'mkspellmem'	  'msm'     memory used before |:mkspell| compresses the tree
 'modeline'	  'ml'	    recognize modelines at start or end of file
+'modelineexpr'	  'mle'	    allow setting expression options from a modeline
 'modelines'	  'mls'     number of lines checked for modelines
 'modifiable'	  'ma'	    changes to the text are not possible
 'modified'	  'mod'     buffer has been modified
@@ -798,6 +800,7 @@ Short explanation of each option:		*option-list*
 'perldll'		    name of the Perl dynamic library
 'preserveindent'  'pi'	    preserve the indent structure when reindenting
 'previewheight'   'pvh'     height of the preview window
+'previewpopup'    'pvp'     use popup window for preview
 'previewwindow'   'pvw'     identifies the preview window
 'printdevice'	  'pdev'    name of the printer to be used for :hardcopy
 'printencoding'   'penc'    encoding to be used for printing
@@ -809,8 +812,10 @@ Short explanation of each option:		*option-list*
 'printoptions'	  'popt'    controls the format of :hardcopy output
 'prompt'	  'prompt'  enable prompt in Ex mode
 'pumheight'	  'ph'	    maximum height of the popup menu
+'pumwidth'	  'pw'	    minimum width of the popup menu
 'pythondll'		    name of the Python 2 dynamic library
 'pythonthreedll'	    name of the Python 3 dynamic library
+'pyxversion'	  'pyx'	    Python version used for pyx* commands
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
@@ -856,7 +861,7 @@ Short explanation of each option:		*option-list*
 'showtabline'	  'stal'    tells when the tab pages line is displayed
 'sidescroll'	  'ss'	    minimum number of columns to scroll horizontal
 'sidescrolloff'   'siso'    min. nr. of columns to left and right of cursor
-'signcolumn'	  'scl'	    when to display the sign column
+'signcolumn'	  'scl'	    when and how to display the sign column
 'smartcase'	  'scs'     no ignore case when pattern has uppercase
 'smartindent'	  'si'	    smart autoindenting for C programs
 'smarttab'	  'sta'     use 'shiftwidth' when inserting <Tab>
@@ -906,6 +911,8 @@ Short explanation of each option:		*option-list*
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file
 'updatetime'	  'ut'	    after this many milliseconds flush swap file
+'varsofttabstop'  'vsts'    a list of number of spaces when typing <Tab>
+'vartabstop'	  'vts'	    a list of number of spaces for <Tab>s
 'verbose'	  'vbs'     give informative messages
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
@@ -924,6 +931,7 @@ Short explanation of each option:		*option-list*
 'winaltkeys'	  'wak'     when the windows system handles ALT keys
 'window'	  'wi'	    nr of lines to scroll for CTRL-F and CTRL-B
 'winheight'	  'wh'	    minimum number of lines for the current window
+'winhighlight'	  'winhl'   window-local highlighting
 'winfixheight'	  'wfh'     keep window height when opening/closing windows
 'winfixwidth'	  'wfw'     keep window width when opening/closing windows
 'winminheight'	  'wmh'     minimum number of lines for any window
@@ -1117,7 +1125,6 @@ Context-sensitive completion on the command-line:
 |-b|	-b		    binary mode
 |-l|	-l		    lisp mode
 |-A|	-A		    Arabic mode ('arabic' is set)
-|-F|	-F		    Farsi mode ('fkmap' and 'rightleft' are set)
 |-H|	-H		    Hebrew mode ('hkmap' and 'rightleft' are set)
 |-V|	-V		    Verbose, give informative messages
 |-r|	-r		    give list of swap files
@@ -1372,4 +1379,4 @@ Context-sensitive completion on the command-line:
 |zN|		zN			fold normal set 'foldenable'
 |zi|		zi			invert 'foldenable'
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

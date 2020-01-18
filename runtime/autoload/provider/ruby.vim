@@ -5,11 +5,7 @@ endif
 let g:loaded_ruby_provider = 1
 
 function! provider#ruby#Detect() abort
-  if exists("g:ruby_host_prog")
-    return g:ruby_host_prog
-  else
-    return has('win32') ? exepath('neovim-ruby-host.bat') : exepath('neovim-ruby-host')
-  end
+  return s:prog
 endfunction
 
 function! provider#ruby#Prog() abort
@@ -47,11 +43,28 @@ function! provider#ruby#Call(method, args) abort
   return call('rpcrequest', insert(insert(a:args, 'ruby_'.a:method), s:host))
 endfunction
 
-let s:err = ''
-let s:prog = provider#ruby#Detect()
-let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
+function! s:detect()
+  if exists("g:ruby_host_prog")
+    return expand(g:ruby_host_prog)
+  elseif has('win32')
+    return exepath('neovim-ruby-host.bat')
+  else
+    let p = exepath('neovim-ruby-host')
+    if empty(p)
+      return ''
+    endif
+    " neovim-ruby-host could be an rbenv shim for another Ruby version.
+    call system(p)
+    return v:shell_error ? '' : p
+  end
+endfunction
 
-if empty(s:prog)
+let s:err = ''
+let s:prog = s:detect()
+let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
+let g:loaded_ruby_provider = empty(s:prog) ? 1 : 2
+
+if g:loaded_ruby_provider != 2
   let s:err = 'Cannot find the neovim RubyGem. Try :checkhealth'
 endif
 

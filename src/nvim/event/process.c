@@ -26,6 +26,11 @@
 // For PTY processes SIGTERM is sent first (in case SIGHUP was not enough).
 #define KILL_TIMEOUT_MS 2000
 
+/// Externally defined with gcov.
+#ifdef USE_GCOV
+void __gcov_flush(void);
+#endif
+
 static bool process_is_tearing_down = false;
 
 /// @returns zero on success, or negative error code
@@ -49,6 +54,11 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   } else {
     proc->err.closed = true;
   }
+
+#ifdef USE_GCOV
+  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
+  __gcov_flush();
+#endif
 
   int status;
   switch (proc->type) {
@@ -149,7 +159,7 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///                 0 for no wait. -1 to wait until the process quits.
 /// @return Exit code of the process. proc->status will have the same value.
 ///         -1 if the timeout expired while the process is still running.
-///         -2 if the user interruped the wait.
+///         -2 if the user interrupted the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -171,8 +181,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
                             got_int                   // interrupted by the user
                             || proc->refcount == 1);  // job exited
 
-  // we'll assume that a user frantically hitting interrupt doesn't like
-  // the current job. Signal that it has to be killed.
+  // Assume that a user hitting CTRL-C does not like the current job.  Kill it.
   if (got_int) {
     got_int = false;
     process_stop(proc);
@@ -210,13 +219,10 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
     return;
   }
   proc->stopped_time = os_hrtime();
+  proc->exit_signal = SIGTERM;
 
   switch (proc->type) {
     case kProcessTypeUv:
-      // Close the process's stdin. If the process doesn't close its own
-      // stdout/stderr, they will be closed when it exits(possibly due to being
-      // terminated after a timeout)
-      stream_may_close(&proc->in);
       os_proc_tree_kill(proc->pid, SIGTERM);
       break;
     case kProcessTypePty:
@@ -247,8 +253,10 @@ static void children_kill_cb(uv_timer_t *handle)
     }
     uint64_t term_sent = UINT64_MAX == proc->stopped_time;
     if (kProcessTypePty != proc->type || term_sent) {
+      proc->exit_signal = SIGKILL;
       os_proc_tree_kill(proc->pid, SIGKILL);
     } else {
+      proc->exit_signal = SIGTERM;
       os_proc_tree_kill(proc->pid, SIGTERM);
       proc->stopped_time = UINT64_MAX;  // Flag: SIGTERM was sent.
       // Restart timer.
@@ -397,4 +405,3 @@ static void on_process_stream_close(Stream *stream, void *data)
   Process *proc = data;
   decref(proc);
 }
-

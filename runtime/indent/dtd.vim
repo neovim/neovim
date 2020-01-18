@@ -3,9 +3,6 @@
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:      2011-07-08
 
-let s:cpo_save = &cpo
-set cpo&vim
-
 setlocal indentexpr=GetDTDIndent()
 setlocal indentkeys=!^F,o,O,>
 setlocal nosmartindent
@@ -13,6 +10,9 @@ setlocal nosmartindent
 if exists("*GetDTDIndent")
   finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 " TODO: Needs to be adjusted to stop at [, <, and ].
 let s:token_pattern = '^[^[:space:]]\+'

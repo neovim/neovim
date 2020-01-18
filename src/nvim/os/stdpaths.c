@@ -65,8 +65,12 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *env_val = os_getenv(env);
 
 #ifdef WIN32
-  if (env_val == NULL) {
+  if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
+  }
+#else
+  if (env_val == NULL && os_env_exists(env)) {
+    env_val = "";
   }
 #endif
 
@@ -74,20 +78,20 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val != NULL) {
     ret = xstrdup(env_val);
   } else if (fallback) {
-    ret = (char *) expand_env_save((char_u *)fallback);
+    ret = (char *)expand_env_save((char_u *)fallback);
   }
 
   return ret;
 }
 
-/// Return nvim-specific XDG directory subpath
+/// Return Nvim-specific XDG directory subpath.
+///
+/// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
+/// configuration and data files in the same path. #4403
 ///
 /// @param[in]  idx  XDG directory to use.
 ///
-/// @return [allocated] `{xdg_directory}/nvim`
-///
-/// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
-/// avoid storing configuration and data files in the same path.
+/// @return [allocated] "{xdg_directory}/nvim"
 char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {

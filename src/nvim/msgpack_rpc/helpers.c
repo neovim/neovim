@@ -1,7 +1,6 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
 
@@ -253,7 +252,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
           case kObjectTypeFloat:
           case kObjectTypeString:
           case kObjectTypeArray:
-          case kObjectTypeDictionary: {
+          case kObjectTypeDictionary:
+          case kObjectTypeLuaRef: {
             break;
           }
         }
@@ -383,7 +383,11 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
                   && kObjectTypeTabpage == kObjectTypeWindow + 1,
                   "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
-      case kObjectTypeNil: {
+      case kObjectTypeNil:
+      case kObjectTypeLuaRef: {
+        // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
+        // should only appear when the caller has opted in to handle references,
+        // see nlua_pop_Object.
         msgpack_pack_nil(res);
         break;
       }
@@ -488,26 +492,8 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
   }
 }
 
-/// Handler executed when an invalid method name is passed
-Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
-                                         Array args,
-                                         Error *error)
-{
-  api_set_error(error, kErrorTypeException, "Invalid method name");
-  return NIL;
-}
-
-/// Handler executed when malformated arguments are passed
-Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
-                                            Array args,
-                                            Error *error)
-{
-  api_set_error(error, kErrorTypeException, "Invalid method arguments");
-  return NIL;
-}
-
 /// Serializes a msgpack-rpc request or notification(id == 0)
-void msgpack_rpc_serialize_request(uint64_t request_id,
+void msgpack_rpc_serialize_request(uint32_t request_id,
                                    const String method,
                                    Array args,
                                    msgpack_packer *pac)
@@ -517,7 +503,7 @@ void msgpack_rpc_serialize_request(uint64_t request_id,
   msgpack_pack_int(pac, request_id ? 0 : 2);
 
   if (request_id) {
-    msgpack_pack_uint64(pac, request_id);
+    msgpack_pack_uint32(pac, request_id);
   }
 
   msgpack_rpc_from_string(method, pac);
@@ -525,7 +511,7 @@ void msgpack_rpc_serialize_request(uint64_t request_id,
 }
 
 /// Serializes a msgpack-rpc response
-void msgpack_rpc_serialize_response(uint64_t response_id,
+void msgpack_rpc_serialize_response(uint32_t response_id,
                                     Error *err,
                                     Object arg,
                                     msgpack_packer *pac)
@@ -533,7 +519,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
 {
   msgpack_pack_array(pac, 4);
   msgpack_pack_int(pac, 1);
-  msgpack_pack_uint64(pac, response_id);
+  msgpack_pack_uint32(pac, response_id);
 
   if (ERROR_SET(err)) {
     // error represented by a [type, message] array
@@ -579,58 +565,57 @@ static msgpack_object *msgpack_rpc_msg_id(msgpack_object *req)
   return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER ? obj : NULL;
 }
 
-void msgpack_rpc_validate(uint64_t *response_id,
-                          msgpack_object *req,
-                          Error *err)
+MessageType msgpack_rpc_validate(uint32_t *response_id, msgpack_object *req,
+                                 Error *err)
 {
-  // response id not known yet
-
-  *response_id = NO_RESPONSE;
+  *response_id = 0;
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
     api_set_error(err, kErrorTypeValidation, "Message is not an array");
-    return;
+    return kMessageTypeUnknown;
   }
 
   if (req->via.array.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Message is empty");
-    return;
+    return kMessageTypeUnknown;
   }
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
     api_set_error(err, kErrorTypeValidation, "Message type must be an integer");
-    return;
+    return kMessageTypeUnknown;
   }
 
-  uint64_t type = req->via.array.ptr[0].via.u64;
+  MessageType type = (MessageType)req->via.array.ptr[0].via.u64;
   if (type != kMessageTypeRequest && type != kMessageTypeNotification) {
     api_set_error(err, kErrorTypeValidation, "Unknown message type");
-    return;
+    return kMessageTypeUnknown;
   }
 
   if ((type == kMessageTypeRequest && req->via.array.size != 4)
       || (type == kMessageTypeNotification && req->via.array.size != 3)) {
     api_set_error(err, kErrorTypeValidation,
                   "Request array size must be 4 (request) or 3 (notification)");
-    return;
+    return type;
   }
 
   if (type == kMessageTypeRequest) {
     msgpack_object *id_obj = msgpack_rpc_msg_id(req);
     if (!id_obj) {
       api_set_error(err, kErrorTypeValidation, "ID must be a positive integer");
-      return;
+      return type;
     }
-    *response_id = id_obj->via.u64;
+    *response_id = (uint32_t)id_obj->via.u64;
   }
 
   if (!msgpack_rpc_method(req)) {
     api_set_error(err, kErrorTypeValidation, "Method must be a string");
-    return;
+    return type;
   }
 
   if (!msgpack_rpc_args(req)) {
     api_set_error(err, kErrorTypeValidation, "Parameters must be an array");
-    return;
+    return type;
   }
+
+  return type;
 }

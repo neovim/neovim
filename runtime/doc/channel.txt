@@ -30,71 +30,79 @@ There are several ways to open a channel:
 
 Channels support multiple modes or protocols. In the most basic
 mode of operation, raw bytes are read and written to the channel.
-The |rpc| protocol, based on the msgpack-rpc standard, enables nvim and the
+The |RPC| protocol, based on the msgpack-rpc standard, enables nvim and the
 process at the other end to send remote calls and events to each other.
-Additionally, the builtin |terminal-emulator|, is implemented on top of PTY
-channels.
+The builtin |terminal-emulator| is also implemented on top of PTY channels.
+
+Channel Id						*channel-id*
+
+Each channel is identified by an integer id, unique for the life of the
+current Nvim session. Functions like |stdioopen()| return channel ids;
+functions like |chansend()| consume channel ids.
 
 ==============================================================================
 2. Reading and writing raw bytes			      *channel-bytes*
 
-By default, channels opened by vimscript functions will operate with raw
-bytes. Additionally, for a job channel using rpc, bytes can still be
-read over its stderr. Similarily, only bytes can be written to nvim's own stderr.
+Channels opened by Vimscript functions operate with raw bytes by default. For
+a job channel using RPC, bytes can still be read over its stderr. Similarily,
+only bytes can be written to Nvim's own stderr.
 
-						    *channel-callback* *buffered*
-				*E5210* *on_stdout* *on_stderr* *on_stdin* *on_data*
-It is possible to register callback functions when a channel receives data by
-passing the `on_stdout`, `on_stderr`, `on_stdin` options on creation. Sockets
-may specify an `on_data` callback instead. Each callback function will be
-invoked with data read from the channel. By default, the callback will be
-invoked immediately when data is available, to facilitate interactive
-communication. The same callback will then be invoked with empty data, to
-indicate that the stream reached EOF. Alternatively the `stdout_buffered`,
-`stderr_buffered`, `stdin_buffered`, `data_buffered` options can be set to
-invoke the corresponding callback only when the underlying stream reaches EOF.
-The callback will then be passed complete output. This is helpful when only
-the complete output is useful, and not partial data. Futhermore if the stream
-is set to be buffered, but the callback is not set, the data is saved in the
-options dict, with the stream name as key. For this to work a new options dict
-must be used for each opened channel. If a script uses a global `s:job_opts`
-dict, it can be copied with |copy()| before supplying it to |jobstart()|. If a
-dict is reused, so that the dict key already is occupied, error `E5210` will
-be raised.
+						*channel-callback*
+on_stdout({chan-id}, {data}, {name})		*on_stdout* 
+on_stderr({chan-id}, {data}, {name})		*on_stderr* 
+on_stdin({chan-id}, {data}, {name})		*on_stdin* 
+on_data({chan-id}, {data}, {name})		*on_data*
+    Scripts can react to channel activity (received data) via callback
+    functions assigned to the `on_stdout`, `on_stderr`, `on_stdin`, or
+    `on_data` option keys. Callbacks should be fast: avoid potentially
+    slow/expensive work.
 
-- The arguments passed to the callback function are:
+    Parameters: ~
+      {chan-id}     Channel handle. |channel-id|
+      {data}	    Raw data (|readfile()|-style list of strings) read from
+		    the channel. EOF is a single-item list: `['']`. First and
+		    last items may be partial lines! |channel-lines|
+      {name}	    Stream name (string) like "stdout", so the same function
+		    can handle multiple streams. Event names depend on how the
+		    channel was opened and in what mode/protocol.
 
-  0: The channel id
-  1: the raw data read from the channel, formatted as a |readfile()|-style
-     list. If EOF occured, a single empty string `['']` will be passed in.
-     Note that the items in this list do not directly correspond to actual
-     lines in the output. See |channel-lines|
-  2: Stream name as a string, like `"stdout"`. This is to allow multiple
-  stream handlers to be implemented by the same function. The available
-  events depend on how the channel was opened and in what mode/protocol.
+						*channel-buffered*
+    The callback is invoked immediately as data is available, where
+    a single-item list `['']` indicates EOF (stream closed).  Alternatively
+    set the `stdout_buffered`, `stderr_buffered`, `stdin_buffered`, or
+    `data_buffered` option keys to invoke the callback only after all output
+    was gathered and the stream was closed.
+						*E5210*
+    If a buffering mode is used without a callback, the data is saved in the
+    stream {name} key of the options dict. It is an error if the key exists.
 
 							      *channel-lines*
-  Note:
-	stream event handlers may receive partial (incomplete) lines. For a given
-	invocation of on_stdout etc, `a:data` is not guaranteed to end
-	with a newline.
-	  - `abcdefg` may arrive as `['abc']`, `['defg']`.
-	  - `abc\nefg` may arrive as `['abc', '']`, `['efg']` or `['abc']`,
-	    `['','efg']`, or even `['ab']`, `['c','efg']`.
-	
-	If you only are interested in complete output when the process exits,
-	use buffered mode. Otherwise, an easy way to deal with this:
-	initialize a list as `['']`, then append to it as follows: >
-	  let s:chunks = ['']
-	  func! s:on_event(job_id, data, event) dict
-	    let s:chunks[-1] .= a:data[0]
-	    call extend(s:chunks, a:data[1:])
-	  endf
+    Stream event handlers receive data as it becomes available from the OS,
+    thus the first and last items in the {data} list may be partial lines.
+    Empty string completes the previous partial line. Examples (not including
+    the final `['']` emitted at EOF):
+      - `foobar` may arrive as `['fo'], ['obar']` 
+      - `foo\nbar` may arrive as
+	   `['foo','bar']`
+	or `['foo',''], ['bar']`
+	or `['foo'], ['','bar']`
+	or `['fo'], ['o','bar']`
+    There are two ways to deal with this:
+    1. To wait for the entire output, use |channel-buffered| mode.
+    2. To read line-by-line, use the following code: >
+	let s:lines = ['']
+	func! s:on_event(job_id, data, event) dict
+	  let eof = (a:data == [''])
+	  " Complete the previous line.
+	  let s:lines[-1] .= a:data[0]
+	  " Append (last item may be a partial line, until EOF).
+	  call extend(s:lines, a:data[1:])
+	endf
 <
 
-Additionally, if the callbacks are Dictionary functions, |self| can be used to
-refer to the options dictionary containing the callbacks. |Partial|s can also be
-used as callbacks.
+If the callback functions are |Dictionary-function|s, |self| refers to the
+options dictionary containing the callbacks. |Partial|s can also be used as
+callbacks.
 
 Data can be sent to the channel using the |chansend()| function. Here is a
 simple example, echoing some data through a cat-process:
@@ -126,10 +134,14 @@ all data has been processed:
 For additional examples with jobs, see |job-control|.
 
 							      *channel-pty*
-A special case is PTY channels opened by  `jobstart(..., {'pty': v:true})` .
-No preprocessing of ANSI escape sequences is done, these will be sent raw to
-the callback. However, change of PTY size can be signaled to the slave using
-|jobresize()|. See also |terminal-emulator|.
+Special case: PTY channels opened with `jobstart(..., {'pty': v:true})` do not
+preprocess ANSI escape sequences, these will be sent raw to the callback.
+However, change of PTY size can be signaled to the slave using |jobresize()|.
+See also |terminal-emulator|.
+
+Terminal characteristics (termios) for |:terminal| and PTY channels are copied
+from the host TTY, or if Nvim is |--headless| it uses default values: >
+    :echo system('nvim --headless +"te stty -a" +"sleep 1" +"1,/^$/print" +q')
 
 ==============================================================================
 3. Communicating using msgpack-rpc			      *channel-rpc*
@@ -140,37 +152,26 @@ rpc channels are implicitly trusted and the process at the other end can
 invoke any |api| function!
 
 ==============================================================================
-4. Using the stdio channel				    *channel-stdio*
+4. Standard IO channel					    *channel-stdio*
 
-When invoked normally, nvim will use stdin and stdout to interact with the
-user over the terminal interface (TUI). However when invoked with
-`--headless`, the TUI is not started and stdin and stdout can be used as a
-channel. To open the stdio channel |stdioopen()| must be called during
-|startup|, as there later will be no way of invoking a command.  As a
-convenience, the stdio channel will always have channel id 1.
+Nvim uses stdin/stdout to interact with the user over the terminal interface
+(TUI). If Nvim is |--headless| the TUI is not started and stdin/stdout can be
+used as a channel. See also |--embed|.
 
-Here is an example:
->
+Call |stdioopen()| during |startup| to open the stdio channel as |channel-id| 1.
+Nvim's stderr is always available as |v:stderr|, a write-only bytes channel.
+
+Example: >
     func! OnEvent(id, data, event)
       if a:data == [""]
-	quit
+        quit
       end
       call chansend(a:id, map(a:data, {i,v -> toupper(v)}))
     endfunc
-
     call stdioopen({'on_stdin': 'OnEvent'})
 <
-Put this in `uppercase.vim` and invoke nvim with
->
+Put this in `uppercase.vim` and run:  >
     nvim --headless --cmd "source uppercase.vim"
-<
-								*--embed*
-An common use case is another program embedding nvim and communicating with it
-over rpc. Therefore, the option `--embed` exists as a shorthand for
-`nvim --headless --cmd "call stdioopen({'rpc': v:true})"`
-
-Nvim's stderr is implicitly open as a write-only bytes channel. It will
-always have channel id 2, however to be explicit |v:stderr| can be used.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

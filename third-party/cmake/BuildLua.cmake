@@ -41,7 +41,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
   set(LUA_TARGET freebsd)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
   set(CMAKE_LUA_TARGET bsd)
-elseif(SYSTEM_NAME MATCHES "^MINGW")
+elseif(CMAKE_SYSTEM_NAME MATCHES "^MINGW")
   set(CMAKE_LUA_TARGET mingw)
 else()
   if(UNIX)
@@ -91,7 +91,7 @@ set(BUSTED_LUA ${BUSTED}-lua)
 
 add_custom_command(OUTPUT ${BUSTED_LUA}
   COMMAND sed -e 's/^exec/exec $$LUA_DEBUGGER/' -e 's/jit//g' < ${BUSTED} > ${BUSTED_LUA} && chmod +x ${BUSTED_LUA}
-  DEPENDS lua busted)
+  DEPENDS lua busted ${BUSTED})
 add_custom_target(busted-lua
   DEPENDS ${DEPS_INSTALL_DIR}/bin/busted-lua)
 

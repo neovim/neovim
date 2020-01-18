@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: Murphi model checking language
 " Maintainer: Matthew Fernandez <matthew.fernandez@gmail.com>
-" Last Change: 2017 Aug 27
+" Last Change: 2019 Aug 27
 " Version: 2
 " Remark: Originally authored by Diego Ongaro <ongaro@cs.stanford.edu> 
 
@@ -61,7 +61,6 @@ syn keyword murphiFunction      multisetcount
 syn keyword murphiFunction      multisetremove
 syn keyword murphiFunction      multisetremovepred
 syn keyword murphiKeyword       procedure
-syn keyword murphiKeyword       process
 syn keyword murphiKeyword       program
 syn keyword murphiKeyword       put
 syn keyword murphiStructure     record
@@ -89,7 +88,7 @@ syn match murphiNumber "\<\d\+\>"
 
 " Operators and special characters.
 syn match murphiOperator "[\+\-\*\/%&|=!<>:\?]\|\."
-syn match murphiDelimiter "\(:[^=]\|[;,]\)"
+syn match murphiDelimiter "\(:=\@!\|[;,]\)"
 syn match murphiSpecial "[()\[\]]"
 
 " Double equal sign is a common error: use one equal sign for equality testing.

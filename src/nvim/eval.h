@@ -24,6 +24,13 @@ EXTERN ufunc_T dumuf;
 #define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
+/// enum used by var_flavour()
+typedef enum {
+  VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
+  VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
+  VAR_FLAVOUR_SHADA   = 4    // all uppercase
+} var_flavour_T;
+
 /// Defines for Vim variables
 typedef enum {
     VV_COUNT,
@@ -108,7 +115,9 @@ typedef enum {
     VV_TYPE_DICT,
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
+    VV_ECHOSPACE,
     VV_EXITING,
+    VV_LUA,
 } VimVarIndex;
 
 /// All recognized msgpack types

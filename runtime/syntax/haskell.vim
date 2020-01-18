@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Haskell
 " Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
-" Last Change:		2017 Jun 04
+" Last Change:		2018 Mar 29 by Marcin Szamotulski
 " Original Author:	John Williams <jrw@pobox.com>
 "
 " Thanks to Ryan Crumley for suggestions and John Meacham for
@@ -38,8 +38,8 @@ if exists("b:current_syntax")
 endif
 
 " (Qualified) identifiers (no default highlighting)
-syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[A-Z][a-zA-Z0-9_']*\>"
-syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[a-z][a-zA-Z0-9_']*\>"
+syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[A-Z][a-zA-Z0-9_']*\>" contains=@NoSpell
+syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[a-z][a-zA-Z0-9_']*\>" contains=@NoSpell
 
 " Infix operators--most punctuation characters and any (qualified) identifier
 " enclosed in `backquotes`. An operator starting with : is a constructor,
@@ -56,18 +56,18 @@ syn match hsDelimiter  "(\|)\|\[\|\]\|,\|;\|_\|{\|}"
 syn match   hsSpecialChar	contained "\\\([0-9]\+\|o[0-7]\+\|x[0-9a-fA-F]\+\|[\"\\'&\\abfnrtv]\|^[A-Z^_\[\\\]]\)"
 syn match   hsSpecialChar	contained "\\\(NUL\|SOH\|STX\|ETX\|EOT\|ENQ\|ACK\|BEL\|BS\|HT\|LF\|VT\|FF\|CR\|SO\|SI\|DLE\|DC1\|DC2\|DC3\|DC4\|NAK\|SYN\|ETB\|CAN\|EM\|SUB\|ESC\|FS\|GS\|RS\|US\|SP\|DEL\)"
 syn match   hsSpecialCharError	contained "\\&\|'''\+"
-syn region  hsString		start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=hsSpecialChar
+syn region  hsString		start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=hsSpecialChar,@NoSpell
 syn match   hsCharacter		"[^a-zA-Z0-9_']'\([^\\]\|\\[^']\+\|\\'\)'"lc=1 contains=hsSpecialChar,hsSpecialCharError
 syn match   hsCharacter		"^'\([^\\]\|\\[^']\+\|\\'\)'" contains=hsSpecialChar,hsSpecialCharError
-syn match   hsNumber		"\<[0-9]\+\>\|\<0[xX][0-9a-fA-F]\+\>\|\<0[oO][0-7]\+\>"
-syn match   hsFloat		"\<[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
+syn match   hsNumber		"\v<[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*>|<0[oO]_*%(_*[0-7])*>|<0[bB]_*[01]%(_*[01])*>"
+syn match   hsFloat		"\v<[0-9]%(_*[0-9])*\.[0-9]%(_*[0-9])*%(_*[eE][-+]?[0-9]%(_*[0-9])*)?>|<[0-9]%(_*[0-9])*_*[eE][-+]?[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*\.[0-9a-fA-F]%(_*[0-9a-fA-F])*%(_*[pP][-+]?[0-9]%(_*[0-9])*)?>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*_*[pP][-+]?[0-9]%(_*[0-9])*>"
 
 " Keyword definitions. These must be patterns instead of keywords
 " because otherwise they would match as keywords at the start of a
 " "literate" comment (see lhs.vim).
 syn match hsModule		"\<module\>"
-syn match hsImport		"\<import\>.*"he=s+6 contains=hsImportMod,hsLineComment,hsBlockComment
-syn match hsImportMod		contained "\<\(as\|qualified\|hiding\)\>"
+syn match hsImport		"\<import\>.*"he=s+6 contains=hsImportMod,hsLineComment,hsBlockComment,@NoSpell
+syn match hsImportMod		contained "\<\(as\|qualified\|hiding\)\>" contains=@NoSpell
 syn match hsInfix		"\<\(infix\|infixl\|infixr\)\>"
 syn match hsStructure		"\<\(class\|data\|deriving\|instance\|default\|where\)\>"
 syn match hsTypedef		"\<\(type\|newtype\)\>"
@@ -97,8 +97,8 @@ endif
 
 
 " Comments
-syn match   hsLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$"
-syn region  hsBlockComment     start="{-"  end="-}" contains=hsBlockComment
+syn match   hsLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$" contains=@Spell
+syn region  hsBlockComment     start="{-"  end="-}" contains=hsBlockComment,@Spell
 syn region  hsPragma	       start="{-#" end="#-}"
 
 " C Preprocessor directives. Shamelessly ripped from c.vim and trimmed

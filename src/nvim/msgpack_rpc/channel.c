@@ -31,6 +31,7 @@
 #include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)
@@ -61,13 +62,15 @@ void rpc_start(Channel *channel)
   rpc->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rpc->subscribed_events = pmap_new(cstr_t)();
   rpc->next_request_id = 1;
+  rpc->info = (Dictionary)ARRAY_DICT_INIT;
   kv_init(rpc->call_stack);
 
   if (channel->streamtype != kChannelStreamInternal) {
     Stream *out = channel_outstream(channel);
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
     Stream *in = channel_instream(channel);
-    DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
+    DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id,
+         (void *)in, (void *)out);
 #endif
 
     rstream_start(out, receive_msgpack, channel);
@@ -130,7 +133,7 @@ Object rpc_send_call(uint64_t id,
 
   channel_incref(channel);
   RpcState *rpc = &channel->rpc;
-  uint64_t request_id = rpc->next_request_id++;
+  uint32_t request_id = rpc->next_request_id++;
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
 
@@ -222,7 +225,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
 
   size_t count = rbuffer_size(rbuf);
   DLOG("ch %" PRIu64 ": parsing %zu bytes from msgpack Stream: %p",
-       channel->id, count, stream);
+       channel->id, count, (void *)stream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->rpc.unpacker, count);
@@ -280,24 +283,26 @@ static void parse_msgpack(Channel *channel)
     // A not so uncommon cause for this might be deserializing objects with
     // a high nesting level: msgpack will break when its internal parse stack
     // size exceeds MSGPACK_EMBED_STACK_SIZE (defined as 32 by default)
-    send_error(channel, 0, "Invalid msgpack payload. "
-                           "This error can also happen when deserializing "
-                           "an object with high level of nesting");
+    send_error(channel, kMessageTypeRequest, 0,
+               "Invalid msgpack payload. "
+               "This error can also happen when deserializing "
+               "an object with high level of nesting");
   }
 }
 
-
+/// Handles requests and notifications received on the channel.
 static void handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
-  uint64_t request_id;
+  uint32_t request_id;
   Error error = ERROR_INIT;
-  msgpack_rpc_validate(&request_id, request, &error);
+  MessageType type = msgpack_rpc_validate(&request_id, request, &error);
 
   if (ERROR_SET(&error)) {
     // Validation failed, send response with error
     if (channel_write(channel,
                       serialize_response(channel->id,
+                                         type,
                                          request_id,
                                          &error,
                                          NIL,
@@ -311,67 +316,84 @@ static void handle_request(Channel *channel, msgpack_object *request)
     api_clear_error(&error);
     return;
   }
-  // Retrieve the request handler
+  assert(type == kMessageTypeRequest || type == kMessageTypeNotification);
+
   MsgpackRpcRequestHandler handler;
   msgpack_object *method = msgpack_rpc_method(request);
+  handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                        method->via.bin.size,
+                                        &error);
 
-  if (method) {
-    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
-                                          method->via.bin.size);
-  } else {
-    handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
+  // check method arguments
+  Array args = ARRAY_DICT_INIT;
+  if (!ERROR_SET(&error)
+      && !msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+    api_set_error(&error, kErrorTypeException, "Invalid method arguments");
   }
 
-  Array args = ARRAY_DICT_INIT;
-  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-    handler.fn = msgpack_rpc_handle_invalid_arguments;
-    handler.async = true;
+  if (ERROR_SET(&error)) {
+    send_error(channel, type, request_id, error.msg);
+    api_clear_error(&error);
+    api_free_array(args);
+    return;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
+  evdata->type = type;
   evdata->channel = channel;
   evdata->handler = handler;
   evdata->args = args;
   evdata->request_id = request_id;
   channel_incref(channel);
-  if (handler.async) {
+  if (handler.fast) {
     bool is_get_mode = handler.fn == handle_nvim_get_mode;
 
     if (is_get_mode && !input_blocking()) {
       // Defer the event to a special queue used by os/input.c. #6247
-      multiqueue_put(ch_before_blocking_events, on_request_event, 1, evdata);
+      multiqueue_put(ch_before_blocking_events, request_event, 1, evdata);
     } else {
       // Invoke immediately.
-      on_request_event((void **)&evdata);
+      request_event((void **)&evdata);
     }
   } else {
-    multiqueue_put(channel->events, on_request_event, 1, evdata);
+    bool is_resize = handler.fn == handle_nvim_ui_try_resize;
+    if (is_resize) {
+      Event ev = event_create_oneshot(event_create(request_event, 1, evdata),
+                                      2);
+      multiqueue_put_event(channel->events, ev);
+      multiqueue_put_event(resize_events, ev);
+    } else {
+      multiqueue_put(channel->events, request_event, 1, evdata);
+      DLOG("RPC: scheduled %.*s", method->via.bin.size, method->via.bin.ptr);
+    }
   }
 }
 
-static void on_request_event(void **argv)
+
+/// Handles a message, depending on the type:
+///   - Request: invokes method and writes the response (or error).
+///   - Notification: invokes method (emits `nvim_error_event` on error).
+static void request_event(void **argv)
 {
   RequestEvent *e = argv[0];
   Channel *channel = e->channel;
   MsgpackRpcRequestHandler handler = e->handler;
-  Array args = e->args;
-  uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
-  Object result = handler.fn(channel->id, args, &error);
-  if (request_id != NO_RESPONSE) {
-    // send the response
+  Object result = handler.fn(channel->id, e->args, &error);
+  if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
+    // Send the response.
     msgpack_packer response;
     msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
     channel_write(channel, serialize_response(channel->id,
-                                              request_id,
+                                              e->type,
+                                              e->request_id,
                                               &error,
                                               result,
                                               &out_buffer));
   } else {
     api_free_object(result);
   }
-  api_free_array(args);
+  api_free_array(e->args);
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);
@@ -426,20 +448,21 @@ static void internal_read_event(void **argv)
   wstream_release_wbuffer(buffer);
 }
 
-static void send_error(Channel *channel, uint64_t id, char *err)
+static void send_error(Channel *chan, MessageType type, uint32_t id, char *err)
 {
   Error e = ERROR_INIT;
   api_set_error(&e, kErrorTypeException, "%s", err);
-  channel_write(channel, serialize_response(channel->id,
-                                            id,
-                                            &e,
-                                            NIL,
-                                            &out_buffer));
+  channel_write(chan, serialize_response(chan->id,
+                                         type,
+                                         id,
+                                         &e,
+                                         NIL,
+                                         &out_buffer));
   api_clear_error(&e);
 }
 
 static void send_request(Channel *channel,
-                         uint64_t id,
+                         uint32_t id,
                          const char *name,
                          Array args)
 {
@@ -491,8 +514,8 @@ static void broadcast_event(const char *name, Array args)
                                       kv_size(subscribed));
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
-    Channel *channel = kv_A(subscribed, i);
-    channel_write(channel, buffer);
+    Channel *c = kv_A(subscribed, i);
+    channel_write(c, buffer);
   }
 
 end:
@@ -502,6 +525,11 @@ end:
 static void unsubscribe(Channel *channel, char *event)
 {
   char *event_string = pmap_get(cstr_t)(event_strings, event);
+  if (!event_string) {
+      WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
+           channel->id, event);
+      return;
+  }
   pmap_del(cstr_t)(channel->rpc.subscribed_events, event_string);
 
   map_foreach_value(channels, channel, {
@@ -553,6 +581,7 @@ void rpc_free(Channel *channel)
 
   pmap_free(cstr_t)(channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
+  api_free_dictionary(channel->rpc.info);
 }
 
 static bool is_rpc_response(msgpack_object *obj)
@@ -566,7 +595,7 @@ static bool is_rpc_response(msgpack_object *obj)
 
 static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
 {
-  uint64_t response_id = obj->via.array.ptr[1].via.u64;
+  uint32_t response_id = (uint32_t)obj->via.array.ptr[1].via.u64;
   if (kv_size(channel->rpc.call_stack) == 0) {
     return false;
   }
@@ -604,7 +633,7 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
 }
 
 static WBuffer *serialize_request(uint64_t channel_id,
-                                  uint64_t request_id,
+                                  uint32_t request_id,
                                   const String method,
                                   Array args,
                                   msgpack_sbuffer *sbuffer,
@@ -624,14 +653,24 @@ static WBuffer *serialize_request(uint64_t channel_id,
 }
 
 static WBuffer *serialize_response(uint64_t channel_id,
-                                   uint64_t response_id,
+                                   MessageType type,
+                                   uint32_t response_id,
                                    Error *err,
                                    Object arg,
                                    msgpack_sbuffer *sbuffer)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
-  msgpack_rpc_serialize_response(response_id, err, arg, &pac);
+  if (ERROR_SET(err) && type == kMessageTypeNotification) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(err->type));
+    ADD(args, STRING_OBJ(cstr_to_string(err->msg)));
+    msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
+                                  args, &pac);
+    api_free_array(args);
+  } else {
+    msgpack_rpc_serialize_response(response_id, err, arg, &pac);
+  }
   log_server_msg(channel_id, sbuffer);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
@@ -640,6 +679,39 @@ static WBuffer *serialize_response(uint64_t channel_id,
   msgpack_sbuffer_clear(sbuffer);
   api_free_object(arg);
   return rv;
+}
+
+void rpc_set_client_info(uint64_t id, Dictionary info)
+{
+  Channel *chan = find_rpc_channel(id);
+  if (!chan) {
+    abort();
+  }
+
+  api_free_dictionary(chan->rpc.info);
+  chan->rpc.info = info;
+  channel_info_changed(chan, false);
+}
+
+Dictionary rpc_client_info(Channel *chan)
+{
+  return copy_dictionary(chan->rpc.info);
+}
+
+const char *rpc_client_name(Channel *chan)
+{
+  if (!chan->is_rpc) {
+    return NULL;
+  }
+  Dictionary info = chan->rpc.info;
+  for (size_t i = 0; i < info.size; i++) {
+    if (strequal("name", info.items[i].key.data)
+        && info.items[i].value.type == kObjectTypeString) {
+      return info.items[i].value.data.string.data;
+    }
+  }
+
+  return NULL;
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
@@ -717,4 +789,3 @@ static void log_msg_close(FILE *f, msgpack_object msg)
   log_unlock();
 }
 #endif
-

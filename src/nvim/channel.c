@@ -1,14 +1,20 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
+#include "nvim/fileio.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
+#ifdef WIN32
+# include "nvim/os/pty_conpty_win.h"
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/path.h"
 #include "nvim/ascii.h"
 
@@ -20,18 +26,10 @@ PMap(uint64_t) *channels = NULL;
 /// 2 is reserved for stderr channel
 static uint64_t next_chan_id = CHAN_STDERR+1;
 
-
-typedef struct {
-  Channel *chan;
-  Callback *callback;
-  const char *type;
-  list_T *received;
-  int status;
-} ChannelEvent;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "channel.c.generated.h"
 #endif
+
 /// Teardown the module
 void channel_teardown(void)
 {
@@ -144,6 +142,9 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
         return false;
       }
       break;
+
+    default:
+      abort();
   }
 
   return true;
@@ -155,7 +156,6 @@ void channel_init(void)
   channels = pmap_new(uint64_t)();
   channel_alloc(kChannelStreamStderr);
   rpc_init();
-  remote_ui_init();
 }
 
 /// Allocates a channel.
@@ -174,51 +174,17 @@ static Channel *channel_alloc(ChannelStreamType type)
   }
   chan->events = multiqueue_new_child(main_loop.events);
   chan->refcount = 1;
+  chan->exit_status = -1;
   chan->streamtype = type;
+  assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(channels, chan->id, chan);
   return chan;
 }
 
-/// Not implemented, only logging for now
 void channel_create_event(Channel *chan, const char *ext_source)
 {
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
-  const char *stream_desc;
-  const char *mode_desc;
   const char *source;
-
-  switch (chan->streamtype) {
-    case kChannelStreamProc:
-      if (chan->stream.proc.type == kProcessTypePty) {
-          stream_desc = "pty job";
-      } else {
-          stream_desc = "job";
-      }
-      break;
-
-    case kChannelStreamStdio:
-       stream_desc = "stdio";
-       break;
-
-    case kChannelStreamSocket:
-      stream_desc = "socket";
-      break;
-
-    case kChannelStreamInternal:
-      stream_desc = "socket (internal)";
-      break;
-
-    default:
-      stream_desc = "?";
-  }
-
-  if (chan->is_rpc) {
-    mode_desc = ", rpc";
-  } else if (chan->term) {
-    mode_desc = ", terminal";
-  } else {
-    mode_desc = "";
-  }
 
   if (ext_source) {
     // TODO(bfredl): in a future improved traceback solution,
@@ -229,12 +195,22 @@ void channel_create_event(Channel *chan, const char *ext_source)
     source = (const char *)IObuff;
   }
 
-  ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
-       mode_desc, source);
+  assert(chan->id <= VARNUMBER_MAX);
+  Dictionary info = channel_info(chan->id);
+  typval_T tv = TV_INITIAL_VALUE;
+  // TODO(bfredl): do the conversion in one step. Also would be nice
+  // to pretty print top level dict in defined order
+  (void)object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
+  char *str = encode_tv2json(&tv, NULL);
+  ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
+  xfree(str);
+  api_free_dictionary(info);
+
 #else
-  (void)chan;
   (void)ext_source;
 #endif
+
+  channel_info_changed(chan, true);
 }
 
 void channel_incref(Channel *chan)
@@ -253,17 +229,13 @@ void channel_decref(Channel *chan)
 void callback_reader_free(CallbackReader *reader)
 {
   callback_free(&reader->cb);
-  if (reader->buffered) {
-    ga_clear(&reader->buffer);
-  }
+  ga_clear(&reader->buffer);
 }
 
-void callback_reader_start(CallbackReader *reader)
+void callback_reader_start(CallbackReader *reader, const char *type)
 {
-  if (reader->buffered) {
-    ga_init(&reader->buffer, sizeof(char *), 32);
-    ga_grow(&reader->buffer, 32);
-  }
+  ga_init(&reader->buffer, sizeof(char *), 32);
+  reader->type = type;
 }
 
 static void free_channel_event(void **argv)
@@ -273,7 +245,7 @@ static void free_channel_event(void **argv)
     rpc_free(chan);
   }
 
-  callback_reader_free(&chan->on_stdout);
+  callback_reader_free(&chan->on_data);
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
 
@@ -304,17 +276,42 @@ static void close_cb(Stream *stream, void *data)
   channel_decref(data);
 }
 
+
+/// Starts a job and returns the associated channel
+///
+/// @param[in]  argv  Arguments vector specifying the command to run,
+///                   NULL-terminated
+/// @param[in]  on_stdout  Callback to read the job's stdout
+/// @param[in]  on_stderr  Callback to read the job's stderr
+/// @param[in]  on_exit  Callback to receive the job's exit status
+/// @param[in]  pty  True if the job should run attached to a pty
+/// @param[in]  rpc  True to communicate with the job using msgpack-rpc,
+///                  `on_stdout` is ignored
+/// @param[in]  detach  True if the job should not be killed when nvim exits,
+///                     ignored if `pty` is true
+/// @param[in]  cwd  Initial working directory for the job.  Nvim's working
+///                  directory if `cwd` is NULL
+/// @param[in]  pty_width  Width of the pty, ignored if `pty` is false
+/// @param[in]  pty_height  Height of the pty, ignored if `pty` is false
+/// @param[in]  term_name  `$TERM` for the pty
+/// @param[in]  env  Nvim's configured environment is used if this is NULL,
+///                  otherwise defines all environment variables
+/// @param[out]  status_out  0 for invalid arguments, > 0 for the channel id,
+///                          < 0 if the job can't start
+///
+/// @returns [allocated] channel
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool detach, const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
-                           char *term_name, varnumber_T *status_out)
+                           char *term_name, char **env, varnumber_T *status_out)
 {
+  assert(cwd == NULL || os_isdir_executable(cwd));
+
   Channel *chan = channel_alloc(kChannelStreamProc);
-  chan->on_stdout = on_stdout;
+  chan->on_data = on_stdout;
   chan->on_stderr = on_stderr;
   chan->on_exit = on_exit;
-  chan->is_rpc = rpc;
 
   if (pty) {
     if (detach) {
@@ -345,6 +342,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->events = chan->events;
   proc->detach = detach;
   proc->cwd = cwd;
+  proc->env = env;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;
@@ -352,13 +350,14 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     has_out = true;
     has_err = false;
   } else {
-    has_out = chan->is_rpc || callback_reader_set(chan->on_stdout);
+    has_out = rpc || callback_reader_set(chan->on_data);
     has_err = callback_reader_set(chan->on_stderr);
   }
   int status = process_spawn(proc, true, has_out, has_err);
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
+    os_free_fullenv(proc->env);
     if (proc->type == kProcessTypePty) {
       xfree(chan->stream.pty.term_name);
     }
@@ -367,24 +366,26 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     return NULL;
   }
   xfree(cmd);
+  os_free_fullenv(proc->env);
+
 
   wstream_init(&proc->in, 0);
   if (has_out) {
     rstream_init(&proc->out, 0);
   }
 
-  if (chan->is_rpc) {
+  if (rpc) {
     // the rpc takes over the in and out streams
     rpc_start(chan);
   } else {
     if (has_out) {
-      callback_reader_start(&chan->on_stdout);
-      rstream_start(&proc->out, on_job_stdout, chan);
+      callback_reader_start(&chan->on_data, "stdout");
+      rstream_start(&proc->out, on_channel_data, chan);
     }
   }
 
   if (has_err) {
-    callback_reader_start(&chan->on_stderr);
+    callback_reader_start(&chan->on_stderr, "stderr");
     rstream_init(&proc->err, 0);
     rstream_start(&proc->err, on_job_stderr, chan);
   }
@@ -428,9 +429,9 @@ uint64_t channel_connect(bool tcp, const char *address,
   if (rpc) {
     rpc_start(channel);
   } else {
-    channel->on_stdout = on_output;
-    callback_reader_start(&channel->on_stdout);
-    rstream_start(&channel->stream.socket, on_socket_output, channel);
+    channel->on_data = on_output;
+    callback_reader_start(&channel->on_data, "data");
+    rstream_start(&channel->stream.socket, on_channel_data, channel);
   }
 
 end:
@@ -459,7 +460,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
                             const char **error)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!headless_mode) {
+  if (!headless_mode && !embedded_mode) {
     *error = _("can only be opened in headless mode");
     return 0;
   }
@@ -472,15 +473,27 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 
   Channel *channel = channel_alloc(kChannelStreamStdio);
 
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, 0, 0);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, 1, 0);
+  int stdin_dup_fd = STDIN_FILENO;
+  int stdout_dup_fd = STDOUT_FILENO;
+#ifdef WIN32
+  // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
+  // stdin and stdout with CONIN$ and CONOUT$, respectively.
+  if (embedded_mode && os_has_conpty_working()) {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+    os_replace_stdin_to_conin();
+    stdout_dup_fd = os_dup(STDOUT_FILENO);
+    os_replace_stdout_and_stderr_to_conout();
+  }
+#endif
+  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
+  wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
 
   if (rpc) {
     rpc_start(channel);
   } else {
-    channel->on_stdout = on_output;
-    callback_reader_start(&channel->on_stdout);
-    rstream_start(&channel->stream.stdio.in, on_stdio_input, channel);
+    channel->on_data = on_output;
+    callback_reader_start(&channel->on_data, "stdin");
+    rstream_start(&channel->stream.stdio.in, on_channel_data, channel);
   }
 
   return channel->id;
@@ -533,69 +546,34 @@ err:
 ///
 /// @return [allocated] Converted list.
 static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   list_T *const l = tv_list_alloc(kListLenMayKnow);
   // Empty buffer should be represented by [''], encode_list_write() thinks
   // empty list is fine for the case.
   tv_list_append_string(l, "", 0);
-  encode_list_write(l, buf, len);
+  if (len > 0) {
+    encode_list_write(l, buf, len);
+  }
   return l;
 }
 
-// vimscript job callbacks must be executed on Nvim main loop
-static inline void process_channel_event(Channel *chan, Callback *callback,
-                                         const char *type, char *buf,
-                                         size_t count, int status)
-{
-  assert(callback);
-  ChannelEvent *event_data = xmalloc(sizeof(*event_data));
-  event_data->received = NULL;
-  if (buf) {
-    event_data->received = buffer_to_tv_list(buf, count);
-  } else {
-    event_data->status = status;
-  }
-  channel_incref(chan);  // Hold on ref to callback
-  event_data->chan = chan;
-  event_data->callback = callback;
-  event_data->type = type;
-
-  multiqueue_put(chan->events, on_channel_event, 1, event_data);
-}
-
-void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
-                   void *data, bool eof)
+void on_channel_data(Stream *stream, RBuffer *buf, size_t count,
+                     void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_stdout, "stdout");
+  on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
 }
 
 void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
                    void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr, "stderr");
+  on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr);
 }
 
-static void on_socket_output(Stream *stream, RBuffer *buf, size_t count,
-                             void *data, bool eof)
-{
-  Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_stdout, "data");
-}
-
-static void on_stdio_input(Stream *stream, RBuffer *buf, size_t count,
-                           void *data, bool eof)
-{
-  Channel *chan = data;
-  on_channel_output(stream, chan, buf, count, eof, &chan->on_stdout, "stdin");
-}
-
-/// @param type must have static lifetime
 static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
-                              size_t count, bool eof, CallbackReader *reader,
-                              const char *type)
+                              size_t count, bool eof, CallbackReader *reader)
 {
   // stub variable, to keep reading consistent with the order of events, only
   // consider the count parameter.
@@ -603,50 +581,91 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   char *ptr = rbuffer_read_ptr(buf, &r);
 
   if (eof) {
-    if (reader->buffered) {
-      if (reader->cb.type != kCallbackNone) {
-        process_channel_event(chan, &reader->cb, type, reader->buffer.ga_data,
-                              (size_t)reader->buffer.ga_len, 0);
-      } else if (reader->self) {
-        if (tv_dict_find(reader->self, type, -1) == NULL) {
-          list_T *data = buffer_to_tv_list(reader->buffer.ga_data,
-                                           (size_t)reader->buffer.ga_len);
-          tv_dict_add_list(reader->self, type, strlen(type), data);
-        } else {
-            // can't display error message now, defer it.
-            channel_incref(chan);
-            multiqueue_put(chan->events, on_buffered_error, 2, chan, type);
-        }
-      } else {
-        abort();
-      }
-      ga_clear(&reader->buffer);
-    } else if (reader->cb.type != kCallbackNone) {
-      process_channel_event(chan, &reader->cb, type, ptr, 0, 0);
+    reader->eof = true;
+  } else {
+    if (chan->term) {
+      terminal_receive(chan->term, ptr, count);
+      terminal_flush_output(chan->term);
     }
-    return;
+
+    rbuffer_consumed(buf, count);
+
+    if (callback_reader_set(*reader)) {
+      ga_concat_len(&reader->buffer, ptr, count);
+    }
   }
 
-  // The order here matters, the terminal must receive the data first because
-  // process_channel_event will modify the read buffer(convert NULs into NLs)
-  if (chan->term) {
-    terminal_receive(chan->term, ptr, count);
-  }
-
-  rbuffer_consumed(buf, count);
-  if (reader->buffered) {
-    ga_concat_len(&reader->buffer, ptr, count);
-  } else if (callback_reader_set(*reader)) {
-    process_channel_event(chan, &reader->cb, type, ptr, count, 0);
+  if (callback_reader_set(*reader)) {
+    schedule_channel_event(chan);
   }
 }
 
-static void on_buffered_error(void **args)
+/// schedule the necessary callbacks to be invoked as a deferred event
+static void schedule_channel_event(Channel *chan)
+{
+  if (!chan->callback_scheduled) {
+    if (!chan->callback_busy) {
+      multiqueue_put(chan->events, on_channel_event, 1, chan);
+      channel_incref(chan);
+    }
+    chan->callback_scheduled = true;
+  }
+}
+
+static void on_channel_event(void **args)
 {
   Channel *chan = (Channel *)args[0];
-  const char *stream = (const char *)args[1];
-  EMSG3(_(e_streamkey), stream, chan->id);
+
+  chan->callback_busy = true;
+  chan->callback_scheduled = false;
+
+  int exit_status = chan->exit_status;
+  channel_reader_callbacks(chan, &chan->on_data);
+  channel_reader_callbacks(chan, &chan->on_stderr);
+  if (exit_status > -1) {
+    channel_callback_call(chan, NULL);
+    chan->exit_status = -1;
+  }
+
+  chan->callback_busy = false;
+  if (chan->callback_scheduled) {
+    // further callback was deferred to avoid recursion.
+    multiqueue_put(chan->events, on_channel_event, 1, chan);
+    channel_incref(chan);
+  }
+
   channel_decref(chan);
+}
+
+void channel_reader_callbacks(Channel *chan, CallbackReader *reader)
+{
+  if (reader->buffered) {
+    if (reader->eof) {
+      if (reader->self) {
+        if (tv_dict_find(reader->self, reader->type, -1) == NULL) {
+          list_T *data = buffer_to_tv_list(reader->buffer.ga_data,
+                                           (size_t)reader->buffer.ga_len);
+          tv_dict_add_list(reader->self, reader->type, strlen(reader->type),
+                           data);
+        } else {
+          EMSG3(_(e_streamkey), reader->type, chan->id);
+        }
+      } else {
+        channel_callback_call(chan, reader);
+      }
+      reader->eof = false;
+    }
+  } else {
+    bool is_eof = reader->eof;
+    if (reader->buffer.ga_len > 0) {
+      channel_callback_call(chan, reader);
+    }
+    // if the stream reached eof, invoke extra callback with no data
+    if (is_eof) {
+      channel_callback_call(chan, reader);
+      reader->eof = false;
+    }
+  }
 }
 
 static void channel_process_exit_cb(Process *proc, int status, void *data)
@@ -660,43 +679,46 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
 
   // If process did not exit, we only closed the handle of a detached process.
   bool exited = (status >= 0);
-  if (exited) {
-    process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
+  if (exited && chan->on_exit.type != kCallbackNone) {
+    schedule_channel_event(chan);
+    chan->exit_status = status;
   }
 
   channel_decref(chan);
 }
 
-static void on_channel_event(void **args)
+static void channel_callback_call(Channel *chan, CallbackReader *reader)
 {
-  ChannelEvent *ev = (ChannelEvent *)args[0];
-
+  Callback *cb;
   typval_T argv[4];
 
   argv[0].v_type = VAR_NUMBER;
   argv[0].v_lock = VAR_UNLOCKED;
-  argv[0].vval.v_number = (varnumber_T)ev->chan->id;
+  argv[0].vval.v_number = (varnumber_T)chan->id;
 
-  if (ev->received) {
+  if (reader) {
     argv[1].v_type = VAR_LIST;
     argv[1].v_lock = VAR_UNLOCKED;
-    argv[1].vval.v_list = ev->received;
+    argv[1].vval.v_list = buffer_to_tv_list(reader->buffer.ga_data,
+                                            (size_t)reader->buffer.ga_len);
     tv_list_ref(argv[1].vval.v_list);
+    ga_clear(&reader->buffer);
+    cb = &reader->cb;
+    argv[2].vval.v_string = (char_u *)reader->type;
   } else {
     argv[1].v_type = VAR_NUMBER;
     argv[1].v_lock = VAR_UNLOCKED;
-    argv[1].vval.v_number = ev->status;
+    argv[1].vval.v_number = chan->exit_status;
+    cb = &chan->on_exit;
+    argv[2].vval.v_string = (char_u *)"exit";
   }
 
   argv[2].v_type = VAR_STRING;
   argv[2].v_lock = VAR_UNLOCKED;
-  argv[2].vval.v_string = (uint8_t *)ev->type;
 
   typval_T rettv = TV_INITIAL_VALUE;
-  callback_call(ev->callback, 3, argv, &rettv);
+  callback_call(cb, 3, argv, &rettv);
   tv_clear(&rettv);
-  channel_decref(ev->chan);
-  xfree(ev);
 }
 
 
@@ -758,3 +780,103 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
+void channel_info_changed(Channel *chan, bool new)
+{
+  event_T event = new ? EVENT_CHANOPEN : EVENT_CHANINFO;
+  if (has_event(event)) {
+    channel_incref(chan);
+    multiqueue_put(main_loop.events, set_info_event,
+                   2, chan, event);
+  }
+}
+
+static void set_info_event(void **argv)
+{
+  Channel *chan = argv[0];
+  event_T event = (event_T)(ptrdiff_t)argv[1];
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  Dictionary info = channel_info(chan->id);
+  typval_T retval;
+  (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
+  tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
+
+  apply_autocmds(event, NULL, NULL, false, curbuf);
+
+  tv_dict_clear(dict);
+  api_free_dictionary(info);
+  channel_decref(chan);
+}
+
+bool channel_job_running(uint64_t id)
+{
+  Channel *chan = find_channel(id);
+  return (chan
+          && chan->streamtype == kChannelStreamProc
+          && !process_is_stopped(&chan->stream.proc));
+}
+
+Dictionary channel_info(uint64_t id)
+{
+  Channel *chan = find_channel(id);
+  if (!chan) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+
+  Dictionary info = ARRAY_DICT_INIT;
+  PUT(info, "id", INTEGER_OBJ((Integer)chan->id));
+
+  const char *stream_desc, *mode_desc;
+  switch (chan->streamtype) {
+    case kChannelStreamProc:
+      stream_desc = "job";
+      if (chan->stream.proc.type == kProcessTypePty) {
+        const char *name = pty_process_tty_name(&chan->stream.pty);
+        PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
+      }
+      break;
+
+    case kChannelStreamStdio:
+       stream_desc = "stdio";
+       break;
+
+    case kChannelStreamStderr:
+       stream_desc = "stderr";
+       break;
+
+    case kChannelStreamInternal:
+       PUT(info, "internal", BOOLEAN_OBJ(true));
+      FALLTHROUGH;
+
+    case kChannelStreamSocket:
+      stream_desc = "socket";
+      break;
+
+    default:
+      abort();
+  }
+  PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
+
+  if (chan->is_rpc) {
+    mode_desc = "rpc";
+    PUT(info, "client", DICTIONARY_OBJ(rpc_client_info(chan)));
+  } else if (chan->term) {
+    mode_desc = "terminal";
+    PUT(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+  } else {
+    mode_desc = "bytes";
+  }
+  PUT(info, "mode", STRING_OBJ(cstr_to_string(mode_desc)));
+
+  return info;
+}
+
+Array channel_all_info(void)
+{
+  Channel *channel;
+  Array ret = ARRAY_DICT_INIT;
+  map_foreach_value(channels, channel, {
+    ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
+  });
+  return ret;
+}

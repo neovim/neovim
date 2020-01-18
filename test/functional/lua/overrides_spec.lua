@@ -14,6 +14,7 @@ local command = helpers.command
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
 local alter_slashes = helpers.alter_slashes
+local exec_lua = helpers.exec_lua
 
 local screen
 
@@ -53,11 +54,12 @@ describe('print', function()
       v_tblout = setmetatable({}, meta_tblout)
     ]])
     eq('', redir_exec('luafile ' .. fname))
-    eq('\nE5114: Error while converting print argument #2: [NULL]',
+    -- TODO(bfredl): these look weird, print() should not use "E5114:" style errors..
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: [NULL]',
        redir_exec('lua print("foo", v_nilerr, "bar")'))
-    eq('\nE5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
        redir_exec('lua print("foo", v_abcerr, "bar")'))
-    eq('\nE5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
        redir_exec('lua print("foo", v_tblout, "bar")'))
   end)
   it('prints strings with NULs and NLs correctly', function()
@@ -75,6 +77,29 @@ describe('print', function()
     eq('\n def', redir_exec('lua print("", "def")'))
     eq('\nabc ', redir_exec('lua print("abc", "")'))
     eq('\nabc  def', redir_exec('lua print("abc", "", "def")'))
+  end)
+  it('defers printing in luv event handlers', function()
+    exec_lua([[
+      local cmd = ...
+      function test()
+        local timer = vim.loop.new_timer()
+        local done = false
+        timer:start(10, 0, function()
+          print("very fast")
+          timer:close()
+          done = true
+        end)
+        -- be kind to slow travis OS X jobs:
+        -- loop until we know for sure the callback has been executed
+        while not done do
+          os.execute(cmd)
+          vim.loop.run("nowait") -- fake os_breakcheck()
+        end
+        print("very slow")
+        vim.api.nvim_command("sleep 1m") -- force deferred event processing
+      end
+    ]], (iswin() and "timeout 1") or "sleep 0.1")
+    eq('\nvery slow\nvery fast',redir_exec('lua test()'))
   end)
 end)
 
@@ -132,7 +157,8 @@ describe('debug.debug', function()
       lua_debug> ^                                          |
     ]])
     feed('<C-c>')
-    screen:expect([[
+    screen:expect{grid=[[
+      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
@@ -143,11 +169,10 @@ describe('debug.debug', function()
       lua_debug> print("TEST")                             |
       TEST                                                 |
                                                            |
-      {E:E5105: Error while calling lua chunk: [string "<VimL }|
-      {E:compiled string>"]:5: attempt to perform arithmetic o}|
-      {E:n local 'a' (a nil value)}                            |
+      {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
+      {E: to perform arithmetic on local 'a' (a nil value)}    |
       Interrupt: {cr:Press ENTER or type command to continue}^   |
-    ]])
+    ]]}
     feed('<C-l>:lua Test()\n')
     screen:expect([[
       {0:~                                                    }|
@@ -166,7 +191,8 @@ describe('debug.debug', function()
       lua_debug> ^                                          |
     ]])
     feed('\n')
-    screen:expect([[
+    screen:expect{grid=[[
+      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
@@ -177,11 +203,85 @@ describe('debug.debug', function()
       {0:~                                                    }|
       nil                                                  |
       lua_debug>                                           |
-      {E:E5105: Error while calling lua chunk: [string "<VimL }|
-      {E:compiled string>"]:5: attempt to perform arithmetic o}|
-      {E:n local 'a' (a nil value)}                            |
+      {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
+      {E: to perform arithmetic on local 'a' (a nil value)}    |
       {cr:Press ENTER or type command to continue}^              |
-    ]])
+    ]]}
+  end)
+
+  it("can be safely exited with 'cont'", function()
+    feed('<cr>')
+    feed(':lua debug.debug() print("x")<cr>')
+    screen:expect{grid=[[
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("conttt<cr>") -- misspelled cont; invalid syntax
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("cont<cr>") -- exactly "cont", exit now
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> cont                                      |
+      x                                                    |
+      {cr:Press ENTER or type command to continue}^              |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
   end)
 end)
 
@@ -199,14 +299,11 @@ describe('package.path/package.cpath', function()
     end
     return new_paths
   end
-  local function execute_lua(cmd, ...)
-    return meths.execute_lua(cmd, {...})
-  end
   local function eval_lua(expr, ...)
-    return meths.execute_lua('return ' .. expr, {...})
+    return meths.exec_lua('return '..expr, {...})
   end
   local function set_path(which, value)
-    return execute_lua('package[select(1, ...)] = select(2, ...)', which, value)
+    return exec_lua('package[select(1, ...)] = select(2, ...)', which, value)
   end
 
   it('contains directories from &runtimepath on first invocation', function()
@@ -298,5 +395,21 @@ describe('package.path/package.cpath', function()
     local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {','})
     local new_paths_str = table.concat(new_paths, ';')
     eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
+  end)
+end)
+
+describe('os.getenv', function()
+  it('returns nothing for undefined env var', function()
+    eq(NIL, funcs.luaeval('os.getenv("XTEST_1")'))
+  end)
+  it('returns env var set by the parent process', function()
+    local value = 'foo'
+    clear({env = {['XTEST_1']=value}})
+    eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
+  end)
+  it('returns env var set by let', function()
+    local value = 'foo'
+    meths.command('let $XTEST_1 = "'..value..'"')
+    eq(value, funcs.luaeval('os.getenv("XTEST_1")'))
   end)
 end)

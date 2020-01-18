@@ -3,7 +3,7 @@
 
 		  VIM REFERENCE MANUAL    by Shugo Maeda
 
-The Ruby Interface to Vim				*ruby* *Ruby*
+The Ruby Interface to Vim				*if_ruby* *ruby* *Ruby*
 
 			*E266* *E267* *E268* *E269* *E270* *E271* *E272* *E273*
 
@@ -19,15 +19,19 @@ downloading Ruby there.
 :rub[y] {cmd}		Execute Ruby command {cmd}.  A command to try it out: >
 				:ruby print "Hello"
 
-:rub[y] << {endpattern}
+:rub[y] << [endpattern]
 {script}
 {endpattern}
 			Execute Ruby script {script}.
-			{endpattern} must NOT be preceded by any white space.
-			If {endpattern} is omitted, it defaults to a dot '.'
-			like for the |:append| and |:insert| commands.  This
-			form of the |:ruby| command is mainly useful for
+			The {endpattern} after {script} must NOT be preceded
+			by any white space.
+
+			If [endpattern] is omitted, it defaults to a dot '.'
+			like for the |:append| and |:insert| commands.
+
+			This form of the |:ruby| command is mainly useful for
 			including ruby code in vim scripts.
+
 			Note: This command doesn't work when the Ruby feature
 			wasn't compiled in.  To avoid errors, see
 			|script-here|.
@@ -180,4 +184,4 @@ $curwin		The current window object.
 $curbuf		The current buffer object.
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

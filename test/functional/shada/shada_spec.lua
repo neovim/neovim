@@ -15,7 +15,6 @@ local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
   shada_helpers.reset, shada_helpers.clear, shada_helpers.get_shada_rw
 local read_shada_file = shada_helpers.read_shada_file
-local set_additional_cmd = shada_helpers.set_additional_cmd
 
 local wshada, _, shada_fname, clean =
   get_shada_rw('Xtest-functional-shada-shada.shada')
@@ -137,7 +136,7 @@ describe('ShaDa support code', function()
 
   it('does not write NONE file', function()
     local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '--cmd', 'qall'}, true)
+                           '--headless', '--cmd', 'qall'}, true)
     session:close()
     eq(nil, lfs.attributes('NONE'))
     eq(nil, lfs.attributes('NONE.tmp.a'))
@@ -145,8 +144,8 @@ describe('ShaDa support code', function()
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
-                          true)
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--headless'}, true)
     set_session(session)
     eq('', funcs.getreg('a'))
     session:close()
@@ -244,8 +243,7 @@ describe('ShaDa support code', function()
 
     funcs.mkdir(dirname, '', 0)
     eq(0, funcs.filewritable(dirname))
-    set_additional_cmd('set shada=')
-    reset(dirshada)
+    reset{shadafile=dirshada, args={'--cmd', 'set shada='}}
     meths.set_option('shada', '\'10')
     eq('Vim(wshada):E886: System error while opening ShaDa file '
        .. 'Xtest-functional-shada-shada.d/main.shada for reading to merge '

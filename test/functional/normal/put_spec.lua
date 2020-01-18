@@ -307,7 +307,7 @@ describe('put command', function()
   -- }}}
 
   -- Conversion functions {{{
-  local function convert_characterwise(expect_base, conversion_table,
+  local function convert_charwise(expect_base, conversion_table,
                                        virtualedit_end, visual_put)
     expect_base = dedent(expect_base)
     -- There is no difference between 'P' and 'p' when VIsual_active
@@ -335,7 +335,7 @@ describe('put command', function()
       expect_base = expect_base:gsub('(test_stringx?)"', '%1.')
     end
     return expect_base
-  end -- convert_characterwise()
+  end -- convert_charwise()
 
   local function make_back(string)
     local prev_line
@@ -500,7 +500,7 @@ describe('put command', function()
   local function run_normal_mode_tests(test_string, base_map, extra_setup,
                                        virtualedit_end, selection_string)
     local function convert_closure(e, c)
-      return convert_characterwise(e, c, virtualedit_end, selection_string)
+      return convert_charwise(e, c, virtualedit_end, selection_string)
     end
     local function expect_normal_creator(expect_base, conversion_table)
       local test_expect = expect_creator(convert_closure, expect_base, conversion_table)
@@ -659,6 +659,7 @@ describe('put command', function()
   end)
 
   describe('put after the line with virtualedit', function()
+    -- luacheck: ignore 621
     local test_string = [[
     Line of words 1  test_stringx"
     	Line of words 2]]
@@ -855,6 +856,7 @@ describe('put command', function()
   end)
 
   describe('. register special tests', function()
+    -- luacheck: ignore 621
     before_each(reset)
     it('applies control character actions', function()
       feed('i<C-t><esc>u')
@@ -874,20 +876,23 @@ describe('put command', function()
     local function bell_test(actions, should_ring)
       local screen = Screen.new()
       screen:attach()
+      if should_ring then
+        -- check bell is not set by nvim before the action
+        screen:sleep(50)
+      end
       helpers.ok(not screen.bell and not screen.visualbell)
       actions()
-      helpers.wait()
-      screen:wait(function()
+      screen:expect{condition=function()
         if should_ring then
           if not screen.bell and not screen.visualbell then
-            return 'Bell was not rung after action'
+            error('Bell was not rung after action')
           end
         else
           if screen.bell or screen.visualbell then
-            return 'Bell was rung after action'
+            error('Bell was rung after action')
           end
         end
-      end)
+      end, unchanged=(not should_ring)}
       screen:detach()
     end
 

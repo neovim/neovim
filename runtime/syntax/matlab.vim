@@ -4,9 +4,10 @@
 " Credits:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
 "		Maurizio Tranchero - maurizio(.)tranchero(@)gmail(.)com
 "		Original author: Mario Eusebio
-" Last Change:	Mon Jan 23 2017
-" 		added support for cell mode
+" Last Change:	June 10 2019
+" 		added highlight rule for double-quoted string literals
 " Change History:
+"               - double-quoted string literals added
 " 		- now highlights cell-mode separator comments
 " 		- 'global' and 'persistent' keyword are now recognized
 
@@ -40,6 +41,7 @@ syn match matlabLineContinuation	"\.\{3}"
 " String
 " MT_ADDON - added 'skip' in order to deal with 'tic' escaping sequence 
 syn region matlabString			start=+'+ end=+'+	oneline skip=+''+
+syn region matlabStringArray		start=+"+ end=+"+	oneline skip=+""+
 
 " If you don't like tabs
 syn match matlabTab			"\t"
@@ -87,6 +89,7 @@ hi def link matlabExceptions		Conditional
 hi def link matlabRepeat			Repeat
 hi def link matlabTodo			Todo
 hi def link matlabString			String
+hi def link matlabStringArray			String
 hi def link matlabDelimiter		Identifier
 hi def link matlabTransposeOther		Identifier
 hi def link matlabNumber			Number

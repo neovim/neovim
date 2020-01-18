@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "nvim/os/dl.h"
 #include "nvim/os/os.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -18,15 +19,15 @@
 /// string -> int
 typedef void (*gen_fn)(void);
 typedef const char *(*str_str_fn)(const char *str);
-typedef int64_t (*str_int_fn)(const char *str);
+typedef int (*str_int_fn)(const char *str);
 typedef const char *(*int_str_fn)(int64_t i);
-typedef int64_t (*int_int_fn)(int64_t i);
+typedef int (*int_int_fn)(int64_t i);
 
 /// os_libcall - call a function in a dynamic loadable library
 ///
 /// an example of calling a function that takes a string and returns an int:
 ///
-///   int64_t int_out = 0;
+///   int int_out = 0;
 ///   os_libcall("mylib.so", "somefn", "string-argument", 0, NULL, &int_out);
 ///
 /// @param libname the name of the library to load (e.g.: libsomething.so)
@@ -42,7 +43,7 @@ bool os_libcall(const char *libname,
                 const char *argv,
                 int64_t argi,
                 char **str_out,
-                int64_t *int_out)
+                int *int_out)
 {
   if (!libname || !funcname) {
     return false;
@@ -53,6 +54,7 @@ bool os_libcall(const char *libname,
   // open the dynamic loadable library
   if (uv_dlopen(libname, &lib)) {
       EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+      uv_dlclose(&lib);
       return false;
   }
 

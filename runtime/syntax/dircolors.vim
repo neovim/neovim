@@ -2,7 +2,7 @@
 " Language:        dircolors(1) input file
 " Maintainer:      Jan Larres <jan@majutsushi.net>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
-" Latest Revision: 2013-08-17
+" Latest Revision: 2018-02-19
 
 if exists("b:current_syntax")
     finish
@@ -135,6 +135,12 @@ function! s:preview_color(linenr) abort
         elseif item >= 40 && item <= 47
             " ANSI SGR background color
             let hi_str .= s:get_hi_str(item - 40, 'bg')
+        elseif item >= 90 && item <= 97
+            " ANSI SGR+8 foreground color (xterm 16-color support)
+            let hi_str .= s:get_hi_str(item - 82, 'fg')
+        elseif item >= 100 && item <= 107
+            " ANSI SGR+8 background color (xterm 16-color support)
+            let hi_str .= s:get_hi_str(item - 92, 'bg')
         elseif item == 38
             " Foreground for terminals with 88/256 color support
             let color = s:get_256color(colors)

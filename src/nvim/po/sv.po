@@ -818,7 +818,7 @@ msgstr "E216: Ingen sådan grupp eller händelse: %s"
 #: ../fileio.c:5994
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandon ---"
@@ -842,7 +842,7 @@ msgstr "E218: autokommando nästlad för djupt"
 
 #: ../fileio.c:7043
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandon för \"%s\""
 
 #: ../fileio.c:7049
@@ -3792,8 +3792,8 @@ msgstr "Varning: region %s stöds inte"
 
 #: ../spell.c:4362
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Läser affix-fil %s ..."
+msgid "Reading affix file %s..."
+msgstr "Läser affix-fil %s..."
 
 #: ../spell.c:4401 ../spell.c:5439 ../spell.c:5944
 #, c-format
@@ -3953,8 +3953,8 @@ msgstr "%s värde skiljer sig från vad som används i en annan .aff-fil."
 
 #: ../spell.c:5406
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Läser ordboksfil %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Läser ordboksfil %s..."
 
 #: ../spell.c:5415
 #, c-format
@@ -3988,8 +3988,8 @@ msgstr "Ignorerade %d ord med icke-ASCII tecken i %s"
 
 #: ../spell.c:5919
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Läser ordfil %s ..."
+msgid "Reading word file %s..."
+msgstr "Läser ordfil %s..."
 
 #: ../spell.c:5959
 #, c-format
@@ -4058,8 +4058,8 @@ msgstr "Totalt antal ord: %d"
 
 #: ../spell.c:7458
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Skriver förslagsfil %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Skriver förslagsfil %s..."
 
 #: ../spell.c:7510 ../spell.c:7730
 #, c-format
@@ -4085,8 +4085,8 @@ msgstr "Varning: både sammansättning och NOBREAK specifierad"
 
 #: ../spell.c:7723
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Skriver stavningsfil %s ..."
+msgid "Writing spell file %s..."
+msgstr "Skriver stavningsfil %s..."
 
 #: ../spell.c:7728
 msgid "Done!"
@@ -5675,7 +5675,7 @@ msgstr "-q [felfil]    redigera fil med första fel"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

@@ -78,6 +78,13 @@ struct multiqueue {
   size_t size;
 };
 
+typedef struct {
+  Event event;
+  bool fired;
+  int refcount;
+} MulticastEvent;  ///< Event present on multiple queues.
+
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/multiqueue.c.generated.h"
 #endif
@@ -244,4 +251,34 @@ static void multiqueue_push(MultiQueue *this, Event event)
 static MultiQueueItem *multiqueue_node_data(QUEUE *q)
 {
   return QUEUE_DATA(q, MultiQueueItem, node);
+}
+
+/// Multicasts a one-shot event to multiple queues.
+///
+/// The handler will be invoked once by the _first_ queue that consumes the
+/// event. Later processing will do nothing (just memory cleanup).
+///
+/// @param ev  Event
+/// @param num  Number of queues that the event will be put on
+/// @return Event that is safe to put onto `num` queues
+Event event_create_oneshot(Event ev, int num)
+{
+  MulticastEvent *data = xmalloc(sizeof(*data));
+  data->event = ev;
+  data->fired = false;
+  data->refcount = num;
+  return event_create(multiqueue_oneshot_event, 1, data);
+}
+static void multiqueue_oneshot_event(void **argv)
+{
+  MulticastEvent *data = argv[0];
+  if (!data->fired) {
+    data->fired = true;
+    if (data->event.handler) {
+      data->event.handler(data->event.argv);
+    }
+  }
+  if ((--data->refcount) == 0) {
+    xfree(data);
+  }
 }

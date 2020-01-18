@@ -1,13 +1,15 @@
 option(USE_GCOV "Enable gcov support" OFF)
 
-if(NOT CLANG_TSAN)
-# GCOV and TSAN results in false data race reports
 if(USE_GCOV)
+  if(CLANG_TSAN)
+    # GCOV and TSAN results in false data race reports
+    message(FATAL_ERROR "USE_GCOV cannot be used with CLANG_TSAN")
+  endif()
   message(STATUS "Enabling gcov support")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
-endif()
+  add_definitions(-DUSE_GCOV)
 endif()
 
 if(WIN32)
@@ -23,6 +25,7 @@ set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
+set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
@@ -49,7 +52,8 @@ set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
-set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -79,6 +83,12 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
+file(GLOB XDIFF_SOURCES xdiff/*.c)
+file(GLOB XDIFF_HEADERS xdiff/*.h)
+
+file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
+file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
+list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
 
 foreach(subdir
         os
@@ -124,6 +134,12 @@ foreach(sfile ${NVIM_SOURCES})
   if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_conpty_win.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(os_win_console.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
@@ -135,8 +151,8 @@ set(CONV_SOURCES
   eval.c
   ex_cmds.c
   ex_docmd.c
-  ex_getln.c
   fileio.c
+  lua/treesitter.c
   mbyte.c
   memline.c
   message.c
@@ -148,25 +164,29 @@ set(CONV_SOURCES
   syntax.c
   tag.c
   window.c)
-
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
+# xdiff: inlined external project, we don't maintain it. #9306
+list(APPEND CONV_SOURCES ${XDIFF_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   # gperf generates ANSI-C with incorrect linkage, ignore it.
-  check_c_compiler_flag(-Wno-static-in-inline HAS_WNO_STATIC_IN_INLINE_FLAG)
-  if(HAS_WNO_STATIC_IN_INLINE_FLAG)
+  check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
+  if(HAS_WSTATIC_IN_INLINE)
     set_source_files_properties(
       eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
   else()
     set_source_files_properties(
       eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
+
+  # tree-sitter: inlined external project, we don't maintain it. #10124
+  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -204,6 +224,34 @@ function(get_preproc_output varname iname)
   endif()
 endfunction()
 
+# Handle generating version from Git.
+set(use_git_version 0)
+if(NVIM_VERSION_MEDIUM)
+  message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
+elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
+  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
+  find_program(GIT_EXECUTABLE git)
+  if(GIT_EXECUTABLE)
+    message(STATUS "Using NVIM_VERSION_MEDIUM from Git")
+    set(use_git_version 1)
+  else()
+    message(STATUS "Skipping version-string generation (cannot find git)")
+  endif()
+endif()
+if(use_git_version)
+  # Create a update_version_stamp target to update the version during build.
+  file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
+  add_custom_target(update_version_stamp ALL
+    COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
+      ${relbuild}/config/auto/versiondef_git.h
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
+else()
+  file(WRITE ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h "")
+endif()
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -232,12 +280,16 @@ foreach(sfile ${NVIM_SOURCES}
 
   get_preproc_output(PREPROC_OUTPUT ${gf_i})
 
+  set(depends "${HEADER_GENERATOR}" "${sfile}")
+  if(use_git_version AND "${f}" STREQUAL "version.c")
+    # Ensure auto/versiondef_git.h exists after "make clean".
+    list(APPEND depends update_version_stamp)
+  endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
-    DEPENDS "${HEADER_GENERATOR}" "${sfile}"
-    )
+    DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
@@ -266,16 +318,19 @@ add_custom_command(
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
     ${API_DISPATCH_GENERATOR}
+    ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE} vim_module
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
+      ${LUA_VIM_MODULE_SOURCE} vim_module
+      ${LUA_SHARED_MODULE_SOURCE} shared_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
-    ${VIM_MODULE_SOURCE}
+    ${LUA_VIM_MODULE_SOURCE}
+    ${LUA_SHARED_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -297,6 +352,7 @@ add_custom_command(
                      ${GENERATED_UI_EVENTS_METADATA}
   DEPENDS
     ${API_UI_EVENTS_GENERATOR}
+    ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
 )
 
@@ -372,16 +428,24 @@ if(Iconv_LIBRARIES)
 endif()
 
 if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES netapi32)
   list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
+# Use "luv" as imported library, to work around CMake using "-lluv" for
+# "luv.so".  #10407
+add_library(luv UNKNOWN IMPORTED)
+set_property(TARGET luv PROPERTY IMPORTED_LOCATION ${LIBLUV_LIBRARIES})
+
 # Put these last on the link line, since multiple things may depend on them.
 list(APPEND NVIM_LINK_LIBRARIES
+  luv
   ${LIBUV_LIBRARIES}
   ${MSGPACK_LIBRARIES}
   ${LIBVTERM_LIBRARIES}
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
+  ${UTF8PROC_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -394,24 +458,28 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-if(CMAKE_VERSION VERSION_LESS "2.8.8")
-  # Use include_directories() because INCLUDE_DIRECTORIES target property
-  # is not supported
-  include_directories(${LUA_PREFERRED_INCLUDE_DIRS})
-endif()
-
-# Don't use jemalloc in the unit test library.
-if(JEMALLOC_FOUND)
-  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
+# Add IPO flags (for LTO), or error if CMake does not know the flags. #8654
+if(POLICY CMP0069)
+  cmake_policy(SET CMP0069 NEW)
 endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
+  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+set_property(TARGET nvim PROPERTY ENABLE_EXPORTS TRUE)
+
+if(ENABLE_LTO AND (POLICY CMP0069))
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT IPO_SUPPORTED)
+  if(IPO_SUPPORTED AND (NOT CMAKE_BUILD_TYPE MATCHES Debug))
+    set_property(TARGET nvim PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  endif()
+endif()
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
@@ -430,39 +498,53 @@ if(WIN32)
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
 
+  # A CMake script is used for copying the files to avoid the
+  # "command line is too long" error that occurs when Ninja tries running
+  # a command that exceeds the length limit (8191 characters) on Windows.
+  # See https://developercommunity.visualstudio.com/content/problem/212207/file-open-cmake-the-command-line-is-too-long.html
+  set(EXTERNAL_BLOBS_SCRIPT
+    "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
+  foreach(DEP_FILE IN ITEMS
+                      ca-bundle.crt
+                      cat.exe
+                      curl.exe
+                      diff.exe
+                      tee.exe
+                      tidy.exe
+                      win32yank.exe
+                      winpty-agent.exe
+                      xxd.exe
+
+                      D3Dcompiler_47.dll
+                      libEGL.dll
+                      libgcc_s_dw2-1.dll
+                      libGLESV2.dll
+                      libstdc++-6.dll
+                      libwinpthread-1.dll
+                      nvim-qt.exe
+                      Qt5Core.dll
+                      Qt5Gui.dll
+                      Qt5Network.dll
+                      Qt5Svg.dll
+                      Qt5Widgets.dll
+                      winpty.dll
+
+                      platforms/qwindows.dll
+                      )
+    get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
+    set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
+      "file(COPY \"${DEPS_PREFIX}/bin/${DEP_FILE}\"
+         DESTINATION \"${PROJECT_BINARY_DIR}/windows_runtime_deps/${DEP_FILE_DIR}\")")
+  endforeach()
+  file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/ca-bundle.crt"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/cat.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/curl.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/diff.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/xxd.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libgcc_s_dw2-1.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libGLESV2.dll"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libstdc++-6.dll"     ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libwinpthread-1.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/nvim-qt.exe"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Core.dll"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Gui.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
-    )
+    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
+  set_target_properties(external_blobs PROPERTIES FOLDER deps)
   add_dependencies(nvim_runtime_deps external_blobs)
 else()
   add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
+set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
 add_library(
   libnvim
@@ -470,6 +552,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -484,7 +567,9 @@ set_property(
   APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
 )
 
-if(LUAJIT_FOUND)
+if(NOT LUAJIT_FOUND)
+  message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
+else()
   set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
   add_library(
     nvim-test
@@ -492,6 +577,7 @@ if(LUAJIT_FOUND)
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
@@ -519,19 +605,19 @@ if(CLANG_ASAN_UBSAN)
   else()
     set(SANITIZE_RECOVER -fno-sanitize-recover)         # Clang 3.5-
   endif()
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist")
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_DEFINITIONS EXITFREE)
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS ${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=address -fsanitize=undefined ")
 elseif(CLANG_MSAN)
   message(STATUS "Enabling Clang memory sanitizer for nvim.")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_DEFINITIONS EXITFREE)
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS -fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer -fno-optimize-sibling-calls)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=memory -fsanitize-memory-track-origins ")
 elseif(CLANG_TSAN)
   message(STATUS "Enabling Clang thread sanitizer for nvim.")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-DEXITFREE ")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fsanitize=thread ")
-  set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fPIE ")
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_DEFINITIONS EXITFREE)
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS -fsanitize=thread)
+  set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS -fPIE)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 
@@ -557,6 +643,8 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   os/pty_process_win.h
+  os/pty_conpty_win.h
+  os/os_win_console.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)
@@ -572,6 +660,7 @@ foreach(hfile ${NVIM_HEADERS})
       TARGET ${texe}
       APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
     )
+    set_target_properties(${texe} PROPERTIES FOLDER test)
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
@@ -637,4 +726,13 @@ add_custom_target(
   DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
 )
 
+add_custom_target(generated-sources DEPENDS
+  ${NVIM_GENERATED_FOR_SOURCES}
+  ${NVIM_GENERATED_FOR_HEADERS}
+  ${NVIM_GENERATED_SOURCES}
+)
+
 add_subdirectory(po)
+
+include(GetCompileFlags)
+get_compile_flags(NVIM_VERSION_CFLAGS)

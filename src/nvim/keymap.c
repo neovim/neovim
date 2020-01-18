@@ -163,6 +163,7 @@ static const struct key_name_entry {
   { K_DEL,             "Del" },
   { K_DEL,             "Delete" },      // Alternative name
   { K_KDEL,            "kDel" },
+  { K_KDEL,            "KPPeriod" },    // libtermkey name
   { K_UP,              "Up" },
   { K_DOWN,            "Down" },
   { K_LEFT,            "Left" },
@@ -171,6 +172,14 @@ static const struct key_name_entry {
   { K_XDOWN,           "xDown" },
   { K_XLEFT,           "xLeft" },
   { K_XRIGHT,          "xRight" },
+  { K_KUP,             "kUp" },
+  { K_KUP,             "KP8" },
+  { K_KDOWN,           "kDown" },
+  { K_KDOWN,           "KP2" },
+  { K_KLEFT,           "kLeft" },
+  { K_KLEFT,           "KP4" },
+  { K_KRIGHT,          "kRight" },
+  { K_KRIGHT,          "KP6" },
 
   { K_F1,              "F1" },
   { K_F2,              "F2" },
@@ -223,25 +232,41 @@ static const struct key_name_entry {
   { K_INS,             "Insert" },
   { K_INS,             "Ins" },         // Alternative name
   { K_KINS,            "kInsert" },
+  { K_KINS,            "KP0" },
   { K_HOME,            "Home" },
   { K_KHOME,           "kHome" },
+  { K_KHOME,           "KP7" },
   { K_XHOME,           "xHome" },
   { K_ZHOME,           "zHome" },
   { K_END,             "End" },
   { K_KEND,            "kEnd" },
+  { K_KEND,            "KP1" },
   { K_XEND,            "xEnd" },
   { K_ZEND,            "zEnd" },
   { K_PAGEUP,          "PageUp" },
   { K_PAGEDOWN,        "PageDown" },
   { K_KPAGEUP,         "kPageUp" },
+  { K_KPAGEUP,         "KP9" },
   { K_KPAGEDOWN,       "kPageDown" },
+  { K_KPAGEDOWN,       "KP3" },
+  { K_KORIGIN,         "kOrigin" },
+  { K_KORIGIN,         "KP5" },
 
   { K_KPLUS,           "kPlus" },
+  { K_KPLUS,           "KPPlus" },
   { K_KMINUS,          "kMinus" },
+  { K_KMINUS,          "KPMinus" },
   { K_KDIVIDE,         "kDivide" },
+  { K_KDIVIDE,         "KPDiv" },
   { K_KMULTIPLY,       "kMultiply" },
+  { K_KMULTIPLY,       "KPMult" },
   { K_KENTER,          "kEnter" },
+  { K_KENTER,          "KPEnter" },
   { K_KPOINT,          "kPoint" },
+  { K_KCOMMA,          "kComma" },
+  { K_KCOMMA,          "KPComma" },
+  { K_KEQUAL,          "kEqual" },
+  { K_KEQUAL,          "KPEquals" },
 
   { K_K0,              "k0" },
   { K_K1,              "k1" },
@@ -284,7 +309,7 @@ static const struct key_name_entry {
   { K_ZERO,            "Nul" },
   { K_SNR,             "SNR" },
   { K_PLUG,            "Plug" },
-  { K_PASTE,           "Paste" },
+  { K_IGNORE,          "Ignore" },
   { K_COMMAND,         "Cmd" },
   { 0,                 NULL }
   // NOTE: When adding a long name update MAX_KEY_NAME_LEN.
@@ -462,14 +487,13 @@ char_u *get_special_key_name(int c, int modifiers)
       string[idx++] = '_';
       string[idx++] = (char_u)KEY2TERMCAP0(c);
       string[idx++] = KEY2TERMCAP1(c);
-    }
-    /* Not a special key, only modifiers, output directly */
-    else {
-      if (has_mbyte && (*mb_char2len)(c) > 1)
-        idx += (*mb_char2bytes)(c, string + idx);
-      else if (vim_isprintc(c))
+    } else {
+      // Not a special key, only modifiers, output directly.
+      if (utf_char2len(c) > 1) {
+        idx += utf_char2bytes(c, string + idx);
+      } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
-      else {
+      } else {
         s = transchar(c);
         while (*s)
           string[idx++] = *s++;
@@ -524,14 +548,12 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
-  } else if (has_mbyte && !keycode) {
-    dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
-  } else if (keycode) {
+  } else if (!keycode) {
+    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
+  } else {
     char_u *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
-  } else {
-    dst[dlen++] = (char_u)key;
   }
 
   return dlen;
@@ -582,7 +604,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[2] == '>') {
+        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l+1] == '>') {
           bp += l;
         } else if (end - bp > 2 && in_string && bp[1] == '\\'
                    && bp[2] == '"' && bp[3] == '>') {
@@ -666,7 +688,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         *modp = modifiers;
         *srcp = end_of_name;
         return key;
-      }
+      }  // else { ELOG("unknown key: '%s'", src); }
     }
   }
   return 0;
@@ -803,7 +825,8 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
 
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
-  result = xmalloc(from_len * 6 + 1);
+  const size_t buf_len = from_len * 6 + 1;
+  result = xmalloc(buf_len);
 
   src = from;
 
@@ -828,14 +851,15 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
-        if (current_SID <= 0) {
+        if (current_sctx.sc_sid <= 0) {
           EMSG(_(e_usingsid));
         } else {
           src += 5;
           result[dlen++] = K_SPECIAL;
           result[dlen++] = (int)KS_EXTRA;
           result[dlen++] = (int)KE_SNR;
-          sprintf((char *)result + dlen, "%" PRId64, (int64_t)current_SID);
+          snprintf((char *)result + dlen, buf_len - dlen, "%" PRId64,
+                   (int64_t)current_sctx.sc_sid);
           dlen += STRLEN(result + dlen);
           result[dlen++] = '_';
           continue;
@@ -898,7 +922,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
     }
 
     // skip multibyte char correctly
-    for (i = (*mb_ptr2len_len)(src, (int) (end - src) + 1); i > 0; i--) {
+    for (i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       // If compiled with the GUI replace CSI with K_CSI.
@@ -919,3 +943,14 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
   return *bufp;
 }
 
+/// Logs a single key as a human-readable keycode.
+void log_key(int log_level, int key)
+{
+  if (log_level < MIN_LOG_LEVEL) {
+    return;
+  }
+  char *keyname = key == K_EVENT
+    ? "K_EVENT"
+    : (char *)get_special_key_name(key, mod_mask);
+  LOG(log_level, "input: %s", keyname);
+}

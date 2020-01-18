@@ -13,7 +13,7 @@ HTMLS = $(DOCS:.txt=.html)
 .SUFFIXES: .c .o .txt .html
 
 # Awk version of .txt to .html conversion.
-html: noerrors $(HTMLS)
+html: noerrors vimindex.html $(HTMLS)
 	@if test -f errors.log; then cat errors.log; fi
 
 noerrors:

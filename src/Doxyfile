@@ -243,7 +243,7 @@ OPTIMIZE_OUTPUT_VHDL   = NO
 # that for custom extensions you also need to set FILE_PATTERNS otherwise the
 # files are not read by doxygen.
 
-EXTENSION_MAPPING      =
+EXTENSION_MAPPING      = lua=C
 
 # If MARKDOWN_SUPPORT is enabled (the default) then doxygen pre-processes all
 # comments according to the Markdown format, which allows for more readable
@@ -672,7 +672,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.for *.vhd *.vhdl
 
-FILE_PATTERNS          = *.h *.c
+FILE_PATTERNS          = *.h *.c *.lua
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -758,7 +758,7 @@ INPUT_FILTER           =
 # info on how filters are used. If FILTER_PATTERNS is empty or if
 # non of the patterns match the file name, INPUT_FILTER is applied.
 
-FILTER_PATTERNS        =
+FILTER_PATTERNS        = *.lua=scripts/lua2dox_filter
 
 # If the FILTER_SOURCE_FILES tag is set to YES, the input filter (if set using
 # INPUT_FILTER) will be used to filter the input files when producing source

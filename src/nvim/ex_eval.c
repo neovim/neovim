@@ -8,7 +8,6 @@
 /// Functions for Ex command line for the +eval feature.
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <limits.h>
 
@@ -308,7 +307,7 @@ void free_global_msglist(void)
  * error exception.  If cstack is NULL, postpone the throw until do_cmdline()
  * has returned (see do_one_cmd()).
  */
-void do_errthrow(struct condstack *cstack, char_u *cmdname)
+void do_errthrow(cstack_T *cstack, char_u *cmdname)
 {
   /*
    * Ensure that all commands in nested function calls and sourced files
@@ -340,7 +339,7 @@ void do_errthrow(struct condstack *cstack, char_u *cmdname)
  * exception if appropriate.  Return TRUE if the current exception is discarded,
  * FALSE otherwise.
  */
-int do_intthrow(struct condstack *cstack)
+int do_intthrow(cstack_T *cstack)
 {
   // If no interrupt occurred or no try conditional is active and no exception
   // is being thrown, do nothing (for compatibility of non-EH scripts).
@@ -569,10 +568,12 @@ static void discard_exception(except_T *excp, int was_finished)
  */
 void discard_current_exception(void)
 {
-  discard_exception(current_exception, false);
+  if (current_exception != NULL) {
+    discard_exception(current_exception, false);
+    current_exception = NULL;
+  }
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
-  current_exception = NULL;
   need_rethrow = false;
 }
 
@@ -794,7 +795,7 @@ void ex_if(exarg_T *eap)
 {
   int skip;
   int result;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1)
     eap->errmsg = (char_u *)N_("E579: :if nesting too deep");
@@ -851,7 +852,7 @@ void ex_else(exarg_T *eap)
 {
   int skip;
   int result;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   skip = CHECK_SKIP;
 
@@ -925,7 +926,7 @@ void ex_while(exarg_T *eap)
   bool error;
   int skip;
   int result;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1)
     eap->errmsg = (char_u *)N_("E585: :while/:for nesting too deep");
@@ -1004,7 +1005,7 @@ void ex_while(exarg_T *eap)
 void ex_continue(exarg_T *eap)
 {
   int idx;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0)
     eap->errmsg = (char_u *)N_("E586: :continue without :while or :for");
@@ -1038,7 +1039,7 @@ void ex_continue(exarg_T *eap)
 void ex_break(exarg_T *eap)
 {
   int idx;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0)
     eap->errmsg = (char_u *)N_("E587: :break without :while or :for");
@@ -1060,7 +1061,7 @@ void ex_break(exarg_T *eap)
  */
 void ex_endwhile(exarg_T *eap)
 {
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
   int idx;
   char_u              *err;
   int csf;
@@ -1163,7 +1164,7 @@ void ex_throw(exarg_T *eap)
  * for ":throw" (user exception) and error and interrupt exceptions.  Also
  * used for rethrowing an uncaught exception.
  */
-void do_throw(struct condstack *cstack)
+void do_throw(cstack_T *cstack)
 {
   int idx;
   int inactivate_try = FALSE;
@@ -1224,7 +1225,7 @@ void do_throw(struct condstack *cstack)
 void ex_try(exarg_T *eap)
 {
   int skip;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1)
     eap->errmsg = (char_u *)N_("E601: :try nesting too deep");
@@ -1259,7 +1260,7 @@ void ex_try(exarg_T *eap)
        * to save the value.
        */
       if (emsg_silent) {
-        eslist_T *elem = xmalloc(sizeof(struct eslist_elem));
+        eslist_T *elem = xmalloc(sizeof(*elem));
         elem->saved_emsg_silent = emsg_silent;
         elem->next = cstack->cs_emsg_silent_list;
         cstack->cs_emsg_silent_list = elem;
@@ -1285,7 +1286,7 @@ void ex_catch(exarg_T *eap)
   char_u      *save_cpo;
   regmatch_T regmatch;
   int prev_got_int;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
   char_u      *pat;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
@@ -1431,7 +1432,7 @@ void ex_finally(exarg_T *eap)
   int idx;
   int skip = FALSE;
   int pending = CSTP_NONE;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0)
     eap->errmsg = (char_u *)N_("E606: :finally without :try");
@@ -1554,7 +1555,7 @@ void ex_endtry(exarg_T *eap)
   int rethrow = FALSE;
   int pending = CSTP_NONE;
   void        *rettv = NULL;
-  struct condstack    *cstack = eap->cstack;
+  cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = (char_u *)N_("E602: :endtry without :try");
@@ -1766,6 +1767,7 @@ void enter_cleanup(cleanup_T *csp)
      */
     if (current_exception || need_rethrow) {
       csp->exception = current_exception;
+      current_exception = NULL;
     } else {
       csp->exception = NULL;
       if (did_emsg) {
@@ -1880,7 +1882,7 @@ void leave_cleanup(cleanup_T *csp)
  * entered, is restored (used by ex_endtry()).  This is normally done only
  * when such a try conditional is left.
  */
-int cleanup_conditionals(struct condstack *cstack, int searched_cond, int inclusive)
+int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 {
   int idx;
   int stop = FALSE;
@@ -1988,7 +1990,7 @@ int cleanup_conditionals(struct condstack *cstack, int searched_cond, int inclus
 /*
  * Return an appropriate error message for a missing endwhile/endfor/endif.
  */
-static char_u *get_end_emsg(struct condstack *cstack)
+static char_u *get_end_emsg(cstack_T *cstack)
 {
   if (cstack->cs_flags[cstack->cs_idx] & CSF_WHILE)
     return e_endwhile;
@@ -2005,7 +2007,8 @@ static char_u *get_end_emsg(struct condstack *cstack)
  * type.
  * Also free "for info" structures where needed.
  */
-void rewind_conditionals(struct condstack *cstack, int idx, int cond_type, int *cond_level)
+void rewind_conditionals(cstack_T *cstack, int idx, int cond_type,
+                         int *cond_level)
 {
   while (cstack->cs_idx > idx) {
     if (cstack->cs_flags[cstack->cs_idx] & cond_type)

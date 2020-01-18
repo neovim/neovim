@@ -12,6 +12,7 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/os_unix.h"
 #include "nvim/fold.h"
 #include "nvim/diff.h"
@@ -70,6 +71,7 @@ int jump_to_mouse(int flags,
   bool first;
   int row = mouse_row;
   int col = mouse_col;
+  int grid = mouse_grid;
   int mouse_char;
 
   mouse_past_bottom = false;
@@ -108,12 +110,14 @@ retnomove:
     goto retnomove;                             // ugly goto...
 
   // Remember the character under the mouse, it might be a '-' or '+' in the
-  // fold column.
+  // fold column. NB: only works for ASCII chars!
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && ScreenLines != NULL)
-    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col];
-  else
+      && default_grid.chars != NULL) {
+    mouse_char = default_grid.chars[default_grid.line_offset[row]
+                                    + (unsigned)col][0];
+  } else {
     mouse_char = ' ';
+  }
 
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;
@@ -123,17 +127,22 @@ retnomove:
       return IN_UNKNOWN;
 
     // find the window where the row is in
-    wp = mouse_find_win(&row, &col);
+    wp = mouse_find_win(&grid, &row, &col);
+    if (wp == NULL) {
+      return IN_UNKNOWN;
+    }
     dragwin = NULL;
     // winpos and height may change in win_enter()!
-    if (row >= wp->w_height) {                  // In (or below) status line
+    if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
+      // In (or below) status line
       on_status_line = row - wp->w_height + 1;
       dragwin = wp;
     } else {
       on_status_line = 0;
     }
 
-    if (col >= wp->w_width) {           // In separator line
+    if (grid == DEFAULT_GRID_HANDLE && col >= wp->w_width) {
+      // In separator line
       on_sep_line = col - wp->w_width + 1;
       dragwin = wp;
     } else {
@@ -155,12 +164,10 @@ retnomove:
         && (wp->w_buffer != curwin->w_buffer
             || (!on_status_line
                 && !on_sep_line
-                && (
-                  wp->w_p_rl ? col < wp->w_width - wp->w_p_fdc :
-                                     col >= wp->w_p_fdc
-                                             + (cmdwin_type == 0 && wp ==
-                                                curwin ? 0 : 1)
-                  )
+                && (wp->w_p_rl
+                    ? col < wp->w_width_inner - wp->w_p_fdc
+                    : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
+                                            ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -252,7 +259,7 @@ retnomove:
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       redraw_later(VALID);
       row = 0;
-    } else if (row >= curwin->w_height)   {
+    } else if (row >= curwin->w_height_inner)   {
       count = 0;
       for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
         if (curwin->w_topfill > 0) {
@@ -261,7 +268,7 @@ retnomove:
           count += plines(curwin->w_topline);
         }
 
-        if (!first && count > row - curwin->w_height + 1) {
+        if (!first && count > row - curwin->w_height_inner + 1) {
           break;
         }
         first = false;
@@ -283,7 +290,7 @@ retnomove:
       redraw_later(VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      row = curwin->w_height - 1;
+      row = curwin->w_height_inner - 1;
     } else if (row == 0)   {
       // When dragging the mouse, while the text has been scrolled up as
       // far as it goes, moving the mouse in the top line should scroll
@@ -298,7 +305,7 @@ retnomove:
   }
 
   // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_width - curwin->w_p_fdc :
+  if (curwin->w_p_rl ? col < curwin->w_width_inner - curwin->w_p_fdc :
       col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
     mouse_char = ' ';
   }
@@ -314,7 +321,6 @@ retnomove:
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
-    check_visual_highlight();
     VIsual = old_cursor;
     VIsual_active = true;
     VIsual_reselect = true;
@@ -344,7 +350,7 @@ retnomove:
     count |= CURSOR_MOVED;              // Cursor has moved
   }
 
-  if (mouse_char == '+') {
+  if (mouse_char == curwin->w_p_fcs_chars.foldclosed) {
     count |= MOUSE_FOLD_OPEN;
   } else if (mouse_char != ' ') {
     count |= MOUSE_FOLD_CLOSE;
@@ -365,8 +371,9 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   int off;
   int count;
 
-  if (win->w_p_rl)
-    col = win->w_width - 1 - col;
+  if (win->w_p_rl) {
+    col = win->w_width_inner - 1 - col;
+  }
 
   lnum = win->w_topline;
 
@@ -403,7 +410,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     off = win_col_off(win) - win_col_off2(win);
     if (col < off)
       col = off;
-    col += row * (win->w_width - off);
+    col += row * (win->w_width_inner - off);
     // add skip column (for long wrapping line)
     col += win->w_skipcol;
   }
@@ -424,10 +431,20 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   return retval;
 }
 
-// Find the window at screen position "*rowp" and "*colp".  The positions are
-// updated to become relative to the top-left of the window.
-win_T *mouse_find_win(int *rowp, int *colp)
+/// Find the window at "grid" position "*rowp" and "*colp".  The positions are
+/// updated to become relative to the top-left of the window.
+///
+/// @return NULL when something is wrong.
+win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 {
+  win_T *wp_grid = mouse_find_grid_win(gridp, rowp, colp);
+  if (wp_grid) {
+    return wp_grid;
+  } else if (*gridp > 1) {
+    return NULL;
+  }
+
+
   frame_T     *fp;
 
   fp = topframe;
@@ -449,34 +466,72 @@ win_T *mouse_find_win(int *rowp, int *colp)
       }
     }
   }
-  return fp->fr_win;
+  // When using a timer that closes a window the window might not actually
+  // exist.
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp == fp->fr_win) {
+      return wp;
+    }
+  }
+  return NULL;
 }
 
-/*
- * setmouse() - switch mouse on/off depending on current mode and 'mouse'
- */
+static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
+{
+  if (*gridp == msg_grid.handle) {
+    // rowp += msg_grid_pos;  // PVS: dead store #11612
+    *gridp = DEFAULT_GRID_HANDLE;
+  } else if (*gridp > 1) {
+    win_T *wp = get_win_by_grid_handle(*gridp);
+    if (wp && wp->w_grid.chars
+        && !(wp->w_floating && !wp->w_float_config.focusable)) {
+      *rowp = MIN(*rowp, wp->w_grid.Rows-1);
+      *colp = MIN(*colp, wp->w_grid.Columns-1);
+      return wp;
+    }
+  } else if (*gridp == 0) {
+    ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (&wp->w_grid != grid) {
+        continue;
+      }
+      *gridp = grid->handle;
+      *rowp -= grid->comp_row;
+      *colp -= grid->comp_col;
+      return wp;
+    }
+
+    // no float found, click on the default grid
+    // TODO(bfredl): grid can be &pum_grid, allow select pum items by mouse?
+    *gridp = DEFAULT_GRID_HANDLE;
+  }
+  return NULL;
+}
+
+/// Set UI mouse depending on current mode and 'mouse'.
+///
+/// Emits mouse_on/mouse_off UI event (unless 'mouse' is empty).
 void setmouse(void)
 {
-  int checkfor;
-
   ui_cursor_shape();
 
-  /* be quick when mouse is off */
-  if (*p_mouse == NUL)
+  // Be quick when mouse is off.
+  if (*p_mouse == NUL) {
     return;
+  }
 
-  if (VIsual_active)
+  int checkfor = MOUSE_NORMAL;  // assume normal mode
+  if (VIsual_active) {
     checkfor = MOUSE_VISUAL;
-  else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)
+  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
     checkfor = MOUSE_RETURN;
-  else if (State & INSERT)
+  } else if (State & INSERT) {
     checkfor = MOUSE_INSERT;
-  else if (State & CMDLINE)
+  } else if (State & CMDLINE) {
     checkfor = MOUSE_COMMAND;
-  else if (State == CONFIRM || State == EXTERNCMD)
-    checkfor = ' ';     /* don't use mouse for ":confirm" or ":!cmd" */
-  else
-    checkfor = MOUSE_NORMAL;        /* assume normal mode */
+  } else if (State == CONFIRM || State == EXTERNCMD) {
+    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
+  }
 
   if (mouse_has(checkfor)) {
     ui_call_mouse_on();
@@ -525,7 +580,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   if (*line != NUL) {
     for (;;) {
       int numchar = chartabsize(line, col);
-      mb_ptr_adv(line);
+      MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character
         break;
       }
@@ -583,7 +638,7 @@ bool mouse_scroll_horiz(int dir)
 
   int step = 6;
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      step = curwin->w_width;
+      step = curwin->w_width_inner;
   }
 
   int leftcol = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : +step);
@@ -629,13 +684,13 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
   char_u *ptr = line;
-  char_u *ptr_end = line;
+  char_u *ptr_end;
   char_u *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
 
   // Find the offset where scanning should begin.
   int offset = wp->w_leftcol;
   if (row > 0) {
-    offset += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp) -
+    offset += row * (wp->w_width_inner - win_col_off(wp) - win_col_off2(wp) -
                      wp->w_leftcol + wp->w_skipcol);
   }
 
@@ -692,7 +747,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
       } else {
         if (!(row > 0 && ptr == ptr_row_offset)
             && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
-                                      && (lcs_conceal != NUL
+                                      && (wp->w_p_lcs_chars.conceal != NUL
                                           || syn_get_sub_char() != NUL)))) {
           // At least one placeholder character will be displayed.
           decr();

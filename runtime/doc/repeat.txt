@@ -11,7 +11,7 @@ Chapter 26 of the user manual introduces repeating |usr_26.txt|.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Single repeats					*single-repeat*
+Single repeats						*single-repeat*
 
 							*.*
 .			Repeat last change, with count replaced with [count].
@@ -35,9 +35,9 @@ of area is used, see |visual-repeat|.
 
 
 ==============================================================================
-2. Multiple repeats					*multi-repeat*
+Multiple repeats					*multi-repeat*
 
-						*:g* *:global* *E147* *E148*
+						*:g* *:global* *E148*
 :[range]g[lobal]/{pattern}/[cmd]
 			Execute the Ex command [cmd] (default ":p") on the
 			lines within [range] where {pattern} matches.
@@ -70,8 +70,15 @@ The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
 line is aborted and the global command continues with the next marked or
 unmarked line.
+								*E147* 
+When the command is used recursively, it only works on one line.  Giving a
+range is then not allowed. This is useful to find all lines that match a
+pattern and do not match another pattern: >
+	:g/found/v/notfound/{cmd}
+This first finds all lines containing "found", but only executes {cmd} when
+there is no match for "notfound".
 
-To repeat a non-Ex command, you can use the ":normal" command: >
+To execute a non-Ex command, you can use the `:normal` command: >
 	:g/pat/normal {commands}
 Make sure that {commands} ends with a whole command, otherwise Vim will wait
 for you to type the rest of the command for each match.  The screen will not
@@ -96,7 +103,7 @@ repeated for each matching line.  While doing this you cannot use ":global".
 To abort this type CTRL-C twice.
 
 ==============================================================================
-3. Complex repeats					*complex-repeat*
+Complex repeats						*complex-repeat*
 
 							*q* *recording*
 q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
@@ -150,7 +157,7 @@ q			Stops recording.
 			line [addr] (default is current line).
 
 ==============================================================================
-4. Using Vim scripts					*using-scripts*
+Using Vim scripts					*using-scripts*
 
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
@@ -158,7 +165,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :so[urce] {file}	Read Ex commands from {file}.  These are commands that
 			start with a ":".
 			Triggers the |SourcePre| autocommand.
-
+							*:source!*
 :so[urce]! {file}	Read Vim commands from {file}.  These are commands
 			that are executed from Normal mode, like you type
 			them.
@@ -166,6 +173,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			|:bufdo|, in a loop or when another command follows
 			the display won't be updated while executing the
 			commands.
+			Cannot be used in the |sandbox|.
 
 							*:ru* *:runtime*
 :ru[ntime][!] [where] {file} ..
@@ -219,6 +227,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			If the directory pack/*/opt/{name}/after exists it is
 			added at the end of 'runtimepath'.
 
+			If loading packages from "pack/*/start" was skipped,
+			then this directory is searched first:
+				pack/*/start/{name} ~
+
 			Note that {name} is the directory name, not the name
 			of the .vim file.  All the files matching the pattern
 				pack/*/opt/{name}/plugin/**/*.vim ~
@@ -254,9 +266,16 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			after loading your .vimrc file.  With this command it
 			can be done earlier.
 
-			Packages will be loaded only once.  After this command
-			it won't happen again.  When the optional ! is added
-			this command will load packages even when done before.
+			Packages will be loaded only once.  Using
+			`:packloadall` a second time will have no effect.
+			When the optional ! is added this command will load
+			packages even when done before.
+
+			Note that when using `:packloadall` in the |vimrc|
+			file, the 'runtimepath' option is updated, and later
+			all plugins in 'runtimepath' will be loaded, which
+			means they are loaded again.  Plugins are expected to
+			handle that.
 
 			An error only causes sourcing the script where it
 			happens to be aborted, further plugins will be loaded.
@@ -293,6 +312,12 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
+
+:scr[iptnames][!] {scriptId}			*:script*
+			Edit script {scriptId}.  Although ":scriptnames name"
+			works, using ":script name" is recommended.
+			When the current buffer can't be |abandon|ed and the !
+			is not present, the command fails.
 
 						*:fini* *:finish* *E168*
 :fini[sh]		Stop sourcing a script.  Can only be used in a Vim
@@ -418,6 +443,16 @@ flag when defining the function, it is not relevant when executing it. >
    .
    :endfunction
    :set cpo-=C
+<
+					*line-continuation-comment*
+To add a comment in between the lines start with '\" '.  Notice the space
+after the double quote.  Example: >
+	let array = [
+		"\ first entry comment
+		\ 'first',
+		"\ second entry comment
+		\ 'second',
+		\ ]
 
 Rationale:
 	Most programs work with a trailing backslash to indicate line
@@ -426,8 +461,16 @@ Rationale:
 		:map xx  asdf\
 <	Therefore the unusual leading backslash is used.
 
+	Starting a comment in a continuation line results in all following
+	continuation lines to be part of the comment.  Since it was like this
+	for a long time, when making it possible to add a comment halfway a
+	sequence of continuation lines, it was not possible to use \", since
+	that was a valid continuation line.  Using '"\ ' comes closest, even
+	though it may look a bit weird.  Requiring the space after the
+	backslash is to make it very unlikely this is a normal comment line.
+
 ==============================================================================
-5. Using Vim packages					*packages*
+Using Vim packages					*packages*
 
 A Vim package is a directory that contains one or more plugins.  The
 advantages over normal plugins:
@@ -543,7 +586,7 @@ The "after" directory is most likely not useful in a package.  It's not
 disallowed though.
 
 ==============================================================================
-6. Creating Vim packages				*package-create*
+Creating Vim packages					*package-create*
 
 This assumes you write one or more plugins that you distribute as a package.
 
@@ -609,7 +652,7 @@ This works, because loading packages will first add all found directories to
 'runtimepath' before sourcing the plugins.
 
 ==============================================================================
-7. Debugging scripts					*debug-scripts*
+Debugging scripts					*debug-scripts*
 
 Besides the obvious messages that you can add to your scripts to find out what
 they are doing, Vim offers a debug mode.  This allows you to step through a
@@ -833,7 +876,7 @@ OBSCURE
 		user, don't use typeahead for debug commands.
 
 ==============================================================================
-8. Profiling						*profile* *profiling*
+Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
 functions and/or scripts.  The |+profile| feature is required for this.
@@ -950,5 +993,32 @@ mind there are various things that may clobber the results:
 
 - The "self" time is wrong when a function is used recursively.
 
+==============================================================================
+Context							*Context* *context*
 
- vim:tw=78:ts=8:ft=help:norl:
+The editor state is represented by the Context concept. This includes things
+like the current |jumplist|, values of |registers|, and more, described below.
+
+							*context-types*
+The following Context items are supported:
+	"jumps"		|jumplist|
+	"regs"		|registers|
+	"bufs"		|buffer-list|
+	"gvars"		|global-variable|s
+	"sfuncs"	|script-local| functions
+	"funcs"		global and |script-local| functions
+
+							*context-dict*
+Context objects are dictionaries with the following key-value pairs:
+- "jumps", "regs", "bufs", "gvars":
+      |readfile()|-style |List| representation of corresponding msgpack
+      objects (see |msgpackdump()| and |msgpackparse()|).
+- "funcs" (includes |script-local| functions as well):
+      |List| of |:function| definitions.
+
+							*context-stack*
+An initially-empty internal Context stack is maintained by the ctx-family
+functions (see |ctx-functions|).
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

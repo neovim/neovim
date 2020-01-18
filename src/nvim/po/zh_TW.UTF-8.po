@@ -2509,10 +2509,10 @@ msgstr "E216: 無此群組或事件: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 
 #: ../fileio.c:6293
 #, fuzzy, c-format
@@ -2533,8 +2533,8 @@ msgstr "E218: autocommand 層數過深"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
-msgstr "%s Auto commands: \"%s\""
+msgid "%s Autocommands for \"%s\""
+msgstr "%s Autocommands: \"%s\""
 
 #: ../fileio.c:7149
 #, c-format
@@ -3422,7 +3422,7 @@ msgstr "-q [errorfile]  編輯時載入第一個錯誤"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

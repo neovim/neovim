@@ -32,7 +32,7 @@ before_each(function()
     highlight RBP4 guibg=Blue
     let g:NUM_LVLS = 4
     function Redraw()
-      redraw!
+      mode
       return ''
     endfunction
     let g:id = ''
@@ -267,7 +267,7 @@ describe('Command-line coloring', function()
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
     redraw_input()
-    screen:expect([[
+    screen:expect{grid=[[
                                               |
       {EOB:~                                       }|
       {EOB:~                                       }|
@@ -276,7 +276,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
-    ]])
+    ]], reset=true}
   end)
   for _, func_part in ipairs({'', 'n', 'msg'}) do
     it('disables :echo' .. func_part .. ' messages', function()
@@ -362,7 +362,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.command_output('messages'))
+    eq('', meths.exec('messages', true))
   end)
   it('silences :echon', function()
     set_color_cb('Echoning')
@@ -377,7 +377,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.command_output('messages'))
+    eq('', meths.exec('messages', true))
   end)
   it('silences :echomsg', function()
     set_color_cb('Echomsging')
@@ -392,7 +392,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :e^                                      |
     ]])
-    eq('', meths.command_output('messages'))
+    eq('', meths.exec('messages', true))
   end)
   it('does the right thing when throwing', function()
     set_color_cb('Throwing')
@@ -494,7 +494,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      Type  :quit<Enter>  to exit Nvim        |
+      Type  :qa  and pre...nter> to exit Nvim |
     ]])
   end)
   it('works fine with NUL, NL, CR', function()
@@ -755,7 +755,7 @@ describe('Command-line coloring', function()
     eq(1, meths.eval('1'))
   end)
 end)
-describe('Ex commands coloring support', function()
+describe('Ex commands coloring', function()
   it('works', function()
     meths.set_var('Nvim_color_cmdline', 'RainBowParens')
     feed(':echo (((1)))')
@@ -831,7 +831,7 @@ describe('Ex commands coloring support', function()
                                               |
     ]])
   end)
-  it('does not prevent mapping error from cancelling prompt', function()
+  it('mapping error does not cancel prompt', function()
     command("cnoremap <expr> x execute('throw 42')[-1]")
     feed(':#x')
     screen:expect([[
@@ -846,28 +846,18 @@ describe('Ex commands coloring support', function()
     ]])
     feed('<CR>')
     screen:expect([[
-      ^                                        |
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-                                              |
+      :#                                      |
+      {ERR:Error detected while processing :}       |
+      {ERR:E605: Exception not caught: 42}          |
+      {ERR:E749: empty buffer}                      |
+      {PE:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
-    screen:expect([[
-      ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-                                              |
-    ]])
-    eq('Error detected while processing :\nE605: Exception not caught: 42',
-       meths.command_output('messages'))
+    eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: empty buffer',
+       meths.exec('messages', true))
   end)
   it('errors out when failing to get callback', function()
     meths.set_var('Nvim_color_cmdline', 42)
@@ -985,8 +975,6 @@ describe('Expressions coloring support', function()
     ]])
     funcs.setreg('a', {'\192'})
     feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
-    -- TODO(ZyX-I): Parser highlighting should not override special character
-    --              highlighting.
     screen:expect([[
                                               |
       {EOB:~                                       }|

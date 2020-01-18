@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
-#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -134,9 +133,9 @@ static int current_syn_id;
 #define PRCOLOR_BLACK 0
 #define PRCOLOR_WHITE 0xffffff
 
-static int curr_italic;
-static int curr_bold;
-static int curr_underline;
+static TriState curr_italic;
+static TriState curr_bold;
+static TriState curr_underline;
 static uint32_t curr_bg;
 static uint32_t curr_fg;
 static int page_count;
@@ -326,7 +325,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table,
         break;
       }
 
-      table[idx].number = getdigits_int(&p);
+      table[idx].number = getdigits_int(&p, false, 0);
     }
 
     table[idx].string = p;
@@ -417,7 +416,8 @@ static void prt_set_bg(uint32_t bg)
   }
 }
 
-static void prt_set_font(int bold, int italic, int underline)
+static void prt_set_font(const TriState bold, const TriState italic,
+                         const TriState underline)
 {
   if (curr_bold != bold
       || curr_italic != italic
@@ -429,34 +429,32 @@ static void prt_set_font(int bold, int italic, int underline)
   }
 }
 
-/*
- * Print the line number in the left margin.
- */
-static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T lnum)
+// Print the line number in the left margin.
+static void prt_line_number(prt_settings_T *const psettings,
+                            const int page_line, const linenr_T lnum)
 {
-  int i;
-  char_u tbuf[20];
-
   prt_set_fg(psettings->number.fg_color);
   prt_set_bg(psettings->number.bg_color);
   prt_set_font(psettings->number.bold, psettings->number.italic,
-      psettings->number.underline);
-  mch_print_start_line(TRUE, page_line);
+               psettings->number.underline);
+  mch_print_start_line(true, page_line);
 
-  /* Leave two spaces between the number and the text; depends on
-   * PRINT_NUMBER_WIDTH. */
-  sprintf((char *)tbuf, "%6ld", (long)lnum);
-  for (i = 0; i < 6; i++)
+  // Leave two spaces between the number and the text; depends on
+  // PRINT_NUMBER_WIDTH.
+  char_u tbuf[20];
+  snprintf((char *)tbuf, sizeof(tbuf), "%6ld", (long)lnum);
+  for (int i = 0; i < 6; i++) {
     (void)mch_print_text_out(&tbuf[i], 1);
+  }
 
-  if (psettings->do_syntax)
-    /* Set colors for next character. */
+  if (psettings->do_syntax) {
+    // Set colors for next character.
     current_syn_id = -1;
-  else {
-    /* Set colors and font back to normal. */
+  } else {
+    // Set colors and font back to normal.
     prt_set_fg(PRCOLOR_BLACK);
     prt_set_bg(PRCOLOR_WHITE);
-    prt_set_font(FALSE, FALSE, FALSE);
+    prt_set_font(kFalse, kFalse, kFalse);
   }
 }
 
@@ -499,22 +497,20 @@ int prt_get_unit(int idx)
   return u;
 }
 
-/*
- * Print the page header.
- */
-static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
+// Print the page header.
+static void prt_header(prt_settings_T *const psettings, const int pagenum,
+                       const linenr_T lnum)
 {
   int width = psettings->chars_per_line;
-  int page_line;
-  char_u      *tbuf;
-  char_u      *p;
 
-  /* Also use the space for the line number. */
-  if (prt_use_number())
+  // Also use the space for the line number.
+  if (prt_use_number()) {
     width += PRINT_NUMBER_WIDTH;
+  }
 
   assert(width >= 0);
-  tbuf = xmalloc((size_t)width + IOSIZE);
+  const size_t tbuf_size = (size_t)width + IOSIZE;
+  char_u *tbuf = xmalloc(tbuf_size);
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
@@ -543,38 +539,40 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
     curwin->w_cursor.lnum = tmp_lnum;
     curwin->w_topline = tmp_topline;
     curwin->w_botline = tmp_botline;
-  } else
-    sprintf((char *)tbuf, _("Page %d"), pagenum);
+  } else {
+    snprintf((char *)tbuf, tbuf_size, _("Page %d"), pagenum);
+  }
 
   prt_set_fg(PRCOLOR_BLACK);
   prt_set_bg(PRCOLOR_WHITE);
-  prt_set_font(TRUE, FALSE, FALSE);
+  prt_set_font(kTrue, kFalse, kFalse);
 
-  /* Use a negative line number to indicate printing in the top margin. */
-  page_line = 0 - prt_header_height();
-  mch_print_start_line(TRUE, page_line);
-  for (p = tbuf; *p != NUL; ) {
-    int l = (*mb_ptr2len)(p);
+  // Use a negative line number to indicate printing in the top margin.
+  int page_line = 0 - prt_header_height();
+  mch_print_start_line(true, page_line);
+  for (char_u *p = tbuf; *p != NUL; ) {
+    const int l = (*mb_ptr2len)(p);
     assert(l >= 0);
     if (mch_print_text_out(p, (size_t)l)) {
-      ++page_line;
-      if (page_line >= 0)       /* out of room in header */
+      page_line++;
+      if (page_line >= 0) {     // out of room in header
         break;
-      mch_print_start_line(TRUE, page_line);
+      }
+      mch_print_start_line(true, page_line);
     }
     p += l;
   }
 
   xfree(tbuf);
 
-  if (psettings->do_syntax)
-    /* Set colors for next character. */
+  if (psettings->do_syntax) {
+    // Set colors for next character.
     current_syn_id = -1;
-  else {
-    /* Set colors and font back to normal. */
+  } else {
+    // Set colors and font back to normal.
     prt_set_fg(PRCOLOR_BLACK);
     prt_set_bg(PRCOLOR_WHITE);
-    prt_set_font(FALSE, FALSE, FALSE);
+    prt_set_font(kFalse, kFalse, kFalse);
   }
 }
 
@@ -583,8 +581,9 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
  */
 static void prt_message(char_u *s)
 {
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  screen_puts(s, (int)Rows - 1, 0, hl_attr(HLF_R));
+  // TODO(bfredl): delete this
+  grid_fill(&default_grid, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
+  grid_puts(&default_grid, s, Rows - 1, 0, HL_ATTR(HLF_R));
   ui_flush();
 }
 
@@ -640,21 +639,19 @@ void ex_hardcopy(exarg_T *eap)
   else
     settings.do_syntax = settings.has_color;
 
-  /* Set up printing attributes for line numbers */
+  // Set up printing attributes for line numbers
   settings.number.fg_color = PRCOLOR_BLACK;
   settings.number.bg_color = PRCOLOR_WHITE;
-  settings.number.bold = FALSE;
-  settings.number.italic = TRUE;
-  settings.number.underline = FALSE;
-  /*
-   * Syntax highlighting of line numbers.
-   */
-  if (prt_use_number() && settings.do_syntax) {
-    int id;
+  settings.number.bold = kFalse;
+  settings.number.italic = kTrue;
+  settings.number.underline = kFalse;
 
-    id = syn_name2id((char_u *)"LineNr");
-    if (id > 0)
+  // Syntax highlighting of line numbers.
+  if (prt_use_number() && settings.do_syntax) {
+    int id = syn_name2id((char_u *)"LineNr");
+    if (id > 0) {
       id = syn_get_final_id(id);
+    }
 
     prt_get_attr(id, &settings.number, settings.modec);
   }
@@ -672,13 +669,13 @@ void ex_hardcopy(exarg_T *eap)
   /* Set colors and font to normal. */
   curr_bg = 0xffffffff;
   curr_fg = 0xffffffff;
-  curr_italic = MAYBE;
-  curr_bold = MAYBE;
-  curr_underline = MAYBE;
+  curr_italic = kNone;
+  curr_bold = kNone;
+  curr_underline = kNone;
 
   prt_set_fg(PRCOLOR_BLACK);
   prt_set_bg(PRCOLOR_WHITE);
-  prt_set_font(FALSE, FALSE, FALSE);
+  prt_set_font(kFalse, kFalse, kFalse);
   current_syn_id = -1;
 
   jobsplit = (printer_opts[OPT_PRINT_JOBSPLIT].present
@@ -841,7 +838,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     tab_spaces = ppos->lead_spaces;
   }
 
-  mch_print_start_line(0, page_line);
+  mch_print_start_line(false, page_line);
   line = ml_get(ppos->file_line);
 
   /*
@@ -895,10 +892,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
       need_break = 1;
     } else {
       need_break = mch_print_text_out(line + col, (size_t)outputlen);
-      if (has_mbyte)
-        print_pos += (*mb_ptr2cells)(line + col);
-      else
-        print_pos++;
+      print_pos += utf_ptr2cells(line + col);
     }
   }
 
@@ -1266,8 +1260,8 @@ static int prt_do_moveto;
 static int prt_need_font;
 static int prt_font;
 static int prt_need_underline;
-static int prt_underline;
-static int prt_do_underline;
+static TriState prt_underline;
+static TriState prt_do_underline;
 static int prt_need_fgcol;
 static uint32_t prt_fgcol;
 static int prt_need_bgcol;
@@ -1675,7 +1669,7 @@ static int prt_open_resource(struct prt_ps_resource_S *resource)
   FILE        *fd_resource;
   struct prt_dsc_line_S dsc_line;
 
-  fd_resource = mch_fopen((char *)resource->filename, READBIN);
+  fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E624: Can't open file \"%s\""), resource->filename);
     return FALSE;
@@ -1947,8 +1941,7 @@ void mch_print_cleanup(void)
     prt_file_error = FALSE;
   }
   if (prt_ps_file_name != NULL) {
-    xfree(prt_ps_file_name);
-    prt_ps_file_name = NULL;
+    XFREE_CLEAR(prt_ps_file_name);
   }
 }
 
@@ -2312,13 +2305,10 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
                  || TOLOWER_ASC(printer_opts[OPT_PRINT_COLLATE].string[0]) ==
                  'y');
   if (prt_collate) {
-    /* TODO: Get number of collated copies wanted. */
-    psettings->n_collated_copies = 1;
+    // TODO(vim): Get number of collated copies wanted.
   } else {
-    /* TODO: Get number of uncollated copies wanted and update the cached
-     * count.
-     */
-    prt_num_copies = 1;
+    // TODO(vim): Get number of uncollated copies wanted and update the cached
+    // count.
   }
 
   psettings->jobname = jobname;
@@ -2349,11 +2339,11 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       EMSG(_(e_notmp));
       return FAIL;
     }
-    prt_ps_fd = mch_fopen((char *)prt_ps_file_name, WRITEBIN);
+    prt_ps_fd = os_fopen((char *)prt_ps_file_name, WRITEBIN);
   } else {
     p = expand_env_save(psettings->outfile);
     if (p != NULL) {
-      prt_ps_fd = mch_fopen((char *)p, WRITEBIN);
+      prt_ps_fd = os_fopen((char *)p, WRITEBIN);
       xfree(p);
     }
   }
@@ -2388,7 +2378,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   char_u resource_buffer[512];
   size_t bytes_read;
 
-  fd_resource = mch_fopen((char *)resource->filename, READBIN);
+  fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E456: Can't open file \"%s\""), resource->filename);
     return FALSE;
@@ -2855,7 +2845,7 @@ int mch_print_begin_page(char_u *str)
   /* We have reset the font attributes, force setting them again. */
   curr_bg = 0xffffffff;
   curr_fg = 0xffffffff;
-  curr_bold = MAYBE;
+  curr_bold = kNone;
 
   return !prt_file_error;
 }
@@ -2868,11 +2858,12 @@ int mch_print_blank_page(void)
 static double prt_pos_x = 0;
 static double prt_pos_y = 0;
 
-void mch_print_start_line(int margin, int page_line)
+void mch_print_start_line(const bool margin, const int page_line)
 {
   prt_pos_x = prt_left_margin;
-  if (margin)
+  if (margin) {
     prt_pos_x -= prt_number_width;
+  }
 
   prt_pos_y = prt_top_margin - prt_first_line_height -
               page_line * prt_line_height;
@@ -2882,17 +2873,13 @@ void mch_print_start_line(int margin, int page_line)
   prt_half_width = FALSE;
 }
 
-int mch_print_text_out(char_u *p, size_t len)
+int mch_print_text_out(char_u *const textp, size_t len)
 {
-  int need_break;
+  char_u *p = textp;
   char_u ch;
   char_u ch_buff[8];
-  double char_width;
-  double next_pos;
-  int in_ascii;
-  int half_width;
-
-  char_width = prt_char_width;
+  char_u *tofree = NULL;
+  double char_width = prt_char_width;
 
   /* Ideally VIM would create a rearranged CID font to combine a Roman and
    * CJKV font to do what VIM is doing here - use a Roman font for characters
@@ -2902,7 +2889,7 @@ int mch_print_text_out(char_u *p, size_t len)
    * years!  If they ever do, a lot of this code will disappear.
    */
   if (prt_use_courier) {
-    in_ascii = (len == 1 && *p < 0x80);
+    const bool in_ascii = (len == 1 && *p < 0x80);
     if (prt_in_ascii) {
       if (!in_ascii) {
         /* No longer in ASCII range - need to switch font */
@@ -2918,9 +2905,10 @@ int mch_print_text_out(char_u *p, size_t len)
     }
   }
   if (prt_out_mbyte) {
-    half_width = ((*mb_ptr2cells)(p) == 1);
-    if (half_width)
+    const bool half_width = (utf_ptr2cells(p) == 1);
+    if (half_width) {
       char_width /= 2;
+    }
     if (prt_half_width) {
       if (!half_width) {
         prt_half_width = FALSE;
@@ -2993,23 +2981,24 @@ int mch_print_text_out(char_u *p, size_t len)
   }
 
   if (prt_do_conv) {
-    /* Convert from multi-byte to 8-bit encoding */
-    p = string_convert(&prt_conv, p, &len);
-    if (p == NULL)
-      p = (char_u *)xstrdup("");
+    // Convert from multi-byte to 8-bit encoding
+    tofree = p = string_convert(&prt_conv, p, &len);
+    if (p == NULL) {
+      p = (char_u *)"";
+      len = 0;
+    }
   }
 
   if (prt_out_mbyte) {
-    /* Multi-byte character strings are represented more efficiently as hex
-     * strings when outputting clean 8 bit PS.
-     */
-    do {
+    // Multi-byte character strings are represented more efficiently as hex
+    // strings when outputting clean 8 bit PS.
+    while (len-- > 0) {
       ch = prt_hexchar[(unsigned)(*p) >> 4];
       ga_append(&prt_ps_buffer, (char)ch);
       ch = prt_hexchar[(*p) & 0xf];
       ga_append(&prt_ps_buffer, (char)ch);
       p++;
-    } while (--len);
+    }
   } else {
     /* Add next character to buffer of characters to output.
      * Note: One printed character may require several PS characters to
@@ -3043,25 +3032,26 @@ int mch_print_text_out(char_u *p, size_t len)
       ga_append(&prt_ps_buffer, (char)ch);
   }
 
-  /* Need to free any translated characters */
-  if (prt_do_conv)
-    xfree(p);
+  // Need to free any translated characters
+  xfree(tofree);
 
   prt_text_run += char_width;
   prt_pos_x += char_width;
 
   // The downside of fp - use relative error on right margin check
-  next_pos = prt_pos_x + prt_char_width;
-  need_break = ((next_pos > prt_right_margin)
-                && ((next_pos - prt_right_margin) > (prt_right_margin * 1e-5)));
+  const double next_pos = prt_pos_x + prt_char_width;
+  const bool need_break = (next_pos > prt_right_margin)
+      && ((next_pos - prt_right_margin) > (prt_right_margin * 1e-5));
 
-  if (need_break)
+  if (need_break) {
     prt_flush_buffer();
+  }
 
   return need_break;
 }
 
-void mch_print_set_font(int iBold, int iItalic, int iUnderline)
+void mch_print_set_font(const TriState iBold, const TriState iItalic,
+                        const TriState iUnderline)
 {
   int font = 0;
 

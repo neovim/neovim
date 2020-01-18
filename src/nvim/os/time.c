@@ -9,6 +9,7 @@
 
 #include <uv.h>
 
+#include "nvim/assert.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
@@ -22,6 +23,7 @@ static uv_cond_t delay_cond;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/time.c.generated.h"
 #endif
+
 /// Initializes the time module
 void time_init(void)
 {
@@ -29,13 +31,30 @@ void time_init(void)
   uv_cond_init(&delay_cond);
 }
 
-/// Obtain a high-resolution timer value
+/// Gets a high-resolution (nanosecond), monotonically-increasing time relative
+/// to an arbitrary time in the past.
 ///
-/// @return a timer value, not related to the time of day and not subject
-///         to clock drift. The value is expressed in nanoseconds.
+/// Not related to the time of day and therefore not subject to clock drift.
+///
+/// @return Relative time value with nanosecond precision.
 uint64_t os_hrtime(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_hrtime();
+}
+
+/// Gets a millisecond-resolution, monotonically-increasing time relative to an
+/// arbitrary time in the past.
+///
+/// Not related to the time of day and therefore not subject to clock drift.
+/// The value is cached by the loop, it will not change until the next
+/// loop-tick (unless uv_update_time is called).
+///
+/// @return Relative time value with millisecond precision.
+uint64_t os_now(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return uv_now(&main_loop.uv);
 }
 
 /// Sleeps for `ms` milliseconds.
@@ -114,12 +133,12 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 #endif
 }
 
-/// Obtains the current Unix timestamp and adjusts it to local time.
+/// Gets the current Unix timestamp and adjusts it to local time.
 ///
 /// @param result Pointer to a 'struct tm' where the result should be placed
 /// @return A pointer to a 'struct tm' in the current time zone (the 'result'
 ///         argument) or NULL in case of error
-struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
+struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);

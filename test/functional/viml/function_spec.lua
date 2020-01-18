@@ -2,15 +2,10 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local clear = helpers.clear
-local funcs = helpers.funcs
 local dedent = helpers.dedent
 local redir_exec = helpers.redir_exec
 
 before_each(clear)
-
-local function check_nofunc(fname)
-  eq(0, funcs.exists('*' .. fname))
-end
 
 local function check_func(fname, body, indent)
   if type(body) == 'number' then
@@ -141,12 +136,12 @@ describe(':endfunction', function()
     ]]))
     check_func('F1', 42)
   end)
-  it('errors out on an uncommented bar', function()
-    eq('\nE488: Trailing characters: | echo 42', redir_exec([[
+  it('accepts uncommented bar', function()
+    eq('\n42', redir_exec([[
       function F1()
       endfunction | echo 42
     ]]))
-    check_nofunc('F1')
+    check_func('F1')
   end)
   it('allows running multiple commands', function()
     eq('\n2', redir_exec([[

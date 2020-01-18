@@ -436,7 +436,7 @@ zk		Move upwards to the end of the previous fold.  A closed fold
 
 EXECUTING COMMANDS ON FOLDS ~
 
-:[range]foldd[oopen] {cmd}			*:foldd* *:folddoopen*
+:[range]foldd[oopen] {cmd}			*:foldd* *:folddo* *:folddoopen*
 		Execute {cmd} on all lines that are not in a closed fold.
 		When [range] is given, only these lines are used.
 		Each time {cmd} is executed the cursor is positioned on the
@@ -595,4 +595,4 @@ used.  Otherwise the values from the window where the buffer was edited last
 are used.
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

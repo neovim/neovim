@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
-#if defined(__FreeBSD__) || defined (__DragonFly__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
@@ -44,6 +44,7 @@ static struct termios termios_default;
 /// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
 void pty_process_save_termios(int tty_fd)
 {
+  DLOG("tty_fd=%d", tty_fd);
   if (tty_fd == -1 || tcgetattr(tty_fd, &termios_default) != 0) {
     return;
   }
@@ -115,6 +116,11 @@ error:
   return status;
 }
 
+const char *pty_process_tty_name(PtyProcess *ptyproc)
+{
+  return ptsname(ptyproc->tty_fd);
+}
+
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -151,11 +157,11 @@ static void init_child(PtyProcess *ptyproc)
   // New session/process-group. #6530
   setsid();
 
-  unsetenv("COLUMNS");
-  unsetenv("LINES");
-  unsetenv("TERMCAP");
-  unsetenv("COLORTERM");
-  unsetenv("COLORFGBG");
+  os_unsetenv("COLUMNS");
+  os_unsetenv("LINES");
+  os_unsetenv("TERMCAP");
+  os_unsetenv("COLORTERM");
+  os_unsetenv("COLORFGBG");
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
@@ -171,7 +177,7 @@ static void init_child(PtyProcess *ptyproc)
   }
 
   char *prog = ptyproc->process.argv[0];
-  setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
+  os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(prog, ptyproc->process.argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.
@@ -267,26 +273,23 @@ static void chld_handler(uv_signal_t *handle, int signum)
   int stat = 0;
   int pid;
 
-  do {
-    pid = waitpid(-1, &stat, WNOHANG);
-  } while (pid < 0 && errno == EINTR);
-
-  if (pid <= 0) {
-    return;
-  }
-
   Loop *loop = handle->loop->data;
 
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (proc->pid == pid) {
-      if (WIFEXITED(stat)) {
-        proc->status = WEXITSTATUS(stat);
-      } else if (WIFSIGNALED(stat)) {
-        proc->status = WTERMSIG(stat);
-      }
-      proc->internal_exit_cb(proc);
-      break;
+    do {
+      pid = waitpid(proc->pid, &stat, WNOHANG);
+    } while (pid < 0 && errno == EINTR);
+
+    if (pid <= 0) {
+      continue;
     }
+
+    if (WIFEXITED(stat)) {
+      proc->status = WEXITSTATUS(stat);
+    } else if (WIFSIGNALED(stat)) {
+      proc->status = 128 + WTERMSIG(stat);
+    }
+    proc->internal_exit_cb(proc);
   }
 }

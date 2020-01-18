@@ -4,8 +4,8 @@
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-				*Cmdline-mode* *Command-line-mode*
-Command-line mode		*Cmdline* *Command-line* *mode-cmdline* *:*
+				*Cmdline-mode* *Command-line-mode* *Cmdline*
+Command-line mode		*cmdline* *Command-line* *mode-cmdline* *:*
 
 Command-line mode is used to enter Ex commands (":"), search patterns
 ("/" and "?"), and filter commands ("!").
@@ -163,12 +163,14 @@ CTRL-R CTRL-F				*c_CTRL-R_CTRL-F* *c_<C-R>_<C-F>*
 CTRL-R CTRL-P				*c_CTRL-R_CTRL-P* *c_<C-R>_<C-P>*
 CTRL-R CTRL-W				*c_CTRL-R_CTRL-W* *c_<C-R>_<C-W>*
 CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
+CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 		Insert the object under the cursor:
 			CTRL-F	the Filename under the cursor
 			CTRL-P	the Filename under the cursor, expanded with
 				'path' as in |gf|
 			CTRL-W	the Word under the cursor
 			CTRL-A	the WORD under the cursor; see |WORD|
+			CTRL-L	the line under the cursor
 
 		When 'incsearch' is set the cursor position at the end of the
 		currently displayed match is used.  With CTRL-W the part of
@@ -176,8 +178,8 @@ CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
+CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		Insert register or object under the cursor.  Works like
 		|c_CTRL-R| but inserts the text literally.  For example, if
 		register a contains "xy^Hz" (where ^H is a backspace),
@@ -210,7 +212,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 
 							*c_CTRL-Y*
 CTRL-Y		When there is a modeless selection, copy the selection into
-		the clipboard. |modeless-selection|
+		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
@@ -248,19 +250,12 @@ CTRL-A		command-line completion (see |cmdline-completion|)
 CTRL-L		command-line completion (see |cmdline-completion|)
 
 							*c_CTRL-_*
-CTRL-_		a - switch between Hebrew and English keyboard mode, which is
+CTRL-_		Switch between Hebrew and English keyboard mode, which is
 		private to the command-line and not related to hkmap.
 		This is useful when Hebrew text entry is required in the
 		command-line, searches, abbreviations, etc.  Applies only if
 		the 'allowrevins' option is set.
 		See |rileft.txt|.
-
-		b - switch between Farsi and English keyboard mode, which is
-		private to the command-line and not related to fkmap.  In
-		Farsi keyboard mode the characters are inserted in reverse
-		insert manner.  This is useful when Farsi text entry is
-		required in the command-line, searches, abbreviations, etc.
-		See |farsi.txt|.
 
 							*c_CTRL-^*
 CTRL-^		Toggle the use of language |:lmap| mappings and/or Input
@@ -376,13 +371,16 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		match is inserted.  After the last match, the first is used
 		again (wrap around).
 		The behavior can be changed with the 'wildmode' option.
+							*c_<S-Tab>*
+<S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
+		then go to the previous match.
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
 		match.  Otherwise recall more recent command-line from history.
-<S-Tab>							*c_CTRL-P* *c_<S-Tab>*
+							*c_CTRL-P*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
-		history.  <S-Tab> only works with the GUI.
+		history.
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
@@ -417,6 +415,10 @@ The 'wildchar' option defaults to <Tab> (CTRL-E when in Vi compatible mode; in
 a previous version <Esc> was used).  In the pattern standard wildcards '*' and
 '?' are accepted when matching file names.  '*' matches any string, '?'
 matches exactly one character.
+
+When repeating 'wildchar' or CTRL-N you cycle through the matches, eventually
+ending up back to what was typed.  If the first match is not what you wanted,
+you can use <S-Tab> or CTRL-P to go straight back to what you typed.
 
 The 'wildignorecase' option can be set to ignore case in filenames.
 
@@ -490,8 +492,45 @@ after a command causes the rest of the line to be ignored.  This can be used
 to add comments.  Example: >
 	:set ai		"set 'autoindent' option
 It is not possible to add a comment to a shell command ":!cmd" or to the
-":map" command and a few others, because they see the '"' as part of their
-argument.  This is mentioned where the command is explained.
+":map" command and a few others (mainly commands that expect expressions)
+that see the '"' as part of their argument:
+
+    :argdo
+    :autocmd
+    :bufdo
+    :cexpr (and the like)
+    :cdo (and the like)
+    :command
+    :cscope (and the like)
+    :debug
+    :display
+    :echo (and the like)
+    :elseif
+    :execute
+    :folddoopen
+    :folddoclosed
+    :for
+    :grep (and the like)
+    :help (and the like)
+    :if
+    :let
+    :make
+    :map (and the like including :abbrev commands)
+    :menu (and the like)
+    :mkspell
+    :normal
+    :ownsyntax
+    :popup
+    :promptfind (and the like)
+    :registers
+    :return
+    :sort
+    :syntax
+    :tabdo
+    :tearoff
+    :vimgrep (and the like)
+    :while
+    :windo
 
 							*:bar* *:\bar*
 '|' can be used to separate commands, so you can give multiple commands in one
@@ -621,7 +660,7 @@ commands ":write" and ":global" have the whole file (1,$) as default.
 If more line specifiers are given than required for the command, the first
 one(s) will be ignored.
 
-Line numbers may be specified with:		*:range* *E14* *{address}*
+Line numbers may be specified with:		*:range* *{address}*
 	{number}	an absolute line number
 	.		the current line			  *:.*
 	$		the last line in the file		  *:$*
@@ -753,7 +792,6 @@ function |expand()|.
 	#<n	(where n is a number > 0) is replaced with old	  *:_#<* *c_#<*
 		file name n.  See |:oldfiles| or |v:oldfiles| to get the
 		number.							*E809*
-		{only when compiled with the |+eval| and |+shada| features}
 
 Note that these, except "#<n", give the file name as it was typed.  If an
 absolute path is needed (when using the file name from a different directory),
@@ -778,27 +816,34 @@ it, no matter how many backslashes.
 	   \\#			\#
 Also see |`=|.
 
-			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
-			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
-			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
-			       *:<cexpr>* *<cexpr>*
-			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
+			       *:<cword>* *<cword>* *:<cWORD>* *<cWORD>*
+			       *:<cexpr>* *<cexpr>* *:<cfile>* *<cfile>*
+			       *:<afile>* *<afile>* *:<abuf>* *<abuf>*
+			       *:<amatch>* *<amatch>*
+			       *:<sfile>* *<sfile>* *:<slnum>* *<slnum>*
+			       *:<sflnum>* *<sflnum>* *E499* *E500*
 Note: these are typed literally, they are not special keys!
 	<cword>    is replaced with the word under the cursor (like |star|)
 	<cWORD>    is replaced with the WORD under the cursor (see |WORD|)
+	<cexpr>    is replaced with the word under the cursor, including more
+		   to form a C expression.  E.g., when the cursor is on "arg"
+		   of "ptr->arg" then the result is "ptr->arg"; when the
+		   cursor is on "]" of "list[idx]" then the result is
+		   "list[idx]".  This is used for |v:beval_text|.
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name
 		   of the buffer being manipulated, or the file for a read or
-		   write.
+		   write.  *E495*
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
-		   buffer).
+		   buffer).  *E496*
 	<amatch>   When executing autocommands, is replaced with the match for
-		   which this autocommand was executed.  It differs from
-		   <afile> only when the file name isn't used to match with
-		   (for FileType, Syntax and SpellFileMissing events).
+		   which this autocommand was executed.  *E497*
+		   It differs from <afile> only when the file name isn't used
+		   to match with (for FileType, Syntax and SpellFileMissing
+		   events).
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with:
@@ -808,17 +853,18 @@ Note: these are typed literally, they are not special keys!
 		   Note that filename-modifiers are useless when <sfile> is
 		   used inside a function.
 	<slnum>	   When executing a ":source" command, is replaced with the
-	           line number.  *E842*
+		   line number.  *E842*
 		   When executing a function it's the line number relative to
 		   the start of the function.
+	<sflnum>   When executing a script, is replaced with the line number.
+		   It differs from <slnum> in that <sflnum> is replaced with
+		   the script line number in any situation.  *E961*
 
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
 The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<sfile>",
 "<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
-These are not available when Vim has been compiled without the |+modify_fname|
-feature.
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
 		changes "~/" (and "~user/" for Unix) to the path for the home
@@ -834,7 +880,8 @@ These modifiers can be given, in this order:
 		directory.
 	:.	Reduce file name to be relative to current directory, if
 		possible.  File name is unmodified if it is not below the
-		current directory.
+		current directory, but on MS-Windows the drive is removed if
+		it is the current drive.
 		For maximum shortness, use ":~:.".
 	:h	Head of the file name (the last component and any separators
 		removed).  Cannot be used with :e, :r or :t.
@@ -1060,8 +1107,8 @@ in the command-line window, like this: >
 Note that hitting <Tab> in Normal mode will do completion on the next
 character.  That way it works at the end of the line.
 If you don't want these mappings, disable them with: >
-	au CmdwinEnter [:>] iunmap <Tab>
-	au CmdwinEnter [:>] nunmap <Tab>
+	au CmdwinEnter [:>] iunmap <buffer> <Tab>
+	au CmdwinEnter [:>] nunmap <buffer> <Tab>
 You could put these lines in your vimrc file.
 
 While in the command-line window you cannot use the mouse to put the cursor in
@@ -1075,11 +1122,9 @@ edited as described in |cmdwin-char|.
 
 AUTOCOMMANDS
 
-Two autocommand events are used: |CmdwinEnter| and |CmdwinLeave|.  Since this
-window is of a special type, the WinEnter, WinLeave, BufEnter and BufLeave
-events are not triggered.  You can use the Cmdwin events to do settings
-specifically for the command-line window.  Be careful not to cause side
-effects!
+Two autocommand events are used: |CmdwinEnter| and |CmdwinLeave|.  You can use
+the Cmdwin events to do settings specifically for the command-line window.
+Be careful not to cause side effects!
 Example: >
 	:au CmdwinEnter :  let b:cpt_save = &cpt | set cpt=.
 	:au CmdwinLeave :  let &cpt = b:cpt_save
@@ -1098,4 +1143,4 @@ The character used for the pattern indicates the type of command-line:
 	@	string for |input()|
 	-	text for |:insert| or |:append|
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

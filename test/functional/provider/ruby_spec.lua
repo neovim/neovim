@@ -12,12 +12,20 @@ local funcs = helpers.funcs
 local insert = helpers.insert
 local meths = helpers.meths
 local missing_provider = helpers.missing_provider
+local matches = helpers.matches
 local write_file = helpers.write_file
+local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('ruby') then
-    pending("Missing neovim RubyGem.", function() end)
+  local reason = missing_provider('ruby')
+  if reason then
+    it(':ruby reports E319 if provider is missing', function()
+      local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
+      matches(expected, pcall_err(command, 'ruby puts "foo"'))
+      matches(expected, pcall_err(command, 'rubyfile foo'))
+    end)
+    pending(string.format('Missing neovim RubyGem (%s)', reason), function() end)
     return
   end
 end
@@ -95,6 +103,7 @@ end)
 
 describe('ruby provider', function()
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
+    helpers.add_builddir_to_rtp()
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
     feed_command('help help')
     eq(2, eval('1+1'))  -- Still alive?

@@ -34,7 +34,12 @@ void loop_init(Loop *loop, void *data)
 
 /// Processes one `Loop.uv` event (at most).
 /// Processes all `Loop.fast_events` events.
+/// Does NOT process `Loop.events`, that is an application-specific decision.
 ///
+/// @param loop
+/// @param ms   0: non-blocking poll.
+///            >0: timeout after `ms`.
+///            <0: wait forever.
 /// @returns true if `ms` timeout was reached
 bool loop_poll_events(Loop *loop, int ms)
 {
@@ -66,7 +71,7 @@ bool loop_poll_events(Loop *loop, int ms)
   return timeout_expired;
 }
 
-/// Schedules an event from another thread.
+/// Schedules a fast event from another thread.
 ///
 /// @note Event is queued into `fast_events`, which is processed outside of the
 ///       primary `events` queue by loop_poll_events(). For `main_loop`, that
@@ -74,7 +79,7 @@ bool loop_poll_events(Loop *loop, int ms)
 ///       (VimState.execute), so redraw and other side-effects are likely to be
 ///       skipped.
 /// @see loop_schedule_deferred
-void loop_schedule(Loop *loop, Event event)
+void loop_schedule_fast(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
   multiqueue_put_event(loop->thread_events, event);
@@ -82,15 +87,15 @@ void loop_schedule(Loop *loop, Event event)
   uv_mutex_unlock(&loop->mutex);
 }
 
-/// Schedules an event from another thread. Unlike loop_schedule(), the event
-/// is forwarded to `Loop.events`, instead of being processed immediately.
+/// Schedules an event from another thread. Unlike loop_schedule_fast(), the
+/// event is forwarded to `Loop.events`, instead of being processed immediately.
 ///
-/// @see loop_schedule
+/// @see loop_schedule_fast
 void loop_schedule_deferred(Loop *loop, Event event)
 {
   Event *eventp = xmalloc(sizeof(*eventp));
   *eventp = event;
-  loop_schedule(loop, event_create(loop_deferred_event, 2, loop, eventp));
+  loop_schedule_fast(loop, event_create(loop_deferred_event, 2, loop, eventp));
 }
 static void loop_deferred_event(void **argv)
 {
@@ -103,10 +108,10 @@ static void loop_deferred_event(void **argv)
 void loop_on_put(MultiQueue *queue, void *data)
 {
   Loop *loop = data;
-  // Sometimes libuv will run pending callbacks(timer for example) before
+  // Sometimes libuv will run pending callbacks (timer for example) before
   // blocking for a poll. If this happens and the callback pushes a event to one
   // of the queues, the event would only be processed after the poll
-  // returns(user hits a key for example). To avoid this scenario, we call
+  // returns (user hits a key for example). To avoid this scenario, we call
   // uv_stop when a event is enqueued.
   uv_stop(&loop->uv);
 }
@@ -161,6 +166,7 @@ static void async_cb(uv_async_t *handle)
 {
   Loop *l = handle->loop->data;
   uv_mutex_lock(&l->mutex);
+  // Flush thread_events to fast_events for processing on main loop.
   while (!multiqueue_empty(l->thread_events)) {
     Event ev = multiqueue_get(l->thread_events);
     multiqueue_put_event(l->fast_events, ev);

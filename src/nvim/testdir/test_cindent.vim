@@ -18,25 +18,25 @@ endfunc
 func Test_cino_extern_c()
   " Test for cino-E
 
-  let without_ind = [
-        \ '#ifdef __cplusplus',
-        \ 'extern "C" {',
-        \ '#endif',
-        \ 'int func_a(void);',
-        \ '#ifdef __cplusplus',
-        \ '}',
-        \ '#endif'
-        \ ]
+  let without_ind =<< trim [CODE]
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
+    int func_a(void);
+    #ifdef __cplusplus
+    }
+    #endif
+  [CODE]
 
-  let with_ind = [
-        \ '#ifdef __cplusplus',
-        \ 'extern "C" {',
-        \ '#endif',
-        \ "\tint func_a(void);",
-        \ '#ifdef __cplusplus',
-        \ '}',
-        \ '#endif'
-        \ ]
+  let with_ind =<< trim [CODE]
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
+    	int func_a(void);
+    #ifdef __cplusplus
+    }
+    #endif
+  [CODE]
   new
   setlocal cindent cinoptions=E0
   call setline(1, without_ind)
@@ -68,9 +68,54 @@ func Test_cino_extern_c()
     call assert_equal(pair[2], getline(len(lines) + 1), 'Failed for "' . string(lines) . '"')
   endfor
 
-
-
   bwipe!
+endfunc
+
+func Test_cindent_rawstring()
+  new
+  setl cindent
+  call feedkeys("i" .
+          \ "int main() {\<CR>" .
+          \ "R\"(\<CR>" .
+          \ ")\";\<CR>" .
+          \ "statement;\<Esc>", "x")
+  call assert_equal("\tstatement;", getline(line('.')))
+  bw!
+endfunc
+
+func Test_cindent_expr()
+  new
+  func! MyIndentFunction()
+    return v:lnum == 1 ? shiftwidth() : 0
+  endfunc
+  setl expandtab sw=8 indentkeys+=; indentexpr=MyIndentFunction()
+  let testinput =<< trim [CODE]
+    var_a = something()
+    b = something()
+  [CODE]
+  call setline(1, testinput)
+  call cursor(1, 1)
+  call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
+  let expected =<< [CODE]
+        var_a = something();
+b = something();
+[CODE]
+  call assert_equal(expected, getline(1, '$'))
+
+  %d
+  let testinput =<< [CODE]
+                var_a = something()
+                b = something()
+[CODE]
+  call setline(1, testinput)
+  call cursor(1, 1)
+  call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
+  let expected =<< [CODE]
+        var_a = something();
+                b = something()
+[CODE]
+  call assert_equal(expected, getline(1, '$'))
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

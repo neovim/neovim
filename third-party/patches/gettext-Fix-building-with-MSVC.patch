@@ -1,0 +1,50 @@
+diff --git a/gettext-tools/config.h.in b/gettext-tools/config.h.in
+index 6818a4d..9842a71 100644
+--- a/gettext-tools/config.h.in
++++ b/gettext-tools/config.h.in
+@@ -3147,7 +3147,7 @@
+ #define PAGE_WIDTH 79
+ 
+ /* On Windows, variables that may be in a DLL must be marked specially.  */
+-#if ((defined _MSC_VER && defined _DLL) || defined WOE32DLL) && !defined IN_RELOCWRAPPER
++#if ((defined _MSC_VER && defined DLL_IMPORT) || defined WOE32DLL) && !defined IN_RELOCWRAPPER
+ # define DLL_VARIABLE __declspec (dllimport)
+ #else
+ # define DLL_VARIABLE
+diff --git a/gettext-tools/gnulib-lib/javaversion.c b/gettext-tools/gnulib-lib/javaversion.c
+index d760c32..4867fda 100644
+--- a/gettext-tools/gnulib-lib/javaversion.c
++++ b/gettext-tools/gnulib-lib/javaversion.c
+@@ -39,7 +39,7 @@
+ #define _(str) gettext (str)
+ 
+ /* Get PKGDATADIR.  */
+-#include "configmake.h"
++#define PKGDATADIR ""
+ 
+ 
+ struct locals
+diff --git a/gettext-tools/libgettextpo/xalloc.h b/gettext-tools/libgettextpo/xalloc.h
+index f4a329e..a38dcf1 100644
+--- a/gettext-tools/libgettextpo/xalloc.h
++++ b/gettext-tools/libgettextpo/xalloc.h
+@@ -60,7 +60,7 @@ extern "C" {
+    in charge of honoring the three previous items.  This is the
+    function to call when one wants the program to die because of a
+    memory allocation failure.  */
+-extern void xalloc_die (void)
++extern _Noreturn void xalloc_die (void)
+ #if (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)) && !__STRICT_ANSI__
+      __attribute__ ((__noreturn__))
+ #endif
+diff --git a/gettext-tools/src/plural-exp.c b/gettext-tools/src/plural-exp.c
+index d5b9deb..e2c6bc4 100644
+--- a/gettext-tools/src/plural-exp.c
++++ b/gettext-tools/src/plural-exp.c
+@@ -17,5 +17,5 @@
+ 
+ /* Include the expression parsing code from libintl, with different function
+    names.  */
+-#include "../intl/pluralx.c"
++#include "../intl/plural.c"
+ #include "../../gettext-runtime/intl/plural-exp.c"

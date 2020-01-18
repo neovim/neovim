@@ -10,10 +10,12 @@ local eval = helpers.eval
 local eq = helpers.eq
 local funcs = helpers.funcs
 local insert = helpers.insert
+local iswin = helpers.iswin
 local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
+local tbl_contains = helpers.tbl_contains
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -117,6 +119,13 @@ describe('startup defaults', function()
       clear('-u', 'NORC', '-c', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
     end)
+
+    it('":if 0|syntax on|endif" does not affect default #8728', function()
+      clear('-u', 'NORC', '--cmd', ':if 0|syntax on|endif')
+      eq(1, eval('exists("g:syntax_on")'))
+      clear('-u', 'NORC', '--cmd', ':if 0|syntax off|endif')
+      eq(1, eval('exists("g:syntax_on")'))
+    end)
   end)
 
   describe("'fillchars'", function()
@@ -152,26 +161,50 @@ describe('startup defaults', function()
     end)
   end)
 
-  describe("'packpath'", function()
-    it('defaults to &runtimepath', function()
-      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-    end)
+  it("'shadafile' ('viminfofile')", function()
+    local env = {XDG_DATA_HOME='Xtest-userdata', XDG_CONFIG_HOME='Xtest-userconfig'}
+    clear{args={}, args_rm={'-i'}, env=env}
+    -- Default 'shadafile' is empty.
+    -- This means use the default location. :help shada-file-name
+    eq('', meths.get_option('shadafile'))
+    eq('', meths.get_option('viminfofile'))
+    -- Check that shada data (such as v:oldfiles) is saved/restored.
+    command('edit Xtest-foo')
+    command('write')
+    local f = eval('fnamemodify(@%,":p")')
+    assert(string.len(f) > 3)
+    command('qall')
+    clear{args={}, args_rm={'-i'}, env=env}
+    eq({ f }, eval('v:oldfiles'))
+    os.remove('Xtest-foo')
+    rmdir('Xtest-userdata')
 
-    it('does not follow modifications to runtimepath', function()
-      meths.command('set runtimepath+=foo')
-      neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-      meths.command('set packpath+=foo')
-      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-    end)
+    -- Handles viminfo/viminfofile as alias for shada/shadafile.
+    eq('\n  shadafile=', eval('execute("set shadafile?")'))
+    eq('\n  shadafile=', eval('execute("set viminfofile?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
+  end)
+
+  it("'packpath'", function()
+    clear()
+    -- Defaults to &runtimepath.
+    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+
+    -- Does not follow modifications to runtimepath.
+    meths.command('set runtimepath+=foo')
+    neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    meths.command('set packpath+=foo')
+    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
   end)
 
   it('v:progpath is set to the absolute path', function()
+    clear()
     eq(eval("fnamemodify(v:progpath, ':p')"), eval('v:progpath'))
   end)
 
   describe('$NVIM_LOG_FILE', function()
-    -- TODO(jkeyes): use stdpath('data') instead.
-    local datasubdir = helpers.iswin() and 'nvim-data' or 'nvim'
+    local datasubdir = iswin() and 'nvim-data' or 'nvim'
     local xdgdir = 'Xtest-startup-xdg-logpath'
     local xdgdatadir = xdgdir..'/'..datasubdir
     after_each(function()
@@ -191,9 +224,6 @@ describe('startup defaults', function()
         XDG_DATA_HOME=xdgdir,
         NVIM_LOG_FILE='',  -- Empty is invalid.
       }})
-      -- server_start() calls ELOG, which tickles log_path_init().
-      pcall(command, 'call serverstart(serverlist()[0])')
-
       eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
     it('defaults to stdpath("data")/log if invalid', function()
@@ -202,9 +232,6 @@ describe('startup defaults', function()
         XDG_DATA_HOME=xdgdir,
         NVIM_LOG_FILE='.',  -- Any directory is invalid.
       }})
-      -- server_start() calls ELOG, which tickles log_path_init().
-      pcall(command, 'call serverstart(serverlist()[0])')
-
       eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
     it('defaults to .nvimlog if stdpath("data") is invalid', function()
@@ -212,9 +239,6 @@ describe('startup defaults', function()
         XDG_DATA_HOME='Xtest-missing-xdg-dir',
         NVIM_LOG_FILE='.',  -- Any directory is invalid.
       }})
-      -- server_start() calls ELOG, which tickles log_path_init().
-      pcall(command, 'call serverstart(serverlist()[0])')
-
       eq('.nvimlog', eval('$NVIM_LOG_FILE'))
     end)
   end)
@@ -223,6 +247,23 @@ end)
 describe('XDG-based defaults', function()
   -- Need separate describe() blocks to not run clear() twice.
   -- Do not put before_each() here for the same reasons.
+
+  it("&runtimepath data-dir matches stdpath('data') #9910", function()
+    clear()
+    local rtp = eval('split(&runtimepath, ",")')
+    local rv = {}
+    local expected = (iswin()
+                      and { [[\nvim-data\site]], [[\nvim-data\site\after]], }
+                      or { '/nvim/site', '/nvim/site/after', })
+
+    for _,v in ipairs(rtp) do
+      local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
+      if m and not tbl_contains(rv, m) then
+        table.insert(rv, m)
+      end
+    end
+    eq(expected, rv)
+  end)
 
   describe('with empty/broken environment', function()
     it('sets correct defaults', function()
@@ -428,7 +469,24 @@ end)
 
 
 describe('stdpath()', function()
+  -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
+  -- due to XDG_CONFIG_HOME and XDG_DATA_HOME being the same.
+  local datadir = iswin() and 'nvim-data' or 'nvim'
+
+  it('acceptance', function()
+    clear()  -- Do not explicitly set any env vars.
+
+    eq('nvim', funcs.fnamemodify(funcs.stdpath('cache'), ':t'))
+    eq('nvim', funcs.fnamemodify(funcs.stdpath('config'), ':t'))
+    eq(datadir, funcs.fnamemodify(funcs.stdpath('data'), ':t'))
+    eq('table', type(funcs.stdpath('config_dirs')))
+    eq('table', type(funcs.stdpath('data_dirs')))
+    -- Check for crash. #8393
+    eq(2, eval('1+1'))
+  end)
+
   context('returns a String', function()
+
     describe('with "config"' , function ()
       it('knows XDG_CONFIG_HOME', function()
         clear({env={
@@ -463,32 +521,20 @@ describe('stdpath()', function()
     end)
 
     describe('with "data"' , function ()
-      local appended_dir
-      setup(function()
-        -- Windows appends 'nvim-data' instead of just 'nvim' to
-        -- prevent collisions due to XDG_CONFIG_HOME and XDG_DATA_HOME
-        -- being the same.
-        if helpers.iswin() then
-          appended_dir = '/nvim-data'
-        else
-          appended_dir = '/nvim'
-        end
-      end)
-
       it('knows XDG_DATA_HOME', function()
         clear({env={
           XDG_DATA_HOME=alter_slashes('/home/docwhat/.local'),
         }})
-        eq(alter_slashes('/home/docwhat/.local' .. appended_dir), funcs.stdpath('data'))
+        eq(alter_slashes('/home/docwhat/.local/'..datadir), funcs.stdpath('data'))
       end)
 
       it('handles changes during runtime', function()
         clear({env={
           XDG_DATA_HOME=alter_slashes('/home/original'),
         }})
-        eq(alter_slashes('/home/original' .. appended_dir), funcs.stdpath('data'))
+        eq(alter_slashes('/home/original/'..datadir), funcs.stdpath('data'))
         command("let $XDG_DATA_HOME='"..alter_slashes('/home/new').."'")
-        eq(alter_slashes('/home/new' .. appended_dir), funcs.stdpath('data'))
+        eq(alter_slashes('/home/new/'..datadir), funcs.stdpath('data'))
       end)
 
       it("doesn't expand $VARIABLES", function()
@@ -496,14 +542,14 @@ describe('stdpath()', function()
           XDG_DATA_HOME='$VARIABLES',
           VARIABLES='this-should-not-happen',
         }})
-        eq(alter_slashes('$VARIABLES' .. appended_dir), funcs.stdpath('data'))
+        eq(alter_slashes('$VARIABLES/'..datadir), funcs.stdpath('data'))
       end)
 
       it("doesn't expand ~/", function()
         clear({env={
           XDG_DATA_HOME=alter_slashes('~/frobnitz'),
         }})
-        eq(alter_slashes('~/frobnitz' .. appended_dir), funcs.stdpath('data'))
+        eq(alter_slashes('~/frobnitz/'..datadir), funcs.stdpath('data'))
       end)
     end)
 
@@ -544,7 +590,7 @@ describe('stdpath()', function()
   context('returns a List', function()
     -- Some OS specific variables the system would have set.
     local function base_env()
-      if helpers.iswin() then
+      if iswin() then
         return {
           HOME='C:\\Users\\docwhat', -- technically, is not a usual PATH
           HOMEDRIVE='C:',

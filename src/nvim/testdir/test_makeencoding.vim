@@ -1,7 +1,4 @@
 " Tests for 'makeencoding'.
-if !has('multi_byte')
-  finish
-endif
 
 source shared.vim
 

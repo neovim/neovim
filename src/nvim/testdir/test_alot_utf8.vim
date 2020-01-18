@@ -2,8 +2,7 @@
 " This makes testing go faster, since Vim doesn't need to restart.
 
 " These tests use utf8 'encoding'.  Setting 'encoding' is already done in
-" runtest.vim.  Checking for the multi_byte feature is in the individual
-" files, so that they can be run by themselves.
+" runtest.vim.
 
 source test_charsearch_utf8.vim
 source test_expr_utf8.vim

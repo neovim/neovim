@@ -282,6 +282,12 @@ describe('buffer functions', function()
       end)
     end
 
+    -- expression testing
+    statusline_test('Should expand expression', 2,
+     '%!expand(20+1)',       '21')
+    statusline_test('Should expand broken expression to itself', 11,
+     '%!expand(20+1',       'expand(20+1')
+
     -- file name testing
     statusline_test('should print no file name', 10,
       '%f',                  '[No Name]',
@@ -306,6 +312,12 @@ describe('buffer functions', function()
     statusline_test('should put fillchar `~` in between text', 10,
       'abc%=def',            'abc~~~~def',
       {fillchar=('~'):byte()})
+    statusline_test('should handle zero-fillchar as a space', 10,
+      'abcde%=',             'abcde     ',
+      {fillchar=0})
+    statusline_test('should handle multibyte-fillchar as a dash', 10,
+      'abcde%=',             'abcde-----',
+      {fillchar=0x80})
     statusline_test('should print the tail file name', 80,
       '%t',                  'buffer_spec.lua',
       {file_name='test/unit/buffer_spec.lua', expected_cell_count=15})
@@ -351,6 +363,8 @@ describe('buffer functions', function()
 
     statusline_test('should truncate at the first `<`', 10,
       'abc%<def%<ghijklm',   'abc<hijklm')
+
+    statusline_test('should ignore trailing %', 3, 'abc%', 'abc')
 
     -- alignment testing
     statusline_test('should right align when using =', 20,
@@ -451,6 +465,11 @@ describe('buffer functions', function()
     statusline_test('should handle multibyte characters and different fillchars', 10,
       'Ą%=mid%=end',         'Ą@mid@@end',
       {fillchar=('@'):byte(), expected_byte_length=11})
+
+    -- escaping % testing
+    statusline_test('should handle escape of %', 4, 'abc%%', 'abc%')
+    statusline_test('case where escaped % does not fit', 3, 'abc%%abcabc', '<bc')
+    statusline_test('escaped % is first', 1, '%%', '%')
 
   end)
 end)

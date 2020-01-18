@@ -25,9 +25,6 @@ setlocal foldmethod=manual
 setlocal foldexpr=tutor#TutorFolds()
 setlocal foldlevel=4
 
-setlocal statusline=%{toupper(expand('%:t:r'))}\ tutorial%=
-setlocal statusline+=%{tutor#InfoText()}
-
 " Load metadata if it exists: {{{1
 if filereadable(expand('%').'.json')
     call tutor#LoadMetadata()
