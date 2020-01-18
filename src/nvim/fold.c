@@ -1744,8 +1744,7 @@ static void foldDelMarker(
       STRCPY(newline + (p - line), p + len);
       ml_replace_buf(buf, lnum, newline, false);
       extmark_splice_cols(buf, (int)lnum-1, (int)(p - line),
-                          (int)len,
-                          0, kExtmarkUndo);
+                          (int)len, 0, kExtmarkUndo);
     }
     break;
   }
