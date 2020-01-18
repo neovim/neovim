@@ -595,14 +595,12 @@ function! s:check_node() abort
           \  'Are you behind a firewall or proxy?'])
     return
   endif
-  if !empty(latest_npm)
-    try
-      let pkg_data = json_decode(latest_npm)
-    catch /E474/
-      return 'error: '.latest_npm
-    endtry
-    let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
-  endif
+  try
+    let pkg_data = json_decode(latest_npm)
+  catch /E474/
+    return 'error: '.latest_npm
+  endtry
+  let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
 
   let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
@@ -646,21 +644,38 @@ function! s:check_perl() abort
 
   let host = provider#perl#Detect()
   if empty(host)
-    call health#report_warn('Missing "Neovim::Ext" cpan package.',
+    call health#report_warn('Missing "Neovim::Ext" cpan module.',
           \ ['Run in shell: cpanm Neovim::Ext'])
     return
   endif
   call health#report_info('Neovim perl host: '. host)
 
-  let current_perl_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
-  let current_perl = s:system(current_perl_cmd)
+  let latest_cpan_cmd = 'cpanm --info Neovim::Ext'
+  let latest_cpan = s:system(latest_cpan_cmd)
+  if s:shell_error || empty(latest_cpan)
+    call health#report_error('Failed to run: '. latest_cpan_cmd,
+          \ ["Make sure you're connected to the internet.",
+          \  'Are you behind a firewall or proxy?'])
+    return
+  endif
+  let latest_cpan = matchstr(latest_cpan, '\(\.\?\d\)\+')
+
+  let current_cpan_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
+  let current_cpan = s:system(current_cpan_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. string(current_perl_cmd),
-          \ ['Report this issue with the output of: ', string(current_perl_cmd)])
+    call health#report_error('Failed to run: '. string(current_cpan_cmd),
+          \ ['Report this issue with the output of: ', string(current_cpan_cmd)])
     return
   endif
 
-  call health#report_ok('"Neovim::Ext" cpan package is installed: '. current_perl)
+  if s:version_cmp(current_cpan, latest_cpan) == -1
+    call health#report_warn(
+          \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
+          \ current_cpan, latest_cpan),
+          \ ['Run in shell: cpanm Neovim::Ext'])
+  else
+    call health#report_ok('Latest "Neovim::Ext" cpan module is installed: '. current_cpan)
+  endif
 endfunction
 
 function! health#provider#check() abort
