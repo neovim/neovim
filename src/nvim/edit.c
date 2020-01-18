@@ -3747,6 +3747,8 @@ expand_by_function(
     case VAR_DICT:
       matchdict = rettv.vval.v_dict;
       break;
+    case VAR_SPECIAL:
+      FALLTHROUGH;
     default:
       // TODO(brammool): Give error message?
       tv_clear(&rettv);
@@ -5210,7 +5212,7 @@ static int ins_complete(int c, bool enable_pum)
     }
   }
 
-  /* Show a message about what (completion) mode we're in. */
+  // Show a message about what (completion) mode we're in.
   showmode();
   if (!shortmess(SHM_COMPLETIONMENU)) {
     if (edit_submode_extra != NULL) {
