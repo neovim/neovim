@@ -246,7 +246,7 @@ func Test_p_arg()
     call assert_equal('Tab page 1',    lines[0])
     call assert_equal('>   [No Name]', lines[1])
     call assert_equal('Tab page 2',    lines[2])
-    call assert_equal('    [No Name]', lines[3])
+    call assert_equal('#   [No Name]', lines[3])
   endif
 
   if RunVim([], after, '-p foo bar')
@@ -255,7 +255,7 @@ func Test_p_arg()
     call assert_equal('Tab page 1', lines[0])
     call assert_equal('>   foo',    lines[1])
     call assert_equal('Tab page 2', lines[2])
-    call assert_equal('    bar',    lines[3])
+    call assert_equal('#   bar',    lines[3])
   endif
 
   call delete('Xtestout')
