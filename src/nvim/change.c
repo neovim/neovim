@@ -366,7 +366,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice(curbuf, (int)lnum-1, col, 0, old, 0, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum-1, col, old, new, kExtmarkUndo);
   }
 
   changed_bytes(lnum, col);

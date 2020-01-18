@@ -501,6 +501,7 @@ void extmark_adjust(buf_T *buf,
   }
 }
 
+
 void extmark_splice(buf_T *buf,
                     int start_row, colnr_T start_col,
                     int oldextent_row, colnr_T oldextent_col,
@@ -578,6 +579,13 @@ void extmark_splice(buf_T *buf,
   }
 }
 
+void extmark_splice_cols(buf_T *buf,
+                         int start_row, colnr_T start_col,
+                         colnr_T oldextent, colnr_T newextent,
+                         ExtmarkOp undo)
+{
+  extmark_splice(buf, start_row, start_col, 0, oldextent, 0, newextent, undo);
+}
 
 void extmark_move_region(buf_T *buf,
                          int start_row, colnr_T start_col,
