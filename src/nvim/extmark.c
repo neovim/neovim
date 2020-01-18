@@ -553,6 +553,7 @@ void extmark_adjust(buf_T *buf,
   }
 }
 
+
 void extmark_splice(buf_T *buf,
                     int start_row, colnr_T start_col,
                     int oldextent_row, colnr_T oldextent_col,
