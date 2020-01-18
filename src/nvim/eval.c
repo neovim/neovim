@@ -24611,6 +24611,7 @@ bool eval_has_provider(const char *feat)
       && !strequal(feat, "python_dynamic")
       && !strequal(feat, "python3_compiled")
       && !strequal(feat, "python3_dynamic")
+      && !strequal(feat, "perl")
       && !strequal(feat, "ruby")
       && !strequal(feat, "node")) {
     // Avoid autoload for non-provider has() features.
