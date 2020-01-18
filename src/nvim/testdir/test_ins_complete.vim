@@ -138,6 +138,8 @@ function! s:CompleteDone_CheckCompletedItemDict()
   call assert_equal( 'W',              v:completed_item[ 'kind' ] )
   call assert_equal( 'test',           v:completed_item[ 'user_data' ] )
 
+  call assert_equal('function', complete_info().mode)
+
   let s:called_completedone = 1
 endfunction
 
