@@ -139,6 +139,25 @@ describe("'langmap'", function()
     lines
     ]])
   end)
+  it('prompt for number', function()
+    command('set langmap=12,21')
+    helpers.source([[
+      let gotten_one = 0
+      function Map()
+        let answer = inputlist(['a', '1.', '2.', '3.'])
+        if answer == 1
+          let g:gotten_one = 1
+        endif
+      endfunction
+      nnoremap x :call Map()<CR>
+    ]])
+    feed('x2<CR>')
+    eq(eval('gotten_one'), 1)
+    command('let g:gotten_one = 0')
+    feed_command('call Map()')
+    feed('1<CR>')
+    eq(eval('gotten_one'), 0)
+  end)
   describe('exceptions', function()
     -- All "command characters" that 'langmap' does not apply to.
     -- These tests consist of those places where some subset of ASCII
@@ -189,25 +208,6 @@ describe("'langmap'", function()
     -- it('-- More -- prompt', function()
     --   -- The 'b' 'j' 'd' 'f' commands at the -- More -- prompt
     -- end)
-    it('prompt for number', function()
-      command('set langmap=12,21')
-      helpers.source([[
-        let gotten_one = 0
-        function Map()
-          let answer = inputlist(['a', '1.', '2.', '3.'])
-          if answer == 1
-            let g:gotten_one = 1
-          endif
-        endfunction
-        nnoremap x :call Map()<CR>
-      ]])
-      feed('x1<CR>')
-      eq(eval('gotten_one'), 1)
-      command('let g:gotten_one = 0')
-      feed_command('call Map()')
-      feed('1<CR>')
-      eq(eval('gotten_one'), 1)
-    end)
   end)
   it('conversions are not applied during setreg()',
   function()
