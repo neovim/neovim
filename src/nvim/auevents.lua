@@ -21,12 +21,12 @@ return {
     'BufWritePre',            -- before writing a buffer
     'ChanInfo',               -- info was received about channel
     'ChanOpen',               -- channel was opened
-    'CmdlineChanged',         -- command line was modified
-    'CmdlineEnter',           -- after entering cmdline mode
-    'CmdlineLeave',           -- before leaving cmdline mode
     'CmdUndefined',           -- command undefined
     'CmdWinEnter',            -- after entering the cmdline window
     'CmdWinLeave',            -- before leaving the cmdline window
+    'CmdlineChanged',         -- command line was modified
+    'CmdlineEnter',           -- after entering cmdline mode
+    'CmdlineLeave',           -- before leaving cmdline mode
     'ColorScheme',            -- after loading a colorscheme
     'ColorSchemePre',         -- before loading a colorscheme
     'CompleteChanged',        -- after popup menu changed
@@ -76,8 +76,8 @@ return {
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
     'Signal',                 -- after nvim process received a signal
     'SourceCmd',              -- sourcing a Vim script using command
-    'SourcePre',              -- before sourcing a Vim script
     'SourcePost',             -- after sourcing a Vim script
+    'SourcePre',              -- before sourcing a Vim script
     'SpellFileMissing',       -- spell file missing
     'StdinReadPost',          -- after reading from stdin
     'StdinReadPre',           -- before reading from stdin
@@ -107,6 +107,7 @@ return {
     'VimResized',             -- after Vim window was resized
     'VimResume',              -- after Nvim is resumed
     'VimSuspend',             -- before Nvim is suspended
+    'WinClosed',              -- after closing a window
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
@@ -129,5 +130,6 @@ return {
     TermOpen=true,
     UIEnter=true,
     UILeave=true,
+    WinClosed=true,
   },
 }

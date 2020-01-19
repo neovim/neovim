@@ -2502,9 +2502,10 @@ int win_close(win_T *win, bool free_buf)
         return FAIL;
     }
     win->w_closing = true;
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, FALSE, curbuf);
-    if (!win_valid(win))
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
+    if (!win_valid(win)) {
       return FAIL;
+    }
     win->w_closing = false;
     if (last_window())
       return FAIL;
@@ -2534,6 +2535,12 @@ int win_close(win_T *win, bool free_buf)
     }
   }
 
+  // Fire WinClosed just before starting to free window-related resources.
+  do_autocmd_winclosed(win);
+  // autocmd may have freed the window already.
+  if (!win_valid_any_tab(win)) {
+    return OK;
+  }
 
   /* Free independent synblock before the buffer is freed. */
   if (win->w_buffer != NULL)
@@ -2576,6 +2583,7 @@ int win_close(win_T *win, bool free_buf)
     win_close_othertab(win, false, prev_curtab);
     return FAIL;
   }
+
   // Autocommands may have closed the window already, or closed the only
   // other window or moved to another tab page.
   if (!win_valid(win) || (!win->w_floating && last_window())
@@ -2585,8 +2593,9 @@ int win_close(win_T *win, bool free_buf)
 
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
-  /* Free the memory used for the window and get the window that received
-   * the screen space. */
+
+  // Free the memory used for the window and get the window that received
+  // the screen space.
   wp = win_free_mem(win, &dir, NULL);
 
   if (help_window) {
@@ -2678,6 +2687,20 @@ int win_close(win_T *win, bool free_buf)
   return OK;
 }
 
+static void do_autocmd_winclosed(win_T *win)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static bool recursive = false;
+  if (recursive || !has_event(EVENT_WINCLOSED)) {
+    return;
+  }
+  recursive = true;
+  char_u winid[NUMBUFLEN];
+  vim_snprintf((char *)winid, sizeof(winid), "%i", win->handle);
+  apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
+  recursive = false;
+}
+
 /*
  * Close window "win" in tab page "tp", which is not the current tab page.
  * This may be the last window in that tab page and result in closing the tab,
@@ -2696,6 +2719,13 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (win->w_closing
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
+  }
+
+  // Fire WinClosed just before starting to free window-related resources.
+  do_autocmd_winclosed(win);
+  // autocmd may have freed the window already.
+  if (!win_valid_any_tab(win)) {
+    return;
   }
 
   if (win->w_buffer != NULL) {
