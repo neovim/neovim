@@ -133,7 +133,7 @@ Alternatively, you can clone the repo and select which gadgets are installed:
 
 Vimspector requires:
 
-* Vim (*not neovim*) version 8.1 with at least patch 1264
+* Vim version 8.1 with at least patch 1264, or Neovim 0.4.3
 * One of the following operating systems:
   * Linux
   * macOS Mojave or pater
@@ -149,15 +149,10 @@ author. PRs are welcome.
 
 Which Linux versions? I only test on Ubuntu 18.04 and later and RHEL 7.
 
-Why not neovim? A few fiddly reasons (not philosophy):
+### Neovim differences
 
-* neovim doesn't implement some features Vimspector relies on
-* neovim's Python API is not compatible with Vim's
-* I don't personally use or test with neovim, and doing so doubles the 
-effort required.
-
-If enough people +1 [this issue](https://github.com/puremourning/vimspector/issues/29),
-I will consider it.
+neovim doesn't implement some features Vimspector relies on (WinBar and prompt
+buffers), so you have to use `:Vimspector*` commands (see [Usage][#usage]).
 
 ## Language dependencies
 
@@ -382,12 +377,26 @@ minimise this, or at least announce on Gitter.
 
 By default, vimspector does not change any of your mappings. Mappings are very
 personal and so you should work out what you like and use vim's powerful mapping
-features to set your own mappings. For example, if you want `<F5>` to
-start/continue debugging, add this to some appropriate place, such as your
-`vimrc` (hint: run `:e $MYVIMRC`).
+features to set your own mappings. To that end, Vimspector defines the following
+`<Plug>` mappings:
+
+* `<Plug>VimspectorContinue`
+* `<Plug>VimspectorStop`
+* `<Plug>VimspectorRestart`
+* `<Plug>VimspectorPause`
+* `<Plug>VimspectorToggleBreakpoint`
+* `<Plug>VimspectorAddFunctionBreakpoint`
+* `<Plug>VimspectorStepOver`
+* `<Plug>VimspectorStepInto`
+* `<Plug>VimspectorStepOut`
+
+These map 1-1 with the API functions below.
+
+For example, if you want `<F5>` to start/continue debugging, add this to some
+appropriate place, such as your `vimrc` (hint: run `:e $MYVIMRC`).
 
 ```viml
-nnoremap <F5> :call vimspector#Continue()<CR>
+nmap <F5> <Plug>VimspectorContinue
 ```
 
 That said, many people are familiar with particular debuggers, so the following
@@ -470,11 +479,13 @@ breakpoint.
 
 ## Watches
 
-The watches window is a prompt buffer. Enter insert mode to add a 
-new watch expression.
+The watches window is a prompt buffer, where that's available. Enter insert mode
+to add a new watch expression.
 
 * Add watches to the variables window by entering insert mode and
   typing the expression. Commit with `<CR>`.
+* Alternatively, use `:VimspectorWatch <expression>`. Tab-completion for
+  expression is available in some debug adapters.
 * Expand result with `<CR>`.
 * Delete with `<DEL>`.
 
@@ -486,15 +497,20 @@ new watch expression.
 ## Program Output
 
 * In the outputs window use the WinBar to select the output channel.
+* Alternatively, use `:VimspectorShowOutput <category>`. Use command-line
+  completion to see the categories.
 * The debugee prints to the stdout channel.
 * Other channels may be useful for debugging.
 
 ### Console
 
-The console window is a prompt buffer and can be used as an interactive
-CLI for the debug adapter. Support for this varies amongt adapters.
+The console window is a prompt buffer, where that's available, and can be used
+as an interactive CLI for the debug adapter. Support for this varies amongt
+adapters.
 
-* Enter insert mode to enter a command to evaluate
+* Enter insert mode to enter a command to evaluate. 
+* Alternatively, `:VimspectorEval <expression>`. Completion is available with
+  some debug adapters.
 * Commit the request with `<CR>`
 * The request and subsequent result are printed.
 
@@ -504,7 +520,8 @@ NOTE: See also [Watches](#watches) above.
 
 To close the debugger, use:
 
-* `Reset` button when mouse support is enabled in vim (`set mouse=a`)
+* `Reset` WinBar button (`set mouse=a`)
+* `:VimspectorReset` when the WinBar is not available.
 * `call vimspector#Reset()`
 
 # Debug adapter configuration
