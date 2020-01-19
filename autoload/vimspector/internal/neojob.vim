@@ -132,7 +132,7 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
     let cw = winnr()
     try
       execute w . 'wincmd w'
-      normal Gz.
+      normal! Gz.
     finally
       execute cw . 'wincmd w'
     endtry
