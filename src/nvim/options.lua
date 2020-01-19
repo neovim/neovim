@@ -2489,6 +2489,12 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='termencoding', abbreviation='tenc',
+      type='string', scope={'global'},
+      vi_def=true,
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='termguicolors', abbreviation='tgc',
       type='bool', scope={'global'},
       vi_def=false,

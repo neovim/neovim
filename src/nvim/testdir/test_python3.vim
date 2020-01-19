@@ -175,9 +175,7 @@ endfunc
 
 func Test_unicode()
   " this crashed Vim once
-  if &tenc != ''
-    throw "Skipped: 'termencoding' is not empty"
-  endif
+  throw "Skipped: nvim does not support changing 'encoding'"
 
   set encoding=utf32
   py3 print('hello')
