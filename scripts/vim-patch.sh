@@ -560,6 +560,7 @@ list_missing_previous_vimpatches_for_patch() {
     local -a missing_vim_patches=()
     _set_missing_vimpatches 1 -- "${fname}"
 
+    set +u  # Avoid "unbound variable" with bash < 4.4 below.
     local missing_vim_commit_info="${missing_vim_patches[0]}"
     if [[ -z "${missing_vim_commit_info}" ]]; then
       printf -- "-\n"
@@ -572,6 +573,7 @@ list_missing_previous_vimpatches_for_patch() {
         printf -- "-\n"
       fi
     fi
+    set -u
   done
 
   set +u  # Avoid "unbound variable" with bash < 4.4 below.

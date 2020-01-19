@@ -1,5 +1,5 @@
 " Test for python 2 commands.
-" TODO: move tests from test87.in here.
+" TODO: move tests from test86.in here.
 
 if !has('python')
   finish
