@@ -41,11 +41,14 @@ USER_CHOICES = {}
 
 
 class DebugSession( object ):
-  def __init__( self ):
+  def __init__( self, api_prefix ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
+    self._api_prefix = api_prefix
+
     self._logger.info( "**** INITIALISING NEW VIMSPECTOR SESSION ****" )
+    self._logger.info( "API is: {}".format( api_prefix ) )
     self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
     self._logger.info( 'gadgetDir = %s',
                        install.GetGadgetDir( VIMSPECTOR_HOME,
@@ -400,12 +403,35 @@ class DebugSession( object ):
   def ShowOutput( self, category ):
     self._outputView.ShowOutput( category )
 
+  def GetOutputBuffers( self ):
+    return self._outputView.GetCategories()
+
+  def GetCompletionsSync( self, text_line, column_in_bytes ):
+    if not self._server_capabilities.get( 'supportsCompletionsRequest' ):
+      return []
+
+    response = self._connection.DoRequestSync( {
+      'command': 'completions',
+      'arguments': {
+        'frameId': self._stackTraceView.GetCurrentFrame()[ 'id' ],
+        # TODO: encoding ? bytes/codepoints
+        'text': text_line,
+        'column': column_in_bytes
+      }
+    } )
+    # TODO:
+    #  - start / length
+    #  - sortText
+    return [ i.get( 'text' ) or i[ 'label' ]
+             for i in response[ 'body' ][ 'targets' ] ]
+
+
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
 
     # Code window
-    self._codeView = code.CodeView( vim.current.window )
+    self._codeView = code.CodeView( vim.current.window, self._api_prefix )
 
     # Call stack
     with utils.TemporaryVimOptions( { 'splitright':  False,
@@ -441,7 +467,8 @@ class DebugSession( object ):
       vim.command( '10spl' )
       vim.command( 'enew' )
       self._outputView = output.OutputView( self._connection,
-                                            vim.current.window )
+                                            vim.current.window,
+                                            self._api_prefix )
 
   def ClearCurrentFrame( self ):
     self.SetCurrentFrame( None )
@@ -482,6 +509,8 @@ class DebugSession( object ):
         port = utils.AskForInput( 'Enter port to connect to: ' )
         self._adapter[ 'port' ] = port
 
+    self._connection_type = self._api_prefix + self._connection_type
+
     # TODO: Do we actually need to copy and update or does Vim do that?
     env = os.environ.copy()
     if 'env' in self._adapter:
@@ -492,19 +521,18 @@ class DebugSession( object ):
       self._adapter[ 'cwd' ] = os.getcwd()
 
     vim.vars[ '_vimspector_adapter_spec' ] = self._adapter
-    channel_send_func = vim.bindeval(
-        "vimspector#internal#{}#StartDebugSession( "
-        "  g:_vimspector_adapter_spec "
-        ")".format( self._connection_type ) )
-
-    if channel_send_func is None:
+    if not vim.eval( "vimspector#internal#{}#StartDebugSession( "
+                     "  g:_vimspector_adapter_spec "
+                     ")".format( self._connection_type ) ):
       self._logger.error( "Unable to start debug server" )
     else:
       self._connection = debug_adapter_connection.DebugAdapterConnection(
         self,
-        channel_send_func )
+        lambda msg: utils.Call(
+          "vimspector#internal#{}#Send".format( self._connection_type ),
+          msg ) )
 
-      self._logger.info( 'Debug Adapter Started' )
+    self._logger.info( 'Debug Adapter Started' )
 
   def _StopDebugAdapter( self, callback = None ):
     def handler( *args ):
@@ -796,11 +824,12 @@ class DebugSession( object ):
       self._logger.debug( 'Defaulting working directory to %s',
                           params[ 'cwd' ] )
 
-    buffer_number = self._codeView.LaunchTerminal( params )
+    term_id = self._codeView.LaunchTerminal( params )
 
     response = {
-      'processId': vim.eval( 'job_info( term_getjob( {} ) )'
-                             '.process'.format( buffer_number ) )
+      'processId': int( utils.Call(
+        'vimspector#internal#{}term#GetPID'.format( self._api_prefix ),
+        term_id ) )
     }
 
     self._connection.DoResponse( message, None, response )

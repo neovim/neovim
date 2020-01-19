@@ -19,17 +19,16 @@ let s:save_cpo = &cpoptions
 set cpoptions&vim
 " }}}
 
-let s:is_neovim = has( 'nvim' )
+function! vimspector#internal#term#Start( cmd, opts ) abort
+  return term_start( a:cmd, a:opts )
+endfunction
 
-function! vimspector#internal#state#Reset() abort
-  let prefix = ''
-  if s:is_neovim
-    let prefix='neo'
-  endif
-    py3 << EOF
-from vimspector import debug_session
-_vimspector_session = debug_session.DebugSession( vim.eval( 'prefix' ) )
-EOF
+function! vimspector#internal#term#IsFinished( bufno ) abort
+  return index( split( term_getstatus( a:bufno ), ',' ), 'finished' ) >= 0
+endfunction
+
+function! vimspector#internal#term#GetPID( bufno ) abort
+  return job_info( term_getjob( a:bufno ) ).process
 endfunction
 
 " Boilerplate {{{

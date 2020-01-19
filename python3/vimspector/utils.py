@@ -56,24 +56,26 @@ def OpenFileInCurrentWindow( file_name ):
   return vim.buffers[ buffer_number ]
 
 
-def SetUpCommandBuffer( cmd, name ):
-  bufs = vim.bindeval(
-    'vimspector#internal#job#StartCommandWithLog( {}, "{}" )'.format(
+def SetUpCommandBuffer( cmd, name, api_prefix ):
+  bufs = vim.eval(
+    'vimspector#internal#{}job#StartCommandWithLog( {}, "{}" )'.format(
+      api_prefix,
       json.dumps( cmd ),
       name ) )
 
   if bufs is None:
     raise RuntimeError( "Unable to start job {}: {}".format( cmd, name ) )
-  elif not all( b > 0 for b in bufs ):
+  elif not all( int( b ) > 0 for b in bufs ):
     raise RuntimeError( "Unable to get all streams for job {}: {}".format(
       name,
       cmd ) )
 
-  return [ vim.buffers[ b ] for b in bufs ]
+  return [ vim.buffers[ int( b ) ] for b in bufs ]
 
 
-def CleanUpCommand( name ):
-  return vim.eval( 'vimspector#internal#job#CleanUpCommand( "{}" )'.format(
+def CleanUpCommand( name, api_prefix ):
+  return vim.eval( 'vimspector#internal#{}job#CleanUpCommand( "{}" )'.format(
+    api_prefix,
     name ) )
 
 
@@ -102,7 +104,7 @@ def SetUpHiddenBuffer( buf, name ):
 def SetUpPromptBuffer( buf, name, prompt, callback, hidden=False ):
   # This feature is _super_ new, so only enable when available
   if not int( vim.eval( "exists( '*prompt_setprompt' )" ) ):
-    return SetUpScratchBuffer( buf, name )
+    return SetUpHiddenBuffer( buf, name )
 
   buf.options[ 'buftype' ] = 'prompt'
   buf.options[ 'swapfile' ] = False
@@ -449,3 +451,19 @@ def ToUnicode( b ):
   if isinstance( b, bytes ):
     return b.decode( 'utf-8' )
   return b
+
+
+# Call a vimscript function with suplied arguments.
+def Call( vimscript_function, *args ):
+  call = vimscript_function + '('
+  for index, arg in enumerate( args ):
+    if index > 0:
+      call += ', '
+
+    arg_name = 'vimspector_internal_arg_{}'.format( index )
+    vim.vars[ arg_name ] = arg
+    call += 'g:' + arg_name
+
+  call += ')'
+  _logger.debug( 'Calling: {}'.format( call ) )
+  return vim.eval( call )

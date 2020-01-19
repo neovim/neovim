@@ -40,10 +40,11 @@ def CategoryToBuffer( category ):
 
 
 class OutputView( object ):
-  def __init__( self, connection, window ):
+  def __init__( self, connection, window, api_prefix ):
     self._window = window
     self._connection = connection
     self._buffers = {}
+    self._api_prefix = api_prefix
 
     for b in set( BUFFER_MAP.values() ):
       self._CreateBuffer( b )
@@ -95,12 +96,12 @@ class OutputView( object ):
   def Clear( self ):
     for category, tab_buffer in self._buffers.items():
       if tab_buffer.is_job:
-        utils.CleanUpCommand( category )
+        utils.CleanUpCommand( category, self._api_prefix )
       try:
         vim.command( 'bdelete! {0}'.format( tab_buffer.buf.number ) )
       except vim.error as e:
         # FIXME: For now just ignore the "no buffers were deleted" error
-        if 'E516' not in e:
+        if 'E516' not in str( e ):
           raise
 
     self._buffers = {}
@@ -116,17 +117,19 @@ class OutputView( object ):
 
   def Evaluate( self, frame, expression ):
     console = self._buffers[ 'Console' ].buf
-    utils.AppendToBuffer( console, 'Evaluating: ' + expression )
+    with utils.ModifiableScratchBuffer( console ):
+      utils.AppendToBuffer( console, 'Evaluating: ' + expression )
 
     def print_result( message ):
-      utils.AppendToBuffer( console,
-                            'Evaluated: ' + expression )
+      with utils.ModifiableScratchBuffer( console ):
+        utils.AppendToBuffer( console,
+                              'Evaluated: ' + expression )
 
-      result = message[ 'body' ][ 'result' ]
-      if result is None:
-        result = 'null'
+        result = message[ 'body' ][ 'result' ]
+        if result is None:
+          result = 'null'
 
-      utils.AppendToBuffer( console, '  Result: ' + result )
+        utils.AppendToBuffer( console, '  Result: ' + result )
 
     request = {
       'command': 'evaluate',
@@ -161,7 +164,7 @@ class OutputView( object ):
           cmd = [ 'tail', '-F', '-n', '+1', '--', file_name ]
 
         if cmd is not None:
-          out, err = utils.SetUpCommandBuffer( cmd, category )
+          out, err = utils.SetUpCommandBuffer( cmd, category, self._api_prefix )
           self._buffers[ category + '-out' ] = TabBuffer( out,
                                                           len( self._buffers ) )
           self._buffers[ category + '-out' ].is_job = True
@@ -205,3 +208,6 @@ class OutputView( object ):
                    tab_buffer.index,
                    utils.Escape( category ),
                    '*' if tab_buffer.flag else '' ) )
+
+  def GetCategories( self ):
+    return [ category for category in self._buffers.keys() ]

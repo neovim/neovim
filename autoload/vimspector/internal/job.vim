@@ -30,7 +30,7 @@ endfunction
 function! s:_OnExit( channel, status ) abort
   echom 'Channel exit with status ' . a:status
   redraw
-  unlet s:job 
+  unlet s:job
   py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
@@ -39,35 +39,11 @@ function! s:_OnClose( channel ) abort
   redraw
 endfunction
 
-function! s:_Send( msg ) abort
-  if ! exists( 's:job' )
-    echom "Can't send message: Job was not initialised correctly"
-    redraw
-    return 0
-  endif
-
-  if job_status( s:job ) !=# 'run'
-    echom "Can't send message: Job is not running"
-    redraw
-    return 0
-  endif
-
-  let ch = job_getchannel( s:job )
-  if ch ==# 'channel fail'
-    echom 'Channel was closed unexpectedly!'
-    redraw
-    return 0
-  endif
-
-  call ch_sendraw( ch, a:msg )
-  return 1
-endfunction
-
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
     echom 'Not starging: Job is already running'
     redraw
-    return v:none
+    return v:false
   endif
 
   let s:job = job_start( a:config[ 'command' ],
@@ -91,10 +67,34 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
   if job_status( s:job ) !=# 'run'
     echom 'Unable to start job, status is: ' . job_status( s:job )
     redraw
-    return v:none
+    return v:false
   endif
 
-  return funcref( 's:_Send' )
+  return v:true
+endfunction
+
+function! vimspector#internal#job#Send( msg ) abort
+  if ! exists( 's:job' )
+    echom "Can't send message: Job was not initialised correctly"
+    redraw
+    return 0
+  endif
+
+  if job_status( s:job ) !=# 'run'
+    echom "Can't send message: Job is not running"
+    redraw
+    return 0
+  endif
+
+  let ch = job_getchannel( s:job )
+  if ch ==# 'channel fail'
+    echom 'Channel was closed unexpectedly!'
+    redraw
+    return 0
+  endif
+
+  call ch_sendraw( ch, a:msg )
+  return 1
 endfunction
 
 function! vimspector#internal#job#StopDebugSession() abort
@@ -115,15 +115,6 @@ function! vimspector#internal#job#Reset() abort
   call vimspector#internal#job#StopDebugSession()
 endfunction
 
-function! vimspector#internal#job#ForceRead() abort
-  if exists( 's:job' )
-    let data = ch_readraw( job_getchannel( s:job ), { 'timeout': 1000 } )
-    if data !=# ''
-      call s:_OnServerData( job_getchannel( s:job ), data )
-    endif
-  endif
-endfunction
-
 function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
   if ! exists( 's:commands' )
     let s:commands = {}
@@ -136,7 +127,7 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
   let l:index = len( s:commands[ a:category ] )
 
   call add( s:commands[ a:category ], job_start(
-        \ a:cmd, 
+        \ a:cmd,
         \ {
         \   'out_io': 'buffer',
         \   'in_io': 'null',

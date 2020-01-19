@@ -25,11 +25,6 @@ _vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
 EOF
 endfunction
 
-function! s:_OnServerError( channel, data ) abort
-  echom 'Channel received error: ' . a:data
-  redraw
-endfunction
-
 function! s:_OnClose( channel ) abort
   echom 'Channel closed'
   redraw
@@ -37,22 +32,11 @@ function! s:_OnClose( channel ) abort
   py3 _vimspector_session.OnServerExit( 0 )
 endfunction
 
-function! s:_Send( msg ) abort
-  call ch_sendraw( s:ch, a:msg )
-  return 1
-endfunction
-
-function! vimspector#internal#channel#Timeout( id ) abort
-  py3 << EOF
-_vimspector_session.OnRequestTimeout( vim.eval( 'a:id' ) )
-EOF
-endfunction
-
 function! vimspector#internal#channel#StartDebugSession( config ) abort
 
   if exists( 's:ch' )
     echo 'Channel is already running'
-    return v:none
+    return v:false
   endif
 
   let l:addr = 'localhost:' . a:config[ 'port' ]
@@ -70,10 +54,21 @@ function! vimspector#internal#channel#StartDebugSession( config ) abort
   if ch_status( s:ch ) !=# 'open'
     echom 'Unable to connect to debug adapter'
     redraw
-    return v:none
+    return v:false
   endif
 
-  return funcref( 's:_Send' )
+  return v:true
+endfunction
+
+function! vimspector#internal#channel#Send( msg ) abort
+  call ch_sendraw( s:ch, a:msg )
+  return 1
+endfunction
+
+function! vimspector#internal#channel#Timeout( id ) abort
+  py3 << EOF
+_vimspector_session.OnRequestTimeout( vim.eval( 'a:id' ) )
+EOF
 endfunction
 
 function! vimspector#internal#channel#StopDebugSession() abort
@@ -94,15 +89,6 @@ endfunction
 function! vimspector#internal#channel#Reset() abort
   if exists( 's:ch' )
     call vimspector#internal#channel#StopDebugSession()
-  endif
-endfunction
-
-function! vimspector#internal#channel#ForceRead() abort
-  if exists( 's:ch' )
-    let data = ch_readraw( s:ch, { 'timeout': 1000 } )
-    if data !=# ''
-      call s:_OnServerData( s:ch, data )
-    endif
   endif
 endfunction
 

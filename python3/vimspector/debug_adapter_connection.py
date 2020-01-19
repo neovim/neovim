@@ -65,6 +65,33 @@ class DebugAdapterConnection( object ):
     if not self._SendMessage( msg ):
       self._AbortRequest( request, 'Unable to send message' )
 
+
+  def DoRequestSync( self, msg, timeout = 5000 ):
+    result = {}
+
+    def handler( msg ):
+      result[ 'response' ] = msg
+
+    def failure_handler( reason, msg ):
+      result[ 'response' ] = msg
+      result[ 'exception' ] = RuntimeError( reason )
+
+    self.DoRequest( handler, msg, failure_handler, timeout )
+
+    bug_catcher = 1000
+    while not result and bug_catcher >= 0:
+      vim.command( 'sleep 10m' )
+      bug_catcher -= 10
+
+    if result.get( 'exception' ) is not None:
+      raise result[ 'exception' ]
+
+    if result.get( 'response' ) is None:
+      raise RuntimeError( "No response" )
+
+    return result[ 'response' ]
+
+
   def OnRequestTimeout( self, timer_id ):
     request_id = None
     for seq, request in self._outstanding_requests.items():
