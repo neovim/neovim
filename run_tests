@@ -12,8 +12,10 @@ fi
 RUN_VIM="vim --clean --not-a-term"
 RUN_TEST="${RUN_VIM} -S lib/run_test.vim"
 
-if [ $(node --version | awk 'BEGIN { FS="." } { print $1 }') != "v10" ]; then
-  echo "ERROR: Tests must be run against node v10 because python." >&2
+NODE_VERSION_MAJ=$(node --version \
+                  | awk 'BEGIN { FS="." } { print substr( $1, 2 ) }')
+if [ ${NODE_VERSION_MAJ} -gt "10" ]; then
+  echo "ERROR: Tests must be run against node 10 or earlier because python." >&2
   echo "You have $(node --version)" >&2
   exit 1
 fi
