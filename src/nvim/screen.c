@@ -3868,6 +3868,7 @@ win_line (
       }
       wp->w_wrow = row;
       did_wcol = true;
+      curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
     }
 
     // Don't override visual selection highlighting.
