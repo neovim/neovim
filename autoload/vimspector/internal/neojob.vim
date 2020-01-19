@@ -106,7 +106,12 @@ function! s:_OnCommandEvent( category, id, data, event ) abort
     let buffer = s:commands[ a:category ][ a:id ].stderr
   endif
 
-  call bufload( buffer )
+  try
+    call bufload( buffer )
+  catch /E325/
+    " Ignore E325/ATTENTION
+  endtry
+
 
   let numlines = py3eval( "len( vim.buffers[ int( vim.eval( 'buffer' ) ) ] )" )
   let last_line = getbufline( buffer, '$' )[ 0 ]
