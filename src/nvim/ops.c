@@ -1372,7 +1372,7 @@ int op_delete(oparg_T *oap)
   linenr_T lnum;
   char_u              *ptr;
   char_u              *newp, *oldp;
-  struct block_def bd;
+  struct block_def bd = { 0 };
   linenr_T old_lcount = curbuf->b_ml.ml_line_count;
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {  // nothing to do

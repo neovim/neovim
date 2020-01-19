@@ -26,11 +26,11 @@ function! Test_Incr_Marks()
 endfunction
 
 func Test_setpos()
-  new one
+  new Xone
   let onebuf = bufnr('%')
   let onewin = win_getid()
   call setline(1, ['aaa', 'bbb', 'ccc'])
-  new two
+  new Xtwo
   let twobuf = bufnr('%')
   let twowin = win_getid()
   call setline(1, ['aaa', 'bbb', 'ccc'])
@@ -63,7 +63,24 @@ func Test_setpos()
   call setpos("'N", [onebuf, 1, 3, 0])
   call assert_equal([onebuf, 1, 3, 0], getpos("'N"))
 
+  " try invalid column and check virtcol()
   call win_gotoid(onewin)
+  call setpos("'a", [0, 1, 2, 0])
+  call assert_equal([0, 1, 2, 0], getpos("'a"))
+  call setpos("'a", [0, 1, -5, 0])
+  call assert_equal([0, 1, 2, 0], getpos("'a"))
+  call setpos("'a", [0, 1, 0, 0])
+  call assert_equal([0, 1, 1, 0], getpos("'a"))
+  call setpos("'a", [0, 1, 4, 0])
+  call assert_equal([0, 1, 4, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+  call setpos("'a", [0, 1, 5, 0])
+  call assert_equal([0, 1, 5, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+  call setpos("'a", [0, 1, 21341234, 0])
+  call assert_equal([0, 1, 21341234, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+
   bwipe!
   call win_gotoid(twowin)
   bwipe!
