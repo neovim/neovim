@@ -31,6 +31,8 @@ function! s:_OnEvent( chan_id, data, event ) abort
     echom 'Channel exit with status ' . a:data
     redraw
     unlet s:job
+    " This causes terminal spam in neovim due to
+    " https://github.com/neovim/neovim/issues/11725
     py3 _vimspector_session.OnServerExit( vim.eval( 'a:data' ) )
   endif
 endfunction
@@ -52,10 +54,7 @@ function! vimspector#internal#neojob#StartDebugSession( config ) abort
         \                }
         \              )
 
-  " FIXME: Missing in neovim 0.4. But in master:
-  "
-
-  " FIXME: error handling ?
+  " FIXME: env might not work: Missing in neovim 0.4. But in master:
   return v:true
 endfunction
 
