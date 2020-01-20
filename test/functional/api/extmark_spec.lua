@@ -548,7 +548,6 @@ describe('API/extmarks', function()
   end)
 
   it('deleting marks at end of line works', function()
-    -- mark_extended.c/extmark_col_adjust_delete
     set_extmark(ns, marks[1], 0, 4)
     feed('$x')
     check_undo_redo(ns, marks[1], 0, 4, 0, 4)

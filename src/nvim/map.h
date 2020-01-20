@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/map_defs.h"
-#include "nvim/mark_extended_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/highlight_defs.h"

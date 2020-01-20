@@ -24,7 +24,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"

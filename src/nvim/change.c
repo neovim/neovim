@@ -17,7 +17,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/mark.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"

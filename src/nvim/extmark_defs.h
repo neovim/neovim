@@ -1,5 +1,5 @@
-#ifndef NVIM_MARK_EXTENDED_DEFS_H
-#define NVIM_MARK_EXTENDED_DEFS_H
+#ifndef NVIM_EXTMARK_DEFS_H
+#define NVIM_EXTMARK_DEFS_H
 
 #include "nvim/pos.h"  // for colnr_T
 #include "nvim/lib/kvec.h"
@@ -34,4 +34,4 @@ typedef enum {
   kExtmarkUndoNoRedo,  // Operation should be undoable, but not redoable
 } ExtmarkOp;
 
-#endif  // NVIM_MARK_EXTENDED_DEFS_H
+#endif  // NVIM_EXTMARK_DEFS_H
