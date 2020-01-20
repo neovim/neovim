@@ -85,7 +85,7 @@ describe('tabpage/previous', function()
           Tab page 3
           >   [No Name]
           Tab page 4
-              [No Name]]=]),
+          #   [No Name]]=]),
            redir_exec('tabs')
         )
 
@@ -122,7 +122,7 @@ describe('tabpage/previous', function()
          Tab page 2
          >   [No Name]
          Tab page 3
-             [No Name]
+         #   [No Name]
          Tab page 4
              [No Name]
          Tab page 5
@@ -160,7 +160,7 @@ describe('tabpage/previous', function()
 
 
          Tab page 1
-             [No Name]
+         #   [No Name]
          Tab page 2
              [No Name]
          Tab page 3
@@ -208,7 +208,7 @@ describe('tabpage/previous', function()
          Tab page 3
              [No Name]
          Tab page 4
-             [No Name]]=]),
+         #   [No Name]]=]),
          redir_exec('tabs')
       )
 
@@ -246,7 +246,7 @@ describe('tabpage/previous', function()
          Tab page 2
              [No Name]
          Tab page 3
-             [No Name]
+         #   [No Name]
          Tab page 4
          >   [No Name]]=]),
          redir_exec('tabs')
@@ -284,7 +284,7 @@ describe('tabpage/previous', function()
 
 
          Tab page 1
-             [No Name]
+         #   [No Name]
          Tab page 2
              [No Name]
          Tab page 3
@@ -326,7 +326,7 @@ describe('tabpage/previous', function()
          Tab page 1
              [No Name]
          Tab page 2
-             [No Name]
+         #   [No Name]
          Tab page 3
              [No Name]
          Tab page 4
@@ -372,7 +372,7 @@ describe('tabpage/previous', function()
          Tab page 3
              [No Name]
          Tab page 4
-             [No Name]]=]),
+         #   [No Name]]=]),
          redir_exec('tabs')
       )
 
@@ -516,4 +516,33 @@ describe('tabpage/previous', function()
     cmdline_win_prevents_tab_switch('<C-W>g<Tab>', 1))
   it('cmdline-win prevents tab switch via <C-Tab>',
     cmdline_win_prevents_tab_switch('<C-Tab>', 0))
+
+  it(':tabs indicates correct prevtab curwin', function()
+      -- Add three tabs for a total of four
+      command('tabnew')
+      command('tabnew')
+      command('split')
+      command('vsplit')
+      feed('<C-w>p')
+      command('tabnew')
+
+      -- The previous tab is now the three.
+      eq(3, eval('tabpagenr(\'#\')'))
+
+      eq(dedent([=[
+
+
+         Tab page 1
+             [No Name]
+         Tab page 2
+             [No Name]
+         Tab page 3
+             [No Name]
+         #   [No Name]
+             [No Name]
+         Tab page 4
+         >   [No Name]]=]),
+         redir_exec('tabs')
+      )
+  end)
 end)
