@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://puremourning.github.io/vimspector/schema/gadgets.schema.json",
+  "type": "object",
+  "properties": {
+    "adapters": {
+      "type": "object",
+      "additionalProperties": { "$ref": "vimspector.schema.json#/definitions/adapter" }
+    }
+  }
+}

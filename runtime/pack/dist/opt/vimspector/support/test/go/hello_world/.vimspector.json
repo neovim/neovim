@@ -1,0 +1,14 @@
+{
+  "configurations": {
+    "run": {
+      "adapter": "vscode-go",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/hello-world.go",
+        "mode": "debug",
+        "dlvToolPath": "$HOME/go/bin/dlv",
+        "trace": true
+      }
+    }
+  }
+}

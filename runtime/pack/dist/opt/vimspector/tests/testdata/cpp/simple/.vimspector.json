@@ -1,0 +1,29 @@
+{
+  "configurations": {
+    "cpptools-run": {
+      "adapter": "vscode-cpptools",
+      "configuration": {
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/${fileBasenameNoExtension}",
+        "args": [],
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "externalConsole": true,
+        "stopAtEntry": true,
+        "stopOnEntry": true,
+        "MImode": "${VIMSPECTOR_MIMODE}"
+      },
+      "breakpoints": {
+        "exception": {
+          "cpp_catch": "",
+          "cpp_throw": "",
+          "objc_catch": "",
+          "objc_throw": "",
+          "swift_catch": "",
+          "swift_throw": ""
+        }
+      }
+    }
+  }
+}
