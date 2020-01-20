@@ -2130,11 +2130,11 @@ fill_foldcolumn(
 
   if (closed) {
     if (symbol != 0) {
-      // rollback length
+      // rollback previous write
       char_counter -= len;
+      memset(&p[char_counter], ' ', len);
     }
-    symbol = wp->w_p_fcs_chars.foldclosed;
-    len = utf_char2bytes(symbol, &p[char_counter]);
+    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, &p[char_counter]);
     char_counter += len;
   }
 
