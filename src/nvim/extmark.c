@@ -32,7 +32,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/vim.h"
 #include "nvim/charset.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/memline.h"
 #include "nvim/pos.h"
@@ -45,7 +45,7 @@
 #include "nvim/highlight.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark_extended.c.generated.h"
+# include "extmark.c.generated.h"
 #endif
 
 static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {

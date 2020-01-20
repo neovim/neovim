@@ -31,7 +31,7 @@
 #include "nvim/indent.h"
 #include "nvim/log.h"
 #include "nvim/mark.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

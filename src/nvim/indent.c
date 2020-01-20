@@ -13,7 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/mark.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"

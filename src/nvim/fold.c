@@ -22,7 +22,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/buffer_updates.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

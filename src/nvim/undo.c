@@ -93,7 +93,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/pos.h"  // MAXLNUM
 #include "nvim/mark.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"

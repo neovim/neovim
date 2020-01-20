@@ -1,8 +1,8 @@
-#ifndef NVIM_MARK_EXTENDED_H
-#define NVIM_MARK_EXTENDED_H
+#ifndef NVIM_EXTMARK_H
+#define NVIM_EXTMARK_H
 
 #include "nvim/buffer_defs.h"
-#include "nvim/mark_extended_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/marktree.h"
 
 EXTERN int extmark_splice_pending INIT(= 0);
@@ -87,7 +87,7 @@ typedef struct {
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark_extended.h.generated.h"
+# include "extmark.h.generated.h"
 #endif
 
-#endif  // NVIM_MARK_EXTENDED_H
+#endif  // NVIM_EXTMARK_H

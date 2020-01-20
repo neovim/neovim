@@ -40,7 +40,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
