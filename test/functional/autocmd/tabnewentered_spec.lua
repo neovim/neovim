@@ -97,6 +97,7 @@ describe('tabpage/previous', function()
     switches_to_previous_after_new_tab_creation_at_end('g<Tab>'))
   it('switches to previous via <C-W>g<Tab>. after new tab creation at end', switches_to_previous_after_new_tab_creation_at_end('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab>. after new tab creation at end', switches_to_previous_after_new_tab_creation_at_end('<C-Tab>'))
+  it('switches to previous via :tabn #<CR>. after new tab creation at end', switches_to_previous_after_new_tab_creation_at_end(':tabn #<CR>'))
 
   local function switches_to_previous_after_new_tab_creation_in_middle(characters)
     return function()
@@ -140,6 +141,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_new_tab_creation_in_middle('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after new tab creation in middle',
     switches_to_previous_after_new_tab_creation_in_middle('<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after new tab creation in middle',
+    switches_to_previous_after_new_tab_creation_in_middle(':tabn #<CR>'))
 
   local function switches_to_previous_after_switching_to_next_tab(characters)
     return function()
@@ -180,6 +183,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_switching_to_next_tab('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to next tab',
     switches_to_previous_after_switching_to_next_tab('<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to next tab',
+    switches_to_previous_after_switching_to_next_tab(':tabn #<CR>'))
 
   local function switches_to_previous_after_switching_to_last_tab(characters)
     return function()
@@ -222,6 +227,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_switching_to_last_tab('<C-W>g<Tab>'))
   it('switches to previous after switching to last tab',
     switches_to_previous_after_switching_to_last_tab('<C-Tab>'))
+  it('switches to previous after switching to last tab',
+    switches_to_previous_after_switching_to_last_tab(':tabn #<CR>'))
 
   local function switches_to_previous_after_switching_to_previous_tab(characters)
     return function()
@@ -262,6 +269,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_switching_to_previous_tab('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to previous tab',
     switches_to_previous_after_switching_to_previous_tab('<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to previous tab',
+    switches_to_previous_after_switching_to_previous_tab(':tabn #<CR>'))
 
   local function switches_to_previous_after_switching_to_first_tab(characters)
     return function()
@@ -304,6 +313,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_switching_to_first_tab('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to first tab',
     switches_to_previous_after_switching_to_first_tab('<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to first tab',
+    switches_to_previous_after_switching_to_first_tab(':tabn #<CR>'))
 
   local function switches_to_previous_after_numbered_tab_switch(characters)
     return function()
@@ -344,6 +355,8 @@ describe('tabpage/previous', function()
     switches_to_previous_after_numbered_tab_switch('<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after numbered tab switch',
     switches_to_previous_after_numbered_tab_switch('<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after numbered tab switch',
+    switches_to_previous_after_numbered_tab_switch(':tabn #<CR>'))
 
   local function switches_to_previous_after_switching_to_previous(characters1, characters2)
     return function()
@@ -386,18 +399,32 @@ describe('tabpage/previous', function()
     switches_to_previous_after_switching_to_previous('g<Tab>', '<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to previous via g<Tab>',
     switches_to_previous_after_switching_to_previous('g<Tab>', '<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to previous via g<Tab>',
+    switches_to_previous_after_switching_to_previous('g<Tab>', ':tabn #<CR>'))
   it('switches to previous via g<Tab> after switching to previous via <C-W>g<Tab>',
     switches_to_previous_after_switching_to_previous('<C-W>g<Tab>', 'g<Tab>'))
   it('switches to previous via <C-W>g<Tab> after switching to previous via <C-W>g<Tab>',
     switches_to_previous_after_switching_to_previous('<C-W>g<Tab>', '<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to previous via <C-W>g<Tab>',
     switches_to_previous_after_switching_to_previous('<C-W>g<Tab>', '<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to previous via <C-W>g<Tab>',
+    switches_to_previous_after_switching_to_previous('<C-W>g<Tab>', ':tabn #<CR>'))
   it('switches to previous via g<Tab> after switching to previous via <C-Tab>',
     switches_to_previous_after_switching_to_previous('<C-Tab>', 'g<Tab>'))
   it('switches to previous via <C-W>g<Tab> after switching to previous via <C-Tab>',
     switches_to_previous_after_switching_to_previous('<C-Tab>', '<C-W>g<Tab>'))
   it('switches to previous via <C-Tab> after switching to previous via <C-Tab>',
     switches_to_previous_after_switching_to_previous('<C-Tab>', '<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to previous via <C-Tab>',
+    switches_to_previous_after_switching_to_previous('<C-Tab>', ':tabn #<CR>'))
+  it('switches to previous via g<Tab> after switching to previous via :tabn #<CR>',
+    switches_to_previous_after_switching_to_previous(':tabn #<CR>', 'g<Tab>'))
+  it('switches to previous via <C-W>g<Tab> after switching to previous via :tabn #<CR>',
+    switches_to_previous_after_switching_to_previous(':tabn #<CR>', '<C-W>g<Tab>'))
+  it('switches to previous via <C-Tab> after switching to previous via <C-Tab>',
+    switches_to_previous_after_switching_to_previous(':tabn #<CR>', '<C-Tab>'))
+  it('switches to previous via :tabn #<CR> after switching to previous via :tabn #<CR>',
+    switches_to_previous_after_switching_to_previous(':tabn #<CR>', ':tabn #<CR>'))
 
   local function does_not_switch_to_previous_after_closing_current_tab(characters)
     return function()
@@ -437,6 +464,8 @@ describe('tabpage/previous', function()
     does_not_switch_to_previous_after_closing_current_tab('<C-W>g<Tab>'))
   it('does not switch to previous via <C-Tab> after closing current tab',
     does_not_switch_to_previous_after_closing_current_tab('<C-Tab>'))
+  it('does not switch to previous via :tabn #<CR> after closing current tab',
+    does_not_switch_to_previous_after_closing_current_tab(':tabn #<CR>'))
 
   local function does_not_switch_to_previous_after_entering_operator_pending(characters)
     return function()
@@ -480,6 +509,11 @@ describe('tabpage/previous', function()
   --   does_not_switch_to_previous_after_entering_operator_pending('<C-W>g<Tab>'))
   it('does not switch to previous via <C-Tab> after entering operator pending',
     does_not_switch_to_previous_after_entering_operator_pending('<C-Tab>'))
+  -- NOTE: When in operator pending mode, pressing : leaves operator pending
+  --       mode and enters command mode, so :tabn #<CR> does in fact switch
+  --       tabs.
+  -- it('does not switch to previous via :tabn #<CR> after entering operator pending',
+  --   does_not_switch_to_previous_after_entering_operator_pending(':tabn #<CR>'))
 
   local function cmdline_win_prevents_tab_switch(characters, completion_visible)
     return function()
@@ -516,6 +550,8 @@ describe('tabpage/previous', function()
     cmdline_win_prevents_tab_switch('<C-W>g<Tab>', 1))
   it('cmdline-win prevents tab switch via <C-Tab>',
     cmdline_win_prevents_tab_switch('<C-Tab>', 0))
+  it('cmdline-win prevents tab switch via :tabn #<CR>',
+    cmdline_win_prevents_tab_switch(':tabn #<CR>', 0))
 
   it(':tabs indicates correct prevtab curwin', function()
       -- Add three tabs for a total of four
