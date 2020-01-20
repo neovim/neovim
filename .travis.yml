@@ -18,7 +18,7 @@ env:
     - secure: hd0qn2u8ABbJg5Bx4pBRcUQbKYFmcSHoecyHIPTCnGJT+NI41Bvm/IkN/N5DhBF+LbD3Q2nmR/dzI5H/dqS7RxMFvEx1DuFLendFHHX3MYf0AuKpXYY3gwgMTmqx8p/v6srlU7RBGWNGzHCWqksAem+EIWCe3I7WvfdKo1/DV/Y=
 
     # Set "false" to force rebuild of third-party dependencies.
-    - CACHE_ENABLE=true
+    - CACHE_ENABLE=false
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
