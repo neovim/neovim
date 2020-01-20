@@ -306,16 +306,16 @@ describe('jobs', function()
     end))
   end)
 
-  it('disallows jobsend/stop on a non-existent job', function()
+  it('disallows jobsend on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
-    eq(false, pcall(eval, "jobstop(-1)"))
+    eq(0, eval('jobstop(-1)'))
   end)
 
-  it('disallows jobstop twice on the same job', function()
+  it('jobstop twice on the stopped or exited job return 0', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
-    eq(true, pcall(eval, "jobstop(j)"))
-    eq(false, pcall(eval, "jobstop(j)"))
+    eq(1, eval("jobstop(j)"))
+    eq(0, eval("jobstop(j)"))
   end)
 
   it('will not leak memory if we leave a job running', function()
@@ -917,6 +917,13 @@ describe('jobs', function()
         eq(NIL, meths.get_proc(child_pid))
       end
     end)
+  end)
+
+  it('jobstop on same id before stopped', function()
+    nvim('command', 'let j = jobstart(["cat", "-"], g:job_opts)')
+    neq(0, eval('j'))
+
+    eq({1, 0}, eval('[jobstop(j), jobstop(j)]'))
   end)
 
   describe('running tty-test program', function()
