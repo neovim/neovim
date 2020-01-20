@@ -30,7 +30,8 @@ describe('perl host', function()
     local fname = 'Xtest-perl-hello.pl'
     write_file(fname, [[
       package main;
-      use v5.22.1;
+      use strict;
+      use warnings;
       use Neovim::Ext;
       use Neovim::Ext::MsgPack::RPC;
 
@@ -47,6 +48,8 @@ describe('perl host', function()
     local fname = 'Xtest-perl-hello-plugin.pl'
     write_file(fname, [[
       package TestPlugin;
+      use strict;
+      use warnings;
       use parent qw(Neovim::Ext::Plugin);
 
       __PACKAGE__->register;
@@ -60,7 +63,8 @@ describe('perl host', function()
       }
 
       package main;
-      use v5.22.1;
+      use strict;
+      use warnings;
       use Neovim::Ext;
       use Neovim::Ext::MsgPack::RPC;
 
