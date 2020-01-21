@@ -1300,6 +1300,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   uint64_t id = 0;
+  int line2 = -1, hl_id = 0;
+  colnr_T col2 = 0;
+  VirtText virt_text = KV_INITIAL_VALUE;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
@@ -1311,19 +1314,87 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       }
 
       id = (uint64_t)v->data.integer;
+    } else if (strequal("end_line", k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_line is not an integer");
+        goto error;
+      }
+      if (v->data.integer < 0 || v->data.integer > buf->b_ml.ml_line_count) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_line value outside range");
+        goto error;
+      }
+
+      line2 = (int)v->data.integer;
+    } else if (strequal("end_col", k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_col is not an integer");
+        goto error;
+      }
+      if (v->data.integer < 0 || v->data.integer > MAXCOL) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_col value outside range");
+        goto error;
+      }
+
+      col2 = (colnr_T)v->data.integer;
+    } else if (strequal("hl_group", k.data)) {
+      // TODO(bfredl): as a crude optimization, allow int to be passed in?
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "hl_group is not a String");
+        goto error;
+      }
+      String hl_group = v->data.string;
+      hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+    } else if (strequal("virtual_text", k.data)) {
+      if (v->type != kObjectTypeArray) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virtual_text is not an Array");
+        goto error;
+      }
+      virt_text = parse_virt_text(v->data.array, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
   }
 
+  if (col2 >= 0) {
+    if (line2 >= 0) {
+      len = STRLEN(ml_get_buf(buf, (linenr_T)line2+1, false));
+    } else {
+      // reuse len from before
+      line2 = (int)line;
+    }
+    if (col2 > (Integer)len) {
+      api_set_error(err, kErrorTypeValidation,
+                    "end_col value outside range");
+      goto error;
+    }
+  } else if (line2 >= 0) {
+    col2 = 0;
+  }
+
+  Decoration *decor = NULL;
+  if (hl_id || kv_size(virt_text)) {
+    decor = xcalloc(1, sizeof(*decor));
+    decor->hl_id = hl_id;
+    decor->virt_text = virt_text;
+  }
 
   id = extmark_set(buf, (uint64_t)ns_id, id,
-                   (int)line, (colnr_T)col, -1, -1, NULL, kExtmarkUndo);
+                   (int)line, (colnr_T)col, line2, col2, decor, kExtmarkUndo);
 
   return (Integer)id;
 
 error:
+  clear_virttext(&virt_text);
   return 0;
 }
 
@@ -1654,64 +1725,6 @@ Array nvim_buf_get_virtual_text(Buffer buffer, Integer line, Error *err)
   }
 
   return chunks;
-}
-
-Integer nvim__buf_add_decoration(Buffer buffer, Integer ns_id, String hl_group,
-                                 Integer start_row, Integer start_col,
-                                 Integer end_row, Integer end_col,
-                                 Array virt_text,
-                                 Error *err)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return 0;
-  }
-
-  if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
-    return 0;
-  }
-
-
-  if (start_row < 0 || start_row >= MAXLNUM || end_row > MAXCOL) {
-    api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return 0;
-  }
-
-  if (start_col < 0 || start_col > MAXCOL || end_col > MAXCOL) {
-    api_set_error(err, kErrorTypeValidation, "Column value outside range");
-    return 0;
-  }
-  if (end_row < 0 || end_col < 0) {
-    end_row = -1;
-    end_col = -1;
-  }
-
-  if (start_row >= buf->b_ml.ml_line_count
-      || end_row >= buf->b_ml.ml_line_count) {
-    // safety check, we can't add marks outside the range
-    return 0;
-  }
-
-  int hlg_id = 0;
-  if (hl_group.size > 0) {
-    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
-  }
-
-  VirtText vt = parse_virt_text(virt_text, err);
-  if (ERROR_SET(err)) {
-    return 0;
-  }
-
-  Decoration *decor = xcalloc(1, sizeof(*decor));
-  decor->hl_id = hlg_id;
-  decor->virt_text = vt;
-
-  uint64_t mark_id = extmark_set(buf, (uint64_t)ns_id, 0,
-                                 (int)start_row, (colnr_T)start_col,
-                                 (int)end_row, (colnr_T)end_col, decor,
-                                 kExtmarkUndo);
-  return (Integer)mark_id;
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)
