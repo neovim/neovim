@@ -1269,7 +1269,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
 /// @param opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
-Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
+Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                              Integer line, Integer col,
                              Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
@@ -1281,11 +1281,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
 
   if (!ns_initialized((uint64_t)ns_id)) {
     api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
-    return 0;
-  }
-
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
     return 0;
   }
 
@@ -1304,19 +1299,32 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
     return 0;
   }
 
-  uint64_t id_num;
-  if (id >= 0) {
-    id_num = (uint64_t)id;
-  } else {
-    api_set_error(err, kErrorTypeValidation, _("Invalid mark id"));
-    return 0;
+  uint64_t id = 0;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("id", k.data)) {
+      if (v->type != kObjectTypeInteger || v->data.integer <= 0) {
+        api_set_error(err, kErrorTypeValidation,
+                      "id is not a positive integer");
+        goto error;
+      }
+
+      id = (uint64_t)v->data.integer;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
   }
 
-  id_num = extmark_set(buf, (uint64_t)ns_id, id_num,
-                       (int)line, (colnr_T)col,
-                       -1, -1, NULL, kExtmarkUndo);
 
-  return (Integer)id_num;
+  id = extmark_set(buf, (uint64_t)ns_id, id,
+                   (int)line, (colnr_T)col, -1, -1, NULL, kExtmarkUndo);
+
+  return (Integer)id;
+
+error:
+  return 0;
 }
 
 /// Removes an extmark.
