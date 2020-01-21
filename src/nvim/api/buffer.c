@@ -1318,7 +1318,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
   }
 
   id_num = extmark_set(buf, (uint64_t)ns_id, id_num,
-                       (int)line, (colnr_T)col, kExtmarkUndo);
+                       (int)line, (colnr_T)col,
+                       -1, -1, NULL, kExtmarkUndo);
 
   return (Integer)id_num;
 }
@@ -1425,10 +1426,13 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  extmark_add_decoration(buf, ns_id, hlg_id,
-                         (int)line, (colnr_T)col_start,
-                         end_line, (colnr_T)col_end,
-                         VIRTTEXT_EMPTY);
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->hl_id = hlg_id;
+
+  ns_id = extmark_set(buf, ns_id, 0,
+                      (int)line, (colnr_T)col_start,
+                      end_line, (colnr_T)col_end,
+                      decor, kExtmarkUndo);
   return src_id;
 }
 
@@ -1592,9 +1596,10 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     return src_id;
   }
 
-  extmark_add_decoration(buf, ns_id, 0,
-                         (int)line, 0, -1, -1,
-                         virt_text);
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->virt_text = virt_text;
+
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkUndo);
   return src_id;
 }
 
@@ -1695,9 +1700,14 @@ Integer nvim__buf_add_decoration(Buffer buffer, Integer ns_id, String hl_group,
     return 0;
   }
 
-  uint64_t mark_id = extmark_add_decoration(buf, (uint64_t)ns_id, hlg_id,
-                                            (int)start_row, (colnr_T)start_col,
-                                            (int)end_row, (colnr_T)end_col, vt);
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->hl_id = hlg_id;
+  decor->virt_text = vt;
+
+  uint64_t mark_id = extmark_set(buf, (uint64_t)ns_id, 0,
+                                 (int)start_row, (colnr_T)start_col,
+                                 (int)end_row, (colnr_T)end_col, decor,
+                                 kExtmarkUndo);
   return (Integer)mark_id;
 }
 
