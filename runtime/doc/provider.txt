@@ -127,6 +127,31 @@ To use the RVM "system" Ruby installation: >
     let g:ruby_host_prog = 'rvm system do neovim-ruby-host'
 
 ==============================================================================
+Perl integration				*provider-perl*
+
+Nvim supports Perl |remote-plugin|s.
+https://github.com/jacquesg/p5-Neovim-Ext
+
+
+PERL QUICKSTART~
+
+To use perl remote-plugins with Nvim, install the "Neovim::Ext" cpan package: >
+    cpanm -n Neovim::Ext
+
+Run |:checkhealth| to see if your system is up-to-date.
+
+
+PERL PROVIDER CONFIGURATION~
+						*g:loaded_perl_provider*
+To disable Perl support: >
+    :let g:loaded_perl_provider = 0
+<
+						*g:perl_host_prog*
+Command to start the Perl executable. Must be set before any
+check for has("perl").  >
+    let g:perl_host_prog = '/path/to/perl'
+<
+==============================================================================
 Node.js integration				*provider-nodejs*
 
 Nvim supports Node.js |remote-plugin|s.

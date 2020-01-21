@@ -29,6 +29,30 @@ function exitIfFailed() {
   }
 }
 
+# https://github.com/lukesampson/scoop#installation
+$scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+& {
+  Set-StrictMode -Off
+  Invoke-Expression $scoop
+}
+
+scoop install diffutils perl
+diff3 --version
+perl --version
+cpanm.bat --version
+
+if (-not $NoTests) {
+  scoop install nodejs-lts
+  node --version
+  npm.cmd --version
+
+  cpanm.bat -n Neovim::Ext
+  if ($LastExitCode -ne 0) {
+    Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
+  }
+  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
+}
+
 if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
   write-host "cache dir not found: $($env:DEPS_BUILD_DIR)"
   mkdir $env:DEPS_BUILD_DIR
@@ -57,7 +81,7 @@ if ($compiler -eq 'MINGW') {
   # in MSYS2, but we cannot build inside the MSYS2 shell.
   $cmakeGenerator = 'Ninja'
   $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils').ForEach({
+  $mingwPackages = @('ninja', 'cmake').ForEach({
     "mingw-w64-$arch-$_"
   })
 
@@ -115,7 +139,6 @@ if (-not $NoTests) {
   if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
     exit 1
   }
-
 }
 
 if ($compiler -eq 'MSVC') {
