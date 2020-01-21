@@ -32,7 +32,10 @@ local function set_extmark(ns_id, id, line, col, opts)
   if opts == nil then
     opts = {}
   end
-  return curbufmeths.set_extmark(ns_id, id, line, col, opts)
+  if id ~= nil and id ~= 0 then
+    opts.id = id
+  end
+  return curbufmeths.set_extmark(ns_id, line, col, opts)
 end
 
 local function get_extmarks(ns_id, start, end_, opts)
@@ -1357,14 +1360,14 @@ describe('API/extmarks', function()
   it('can set a mark to other buffer', function()
     local buf = request('nvim_create_buf', 0, 1)
     request('nvim_buf_set_lines', buf, 0, -1, 1, {"", ""})
-    local id = bufmeths.set_extmark(buf, ns, 0, 1, 0, {})
+    local id = bufmeths.set_extmark(buf, ns, 1, 0, {})
     eq({{id, 1, 0}}, bufmeths.get_extmarks(buf, ns, 0, -1, {}))
   end)
 
   it('does not crash with append/delete/undo seqence', function()
      meths.exec([[
       let ns = nvim_create_namespace('myplugin')
-      call nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+      call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
       undo]],false)
