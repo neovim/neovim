@@ -36,18 +36,22 @@ $scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'
   Invoke-Expression $scoop
 }
 
-scoop install diffutils nodejs-lts perl
+scoop install diffutils perl
 diff3 --version
-node --version
-npm.cmd --version
 perl --version
 cpanm.bat --version
 
-cpanm.bat -n Neovim::Ext
-if ($LastExitCode -ne 0) {
-  Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
+if (-not $NoTests) {
+  scoop install nodejs-lts
+  node --version
+  npm.cmd --version
+
+  cpanm.bat -n Neovim::Ext
+  if ($LastExitCode -ne 0) {
+    Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
+  }
+  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
 }
-perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
 
 if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
   write-host "cache dir not found: $($env:DEPS_BUILD_DIR)"
