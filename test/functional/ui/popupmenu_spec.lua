@@ -640,7 +640,7 @@ describe('builtin popupmenu', function()
     })
   end)
 
-  it('works with preview-window above', function()
+  it('with preview-window above', function()
     feed(':ped<CR><c-w>4+')
     feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
     feed('<c-x><c-n>')
@@ -668,7 +668,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with preview-window below', function()
+  it('with preview-window below', function()
     feed(':ped<CR><c-w>4+<c-w>r')
     feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
     feed('<c-x><c-n>')
@@ -696,7 +696,7 @@ describe('builtin popupmenu', function()
       ]])
   end)
 
-  it('works with preview-window above and tall and inverted', function()
+  it('with preview-window above and tall and inverted', function()
     feed(':ped<CR><c-w>8+')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -726,7 +726,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with preview-window above and short and inverted', function()
+  it('with preview-window above and short and inverted', function()
     feed(':ped<CR><c-w>4+')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -755,7 +755,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with preview-window below and inverted', function()
+  it('with preview-window below and inverted', function()
     feed(':ped<CR><c-w>4+<c-w>r')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -784,7 +784,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with vsplits', function()
+  it('with vsplits', function()
     insert('aaa aab aac\n')
     feed(':vsplit<cr>')
     screen:expect([[
@@ -859,7 +859,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with split and scroll', function()
+  it('with split and scroll', function()
     screen:try_resize(60,14)
     command("split")
     command("set completeopt+=noinsert")
@@ -1293,7 +1293,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('behaves correcty with VimResized autocmd', function()
+  it('with VimResized autocmd', function()
     feed('isome long prefix before the ')
     command("set completeopt+=noinsert,noselect")
     command("autocmd VimResized * redraw!")
@@ -1337,7 +1337,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with rightleft window', function()
+  it('with rightleft window', function()
     command("set rl")
     feed('isome rightleft ')
     screen:expect([[
@@ -1437,7 +1437,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with multiline messages', function()
+  it('with multiline messages', function()
     screen:try_resize(40,8)
     feed('ixx<cr>')
     command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
@@ -1514,7 +1514,7 @@ describe('builtin popupmenu', function()
     ]], unchanged=true}
   end)
 
-  it('works with kind, menu and abbr attributes', function()
+  it('with kind, menu and abbr attributes', function()
     screen:try_resize(40,8)
     feed('ixx ')
     funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
@@ -1566,7 +1566,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with wildoptions=pum', function()
+  it('wildoptions=pum', function()
     screen:try_resize(32,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -1738,7 +1738,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with wildoptions=pum with scrolled mesages ', function()
+  it('wildoptions=pum with scrolled mesages ', function()
     screen:try_resize(40,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -1784,6 +1784,39 @@ describe('builtin popupmenu', function()
       {6:error}                                   |
       :sign defined^                           |
     ]]}
+  end)
+
+  it('wildoptions=pum and wildmode=longest,full #11622', function()
+    screen:try_resize(30,8)
+    command('set wildmenu')
+    command('set wildoptions=pum')
+    command('set wildmode=longest,full')
+
+    feed(':sign u<tab>')
+    screen:expect{grid=[[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :sign un^                      |
+    ]]}
+    eq(0, funcs.wildmenumode())
+
+    feed('<tab>')
+    screen:expect{grid=[[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~    }{s: undefine       }{1:         }|
+      {1:~    }{n: unplace        }{1:         }|
+      :sign undefine^                |
+    ]]}
+    eq(1, funcs.wildmenumode())
   end)
 
   it("'pumblend' RGB-color", function()

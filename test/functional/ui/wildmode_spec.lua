@@ -221,6 +221,106 @@ describe("'wildmenu'", function()
     ]])
   end)
 
+  it('wildmode=longest,list', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:try_resize(25, 7)
+
+    command('set wildmenu wildmode=longest,list')
+
+    -- give wildmode-longest something to expand to
+    feed(':sign u<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign un^                 |
+    ]])
+    feed('<tab>') -- trigger wildmode list
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign un                 |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+
+    -- give wildmode-longest something it cannot expand, use list
+    feed(':sign un<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign un                 |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<tab>')
+    screen:expect_unchanged()
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
+  it('wildmode=list,longest', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:try_resize(25, 7)
+
+    command('set wildmenu wildmode=list,longest')
+    feed(':sign u<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign u                  |
+      undefine  unplace        |
+      :sign u^                  |
+    ]])
+    feed('<tab>') -- trigger wildmode longest
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign u                  |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
   it('multiple <C-D> renders correctly', function()
     screen:try_resize(25, 7)
 
