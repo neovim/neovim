@@ -17,6 +17,7 @@ typedef struct
   int hl_id;  // highlight group
   VirtText virt_text;
   // TODO(bfredl): style, signs, etc
+  bool shared;  // shared decoration, don't free
 } Decoration;
 
 typedef struct
