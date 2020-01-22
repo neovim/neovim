@@ -3068,18 +3068,15 @@ void col_print(char_u *buf, size_t buflen, int col, int vcol)
   }
 }
 
-/*
- * put file name in title bar of window and in icon title
- */
-
 static char_u *lasttitle = NULL;
 static char_u *lasticon = NULL;
 
+
+// Put the title name in the title bar and icon of the window.
 void maketitle(void)
 {
-  char_u      *t_str = NULL;
-  char_u      *i_name;
-  char_u      *i_str = NULL;
+  char_u *title_str = NULL;
+  char_u *icon_str = NULL;
   int maxlen = 0;
   int len;
   int mustset;
@@ -3093,7 +3090,7 @@ void maketitle(void)
 
   need_maketitle = false;
   if (!p_title && !p_icon && lasttitle == NULL && lasticon == NULL) {
-    return;
+    return;  // nothing to do
   }
 
   if (p_title) {
@@ -3114,14 +3111,14 @@ void maketitle(void)
         build_stl_str_hl(curwin, (char_u *)buf, sizeof(buf),
                          p_titlestring, use_sandbox,
                          0, maxlen, NULL, NULL);
-        t_str = (char_u *)buf;
+        title_str = (char_u *)buf;
         if (called_emsg) {
           set_string_option_direct((char_u *)"titlestring", -1, (char_u *)"",
                                    OPT_FREE, SID_ERROR);
         }
         called_emsg |= save_called_emsg;
       } else {
-        t_str = p_titlestring;
+        title_str = p_titlestring;
       }
     } else {
       // Format: "fname + (path) (1 of 2) - VIM".
@@ -3205,16 +3202,16 @@ void maketitle(void)
           trunc_string((char_u *)buf, (char_u *)buf, maxlen, sizeof(buf));
         }
       }
-      t_str = (char_u *)buf;
+      title_str = (char_u *)buf;
 #undef SPACE_FOR_FNAME
 #undef SPACE_FOR_DIR
 #undef SPACE_FOR_ARGNR
     }
   }
-  mustset = ti_change(t_str, &lasttitle);
+  mustset = value_change(title_str, &lasttitle);
 
   if (p_icon) {
-    i_str = (char_u *)buf;
+    icon_str = (char_u *)buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         int use_sandbox = false;
@@ -3222,37 +3219,40 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely((char_u *)"iconstring", 0);
         called_emsg = false;
-        build_stl_str_hl(curwin, i_str, sizeof(buf),
-            p_iconstring, use_sandbox,
-            0, 0, NULL, NULL);
-        if (called_emsg)
+        build_stl_str_hl(curwin, icon_str, sizeof(buf),
+                         p_iconstring, use_sandbox,
+                         0, 0, NULL, NULL);
+        if (called_emsg) {
           set_string_option_direct((char_u *)"iconstring", -1,
-              (char_u *)"", OPT_FREE, SID_ERROR);
+                                   (char_u *)"", OPT_FREE, SID_ERROR);
+        }
         called_emsg |= save_called_emsg;
-      } else
-        i_str = p_iconstring;
-    } else {
-      if (buf_spname(curbuf) != NULL) {
-        i_name = buf_spname(curbuf);
-      } else {                        // use file name only in icon
-        i_name = path_tail(curbuf->b_ffname);
+      } else {
+        icon_str = p_iconstring;
       }
-      *i_str = NUL;
+    } else {
+      char_u *buf_p;
+      if (buf_spname(curbuf) != NULL) {
+        buf_p = buf_spname(curbuf);
+      } else {                        // use file name only in icon
+        buf_p = path_tail(curbuf->b_ffname);
+      }
+      *icon_str = NUL;
       // Truncate name at 100 bytes.
-      len = (int)STRLEN(i_name);
+      len = (int)STRLEN(buf_p);
       if (len > 100) {
         len -= 100;
         if (has_mbyte) {
-          len += (*mb_tail_off)(i_name, i_name + len) + 1;
+          len += (*mb_tail_off)(buf_p, buf_p + len) + 1;
         }
-        i_name += len;
+        buf_p += len;
       }
-      STRCPY(i_str, i_name);
-      trans_characters(i_str, IOSIZE);
+      STRCPY(icon_str, buf_p);
+      trans_characters(icon_str, IOSIZE);
     }
   }
 
-  mustset |= ti_change(i_str, &lasticon);
+  mustset |= value_change(icon_str, &lasticon);
 
   if (mustset) {
     resettitle();
@@ -3266,8 +3266,8 @@ void maketitle(void)
 /// @param          str   desired title string
 /// @param[in,out]  last  current title string
 //
-/// @return true when "*last" changed.
-static bool ti_change(char_u *str, char_u **last)
+/// @return true if resettitle() is to be called.
+static bool value_change(char_u *str, char_u **last)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if ((str == NULL) != (*last == NULL)
@@ -3275,10 +3275,11 @@ static bool ti_change(char_u *str, char_u **last)
     xfree(*last);
     if (str == NULL) {
       *last = NULL;
+      resettitle();
     } else {
       *last = vim_strsave(str);
+      return true;
     }
-    return true;
   }
   return false;
 }

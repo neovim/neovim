@@ -2021,13 +2021,10 @@ static char_u *check_cedit(void)
 // maketitle() to create and display it.
 // When switching the title or icon off, call ui_set_{icon,title}(NULL) to get
 // the old value back.
-static void did_set_title(
-    int icon                   // Did set icon instead of title
-)
+static void did_set_title(void)
 {
   if (starting != NO_SCREEN) {
     maketitle();
-    resettitle();
   }
 }
 
@@ -2986,7 +2983,7 @@ ambw_end:
     } else {
       stl_syntax &= ~flagval;
     }
-    did_set_title(varp == &p_iconstring);
+    did_set_title();
 
   } else if (varp == &p_sel) {  // 'selection'
     if (*p_sel == NUL
@@ -4025,9 +4022,9 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     (void)buf_init_chartab(curbuf, false);          // ignore errors
   } else if ((int *)varp == &p_title) {
     // when 'title' changed, may need to change the title; same for 'icon'
-    did_set_title(false);
+    did_set_title();
   } else if ((int *)varp == &p_icon) {
-    did_set_title(true);
+    did_set_title();
   } else if ((int *)varp == &curbuf->b_changed) {
     if (!value) {
       save_file_ff(curbuf);             // Buffer is unchanged
