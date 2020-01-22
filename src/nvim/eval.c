@@ -12706,7 +12706,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  Channel *data = find_job(argvars[0].vval.v_number, true);
+  Channel *data = find_job(argvars[0].vval.v_number, false);
   if (!data) {
     return;
   }

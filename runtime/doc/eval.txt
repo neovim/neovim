@@ -5502,6 +5502,9 @@ jobstop({id})						*jobstop()*
 		(if any) will be invoked.
 		See |job-control|.
 
+		Returns 1 for valid job id, 0 for invalid id, including jobs have
+		exited or stopped.
+
 jobwait({jobs}[, {timeout}])				*jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
 
