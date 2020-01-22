@@ -16,6 +16,8 @@
 #define WILD_ALL                6
 #define WILD_LONGEST            7
 #define WILD_ALL_KEEP           8
+#define WILD_CANCEL             9
+#define WILD_APPLY              10
 
 #define WILD_LIST_NOTFOUND      0x01
 #define WILD_HOME_REPLACE       0x02

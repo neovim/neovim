@@ -16,6 +16,44 @@ describe("'wildmenu'", function()
     screen:attach()
   end)
 
+  it('C-E to cancel wildmenu completion restore original input', function()
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign ^                   |
+    ]])
+  end)
+
+  it('C-Y to apply selection and end wildmenu completion', function()
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<tab><C-Y>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign jump^               |
+    ]])
+  end)
+
   it(':sign <tab> shows wildmenu completions', function()
     command('set wildmenu wildmode=full')
     feed(':sign <tab>')
