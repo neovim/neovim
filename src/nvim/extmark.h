@@ -13,9 +13,12 @@ typedef struct
   uint64_t mark_id;
   int row;
   colnr_T col;
+  int end_row;
+  colnr_T end_col;
+  Decoration *decor;
 } ExtmarkInfo;
 
-typedef kvec_t(ExtmarkInfo) ExtmarkArray;
+typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;
 
 
 // delete the columns between mincol and endcol
