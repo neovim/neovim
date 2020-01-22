@@ -1103,6 +1103,52 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+static Array extmark_to_array(ExtmarkInfo extmark, bool id)
+{
+  Array rv = ARRAY_DICT_INIT;
+  if (id) {
+    ADD(rv, INTEGER_OBJ((Integer)extmark.mark_id));
+  }
+  ADD(rv, INTEGER_OBJ(extmark.row));
+  ADD(rv, INTEGER_OBJ(extmark.col));
+
+  // TODO: make the dict optional by flag?
+  Dictionary dict = ARRAY_DICT_INIT;
+
+  if (extmark.end_row >= 0) {
+    PUT(dict, "end_row", INTEGER_OBJ(extmark.end_row));
+    PUT(dict, "end_col", INTEGER_OBJ(extmark.end_col));
+  }
+
+  if (extmark.decor) {
+    Decoration *decor = extmark.decor;
+    if (decor->hl_id) {
+      String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
+      PUT(dict, "hl_group", STRING_OBJ(name));
+    }
+    if (kv_size(decor->virt_text)) {
+      Array chunks = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < decor->virt_text.size; i++) {
+        Array chunk = ARRAY_DICT_INIT;
+        VirtTextChunk *vtc = &decor->virt_text.items[i];
+        ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+        if (vtc->hl_id > 0) {
+          ADD(chunk, STRING_OBJ(cstr_to_string(
+              (const char *)syn_id2name(vtc->hl_id))));
+        }
+        ADD(chunks, ARRAY_OBJ(chunk));
+      }
+      PUT(dict, "virt_text", ARRAY_OBJ(chunks));
+    }
+  }
+
+  if (dict.size) {
+    ADD(rv, DICTIONARY_OBJ(dict));
+  }
+
+  return rv;
+}
+
 /// Returns position for a given extmark id
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
@@ -1131,9 +1177,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.row < 0) {
     return rv;
   }
-  ADD(rv, INTEGER_OBJ((Integer)extmark.row));
-  ADD(rv, INTEGER_OBJ((Integer)extmark.col));
-  return rv;
+  return extmark_to_array(extmark, false);
 }
 
 /// Gets extmarks in "traversal order" from a |charwise| region defined by
@@ -1236,16 +1280,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
   }
 
 
-  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_row, l_col, u_row,
-                                   u_col, (int64_t)limit, reverse);
+  ExtmarkInfoArray marks = extmark_get(buf, (uint64_t)ns_id, l_row, l_col,
+                                       u_row, u_col, (int64_t)limit, reverse);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    Array mark = ARRAY_DICT_INIT;
-    ExtmarkInfo extmark = kv_A(marks, i);
-    ADD(mark, INTEGER_OBJ((Integer)extmark.mark_id));
-    ADD(mark, INTEGER_OBJ(extmark.row));
-    ADD(mark, INTEGER_OBJ(extmark.col));
-    ADD(rv, ARRAY_OBJ(mark));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true)));
   }
 
   kv_destroy(marks);
@@ -1349,10 +1388,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       }
       String hl_group = v->data.string;
       hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
-    } else if (strequal("virtual_text", k.data)) {
+    } else if (strequal("virt_text", k.data)) {
       if (v->type != kObjectTypeArray) {
         api_set_error(err, kErrorTypeValidation,
-                      "virtual_text is not an Array");
+                      "virt_text is not an Array");
         goto error;
       }
       virt_text = parse_virt_text(v->data.array, err);
@@ -1675,56 +1714,6 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 
   extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkUndo);
   return src_id;
-}
-
-/// Get the virtual text (annotation) for a buffer line.
-///
-/// The virtual text is returned as list of lists, whereas the inner lists have
-/// either one or two elements. The first element is the actual text, the
-/// optional second element is the highlight group.
-///
-/// The format is exactly the same as given to nvim_buf_set_virtual_text().
-///
-/// If there is no virtual text associated with the given line, an empty list
-/// is returned.
-///
-/// @param buffer   Buffer handle, or 0 for current buffer
-/// @param line     Line to get the virtual text from (zero-indexed)
-/// @param[out] err Error details, if any
-/// @return         List of virtual text chunks
-Array nvim_buf_get_virtual_text(Buffer buffer, Integer line, Error *err)
-  FUNC_API_SINCE(7)
-{
-  Array chunks = ARRAY_DICT_INIT;
-
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return chunks;
-  }
-
-  if (line < 0 || line >= MAXLNUM) {
-    api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return chunks;
-  }
-
-  VirtText *virt_text = extmark_find_virttext(buf, (int)line, 0);
-
-  if (!virt_text) {
-    return chunks;
-  }
-
-  for (size_t i = 0; i < virt_text->size; i++) {
-    Array chunk = ARRAY_DICT_INIT;
-    VirtTextChunk *vtc = &virt_text->items[i];
-    ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
-    if (vtc->hl_id > 0) {
-      ADD(chunk, STRING_OBJ(cstr_to_string(
-          (const char *)syn_id2name(vtc->hl_id))));
-    }
-    ADD(chunks, ARRAY_OBJ(chunk));
-  }
-
-  return chunks;
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)
