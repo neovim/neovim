@@ -417,7 +417,7 @@ int update_screen(int type)
     need_wait_return = false;
   }
 
-  win_ui_flush_positions();
+  win_ui_flush();
   msg_ext_check_clear();
 
   /* reset cmdline_row now (may have been changed temporarily) */
@@ -1629,6 +1629,7 @@ static void win_update(win_T *wp)
      * changes are relevant).
      */
     wp->w_valid |= VALID_BOTLINE;
+    wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
       recursive = TRUE;
       curwin->w_valid &= ~VALID_TOPLINE;
@@ -1648,7 +1649,7 @@ static void win_update(win_T *wp)
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
-}
+}  // NOLINT(readability/fn_size)
 
 /// Returns width of the signcolumn that should be used for the whole window
 ///

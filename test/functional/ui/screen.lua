@@ -158,6 +158,7 @@ function Screen.new(width, height)
     wildmenu_items = nil,
     wildmenu_selected = nil,
     win_position = {},
+    win_viewport = {},
     float_pos = {},
     msg_grid = nil,
     msg_grid_pos = nil,
@@ -254,7 +255,7 @@ end
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
   'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
-  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos',
+  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
 }
 
 -- Asserts that the screen state eventually matches an expected state.
@@ -420,6 +421,9 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     local extstate = self:_extstate_repr(attr_state)
     if expected.mode ~= nil then
       extstate.mode = self.mode
+    end
+    if expected.win_viewport == nil then
+      extstate.win_viewport = nil
     end
 
     -- Convert assertion errors into invalid screen state descriptions.
@@ -726,6 +730,7 @@ function Screen:_handle_grid_destroy(grid)
   self._grids[grid] = nil
   if self._options.ext_multigrid then
     self.win_position[grid] = nil
+    self.win_viewport[grid] = nil
   end
 end
 
@@ -746,14 +751,24 @@ function Screen:_handle_grid_cursor_goto(grid, row, col)
 end
 
 function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
-    self.win_position[grid] = {
-        win = win,
-        startrow = startrow,
-        startcol = startcol,
-        width = width,
-        height = height
-    }
-    self.float_pos[grid] = nil
+  self.win_position[grid] = {
+    win = win,
+    startrow = startrow,
+    startcol = startcol,
+    width = width,
+    height = height
+  }
+  self.float_pos[grid] = nil
+end
+
+function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol)
+  self.win_viewport[grid] = {
+    win = win,
+    topline = topline,
+    botline = botline,
+    curline = curline,
+    curcol = curcol
+  }
 end
 
 function Screen:_handle_win_float_pos(grid, ...)
@@ -1130,6 +1145,8 @@ function Screen:_extstate_repr(attr_state)
     messages[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
   end
 
+  local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
+
   return {
     popupmenu=self.popupmenu,
     cmdline=cmdline,
@@ -1141,7 +1158,8 @@ function Screen:_extstate_repr(attr_state)
     showcmd=self:_chunks_repr(self.showcmd, attr_state),
     ruler=self:_chunks_repr(self.ruler, attr_state),
     msg_history=msg_history,
-    float_pos=self.float_pos
+    float_pos=self.float_pos,
+    win_viewport=win_viewport,
   }
 end
 
@@ -1216,10 +1234,6 @@ function Screen:render(headers, attr_state, preview)
   return rv
 end
 
-local remove_all_metatables = function(item, path)
-  if path[#path] ~= inspect.METATABLE then return item end
-end
-
 -- Returns the current screen state in the form of a screen:expect()
 -- keyword-args map.
 function Screen:get_snapshot(attrs, ignore)
@@ -1269,6 +1283,26 @@ function Screen:get_snapshot(attrs, ignore)
   return kwargs, ext_state, attr_state
 end
 
+local function fmt_ext_state(name, state)
+  if name == "win_viewport" then
+    local str = "{\n"
+    for k,v in pairs(state) do
+      str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
+             ..v.topline..", botline = "..v.botline..", curline = "..v.curline
+             ..", curcol = "..v.curcol.."},\n")
+    end
+    return str .. "}"
+  else
+    -- TODO(bfredl): improve formatting of more states
+    local function remove_all_metatables(item, path)
+      if path[#path] ~= inspect.METATABLE then
+        return item
+      end
+    end
+    return inspect(state,{process=remove_all_metatables})
+  end
+end
+
 function Screen:print_snapshot(attrs, ignore)
   local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
   local attrstr = ""
@@ -1291,9 +1325,8 @@ function Screen:print_snapshot(attrs, ignore)
   print(kwargs.grid)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
-    if ext_state[k] ~= nil then
-      -- TODO(bfredl): improve formatting
-      io.stdout:write(", "..k.."="..inspect(ext_state[k],{process=remove_all_metatables}))
+    if ext_state[k] ~= nil and not (k == "win_viewport" and not self.options.ext_multigrid) then
+      io.stdout:write(", "..k.."="..fmt_ext_state(k, ext_state[k]))
     end
   end
   print("}\n")

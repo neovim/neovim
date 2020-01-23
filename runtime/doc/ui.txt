@@ -592,6 +592,12 @@ tabs.
 	When |ext_messages| is active, no message grid is used, and this event
 	will not be sent.
 
+["win_viewport", grid, win, topline, botline, curline, curcol]
+	Indicates the range of buffer text displayed in the window, as well
+	as the cursor position in the buffer. All positions are zero-based.
+	`botline` is set to one more than the line count of the buffer, if
+	there are filler lines past the end.
+
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
 
