@@ -811,6 +811,8 @@ describe('ui/builtin messages', function()
       [5] = {foreground = Screen.colors.Blue1},
       [6] = {bold = true, foreground = Screen.colors.Magenta},
       [7] = {background = Screen.colors.Grey20},
+      [8] = {reverse = true},
+      [9] = {background = Screen.colors.LightRed}
     })
   end)
 
@@ -960,6 +962,90 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                                           }|
       {1:~                                                           }|
       zbc                                                         |
+    ]]}
+  end)
+
+  it('redraws NOT_VALID correctly after message', function()
+    -- edge case: only one window was set NOT_VALID. Orginal report
+    -- used :make, but fake it using one command to set the current
+    -- window NOT_VALID and another to show a long message.
+    feed(':new<cr><c-w><c-w>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^                                                            |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+      :new                                                        |
+    ]]}
+
+    feed(':set colorcolumn=10 | digraphs<cr>')
+    screen:expect{grid=[[
+      er {5:ㄦ} 12582  i4 {5:ㄧ} 12583  u4 {5:ㄨ} 12584  iu {5:ㄩ} 12585          |
+      v4 {5:ㄪ} 12586  nG {5:ㄫ} 12587  gn {5:ㄬ} 12588  1c {5:㈠} 12832          |
+      2c {5:㈡} 12833  3c {5:㈢} 12834  4c {5:㈣} 12835  5c {5:㈤} 12836          |
+      6c {5:㈥} 12837  7c {5:㈦} 12838  8c {5:㈧} 12839  9c {5:㈨} 12840          |
+      ff {5:ﬀ}  64256  fi {5:ﬁ}  64257  fl {5:ﬂ}  64258  ft {5:ﬅ}  64261          |
+      st {5:ﬆ}  64262                                                 |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^         {9: }                                                  |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]]}
+
+    -- edge case: just covers statusline
+    feed(':set colorcolumn=5 | lua error("x\\n\\nx")<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
+      {2:E5108: Error executing lua [string ":lua"]:1: x}             |
+                                                                  |
+      {2:x}                                                           |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^    {9: }                                                       |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]]}
+
+    -- edge case: just covers lowest window line
+    feed(':set colorcolumn=5 | lua error("x\\n\\n\\nx")<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {3:                                                            }|
+      {2:E5108: Error executing lua [string ":lua"]:1: x}             |
+                                                                  |
+                                                                  |
+      {2:x}                                                           |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^    {9: }                                                       |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |
     ]]}
   end)
 end)
