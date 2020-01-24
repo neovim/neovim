@@ -5321,6 +5321,7 @@ win_redr_custom (
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
 
+  // TODO: delet this now?
   /* fill up with "fillchar" */
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
     len += utf_char2bytes(fillchar, buf + len);
@@ -5337,8 +5338,7 @@ win_redr_custom (
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(grid, p, textlen, row, col, curattr);
-    col += vim_strnsize(p, textlen);
+    col += grid_puts_len(grid, p, textlen, row, col, curattr);
     p = hltab[n].start;
 
     if (hltab[n].userhl == 0)
@@ -5351,8 +5351,11 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
-            curattr);
+  col += grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
+                   curattr);
+  int maxcol = maxwidth + (wp ? wp->w_wincol : 0);
+
+  grid_fill(grid, row, row+1, col, maxcol, fillchar, fillchar, curattr);
 
   grid_puts_line_flush(false);
 
@@ -5495,9 +5498,9 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
 /// attributes 'attr', and update chars[] and attrs[].
 /// Note: only outputs within one row, message is truncated at grid boundary!
 /// Note: if grid, row and/or col is invalid, nothing is done.
-void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
+int grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
 {
-  grid_puts_len(grid, text, -1, row, col, attr);
+  return grid_puts_len(grid, text, -1, row, col, attr);
 }
 
 static ScreenGrid *put_dirty_grid = NULL;
@@ -5520,7 +5523,7 @@ void grid_puts_line_start(ScreenGrid *grid, int row)
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
 /// a NUL.
-void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
+int grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
                    int col, int attr)
 {
   unsigned off;
@@ -5546,7 +5549,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   if (grid->chars == NULL
       || row >= grid->Rows || row < 0
       || col >= grid->Columns || col < 0) {
-    return;
+    return 0;
   }
 
   if (put_dirty_row == -1) {
@@ -5558,6 +5561,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
     }
   }
   off = grid->line_offset[row] + col;
+  int start_col = col;
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
@@ -5658,6 +5662,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   if (do_flush) {
     grid_puts_line_flush(true);
   }
+  return col-start_col;
 }
 
 /// End a group of grid_puts_len calls and send the screen buffer to the UI
