@@ -296,3 +296,30 @@ function Test_breakindent16()
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunction
+
+func Test_breakindent19_sbr_nextpage()
+  let s:input = ""
+  call s:test_windows('setl breakindent briopt=shift:2,sbr,min:18 sbr=>')
+  call setline(1, repeat('a', 200))
+  norm! 1gg
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "aaaaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " Scroll down one screen line
+  setl scrolloff=5
+  norm! 5gj
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& briopt& sbr&')
+endfunc

@@ -2243,7 +2243,7 @@ win_line (
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
-  int need_showbreak = false;           // overlong line, skip first x chars
+  bool need_showbreak = false;          // overlong line, skip first x chars
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   matchitem_T *cur;                     // points to the match list
@@ -2654,11 +2654,12 @@ win_line (
     else if (fromcol >= 0 && fromcol < vcol)
       fromcol = vcol;
 
-    /* When w_skipcol is non-zero, first line needs 'showbreak' */
-    if (wp->w_p_wrap)
-      need_showbreak = TRUE;
-    /* When spell checking a word we need to figure out the start of the
-     * word and if it's badly spelled or not. */
+    // When w_skipcol is non-zero, first line needs 'showbreak'
+    if (wp->w_p_wrap) {
+      need_showbreak = true;
+    }
+    // When spell checking a word we need to figure out the start of the
+    // word and if it's badly spelled or not.
     if (has_spell) {
       size_t len;
       colnr_T linecol = (colnr_T)(ptr - line);
@@ -2975,11 +2976,16 @@ win_line (
           }
           p_extra = NULL;
           c_extra = ' ';
-          n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
-          /* Correct end of highlighted area for 'breakindent',
-             required wen 'linebreak' is also set. */
-          if (tocol == vcol)
+          n_extra =
+            get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
+          if (wp->w_skipcol > 0 && wp->w_p_wrap) {
+            need_showbreak = false;
+          }
+          // Correct end of highlighted area for 'breakindent',
+          // required wen 'linebreak' is also set.
+          if (tocol == vcol) {
             tocol += n_extra;
+          }
         }
       }
 
@@ -3008,7 +3014,9 @@ win_line (
           c_final = NUL;
           n_extra = (int)STRLEN(p_sbr);
           char_attr = win_hl_attr(wp, HLF_AT);
-          need_showbreak = false;
+          if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
+            need_showbreak = false;
+          }
           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
           /* Correct end of highlighted area for 'showbreak',
            * required when 'linebreak' is also set. */
