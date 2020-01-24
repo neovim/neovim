@@ -50,7 +50,7 @@ vim_acl_T os_get_acl(const char_u *fname)
     ret = (vim_acl_T)xcalloc(1, (unsigned)sizeof(*ret));
     wchar_t *wn = NULL;
 
-    int conversion_result = utf8_to_utf16(fname, &wn);
+    int conversion_result = utf8_to_utf16((const char *)fname, -1, &wn);
     if (conversion_result  == 0) {
       // Try to retrieve the entire security descriptor.
       err = GetNamedSecurityInfoW(
@@ -79,8 +79,12 @@ vim_acl_T os_get_acl(const char_u *fname)
             &ret->pSecurityDescriptor);
       }
       if (ret->pSecurityDescriptor == NULL) {
-        ELOG("failed to get acl of a file: %s",
-             uv_strerror(os_translate_sys_error(err)));
+        int sys_err = os_translate_sys_error((int)err);
+        if (sys_err == UV_UNKNOWN) {
+          ELOG("failed to get acl of file: Unknown system error %d", err);
+        } else {
+          ELOG("failed to get acl of a file: %s", uv_strerror(sys_err));
+        }
         os_free_acl(ret);
         ret = NULL;
       }
@@ -134,7 +138,7 @@ void os_set_acl(const char_u *fname, vim_acl_T aclent)
     sec_info |= SACL_SECURITY_INFORMATION;
   }
 
-  int conversion_result = utf8_to_utf16(fname, &wn);
+  int conversion_result = utf8_to_utf16((const char *)fname, -1, &wn);
   if (conversion_result == 0) {
     DWORD err = SetNamedSecurityInfoW(
         wn,  // Abstract filename
@@ -145,8 +149,12 @@ void os_set_acl(const char_u *fname, vim_acl_T aclent)
         aclent->pDacl,  // Discretionary information.
         aclent->pSacl);  // For auditing purposes.
     if (err != ERROR_SUCCESS) {
-      ELOG("failed to set acl on a file: %s",
-           uv_strerror(os_translate_sys_error(err)));
+      int sys_err = os_translate_sys_error((int)err);
+      if (sys_err == UV_UNKNOWN) {
+        ELOG("failed to get acl of file: Unknown system error %d", err);
+      } else {
+        ELOG("failed to get acl of a file: %s", uv_strerror(sys_err));
+      }
     }
     xfree(wn);
   } else {
