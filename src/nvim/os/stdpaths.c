@@ -51,6 +51,76 @@ static const char *const xdg_defaults[] = {
 #endif
 };
 
+static bool list_contains(const char *list, const char *path)
+{
+  const size_t path_len = strlen(path);
+  const char *current = NULL;
+  const char *next = list;
+  while ((current = next)) {
+    next = strchr(current, ':');
+    size_t len;
+    if (next) {
+      len = (uintptr_t)next - (uintptr_t)current;
+      // At this point 'next' points at the ':' separator. So move it to the
+      // beginning of the next path.
+      next++;
+    } else {
+      len = strlen(current);
+    }
+
+    if (len == path_len) {
+      if (strncmp(current, path, len) == 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Filters duplicates out of a colon-separated list of locations.
+///
+/// @param  _paths  Null-terminated string.
+///
+/// @return Newly allocated string.
+static char *rm_duplicate_locations(const char *_paths)
+{
+  // We are going to modify the contents of the string.
+  // There is a chance that a given pointer will point to a read-only location,
+  // therefore it would be better to have our private copy.
+  char *paths = xstrdup(_paths);
+
+  char *token_state = NULL;
+  char *token = os_strtok(paths, ":", &token_state);
+
+  size_t result_sz = strlen(_paths) + 1;
+  char *result = xcalloc(result_sz, sizeof(*result));
+  char *result_cursor = result;
+  memset(result, 0, result_sz);
+
+  while (token) {
+    char *current_path = token;
+    token = os_strtok(NULL, ":", &token_state);
+
+    if (list_contains(result, current_path)) {
+      continue;
+    }
+
+    strcpy(result_cursor, current_path);
+    result_cursor += strlen(result_cursor);
+    *result_cursor = ':';
+    result_cursor++;
+  }
+
+  char *last_char = result_cursor - 1;
+  bool empty_result = result_cursor == result;
+  if (!empty_result && *last_char != '\0') {
+    *last_char = '\0';
+  }
+  free(paths);
+
+  return result;
+}
+
 /// Return XDG variable value
 ///
 /// @param[in]  idx  XDG variable to use.
@@ -76,7 +146,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 
   char *ret = NULL;
   if (env_val != NULL) {
-    ret = xstrdup(env_val);
+    ret = rm_duplicate_locations(env_val);
   } else if (fallback) {
     ret = (char *)expand_env_save((char_u *)fallback);
   }
