@@ -3311,7 +3311,7 @@ void maketitle(void)
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
         buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
-                              buf_p, SPACE_FOR_FNAME + 1, true);
+                              -1, buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
       switch (bufIsChanged(curbuf)

@@ -354,14 +354,15 @@ size_t transstr_len(const char *const s, bool untab)
 /// @param[in]  untab  remove tab characters
 ///
 /// @return length of the resulting string, without the NUL byte.
-size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool untab)
+size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, const size_t buflen,
+                    bool untab)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
   char *buf_p = buf;
-  char *const buf_e = buf_p + len - 1;
+  char *const buf_e = buf_p + buflen - 1;
 
-  while (*p != NUL && buf_p < buf_e) {
+  while ((slen < 0 || (p - s) < slen) && *p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
       if (buf_p + l > buf_e) {
@@ -416,7 +417,7 @@ char *transstr(const char *const s, bool untab)
   // multi-byte characters.
   const size_t len = transstr_len(s, untab) + 1;
   char *const buf = xmalloc(len);
-  transstr_buf(s, buf, len, untab);
+  transstr_buf(s, -1, buf, len, untab);
   return buf;
 }
 
@@ -431,7 +432,7 @@ size_t kv_transstr(StringBuilder *str, const char *const s, bool untab)
   // multi-byte characters.
   const size_t len = transstr_len(s, untab);
   kv_ensure_space(*str, len + 1);
-  transstr_buf(s, str->items + str->size, len + 1, untab);
+  transstr_buf(s, -1, str->items + str->size, len + 1, untab);
   str->size += len;  // do not include NUL byte
   return len;
 }

@@ -158,6 +158,7 @@ describe('multibyte rendering: statusline', function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {bold = true, reverse = true},
+      [3] = {background = Screen.colors.Red, foreground = Screen.colors.Gray100};
     })
     screen:attach()
     command('set laststatus=2')
@@ -217,6 +218,29 @@ describe('multibyte rendering: statusline', function()
       ^                                        |
       {1:~                                       }|
       {2: Q≡                                     }|
+                                              |
+    ]]}
+  end)
+
+  it('unprintable chars in filename with default stl', function()
+    command("file 🧑‍💻")
+    -- TODO: this is wrong but avoids a crash
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {2:🧑�💻                                   }|
+                                              |
+    ]]}
+  end)
+
+  it('unprintable chars in filename with custom stl', function()
+    command('set statusline=xx%#ErrorMsg#%f%##yy')
+    command("file 🧑‍💻")
+    -- TODO: this is also wrong but also avoids a crash
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {2:xx}{3:🧑<200d>💻}{2:yy                          }|
                                               |
     ]]}
   end)

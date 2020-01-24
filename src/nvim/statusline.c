@@ -152,8 +152,8 @@ void win_redr_status(win_T *wp)
 
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     col = is_stl_global ? 0 : wp->w_wincol;
-    grid_puts(&default_grid, p, row, col, attr);
-    grid_fill(&default_grid, row, row + 1, len + col,
+    int width = grid_puts(&default_grid, p, row, col, attr);
+    grid_fill(&default_grid, row, row + 1, width + col,
               this_ru_col + col, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
@@ -266,6 +266,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int n;
   int fillchar;
   char buf[MAXPATHL];
+  char transbuf[MAXPATHL];
   char *stl;
   char *opt_name;
   int opt_scope = 0;
@@ -370,34 +371,25 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // Make a copy, because the statusline may include a function call that
   // might change the option value and free the memory.
   stl = xstrdup(stl);
-  int width = build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_name, opt_scope,
-                               fillchar, maxwidth, &hltab, &tabtab, NULL);
+  build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_name, opt_scope,
+                   fillchar, maxwidth, &hltab, &tabtab, NULL);
 
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
-  // Make all characters printable.
-  char *p = transstr(buf, true);
-  int len = (int)xstrlcpy(buf, p, sizeof(buf));
-  len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
-  xfree(p);
-
-  // fill up with "fillchar"
-  while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += utf_char2bytes(fillchar, buf + len);
-    width++;
-  }
-  buf[len] = NUL;
+  int len = (int)strlen(buf);
+  int start_col = col;
 
   // Draw each snippet with the specified highlighting.
   grid_puts_line_start(grid, row);
 
   int curattr = attr;
-  p = buf;
+  char *p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(grid, p, textlen, row, col, curattr);
-    col += vim_strnsize(p, textlen);
+    // Make all characters printable.
+    size_t tsize = transstr_buf(p, textlen, transbuf, sizeof transbuf, true);
+    col += grid_puts_len(grid, transbuf, (int)tsize, row, col, curattr);
     p = hltab[n].start;
 
     if (hltab[n].userhl == 0) {
@@ -411,7 +403,12 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     }
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(grid, p >= buf + len ? "" : p, row, col, curattr);
+  size_t tsize = transstr_buf(p >= buf + len ? "" : p, -1, transbuf, sizeof transbuf, true);
+  col += grid_puts_len(grid, transbuf, (int)tsize, row, col, curattr);
+  int maxcol = start_col + maxwidth;
+
+  // fill up with "fillchar"
+  grid_fill(grid, row, row + 1, col, maxcol, fillchar, fillchar, curattr);
 
   grid_puts_line_flush(false);
 
