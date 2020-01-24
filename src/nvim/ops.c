@@ -4414,7 +4414,10 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   char_u      *line;
   char_u      *prev_pstart;
   char_u      *prev_pend;
+  const int lbr_saved = curwin->w_p_lbr;
 
+  // Avoid a problem with unwanted linebreaks in block mode.
+  curwin->w_p_lbr = false;
   bdp->startspaces = 0;
   bdp->endspaces = 0;
   bdp->textlen = 0;
@@ -4514,6 +4517,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   }
   bdp->textcol = (colnr_T) (pstart - line);
   bdp->textstart = pstart;
+  curwin->w_p_lbr = lbr_saved;
 }
 
 /// Handle the add/subtract operator.
