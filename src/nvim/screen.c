@@ -5588,6 +5588,12 @@ int grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
       u8c = utfc_ptr2char(ptr, u8cc);
     }
     mbyte_cells = utf_char2cells(u8c);
+    //assert(mbyte_cells == 1 || mbyte_cells == 2);
+    if (mbyte_cells > 2) {
+      mbyte_cells = 1;
+      u8c = 0xFFFD;
+      u8cc[0] = 0;
+    }
     if (p_arshape && !p_tbidi && arabic_char(u8c)) {
       // Do Arabic shaping.
       if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
