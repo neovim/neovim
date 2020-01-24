@@ -2976,6 +2976,7 @@ win_line (
           }
           p_extra = NULL;
           c_extra = ' ';
+          c_final = NUL;
           n_extra =
             get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
           if (wp->w_skipcol > 0 && wp->w_p_wrap) {
@@ -3293,9 +3294,7 @@ win_line (
     } else {
       int c0;
 
-      if (p_extra_free != NULL) {
-        XFREE_CLEAR(p_extra_free);
-      }
+      XFREE_CLEAR(p_extra_free);
 
       // Get a character from the line itself.
       c0 = c = *ptr;
