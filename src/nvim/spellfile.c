@@ -304,9 +304,6 @@
 static char *e_spell_trunc = N_("E758: Truncated spell file");
 static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
 static char *e_affname = N_("Affix name too long in %s line %d: %s");
-static char *e_affform = N_("E761: Format error in affix file FOL, LOW or UPP");
-static char *e_affrange = N_(
-    "E762: Character in FOL, LOW or UPP is out of range");
 static char *msg_compressing = N_("Compressing word tree...");
 
 #define MAXLINELEN  500         // Maximum length in bytes of a line in a .aff
@@ -1386,8 +1383,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   // Inserting backslashes may double the length, "^\(\)$<Nul>" is 7 bytes.
   // Conversion to utf-8 may double the size.
   c = todo * 2 + 7;
-  if (enc_utf8)
-    c += todo * 2;
+  c += todo * 2;
   pat = xmalloc(c);
 
   // We also need a list of all flags that can appear at the start and one
@@ -2622,19 +2618,6 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       // currently used spell properties.
       init_spell_chartab();
       spin->si_clear_chartab = false;
-    }
-
-    // Don't write a word table for an ASCII file, so that we don't check
-    // for conflicts with a word table that matches 'encoding'.
-    // Don't write one for utf-8 either, we use utf_*() and
-    // mb_get_class(), the list of chars in the file will be incomplete.
-    if (!spin->si_ascii
-        && !enc_utf8
-        ) {
-      if (fol == NULL || low == NULL || upp == NULL)
-        smsg(_("Missing FOL/LOW/UPP line in %s"), fname);
-      else
-        (void)set_spell_chartab(fol, low, upp);
     }
 
     xfree(fol);
@@ -5531,65 +5514,6 @@ static void init_spellfile(void)
 
     xfree(buf);
   }
-}
-
-// Set the spell character tables from strings in the affix file.
-static int set_spell_chartab(char_u *fol, char_u *low, char_u *upp)
-{
-  // We build the new tables here first, so that we can compare with the
-  // previous one.
-  spelltab_T new_st;
-  char_u      *pf = fol, *pl = low, *pu = upp;
-  int f, l, u;
-
-  clear_spell_chartab(&new_st);
-
-  while (*pf != NUL) {
-    if (*pl == NUL || *pu == NUL) {
-      EMSG(_(e_affform));
-      return FAIL;
-    }
-    f = mb_ptr2char_adv((const char_u **)&pf);
-    l = mb_ptr2char_adv((const char_u **)&pl);
-    u = mb_ptr2char_adv((const char_u **)&pu);
-    // Every character that appears is a word character.
-    if (f < 256)
-      new_st.st_isw[f] = true;
-    if (l < 256)
-      new_st.st_isw[l] = true;
-    if (u < 256)
-      new_st.st_isw[u] = true;
-
-    // if "LOW" and "FOL" are not the same the "LOW" char needs
-    // case-folding
-    if (l < 256 && l != f) {
-      if (f >= 256) {
-        EMSG(_(e_affrange));
-        return FAIL;
-      }
-      new_st.st_fold[l] = f;
-    }
-
-    // if "UPP" and "FOL" are not the same the "UPP" char needs
-    // case-folding, it's upper case and the "UPP" is the upper case of
-    // "FOL" .
-    if (u < 256 && u != f) {
-      if (f >= 256) {
-        EMSG(_(e_affrange));
-        return FAIL;
-      }
-      new_st.st_fold[u] = f;
-      new_st.st_isu[u] = true;
-      new_st.st_upper[f] = u;
-    }
-  }
-
-  if (*pl != NUL || *pu != NUL) {
-    EMSG(_(e_affform));
-    return FAIL;
-  }
-
-  return set_spell_finish(&new_st);
 }
 
 // Set the spell character tables from strings in the .spl file.
