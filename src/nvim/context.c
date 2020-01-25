@@ -247,8 +247,8 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(&func_hashtab, hi, {
     const char_u *const name = hi->hi_key;
-    bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
-    bool isscript = (name[0] == K_SPECIAL);
+    const bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
+    const bool isscript = (name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {
       size_t cmd_len = sizeof("func! ") + STRLEN(name);
