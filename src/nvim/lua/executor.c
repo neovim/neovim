@@ -1025,8 +1025,11 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, create_tslua_parser);
   lua_setfield(lstate, -2, "_create_ts_parser");
 
-  lua_pushcfunction(lstate, tslua_register_lang);
+  lua_pushcfunction(lstate, tslua_add_language);
   lua_setfield(lstate, -2, "_ts_add_language");
+
+  lua_pushcfunction(lstate, tslua_has_language);
+  lua_setfield(lstate, -2, "_ts_has_language");
 
   lua_pushcfunction(lstate, tslua_inspect_lang);
   lua_setfield(lstate, -2, "_ts_inspect_language");
