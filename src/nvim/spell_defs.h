@@ -265,15 +265,15 @@ typedef struct trystate_S {
 // Multi-byte implementation.  For Unicode we can call utf_*(), but don't do
 // that for ASCII, because we don't want to use 'casemap' here.  Otherwise use
 // the "w" library function for characters above 255.
-#define SPELL_TOFOLD(c) (enc_utf8 && (c) >= 128 ? utf_fold(c) \
+#define SPELL_TOFOLD(c) ((c) >= 128 ? utf_fold(c) \
                          : (c) < \
                          256 ? (int)spelltab.st_fold[c] : (int)towlower(c))
 
-#define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? mb_toupper(c) \
+#define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) \
                           : (c) < \
                           256 ? (int)spelltab.st_upper[c] : (int)towupper(c))
 
-#define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? mb_isupper(c) \
+#define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) \
                           : (c) < 256 ? spelltab.st_isu[c] : iswupper(c))
 
 // First language that is loaded, start of the linked list of loaded
