@@ -848,7 +848,7 @@ static void find_word(matchinf_T *mip, int mode)
         mip->mi_compflags[mip->mi_complen] = ((unsigned)flags >> 24);
         mip->mi_compflags[mip->mi_complen + 1] = NUL;
         if (word_ends) {
-          char_u fword[MAXWLEN];
+          char_u fword[MAXWLEN] = { 0 };
 
           if (slang->sl_compsylmax < MAXWLEN) {
             // "fword" is only needed for checking syllables.
@@ -3603,7 +3603,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 {
   char_u tword[MAXWLEN];            // good word collected so far
   trystate_T stack[MAXWLEN];
-  char_u preword[MAXWLEN * 3];      // word found with proper case;
+  char_u preword[MAXWLEN * 3] = { 0 };  // word found with proper case;
                                     // concatenation of prefix compound
                                     // words and split word.  NUL terminated
                                     // when going deeper but not when coming
