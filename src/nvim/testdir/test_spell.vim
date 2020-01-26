@@ -151,6 +151,12 @@ func Test_spellinfo()
   set nospell spelllang=en
   call assert_fails('spellinfo', 'E756:')
 
+  call assert_fails('set spelllang=foo/bar', 'E474:')
+  call assert_fails('set spelllang=foo\ bar', 'E474:')
+  call assert_fails("set spelllang=foo\\\nbar", 'E474:')
+  call assert_fails("set spelllang=foo\\\rbar", 'E474:')
+  call assert_fails("set spelllang=foo+bar", 'E474:')
+
   set enc& spell& spelllang&
   bwipe
 endfunc
@@ -384,6 +390,11 @@ func Test_zz_sal_and_addition()
   set spl=Xtest_ca.latin1.spl
   call assert_equal("elequint", FirstSpellWord())
   call assert_equal("elekwint", SecondSpellWord())
+endfunc
+
+func Test_spellfile_value()
+  set spellfile=Xdir/Xtest.latin1.add
+  set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
 endfunc
 
 func Test_region_error()

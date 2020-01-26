@@ -2509,12 +2509,41 @@ static char *set_string_option(const int opt_idx, const char *const value,
   return r;
 }
 
+/// Return true if "val" is a valid name: only consists of alphanumeric ASCII
+/// characters or characters in "allowed".
+static bool valid_name(const char_u *val, const char *allowed)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  for (const char_u *s = val; *s != NUL; s++) {
+    if (!ASCII_ISALNUM(*s)
+        && vim_strchr((const char_u *)allowed, *s) == NULL) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Return true if "val" is a valid 'filetype' name.
 /// Also used for 'syntax' and 'keymap'.
-static bool valid_filetype(char_u *val)
+static bool valid_filetype(const char_u *val)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (char_u *s = val; *s != NUL; s++) {
-    if (!ASCII_ISALNUM(*s) && vim_strchr((char_u *)".-_", *s) == NULL) {
+  return valid_name(val, ".-_");
+}
+
+/// Return true if "val" is a valid 'spellang' value.
+bool valid_spellang(const char_u *val)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return valid_name(val, ".-_,");
+}
+
+/// Return true if "val" is a valid 'spellfile' value.
+static bool valid_spellfile(const char_u *val)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  for (const char_u *s = val; *s != NUL; s++) {
+    if (!vim_isfilec(*s) && *s != ',') {
       return false;
     }
   }
@@ -3032,7 +3061,14 @@ ambw_end:
              || varp == &(curwin->w_s->b_p_spf)) {
     // When 'spelllang' or 'spellfile' is set and there is a window for this
     // buffer in which 'spell' is set load the wordlists.
-    errmsg = did_set_spell_option(varp == &(curwin->w_s->b_p_spf));
+    const bool is_spellfile = varp == &(curwin->w_s->b_p_spf);
+
+    if ((is_spellfile && !valid_spellfile(*varp))
+        || (!is_spellfile && !valid_spellang(*varp))) {
+      errmsg = e_invarg;
+    } else {
+      errmsg = did_set_spell_option(is_spellfile);
+    }
   } else if (varp == &(curwin->w_s->b_p_spc)) {
     // When 'spellcapcheck' is set compile the regexp program.
     errmsg = compile_cap_prog(curwin->w_s);
