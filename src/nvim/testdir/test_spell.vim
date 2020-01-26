@@ -392,6 +392,11 @@ func Test_zz_sal_and_addition()
   call assert_equal("elekwint", SecondSpellWord())
 endfunc
 
+func Test_spellfile_value()
+  set spellfile=Xdir/Xtest.latin1.add
+  set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
+endfunc
+
 func Test_region_error()
   messages clear
   call writefile(["/regions=usgbnz", "elequint/0"], "Xtest.latin1.add")
