@@ -18386,7 +18386,12 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // "./…" => "/home/foo/…"
   vim_FullName(cwd, (char *)NameBuff, sizeof(NameBuff), false);
   // "/home/foo/…" => "~/…"
-  home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
+  size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
+  // Trim slash.
+  if (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/') {
+    IObuff[len - 1] = '\0';
+  }
+
   // Terminal URI: "term://$CWD//$PID:$CMD"
   snprintf((char *)NameBuff, sizeof(NameBuff), "term://%s//%d:%s",
            (char *)IObuff, pid, cmd);
