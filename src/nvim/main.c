@@ -97,6 +97,7 @@ typedef struct {
   char        **argv;
 
   char *use_vimrc;                           // vimrc from -u argument
+  bool clean;                                // --clean argument
 
   int n_commands;                            // no. of commands from + or -c
   char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
@@ -187,7 +188,7 @@ bool event_teardown(void)
 /// Performs early initialization.
 ///
 /// Needed for unit tests. Must be called after `time_init()`.
-void early_init(void)
+static void early_init(mparm_T *paramp)
 {
   env_init();
   fs_init();
@@ -221,7 +222,7 @@ void early_init(void)
   // msg_outtrans_len_attr().
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
-  set_init_1();
+  set_init_1(paramp->clean);
   log_init();
   TIME_MSG("inits 1");
 
@@ -263,10 +264,11 @@ int main(int argc, char **argv)
   init_params(&params, argc, argv);
 
   init_startuptime(&params);
+  init_clean(&params);
 
   event_init();
 
-  early_init();
+  early_init(&params);
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
@@ -1260,9 +1262,8 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
-  for (int i = 1; i < paramp->argc; i++) {
-    if (STRICMP(paramp->argv[i], "--startuptime") == 0
-        && i + 1 < paramp->argc) {
+  for (int i = 1; i < paramp->argc - 1; i++) {
+    if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
       time_fd = os_fopen(paramp->argv[i + 1], "a");
       time_start("--- NVIM STARTING ---");
       break;
@@ -1270,6 +1271,17 @@ static void init_startuptime(mparm_T *paramp)
   }
 
   starttime = time(NULL);
+}
+
+static void init_clean(mparm_T *paramp)
+{
+  // Need to find "--clean" before actually parsing arguments.
+  for (int i = 1; i < paramp->argc; i++) {
+    if (STRICMP(paramp->argv[i], "--clean") == 0) {
+      paramp->clean = true;
+      break;
+    }
+  }
 }
 
 static void check_and_set_isatty(mparm_T *paramp)
