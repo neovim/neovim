@@ -188,7 +188,7 @@ bool event_teardown(void)
 /// Performs early initialization.
 ///
 /// Needed for unit tests. Must be called after `time_init()`.
-static void early_init(mparm_T *paramp)
+void early_init(bool clean_arg)
 {
   env_init();
   fs_init();
@@ -222,7 +222,7 @@ static void early_init(mparm_T *paramp)
   // msg_outtrans_len_attr().
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
-  set_init_1(paramp->clean);
+  set_init_1(clean_arg);
   log_init();
   TIME_MSG("inits 1");
 
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 
   event_init();
 
-  early_init(&params);
+  early_init(&params.clean);
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
