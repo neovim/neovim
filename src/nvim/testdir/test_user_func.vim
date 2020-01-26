@@ -94,3 +94,83 @@ func Test_user_func()
   unlet g:retval g:counter
   enew!
 endfunc
+
+func Log(val, base = 10)
+  return log(a:val) / log(a:base)
+endfunc
+
+func Args(mandatory, optional = v:null, ...)
+  return deepcopy(a:)
+endfunc
+
+func Args2(a = 1, b = 2, c = 3)
+  return deepcopy(a:)
+endfunc
+
+let s:counter = 0
+
+func Counter()
+  let s:counter += 1
+  return s:counter
+endfunc
+
+func Args3(a = Counter(), b = Counter())
+  return deepcopy(a:)
+endfunc
+
+func MakeBadFunc()
+  func s:fcn(a, b=1, c)
+  endfunc
+endfunc
+func
+
+func Test_default_arg()
+  call assert_equal(1.0, Log(10))
+  call assert_equal(log(10), Log(10, exp(1)))
+  call assert_fails("call Log(1,2,3)", 'E118')
+
+  let res = Args(1)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, v:null)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2,3)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 1)
+
+  call assert_fails("call MakeBadFunc()", 'E989')
+  call assert_fails("fu F(a=1 ,) | endf", 'E475')
+
+  let d = Args2(7, v:none, 9)
+  call assert_equal([7, 2, 9], [d.a, d.b, d.c])
+
+  let d = Args3(v:none, 321)
+  call assert_equal([1, 321], [d.a, d.b])
+
+  let d = Args3()
+  call assert_equal([2, 3], [d.a, d.b])
+
+  let Arg3funcref_dummy = function('Args3', [222])
+  let Arg3funcref = function('Args3', [123])
+  let d = Arg3funcref()
+  call assert_equal([123, 4], [d.a, d.b])
+
+  call assert_equal("\n"
+	\ .. "   function Args2(a = 1, b = 2, c = 3)\n"
+	\ .. "1    return deepcopy(a:)\n"
+	\ .. "   endfunction",
+	\ execute('func Args2'))
+
+  delfunc Log
+  delfunc Args
+  delfunc Args2
+  delfunc Counter
+  delfunc Args3
+  delfunc MakeBadFunc
+endfunc

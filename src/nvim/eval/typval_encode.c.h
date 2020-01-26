@@ -13,6 +13,15 @@
 /// @param  tv  Pointer to typval where value is stored. May not be NULL. May
 ///             point to special dictionary.
 
+/// @def TYPVAL_ENCODE_CONV_NONE_VAL
+/// @brief Macros used to convert none value
+///
+/// Is called both for special dictionary (unless #TYPVAL_ENCODE_ALLOW_SPECIALS
+/// is false) and `v:none`.
+///
+/// @param  tv  Pointer to typval where value is stored. May not be NULL. May
+///             point to special dictionary.
+
 /// @def TYPVAL_ENCODE_CONV_BOOL
 /// @brief Macros used to convert boolean value
 ///
@@ -383,6 +392,10 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       switch (tv->vval.v_special) {
         case kSpecialVarNull: {
           TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
+          break;
+        }
+        case kSpecialVarNone: {
+          TYPVAL_ENCODE_CONV_NONE_VAL(tv);
           break;
         }
         case kSpecialVarTrue:

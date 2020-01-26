@@ -1773,6 +1773,16 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators). Read-only.
 
+					*v:none* *none-variable*
+v:none		Special value originally used to put an empty item in JSON.
+		This only can be used in VimL and behaves |v:null| in JSON
+		msgpack. Do not use this instead of |v:null|. This value is
+		remained for default arguments.  This value is converted to
+		"v:none" when used as a String (e.g. in |expr5| with string
+		concatenation operator) and to zero when used as a Number
+		(e.g. in |expr5| or |expr7| when used with numeric operators).
+		Read-only.
+
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.

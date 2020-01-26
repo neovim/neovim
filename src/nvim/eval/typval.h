@@ -96,6 +96,7 @@ typedef enum {
   kSpecialVarFalse,  ///< v:false
   kSpecialVarTrue,   ///< v:true
   kSpecialVarNull,   ///< v:null
+  kSpecialVarNone,   ///< v:none
 } SpecialVarValue;
 
 /// Variable lock status for typval_T.v_lock
@@ -114,7 +115,7 @@ typedef enum {
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
-  VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
+  VAR_SPECIAL,      ///< Special value (true, false, null, none), .v_special
                     ///< is used.
   VAR_PARTIAL,      ///< Partial, .v_partial is used.
 } VarType;
@@ -268,6 +269,7 @@ struct ufunc {
   int          uf_calls;         ///< nr of active calls
   bool         uf_cleared;       ///< func_clear() was already called
   garray_T     uf_args;          ///< arguments
+  garray_T     uf_def_args;      ///< default argument expressions
   garray_T     uf_lines;         ///< function lines
   int          uf_profiling;     ///< true when func is being profiled
   int          uf_prof_initialized;

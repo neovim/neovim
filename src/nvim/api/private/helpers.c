@@ -413,6 +413,9 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
     kv_push(edata->stack, NIL)
 
+#define TYPVAL_ENCODE_CONV_NONE_VAL(tv) \
+    kv_push(edata->stack, NONE)
+
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
@@ -591,6 +594,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START

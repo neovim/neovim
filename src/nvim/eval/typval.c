@@ -1957,6 +1957,9 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
+#define TYPVAL_ENCODE_CONV_NONE_VAL(tv) \
+    TYPVAL_ENCODE_CONV_NIL(tv)
+
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     TYPVAL_ENCODE_CONV_NIL(tv)
 
@@ -2161,6 +2164,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
 #undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER

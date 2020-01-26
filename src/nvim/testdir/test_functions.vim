@@ -40,7 +40,7 @@ func Test_empty()
   call assert_equal(0, empty({'a':1}))
 
   call assert_equal(1, empty(v:null))
-  " call assert_equal(1, empty(v:none))
+  call assert_equal(1, empty(v:none))
   call assert_equal(1, empty(v:false))
   call assert_equal(0, empty(v:true))
 
@@ -67,7 +67,7 @@ func Test_len()
   call assert_equal(0, len({}))
   call assert_equal(2, len({'a': 1, 'b': 2}))
 
-  " call assert_fails('call len(v:none)', 'E701:')
+  call assert_fails('call len(v:none)', 'E701:')
   call assert_fails('call len({-> 0})', 'E701:')
 endfunc
 
@@ -81,7 +81,7 @@ func Test_max()
   call assert_equal(2, max({'a':1, 'b':2}))
 
   call assert_fails('call max(1)', 'E712:')
-  " call assert_fails('call max(v:none)', 'E712:')
+  call assert_fails('call max(v:none)', 'E712:')
 endfunc
 
 func Test_min()
@@ -94,7 +94,7 @@ func Test_min()
   call assert_equal(1, min({'a':1, 'b':2}))
 
   call assert_fails('call min(1)', 'E712:')
-  " call assert_fails('call min(v:none)', 'E712:')
+  call assert_fails('call min(v:none)', 'E712:')
 endfunc
 
 func Test_strwidth()
@@ -162,7 +162,7 @@ func Test_str2nr()
   call assert_equal(1, str2nr('1g', 16))
 
   call assert_equal(0, str2nr(v:null))
-  " call assert_equal(0, str2nr(v:none))
+  call assert_equal(0, str2nr(v:none))
 
   call assert_fails('call str2nr([])', 'E730:')
   call assert_fails('call str2nr({->2})', 'E729:')

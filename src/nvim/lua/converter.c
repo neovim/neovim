@@ -434,6 +434,9 @@ static bool typval_conv_special = false;
       } \
     } while (0)
 
+#define TYPVAL_ENCODE_CONV_NONE_VAL(tv) \
+    TYPVAL_ENCODE_CONV_NIL(tv)
+
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     lua_pushboolean(lstate, (bool)(num))
 
@@ -562,6 +565,7 @@ static bool typval_conv_special = false;
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START

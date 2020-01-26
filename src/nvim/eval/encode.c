@@ -36,6 +36,7 @@
 
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
+  [kSpecialVarNone] = "none",
   [kSpecialVarTrue] = "true",
   [kSpecialVarFalse] = "false",
 };
@@ -386,6 +387,9 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
     ga_concat(gap, "v:null")
 
+#define TYPVAL_ENCODE_CONV_NONE_VAL(tv) \
+    ga_concat(gap, "v:none")
+
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     ga_concat(gap, ((num)? "v:true": "v:false"))
 
@@ -510,6 +514,10 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #undef TYPVAL_ENCODE_CONV_NIL
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
       ga_concat(gap, "null")
+
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
+#define TYPVAL_ENCODE_CONV_NONE_VAL \
+      TYPVAL_ENCODE_CONV_NIL
 
 #undef TYPVAL_ENCODE_CONV_BOOL
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
@@ -761,6 +769,9 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
 #undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
+#undef CONV_NONE_VAL
+#define CONV_NONE_VAL()
+
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
@@ -775,6 +786,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START
@@ -927,6 +939,9 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
     msgpack_pack_nil(packer)
 
+#define TYPVAL_ENCODE_CONV_NONE_VAL(tv) \
+    TYPVAL_ENCODE_CONV_NIL(tv)
+
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     do { \
       if (num) { \
@@ -987,6 +1002,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
 #undef TYPVAL_ENCODE_CONV_NIL
+#undef TYPVAL_ENCODE_CONV_NONE_VAL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
 #undef TYPVAL_ENCODE_CONV_DICT_START

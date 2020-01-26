@@ -269,7 +269,9 @@ are always available and may be used simultaneously. See |provider-python|.
 3. It accepts only valid JSON.  Trailing commas are not accepted.
 
 |json_encode()| behaviour slightly changed: now |msgpack-special-dict| values 
-are accepted, but |v:none| is not.
+are accepted, and |v:none| is treated as |v:null|. It's not recommended to use
+|v:none| as an alternative of |v:null|. This variable is added for function
+arguments to use partially default value.
 
 Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:
@@ -442,7 +444,6 @@ Compile-time features:
 Eval:
   *js_encode()*
   *js_decode()*
-  *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
 
 Highlight groups:
   *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim

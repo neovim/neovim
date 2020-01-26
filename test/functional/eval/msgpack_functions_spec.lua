@@ -533,8 +533,14 @@ describe('msgpackdump() function', function()
     eq({'\194'}, funcs.msgpackdump({false}))
   end)
 
-  it('can v:null', function()
+  it('can dump v:null', function()
     command('let todump = v:null')
+    eq({'\192'}, eval('msgpackdump([todump])'))
+  end)
+
+  it('can dump v:none same as v:null', function()
+    command('let todump = v:none')
+    eq({'\192'}, eval('msgpackdump([todump])'))
   end)
 
   it('can dump special bool mapping (true)', function()
@@ -704,7 +710,7 @@ describe('msgpackdump() function', function()
   end)
 
   it('fails to dump special value', function()
-    for _, val in ipairs({'v:true', 'v:false', 'v:null'}) do
+    for _, val in ipairs({'v:true', 'v:false', 'v:null', 'v:none'}) do
       eq('Vim(call):E686: Argument of msgpackdump() must be a List',
         exc_exec('call msgpackdump(' .. val .. ')'))
     end

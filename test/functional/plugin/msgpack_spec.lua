@@ -416,6 +416,7 @@ describe('autoload/msgpack.vim', function()
       string_eq('TRUE', 'v:true')
       string_eq('FALSE', 'v:false')
       string_eq('NIL', 'v:null')
+      string_eq('NIL', 'v:none')
     end)
   end)
 
