@@ -8085,11 +8085,6 @@ static void close_redir(void)
   }
 }
 
-#ifdef USE_CRNL
-# define MKSESSION_NL
-static int mksession_nl = FALSE;    /* use NL only in put_eol() */
-#endif
-
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
 static void ex_mkrc(exarg_T *eap)
 {
@@ -8141,12 +8136,6 @@ static void ex_mkrc(exarg_T *eap)
       flagp = &vop_flags;
     else
       flagp = &ssop_flags;
-
-#ifdef MKSESSION_NL
-    /* "unix" in 'sessionoptions': use NL line separator */
-    if (view_session && (*flagp & SSOP_UNIX))
-      mksession_nl = TRUE;
-#endif
 
     /* Write the version command for :mkvimrc */
     if (eap->cmdidx == CMD_mkvimrc)
@@ -8236,9 +8225,6 @@ static void ex_mkrc(exarg_T *eap)
       }
       xfree(tbuf);
     }
-#ifdef MKSESSION_NL
-    mksession_nl = FALSE;
-#endif
   }
 
   xfree(viewFile);
@@ -9964,19 +9950,11 @@ static char *get_view_file(int c)
 }
 
 
-/*
- * Write end-of-line character(s) for ":mkexrc", ":mkvimrc" and ":mksession".
- * Return FAIL for a write error.
- */
+/// TODO(justinmk): remove this. Formerly used to choose CRLF or LF for session
+// files, but that's useless--instead we always write LF.
 int put_eol(FILE *fd)
 {
-#if defined(USE_CRNL) && defined(MKSESSION_NL)
-  if ((!mksession_nl && putc('\r', fd) < 0) || putc('\n', fd) < 0) {
-#elif defined(USE_CRNL)
-  if (putc('\r', fd) < 0 || putc('\n', fd) < 0) {
-#else
   if (putc('\n', fd) < 0) {
-#endif
     return FAIL;
   }
   return OK;
