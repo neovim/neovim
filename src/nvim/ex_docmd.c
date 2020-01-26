@@ -8160,7 +8160,7 @@ static void ex_mkrc(exarg_T *eap)
     if (!view_session || (eap->cmdidx == CMD_mksession
                           && (*flagp & SSOP_OPTIONS))) {
       failed |= (makemap(fd, NULL) == FAIL
-                 || makeset(fd, OPT_GLOBAL, FALSE) == FAIL);
+                 || makeset(fd, OPT_GLOBAL, false) == FAIL);
     }
 
     if (!failed && view_session) {
@@ -9241,7 +9241,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   // - Put windows for each tab, when "tabpages" is in 'sessionoptions'.
   // - Don't use goto_tabpage(), it may change CWD and trigger autocommands.
   //
-  tab_firstwin = firstwin;      /* first window in tab page "tabnr" */
+  tab_firstwin = firstwin;      // First window in tab page "tabnr".
   tab_topframe = topframe;
   for (tabnr = 1;; tabnr++) {
     tabpage_T *tp = find_tabpage(tabnr);
@@ -9658,11 +9658,18 @@ put_view(
         return FAIL;
       }
 
-      if (fputs("silent file ", fd) < 0
-          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || put_eol(fd) == FAIL) {
+      char *fname_esc =
+        ses_escape_fname(ses_get_fname(wp->w_buffer, flagp, false), flagp);
+      // Fixup :terminal buffer name.
+      if (fprintf(fd,
+                  "if &buftype ==# 'terminal'\n"
+                  "  silent file %s\n"
+                  "endif\n",
+                  fname_esc) < 0) {
+        xfree(fname_esc);
         return FAIL;
       }
+      xfree(fname_esc);
     } else {
       // No file in this buffer, just make it empty.
       if (put_line(fd, "enew") == FAIL) {
@@ -9828,44 +9835,45 @@ ses_arglist(
   return OK;
 }
 
+/// Gets the buffer name for `buf`.
+static char *ses_get_fname(buf_T *buf, unsigned *flagp, bool add_eol)
+{
+  // Use the short file name if the current directory is known at the time
+  // the session file will be sourced.
+  // Don't do this for ":mkview", we don't know the current directory.
+  // Don't do this after ":lcd", we don't keep track of what the current
+  // directory is.
+  if (buf->b_sfname != NULL
+      && flagp == &ssop_flags
+      && (ssop_flags & (SSOP_CURDIR | SSOP_SESDIR))
+      && !p_acd
+      && !did_lcd) {
+    return (char *)buf->b_sfname;
+  }
+  return (char *)buf->b_ffname;
+}
 /// Write a buffer name to the session file.
 /// Also ends the line, if "add_eol" is true.
 /// Returns FAIL if writing fails.
 static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
 {
-  char_u      *name;
-
-  /* Use the short file name if the current directory is known at the time
-   * the session file will be sourced.
-   * Don't do this for ":mkview", we don't know the current directory.
-   * Don't do this after ":lcd", we don't keep track of what the current
-   * directory is. */
-  if (buf->b_sfname != NULL
-      && flagp == &ssop_flags
-      && (ssop_flags & (SSOP_CURDIR | SSOP_SESDIR))
-      && !p_acd
-      && !did_lcd)
-    name = buf->b_sfname;
-  else
-    name = buf->b_ffname;
-  if (ses_put_fname(fd, name, flagp) == FAIL
+  char *name = ses_get_fname(buf, flagp, add_eol);
+  if (ses_put_fname(fd, (char_u *)name, flagp) == FAIL
       || (add_eol && put_eol(fd) == FAIL)) {
     return FAIL;
   }
   return OK;
 }
 
-/*
- * Write a file name to the session file.
- * Takes care of the "slash" option in 'sessionoptions' and escapes special
- * characters.
- * Returns FAIL if writing fails.
- */
-static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
+// Escapes a filename for session writing.
+// Takes care of "slash" flag in 'sessionoptions' and escapes special
+// characters.
+//
+// Returns allocated string or NULL.
+static char *ses_escape_fname(char *name, unsigned *flagp)
 {
-  char_u      *p;
-
-  char_u *sname = home_replace_save(NULL, name);
+  char *p;
+  char *sname = (char *)home_replace_save(NULL, (char_u *)name);
 
   if (*flagp & SSOP_SLASH) {
     // change all backslashes to forward slashes
@@ -9877,11 +9885,19 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   }
 
   // Escape special characters.
-  p = (char_u *)vim_strsave_fnameescape((const char *)sname, false);
+  p = vim_strsave_fnameescape(sname, false);
   xfree(sname);
+  return p;
+}
 
-  /* write the result */
-  bool retval = fputs((char *)p, fd) < 0 ? FAIL : OK;
+// Write a file name to the session file.
+// Takes care of the "slash" option in 'sessionoptions' and escapes special
+// characters.
+// Returns FAIL if writing fails.
+static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
+{
+  char *p = ses_escape_fname((char *)name, flagp);
+  bool retval = fputs(p, fd) < 0 ? FAIL : OK;
   xfree(p);
   return retval;
 }
