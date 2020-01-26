@@ -9151,12 +9151,13 @@ static int makeopens(FILE *fd, char_u *dirnow)
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
     sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
-    if (fputs("cd ", fd) < 0
-        || ses_put_fname(fd, sname, &ssop_flags) == FAIL
-        || put_eol(fd) == FAIL) {
+    char *fname_esc = ses_escape_fname((char *)sname, &ssop_flags);
+    if (fprintf(fd, "cd %s\n", fname_esc) < 0) {
+      xfree(fname_esc);
       xfree(sname);
       return FAIL;
     }
+    xfree(fname_esc);
     xfree(sname);
   }
 
@@ -9196,11 +9197,11 @@ static int makeopens(FILE *fd, char_u *dirnow)
   }
 
   if (ssop_flags & SSOP_RESIZE) {
-    /* Note: after the restore we still check it worked!*/
-    if (fprintf(fd, "set lines=%" PRId64 " columns=%" PRId64,
-                (int64_t)Rows, (int64_t)Columns) < 0
-        || put_eol(fd) == FAIL)
+    // Note: after the restore we still check it worked!
+    if (fprintf(fd, "set lines=%" PRId64 " columns=%" PRId64 "\n",
+                (int64_t)Rows, (int64_t)Columns) < 0) {
       return FAIL;
+    }
   }
 
   int restore_stal = FALSE;
@@ -9343,8 +9344,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     //
     // Restore cursor to the current window if it's not the first one.
     //
-    if (cnr > 1 && (fprintf(fd, "%dwincmd w", cnr) < 0
-                    || put_eol(fd) == FAIL)) {
+    if (cnr > 1 && (fprintf(fd, "%dwincmd w\n", cnr) < 0)) {
       return FAIL;
     }
 
@@ -9360,8 +9360,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     if (tp->tp_localdir) {
       if (fputs("if exists(':tcd') == 2 | tcd ", fd) < 0
           || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
-          || fputs(" | endif", fd) < 0
-          || put_eol(fd) == FAIL) {
+          || fputs(" | endif\n", fd) < 0) {
         return FAIL;
       }
       did_lcd = true;
@@ -9396,15 +9395,15 @@ static int makeopens(FILE *fd, char_u *dirnow)
   }
 
   // Re-apply options.
-  if (fprintf(fd, "set winheight=%" PRId64 " winwidth=%" PRId64
-                  " winminheight=%" PRId64 " winminwidth=%" PRId64
-                  " shortmess=%s",
+  if (fprintf(fd,
+              "set winheight=%" PRId64 " winwidth=%" PRId64
+              " winminheight=%" PRId64 " winminwidth=%" PRId64
+              " shortmess=%s\n",
               (int64_t)p_wh,
               (int64_t)p_wiw,
               (int64_t)p_wmh,
               (int64_t)p_wmw,
-              p_shm) < 0
-      || put_eol(fd) == FAIL) {
+              p_shm) < 0) {
     return FAIL;
   }
 
@@ -9438,10 +9437,9 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       if (wp->w_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
                       "exe '%dresize ' . ((&lines * %" PRId64
-                      " + %" PRId64 ") / %" PRId64 ")",
+                      " + %" PRId64 ") / %" PRId64 ")\n",
                       n, (int64_t)wp->w_height,
-                      (int64_t)Rows / 2, (int64_t)Rows) < 0
-              || put_eol(fd) == FAIL)) {
+                      (int64_t)Rows / 2, (int64_t)Rows) < 0)) {
         return FAIL;
       }
 
@@ -9449,10 +9447,9 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       if (wp->w_width < Columns
           && (fprintf(fd,
                       "exe 'vert %dresize ' . ((&columns * %" PRId64
-                      " + %" PRId64 ") / %" PRId64 ")",
+                      " + %" PRId64 ") / %" PRId64 ")\n",
                       n, (int64_t)wp->w_width, (int64_t)Columns / 2,
-                      (int64_t)Columns) < 0
-              || put_eol(fd) == FAIL)) {
+                      (int64_t)Columns) < 0)) {
         return FAIL;
       }
     }
@@ -9490,8 +9487,7 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
 
     // Go back to the first window.
     if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
-                              ? "%dwincmd k" : "%dwincmd h", count) < 0
-                      || put_eol(fd) == FAIL)) {
+                              ? "%dwincmd k\n" : "%dwincmd h\n", count) < 0)) {
       return FAIL;
     }
 
@@ -9560,11 +9556,11 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
   int r;
 
   if (wp->w_curswant == MAXCOL) {
-    r = fprintf(fd, "%snormal! $", spaces);
+    r = fprintf(fd, "%snormal! $\n", spaces);
   } else {
-    r = fprintf(fd, "%snormal! 0%d|", spaces, wp->w_virtcol + 1);
+    r = fprintf(fd, "%snormal! 0%d|\n", spaces, wp->w_virtcol + 1);
   }
-  return r < 0 || put_eol(fd) == FAIL ? FAIL : OK;
+  return r >= 0;
 }
 
 /*
@@ -9608,18 +9604,19 @@ put_view(
    * arguments may have been deleted, check if the index is valid. */
   if (wp->w_arg_idx != current_arg_idx && wp->w_arg_idx < WARGCOUNT(wp)
       && flagp == &ssop_flags) {
-    if (fprintf(fd, "%" PRId64 "argu", (int64_t)wp->w_arg_idx + 1) < 0
-        || put_eol(fd) == FAIL) {
+    if (fprintf(fd, "%" PRId64 "argu\n", (int64_t)wp->w_arg_idx + 1) < 0) {
       return FAIL;
     }
     did_next = true;
   }
 
-  /* Edit the file.  Skip this when ":next" already did it. */
+  // Edit the file.  Skip this when ":next" already did it.
   if (add_edit && (!did_next || wp->w_arg_idx_invalid)) {
-    /*
-     * Load the file.
-     */
+    char *fname_esc =
+      ses_escape_fname(ses_get_fname(wp->w_buffer, flagp), flagp);
+    //
+    // Load the file.
+    //
     if (wp->w_buffer->b_ffname != NULL
         && (!bt_nofile(wp->w_buffer) || wp->w_buffer->terminal)
         ) {
@@ -9629,49 +9626,41 @@ put_view(
       // Note, if a buffer for that file already exists, use :badd to
       // edit that buffer, to not lose folding information (:edit resets
       // folds in other buffers)
-      if (fputs("if bufexists(\"", fd) < 0
-          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || fputs("\") | buffer ", fd) < 0
-          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || fputs(" | else | edit ", fd) < 0
-          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || fputs(" | endif", fd) < 0
-          || put_eol(fd) == FAIL) {
-        return FAIL;
-      }
-
-      char *fname_esc =
-        ses_escape_fname(ses_get_fname(wp->w_buffer, flagp, false), flagp);
-      // Fixup :terminal buffer name.
       if (fprintf(fd,
+                  "if bufexists(\"%s\") | buffer %s | else | edit %s | endif\n"
+                  // Fixup :terminal buffer name. #7836
                   "if &buftype ==# 'terminal'\n"
                   "  silent file %s\n"
                   "endif\n",
+                  fname_esc,
+                  fname_esc,
+                  fname_esc,
                   fname_esc) < 0) {
         xfree(fname_esc);
         return FAIL;
       }
-      xfree(fname_esc);
     } else {
       // No file in this buffer, just make it empty.
       PUTLINE_FAIL("enew");
       if (wp->w_buffer->b_ffname != NULL) {
         // The buffer does have a name, but it's not a file name.
-        if (fputs("file ", fd) < 0
-            || ses_fname(fd, wp->w_buffer, flagp, true) == FAIL) {
+        if (fprintf(fd, "file %s\n", fname_esc) < 0) {
+          xfree(fname_esc);
           return FAIL;
         }
       }
       do_cursor = false;
     }
+    xfree(fname_esc);
   }
 
   /*
    * Local mappings and abbreviations.
    */
   if ((*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS))
-      && makemap(fd, wp->w_buffer) == FAIL)
+      && makemap(fd, wp->w_buffer) == FAIL) {
     return FAIL;
+  }
 
   /*
    * Local options.  Need to go to the window temporarily.
@@ -9692,8 +9681,9 @@ put_view(
     f = OK;
   curwin = save_curwin;
   curbuf = curwin->w_buffer;
-  if (f == FAIL)
+  if (f == FAIL) {
     return FAIL;
+  }
 
   //
   // Save Folds when 'buftype' is empty and for help files.
@@ -9736,8 +9726,7 @@ put_view(
                     " * winwidth(0) + %" PRId64 ") / %" PRId64 ")\n"
                     "if s:c > 0\n"
                     "  exe 'normal! ' . s:c . '|zs' . %" PRId64 " . '|'\n"
-                    "else\n"
-                    ,
+                    "else\n",
                     (int64_t)wp->w_virtcol + 1,
                     (int64_t)(wp->w_virtcol - wp->w_leftcol),
                     (int64_t)(wp->w_width / 2),
@@ -9761,7 +9750,7 @@ put_view(
       && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
         || ses_put_fname(fd, wp->w_localdir, flagp) == FAIL
-        || put_eol(fd) == FAIL) {
+        || fprintf(fd, "\n") < 0) {
       return FAIL;
     }
     did_lcd = true;
@@ -9785,10 +9774,9 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
   char_u      *buf = NULL;
   char_u      *s;
 
-  if (fputs(cmd, fd) < 0 || put_eol(fd) == FAIL) {
+  if (fprintf(fd, "%s\n%s\n", cmd, "%argdel") < 0) {
     return FAIL;
   }
-  PUTLINE_FAIL("%argdel");
   for (int i = 0; i < gap->ga_len; i++) {
     // NULL file names are skipped (only happens when out of memory).
     s = alist_name(&((aentry_T *)gap->ga_data)[i]);
@@ -9798,11 +9786,13 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
         (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, FALSE);
         s = buf;
       }
-      if (fputs("$argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
-          || put_eol(fd) == FAIL) {
+      char *fname_esc = ses_escape_fname((char *)s, flagp);
+      if (fprintf(fd, "$argadd %s\n", fname_esc) < 0) {
+        xfree(fname_esc);
         xfree(buf);
         return FAIL;
       }
+      xfree(fname_esc);
       xfree(buf);
     }
   }
@@ -9810,7 +9800,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
 }
 
 /// Gets the buffer name for `buf`.
-static char *ses_get_fname(buf_T *buf, unsigned *flagp, bool add_eol)
+static char *ses_get_fname(buf_T *buf, unsigned *flagp)
 {
   // Use the short file name if the current directory is known at the time
   // the session file will be sourced.
@@ -9832,9 +9822,9 @@ static char *ses_get_fname(buf_T *buf, unsigned *flagp, bool add_eol)
 /// Returns FAIL if writing fails.
 static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
 {
-  char *name = ses_get_fname(buf, flagp, add_eol);
+  char *name = ses_get_fname(buf, flagp);
   if (ses_put_fname(fd, (char_u *)name, flagp) == FAIL
-      || (add_eol && put_eol(fd) == FAIL)) {
+      || (add_eol && fprintf(fd, "\n") < 0)) {
     return FAIL;
   }
   return OK;
@@ -9939,8 +9929,7 @@ static char *get_view_file(int c)
 }
 
 
-/// TODO(justinmk): remove this. Formerly used to choose CRLF or LF for session
-// files, but that's useless--instead we always write LF.
+// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
 int put_eol(FILE *fd)
 {
   if (putc('\n', fd) < 0) {
@@ -9949,10 +9938,10 @@ int put_eol(FILE *fd)
   return OK;
 }
 
-// TODO(justinmk): remove this, not needed after 823750fef315.
+// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
 int put_line(FILE *fd, char *s)
 {
-  if (0 > fprintf(fd, "%s\n", s)) {
+  if (fprintf(fd, "%s\n", s) < 0) {
     return FAIL;
   }
   return OK;
