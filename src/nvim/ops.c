@@ -357,15 +357,11 @@ static void shift_block(oparg_T *oap, int amount)
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
     char_u * old_textstart = bd.textstart;
     if (bd.startspaces) {
-      if (has_mbyte) {
-        if ((*mb_ptr2len)(bd.textstart) == 1) {
-          bd.textstart++;
-        } else {
-          ws_vcol = 0;
-          bd.startspaces = 0;
-        }
-      } else {
+      if (utfc_ptr2len(bd.textstart) == 1) {
         bd.textstart++;
+      } else {
+        ws_vcol = 0;
+        bd.startspaces = 0;
       }
     }
     for (; ascii_iswhite(*bd.textstart); ) {
@@ -1215,9 +1211,7 @@ static void stuffescaped(const char *arg, int literally)
 
     /* stuff a single special character */
     if (*arg != NUL) {
-      const int c = (has_mbyte
-                     ? mb_cptr2char_adv((const char_u **)&arg)
-                     : (uint8_t)(*arg++));
+      const int c = mb_cptr2char_adv((const char_u **)&arg);
       if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
       }
@@ -1389,8 +1383,7 @@ int op_delete(oparg_T *oap)
     return FAIL;
   }
 
-  if (has_mbyte)
-    mb_adjust_opend(oap);
+  mb_adjust_opend(oap);
 
   /*
    * Imitate the strange Vi behaviour: If the delete spans more than one
@@ -1736,8 +1729,7 @@ int op_replace(oparg_T *oap, int c)
     c = NL;
   }
 
-  if (has_mbyte)
-    mb_adjust_opend(oap);
+  mb_adjust_opend(oap);
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
           (linenr_T)(oap->end.lnum + 1)) == FAIL)
@@ -2012,17 +2004,16 @@ void op_tilde(oparg_T *oap)
  * Returns TRUE if some character was changed.
  */
 static int swapchars(int op_type, pos_T *pos, int length)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int todo;
   int did_change = 0;
 
-  for (todo = length; todo > 0; --todo) {
-    if (has_mbyte) {
-      int len = (*mb_ptr2len)(ml_get_pos(pos));
+  for (int todo = length; todo > 0; todo--) {
+    const int len = utfc_ptr2len(ml_get_pos(pos));
 
-      /* we're counting bytes, not characters */
-      if (len > 0)
-        todo -= len - 1;
+    // we're counting bytes, not characters
+    if (len > 0) {
+      todo -= len - 1;
     }
     did_change |= swapchar(op_type, pos);
     if (inc(pos) == -1)        /* at end of file */
@@ -3052,7 +3043,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
 
       // move to start of next multi-byte character
-      curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
+      curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
       col++;
     } else {
       getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
@@ -3615,7 +3606,7 @@ dis_msg(
   while (*p != NUL
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
          && (n -= ptr2cells(p)) >= 0) {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
+    if ((l = utfc_ptr2len(p)) > 1) {
       msg_outtrans_len(p, l);
       p += l;
     } else
@@ -4414,7 +4405,10 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   char_u      *line;
   char_u      *prev_pstart;
   char_u      *prev_pend;
+  const int lbr_saved = curwin->w_p_lbr;
 
+  // Avoid a problem with unwanted linebreaks in block mode.
+  curwin->w_p_lbr = false;
   bdp->startspaces = 0;
   bdp->endspaces = 0;
   bdp->textlen = 0;
@@ -4514,6 +4508,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   }
   bdp->textcol = (colnr_T) (pstart - line);
   bdp->textstart = pstart;
+  curwin->w_p_lbr = lbr_saved;
 }
 
 /// Handle the add/subtract operator.

@@ -760,7 +760,7 @@ static void normal_get_additional_char(NormalState *s)
     // because if it's put back with vungetc() it's too late to apply
     // mapping.
     no_mapping--;
-    while (enc_utf8 && lang && (s->c = vpeekc()) > 0
+    while (lang && (s->c = vpeekc()) > 0
            && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
       s->c = plain_vgetc();
       if (!utf_iscomposing(s->c)) {
@@ -1711,13 +1711,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       }
     }
 
-    /* Include the trailing byte of a multi-byte char. */
-    if (has_mbyte && oap->inclusive) {
-      int l;
-
-      l = (*mb_ptr2len)(ml_get_pos(&oap->end));
-      if (l > 1)
+    // Include the trailing byte of a multi-byte char.
+    if (oap->inclusive) {
+      const int l = utfc_ptr2len(ml_get_pos(&oap->end));
+      if (l > 1) {
         oap->end.col += l - 1;
+      }
     }
     curwin->w_set_curswant = true;
 
@@ -1846,10 +1845,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restart_edit = 0;
 
         // Restore linebreak, so that when the user edits it looks as before.
-        if (curwin->w_p_lbr != lbr_saved) {
-          curwin->w_p_lbr = lbr_saved;
-          get_op_vcol(oap, redo_VIsual_mode, false);
-        }
+        curwin->w_p_lbr = lbr_saved;
 
         // Reset finish_op now, don't want it set inside edit().
         finish_op = false;
@@ -1935,10 +1931,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         restart_edit = 0;
 
         // Restore linebreak, so that when the user edits it looks as before.
-        if (curwin->w_p_lbr != lbr_saved) {
-          curwin->w_p_lbr = lbr_saved;
-          get_op_vcol(oap, redo_VIsual_mode, false);
-        }
+        curwin->w_p_lbr = lbr_saved;
 
         op_insert(oap, cap->count1);
 
@@ -1964,10 +1957,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         // Restore linebreak, so that when the user edits it looks as before.
-        if (curwin->w_p_lbr != lbr_saved) {
-          curwin->w_p_lbr = lbr_saved;
-          get_op_vcol(oap, redo_VIsual_mode, false);
-        }
+        curwin->w_p_lbr = lbr_saved;
 
         op_replace(oap, cap->nchar);
       }
@@ -2906,17 +2896,17 @@ static void find_end_of_word(pos_T *pos)
  */
 static int get_mouse_class(char_u *p)
 {
-  int c;
-
-  if (has_mbyte && MB_BYTE2LEN(p[0]) > 1)
+  if (MB_BYTE2LEN(p[0]) > 1) {
     return mb_get_class(p);
+  }
 
-  c = *p;
-  if (c == ' ' || c == '\t')
+  const int c = *p;
+  if (c == ' ' || c == '\t') {
     return 0;
-
-  if (vim_iswordc(c))
+  }
+  if (vim_iswordc(c)) {
     return 2;
+  }
 
   /*
    * There are a few special cases where we want certain combinations of
@@ -4916,10 +4906,9 @@ static void nv_ident(cmdarg_T *cap)
         *p++ = '\\';
       /* When current byte is a part of multibyte character, copy all
        * bytes of that character. */
-      if (has_mbyte) {
-        size_t len = (size_t)((*mb_ptr2len)(ptr) - 1);
-        for (size_t i = 0; i < len && n > 0; ++i, --n)
-          *p++ = *ptr++;
+      const size_t len = (size_t)(utfc_ptr2len(ptr) - 1);
+      for (size_t i = 0; i < len && n > 0; i++, n--) {
+        *p++ = *ptr++;
       }
       *p++ = *ptr++;
     }
@@ -4930,11 +4919,11 @@ static void nv_ident(cmdarg_T *cap)
    * Execute the command.
    */
   if (cmdchar == '*' || cmdchar == '#') {
-    if (!g_cmd && (
-          has_mbyte ? vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr)) :
-          vim_iswordc(ptr[-1])))
+    if (!g_cmd
+        && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
       STRCAT(buf, "\\>");
-    /* put pattern in search history */
+    }
+    // put pattern in search history
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0,
@@ -4977,9 +4966,8 @@ get_visual_text (
       *pp = ml_get_pos(&VIsual);
       *lenp = (size_t)curwin->w_cursor.col - (size_t)VIsual.col + 1;
     }
-    if (has_mbyte)
-      /* Correct the length to include the whole last character. */
-      *lenp += (size_t)((*mb_ptr2len)(*pp + (*lenp - 1)) - 1);
+    // Correct the length to include the whole last character.
+    *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
   }
   reset_VIsual_and_resel();
   return true;
@@ -5197,11 +5185,7 @@ static void nv_left(cmdarg_T *cap)
           char_u *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
-            if (has_mbyte) {
-              curwin->w_cursor.col += (*mb_ptr2len)(cp);
-            } else {
-              curwin->w_cursor.col++;
-            }
+            curwin->w_cursor.col += utfc_ptr2len(cp);
           }
           cap->retval |= CA_NO_ADJ_OP_END;
         }
@@ -5859,7 +5843,6 @@ static void nv_replace(cmdarg_T *cap)
 {
   char_u      *ptr;
   int had_ctrl_v;
-  long n;
 
   if (checkclearop(cap->oap))
     return;
@@ -5913,7 +5896,7 @@ static void nv_replace(cmdarg_T *cap)
   /* Abort if not enough characters to replace. */
   ptr = get_cursor_pos_ptr();
   if (STRLEN(ptr) < (unsigned)cap->count1
-      || (has_mbyte && mb_charlen(ptr) < cap->count1)
+      || (mb_charlen(ptr) < cap->count1)
       ) {
     clearopbeep(cap->oap);
     return;
@@ -5955,71 +5938,44 @@ static void nv_replace(cmdarg_T *cap)
         NUL, 'r', NUL, had_ctrl_v, cap->nchar);
 
     curbuf->b_op_start = curwin->w_cursor;
-    if (has_mbyte) {
-      int old_State = State;
+    const int old_State = State;
 
-      if (cap->ncharC1 != 0)
-        AppendCharToRedobuff(cap->ncharC1);
-      if (cap->ncharC2 != 0)
-        AppendCharToRedobuff(cap->ncharC2);
+    if (cap->ncharC1 != 0) {
+      AppendCharToRedobuff(cap->ncharC1);
+    }
+    if (cap->ncharC2 != 0) {
+      AppendCharToRedobuff(cap->ncharC2);
+    }
 
-      /* This is slow, but it handles replacing a single-byte with a
-       * multi-byte and the other way around.  Also handles adding
-       * composing characters for utf-8. */
-      for (n = cap->count1; n > 0; --n) {
-        State = REPLACE;
-        if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
-          int c = ins_copychar(curwin->w_cursor.lnum
-              + (cap->nchar == Ctrl_Y ? -1 : 1));
-          if (c != NUL)
-            ins_char(c);
-          else
-            /* will be decremented further down */
-            ++curwin->w_cursor.col;
-        } else
-          ins_char(cap->nchar);
-        State = old_State;
-        if (cap->ncharC1 != 0)
-          ins_char(cap->ncharC1);
-        if (cap->ncharC2 != 0)
-          ins_char(cap->ncharC2);
-      }
-    } else {
-      /*
-       * Replace the characters within one line.
-       */
-      for (n = cap->count1; n > 0; --n) {
-        /*
-         * Get ptr again, because u_save and/or showmatch() will have
-         * released the line.  At the same time we let know that the
-         * line will be changed.
-         */
-        ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
-        if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
-          int c = ins_copychar(curwin->w_cursor.lnum
-                               + (cap->nchar == Ctrl_Y ? -1 : 1));
-          if (c != NUL) {
-            assert(c >= 0 && c <= UCHAR_MAX);
-            ptr[curwin->w_cursor.col] = (char_u)c;
-          }
+    // This is slow, but it handles replacing a single-byte with a
+    // multi-byte and the other way around.  Also handles adding
+    // composing characters for utf-8.
+    for (long n = cap->count1; n > 0; n--) {
+      State = REPLACE;
+      if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
+        int c = ins_copychar(curwin->w_cursor.lnum
+                             + (cap->nchar == Ctrl_Y ? -1 : 1));
+        if (c != NUL) {
+          ins_char(c);
         } else {
-          assert(cap->nchar >= 0 && cap->nchar <= UCHAR_MAX);
-          ptr[curwin->w_cursor.col] = (char_u)cap->nchar;
+          // will be decremented further down
+          curwin->w_cursor.col++;
         }
-        if (p_sm && msg_silent == 0)
-          showmatch(cap->nchar);
-        ++curwin->w_cursor.col;
+      } else {
+        ins_char(cap->nchar);
       }
-
-      /* mark the buffer as changed and prepare for displaying */
-      changed_bytes(curwin->w_cursor.lnum,
-          (colnr_T)(curwin->w_cursor.col - cap->count1));
+      State = old_State;
+      if (cap->ncharC1 != 0) {
+        ins_char(cap->ncharC1);
+      }
+      if (cap->ncharC2 != 0) {
+        ins_char(cap->ncharC2);
+      }
     }
     --curwin->w_cursor.col;         /* cursor on the last replaced char */
     /* if the character on the left of the current cursor is a multi-byte
      * character, move two characters left */
-    if (has_mbyte)
-      mb_adjust_cursor();
+    mb_adjust_cursor();
     curbuf->b_op_end = curwin->w_cursor;
     curwin->w_set_curswant = true;
     set_last_insert(cap->nchar);
@@ -7365,10 +7321,9 @@ static void adjust_cursor(oparg_T *oap)
       && (!VIsual_active || *p_sel == 'o')
       && !virtual_active() && (ve_flags & VE_ONEMORE) == 0
       ) {
-    --curwin->w_cursor.col;
-    /* prevent cursor from moving on the trail byte */
-    if (has_mbyte)
-      mb_adjust_cursor();
+    curwin->w_cursor.col--;
+    // prevent cursor from moving on the trail byte
+    mb_adjust_cursor();
     oap->inclusive = true;
   }
 }
@@ -7395,10 +7350,7 @@ static void adjust_for_sel(cmdarg_T *cap)
 {
   if (VIsual_active && cap->oap->inclusive && *p_sel == 'e'
       && gchar_cursor() != NUL && lt(VIsual, curwin->w_cursor)) {
-    if (has_mbyte)
-      inc_cursor();
-    else
-      ++curwin->w_cursor.col;
+    inc_cursor();
     cap->oap->inclusive = false;
   }
 }
@@ -7988,9 +7940,7 @@ static void get_op_vcol(
   oap->motion_type = kMTBlockWise;
 
   // prevent from moving onto a trail byte
-  if (has_mbyte) {
-    mark_mb_adjustpos(curwin->w_buffer, &oap->end);
-  }
+  mark_mb_adjustpos(curwin->w_buffer, &oap->end);
 
   getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol);
   if (!redo_VIsual_busy) {

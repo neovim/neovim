@@ -1802,9 +1802,10 @@ char_u *ml_get(linenr_T lnum)
 /*
  * Return pointer to position "pos".
  */
-char_u *ml_get_pos(pos_T *pos)
+char_u *ml_get_pos(const pos_T *pos)
+  FUNC_ATTR_NONNULL_ALL
 {
-  return ml_get_buf(curbuf, pos->lnum, FALSE) + pos->col;
+  return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
 /*

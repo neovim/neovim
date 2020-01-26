@@ -296,3 +296,70 @@ function Test_breakindent16()
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunction
+
+func Test_breakindent17_vartabs()
+  if !has("vartabs")
+    return
+  endif
+  let s:input = ""
+  call s:test_windows('setl breakindent list listchars=tab:<-> showbreak=+++')
+  call setline(1, "\t" . repeat('a', 63))
+  vert resize 30
+  norm! 1gg$
+  redraw!
+  let lines = s:screen_lines(1, 30)
+  let expect = [
+	\ "<-->aaaaaaaaaaaaaaaaaaaaaaaaaa",
+	\ "    +++aaaaaaaaaaaaaaaaaaaaaaa",
+	\ "    +++aaaaaaaaaaaaaa         ",
+	\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& list& listchars& showbreak&')
+endfunc
+
+func Test_breakindent18_vartabs()
+  if !has("vartabs")
+    return
+  endif
+  let s:input = ""
+  call s:test_windows('setl breakindent list listchars=tab:<->')
+  call setline(1, "\t" . repeat('a', 63))
+  vert resize 30
+  norm! 1gg$
+  redraw!
+  let lines = s:screen_lines(1, 30)
+  let expect = [
+	\ "<-->aaaaaaaaaaaaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaaaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaa               ",
+	\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& list& listchars&')
+endfunc
+
+func Test_breakindent19_sbr_nextpage()
+  let s:input = ""
+  call s:test_windows('setl breakindent briopt=shift:2,sbr,min:18 sbr=>')
+  call setline(1, repeat('a', 200))
+  norm! 1gg
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "aaaaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " Scroll down one screen line
+  setl scrolloff=5
+  norm! 5gj
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "> aaaaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& briopt& sbr&')
+endfunc
