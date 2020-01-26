@@ -578,7 +578,7 @@ static char *(p_ssop_values[]) = {
 # define SSOP_BLANK             0x080
 # define SSOP_GLOBALS           0x100
 # define SSOP_SLASH             0x200
-# define SSOP_UNIX              0x400  /* Deprecated, not used. */
+# define SSOP_UNIX              0x400  // Deprecated, not used.
 # define SSOP_SESDIR            0x800
 # define SSOP_CURDIR            0x1000
 # define SSOP_FOLDS             0x2000

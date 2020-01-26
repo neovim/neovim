@@ -9210,7 +9210,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   // temporarily to avoid that.
   if (p_stal == 1 && first_tabpage->tp_next != NULL) {
     PUTLINE_FAIL("set stal=2");
-    restore_stal = TRUE;
+    restore_stal = true;
   }
 
   //
@@ -9482,18 +9482,18 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
         // to split.
         if (fprintf(fd, "%s%s",
                     "wincmd _ | wincmd |\n",
-                    (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")
-                    ) < 0) {
+                    (fr->fr_layout == FR_COL ? "split\n" : "vsplit\n")) < 0) {
           return FAIL;
         }
-        ++count;
+        count++;
       }
 
     // Go back to the first window.
     if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
-                          ? "%dwincmd k" : "%dwincmd h", count) < 0
-                      || put_eol(fd) == FAIL))
+                              ? "%dwincmd k" : "%dwincmd h", count) < 0
+                      || put_eol(fd) == FAIL)) {
       return FAIL;
+    }
 
     // Recursively create frames/windows in each window of this column or row.
     frc = ses_skipframe(fr->fr_child);
@@ -9501,8 +9501,9 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
       ses_win_rec(fd, frc);
       frc = ses_skipframe(frc->fr_next);
       // Go to next window.
-      if (frc != NULL && put_line(fd, "wincmd w") == FAIL)
+      if (frc != NULL && put_line(fd, "wincmd w") == FAIL) {
         return FAIL;
+      }
     }
   }
   return OK;
@@ -9694,9 +9695,9 @@ put_view(
   if (f == FAIL)
     return FAIL;
 
-  /*
-   * Save Folds when 'buftype' is empty and for help files.
-   */
+  //
+  // Save Folds when 'buftype' is empty and for help files.
+  //
   if ((*flagp & SSOP_FOLDS)
       && wp->w_buffer->b_ffname != NULL
       && (bt_normal(wp->w_buffer) || bt_help(wp->w_buffer))
@@ -9705,11 +9706,10 @@ put_view(
       return FAIL;
   }
 
-  /*
-   * Set the cursor after creating folds, since that moves the cursor.
-   */
+  //
+  // Set the cursor after creating folds, since that moves the cursor.
+  //
   if (do_cursor) {
-
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
     if (fprintf(fd,
@@ -9718,14 +9718,12 @@ put_view(
                 "if s:l < 1 | let s:l = 1 | endif\n"
                 "exe s:l\n"
                 "normal! zt\n"
-                "%" PRId64 "\n"
-                 ,
+                "%" PRId64 "\n",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
                 (int64_t)(wp->w_height_inner / 2),
                 (int64_t)wp->w_height_inner,
-                (int64_t)wp->w_cursor.lnum
-                ) < 0) {
+                (int64_t)wp->w_cursor.lnum) < 0) {
       return FAIL;
     }
     // Restore the cursor column and left offset when not wrapping.
@@ -9791,8 +9789,8 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
     return FAIL;
   }
   PUTLINE_FAIL("%argdel");
-  for (int i = 0; i < gap->ga_len; ++i) {
-    /* NULL file names are skipped (only happens when out of memory). */
+  for (int i = 0; i < gap->ga_len; i++) {
+    // NULL file names are skipped (only happens when out of memory).
     s = alist_name(&((aentry_T *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
