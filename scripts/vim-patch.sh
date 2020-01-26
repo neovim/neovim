@@ -428,7 +428,7 @@ _set_tokens_and_tags() {
 }
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
-# "$1": use extended format?
+# "$1": use extended format? (with subject)
 # "$@" is passed to list_vim_commits, as extra arguments to git-log.
 list_missing_vimpatches() {
   local -a missing_vim_patches=()
@@ -442,6 +442,8 @@ list_missing_vimpatches() {
 
 # Sets / appends to missing_vim_patches (useful to avoid a subshell when
 # used multiple times to cache tokens/vim_commit_tags).
+# "$1": use extended format? (with subject)
+# "$@": extra arguments to git-log.
 _set_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -a git_log_args
