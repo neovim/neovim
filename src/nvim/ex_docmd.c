@@ -8089,6 +8089,10 @@ static void close_redir(void)
   do { if (FAIL == put_line(fd, (s))) { return FAIL; } } while (0)
 
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
+///
+/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
+///   - SSOP_UNIX: line-endings are always LF
+///   - SSOP_SLASH: filenames are always written with "/" slash
 static void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;
@@ -9112,6 +9116,8 @@ char_u *expand_sfile(char_u *arg)
 
 /// Writes commands for restoring the current buffers, for :mksession.
 ///
+/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
+///
 /// @param dirnow  Current directory name
 /// @param fd  File descriptor to write to
 ///
@@ -9840,12 +9846,10 @@ static char *ses_escape_fname(char *name, unsigned *flagp)
   char *p;
   char *sname = (char *)home_replace_save(NULL, (char_u *)name);
 
-  if (*flagp & SSOP_SLASH) {
-    // change all backslashes to forward slashes
-    for (p = sname; *p != NUL; MB_PTR_ADV(p)) {
-      if (*p == '\\') {
-        *p = '/';
-      }
+  // Always SSOP_SLASH: change all backslashes to forward slashes.
+  for (p = sname; *p != NUL; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
+      *p = '/';
     }
   }
 

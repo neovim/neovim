@@ -96,7 +96,8 @@ describe(':mksession', function()
 
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    local session_path = cwd_dir..get_pathsep()..session_file
+    cwd_dir = cwd_dir:gsub([[\]], '/')  -- :mksession always uses unix slashes.
+    local session_path = cwd_dir..'/'..session_file
 
     command('cd '..tab_dir)
     command('terminal echo $PWD')
@@ -108,7 +109,7 @@ describe(':mksession', function()
     clear()
     command('silent source '..session_path)
 
-    local expected_cwd = cwd_dir..get_pathsep()..tab_dir
+    local expected_cwd = cwd_dir..'/'..tab_dir
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
     command('qall!')
   end)
