@@ -339,8 +339,8 @@ int main(int argc, char **argv)
                  "matchstr(expand(\"<amatch>\"), "
                  "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
                  // capture the working directory
-                 "{'cwd': get(matchlist(expand(\"<amatch>\"), "
-                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, '')})"
+                 "{'cwd': expand(get(matchlist(expand(\"<amatch>\"), "
+                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, ''))})"
                  "|endif");
   do_cmdline_cmd("augroup END");
 #undef PROTO

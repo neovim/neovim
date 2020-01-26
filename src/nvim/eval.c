@@ -18383,13 +18383,17 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int pid = chan->stream.pty.process.pid;
 
-  char buf[1024];
-  // format the title with the pid to conform with the term:// URI
-  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, cmd);
+  // "./…" => "/home/foo/…"
+  vim_FullName(cwd, (char *)NameBuff, sizeof(NameBuff), false);
+  // "/home/foo/…" => "~/…"
+  home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
+  // Terminal URI: "term://$CWD//$PID:$CMD"
+  snprintf((char *)NameBuff, sizeof(NameBuff), "term://%s//%d:%s",
+           (char *)IObuff, pid, cmd);
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;
-  (void)setfname(curbuf, (char_u *)buf, NULL, true);
+  (void)setfname(curbuf, NameBuff, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err = ERROR_INIT;
   // deprecated: use 'channel' buffer option

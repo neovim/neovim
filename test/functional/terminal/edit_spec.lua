@@ -5,9 +5,12 @@ local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
 local nvim_dir = helpers.nvim_dir
 local command = helpers.command
+local funcs = helpers.funcs
 local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
+local matches = helpers.matches
+local pesc = helpers.pesc
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
@@ -28,7 +31,8 @@ describe(':edit term://*', function()
     command('edit term://')
     local termopen_runs = meths.get_var('termopen_runs')
     eq(1, #termopen_runs)
-    eq(termopen_runs[1], termopen_runs[1]:match('^term://.//%d+:$'))
+    local cwd = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    matches('^term://'..pesc(cwd)..'//%d+:$', termopen_runs[1])
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
