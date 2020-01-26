@@ -582,6 +582,7 @@ list_missing_previous_vimpatches_for_patch() {
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
   if [[ -z "${missing_list[*]}" ]]; then
     msg_ok 'no missing previous Vim patches'
+    set -u
     return 0
   fi
   set -u
