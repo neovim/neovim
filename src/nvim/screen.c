@@ -370,6 +370,17 @@ int update_screen(int type)
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
         }
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+          if (wp->w_floating) {
+            continue;
+          }
+          if (W_ENDROW(wp) > valid) {
+            wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
+          }
+          if (W_ENDROW(wp) + wp->w_status_height > valid) {
+            wp->w_redr_status = true;
+          }
+        }
       }
       msg_grid_set_pos(Rows-p_ch, false);
       msg_grid_invalid = false;
