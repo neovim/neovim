@@ -2008,6 +2008,10 @@ char_u *did_set_spelllang(win_T *wp)
     region = NULL;
     len = (int)STRLEN(lang);
 
+    if (!valid_spellang(lang)) {
+      continue;
+    }
+
     if (STRCMP(lang, "cjk") == 0) {
       wp->w_s->b_cjk = 1;
       continue;

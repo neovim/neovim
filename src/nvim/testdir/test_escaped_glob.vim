@@ -17,7 +17,7 @@ function Test_glob()
   " Setting 'shell' to an invalid name causes a memory leak.
   sandbox call assert_equal("", glob('Xxx\{'))
   sandbox call assert_equal("", glob('Xxx\$'))
-  w! Xxx{
+  w! Xxx\{
   " } to fix highlighting
   w! Xxx\$
   sandbox call assert_equal("Xxx{", glob('Xxx\{'))

@@ -151,6 +151,12 @@ func Test_spellinfo()
   set nospell spelllang=en
   call assert_fails('spellinfo', 'E756:')
 
+  call assert_fails('set spelllang=foo/bar', 'E474:')
+  call assert_fails('set spelllang=foo\ bar', 'E474:')
+  call assert_fails("set spelllang=foo\\\nbar", 'E474:')
+  call assert_fails("set spelllang=foo\\\rbar", 'E474:')
+  call assert_fails("set spelllang=foo+bar", 'E474:')
+
   set enc& spell& spelllang&
   bwipe
 endfunc
