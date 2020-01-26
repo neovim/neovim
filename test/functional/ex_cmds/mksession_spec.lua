@@ -26,6 +26,27 @@ describe(':mksession', function()
     rmdir(tab_dir)
   end)
 
+  it('restores same :terminal buf in splits', function()
+    -- If the same :terminal is displayed in multiple windows, :mksession
+    -- should restore it as such.
+
+    -- Create two windows showing the same :terminal buffer.
+    command('terminal')
+    command('split')
+    command('terminal')
+    command('split')
+    command('mksession '..session_file)
+
+    -- Create a new test instance of Nvim.
+    command('qall!')
+    clear()
+    -- Restore session.
+    command('source '..session_file)
+
+    eq({3,3,2},
+      {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
+  end)
+
   it('restores tab-local working directories', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
     local cwd_dir = funcs.getcwd()
@@ -91,23 +112,4 @@ describe(':mksession', function()
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
     command('qall!')
   end)
-
-	it('restores multiple windows with same terminal instances', function()
-		-- Create a view with two buffers referencing the same terminal instance
-		command('terminal')
-		command('split')
-		command('mksession ' .. session_file)
-
-		clear()
-
-		command('source ' .. session_file)
-		-- Getting the name of the buffer shown to compare with the other window
-		local eval = helpers.eval
-
-		command('exe 1 . "wincmd w"')
-		local expected_pid = eval('b:terminal_job_pid')
-
-		command('exe 2 . "wincmd w"')
-		eq(expected_pid, eval('b:terminal_job_pid'))
-	end)
 end)

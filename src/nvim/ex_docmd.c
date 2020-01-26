@@ -8090,14 +8090,12 @@ static void close_redir(void)
 static int mksession_nl = FALSE;    /* use NL only in put_eol() */
 #endif
 
-/*
- * ":mkexrc", ":mkvimrc", ":mkview" and ":mksession".
- */
+/// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
 static void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;
   int failed = false;
-  int view_session = false;
+  int view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
   unsigned    *flagp;
@@ -8159,11 +8157,11 @@ static void ex_mkrc(exarg_T *eap)
         failed = TRUE;
     }
 
-    if (!view_session
-        || (eap->cmdidx == CMD_mksession
-            && (*flagp & SSOP_OPTIONS)))
+    if (!view_session || (eap->cmdidx == CMD_mksession
+                          && (*flagp & SSOP_OPTIONS))) {
       failed |= (makemap(fd, NULL) == FAIL
                  || makeset(fd, OPT_GLOBAL, FALSE) == FAIL);
+    }
 
     if (!failed && view_session) {
       if (put_line(fd,
@@ -9119,15 +9117,13 @@ char_u *expand_sfile(char_u *arg)
 }
 
 
-/*
- * Write openfile commands for the current buffers to an .exrc file.
- * Return FAIL on error, OK otherwise.
- */
-static int
-makeopens(
-    FILE *fd,
-    char_u *dirnow            /* Current directory name */
-)
+/// Writes commands for restoring the current buffers, for :mksession.
+///
+/// @param dirnow  Current directory name
+/// @param fd  File descriptor to write to
+///
+/// @return FAIL on error, OK otherwise.
+static int makeopens(FILE *fd, char_u *dirnow)
 {
   int only_save_windows = TRUE;
   int nr;
@@ -9240,12 +9236,11 @@ makeopens(
     restore_stal = TRUE;
   }
 
-  /*
-   * May repeat putting Windows for each tab, when "tabpages" is in
-   * 'sessionoptions'.
-   * Don't use goto_tabpage(), it may change directory and trigger
-   * autocommands.
-   */
+  //
+  // For each tab:
+  // - Put windows for each tab, when "tabpages" is in 'sessionoptions'.
+  // - Don't use goto_tabpage(), it may change CWD and trigger autocommands.
+  //
   tab_firstwin = firstwin;      /* first window in tab page "tabnr" */
   tab_topframe = topframe;
   for (tabnr = 1;; tabnr++) {
@@ -9269,11 +9264,11 @@ makeopens(
         need_tabnew = TRUE;
     }
 
-    /*
-     * Before creating the window layout, try loading one file.  If this
-     * is aborted we don't end up with a number of useless windows.
-     * This may have side effects! (e.g., compressed or network file).
-     */
+    //
+    // Before creating the window layout, try loading one file.  If this
+    // is aborted we don't end up with a number of useless windows.
+    // This may have side effects! (e.g., compressed or network file).
+    //
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
@@ -9343,13 +9338,9 @@ makeopens(
       return FAIL;
     }
 
-    /*
-     * Restore the view of the window (options, file, cursor, etc.).
-     */
-    if (put_line(fd, "let s:buffer_names = []") == FAIL) {
-      return FAIL;
-    }
-
+    //
+    // Restore the view of the window (options, file, cursor, etc.).
+    //
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp))
         continue;
@@ -9359,16 +9350,6 @@ makeopens(
       if (nr > 1 && put_line(fd, "wincmd w") == FAIL)
         return FAIL;
       next_arg_idx = wp->w_arg_idx;
-    }
-
-    if (put_line(fd, "for [s:name, s:tbuf] in s:buffer_names") == FAIL
-        || put_line(fd, "  if buflisted(s:tbuf)") == FAIL
-        || put_line(fd, "    execute 'buffer' fnameescape(s:tbuf)") == FAIL
-        || put_line(fd, "    execute 'file' fnameescape(s:name)") == FAIL
-        || put_line(fd, "  endif") == FAIL
-        || put_line(fd, "endfor") == FAIL
-        || put_line(fd, "unlet! s:buffer_names s:tbuf s:name") == FAIL) {
-      return FAIL;
     }
 
     /* The argument index in the first tab page is zero, need to set it in
@@ -9677,14 +9658,7 @@ put_view(
         return FAIL;
       }
 
-      if (fputs("call add(s:buffer_names, [bufname('%'),'", fd) < 0
-          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || fputs("'])", fd) < 0
-          || put_eol(fd) == FAIL) {
-        return FAIL;
-      }
-
-      if (fputs("file ", fd) < 0
+      if (fputs("silent file ", fd) < 0
           || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
           || put_eol(fd) == FAIL) {
         return FAIL;
