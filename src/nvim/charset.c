@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <wctype.h>
-#include <wchar.h>  // for towupper() and towlower()
 #include <inttypes.h>
 
 #include "nvim/vim.h"
