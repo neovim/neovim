@@ -1551,15 +1551,14 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     /* Stop when scrolled nothing or at least "min_scroll", found "extra"
      * context for 'scrolloff' and counted all lines below the window. */
     if ((((scrolled <= 0 || scrolled >= min_scroll)
-          && extra >= (
-            mouse_dragging > 0 ? mouse_dragging - 1 :
-            p_so))
+          && extra >= (mouse_dragging > 0 ? mouse_dragging - 1 : p_so))
          || boff.lnum + 1 > curbuf->b_ml.ml_line_count)
         && loff.lnum <= curwin->w_botline
         && (loff.lnum < curwin->w_botline
             || loff.fill >= fill_below_window)
-        )
+        ) {
       break;
+    }
 
     /* Add one line above */
     topline_back(&loff);
@@ -1590,9 +1589,8 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
       if (used > curwin->w_height_inner) {
         break;
       }
-      if (extra < (
-            mouse_dragging > 0 ? mouse_dragging - 1 :
-            p_so) || scrolled < min_scroll) {
+      if (extra < (mouse_dragging > 0 ? mouse_dragging - 1 : p_so)
+          || scrolled < min_scroll) {
         extra += boff.height;
         if (boff.lnum >= curwin->w_botline
             || (boff.lnum + 1 == curwin->w_botline
@@ -1742,8 +1740,7 @@ void cursor_correct(void)
   }
   validate_botline();
   if (curwin->w_botline == curbuf->b_ml.ml_line_count + 1
-      && mouse_dragging == 0
-      ) {
+      && mouse_dragging == 0) {
     below_wanted = 0;
     int max_off = (curwin->w_height_inner - 1) / 2;
     if (above_wanted > max_off) {
