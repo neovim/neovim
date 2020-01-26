@@ -23,6 +23,7 @@ usage() {
   echo "    -h                 Show this message and exit."
   echo "    -l [git-log opts]  List missing Vim patches."
   echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
+  echo "    -m {vim-revision}  List previous (older) missing Vim patches."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.0.xxx) or a Git hash."
