@@ -423,7 +423,7 @@ static bool out_data_decide_throttle(size_t size)
   pulse_msg[1] = (tick > 1) ? '.' : ' ';
   pulse_msg[2] = (tick > 2) ? '.' : ' ';
   if (visit == 1) {
-    msg_puts("[...]\n");
+    msg_puts("...\n");
   }
   msg_putchar('\r');  // put cursor at start of line
   msg_puts(pulse_msg);
