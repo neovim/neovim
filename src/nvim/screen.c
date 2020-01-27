@@ -2551,6 +2551,7 @@ win_line (
   }
 
   // If this line has a sign with line highlighting set line_attr.
+  // TODO: this should not take priority over decorations!
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL, 0, 1);
   if (v != 0) {
     line_attr = sign_get_attr((int)v, SIGN_LINEHL);
