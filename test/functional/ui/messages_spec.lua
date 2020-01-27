@@ -938,6 +938,30 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {7:                                          0,0-1 100%        }|
     ]]}
   end)
+
+  it('supports echo with CRLF line separators', function()
+    feed(':echo "line 1\\r\\nline 2"<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {3:                                                            }|
+      line 1                                                      |
+      line 2                                                      |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>:echo "abc\\rz"<cr>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      zbc                                                         |
+    ]]}
+  end)
 end)
 
 describe('ui/ext_messages', function()
