@@ -5028,22 +5028,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 			will become the current directory (useful with
 			projects accessed over a network from different
 			systems)
-	   slash	backslashes in file names replaced with forward
-			slashes
 	   tabpages	all tab pages; without this only the current tab page
 			is restored, so that you can make a session for each
 			tab page separately
 	   terminal	include terminal windows where the command can be
 			restored
-	   unix		with Unix end-of-line format (single <NL>), even when
-			on Windows or DOS
 	   winpos	position of the whole Vim window
 	   winsize	window sizes
+	   slash	|deprecated| Always enabled. Uses "/" in filenames.
+	   unix		|deprecated| Always enabled. Uses "\n" line endings.
 
-	Don't include both "curdir" and "sesdir".
-	When neither "curdir" nor "sesdir" is included, file names are stored
-	with absolute paths.
-	"slash" and "unix" are always enabled.
+	Don't include both "curdir" and "sesdir". When neither is included
+	filenames are stored as absolute paths.
 
 				*'shada'* *'sd'* *E526* *E527* *E528*
 'shada' 'sd'		string	(Vim default for
@@ -6569,14 +6565,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   options	options and mappings local to a window or buffer (not
 			global values for local options)
 	   localoptions same as "options"
-	   slash	backslashes in file names replaced with forward
-			slashes
-	   unix		with Unix end-of-line format (single <NL>), even when
-			on Windows or DOS
-
-	"slash" and "unix" are useful on Windows when sharing view files
-	with Unix.  The Unix version of Vim cannot source dos format scripts,
-	but the Windows version of Vim can source unix format scripts.
+	   slash	|deprecated| Always enabled. Uses "/" in filenames.
+	   unix		|deprecated| Always enabled. Uses "\n" line endings.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
