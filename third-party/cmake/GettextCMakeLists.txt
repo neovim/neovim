@@ -8,6 +8,9 @@ endmacro()
 
 file(READ gettext-runtime/config.h.in CONFIG_CONTENT)
 string(REPLACE "#undef HAVE_GETCWD" "#define HAVE_GETCWD 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_ICONV_H" "#define HAVE_ICONV_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_ICONV" "#define HAVE_ICONV 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef ICONV_CONST" "#define ICONV_CONST const" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef uintmax_t" "
   #if _WIN64
   # define intmax_t long long
@@ -54,7 +57,8 @@ PREFIX_LIST_ITEMS(libintl_SOURCES "gettext-runtime/intl/")
 add_library(libintl ${libintl_SOURCES})
 set_property(TARGET libintl APPEND PROPERTY INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime
-  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl)
+  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl
+  ${LIBICONV_INCLUDE_DIRS})
 set_property(TARGET libintl APPEND PROPERTY COMPILE_DEFINITIONS
   BUILDING_LIBINTL
   IN_LIBINTL
@@ -72,6 +76,8 @@ string(REPLACE "#undef ENDIANNESS" "#define ENDIANNESS 0" CONFIG_CONTENT ${CONFI
 string(REPLACE "#undef GNULIB_FWRITEERROR" "#define GNULIB_FWRITEERROR 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_DECL_STRERROR_R" "#define HAVE_DECL_STRERROR_R 0" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_DUP2" "#define HAVE_DUP2 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_ICONV_H" "#define HAVE_ICONV_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_ICONV" "#define HAVE_ICONV 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_LIBUNISTRING" "#define HAVE_LIBUNISTRING 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_STDINT_H_WITH_UINTMAX" "#define HAVE_STDINT_H_WITH_UINTMAX 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_STDINT_H" "#define HAVE_STDINT_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
@@ -126,7 +132,7 @@ set(GLIBC_SOURCE
   mbchar.c mbslen.c mbsstr.c mbswidth.c obstack.c ostream.c html-ostream.c
   fd-ostream.c styled-ostream.c progname.c html-styled-ostream.c printf-args.c
   printf-parse.c propername.c quotearg.c rawmemchr.c safe-read.c safe-write.c
-  stpcpy.c stpncpy.c strchrnul.c striconveh.c striconveha.c strnlen1.c
+  stpcpy.c stpncpy.c strchrnul.c striconv.c striconveh.c striconveha.c strnlen1.c
   term-ostream.c term-styled-ostream.c tparm.c trim.c gcd.c gl_linkedhash_list.c
   uniconv/u8-conv-from-enc.c unictype/ctype_space.c unilbrk/lbrktables.c
   unilbrk/u8-possible-linebreaks.c unilbrk/u8-width-linebreaks.c
@@ -135,7 +141,7 @@ set(GLIBC_SOURCE
   unistr/u8-mbtouc-unsafe-aux.c unistr/u8-mbtouc-unsafe.c unistr/u8-mbtouc.c
   unistr/u8-mbtoucr.c unistr/u8-prev.c unistr/u8-uctomb-aux.c unistr/u8-uctomb.c
   uniwidth/width.c vasnprintf.c vasprintf.c wcwidth.c xasprintf.c
-  xconcat-filename.c xerror.c xmalloc.c xstrdup.c xvasprintf.c glib/ghash.c
+  xconcat-filename.c xerror.c xmalloc.c xstrdup.c xstriconv.c xstriconveh.c xvasprintf.c glib/ghash.c
   glib/glist.c glib/gmessages.c glib/gprimes.c glib/gstrfuncs.c glib/gstring.c
   libcroco/cr-additional-sel.c libcroco/cr-attr-sel.c libcroco/cr-cascade.c
   libcroco/cr-declaration.c libcroco/cr-doc-handler.c libcroco/cr-enc-handler.c
