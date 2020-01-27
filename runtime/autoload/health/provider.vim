@@ -392,18 +392,6 @@ function! s:check_python(version) abort
     let python_exe = ''
   endif
 
-  " Check if $VIRTUAL_ENV is valid.
-  if exists('$VIRTUAL_ENV') && !empty(python_exe)
-    if $VIRTUAL_ENV ==# matchstr(python_exe, '^\V'.$VIRTUAL_ENV)
-      call health#report_info('$VIRTUAL_ENV matches executable')
-    else
-      call health#report_warn(
-        \ '$VIRTUAL_ENV exists but appears to be inactive. '
-        \ . 'This could lead to unexpected results.',
-        \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654' ])
-    endif
-  endif
-
   " Diagnostic output
   call health#report_info('Executable: ' . (empty(python_exe) ? 'Not found' : python_exe))
   if len(python_multiple)
@@ -495,6 +483,72 @@ function! s:check_for_pyenv() abort
   call health#report_info('pyenv: Root: '.pyenv_root)
 
   return [pyenv_path, pyenv_root]
+endfunction
+
+" Locate Python executable by running invocation and checking
+" sys.executable.
+function! s:locate_pythonx(invocation) abort
+  return s:normalize_path(system(a:invocation
+    \ . ' -c "from __future__ import print_function; import sys; print(sys.executable, end=\"\")"'))
+endfunction
+
+" If $VIRTUAL_ENV is set, check whether its Python executables will be
+" the first on the $PATH of both Neovim and subshells spawned from
+" Neovim.
+function! s:check_active_virtualenv() abort
+  call health#report_start('Python active virtualenv')
+  let errors = []
+  " hints are kept as Dictionary keys in order to discard duplicates
+  let hints = {}
+  " the virtualenv should contain some Python executables, and those
+  " executables should be first both on Neovim's path and on the path of
+  " subshells launched from Neovim
+  let venv_pythonxs = glob($VIRTUAL_ENV . '/bin/python*', v:true, v:true)
+  if len(venv_pythonxs)
+    for venv_pythonx in venv_pythonxs
+      let venv_pythonx = s:normalize_path(venv_pythonx)
+      let pythonx_basename = fnamemodify(venv_pythonx, ':t')
+      let neovim_pythonx = s:locate_pythonx(exepath(pythonx_basename))
+      let subshell_pythonx = s:locate_pythonx(pythonx_basename)
+      if venv_pythonx !=# neovim_pythonx
+        call add(errors, 'according to Neovim''s $PATH, the ' . pythonx_basename
+          \ . ' executable is found outside the virtualenv, here: ' . neovim_pythonx)
+        let hint = 'Problems with Neovim''s $PATH are caused by the virtualenv not being '
+          \ . 'properly activated prior to launching Neovim. Close Neovim, activate the virtualenv '
+          \ . 'properly, check that invoking Python from the command line launches the correct one, '
+          \ . 'and relaunch Neovim.'
+        let hints[hint] = v:true
+      endif
+      if venv_pythonx !=# subshell_pythonx
+        call add(errors, 'according to the $PATH of subshells launched from Neovim, the '
+          \ . pythonx_basename . ' executable is found outside the virtualenv, here: '
+          \ . subshell_pythonx)
+        let hint = 'Problems with the $PATH of subshells launched from Neovim can be '
+          \ . 'caused by your shell''s startup files overriding the $PATH previously set by the '
+          \ . 'virtualenv. Either prevent them from doing so, or use '
+          \ . 'https://vi.stackexchange.com/a/7654/18339 as a workaround.'
+        let hints[hint] = v:true
+      endif
+    endfor
+  else
+    call add(errors, 'no Python executables were found in the virtualenv''s bin directory.')
+  endif
+
+  if len(errors)
+    call health#report_warn('$VIRTUAL_ENV is set to: ' . $VIRTUAL_ENV)
+    if len(venv_pythonxs)
+      call health#report_warn('And its bin directory contains the following executables: '
+        \ . join(map(venv_pythonxs, "fnamemodify(v:val, ':t')"), ', '))
+    endif
+    let conj = 'However, '
+    for error in errors
+      call health#report_warn(conj . error)
+      let conj = 'And '
+    endfor
+    call health#report_warn('So invoking Python may lead to unexpected results.', keys(hints))
+  else
+    call health#report_ok('$VIRTUAL_ENV is active and invoking Python from within Neovim will honor it.')
+  endif
 endfunction
 
 function! s:check_ruby() abort
@@ -682,6 +736,9 @@ function! health#provider#check() abort
   call s:check_clipboard()
   call s:check_python(2)
   call s:check_python(3)
+  if exists('$VIRTUAL_ENV')
+    call s:check_active_virtualenv()
+  endif
   call s:check_ruby()
   call s:check_node()
   call s:check_perl()
