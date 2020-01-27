@@ -358,7 +358,10 @@ Name			triggered by ~
 
 |MenuPopup|		just before showing the popup menu
 |CompleteChanged|	after popup menu changed, not fired on popup menu hide
-|CompleteDone|		after Insert mode completion is done
+|CompleteDonePre|	after Insert mode completion is done, before clearing
+			info
+|CompleteDone|		after Insert mode completion is done, after clearing
+			info
 
 |User|			to be used in combination with ":doautocmd"
 |Signal|		after Nvim receives a signal
@@ -577,7 +580,8 @@ ColorSchemePre			Before loading a color scheme. |:colorscheme|
 CompleteChanged 					*CompleteChanged*
 				After each time the Insert mode completion
 				menu changed.  Not fired on popup menu hide,
-				use |CompleteDone| for that.
+				use |CompleteDonePre| or |CompleteDone| for
+				that.
 
 				Sets these |v:event| keys:
 				    completed_item	See |complete-items|.
@@ -594,12 +598,22 @@ CompleteChanged 					*CompleteChanged*
   				The size and position of the popup are also
  				available by calling |pum_getpos()|.
 
+							*CompleteDonePre*
+CompleteDonePre			After Insert mode completion is done.  Either
+				when something was completed or abandoning
+				completion. |ins-completion|
+				|complete_info()| can be used, the info is
+				cleared after triggering CompleteDonePre.
+				The |v:completed_item| variable contains
+				information about the completed item.
+
 							*CompleteDone*
 CompleteDone			After Insert mode completion is done.  Either
 				when something was completed or abandoning
 				completion. |ins-completion|
-				|complete_info()| can be used, the info is
-				cleared after triggering CompleteDone.
+				|complete_info()| cannot be used, the info is
+				cleared before triggering CompleteDone.  Use
+				CompleteDonePre if you need it.
 				|v:completed_item| gives the completed item.
 
 							*CursorHold*

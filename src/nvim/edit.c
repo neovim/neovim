@@ -3594,17 +3594,11 @@ static bool ins_compl_prep(int c)
 
       auto_format(FALSE, TRUE);
 
-      {
-        const int new_mode = ctrl_x_mode;
-
-        // Trigger the CompleteDone event to give scripts a chance to
-        // act upon the completion.  Do this before clearing the info,
-        // and restore ctrl_x_mode, so that complete_info() can be
-        // used.
-        ctrl_x_mode = prev_mode;
-        ins_apply_autocmds(EVENT_COMPLETEDONE);
-        ctrl_x_mode = new_mode;
-      }
+      // Trigger the CompleteDonePre event to give scripts a chance to
+      // act upon the completion before clearing the info, and restore
+      // ctrl_x_mode, so that complete_info() can be used.
+      ctrl_x_mode = prev_mode;
+      ins_apply_autocmds(EVENT_COMPLETEDONEPRE);
 
       ins_compl_free();
       compl_started = false;
@@ -3630,6 +3624,9 @@ static bool ins_compl_prep(int c)
        */
       if (want_cindent && in_cinkeys(KEY_COMPLETE, ' ', inindent(0)))
         do_c_expr_indent();
+      // Trigger the CompleteDone event to give scripts a chance to act
+      // upon the end of completion.
+      ins_apply_autocmds(EVENT_COMPLETEDONE);
     }
   } else if (ctrl_x_mode == CTRL_X_LOCAL_MSG)
     /* Trigger the CompleteDone event to give scripts a chance to act
