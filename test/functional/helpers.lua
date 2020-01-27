@@ -794,7 +794,7 @@ function module.alter_slashes(obj)
     end
     return ret
   else
-    assert(false, 'Could only alter slashes for tables of strings and strings')
+    assert(false, 'expected string or table of strings, got '..type(obj))
   end
 end
 

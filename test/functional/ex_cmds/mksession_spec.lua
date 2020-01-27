@@ -26,6 +26,27 @@ describe(':mksession', function()
     rmdir(tab_dir)
   end)
 
+  it('restores same :terminal buf in splits', function()
+    -- If the same :terminal is displayed in multiple windows, :mksession
+    -- should restore it as such.
+
+    -- Create two windows showing the same :terminal buffer.
+    command('terminal')
+    command('split')
+    command('terminal')
+    command('split')
+    command('mksession '..session_file)
+
+    -- Create a new test instance of Nvim.
+    command('qall!')
+    clear()
+    -- Restore session.
+    command('source '..session_file)
+
+    eq({3,3,2},
+      {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
+  end)
+
   it('restores tab-local working directories', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
     local cwd_dir = funcs.getcwd()
@@ -75,7 +96,8 @@ describe(':mksession', function()
 
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    local session_path = cwd_dir..get_pathsep()..session_file
+    cwd_dir = cwd_dir:gsub([[\]], '/')  -- :mksession always uses unix slashes.
+    local session_path = cwd_dir..'/'..session_file
 
     command('cd '..tab_dir)
     command('terminal echo $PWD')
@@ -87,7 +109,7 @@ describe(':mksession', function()
     clear()
     command('silent source '..session_path)
 
-    local expected_cwd = cwd_dir..get_pathsep()..tab_dir
+    local expected_cwd = cwd_dir..'/'..tab_dir
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
     command('qall!')
   end)
