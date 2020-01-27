@@ -31,6 +31,7 @@ return {
     'ColorSchemePre',         -- before loading a colorscheme
     'CompleteChanged',        -- after popup menu changed
     'CompleteDone',           -- after finishing insert complete
+    'CompleteDonePre',        -- idem, before clearing info
     'CursorHold',             -- cursor in same position for a while
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
