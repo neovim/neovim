@@ -70,6 +70,7 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
+#include "nvim/ex_session.h"
 #include "nvim/sha256.h"
 #include "nvim/sign.h"
 #include "nvim/spell.h"

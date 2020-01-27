@@ -19,6 +19,7 @@
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_session.h"
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/buffer_updates.h"
