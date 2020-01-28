@@ -66,6 +66,7 @@
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
 #include "nvim/regexp.h"
+#include "nvim/ex_session.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"

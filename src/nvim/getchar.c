@@ -41,6 +41,7 @@
 #include "nvim/option.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/ex_session.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
