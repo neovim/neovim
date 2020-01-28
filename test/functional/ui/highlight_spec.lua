@@ -1186,6 +1186,7 @@ describe("'winhighlight' highlight", function()
       [25] = {bold = true, foreground = Screen.colors.Green1},
       [26] = {background = Screen.colors.Red},
       [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
+      [28] = {bold = true, foreground = Screen.colors.Brown},
     })
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
@@ -1597,5 +1598,46 @@ describe("'winhighlight' highlight", function()
       {3:[No Name] [+]       }|
       {21:-- }{22:match 1 of 3}     |
     ]])
+  end)
+
+  it('can override CursorLine and CursorLineNr', function()
+    -- CursorLine used to be parsed as CursorLineNr, because strncmp
+    command('set cursorline number')
+    command('split')
+    command('set winhl=CursorLine:Background1')
+    screen:expect{grid=[[
+      {28:  1 }{1:^                }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {28:  1 }{18:                }|
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    command('set winhl=CursorLineNr:Background2,CursorLine:Background1')
+    screen:expect{grid=[[
+      {5:  1 }{1:^                }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {28:  1 }{18:                }|
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    feed('<c-w>w')
+    screen:expect{grid=[[
+      {5:  1 }{1:                }|
+      {0:~                   }|
+      {0:~                   }|
+      {4:[No Name]           }|
+      {28:  1 }{18:^                }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]]}
   end)
 end)
