@@ -704,7 +704,7 @@ do
 end
 
 local position_sort = sort_by_key(function(v)
-  return {v.line, v.character}
+  return {v.start.line, v.start.character}
 end)
 
 -- Returns the items with the byte position calculated correctly and in sorted
@@ -721,17 +721,21 @@ function M.locations_to_items(locations)
   for _, d in ipairs(locations) do
     local start = d.range.start
     local fname = assert(vim.uri_to_fname(d.uri))
-    table.insert(grouped[fname], start)
+    table.insert(grouped[fname], {start = start, msg= d.message })
   end
+
+
   local keys = vim.tbl_keys(grouped)
   table.sort(keys)
   -- TODO(ashkan) I wish we could do this lazily.
   for _, fname in ipairs(keys) do
     local rows = grouped[fname]
+
     table.sort(rows, position_sort)
     local i = 0
     for line in io.lines(fname) do
-      for _, pos in ipairs(rows) do
+      for _, temp in ipairs(rows) do
+        local pos = temp.start
         local row = pos.line
         if i == row then
           local col
@@ -744,7 +748,7 @@ function M.locations_to_items(locations)
             filename = fname,
             lnum = row + 1,
             col = col + 1;
-            text = line;
+            text = temp.msg;
           })
         end
       end
