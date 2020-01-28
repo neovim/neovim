@@ -3842,7 +3842,8 @@ static bool parse_winhl_opt(win_T *wp)
       w_hl_id_normal = hl_id;
     } else {
       for (hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
-        if (strncmp(hlf_names[hlf], p, nlen) == 0) {
+        if (strlen(hlf_names[hlf]) == nlen
+            && strncmp(hlf_names[hlf], p, nlen) == 0) {
           w_hl_ids[hlf] = hl_id;
           break;
         }
