@@ -455,15 +455,15 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
+if(ENABLE_LIBICONV)
+  find_package(Iconv REQUIRED)
+  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
+endif()
+
 if(ENABLE_LIBINTL)
   # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
   find_package(LibIntl REQUIRED)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
-endif()
-
-if(ENABLE_LIBICONV)
-  find_package(Iconv REQUIRED)
-  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
