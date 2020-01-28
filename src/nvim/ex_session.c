@@ -112,7 +112,7 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
     // Find first frame that's not skipped and then create a window for
     // each following one (first frame is already there).
     frc = ses_skipframe(fr->fr_child);
-    if (frc != NULL)
+    if (frc != NULL) {
       while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
         // Make window as big as possible so that we have lots of room
         // to split.
@@ -123,6 +123,7 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
         }
         count++;
       }
+    }
 
     // Go back to the first window.
     if (count > 0 && (fprintf(fd, fr->fr_layout == FR_COL
@@ -214,7 +215,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, FALSE);
+        (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, false);
         s = buf;
       }
       char *fname_esc = ses_escape_fname((char *)s, flagp);
@@ -301,24 +302,23 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
 static int put_view(
     FILE *fd,
     win_T *wp,
-    int add_edit,                   /* add ":edit" command to view */
-    unsigned *flagp,             /* vop_flags or ssop_flags */
-    int current_arg_idx             /* current argument index of the window, use
-                                  * -1 if unknown */
-)
+    int add_edit,                // add ":edit" command to view
+    unsigned *flagp,             // vop_flags or ssop_flags
+    int current_arg_idx          // current argument index of the window, use
+)                                // -1 if unknown
 {
   win_T       *save_curwin;
   int f;
   int do_cursor;
-  int did_next = FALSE;
+  int did_next = false;
 
-  /* Always restore cursor position for ":mksession".  For ":mkview" only
-   * when 'viewoptions' contains "cursor". */
+  // Always restore cursor position for ":mksession".  For ":mkview" only
+  // when 'viewoptions' contains "cursor".
   do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
 
-  /*
-   * Local argument list.
-   */
+  //
+  // Local argument list.
+  //
   if (wp->w_alist == &global_alist) {
     PUTLINE_FAIL("argglobal");
   } else {
@@ -330,8 +330,8 @@ static int put_view(
     }
   }
 
-  /* Only when part of a session: restore the argument index.  Some
-   * arguments may have been deleted, check if the index is valid. */
+  // Only when part of a session: restore the argument index.  Some
+  // arguments may have been deleted, check if the index is valid.
   if (wp->w_arg_idx != current_arg_idx && wp->w_arg_idx < WARGCOUNT(wp)
       && flagp == &ssop_flags) {
     if (fprintf(fd, "%" PRId64 "argu\n", (int64_t)wp->w_arg_idx + 1) < 0) {
@@ -384,31 +384,32 @@ static int put_view(
     xfree(fname_esc);
   }
 
-  /*
-   * Local mappings and abbreviations.
-   */
+  //
+  // Local mappings and abbreviations.
+  //
   if ((*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS))
       && makemap(fd, wp->w_buffer) == FAIL) {
     return FAIL;
   }
 
-  /*
-   * Local options.  Need to go to the window temporarily.
-   * Store only local values when using ":mkview" and when ":mksession" is
-   * used and 'sessionoptions' doesn't include "nvim/options".
-   * Some folding options are always stored when "folds" is included,
-   * otherwise the folds would not be restored correctly.
-   */
+  //
+  // Local options.  Need to go to the window temporarily.
+  // Store only local values when using ":mkview" and when ":mksession" is
+  // used and 'sessionoptions' doesn't include "nvim/options".
+  // Some folding options are always stored when "folds" is included,
+  // otherwise the folds would not be restored correctly.
+  //
   save_curwin = curwin;
   curwin = wp;
   curbuf = curwin->w_buffer;
-  if (*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS))
+  if (*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS)) {
     f = makeset(fd, OPT_LOCAL,
-        flagp == &vop_flags || !(*flagp & SSOP_OPTIONS));
-  else if (*flagp & SSOP_FOLDS)
+                flagp == &vop_flags || !(*flagp & SSOP_OPTIONS));
+  } else if (*flagp & SSOP_FOLDS) {
     f = makefoldset(fd);
-  else
+  } else {
     f = OK;
+  }
   curwin = save_curwin;
   curbuf = curwin->w_buffer;
   if (f == FAIL) {
@@ -422,8 +423,9 @@ static int put_view(
       && wp->w_buffer->b_ffname != NULL
       && (bt_normal(wp->w_buffer) || bt_help(wp->w_buffer))
       ) {
-    if (put_folds(fd, wp) == FAIL)
+    if (put_folds(fd, wp) == FAIL) {
       return FAIL;
+    }
   }
 
   //
@@ -499,7 +501,7 @@ static int put_view(
 /// @return FAIL on error, OK otherwise.
 static int makeopens(FILE *fd, char_u *dirnow)
 {
-  int only_save_windows = TRUE;
+  int only_save_windows = true;
   int nr;
   int restore_size = true;
   win_T       *wp;
@@ -511,8 +513,9 @@ static int makeopens(FILE *fd, char_u *dirnow)
   int cur_arg_idx = 0;
   int next_arg_idx = 0;
 
-  if (ssop_flags & SSOP_BUFFERS)
-    only_save_windows = FALSE;                  /* Save ALL buffers */
+  if (ssop_flags & SSOP_BUFFERS) {
+    only_save_windows = false;  // Save ALL buffers
+  }
 
   // Begin by setting v:this_session, and then other sessionable variables.
   PUTLINE_FAIL("let v:this_session=expand(\"<sfile>:p\")");
@@ -571,7 +574,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     }
   }
 
-  /* the global argument list */
+  // the global argument list
   if (ses_arglist(fd, "argglobal", &global_alist.al_ga,
                   !(ssop_flags & SSOP_CURDIR), &ssop_flags) == FAIL) {
     return FAIL;
@@ -585,7 +588,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     }
   }
 
-  int restore_stal = FALSE;
+  int restore_stal = false;
   // When there are two or more tabpages and 'showtabline' is 1 the tabline
   // will be displayed when creating the next tab.  That resizes the windows
   // in the first tab, which may cause problems.  Set 'showtabline' to 2
@@ -619,8 +622,9 @@ static int makeopens(FILE *fd, char_u *dirnow)
         tab_firstwin = tp->tp_firstwin;
         tab_topframe = tp->tp_topframe;
       }
-      if (tabnr > 1)
-        need_tabnew = TRUE;
+      if (tabnr > 1) {
+        need_tabnew = true;
+      }
     }
 
     //
@@ -671,12 +675,14 @@ static int makeopens(FILE *fd, char_u *dirnow)
     //
     nr = 0;
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
-      if (ses_do_win(wp))
-        ++nr;
-      else
-        restore_size = FALSE;
-      if (curwin == wp)
+      if (ses_do_win(wp)) {
+        nr++;
+      } else {
+        restore_size = false;
+      }
+      if (curwin == wp) {
         cnr = nr;
+      }
     }
 
     // Go to the first window.
@@ -807,7 +813,7 @@ void ex_loadview(exarg_T *eap)
 {
   char *fname = get_view_file(*eap->arg);
   if (fname != NULL) {
-    if (do_source((char_u *)fname, FALSE, DOSO_NONE) == FAIL) {
+    if (do_source((char_u *)fname, false, DOSO_NONE) == FAIL) {
       EMSG2(_(e_notopen), fname);
     }
     xfree(fname);
@@ -829,12 +835,12 @@ void ex_mkrc(exarg_T *eap)
   unsigned    *flagp;
 
   if (eap->cmdidx == CMD_mksession || eap->cmdidx == CMD_mkview) {
-    view_session = TRUE;
+    view_session = true;
   }
 
-  /* Use the short file name until ":lcd" is used.  We also don't use the
-   * short file name when 'acd' is set, that is checked later. */
-  did_lcd = FALSE;
+  // Use the short file name until ":lcd" is used.  We also don't use the
+  // short file name when 'acd' is set, that is checked later.
+  did_lcd = false;
 
   char *fname;
   // ":mkview" or ":mkview 9": generate file name with 'viewdir'
@@ -849,7 +855,7 @@ void ex_mkrc(exarg_T *eap)
     viewFile = fname;
     using_vdir = true;
   } else if (*eap->arg != NUL) {
-    fname = (char *) eap->arg;
+    fname = (char *)eap->arg;
   } else if (eap->cmdidx == CMD_mkvimrc) {
     fname = VIMRC_FILE;
   } else if (eap->cmdidx == CMD_mksession) {
@@ -858,17 +864,18 @@ void ex_mkrc(exarg_T *eap)
     fname = EXRC_FILE;
   }
 
-  /* When using 'viewdir' may have to create the directory. */
+  // When using 'viewdir' may have to create the directory.
   if (using_vdir && !os_isdir(p_vdir)) {
     vim_mkdir_emsg((const char *)p_vdir, 0755);
   }
 
-  fd = open_exfile((char_u *) fname, eap->forceit, WRITEBIN);
+  fd = open_exfile((char_u *)fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
-    if (eap->cmdidx == CMD_mkview)
+    if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
-    else
+    } else {
       flagp = &ssop_flags;
+    }
 
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
@@ -876,8 +883,9 @@ void ex_mkrc(exarg_T *eap)
     }
 
     if (eap->cmdidx == CMD_mksession) {
-      if (put_line(fd, "let SessionLoad = 1") == FAIL)
-        failed = TRUE;
+      if (put_line(fd, "let SessionLoad = 1") == FAIL) {
+        failed = true;
+      }
     }
 
     if (!view_session || (eap->cmdidx == CMD_mksession
@@ -888,51 +896,55 @@ void ex_mkrc(exarg_T *eap)
 
     if (!failed && view_session) {
       if (put_line(fd,
-              "let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0")
-          == FAIL)
-        failed = TRUE;
+                   "let s:so_save = &so | let s:siso_save = &siso"
+                   " | set so=0 siso=0") == FAIL) {
+        failed = true;
+      }
       if (eap->cmdidx == CMD_mksession) {
-        char_u *dirnow;          /* current directory */
+        char_u *dirnow;  // current directory
 
         dirnow = xmalloc(MAXPATHL);
-        /*
-         * Change to session file's dir.
-         */
+        //
+        // Change to session file's dir.
+        //
         if (os_dirname(dirnow, MAXPATHL) == FAIL
-            || os_chdir((char *)dirnow) != 0)
+            || os_chdir((char *)dirnow) != 0) {
           *dirnow = NUL;
+        }
         if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
-          if (vim_chdirfile((char_u *) fname) == OK) {
+          if (vim_chdirfile((char_u *)fname) == OK) {
             shorten_fnames(true);
           }
         } else if (*dirnow != NUL
                    && (ssop_flags & SSOP_CURDIR) && globaldir != NULL) {
-          if (os_chdir((char *)globaldir) == 0)
-            shorten_fnames(TRUE);
+          if (os_chdir((char *)globaldir) == 0) {
+            shorten_fnames(true);
+          }
         }
 
         failed |= (makeopens(fd, dirnow) == FAIL);
 
-        /* restore original dir */
+        // restore original dir
         if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
                                || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                    NULL))) {
-          if (os_chdir((char *)dirnow) != 0)
+          if (os_chdir((char *)dirnow) != 0) {
             EMSG(_(e_prev_dir));
-          shorten_fnames(TRUE);
-          /* restore original dir */
+          }
+          shorten_fnames(true);
+          // restore original dir
           if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
                                  || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                      NULL))) {
-            if (os_chdir((char *)dirnow) != 0)
+            if (os_chdir((char *)dirnow) != 0) {
               EMSG(_(e_prev_dir));
-            shorten_fnames(TRUE);
+            }
+            shorten_fnames(true);
           }
         }
         xfree(dirnow);
       } else {
-        failed |= (put_view(fd, curwin, !using_vdir, flagp,
-                       -1) == FAIL);
+        failed |= (put_view(fd, curwin, !using_vdir, flagp, -1) == FAIL);
       }
       if (fprintf(fd,
                   "%s",
@@ -947,8 +959,9 @@ void ex_mkrc(exarg_T *eap)
         }
       }
     }
-    if (put_line(fd, "\" vim: set ft=vim :") == FAIL)
-      failed = TRUE;
+    if (put_line(fd, "\" vim: set ft=vim :") == FAIL) {
+      failed = true;
+    }
 
     failed |= fclose(fd);
 
@@ -978,13 +991,13 @@ static char *get_view_file(int c)
 
   // We want a file name without separators, because we're not going to make
   // a directory.
-  // "normal" path separator	-> "=+"
-  // "="			-> "=="
-  // ":" path separator	-> "=-"
+  //    "normal" path separator   -> "=+"
+  //    "="                       -> "=="
+  //    ":" path separator        -> "=-"
   size_t len = 0;
   for (char *p = sname; *p; p++) {
     if (*p == '=' || vim_ispathsep(*p)) {
-      ++len;
+      len++;
     }
   }
   char *retval = xmalloc(strlen(sname) + len + STRLEN(p_vdir) + 9);
@@ -998,18 +1011,18 @@ static char *get_view_file(int c)
     } else if (vim_ispathsep(*p)) {
       *s++ = '=';
 #if defined(BACKSLASH_IN_FILENAME)
-      if (*p == ':')
-        *s++ = '-';
-      else
-#endif
+      *s++ = (*p == ':') ? '-' : '+';
+#else
       *s++ = '+';
-    } else
+#endif
+    } else {
       *s++ = *p;
+    }
   }
   *s++ = '=';
   assert(c >= CHAR_MIN && c <= CHAR_MAX);
   *s++ = (char)c;
-  strcpy(s, ".vim");
+  xstrlcpy(s, ".vim", 5);
 
   xfree(sname);
   return retval;
