@@ -203,4 +203,17 @@ describe('lua: buffer event callbacks', function()
         { "test1", "lines", 1, tick+1, 5, 6, 5, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
   end)
 
+  it('has valid cursor position while shifting', function()
+    meths.buf_set_lines(0, 0, -1, true, {'line1'})
+    exec_lua([[
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function()
+          vim.api.nvim_set_var('listener_cursor_line', vim.api.nvim_win_get_cursor(0)[1])
+        end,
+      })
+    ]])
+    feed('>>')
+    eq(1, meths.get_var('listener_cursor_line'))
+  end)
+
 end)

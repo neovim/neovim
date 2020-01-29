@@ -1,9 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq, ok = helpers.eq, helpers.ok
-local buffer, command, meths, eval, nvim, next_msg, exec_lua = helpers.buffer,
-	helpers.command, helpers.meths, helpers.eval, helpers.nvim, helpers.next_msg,
-	helpers.exec_lua
+local buffer, command, eval, nvim, next_msg = helpers.buffer,
+  helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
 local sleep = helpers.sleep
@@ -860,20 +859,6 @@ describe('API: buffer events:', function()
     local s = string.rep('\nxyz', 30)
     sendkeys(s)
     assert_match_somewhere(expected_lines, buffer_lines)
-  end)
-
-  it('has valid cursor position while shifting', function()
-	  clear()
-	  local b = open(false, {'line1'})
-	  exec_lua([[
-	  vim.api.nvim_buf_attach(vim.api.nvim_get_current_buf(), false, {
-		  on_lines = function()
-			  vim.api.nvim_set_var('listener_cursor_line', vim.api.nvim_win_get_cursor(0)[1])
-		  end,
-		  })
-	  ]])
-	  sendkeys('>>')
-	  eq(1, meths.get_var('listener_cursor_line'))
   end)
 
 end)
