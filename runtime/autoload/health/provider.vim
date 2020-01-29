@@ -495,7 +495,7 @@ endfunction
 " If $VIRTUAL_ENV is set, check whether its Python executables will be
 " the first on the $PATH of both Neovim and subshells spawned from
 " Neovim.
-function! s:check_virtualenv() abort
+function! s:check_active_virtualenv() abort
   call health#report_start('Python active virtualenv')
   let errors = []
   " hints are kept as Dictionary keys in order to discard duplicates
@@ -737,7 +737,7 @@ function! health#provider#check() abort
   call s:check_python(2)
   call s:check_python(3)
   if exists('$VIRTUAL_ENV')
-    call s:check_virtualenv()
+    call s:check_active_virtualenv()
   endif
   call s:check_ruby()
   call s:check_node()
