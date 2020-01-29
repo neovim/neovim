@@ -489,7 +489,7 @@ endfunction
 " sys.executable.
 function! s:locate_pythonx(invocation) abort
   return s:normalize_path(system(a:invocation
-    \ . ' -c "from __future__ import print_function; import sys; print(sys.executable, end=\"\")"'))
+    \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
 endfunction
 
 " If $VIRTUAL_ENV is set, check whether its Python executables will be
