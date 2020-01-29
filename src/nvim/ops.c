@@ -260,8 +260,9 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   curbuf->b_op_start = oap->start;
   curbuf->b_op_end.lnum = oap->end.lnum;
   curbuf->b_op_end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
-  if (curbuf->b_op_end.col > 0)
-    --curbuf->b_op_end.col;
+  if (curbuf->b_op_end.col > 0) {
+    curbuf->b_op_end.col--;
+  }
 
   changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
 }
