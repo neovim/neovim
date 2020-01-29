@@ -98,7 +98,7 @@ describe('lua: buffer event callbacks', function()
     command('undo')
 
     -- plugins can opt in to receive changedtick events, or choose
-    -- to only recieve actual changes.
+    -- to only receive actual changes.
     check_events({{ "test1", "lines", 1, tick, 3, 4, 5, 13 },
         { "test2", "lines", 1, tick, 3, 4, 5, 13 },
         { "test2", "changedtick", 1, tick+1 } })
@@ -111,7 +111,7 @@ describe('lua: buffer event callbacks', function()
     tick = tick + 1
 
     -- plugins can opt in to receive changedtick events, or choose
-    -- to only recieve actual changes.
+    -- to only receive actual changes.
     check_events({{ "test1", "lines", 1, tick, 6, 7, 9, 16 },
         { "test2", "lines", 1, tick, 6, 7, 9, 16 }})
 

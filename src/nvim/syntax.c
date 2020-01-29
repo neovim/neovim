@@ -3981,7 +3981,7 @@ static void add_keyword(char_u *const name,
                                      STRLEN(kp->keyword), hash);
 
   // even though it looks like only the kp->keyword member is
-  // being used here, vim uses some pointer trickery to get the orignal
+  // being used here, vim uses some pointer trickery to get the original
   // struct again later by using knowledge of the offset of the keyword
   // field in the struct. See the definition of the HI2KE macro.
   if (HASHITEM_EMPTY(hi)) {

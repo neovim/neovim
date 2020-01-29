@@ -173,7 +173,7 @@
 /// @def TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 /// @brief Macros used to check special dictionary key
 ///
-/// @param  label  Label for goto in case check was not successfull.
+/// @param  label  Label for goto in case check was not successful.
 /// @param  key  typval_T key to check.
 
 /// @def TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
