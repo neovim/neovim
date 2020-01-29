@@ -1362,7 +1362,7 @@ msgstr "E156: Falta el nom del senyal"
 
 #: ../ex_cmds.c:5746
 msgid "E612: Too many signs defined"
-msgstr "E612: S'han definite massa senyals"
+msgstr "E612: S'han definit massa senyals"
 
 #: ../ex_cmds.c:5813
 #, c-format
@@ -1422,7 +1422,7 @@ msgstr "E161: Punt de ruptura no trobat: %s"
 
 #: ../ex_cmds2.c:611
 msgid "No breakpoints defined"
-msgstr "No s'han definite punts de ruptura"
+msgstr "No s'han definit punts de ruptura"
 
 #: ../ex_cmds2.c:617
 #, c-format
@@ -4283,7 +4283,7 @@ msgstr "E334: No s'ha trobat el menú: %s"
 #: ../menu.c:1396
 #, c-format
 msgid "E335: Menu not defined for %s mode"
-msgstr "E335: El menú no està definite pel mode %s"
+msgstr "E335: El menú no està definit pel mode %s"
 
 #: ../menu.c:1426
 msgid "E336: Menu path must lead to a sub-menu"
@@ -5938,7 +5938,7 @@ msgstr "E413: Sobren arguments: \":highlight link %s\""
 
 #: ../syntax.c:6302
 msgid "E414: group has settings, highlight link ignored"
-msgstr "E414: El grup ja ha estat definite, s'ignora l'enllaç de ressalt"
+msgstr "E414: El grup ja ha estat definit, s'ignora l'enllaç de ressalt"
 
 #: ../syntax.c:6367
 #, c-format
