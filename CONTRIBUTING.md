@@ -8,7 +8,7 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - [Merge a Vim patch].
-- Try a [complexity:low] issue.
+- Try a [good first issue](../../labels/good%20first%20issue) or [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
 
