@@ -3158,9 +3158,11 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 
       is_static = test_for_static(&tp);
 
-      /* Skip pseudo-tag lines. */
-      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
+      // Skip pseudo-tag lines.
+      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0) {
+        xfree(matches[i]);
         continue;
+      }
 
       dict = tv_dict_alloc();
       tv_list_append_dict(list, dict);
@@ -3378,11 +3380,15 @@ static void tagstack_set_curidx(win_T *wp, int curidx)
 }
 
 // Set the tag stack entries of the specified window.
-// 'action' is set to either 'a' for append or 'r' for replace.
-int set_tagstack(win_T *wp, dict_T *d, int action)
+// 'action' is set to one of:
+//    'a' for append
+//    'r' for replace
+//    't' for truncate
+int set_tagstack(win_T *wp, const dict_T *d, int action)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   dictitem_T *di;
-  list_T *l;
+  list_T *l = NULL;
 
   // not allowed to alter the tag stack entries from inside tagfunc
   if (tfu_in_use) {
@@ -3395,16 +3401,30 @@ int set_tagstack(win_T *wp, dict_T *d, int action)
       return FAIL;
     }
     l = di->di_tv.vval.v_list;
-
-    if (action == 'r') {
-      tagstack_clear(wp);
-    }
-
-    tagstack_push_items(wp, l);
   }
 
   if ((di = tv_dict_find(d, "curidx", -1)) != NULL) {
     tagstack_set_curidx(wp, (int)tv_get_number(&di->di_tv) - 1);
+  }
+  if (action == 't') {  // truncate the stack
+    taggy_T *const tagstack = wp->w_tagstack;
+    const int tagstackidx = wp->w_tagstackidx;
+    int tagstacklen = wp->w_tagstacklen;
+    // delete all the tag stack entries above the current entry
+    while (tagstackidx < tagstacklen) {
+      tagstack_clear_entry(&tagstack[--tagstacklen]);
+    }
+    wp->w_tagstacklen = tagstacklen;
+  }
+
+  if (l != NULL) {
+    if (action == 'r') {  // replace the stack
+      tagstack_clear(wp);
+    }
+
+    tagstack_push_items(wp, l);
+    // set the current index after the last entry
+    wp->w_tagstackidx = wp->w_tagstacklen;
   }
 
   return OK;

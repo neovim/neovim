@@ -340,6 +340,28 @@ func Test_getsettagstack()
         \ {'items' : [{'tagname' : 'abc', 'from' : [1, 10, 1, 0]}]}, 'a')
   call assert_equal('abc', gettagstack().items[19].tagname)
 
+  " truncate the tag stack
+  call settagstack(1,
+        \ {'curidx' : 9,
+        \  'items' : [{'tagname' : 'abc', 'from' : [1, 10, 1, 0]}]}, 't')
+  let t = gettagstack()
+  call assert_equal(9, t.length)
+  call assert_equal(10, t.curidx)
+
+  " truncate the tag stack without pushing any new items
+  call settagstack(1, {'curidx' : 5}, 't')
+  let t = gettagstack()
+  call assert_equal(4, t.length)
+  call assert_equal(5, t.curidx)
+
+  " truncate an empty tag stack and push new items
+  call settagstack(1, {'items' : []})
+  call settagstack(1,
+        \ {'items' : [{'tagname' : 'abc', 'from' : [1, 10, 1, 0]}]}, 't')
+  let t = gettagstack()
+  call assert_equal(1, t.length)
+  call assert_equal(2, t.curidx)
+
   " Tag with multiple matches
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
         \ "two\tXfile1\t1",
