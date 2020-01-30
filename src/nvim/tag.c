@@ -3158,9 +3158,11 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 
       is_static = test_for_static(&tp);
 
-      /* Skip pseudo-tag lines. */
-      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
+      // Skip pseudo-tag lines.
+      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0) {
+        xfree(matches[i]);
         continue;
+      }
 
       dict = tv_dict_alloc();
       tv_list_append_dict(list, dict);
