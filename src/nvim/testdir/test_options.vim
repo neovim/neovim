@@ -279,6 +279,9 @@ endfunc
 
 " Must be executed before other tests that set 'term'.
 func Test_000_term_option_verbose()
+  if has('nvim') || has('gui_running')
+    return
+  endif
   let verb_cm = execute('verbose set t_cm')
   call assert_notmatch('Last set from', verb_cm)
 
