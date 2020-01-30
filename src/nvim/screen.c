@@ -1353,13 +1353,7 @@ static void win_update(win_T *wp)
            * rows, and may insert/delete lines */
           j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
-              new_rows++;
-            } else if (l == wp->w_topline) {
-              new_rows += plines_win_nofill(wp, l, true) + wp->w_topfill;
-            } else {
-              new_rows += plines_win(wp, l, true);
-            }
+            new_rows += plines_win_full(wp, l, NULL, &l, NULL, true);
             j++;
             if (new_rows > wp->w_grid.Rows - row - 2) {
               // it's getting too much, must redraw the rest
