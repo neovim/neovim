@@ -16242,7 +16242,8 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (actstr == NULL) {
           return;
         }
-        if ((*actstr == 'r' || *actstr == 'a') && actstr[1] == NUL) {
+        if ((*actstr == 'r' || *actstr == 'a' || *actstr == 't')
+            && actstr[1] == NUL) {
           action = *actstr;
         } else {
             EMSG2(_(e_invact2), actstr);

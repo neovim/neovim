@@ -7550,11 +7550,21 @@ settagstack({nr}, {dict} [, {action}])			*settagstack()*
 		{nr} can be the window number or the |window-ID|.
 
 		For a list of supported items in {dict}, refer to
-		|gettagstack()|
+		|gettagstack()|. "curidx" takes effect before changing the tag
+		stack.
 							*E962*
-		If {action} is not present or is set to 'r', then the tag
-		stack is replaced. If {action} is set to 'a', then new entries
-		from {dict} are pushed onto the tag stack.
+		How the tag stack is modified depends on the {action}
+		argument:
+		- If {action} is not present or is set to 'r', then the tag
+		  stack is replaced.
+		- If {action} is set to 'a', then new entries from {dict} are
+		  pushed (added) onto the tag stack.
+		- If {action} is set to 't', then all the entries from the
+		  current entry in the tag stack or "curidx" in {dict} are
+		  removed and then new entries are pushed to the stack.
+
+		The current index is set to one after the length of the tag
+		stack after the modification.
 
 		Returns zero for success, -1 for failure.
 
