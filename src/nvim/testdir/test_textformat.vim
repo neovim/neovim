@@ -886,7 +886,7 @@ func Test_ra_multibyte()
 endfunc
 
 " Test for 'whichwrap' with multi-byte character
-func Test_whichwrap()
+func Test_whichwrap_multi_byte()
   new
   let t =<< trim END
     á
@@ -897,7 +897,7 @@ func Test_whichwrap()
 
   set whichwrap+=h
   normal dh
-  set whichwrap-=h
+  set whichwrap&
 
   let expected =<< trim END
     áx
