@@ -503,7 +503,8 @@ function! s:check_active_virtualenv() abort
   " the virtualenv should contain some Python executables, and those
   " executables should be first both on Neovim's path and on the path of
   " subshells launched from Neovim
-  let venv_pythonxs = glob($VIRTUAL_ENV . '/bin/python*', v:true, v:true)
+  let bin_dir = has('win32') ? '/Scripts' : '/bin'
+  let venv_pythonxs = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
   if len(venv_pythonxs)
     for venv_pythonx in venv_pythonxs
       let venv_pythonx = s:normalize_path(venv_pythonx)
@@ -531,13 +532,14 @@ function! s:check_active_virtualenv() abort
       endif
     endfor
   else
-    call add(errors, 'no Python executables were found in the virtualenv''s bin directory.')
+    call add(errors, 'no Python executables were found in the virtualenv''s '
+      \ . bin_dir . ' directory.')
   endif
 
   if len(errors)
     call health#report_warn('$VIRTUAL_ENV is set to: ' . $VIRTUAL_ENV)
     if len(venv_pythonxs)
-      call health#report_warn('And its bin directory contains the following executables: '
+      call health#report_warn('And its ' . bin_dir . ' directory contains the following executables: '
         \ . join(map(venv_pythonxs, "fnamemodify(v:val, ':t')"), ', '))
     endif
     let conj = 'However, '
