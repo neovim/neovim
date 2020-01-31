@@ -3040,7 +3040,7 @@ void cmdline_screen_cleared(void)
   }
 }
 
-/// called by ui_flush, do what redraws neccessary to keep cmdline updated.
+/// called by ui_flush, do what redraws necessary to keep cmdline updated.
 void cmdline_ui_flush(void)
 {
   if (!ui_has(kUICmdline)) {

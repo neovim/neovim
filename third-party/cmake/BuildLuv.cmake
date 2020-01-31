@@ -106,7 +106,7 @@ elseif(MSVC)
     # Same as Unix without fPIC
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS}"
     # Make sure we use the same generator, otherwise we may
-    # accidentaly end up using different MSVC runtimes
+    # accidentally end up using different MSVC runtimes
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
     # Use static runtime
     -DCMAKE_C_FLAGS_DEBUG="-MTd"

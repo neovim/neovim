@@ -18,7 +18,7 @@ typedef int16_t sattr_T;
 /// chars[] contains the UTF-8 text that is currently displayed on the grid.
 /// It is stored as a single block of cells. When redrawing a part of the grid,
 /// the new state can be compared with the existing state of the grid. This way
-/// we can avoid sending bigger updates than neccessary to the Ul layer.
+/// we can avoid sending bigger updates than necessary to the Ul layer.
 ///
 /// Screen cells are stored as NUL-terminated UTF-8 strings, and a cell can
 /// contain up to MAX_MCO composing characters after the base character.

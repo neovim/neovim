@@ -6587,7 +6587,7 @@ static int autocmd_nested = FALSE;
 
 /// Execute autocommands for "event" and file name "fname".
 ///
-/// @param event event that occured
+/// @param event event that occurred
 /// @param fname filename, NULL or empty means use actual file name
 /// @param fname_io filename to use for <afile> on cmdline
 /// @param force When true, ignore autocmd_busy
@@ -6604,7 +6604,7 @@ bool apply_autocmds(event_T event, char_u *fname, char_u *fname_io, bool force,
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
 /// setting v:filearg.
 ///
-/// @param event event that occured
+/// @param event event that occurred
 /// @param fname NULL or empty means use actual file name
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force When true, ignore autocmd_busy
@@ -6624,7 +6624,7 @@ static bool apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io,
 /// conditional, no autocommands are executed.  If otherwise the autocommands
 /// cause the script to be aborted, retval is set to FAIL.
 ///
-/// @param event event that occured
+/// @param event event that occurred
 /// @param fname NULL or empty means use actual file name
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force When true, ignore autocmd_busy
@@ -6684,7 +6684,7 @@ bool has_event(event_T event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Execute autocommands for "event" and file name "fname".
 ///
-/// @param event event that occured
+/// @param event event that occurred
 /// @param fname filename, NULL or empty means use actual file name
 /// @param fname_io filename to use for <afile> on cmdline,
 ///                 NULL means use `fname`.
@@ -7197,8 +7197,8 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
 /// To account for buffer-local autocommands, function needs to know
 /// in which buffer the file will be opened.
 ///
-/// @param event event that occured.
-/// @param sfname filename the event occured in.
+/// @param event event that occurred.
+/// @param sfname filename the event occurred in.
 /// @param buf buffer the file is open in
 bool has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   FUNC_ATTR_WARN_UNUSED_RESULT
