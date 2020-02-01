@@ -699,21 +699,30 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
 
   // TODO(bfredl): if decoration had blocky mode, we could avoid this loop
   for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
+    int end_off = 0;
     if (pos_start.lnum < lnum && lnum < pos_end.lnum) {
-      hl_start = offset-1;
-      hl_end = MAXCOL;
+      // TODO(bfredl): This is quite ad-hoc, but the space between |num| and
+      // text being highlighted is the indication of \n being part of the
+      // substituted text. But it would be more consistent to highlight
+      // a space _after_ the previous line instead (like highlight EOL list
+      // char)
+      hl_start = MAX(offset-1, 0);
+      end_off = 1;
+      hl_end = 0;
     } else if (lnum == pos_start.lnum && lnum < pos_end.lnum) {
       hl_start = pos_start.col + offset;
-      hl_end = MAXCOL;
+      end_off = 1;
+      hl_end = 0;
     } else if (pos_start.lnum < lnum && lnum == pos_end.lnum) {
-      hl_start = offset-1;
+      hl_start = MAX(offset-1, 0);
       hl_end = pos_end.col + offset;
     } else if (pos_start.lnum == lnum && pos_end.lnum == lnum) {
       hl_start = pos_start.col + offset;
       hl_end = pos_end.col + offset;
     }
     (void)extmark_add_decoration(buf, (uint64_t)src_id, hl_id,
-                                 (int)lnum-1, hl_start, (int)lnum-1, hl_end,
+                                 (int)lnum-1, hl_start,
+                                 (int)lnum-1+end_off, hl_end,
                                  VIRTTEXT_EMPTY);
   }
 }
