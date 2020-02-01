@@ -139,7 +139,7 @@ let s:filename_checks = {
     \ 'dockerfile': ['Dockerfile', 'file.Dockerfile'],
     \ 'dosbatch': ['file.bat', 'file.sys'],
     \ 'dosini': ['.editorconfig', '/etc/yum.conf', 'file.ini'],
-    \ 'dot': ['file.dot'],
+    \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe'],
     \ 'dsl': ['file.dsl'],
     \ 'dtd': ['file.dtd'],
