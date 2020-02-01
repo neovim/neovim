@@ -234,6 +234,7 @@ let s:filename_checks = {
     \ 'kconfig': ['Kconfig', 'Kconfig.debug'],
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
+    \ 'kotlin': ['file.kt', 'file.ktm', 'file.kts'],
     \ 'kscript': ['file.ks'],
     \ 'kwt': ['file.k'],
     \ 'lace': ['file.ace', 'file.ACE'],
