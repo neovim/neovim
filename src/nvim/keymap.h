@@ -240,8 +240,8 @@ enum key_extra {
   , KE_DROP = 95              // DnD data is available
   // , KE_CURSORHOLD = 96     // CursorHold event
   , KE_NOP = 97               // no-op: does nothing
-  , KE_FOCUSGAINED = 98       // focus gained
-  , KE_FOCUSLOST = 99         // focus lost
+  // , KE_FOCUSGAINED = 98    // focus gained
+  // , KE_FOCUSLOST = 99      // focus lost
   // , KE_MOUSEMOVE = 100     // mouse moved with no button down
   // , KE_CANCEL = 101        // return from vgetc
   , KE_EVENT = 102            // event

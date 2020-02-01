@@ -1096,26 +1096,40 @@ void del_typebuf(int len, int offset)
  * Write typed characters to script file.
  * If recording is on put the character in the recordbuffer.
  */
-static void gotchars(char_u *chars, size_t len)
+static void gotchars(const char_u *chars, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *s = chars;
-  int c;
+  const char_u *s = chars;
+  static char_u buf[4] = { 0 };
+  static size_t buflen = 0;
+  size_t todo = len;
 
-  // remember how many chars were last recorded
-  if (reg_recording != 0) {
-    last_recorded_len += len;
-  }
+  while (todo--) {
+    buf[buflen++] = *s++;
 
-  while (len--) {
+    // When receiving a special key sequence, store it until we have all
+    // the bytes and we can decide what to do with it.
+    if (buflen == 1 && buf[0] == K_SPECIAL) {
+      continue;
+    }
+    if (buflen == 2) {
+      continue;
+    }
+
     // Handle one byte at a time; no translation to be done.
-    c = *s++;
-    updatescript(c);
+    for (size_t i = 0; i < buflen; i++) {
+      updatescript(buf[i]);
+    }
 
     if (reg_recording != 0) {
-      char buf[2] = { (char)c, NUL };
-      add_buff(&recordbuff, buf, 1L);
+      buf[buflen] = NUL;
+      add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
+      // remember how many chars were last recorded
+      last_recorded_len += buflen;
     }
+    buflen = 0;
   }
+
   may_sync_undo();
 
   /* output "debug mode" message next time in debug mode */
