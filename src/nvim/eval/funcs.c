@@ -9558,7 +9558,7 @@ static void f_stridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * "string()" function
  */
-static void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)encode_tv2string(&argvars[0], NULL);
