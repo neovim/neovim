@@ -2495,12 +2495,11 @@ int inchar(
   return fix_input_buffer(buf, len);
 }
 
-/*
- * Fix typed characters for use by vgetc() and check_termcode().
- * buf[] must have room to triple the number of bytes!
- * Returns the new length.
- */
+// Fix typed characters for use by vgetc() and check_termcode().
+// "buf[]" must have room to triple the number of bytes!
+// Returns the new length.
 int fix_input_buffer(char_u *buf, int len)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
