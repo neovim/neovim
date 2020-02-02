@@ -21,6 +21,10 @@
 #define uv_stream_get_write_queue_size(stream) stream->write_queue_size
 #endif
 
+#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
+# define ENABLE_VIRTUAL_TERMINAL_INPUT 0x0200
+#endif
+
 /// Sets the stream associated with `fd` to "blocking" mode.
 ///
 /// @return `0` on success, or libuv error code on failure.
@@ -62,6 +66,11 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       if (type == UV_TTY) {
         uv_tty_init(&loop->uv, &stream->uv.tty, fd, 0);
         uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_RAW);
+        DWORD dwMode;
+        if (GetConsoleMode(stream->uv.tty.handle, &dwMode)) {
+          dwMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+          SetConsoleMode(stream->uv.tty.handle, dwMode);
+        }
         stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.tty);
       } else {
 #endif
