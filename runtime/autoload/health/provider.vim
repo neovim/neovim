@@ -507,6 +507,8 @@ function! s:check_virtualenv() abort
   " subshells launched from Nvim.
   let bin_dir = has('win32') ? '/Scripts' : '/bin'
   let venv_bins = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
+  " XXX: Remove irrelevant executables found in bin/.
+  let venv_bins = filter(venv_bins, 'v:val !~# "python-config"')
   if len(venv_bins)
     for venv_bin in venv_bins
       let venv_bin = s:normalize_path(venv_bin)
