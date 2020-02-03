@@ -100,7 +100,8 @@ static bool have_dollars(int num, char_u **file)
 ///
 /// @returns             OK for success or FAIL for error.
 int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
-                         char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
+                        char_u ***file, int flags)
+  FUNC_ATTR_NONNULL_ARG(3)
   FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
@@ -114,12 +115,11 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   char_u      *command;
   FILE        *fd;
   char_u      *buffer;
-#define STYLE_ECHO      0       /* use "echo", the default */
-#define STYLE_GLOB      1       /* use "glob", for csh */
-#define STYLE_VIMGLOB   2       /* use "vimglob", for Posix sh */
-#define STYLE_PRINT     3       /* use "print -N", for zsh */
-#define STYLE_BT        4       /* `cmd` expansion, execute the pattern
-                                 * directly */
+#define STYLE_ECHO      0       // use "echo", the default
+#define STYLE_GLOB      1       // use "glob", for csh
+#define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
+#define STYLE_PRINT     3       // use "print -N", for zsh
+#define STYLE_BT        4       // `cmd` expansion, execute the pattern directly
   int shell_style = STYLE_ECHO;
   int check_spaces;
   static bool did_find_nul = false;
@@ -189,16 +189,18 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       shell_style = STYLE_PRINT;
     }
   }
-  if (shell_style == STYLE_ECHO && strstr((char *)path_tail(p_sh),
-          "sh") != NULL)
+  if (shell_style == STYLE_ECHO
+      && strstr((char *)path_tail(p_sh), "sh") != NULL) {
     shell_style = STYLE_VIMGLOB;
+  }
 
   // Compute the length of the command.  We need 2 extra bytes: for the
   // optional '&' and for the NUL.
   // Worst case: "unset nonomatch; print -N >" plus two is 29
   len = STRLEN(tempname) + 29;
-  if (shell_style == STYLE_VIMGLOB)
+  if (shell_style == STYLE_VIMGLOB) {
     len += STRLEN(sh_vimglob_func);
+  }
 
   for (i = 0; i < num_pat; i++) {
     // Count the length of the patterns in the same way as they are put in
@@ -248,18 +250,20 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     }
     STRCAT(command, ">");
   } else {
-    if (flags & EW_NOTFOUND)
+    if (flags & EW_NOTFOUND) {
       STRCPY(command, "set nonomatch; ");
-    else
+    } else {
       STRCPY(command, "unset nonomatch; ");
-    if (shell_style == STYLE_GLOB)
+    }
+    if (shell_style == STYLE_GLOB) {
       STRCAT(command, "glob >");
-    else if (shell_style == STYLE_PRINT)
+    } else if (shell_style == STYLE_PRINT) {
       STRCAT(command, "print -N >");
-    else if (shell_style == STYLE_VIMGLOB)
+    } else if (shell_style == STYLE_VIMGLOB) {
       STRCAT(command, sh_vimglob_func);
-    else
+    } else {
       STRCAT(command, "echo >");
+    }
   }
 
   STRCAT(command, tempname);
@@ -323,11 +327,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   }
 
   // execute the shell command
-  i = call_shell(
-      command,
-      shellopts,
-      extra_shell_arg
-      );
+  i = call_shell(command, shellopts, extra_shell_arg);
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
@@ -380,7 +380,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     return FAIL;
   }
 #if SIZEOF_LONG_LONG > SIZEOF_SIZE_T
-  assert(templen <= (long long)SIZE_MAX);
+  assert(templen <= (long long)SIZE_MAX);  // NOLINT(runtime/int)
 #endif
   len = (size_t)templen;
   fseek(fd, 0L, SEEK_SET);
@@ -434,10 +434,11 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       // If there is a NUL, set did_find_nul, else set check_spaces
       buffer[len] = NUL;
-      if (len && (int)STRLEN(buffer) < (int)len)
+      if (len && (int)STRLEN(buffer) < (int)len) {
         did_find_nul = true;
-      else
+      } else {
         check_spaces = true;
+      }
     }
 
     // Make sure the buffer ends with a NUL.  For STYLE_PRINT there
@@ -472,7 +473,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   // Isolate the individual file names.
   p = buffer;
-  for (i = 0; i < *num_file; ++i) {
+  for (i = 0; i < *num_file; i++) {
     (*file)[i] = p;
     // Space or NL separates
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
@@ -504,8 +505,9 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
     // check if this entry should be included
     dir = (os_isdir((*file)[i]));
-    if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE)))
+    if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE))) {
       continue;
+    }
 
     // Skip files that are not executable if we check for that.
     if (!dir && (flags & EW_EXEC)
@@ -536,7 +538,6 @@ notfound:
     return OK;
   }
   return FAIL;
-
 }
 
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)

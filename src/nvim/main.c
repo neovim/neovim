@@ -293,8 +293,8 @@ int main(int argc, char **argv)
   if (params.diff_mode && params.window_count == -1)
     params.window_count = 0;            /* open up to 3 windows */
 
-  /* Don't redraw until much later. */
-  ++RedrawingDisabled;
+  // Don't redraw until much later.
+  RedrawingDisabled++;
 
   setbuf(stdout, NULL);
 
@@ -384,22 +384,16 @@ int main(int argc, char **argv)
     syn_maybe_on();
   }
 
-  /*
-   * Read all the plugin files.
-   * Only when compiled with +eval, since most plugins need it.
-   */
+  // Read all the plugin files.
   load_plugins();
 
   // Decide about window layout for diff mode after reading vimrc.
   set_window_layout(&params);
 
-  /*
-   * Recovery mode without a file name: List swap files.
-   * This uses the 'dir' option, therefore it must be after the
-   * initializations.
-   */
+  // Recovery mode without a file name: List swap files.
+  // Uses the 'dir' option, therefore it must be after the initializations.
   if (recoverymode && fname == NULL) {
-    recover_names(NULL, TRUE, 0, NULL);
+    recover_names(NULL, true, 0, NULL);
     os_exit(0);
   }
 
@@ -431,17 +425,15 @@ int main(int argc, char **argv)
     set_vim_var_list(VV_OLDFILES, tv_list_alloc(0));
   }
 
-  /*
-   * "-q errorfile": Load the error file now.
-   * If the error file can't be read, exit before doing anything else.
-   */
+  // "-q errorfile": Load the error file now.
+  // If the error file can't be read, exit before doing anything else.
   handle_quickfix(&params);
 
-  /*
-   * Start putting things on the screen.
-   * Scroll screen down before drawing over it
-   * Clear screen now, so file message will not be cleared.
-   */
+  //
+  // Start putting things on the screen.
+  // Scroll screen down before drawing over it
+  // Clear screen now, so file message will not be cleared.
+  //
   starting = NO_BUFFERS;
   no_wait_return = false;
   if (!exmode_active) {
@@ -473,27 +465,26 @@ int main(int argc, char **argv)
 
   no_wait_return = true;
 
-  /*
-   * Create the requested number of windows and edit buffers in them.
-   * Also does recovery if "recoverymode" set.
-   */
+  //
+  // Create the requested number of windows and edit buffers in them.
+  // Also does recovery if "recoverymode" set.
+  //
   create_windows(&params);
   TIME_MSG("opening buffers");
 
-  /* clear v:swapcommand */
+  // Clear v:swapcommand
   set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
 
-  /* Ex starts at last line of the file */
-  if (exmode_active)
+  // Ex starts at last line of the file.
+  if (exmode_active) {
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  }
 
   apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 
-  /*
-   * When started with "-q errorfile" jump to first error now.
-   */
+  // When started with "-q errorfile" jump to first error now.
   if (params.edit_type == EDIT_QF) {
     qf_jump(NULL, 0, 0, FALSE);
     TIME_MSG("jump to first error");
@@ -505,26 +496,23 @@ int main(int argc, char **argv)
   xfree(cwd);
 
   if (params.diff_mode) {
-    /* set options in each window for "nvim -d". */
+    // set options in each window for "nvim -d".
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       diff_win_options(wp, TRUE);
     }
   }
 
-  /*
-   * Shorten any of the filenames, but only when absolute.
-   */
-  shorten_fnames(FALSE);
+  // Shorten any of the filenames, but only when absolute.
+  shorten_fnames(false);
 
-  /*
-   * Need to jump to the tag before executing the '-c command'.
-   * Makes "vim -c '/return' -t main" work.
-   */
+  // Need to jump to the tag before executing the '-c command'.
+  // Makes "vim -c '/return' -t main" work.
   handle_tag(params.tagname);
 
-  /* Execute any "+", "-c" and "-S" arguments. */
-  if (params.n_commands > 0)
+  // Execute any "+", "-c" and "-S" arguments.
+  if (params.n_commands > 0) {
     exe_commands(&params);
+  }
 
   starting = 0;
 
@@ -535,9 +523,10 @@ int main(int argc, char **argv)
   // 'autochdir' has been postponed.
   do_autochdir();
 
-  /* start in insert mode */
-  if (p_im)
-    need_start_insertmode = TRUE;
+  // start in insert mode
+  if (p_im) {
+    need_start_insertmode = true;
+  }
 
   set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
@@ -553,18 +542,19 @@ int main(int argc, char **argv)
   // main loop.
   set_reg_var(get_default_register_name());
 
-  /* When a startup script or session file setup for diff'ing and
-   * scrollbind, sync the scrollbind now. */
+  // When a startup script or session file setup for diff'ing and
+  // scrollbind, sync the scrollbind now.
   if (curwin->w_p_diff && curwin->w_p_scb) {
     update_topline();
     check_scrollbind((linenr_T)0, 0L);
     TIME_MSG("diff scrollbinding");
   }
 
-  /* If ":startinsert" command used, stuff a dummy command to be able to
-   * call normal_cmd(), which will then start Insert mode. */
-  if (restart_edit != 0)
+  // If ":startinsert" command used, stuff a dummy command to be able to
+  // call normal_cmd(), which will then start Insert mode.
+  if (restart_edit != 0) {
     stuffcharReadbuff(K_NOP);
+  }
 
   // WORKAROUND(mhi): #3023
   if (cb_flags & CB_UNNAMEDMASK) {
@@ -574,9 +564,7 @@ int main(int argc, char **argv)
   TIME_MSG("before starting main loop");
   ILOG("starting main loop");
 
-  /*
-   * Call the main command loop.  This never returns.
-   */
+  // Main loop: never returns.
   normal_enter(false, false);
 
 #if defined(WIN32) && !defined(MAKE_LIB)
