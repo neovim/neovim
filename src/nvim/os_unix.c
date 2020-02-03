@@ -72,28 +72,3 @@ void mch_free_acl(vim_acl_T aclent)
     return;
 }
 #endif
-
-void mch_exit(int r)
-  FUNC_ATTR_NORETURN
-{
-  exiting = true;
-
-  ui_flush();
-  ui_call_stop();
-  ml_close_all(true);           // remove all memfiles
-
-  if (!event_teardown() && r == 0) {
-    r = 1;  // Exit with error if main_loop did not teardown gracefully.
-  }
-  if (input_global_fd() >= 0) {
-    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
-  }
-
-  ILOG("Nvim exit: %d", r);
-
-#ifdef EXITFREE
-  free_all_mem();
-#endif
-
-  exit(r);
-}

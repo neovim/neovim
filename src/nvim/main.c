@@ -207,7 +207,7 @@ void early_init(void)
   // Allocate the first window and buffer.
   // Can't do anything without it, exit when it fails.
   if (!win_alloc_first()) {
-    mch_exit(0);
+    os_exit(0);
   }
 
   init_yank();                  // init yank buffers
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
    */
   if (recoverymode && fname == NULL) {
     recover_names(NULL, TRUE, 0, NULL);
-    mch_exit(0);
+    os_exit(0);
   }
 
   // Set some option defaults after reading vimrc files.
@@ -585,6 +585,31 @@ int main(int argc, char **argv)
   return 0;
 }
 
+void os_exit(int r)
+  FUNC_ATTR_NORETURN
+{
+  exiting = true;
+
+  ui_flush();
+  ui_call_stop();
+  ml_close_all(true);           // remove all memfiles
+
+  if (!event_teardown() && r == 0) {
+    r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
+  if (input_global_fd() >= 0) {
+    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  }
+
+  ILOG("Nvim exit: %d", r);
+
+#ifdef EXITFREE
+  free_all_mem();
+#endif
+
+  exit(r);
+}
+
 /// Exit properly
 void getout(int exitval)
   FUNC_ATTR_NORETURN
@@ -679,7 +704,7 @@ void getout(int exitval)
     garbage_collect(false);
   }
 
-  mch_exit(exitval);
+  os_exit(exitval);
 }
 
 /// Gets the integer value of a numeric command line argument if given,
@@ -799,10 +824,10 @@ static void command_line_scan(mparm_T *parmp)
           // "--cmd <cmd>" execute cmd before vimrc
           if (STRICMP(argv[0] + argv_idx, "help") == 0) {
             usage();
-            mch_exit(0);
+            os_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
             version();
-            mch_exit(0);
+            os_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             FileDescriptor fp;
             const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
@@ -825,7 +850,7 @@ static void command_line_scan(mparm_T *parmp)
             if (ff_ret < 0) {
               msgpack_file_write_error(ff_ret);
             }
-            mch_exit(0);
+            os_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             headless_mode = true;
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
@@ -891,7 +916,7 @@ static void command_line_scan(mparm_T *parmp)
         case '?':    // "-?" give help message (for MS-Windows)
         case 'h': {  // "-h" give help message
           usage();
-          mch_exit(0);
+          os_exit(0);
         }
         case 'H': {  // "-H" start in Hebrew mode: rl + hkmap set.
           p_hkmap = true;
@@ -988,7 +1013,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'v': {
           version();
-          mch_exit(0);
+          os_exit(0);
         }
         case 'V': {  // "-V{N}" Verbose level
           // default is 10: a little bit verbose
@@ -1116,7 +1141,7 @@ scripterror:
                            _("Attempt to open script file again: \"%s %s\"\n"),
                            argv[-1], argv[0]);
               mch_errmsg((const char *)IObuff);
-              mch_exit(2);
+              os_exit(2);
             }
             int error;
             if (strequal(argv[0], "-")) {
@@ -1135,7 +1160,7 @@ scripterror:
                            _("Cannot open for reading: \"%s\": %s\n"),
                            argv[0], os_strerror(error));
               mch_errmsg((const char *)IObuff);
-              mch_exit(2);
+              os_exit(2);
             }
             save_typebuf();
             break;
@@ -1173,7 +1198,7 @@ scripterror:
               mch_errmsg(_("Cannot open for script output: \""));
               mch_errmsg(argv[0]);
               mch_errmsg("\"\n");
-              mch_exit(2);
+              os_exit(2);
             }
             break;
           }
@@ -1380,7 +1405,7 @@ static void handle_quickfix(mparm_T *paramp)
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
       msg_putchar('\n');
-      mch_exit(3);
+      os_exit(3);
     }
     TIME_MSG("reading errorfile");
   }
@@ -1943,7 +1968,7 @@ static void mainerr(const char *errstr, const char *str)
   mch_errmsg(prgname);
   mch_errmsg(" -h\"\n");
 
-  mch_exit(1);
+  os_exit(1);
 }
 
 /// Prints version information for "nvim -v" or "nvim --version".
