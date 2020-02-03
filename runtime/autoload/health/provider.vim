@@ -737,11 +737,11 @@ function! s:check_perl() abort
 endfunction
 
 function! health#provider#check() abort
-  " call s:check_clipboard()
-  " call s:check_python(2)
-  " call s:check_python(3)
+  call s:check_clipboard()
+  call s:check_python(2)
+  call s:check_python(3)
   call s:check_virtualenv()
-  " call s:check_ruby()
-  " call s:check_node()
-  " call s:check_perl()
+  call s:check_ruby()
+  call s:check_node()
+  call s:check_perl()
 endfunction
