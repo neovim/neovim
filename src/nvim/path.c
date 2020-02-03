@@ -1178,7 +1178,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
    */
   if (recursive)
 #ifdef SPECIAL_WILDCHAR
-    return mch_expand_wildcards(num_pat, pat, num_file, file, flags);
+    return os_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
     return FAIL;
 #endif
@@ -1193,7 +1193,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   for (int i = 0; i < num_pat; i++) {
     if (has_special_wildchar(pat[i])
         && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
-      return mch_expand_wildcards(num_pat, pat, num_file, file, flags);
+      return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
   }
 #endif
@@ -1233,8 +1233,8 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
         else if (has_env_var(p) || *p == '~') {
           xfree(p);
           ga_clear_strings(&ga);
-          i = mch_expand_wildcards(num_pat, pat, num_file, file,
-              flags | EW_KEEPDOLLAR);
+          i = os_expand_wildcards(num_pat, pat, num_file, file,
+                                  flags | EW_KEEPDOLLAR);
           recursive = false;
           return i;
         }
