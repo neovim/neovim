@@ -98,13 +98,6 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|NetBSD|Windows")
-  message(STATUS "skipping libacl on this sytem: ${CMAKE_SYSTEM_NAME}")
-  option(ENABLE_LIBACL "enable libacl" OFF)
-else()
-  option(ENABLE_LIBACL "enabled libacl" ON)
-endif()
-
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 # Build type.
@@ -471,9 +464,11 @@ if(ENABLE_LIBINTL)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
 endif()
 
-if(ENABLE_LIBACL)
-  find_package(LibACL REQUIRED)
-  include_directories(SYSTEM ${LibACL_INCLUDE_DIRS})
+if(NOT WIN32)
+  find_package(LibACL)
+  if (LibACL_FOUND)
+    include_directories(SYSTEM ${LibACL_INCLUDE_DIRS})
+  endif()
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
