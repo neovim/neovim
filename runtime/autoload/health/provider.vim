@@ -163,7 +163,7 @@ function! s:check_clipboard() abort
   endif
 endfunction
 
-" Get the latest Neovim Python client (pynvim) version from PyPI.
+" Get the latest Nvim Python client (pynvim) version from PyPI.
 function! s:latest_pypi_version() abort
   let pypi_version = 'unable to get pypi response'
   let pypi_response = s:download('https://pypi.python.org/pypi/pynvim/json')
@@ -180,7 +180,7 @@ endfunction
 
 " Get version information using the specified interpreter.  The interpreter is
 " used directly in case breaking changes were introduced since the last time
-" Neovim's Python client was updated.
+" Nvim's Python client was updated.
 "
 " Returns: [
 "     {python executable version},
@@ -224,7 +224,7 @@ function! s:version_info(python) abort
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
   if empty(nvim_version)
-    let nvim_version = 'unable to find neovim Python module version'
+    let nvim_version = 'unable to find pynvim module version'
     let base = fnamemodify(nvim_path, ':h')
     let metas = glob(base.'-*/METADATA', 1, 1)
           \ + glob(base.'-*/PKG-INFO', 1, 1)
@@ -363,7 +363,7 @@ function! s:check_python(version) abort
           \ && !empty(pyenv_root) && resolve(python_exe) !~# '^'.pyenv_root.'/'
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
-            \ . 'for Neovim using pyenv, and set `g:%s`.  This will avoid '
+            \ . 'for Nvim using pyenv, and set `g:%s`.  This will avoid '
             \ . 'the need to install the pynvim module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
@@ -377,7 +377,7 @@ function! s:check_python(version) abort
       if resolve(python_exe) !~# '^'.venv_root.'/'
         call health#report_warn('Your virtualenv is not set up optimally.', [
               \ printf('Create a virtualenv specifically '
-              \ . 'for Neovim and use `g:%s`.  This will avoid '
+              \ . 'for Nvim and use `g:%s`.  This will avoid '
               \ . 'the need to install the pynvim module in each '
               \ . 'virtualenv.', host_prog_var)
               \ ])
@@ -485,71 +485,71 @@ function! s:check_for_pyenv() abort
   return [pyenv_path, pyenv_root]
 endfunction
 
-" Locate Python executable by running invocation and checking
-" sys.executable.
-function! s:locate_pythonx(invocation) abort
+" Resolves Python executable path by invoking and checking `sys.executable`.
+function! s:python_exepath(invocation) abort
   return s:normalize_path(system(a:invocation
     \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
 endfunction
 
-" If $VIRTUAL_ENV is set, check whether its Python executables will be
-" the first on the $PATH of both Neovim and subshells spawned from
-" Neovim.
-function! s:check_active_virtualenv() abort
-  call health#report_start('Python active virtualenv')
+" Checks that $VIRTUAL_ENV Python executables are found at front of $PATH in
+" Nvim and subshells.
+function! s:check_virtualenv() abort
+  call health#report_start('Python virtualenv')
+  if !exists('$VIRTUAL_ENV')
+    call health#report_ok('no $VIRTUAL_ENV')
+    return
+  endif
   let errors = []
-  " hints are kept as Dictionary keys in order to discard duplicates
+  " Keep hints as dict keys in order to discard duplicates.
   let hints = {}
-  " the virtualenv should contain some Python executables, and those
-  " executables should be first both on Neovim's path and on the path of
-  " subshells launched from Neovim
+  " The virtualenv should contain some Python executables, and those
+  " executables should be first both on Nvim's $PATH and the $PATH of
+  " subshells launched from Nvim.
   let bin_dir = has('win32') ? '/Scripts' : '/bin'
-  let venv_pythonxs = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
-  if len(venv_pythonxs)
-    for venv_pythonx in venv_pythonxs
-      let venv_pythonx = s:normalize_path(venv_pythonx)
-      let pythonx_basename = fnamemodify(venv_pythonx, ':t')
-      let neovim_pythonx = s:locate_pythonx(exepath(pythonx_basename))
-      let subshell_pythonx = s:locate_pythonx(pythonx_basename)
-      if venv_pythonx !=# neovim_pythonx
-        call add(errors, 'according to Neovim''s $PATH, the ' . pythonx_basename
-          \ . ' executable is found outside the virtualenv, here: ' . neovim_pythonx)
-        let hint = 'Problems with Neovim''s $PATH are caused by the virtualenv not being '
-          \ . 'properly activated prior to launching Neovim. Close Neovim, activate the virtualenv '
-          \ . 'properly, check that invoking Python from the command line launches the correct one, '
-          \ . 'and relaunch Neovim.'
+  let venv_bins = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
+  if len(venv_bins)
+    for venv_bin in venv_bins
+      let venv_bin = s:normalize_path(venv_bin)
+      let py_bin_basename = fnamemodify(venv_bin, ':t')
+      let nvim_py_bin = s:python_exepath(exepath(py_bin_basename))
+      let subshell_py_bin = s:python_exepath(py_bin_basename)
+      if venv_bin !=# nvim_py_bin
+        call add(errors, '$PATH yields this '.py_bin_basename.' executable: '.nvim_py_bin)
+        let hint = '$PATH ambiguities arise if the virtualenv is not '
+          \.'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
+          \.'check that invoking Python from the command line launches the correct one, '
+          \.'then relaunch Nvim.'
         let hints[hint] = v:true
       endif
-      if venv_pythonx !=# subshell_pythonx
-        call add(errors, 'according to the $PATH of subshells launched from Neovim, the '
-          \ . pythonx_basename . ' executable is found outside the virtualenv, here: '
-          \ . subshell_pythonx)
-        let hint = 'Problems with the $PATH of subshells launched from Neovim can be '
-          \ . 'caused by your shell''s startup files overriding the $PATH previously set by the '
-          \ . 'virtualenv. Either prevent them from doing so, or use '
-          \ . 'https://vi.stackexchange.com/a/7654/18339 as a workaround.'
+      if venv_bin !=# subshell_py_bin
+        call add(errors, '$PATH in subshells yields this '
+          \.py_bin_basename . ' executable: '.subshell_py_bin)
+        let hint = '$PATH ambiguities in subshells typically are '
+          \.'caused by your shell config overriding the $PATH previously set by the '
+          \.'virtualenv. Either prevent them from doing so, or use this workaround: '
+          \.'https://vi.stackexchange.com/a/7654'
         let hints[hint] = v:true
       endif
     endfor
   else
-    call add(errors, 'no Python executables were found in the virtualenv''s '
-      \ . bin_dir . ' directory.')
+    call add(errors, 'no Python executables found in the virtualenv '.bin_dir.' directory.')
   endif
 
   if len(errors)
-    call health#report_warn('$VIRTUAL_ENV is set to: ' . $VIRTUAL_ENV)
-    if len(venv_pythonxs)
-      call health#report_warn('And its ' . bin_dir . ' directory contains the following executables: '
-        \ . join(map(venv_pythonxs, "fnamemodify(v:val, ':t')"), ', '))
+    let msg = '$VIRTUAL_ENV is set to: '.$VIRTUAL_ENV
+    if len(venv_bins)
+      let msg .= "\nAnd its ".bin_dir.' directory contains: '
+        \.join(map(venv_bins, "fnamemodify(v:val, ':t')"), ', ')
     endif
-    let conj = 'However, '
+    let conj = "\nBut "
     for error in errors
-      call health#report_warn(conj . error)
-      let conj = 'And '
+      let msg .= conj.error
+      let conj = "\nAnd "
     endfor
-    call health#report_warn('So invoking Python may lead to unexpected results.', keys(hints))
+    let msg .= "\nSo invoking Python may lead to unexpected results."
+    call health#report_warn(msg, keys(hints))
   else
-    call health#report_ok('$VIRTUAL_ENV is active and invoking Python from within Neovim will honor it.')
+    call health#report_ok('$VIRTUAL_ENV provides :python, :python3, et al.')
   endif
 endfunction
 
@@ -623,7 +623,7 @@ function! s:check_node() abort
   let node_v = get(split(s:system('node -v'), "\n"), 0, '')
   call health#report_info('Node.js: '. node_v)
   if s:shell_error || s:version_cmp(node_v[1:], '6.0.0') < 0
-    call health#report_warn('Neovim node.js host does not support '.node_v)
+    call health#report_warn('Nvim node.js host does not support '.node_v)
     " Skip further checks, they are nonsense if nodejs is too old.
     return
   endif
@@ -638,7 +638,7 @@ function! s:check_node() abort
           \  'Run in shell (if you use yarn): yarn global add neovim'])
     return
   endif
-  call health#report_info('Neovim node.js host: '. host)
+  call health#report_info('Nvim node.js host: '. host)
 
   let manager = executable('npm') ? 'npm' : 'yarn'
   let latest_npm_cmd = has('win32') ?
@@ -693,7 +693,7 @@ function! s:check_perl() abort
   let perl_v = get(split(s:system(['perl', '-W', '-e', 'print $^V']), "\n"), 0, '')
   call health#report_info('Perl: '. perl_v)
   if s:shell_error
-    call health#report_warn('Neovim perl host does not support '.perl_v)
+    call health#report_warn('Nvim perl host does not support '.perl_v)
     " Skip further checks, they are nonsense if perl is too old.
     return
   endif
@@ -704,7 +704,7 @@ function! s:check_perl() abort
           \ ['Run in shell: cpanm Neovim::Ext'])
     return
   endif
-  call health#report_info('Neovim perl host: '. host)
+  call health#report_info('Nvim perl host: '. host)
 
   let latest_cpan_cmd = 'cpanm --info Neovim::Ext'
   let latest_cpan = s:system(latest_cpan_cmd)
@@ -735,13 +735,11 @@ function! s:check_perl() abort
 endfunction
 
 function! health#provider#check() abort
-  call s:check_clipboard()
-  call s:check_python(2)
-  call s:check_python(3)
-  if exists('$VIRTUAL_ENV')
-    call s:check_active_virtualenv()
-  endif
-  call s:check_ruby()
-  call s:check_node()
-  call s:check_perl()
+  " call s:check_clipboard()
+  " call s:check_python(2)
+  " call s:check_python(3)
+  call s:check_virtualenv()
+  " call s:check_ruby()
+  " call s:check_node()
+  " call s:check_perl()
 endfunction
