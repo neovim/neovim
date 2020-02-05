@@ -2860,10 +2860,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   no_mapping--;
 
-  vimvars[VV_MOUSE_WIN].vv_nr = 0;
-  vimvars[VV_MOUSE_WINID].vv_nr = 0;
-  vimvars[VV_MOUSE_LNUM].vv_nr = 0;
-  vimvars[VV_MOUSE_COL].vv_nr = 0;
+  set_vim_var_nr(VV_MOUSE_WIN, 0);
+  set_vim_var_nr(VV_MOUSE_WINID, 0);
+  set_vim_var_nr(VV_MOUSE_LNUM, 0);
+  set_vim_var_nr(VV_MOUSE_COL, 0);
 
   rettv->vval.v_number = n;
   if (IS_SPECIAL(n) || mod_mask != 0) {
@@ -2906,10 +2906,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         (void)mouse_comp_pos(win, &row, &col, &lnum);
         for (wp = firstwin; wp != win; wp = wp->w_next)
           ++winnr;
-        vimvars[VV_MOUSE_WIN].vv_nr = winnr;
-        vimvars[VV_MOUSE_WINID].vv_nr = wp->handle;
-        vimvars[VV_MOUSE_LNUM].vv_nr = lnum;
-        vimvars[VV_MOUSE_COL].vv_nr = col + 1;
+        set_vim_var_nr(VV_MOUSE_WIN, winnr);
+        set_vim_var_nr(VV_MOUSE_WINID, wp->handle);
+        set_vim_var_nr(VV_MOUSE_LNUM, lnum);
+        set_vim_var_nr(VV_MOUSE_COL, col + 1);
       }
     }
   }
@@ -3520,7 +3520,7 @@ static void f_getreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    strregname = (const char *)vimvars[VV_REG].vv_str;
+    strregname = get_vim_var_str(VV_REG);
   }
 
   if (error) {
@@ -3562,7 +3562,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else {
     // Default to v:register.
-    strregname = (const char *)vimvars[VV_REG].vv_str;
+    strregname = get_vim_var_str(VV_REG);
   }
 
   int regname = (uint8_t)(strregname == NULL ? '"' : *strregname);
