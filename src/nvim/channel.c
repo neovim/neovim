@@ -301,7 +301,8 @@ static void close_cb(Stream *stream, void *data)
 /// @returns [allocated] channel
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
-                           bool pty, bool rpc, bool detach, const char *cwd,
+                           bool pty, bool rpc, bool overlapped, bool detach,
+                           const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
                            char *term_name, char **env, varnumber_T *status_out)
 {
@@ -342,6 +343,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->detach = detach;
   proc->cwd = cwd;
   proc->env = env;
+  proc->overlapped = overlapped;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;

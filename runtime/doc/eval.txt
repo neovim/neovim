@@ -5506,6 +5506,11 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 			      stdout data.
 		  |on_stderr|:  (function) Callback invoked when the job emits
 			      stderr data.
+		  overlapped: (boolean) Set FILE_FLAG_OVERLAPPED for the
+			      standard input/output passed to the child process.
+			      Normally you do not need to set this.
+			      (Only available on MS-Windows, On other
+			      platforms, this option is silently ignored.)
 		  pty:	      (boolean) Connect the job to a new pseudo
 			      terminal, and its streams to the master file
 			      descriptor. Then  `on_stderr` is ignored,
