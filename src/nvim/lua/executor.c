@@ -528,7 +528,7 @@ int nlua_debug(lua_State *lstate)
   for (;;) {
     lua_settop(lstate, 0);
     typval_T input;
-    get_user_input(input_args, &input, false);
+    get_user_input(input_args, &input, false, false);
     msg_putchar('\n');  // Avoid outputting on input line.
     if (input.v_type != VAR_STRING
         || input.vval.v_string == NULL

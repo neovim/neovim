@@ -4412,7 +4412,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-static int inputsecret_flag = 0;
+static bool inputsecret_flag = false;
 
 /*
  * "input()" function
@@ -4420,7 +4420,7 @@ static int inputsecret_flag = 0;
  */
 static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, FALSE);
+  get_user_input(argvars, rettv, FALSE, inputsecret_flag);
 }
 
 /*
@@ -4428,7 +4428,7 @@ static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_inputdialog(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, TRUE);
+  get_user_input(argvars, rettv, TRUE, inputsecret_flag);
 }
 
 /*
@@ -4493,10 +4493,10 @@ static void f_inputsave(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_inputsecret(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   cmdline_star++;
-  inputsecret_flag++;
+  inputsecret_flag = true;
   f_input(argvars, rettv, NULL);
   cmdline_star--;
-  inputsecret_flag--;
+  inputsecret_flag = false;
 }
 
 /*

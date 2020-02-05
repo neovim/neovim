@@ -7521,7 +7521,7 @@ getwinvar(
  * when the user cancels the prompt.
  */
 void get_user_input(const typval_T *const argvars,
-                    typval_T *const rettv, const bool inputdialog)
+                    typval_T *const rettv, const bool inputdialog, const bool secret)
   FUNC_ATTR_NONNULL_ALL
 {
   rettv->v_type = VAR_STRING;
@@ -7632,7 +7632,7 @@ void get_user_input(const typval_T *const argvars,
   const int save_ex_normal_busy = ex_normal_busy;
   ex_normal_busy = 0;
   rettv->vval.v_string =
-    (char_u *)getcmdline_prompt(inputsecret_flag ? NUL : '@', p, echo_attr,
+    (char_u *)getcmdline_prompt(secret ? NUL : '@', p, echo_attr,
                                 xp_type, xp_arg, input_callback);
   ex_normal_busy = save_ex_normal_busy;
   callback_free(&input_callback);
