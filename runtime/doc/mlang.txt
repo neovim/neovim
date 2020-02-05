@@ -185,8 +185,8 @@ you can do it without restarting Vim: >
 	:source $VIMRUNTIME/menu.vim
 
 Each part of a menu path is translated separately.  The result is that when
-"Help" is translated to "Hilfe" and "Overview" to "Überblick" then
-"Help.Overview" will be translated to "Hilfe.Überblick".
+"Help" is translated to "Hilfe" and "Overview" to "Ãœberblick" then
+"Help.Overview" will be translated to "Hilfe.Ãœberblick".
 
 ==============================================================================
 3. Scripts						*multilang-scripts*
