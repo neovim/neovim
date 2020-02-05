@@ -392,54 +392,7 @@ static void f_assert_exception(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "assert_fails(cmd [, error [, msg]])" function
 static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *const cmd = tv_get_string_chk(&argvars[0]);
-  garray_T    ga;
-  int ret = 0;
-  int         save_trylevel = trylevel;
-
-  // trylevel must be zero for a ":throw" command to be considered failed
-  trylevel = 0;
-  called_emsg = false;
-  suppress_errthrow = true;
-  emsg_silent = true;
-
-  do_cmdline_cmd(cmd);
-  if (!called_emsg) {
-    prepare_assert_error(&ga);
-    ga_concat(&ga, (const char_u *)"command did not fail: ");
-    if (argvars[1].v_type != VAR_UNKNOWN
-        && argvars[2].v_type != VAR_UNKNOWN) {
-      char *const tofree = encode_tv2echo(&argvars[2], NULL);
-      ga_concat(&ga, (char_u *)tofree);
-      xfree(tofree);
-    } else {
-      ga_concat(&ga, (const char_u *)cmd);
-    }
-    assert_error(&ga);
-    ga_clear(&ga);
-    ret = 1;
-  } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    char buf[NUMBUFLEN];
-    const char *const error = tv_get_string_buf_chk(&argvars[1], buf);
-
-    if (error == NULL
-        || strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
-      prepare_assert_error(&ga);
-      fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
-                        &vimvars[VV_ERRMSG].vv_tv, ASSERT_OTHER);
-      assert_error(&ga);
-      ga_clear(&ga);
-      ret = 1;
-    }
-  }
-
-  trylevel = save_trylevel;
-  called_emsg = false;
-  suppress_errthrow = false;
-  emsg_silent = false;
-  emsg_on_display = false;
-  set_vim_var_string(VV_ERRMSG, NULL, 0);
-  rettv->vval.v_number = ret;
+  rettv->vval.v_number = assert_fails(argvars);
 }
 
 // "assert_false(actual[, msg])" function
