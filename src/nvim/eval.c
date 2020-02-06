@@ -873,8 +873,8 @@ static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
   return ret;
 }
 
-static int eval_expr_typval(const typval_T *expr, typval_T *argv,
-                            int argc, typval_T *rettv)
+int eval_expr_typval(const typval_T *expr, typval_T *argv,
+                     int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int dummy;
@@ -919,7 +919,7 @@ static int eval_expr_typval(const typval_T *expr, typval_T *argv,
 
 /// Like eval_to_bool() but using a typval_T instead of a string.
 /// Works for string, funcref and partial.
-static bool eval_expr_to_bool(const typval_T *expr, bool *error)
+bool eval_expr_to_bool(const typval_T *expr, bool *error)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T argv, rettv;
@@ -1093,7 +1093,7 @@ static void restore_vimvar(int idx, typval_T *save_tv)
 }
 
 /// If there is a window for "curbuf", make it the current window.
-static void find_win_for_curbuf(void)
+void find_win_for_curbuf(void)
 {
   for (wininfo_T *wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
     if (wip->wi_win != NULL) {
@@ -2131,9 +2131,9 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
 ///
 /// @return A pointer to just after the name, including indexes. Returns NULL
 ///         for a parsing error, but it is still needed to free items in lp.
-static char_u *get_lval(char_u *const name, typval_T *const rettv,
-                        lval_T *const lp, const bool unlet, const bool skip,
-                        const int flags, const int fne_flags)
+char_u *get_lval(char_u *const name, typval_T *const rettv,
+                 lval_T *const lp, const bool unlet, const bool skip,
+                 const int flags, const int fne_flags)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   dictitem_T  *v;
@@ -2454,7 +2454,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
 /*
  * Clear lval "lp" that was filled by get_lval().
  */
-static void clear_lval(lval_T *lp)
+void clear_lval(lval_T *lp)
 {
   xfree(lp->ll_exp_name);
   xfree(lp->ll_newkey);
@@ -3438,7 +3438,7 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
  *
  * Return OK or FAIL.
  */
-static int eval1(char_u **arg, typval_T *rettv, int evaluate)
+int eval1(char_u **arg, typval_T *rettv, int evaluate)
 {
   int result;
   typval_T var2;
@@ -6541,8 +6541,8 @@ static void emsg_funcname(char *ermsg, const char_u *name)
 
 
 /// Get the argument list for a given window
-static void get_arglist_as_rettv(aentry_T *arglist, int argcount,
-                                 typval_T *rettv)
+void get_arglist_as_rettv(aentry_T *arglist, int argcount,
+                          typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, argcount);
   if (arglist != NULL) {
@@ -6681,7 +6681,7 @@ int assert_equal_common(typval_T *argvars, assert_type_T atype)
   return 0;
 }
 
-static int assert_equalfile(typval_T *argvars)
+int assert_equalfile(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
@@ -6735,7 +6735,7 @@ static int assert_equalfile(typval_T *argvars)
   return 0;
 }
 
-static int assert_inrange(typval_T *argvars)
+int assert_inrange(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
@@ -7085,8 +7085,8 @@ theend:
   return retval;
 }
 
-static void common_function(typval_T *argvars, typval_T *rettv,
-                            bool is_funcref, FunPtr fptr)
+void common_function(typval_T *argvars, typval_T *rettv,
+                     bool is_funcref, FunPtr fptr)
 {
   char_u      *s;
   char_u      *name;
@@ -7248,7 +7248,7 @@ theend:
 }
 
 /// Returns buffer options, variables and other attributes in a dictionary.
-static dict_T *get_buffer_info(buf_T *buf)
+dict_T *get_buffer_info(buf_T *buf)
 {
   dict_T *const dict = tv_dict_alloc();
 
@@ -7295,8 +7295,8 @@ static dict_T *get_buffer_info(buf_T *buf)
 ///                  be NULL, in this case "$" results in zero return.
 ///
 /// @return Line number or 0 in case of error.
-static linenr_T tv_get_lnum_buf(const typval_T *const tv,
-                                const buf_T *const buf)
+linenr_T tv_get_lnum_buf(const typval_T *const tv,
+                         const buf_T *const buf)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv->v_type == VAR_STRING
@@ -7308,8 +7308,8 @@ static linenr_T tv_get_lnum_buf(const typval_T *const tv,
   return tv_get_number_chk(tv, NULL);
 }
 
-static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
-                            typval_T *rettv)
+void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
+                     typval_T *rettv)
 {
   if (what_arg->v_type == VAR_UNKNOWN) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -7334,7 +7334,7 @@ static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
 
 /// Returns information (variables, options, etc.) about a tab page
 /// as a dictionary.
-static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
+dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
 {
   dict_T *const dict = tv_dict_alloc();
 
@@ -7353,7 +7353,7 @@ static dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
 }
 
 /// Returns information about a window as a dictionary.
-static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
+dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
 {
   dict_T *const dict = tv_dict_alloc();
 
@@ -7655,8 +7655,8 @@ void get_user_input(const typval_T *const argvars,
 ///                 a dictionary, will give an error if not.
 /// @param[out]  rettv  Location where result will be saved.
 /// @param[in]  what  What to save in rettv.
-static void dict_list(typval_T *const tv, typval_T *const rettv,
-                      const DictListType what)
+void dict_list(typval_T *const tv, typval_T *const rettv,
+               const DictListType what)
 {
   if (tv->v_type != VAR_DICT) {
     EMSG(_(e_dictreq));
@@ -7713,7 +7713,7 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
 /// @returns Result of `shell_build_argv()` if `cmd_tv` is a String.
 ///          Else, string values of `cmd_tv` copied to a (char **) list with
 ///          argv[0] resolved to full path ($PATHEXT-resolved on Windows).
-static char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
+char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
 {
   if (cmd_tv->v_type == VAR_STRING) {  // String => "shell semantics".
     const char *cmd_str = tv_get_string(cmd_tv);
@@ -7817,8 +7817,8 @@ void mapblock_fill_dict(dict_T *const dict,
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
-static int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
-                             win_T **win)
+int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
+                      win_T **win)
 {
   dictitem_T *di;
 
@@ -7842,7 +7842,7 @@ static int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
   return OK;
 }
 
-static void return_register(int regname, typval_T *rettv)
+void return_register(int regname, typval_T *rettv)
 {
   char_u buf[2] = { regname, 0 };
 
@@ -7850,7 +7850,7 @@ static void return_register(int regname, typval_T *rettv)
   rettv->vval.v_string = vim_strsave(buf);
 }
 
-static void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
+void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
 {
   // TODO(bfredl): this is a hack for legacy tests which use screenchar()
   // to check printed messages on the screen (but not floats etc
@@ -7866,8 +7866,8 @@ static void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
 }
 
 /// Set line or list of lines in buffer "buf".
-static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
-                             const typval_T *lines, typval_T *rettv)
+void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
+                      const typval_T *lines, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(4, 5)
 {
   linenr_T lnum = lnum_arg + (append ? 1 : 0);
@@ -8034,7 +8034,7 @@ void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 }
 
 /// "stdpath()" helper for list results
-static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
+void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
   const void *iter = NULL;
@@ -8071,8 +8071,8 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
 }
 
 // os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
-static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
-                                       bool retlist)
+void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
+                                bool retlist)
 {
   proftime_T wait_time;
   bool profiling = do_profiling == PROF_YES;
@@ -8262,7 +8262,7 @@ static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID,
   return false;
 }
 
-static void add_timer_info(typval_T *rettv, timer_T *timer)
+void add_timer_info(typval_T *rettv, timer_T *timer)
 {
   list_T *list = rettv->vval.v_list;
   dict_T *dict = tv_dict_alloc();
@@ -8291,7 +8291,7 @@ static void add_timer_info(typval_T *rettv, timer_T *timer)
   }
 }
 
-static void add_timer_info_all(typval_T *rettv)
+void add_timer_info_all(typval_T *rettv)
 {
   timer_T *timer;
   map_foreach_value(timers, timer, {
@@ -8302,7 +8302,7 @@ static void add_timer_info_all(typval_T *rettv)
 }
 
 // invoked on the main loop
-static void timer_due_cb(TimeWatcher *tw, void *data)
+void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
   int save_did_emsg = did_emsg;
@@ -8354,7 +8354,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   timer_decref(timer);
 }
 
-static void timer_stop(timer_T *timer)
+void timer_stop(timer_T *timer)
 {
   if (timer->stopped) {
     // avoid double free
@@ -8383,7 +8383,7 @@ static void timer_decref(timer_T *timer)
   }
 }
 
-static void timer_stop_all(void)
+void timer_stop_all(void)
 {
   timer_T *timer;
   map_foreach_value(timers, timer, {
@@ -8403,8 +8403,8 @@ void timer_teardown(void)
 /// @param[in]  binary  Whether to write in binary mode.
 ///
 /// @return true in case of success, false otherwise.
-static bool write_list(FileDescriptor *const fp, const list_T *const list,
-                       const bool binary)
+bool write_list(FileDescriptor *const fp, const list_T *const list,
+                const bool binary)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int error = 0;
@@ -8462,7 +8462,7 @@ write_list_error:
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
-static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
+char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   *len = 0;
@@ -9313,7 +9313,7 @@ static int check_luafunc_name(const char *str, bool paren)
 /// Handle expr[expr], expr[expr:expr] subscript and .name lookup.
 /// Also handle function call with Funcref variable: func(expr)
 /// Can all be combined: dict.func(expr)[idx]['func'](expr)
-static int
+int
 handle_subscript(
     const char **const arg,
     typval_T *rettv,
@@ -9487,8 +9487,8 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
 // Careful: "a:0" variables don't have a name.
 // When "htp" is not NULL we are writing to the variable, set "htp" to the
 // hashtab_T used.
-static dictitem_T *find_var(const char *const name, const size_t name_len,
-                            hashtab_T **htp, int no_autoload)
+dictitem_T *find_var(const char *const name, const size_t name_len,
+                     hashtab_T **htp, int no_autoload)
 {
   const char *varname;
   hashtab_T *const ht = find_var_ht(name, name_len, &varname);
@@ -11526,7 +11526,7 @@ bool translated_function_exists(const char *name)
 /// @param[in]  no_deref  Whether to dereference a Funcref.
 ///
 /// @return True if it exists, false otherwise.
-static bool function_exists(const char *const name, bool no_deref)
+bool function_exists(const char *const name, bool no_deref)
 {
   const char_u *nm = (const char_u *)name;
   bool n = false;
@@ -13497,10 +13497,10 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
 /// common code for getting job callbacks for jobstart, termopen and rpcstart
 ///
 /// @return true/false on success/failure.
-static inline bool common_job_callbacks(dict_T *vopts,
-                                        CallbackReader *on_stdout,
-                                        CallbackReader *on_stderr,
-                                        Callback *on_exit)
+bool common_job_callbacks(dict_T *vopts,
+                          CallbackReader *on_stdout,
+                          CallbackReader *on_stderr,
+                          Callback *on_exit)
 {
   if (tv_dict_get_callback(vopts, S_LEN("on_stdout"), &on_stdout->cb)
       &&tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
@@ -13524,7 +13524,7 @@ static inline bool common_job_callbacks(dict_T *vopts,
 }
 
 
-static Channel *find_job(uint64_t id, bool show_error)
+Channel *find_job(uint64_t id, bool show_error)
 {
   Channel *data = find_channel(id);
   if (!data || data->streamtype != kChannelStreamProc
@@ -13542,7 +13542,7 @@ static Channel *find_job(uint64_t id, bool show_error)
 }
 
 
-static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
+void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {
   if (check_restricted() || check_secure()) {
     return;
