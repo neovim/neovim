@@ -6,6 +6,15 @@
 #include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 
+/// Describe data to return from find_some_match()
+typedef enum {
+  kSomeMatch,  ///< Data for match().
+  kSomeMatchEnd,  ///< Data for matchend().
+  kSomeMatchList,  ///< Data for matchlist().
+  kSomeMatchStr,  ///< Data for matchstr().
+  kSomeMatchStrPos,  ///< Data for matchstrpos().
+} SomeMatchType;
+
 KHASH_MAP_INIT_STR(functions, VimLFuncDef)
 
 

@@ -168,15 +168,6 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
-/// Describe data to return from find_some_match()
-typedef enum {
-  kSomeMatch,  ///< Data for match().
-  kSomeMatchEnd,  ///< Data for matchend().
-  kSomeMatchList,  ///< Data for matchlist().
-  kSomeMatchStr,  ///< Data for matchstr().
-  kSomeMatchStrPos,  ///< Data for matchstrpos().
-} SomeMatchType;
-
 // flags used in uf_flags
 #define FC_ABORT    0x01          // abort function on error
 #define FC_RANGE    0x02          // function accepts range
