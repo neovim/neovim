@@ -166,13 +166,7 @@ typedef struct lval_S {
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
 static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_listarg = N_("E686: Argument of %s must be a List");
-static char *e_listdictarg = N_(
-    "E712: Argument of %s must be a List or Dictionary");
-static char *e_listreq = N_("E714: List required");
-static char *e_dictreq = N_("E715: Dictionary required");
 static char *e_stringreq = N_("E928: String required");
-static char *e_toomanyarg = N_("E118: Too many arguments for function: %s");
-static char *e_dictkey = N_("E716: Key not present in Dictionary: %s");
 static char *e_funcexts = N_(
     "E122: Function %s already exists, add ! to replace it");
 static char *e_funcdict = N_("E717: Dictionary entry already exists");
@@ -181,8 +175,6 @@ static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
-static const char *e_readonlyvar = N_(
-    "E46: Cannot change read-only variable \"%.*s\"");
 
 // TODO(ZyX-I): move to eval/executor
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
