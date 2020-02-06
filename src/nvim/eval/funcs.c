@@ -6,7 +6,6 @@
 #include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 
-
 KHASH_MAP_INIT_STR(functions, VimLFuncDef)
 
 
