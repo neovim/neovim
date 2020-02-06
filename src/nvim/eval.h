@@ -142,6 +142,17 @@ extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
 typedef int (*ArgvFunc)(int current_argcount, typval_T *argv,
                         int called_func_argcount);
 
+/// Type of assert_* check being performed
+typedef enum
+{
+  ASSERT_EQUAL,
+  ASSERT_NOTEQUAL,
+  ASSERT_MATCH,
+  ASSERT_NOTMATCH,
+  ASSERT_INRANGE,
+  ASSERT_OTHER,
+} assert_type_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
 #endif

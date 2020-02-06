@@ -466,17 +466,6 @@ typedef struct fst {
 
 KHASH_MAP_INIT_STR(functions, VimLFuncDef)
 
-/// Type of assert_* check being performed
-typedef enum
-{
-  ASSERT_EQUAL,
-  ASSERT_NOTEQUAL,
-  ASSERT_MATCH,
-  ASSERT_NOTMATCH,
-  ASSERT_INRANGE,
-  ASSERT_OTHER,
-} assert_type_T;
-
 /// Type for dict_list function
 typedef enum {
   kDictListKeys,  ///< List dictionary keys.
