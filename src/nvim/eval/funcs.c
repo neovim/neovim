@@ -105,7 +105,7 @@ char_u *get_expr_name(expand_T *xp, int idx)
 /// @param[in]  name  Name of the function.
 ///
 /// Returns pointer to the function definition or NULL if not found.
-static const VimLFuncDef *find_internal_func(const char *const name)
+const VimLFuncDef *find_internal_func(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t len = strlen(name);

@@ -4742,8 +4742,8 @@ eval_index(
 /// @param[in]  evaluate  If not true, rettv is not populated.
 ///
 /// @return OK or FAIL.
-static int get_option_tv(const char **const arg, typval_T *const rettv,
-                         const bool evaluate)
+int get_option_tv(const char **const arg, typval_T *const rettv,
+                  const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   long numval;
@@ -6554,7 +6554,7 @@ static void get_arglist_as_rettv(aentry_T *arglist, int argcount,
 }
 
 // Prepare "gap" for an assert error and add the sourcing position.
-static void prepare_assert_error(garray_T *gap)
+void prepare_assert_error(garray_T *gap)
 {
   char buf[NUMBUFLEN];
 
@@ -6608,9 +6608,9 @@ static void ga_concat_esc(garray_T *gap, char_u *str)
 }
 
 // Fill "gap" with information about an assert error.
-static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
-                              char_u *exp_str, typval_T *exp_tv,
-                              typval_T *got_tv, assert_type_T atype)
+void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
+                       char_u *exp_str, typval_T *exp_tv,
+                       typval_T *got_tv, assert_type_T atype)
 {
   char_u *tofree;
 
@@ -6652,7 +6652,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
 }
 
 // Add an assert error to v:errors.
-static void assert_error(garray_T *gap)
+void assert_error(garray_T *gap)
 {
   struct vimvar *vp = &vimvars[VV_ERRORS];
 
@@ -6664,7 +6664,7 @@ static void assert_error(garray_T *gap)
                         (const char *)gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
-static int assert_equal_common(typval_T *argvars, assert_type_T atype)
+int assert_equal_common(typval_T *argvars, assert_type_T atype)
   FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
@@ -6764,7 +6764,7 @@ static int assert_inrange(typval_T *argvars)
 }
 
 // Common for assert_true() and assert_false().
-static int assert_bool(typval_T *argvars, bool is_true)
+int assert_bool(typval_T *argvars, bool is_true)
   FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
@@ -6789,7 +6789,7 @@ static int assert_bool(typval_T *argvars, bool is_true)
   return 0;
 }
 
-static int assert_exception(typval_T *argvars)
+int assert_exception(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
@@ -6813,7 +6813,7 @@ static int assert_exception(typval_T *argvars)
   return 0;
 }
 
-static int assert_fails(typval_T *argvars)
+int assert_fails(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
@@ -6866,7 +6866,7 @@ static int assert_fails(typval_T *argvars)
   return ret;
 }
 
-static int assert_match_common(typval_T *argvars, assert_type_T atype)
+int assert_match_common(typval_T *argvars, assert_type_T atype)
   FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
@@ -6935,7 +6935,7 @@ win_T * find_win_by_nr_or_id(typval_T *vp)
 /*
  * Implementation of map() and filter().
  */
-static void filter_map(typval_T *argvars, typval_T *rettv, int map)
+void filter_map(typval_T *argvars, typval_T *rettv, int map)
 {
   typval_T    *expr;
   list_T      *l = NULL;
@@ -7382,7 +7382,7 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
 /*
  * Find window specified by "vp" in tabpage "tp".
  */
-static win_T *
+win_T *
 find_win_by_nr (
     typval_T *vp,
     tabpage_T *tp         /* NULL for current tab page */
@@ -7416,7 +7416,7 @@ find_win_by_nr (
 }
 
 /// Find window specified by "wvp" in tabpage "tvp".
-static win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
+win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 {
   win_T *wp = NULL;
   tabpage_T *tp = NULL;
@@ -7444,7 +7444,7 @@ static win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 /*
  * getwinvar() and gettabwinvar()
  */
-static void
+void
 getwinvar(
     typval_T *argvars,
     typval_T *rettv,
@@ -7985,7 +7985,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
  * "setwinvar()" and "settabwinvar()" functions
  */
 
-static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
+void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
   if (check_secure()) {
     return;
@@ -8778,10 +8778,10 @@ static int get_id_len(const char **const arg)
  * If the name contains 'magic' {}'s, expand them and return the
  * expanded name in an allocated string via 'alias' - caller must free.
  */
-static int get_name_len(const char **const arg,
-                        char **alias,
-                        int evaluate,
-                        int verbose)
+int get_name_len(const char **const arg,
+                 char **alias,
+                 int evaluate,
+                 int verbose)
 {
   int len;
 
@@ -9239,7 +9239,7 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
  * Get the value of internal variable "name".
  * Return OK or FAIL.
  */
-static int get_var_tv(
+int get_var_tv(
     const char *name,
     int len,           // length of "name"
     typval_T *rettv,   // NULL when only checking existence
@@ -9521,11 +9521,11 @@ static dictitem_T *find_var(const char *const name, const size_t name_len,
 ///
 /// @return pointer to the dictionary item with the found variable or NULL if it
 ///         was not found.
-static dictitem_T *find_var_in_ht(hashtab_T *const ht,
-                                  int htname,
-                                  const char *const varname,
-                                  const size_t varname_len,
-                                  int no_autoload)
+dictitem_T *find_var_in_ht(hashtab_T *const ht,
+                           int htname,
+                           const char *const varname,
+                           const size_t varname_len,
+                           int no_autoload)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   hashitem_T  *hi;
@@ -9885,8 +9885,8 @@ static void list_one_var_a(const char *prefix, const char *name,
 /// @param[in]  name_len  Length of the variable name.
 /// @param  tv  Variable value.
 /// @param[in]  copy  True if value in tv is to be copied.
-static void set_var(const char *name, const size_t name_len, typval_T *const tv,
-                    const bool copy)
+void set_var(const char *name, const size_t name_len, typval_T *const tv,
+             const bool copy)
   FUNC_ATTR_NONNULL_ALL
 {
   set_var_const(name, name_len, tv, copy, false);
@@ -10093,8 +10093,8 @@ bool var_check_ro(const int flags, const char *name,
 ///                       gettext.
 ///
 /// @return True if variable is fixed, false otherwise.
-static bool var_check_fixed(const int flags, const char *name,
-                            size_t name_len)
+bool var_check_fixed(const int flags, const char *name,
+                     size_t name_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (flags & DI_FLAGS_FIX) {
