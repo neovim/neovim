@@ -732,6 +732,11 @@ static void find_runtime_cb(char_u *fname, void *cookie)
   ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
 }
 
+String nvim__get_lib_dir(void)
+{
+  return cstr_as_string(get_lib_dir());
+}
+
 /// Changes the global working directory.
 ///
 /// @param dir      Directory path

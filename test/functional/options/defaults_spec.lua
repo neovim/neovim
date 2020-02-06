@@ -295,7 +295,9 @@ describe('XDG-based defaults', function()
 
   local function vimruntime_and_libdir()
     local vimruntime = eval('$VIMRUNTIME')
-    local libdir = string.gsub(vimruntime, "share/nvim/runtime$", "lib/nvim")
+    -- libdir is hard to calculate reliably across various ci platforms
+    -- local libdir = string.gsub(vimruntime, "share/nvim/runtime$", "lib/nvim")
+    local libdir = meths._get_lib_dir()
     return vimruntime, libdir
   end
 
