@@ -29,6 +29,16 @@ PRAGMA_DIAG_POP
 static char *e_listarg = N_("E686: Argument of %s must be a List");
 static char *e_stringreq = N_("E928: String required");
 
+static uint64_t last_timer_id = 1;
+
+/// Dummy va_list for passing to vim_snprintf
+///
+/// Used because:
+/// - passing a NULL pointer doesn't work when va_list isn't a pointer
+/// - locally in the function results in a "used before set" warning
+/// - using va_start() to initialize it gives "function with fixed args" error
+static va_list dummy_ap;
+
 
 /// Function given to ExpandGeneric() to obtain the list of internal
 /// or user defined function names.

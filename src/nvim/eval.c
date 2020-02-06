@@ -478,16 +478,7 @@ typedef enum {
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
 
-static uint64_t last_timer_id = 1;
 static PMap(uint64_t) *timers = NULL;
-
-/// Dummy va_list for passing to vim_snprintf
-///
-/// Used because:
-/// - passing a NULL pointer doesn't work when va_list isn't a pointer
-/// - locally in the function results in a "used before set" warning
-/// - using va_start() to initialize it gives "function with fixed args" error
-static va_list dummy_ap;
 
 static const char *const msgpack_type_names[] = {
   [kMPNil] = "nil",
