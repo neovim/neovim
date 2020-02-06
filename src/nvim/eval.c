@@ -364,6 +364,7 @@ static partial_T *vvlua_partial;
 # include "eval.c.generated.h"
 #endif
 
+static uint64_t last_timer_id = 1;
 static PMap(uint64_t) *timers = NULL;
 
 static const char *const msgpack_type_names[] = {
@@ -8262,6 +8263,11 @@ static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID,
   return false;
 }
 
+timer_T *find_timer_by_nr(varnumber_T xx)
+{
+    return pmap_get(uint64_t)(timers, xx);
+}
+
 void add_timer_info(typval_T *rettv, timer_T *timer)
 {
   list_T *list = rettv->vval.v_list;
@@ -8293,6 +8299,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
 
 void add_timer_info_all(typval_T *rettv)
 {
+  tv_list_alloc_ret(rettv, timers->table->n_occupied);
   timer_T *timer;
   map_foreach_value(timers, timer, {
     if (!timer->stopped) {
@@ -8352,6 +8359,30 @@ void timer_due_cb(TimeWatcher *tw, void *data)
     time_watcher_start(&timer->tw, timer_due_cb, 0, 0);
   }
   timer_decref(timer);
+}
+
+uint64_t timer_start(const long timeout,
+                     const int repeat_count,
+                     const Callback *const callback)
+{
+  timer_T *timer = xmalloc(sizeof *timer);
+  timer->refcount = 1;
+  timer->stopped = false;
+  timer->paused = false;
+  timer->emsg_count = 0;
+  timer->repeat_count = repeat_count;
+  timer->timeout = timeout;
+  timer->timer_id = last_timer_id++;
+  timer->callback = *callback;
+
+  time_watcher_init(&main_loop, &timer->tw, timer);
+  timer->tw.events = multiqueue_new_child(main_loop.events);
+  // if main loop is blocked, don't queue up multiple events
+  timer->tw.blockable = true;
+  time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
+
+  pmap_put(uint64_t)(timers, timer->timer_id, timer);
+  return timer->timer_id;
 }
 
 void timer_stop(timer_T *timer)

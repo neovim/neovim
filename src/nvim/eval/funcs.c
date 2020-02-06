@@ -37,8 +37,6 @@ PRAGMA_DIAG_POP
 static char *e_listarg = N_("E686: Argument of %s must be a List");
 static char *e_stringreq = N_("E928: String required");
 
-static uint64_t last_timer_id = 1;
-
 /// Dummy va_list for passing to vim_snprintf
 ///
 /// Used because:
@@ -10159,15 +10157,13 @@ static void f_test_write_list_log(typval_T *const argvars,
 /// "timer_info([timer])" function
 static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  tv_list_alloc_ret(rettv, (argvars[0].v_type != VAR_UNKNOWN
-                            ? 1
-                            : timers->table->n_occupied));
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_NUMBER) {
       EMSG(_(e_number_exp));
       return;
     }
-    timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+    tv_list_alloc_ret(rettv, 1);
+    timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
     if (timer != NULL && !timer->stopped) {
       add_timer_info(rettv, timer);
     }
@@ -10184,7 +10180,7 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
     return;
   }
   int paused = (bool)tv_get_number(&argvars[1]);
-  timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+  timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
   if (timer != NULL) {
     if (!timer->paused && paused) {
       time_watcher_stop(&timer->tw);
@@ -10199,8 +10195,6 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
 /// "timer_start(timeout, callback, opts)" function
 static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const long timeout = tv_get_number(&argvars[0]);
-  timer_T *timer;
   int repeat = 1;
   dict_T *dict;
 
@@ -10225,25 +10219,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!callback_from_typval(&callback, &argvars[1])) {
     return;
   }
-
-  timer = xmalloc(sizeof *timer);
-  timer->refcount = 1;
-  timer->stopped = false;
-  timer->paused = false;
-  timer->emsg_count = 0;
-  timer->repeat_count = repeat;
-  timer->timeout = timeout;
-  timer->timer_id = last_timer_id++;
-  timer->callback = callback;
-
-  time_watcher_init(&main_loop, &timer->tw, timer);
-  timer->tw.events = multiqueue_new_child(main_loop.events);
-  // if main loop is blocked, don't queue up multiple events
-  timer->tw.blockable = true;
-  time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
-
-  pmap_put(uint64_t)(timers, timer->timer_id, timer);
-  rettv->vval.v_number = timer->timer_id;
+  rettv->vval.v_number = timer_start(tv_get_number(&argvars[0]), repeat, &callback);
 }
 
 
@@ -10255,8 +10231,7 @@ static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
     }
 
-    timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
-
+    timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
     if (timer == NULL) {
       return;
     }
