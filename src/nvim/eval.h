@@ -1,19 +1,13 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
-#include "nvim/hashtab.h"  // For hashtab_T
 #include "nvim/buffer_defs.h"
-#include "nvim/ex_cmds_defs.h"  // For exarg_T
-#include "nvim/eval/typval.h"
-#include "nvim/profile.h"
-#include "nvim/garray.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
 #include "nvim/channel.h"
-#include "nvim/os/stdpaths_defs.h"
-#include "nvim/event/time.h"  // For TimeWatcher
-#include "nvim/os/fileio.h"  // For FileDescriptor
 #include "nvim/eval/funcs.h" // For FunPtr
+#include "nvim/event/time.h"  // For TimeWatcher
+#include "nvim/ex_cmds_defs.h"  // For exarg_T
+#include "nvim/os/fileio.h"  // For FileDescriptor
+#include "nvim/os/stdpaths_defs.h"  // For XDGVarType
 
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
