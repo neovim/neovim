@@ -63,6 +63,11 @@ static char *e_funcdict = N_("E717: Dictionary entry already exists");
 static char *e_funcref = N_("E718: Funcref required");
 static char *e_nofunc = N_("E130: Unknown function: %s");
 
+void func_init(void)
+{
+    hash_init(&func_hashtab);
+}
+
 /// Get function arguments.
 static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs,
                              int *varargs, bool skip)

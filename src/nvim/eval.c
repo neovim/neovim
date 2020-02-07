@@ -18,6 +18,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/eval/user_funcs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
@@ -326,7 +327,7 @@ void eval_init(void)
   init_var_dict(&vimvardict, &vimvars_var, VAR_SCOPE);
   vimvardict.dv_lock = VAR_FIXED;
   hash_init(&compat_hashtab);
-  hash_init(&func_hashtab);
+  func_init();
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
