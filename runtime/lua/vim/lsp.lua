@@ -149,7 +149,7 @@ local function optional_validator(fn)
   end
 end
 
-local function validate_client_config(config)
+function lsp.validate_client_config(config)
   validate {
     config = { config, 't' };
   }
@@ -352,7 +352,7 @@ end
 --- delay (or never if there is an error). Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
-  local cleaned_config = validate_client_config(config)
+  local cleaned_config = lsp.validate_client_config(config)
   local cmd, cmd_args, offset_encoding = cleaned_config.cmd, cleaned_config.cmd_args, cleaned_config.offset_encoding
 
   local client_id = next_client_id()
