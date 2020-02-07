@@ -6476,11 +6476,6 @@ static void emsg_funcname(char *ermsg, const char_u *name)
   }
 }
 
-/*********************************************
- * Implementation of the built-in functions
- */
-
-
 /// Get the argument list for a given window
 void get_arglist_as_rettv(aentry_T *arglist, int argcount,
                           typval_T *rettv)
