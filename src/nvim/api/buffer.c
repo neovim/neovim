@@ -486,6 +486,28 @@ void buffer_set_line_slice(Buffer buffer,
   nvim_buf_set_lines(0, buffer, start, end, false, replacement, err);
 }
 
+static bool check_string_array(Array arr, bool disallow_nl, Error *err)
+{
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "All items in the replacement array must be strings");
+      return false;
+    }
+    // Disallow newlines in the middle of the line.
+    if (disallow_nl) {
+      const String l = arr.items[i].data.string;
+      if (memchr(l.data, NL, l.size)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "String cannot contain newlines");
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 
 /// Sets (replaces) a line-range in the buffer.
 ///
@@ -538,22 +560,9 @@ void nvim_buf_set_lines(uint64_t channel_id,
     return;
   }
 
-  for (size_t i = 0; i < replacement.size; i++) {
-    if (replacement.items[i].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "All items in the replacement array must be strings");
-      return;
-    }
-    // Disallow newlines in the middle of the line.
-    if (channel_id != VIML_INTERNAL_CALL) {
-      const String l = replacement.items[i].data.string;
-      if (memchr(l.data, NL, l.size)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "String cannot contain newlines");
-        return;
-      }
-    }
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  if (!check_string_array(replacement, disallow_nl, err)) {
+    return;
   }
 
   size_t new_len = replacement.size;
@@ -661,6 +670,153 @@ end:
   xfree(lines);
   aucmd_restbuf(&aco);
   try_end(err);
+}
+
+void nvim_buf_set_text(uint64_t channel_id,
+                       Buffer buffer,
+                       Integer start_row,
+                       Integer start_col,
+                       Integer end_row,
+                       Integer end_col,
+                       ArrayOf(String) replacement,
+                       Error *err)
+  FUNC_API_SINCE(7)
+{
+  // TODO: treat [] as [''] for convenience
+  assert(replacement.size > 0);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+  size_t new_len = replacement.size;
+
+  // TODO: do the nl-for-NUL dance as well?
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  if (!check_string_array(replacement, disallow_nl, err)) {
+    return;
+  }
+
+  // TODO: check range is ordered and everything!
+  // start_row, end_row within buffer len (except add text past the end?)
+  char *str_at_start = (char *)ml_get_buf(buf, start_row+1, false);
+  if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
+    api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
+    return;
+  }
+
+  char *str_at_end = (char *)ml_get_buf(buf, end_row+1, false);
+  size_t len_at_end = strlen(str_at_end);
+  if (end_col < 0 || (size_t)end_col > len_at_end) {
+    api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
+    return;
+  }
+
+  String first_item = replacement.items[0].data.string;
+  size_t firstlen = (size_t)start_col+first_item.size;
+  size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
+  if (replacement.size == 1) {
+    firstlen += last_part_len;
+  }
+  char *first = xmallocz(firstlen), *last = NULL;
+  memcpy(first, str_at_start, (size_t)start_col);
+  memcpy(first+start_col, first_item.data, first_item.size);
+  if (replacement.size == 1) {
+    memcpy(first+start_col+first_item.size, str_at_end+end_col, last_part_len);
+  } else {
+    String last_item = replacement.items[replacement.size-1].data.string;
+    last = xmallocz(last_item.size+last_part_len);
+    memcpy(last, last_item.data, last_item.size);
+    memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
+  }
+
+  char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
+  lines[0] = first;
+  for (size_t i = 1; i < new_len-1; i++) {
+    lines[i] = replacement.items[i].data.string.data;
+  }
+  if (replacement.size > 1) {
+    lines[replacement.size-1] = last;
+  }
+
+  try_start();
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, (buf_T *)buf);
+
+  if (!MODIFIABLE(buf)) {
+    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
+    goto end;
+  }
+
+  // TODO: dubbel KOLLA KOLLA indexen här
+  if (u_save((linenr_T)start_row, (linenr_T)end_row+2) == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to save undo information");
+    goto end;
+  }
+
+
+  ptrdiff_t extra = 0;  // lines added to text, can be negative
+  size_t old_len = (size_t)(end_row-start_row+1);
+
+  // If the size of the range is reducing (ie, new_len < old_len) we
+  // need to delete some old_len. We do this at the start, by
+  // repeatedly deleting line "start".
+  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
+  for (size_t i = 0; i < to_delete; i++) {
+    if (ml_delete((linenr_T)start_row+1, false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to delete line");
+      goto end;
+    }
+  }
+
+  if (to_delete > 0) {
+    extra -= (ptrdiff_t)to_delete;
+  }
+
+  // For as long as possible, replace the existing old_len with the
+  // new old_len. This is a more efficient operation, as it requires
+  // less memory allocation and freeing.
+  size_t to_replace = old_len < new_len ? old_len : new_len;
+  for (size_t i = 0; i < to_replace; i++) {
+    int64_t lnum = start_row + 1 + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
+      goto end;
+    }
+
+    if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to replace line");
+      goto end;
+    }
+    // Mark lines that haven't been passed to the buffer as they need
+    // to be freed later
+    lines[i] = NULL;
+  }
+
+  // Now we may need to insert the remaining new old_len
+  for (size_t i = to_replace; i < new_len; i++) {
+    int64_t lnum = start_row + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
+      goto end;
+    }
+
+    if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to insert line");
+      goto end;
+    }
+
+    // Same as with replacing, but we also need to free lines
+    xfree(lines[i]);
+    lines[i] = NULL;
+    extra++;
+  }
+
+end:
+  aucmd_restbuf(&aco);
+  try_end(err);
+  
 }
 
 /// Returns the byte offset of a line (0-indexed). |api-indexing|
