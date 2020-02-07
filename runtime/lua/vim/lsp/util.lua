@@ -552,7 +552,7 @@ function M.open_floating_peek_preview(bufnr, start, finish, opts)
 end
 
 
-function highlight_range(bufnr, ns, hiname, start, finish)
+local function highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
     -- TODO care about encoding here since this is in byte index?
     api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], finish[2])
@@ -714,13 +714,12 @@ do
     for _, reference in ipairs(references) do
       local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
       local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
-      if reference["kind"] == protocol.DocumentHighlightKind.Text then
-        highlight_range(bufnr, reference_ns, "LspReferenceText", start_pos, end_pos)
-      elseif reference["kind"] == protocol.DocumentHighlightKind.Read then
-        highlight_range(bufnr, reference_ns, "LspReferenceRead", start_pos, end_pos)
-      elseif reference["kind"] == protocol.DocumentHighlightKind.Write then
-        highlight_range(bufnr, reference_ns, "LspReferenceWrite", start_pos, end_pos)
-      end
+      local document_highlight_kind = {
+        [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
+        [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
+        [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
+      }
+      highlight_range(bufnr, reference_ns, document_highlight_kind[reference["kind"]], start_pos, end_pos)
     end
   end
 
