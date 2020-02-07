@@ -494,10 +494,12 @@ VIM.TREESITTER						*lua-treesitter*
 Nvim integrates the tree-sitter library for incremental parsing of buffers.
 
 Currently Nvim does not provide the tree-sitter parsers, instead these must
-be built separately, for instance using the tree-sitter utility.
-The parser is loaded into nvim using >
+be built separately, for instance using the tree-sitter utility. The only
+exception is a C parser being included in official builds for testing
+purposes. Parsers are searched for as `parser/{lang}.*` in any 'runtimepath'
+directory. A parser can also be loaded manually using a full path: >
 
-    vim.treesitter.add_language("/path/to/c_parser.so", "c")
+    vim.treesitter.require_language("python", "/path/to/python.so")
 
 <Create a parser for a buffer and a given language (if another plugin uses the
 same buffer/language combination, it will be safely reused). Use >

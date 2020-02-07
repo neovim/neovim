@@ -19,7 +19,7 @@ exit_suite --continue
 
 source ~/.nvm/nvm.sh
 nvm use 10
-export TREE_SITTER_DIR=$HOME/tree-sitter-build/
+
 
 enter_suite tests
 
