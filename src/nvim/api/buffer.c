@@ -651,7 +651,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  // Only adjust marks if we managed to switch to a window that holds
+  // Only adjust mapks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   mark_adjust((linenr_T)start,
               (linenr_T)(end - 1),
@@ -712,6 +712,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   }
 
   String first_item = replacement.items[0].data.string;
+  String last_item = replacement.items[replacement.size-1].data.string;
   size_t firstlen = (size_t)start_col+first_item.size;
   size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
   if (replacement.size == 1) {
@@ -723,7 +724,6 @@ void nvim_buf_set_text(uint64_t channel_id,
   if (replacement.size == 1) {
     memcpy(first+start_col+first_item.size, str_at_end+end_col, last_part_len);
   } else {
-    String last_item = replacement.items[replacement.size-1].data.string;
     last = xmallocz(last_item.size+last_part_len);
     memcpy(last, last_item.data, last_item.size);
     memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
@@ -813,10 +813,30 @@ void nvim_buf_set_text(uint64_t channel_id,
     extra++;
   }
 
+  // Adjust marks. Invalidate any which lie in the
+  // changed range, and move any in the remainder of the buffer.
+  // Only adjust mapks if we managed to switch to a window that holds
+  // the buffer, otherwise line numbers will be invalid.
+  mark_adjust((linenr_T)start_row,
+              (linenr_T)end_row,
+              MAXLNUM,
+              (long)extra,
+              kExtmarkNOOP);
+
+  colnr_T col_extent = (colnr_T)(end_col
+                                 - ((end_row > start_col) ? start_col : 0));
+  extmark_splice(buf, (int)start_row, (colnr_T)start_col,
+                 (int)(end_row-start_row), col_extent,
+                 (int)new_len-1, (colnr_T)last_item.size, kExtmarkUndo);
+
+  changed_lines((linenr_T)start_row+1, 0, (linenr_T)end_row+1, (long)extra, true);
+
+  // TODO: adjust cursor like an extmark ( i e it was inside last_part_len)
+  fix_cursor((linenr_T)start_row+1, (linenr_T)end_row+1, (linenr_T)extra);
+
 end:
   aucmd_restbuf(&aco);
   try_end(err);
-  
 }
 
 /// Returns the byte offset of a line (0-indexed). |api-indexing|
