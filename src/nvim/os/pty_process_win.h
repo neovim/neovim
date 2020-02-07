@@ -33,6 +33,14 @@ typedef struct arg_node {
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
+// Structure used by build_cmd_line()
+typedef struct env_node {
+  wchar_t *env;  // pointer to environment variable.
+  size_t len;  // length of environment variable including terminal null.
+  size_t name_len;  // length of environment variable name.
+  QUEUE node;  // QUEUE structure.
+} EnvNode;
+
 static inline PtyProcess pty_process_init(Loop *loop, void *data)
 {
   PtyProcess rv;

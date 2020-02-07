@@ -47,6 +47,7 @@ static inline int QUEUE_EMPTY(const QUEUE *const q)
 }
 
 #define QUEUE_HEAD(q) (q)->next
+#define QUEUE_TAIL(q) (q)->prev
 
 static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 {

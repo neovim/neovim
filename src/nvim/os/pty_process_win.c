@@ -52,6 +52,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
+  wchar_t *env = NULL;
   const char *emsg = NULL;
 
   assert(proc->err.closed);
@@ -124,13 +125,21 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
+  if (proc->env) {
+    status = build_env_block(proc->env, &env);
+    if (status != 0) {
+      emsg = "build_env_block failed";
+      goto cleanup;
+    }
+  }
+
   if (ptyproc->type == kConpty) {
     if (!os_conpty_spawn(conpty_object,
                          &process_handle,
                          NULL,
                          cmd_line,
                          cwd,
-                         NULL)) {
+                         env)) {
       emsg = "os_conpty_spawn failed";
       status = (int)GetLastError();
       goto cleanup;
@@ -141,7 +150,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
         NULL,  // Optional application name
         cmd_line,
         cwd,
-        NULL,  // Optional environment variables
+        env,
         &err);
     if (spawncfg == NULL) {
       emsg = "winpty_spawn_config_new failed";
@@ -213,6 +222,7 @@ cleanup:
   xfree(in_req);
   xfree(out_req);
   xfree(cmd_line);
+  xfree(env);
   xfree(cwd);
   return status;
 }
@@ -453,4 +463,166 @@ int translate_winpty_error(int winpty_errno)
     case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
     default:                                        return UV_UNKNOWN;
   }
+}
+
+/// According to comments in src/win/process.c of libuv, Windows has a few
+/// "essential" environment variables. Prepare them here in an array.
+#define R_E(str) { str, sizeof(str) - 1 }
+  static struct {
+    const char *const name;
+    const size_t len;
+  } required_envs[] = {
+    R_E("HOMEDRIVE"),
+    R_E("HOMEPATH"),
+    R_E("LOGONSERVER"),
+    R_E("PATH"),
+    R_E("SYSTEMDRIVE"),
+    R_E("SYSTEMROOT"),
+    R_E("TEMP"),
+    R_E("USERDOMAIN"),
+    R_E("USERNAME"),
+    R_E("USERPROFILE"),
+    R_E("WINDIR"),
+    { NULL, 0 }
+  };
+
+/// Create an environment block of the following format to be passed to
+/// CreateProcessW.
+///
+/// var1=value1\0var2=value2\0...varN=valueN\0\0
+///
+/// @param[in] envs Array with environment variables.
+/// @param[out] env_block Location where saved builded environment block.
+///
+/// @returns zero on success, or error code of MultiByteToWideChar function.
+///
+static int build_env_block(char **envs, wchar_t **env_block)
+{
+  QUEUE *q;
+
+  // Add required environment variables to queue required_envs_q.
+  QUEUE required_envs_q;
+  QUEUE_INIT(&required_envs_q);
+  for (int i = 0; required_envs[i].name != NULL; i++) {
+    const char *value = os_getenv(required_envs[i].name);
+    if (value) {
+      size_t len = required_envs[i].len + strlen(value) + 2;
+      char *env = xmalloc(len * sizeof(*env));
+      snprintf(env, len, "%s=%s", required_envs[i].name, value);
+      EnvNode *env_node = xmalloc(sizeof(*env_node));
+      int resutl = utf8_to_utf16(env, -1, &env_node->env);
+      if (resutl != 0) {
+        EMSG2("utf8_to_utf16 failed: %d", resutl);
+        xfree(env_node);
+      } else {
+        QUEUE_INSERT_TAIL(&required_envs_q, &env_node->node);
+        env_node->len = wcslen(env_node->env) + 1;
+        env_node->name_len = required_envs[i].len;
+      }
+      xfree(env);
+    }
+  }
+
+  // first pass: Converts the environment string passed as an argument to a
+  // wide character string and adds it to the queue envs_q.
+  size_t env_len = 0;
+  size_t envc = 0;
+  QUEUE envs_q;
+  QUEUE_INIT(&envs_q);
+  while (*envs) {
+    EnvNode *env_node = xmalloc(sizeof(*env_node));
+    QUEUE_INSERT_TAIL(&envs_q, &env_node->node);
+    int result = utf8_to_utf16(*envs, -1, &env_node->env);
+    if (result != 0) {
+      q = QUEUE_HEAD(&envs_q);
+      while (q != &envs_q) {
+        QUEUE *next = q->next;
+        env_node = QUEUE_DATA(q, EnvNode, node);
+        xfree(env_node->env);
+        QUEUE_REMOVE(q);
+        xfree(env_node);
+        q = next;
+      }
+      return result;
+    }
+    // If required environment variables are found in the environment string,
+    // remove them from queue required_env_q.
+    q = QUEUE_HEAD(&required_envs_q);
+    while (q != &required_envs_q) {
+      QUEUE *next = q->next;
+      EnvNode *required_env_node = QUEUE_DATA(q, EnvNode, node);
+      // name_len + 1 is needed because we need to compare up to the equals
+      // sign.
+      if (!_wcsnicmp(required_env_node->env,
+                     env_node->env, required_env_node->name_len + 1)) {
+        xfree(required_env_node->env);
+        QUEUE_REMOVE(q);
+        xfree(required_env_node);
+      }
+      q = next;
+    }
+    env_node->len = wcslen(env_node->env) + 1;
+    env_node->name_len = (size_t)(wcschr(env_node->env, L'=') - env_node->env);
+    env_len += env_node->len;
+    envc++;
+    envs++;
+  }
+
+  // If the queue required_envs_q is not empty, add it to env_len, envc and
+  // append the node of queue required_envs_q to queue envs_q.
+  if (!QUEUE_EMPTY(&required_envs_q)) {
+    QUEUE_FOREACH(q, &required_envs_q) {
+      EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
+      env_len += env_node->len;
+      envc++;
+    }
+    QUEUE_HEAD(&required_envs_q)->prev = QUEUE_TAIL(&envs_q);
+    QUEUE_TAIL(&envs_q)->next = QUEUE_HEAD(&required_envs_q);
+    QUEUE_TAIL(&required_envs_q)->next = &envs_q;
+    envs_q.prev = QUEUE_TAIL(&required_envs_q);
+  }
+
+  // second pass: Add the nodes of the queue envs_q to the array and sort them.
+  EnvNode **sorted_envs = xmalloc(sizeof(*sorted_envs) * (envc + 1));
+  int i = 0;
+  QUEUE_FOREACH(q, &envs_q) {
+    sorted_envs[i] = QUEUE_DATA(q, EnvNode, node);
+    i++;
+  }
+  sorted_envs[i] = NULL;
+  qsort(sorted_envs, envc, sizeof(*sorted_envs), qsort_wcscmp);
+
+  // final pass: Copy environment variables from the sorted array to the
+  // environment block.
+  *env_block = xmalloc(sizeof(**env_block) * (env_len + 1));
+  wchar_t *dst_ptr = *env_block;
+  for (i = 0; sorted_envs[i] != NULL; i++) {
+    memcpy(dst_ptr, sorted_envs[i]->env,
+           sorted_envs[i]->len * (sizeof(**env_block)));
+    dst_ptr += sorted_envs[i]->len;
+    xfree(sorted_envs[i]->env);
+    xfree(sorted_envs[i]);
+  }
+  // Terminate with an extra NULL.
+  *dst_ptr = L'\0';
+  return 0;
+}
+
+static int qsort_wcscmp(const void *lhs, const void *rhs)
+{
+  EnvNode *lnode = *(EnvNode **)lhs;
+  EnvNode *rnode = *(EnvNode **)rhs;
+  size_t len =
+    lnode->name_len > rnode->name_len ? rnode->name_len : lnode->name_len;
+  // The beginning of Windows environment block contains entries such as
+  // "=C:=C:\Windows\system32". Keep these special entries at the top and sort
+  // by all of the content.
+  if (len == 0) {
+    if (lnode->name_len == 0 && rnode->name_len == 0) {
+      len = lnode->len > rnode->len ? rnode->len : lnode->len;
+      return _wcsnicmp(lnode->env, rnode->env, len);
+    }
+    return lnode->name_len == 0 ? -1 : 1;
+  }
+  return _wcsnicmp(lnode->env, rnode->env, len);
 }
