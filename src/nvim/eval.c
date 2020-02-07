@@ -7319,7 +7319,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
  * Find window specified by "vp" in tabpage "tp".
  */
 win_T *
-find_win_by_nr (
+find_win_by_nr(
     typval_T *vp,
     tabpage_T *tp         /* NULL for current tab page */
 )
@@ -7457,7 +7457,9 @@ getwinvar(
  * when the user cancels the prompt.
  */
 void get_user_input(const typval_T *const argvars,
-                    typval_T *const rettv, const bool inputdialog, const bool secret)
+                    typval_T *const rettv,
+                    const bool inputdialog,
+                    const bool secret)
   FUNC_ATTR_NONNULL_ALL
 {
   rettv->v_type = VAR_STRING;

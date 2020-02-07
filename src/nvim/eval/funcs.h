@@ -1,6 +1,7 @@
 #ifndef NVIM_EVAL_FUNCS_H
 #define NVIM_EVAL_FUNCS_H
 
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 
 typedef void (*FunPtr)(void);

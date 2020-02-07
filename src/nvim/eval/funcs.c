@@ -722,7 +722,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   p_cpo = (char_u *)"";
 
   buf = buflist_findnr(buflist_findpat(name, name + STRLEN(name),
-          TRUE, FALSE, curtab_only));
+                                       TRUE, FALSE, curtab_only));
 
   p_magic = save_magic;
   p_cpo = save_cpo;
@@ -2447,9 +2447,9 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     unsigned long count = (unsigned long)(foldend - foldstart + 1);
     txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
     r = xmalloc(STRLEN(txt)
-                + STRLEN(dashes) // for %s
-                + 20             // for %3ld
-                + STRLEN(s));    // concatenated
+                + STRLEN(dashes)  // for %s
+                + 20              // for %3ld
+                + STRLEN(s));     // concatenated
     sprintf((char *)r, txt, dashes, count);
     len = (int)STRLEN(r);
     STRCAT(r, s);
@@ -2679,7 +2679,11 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  * buffer.
  * If 'retlist' is TRUE, then the lines are returned as a Vim List.
  */
-static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retlist, typval_T *rettv)
+static void get_buffer_lines(buf_T *buf,
+                             linenr_T start,
+                             linenr_T end,
+                             int retlist,
+                             typval_T *rettv)
 {
   rettv->v_type = (retlist ? VAR_LIST : VAR_STRING);
   rettv->vval.v_string = NULL;
@@ -4519,7 +4523,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-static garray_T ga_userinput = {0, 0, sizeof(tasave_T), 4, NULL};
+static garray_T ga_userinput = { 0, 0, sizeof(tasave_T), 4, NULL };
 
 /// "inputrestore()" function
 static void f_inputrestore(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -5054,7 +5058,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_json_encode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *) encode_tv2json(&argvars[0], NULL);
+  rettv->vval.v_string = (char_u *)encode_tv2json(&argvars[0], NULL);
 }
 
 /*
@@ -5128,14 +5132,14 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
     return;
   }
 
-  const char *libname = (char *) argvars[0].vval.v_string;
-  const char *funcname = (char *) argvars[1].vval.v_string;
+  const char *libname = (char *)argvars[0].vval.v_string;
+  const char *funcname = (char *)argvars[1].vval.v_string;
 
   VarType in_type = argvars[2].v_type;
 
   // input variables
   char *str_in = (in_type == VAR_STRING)
-      ? (char *) argvars[2].vval.v_string : NULL;
+      ? (char *)argvars[2].vval.v_string : NULL;
   int64_t int_in = argvars[2].vval.v_number;
 
   // output variables
@@ -6291,7 +6295,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
       if (p - start + prevlen >= prevsize) {
-
         /* A common use case is ordinary text files and "prev" gets a
          * fragment of a line, so the first allocation is made
          * small, to avoid repeatedly 'allocing' large and
@@ -9425,7 +9428,7 @@ static void f_stridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *) encode_tv2string(&argvars[0], NULL);
+  rettv->vval.v_string = (char_u *)encode_tv2string(&argvars[0], NULL);
 }
 
 /*
@@ -10275,7 +10278,8 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!callback_from_typval(&callback, &argvars[1])) {
     return;
   }
-  rettv->vval.v_number = timer_start(tv_get_number(&argvars[0]), repeat, &callback);
+  rettv->vval.v_number =
+      timer_start(tv_get_number(&argvars[0]), repeat, &callback);
 }
 
 
