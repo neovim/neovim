@@ -763,15 +763,13 @@ do
   end
   function M.buf_diagnostics_signs(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
-      if diagnostic.severity == protocol.DiagnosticSeverity.Error then
-        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsErrorSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
-      elseif diagnostic.severity == protocol.DiagnosticSeverity.Warning then
-        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsWarningSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
-      elseif diagnostic.severity == protocol.DiagnosticSeverity.Information then
-        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsInformationSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
-      elseif diagnostic.severity == protocol.DiagnosticSeverity.Hint then
-        vim.fn.sign_place(0, sign_ns, 'LspDiagnosticsHintSign', bufnr, {lnum=(diagnostic.range.start.line+1)})
-      end
+      local diagnostic_severity_map = {
+        [protocol.DiagnosticSeverity.Error] = "LspDiagnosticsErrorSign";
+        [protocol.DiagnosticSeverity.Warning] = "LspDiagnosticsWarningSign";
+        [protocol.DiagnosticSeverity.Information] = "LspDiagnosticsInformationSign";
+        [protocol.DiagnosticSeverity.Hint] = "LspDiagnosticsHintSign";
+      }
+      vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1)})
     end
   end
 
