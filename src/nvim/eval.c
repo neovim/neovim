@@ -6429,7 +6429,7 @@ call_func(
       emsg_funcname(N_("E933: Function was deleted: %s"), name);
       break;
     case ERROR_TOOMANY:
-      emsg_funcname(e_toomanyarg, name);
+      emsg_funcname(_(e_toomanyarg), name);
       break;
     case ERROR_TOOFEW:
       emsg_funcname(N_("E119: Not enough arguments for function: %s"),
@@ -10021,7 +10021,7 @@ bool var_check_ro(const int flags, const char *name,
 {
   const char *error_message = NULL;
   if (flags & DI_FLAGS_RO) {
-    error_message = N_(e_readonlyvar);
+    error_message = _(e_readonlyvar);
   } else if ((flags & DI_FLAGS_RO_SBX) && sandbox) {
     error_message = N_("E794: Cannot set variable in the sandbox: \"%.*s\"");
   }

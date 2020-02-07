@@ -3527,7 +3527,7 @@ static void f_getreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    strregname = get_vim_var_str(VV_REG);
+    strregname = _(get_vim_var_str(VV_REG));
   }
 
   if (error) {
@@ -3569,7 +3569,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else {
     // Default to v:register.
-    strregname = get_vim_var_str(VV_REG);
+    strregname = _(get_vim_var_str(VV_REG));
   }
 
   int regname = (uint8_t)(strregname == NULL ? '"' : *strregname);
