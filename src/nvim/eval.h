@@ -15,13 +15,6 @@
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
 
-///< Structure used by trans_function_name()
-typedef struct {
-  dict_T *fd_dict;  ///< Dictionary used.
-  char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
-  dictitem_T  *fd_di;  ///< Dictionary item used.
-} funcdict_T;
-
 // From user function to hashitem and back.
 EXTERN ufunc_T dumuf;
 #define UF2HIKEY(fp) ((fp)->uf_name)

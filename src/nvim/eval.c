@@ -5527,18 +5527,6 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-typedef enum {
-  ERROR_UNKNOWN = 0,
-  ERROR_TOOMANY,
-  ERROR_TOOFEW,
-  ERROR_SCRIPT,
-  ERROR_DICT,
-  ERROR_NONE,
-  ERROR_OTHER,
-  ERROR_BOTH,
-  ERROR_DELETED,
-} FnameTransError;
-
 /// Get the argument list for a given window
 void get_arglist_as_rettv(aentry_T *arglist, int argcount,
                           typval_T *rettv)
