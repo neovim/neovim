@@ -39,9 +39,9 @@ endfunc
 
 func Test_compiler_without_arg()
   let a=split(execute('compiler'))
-  call assert_match('^.*runtime/compiler/ant.vim$',   a[0])
-  call assert_match('^.*runtime/compiler/bcc.vim$',   a[1])
-  call assert_match('^.*runtime/compiler/xmlwf.vim$', a[-1])
+  call assert_match($VIMRUNTIME .. '/compiler/ant.vim$',   a[0])
+  call assert_match($VIMRUNTIME .. '/compiler/bcc.vim$',   a[1])
+  call assert_match($VIMRUNTIME .. '/compiler/xmlwf.vim$', a[-1])
 endfunc
 
 func Test_compiler_completion()

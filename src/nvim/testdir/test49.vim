@@ -1,6 +1,6 @@
 " Vim script language tests
 " Author:	Servatius Brandt <Servatius.Brandt@fujitsu-siemens.com>
-" Last Change:	2019 May 24
+" Last Change:	2019 Oct 08
 
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
@@ -456,7 +456,7 @@ function! ExtraVim(...)
     " messing up the user's viminfo file.
     let redirect = a:0 ?
 	\ " -c 'au VimLeave * redir END' -c 'redir\\! >" . a:1 . "'" : ""
-    exec "!echo '" . debug_quits . "q' | $NVIM_PRG -u NONE -N -es" . redirect .
+    exec "!echo '" . debug_quits . "q' | " .. v:progpath .. " -u NONE -N -es" . redirect .
 	\ " -c 'debuggreedy|set viminfo+=nviminfo'" .
 	\ " -c 'let ExtraVimBegin = " . extra_begin . "'" .
 	\ " -c 'let ExtraVimResult = \"" . resultfile . "\"'" . breakpoints .
