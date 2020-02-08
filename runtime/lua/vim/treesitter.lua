@@ -31,8 +31,6 @@ function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_
 end
 
 local M = {
-  add_language=vim._ts_add_language,
-  inspect_language=vim._ts_inspect_language,
   parse_query = vim._ts_parse_query,
 }
 
@@ -45,12 +43,34 @@ setmetatable(M, {
    end
  })
 
-function M.create_parser(bufnr, ft, id)
+function M.require_language(lang, path)
+  if vim._ts_has_language(lang) then
+    return true
+  end
+  if path == nil then
+    local fname = 'parser/' .. lang .. '.*'
+    local paths = a.nvim_get_runtime_file(fname, false)
+    if #paths == 0 then
+      -- TODO(bfredl): help tag?
+      error("no parser for '"..lang.."' language")
+    end
+    path = paths[1]
+  end
+  vim._ts_add_language(path, lang)
+end
+
+function M.inspect_language(lang)
+  M.require_language(lang)
+  return vim._ts_inspect_language(lang)
+end
+
+function M.create_parser(bufnr, lang, id)
+  M.require_language(lang)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  local self = setmetatable({bufnr=bufnr, lang=ft, valid=false}, Parser)
-  self._parser = vim._create_ts_parser(ft)
+  local self = setmetatable({bufnr=bufnr, lang=lang, valid=false}, Parser)
+  self._parser = vim._create_ts_parser(lang)
   self.change_cbs = {}
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
@@ -94,6 +114,7 @@ local Query = {}
 Query.__index = Query
 
 function M.parse_query(lang, query)
+  M.require_language(lang)
   local self = setmetatable({}, Query)
   self.query = vim._ts_parse_query(lang, query)
   self.info = self.query:inspect()

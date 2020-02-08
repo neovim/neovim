@@ -888,9 +888,9 @@ when using "cp1250" on Unix.
 						*spell-LOW* *spell-UPP*
 Three lines in the affix file are needed.  Simplistic example:
 
-	FOL  áëñ ~
-	LOW  áëñ ~
-	UPP  ÁËÑ ~
+	FOL  Ã¡Ã«Ã± ~
+	LOW  Ã¡Ã«Ã± ~
+	UPP  ÃÃ‹Ã‘ ~
 
 All three lines must have exactly the same number of characters.
 
@@ -905,9 +905,9 @@ The "UPP" line specifies the characters with upper-case.  That is, a character
 is upper-case where it's different from the character at the same position in
 "FOL".
 
-An exception is made for the German sharp s ß.  The upper-case version is
+An exception is made for the German sharp s ÃŸ.  The upper-case version is
 "SS".  In the FOL/LOW/UPP lines it should be included, so that it's recognized
-as a word character, but use the ß character in all three.
+as a word character, but use the ÃŸ character in all three.
 
 ASCII characters should be omitted, Vim always handles these in the same way.
 When the encoding is UTF-8 no word characters need to be specified.
@@ -1377,7 +1377,7 @@ suggestions would spend most time trying all kind of weird compound words.
 							*spell-SYLLABLE*
 The SYLLABLE item defines characters or character sequences that are used to
 count the number of syllables in a word.  Example:
-	SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
+	SYLLABLE aÃ¡eÃ©iÃ­oÃ³Ã¶ÃµuÃºÃ¼Ã»y/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
 
 Before the first slash is the set of characters that are counted for one
 syllable, also when repeated and mixed, until the next character that is not
@@ -1458,8 +1458,8 @@ alike.  This is mostly used for a letter with different accents.  This is used
 to prefer suggestions with these letters substituted.  Example:
 
 	MAP 2 ~
-	MAP eéëêè ~
-	MAP uüùúû ~
+	MAP eÃ©Ã«ÃªÃ¨ ~
+	MAP uÃ¼Ã¹ÃºÃ» ~
 
 The first line specifies the number of MAP lines following.  Vim ignores the
 number, but the line must be there.

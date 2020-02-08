@@ -23,6 +23,7 @@ local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
 local intchar2lua = helpers.intchar2lua
 local mergedicts_copy = helpers.mergedicts_copy
+local endswith = helpers.endswith
 
 describe('API', function()
   before_each(clear)
@@ -1851,6 +1852,29 @@ describe('API', function()
     it('does not cause heap-use-after-free on exit while setting options', function()
       command('au OptionSet * q')
       command('silent! call nvim_create_buf(0, 1)')
+    end)
+  end)
+
+  describe('nvim_get_runtime_file', function()
+    it('works', function()
+      eq({}, meths.get_runtime_file("bork.borkbork", false))
+      eq({}, meths.get_runtime_file("bork.borkbork", true))
+      eq(1, #meths.get_runtime_file("autoload/msgpack.vim", false))
+      eq(1, #meths.get_runtime_file("autoload/msgpack.vim", true))
+      local val = meths.get_runtime_file("autoload/remote/*.vim", true)
+      eq(2, #val)
+      local p = helpers.alter_slashes
+      if endswith(val[1], "define.vim") then
+        ok(endswith(val[1], p("autoload/remote/define.vim")))
+        ok(endswith(val[2], p("autoload/remote/host.vim")))
+      else
+        ok(endswith(val[1], p("autoload/remote/host.vim")))
+        ok(endswith(val[2], p("autoload/remote/define.vim")))
+      end
+      val = meths.get_runtime_file("autoload/remote/*.vim", false)
+      eq(1, #val)
+      ok(endswith(val[1], p("autoload/remote/define.vim"))
+         or endswith(val[1], p("autoload/remote/host.vim")))
     end)
   end)
 end)

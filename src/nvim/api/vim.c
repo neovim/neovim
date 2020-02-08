@@ -703,6 +703,40 @@ ArrayOf(String) nvim_list_runtime_paths(void)
   return rv;
 }
 
+/// Find files in runtime directories
+///
+/// 'name' can contain wildcards. For example
+/// nvim_get_runtime_file("colors/*.vim", true) will return all color
+/// scheme files.
+///
+/// It is not an error to not find any files. An empty array is returned then.
+///
+/// @param name pattern of files to search for
+/// @param all whether to return all matches or only the first
+/// @return list of absolute paths to the found files
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all)
+  FUNC_API_SINCE(7)
+{
+  Array rv = ARRAY_DICT_INIT;
+  if (!name.data) {
+    return rv;
+  }
+  int flags = DIP_START | (all ? DIP_ALL : 0);
+  do_in_runtimepath((char_u *)name.data, flags, find_runtime_cb, &rv);
+  return rv;
+}
+
+static void find_runtime_cb(char_u *fname, void *cookie)
+{
+  Array *rv = (Array *)cookie;
+  ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+}
+
+String nvim__get_lib_dir(void)
+{
+  return cstr_as_string(get_lib_dir());
+}
+
 /// Changes the global working directory.
 ///
 /// @param dir      Directory path

@@ -119,7 +119,14 @@ void tslua_init(lua_State *L)
   build_meta(L, "treesitter_querycursor", querycursor_meta);
 }
 
-int tslua_register_lang(lua_State *L)
+int tslua_has_language(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+  lua_pushboolean(L, pmap_has(cstr_t)(langs, lang_name));
+  return 1;
+}
+
+int tslua_add_language(lua_State *L)
 {
   if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
     return luaL_error(L, "string expected");

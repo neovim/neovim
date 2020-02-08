@@ -293,6 +293,14 @@ describe('XDG-based defaults', function()
   -- TODO(jkeyes): tests below fail on win32 because of path separator.
   if helpers.pending_win32(pending) then return end
 
+  local function vimruntime_and_libdir()
+    local vimruntime = eval('$VIMRUNTIME')
+    -- libdir is hard to calculate reliably across various ci platforms
+    -- local libdir = string.gsub(vimruntime, "share/nvim/runtime$", "lib/nvim")
+    local libdir = meths._get_lib_dir()
+    return vimruntime, libdir
+  end
+
   describe('with too long XDG variables', function()
     before_each(function()
       clear({env={
@@ -308,6 +316,8 @@ describe('XDG-based defaults', function()
     end)
 
     it('are correctly set', function()
+      local vimruntime, libdir = vimruntime_and_libdir()
+
       eq((('/x'):rep(4096) .. '/nvim'
           .. ',' .. ('/a'):rep(2048) .. '/nvim'
           .. ',' .. ('/b'):rep(2048) .. '/nvim'
@@ -316,7 +326,8 @@ describe('XDG-based defaults', function()
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
           .. (',' .. '/C/nvim/site'):rep(512)
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. (',' .. '/C/nvim/site/after'):rep(512)
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
@@ -339,7 +350,8 @@ describe('XDG-based defaults', function()
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
           .. (',' .. '/C/nvim/site'):rep(512)
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. (',' .. '/C/nvim/site/after'):rep(512)
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
@@ -368,11 +380,13 @@ describe('XDG-based defaults', function()
     end)
 
     it('are not expanded', function()
+      local vimruntime, libdir = vimruntime_and_libdir()
       eq(('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'
           .. ',$XDG_CONFIG_HOME/nvim/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
           .. ',$XDG_CONFIG_HOME/nvim/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
@@ -387,7 +401,8 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim'
           .. ',$XDG_CONFIG_HOME/nvim/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
           .. ',$XDG_CONFIG_HOME/nvim/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
@@ -402,7 +417,8 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim'
           .. ',$XDG_CONFIG_HOME/nvim/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
           .. ',$XDG_CONFIG_HOME/nvim/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
@@ -426,13 +442,15 @@ describe('XDG-based defaults', function()
     end)
 
     it('are escaped properly', function()
+      local vimruntime, libdir = vimruntime_and_libdir()
       eq(('\\, \\, \\,/nvim'
           .. ',\\,-\\,-\\,/nvim'
           .. ',-\\,-\\,-/nvim'
           .. ',\\,=\\,=\\,/nvim/site'
           .. ',\\,≡\\,≡\\,/nvim/site'
           .. ',≡\\,≡\\,≡/nvim/site'
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. ',≡\\,≡\\,≡/nvim/site/after'
           .. ',\\,≡\\,≡\\,/nvim/site/after'
           .. ',\\,=\\,=\\,/nvim/site/after'
@@ -451,7 +469,8 @@ describe('XDG-based defaults', function()
           .. ',\\,=\\,=\\,/nvim/site'
           .. ',\\,≡\\,≡\\,/nvim/site'
           .. ',≡\\,≡\\,≡/nvim/site'
-          .. ',' .. eval('$VIMRUNTIME')
+          .. ',' .. vimruntime
+          .. ',' .. libdir
           .. ',≡\\,≡\\,≡/nvim/site/after'
           .. ',\\,≡\\,≡\\,/nvim/site/after'
           .. ',\\,=\\,=\\,/nvim/site/after'

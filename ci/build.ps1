@@ -123,22 +123,6 @@ if (-not $NoTests) {
   npm.cmd install -g neovim
   Get-Command -CommandType Application neovim-node-host.cmd
   npm.cmd link neovim
-
-
-  $env:TREE_SITTER_DIR = $env:USERPROFILE + "\tree-sitter-build"
-  mkdir "$env:TREE_SITTER_DIR\bin"
-
-  $xbits = if ($bits -eq '32') {'x86'} else {'x64'}
-  Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-$xbits.gz" -OutFile tree-sitter.exe.gz
-  C:\msys64\usr\bin\gzip -d tree-sitter.exe.gz
-
-  Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2" -OutFile tree_sitter_c.zip
-  Expand-Archive .\tree_sitter_c.zip -DestinationPath .
-  cd tree-sitter-c-0.15.2
-  ..\tree-sitter.exe test
-  if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
-    exit 1
-  }
 }
 
 if ($compiler -eq 'MSVC') {

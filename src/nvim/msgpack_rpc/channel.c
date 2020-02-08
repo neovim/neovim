@@ -564,7 +564,7 @@ void rpc_close(Channel *channel)
 static void exit_event(void **argv)
 {
   if (!exiting) {
-    mch_exit(0);
+    os_exit(0);
   }
 }
 

@@ -6,7 +6,6 @@ local clear = helpers.clear
 local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
-local iswin = helpers.iswin
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
@@ -16,37 +15,35 @@ before_each(clear)
 describe('treesitter API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
-    eq('Error executing lua: .../treesitter.lua: no such language: borklang',
+    eq("Error executing lua: .../treesitter.lua: no parser for 'borklang' language",
        pcall_err(exec_lua, "parser = vim.treesitter.create_parser(0, 'borklang')"))
 
     -- actual message depends on platform
-    matches('Error executing lua: Failed to load parser: uv_dlopen: .+',
-       pcall_err(exec_lua, "parser = vim.treesitter.add_language('borkbork.so', 'borklang')"))
+    matches("Error executing lua: Failed to load parser: uv_dlopen: .+",
+       pcall_err(exec_lua, "parser = vim.treesitter.require_language('borklang', 'borkbork.so')"))
 
-    eq('Error executing lua: [string "<nvim>"]:1: no such language: borklang',
+    eq("Error executing lua: .../treesitter.lua: no parser for 'borklang' language",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
   end)
 
 end)
 
 describe('treesitter API with C parser', function()
-  local ts_path = os.getenv("TREE_SITTER_DIR")
-
-  -- The tests after this requires an actual parser
-  if ts_path == nil then
-    it("works", function() pending("TREE_SITTER_PATH not set, skipping treesitter parser tests") end)
-    return
+  local function check_parser()
+    local status, msg = unpack(exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
+    if not status then
+      if helpers.isCI() then
+        error("treesitter C parser not found, required on CI: " .. msg)
+      else
+        pending('no C parser, skipping')
+      end
+    end
+    return status
   end
 
-  before_each(function()
-    local path = ts_path .. '/bin/c'..(iswin() and '.dll' or '.so')
-    exec_lua([[
-      local path = ...
-      vim.treesitter.add_language(path,'c')
-    ]], path)
-  end)
-
   it('parses buffer', function()
+    if not check_parser() then return end
+
     insert([[
       int main() {
         int x = 3;
@@ -138,6 +135,8 @@ void ui_refresh(void)
   ]]
 
   it('support query and iter by capture', function()
+    if not check_parser() then return end
+
     insert(test_text)
 
     local res = exec_lua([[
@@ -167,6 +166,8 @@ void ui_refresh(void)
   end)
 
   it('support query and iter by match', function()
+    if not check_parser() then return end
+
     insert(test_text)
 
     local res = exec_lua([[
@@ -198,6 +199,8 @@ void ui_refresh(void)
   end)
 
   it('supports highlighting', function()
+    if not check_parser() then return end
+
     local hl_text = [[
 /// Schedule Lua callback on main loop's event queue
 static int nlua_schedule(lua_State *const lstate)
@@ -357,41 +360,43 @@ static int nlua_schedule(lua_State *const lstate)
   end)
 
   it('inspects language', function()
-      local keys, fields, symbols = unpack(exec_lua([[
-        local lang = vim.treesitter.inspect_language('c')
-        local keys, symbols = {}, {}
-        for k,_ in pairs(lang) do
-          keys[k] = true
-        end
+    if not check_parser() then return end
 
-        -- symbols array can have "holes" and is thus not a valid msgpack array
-        -- but we don't care about the numbers here (checked in the parser test)
-        for _, v in pairs(lang.symbols) do
-          table.insert(symbols, v)
-        end
-        return {keys, lang.fields, symbols}
-      ]]))
-
-      eq({fields=true, symbols=true}, keys)
-
-      local fset = {}
-      for _,f in pairs(fields) do
-        eq("string", type(f))
-        fset[f] = true
+    local keys, fields, symbols = unpack(exec_lua([[
+      local lang = vim.treesitter.inspect_language('c')
+      local keys, symbols = {}, {}
+      for k,_ in pairs(lang) do
+        keys[k] = true
       end
-      eq(true, fset["directive"])
-      eq(true, fset["initializer"])
 
-      local has_named, has_anonymous
-      for _,s in pairs(symbols) do
-        eq("string", type(s[1]))
-        eq("boolean", type(s[2]))
-        if s[1] == "for_statement" and s[2] == true then
-          has_named = true
-        elseif s[1] == "|=" and s[2] == false then
-          has_anonymous = true
-        end
+      -- symbols array can have "holes" and is thus not a valid msgpack array
+      -- but we don't care about the numbers here (checked in the parser test)
+      for _, v in pairs(lang.symbols) do
+        table.insert(symbols, v)
       end
-      eq({true,true}, {has_named,has_anonymous})
+      return {keys, lang.fields, symbols}
+    ]]))
+
+    eq({fields=true, symbols=true}, keys)
+
+    local fset = {}
+    for _,f in pairs(fields) do
+      eq("string", type(f))
+      fset[f] = true
+    end
+    eq(true, fset["directive"])
+    eq(true, fset["initializer"])
+
+    local has_named, has_anonymous
+    for _,s in pairs(symbols) do
+      eq("string", type(s[1]))
+      eq("boolean", type(s[2]))
+      if s[1] == "for_statement" and s[2] == true then
+        has_named = true
+      elseif s[1] == "|=" and s[2] == false then
+        has_anonymous = true
+      end
+    end
+    eq({true,true}, {has_named,has_anonymous})
   end)
 end)

@@ -498,6 +498,24 @@ static inline char *add_dir(char *dest, const char *const dir,
   return dest;
 }
 
+char *get_lib_dir(void)
+{
+  // TODO(bfredl): too fragile? Ideally default_lib_dir would be made empty
+  // in an appimage build
+  if (strlen(default_lib_dir) != 0
+      && os_isdir((const char_u *)default_lib_dir)) {
+    return xstrdup(default_lib_dir);
+  }
+
+  // Find library path relative to the nvim binary: ../lib/nvim/
+  char exe_name[MAXPATHL];
+  vim_get_prefix_from_exepath(exe_name);
+  if (append_path(exe_name, "lib" _PATHSEPSTR "nvim", MAXPATHL) == OK) {
+    return xstrdup(exe_name);
+  }
+  return NULL;
+}
+
 /// Sets &runtimepath to default value.
 ///
 /// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
@@ -508,6 +526,7 @@ static void set_runtimepath_default(void)
   char *const data_home = stdpaths_get_xdg_var(kXDGDataHome);
   char *const config_home = stdpaths_get_xdg_var(kXDGConfigHome);
   char *const vimruntime = vim_getenv("VIMRUNTIME");
+  char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
 #define SITE_SIZE (sizeof("site") - 1)
@@ -515,6 +534,7 @@ static void set_runtimepath_default(void)
   size_t data_len = 0;
   size_t config_len = 0;
   size_t vimruntime_len = 0;
+  size_t libdir_len = 0;
   if (data_home != NULL) {
     data_len = strlen(data_home);
     if (data_len != 0) {
@@ -544,6 +564,12 @@ static void set_runtimepath_default(void)
       rtp_size += vimruntime_len + memcnt(vimruntime, ',', vimruntime_len) + 1;
     }
   }
+  if (libdir != NULL) {
+    libdir_len = strlen(libdir);
+    if (libdir_len != 0) {
+      rtp_size += libdir_len + memcnt(libdir, ',', libdir_len) + 1;
+    }
+  }
   rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
                                        AFTER_SIZE + 1);
   rtp_size += compute_double_colon_len(config_dirs, NVIM_SIZE + 1,
@@ -562,6 +588,7 @@ static void set_runtimepath_default(void)
                            true);
   rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, kXDGNone,
                     NULL, 0, NULL, 0);
+  rtp_cur = add_dir(rtp_cur, libdir, libdir_len, kXDGNone, NULL, 0, NULL, 0);
   rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
                            "after", AFTER_SIZE, false);
   rtp_cur = add_dir(rtp_cur, data_home, data_len, kXDGDataHome,
@@ -583,6 +610,7 @@ static void set_runtimepath_default(void)
   xfree(data_home);
   xfree(config_home);
   xfree(vimruntime);
+  xfree(libdir);
 }
 
 #undef NVIM_SIZE

@@ -42,6 +42,7 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
+option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
@@ -190,14 +191,17 @@ set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc086
 set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
 set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
 
-set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.8.1.tar.gz)
-set(GETTEXT_SHA256 ff942af0e438ced4a8b0ea4b0b6e0d6d657157c5e2364de57baa279c1c125c43)
+set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.20.1.tar.gz)
+set(GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c)
 
 set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
 set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
 
 set(UTF8PROC_URL https://github.com/JuliaStrings/utf8proc/archive/v2.2.0.tar.gz)
 set(UTF8PROC_SHA256 3f8fd1dbdb057ee5ba584a539d5cd1b3952141c0338557cb0bdf8cb9cfed5dbf)
+
+set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/6002fcd.tar.gz)
+set(TREESITTER_C_SHA256 46f8d44fa886d9ddb92571bb6fa8b175992c8758eca749cb1217464e512b6e97)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -252,6 +256,10 @@ endif()
 
 if(USE_BUNDLED_UTF8PROC)
   include(BuildUtf8proc)
+endif()
+
+if(USE_BUNDLED_TS_PARSERS)
+  include(BuildTreesitterParsers)
 endif()
 
 if(WIN32)

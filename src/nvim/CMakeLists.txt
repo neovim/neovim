@@ -546,6 +546,15 @@ else()
 endif()
 set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
+# install treesitter parser if bundled
+if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
+  file(COPY ${DEPS_PREFIX}/lib/nvim/parser DESTINATION ${PROJECT_BINARY_DIR}/lib/nvim/)
+endif()
+
+install(DIRECTORY ${PROJECT_BINARY_DIR}/lib/nvim/
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/
+  USE_SOURCE_PERMISSIONS)
+
 add_library(
   libnvim
   STATIC
