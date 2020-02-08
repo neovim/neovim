@@ -739,6 +739,9 @@ int start_redo(long count, bool old_redo)
     return FAIL;
   }
 
+  // mark the beginning of the repeat sequence
+  add_char_buff(&readbuf2, K_REPEAT_BEGIN);
+
   c = read_redo(false, old_redo);
 
   /* copy the buffer name, if present */
@@ -780,6 +783,9 @@ int start_redo(long count, bool old_redo)
   /* copy from the redo buffer into the stuff buffer */
   add_char_buff(&readbuf2, c);
   copy_redo(old_redo);
+
+  // mark the end of the repeat sequence
+  add_char_buff(&readbuf2, K_REPEAT_END);
   return OK;
 }
 
@@ -1534,6 +1540,18 @@ int vgetc(void)
    * avoid internally used Lists and Dicts to be freed.
    */
   may_garbage_collect = false;
+
+  // beginning / end of the repeat sequence
+  // since K_REPEAT_BEGIN/END are just for marking the repeat sequence,
+  // they don't have any effects and thus they are replaced with K_NOP.
+  if (c == K_REPEAT_BEGIN) {
+    repeat_busy = 1;
+    c = K_NOP;
+  }
+  if (c == K_REPEAT_END) {
+    repeat_busy = 0;
+    c = K_NOP;
+  }
 
   return c;
 }

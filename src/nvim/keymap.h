@@ -87,6 +87,10 @@
 /* Used for menu in a tab pages line. */
 #define KS_TABMENU              239
 
+/* Used as marks indicating the beginning and the end of a repeat sequence. */
+#define KS_REPEAT_BEGIN         238
+#define KS_REPEAT_END           237
+
 /*
  * Filler used after KS_SPECIAL and others
  */
@@ -401,6 +405,9 @@ enum key_extra {
 
 #define K_TABLINE       TERMCAP2KEY(KS_TABLINE, KE_FILLER)
 #define K_TABMENU       TERMCAP2KEY(KS_TABMENU, KE_FILLER)
+
+#define K_REPEAT_BEGIN  TERMCAP2KEY(KS_REPEAT_BEGIN, KE_FILLER)
+#define K_REPEAT_END    TERMCAP2KEY(KS_REPEAT_END, KE_FILLER)
 
 /*
  * Symbols for pseudo keys which are translated from the real key symbols

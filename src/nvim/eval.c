@@ -14459,6 +14459,14 @@ static void f_repeat(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /*
+ * "repeatbusy()" function
+ */
+static void f_repeatbusy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = repeat_busy;
+}
+
+/*
  * "resolve()" function
  */
 static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)

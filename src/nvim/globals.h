@@ -245,6 +245,8 @@ EXTERN int quit_more INIT(= false);         // 'q' hit at "--more--" msg
 EXTERN int ex_keep_indent INIT(= false);    // getexmodeline(): keep indent
 EXTERN int vgetc_busy INIT(= 0);            // when inside vgetc() then > 0
 
+EXTERN int repeat_busy INIT(= 0);           // when executing a repeat sequence then == 1
+
 EXTERN int didset_vim INIT(= FALSE);        /* did set $VIM ourselves */
 EXTERN int didset_vimruntime INIT(= FALSE);        /* idem for $VIMRUNTIME */
 
