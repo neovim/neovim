@@ -217,7 +217,7 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(1, code, "exit code")
+          eq(101, code, "exit code")
           eq(0, signal, "exit signal")
         end;
         on_callback = function(...)
