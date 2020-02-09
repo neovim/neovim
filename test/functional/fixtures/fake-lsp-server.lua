@@ -369,7 +369,7 @@ function tests.basic_check_buffer_open_and_change_incremental()
   }
 end
 
-function tests.basic_check_buffer_open_and_change_incremental_editting()
+function tests.basic_check_buffer_open_and_change_incremental_editing()
   skeleton {
     on_init = function(params)
       local expected_capabilities = protocol.make_client_capabilities()
@@ -422,6 +422,7 @@ local kill_timer = vim.loop.new_timer()
 kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
   kill_timer:stop()
   kill_timer:close()
+  -- TODO: log('TIMEOUT')
   io.stderr:write("TIMEOUT")
   os.exit(100)
 end)
@@ -432,6 +433,7 @@ local status, err = pcall(assert(tests[test_name], "Test not found"))
 kill_timer:stop()
 kill_timer:close()
 if not status then
+  -- TODO: log(err)
   io.stderr:write(err)
   os.exit(101)
 end
