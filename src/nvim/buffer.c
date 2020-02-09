@@ -3531,6 +3531,12 @@ int build_stl_str_hl(
         if (n == curitem && group_start_userhl == group_end_userhl) {
           out_p = t;
           group_len = 0;
+          // do not use the highlighting from the removed group
+          for (n = groupitems[groupdepth] + 1; n < curitem; n++) {
+            if (items[n].type == Highlight) {
+              items[n].type = Empty;
+            }
+          }
         }
       }
 
