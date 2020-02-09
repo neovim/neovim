@@ -19,6 +19,9 @@
 #else
 # include <pty.h>
 #endif
+#ifdef __APPLE__
+#include <crt_externs.h>
+#endif
 
 #include <uv.h>
 
@@ -151,17 +154,31 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
+#define U_E(str) { str, str"=" , sizeof(str) }
+static struct {
+  const char *const name;
+  const char *const name_eq;
+  size_t len_name_eq;
+} unnecessary_envs[] = {
+  U_E("COLUMNS"),
+  U_E("LINES"),
+  U_E("TERMCAP"),
+  U_E("COLORTERM"),
+  U_E("COLORFGBG"),
+  { NULL, NULL, 0 }
+};
+
 static void init_child(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
+# ifdef __APPLE__
+# define environ (*_NSGetEnviron())
+# else
+  extern char **environ;
+# endif
+
   // New session/process-group. #6530
   setsid();
-
-  os_unsetenv("COLUMNS");
-  os_unsetenv("LINES");
-  os_unsetenv("TERMCAP");
-  os_unsetenv("COLORTERM");
-  os_unsetenv("COLORFGBG");
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
@@ -176,8 +193,59 @@ static void init_child(PtyProcess *ptyproc)
     return;
   }
 
+  if (proc->env) {
+    char **env;
+    int term_pos = -1;
+    size_t delete_pos[ARRAY_SIZE(unnecessary_envs) * 2];
+    size_t *delete_ptr = delete_pos;
+    size_t delete_num = 0;
+    const char *term_eq = "TERM=";
+    const char *term_value =
+      ptyproc->term_name ? ptyproc->term_name : "ansi";
+    size_t term_len = STRLEN(term_eq) + STRLEN(term_value) + 1;
+    for (env = proc->env; *env; env++) {
+      for (int i = 0; unnecessary_envs[i].name != NULL; i++) {
+        if (!STRNCMP(unnecessary_envs[i].name_eq, *env,
+                     unnecessary_envs[i].len_name_eq)) {
+          *delete_ptr++ = (size_t)(env - proc->env);
+          delete_num++;
+          break;
+        }
+      }
+      if (!STRNCMP(term_eq, *env, STRLEN(term_eq))) {
+        xfree(*env);
+        *env = xmalloc(term_len);
+        snprintf(*env, term_len, "%s%s", term_eq, term_value);
+        term_pos = (int)(env - proc->env);
+      }
+    }
+    char **new_env = xmalloc(((size_t)(env - proc->env) + 1 - delete_num +
+                              (term_pos == -1 ? 1 : 0) + 1) * sizeof(*new_env));
+    char **dst_ptr = new_env;
+    delete_ptr -= delete_num;
+    env = proc->env;
+    while (*env) {
+      if (delete_num && *delete_ptr == (size_t)(env - proc->env)) {
+        delete_ptr++;
+        delete_num--;
+      } else {
+        *dst_ptr++ = *env;
+      }
+      env++;
+    }
+    if (term_pos == -1) {
+        *dst_ptr = xmalloc(term_len);
+        snprintf(*(dst_ptr++), term_len, "%s%s", term_eq, term_value);
+    }
+    *dst_ptr = NULL;
+    environ = new_env;
+  } else {
+    for (int i = 0; unnecessary_envs[i].name != NULL; i++) {
+      os_unsetenv(unnecessary_envs[i].name);
+    }
+    os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
+  }
   char *prog = ptyproc->process.argv[0];
-  os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(prog, ptyproc->process.argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.
