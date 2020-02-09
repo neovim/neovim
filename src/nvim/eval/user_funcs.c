@@ -168,7 +168,7 @@ static void register_closure(ufunc_T *fp)
 /// Parse a lambda expression and get a Funcref from "*arg".
 ///
 /// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
-static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
+int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
 {
   garray_T   newargs = GA_EMPTY_INIT_VALUE;
   garray_T   *pnewargs;
@@ -296,7 +296,7 @@ errret:
 ///                          was not found.
 ///
 /// @return name of the function.
-static char_u *deref_func_name(const char *name, int *lenp,
+char_u *deref_func_name(const char *name, int *lenp,
                                partial_T **const partialp, bool no_autoload)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
@@ -357,7 +357,7 @@ static void emsg_funcname(char *ermsg, const char_u *name)
  * Allocate a variable for the result of a function.
  * Return OK or FAIL.
  */
-static int
+int
 get_func_tv(
     const char_u *name,     // name of the function
     int len,                // length of "name"
@@ -505,7 +505,7 @@ static char_u *fname_trans_sid(const char_u *const name,
 
 /// Find a function by name, return pointer to it in ufuncs.
 /// @return NULL for unknown function.
-static ufunc_T *find_func(const char_u *name)
+ufunc_T *find_func(const char_u *name)
 {
   hashitem_T  *hi;
 
@@ -1499,7 +1499,7 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 /// Advances "pp" to just after the function name (if no error).
 ///
 /// @return the function name in allocated memory, or NULL for failure.
-static char_u *
+char_u *
 trans_function_name(
     char_u **pp,
     bool skip,                     // only find the end, don't evaluate
@@ -2387,7 +2387,7 @@ ret_free:
  * Return 2 if "p" starts with "s:".
  * Return 0 otherwise.
  */
-static int eval_fname_script(const char *const p)
+int eval_fname_script(const char *const p)
 {
   // Use mb_strnicmp() because in Turkish comparing the "I" may not work with
   // the standard library function.
@@ -3014,7 +3014,7 @@ int current_func_returned(void)
 }
 
 // Get function call environment based on backtrace debug level
-static funccall_T *get_funccal(void)
+funccall_T *get_funccal(void)
 {
   funccall_T *funccal = current_funccal;
   if (debug_backtrace_level > 0) {
@@ -3034,7 +3034,7 @@ static funccall_T *get_funccal(void)
 
 /// Return the hashtable used for local variables in the current funccal.
 /// Return NULL if there is no current funccal.
-static hashtab_T *get_funccal_local_ht(void)
+hashtab_T *get_funccal_local_ht(void)
 {
   if (current_funccal == NULL) {
     return NULL;
@@ -3044,7 +3044,7 @@ static hashtab_T *get_funccal_local_ht(void)
 
 /// Return the hashtable used for argument in the current funccal.
 /// Return NULL if there is no current funccal.
-static hashtab_T *get_funccal_args_ht(void)
+hashtab_T *get_funccal_args_ht(void)
 {
   if (current_funccal == NULL) {
     return NULL;
@@ -3055,7 +3055,7 @@ static hashtab_T *get_funccal_args_ht(void)
 /*
  * List function variables, if there is a function.
  */
-static void list_func_vars(int *first)
+void list_func_vars(int *first)
 {
   if (current_funccal != NULL) {
     list_hashtable_vars(&current_funccal->l_vars.dv_hashtab, "l:", false,

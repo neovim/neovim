@@ -1577,8 +1577,8 @@ static const char_u *skip_var_one(const char_u *arg)
  * List variables for hashtab "ht" with prefix "prefix".
  * If "empty" is TRUE also list NULL strings as empty strings.
  */
-static void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
-                                int *first)
+void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
+                         int *first)
 {
   hashitem_T  *hi;
   dictitem_T  *di;
@@ -7728,7 +7728,7 @@ static int get_env_len(const char_u **arg)
 // Get the length of the name of a function or internal variable.
 // "arg" is advanced to the first non-white character after the name.
 // Return 0 if something is wrong.
-static int get_id_len(const char **const arg)
+int get_id_len(const char **const arg)
 {
   int len;
 
@@ -7829,7 +7829,7 @@ int get_name_len(const char **const arg,
 // "flags" can have FNE_INCL_BR and FNE_CHECK_START.
 // Return a pointer to just after the name.  Equal to "arg" if there is no
 // valid name.
-static const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
+const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
                                    const char_u **expr_end, int flags)
 {
   int mb_nest = 0;
@@ -7968,7 +7968,7 @@ static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
  * Return TRUE if character "c" can be used in a variable or function name.
  * Does not include '{' or '}' for magic braces.
  */
-static int eval_isnamec(int c)
+int eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
@@ -7977,7 +7977,7 @@ static int eval_isnamec(int c)
  * Return TRUE if character "c" can be used as the first character in a
  * variable or function name (excluding '{' and '}').
  */
-static int eval_isnamec1(int c)
+int eval_isnamec1(int c)
 {
   return ASCII_ISALPHA(c) || c == '_';
 }
@@ -8283,7 +8283,7 @@ static bool tv_is_luafunc(typval_T *tv)
 }
 
 /// check the function name after "v:lua."
-static int check_luafunc_name(const char *str, bool paren)
+int check_luafunc_name(const char *str, bool paren)
 {
   const char *p = str;
   while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.') {
@@ -8634,8 +8634,8 @@ end:
 ///                       prefix.
 ///
 /// @return Scope hashtab, NULL if name is not valid.
-static hashtab_T *find_var_ht(const char *name, const size_t name_len,
-                              const char **varname)
+hashtab_T *find_var_ht(const char *name, const size_t name_len,
+                       const char **varname)
 {
   dict_T *d;
   return find_var_ht_dict(name, name_len, varname, &d);
@@ -8730,7 +8730,7 @@ void vars_clear(hashtab_T *ht)
 /*
  * Like vars_clear(), but only free the value if "free_val" is TRUE.
  */
-static void vars_clear_ext(hashtab_T *ht, int free_val)
+void vars_clear_ext(hashtab_T *ht, int free_val)
 {
   int todo;
   hashitem_T  *hi;
@@ -9405,7 +9405,7 @@ static const char *find_option_end(const char **const arg, int *const opt_flags)
 /*
  * Start profiling function "fp".
  */
-static void func_do_profile(ufunc_T *fp)
+void func_do_profile(ufunc_T *fp)
 {
   int len = fp->uf_lines.ga_len;
 
@@ -9591,7 +9591,7 @@ static int prof_self_cmp(const void *s1, const void *s2)
 /// @param[in]  reload  If true, load script again when already loaded.
 ///
 /// @return true if a package was loaded.
-static bool script_autoload(const char *const name, const size_t name_len,
+bool script_autoload(const char *const name, const size_t name_len,
                             const bool reload)
 {
   // If there is no '#' after name[0] there is no package name.
@@ -9638,7 +9638,7 @@ static bool script_autoload(const char *const name, const size_t name_len,
 /// @param[in]  name_len  Name length.
 ///
 /// @return [allocated] autoload script name.
-static char *autoload_name(const char *const name, const size_t name_len)
+char *autoload_name(const char *const name, const size_t name_len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Get the script file name: replace '#' with '/', append ".vim".
