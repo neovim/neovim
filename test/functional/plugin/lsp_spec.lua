@@ -16,16 +16,16 @@ local run, stop = helpers.run, helpers.stop
 
 if helpers.pending_win32(pending) then return end
 
-local fake_lsp_server_file = "test/functional/fixtures/lsp-test-rpc-server.lua"
-if iswin() then
-  fake_lsp_server_file = fake_lsp_server_file:gsub("/", "\\")
-end
+local fake_lsp_server_file = 'test/functional/fixtures/fake-lsp-server.lua'
 
 local function fake_lsp_server_setup(test_name, timeout_ms)
   exec_lua([=[
     lsp = require('vim.lsp')
     local test_name, fixture_filename, timeout = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
+      cmd_env = {
+        NVIM_LOG_FILE = 'Xtest-fake-lsp-server.log'
+      };
       cmd = {
         vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
         "-c", string.format("lua TEST_NAME = %q", test_name),
@@ -117,6 +117,9 @@ describe('LSP', function()
         local test_name, fixture_filename = ...
         function test__start_client()
           return lsp.start_client {
+            cmd_env = {
+              NVIM_LOG_FILE = 'Xtest-fake-lsp-server.log'
+            };
             cmd = {
               vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
               "-c", string.format("lua TEST_NAME = %q", test_name),
@@ -217,7 +220,7 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(101, code, "exit code")
+          eq(101, code, "exit code")  -- See fake-lsp-server.lua
           eq(0, signal, "exit signal")
         end;
         on_callback = function(...)

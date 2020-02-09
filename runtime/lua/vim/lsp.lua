@@ -154,7 +154,7 @@ local function validate_client_config(config)
     callbacks       = { config.callbacks, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
-    cmd_env         = { config.cmd_env, "f", true };
+    cmd_env         = { config.cmd_env, "t", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
