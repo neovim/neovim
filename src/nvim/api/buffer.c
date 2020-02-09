@@ -1421,10 +1421,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   Decoration *decor = NULL;
-  if (hl_id || kv_size(virt_text)) {
+  if (kv_size(virt_text)) {
     decor = xcalloc(1, sizeof(*decor));
     decor->hl_id = hl_id;
     decor->virt_text = virt_text;
+  } else if (hl_id) {
+    decor = decoration_hl(hl_id);
   }
 
   id = extmark_set(buf, (uint64_t)ns_id, id,
@@ -1526,9 +1528,9 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     return src_id;
   }
 
-  int hlg_id = 0;
+  int hl_id = 0;
   if (hl_group.size > 0) {
-    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+    hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
   } else {
     return src_id;
   }
@@ -1539,13 +1541,10 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  Decoration *decor = xcalloc(1, sizeof(*decor));
-  decor->hl_id = hlg_id;
-
   ns_id = extmark_set(buf, ns_id, 0,
                       (int)line, (colnr_T)col_start,
                       end_line, (colnr_T)col_end,
-                      decor, kExtmarkUndo);
+                      decoration_hl(hl_id), kExtmarkUndo);
   return src_id;
 }
 
