@@ -634,13 +634,12 @@ bool win_cursorline_standout(const win_T *wp)
     || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
 }
 
-static DecorationState decorations;
+static DecorationRedrawState decorations;
 bool decorations_active = false;
 
-// VERY ad-hoc, should be in mark_extended.c?
-void decoration_state_add_tmp(int attr_id,
-                              int start_row, int start_col,
-                              int end_row, int end_col)
+void decorations_add_luahl_attr(int attr_id,
+                                int start_row, int start_col,
+                                int end_row, int end_col)
 {
   kv_push(decorations.active,
           ((HlRange){ start_row, start_col, end_row, end_col, attr_id, NULL }));
@@ -1237,6 +1236,8 @@ static void win_update(win_T *wp)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
+  decorations_active = decorations_redraw_reset(buf, &decorations);
+
   if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
     Error err = ERROR_INIT;
     FIXED_TEMP_ARRAY(args, 4);
@@ -1257,7 +1258,6 @@ static void win_update(win_T *wp)
     }
   }
 
-  decorations_active = extmark_decorations_reset(buf, &decorations);
 
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
@@ -2343,36 +2343,32 @@ win_line (
       }
     }
 
-    if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
-      Error err = ERROR_INIT;
-      // TODO(bfredl): build a macro for the "static array" pattern
-      // in buf_updates_send_changes?
-      FIXED_TEMP_ARRAY(args, 3);
-      args.items[0] = WINDOW_OBJ(wp->handle);
-      args.items[1] = BUFFER_OBJ(buf->handle);
-      args.items[2] = INTEGER_OBJ(lnum-1);
-      lua_attr_active = true;
-      extra_check = true;
-      Object o = executor_exec_lua_cb(buf->b_luahl_line, "line",
-                                      args, true, &err);
-      lua_attr_active = false;
-      if (o.type == kObjectTypeString) {
-        // TODO(bfredl): this is a bit of a hack. A final API should use an
-        // "unified" interface where luahl can add both bufhl and virttext
-        luatext = o.data.string.data;
-        do_virttext = true;
-      } else if (ERROR_SET(&err)) {
-        ELOG("error in luahl line: %s", err.msg);
-        luatext = err.msg;
-        do_virttext = true;
-      }
-      decorations_active = true;  // TODO: huff!
-    }
-
-
     if (decorations_active) {
-      has_decorations = extmark_decorations_line(wp->w_buffer, lnum-1,
-                                                 &decorations);
+      if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
+        Error err = ERROR_INIT;
+        FIXED_TEMP_ARRAY(args, 3);
+        args.items[0] = WINDOW_OBJ(wp->handle);
+        args.items[1] = BUFFER_OBJ(buf->handle);
+        args.items[2] = INTEGER_OBJ(lnum-1);
+        lua_attr_active = true;
+        extra_check = true;
+        Object o = executor_exec_lua_cb(buf->b_luahl_line, "line",
+                                        args, true, &err);
+        lua_attr_active = false;
+        if (o.type == kObjectTypeString) {
+          // TODO(bfredl): this is a bit of a hack. A final API should use an
+          // "unified" interface where luahl can add both bufhl and virttext
+          luatext = o.data.string.data;
+          do_virttext = true;
+        } else if (ERROR_SET(&err)) {
+          ELOG("error in luahl line: %s", err.msg);
+          luatext = err.msg;
+          do_virttext = true;
+        }
+      }
+
+      has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
+                                                &decorations);
       if (has_decorations) {
         extra_check = true;
       }
@@ -3541,8 +3537,8 @@ win_line (
         }
 
         if (has_decorations && v > 0) {
-          int extmark_attr = extmark_decorations_col(wp->w_buffer, (colnr_T)v-1,
-                                                     &decorations);
+          int extmark_attr = decorations_redraw_col(wp->w_buffer, (colnr_T)v-1,
+                                                    &decorations);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, extmark_attr);
@@ -4036,8 +4032,7 @@ win_line (
         kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
         do_virttext = true;
       } else if (has_decorations) {
-        VirtText *vp = extmark_decorations_virt_text(wp->w_buffer,
-                                                     &decorations);
+        VirtText *vp = decorations_redraw_virt_text(wp->w_buffer, &decorations);
         if (vp) {
           virt_text = *vp;
           do_virttext = true;

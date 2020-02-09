@@ -2612,5 +2612,6 @@ void nvim__put_attr(Integer id, Integer start_row, Integer start_col,
   if (attr == 0) {
     return;
   }
-  decoration_state_add_tmp(attr, start_row, start_col, end_row, end_col);
+  decorations_add_luahl_attr(attr, (int)start_row, (colnr_T)start_col,
+                             (int)end_row, (colnr_T)end_col);
 }

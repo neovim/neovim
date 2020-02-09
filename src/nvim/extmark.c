@@ -756,17 +756,16 @@ VirtText *extmark_find_virttext(buf_T *buf, int row, uint64_t ns_id)
   return NULL;
 }
 
-// TODO: use decoration_state prefix
-bool extmark_decorations_reset(buf_T *buf, DecorationState *state)
+bool decorations_redraw_reset(buf_T *buf, DecorationRedrawState *state)
 {
   state->row = -1;
   kv_size(state->active) = 0;
-  // TODO: for tmp decorations!
-  return buf->b_extmark_index || true;
+  return buf->b_extmark_index || buf->b_luahl;
 }
 
 
-bool extmark_decorations_start(buf_T *buf, int top_row, DecorationState *state)
+bool decorations_redraw_start(buf_T *buf, int top_row,
+                              DecorationRedrawState *state)
 {
   state->top_row = top_row;
   marktree_itr_get(buf->b_marktree, top_row, 0, state->itr);
@@ -818,17 +817,17 @@ next_mark:
   return true;  // TODO(bfredl): check if available in the region
 }
 
-bool extmark_decorations_line(buf_T *buf, int row, DecorationState *state)
+bool decorations_redraw_line(buf_T *buf, int row, DecorationRedrawState *state)
 {
   if (state->row == -1) {
-    extmark_decorations_start(buf, row, state);
+    decorations_redraw_start(buf, row, state);
   }
   state->row = row;
   state->col_until = -1;
   return true;  // TODO(bfredl): be more precise
 }
 
-int extmark_decorations_col(buf_T *buf, int col, DecorationState *state)
+int decorations_redraw_col(buf_T *buf, int col, DecorationRedrawState *state)
 {
   if (col <= state->col_until) {
     return state->current;
@@ -907,9 +906,9 @@ next_mark:
   return attr;
 }
 
-VirtText *extmark_decorations_virt_text(buf_T *buf, DecorationState *state)
+VirtText *decorations_redraw_virt_text(buf_T *buf, DecorationRedrawState *state)
 {
-  extmark_decorations_col(buf, MAXCOL, state);
+  decorations_redraw_col(buf, MAXCOL, state);
   for (size_t i = 0; i < kv_size(state->active); i++) {
     HlRange item = kv_A(state->active, i);
     if (item.start_row == state->row && item.virt_text) {

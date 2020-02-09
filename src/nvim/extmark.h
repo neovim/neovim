@@ -83,7 +83,7 @@ typedef struct {
   int col_until;
   int current;
   VirtText *virt_text;
-} DecorationState;
+} DecorationRedrawState;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
