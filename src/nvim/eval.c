@@ -2813,22 +2813,23 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
   hashtab_T *ht = find_var_ht_dict(name, name_len, &varname, &dict);
 
   if (ht != NULL && *varname != NUL) {
-    dict_T *d;
-    if (ht == &globvarht) {
-      d = &globvardict;
-    } else if (current_funccal != NULL
-               && ht == &current_funccal->l_vars.dv_hashtab) {
-      d = &current_funccal->l_vars;
-    } else if (ht == &compat_hashtab) {
-        d = &vimvardict;
-    } else {
-      dictitem_T *const di = find_var_in_ht(ht, *name, "", 0, false);
-      d = di->di_tv.vval.v_dict;
+    dict_T *d = get_current_funccal_dict(ht);
+    if (d == NULL)
+	{
+      if (ht == &globvarht) {
+        d = &globvardict;
+      } else if (ht == &compat_hashtab) {
+          d = &vimvardict;
+      } else {
+        dictitem_T *const di = find_var_in_ht(ht, *name, "", 0, false);
+        d = di->di_tv.vval.v_dict;
+      }
+      if (d == NULL) {
+        internal_error("do_unlet()");
+        return FAIL;
+      }
     }
-    if (d == NULL) {
-      internal_error("do_unlet()");
-      return FAIL;
-    }
+
     hashitem_T *hi = hash_find(ht, (const char_u *)varname);
     if (HASHITEM_EMPTY(hi)) {
       hi = find_hi_in_scoped_ht((const char *)name, &ht);
@@ -4878,11 +4879,7 @@ bool garbage_collect(bool testing)
   // Don't free variables in the previous_funccal list unless they are only
   // referenced through previous_funccal.  This must be first, because if
   // the item is referenced elsewhere the funccal must not be freed.
-  for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    fc->fc_copyID = copyID + 1;
-    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
-    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
-  }
+  ABORTING(set_ref_in_previous_funccal)(copyID);
 
   // script-local variables
   for (int i = 1; i <= ga_scripts.ga_len; ++i) {
@@ -4959,14 +4956,10 @@ bool garbage_collect(bool testing)
   ABORTING(set_ref_in_ht)(&globvarht, copyID, NULL);
 
   // function-local variables
-  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
-    fc->fc_copyID = copyID;
-    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID, NULL);
-    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
-  }
+  ABORTING(set_ref_in_call_stack)(copyID);
 
   // named functions (matters for closures)
-  ABORTING(set_ref_in_functions(copyID));
+  ABORTING(set_ref_in_functions)(copyID);
 
   // Channels
   {
@@ -4987,10 +4980,7 @@ bool garbage_collect(bool testing)
   }
 
   // function call arguments, if v:testing is set.
-  for (int i = 0; i < funcargs.ga_len; i++) {
-    ABORTING(set_ref_in_item)(((typval_T **)funcargs.ga_data)[i],
-                              copyID, NULL, NULL);
-  }
+  ABORTING(set_ref_in_func_args)(copyID);
 
   // v: vars
   ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
@@ -5033,23 +5023,8 @@ bool garbage_collect(bool testing)
     did_free = free_unref_items(copyID);
 
     // 3. Check if any funccal can be freed now.
-    bool did_free_funccal = false;
-    for (funccall_T **pfc = &previous_funccal; *pfc != NULL;) {
-      if (can_free_funccal(*pfc, copyID)) {
-        funccall_T *fc = *pfc;
-        *pfc = fc->caller;
-        free_funccal(fc, true);
-        did_free = true;
-        did_free_funccal = true;
-      } else {
-        pfc = &(*pfc)->caller;
-      }
-    }
-    if (did_free_funccal) {
-      // When a funccal was freed some more items might be garbage
-      // collected, so run again.
-      (void)garbage_collect(testing);
-    }
+    //    This may call us back recursively.
+    did_free = did_free || free_unref_funccal(copyID, testing);
   } else if (p_verbose > 0) {
     verb_msg(_(
         "Not enough memory to set references, garbage collection aborted!"));
@@ -8526,10 +8501,8 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht,
       case 'b': return (dictitem_T *)&curbuf->b_bufvar;
       case 'w': return (dictitem_T *)&curwin->w_winvar;
       case 't': return (dictitem_T *)&curtab->tp_winvar;
-      case 'l': return (current_funccal == NULL
-                        ? NULL : (dictitem_T *)&current_funccal->l_vars_var);
-      case 'a': return (current_funccal == NULL
-                        ? NULL : (dictitem_T *)&get_funccal()->l_avars_var);
+      case 'l': return get_funccal_local_var();
+      case 'a': return get_funccal_args_var();
     }
     return NULL;
   }

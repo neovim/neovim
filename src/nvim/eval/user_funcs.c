@@ -3018,6 +3018,30 @@ int current_func_returned(void)
   return current_funccal->returned;
 }
 
+bool free_unref_funccal(int copyID, int testing)
+{
+  bool did_free = false;
+  bool did_free_funccal = false;
+
+  for (funccall_T **pfc = &previous_funccal; *pfc != NULL;) {
+    if (can_free_funccal(*pfc, copyID)) {
+      funccall_T *fc = *pfc;
+      *pfc = fc->caller;
+      free_funccal(fc, true);
+      did_free = true;
+      did_free_funccal = true;
+    } else {
+      pfc = &(*pfc)->caller;
+    }
+  }
+  if (did_free_funccal) {
+    // When a funccal was freed some more items might be garbage
+    // collected, so run again.
+    (void)garbage_collect(testing);
+  }
+  return did_free;
+}
+
 // Get function call environment based on backtrace debug level
 funccall_T *get_funccal(void)
 {
@@ -3047,6 +3071,16 @@ hashtab_T *get_funccal_local_ht(void)
   return &get_funccal()->l_vars.dv_hashtab;
 }
 
+/// Return the l: scope variable.
+/// Return NULL if there is no current funccal.
+dictitem_T *get_funccal_local_var(void)
+{
+  if (current_funccal == NULL) {
+    return NULL;
+  }
+  return (dictitem_T *)&get_funccal()->l_vars_var;
+}
+
 /// Return the hashtable used for argument in the current funccal.
 /// Return NULL if there is no current funccal.
 hashtab_T *get_funccal_args_ht(void)
@@ -3055,6 +3089,16 @@ hashtab_T *get_funccal_args_ht(void)
     return NULL;
   }
   return &get_funccal()->l_avars.dv_hashtab;
+}
+
+/// Return the a: scope variable.
+/// Return NULL if there is no current funccal.
+dictitem_T *get_funccal_args_var(void)
+{
+  if (current_funccal == NULL) {
+    return NULL;
+  }
+  return (dictitem_T *)&current_funccal->l_avars_var;
 }
 
 /*
@@ -3066,6 +3110,17 @@ void list_func_vars(int *first)
     list_hashtable_vars(&current_funccal->l_vars.dv_hashtab, "l:", false,
                         first);
   }
+}
+
+/// If "ht" is the hashtable for local variables in the current funccal, return
+/// the dict that contains it.
+/// Otherwise return NULL.
+dict_T *get_current_funccal_dict(hashtab_T *ht)
+{
+  if (current_funccal != NULL && ht == &current_funccal->l_vars.dv_hashtab) {
+    return &current_funccal->l_vars;
+  }
+  return NULL;
 }
 
 /// Search hashitem in parent scope.
@@ -3134,6 +3189,18 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
   return v;
 }
 
+/// Set "copyID + 1" in previous_funccal and callers.
+bool set_ref_in_previous_funccal(int copyID)
+{
+  bool abort = false;
+
+  for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
+    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
+    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
+  }
+  return abort;
+}
+
 static bool set_ref_in_funccal(funccall_T *fc, int copyID)
 {
   bool abort = false;
@@ -3143,6 +3210,18 @@ static bool set_ref_in_funccal(funccall_T *fc, int copyID)
     abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
     abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
     abort = abort || set_ref_in_func(NULL, fc->func, copyID);
+  }
+  return abort;
+}
+
+/// Set "copyID" in all local vars and arguments in the call stack.
+bool set_ref_in_call_stack(int copyID)
+{
+  bool abort = false;
+
+  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
+    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
+    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
   }
   return abort;
 }
@@ -3168,6 +3247,18 @@ bool set_ref_in_functions(int copyID)
   return abort;
 }
  
+/// Set "copyID" in all function arguments.
+bool set_ref_in_func_args(int copyID)
+{
+  bool abort = false;
+
+  for (int i = 0; i < funcargs.ga_len; i++) {
+    abort = abort || set_ref_in_item(((typval_T **)funcargs.ga_data)[i],
+                                     copyID, NULL, NULL);
+  }
+  return abort;
+}
+
 /// Mark all lists and dicts referenced through function "name" with "copyID".
 /// "list_stack" is used to add lists to be marked.  Can be NULL.
 /// "ht_stack" is used to add hashtabs to be marked.  Can be NULL.
