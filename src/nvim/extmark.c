@@ -43,6 +43,13 @@
 # include "extmark.c.generated.h"
 #endif
 
+static PMap(uint64_t) *hl_decors;
+
+void extmark_init(void)
+{
+  hl_decors = pmap_new(uint64_t)();
+}
+
 static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
   if (!buf->b_extmark_ns) {
     if (!put) {
@@ -704,6 +711,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
 {
   colnr_T hl_start = 0;
   colnr_T hl_end = 0;
+  Decoration *decor = decoration_hl(hl_id);
 
   // TODO(bfredl): if decoration had blocky mode, we could avoid this loop
   for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
@@ -728,12 +736,26 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
       hl_start = pos_start.col + offset;
       hl_end = pos_end.col + offset;
     }
-    Decoration *decor = xcalloc(1, sizeof(*decor));
-    decor->hl_id = hl_id;
     (void)extmark_set(buf, (uint64_t)src_id, 0,
                       (int)lnum-1, hl_start, (int)lnum-1+end_off, hl_end,
                       decor, kExtmarkUndo);
   }
+}
+
+Decoration *decoration_hl(int hl_id)
+{
+  assert(hl_id > 0);
+  Decoration **dp = (Decoration **)pmap_ref(uint64_t)(hl_decors,
+                                                      (uint64_t)hl_id, true);
+  if (*dp) {
+    return *dp;
+  }
+
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->hl_id = hl_id;
+  decor->shared = true;
+  *dp = decor;
+  return decor;
 }
 
 void decoration_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
@@ -749,7 +771,7 @@ void decoration_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 
 void free_decoration(Decoration *decor)
 {
-  if (decor) {
+  if (decor && !decor->shared) {
     clear_virttext(&decor->virt_text);
     xfree(decor);
   }
