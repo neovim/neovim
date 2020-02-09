@@ -452,7 +452,7 @@ function lsp.start_client(config)
       -- The rootPath of the workspace. Is null if no folder is open.
       --
       -- @deprecated in favour of rootUri.
-      rootPath = nil;
+      rootPath = config.root_dir;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
       rootUri = vim.uri_from_fname(config.root_dir);
