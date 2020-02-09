@@ -58,6 +58,14 @@ local check_logs_useless_lines = {
 function module.eq(expected, actual, context)
   return assert.are.same(expected, actual, context)
 end
+-- Like eq(), but includes tail of `logfile` in failure message.
+function module.eq_dumplog(logfile, expected, actual, context)
+  local status, rv = pcall(module.eq, expected, actual, context)
+  if not status then
+    local logtail = module.read_nvim_log(logfile)
+    error(string.format('%s\n%s', rv, logtail))
+  end
+end
 function module.neq(expected, actual, context)
   return assert.are_not.same(expected, actual, context)
 end
@@ -737,10 +745,10 @@ function module.isCI(name)
 
 end
 
--- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
+-- Gets the contents of `logfile` for printing to the build log.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log()
-  local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+function module.read_nvim_log(logfile)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
   local keep = is_ci and 999 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
