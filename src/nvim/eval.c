@@ -1131,7 +1131,7 @@ void *call_func_retlist(const char_u *func, int argc, typval_T *argv)
 void prof_child_enter(proftime_T *tm /* place to store waittime */
                       )
 {
-  funccall_T *fc = current_funccal;
+  funccall_T *fc = get_current_funccal();
 
   if (fc != NULL && fc->func->uf_profiling) {
     fc->prof_child = profile_start();
@@ -1147,7 +1147,7 @@ void prof_child_enter(proftime_T *tm /* place to store waittime */
 void prof_child_exit(proftime_T *tm /* where waittime was stored */
                      )
 {
-  funccall_T *fc = current_funccal;
+  funccall_T *fc = get_current_funccal();
 
   if (fc != NULL && fc->func->uf_profiling) {
     fc->prof_child = profile_end(fc->prof_child);

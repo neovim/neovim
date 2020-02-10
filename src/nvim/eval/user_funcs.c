@@ -1120,6 +1120,11 @@ void restore_funccal(void *vfc)
   current_funccal = (funccall_T *)vfc;
 }
 
+funccall_T *get_current_funccal(void)
+{
+  return current_funccal;
+}
+
 #if defined(EXITFREE)
 void free_all_functions(void)
 {
