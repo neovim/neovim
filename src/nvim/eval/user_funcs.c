@@ -17,34 +17,6 @@
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
-/// Short variable name length
-#define VAR_SHORT_LEN 20
-/// Number of fixed variables used for arguments
-#define FIXVAR_CNT 12
-
-struct funccall_S {
-  ufunc_T *func;  ///< Function being called.
-  int linenr;  ///< Next line to be executed.
-  int returned;  ///< ":return" used.
-  /// Fixed variables for arguments.
-  TV_DICTITEM_STRUCT(VAR_SHORT_LEN + 1) fixvar[FIXVAR_CNT];
-  dict_T l_vars;  ///< l: local function variables.
-  ScopeDictDictItem l_vars_var;  ///< Variable for l: scope.
-  dict_T l_avars;  ///< a: argument variables.
-  ScopeDictDictItem l_avars_var;  ///< Variable for a: scope.
-  list_T l_varlist;  ///< List for a:000.
-  listitem_T l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
-  typval_T *rettv;  ///< Return value.
-  linenr_T breakpoint;  ///< Next line with breakpoint or zero.
-  int dbg_tick;  ///< Debug_tick when breakpoint was set.
-  int level;  ///< Top nesting level of executed function.
-  proftime_T prof_child;  ///< Time spent in a child.
-  funccall_T *caller;  ///< Calling function or NULL.
-  int fc_refcount;  ///< Number of user functions that reference this funccall.
-  int fc_copyID;  ///< CopyID used for garbage collection.
-  garray_T fc_funcs;  ///< List of ufunc_T* which keep a reference to "func".
-};
-
 hashtab_T func_hashtab;
 
 // Used by get_func_tv()

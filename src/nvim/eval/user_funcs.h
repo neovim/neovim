@@ -23,6 +23,9 @@ typedef enum {
   ERROR_DELETED,
 } FnameTransError;
 
+typedef int (*ArgvFunc)(int current_argcount, typval_T *argv,
+                        int called_func_argcount);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/user_funcs.h.generated.h"
 #endif
