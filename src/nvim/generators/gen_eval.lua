@@ -18,10 +18,6 @@ end
 
 package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
-local funcsfname = autodir .. '/funcs.generated.h'
-
-local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
-
 local funcs = require('eval').funcs
 local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
 for _,fun in ipairs(metadata) do
@@ -38,21 +34,26 @@ local funcsdata = io.open(funcs_file, 'w')
 funcsdata:write(mpack.pack(funcs))
 funcsdata:close()
 
-gperfpipe:write([[
-%language=ANSI-C
-%global-table
-%readonly-tables
-%define initializer-suffix ,0,0,NULL,NULL
-%define word-array-name functions
-%define hash-function-name hash_internal_func_gperf
-%define lookup-function-name find_internal_func_gperf
-%omit-struct-type
-%struct-type
-VimLFuncDef;
-%%
+local funcs_list = io.open(autodir .. '/funcs.generated.h', 'w')
+
+funcs_list:write([[
+#ifdef _MSC_VER
+// This prevents MSVC from replacing the functions with intrinsics,
+// and causing errors when trying to get their addresses
+#pragma function(ceil)
+#pragma function(floor)
+#endif
+
+static const VimLFuncDef functions[] = {
 ]])
 
-for name, def in pairs(funcs) do
+-- Sort the functions by their name
+local names = {}
+for n in pairs(funcs) do table.insert(names, n) end
+table.sort(names)
+
+for _, name in ipairs(names) do
+  local def = funcs[name]
   local args = def.args or 0
   if type(args) == 'number' then
     args = {args, args}
@@ -61,7 +62,9 @@ for name, def in pairs(funcs) do
   end
   local func = def.func or ('f_' .. name)
   local data = def.data or "NULL"
-  gperfpipe:write(('%s,  %s, %s, &%s, (FunPtr)%s\n')
+  funcs_list:write(('  {"%s", %s, %s, &%s, (FunPtr)%s},\n')
                   :format(name, args[1], args[2], func, data))
 end
-gperfpipe:close()
+
+funcs_list:write('};\n')
+funcs_list:close()
