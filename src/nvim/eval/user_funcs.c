@@ -1117,9 +1117,7 @@ void *save_funccal(void)
 
 void restore_funccal(void *vfc)
 {
-  funccall_T *fc = (funccall_T *)vfc;
-
-  current_funccal = fc;
+  current_funccal = (funccall_T *)vfc;
 }
 
 #if defined(EXITFREE)

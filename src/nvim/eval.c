@@ -9770,10 +9770,9 @@ const void *var_shada_iter(const void *const iter, const char **const name,
 
 void var_set_global(const char *const name, typval_T vartv)
 {
-  funccall_T *const saved_current_funccal = current_funccal;
-  current_funccal = NULL;
+  funccall_T *const saved_funccal = (funccall_T *)save_funccal();
   set_var(name, strlen(name), &vartv, false);
-  current_funccal = saved_current_funccal;
+  restore_funccal(saved_funccal);
 }
 
 int store_session_globals(FILE *fd)
