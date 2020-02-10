@@ -150,6 +150,7 @@ set(CONV_SOURCES
   diff.c
   edit.c
   eval.c
+  eval/funcs.c
   ex_cmds.c
   ex_docmd.c
   fileio.c
@@ -180,10 +181,10 @@ if(NOT MSVC)
   check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
   if(HAS_WSTATIC_IN_INLINE)
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
   else()
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
 
   # tree-sitter: inlined external project, we don't maintain it. #10124

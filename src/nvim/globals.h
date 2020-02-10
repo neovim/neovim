@@ -993,6 +993,14 @@ EXTERN char_u e_re_damg[] INIT(= N_("E43: Damaged match string"));
 EXTERN char_u e_re_corr[] INIT(= N_("E44: Corrupted regexp program"));
 EXTERN char_u e_readonly[] INIT(= N_(
     "E45: 'readonly' option is set (add ! to override)"));
+EXTERN char_u e_readonlyvar[] INIT(= N_(
+    "E46: Cannot change read-only variable \"%.*s\""));
+EXTERN char_u e_dictreq[] INIT(= N_("E715: Dictionary required"));
+EXTERN char_u e_toomanyarg[] INIT(= N_("E118: Too many arguments for function: %s"));
+EXTERN char_u e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: %s"));
+EXTERN char_u e_listreq[] INIT(= N_("E714: List required"));
+EXTERN char_u e_listdictarg[] INIT(= N_(
+    "E712: Argument of %s must be a List or Dictionary"));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
