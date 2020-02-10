@@ -1863,7 +1863,10 @@ errorret:
         // Avoid giving this message for a recursive call, may happen
         // when the GUI redraws part of the text.
         recursive++;
-        IEMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
+        get_trans_bufname(buf);
+        shorten_dir(NameBuff);
+        iemsgf(_("E316: ml_get: cannot find line %" PRId64 " in buffer %d %s"),
+               lnum, buf->b_fnum, NameBuff);
         recursive--;
       }
       goto errorret;
