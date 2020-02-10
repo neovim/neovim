@@ -17,6 +17,10 @@
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+#include "eval/user_funcs.c.generated.h"
+#endif
+
 hashtab_T func_hashtab;
 
 // Used by get_func_tv()
