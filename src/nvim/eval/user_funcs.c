@@ -3,7 +3,26 @@
 
 // User defined function support
 
+#include "nvim/ascii.h"
+#include "nvim/charset.h"
+#include "nvim/edit.h"
+#include "nvim/eval.h"
+#include "nvim/eval/encode.h"
 #include "nvim/eval/user_funcs.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/ex_getln.h"
+#include "nvim/fileio.h"
+#include "nvim/getchar.h"
+#include "nvim/globals.h"
+#include "nvim/lua/executor.h"
+#include "nvim/misc1.h"
+#include "nvim/os/input.h"
+#include "nvim/regexp.h"
+#include "nvim/search.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 // flags used in uf_flags
 #define FC_ABORT    0x01          // abort function on error

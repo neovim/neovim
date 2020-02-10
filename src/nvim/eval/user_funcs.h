@@ -2,6 +2,7 @@
 #define NVIM_EVAL_USER_FUNCS_H
 
 #include "nvim/eval/typval.h"
+#include "nvim/ex_cmds_defs.h"
 
 ///< Structure used by trans_function_name()
 typedef struct {
