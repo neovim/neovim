@@ -2981,6 +2981,67 @@ int func_has_abort(void *cookie)
   return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
 }
 
+/// Turn "dict.Func" into a partial for "Func" bound to "dict".
+/// Changes "rettv" in-place.
+void make_partial(dict_T *const selfdict, typval_T *const rettv)
+{
+  char_u *fname;
+  char_u *tofree = NULL;
+  ufunc_T *fp;
+  char_u fname_buf[FLEN_FIXED + 1];
+  int error;
+
+  if (rettv->v_type == VAR_PARTIAL && rettv->vval.v_partial->pt_func != NULL) {
+    fp = rettv->vval.v_partial->pt_func;
+  } else {
+    fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
+                                      ? rettv->vval.v_string
+                                      : rettv->vval.v_partial->pt_name;
+    // Translate "s:func" to the stored function name.
+    fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
+    fp = find_func(fname);
+    xfree(tofree);
+  }
+
+  // Turn "dict.Func" into a partial for "Func" with "dict".
+  if (fp != NULL && (fp->uf_flags & FC_DICT)) {
+    partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
+    pt->pt_refcount = 1;
+    pt->pt_dict = selfdict;
+    (selfdict->dv_refcount)++;
+    pt->pt_auto = true;
+    if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
+      // Just a function: Take over the function name and use selfdict.
+      pt->pt_name = rettv->vval.v_string;
+    } else {
+      partial_T *ret_pt = rettv->vval.v_partial;
+      int i;
+
+      // Partial: copy the function name, use selfdict and copy
+      // args. Can't take over name or args, the partial might
+      // be referenced elsewhere.
+      if (ret_pt->pt_name != NULL) {
+        pt->pt_name = vim_strsave(ret_pt->pt_name);
+        func_ref(pt->pt_name);
+      } else {
+        pt->pt_func = ret_pt->pt_func;
+        func_ptr_ref(pt->pt_func);
+      }
+      if (ret_pt->pt_argc > 0) {
+        size_t arg_size = sizeof(typval_T) * ret_pt->pt_argc;
+        pt->pt_argv = (typval_T *)xmalloc(arg_size);
+        pt->pt_argc = ret_pt->pt_argc;
+        for (i = 0; i < pt->pt_argc; i++) {
+          tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
+        }
+      }
+      partial_unref(ret_pt);
+    }
+    rettv->v_type = VAR_PARTIAL;
+    rettv->vval.v_partial = pt;
+  }
+}
+
 /*
  * Return the name of the executed function.
  */
