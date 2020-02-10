@@ -57,9 +57,6 @@
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
-// Character used as separator in autoload function/variable names.
-#define AUTOLOAD_CHAR '#'
-
 
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
 static char *e_missbrac = N_("E111: Missing ']'");
