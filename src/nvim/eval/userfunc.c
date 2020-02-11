@@ -8,7 +8,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
-#include "nvim/eval/user_funcs.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -34,7 +34,7 @@
 #define FC_SANDBOX  0x40          // function defined in the sandbox
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "eval/user_funcs.c.generated.h"
+#include "eval/userfunc.c.generated.h"
 #endif
 
 hashtab_T func_hashtab;
@@ -3318,7 +3318,7 @@ bool set_ref_in_functions(int copyID)
   }
   return abort;
 }
- 
+
 /// Set "copyID" in all function arguments.
 bool set_ref_in_func_args(int copyID)
 {

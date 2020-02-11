@@ -18,7 +18,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
-#include "nvim/eval/user_funcs.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"

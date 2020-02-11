@@ -1,5 +1,5 @@
-#ifndef NVIM_EVAL_USER_FUNCS_H
-#define NVIM_EVAL_USER_FUNCS_H
+#ifndef NVIM_EVAL_USERFUNC_H
+#define NVIM_EVAL_USERFUNC_H
 
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
@@ -31,6 +31,6 @@ typedef int (*ArgvFunc)(int current_argcount, typval_T *argv,
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/user_funcs.h.generated.h"
+# include "eval/userfunc.h.generated.h"
 #endif
-#endif  // NVIM_EVAL_USER_FUNCS_H
+#endif  // NVIM_EVAL_USERFUNC_H
