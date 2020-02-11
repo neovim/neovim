@@ -159,8 +159,8 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   char_u     *start = skipwhite(*arg + 1);
   char_u     *s, *e;
   static int lambda_no = 0;
-  int        *old_eval_lavars = eval_lavars_used;
-  int        eval_lavars = false;
+  bool       *old_eval_lavars = eval_lavars_used;
+  bool       eval_lavars = false;
 
   // First, check if this is a lambda expression. "->" must exists.
   ret = get_function_args(&start, '-', NULL, NULL, true);

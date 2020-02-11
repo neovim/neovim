@@ -81,8 +81,8 @@ static ScopeDictDictItem globvars_var;
  */
 static hashtab_T compat_hashtab;
 
-// Used for checking if local variables or arguments used in a lambda.
-static int *eval_lavars_used = NULL;
+/// Used for checking if local variables or arguments used in a lambda.
+bool *eval_lavars_used = NULL;
 
 /*
  * Array to hold the hashtab with variables local to each sourced script.
@@ -8232,7 +8232,7 @@ int get_var_tv(
 }
 
 /// Check if variable "name[len]" is a local variable or an argument.
-/// If so, "*eval_lavars_used" is set to TRUE.
+/// If so, "*eval_lavars_used" is set to true.
 static void check_vars(const char *name, size_t len)
 {
   if (eval_lavars_used == NULL) {
