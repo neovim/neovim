@@ -9583,24 +9583,6 @@ char *autoload_name(const char *const name, const size_t name_len)
   return scriptname;
 }
 
-
-
-/// Check whether funccall is still referenced outside
-///
-/// It is supposed to be referenced if either it is referenced itself or if l:,
-/// a: or a:000 are referenced as all these are statically allocated within
-/// funccall structure.
-static inline bool fc_referenced(const funccall_T *const fc)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-  FUNC_ATTR_NONNULL_ALL
-{
-  return ((fc->l_varlist.lv_refcount  // NOLINT(runtime/deprecated)
-           != DO_NOT_FREE_CNT)
-          || fc->l_vars.dv_refcount != DO_NOT_FREE_CNT
-          || fc->l_avars.dv_refcount != DO_NOT_FREE_CNT
-          || fc->fc_refcount > 0);
-}
-
 /*
  * Called when starting to read a function line.
  * "sourcing_lnum" must be correct!
