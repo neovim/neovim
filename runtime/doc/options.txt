@@ -4895,7 +4895,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'scrolloff'* *'so'*
 'scrolloff' 'so'	number	(default 0)
-			global
+			global or local to window |global-local|
 	Minimal number of screen lines to keep above and below the cursor.
 	This will make some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
@@ -5510,7 +5510,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)
-			global
+			global or local to window |global-local|
 	The minimal number of screen columns to keep to the left and to the
 	right of the cursor if 'nowrap' is set.  Setting this option to a
 	value greater than 0 while having |'sidescroll'| also at a non-zero

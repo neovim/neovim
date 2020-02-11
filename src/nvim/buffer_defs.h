@@ -1280,6 +1280,8 @@ struct window_S {
   int         w_p_brimin;           /* minimum width for breakindent */
   int         w_p_brishift;         /* additional shift for breakindent */
   bool        w_p_brisbr;           /* sbr in 'briopt' */
+  long        w_p_siso;             /* 'sidescrolloff' local value */
+  long        w_p_so;               /* 'scrolloff' local value */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))

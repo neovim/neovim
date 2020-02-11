@@ -900,11 +900,18 @@ set_option_default(
       if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        *(long *)varp = (long)(intptr_t)options[opt_idx].def_val[dvi];
+        long def_val = (long)options[opt_idx].def_val[dvi];
+        if ((long *)varp == &curwin->w_p_so
+                || (long *)varp == &curwin->w_p_siso)
+            // 'scrolloff' and 'sidescrolloff' local values have a
+ 		    // different default value than the global default.
+ 		    *(long *)varp = -1;
+        else
+            *(long *)varp = def_val;
         // May also set global value for local option.
         if (both) {
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+            def_val;
         }
       }
     } else {  // P_BOOL
@@ -4340,7 +4347,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &p_so) {
     if (value < 0 && full_screen) {
-      errmsg = e_scroll;
+      errmsg = e_positive;
     }
   } else if (pp == &p_siso) {
     if (value < 0 && full_screen) {
@@ -5631,6 +5638,12 @@ void unset_global_local_option(char *name, void *from)
       clear_string_option(&buf->b_p_tc);
       buf->b_tc_flags = 0;
       break;
+    case PV_SISO:
+      curwin->w_p_siso = -1;
+      break;
+    case PV_SO:
+      curwin->w_p_so = -1;
+      break;
     case PV_DEF:
       clear_string_option(&buf->b_p_def);
       break;
@@ -5703,6 +5716,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_AR:   return (char_u *)&(curbuf->b_p_ar);
     case PV_TAGS: return (char_u *)&(curbuf->b_p_tags);
     case PV_TC:   return (char_u *)&(curbuf->b_p_tc);
+    case PV_SISO: return (char_u *)&(curwin->w_p_siso);
+    case PV_SO:   return (char_u *)&(curwin->w_p_so);
     case PV_DEF:  return (char_u *)&(curbuf->b_p_def);
     case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
@@ -5747,6 +5762,10 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
   case PV_TC:     return *curbuf->b_p_tc != NUL
            ? (char_u *)&(curbuf->b_p_tc) : p->var;
+  case PV_SISO:   return curwin->w_p_siso >= 0
+           ? (char_u *)&(curwin->w_p_siso) : p->var;
+  case PV_SO:     return curwin->w_p_so >= 0
+           ? (char_u *)&(curwin->w_p_so) : p->var;
   case PV_BKC:    return *curbuf->b_p_bkc != NUL
            ? (char_u *)&(curbuf->b_p_bkc) : p->var;
   case PV_DEF:    return *curbuf->b_p_def != NUL
@@ -7475,3 +7494,22 @@ dict_T *get_winbuf_options(const int bufopt)
 
   return d;
 }
+
+/*
+ * Return the effective 'scrolloff' value for the current window, using the
+ * global value when appropriate.
+ */
+long get_scrolloff_value(void)
+{
+    return curwin->w_p_so < 0 ? p_so : curwin->w_p_so;
+}
+
+/*
+ * Return the effective 'sidescrolloff' value for the current window, using the
+ * global value when appropriate.
+ */
+long get_sidescrolloff_value(void)
+{
+    return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
+}
+

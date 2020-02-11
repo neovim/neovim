@@ -835,6 +835,8 @@ enum {
   , WV_RLC
   , WV_SCBIND
   , WV_SCROLL
+  , WV_SISO
+  , WV_SO
   , WV_SPELL
   , WV_CUC
   , WV_CUL
