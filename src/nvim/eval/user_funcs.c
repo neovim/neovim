@@ -14,9 +14,6 @@
 #define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 #define FC_SANDBOX  0x40          // function defined in the sandbox
 
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
-#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "eval/user_funcs.c.generated.h"
 #endif

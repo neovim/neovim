@@ -26,6 +26,9 @@ typedef enum {
 typedef int (*ArgvFunc)(int current_argcount, typval_T *argv,
                         int called_func_argcount);
 
+#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
+#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/user_funcs.h.generated.h"
 #endif
