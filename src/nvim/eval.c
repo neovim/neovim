@@ -8250,9 +8250,15 @@ static void check_vars(const char *name, size_t len)
 }
 
 /// check if special v:lua value for calling lua functions
+bool is_luafunc(partial_T *partial)
+{
+  return partial == vvlua_partial;
+}
+
+/// check if special v:lua value for calling lua functions
 static bool tv_is_luafunc(typval_T *tv)
 {
-  return tv->v_type == VAR_PARTIAL && tv->vval.v_partial == vvlua_partial;
+  return tv->v_type == VAR_PARTIAL && is_luafunc(tv->vval.v_partial);
 }
 
 /// check the function name after "v:lua."

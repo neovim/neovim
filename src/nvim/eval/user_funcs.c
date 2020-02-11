@@ -1304,7 +1304,7 @@ call_func(
     rettv->vval.v_number = 0;
     error = ERROR_UNKNOWN;
 
-    if (partial == vvlua_partial) {
+    if (is_luafunc(partial)) {
       if (len > 0) {
         error = ERROR_NONE;
         executor_call_lua((const char *)funcname, len,
@@ -1556,7 +1556,7 @@ trans_function_name(
       *pp = (char_u *)end;
     } else if (lv.ll_tv->v_type == VAR_PARTIAL
                && lv.ll_tv->vval.v_partial != NULL) {
-      if (lv.ll_tv->vval.v_partial == vvlua_partial && *end == '.') {
+      if (is_luafunc(lv.ll_tv->vval.v_partial) && *end == '.') {
         len = check_luafunc_name((const char *)end+1, true);
         if (len == 0) {
           EMSG2(e_invexpr2, "v:lua");
