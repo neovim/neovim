@@ -96,8 +96,20 @@ describe("folded lines", function()
       {1:                                            ~}|
       :set rightleft                               |
     ]]}
-  end)
 
+    feed_command("set norightleft")
+    meths.input_mouse('left', 'press', '', 0, 0, 1)
+    screen:expect{grid=[[
+    {7:▾▸}{5:^+---  5 lines: aa··························}|
+    {7:│ }ff                                         |
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    :set norightleft                             |
+    ]]}
+  end)
 
   it("works with multibyte text", function()
     -- Currently the only allowed value of 'maxcombine'

@@ -109,12 +109,12 @@ retnomove:
   if (flags & MOUSE_SETPOS)
     goto retnomove;                             // ugly goto...
 
-  // Remember the character under the mouse, it might be a '-' or '+' in the
-  // fold column. NB: only works for ASCII chars!
+  // Remember the character under the mouse, might be one of foldclose or
+  // foldopen fillchars in the fold column.
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
       && default_grid.chars != NULL) {
-    mouse_char = default_grid.chars[default_grid.line_offset[row]
-                                    + (unsigned)col][0];
+     mouse_char = utf_ptr2char(default_grid.chars[default_grid.line_offset[row]
+                                                  + (unsigned)col]);
   } else {
     mouse_char = ' ';
   }
