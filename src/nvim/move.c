@@ -357,14 +357,14 @@ static int scrolljump_value(void)
  */
 static bool check_top_offset(void)
 {
-  if (curwin->w_cursor.lnum < curwin->w_topline + p_so
+  long so = get_scrolloff_value();
+  if (curwin->w_cursor.lnum < curwin->w_topline + so
       || hasAnyFolding(curwin)
       ) {
     lineoff_T loff;
     loff.lnum = curwin->w_cursor.lnum;
     loff.fill = 0;
     int n = curwin->w_topfill;          /* always have this context */
-    long so = get_scrolloff_value();
     /* Count the visible screen lines above the cursor line. */
     while (n < so) {
       topline_back(&loff);

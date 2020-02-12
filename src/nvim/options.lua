@@ -2231,7 +2231,7 @@ return {
       type='number', scope={'global', 'window'},
       vi_def=true,
       vim=true,
-      redraw={'current_buffer'},
+      redraw={'all_windows'},
       varname='p_siso',
       defaults={if_true={vi=0}}
     },
