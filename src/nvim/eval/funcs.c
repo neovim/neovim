@@ -1408,9 +1408,31 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 0;
 }
 
-/*
- * "deepcopy()" function
- */
+// "debugbreak()" function
+static void f_debugbreak(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int pid;
+
+  rettv->vval.v_number = FAIL;
+  pid = (int)tv_get_number(&argvars[0]);
+  if (pid == 0) {
+    EMSG(_(e_invarg));
+  } else {
+#ifdef WIN32
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+
+    if (hProcess != NULL) {
+      DebugBreakProcess(hProcess);
+      CloseHandle(hProcess);
+      rettv->vval.v_number = OK;
+    }
+#else
+    uv_kill(pid, SIGINT);
+#endif
+  }
+}
+
+// "deepcopy()" function
 static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int noref = 0;
@@ -6074,6 +6096,76 @@ static void f_printf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     did_emsg |= saved_did_emsg;
   }
+}
+
+// "prompt_setcallback({buffer}, {callback})" function
+static void f_prompt_setcallback(typval_T *argvars,
+                                 typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    Callback prompt_callback = { .type = kCallbackNone };
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+      if (!callback_from_typval(&prompt_callback, &argvars[1])) {
+        return;
+      }
+    }
+
+    callback_free(&buf->b_prompt_callback);
+    buf->b_prompt_callback = prompt_callback;
+}
+
+// "prompt_setinterrupt({buffer}, {callback})" function
+static void f_prompt_setinterrupt(typval_T *argvars,
+                                  typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    Callback interrupt_callback = { .type = kCallbackNone };
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+      if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+        return;
+      }
+    }
+
+    callback_free(&buf->b_prompt_interrupt);
+    buf->b_prompt_interrupt= interrupt_callback;
+}
+
+// "prompt_setprompt({buffer}, {text})" function
+static void f_prompt_setprompt(typval_T *argvars,
+                               typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    const char_u *text;
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    text = (const char_u *)tv_get_string(&argvars[1]);
+    xfree(buf->b_prompt_text);
+    buf->b_prompt_text = vim_strsave(text);
 }
 
 // "pum_getpos()" function

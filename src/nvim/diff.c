@@ -2432,6 +2432,10 @@ void nv_diffgetput(bool put, size_t count)
   exarg_T ea;
   char buf[30];
 
+  if (bt_prompt(curbuf)) {
+    vim_beep(BO_OPER);
+    return;
+  }
   if (count == 0) {
     ea.arg = (char_u *)"";
   } else {

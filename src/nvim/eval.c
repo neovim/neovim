@@ -5152,6 +5152,10 @@ bool garbage_collect(bool testing)
     }
     // buffer ShaDa additional data
     ABORTING(set_ref_dict)(buf->additional_data, copyID);
+
+    // buffer callback functions
+    set_ref_in_callback(&buf->b_prompt_callback, copyID, NULL, NULL);
+    set_ref_in_callback(&buf->b_prompt_interrupt, copyID, NULL, NULL);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -7315,9 +7319,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   return dict;
 }
 
-/*
- * Find window specified by "vp" in tabpage "tp".
- */
+// Find window specified by "vp" in tabpage "tp".
 win_T *
 find_win_by_nr(
     typval_T *vp,
@@ -13686,4 +13688,52 @@ void ex_checkhealth(exarg_T *eap)
   do_cmdline_cmd(buf);
 
   xfree(buf);
+}
+
+void invoke_prompt_callback(void)
+{
+    typval_T rettv;
+    typval_T argv[2];
+    char_u *text;
+    char_u *prompt;
+    linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+    // Add a new line for the prompt before invoking the callback, so that
+    // text can always be inserted above the last line.
+    ml_append(lnum, (char_u  *)"", 0, false);
+    curwin->w_cursor.lnum = lnum + 1;
+    curwin->w_cursor.col = 0;
+
+    if (curbuf->b_prompt_callback.type == kCallbackNone) {
+      return;
+    }
+    text = ml_get(lnum);
+    prompt = prompt_text();
+    if (STRLEN(text) >= STRLEN(prompt)) {
+      text += STRLEN(prompt);
+    }
+    argv[0].v_type = VAR_STRING;
+    argv[0].vval.v_string = vim_strsave(text);
+    argv[1].v_type = VAR_UNKNOWN;
+
+    callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
+    tv_clear(&argv[0]);
+    tv_clear(&rettv);
+}
+
+// Return true When the interrupt callback was invoked.
+bool invoke_prompt_interrupt(void)
+{
+    typval_T rettv;
+    typval_T argv[1];
+
+    if (curbuf->b_prompt_interrupt.type == kCallbackNone) {
+      return false;
+    }
+    argv[0].v_type = VAR_UNKNOWN;
+
+    got_int = false;  // don't skip executing commands
+    callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+    tv_clear(&rettv);
+    return true;
 }

@@ -2084,6 +2084,7 @@ ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
+debugbreak({pid})		Number  interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
 deletebufline({expr}, {first}[, {last}])
@@ -2280,6 +2281,10 @@ pathshorten({expr})		String	shorten directory names in a path
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
+prompt_addtext({buf}, {expr})	none	add text to a prompt buffer
+prompt_setcallback({buf}, {expr}) none	set prompt callback function
+prompt_setinterrupt({buf}, {text}) none	set prompt interrupt function
+prompt_setprompt({buf}, {text}) none	set prompt text
 pum_getpos()			Dict	position and size of pum if visible
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
@@ -2290,7 +2295,7 @@ range({expr} [, {max} [, {stride}]])
 readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
 readfile({fname} [, {binary} [, {max}]])
 				List	get list of lines from file {fname}
-reg_executing()			Number	get the executing register name
+reg_executing()			String	get the executing register name
 reg_recording()			String	get the recording register name
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
@@ -3637,6 +3642,11 @@ exp({expr})						*exp()*
 			:echo exp(-1)
 <			0.367879
 
+debugbreak({pid})					*debugbreak()*
+		Specifically used to interrupt a program being debugged.  It
+		will cause process {pid} to get a SIGTRAP.  Behavior for other
+		processes is undefined. See |terminal-debugger|.
+		{Sends a SIGINT to a process {pid} other than MS-Windows}
 
 expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		Expand wildcards and the following special keywords in {expr}.
@@ -4541,7 +4551,7 @@ getline({lnum} [, {end}])
 		from the current buffer.  Example: >
 			getline(1)
 <		When {lnum} is a String that doesn't start with a
-		digit, line() is called to translate the String into a Number.
+		digit, |line()| is called to translate the String into a Number.
 		To get the line under the cursor: >
 			getline(".")
 <		When {lnum} is smaller than 1 or bigger than the number of
@@ -6541,6 +6551,50 @@ printf({fmt}, {expr1} ...)				*printf()*
 		of "%" items.  If there are not sufficient or too many
 		arguments an error is given.  Up to 18 arguments can be used.
 
+prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
+		Set prompt callback for buffer {buf} to {expr}.  When {expr}
+		is an empty string the callback is removed.  This has only
+		effect if {buf} has 'buftype' set to "prompt".
+
+		The callback is invoked when pressing Enter.  The current
+		buffer will always be the prompt buffer.  A new line for a
+		prompt is added before invoking the callback, thus the prompt
+		for which the callback was invoked will be in the last but one
+		line.
+		If the callback wants to add text to the buffer, it must
+		insert it above the last line, since that is where the current
+		prompt is.  This can also be done asynchronously.
+		The callback is invoked with one argument, which is the text
+		that was entered at the prompt.  This can be an empty string
+		if the user only typed Enter.
+		Example: >
+		   call prompt_setcallback(bufnr(''), function('s:TextEntered'))
+		   func s:TextEntered(text)
+		     if a:text == 'exit' || a:text == 'quit'
+		       stopinsert
+		       close
+		     else
+		       call append(line('$') - 1, 'Entered: "' . a:text . '"')
+		       " Reset 'modified' to allow the buffer to be closed.
+		       set nomodified
+		     endif
+		   endfunc
+
+prompt_setinterrupt({buf}, {expr})			*prompt_setinterrupt()*
+		Set a callback for buffer {buf} to {expr}.  When {expr} is an
+		empty string the callback is removed.  This has only effect if
+		{buf} has 'buftype' set to "prompt".
+
+		This callback will be invoked when pressing CTRL-C in Insert
+		mode.  Without setting a callback Vim will exit Insert mode,
+		as in any buffer.
+
+prompt_setprompt({buf}, {text})				*prompt_setprompt()*
+		Set prompt for buffer {buf} to {text}.  You most likely want
+		{text} to end in a space.
+		The result is only visible if {buf} has 'buftype' set to
+		"prompt".  Example: >
+			call prompt_setprompt(bufnr(''), 'command: ')
 
 pum_getpos()						*pum_getpos()*
  		If the popup menu (see |ins-completion-menu|) is not visible,

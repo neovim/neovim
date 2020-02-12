@@ -299,7 +299,8 @@ static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
 static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
 static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
 static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
-                                        "help", "acwrite", "terminal", NULL };
+                                        "help", "acwrite", "terminal",
+                                        "prompt", NULL };
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };
@@ -7091,10 +7092,13 @@ static int check_opt_wim(void)
  */
 bool can_bs(int what)
 {
+  if (what == BS_START && bt_prompt(curbuf)) {
+    return false;
+  }
   switch (*p_bs) {
-  case '2':       return true;
-  case '1':       return what != BS_START;
-  case '0':       return false;
+    case '2':       return true;
+    case '1':       return what != BS_START;
+    case '0':       return false;
   }
   return vim_strchr(p_bs, what) != NULL;
 }
