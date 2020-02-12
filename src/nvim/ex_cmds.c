@@ -4380,7 +4380,6 @@ buf_T* do_global(exarg_T *eap, proftime_T timeout)
     // pass 2: execute the command for each line that has been marked
     if (got_int) {
       MSG(_(e_interr));
-      // return NULL;
     } else if (ndone == 0) {
       if (type == 'v') {
         smsg(_("Pattern found in every line: %s"), pat);
@@ -4422,12 +4421,6 @@ buf_T* do_global(exarg_T *eap, proftime_T timeout)
   return preview_buf;
 }
 
-
-/// Shows the effects of the :substitute command being typed ('inccommand').
-/// If inccommand=split, shows a preview window and later restores the layout.
-void show_global(exarg_T *eap)
-{
-}
 
 void ex_global(exarg_T *eap)
 {

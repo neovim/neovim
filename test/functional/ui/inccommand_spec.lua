@@ -1963,6 +1963,68 @@ describe(":substitute", function()
   before_each(function()
     clear()
   end)
+it("inccommand=split, highlights multiline substitutions", function()
+    common_setup(screen, "nosplit", multiline_text)
+    feed("gg")
+
+    -- TODO test
+    feed(":%g/2\\_.*X")
+    screen:expect{grid=[[
+      1 2 3                         |
+      A B C                         |
+      4 5 6                         |
+      X Y Z                         |
+      7 8 9                         |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :%g/2\_.*X^                    |
+    ]]}
+    -- screen:expect([[
+    --   1 {12:2 3}                         |
+    --   {12:A B C}                         |
+    --   {12:4 5 6}                         |
+    --   {12:X} Y Z                         |
+    --   7 8 9                         |
+    --   {11:[No Name] [+]                 }|
+    --   |1| 1 {12:2 3}                     |
+    --   |2|{12: A B C}                     |
+    --   |3|{12: 4 5 6}                     |
+    --   |4|{12: X} Y Z                     |
+    --   {15:~                             }|
+    --   {15:~                             }|
+    --   {15:~                             }|
+    --   {10:[Preview]                     }|
+    --   :%g/2\_.*X                    |
+    -- ]])
+
+    feed("/d")
+    screen:expect{grid=[[
+      A B C                         |
+      4 5 6                         |
+      X Y Z                         |
+      7 8 9                         |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :%g/2\_.*X/d^                  |
+    ]]}
+
+
+  end)
 
   it("inccommand=split, highlights multiline substitutions", function()
     common_setup(screen, "split", multiline_text)
@@ -2765,40 +2827,3 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
     AAAAAAA^     |
   ]])
 end)
-
-describe(":global, inccommand=split interactivity", function()
-  before_each(function()
-    clear()
-    common_setup(nil, "split", default_text)
-  end)
-
-  -- Test the tests: verify that the `1==bufnr('$')` assertion
-  -- in the "no preview" tests (below) actually means something.
-  it("previews interactive cmdline", function()
-    feed(':%g/tw/MO/g')
-    retry(nil, 1000, function()
-      eq(2, eval("bufnr('$')"))
-    end)
-  end)
-
-  it("no preview if invoked by a script", function()
-    source('%s/tw/MO/g')
-    wait()
-    eq(1, eval("bufnr('$')"))
-    -- sanity check: assert the buffer state
-    expect(default_text:gsub("tw", "MO"))
-  end)
-
-  it("no preview if invoked by feedkeys()", function()
-    -- in a script...
-    source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
-    wait()
-    -- or interactively...
-    feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
-    wait()
-    eq(1, eval("bufnr('$')"))
-    -- sanity check: assert the buffer state
-    expect(default_text:gsub("tw", "MO"))
-  end)
-end)
-
