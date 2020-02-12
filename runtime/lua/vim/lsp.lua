@@ -121,13 +121,9 @@ local function validate_encoding(encoding)
       or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
-local function validate_command(input)
+function lsp._cmd_parts(input)
   local cmd, cmd_args
-  if type(input) == 'string' then
-    -- Use a shell to execute the command if it is a string.
-    cmd = vim.api.nvim_get_option('shell')
-    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), input}
-  elseif vim.tbl_islist(input) then
+  if vim.tbl_islist(input) then
     cmd = input[1]
     cmd_args = {}
     -- Don't mutate our input.
@@ -138,7 +134,7 @@ local function validate_command(input)
       end
     end
   else
-    error("cmd type must be string or list.")
+    error("cmd type must be list.")
   end
   return cmd, cmd_args
 end
@@ -166,7 +162,7 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
-  local cmd, cmd_args = validate_command(config.cmd)
+  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
