@@ -65,8 +65,6 @@ describe(':set validation', function()
     should_succeed('regexpengine', 2)
     should_fail('report', -1, 'E487')
     should_succeed('report', 0)
-    should_fail('scrolloff', -1, 'E49')
-    should_fail('sidescrolloff', -1, 'E487')
     should_fail('sidescroll', -1, 'E487')
     should_fail('cmdwinheight', 0, 'E487')
     should_fail('updatetime', -1, 'E487')
@@ -81,6 +79,22 @@ describe(':set validation', function()
     feed_command('setglobal window=-10')
     meths.set_option('window', -10)
     eq(23, meths.get_option('window'))
+    eq('', eval("v:errmsg"))
+
+    -- 'scrolloff' and 'sidescrolloff' can have a -1 value when
+    -- set for the current window, but not globally
+    feed_command('setglobal scrolloff=-1')
+    eq('E487', eval("v:errmsg"):match("E%d*"))
+
+    feed_command('setglobal sidescrolloff=-1')
+    eq('E487', eval("v:errmsg"):match("E%d*"))
+
+    feed_command('let v:errmsg=""')
+
+    feed_command('setlocal scrolloff=-1')
+    eq('', eval("v:errmsg"))
+
+    feed_command('setlocal sidescrolloff=-1')
     eq('', eval("v:errmsg"))
   end)
 
