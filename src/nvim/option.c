@@ -902,12 +902,13 @@ set_option_default(
       } else {
         long def_val = (long)options[opt_idx].def_val[dvi];
         if ((long *)varp == &curwin->w_p_so
-                || (long *)varp == &curwin->w_p_siso)
+            || (long *)varp == &curwin->w_p_siso) {
             // 'scrolloff' and 'sidescrolloff' local values have a
  		    // different default value than the global default.
  		    *(long *)varp = -1;
-        else
+        } else {
             *(long *)varp = def_val;
+        }
         // May also set global value for local option.
         if (both) {
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
