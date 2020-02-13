@@ -1041,3 +1041,74 @@ describe("pty process teardown", function()
     ]])
   end)
 end)
+
+describe("pty job", function()
+  before_each(function()
+    source([[
+    function! Normalize(data) abort
+      return type([]) == type(a:data)
+        \ ?  map(a:data, 'substitute(
+        \   substitute(v:val, "\\%(\r\\|\27]0;.\\+\7\\|\27[?\\?\\d*\\a\\)", "", "g"),
+        \   "[?\\?[0-9]\\+\\a", "", "g")')
+        \ : a:data
+    endfunction
+    function! OnEvent(id, data, event) dict
+      let self.stdout = extend(self.stdout, Normalize(a:data))
+    endfunction
+    let g:job_opts = {
+      \ 'on_stdout': function('OnEvent'),
+      \ 'pty': v:true,
+      \ 'stdout': []
+      \}
+    ]])
+  end)
+
+  -- FIXME: Does not return from jobwait() on Windows. This does not occur
+  -- when the backend is winpty or when calling jobwait() interactively.
+  -- Perhaps ConPTY has some problems when the standard input/output of the
+  -- parent process(nvim) is a pipe.
+  it("append environment #env", function()
+    if helpers.pending_win32(pending) then return end
+
+    local cmd = iswin() and 'set' or 'env'
+
+    nvim('command', "let $foo='bar'")
+    nvim('command', "let g:job_opts.env = {'baz': 'qux'}")
+    nvim('command', "call jobwait([jobstart('"..cmd.."', g:job_opts)])")
+    eq(0, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^foo=bar$'"))]]))
+    eq(0, eval([[empty(filter(g:job_opts.stdout, "v:val =~# '^baz=qux$'"))]]))
+  end)
+
+  it('replace environment #env', function()
+    if helpers.pending_win32(pending) then return end
+
+    local cmd = iswin() and 'set' or 'env'
+
+    nvim('command', "let $foo='bar'")
+    nvim('command', "let g:job_opts.env = {'baz': 'qux'}")
+    nvim('command', "let g:job_opts.clear_env = v:true")
+    nvim('command', "call jobwait([jobstart('"..cmd.."', g:job_opts)])")
+    eq(1, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^foo=bar$'"))]]))
+    eq(0, eval([[empty(filter(g:job_opts.stdout, "v:val =~# '^baz=qux$'"))]]))
+  end)
+
+  it('remove unnecessary environment #env and env var', function()
+    if iswin() then
+      pending('This is not implemented on Windows')
+      return
+    end
+
+    nvim('command', "let $COLUMNS='80'")
+    nvim('command', "let $LINES='45'")
+    nvim('command', "let $TERMCAP='cud1=\\E[B'")
+    nvim('command', "let $COLORTERM='gnome-terminal'")
+    nvim('command', "let $COLORFGBG='15;0'")
+    nvim('command', "let $TERM='xterm-256color'")
+    nvim('command', [[let g:job_opts.env = {'COLUMNS': '160', 'LINES': '40', 'TERMCAP': 'ind@', 'COLORTERM': 'truecolor', 'COLORFGBG': '0;15', 'TERM': 'screen-256color'}]])
+    nvim('command', "call jobwait([jobstart('env', g:job_opts)])")
+    eq(1, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^\\%(COLUMNS=\\|LIENS=\\|TERMCAP=\\|COLORTERM=\\|COLORFGBG=\\)'"))]]))
+    eq(1, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^TERM=xterm-256color$'"))]]))
+    eq(1, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^TERM=screen-256color$'"))]]))
+    eq(0, eval([[empty(filter(copy(g:job_opts.stdout), "v:val =~# '^TERM=ansi$'"))]]))
+  end)
+end)
