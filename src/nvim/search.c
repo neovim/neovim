@@ -2270,16 +2270,16 @@ showmatch(
        * stop displaying the "$". */
       if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol)
         dollar_vcol = -1;
-      ++curwin->w_virtcol;              /* do display ')' just before "$" */
-      update_screen(VALID);             /* show the new char first */
+      ++curwin->w_virtcol;              // do display ')' just before "$"
+      update_screen(VALID);             // show the new char first
 
       save_dollar_vcol = dollar_vcol;
       save_state = State;
       State = SHOWMATCH;
-      ui_cursor_shape();                /* may show different cursor shape */
-      curwin->w_cursor = mpos;          /* move to matching char */
-      *so = 0;                         /* don't use 'scrolloff' here */
-      *siso = 0;                       /* don't use 'sidescrolloff' here */
+      ui_cursor_shape();                // may show different cursor shape
+      curwin->w_cursor = mpos;          // move to matching char
+      *so = 0;                          // don't use 'scrolloff' here
+      *siso = 0;                        // don't use 'sidescrolloff' here
       showruler(FALSE);
       setcursor();
       ui_flush();
@@ -2296,11 +2296,11 @@ showmatch(
         os_delay(p_mat * 100L, true);
       else if (!char_avail())
         os_delay(p_mat * 100L, false);
-      curwin->w_cursor = save_cursor;           /* restore cursor position */
+      curwin->w_cursor = save_cursor;           // restore cursor position
       *so = save_so;
       *siso = save_siso;
       State = save_state;
-      ui_cursor_shape();                /* may show different cursor shape */
+      ui_cursor_shape();                // may show different cursor shape
     }
   }
 }

@@ -7495,19 +7495,15 @@ dict_T *get_winbuf_options(const int bufopt)
   return d;
 }
 
-/*
- * Return the effective 'scrolloff' value for the current window, using the
- * global value when appropriate.
- */
+/// Return the effective 'scrolloff' value for the current window, using the
+/// global value when appropriate.
 long get_scrolloff_value(void)
 {
     return curwin->w_p_so < 0 ? p_so : curwin->w_p_so;
 }
 
-/*
- * Return the effective 'sidescrolloff' value for the current window, using the
- * global value when appropriate.
- */
+/// Return the effective 'sidescrolloff' value for the current window, using the
+/// global value when appropriate.
 long get_sidescrolloff_value(void)
 {
     return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
