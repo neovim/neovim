@@ -322,6 +322,48 @@ describe('lua stdlib', function()
     ]])
 
     assert(is_dc)
+
+    local is_empty_list = exec_lua([[
+      local a = {}
+      local b = vim.deepcopy(a)
+
+      local count = 0
+      for _ in pairs(b) do count = count + 1 end
+
+      return getmetatable(b) ~= vim._empty_dict_mt
+        and count == 0
+        and tostring(a) ~= tostring(b)
+    ]])
+
+    assert(is_empty_list)
+
+    local is_empty_dic = exec_lua([[
+      local a = vim.empty_dict()
+      local b = vim.deepcopy(a)
+
+      local count = 0
+      for _ in pairs(b) do count = count + 1 end
+
+      return getmetatable(b) == vim._empty_dict_mt
+        and count == 0
+    ]])
+
+    assert(is_empty_dic)
+
+    local include_empty_dic = exec_lua([[
+      local a = {x = vim.empty_dict(), y = {}}
+      local b = vim.deepcopy(a)
+
+      local count = 0
+      for _ in pairs(b) do count = count + 1 end
+
+      return getmetatable(b.x) == vim._empty_dict_mt
+        and getmetatable(b.y) ~= vim._empty_dict_mt
+        and count == 2
+        and tostring(a) ~= tostring(b)
+    ]])
+
+    assert(include_empty_dic)
   end)
 
   it('vim.pesc', function()

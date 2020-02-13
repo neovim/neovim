@@ -20,6 +20,11 @@ vim.deepcopy = (function()
   local deepcopy_funcs = {
     table = function(orig)
       local copy = {}
+
+      if getmetatable(orig) == vim._empty_dict_mt then
+        copy = vim.empty_dict()
+      end
+
       for k, v in pairs(orig) do
         copy[vim.deepcopy(k)] = vim.deepcopy(v)
       end
