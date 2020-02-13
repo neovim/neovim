@@ -4373,7 +4373,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
     if (has_wildcards) {
       expand_T xpc;
-      int options = WILD_LIST_NOTFOUND|WILD_ADD_SLASH;
+      int options = WILD_LIST_NOTFOUND | WILD_NOERROR | WILD_ADD_SLASH;
 
       ExpandInit(&xpc);
       xpc.xp_context = EXPAND_FILES;
