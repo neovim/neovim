@@ -708,9 +708,9 @@ function! s:check_perl() abort
   endif
   call health#report_info('Nvim perl host: '. host)
 
-  let latest_cpan_cmd = 'cpanm --info Neovim::Ext'
+  let latest_cpan_cmd = 'cpanm --info -q Neovim::Ext'
   let latest_cpan = s:system(latest_cpan_cmd)
-  if s:shell_error || empty(latest_cpan)
+  if s:shell_error || empty(latest_cpan) || latest_cpan[0] ==# '!'
     call health#report_error('Failed to run: '. latest_cpan_cmd,
           \ ["Make sure you're connected to the internet.",
           \  'Are you behind a firewall or proxy?'])
