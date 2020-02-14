@@ -295,13 +295,21 @@ if(WIN32)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
 endif()
 
-add_custom_target(clean-shared-libraries
-  COMMAND ${CMAKE_COMMAND}
-    -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-    -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
-  DEPENDS ${THIRD_PARTY_DEPS}
-)
+# clean-shared-libraries removes ${DEPS_INSTALL_DIR}/lib/nvim/parser/c.dll,
+# resulting in MSVC build failure in CI.
+if (MSVC)
+  set(ALL_DEPS ${THIRD_PARTY_DEPS})
+else()
+  add_custom_target(clean-shared-libraries
+    COMMAND ${CMAKE_COMMAND}
+      -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+      -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake
+    DEPENDS ${THIRD_PARTY_DEPS}
+  )
+  set(ALL_DEPS clean-shared-libraries)
+endif()
 
 add_custom_target(third-party ALL
   COMMAND ${CMAKE_COMMAND} -E touch .third-party
-  DEPENDS clean-shared-libraries)
+  DEPENDS ${ALL_DEPS}
+)
