@@ -1420,10 +1420,10 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  ns_id = extmark_add_decoration(buf, ns_id, hlg_id,
-                                 (int)line, (colnr_T)col_start,
-                                 end_line, (colnr_T)col_end,
-                                 VIRTTEXT_EMPTY);
+  extmark_add_decoration(buf, ns_id, hlg_id,
+                         (int)line, (colnr_T)col_start,
+                         end_line, (colnr_T)col_end,
+                         VIRTTEXT_EMPTY);
   return src_id;
 }
 
