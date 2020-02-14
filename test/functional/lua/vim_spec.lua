@@ -7,6 +7,7 @@ local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
 local eq = helpers.eq
+local ok = helpers.ok
 local eval = helpers.eval
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
@@ -310,7 +311,7 @@ describe('lua stdlib', function()
   end)
 
   it("vim.deepcopy", function()
-    local is_dc = exec_lua([[
+    ok(exec_lua([[
       local a = { x = { 1, 2 }, y = 5}
       local b = vim.deepcopy(a)
 
@@ -319,51 +320,39 @@ describe('lua stdlib', function()
 
       return b.x[1] == 1 and b.x[2] == 2 and b.y == 5 and count == 2
              and tostring(a) ~= tostring(b)
-    ]])
+    ]]))
 
-    assert(is_dc)
-
-    local is_empty_list = exec_lua([[
+    ok(exec_lua([[
       local a = {}
       local b = vim.deepcopy(a)
 
       local count = 0
       for _ in pairs(b) do count = count + 1 end
 
-      return getmetatable(b) ~= vim._empty_dict_mt
-        and count == 0
-        and tostring(a) ~= tostring(b)
-    ]])
+      return vim.tbl_islist(b) and count == 0 and tostring(a) ~= tostring(b)
+    ]]))
 
-    assert(is_empty_list)
-
-    local is_empty_dic = exec_lua([[
+    ok(exec_lua([[
       local a = vim.empty_dict()
       local b = vim.deepcopy(a)
 
       local count = 0
       for _ in pairs(b) do count = count + 1 end
 
-      return getmetatable(b) == vim._empty_dict_mt
-        and count == 0
-    ]])
+      return not vim.tbl_islist(b) and count == 0
+    ]]))
 
-    assert(is_empty_dic)
-
-    local include_empty_dic = exec_lua([[
+    ok(exec_lua([[
       local a = {x = vim.empty_dict(), y = {}}
       local b = vim.deepcopy(a)
 
       local count = 0
       for _ in pairs(b) do count = count + 1 end
 
-      return getmetatable(b.x) == vim._empty_dict_mt
-        and getmetatable(b.y) ~= vim._empty_dict_mt
+      return not vim.tbl_islist(b.x) and vim.tbl_islist(b.y)
         and count == 2
         and tostring(a) ~= tostring(b)
-    ]])
-
-    assert(include_empty_dic)
+    ]]))
   end)
 
   it('vim.pesc', function()
@@ -409,6 +398,93 @@ describe('lua stdlib', function()
     eq(true, exec_lua("return vim.tbl_isempty({})"))
     eq(false, exec_lua("return vim.tbl_isempty({ 1, 2, 3 })"))
     eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
+  end)
+
+  it('vim.tbl_extend', function()
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {y = 2}
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x == 1 and b.y == 2 and count == 2
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {y = 2}
+      local c = {z = 3}
+      local d = vim.tbl_extend("keep", a, b, c)
+
+      local count = 0
+      for _ in pairs(d) do count = count + 1 end
+
+      return d.x == 1 and d.y == 2 and d.z == 3 and count == 3
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {x = 3}
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x == 1 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {x = 3}
+      local c = vim.tbl_extend("force", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x == 3 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = vim.empty_dict()
+      local b = {}
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return not vim.tbl_islist(c) and count == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {}
+      local b = vim.empty_dict()
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return vim.tbl_islist(c) and count == 0
+    ]]))
+
+    eq('Error executing lua: .../shared.lua: invalid "behavior": nil',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend()
+      ]])
+    )
+
+    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend("keep")
+      ]])
+    )
+
+    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend("keep", {})
+      ]])
+    )
   end)
 
   it('vim.deep_equal', function()
