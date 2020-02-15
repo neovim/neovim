@@ -604,6 +604,8 @@ Directory for temporary files is created in the first suitable directory of:
 			|cmdline-ranges|.
 
 			See |:s_flags| for [flags].
+			The delimiter doesn't need to be /, see
+			|pattern-delimiter|.
 
 :[range]s[ubstitute] [flags] [count]
 :[range]&[&][flags] [count]					*:&*
@@ -738,7 +740,7 @@ This deletes "TESTING" from all lines, but only one per line.
 For compatibility with Vi these two exceptions are allowed:
 "\/{string}/" and "\?{string}?" do the same as "//{string}/r".
 "\&{string}&" does the same as "//{string}/".
-							*E146*
+						*pattern-delimiter* *E146*
 Instead of the '/' which surrounds the pattern and replacement string, you
 can use any other single-byte character, but not an alphanumeric character,
 '\', '"' or '|'.  This is useful if you want to include a '/' in the search
