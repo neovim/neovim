@@ -1033,7 +1033,7 @@ typedef enum {
 } WinStyle;
 
 typedef struct {
-  Window window;
+  NvimWindow window;
   lpos_T bufpos;
   int height, width;
   double row, col;

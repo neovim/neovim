@@ -981,7 +981,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 /// Gets the current list of window handles.
 ///
 /// @return List of window handles
-ArrayOf(Window) nvim_list_wins(void)
+ArrayOf(NvimWindow) nvim_list_wins(void)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -994,7 +994,7 @@ ArrayOf(Window) nvim_list_wins(void)
   size_t i = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.items[i++] = WINDOW_OBJ(wp->handle);
+    rv.items[i++] = NVIMWINDOW_OBJ(wp->handle);
   }
 
   return rv;
@@ -1003,7 +1003,7 @@ ArrayOf(Window) nvim_list_wins(void)
 /// Gets the current window.
 ///
 /// @return Window handle
-Window nvim_get_current_win(void)
+NvimWindow nvim_get_current_win(void)
   FUNC_API_SINCE(1)
 {
   return curwin->handle;
@@ -1013,7 +1013,7 @@ Window nvim_get_current_win(void)
 ///
 /// @param window Window handle
 /// @param[out] err Error details, if any
-void nvim_set_current_win(Window window, Error *err)
+void nvim_set_current_win(NvimWindow window, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -1160,7 +1160,7 @@ fail:
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
+NvimWindow nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
                      Error *err)
   FUNC_API_SINCE(6)
 {

@@ -100,13 +100,13 @@ void raw_line(Integer grid, Integer row, Integer startcol,
 void event(char *name, Array args, bool *args_consumed)
   FUNC_API_NOEXPORT;
 
-void win_pos(Integer grid, Window win, Integer startrow,
+void win_pos(Integer grid, NvimWindow win, Integer startrow,
              Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid,
+void win_float_pos(Integer grid, NvimWindow win, String anchor, Integer anchor_grid,
                    Float anchor_row, Float anchor_col, Boolean focusable)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void win_external_pos(Integer grid, Window win)
+void win_external_pos(Integer grid, NvimWindow win)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_hide(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;

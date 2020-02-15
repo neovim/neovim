@@ -17,7 +17,7 @@
 /// @param tabpage  Tabpage handle, or 0 for current tabpage
 /// @param[out] err Error details, if any
 /// @return List of windows in `tabpage`
-ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
+ArrayOf(NvimWindow) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -35,7 +35,7 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
   size_t i = 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-    rv.items[i++] = WINDOW_OBJ(wp->handle);
+    rv.items[i++] = NVIMWINDOW_OBJ(wp->handle);
   }
 
   return rv;
@@ -144,10 +144,10 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 /// @param tabpage  Tabpage handle, or 0 for current tabpage
 /// @param[out] err Error details, if any
 /// @return Window handle
-Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
+NvimWindow nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
-  Window rv = 0;
+  NvimWindow rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab || !valid_tabpage(tab)) {

@@ -737,7 +737,7 @@ void nlua_push_##type(lua_State *lstate, const type item, bool special) \
 }
 
 GENERATE_INDEX_FUNCTION(Buffer)
-GENERATE_INDEX_FUNCTION(Window)
+GENERATE_INDEX_FUNCTION(NvimWindow)
 GENERATE_INDEX_FUNCTION(Tabpage)
 
 #undef GENERATE_INDEX_FUNCTION
@@ -779,7 +779,7 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
       break; \
     }
     ADD_REMOTE_TYPE(Buffer)
-    ADD_REMOTE_TYPE(Window)
+    ADD_REMOTE_TYPE(NvimWindow)
     ADD_REMOTE_TYPE(Tabpage)
 #undef ADD_REMOTE_TYPE
   }
@@ -1233,7 +1233,7 @@ type nlua_pop_##type(lua_State *lstate, Error *err) \
 }
 
 GENERATE_INDEX_FUNCTION(Buffer)
-GENERATE_INDEX_FUNCTION(Window)
+GENERATE_INDEX_FUNCTION(NvimWindow)
 GENERATE_INDEX_FUNCTION(Tabpage)
 
 #undef GENERATE_INDEX_FUNCTION

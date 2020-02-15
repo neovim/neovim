@@ -883,7 +883,7 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
     } else if (!strcmp(key, "win")) {
       has_window = true;
       if (val.type != kObjectTypeInteger
-          && val.type != kObjectTypeWindow) {
+          && val.type != kObjectTypeNvimWindow) {
         api_set_error(err, kErrorTypeValidation,
                       "'win' key must be Integer or Window");
         return false;

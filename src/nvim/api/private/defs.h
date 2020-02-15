@@ -79,7 +79,7 @@ typedef struct {
 } String;
 
 REMOTE_TYPE(Buffer);
-REMOTE_TYPE(Window);
+REMOTE_TYPE(NvimWindow);
 REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
@@ -107,7 +107,7 @@ typedef enum {
   kObjectTypeLuaRef,
   // EXT types, cannot be split or reordered, see #EXT_OBJECT_TYPE_SHIFT
   kObjectTypeBuffer,
-  kObjectTypeWindow,
+  kObjectTypeNvimWindow,
   kObjectTypeTabpage,
 } ObjectType;
 

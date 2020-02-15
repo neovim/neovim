@@ -637,7 +637,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   return rv;
 }
 
-win_T *find_window_by_handle(Window window, Error *err)
+win_T *find_window_by_handle(NvimWindow window, Error *err)
 {
   if (window == 0) {
     return curwin;
@@ -1080,7 +1080,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeBuffer:
-    case kObjectTypeWindow:
+    case kObjectTypeNvimWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
       STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
@@ -1181,7 +1181,7 @@ void api_free_object(Object value)
     case kObjectTypeInteger:
     case kObjectTypeFloat:
     case kObjectTypeBuffer:
-    case kObjectTypeWindow:
+    case kObjectTypeNvimWindow:
     case kObjectTypeTabpage:
       break;
 
@@ -1318,7 +1318,7 @@ static void init_type_metadata(Dictionary *metadata)
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
   PUT(window_metadata, "id",
-      INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
+      INTEGER_OBJ(kObjectTypeNvimWindow - EXT_OBJECT_TYPE_SHIFT));
   PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
@@ -1327,7 +1327,7 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
-  PUT(types, "Window", DICTIONARY_OBJ(window_metadata));
+  PUT(types, "NvimWindow", DICTIONARY_OBJ(window_metadata));
   PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
 
   PUT(*metadata, "types", DICTIONARY_OBJ(types));

@@ -32,8 +32,8 @@
     .type = kObjectTypeBuffer, \
     .data.integer = s })
 
-#define WINDOW_OBJ(s) ((Object) { \
-    .type = kObjectTypeWindow, \
+#define NVIMWINDOW_OBJ(s) ((Object) { \
+    .type = kObjectTypeNvimWindow, \
     .data.integer = s })
 
 #define TABPAGE_OBJ(s) ((Object) { \
@@ -81,7 +81,7 @@
 #define api_init_float
 #define api_init_string = STRING_INIT
 #define api_init_buffer
-#define api_init_window
+#define api_init_nvimwindow
 #define api_init_tabpage
 #define api_init_object = NIL
 #define api_init_array = ARRAY_DICT_INIT
@@ -91,7 +91,7 @@
 #define api_free_integer(value)
 #define api_free_float(value)
 #define api_free_buffer(value)
-#define api_free_window(value)
+#define api_free_nvimwindow(value)
 #define api_free_tabpage(value)
 
 /// Structure used for saving state for :try

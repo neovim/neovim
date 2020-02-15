@@ -222,7 +222,7 @@ for i = 1, #functions do
       converted = 'arg_'..j
       local rt = real_type(param[1])
       if rt ~= 'Object' then
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
+        if rt:match('^Buffer$') or rt:match('^NvimWindow$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
           output:write('\n  if (args.items['..
             (j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
@@ -231,7 +231,7 @@ for i = 1, #functions do
           output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
           output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..attr_name(rt)..';')
         end
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
+        if rt:match('^Buffer$') or rt:match('^NvimWindow$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
           -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
           output:write('\n  } else if (args.items['..
             (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
