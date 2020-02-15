@@ -20,6 +20,11 @@ vim.deepcopy = (function()
   local deepcopy_funcs = {
     table = function(orig)
       local copy = {}
+
+      if vim._empty_dict_mt ~= nil and getmetatable(orig) == vim._empty_dict_mt then
+        copy = vim.empty_dict()
+      end
+
       for k, v in pairs(orig) do
         copy[vim.deepcopy(k)] = vim.deepcopy(v)
       end
@@ -169,9 +174,19 @@ function vim.tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))
   end
+
+  if select('#', ...) < 2 then
+    error('wrong number of arguments (given '..tostring(1 + select('#', ...))..', expected at least 3)')
+  end
+
   local ret = {}
+  if vim._empty_dict_mt ~= nil and getmetatable(select(1, ...)) == vim._empty_dict_mt then
+    ret = vim.empty_dict()
+  end
+
   for i = 1, select('#', ...) do
     local tbl = select(i, ...)
+    vim.validate{["after the second argument"] = {tbl,'t'}}
     if tbl then
       for k, v in pairs(tbl) do
         if behavior ~= 'force' and ret[k] ~= nil then
