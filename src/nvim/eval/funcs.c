@@ -230,9 +230,44 @@ end:
   api_clear_error(&err);
 }
 
-/*
- * "abs(expr)" function
- */
+static char **create_environment(const dictitem_T *job_env,
+                                 const bool clear_env)
+{
+  char **env;
+  size_t custom_env_size = (size_t)tv_dict_len(job_env->di_tv.vval.v_dict);
+  size_t i = 0;
+  size_t env_size = 0;
+
+  if (clear_env) {
+    // + 1 for last null entry
+    env = xmalloc((custom_env_size + 1) * sizeof(*env));
+    env_size = 0;
+  } else {
+    env_size = os_get_fullenv_size();
+
+    env = xmalloc((custom_env_size + env_size + 1) * sizeof(*env));
+
+    os_copy_fullenv(env, env_size);
+    i = env_size;
+  }
+  assert(env);  // env must be allocated at this point
+
+  TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
+      const char *str = tv_get_string(&var->di_tv);
+      assert(str);
+      size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
+      env[i] = xmalloc(len);
+      snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
+      i++;
+      });
+
+  // must be null terminated
+  env[env_size + custom_env_size] = NULL;
+
+  return env;
+}
+
+// "abs(expr)" function
 static void f_abs(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type == VAR_FLOAT) {
@@ -4834,35 +4869,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
       }
 
-      size_t custom_env_size = (size_t)tv_dict_len(job_env->di_tv.vval.v_dict);
-      size_t i = 0;
-      size_t env_size = 0;
-
-      if (clear_env) {
-        // + 1 for last null entry
-        env = xmalloc((custom_env_size + 1) * sizeof(*env));
-        env_size = 0;
-      } else {
-        env_size = os_get_fullenv_size();
-
-        env = xmalloc((custom_env_size + env_size + 1) * sizeof(*env));
-
-        os_copy_fullenv(env, env_size);
-        i = env_size;
-      }
-      assert(env);  // env must be allocated at this point
-
-      TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
-        const char *str = tv_get_string(&var->di_tv);
-        assert(str);
-        size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
-        env[i] = xmalloc(len);
-        snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
-        i++;
-      });
-
-      // must be null terminated
-      env[env_size + custom_env_size] = NULL;
+      env = create_environment(job_env, clear_env);
     }
 
 
@@ -10203,6 +10210,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *cmd;
+  char **env = NULL;
   bool executable = true;
   char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
   if (!argv) {
@@ -10221,9 +10229,12 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
+  bool clear_env = false;
   const char *cwd = ".";
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
+
+    clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
 
     const char *const new_cwd = tv_dict_get_string(job_opts, "cwd", false);
     if (new_cwd && *new_cwd != NUL) {
@@ -10234,6 +10245,16 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         shell_free_argv(argv);
         return;
       }
+    }
+    dictitem_T *job_env = tv_dict_find(job_opts, S_LEN("env"));
+    if (job_env) {
+      if (job_env->di_tv.v_type != VAR_DICT) {
+        EMSG2(_(e_invarg2), "env");
+        shell_free_argv(argv);
+        return;
+      }
+
+      env = create_environment(job_env, clear_env);
     }
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
@@ -10246,7 +10267,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     true, false, false, cwd,
                                     term_width, curwin->w_height_inner,
-                                    xstrdup("xterm-256color"), NULL,
+                                    xstrdup("xterm-256color"), env,
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;
