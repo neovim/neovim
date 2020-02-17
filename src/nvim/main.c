@@ -10,6 +10,7 @@
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
+#include "nvim/channel.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/aucmd.h"
