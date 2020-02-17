@@ -1123,7 +1123,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   }
 
   if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return rv;
   }
 
@@ -1190,7 +1190,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
   }
 
   if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return rv;
   }
   Integer limit = -1;
@@ -1280,7 +1280,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
   }
 
   if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return 0;
   }
 
@@ -1308,7 +1308,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
   if (id >= 0) {
     id_num = (uint64_t)id;
   } else {
-    api_set_error(err, kErrorTypeValidation, _("Invalid mark id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid mark id");
     return 0;
   }
 
@@ -1337,7 +1337,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
     return false;
   }
   if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return false;
   }
 
@@ -1655,7 +1655,7 @@ Integer nvim__buf_add_decoration(Buffer buffer, Integer ns_id, String hl_group,
   }
 
   if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return 0;
   }
 
