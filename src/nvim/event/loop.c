@@ -127,8 +127,8 @@ bool loop_close(Loop *loop, bool wait)
   uv_close((uv_handle_t *)&loop->async, NULL);
   uint64_t start = wait ? os_hrtime() : 0;
   while (true) {
-    uv_run(&loop->uv, wait ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
-    if (!uv_loop_close(&loop->uv) || !wait) {
+    uv_run(&loop->uv, UV_RUN_NOWAIT);
+    if (!wait || (uv_loop_close(&loop->uv) != UV_EBUSY)) {
       break;
     }
     if (os_hrtime() - start >= 2 * 1000000000) {
