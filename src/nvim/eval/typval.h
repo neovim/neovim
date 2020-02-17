@@ -33,7 +33,7 @@ typedef double float_T;
 enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
 
 /// Additional values for tv_list_alloc() len argument
-enum {
+enum ListLenSpecials {
   /// List length is not known in advance
   ///
   /// To be used when there is neither a way to know how many elements will be
@@ -49,7 +49,7 @@ enum {
   ///
   /// To be used when it looks impractical to determine list length.
   kListLenMayKnow = -3,
-} ListLenSpecials;
+};
 
 /// Maximal possible value of varnumber_T variable
 #define VARNUMBER_MAX INT64_MAX
