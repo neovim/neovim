@@ -6,7 +6,6 @@ local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local eq_dumplog = helpers.eq_dumplog
 local pesc = helpers.pesc
 local insert = helpers.insert
 local retry = helpers.retry
@@ -207,8 +206,8 @@ describe('LSP', function()
         end;
         -- If the program timed out, then code will be nil.
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         -- Note that NIL must be used here.
         -- on_callback(err, method, result, client_id)
@@ -229,8 +228,8 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 101, code, "exit code")  -- See fake-lsp-server.lua
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(101, code, "exit code", fake_lsp_logfile)  -- See fake-lsp-server.lua
+          eq(0, signal, "exit signal", fake_lsp_logfile)
           assert_log(pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
             fake_lsp_logfile)
         end;
@@ -253,8 +252,8 @@ describe('LSP', function()
           client.notify('exit')
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
@@ -272,8 +271,8 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
@@ -312,8 +311,8 @@ describe('LSP', function()
           client.notify('finish')
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
@@ -355,8 +354,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -398,8 +397,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -441,8 +440,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -490,8 +489,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -539,8 +538,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -588,8 +587,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -632,8 +631,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -683,8 +682,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -726,8 +725,8 @@ describe('LSP', function()
           client.stop(true)
         end;
         on_exit = function(code, signal)
-          eq_dumplog(fake_lsp_logfile, 0, code, "exit code")
-          eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
