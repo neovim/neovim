@@ -677,13 +677,13 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
   return 1;
 }
 
-static void buf_set_term_title(buf_T *buf, char *title)
+static void buf_set_term_title(buf_T *buf, const char *title)
   FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
-               STRING_OBJ(cstr_as_string(title)),
+               STRING_OBJ(cstr_as_string((char *)title)), /* discard_const */
                false,
                false,
                &err);
@@ -706,7 +706,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
     case VTERM_PROP_TITLE: {
       buf_T *buf = handle_get_buffer(term->buf_handle);
-      buf_set_term_title(buf, val->string);
+      buf_set_term_title(buf, val->string.str);
       break;
     }
 
