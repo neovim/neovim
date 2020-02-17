@@ -55,25 +55,32 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-function module.eq(expected, actual, context)
-  return assert.are.same(expected, actual, context)
-end
--- Like eq(), but includes tail of `logfile` in failure message.
-function module.eq_dumplog(logfile, expected, actual, context)
-  local status, rv = pcall(module.eq, expected, actual, context)
-  if not status then
+--- Invokes `fn` and includes the tail of `logfile` in the error message if it
+--- fails.
+---
+--@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
+--@param fn       Function to invoke
+--@param ...      Function arguments
+local function dumplog(logfile, fn, ...)
+  -- module.validate({
+  --   logfile={logfile,'s',true},
+  --   fn={fn,'f',false},
+  -- })
+  local status, rv = pcall(fn, ...)
+  if status == false then
+    logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
     local logtail = module.read_nvim_log(logfile)
     error(string.format('%s\n%s', rv, logtail))
   end
 end
-function module.neq(expected, actual, context)
-  return assert.are_not.same(expected, actual, context)
+function module.eq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are.same, expected, actual, context)
 end
-function module.ok(res, msg)
-  return assert.is_true(res, msg)
+function module.neq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are_not.same, expected, actual, context)
 end
-function module.near(actual, expected, tolerance)
-  return assert.is.near(actual, expected, tolerance)
+function module.ok(res, msg, logfile)
+  return dumplog(logfile, assert.is_true, res, msg)
 end
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
