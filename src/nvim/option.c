@@ -7294,12 +7294,13 @@ int get_fileformat(buf_T *buf)
 /// argument.
 ///
 /// @param eap  can be NULL!
-int get_fileformat_force(buf_T *buf, exarg_T *eap)
+int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int c;
 
   if (eap != NULL && eap->force_ff != 0) {
-    c = eap->cmd[eap->force_ff];
+    c = eap->force_ff;
   } else {
     if ((eap != NULL && eap->force_bin != 0)
         ? (eap->force_bin == FORCE_BIN) : buf->b_p_bin) {

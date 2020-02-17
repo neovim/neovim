@@ -3397,14 +3397,27 @@ int build_stl_str_hl(
     fillchar = '-';
   }
 
+  // The cursor in windows other than the current one isn't always
+  // up-to-date, esp. because of autocommands and timers.
+  linenr_T lnum = wp->w_cursor.lnum;
+  if (lnum > wp->w_buffer->b_ml.ml_line_count) {
+    lnum = wp->w_buffer->b_ml.ml_line_count;
+    wp->w_cursor.lnum = lnum;
+  }
+
   // Get line & check if empty (cursorpos will show "0-1").
-  char_u *line_ptr = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false);
+  const char_u *line_ptr = ml_get_buf(wp->w_buffer, lnum, false);
   bool empty_line = (*line_ptr == NUL);
 
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr)) {
+  const size_t len = STRLEN(line_ptr);
+  if (wp->w_cursor.col > (colnr_T)len) {
+    // Line may have changed since checking the cursor column, or the lnum
+    // was adjusted above.
+    wp->w_cursor.col = (colnr_T)len;
+    wp->w_cursor.coladd = 0;
     byteval = 0;
   } else {
     byteval = utf_ptr2char(line_ptr + wp->w_cursor.col);

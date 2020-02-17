@@ -94,3 +94,7 @@ func Test_user_func()
   unlet g:retval g:counter
   enew!
 endfunc
+
+func Test_failed_call_in_try()
+  try | call UnknownFunc() | catch | endtry
+endfunc

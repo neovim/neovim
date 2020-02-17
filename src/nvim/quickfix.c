@@ -3845,7 +3845,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
      *dirname = NUL;
 
     // Add one line for each error
-    if (old_last == NULL) {
+    if (old_last == NULL || old_last->qf_next == NULL) {
       qfp = qfl->qf_start;
       lnum = 0;
     } else {

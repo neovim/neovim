@@ -4693,6 +4693,9 @@ ExpandFromContext (
     flags |= EW_KEEPALL;
   if (options & WILD_SILENT)
     flags |= EW_SILENT;
+  if (options & WILD_NOERROR) {
+    flags |= EW_NOERROR;
+  }
   if (options & WILD_ALLLINKS) {
     flags |= EW_ALLLINKS;
   }

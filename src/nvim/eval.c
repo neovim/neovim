@@ -2852,7 +2852,8 @@ void ex_call(exarg_T *eap)
     }
   }
 
-  if (!failed) {
+  // When inside :try we need to check for following "| catch".
+  if (!failed || eap->cstack->cs_trylevel > 0) {
     // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
       emsg_severe = TRUE;
@@ -9151,10 +9152,7 @@ char_u *v_throwpoint(char_u *oldval)
  */
 char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
 {
-  char_u      *oldval;
-  char_u      *newval;
-
-  oldval = vimvars[VV_CMDARG].vv_str;
+  char_u *oldval = vimvars[VV_CMDARG].vv_str;
   if (eap == NULL) {
     xfree(oldval);
     vimvars[VV_CMDARG].vv_str = oldarg;
@@ -9170,14 +9168,18 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     len += 7;
 
-  if (eap->force_ff != 0)
-    len += STRLEN(eap->cmd + eap->force_ff) + 6;
-  if (eap->force_enc != 0)
+  if (eap->force_ff != 0) {
+    len += 10;  // " ++ff=unix"
+  }
+  if (eap->force_enc != 0) {
     len += STRLEN(eap->cmd + eap->force_enc) + 7;
-  if (eap->bad_char != 0)
-    len += 7 + 4;      /* " ++bad=" + "keep" or "drop" */
+  }
+  if (eap->bad_char != 0) {
+    len += 7 + 4;  // " ++bad=" + "keep" or "drop"
+  }
 
-  newval = xmalloc(len + 1);
+  const size_t newval_len = len + 1;
+  char_u *newval = xmalloc(newval_len);
 
   if (eap->force_bin == FORCE_BIN)
     sprintf((char *)newval, " ++bin");
@@ -9189,18 +9191,23 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     STRCAT(newval, " ++edit");
 
-  if (eap->force_ff != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++ff=%s",
-        eap->cmd + eap->force_ff);
-  if (eap->force_enc != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++enc=%s",
-        eap->cmd + eap->force_enc);
-  if (eap->bad_char == BAD_KEEP)
+  if (eap->force_ff != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++ff=%s",
+             eap->force_ff == 'u' ? "unix" :
+             eap->force_ff == 'd' ? "dos" : "mac");
+  }
+  if (eap->force_enc != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++enc=%s",
+             eap->cmd + eap->force_enc);
+  }
+  if (eap->bad_char == BAD_KEEP) {
     STRCPY(newval + STRLEN(newval), " ++bad=keep");
-  else if (eap->bad_char == BAD_DROP)
+  } else if (eap->bad_char == BAD_DROP) {
     STRCPY(newval + STRLEN(newval), " ++bad=drop");
-  else if (eap->bad_char != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++bad=%c", eap->bad_char);
+  } else if (eap->bad_char != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++bad=%c",
+             eap->bad_char);
+  }
   vimvars[VV_CMDARG].vv_str = newval;
   return oldval;
 }

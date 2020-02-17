@@ -1521,7 +1521,8 @@ void msg_make(char_u *arg)
 /// the character/string -- webb
 int msg_outtrans_special(
     const char_u *strstart,
-    int from               ///< true for LHS of a mapping
+    bool from,              ///< true for LHS of a mapping
+    int maxlen              ///< screen columns, 0 for unlimeted
 )
 {
   if (strstart == NULL) {
@@ -1541,6 +1542,9 @@ int msg_outtrans_special(
       string = str2special((const char **)&str, from, false);
     }
     const int len = vim_strsize((char_u *)string);
+    if (maxlen > 0 && retval + len >= maxlen) {
+      break;
+    }
     // Highlight special keys
     msg_puts_attr(string, (len > 1
                            && (*mb_ptr2len)((char_u *)string) <= 1
