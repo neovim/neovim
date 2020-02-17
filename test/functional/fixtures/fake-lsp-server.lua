@@ -1,6 +1,16 @@
 local protocol = require 'vim.lsp.protocol'
 
 
+-- Logs to $NVIM_LOG_FILE.
+--
+-- TODO(justinmk): remove after https://github.com/neovim/neovim/pull/7062
+local function log(loglevel, area, msg)
+  vim.fn.writefile(
+    {string.format('%s %s: %s', loglevel, area, msg)},
+    vim.env.NVIM_LOG_FILE,
+    'a')
+end
+
 local function message_parts(sep, ...)
   local parts = {}
   for i = 1, select("#", ...) do
@@ -422,7 +432,7 @@ local kill_timer = vim.loop.new_timer()
 kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
   kill_timer:stop()
   kill_timer:close()
-  -- TODO: log('TIMEOUT')
+  log('ERROR', 'LSP', 'TIMEOUT')
   io.stderr:write("TIMEOUT")
   os.exit(100)
 end)
@@ -433,7 +443,7 @@ local status, err = pcall(assert(tests[test_name], "Test not found"))
 kill_timer:stop()
 kill_timer:close()
 if not status then
-  -- TODO: log(err)
+  log('ERROR', 'LSP', tostring(err))
   io.stderr:write(err)
   os.exit(101)
 end

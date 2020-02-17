@@ -1,11 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_log = helpers.assert_log
 local clear = helpers.clear
 local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local eq_dumplog = helpers.eq_dumplog
+local pesc = helpers.pesc
 local insert = helpers.insert
 local retry = helpers.retry
 local NIL = helpers.NIL
@@ -229,6 +231,8 @@ describe('LSP', function()
         on_exit = function(code, signal)
           eq_dumplog(fake_lsp_logfile, 101, code, "exit code")  -- See fake-lsp-server.lua
           eq_dumplog(fake_lsp_logfile, 0, signal, "exit signal")
+          assert_log(pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
+            fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")

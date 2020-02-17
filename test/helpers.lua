@@ -82,6 +82,22 @@ function module.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
+--- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
+---
+--@param pat  (string) Lua pattern to search for in the log file.
+--@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
+function module.assert_log(pat, logfile)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  local nrlines = 10
+  local lines = module.read_file_list(logfile, -nrlines) or {}
+  for _,line in ipairs(lines) do
+    if line:match(pat) then return end
+  end
+  local logtail = module.read_nvim_log(logfile)
+  error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
+    pat, nrlines, logfile, logtail))
+end
+
 -- Invokes `fn` and returns the error string (may truncate full paths), or
 -- raises an error if `fn` succeeds.
 --
@@ -745,9 +761,9 @@ function module.isCI(name)
 
 end
 
--- Gets the contents of `logfile` for printing to the build log.
+-- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log(logfile)
+function module.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
   local keep = is_ci and 999 or 10
@@ -759,7 +775,7 @@ function module.read_nvim_log(logfile)
     log = log..line..'\n'
   end
   log = log..('-'):rep(78)..'\n'
-  if is_ci then
+  if is_ci and ci_rename then
     os.rename(logfile, logfile .. '.displayed')
   end
   return log
