@@ -905,7 +905,6 @@ continue_same_node:
           refkey(b, itr->node, itr->i);
           refkey(b, enditr->node, enditr->i);
         } else {
-          past_right = true;
           break;
         }
       }
