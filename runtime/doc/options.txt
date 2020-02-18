@@ -6689,6 +6689,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	While the menu is active these keys have special meanings:
 
 	<Left> <Right>	- select previous/next match (like CTRL-P/CTRL-N)
+	<CTRL-Y>	- Accet the currenty selected match and stop
+                          completion.
+	<CTRL-E>	- End completion, back to original typed text.
 	<Down>		- in filename/menu name completion: move into a
 			  subdirectory or submenu.
 	<CR>		- in menu completion, when the cursor is just after a
