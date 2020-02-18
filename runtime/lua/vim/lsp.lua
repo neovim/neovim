@@ -945,12 +945,14 @@ function lsp.omnifunc(findstart, base)
 
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local prefix = line_to_cursor:sub(textMatch+1)
+
   local params = util.make_position_params()
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
     if err or not result then return end
-    local matches = util.text_document_completion_list_to_complete_items(result)
+    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(textMatch+1, items)

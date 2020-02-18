@@ -129,6 +129,19 @@ function M.extract_completion_items(result)
   end
 end
 
+-- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
+-- So we exclude completion candidates whose prefix does not match.
+function M.remove_unmatch_completion_items(items, prefix)
+  local matched_items = {}
+  for _, item in ipairs(items) do
+    local word = item.insertText or item.label
+    if vim.startswith(word, prefix) then
+      table.insert(matched_items, item)
+    end
+  end
+  return matched_items
+end
+
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
 function M.apply_text_document_edit(text_document_edit)
@@ -151,11 +164,13 @@ end
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-function M.text_document_completion_list_to_complete_items(result)
+function M.text_document_completion_list_to_complete_items(result, prefix)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
+
+  items = M.remove_unmatch_completion_items(items, prefix)
 
   local matches = {}
 
