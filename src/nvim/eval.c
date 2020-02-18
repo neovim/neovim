@@ -1794,7 +1794,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
       arg = (const char *)find_name_end((char_u *)arg, NULL, NULL,
                                         FNE_INCL_BR | FNE_CHECK_START);
       if (!ascii_iswhite(*arg) && !ends_excmd(*arg)) {
-        emsg_severe = TRUE;
+        emsg_severe = true;
         EMSG(_(e_trailing));
         break;
       }
@@ -1807,7 +1807,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         /* This is mainly to keep test 49 working: when expanding
          * curly braces fails overrule the exception error message. */
         if (len < 0 && !aborting()) {
-          emsg_severe = TRUE;
+          emsg_severe = true;
           EMSG2(_(e_invarg2), arg);
           break;
         }
@@ -2118,7 +2118,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
        * expression evaluation has been cancelled due to an
        * aborting error, an interrupt, or an exception. */
       if (!aborting() && !quiet) {
-        emsg_severe = TRUE;
+        emsg_severe = true;
         EMSG2(_(e_invarg2), name);
         return NULL;
       }
@@ -2856,8 +2856,10 @@ void ex_call(exarg_T *eap)
   if (!failed || eap->cstack->cs_trylevel > 0) {
     // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
-      emsg_severe = TRUE;
-      EMSG(_(e_trailing));
+      if (!failed) {
+        emsg_severe = true;
+        EMSG(_(e_trailing));
+      }
     } else {
       eap->nextcmd = check_nextcmd(arg);
     }
@@ -2932,7 +2934,7 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
     if (name_end == NULL || (!ascii_iswhite(*name_end)
                              && !ends_excmd(*name_end))) {
       if (name_end != NULL) {
-        emsg_severe = TRUE;
+        emsg_severe = true;
         EMSG(_(e_trailing));
       }
       if (!(eap->skip || error))

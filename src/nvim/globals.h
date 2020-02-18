@@ -216,13 +216,13 @@ EXTERN int need_clr_eos INIT(= FALSE);      /* need to clear text before
                                                displaying a message. */
 EXTERN int emsg_skip INIT(= 0);             /* don't display errors for
                                                expression that is skipped */
-EXTERN int emsg_severe INIT(= FALSE);        /* use message of next of several
-                                                emsg() calls for throw */
-EXTERN int did_endif INIT(= FALSE);         /* just had ":endif" */
-EXTERN dict_T vimvardict;                   /* Dictionary with v: variables */
-EXTERN dict_T globvardict;                  /* Dictionary with g: variables */
-EXTERN int did_emsg;                        /* set by emsg() when the message
-                                               is displayed or thrown */
+EXTERN bool emsg_severe INIT(= false);      // use message of next of several
+                                            // emsg() calls for throw
+EXTERN int did_endif INIT(= false);         // just had ":endif"
+EXTERN dict_T vimvardict;                   // Dictionary with v: variables
+EXTERN dict_T globvardict;                  // Dictionary with g: variables
+EXTERN int did_emsg;                        // set by emsg() when the message
+                                            // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN int did_emsg_syntax;                 /* did_emsg set because of a
                                                syntax error */
