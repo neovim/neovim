@@ -116,10 +116,20 @@ void loop_on_put(MultiQueue *queue, void *data)
   uv_stop(&loop->uv);
 }
 
+/// Closes `loop` and its handles, and frees its structures.
+///
+/// @param loop  Loop to destroy
+/// @param wait  Wait briefly for handles to deref
+///
 /// @returns false if the loop could not be closed gracefully
 bool loop_close(Loop *loop, bool wait)
 {
   bool rv = true;
+  // Loop won’t block for I/O after this.
+  uv_stop(&loop->uv);
+  // TODO(justinmk): Close all (lua/luv!) handles. But walk_cb() needs to call
+  // the resource-specific close-callbacks...
+  //    uv_walk((h) => { if !uv_is_closing(h) { uv_close(h, …) } })
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
@@ -127,11 +137,14 @@ bool loop_close(Loop *loop, bool wait)
   uv_close((uv_handle_t *)&loop->async, NULL);
   uint64_t start = wait ? os_hrtime() : 0;
   while (true) {
+    // Run the loop to tickle close-callbacks (which should then free memory).
+    // Use UV_RUN_NOWAIT to avoid a hang. #11820
     uv_run(&loop->uv, UV_RUN_NOWAIT);
-    if (!wait || (uv_loop_close(&loop->uv) != UV_EBUSY)) {
+    if ((uv_loop_close(&loop->uv) != UV_EBUSY) || !wait) {
       break;
     }
-    if (os_hrtime() - start >= 2 * 1000000000) {
+    uint64_t elapsed_s = (os_hrtime() - start) / 1000000000;  // seconds
+    if (elapsed_s >= 2) {
       // Some libuv resource was not correctly deref'd. Log and bail.
       rv = false;
       ELOG("uv_loop_close() hang?");
