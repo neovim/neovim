@@ -129,6 +129,15 @@ function M.extract_completion_items(result)
   end
 end
 
+-- Sort by CompletionItem.sortText
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+function M.sort_completion_items(items)
+  if items[1] and items[1].sortText then
+    table.sort(items, function(a, b) return a.sortText < b.sortText
+    end)
+  end
+end
+
 -- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
 -- So we exclude completion candidates whose prefix does not match.
 function M.remove_unmatch_completion_items(items, prefix)
@@ -171,6 +180,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   end
 
   items = M.remove_unmatch_completion_items(items, prefix)
+  M.sort_completion_items(items)
 
   local matches = {}
 
