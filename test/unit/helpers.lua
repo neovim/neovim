@@ -13,7 +13,7 @@ local syscall = nil
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
-local map = global_helpers.map
+local map = global_helpers.tbl_map
 local eq = global_helpers.eq
 local trim = global_helpers.trim
 

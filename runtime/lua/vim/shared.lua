@@ -135,6 +135,36 @@ function vim.tbl_values(t)
   return values
 end
 
+--- Apply a function to all values of a table.
+---
+--@param func function or callable table
+--@param t table
+function vim.tbl_map(func, t)
+  vim.validate{func={func,'c'},t={t,'t'}}
+
+  local rettab = {}
+  for k, v in pairs(t) do
+    rettab[k] = func(v)
+  end
+  return rettab
+end
+
+--- Filter a table using a predicate function
+---
+--@param func function or callable table
+--@param t table
+function vim.tbl_filter(func, t)
+  vim.validate{func={func,'c'},t={t,'t'}}
+
+  local rettab = {}
+  for _, entry in pairs(t) do
+    if func(entry) then
+      table.insert(rettab, entry)
+    end
+  end
+  return rettab
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
