@@ -197,7 +197,7 @@ static inline void split_node(MarkTree *b, mtnode_t *x, const int i)
 // x must not be a full node (even if there might be internal space)
 static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
 {
-  int i = x->n - 1;
+  int i;
   if (x->level == 0) {
     i = marktree_getp_aux(x, k, 0);
     if (i != x->n - 1) {
