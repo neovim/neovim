@@ -4775,10 +4775,10 @@ static void vgr_display_fname(char_u *fname)
 static buf_T *vgr_load_dummy_buf(char_u *fname, char_u *dirname_start,
                                  char_u *dirname_now)
 {
-  char_u *save_ei = NULL;
-
   // Don't do Filetype autocommands to avoid loading syntax and
   // indent scripts, a great speed improvement.
+  char_u *save_ei = au_event_disable(",Filetype");
+
   long save_mls = p_mls;
   p_mls = 0;
 
