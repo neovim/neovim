@@ -824,7 +824,7 @@ function M.locations_to_items(locations)
             filename = fname,
             lnum = row + 1,
             col = col + 1;
-            text = temp.msg;
+            text = temp.msg or line;
           })
         end
       end
