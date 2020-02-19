@@ -384,6 +384,30 @@ describe('lua stdlib', function()
     end
   end)
 
+  it('vim.tbl_map', function()
+    eq({}, exec_lua([[
+      return vim.tbl_map(function(v) return v * 2 end, {})
+    ]]))
+    eq({2, 4, 6}, exec_lua([[
+      return vim.tbl_map(function(v) return v * 2 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}, {i=4}, {i=6}}, exec_lua([[
+      return vim.tbl_map(function(v) return { i = v.i * 2 } end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+  end)
+
+  it('vim.tbl_filter', function()
+    eq({}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {})
+    ]]))
+    eq({2}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v.i % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+  end)
+
   it('vim.tbl_islist', function()
     eq(true, exec_lua("return vim.tbl_islist({})"))
     eq(false, exec_lua("return vim.tbl_islist(vim.empty_dict())"))

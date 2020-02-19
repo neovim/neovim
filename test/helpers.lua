@@ -290,24 +290,6 @@ module.tmpname = (function()
   end)
 end)()
 
-function module.map(func, tab)
-  local rettab = {}
-  for k, v in pairs(tab) do
-    rettab[k] = func(v)
-  end
-  return rettab
-end
-
-function module.filter(filter_func, tab)
-  local rettab = {}
-  for _, entry in pairs(tab) do
-    if filter_func(entry) then
-      table.insert(rettab, entry)
-    end
-  end
-  return rettab
-end
-
 function module.hasenv(name)
   local env = os.getenv(name)
   if env and env ~= '' then
