@@ -574,10 +574,8 @@ static int insert_check(VimState *state)
     foldCheckClose();
   }
 
-  int cmdchar_todo = s->cmdchar;
   if (bt_prompt(curbuf)) {
-    init_prompt(cmdchar_todo);
-    cmdchar_todo = NUL;
+    init_prompt(s->cmdchar);
   }
 
   // If we inserted a character at the last position of the last line in the
