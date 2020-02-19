@@ -811,6 +811,8 @@ describe('ui/builtin messages', function()
       [5] = {foreground = Screen.colors.Blue1},
       [6] = {bold = true, foreground = Screen.colors.Magenta},
       [7] = {background = Screen.colors.Grey20},
+      [8] = {reverse = true},
+      [9] = {background = Screen.colors.LightRed}
     })
   end)
 
@@ -960,6 +962,92 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                                           }|
       {1:~                                                           }|
       zbc                                                         |
+    ]]}
+  end)
+
+  it('redraws NOT_VALID correctly after message', function()
+    -- edge case: only one window was set NOT_VALID. Orginal report
+    -- used :make, but fake it using one command to set the current
+    -- window NOT_VALID and another to show a long message.
+    screen:try_resize(80, 7)
+    command("set more")
+    feed(':new<cr><c-w><c-w>')
+    screen:expect{grid=[[
+                                                                                      |
+      {1:~                                                                               }|
+      {8:[No Name]                                                                       }|
+      ^                                                                                |
+      {1:~                                                                               }|
+      {3:[No Name]                                                                       }|
+      :new                                                                            |
+    ]]}
+
+    feed(':set colorcolumn=10 | digraphs<cr>')
+    screen:expect{grid=[[
+      :set colorcolumn=10 | digraphs                                                  |
+      NU {5:^@}  10    SH {5:^A}   1    SX {5:^B}   2    EX {5:^C}   3    ET {5:^D}   4    EQ {5:^E}   5      |
+      AK {5:^F}   6    BL {5:^G}   7    BS {5:^H}   8    HT {5:^I}   9    LF {5:^@}  10    VT {5:^K}  11      |
+      FF {5:^L}  12    CR {5:^M}  13    SO {5:^N}  14    SI {5:^O}  15    DL {5:^P}  16    D1 {5:^Q}  17      |
+      D2 {5:^R}  18    D3 {5:^S}  19    D4 {5:^T}  20    NK {5:^U}  21    SY {5:^V}  22    EB {5:^W}  23      |
+      CN {5:^X}  24    EM {5:^Y}  25    SB {5:^Z}  26    EC {5:^[}  27    FS {5:^\}  28    GS {5:^]}  29      |
+      {4:-- More --}^                                                                      |
+    ]]}
+
+    feed('q')
+    screen:expect{grid=[[
+                                                                                      |
+      {1:~                                                                               }|
+      {8:[No Name]                                                                       }|
+      ^         {9: }                                                                      |
+      {1:~                                                                               }|
+      {3:[No Name]                                                                       }|
+                                                                                      |
+    ]]}
+
+    -- edge case: just covers statusline
+    feed(':set colorcolumn=5 | lua error("x\\n\\nx")<cr>')
+    screen:expect{grid=[[
+                                                                                      |
+      {1:~                                                                               }|
+      {3:                                                                                }|
+      {2:E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: x}    |
+                                                                                      |
+      {2:x}                                                                               |
+      {4:Press ENTER or type command to continue}^                                         |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                                      |
+      {1:~                                                                               }|
+      {8:[No Name]                                                                       }|
+      ^    {9: }                                                                           |
+      {1:~                                                                               }|
+      {3:[No Name]                                                                       }|
+                                                                                      |
+    ]]}
+
+    -- edge case: just covers lowest window line
+    feed(':set colorcolumn=5 | lua error("x\\n\\n\\nx")<cr>')
+    screen:expect{grid=[[
+                                                                                      |
+      {3:                                                                                }|
+      {2:E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: x}    |
+                                                                                      |
+                                                                                      |
+      {2:x}                                                                               |
+      {4:Press ENTER or type command to continue}^                                         |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                                      |
+      {1:~                                                                               }|
+      {8:[No Name]                                                                       }|
+      ^    {9: }                                                                           |
+      {1:~                                                                               }|
+      {3:[No Name]                                                                       }|
+                                                                                      |
     ]]}
   end)
 end)
