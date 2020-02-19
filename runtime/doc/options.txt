@@ -5783,7 +5783,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			   *'statusline'* *'stl'* *E540* *E542*
 'statusline' 'stl'	string	(default empty)
-			global or local to window |global-local|
+			global or local to buffer |global-local|
 	When nonempty, this option determines the content of the status line.
 	Also see |status-line|.
 
