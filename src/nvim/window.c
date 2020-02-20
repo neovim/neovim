@@ -5786,7 +5786,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     if (get_scrolloff_value()) {
       update_topline();
     }
-    curs_columns(FALSE);        // validate w_wrow
+    curs_columns(false);        // validate w_wrow
   }
   if (prev_height > 0) {
     wp->w_prev_fraction_row = wp->w_wrow;

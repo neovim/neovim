@@ -159,7 +159,7 @@ void update_topline(void)
   if (curwin->w_valid & VALID_TOPLINE)
     return;
 
-  /* When dragging with the mouse, don't scroll that quickly */
+  // When dragging with the mouse, don't scroll that quickly
   if (mouse_dragging > 0) {
     *so_ptr = mouse_dragging - 1;
   }
@@ -210,7 +210,7 @@ void update_topline(void)
         for (linenr_T lnum = curwin->w_cursor.lnum;
              lnum < curwin->w_topline + *so_ptr; lnum++) {
           n++;
-          /* stop at end of file or when we know we are far off */
+          // stop at end of file or when we know we are far off
           if (lnum >= curbuf->b_ml.ml_line_count || n >= halfheight)
             break;
           (void)hasFolding(lnum, NULL, &lnum);
@@ -863,8 +863,8 @@ void curs_columns(
     if (curwin->w_skipcol + so * width > curwin->w_virtcol) {
       extra = 1;
     }
-    /* Compute last display line of the buffer line that we want at the
-     * bottom of the window. */
+    // Compute last display line of the buffer line that we want at the
+    // bottom of the window.
     if (plines == 0) {
       plines = plines_win(curwin, curwin->w_cursor.lnum, false);
     }
@@ -1259,12 +1259,12 @@ void scrollup_clamp(void)
   }
   if (start_row >= get_scrolloff_value()) {
     if (curwin->w_topfill > 0) {
-      --curwin->w_topfill;
+      curwin->w_topfill--;
     } else {
       (void)hasFolding(curwin->w_topline, NULL, &curwin->w_topline);
-      ++curwin->w_topline;
+      curwin->w_topline--;
     }
-    ++curwin->w_botline;                /* approximate w_botline */
+    curwin->w_botline--;                // approximate w_botline
     curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
   }
 }
@@ -1503,7 +1503,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   linenr_T old_botline    = curwin->w_botline;
   int      old_valid      = curwin->w_valid;
   int      old_empty_rows = curwin->w_empty_rows;
-  linenr_T cln            = curwin->w_cursor.lnum; // Cursor Line Number
+  linenr_T cln            = curwin->w_cursor.lnum;  // Cursor Line Number
   long so = get_scrolloff_value();
 
   if (set_topbot) {

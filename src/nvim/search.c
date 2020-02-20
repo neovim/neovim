@@ -2268,8 +2268,9 @@ showmatch(
       save_siso = *siso;
       // Handle "$" in 'cpo': If the ')' is typed on top of the "$",
       // stop displaying the "$".
-      if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol)
+      if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol) {
         dollar_vcol = -1;
+      }
       curwin->w_virtcol++;              // do display ')' just before "$"
       update_screen(VALID);             // show the new char first
 

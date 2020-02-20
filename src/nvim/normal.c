@@ -2586,10 +2586,11 @@ do_mouse (
    * dragging; temporarily minimize 'scrolloff'. */
   if (VIsual_active && is_drag && get_scrolloff_value()) {
     // In the very first line, allow scrolling one line
-    if (mouse_row == 0)
+    if (mouse_row == 0) {
       mouse_dragging = 2;
-    else
+    } else {
       mouse_dragging = 1;
+    }
   }
 
   /* When dragging the mouse above the window, scroll down. */
