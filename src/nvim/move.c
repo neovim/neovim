@@ -211,8 +211,9 @@ void update_topline(void)
              lnum < curwin->w_topline + *so_ptr; lnum++) {
           n++;
           // stop at end of file or when we know we are far off
-          if (lnum >= curbuf->b_ml.ml_line_count || n >= halfheight)
+          if (lnum >= curbuf->b_ml.ml_line_count || n >= halfheight) {
             break;
+          }
           (void)hasFolding(lnum, NULL, &lnum);
         }
       } else {
