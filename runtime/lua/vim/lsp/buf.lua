@@ -162,6 +162,7 @@ function M.clear_references()
 end
 
 function M.code_action(context)
+  validate { context = { context, 't', true } }
   context = context or { diagnostics = util.get_line_diagnostics() }
   local params = util.make_range_params()
   params.context = context
