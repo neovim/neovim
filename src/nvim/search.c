@@ -2266,11 +2266,11 @@ showmatch(
       save_cursor = curwin->w_cursor;
       save_so = *so;
       save_siso = *siso;
-      /* Handle "$" in 'cpo': If the ')' is typed on top of the "$",
-       * stop displaying the "$". */
+      // Handle "$" in 'cpo': If the ')' is typed on top of the "$",
+      // stop displaying the "$".
       if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol)
         dollar_vcol = -1;
-      ++curwin->w_virtcol;              // do display ')' just before "$"
+      curwin->w_virtcol++;              // do display ')' just before "$"
       update_screen(VALID);             // show the new char first
 
       save_dollar_vcol = dollar_vcol;
@@ -2280,7 +2280,7 @@ showmatch(
       curwin->w_cursor = mpos;          // move to matching char
       *so = 0;                          // don't use 'scrolloff' here
       *siso = 0;                        // don't use 'sidescrolloff' here
-      showruler(FALSE);
+      showruler(false);
       setcursor();
       ui_flush();
       /* Restore dollar_vcol(), because setcursor() may call curs_rows()

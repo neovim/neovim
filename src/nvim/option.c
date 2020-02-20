@@ -903,11 +903,11 @@ set_option_default(
         long def_val = (long)options[opt_idx].def_val[dvi];
         if ((long *)varp == &curwin->w_p_so
             || (long *)varp == &curwin->w_p_siso) {
-            // 'scrolloff' and 'sidescrolloff' local values have a
- 		    // different default value than the global default.
- 		    *(long *)varp = -1;
+          // 'scrolloff' and 'sidescrolloff' local values have a
+          // different default value than the global default.
+          *(long *)varp = -1;
         } else {
-            *(long *)varp = def_val;
+          *(long *)varp = def_val;
         }
         // May also set global value for local option.
         if (both) {
@@ -5331,20 +5331,20 @@ showoneopt(
  * Write modified options as ":set" commands to a file.
  *
  * There are three values for "opt_flags":
- * OPT_GLOBAL:		   Write global option values and fresh values of
- *			   buffer-local options (used for start of a session
- *			   file).
+ * OPT_GLOBAL:         Write global option values and fresh values of
+ *             buffer-local options (used for start of a session
+ *             file).
  * OPT_GLOBAL + OPT_LOCAL: Idem, add fresh values of window-local options for
- *			   curwin (used for a vimrc file).
- * OPT_LOCAL:		   Write buffer-local option values for curbuf, fresh
- *			   and local values for window-local options of
- *			   curwin.  Local values are also written when at the
- *			   default value, because a modeline or autocommand
- *			   may have set them when doing ":edit file" and the
- *			   user has set them back at the default or fresh
- *			   value.
- *			   When "local_only" is true, don't write fresh
- *			   values, only local values (for ":mkview").
+ *             curwin (used for a vimrc file).
+ * OPT_LOCAL:          Write buffer-local option values for curbuf, fresh
+ *             and local values for window-local options of
+ *             curwin.  Local values are also written when at the
+ *             default value, because a modeline or autocommand
+ *             may have set them when doing ":edit file" and the
+ *             user has set them back at the default or fresh
+ *             value.
+ *             When "local_only" is true, don't write fresh
+ *             values, only local values (for ":mkview").
  * (fresh value = value used for a new buffer or window for a local option).
  *
  * Return FAIL on error, OK otherwise.
@@ -6046,10 +6046,10 @@ void didset_window_options(win_T *wp)
  * Copy global option values to local options for one buffer.
  * Used when creating a new buffer and sometimes when entering a buffer.
  * flags:
- * BCO_ENTER	We will enter the buf buffer.
- * BCO_ALWAYS	Always copy the options, but only set b_p_initialized when
- *		appropriate.
- * BCO_NOHELP	Don't copy the values to a help buffer.
+ * BCO_ENTER    We will enter the buf buffer.
+ * BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
+ *      appropriate.
+ * BCO_NOHELP   Don't copy the values to a help buffer.
  */
 void buf_copy_options(buf_T *buf, int flags)
 {

@@ -160,8 +160,9 @@ void update_topline(void)
     return;
 
   /* When dragging with the mouse, don't scroll that quickly */
-  if (mouse_dragging > 0)
+  if (mouse_dragging > 0) {
     *so_ptr = mouse_dragging - 1;
+  }
 
   old_topline = curwin->w_topline;
   old_topfill = curwin->w_topfill;
@@ -207,15 +208,16 @@ void update_topline(void)
          * scrolled). */
         n = 0;
         for (linenr_T lnum = curwin->w_cursor.lnum;
-             lnum < curwin->w_topline + *so_ptr; ++lnum) {
-          ++n;
+             lnum < curwin->w_topline + *so_ptr; lnum++) {
+          n++;
           /* stop at end of file or when we know we are far off */
           if (lnum >= curbuf->b_ml.ml_line_count || n >= halfheight)
             break;
           (void)hasFolding(lnum, NULL, &lnum);
         }
-      } else
+      } else {
         n = curwin->w_topline + *so_ptr - curwin->w_cursor.lnum;
+      }
 
       /* If we weren't very close to begin with, we scroll to put the
        * cursor in the middle of the window.  Otherwise put the cursor
@@ -267,13 +269,15 @@ void update_topline(void)
                  && (loff.lnum + 1 < curwin->w_botline || loff.fill == 0)
                  ) {
             n += loff.height;
-            if (n >= *so_ptr)
+            if (n >= *so_ptr) {
               break;
+            }
             botline_forw(&loff);
           }
-          if (n >= *so_ptr)
-            /* sufficient context, no need to scroll */
+          if (n >= *so_ptr) {
+            // sufficient context, no need to scroll
             check_botline = false;
+          }
         } else {
           /* sufficient context, no need to scroll */
           check_botline = false;
@@ -364,19 +368,21 @@ static bool check_top_offset(void)
     lineoff_T loff;
     loff.lnum = curwin->w_cursor.lnum;
     loff.fill = 0;
-    int n = curwin->w_topfill;          /* always have this context */
-    /* Count the visible screen lines above the cursor line. */
+    int n = curwin->w_topfill;          // always have this context
+    // Count the visible screen lines above the cursor line.
     while (n < so) {
       topline_back(&loff);
-      /* Stop when included a line above the window. */
+      // Stop when included a line above the window.
       if (loff.lnum < curwin->w_topline
           || (loff.lnum == curwin->w_topline && loff.fill > 0)
-          )
+          ) {
         break;
+      }
       n += loff.height;
     }
-    if (n < so)
+    if (n < so) {
       return true;
+    }
   }
   return false;
 }
@@ -854,8 +860,9 @@ void curs_columns(
      * 2: Less than "p_so" lines below
      * 3: both of them */
     extra = 0;
-    if (curwin->w_skipcol + so * width > curwin->w_virtcol)
+    if (curwin->w_skipcol + so * width > curwin->w_virtcol) {
       extra = 1;
+    }
     /* Compute last display line of the buffer line that we want at the
      * bottom of the window. */
     if (plines == 0) {
@@ -886,7 +893,7 @@ void curs_columns(
       }
       curwin->w_skipcol = n * width;
     } else if (extra == 1) {
-      /* less then 'scrolloff' lines above, decrease skipcol */
+      // less then 'scrolloff' lines above, decrease skipcol
       assert(so <= INT_MAX);
       extra = (curwin->w_skipcol + (int)so * width - curwin->w_virtcol
                + width - 1) / width;
@@ -1251,9 +1258,9 @@ void scrollup_clamp(void)
     start_row -= curwin->w_virtcol / curwin->w_width_inner;
   }
   if (start_row >= get_scrolloff_value()) {
-    if (curwin->w_topfill > 0)
+    if (curwin->w_topfill > 0) {
       --curwin->w_topfill;
-    else {
+    } else {
       (void)hasFolding(curwin->w_topline, NULL, &curwin->w_topline);
       ++curwin->w_topline;
     }
@@ -1496,7 +1503,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   linenr_T old_botline    = curwin->w_botline;
   int      old_valid      = curwin->w_valid;
   int      old_empty_rows = curwin->w_empty_rows;
-  linenr_T cln            = curwin->w_cursor.lnum; /* Cursor Line Number */
+  linenr_T cln            = curwin->w_cursor.lnum; // Cursor Line Number
   long so = get_scrolloff_value();
 
   if (set_topbot) {

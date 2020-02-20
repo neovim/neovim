@@ -2585,7 +2585,7 @@ do_mouse (
   /* Set global flag that we are extending the Visual area with mouse
    * dragging; temporarily minimize 'scrolloff'. */
   if (VIsual_active && is_drag && get_scrolloff_value()) {
-    /* In the very first line, allow scrolling one line */
+    // In the very first line, allow scrolling one line
     if (mouse_row == 0)
       mouse_dragging = 2;
     else
@@ -4088,8 +4088,8 @@ void scroll_redraw(int up, long count)
   else
     scrolldown(count, true);
   if (get_scrolloff_value()) {
-    /* Adjust the cursor position for 'scrolloff'.  Mark w_topline as
-     * valid, otherwise the screen jumps back at the end of the file. */
+    // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
+    // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct();
     check_cursor_moved(curwin);
     curwin->w_valid |= VALID_TOPLINE;

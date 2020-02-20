@@ -2680,12 +2680,13 @@ int do_ecmd(
   did_inc_redrawing_disabled = false;
   if (!skip_redraw) {
     n = *so_ptr;
-    if (topline == 0 && command == NULL)
-      *so_ptr = 999;        // force cursor to be vertically centered in the window
+    if (topline == 0 && command == NULL) {
+      *so_ptr = 999;    // force cursor to be vertically centered in the window
+    }
     update_topline();
     curwin->w_scbind_pos = curwin->w_topline;
     *so_ptr = n;
-    redraw_curbuf_later(NOT_VALID);     /* redraw this buffer later */
+    redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
   }
 
   if (p_im)
