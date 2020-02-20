@@ -328,18 +328,24 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   return s:complete(sect, sect, name)
 endfunction
 
-function! s:get_paths(sect, name) abort
+function! s:get_paths(sect, name, do_fallback) abort
+  " callers must try-catch this, as some `man` implementations don't support `s:find_arg`
   try
     let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
+    return globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
   catch
-    call s:error(v:exception)
-    return
+    if !a:do_fallback
+      throw v:exception
+    endif
+
+    " fallback to a single path, with the page we're trying to find
+    let [l:sect, l:name, l:path] = s:verify_exists(a:sect, a:name)
+    return [l:path]
   endtry
-  return globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
 endfunction
 
 function! s:complete(sect, psect, name) abort
-  let pages = s:get_paths(a:sect, a:name)
+  let pages = s:get_paths(a:sect, a:name, v:false)
   " We remove duplicates in case the same manpage in different languages was found.
   return uniq(sort(map(pages, 's:format_candidate(v:val, a:psect)'), 'i'))
 endfunction
@@ -387,7 +393,7 @@ endfunction
 function! man#goto_tag(pattern, flags, info) abort
   let [l:sect, l:name] = man#extract_sect_and_name_ref(a:pattern)
 
-  let l:paths = s:get_paths(l:sect, l:name)
+  let l:paths = s:get_paths(l:sect, l:name, v:true)
   let l:structured = []
 
   for l:path in l:paths
