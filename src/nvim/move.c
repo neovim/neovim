@@ -1262,9 +1262,9 @@ void scrollup_clamp(void)
       curwin->w_topfill--;
     } else {
       (void)hasFolding(curwin->w_topline, NULL, &curwin->w_topline);
-      curwin->w_topline--;
+      curwin->w_topline++;
     }
-    curwin->w_botline--;                // approximate w_botline
+    curwin->w_botline++;                // approximate w_botline
     curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
   }
 }
