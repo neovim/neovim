@@ -37,12 +37,18 @@ M['textDocument/codeAction'] = function(_, _, actions)
   end
   local action_chosen = actions[choice]
   -- textDocument/codeAction can return either Command[] or CodeAction[].
-  -- We handle both in the same way by extracting the command
-  local command = action_chosen
-  if type(action_chosen.command) == table then
-    command = action_chosen.command
+  -- If it is a CodeAction, it can have either an edit, a command or both.
+  -- Edits should be executed first
+  if action_chosen.edit or type(action_chosen.command) == "table" then
+    if action_chosen.edit then
+      util.apply_workspace_edit(action_chosen.edit)
+    end
+    if type(action_chosen.command) == "table" then
+      buf.execute_command(action_chosen.command)
+    end
+  else
+    buf.execute_command(action_chosen)
   end
-  buf.execute_command(command)
 end
 
 M['workspace/applyEdit'] = function(_, _, workspace_edit)
