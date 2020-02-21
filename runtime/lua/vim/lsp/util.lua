@@ -201,7 +201,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       menu = completion_item.detail or '',
       info = info,
       icase = 1,
-      dup = 0,
+      dup = 1,
       empty = 1,
     })
   end
