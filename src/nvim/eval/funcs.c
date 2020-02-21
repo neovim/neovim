@@ -5246,6 +5246,36 @@ static void f_lispindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "list2str()" function
+static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  garray_T ga;
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  list_T *const l = argvars[0].vval.v_list;
+  if (l == NULL) {
+    return;  // empty list results in empty string
+  }
+
+  ga_init(&ga, 1, 80);
+  char_u buf[MB_MAXBYTES + 1];
+
+  TV_LIST_ITER_CONST(l, li, {
+    buf[utf_char2bytes(tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
+    ga_concat(&ga, buf);
+  });
+  ga_append(&ga, NUL);
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = ga.ga_data;
+}
+
 /*
  * "localtime()" function
  */
@@ -9351,6 +9381,17 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_float *= -1;
   }
   rettv->v_type = VAR_FLOAT;
+}
+
+// "str2list()" function
+static void f_str2list(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenUnknown);
+  const char_u *p = (const char_u *)tv_get_string(&argvars[0]);
+
+  for (; *p != NUL; p += utf_ptr2len(p)) {
+    tv_list_append_number(rettv->vval.v_list, utf_ptr2char(p));
+  }
 }
 
 // "str2nr()" function
