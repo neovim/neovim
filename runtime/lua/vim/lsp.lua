@@ -525,14 +525,15 @@ function lsp.start_client(config)
       callback = resolve_callback(method)
         or error("not found: request callback for client "..client.name)
     end
-    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
+    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
     -- TODO keep these checks or just let it go anyway?
     if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
       or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
+      or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
     then
-      callback(unsupported_method(method), method, nil, client_id)
+      callback(unsupported_method(method), method, nil, client_id, bufnr)
       return
     end
     return rpc.request(method, params, function(err, result)
@@ -874,7 +875,7 @@ end
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
-  local function _callback(err, _method, result, client_id, bufnr)
+  local function _callback(err, _method, result, client_id)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1
   end
@@ -905,7 +906,7 @@ function lsp.buf_notify(bufnr, method, params)
     method   = { method, 's' };
   }
   local resp = false
-  for_each_buffer_client(bufnr, function(client, _client_id)
+  for_each_buffer_client(bufnr, function(client, _client_id, _resolved_bufnr)
     if client.rpc.notify(method, params) then resp = true end
   end)
   return resp

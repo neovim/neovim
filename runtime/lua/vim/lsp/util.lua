@@ -834,21 +834,58 @@ function M.locations_to_items(locations)
   return items
 end
 
--- locations is Location[]
--- Only sets for the current window.
-function M.set_loclist(locations)
+function M.set_loclist(items)
   vim.fn.setloclist(0, {}, ' ', {
     title = 'Language Server';
-    items = M.locations_to_items(locations);
+    items = items;
   })
 end
 
--- locations is Location[]
-function M.set_qflist(locations)
+function M.set_qflist(items)
   vim.fn.setqflist({}, ' ', {
     title = 'Language Server';
-    items = M.locations_to_items(locations);
+    items = items;
   })
+end
+
+--- Convert symbols to quickfix list items
+---
+--@symbols DocumentSymbol[] or SymbolInformation[]
+function M.symbols_to_items(symbols, bufnr)
+  local function _symbols_to_items(_symbols, _items, _bufnr)
+    for _, symbol in ipairs(_symbols) do
+      if symbol.location then -- SymbolInformation type
+        local range = symbol.location.range
+        local kind = protocol.SymbolKind[symbol.kind]
+        table.insert(_items, {
+          filename = vim.uri_to_fname(symbol.location.uri),
+          lnum = range.start.line + 1,
+          col = range.start.character + 1,
+          kind = kind,
+          text = '['..kind..'] '..symbol.name,
+        })
+      elseif symbol.range then -- DocumentSymbole type
+        local kind = protocol.SymbolKind[symbol.kind]
+        table.insert(_items, {
+          -- bufnr = _bufnr,
+          filename = vim.api.nvim_buf_get_name(_bufnr),
+          lnum = symbol.range.start.line + 1,
+          col = symbol.range.start.character + 1,
+          kind = kind,
+          text = '['..kind..'] '..symbol.name
+        })
+        if symbol.children then
+          for _, child in ipairs(symbol) do
+            for _, v in ipairs(_symbols_to_items(child, _items, _bufnr)) do
+              vim.list_extend(_items, v)
+            end
+          end
+        end
+      end
+    end
+    return _items
+  end
+  return _symbols_to_items(symbols, {}, bufnr)
 end
 
 -- Remove empty lines from the beginning and end.
@@ -903,9 +940,13 @@ function M.make_position_params()
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   col = str_utfindex(line, col)
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) };
+    textDocument = M.make_text_document_params();
     position = { line = row; character = col; }
   }
+end
+
+function M.make_text_document_params()
+  return { uri = vim.uri_from_bufnr(0) }
 end
 
 -- @param buf buffer handle or 0 for current.

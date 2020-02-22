@@ -48,6 +48,7 @@ go-to-definition, hover, etc.  Example config: >
   nnoremap <silent> <c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
   nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
   nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
+  nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
 
 Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
 |i_CTRL-X_CTRL-O| to consume LSP completion. Example config (note the use of
@@ -731,6 +732,9 @@ definition()                                        *vim.lsp.buf.definition()*
                 TODO: Documentation
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
+                TODO: Documentation
+
+document_symbol()                              *vim.lsp.buf.document_symbol()*
                 TODO: Documentation
 
 formatting({options})                               *vim.lsp.buf.formatting()*
