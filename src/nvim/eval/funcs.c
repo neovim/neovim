@@ -5297,7 +5297,6 @@ static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   });
   ga_append(&ga, NUL);
 
-  rettv->v_type = VAR_STRING;
   rettv->vval.v_string = ga.ga_data;
 }
 
