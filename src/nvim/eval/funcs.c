@@ -2103,6 +2103,31 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
 }
 
+// "expandcmd()" function
+// Expand all the special characters in a command string.
+static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *errormsg = NULL;
+
+  rettv->v_type = VAR_STRING;
+  char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
+
+  exarg_T eap = {
+    .cmd = cmdstr,
+    .arg = cmdstr,
+    .usefilter = false,
+    .nextcmd = NULL,
+    .cmdidx = CMD_USER,
+  };
+  eap.argt |= NOSPC;
+
+  expand_filename(&eap, &cmdstr, &errormsg);
+  if (errormsg != NULL && *errormsg != NUL) {
+    EMSG(errormsg);
+  }
+  rettv->vval.v_string = cmdstr;
+}
+
 /*
  * "extend(list, list [, idx])" function
  * "extend(dict, dict [, action])" function
