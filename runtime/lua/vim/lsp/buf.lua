@@ -134,7 +134,7 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
---- Send request to server to resolve document highlights for the 
+--- Send request to server to resolve document highlights for the
 --- current text document position. This request can be associated
 --- to key mapping or to events such as `CursorHold`, eg:
 ---
