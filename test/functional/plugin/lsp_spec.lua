@@ -845,4 +845,20 @@ describe('LSP', function()
       eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
     end)
   end)
+  describe('buf_diagnostics_save_positions', function()
+    it('stores the diagnostics in diagnostics_by_buf', function ()
+      local diagnostics = {
+        { range = {}; message = "diag1" },
+        { range = {}; message = "diag2" },
+      }
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, diagnostics)
+      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf ]])
+      eq(diagnostics, exec_lua [[
+        for _, diagnostics in pairs(vim.lsp.util.diagnostics_by_buf) do
+          return diagnostics
+        end
+      ]])
+    end)
+  end)
 end)
