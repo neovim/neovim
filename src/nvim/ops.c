@@ -2856,7 +2856,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         //    line joining the current line with the one below.
 
         // curwin->w_cursor.col marks the byte position of the cursor in the
-        // currunt line. It increases up to a max of
+        // current line. It increases up to a max of
         // STRLEN(ml_get(curwin->w_cursor.lnum)). With 'virtualedit' and the
         // cursor past the end of the line, curwin->w_cursor.coladd is
         // incremented instead of curwin->w_cursor.col.
@@ -2944,7 +2944,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     // the yankreg might already have been saved to avoid
     // just restoring the deleted text.
     if (reg == NULL) {
-      reg = get_yank_register(regname, YREG_PASTE);
+      // don't overwrite register 0 when pasting in visual mode
+      if (regname == 0) {
+        reg = get_yank_register('_', YREG_PASTE);
+      } else {
+        reg = get_yank_register(regname, YREG_PASTE);
+      }
     }
 
     y_type = reg->y_type;
