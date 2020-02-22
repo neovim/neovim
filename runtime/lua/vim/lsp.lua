@@ -101,7 +101,7 @@ local function for_each_buffer_client(bufnr, callback)
   for client_id in pairs(client_ids) do
     local client = active_clients[client_id]
     if client then
-      callback(client, client_id)
+      callback(client, client_id, bufnr)
     end
   end
 end
@@ -520,7 +520,7 @@ function lsp.start_client(config)
   end
 
   --- Checks capabilities before rpc.request-ing.
-  function client.request(method, params, callback)
+  function client.request(method, params, callback, bufnr)
     if not callback then
       callback = resolve_callback(method)
         or error("not found: request callback for client "..client.name)
@@ -536,7 +536,7 @@ function lsp.start_client(config)
       return
     end
     return rpc.request(method, params, function(err, result)
-      callback(err, method, result, client_id)
+      callback(err, method, result, client_id, bufnr)
     end)
   end
 
@@ -836,8 +836,8 @@ function lsp.buf_request(bufnr, method, params, callback)
     callback = { callback, 'f', true };
   }
   local client_request_ids = {}
-  for_each_buffer_client(bufnr, function(client, client_id)
-    local request_success, request_id = client.request(method, params, callback)
+  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
+    local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
 
     -- This could only fail if the client shut down in the time since we looked
     -- it up and we did the request, which should be rare.
@@ -874,7 +874,7 @@ end
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
-  local function _callback(err, _method, result, client_id)
+  local function _callback(err, _method, result, client_id, bufnr)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1
   end
