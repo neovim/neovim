@@ -698,3 +698,8 @@ func Test_search_display_pattern()
     set norl
   endif
 endfunc
+
+func Test_search_special()
+  " this was causing illegal memory access
+  exe "norm /\x80PS"
+endfunc
