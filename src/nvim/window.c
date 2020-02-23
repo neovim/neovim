@@ -2451,12 +2451,12 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
-  if ((firstwin == win && lastwin_nofloating() == win)
+  /*if ((firstwin == win && lastwin_nofloating() == win)
       && lastwin->w_floating) {
     // TODO(bfredl): we might close the float also instead
     EMSG(e_floatonly);
     return FAIL;
-  }
+  }*/
 
   /* When closing the last window in a tab page first go to another tab page
    * and then close the window and the tab page to avoid that curwin and

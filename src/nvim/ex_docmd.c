@@ -6426,6 +6426,23 @@ ex_win_close(
   int need_hide;
   buf_T       *buf = win->w_buffer;
 
+  win_T *wp = NULL;
+
+  if (tp) {
+    wp = tp->tp_firstwin;
+  } else {
+    wp = firstwin;
+  }
+
+  for (; wp; wp = wp->w_next) {
+    if (wp->w_floating) {
+      if (wp->w_float_config.relative == kFloatRelativeWindow
+          && wp->w_float_config.window == win->handle) {
+        ex_win_close(forceit, wp, tp);  
+      }
+    }
+  }
+
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
