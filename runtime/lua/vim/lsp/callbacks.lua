@@ -204,12 +204,8 @@ local function log_message(_, _, result, client_id)
   if not client then
     err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
-  if message_type == protocol.MessageType.Error then
-    err_message("LSP[", client_name, "] ", message)
-  else
-    local message_type_name = protocol.MessageType[message_type]
-    api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
-  end
+  local message_type_name = protocol.MessageType[message_type]
+  api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
   return result
 end
 
