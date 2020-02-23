@@ -252,3 +252,14 @@ func Test_numberwidth_adjusted()
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunc
+
+" This was causing a memcheck error
+func Test_relativenumber_uninitialised()
+  new
+  set rnu
+  call setline(1, ["a", "b"])
+  redraw
+  call feedkeys("j", 'xt')
+  redraw
+  bwipe!
+endfunc

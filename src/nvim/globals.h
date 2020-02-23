@@ -412,9 +412,9 @@ EXTERN vimmenu_T        *root_menu INIT(= NULL);
  */
 EXTERN int sys_menu INIT(= FALSE);
 
-/* While redrawing the screen this flag is set.  It means the screen size
- * ('lines' and 'rows') must not be changed. */
-EXTERN int updating_screen INIT(= FALSE);
+// While redrawing the screen this flag is set.  It means the screen size
+// ('lines' and 'rows') must not be changed.
+EXTERN int updating_screen INIT(= 0);
 
 /*
  * All windows are linked in a list. firstwin points to the first entry,
