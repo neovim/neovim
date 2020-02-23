@@ -262,6 +262,7 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_stack_top = 0;   /* nothing in the stack */
   buf->b_ml.ml_locked = NULL;   /* no cached block */
   buf->b_ml.ml_line_lnum = 0;   /* no cached line */
+  buf->b_ml.ml_line_offset = 0;
   buf->b_ml.ml_chunksize = NULL;
 
   if (cmdmod.noswapfile) {
@@ -835,6 +836,7 @@ void ml_recover(bool checkext)
   buf->b_ml.ml_stack = NULL;            /* no stack yet */
   buf->b_ml.ml_stack_top = 0;           /* nothing in the stack */
   buf->b_ml.ml_line_lnum = 0;           /* no cached line */
+  buf->b_ml.ml_line_offset = 0;
   buf->b_ml.ml_locked = NULL;           /* no locked block */
   buf->b_ml.ml_flags = 0;
 
@@ -2829,6 +2831,7 @@ static void ml_flush_line(buf_T *buf)
   }
 
   buf->b_ml.ml_line_lnum = 0;
+  buf->b_ml.ml_line_offset = 0;
 }
 
 /*
@@ -3978,10 +3981,10 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 /// Find offset for line or line with offset.
 ///
 /// @param buf buffer to use
-/// @param lnum if > 0, find offset of lnum, store offset in offp
+/// @param lnum if > 0, find offset of lnum, return offset
 ///             if == 0, return line with offset *offp
-/// @param offp Location where offset of line is stored, or to read offset to
-///             use to find line. In the later case, store remaining offset.
+/// @param offp offset to use to find line, store remaining column offset
+///             Should be NULL when getting offset of line
 /// @param no_ff ignore 'fileformat' option, always use one byte for NL.
 ///
 /// @return -1 if information is not available
@@ -4001,8 +4004,17 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
-  // take care of cached line first
-  ml_flush_line(buf);
+  // take care of cached line first. Only needed if the cached line is before
+  // the requested line. Additionally cache the value for the cached line.
+  // This is used by the extmark code which needs the byte offset of the edited
+  // line. So when doing multiple small edits on the same line the value is
+  // only calculated once.
+  bool can_cache = (lnum != 0 && !ffdos && buf->b_ml.ml_line_lnum == lnum);
+  if (lnum == 0 || buf->b_ml.ml_line_lnum < lnum) {
+    ml_flush_line(buf);
+  } else if (can_cache && buf->b_ml.ml_line_offset > 0) {
+    return buf->b_ml.ml_line_offset;
+  }
 
   if (buf->b_ml.ml_usedchunks == -1
       || buf->b_ml.ml_chunksize == NULL
@@ -4096,6 +4108,10 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         && lnum > buf->b_ml.ml_line_count) {
       size -= ffdos + 1;
     }
+  }
+
+  if (can_cache) {
+    buf->b_ml.ml_line_offset = size;
   }
 
   return size;
