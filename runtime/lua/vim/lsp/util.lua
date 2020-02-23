@@ -727,7 +727,7 @@ do
   end
   function M.buf_diagnostics_count(kind)
     local bufnr = vim.api.nvim_get_current_buf()
-    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
     if not buffer_line_diagnostics then return end
     local count = 0
     for _, line_diags in pairs(buffer_line_diagnostics) do
