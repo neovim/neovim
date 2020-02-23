@@ -33,7 +33,6 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
   util.buf_diagnostics_signs(bufnr, result.diagnostics)
-  -- util.set_loclist(result.diagnostics)
   vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
 end
 
