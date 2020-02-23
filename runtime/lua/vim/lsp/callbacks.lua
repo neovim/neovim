@@ -63,8 +63,9 @@ M['textDocument/completion'] = function(_, _, result)
   local line = assert(api.nvim_buf_get_lines(0, row-1, row, false)[1])
   local line_to_cursor = line:sub(col+1)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local prefix = line_to_cursor:sub(textMatch+1)
 
-  local matches = util.text_document_completion_list_to_complete_items(result)
+  local matches = util.text_document_completion_list_to_complete_items(result, prefix)
   vim.fn.complete(textMatch+1, matches)
 end
 

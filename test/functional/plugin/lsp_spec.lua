@@ -1,12 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_log = helpers.assert_log
 local clear = helpers.clear
 local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local pesc = helpers.pesc
 local insert = helpers.insert
-local iswin = helpers.iswin
 local retry = helpers.retry
 local NIL = helpers.NIL
 
@@ -14,20 +15,27 @@ local NIL = helpers.NIL
 -- yield.
 local run, stop = helpers.run, helpers.stop
 
+-- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
 if helpers.pending_win32(pending) then return end
 
-local lsp_test_rpc_server_file = "test/functional/fixtures/lsp-test-rpc-server.lua"
-if iswin() then
-  lsp_test_rpc_server_file = lsp_test_rpc_server_file:gsub("/", "\\")
-end
+-- Fake LSP server.
+local fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'
+local fake_lsp_logfile = 'Xtest-fake-lsp.log'
 
-local function test_rpc_server_setup(test_name, timeout_ms)
+teardown(function()
+  os.remove(fake_lsp_logfile)
+end)
+
+local function fake_lsp_server_setup(test_name, timeout_ms)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename, timeout = ...
+    local test_name, fixture_filename, logfile, timeout = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
+      cmd_env = {
+        NVIM_LOG_FILE = logfile;
+      };
       cmd = {
-        vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
+        vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
         "-c", string.format("lua TEST_NAME = %q", test_name),
         "-c", string.format("lua TIMEOUT = %d", timeout),
         "-c", "luafile "..fixture_filename,
@@ -48,13 +56,13 @@ local function test_rpc_server_setup(test_name, timeout_ms)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, lsp_test_rpc_server_file, timeout_ms or 1e3)
+  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3)
 end
 
 local function test_rpc_server(config)
   if config.test_name then
     clear()
-    test_rpc_server_setup(config.test_name, config.timeout_ms or 1e3)
+    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -114,11 +122,14 @@ describe('LSP', function()
       local test_name = "basic_init"
       exec_lua([=[
         lsp = require('vim.lsp')
-        local test_name, fixture_filename = ...
+        local test_name, fixture_filename, logfile = ...
         function test__start_client()
           return lsp.start_client {
+            cmd_env = {
+              NVIM_LOG_FILE = logfile;
+            };
             cmd = {
-              vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
+              vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
               "-c", string.format("lua TEST_NAME = %q", test_name),
               "-c", "luafile "..fixture_filename;
             };
@@ -126,7 +137,7 @@ describe('LSP', function()
           }
         end
         TEST_CLIENT1 = test__start_client()
-      ]=], test_name, lsp_test_rpc_server_file)
+      ]=], test_name, fake_lsp_code, fake_lsp_logfile)
     end)
 
     after_each(function()
@@ -195,7 +206,8 @@ describe('LSP', function()
         end;
         -- If the program timed out, then code will be nil.
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         -- Note that NIL must be used here.
         -- on_callback(err, method, result, client_id)
@@ -216,7 +228,10 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(1, code, "exit code") eq(0, signal, "exit signal")
+          eq(101, code, "exit code", fake_lsp_logfile)  -- See fake-lsp-server.lua
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          assert_log(pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
+            fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
@@ -237,7 +252,8 @@ describe('LSP', function()
           client.notify('exit')
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
@@ -255,7 +271,8 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
@@ -294,7 +311,8 @@ describe('LSP', function()
           client.notify('finish')
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
@@ -336,7 +354,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -378,7 +397,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -420,7 +440,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -468,7 +489,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -516,7 +538,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -536,7 +559,7 @@ describe('LSP', function()
     end)
 
     -- TODO(askhan) we don't support full for now, so we can disable these tests.
-    pending('should check the body and didChange incremental normal mode editting', function()
+    pending('should check the body and didChange incremental normal mode editing', function()
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
@@ -544,7 +567,7 @@ describe('LSP', function()
       }
       local client
       test_rpc_server {
-        test_name = "basic_check_buffer_open_and_change_incremental_editting";
+        test_name = "basic_check_buffer_open_and_change_incremental_editing";
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
@@ -564,7 +587,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -607,7 +631,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -657,7 +682,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           if method == 'start' then
@@ -699,7 +725,8 @@ describe('LSP', function()
           client.stop(true)
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_callback = function(err, method, params, client_id)
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")

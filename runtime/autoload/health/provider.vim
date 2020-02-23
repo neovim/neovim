@@ -708,15 +708,29 @@ function! s:check_perl() abort
   endif
   call health#report_info('Nvim perl host: '. host)
 
-  let latest_cpan_cmd = 'cpanm --info Neovim::Ext'
+  let latest_cpan_cmd = 'cpanm --info -q Neovim::Ext'
   let latest_cpan = s:system(latest_cpan_cmd)
   if s:shell_error || empty(latest_cpan)
     call health#report_error('Failed to run: '. latest_cpan_cmd,
           \ ["Make sure you're connected to the internet.",
           \  'Are you behind a firewall or proxy?'])
     return
+  elseif latest_cpan[0] ==# '!'
+    let cpanm_errs = split(latest_cpan, '!')
+    if cpanm_errs[0] =~# "Can't write to "
+      call health#report_warn(cpanm_errs[0], cpanm_errs[1:-2])
+      " Last line is the package info
+      let latest_cpan = cpanm_errs[-1]
+    else
+      call health#report_error('Unknown warning from command: ' . latest_cpan_cmd, cpanm_errs)
+      return
+    endif
   endif
   let latest_cpan = matchstr(latest_cpan, '\(\.\?\d\)\+')
+  if empty(latest_cpan)
+    call health#report_error('Cannot parse version number from cpanm output: ' . latest_cpan)
+    return
+  endif
 
   let current_cpan_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
   let current_cpan = s:system(current_cpan_cmd)

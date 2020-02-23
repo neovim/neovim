@@ -578,8 +578,10 @@ used for.  You can find an alphabetical list here: |functions|.  Use CTRL-] on
 the function name to jump to detailed help on it.
 
 String manipulation:					*string-functions*
-	nr2char()		get a character by its ASCII value
-	char2nr()		get ASCII value of a character
+	nr2char()		get a character by its number value
+	list2str()		get a character string from a list of numbers
+	char2nr()		get number value of a character
+	str2list()		get list of numbers from a string
 	str2nr()		convert a string to a Number
 	str2float()		convert a string to a Float
 	printf()		format a string according to % items

@@ -88,6 +88,9 @@ function M.apply_text_edits(text_edits, bufnr)
   -- Reverse sort the orders so we can apply them without interfering with
   -- eachother. Also add i as a sort key to mimic a stable sort.
   table.sort(cleaned, edit_sort_key)
+  if not api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+  end
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
   local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
@@ -145,14 +148,35 @@ function M.get_current_line_to_cursor()
   return line:sub(pos[2]+1)
 end
 
+-- Sort by CompletionItem.sortText
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+local function sort_completion_items(items)
+  if items[1] and items[1].sortText then
+    table.sort(items, function(a, b) return a.sortText < b.sortText
+    end)
+  end
+end
+
+-- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
+-- So we exclude completion candidates whose prefix does not match.
+local function remove_unmatch_completion_items(items, prefix)
+  return vim.tbl_filter(function(item)
+    local word = item.insertText or item.label
+    return vim.startswith(word, prefix)
+  end, items)
+end
+
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-function M.text_document_completion_list_to_complete_items(result)
+function M.text_document_completion_list_to_complete_items(result, prefix)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
+
+  items = remove_unmatch_completion_items(items, prefix)
+  sort_completion_items(items)
 
   local matches = {}
 
@@ -177,7 +201,7 @@ function M.text_document_completion_list_to_complete_items(result)
       menu = completion_item.detail or '',
       info = info,
       icase = 1,
-      dup = 0,
+      dup = 1,
       empty = 1,
     })
   end

@@ -369,3 +369,24 @@ func Test_statusline_visual()
   bwipe! x1
   bwipe! x2
 endfunc
+
+func Test_statusline_removed_group()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  let lines =<< trim END
+    scriptencoding utf-8
+    set laststatus=2
+    let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'
+  END
+  call writefile(lines, 'XTest_statusline')
+
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 10, 'cols': 50})
+  call term_wait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_statusline_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_statusline')
+endfunc

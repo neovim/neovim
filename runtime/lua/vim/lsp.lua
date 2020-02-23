@@ -121,13 +121,9 @@ local function validate_encoding(encoding)
       or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
-local function validate_command(input)
+function lsp._cmd_parts(input)
   local cmd, cmd_args
-  if type(input) == 'string' then
-    -- Use a shell to execute the command if it is a string.
-    cmd = vim.api.nvim_get_option('shell')
-    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), input}
-  elseif vim.tbl_islist(input) then
+  if vim.tbl_islist(input) then
     cmd = input[1]
     cmd_args = {}
     -- Don't mutate our input.
@@ -138,7 +134,7 @@ local function validate_command(input)
       end
     end
   else
-    error("cmd type must be string or list.")
+    error("cmd type must be list.")
   end
   return cmd, cmd_args
 end
@@ -158,7 +154,7 @@ local function validate_client_config(config)
     callbacks       = { config.callbacks, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
-    cmd_env         = { config.cmd_env, "f", true };
+    cmd_env         = { config.cmd_env, "t", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
@@ -166,7 +162,7 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
-  local cmd, cmd_args = validate_command(config.cmd)
+  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
@@ -452,7 +448,7 @@ function lsp.start_client(config)
       -- The rootPath of the workspace. Is null if no folder is open.
       --
       -- @deprecated in favour of rootUri.
-      rootPath = nil;
+      rootPath = config.root_dir;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
       rootUri = vim.uri_from_fname(config.root_dir);
@@ -949,12 +945,14 @@ function lsp.omnifunc(findstart, base)
 
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local prefix = line_to_cursor:sub(textMatch+1)
+
   local params = util.make_position_params()
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
     if err or not result then return end
-    local matches = util.text_document_completion_list_to_complete_items(result)
+    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(textMatch+1, items)

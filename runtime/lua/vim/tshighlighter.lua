@@ -85,7 +85,6 @@ end
 
 function TSHighlighter:on_window(_, _win, _buf, _topline, botline)
   self.iter = nil
-  self.active_nodes = {}
   self.nextrow = 0
   self.botline = botline
   self.redraw_count = self.redraw_count + 1
@@ -107,32 +106,11 @@ function TSHighlighter:on_line(_, _win, buf, line)
     end
     local start_row, start_col, end_row, end_col = node:range()
     local hl = self.id_map[capture]
-    if hl > 0 and active then
-      if start_row == line and end_row == line then
-        a.nvim__put_attr(hl, start_col, end_col)
-      elseif end_row >= line then
-        -- TODO(bfredl): this is quite messy. Togheter with multiline bufhl we should support
-        -- luahl generating multiline highlights (and other kinds of annotations)
-        self.active_nodes[{hl=hl, start_row=start_row, start_col=start_col, end_row=end_row, end_col=end_col}] = true
-      end
+    if hl > 0 and active and end_row >= line then
+      a.nvim__put_attr(hl, start_row, start_col, end_row, end_col)
     end
     if start_row > line then
       self.nextrow = start_row
-    end
-  end
-  for node,_ in pairs(self.active_nodes) do
-    if node.start_row <= line and node.end_row >= line then
-      local start_col, end_col = node.start_col, node.end_col
-      if node.start_row < line then
-        start_col = 0
-      end
-      if node.end_row > line then
-        end_col = 9000
-      end
-      a.nvim__put_attr(node.hl, start_col, end_col)
-    end
-    if node.end_row <= line then
-      self.active_nodes[node] = nil
     end
   end
   self.line_count[line] = (self.line_count[line] or 0) + 1

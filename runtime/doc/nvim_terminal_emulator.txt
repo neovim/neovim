@@ -307,6 +307,23 @@ Other commands ~
 	     isn't one
 
 
+Prompt mode ~
+						*termdebug-prompt*
+When on MS-Windows, gdb will run in a buffer with 'buftype' set to "prompt".
+This works slightly differently:
+- The gdb window will be in Insert mode while typing commands.  Go to Normal
+  mode with <Esc>, then you can move around in the buffer, copy/paste, etc.
+  Go back to editing the gdb command with any command that starts Insert mode,
+  such as `a` or `i`.
+- The program being debugged will run in a separate window.  On MS-Windows
+  this is a new console window.  On Unix, if the |+terminal| feature is
+  available a Terminal window will be opened to run the debugged program in.
+
+						*termdebug_use_prompt*
+Prompt mode can be used even when the |+terminal| feature is present with: >
+	let g:termdebug_use_prompt = 1
+
+
 Communication ~
 						*termdebug-communication*
 There is another, hidden, buffer, which is used for Vim to communicate with

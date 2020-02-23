@@ -299,7 +299,8 @@ static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
 static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
 static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
 static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
-                                        "help", "acwrite", "terminal", NULL };
+                                        "help", "acwrite", "terminal",
+                                        "prompt", NULL };
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };
@@ -7091,10 +7092,13 @@ static int check_opt_wim(void)
  */
 bool can_bs(int what)
 {
+  if (what == BS_START && bt_prompt(curbuf)) {
+    return false;
+  }
   switch (*p_bs) {
-  case '2':       return true;
-  case '1':       return what != BS_START;
-  case '0':       return false;
+    case '2':       return true;
+    case '1':       return what != BS_START;
+    case '0':       return false;
   }
   return vim_strchr(p_bs, what) != NULL;
 }
@@ -7290,12 +7294,13 @@ int get_fileformat(buf_T *buf)
 /// argument.
 ///
 /// @param eap  can be NULL!
-int get_fileformat_force(buf_T *buf, exarg_T *eap)
+int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int c;
 
   if (eap != NULL && eap->force_ff != 0) {
-    c = eap->cmd[eap->force_ff];
+    c = eap->force_ff;
   } else {
     if ((eap != NULL && eap->force_bin != 0)
         ? (eap->force_bin == FORCE_BIN) : buf->b_p_bin) {

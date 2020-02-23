@@ -1093,6 +1093,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  nowrite	buffer will not be written
 	  quickfix	list of errors |:cwindow| or locations |:lwindow|
 	  terminal	|terminal-emulator| buffer
+	  prompt	buffer where only the last line can be edited, meant
+			to be used by a plugin, see |prompt-buffer|
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.

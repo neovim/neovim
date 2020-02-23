@@ -2701,7 +2701,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {
-    PRINT_ERRMSG(_("E5400: Callback should return list"));
+    PRINT_ERRMSG("%s", _("E5400: Callback should return list"));
     goto color_cmdline_error;
   }
   if (tv.vval.v_list == NULL) {
@@ -4693,6 +4693,9 @@ ExpandFromContext (
     flags |= EW_KEEPALL;
   if (options & WILD_SILENT)
     flags |= EW_SILENT;
+  if (options & WILD_NOERROR) {
+    flags |= EW_NOERROR;
+  }
   if (options & WILD_ALLLINKS) {
     flags |= EW_ALLLINKS;
   }

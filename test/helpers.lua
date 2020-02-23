@@ -55,23 +55,54 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-function module.eq(expected, actual, context)
-  return assert.are.same(expected, actual, context)
+--- Invokes `fn` and includes the tail of `logfile` in the error message if it
+--- fails.
+---
+--@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
+--@param fn       Function to invoke
+--@param ...      Function arguments
+local function dumplog(logfile, fn, ...)
+  -- module.validate({
+  --   logfile={logfile,'s',true},
+  --   fn={fn,'f',false},
+  -- })
+  local status, rv = pcall(fn, ...)
+  if status == false then
+    logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+    local logtail = module.read_nvim_log(logfile)
+    error(string.format('%s\n%s', rv, logtail))
+  end
 end
-function module.neq(expected, actual, context)
-  return assert.are_not.same(expected, actual, context)
+function module.eq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are.same, expected, actual, context)
 end
-function module.ok(res, msg)
-  return assert.is_true(res, msg)
+function module.neq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are_not.same, expected, actual, context)
 end
-function module.near(actual, expected, tolerance)
-  return assert.is.near(actual, expected, tolerance)
+function module.ok(res, msg, logfile)
+  return dumplog(logfile, assert.is_true, res, msg)
 end
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
+end
+
+--- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
+---
+--@param pat  (string) Lua pattern to search for in the log file.
+--@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
+function module.assert_log(pat, logfile)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  local nrlines = 10
+  local lines = module.read_file_list(logfile, -nrlines) or {}
+  for _,line in ipairs(lines) do
+    if line:match(pat) then return end
+  end
+  local logtail = module.read_nvim_log(logfile)
+  error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
+    pat, nrlines, logfile, logtail))
 end
 
 -- Invokes `fn` and returns the error string (may truncate full paths), or
@@ -258,24 +289,6 @@ module.tmpname = (function()
     end
   end)
 end)()
-
-function module.map(func, tab)
-  local rettab = {}
-  for k, v in pairs(tab) do
-    rettab[k] = func(v)
-  end
-  return rettab
-end
-
-function module.filter(filter_func, tab)
-  local rettab = {}
-  for _, entry in pairs(tab) do
-    if filter_func(entry) then
-      table.insert(rettab, entry)
-    end
-  end
-  return rettab
-end
 
 function module.hasenv(name)
   local env = os.getenv(name)
@@ -737,10 +750,10 @@ function module.isCI(name)
 
 end
 
--- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
+-- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log()
-  local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+function module.read_nvim_log(logfile, ci_rename)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
   local keep = is_ci and 999 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
@@ -751,7 +764,7 @@ function module.read_nvim_log()
     log = log..line..'\n'
   end
   log = log..('-'):rep(78)..'\n'
-  if is_ci then
+  if is_ci and ci_rename then
     os.rename(logfile, logfile .. '.displayed')
   end
   return log

@@ -1544,7 +1544,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
         *col = MAXCOL;
         return true;
     } else if (id < 0) {
-      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
+      api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
       return false;
     }
 
@@ -1554,7 +1554,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
       *col = extmark.col;
       return true;
     } else {
-      api_set_error(err, kErrorTypeValidation, _("No mark with requested id"));
+      api_set_error(err, kErrorTypeValidation, "No mark with requested id");
       return false;
     }
 
@@ -1565,7 +1565,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
         || pos.items[0].type != kObjectTypeInteger
         || pos.items[1].type != kObjectTypeInteger) {
       api_set_error(err, kErrorTypeValidation,
-                    _("Position must have 2 integer elements"));
+                    "Position must have 2 integer elements");
       return false;
     }
     Integer pos_row = pos.items[0].data.integer;
@@ -1575,7 +1575,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
     return true;
   } else {
     api_set_error(err, kErrorTypeValidation,
-                  _("Position must be a mark id Integer or position Array"));
+                  "Position must be a mark id Integer or position Array");
     return false;
   }
 }

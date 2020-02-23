@@ -68,8 +68,9 @@ end
 
 function M.formatting(options)
   validate { options = {options, 't', true} }
+  local sts = vim.bo.softtabstop;
   options = vim.tbl_extend('keep', options or {}, {
-    tabSize = vim.bo.tabstop;
+    tabSize = (sts > 0 and sts) or (sts < 0 and vim.bo.shiftwidth) or vim.bo.tabstop;
     insertSpaces = vim.bo.expandtab;
   })
   local params = {
@@ -85,8 +86,9 @@ function M.range_formatting(options, start_pos, end_pos)
     start_pos = {start_pos, 't', true};
     end_pos = {end_pos, 't', true};
   }
+  local sts = vim.bo.softtabstop;
   options = vim.tbl_extend('keep', options or {}, {
-    tabSize = vim.bo.tabstop;
+    tabSize = (sts > 0 and sts) or (sts < 0 and vim.bo.shiftwidth) or vim.bo.tabstop;
     insertSpaces = vim.bo.expandtab;
   })
   local A = list_extend({}, start_pos or api.nvim_buf_get_mark(0, '<'))

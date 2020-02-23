@@ -86,7 +86,7 @@ addons:
       - valgrind
       - xclip
   homebrew:
-    update: false
+    update: true
     casks:
       - powershell
     packages:

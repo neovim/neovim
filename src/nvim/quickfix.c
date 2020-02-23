@@ -3845,7 +3845,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
      *dirname = NUL;
 
     // Add one line for each error
-    if (old_last == NULL) {
+    if (old_last == NULL || old_last->qf_next == NULL) {
       qfp = qfl->qf_start;
       lnum = 0;
     } else {
@@ -4775,10 +4775,10 @@ static void vgr_display_fname(char_u *fname)
 static buf_T *vgr_load_dummy_buf(char_u *fname, char_u *dirname_start,
                                  char_u *dirname_now)
 {
-  char_u *save_ei = NULL;
-
   // Don't do Filetype autocommands to avoid loading syntax and
   // indent scripts, a great speed improvement.
+  char_u *save_ei = au_event_disable(",Filetype");
+
   long save_mls = p_mls;
   p_mls = 0;
 

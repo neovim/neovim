@@ -296,10 +296,7 @@ void buf_updates_send_splice(buf_T *buf,
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
     if (cb.on_bytes != LUA_NOREF) {
-      Array args = ARRAY_DICT_INIT;
-      Object items[8];
-      args.size = 8;
-      args.items = items;
+      FIXED_TEMP_ARRAY(args, 8);
 
       // the first argument is always the buffer handle
       args.items[0] = BUFFER_OBJ(buf->handle);

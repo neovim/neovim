@@ -3361,7 +3361,7 @@ showmap (
     msg_putchar(' ');
 
   // Display the LHS.  Get length of what we write.
-  len = (size_t)msg_outtrans_special(mp->m_keys, true);
+  len = (size_t)msg_outtrans_special(mp->m_keys, true, 0);
   do {
     msg_putchar(' ');                   /* padd with blanks */
     ++len;
@@ -3389,7 +3389,7 @@ showmap (
     // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
-    msg_outtrans_special(s, FALSE);
+    msg_outtrans_special(s, false, 0);
     xfree(s);
   }
   if (p_verbose > 0) {

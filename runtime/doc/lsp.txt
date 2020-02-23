@@ -543,7 +543,7 @@ start_client({config})                                *vim.lsp.start_client()*
                     {root_dir}         (required, string) Directory where the
                                        LSP server will base its rootUri on
                                        initialization.
-                    {cmd}              (required, string or list treated like
+                    {cmd}              (required, list treated like
                                        |jobstart()|) Base command that
                                        initiates the LSP client.
                     {cmd_cwd}          (string, default=|getcwd()|) Directory

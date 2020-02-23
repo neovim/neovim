@@ -4373,7 +4373,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
     if (has_wildcards) {
       expand_T xpc;
-      int options = WILD_LIST_NOTFOUND|WILD_ADD_SLASH;
+      int options = WILD_LIST_NOTFOUND | WILD_NOERROR | WILD_ADD_SLASH;
 
       ExpandInit(&xpc);
       xpc.xp_context = EXPAND_FILES;
@@ -4538,6 +4538,21 @@ skip_cmd_arg (
   return p;
 }
 
+int get_bad_opt(const char_u *p, exarg_T *eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (STRICMP(p, "keep") == 0) {
+    eap->bad_char = BAD_KEEP;
+  } else if (STRICMP(p, "drop") == 0) {
+    eap->bad_char = BAD_DROP;
+  } else if (MB_BYTE2LEN(*p) == 1 && p[1] == NUL) {
+    eap->bad_char = *p;
+  } else {
+    return FAIL;
+  }
+  return OK;
+}
+
 /*
  * Get "++opt=arg" argument.
  * Return FAIL or OK.
@@ -4596,8 +4611,10 @@ static int getargopt(exarg_T *eap)
   *arg = NUL;
 
   if (pp == &eap->force_ff) {
-    if (check_ff_value(eap->cmd + eap->force_ff) == FAIL)
+    if (check_ff_value(eap->cmd + eap->force_ff) == FAIL) {
       return FAIL;
+    }
+    eap->force_ff = eap->cmd[eap->force_ff];
   } else if (pp == &eap->force_enc) {
     /* Make 'fileencoding' lower case. */
     for (p = eap->cmd + eap->force_enc; *p != NUL; ++p)
@@ -4605,15 +4622,9 @@ static int getargopt(exarg_T *eap)
   } else {
     /* Check ++bad= argument.  Must be a single-byte character, "keep" or
      * "drop". */
-    p = eap->cmd + bad_char_idx;
-    if (STRICMP(p, "keep") == 0)
-      eap->bad_char = BAD_KEEP;
-    else if (STRICMP(p, "drop") == 0)
-      eap->bad_char = BAD_DROP;
-    else if (MB_BYTE2LEN(*p) == 1 && p[1] == NUL)
-      eap->bad_char = *p;
-    else
+    if (get_bad_opt(eap->cmd + bad_char_idx, eap) == FAIL) {
       return FAIL;
+    }
   }
 
   return OK;
@@ -5130,9 +5141,8 @@ static char *get_command_complete(int arg)
 static void uc_list(char_u *name, size_t name_len)
 {
   int i, j;
-  int found = FALSE;
+  bool found = false;
   ucmd_T      *cmd;
-  int len;
   uint32_t a;
 
   // In cmdwin, the alternative buffer should be used.
@@ -5151,62 +5161,96 @@ static void uc_list(char_u *name, size_t name_len)
         continue;
       }
 
-      /* Put out the title first time */
-      if (!found)
-        MSG_PUTS_TITLE(_("\n    Name        Args       Address   Complete  Definition"));
-      found = TRUE;
+      // Put out the title first time
+      if (!found) {
+        MSG_PUTS_TITLE(_("\n    Name              Args Address "
+                         "Complete   Definition"));
+      }
+      found = true;
       msg_putchar('\n');
       if (got_int)
         break;
 
-      /* Special cases */
-      msg_putchar(a & BANG ? '!' : ' ');
-      msg_putchar(a & REGSTR ? '"' : ' ');
-      msg_putchar(gap != &ucmds ? 'b' : ' ');
-      msg_putchar(' ');
+      // Special cases
+      int len = 4;
+      if (a & BANG) {
+        msg_putchar('!');
+        len--;
+      }
+      if (a & REGSTR) {
+        msg_putchar('"');
+        len--;
+      }
+      if (gap != &ucmds) {
+        msg_putchar('b');
+        len--;
+      }
+      if (a & TRLBAR) {
+        msg_putchar('|');
+        len--;
+      }
+      while (len-- > 0) {
+        msg_putchar(' ');
+      }
 
       msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
       len = (int)STRLEN(cmd->uc_name) + 4;
 
       do {
         msg_putchar(' ');
-        ++len;
-      } while (len < 16);
+        len++;
+      } while (len < 22);
 
+      // "over" is how much longer the name is than the column width for
+      // the name, we'll try to align what comes after.
+      const int over = len - 22;
       len = 0;
 
-      /* Arguments */
+      // Arguments
       switch (a & (EXTRA|NOSPC|NEEDARG)) {
-      case 0:                     IObuff[len++] = '0'; break;
-      case (EXTRA):               IObuff[len++] = '*'; break;
-      case (EXTRA|NOSPC):         IObuff[len++] = '?'; break;
-      case (EXTRA|NEEDARG):       IObuff[len++] = '+'; break;
-      case (EXTRA|NOSPC|NEEDARG): IObuff[len++] = '1'; break;
+        case 0:
+          IObuff[len++] = '0';
+          break;
+        case (EXTRA):
+          IObuff[len++] = '*';
+          break;
+        case (EXTRA|NOSPC):
+          IObuff[len++] = '?';
+          break;
+        case (EXTRA|NEEDARG):
+          IObuff[len++] = '+';
+          break;
+        case (EXTRA|NOSPC|NEEDARG):
+          IObuff[len++] = '1';
+          break;
       }
 
       do {
         IObuff[len++] = ' ';
-      } while (len < 5);
+      } while (len < 5 - over);
 
-      /* Range */
+      // Address / Range
       if (a & (RANGE|COUNT)) {
         if (a & COUNT) {
-          /* -count=N */
-          sprintf((char *)IObuff + len, "%" PRId64 "c", (int64_t)cmd->uc_def);
+          // -count=N
+          snprintf((char *)IObuff + len, IOSIZE, "%" PRId64 "c",
+                   (int64_t)cmd->uc_def);
           len += (int)STRLEN(IObuff + len);
-        } else if (a & DFLALL)
+        } else if (a & DFLALL) {
           IObuff[len++] = '%';
-        else if (cmd->uc_def >= 0) {
-          /* -range=N */
-          sprintf((char *)IObuff + len, "%" PRId64 "", (int64_t)cmd->uc_def);
+        } else if (cmd->uc_def >= 0) {
+          // -range=N
+          snprintf((char *)IObuff + len, IOSIZE, "%" PRId64 "",
+                   (int64_t)cmd->uc_def);
           len += (int)STRLEN(IObuff + len);
-        } else
+        } else {
           IObuff[len++] = '.';
+        }
       }
 
       do {
         IObuff[len++] = ' ';
-      } while (len < 11);
+      } while (len < 9 - over);
 
       // Address Type
       for (j = 0; addr_type_complete[j].expand != -1; j++) {
@@ -5220,7 +5264,7 @@ static void uc_list(char_u *name, size_t name_len)
 
       do {
         IObuff[len++] = ' ';
-      } while (len < 21);
+      } while (len < 13 - over);
 
       // Completion
       char *cmd_compl = get_command_complete(cmd->uc_compl);
@@ -5231,12 +5275,13 @@ static void uc_list(char_u *name, size_t name_len)
 
       do {
         IObuff[len++] = ' ';
-      } while (len < 35);
+      } while (len < 24 - over);
 
       IObuff[len] = '\0';
       msg_outtrans(IObuff);
 
-      msg_outtrans_special(cmd->uc_rep, false);
+      msg_outtrans_special(cmd->uc_rep, false,
+                           name_len == 0 ? Columns - 46 : 0);
       if (p_verbose > 0) {
         last_set_msg(cmd->uc_script_ctx);
       }
@@ -5424,9 +5469,8 @@ static void ex_command(exarg_T *eap)
   end = p;
   name_len = (int)(end - name);
 
-  /* If there is nothing after the name, and no attributes were specified,
-   * we are listing commands
-   */
+  // If there is nothing after the name, and no attributes were specified,
+  // we are listing commands
   p = skipwhite(end);
   if (!has_attr && ends_excmd(*p)) {
     uc_list(name, end - name);
