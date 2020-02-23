@@ -84,9 +84,9 @@ function! provider#clipboard#Executable() abort
     return 'pbcopy'
   elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
     let s:copy['+'] = 'wl-copy --foreground --type text/plain'
-    let s:paste['+'] = 'wl-paste --no-newline'
+    let s:paste['+'] = 'wl-paste'
     let s:copy['*'] = 'wl-copy --foreground --primary --type text/plain'
-    let s:paste['*'] = 'wl-paste --no-newline --primary'
+    let s:paste['*'] = 'wl-paste --primary'
     return 'wl-copy'
   elseif exists('$DISPLAY') && executable('xclip')
     let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
