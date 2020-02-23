@@ -19,7 +19,6 @@
 #include "nvim/ascii.h"
 
 static bool did_stdio = false;
-PMap(uint64_t) *channels = NULL;
 
 /// next free id for a job or rpc channel
 /// 1 is reserved for stdio channel
