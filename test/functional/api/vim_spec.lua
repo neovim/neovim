@@ -571,6 +571,28 @@ describe('API', function()
       eq({0,7,1,0}, funcs.getpos('.'))
       eq(false, nvim('get_option', 'paste'))
     end)
+    it('Replace-mode', function()
+      -- Within single line
+      nvim('put', {'aabbccdd', 'eeffgghh', 'iijjkkll'}, "c", true, false)
+      command('normal l')
+      command('startreplace')
+      nvim('paste', '123456', true, -1)
+      expect([[
+      a123456d
+      eeffgghh
+      iijjkkll]])
+      command('%delete _')
+      -- Across lines
+      nvim('put', {'aabbccdd', 'eeffgghh', 'iijjkkll'}, "c", true, false)
+      command('normal l')
+      command('startreplace')
+      nvim('paste', '123\n456', true, -1)
+      expect([[
+      a123
+      456d
+      eeffgghh
+      iijjkkll]])
+    end)
     it('crlf=false does not break lines at CR, CRLF', function()
       nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)
       expect('line 1\r\n\r\rline 2\nline 3\rline 4\r')
