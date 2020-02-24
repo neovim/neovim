@@ -4,6 +4,8 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 
+local buffer_manager = require 'vim.util.buffer_manager'
+
 local M = {}
 
 local split = vim.split
@@ -11,12 +13,11 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
-local function ok_or_nil(status, ...)
-  if not status then return end
-  return ...
-end
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
+local function resolve_bufnr(bufnr)
+  if bufnr == 0 or bufnr == nil then
+    return api.nvim_get_current_buf()
+  end
+  return bufnr
 end
 
 function M.set_lines(lines, A, B, new_lines)
@@ -335,10 +336,31 @@ function M.jump_to_location(location)
   return true
 end
 
-local function find_window_by_var(name, value)
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if npcall(api.nvim_win_get_var, win, name) == value then
-      return win
+local popup_manager = buffer_manager{
+  buf_init = function(bufnr, value)
+    local bo = vim.bo[bufnr]
+    -- luacheck: ignore
+    bo.bufhidden = 'wipe'
+    return value
+  end;
+  on_detach = function(_, v)
+    pcall(api.nvim_win_close, v.winnr, true)
+  end;
+}
+
+-- Close all popups which belong to us.
+function M.close_popups()
+  for _, v in popup_manager.iter() do
+    pcall(api.nvim_win_close, v.winnr, true)
+  end
+end
+
+-- Close a popup by its name.
+function M.close_popup_by_name(name)
+  for _, v in popup_manager.iter() do
+    if v.name == name then
+      pcall(api.nvim_win_close, v.winnr, true)
+      return
     end
   end
 end
@@ -349,21 +371,25 @@ end
 -- fn()'s return bufnr, winnr
 -- case that a new floating window should be created.
 function M.focusable_float(unique_name, fn)
-  if npcall(api.nvim_win_get_var, 0, unique_name) then
-    return api.nvim_command("wincmd p")
-  end
   local bufnr = api.nvim_get_current_buf()
-  do
-    local win = find_window_by_var(unique_name, bufnr)
-    if win then
-      api.nvim_set_current_win(win)
-      api.nvim_command("stopinsert")
+  if popup_manager.get(bufnr) then
+    return vim.cmd("wincmd p")
+  end
+
+  for _, v in popup_manager.iter() do
+    if v.name == unique_name then
+      vim.cmd("stopinsert")
+      api.nvim_set_current_win(v.winnr)
       return
     end
   end
+
   local pbufnr, pwinnr = fn()
   if pbufnr then
-    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
+    popup_manager.attach(pbufnr, {
+      name = unique_name;
+      winnr = pwinnr;
+    })
     return pbufnr, pwinnr
   end
 end
@@ -378,6 +404,24 @@ function M.focusable_preview(unique_name, fn)
     return M.open_floating_preview(fn())
   end)
 end
+
+function M.popup(name, fn)
+  local events = {"CursorMoved","CursorMovedI","BufHidden","InsertCharPre"}
+  return M.focusable_float(name, function()
+    local buf, win = fn()
+    if buf then
+      M.close_popups()
+      vim.cmd(string.format(
+        "autocmd %s <buffer> ++once lua vim.lsp.util.close_popup_by_name(%q)",
+        table.concat(events, ','),
+        name
+      ))
+    end
+    return buf, win
+  end)
+end
+
+local rep = string.rep
 
 -- Convert markdown into syntax highlighted regions by stripping the code
 -- blocks and converting them into highlighted code.
@@ -422,8 +466,8 @@ function M.fancy_floating_markdown(contents, opts)
   local width = 0
   for i, v in ipairs(stripped) do
     v = v:gsub("\r", "")
-    if pad_left then v = (" "):rep(pad_left)..v end
-    if pad_right then v = v..(" "):rep(pad_right) end
+    if pad_left then v = rep(" ", pad_left)..v end
+    if pad_right then v = v..rep(" ", pad_right) end
     stripped[i] = v
     width = math.max(width, #v)
   end
@@ -437,7 +481,7 @@ function M.fancy_floating_markdown(contents, opts)
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
-        table.insert(stripped, h.finish + 1, string.rep("─", width))
+        table.insert(stripped, h.finish + 1, rep("─", width))
       end
     end
   end
@@ -446,12 +490,12 @@ function M.fancy_floating_markdown(contents, opts)
   local height = #stripped
   local bufnr = api.nvim_create_buf(false, true)
   local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
   -- Switch to the floating window to apply the syntax highlighting.
   -- This is because the syntax command doesn't accept a target.
-  local cwin = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(winnr)
+  local cwin = api.nvim_get_current_win()
+  api.nvim_set_current_win(winnr)
 
   vim.cmd("ownsyntax markdown")
   local idx = 1
@@ -476,12 +520,8 @@ function M.fancy_floating_markdown(contents, opts)
     -- ph = h
   end
 
-  vim.api.nvim_set_current_win(cwin)
+  api.nvim_set_current_win(cwin)
   return bufnr, winnr
-end
-
-function M.close_preview_autocmd(events, winnr)
-  api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
 function M.open_floating_preview(contents, filetype, opts)
@@ -522,8 +562,7 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  -- TODO make InsertCharPre disappearing optional?
-  api.nvim_command("autocmd CursorMoved,BufHidden,InsertCharPre <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+
   return floating_bufnr, floating_winnr
 end
 
@@ -536,6 +575,14 @@ local function validate_lsp_position(pos)
   return true
 end
 
+local function win_execute(winnr, fn)
+  if not api.nvim_win_is_valid(winnr) then return end
+  local cwin = api.nvim_get_current_win()
+  api.nvim_set_current_win(winnr)
+  pcall(fn)
+  api.nvim_set_current_win(cwin)
+end
+
 function M.open_floating_peek_preview(bufnr, start, finish, opts)
   validate {
     bufnr = {bufnr, 'n'};
@@ -543,14 +590,36 @@ function M.open_floating_peek_preview(bufnr, start, finish, opts)
     finish = {finish, validate_lsp_position, 'valid finish Position'};
     opts = { opts, 't', true };
   }
-  local width = math.max(finish.character - start.character + 1, 1)
   local height = math.max(finish.line - start.line + 1, 1)
+  local width = 0
+  for i, line in ipairs(api.nvim_buf_get_lines(bufnr, start.line, finish.line + 1, false)) do
+    local len
+    if i == height then
+      len = finish.character
+    else
+      len = #line
+    end
+    if i == 1 then
+      len = len - start.character
+    end
+    width = math.max(len, width)
+  end
   local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
-  api.nvim_win_set_cursor(floating_winnr, {start.line+1, start.character})
-  api.nvim_command("autocmd CursorMoved * ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
-  return floating_winnr
+  -- luacheck: ignore
+  vim.wo[floating_winnr].wrap = false
+  local col = start.character
+  if col > 0 then
+    local line = api.nvim_buf_get_lines(bufnr, start.line, start.line + 1, true)[1]
+    col = vim.str_byteindex(line, start.character)
+  end
+  -- TODO(ashkan): Use proper byte offset
+  api.nvim_win_set_cursor(floating_winnr, {start.line + 1, col})
+  win_execute(floating_winnr, function()
+    -- Align the top left
+    vim.cmd "normal! ztzs"
+  end)
+  return floating_winnr, width, height
 end
-
 
 local function highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
@@ -566,7 +635,9 @@ local function highlight_range(bufnr, ns, hiname, start, finish)
 end
 
 do
-  local all_buffer_diagnostics = {}
+  local diagnostics_manager = buffer_manager{
+    buf_init = function() return {} end;
+  }
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
@@ -602,8 +673,7 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-    api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
+    api.nvim_buf_clear_namespace(bufnr or 0, diagnostic_ns, 0, -1)
   end
 
   function M.get_severity_highlight_name(severity)
@@ -611,44 +681,46 @@ do
   end
 
   function M.show_line_diagnostics()
-    local bufnr = api.nvim_get_current_buf()
-    local line = api.nvim_win_get_cursor(0)[1] - 1
-    -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
-    -- if #marks == 0 then
-    --   return
-    -- end
-    -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-    local lines = {"Diagnostics:"}
-    local highlights = {{0, "Bold"}}
+    M.popup("line_diagnostics", function()
+      local bufnr = api.nvim_get_current_buf()
+      local line = api.nvim_win_get_cursor(0)[1] - 1
+      -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
+      -- if #marks == 0 then
+      --   return
+      -- end
+      -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+      local lines = {"Diagnostics:"}
+      local highlights = {{0, "Bold"}}
 
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_diagnostics then return end
-    local line_diagnostics = buffer_diagnostics[line]
-    if not line_diagnostics then return end
+      local buffer_diagnostics = diagnostics_manager.get(bufnr)
+      if not buffer_diagnostics then return end
+      local line_diagnostics = buffer_diagnostics[line]
+      if not line_diagnostics then return end
 
-    for i, diagnostic in ipairs(line_diagnostics) do
-    -- for i, mark in ipairs(marks) do
-    --   local mark_id = mark[1]
-    --   local diagnostic = buffer_diagnostics[mark_id]
+      for i, diagnostic in ipairs(line_diagnostics) do
+      -- for i, mark in ipairs(marks) do
+      --   local mark_id = mark[1]
+      --   local diagnostic = buffer_diagnostics[mark_id]
 
-      -- TODO(ashkan) make format configurable?
-      local prefix = string.format("%d. ", i)
-      local hiname = severity_highlights[diagnostic.severity]
-      local message_lines = split_lines(diagnostic.message)
-      table.insert(lines, prefix..message_lines[1])
-      table.insert(highlights, {#prefix + 1, hiname})
-      for j = 2, #message_lines do
-        table.insert(lines, message_lines[j])
-        table.insert(highlights, {0, hiname})
+        -- TODO(ashkan) make format configurable?
+        local prefix = string.format("%d. ", i)
+        local hiname = severity_highlights[diagnostic.severity]
+        local message_lines = split_lines(diagnostic.message)
+        table.insert(lines, prefix..message_lines[1])
+        table.insert(highlights, {#prefix + 1, hiname})
+        for j = 2, #message_lines do
+          table.insert(lines, message_lines[j])
+          table.insert(highlights, {0, hiname})
+        end
       end
-    end
-    local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
-    for i, hi in ipairs(highlights) do
-      local prefixlen, hiname = unpack(hi)
-      -- Start highlight after the prefix
-      api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-    end
-    return popup_bufnr, winnr
+      local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
+      for i, hi in ipairs(highlights) do
+        local prefixlen, hiname = unpack(hi)
+        -- Start highlight after the prefix
+        api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+      end
+      return popup_bufnr, winnr
+    end)
   end
 
   function M.buf_diagnostics_save_positions(bufnr, diagnostics)
@@ -656,20 +728,9 @@ do
       bufnr = {bufnr, 'n', true};
       diagnostics = {diagnostics, 't', true};
     }
-    if not diagnostics then return end
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-
-    if not all_buffer_diagnostics[bufnr] then
-      -- Clean up our data when the buffer unloads.
-      api.nvim_buf_attach(bufnr, false, {
-        on_detach = function(b)
-          all_buffer_diagnostics[b] = nil
-        end
-      })
-    end
-    all_buffer_diagnostics[bufnr] = {}
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-
+    bufnr = resolve_bufnr(bufnr)
+    diagnostics_manager.set(bufnr, {})
+    local buffer_diagnostics = diagnostics_manager.attach(bufnr)
     for _, diagnostic in ipairs(diagnostics) do
       local start = diagnostic.range.start
       -- local mark_id = api.nvim_buf_set_extmark(bufnr, diagnostic_ns, 0, start.line, 0, {})
@@ -681,8 +742,8 @@ do
       end
       table.insert(line_diagnostics, diagnostic)
     end
+    return buffer_diagnostics
   end
-
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
@@ -706,15 +767,10 @@ do
   end
 
   function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
-    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
-      M.buf_diagnostics_save_positions(bufnr, diagnostics)
-    end
-    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
-      return
-    end
-    for line, line_diags in pairs(buffer_line_diagnostics) do
+    local buffer_diagnostics = diagnostics_manager.get(bufnr)
+        or M.buf_diagnostics_save_positions(bufnr, diagnostics)
+
+    for line, line_diags in pairs(buffer_diagnostics) do
       local virt_texts = {}
       for i = 1, #line_diags - 1 do
         table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})

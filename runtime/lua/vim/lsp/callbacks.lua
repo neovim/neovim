@@ -70,7 +70,7 @@ M['textDocument/completion'] = function(_, _, result)
 end
 
 M['textDocument/hover'] = function(_, method, result)
-  util.focusable_float(method, function()
+  util.popup(method, function()
     if not (result and result.contents) then
       -- return { 'No information available' }
       return
@@ -84,7 +84,6 @@ M['textDocument/hover'] = function(_, method, result)
     local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
       pad_left = 1; pad_right = 1;
     })
-    util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
 end
@@ -167,33 +166,44 @@ local function signature_help_to_preview_contents(input)
 end
 
 M['textDocument/signatureHelp'] = function(_, method, result)
-  util.focusable_preview(method, function()
-    if not (result and result.signatures and result.signatures[1]) then
-      return { 'No signature available' }
-    end
-    -- TODO show popup when signatures is empty?
-    local lines = signature_help_to_preview_contents(result)
-    lines = util.trim_empty_lines(lines)
-    if vim.tbl_isempty(lines) then
-      return { 'No signature available' }
-    end
-    return lines, util.try_trim_markdown_code_blocks(lines)
+  util.popup(method, function()
+    return util.open_floating_preview((function()
+      if not (result and result.signatures and result.signatures[1]) then
+        return { 'No signature available' }
+      end
+      -- TODO show popup when signatures is empty?
+      local lines = signature_help_to_preview_contents(result)
+      lines = util.trim_empty_lines(lines)
+      if vim.tbl_isempty(lines) then
+        return { 'No signature available' }
+      end
+      return lines, util.try_trim_markdown_code_blocks(lines)
+    end)())
   end)
 end
 
-M['textDocument/peekDefinition'] = function(_, _, result, _)
+M['textDocument/peekDefinition'] = function(_, method, result, _)
   if not (result and result[1]) then return end
-  local loc = result[1]
-  local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
-  local start = loc.range.start
-  local finish = loc.range["end"]
-  util.open_floating_peek_preview(bufnr, start, finish, { offset_x = 1 })
-  local headbuf = util.open_floating_preview({"Peek:"}, nil, {
-    offset_y = -(finish.line - start.line);
-    width = finish.character - start.character + 2;
-  })
-  -- TODO(ashkan) change highlight group?
-  api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
+  util.popup(method, function()
+    local loc = result[1]
+    local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
+    local start = loc.range.start
+    local finish = loc.range["end"]
+    local winnr, width, height = util.open_floating_peek_preview(bufnr, start, finish)
+    local headbuf, headwin = util.open_floating_preview({"Peek:"}, nil, {
+      -- offset_y = -height;
+      width = math.max(width, 5),
+      height = height+1;
+    })
+    api.nvim_buf_attach(headbuf, false, {
+      on_detach = function()
+        api.nvim_win_close(winnr, true)
+      end
+    })
+    -- TODO(ashkan) change highlight group?
+    api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, 0, -1)
+    return headbuf, headwin
+  end)
 end
 
 local function log_message(_, _, result, client_id)
