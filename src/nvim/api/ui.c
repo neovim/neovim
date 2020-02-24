@@ -109,7 +109,12 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   UI *ui = xcalloc(1, sizeof(UI));
   ui->width = (int)width;
   ui->height = (int)height;
+  ui->pum_nlines = 0;
+  ui->pum_pos = false;
+  ui->pum_width = 0;
   ui->pum_height = 0;
+  ui->pum_row = -1;
+  ui->pum_col = -1;
   ui->rgb = true;
   ui->override = false;
   ui->grid_resize = remote_ui_grid_resize;
@@ -340,7 +345,69 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
                   "It must support the ext_popupmenu option");
     return;
   }
+
+  ui->pum_nlines = (int)height;
+}
+
+/// Tells Nvim the geometry of the popumenu, to align floating 
+/// windows with an external popup menu. Note that this method
+/// is not to be confused with |nvim_ui_pum_set_height()|, which
+/// sets the number of visible items in the popup menu, while
+/// this function sets the bounding box of the popup menu, 
+/// including visual decorations such as boarders and sliders.
+///
+/// @param channel_id
+/// @param width   Popupmenu width, must be greater than zero.
+/// @param height  Popupmenu height, must be greater than zero.
+/// @param row     Popupmenu row, must be greater or equal to zero.
+/// @param col     Popupmenu height, must be greater or equal to zero.
+/// @param[out] err Error details, if any. On error, suspend pum position reporting for the current UI.
+void nvim_ui_pum_set_bounds(uint64_t channel_id, Integer width, Integer height, 
+                            Integer row, Integer col, Error *err)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(err, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  if (!ui->ui_ext[kUIPopupmenu]) {
+    api_set_error(err, kErrorTypeValidation,
+                  "It must support the ext_popupmenu option");
+    return;
+  }
+
+  if (row < 0) {
+    api_set_error(err, kErrorTypeValidation, "Expected pumpos row >= 0");
+    ui->pum_pos = false;
+    return;
+  }
+
+  if (col < 0) {
+    api_set_error(err, kErrorTypeValidation, "Expected pumpos col >= 0");
+    ui->pum_pos = false;
+    return;
+  }
+
+  if (width <= 0) {
+    api_set_error(err, kErrorTypeValidation, "Expected pumpos width > 0");
+    ui->pum_pos = false;
+    return;
+  }
+
+  if (height <= 0) {
+    api_set_error(err, kErrorTypeValidation, "Expected pumpos height > 0");
+    ui->pum_pos = false;
+    return;
+  }
+
+  ui->pum_row = (int)row;
+  ui->pum_col = (int)col;
+  ui->pum_width = (int)width;
   ui->pum_height = (int)height;
+  ui->pum_pos = true;
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().

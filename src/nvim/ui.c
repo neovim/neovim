@@ -235,6 +235,32 @@ int ui_pum_get_height(void)
   return pum_height;
 }
 
+bool ui_pum_get_pos(int* pwidth, int *pheight, int* prow, int* pcol)
+{
+  int w=0,h=0,r=-1,c=-1;
+  bool found = false;
+  for (size_t i = 1; i < ui_count; i++) {
+    if (!uis[i]->pum_pos) continue;
+    if (!found) {
+      w = uis[i]->pum_width;
+      h = uis[i]->pum_height;
+      r = uis[i]->pum_row;
+      c = uis[i]->pum_col;
+      found = true;
+    } else {
+      w = MIN(uis[i]->pum_width, w);
+      h = MIN(uis[i]->pum_height, h);
+      r = MIN(uis[i]->pum_row, r);
+      c = MIN(uis[i]->pum_col, c);
+    }
+  }
+  *pwidth = w;
+  *pheight = h;
+  *prow = r;
+  *pcol = c;
+  return found;
+}
+
 static void ui_refresh_event(void **argv)
 {
   ui_refresh();

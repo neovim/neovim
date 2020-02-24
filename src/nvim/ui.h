@@ -53,7 +53,12 @@ struct ui_t {
   bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
   int width;
   int height;
+  int pum_nlines; /// actual nr. lines shown in PUM
+  bool pum_pos; /// UI reports back pum position?
+  int pum_row;
+  int pum_col;
   int pum_height;
+  int pum_width;
   void *data;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

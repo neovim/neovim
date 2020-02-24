@@ -908,10 +908,18 @@ void pum_set_event_info(dict_T *dict)
   if (!pum_visible()) {
     return;
   }
-  tv_dict_add_nr(dict, S_LEN("height"), pum_height);
-  tv_dict_add_nr(dict, S_LEN("width"), pum_width);
-  tv_dict_add_nr(dict, S_LEN("row"), pum_row);
-  tv_dict_add_nr(dict, S_LEN("col"), pum_col);
+  int w,h,r,c;
+  if (!ui_pum_get_pos(&w, &h, &r, &c)){
+    tv_dict_add_nr(dict, S_LEN("height"), pum_height);
+    tv_dict_add_nr(dict, S_LEN("width"), pum_width);
+    tv_dict_add_nr(dict, S_LEN("row"), pum_row);
+    tv_dict_add_nr(dict, S_LEN("col"), pum_col);
+  } else {
+    tv_dict_add_nr(dict, S_LEN("height"), h);
+    tv_dict_add_nr(dict, S_LEN("width"), w);
+    tv_dict_add_nr(dict, S_LEN("row"), r);
+    tv_dict_add_nr(dict, S_LEN("col"), c);
+  }
   tv_dict_add_nr(dict, S_LEN("size"), pum_size);
   tv_dict_add_special(dict, S_LEN("scrollbar"),
                       pum_scrollbar ? kSpecialVarTrue : kSpecialVarFalse);
