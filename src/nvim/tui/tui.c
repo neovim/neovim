@@ -1099,6 +1099,7 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
       set_scroll_region(ui, top, bot, left, right);
     }
     cursor_goto(ui, top, left);
+    update_attrs(ui, 0);
 
     if (rows > 0) {
       if (rows == 1) {
