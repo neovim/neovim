@@ -13,7 +13,6 @@ log.levels = {
   INFO  = 2;
   WARN  = 3;
   ERROR = 4;
-  -- FATAL = 4;
 }
 
 -- Default log level is warn.

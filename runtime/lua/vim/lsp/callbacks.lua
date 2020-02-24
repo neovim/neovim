@@ -209,7 +209,27 @@ M['textDocument/documentHighlight'] = function(_, _, result, _)
   util.buf_highlight_references(bufnr, result)
 end
 
-local function log_message(_, _, result, client_id)
+M['window/logMessage'] = function(_, _, result, client_id)
+  local message_type = result.type
+  local message = result.message
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
+  if not client then
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
+  end
+  if message_type == protocol.MessageType.Error then
+    log.error(message)
+  elseif message_type == protocol.MessageType.Warning then
+    log.warn(message)
+  elseif message_type == protocol.MessageType.Info then
+    log.info(message)
+  else
+    log.debug(message)
+  end
+  return result
+end
+
+M['window/showMessage'] = function(_, _, result, client_id)
   local message_type = result.type
   local message = result.message
   local client = vim.lsp.get_client_by_id(client_id)
@@ -225,9 +245,6 @@ local function log_message(_, _, result, client_id)
   end
   return result
 end
-
-M['window/showMessage'] = log_message
-M['window/logMessage'] = log_message
 
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
