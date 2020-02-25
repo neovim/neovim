@@ -2,27 +2,13 @@
 
 source shared.vim
 
-if has('win32') && has('gui')
-  " Win32 GUI shows a dialog instead of displaying the error in the last line.
-  finish
-endif
+"if has('win32') && has('gui')
+"  " Win32 GUI shows a dialog instead of displaying the error in the last line.
+"  finish
+"endif
 
 func Test_restricted()
-  let cmd = GetVimCommand('Xrestricted')
-  if cmd == ''
-    return
-  endif
-
-  call writefile([
-	\ "silent !ls",
-	\ "call writefile([v:errmsg], 'Xrestrout')",
-	\ "qa!",
-	\ ], 'Xrestricted')
-  call system(cmd . ' -Z')
-  call assert_match('E145:', join(readfile('Xrestrout')))
-
-  call delete('Xrestricted')
-  call delete('Xrestrout')
+  call Run_restricted_test('!ls', 'E145:')
 endfunc
 
 func Run_restricted_test(ex_cmd, error)
@@ -31,10 +17,15 @@ func Run_restricted_test(ex_cmd, error)
     return
   endif
 
+  " Use a VimEnter autocommand to avoid that the error message is displayed in
+  " a dialog with an OK button.
   call writefile([
-	\ a:ex_cmd,
-	\ "call writefile([v:errmsg], 'Xrestrout')",
-	\ "qa!",
+	\ "func Init()",
+	\ "  silent! " . a:ex_cmd,
+	\ "  call writefile([v:errmsg], 'Xrestrout')",
+	\ "  qa!",
+	\ "endfunc",
+	\ "au VimEnter * call Init()",
 	\ ], 'Xrestricted')
   call system(cmd . ' -Z')
   call assert_match(a:error, join(readfile('Xrestrout')))
