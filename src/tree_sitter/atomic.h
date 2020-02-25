@@ -12,11 +12,11 @@ static inline size_t atomic_load(const volatile size_t *p) {
 }
 
 static inline uint32_t atomic_inc(volatile uint32_t *p) {
-  return InterlockedIncrement(p);
+  return InterlockedIncrement((long volatile *)p);
 }
 
 static inline uint32_t atomic_dec(volatile uint32_t *p) {
-  return InterlockedDecrement(p);
+  return InterlockedDecrement((long volatile *)p);
 }
 
 #else

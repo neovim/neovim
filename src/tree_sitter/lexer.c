@@ -355,7 +355,7 @@ void ts_lexer_mark_end(Lexer *self) {
   ts_lexer__mark_end(&self->data);
 }
 
-void ts_lexer_set_included_ranges(
+bool ts_lexer_set_included_ranges(
   Lexer *self,
   const TSRange *ranges,
   uint32_t count
@@ -363,6 +363,16 @@ void ts_lexer_set_included_ranges(
   if (count == 0 || !ranges) {
     ranges = &DEFAULT_RANGE;
     count = 1;
+  } else {
+    uint32_t previous_byte = 0;
+    for (unsigned i = 0; i < count; i++) {
+      const TSRange *range = &ranges[i];
+      if (
+        range->start_byte < previous_byte ||
+        range->end_byte < range->start_byte
+      ) return false;
+      previous_byte = range->end_byte;
+    }
   }
 
   size_t size = count * sizeof(TSRange);
@@ -370,6 +380,7 @@ void ts_lexer_set_included_ranges(
   memcpy(self->included_ranges, ranges, size);
   self->included_range_count = count;
   ts_lexer_goto(self, self->current_position);
+  return true;
 }
 
 TSRange *ts_lexer_included_ranges(const Lexer *self, uint32_t *count) {

@@ -322,12 +322,9 @@ void ts_subtree_balance(Subtree self, SubtreePool *pool, const TSLanguage *langu
     if (tree.ptr->repeat_depth > 0) {
       Subtree child1 = tree.ptr->children[0];
       Subtree child2 = tree.ptr->children[tree.ptr->child_count - 1];
-      if (
-        ts_subtree_child_count(child1) > 0 &&
-        ts_subtree_child_count(child2) > 0 &&
-        child1.ptr->repeat_depth > child2.ptr->repeat_depth
-      ) {
-        unsigned n = child1.ptr->repeat_depth - child2.ptr->repeat_depth;
+      long repeat_delta = (long)ts_subtree_repeat_depth(child1) - (long)ts_subtree_repeat_depth(child2);
+      if (repeat_delta > 0) {
+        unsigned n = repeat_delta;
         for (unsigned i = n / 2; i > 0; i /= 2) {
           ts_subtree__compress(tree, i, language, &pool->tree_stack);
           n -= i;
@@ -342,10 +339,6 @@ void ts_subtree_balance(Subtree self, SubtreePool *pool, const TSLanguage *langu
       }
     }
   }
-}
-
-static inline uint32_t ts_subtree_repeat_depth(Subtree self) {
-  return ts_subtree_child_count(self) ? self.ptr->repeat_depth : 0;
 }
 
 void ts_subtree_set_children(
