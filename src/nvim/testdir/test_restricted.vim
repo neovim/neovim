@@ -2,6 +2,11 @@
 
 source shared.vim
 
+if has('win32') && has('gui')
+  " Win32 GUI shows a dialog instead of displaying the error in the last line.
+  finish
+endif
+
 func Test_restricted()
   let cmd = GetVimCommand('Xrestricted')
   if cmd == ''
