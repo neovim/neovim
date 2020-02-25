@@ -24,6 +24,7 @@ local SBOXOK     =  0x80000
 local CMDWIN     = 0x100000
 local MODIFY     = 0x200000
 local EXFLAGS    = 0x400000
+local RESTRICT   = 0x800000
 local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
@@ -1582,19 +1583,19 @@ return {
   },
   {
     command='lua',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_lua',
   },
   {
     command='luado',
-    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_luado',
   },
   {
     command='luafile',
-    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_luafile',
   },
@@ -1924,13 +1925,13 @@ return {
   },
   {
     command='perl',
-    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, SBOXOK, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, SBOXOK, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_script_ni',
   },
   {
     command='perldo',
-    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_ni',
   },
@@ -2056,67 +2057,67 @@ return {
   },
   {
     command='python',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_python',
   },
   {
     command='pydo',
-    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pydo',
   },
   {
     command='pyfile',
-    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pyfile',
   },
   {
     command='py3',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_python3',
   },
   {
     command='py3do',
-    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pydo3',
   },
   {
     command='python3',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_python3',
   },
   {
     command='py3file',
-    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_py3file',
   },
   {
     command='pyx',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pyx',
   },
   {
     command='pyxdo',
-    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pyxdo',
   },
   {
     command='pythonx',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pyx',
   },
   {
     command='pyxfile',
-    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_pyxfile',
   },
@@ -2242,19 +2243,19 @@ return {
   },
   {
     command='ruby',
-    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_ruby',
   },
   {
     command='rubydo',
-    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_rubydo',
   },
   {
     command='rubyfile',
-    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
     func='ex_rubyfile',
   },
