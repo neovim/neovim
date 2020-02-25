@@ -7818,7 +7818,7 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			priority	sign priority
 
 		The returned signs in a buffer are ordered by their line
-		number.
+		number and priority.
 
 		Returns an empty list on failure or if there are no placed
 		signs.

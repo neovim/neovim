@@ -284,6 +284,7 @@ void buf_addsign(
         && sign_in_group(sign, groupname)) {
       // Update an existing sign
       sign->typenr = typenr;
+      sign->priority = prio;
       return;
     } else if (lnum < sign->lnum) {
       insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);

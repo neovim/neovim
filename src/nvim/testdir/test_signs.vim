@@ -1127,6 +1127,24 @@ func Test_sign_priority()
 	      \ 'priority' : 10}],
 	      \ s[0].signs)
 
+  " Place multiple signs with same id on a line with different priority
+  call sign_place(1, '', 'sign1', 'Xsign',
+	      \ {'lnum' : 5, 'priority' : 20})
+  call sign_place(1, '', 'sign2', 'Xsign',
+	      \ {'lnum' : 5, 'priority' : 10})
+  let s = sign_getplaced('Xsign', {'lnum' : 5})
+  call assert_equal([
+	      \ {'id' : 1, 'name' : 'sign2', 'lnum' : 5, 'group' : '',
+	      \ 'priority' : 10}],
+	      \ s[0].signs)
+  call sign_place(1, '', 'sign2', 'Xsign',
+	      \ {'lnum' : 5, 'priority' : 5})
+  let s = sign_getplaced('Xsign', {'lnum' : 5})
+  call assert_equal([
+	      \ {'id' : 1, 'name' : 'sign2', 'lnum' : 5, 'group' : '',
+	      \ 'priority' : 5}],
+	      \ s[0].signs)
+
   " Error case
   call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign',
 	      \ [])", 'E715:')
