@@ -6426,15 +6426,11 @@ ex_win_close(
   int need_hide;
   buf_T       *buf = win->w_buffer;
 
-  win_T *wp = NULL;
-
-  if (tp) {
-    wp = tp->tp_firstwin;
-  } else {
-    wp = firstwin;
+  if (!tp) {
+    tp = curtab;
   }
 
-  for (; wp; wp = wp->w_next) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp)  {
     if (wp->w_floating) {
       if (wp->w_float_config.relative == kFloatRelativeWindow
           && wp->w_float_config.window == win->handle) {
