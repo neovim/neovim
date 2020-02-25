@@ -198,7 +198,7 @@ static void insert_sign(
     // column for signs.
     if (buf->b_signlist == NULL) {
       redraw_buf_later(buf, NOT_VALID);
-      changed_cline_bef_curs();
+      changed_line_abv_curs();
     }
 
     // first sign in signlist
@@ -495,11 +495,11 @@ linenr_T buf_delsign(
     }
   }
 
-  // When deleted the last sign needs to redraw the windows to remove the
-  // sign column.
+  // When deleting the last sign the cursor position may change, because the
+  // sign columns no longer shows.  And the 'signcolumn' may be hidden.
   if (buf->b_signlist == NULL) {
     redraw_buf_later(buf, NOT_VALID);
-    changed_cline_bef_curs();
+    changed_line_abv_curs();
   }
 
   return lnum;
@@ -572,7 +572,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
     // When deleting the last sign need to redraw the windows to remove the
     // sign column. Not when curwin is NULL (this means we're exiting).
     if (buf->b_signlist != NULL && curwin != NULL) {
-      changed_cline_bef_curs();
+      changed_line_abv_curs();
     }
 
     lastp = &buf->b_signlist;

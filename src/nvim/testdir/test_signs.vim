@@ -4,6 +4,8 @@ if !has('signs')
   finish
 endif
 
+source screendump.vim
+
 func Test_sign()
   new
   call setline(1, ['a', 'b', 'c', 'd'])
@@ -1651,4 +1653,32 @@ func Test_sign_jump_func()
   sign unplace * group=*
   sign undefine sign1
   enew! | only!
+endfunc
+
+" Test for correct cursor position after the sign column appears or disappears.
+func Test_sign_cursor_position()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  let lines =<< trim END
+	call setline(1, [repeat('x', 75), 'mmmm', 'yyyy'])
+	call cursor(2,1)
+   	sign define s1 texthl=Search text==>
+	redraw
+   	sign place 10 line=2 name=s1
+  END
+  call writefile(lines, 'XtestSigncolumn')
+  let buf = RunVimInTerminal('-S XtestSigncolumn', {'rows': 6})
+  call VerifyScreenDump(buf, 'Test_sign_cursor_01', {})
+
+  " update cursor position calculation
+  call term_sendkeys(buf, "lh")
+  call term_sendkeys(buf, ":sign unplace 10\<CR>")
+  call VerifyScreenDump(buf, 'Test_sign_cursor_02', {})
+
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestSigncolumn')
 endfunc
