@@ -4317,7 +4317,7 @@ static void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   HistoryType histype;
 
   rettv->vval.v_number = false;
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
   const char *str = tv_get_string_chk(&argvars[0]);  // NULL on type error
@@ -7779,8 +7779,7 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted()
-      || check_secure()
+  if (check_secure()
       || !tv_check_str_or_nr(&argvars[0])) {
     return;
   }
@@ -8284,7 +8283,7 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -11005,7 +11004,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 

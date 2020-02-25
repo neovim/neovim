@@ -184,12 +184,17 @@ argument.
 		the 'modifiable' and 'write' options can be set to enable
 		changes and writing.
 
-						*-Z* *restricted-mode* *E145*
+					*-Z* *restricted-mode* *E145* *E981*
 -Z		Restricted mode.  All commands that make use of an external
 		shell are disabled.  This includes suspending with CTRL-Z,
-		":sh", filtering, the system() function, backtick expansion,
-		delete(), rename(), mkdir(), writefile(), libcall(),
-		jobstart(), etc.
+		":sh", filtering, the system() function, backtick expansion
+		and libcall().
+		Also disallowed are delete(), rename(), mkdir(), jobstart(),
+		etc.
+		Interfaces, such as Python, Ruby and Lua, are also disabled,
+		since they could be used to execute shell commands.
+		Note that the user may still find a loophole to execute a
+		shell command, it has only been made difficult.
 
 -e							*-e* *-E*
 -E		Start Nvim in Ex mode |gQ|.
