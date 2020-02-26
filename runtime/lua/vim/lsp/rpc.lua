@@ -3,24 +3,7 @@ local uv = vim.loop
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
-
--- TODO replace with a better implementation.
-local function json_encode(data)
-  local status, result = pcall(vim.fn.json_encode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
-end
-local function json_decode(data)
-  local status, result = pcall(vim.fn.json_decode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
-end
+local util = require('vim.lsp.util')
 
 local function is_dir(filename)
   local stat = vim.loop.fs_stat(filename)
@@ -259,7 +242,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     if handle:is_closing() then return false end
     -- TODO(ashkan) remove this once we have a Lua json_encode
     schedule(function()
-      local encoded = assert(json_encode(payload))
+      local encoded = assert(util.json_encode(payload))
       stdin:write(format_message_with_content_length(encoded))
     end)
     return true
@@ -330,7 +313,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   -- them with an error then, perhaps.
 
   local function handle_body(body)
-    local decoded, err = json_decode(body)
+    local decoded, err = util.json_decode(body)
     if not decoded then
       on_error(client_errors.INVALID_SERVER_JSON, err)
       return

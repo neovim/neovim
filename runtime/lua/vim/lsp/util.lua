@@ -203,6 +203,11 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       icase = 1,
       dup = 1,
       empty = 1,
+      user_data = M.json_encode({
+        lsp = {
+          completion_item = completion_item
+        }
+      }),
     })
   end
 
@@ -866,6 +871,25 @@ function M.character_offset(buf, row, col)
     return str_utfindex(line)
   end
   return str_utfindex(line, col)
+end
+
+-- TODO replace with a better implementation.
+function M.json_encode(data)
+  local status, result = pcall(vim.fn.json_encode, data)
+  if status then
+    return result
+  else
+    return nil, result
+  end
+end
+
+function M.json_decode(data)
+  local status, result = pcall(vim.fn.json_decode, data)
+  if status then
+    return result
+  else
+    return nil, result
+  end
 end
 
 return M
