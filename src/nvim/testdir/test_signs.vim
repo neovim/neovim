@@ -1726,12 +1726,16 @@ func Test_sign_cursor_position()
   END
   call writefile(lines, 'XtestSigncolumn')
   let buf = RunVimInTerminal('-S XtestSigncolumn', {'rows': 6})
-  call VerifyScreenDump(buf, 'Test_sign_cursor_01', {})
+  call VerifyScreenDump(buf, 'Test_sign_cursor_1', {})
+
+  " Change the sign text
+  call term_sendkeys(buf, ":sign define s1 text=-)\<CR>")
+  call VerifyScreenDump(buf, 'Test_sign_cursor_2', {})
 
   " update cursor position calculation
   call term_sendkeys(buf, "lh")
   call term_sendkeys(buf, ":sign unplace 10\<CR>")
-  call VerifyScreenDump(buf, 'Test_sign_cursor_02', {})
+  call VerifyScreenDump(buf, 'Test_sign_cursor_3', {})
 
 
   " clean up

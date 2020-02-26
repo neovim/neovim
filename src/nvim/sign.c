@@ -831,6 +831,14 @@ int sign_define_by_name(
     } else {
       sp_prev->sn_next = sp;
     }
+  } else {
+    // Signs may already exist, a redraw is needed in windows with a
+    // non-empty sign list.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer->b_signlist != NULL) {
+        redraw_buf_later(wp->w_buffer, NOT_VALID);
+      }
+    }
   }
 
   // set values for a defined sign.
