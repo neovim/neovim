@@ -212,13 +212,16 @@ func Test_sign_completion()
   call assert_equal('"sign define Sign linehl=SpellBad SpellCap ' .
 	      \ 'SpellLocal SpellRare', @:)
 
-  call writefile(['foo'], 'XsignOne')
-  call writefile(['bar'], 'XsignTwo')
+  call feedkeys(":sign define Sign texthl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign define Sign texthl=SpellBad SpellCap ' .
+	      \ 'SpellLocal SpellRare', @:)
+
+  call writefile(repeat(["Sun is shining"], 30), "XsignOne")
+  call writefile(repeat(["Sky is blue"], 30), "XsignTwo")
   call feedkeys(":sign define Sign icon=Xsig\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign define Sign icon=XsignOne XsignTwo', @:)
-  call delete('XsignOne')
-  call delete('XsignTwo')
 
+  " Test for completion of arguments to ':sign undefine'
   call feedkeys(":sign undefine \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign undefine Sign1 Sign2', @:)
 
@@ -229,17 +232,70 @@ func Test_sign_completion()
   call feedkeys(":sign place 1 name=\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign place 1 name=Sign1 Sign2', @:)
 
+  edit XsignOne
+  sign place 1 name=Sign1 line=5
+  sign place 1 name=Sign1 group=g1 line=10
+  edit XsignTwo
+  sign place 1 name=Sign2 group=g2 line=15
+
+  " Test for completion of group= and file= arguments to ':sign place'
+  call feedkeys(":sign place 1 name=Sign1 file=Xsign\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place 1 name=Sign1 file=XsignOne XsignTwo', @:)
+  call feedkeys(":sign place 1 name=Sign1 group=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place 1 name=Sign1 group=g1 g2', @:)
+
+  " Test for completion of arguments to 'sign place' without sign identifier
+  call feedkeys(":sign place \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place buffer= file= group=', @:)
+  call feedkeys(":sign place file=Xsign\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place file=XsignOne XsignTwo', @:)
+  call feedkeys(":sign place group=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place group=g1 g2', @:)
+  call feedkeys(":sign place group=g1 file=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign place group=g1 file=XsignOne XsignTwo', @:)
+
+  " Test for completion of arguments to ':sign unplace'
   call feedkeys(":sign unplace 1 \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign unplace 1 buffer= file= group=', @:)
+  call feedkeys(":sign unplace 1 file=Xsign\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign unplace 1 file=XsignOne XsignTwo', @:)
+  call feedkeys(":sign unplace 1 group=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign unplace 1 group=g1 g2', @:)
+  call feedkeys(":sign unplace 1 group=g2 file=Xsign\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign unplace 1 group=g2 file=XsignOne XsignTwo', @:)
 
+  " Test for completion of arguments to ':sign list'
   call feedkeys(":sign list \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign list Sign1 Sign2', @:)
 
+  " Test for completion of arguments to ':sign jump'
   call feedkeys(":sign jump 1 \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign jump 1 buffer= file= group=', @:)
+  call feedkeys(":sign jump 1 file=Xsign\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign jump 1 file=XsignOne XsignTwo', @:)
+  call feedkeys(":sign jump 1 group=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign jump 1 group=g1 g2', @:)
 
+  " Error cases
+  call feedkeys(":sign here\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign here', @:)
+  call feedkeys(":sign define Sign here=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign define Sign here=\<C-A>", @:)
+  call feedkeys(":sign place 1 here=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign place 1 here=\<C-A>", @:)
+  call feedkeys(":sign jump 1 here=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign jump 1 here=\<C-A>", @:)
+  call feedkeys(":sign here there\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign here there\<C-A>", @:)
+  call feedkeys(":sign here there=\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"sign here there=\<C-A>", @:)
+
+  sign unplace * group=*
   sign undefine Sign1
   sign undefine Sign2
+  enew
+  call delete('XsignOne')
+  call delete('XsignTwo')
 endfunc
 
 func Test_sign_invalid_commands()
