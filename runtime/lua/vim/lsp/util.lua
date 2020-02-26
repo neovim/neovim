@@ -569,6 +569,7 @@ do
   local all_buffer_diagnostics = {}
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
+  local reference_ns = api.nvim_create_namespace("vim_lsp_references")
 
   local underline_highlight_name = "LspDiagnosticsUnderline"
   vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
@@ -602,7 +603,6 @@ do
 
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
   end
 
@@ -683,7 +683,6 @@ do
     end
   end
 
-
   function M.buf_diagnostics_underline(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
       local start = diagnostic.range["start"]
@@ -702,6 +701,25 @@ do
         {start.line, start.character},
         {finish.line, finish.character}
       )
+    end
+  end
+
+  function M.buf_clear_references(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    api.nvim_buf_clear_namespace(bufnr, reference_ns, 0, -1)
+  end
+
+  function M.buf_highlight_references(bufnr, references)
+    validate { bufnr = {bufnr, 'n', true} }
+    for _, reference in ipairs(references) do
+      local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
+      local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
+      local document_highlight_kind = {
+        [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
+        [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
+        [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
+      }
+      highlight_range(bufnr, reference_ns, document_highlight_kind[reference["kind"]], start_pos, end_pos)
     end
   end
 

@@ -196,6 +196,12 @@ M['textDocument/peekDefinition'] = function(_, _, result, _)
   api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
 end
 
+M['textDocument/documentHighlight'] = function(_, _, result, _)
+  if not result then return end
+  local bufnr = api.nvim_get_current_buf()
+  util.buf_highlight_references(bufnr, result)
+end
+
 local function log_message(_, _, result, client_id)
   local message_type = result.type
   local message = result.message
