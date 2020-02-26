@@ -777,6 +777,7 @@ do
       vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1)})
     end
   end
+end
 
 local position_sort = sort_by_key(function(v)
   return {v.start.line, v.start.character}
