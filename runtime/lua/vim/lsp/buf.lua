@@ -23,6 +23,10 @@ local function request(method, params, callback)
   return vim.lsp.buf_request(0, method, params, callback)
 end
 
+function M.server_ready()
+  return not not vim.lsp.buf_notify(0, "window/progress", {})
+end
+
 function M.hover()
   local params = util.make_position_params()
   request('textDocument/hover', params)

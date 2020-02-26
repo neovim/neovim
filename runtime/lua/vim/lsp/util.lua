@@ -743,6 +743,18 @@ do
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
+  function M.buf_diagnostics_count(kind)
+    local bufnr = vim.api.nvim_get_current_buf()
+    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_line_diagnostics then return end
+    local count = 0
+    for _, line_diags in pairs(buffer_line_diagnostics) do
+      for _, diag in ipairs(line_diags) do
+        if protocol.DiagnosticSeverity[kind] == diag.severity then count = count + 1 end
+      end
+    end
+    return count
+  end
 end
 
 local position_sort = sort_by_key(function(v)
