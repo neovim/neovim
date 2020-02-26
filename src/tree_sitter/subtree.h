@@ -206,6 +206,10 @@ static inline uint32_t ts_subtree_child_count(Subtree self) {
   return self.data.is_inline ? 0 : self.ptr->child_count;
 }
 
+static inline uint32_t ts_subtree_repeat_depth(Subtree self) {
+  return self.data.is_inline ? 0 : self.ptr->repeat_depth;
+}
+
 static inline uint32_t ts_subtree_node_count(Subtree self) {
   return (self.data.is_inline || self.ptr->child_count == 0) ? 1 : self.ptr->node_count;
 }

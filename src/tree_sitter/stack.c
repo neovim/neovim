@@ -11,7 +11,7 @@
 #define MAX_NODE_POOL_SIZE 50
 #define MAX_ITERATOR_COUNT 64
 
-#ifdef _WIN32
+#if defined _WIN32 && !defined __GNUC__
 #define inline __forceinline
 #else
 #define inline static inline __attribute__((always_inline))

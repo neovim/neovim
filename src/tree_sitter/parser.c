@@ -71,7 +71,6 @@ struct TSParser {
   unsigned accept_count;
   unsigned operation_count;
   const volatile size_t *cancellation_flag;
-  bool halt_on_error;
   Subtree old_tree;
   TSRangeArray included_range_differences;
   unsigned included_range_difference_index;
@@ -1014,7 +1013,9 @@ static void ts_parser__handle_error(
         TSStateId state_after_missing_symbol = ts_language_next_state(
           self->language, state, missing_symbol
         );
-        if (state_after_missing_symbol == 0) continue;
+        if (state_after_missing_symbol == 0 || state_after_missing_symbol == state) {
+          continue;
+        }
 
         if (ts_language_has_reduce_action(
           self->language,
@@ -1065,46 +1066,6 @@ static void ts_parser__handle_error(
 
   ts_stack_record_summary(self->stack, version, MAX_SUMMARY_DEPTH);
   LOG_STACK();
-}
-
-static void ts_parser__halt_parse(TSParser *self) {
-  LOG("halting_parse");
-  LOG_STACK();
-
-  ts_lexer_advance_to_end(&self->lexer);
-  Length remaining_length = length_sub(
-    self->lexer.current_position,
-    ts_stack_position(self->stack, 0)
-  );
-
-  Subtree filler_node = ts_subtree_new_error(
-    &self->tree_pool,
-    0,
-    length_zero(),
-    remaining_length,
-    remaining_length.bytes,
-    0,
-    self->language
-  );
-  ts_subtree_to_mut_unsafe(filler_node).ptr->visible = false;
-  ts_stack_push(self->stack, 0, filler_node, false, 0);
-
-  SubtreeArray children = array_new();
-  Subtree root_error = ts_subtree_new_error_node(&self->tree_pool, &children, false, self->language);
-  ts_stack_push(self->stack, 0, root_error, false, 0);
-
-  Subtree eof = ts_subtree_new_leaf(
-    &self->tree_pool,
-    ts_builtin_sym_end,
-    length_zero(),
-    length_zero(),
-    0,
-    0,
-    false,
-    false,
-    self->language
-  );
-  ts_parser__accept(self, 0, eof);
 }
 
 static bool ts_parser__recover_to_state(
@@ -1661,7 +1622,6 @@ TSParser *ts_parser_new(void) {
   self->finished_tree = NULL_SUBTREE;
   self->reusable_node = reusable_node_new();
   self->dot_graph_file = NULL;
-  self->halt_on_error = false;
   self->cancellation_flag = NULL;
   self->timeout_duration = 0;
   self->end_clock = clock_null();
@@ -1741,10 +1701,6 @@ void ts_parser_print_dot_graphs(TSParser *self, int fd) {
   }
 }
 
-void ts_parser_halt_on_error(TSParser *self, bool should_halt_on_error) {
-  self->halt_on_error = should_halt_on_error;
-}
-
 const size_t *ts_parser_cancellation_flag(const TSParser *self) {
   return (const size_t *)self->cancellation_flag;
 }
@@ -1761,8 +1717,12 @@ void ts_parser_set_timeout_micros(TSParser *self, uint64_t timeout_micros) {
   self->timeout_duration = duration_from_micros(timeout_micros);
 }
 
-void ts_parser_set_included_ranges(TSParser *self, const TSRange *ranges, uint32_t count) {
-  ts_lexer_set_included_ranges(&self->lexer, ranges, count);
+bool ts_parser_set_included_ranges(
+  TSParser *self,
+  const TSRange *ranges,
+  uint32_t count
+) {
+  return ts_lexer_set_included_ranges(&self->lexer, ranges, count);
 }
 
 const TSRange *ts_parser_included_ranges(const TSParser *self, uint32_t *count) {
@@ -1857,9 +1817,6 @@ TSTree *ts_parser_parse(
 
     unsigned min_error_cost = ts_parser__condense_stack(self);
     if (self->finished_tree.ptr && ts_subtree_error_cost(self->finished_tree) < min_error_cost) {
-      break;
-    } else if (self->halt_on_error && min_error_cost > 0) {
-      ts_parser__halt_parse(self);
       break;
     }
 

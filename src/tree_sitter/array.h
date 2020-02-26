@@ -126,12 +126,28 @@ static inline void array__splice(VoidArray *self, size_t element_size,
   array__reserve(self, element_size, new_size);
 
   char *contents = (char *)self->contents;
-  if (self->size > old_end)
-    memmove(contents + new_end * element_size, contents + old_end * element_size,
-            (self->size - old_end) * element_size);
-  if (new_count > 0)
-    memcpy((contents + index * element_size), elements,
-           new_count * element_size);
+  if (self->size > old_end) {
+    memmove(
+      contents + new_end * element_size,
+      contents + old_end * element_size,
+      (self->size - old_end) * element_size
+    );
+  }
+  if (new_count > 0) {
+    if (elements) {
+      memcpy(
+        (contents + index * element_size),
+        elements,
+        new_count * element_size
+      );
+    } else {
+      memset(
+        (contents + index * element_size),
+        0,
+        new_count * element_size
+      );
+    }
+  }
   self->size += new_count - old_count;
 }
 

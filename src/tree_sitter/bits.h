@@ -7,7 +7,7 @@ static inline uint32_t bitmask_for_index(uint16_t id) {
   return (1u << (31 - id));
 }
 
-#ifdef _WIN32
+#if defined _WIN32 && !defined __GNUC__
 
 #include <intrin.h>
 

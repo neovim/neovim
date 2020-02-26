@@ -29,10 +29,12 @@ static inline bool ts_language_is_symbol_external(const TSLanguage *self, TSSymb
   return 0 < symbol && symbol < self->external_token_count + 1;
 }
 
-static inline const TSParseAction *ts_language_actions(const TSLanguage *self,
-                                                       TSStateId state,
-                                                       TSSymbol symbol,
-                                                       uint32_t *count) {
+static inline const TSParseAction *ts_language_actions(
+  const TSLanguage *self,
+  TSStateId state,
+  TSSymbol symbol,
+  uint32_t *count
+) {
   TableEntry entry;
   ts_language_table_entry(self, state, symbol, &entry);
   *count = entry.action_count;
@@ -90,8 +92,8 @@ static inline TSStateId ts_language_next_state(const TSLanguage *self,
     const TSParseAction *actions = ts_language_actions(self, state, symbol, &count);
     if (count > 0) {
       TSParseAction action = actions[count - 1];
-      if (action.type == TSParseActionTypeShift || action.type == TSParseActionTypeRecover) {
-        return action.params.state;
+      if (action.type == TSParseActionTypeShift) {
+        return action.params.extra ? state : action.params.state;
       }
     }
     return 0;

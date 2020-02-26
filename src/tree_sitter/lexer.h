@@ -38,7 +38,7 @@ void ts_lexer_start(Lexer *);
 void ts_lexer_finish(Lexer *, uint32_t *);
 void ts_lexer_advance_to_end(Lexer *);
 void ts_lexer_mark_end(Lexer *);
-void ts_lexer_set_included_ranges(Lexer *self, const TSRange *ranges, uint32_t count);
+bool ts_lexer_set_included_ranges(Lexer *self, const TSRange *ranges, uint32_t count);
 TSRange *ts_lexer_included_ranges(const Lexer *self, uint32_t *count);
 
 #ifdef __cplusplus
