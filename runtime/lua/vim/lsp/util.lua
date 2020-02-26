@@ -269,7 +269,7 @@ function M.convert_input_to_markdown_lines(input, contents)
       end
     end
   end
-  if contents[1] == '' or contents[1] == nil then
+  if (contents[1] == '' or contents[1] == nil) and #contents == 1 then
     return {}
   end
   return contents
