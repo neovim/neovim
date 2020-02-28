@@ -4402,7 +4402,7 @@ buf_T* do_global(exarg_T *eap, proftime_T timeout)
     } else if (*p_icm != NUL &&  pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
-        pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
+        pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
       }
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group((char_u *)S_LEN("Substitute"));
@@ -4411,8 +4411,8 @@ buf_T* do_global(exarg_T *eap, proftime_T timeout)
       preview_buf = show_sub(eap, old_cursor, &preview_lines,
                              pre_hl_id, pre_src_id);
       if (subsize > 0) {
-        bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
-                               kv_last(preview_lines.subresults).end.lnum);
+        extmark_clear(orig_buf, pre_src_id, eap->line1-1, 0,
+                      kv_last(preview_lines.subresults).end.lnum-1, MAXCOL);
       }
     }
   }
