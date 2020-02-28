@@ -194,7 +194,7 @@ The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
 an error when using other characters.
 
-To be able to allow each user to pick his favorite set of colors, there must
+To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
@@ -4397,7 +4397,7 @@ two different ways:
 	  (e.g., "syntax/pod.vim") the file is searched for in 'runtimepath'.
 	  All matching files are loaded.  Using a relative path is
 	  recommended, because it allows a user to replace the included file
-	  with his own version, without replacing the file that does the ":syn
+	  with their own version, without replacing the file that does the ":syn
 	  include".
 
 						*E847*
