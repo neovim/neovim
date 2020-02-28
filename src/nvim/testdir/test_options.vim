@@ -511,3 +511,9 @@ func Test_shortmess_F2()
   bwipe
   bwipe
 endfunc
+
+func Test_visualbell()
+  set visualbell
+  call assert_beeps('normal 0h')
+  set novisualbell
+endfunc
