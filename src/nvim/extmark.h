@@ -20,6 +20,9 @@ typedef struct
 
 typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;
 
+// BAD, NO GOOD name, something we can :s/// later
+typedef ptrdiff_t bcount_t;
+
 
 // delete the columns between mincol and endcol
 typedef struct {
@@ -29,9 +32,9 @@ typedef struct {
   colnr_T old_col;
   int new_row;
   colnr_T new_col;
-  size_t start_byte;
-  size_t old_byte;
-  size_t new_byte;
+  bcount_t start_byte;
+  bcount_t old_byte;
+  bcount_t new_byte;
 } ExtmarkSplice;
 
 // adjust marks after :move operation
@@ -42,6 +45,9 @@ typedef struct {
   int extent_col;
   int new_row;
   int new_col;
+  bcount_t start_byte;
+  bcount_t extent_byte;
+  bcount_t new_byte;
 } ExtmarkMove;
 
 // extmark was updated
