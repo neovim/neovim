@@ -2399,6 +2399,7 @@ void ml_add_deleted_len(char_u *ptr, ssize_t len)
     len = STRLEN(ptr);
   }
   curbuf->deleted_bytes += len+1;
+  curbuf->deleted_bytes2 += len+1;
   if (curbuf->update_need_codepoints) {
     mb_utflen(ptr, len, &curbuf->deleted_codepoints,
               &curbuf->deleted_codeunits);

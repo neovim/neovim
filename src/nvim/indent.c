@@ -297,10 +297,9 @@ int set_indent(int size, int flags)
   if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursor.lnum) == OK)) {
     ml_replace(curwin->w_cursor.lnum, newline, false);
     if (!(flags & SIN_NOMARK)) {
-      extmark_splice(curbuf,
+      extmark_splice_cols(curbuf,
                      (int)curwin->w_cursor.lnum-1, skipcols,
-                     0, (int)(p-oldline) - skipcols,
-                     0, (int)(s-newline) - skipcols,
+                     (int)(p-oldline) - skipcols, (int)(s-newline) - skipcols,
                      kExtmarkUndo);
     }
 

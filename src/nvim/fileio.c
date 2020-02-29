@@ -1777,6 +1777,7 @@ failed:
       linecnt--;
     }
     curbuf->deleted_bytes = 0;
+    curbuf->deleted_bytes2 = 0;
     curbuf->deleted_codepoints = 0;
     curbuf->deleted_codeunits = 0;
     linecnt = curbuf->b_ml.ml_line_count - linecnt;
