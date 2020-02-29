@@ -2,6 +2,7 @@
 #define NVIM_BUFFER_UPDATES_H
 
 #include "nvim/buffer_defs.h"
+#include "nvim/extmark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer_updates.h.generated.h"
