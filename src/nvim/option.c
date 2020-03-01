@@ -751,7 +751,7 @@ void set_init_1(void)
 #endif
                      false);
 
-  char *backupdir = stdpaths_user_data_subpath("backup", 0, true);
+  char *backupdir = stdpaths_user_data_subpath("backup", 2, true);
   const size_t backupdir_len = strlen(backupdir);
   backupdir = xrealloc(backupdir, backupdir_len + 3);
   memmove(backupdir + 2, backupdir, backupdir_len + 1);
@@ -761,7 +761,7 @@ void set_init_1(void)
   set_string_default("backupdir", backupdir, true);
   set_string_default("directory", stdpaths_user_data_subpath("swap", 2, true),
                      true);
-  set_string_default("undodir", stdpaths_user_data_subpath("undo", 0, true),
+  set_string_default("undodir", stdpaths_user_data_subpath("undo", 2, true),
                      true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
