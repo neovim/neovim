@@ -201,6 +201,7 @@ Options:
   'guicursor'   works in the terminal
   'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
                 marker, "foldopen", "foldsep", "foldclose"
+  'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
   'listchars'   local to window
   'pumblend'    pseudo-transparent popupmenu
