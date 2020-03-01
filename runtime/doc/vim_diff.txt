@@ -473,6 +473,7 @@ Options:
   'encoding' ("utf-8" is always used)
   'esckeys'
   'guioptions' "t" flag was removed
+  *'guifontset'* *'gfs'* (Use 'guifont' instead.)
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*

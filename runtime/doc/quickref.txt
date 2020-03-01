@@ -711,7 +711,6 @@ Short explanation of each option:		*option-list*
 'grepprg'	  'gp'	    program to use for ":grep"
 'guicursor'	  'gcr'     GUI: settings for cursor shape and blinking
 'guifont'	  'gfn'     GUI: Name(s) of font(s) to be used
-'guifontset'	  'gfs'     GUI: Names of multi-byte fonts to be used
 'guifontwide'	  'gfw'     list of font names for double-wide characters
 'guioptions'	  'go'	    GUI: Which components and options are used
 'guitablabel'	  'gtl'     GUI: custom label for a tab page

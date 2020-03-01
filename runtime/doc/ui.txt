@@ -183,7 +183,6 @@ the editor.
 	'ambiwidth'
 	'emoji'
 	'guifont'
-	'guifontset'
 	'guifontwide'
 	'linespace'
 	'pumblend'

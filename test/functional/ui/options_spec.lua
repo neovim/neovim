@@ -14,7 +14,6 @@ describe('UI receives option updates', function()
       arabicshape=true,
       emoji=true,
       guifont='',
-      guifontset='',
       guifontwide='',
       linespace=0,
       pumblend=0,
