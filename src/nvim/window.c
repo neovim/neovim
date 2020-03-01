@@ -694,18 +694,15 @@ void win_check_anchored_floats(win_T *win)
   }
 }
 
-/// Return the number of requested fold columns, based on current
-/// folds signs and on user configuration.
+/// Return the number of fold columns to display
 int win_fdccol_count(win_T *wp)
 {
   const char *fdc = (const char *)wp->w_p_fdc;
 
   // auto:<NUM>
   if (strncmp(fdc, "auto:", 5) == 0) {
-    int needed_fdccols;
-    needed_fdccols = getDeepestNesting(wp);
-    int maximum = fdc[5] - '0';
-    return MIN(maximum, needed_fdccols);
+    int needed_fdccols = getDeepestNesting(wp);
+    return MIN(fdc[5] - '0', needed_fdccols);
   } else {
     return fdc[0] - '0';
   }

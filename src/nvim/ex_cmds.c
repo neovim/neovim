@@ -4483,7 +4483,7 @@ prepare_tagpreview (
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
       curwin->w_p_diff = false;             // no 'diff'
-      set_string_option_direct((char_u *)"fdc", -1,
+      set_string_option_direct((char_u *)"fdc", -1,     // no 'foldcolumn'
                                (char_u *)"0", OPT_FREE, SID_NONE);
       return true;
     }
