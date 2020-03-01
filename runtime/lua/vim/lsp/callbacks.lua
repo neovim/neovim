@@ -38,7 +38,13 @@ end
 
 M['textDocument/references'] = function(_, _, result)
   if not result then return end
-  util.set_qflist(result)
+  util.set_qflist(util.locations_to_items(result))
+end
+
+M['textDocument/documentSymbol'] = function(_, _, result, _, bufnr)
+  if not result or vim.tbl_isempty(result) then return end
+
+  util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
   api.nvim_command("wincmd p")
 end
@@ -97,7 +103,7 @@ local function location_callback(_, method, result)
   end
   util.jump_to_location(result[1])
   if #result > 1 then
-    util.set_qflist(result)
+    util.set_qflist(util.locations_to_items(result))
     api.nvim_command("copen")
     api.nvim_command("wincmd p")
   end

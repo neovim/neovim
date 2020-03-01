@@ -101,7 +101,7 @@ local function for_each_buffer_client(bufnr, callback)
   for client_id in pairs(client_ids) do
     local client = active_clients[client_id]
     if client then
-      callback(client, client_id)
+      callback(client, client_id, bufnr)
     end
   end
 end
@@ -520,23 +520,24 @@ function lsp.start_client(config)
   end
 
   --- Checks capabilities before rpc.request-ing.
-  function client.request(method, params, callback)
+  function client.request(method, params, callback, bufnr)
     if not callback then
       callback = resolve_callback(method)
         or error("not found: request callback for client "..client.name)
     end
-    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
+    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
     -- TODO keep these checks or just let it go anyway?
     if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
       or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
+      or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
     then
-      callback(unsupported_method(method), method, nil, client_id)
+      callback(unsupported_method(method), method, nil, client_id, bufnr)
       return
     end
     return rpc.request(method, params, function(err, result)
-      callback(err, method, result, client_id)
+      callback(err, method, result, client_id, bufnr)
     end)
   end
 
@@ -836,8 +837,8 @@ function lsp.buf_request(bufnr, method, params, callback)
     callback = { callback, 'f', true };
   }
   local client_request_ids = {}
-  for_each_buffer_client(bufnr, function(client, client_id)
-    local request_success, request_id = client.request(method, params, callback)
+  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
+    local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
 
     -- This could only fail if the client shut down in the time since we looked
     -- it up and we did the request, which should be rare.
@@ -905,7 +906,7 @@ function lsp.buf_notify(bufnr, method, params)
     method   = { method, 's' };
   }
   local resp = false
-  for_each_buffer_client(bufnr, function(client, _client_id)
+  for_each_buffer_client(bufnr, function(client, _client_id, _resolved_bufnr)
     if client.rpc.notify(method, params) then resp = true end
   end)
   return resp

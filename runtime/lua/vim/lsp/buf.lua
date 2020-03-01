@@ -138,6 +138,11 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
+function M.document_symbol()
+  local params = { textDocument = util.make_text_document_params() }
+  request('textDocument/documentSymbol', params)
+end
+
 --- Send request to server to resolve document highlights for the
 --- current text document position. This request can be associated
 --- to key mapping or to events such as `CursorHold`, eg:
