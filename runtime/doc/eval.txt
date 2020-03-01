@@ -10370,8 +10370,8 @@ text...
 			The parsing works slightly different from |:echo|,
 			more like |:execute|.  All the expressions are first
 			evaluated and concatenated before echoing anything.
-			The expressions must evaluate to a Number or String, a
-			Dictionary or List causes an error.
+			If expressions does not evaluate to a Number or
+			String, string() is used to turn it into a string.
 			Uses the highlighting set by the |:echohl| command.
 			Example: >
 		:echomsg "It's a Zizzer Zazzer Zuzz, as you can plainly see."
@@ -10382,7 +10382,7 @@ text...
 			message in the |message-history|.  When used in a
 			script or function the line number will be added.
 			Spaces are placed between the arguments as with the
-			:echo command.  When used inside a try conditional,
+			|:echomsg| command.  When used inside a try conditional,
 			the message is raised as an error exception instead
 			(see |try-echoerr|).
 			Example: >

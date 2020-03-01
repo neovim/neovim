@@ -1,4 +1,4 @@
-" Tests for :messages
+" Tests for :messages, :echomsg, :echoerr
 
 function Test_messages()
   let oldmore = &more
@@ -63,6 +63,35 @@ endfunction
 func Test_message_completion()
   call feedkeys(":message \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"message clear', @:)
+endfunc
+
+func Test_echomsg()
+  call assert_equal("\nhello", execute(':echomsg "hello"'))
+  call assert_equal("\n", execute(':echomsg ""'))
+  call assert_equal("\n12345", execute(':echomsg 12345'))
+  call assert_equal("\n[]", execute(':echomsg []'))
+  call assert_equal("\n[1, 2, 3]", execute(':echomsg [1, 2, 3]'))
+  call assert_equal("\n{}", execute(':echomsg {}'))
+  call assert_equal("\n{'a': 1, 'b': 2}", execute(':echomsg {"a": 1, "b": 2}'))
+  if has('float')
+    call assert_equal("\n1.23", execute(':echomsg 1.23'))
+  endif
+  call assert_match("function('<lambda>\\d*')", execute(':echomsg {-> 1234}'))
+endfunc
+
+func Test_echoerr()
+  throw 'skipped: Nvim does not support test_ignore_error()'
+  call test_ignore_error('IgNoRe')
+  call assert_equal("\nIgNoRe hello", execute(':echoerr "IgNoRe hello"'))
+  call assert_equal("\n12345 IgNoRe", execute(':echoerr 12345 "IgNoRe"'))
+  call assert_equal("\n[1, 2, 'IgNoRe']", execute(':echoerr [1, 2, "IgNoRe"]'))
+  call assert_equal("\n{'IgNoRe': 2, 'a': 1}", execute(':echoerr {"a": 1, "IgNoRe": 2}'))
+  if has('float')
+    call assert_equal("\n1.23 IgNoRe", execute(':echoerr 1.23 "IgNoRe"'))
+  endif
+  call test_ignore_error('<lambda>')
+  call assert_match("function('<lambda>\\d*')", execute(':echoerr {-> 1234}'))
+  call test_ignore_error('RESET')
 endfunc
 
 func Test_echospace()

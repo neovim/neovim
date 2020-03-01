@@ -9459,6 +9459,27 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
   }
 }
 
+// Turn a typeval into a string.  Similar to tv_get_string_buf() but uses
+// string() on Dict, List, etc.
+static const char *tv_stringify(typval_T *varp, char *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (varp->v_type == VAR_LIST
+      || varp->v_type == VAR_DICT
+      || varp->v_type == VAR_FUNC
+      || varp->v_type == VAR_PARTIAL
+      || varp->v_type == VAR_FLOAT) {
+    typval_T tmp;
+
+    f_string(varp, &tmp, NULL);
+    const char *const res = tv_get_string_buf(&tmp, buf);
+    tv_clear(varp);
+    *varp = tmp;
+    return res;
+  }
+  return tv_get_string_buf(varp, buf);
+}
+
 // Find variable "name" in the list of variables.
 // Return a pointer to it if found, NULL if not found.
 // Careful: "a:0" variables don't have a name.
@@ -10349,7 +10370,10 @@ void ex_execute(exarg_T *eap)
     }
 
     if (!eap->skip) {
-      const char *const argstr = tv_get_string(&rettv);
+      char buf[NUMBUFLEN];
+      const char *const argstr = eap->cmdidx == CMD_execute
+        ? tv_get_string_buf(&rettv, buf)
+        : tv_stringify(&rettv, buf);
       const size_t len = strlen(argstr);
       ga_grow(&ga, len + 2);
       if (!GA_EMPTY(&ga)) {
