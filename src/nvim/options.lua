@@ -1695,13 +1695,6 @@ return {
       defaults={if_true={vi=false}}
     },
     {
-      full_name='pastetoggle', abbreviation='pt',
-      type='string', scope={'global'},
-      vi_def=true,
-      varname='p_pt',
-      defaults={if_true={vi=""}}
-    },
-    {
       full_name='patchexpr', abbreviation='pex',
       type='string', scope={'global'},
       secure=true,
