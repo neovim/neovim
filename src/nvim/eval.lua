@@ -102,6 +102,7 @@ return {
     exists={args=1},
     exp={args=1, func="float_op_wrapper", data="&exp"},
     expand={args={1, 3}},
+    expandcmd={args=1},
     extend={args={2, 3}},
     feedkeys={args={1, 2}},
     file_readable={args=1, func='f_filereadable'},  -- obsolete

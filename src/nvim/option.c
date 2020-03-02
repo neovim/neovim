@@ -6073,10 +6073,8 @@ void buf_copy_options(buf_T *buf, int flags)
         save_p_isk = buf->b_p_isk;
         buf->b_p_isk = NULL;
       }
-      /*
-       * Always free the allocated strings.
-       * If not already initialized, set 'readonly' and copy 'fileformat'.
-       */
+      // Always free the allocated strings.  If not already initialized,
+      // reset 'readonly' and copy 'fileformat'.
       if (!buf->b_p_initialized) {
         free_buf_options(buf, true);
         buf->b_p_ro = false;                    // don't copy readonly

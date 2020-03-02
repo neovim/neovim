@@ -3008,18 +3008,18 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/*
- * Check if the restricted flag is set.
- * If so, give an error message and return TRUE.
- * Otherwise, return FALSE.
- */
-int check_restricted(void)
+// Check if the restricted flag is set.
+// If so, give an error message and return true.
+// Otherwise, return false.
+bool check_restricted(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (restricted) {
-    EMSG(_("E145: Shell commands not allowed in restricted mode"));
-    return TRUE;
+    EMSG(_("E145: Shell commands and some functionality not allowed"
+           " in restricted mode"));
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*

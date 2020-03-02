@@ -2103,6 +2103,31 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
 }
 
+// "expandcmd()" function
+// Expand all the special characters in a command string.
+static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *errormsg = NULL;
+
+  rettv->v_type = VAR_STRING;
+  char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
+
+  exarg_T eap = {
+    .cmd = cmdstr,
+    .arg = cmdstr,
+    .usefilter = false,
+    .nextcmd = NULL,
+    .cmdidx = CMD_USER,
+  };
+  eap.argt |= NOSPC;
+
+  expand_filename(&eap, &cmdstr, &errormsg);
+  if (errormsg != NULL && *errormsg != NUL) {
+    EMSG(errormsg);
+  }
+  rettv->vval.v_string = cmdstr;
+}
+
 /*
  * "extend(list, list [, idx])" function
  * "extend(dict, dict [, action])" function
@@ -4292,7 +4317,7 @@ static void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   HistoryType histype;
 
   rettv->vval.v_number = false;
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
   const char *str = tv_get_string_chk(&argvars[0]);  // NULL on type error
@@ -5272,7 +5297,6 @@ static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   });
   ga_append(&ga, NUL);
 
-  rettv->v_type = VAR_STRING;
   rettv->vval.v_string = ga.ga_data;
 }
 
@@ -7755,8 +7779,7 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted()
-      || check_secure()
+  if (check_secure()
       || !tv_check_str_or_nr(&argvars[0])) {
     return;
   }
@@ -8260,7 +8283,7 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -10981,7 +11004,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
