@@ -73,6 +73,7 @@ int jump_to_mouse(int flags,
   int col = mouse_col;
   int grid = mouse_grid;
   int mouse_char;
+  int fdc = 0;
 
   mouse_past_bottom = false;
   mouse_past_eol = false;
@@ -131,6 +132,7 @@ retnomove:
     if (wp == NULL) {
       return IN_UNKNOWN;
     }
+    fdc = win_fdccol_count(wp);
     dragwin = NULL;
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
@@ -165,9 +167,8 @@ retnomove:
             || (!on_status_line
                 && !on_sep_line
                 && (wp->w_p_rl
-                    ? col < wp->w_width_inner - wp->w_p_fdc
-                    : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
-                                            ? 0 : 1))
+                    ? col < wp->w_width_inner - fdc
+                    : col >= fdc + (cmdwin_type == 0 && wp == curwin ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -305,8 +306,8 @@ retnomove:
   }
 
   // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_width_inner - curwin->w_p_fdc :
-      col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
+  if (curwin->w_p_rl ? col < curwin->w_width_inner - fdc :
+      col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
     mouse_char = ' ';
   }
 

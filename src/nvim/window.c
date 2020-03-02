@@ -618,7 +618,6 @@ void win_set_minimal_style(win_T *wp)
   wp->w_p_cuc = false;
   wp->w_p_spell = false;
   wp->w_p_list = false;
-  wp->w_p_fdc = 0;
 
   // Hide EOB region: use " " fillchar and cleared highlighting
   if (wp->w_p_fcs_chars.eob != ' ') {
@@ -640,6 +639,12 @@ void win_set_minimal_style(win_T *wp)
   if (wp->w_p_scl[0] != 'a') {
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
+  }
+
+  // foldcolumn: use 'auto'
+  if (wp->w_p_fdc[0] != '0') {
+    xfree(wp->w_p_fdc);
+    wp->w_p_fdc = (char_u *)xstrdup("0");
   }
 
   // colorcolumn: cleared
@@ -688,6 +693,21 @@ void win_check_anchored_floats(win_T *win)
     }
   }
 }
+
+/// Return the number of fold columns to display
+int win_fdccol_count(win_T *wp)
+{
+  const char *fdc = (const char *)wp->w_p_fdc;
+
+  // auto:<NUM>
+  if (strncmp(fdc, "auto:", 5) == 0) {
+    int needed_fdccols = getDeepestNesting(wp);
+    return MIN(fdc[5] - '0', needed_fdccols);
+  } else {
+    return fdc[0] - '0';
+  }
+}
+
 
 static void ui_ext_win_position(win_T *wp)
 {

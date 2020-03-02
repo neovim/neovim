@@ -4482,8 +4482,9 @@ prepare_tagpreview (
       curwin->w_p_wfh = TRUE;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
-      curwin->w_p_diff = FALSE;             /* no 'diff' */
-      curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
+      curwin->w_p_diff = false;             // no 'diff'
+      set_string_option_direct((char_u *)"fdc", -1,     // no 'foldcolumn'
+                               (char_u *)"0", OPT_FREE, SID_NONE);
       return true;
     }
   }

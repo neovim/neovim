@@ -1385,11 +1385,17 @@ void diff_win_options(win_T *wp, int addbuf)
   curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff) {
-    wp->w_p_fdc_save = wp->w_p_fdc;
     wp->w_p_fen_save = wp->w_p_fen;
     wp->w_p_fdl_save = wp->w_p_fdl;
+
+    if (wp->w_p_diff_saved) {
+      free_string_option(wp->w_p_fdc_save);
+    }
+    wp->w_p_fdc_save = vim_strsave(wp->w_p_fdc);
   }
-  wp->w_p_fdc = diff_foldcolumn;
+  xfree(wp->w_p_fdc);
+  wp->w_p_fdc = (char_u *)xstrdup("2");
+  snprintf((char *)wp->w_p_fdc, sizeof(wp->w_p_fdc), "%d", diff_foldcolumn);
   wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
@@ -1443,9 +1449,9 @@ void ex_diffoff(exarg_T *eap)
         wp->w_p_fdm = vim_strsave(*wp->w_p_fdm_save
                                   ? wp->w_p_fdm_save
                                   : (char_u *)"manual");
-        if (wp->w_p_fdc == diff_foldcolumn) {
-          wp->w_p_fdc = wp->w_p_fdc_save;
-        }
+        free_string_option(wp->w_p_fdc);
+        wp->w_p_fdc = vim_strsave(wp->w_p_fdc_save);
+
         if (wp->w_p_fdl == 0) {
           wp->w_p_fdl = wp->w_p_fdl_save;
         }

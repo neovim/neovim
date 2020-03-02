@@ -2421,11 +2421,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	automatically close when moving out of them.
 
 						*'foldcolumn'* *'fdc'*
-'foldcolumn' 'fdc'	number (default 0)
+'foldcolumn' 'fdc'	string (default "0")
 			local to window
-	When non-zero, a column with the specified width is shown at the side
-	of the window which indicates open and closed folds.  The maximum
-	value is 12.
+	When and how to draw the foldcolumn. Valid values are:
+	    "auto":       resize to the maximum amount of folds to display.
+	    "auto:[1-9]": resize to accommodate multiple folds up to the
+			  selected level
+            0:            to disable foldcolumn
+	    "[1-9]":      to display a fixed number of columns
 	See |folding|.
 
 			*'foldenable'* *'fen'* *'nofoldenable'* *'nofen'*

@@ -831,10 +831,11 @@ return {
     },
     {
       full_name='foldcolumn', abbreviation='fdc',
-      type='number', scope={'window'},
+      type='string', scope={'window'},
       vi_def=true,
+      alloced=true,
       redraw={'current_window'},
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi="0"}}
     },
     {
       full_name='foldenable', abbreviation='fen',

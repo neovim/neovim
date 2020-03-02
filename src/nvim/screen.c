@@ -1744,7 +1744,7 @@ static int advance_color_col(int vcol, int **color_cols)
 // space is available for window "wp", minus "col".
 static int compute_foldcolumn(win_T *wp, int col)
 {
-  int fdc = wp->w_p_fdc;
+  int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
   int wwidth = wp->w_grid.Columns;
 

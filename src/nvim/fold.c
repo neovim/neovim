@@ -1465,10 +1465,10 @@ static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2,
  * Get the lowest 'foldlevel' value that makes the deepest nested fold in the
  * current window open.
  */
-int getDeepestNesting(void)
+int getDeepestNesting(win_T *wp)
 {
-  checkupdate(curwin);
-  return getDeepestNestingRecurse(&curwin->w_folds);
+  checkupdate(wp);
+  return getDeepestNestingRecurse(&wp->w_folds);
 }
 
 static int getDeepestNestingRecurse(garray_T *gap)
