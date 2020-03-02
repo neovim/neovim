@@ -356,6 +356,24 @@ function vim.tbl_islist(t)
   end
 end
 
+--- Counts the number of non-nil values in table `t`.
+---
+--- <pre>
+--- vim.tbl_count({ a=1, b=2 }) => 2
+--- vim.tbl_count({ 1, 2 }) => 2
+--- </pre>
+---
+--@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
+--@param Table
+--@returns Number that is the number of the value in table
+function vim.tbl_count(t)
+  vim.validate{t={t,'t'}}
+
+  local count = 0
+  for _ in pairs(t) do count = count + 1 end
+  return count
+end
+
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 --@see https://www.lua.org/pil/20.2.html
