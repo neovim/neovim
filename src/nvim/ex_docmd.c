@@ -6434,6 +6434,7 @@ ex_win_close(
     if (wp->w_floating) {
       if (wp->w_float_config.relative == kFloatRelativeWindow
           && wp->w_float_config.window == win->handle) {
+	if(tp == curtab) tp = NULL;
         ex_win_close(forceit, wp, tp);  
       }
     }
