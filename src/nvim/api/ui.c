@@ -111,10 +111,10 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->height = (int)height;
   ui->pum_nlines = 0;
   ui->pum_pos = false;
-  ui->pum_width = 0;
-  ui->pum_height = 0;
-  ui->pum_row = -1;
-  ui->pum_col = -1;
+  ui->pum_width = 0.0;
+  ui->pum_height = 0.0;
+  ui->pum_row = -1.0;
+  ui->pum_col = -1.0;
   ui->rgb = true;
   ui->override = false;
   ui->grid_resize = remote_ui_grid_resize;
@@ -349,12 +349,15 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   ui->pum_nlines = (int)height;
 }
 
-/// Tells Nvim the geometry of the popumenu, to align floating 
+/// Tells Nvim the geometry of the popumenu, to align floating
 /// windows with an external popup menu. Note that this method
 /// is not to be confused with |nvim_ui_pum_set_height()|, which
 /// sets the number of visible items in the popup menu, while
-/// this function sets the bounding box of the popup menu, 
+/// this function sets the bounding box of the popup menu,
 /// including visual decorations such as boarders and sliders.
+/// Floats need not use the same font size, nor be anchored to
+/// exact grid corners, so one can set floating-point numbers
+/// to the popup menu geometry.
 ///
 /// @param channel_id
 /// @param width   Popupmenu width.
@@ -362,9 +365,9 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
 /// @param row     Popupmenu row.
 /// @param col     Popupmenu height.
 /// @param[out] err Error details, if any.
-void nvim_ui_pum_set_bounds(uint64_t channel_id, Integer width, Integer height, 
-                            Integer row, Integer col, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height,
+                            Float row, Float col, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -393,10 +396,10 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Integer width, Integer height,
     return;
   }
 
-  ui->pum_row = (int)row;
-  ui->pum_col = (int)col;
-  ui->pum_width = (int)width;
-  ui->pum_height = (int)height;
+  ui->pum_row = (double)row;
+  ui->pum_col = (double)col;
+  ui->pum_width = (double)width;
+  ui->pum_height = (double)height;
   ui->pum_pos = true;
 }
 

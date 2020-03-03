@@ -235,12 +235,14 @@ int ui_pum_get_height(void)
   return pum_height;
 }
 
-void ui_pum_get_pos(int* pwidth, int *pheight, int* prow, int* pcol)
+void ui_pum_get_pos(double *pwidth, double *pheight, double *prow, double *pcol)
 {
-  int w=0,h=0,r=-1,c=-1;
+  double w = 0.0, h = 0.0, r = -1.0, c = -1.0;
   bool found = false;
   for (size_t i = 1; i < ui_count; i++) {
-    if (!uis[i]->pum_pos) continue;
+    if (!uis[i]->pum_pos) {
+      continue;
+    }
     if (!found) {
       w = uis[i]->pum_width;
       h = uis[i]->pum_height;
@@ -260,7 +262,12 @@ void ui_pum_get_pos(int* pwidth, int *pheight, int* prow, int* pcol)
     *prow = r;
     *pcol = c;
   } else {
-    pum_get_internal_pos(pwidth, pheight, prow, pcol);
+    int iw, ih, ir, ic;
+    pum_get_internal_pos(&iw, &ih, &ir, &ic);
+    *pwidth = (double)iw;
+    *pheight = (double)ih;
+    *prow = (double)ir;
+    *pcol = (double)ic;
   }
 }
 
