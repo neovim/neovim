@@ -2352,10 +2352,10 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
 		including visual decorations such as boarders and sliders.
 
                 Parameters: ~
-                    {width}   Popupmenu width, must be greater than zero.
-                    {height}  Popupmenu height, must be greater than zero.
-                    {row}     Popupmenu row, must be greater or equal to zero.
-                    {height}  Popupmenu height, must be greater or equal to zero.
+                    {width}   Popupmenu width.
+                    {height}  Popupmenu height.
+                    {row}     Popupmenu row.
+                    {height}  Popupmenu height.
 
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation

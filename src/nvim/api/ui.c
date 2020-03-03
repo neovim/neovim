@@ -357,11 +357,11 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
 /// including visual decorations such as boarders and sliders.
 ///
 /// @param channel_id
-/// @param width   Popupmenu width, must be greater than zero.
-/// @param height  Popupmenu height, must be greater than zero.
-/// @param row     Popupmenu row, must be greater or equal to zero.
-/// @param col     Popupmenu height, must be greater or equal to zero.
-/// @param[out] err Error details, if any. On error, suspend pum position reporting for the current UI.
+/// @param width   Popupmenu width.
+/// @param height  Popupmenu height.
+/// @param row     Popupmenu row.
+/// @param col     Popupmenu height.
+/// @param[out] err Error details, if any.
 void nvim_ui_pum_set_bounds(uint64_t channel_id, Integer width, Integer height, 
                             Integer row, Integer col, Error *err)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
@@ -375,31 +375,21 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Integer width, Integer height,
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
   if (!ui->ui_ext[kUIPopupmenu]) {
     api_set_error(err, kErrorTypeValidation,
-                  "It must support the ext_popupmenu option");
+                  "UI must support the ext_popupmenu option");
     return;
   }
 
   if (row < 0) {
     api_set_error(err, kErrorTypeValidation, "Expected pumpos row >= 0");
-    ui->pum_pos = false;
     return;
-  }
-
-  if (col < 0) {
+  } else if (col < 0) {
     api_set_error(err, kErrorTypeValidation, "Expected pumpos col >= 0");
-    ui->pum_pos = false;
     return;
-  }
-
-  if (width <= 0) {
+  } else if (width <= 0) {
     api_set_error(err, kErrorTypeValidation, "Expected pumpos width > 0");
-    ui->pum_pos = false;
     return;
-  }
-
-  if (height <= 0) {
+  } else if (height <= 0) {
     api_set_error(err, kErrorTypeValidation, "Expected pumpos height > 0");
-    ui->pum_pos = false;
     return;
   }
 

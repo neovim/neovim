@@ -902,6 +902,18 @@ int pum_get_height(void)
   return pum_height;
 }
 
+/// Gets the internal pum geometry.
+///
+/// @return the internal pum geometry. Ignores UI external pum geometry.
+/// Only valid when pum_visible() returns TRUE!
+void pum_get_internal_pos(int* pwidth, int* pheight, int* prow, int* pcol)
+{
+  *pwidth = pum_width;
+  *pheight = pum_height;
+  *prow = pum_row;
+  *pcol = pum_col;
+}
+
 /// Add size information about the pum to "dict".
 void pum_set_event_info(dict_T *dict)
 {
@@ -909,17 +921,11 @@ void pum_set_event_info(dict_T *dict)
     return;
   }
   int w,h,r,c;
-  if (!ui_pum_get_pos(&w, &h, &r, &c)){
-    tv_dict_add_nr(dict, S_LEN("height"), pum_height);
-    tv_dict_add_nr(dict, S_LEN("width"), pum_width);
-    tv_dict_add_nr(dict, S_LEN("row"), pum_row);
-    tv_dict_add_nr(dict, S_LEN("col"), pum_col);
-  } else {
-    tv_dict_add_nr(dict, S_LEN("height"), h);
-    tv_dict_add_nr(dict, S_LEN("width"), w);
-    tv_dict_add_nr(dict, S_LEN("row"), r);
-    tv_dict_add_nr(dict, S_LEN("col"), c);
-  }
+  ui_pum_get_pos(&w, &h, &r, &c);
+  tv_dict_add_nr(dict, S_LEN("height"), h);
+  tv_dict_add_nr(dict, S_LEN("width"), w);
+  tv_dict_add_nr(dict, S_LEN("row"), r);
+  tv_dict_add_nr(dict, S_LEN("col"), c);
   tv_dict_add_nr(dict, S_LEN("size"), pum_size);
   tv_dict_add_special(dict, S_LEN("scrollbar"),
                       pum_scrollbar ? kSpecialVarTrue : kSpecialVarFalse);
