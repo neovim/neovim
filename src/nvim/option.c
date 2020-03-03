@@ -2568,7 +2568,7 @@ static bool valid_filetype(const char_u *val)
 bool valid_spellang(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return valid_name(val, ".-_,");
+  return valid_name(val, ".-_,@");
 }
 
 /// Return true if "val" is a valid 'spellfile' value.
