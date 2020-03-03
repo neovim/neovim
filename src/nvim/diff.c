@@ -1395,7 +1395,8 @@ void diff_win_options(win_T *wp, int addbuf)
   }
   xfree(wp->w_p_fdc);
   wp->w_p_fdc = (char_u *)xstrdup("2");
-  snprintf((char *)wp->w_p_fdc, sizeof(wp->w_p_fdc), "%d", diff_foldcolumn);
+  assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
+  snprintf((char *)wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
   wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
