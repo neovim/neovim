@@ -6426,18 +6426,17 @@ ex_win_close(
   int need_hide;
   buf_T       *buf = win->w_buffer;
 
-  if (!tp) {
-    tp = curtab;
-  }
+  win_T *wp = (tp) ? tp->tp_firstwin : firstwin;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, tp)  {
+  while(wp) {
+    win_T *next_win = wp->w_next;
     if (wp->w_floating) {
       if (wp->w_float_config.relative == kFloatRelativeWindow
           && wp->w_float_config.window == win->handle) {
-	if(tp == curtab) tp = NULL;
         ex_win_close(forceit, wp, tp);  
       }
     }
+    wp = next_win;
   }
 
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
