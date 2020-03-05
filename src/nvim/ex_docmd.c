@@ -5417,6 +5417,8 @@ invalid_count:
       if (addr_type_arg != ADDR_LINES) {
         *argt |= (ZEROR | NOTADR);
       }
+    } else if (STRNICMP(attr, "live", attrlen) == 0) {
+        *argt |= LIVE;
     } else {
       char_u ch = attr[len];
       attr[len] = '\0';
@@ -9413,6 +9415,13 @@ bool cmd_can_preview(char_u *cmd)
       }
       break;
     default:
+      // Cmd is is user command, check if live flag is set
+      if((ea.argt & LIVE)) {
+          // Only preview once the pattern delimiter has been typed
+          if(*end && !ASCII_ISALNUM(*end)) {
+              return true;
+          }
+      }
       break;
   }
 

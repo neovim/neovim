@@ -1933,7 +1933,13 @@ static int command_line_changed(CommandLineState *s)
     State |= CMDPREVIEW;
     emsg_silent++;  // Block error reporting as the command may be incomplete
     msg_silent++;   // Block messages, namely ones that prompt
+
+    String cmdpreviewkey = cstr_to_string("cmdpreview");
+    Error temp;
+    dict_set_var(&globvardict, cmdpreviewkey, BOOLEAN_OBJ(true), false, false, &temp);
     do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT);
+    dict_set_var(&globvardict, cmdpreviewkey, NIL, true, false, &temp);
+
     msg_silent--;   // Unblock messages
     emsg_silent--;  // Unblock error reporting
 
