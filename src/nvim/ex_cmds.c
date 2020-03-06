@@ -4154,6 +4154,11 @@ skip:
       print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
     }
   } else if (!global_busy) {
+    if (!preview) {
+      // Revert u_save_cursor();
+      u_undo_and_forget(1);
+    }
+
     if (got_int) {
       // interrupted
       EMSG(_(e_interr));
