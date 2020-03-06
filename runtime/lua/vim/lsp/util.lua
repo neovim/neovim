@@ -161,7 +161,7 @@ end
 -- So we exclude completion candidates whose prefix does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
-    local word = item.insertText or item.label
+    local word = (item.textEdit and item.textEdit.newText) or item.insertText or item.label
     return vim.startswith(word, prefix)
   end, items)
 end
@@ -193,7 +193,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       end
     end
 
-    local word = completion_item.insertText or completion_item.label
+    local word = (completion_item.textEdit and completion_item.textEdit.newText) or completion_item.insertText or completion_item.label
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
