@@ -159,4 +159,12 @@ describe(':substitue', function()
     feed('yyq')  -- For the dialog of the previous :s command.
     expect('XXx')
   end)
+
+  it('does not create empty undo block when substitution matches nothing', function()
+    insert('xxx')
+    feed_command('set magic&')
+    feed_command('%s/z//eg')
+    feed_command('undo')
+    expect('')
+  end)
 end)
