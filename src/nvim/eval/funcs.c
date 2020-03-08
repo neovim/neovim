@@ -205,7 +205,7 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -862,7 +862,7 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -901,7 +901,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1480,7 +1480,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1515,7 +1515,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // dictwatcheradd(dict, key, funcref) function
 static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1553,7 +1553,7 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // dictwatcherdel(dict, key, funcref) function
 static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4798,7 +4798,7 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4822,7 +4822,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4855,7 +4855,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4988,7 +4988,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -5021,7 +5021,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
   if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
@@ -5239,7 +5239,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
     rettv->vval.v_string = NULL;
   }
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -5942,8 +5942,9 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int prot = 0755;  // -V536
 
   rettv->vval.v_number = FAIL;
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return;
+  }
 
   char buf[NUMBUFLEN];
   const char *const dir = tv_get_string_buf(&argvars[0], buf);
@@ -6832,7 +6833,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_rename(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     rettv->vval.v_number = -1;
   } else {
     char buf[NUMBUFLEN];
@@ -7230,7 +7231,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7266,7 +7267,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 0;
   const int l_provider_call_nesting = provider_call_nesting;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7363,7 +7364,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7429,7 +7430,7 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7891,7 +7892,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;  // Address of the new server
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7933,7 +7934,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "serverstop()" function
 static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -10466,7 +10467,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "termopen(cmd[, cwd])" function
 static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 

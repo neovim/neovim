@@ -1049,13 +1049,13 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
   int len;
   int scroll_save = msg_scroll;
 
-  /*
-   * Disallow shell commands in restricted mode (-Z)
-   * Disallow shell commands from .exrc and .vimrc in current directory for
-   * security reasons.
-   */
-  if (check_restricted() || check_secure())
+  //
+  // Disallow shell commands from .exrc and .vimrc in current directory for
+  // security reasons.
+  //
+  if (check_secure()) {
     return;
+  }
 
   if (addr_count == 0) {                /* :! */
     msg_scroll = FALSE;             /* don't scroll here */
@@ -1383,10 +1383,9 @@ do_shell(
     int flags             // may be SHELL_DOOUT when output is redirected
 )
 {
-  // Disallow shell commands in restricted mode (-Z)
   // Disallow shell commands from .exrc and .vimrc in current directory for
   // security reasons.
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     msg_end();
     return;
   }
@@ -3028,20 +3027,6 @@ void ex_z(exarg_T *eap)
     curwin->w_cursor.col = 0;
   }
   ex_no_reprint = true;
-}
-
-// Check if the restricted flag is set.
-// If so, give an error message and return true.
-// Otherwise, return false.
-bool check_restricted(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (restricted) {
-    EMSG(_("E145: Shell commands and some functionality not allowed"
-           " in restricted mode"));
-    return true;
-  }
-  return false;
 }
 
 /*

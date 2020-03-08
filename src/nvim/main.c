@@ -1012,10 +1012,6 @@ static void command_line_scan(mparm_T *parmp)
           want_argument = true;
           break;
         }
-        case 'Z': {  // "-Z" restricted mode
-          restricted = true;
-          break;
-        }
 
         case 'c': {  // "-c{command}" or "-c {command}" exec command
           if (argv[0][argv_idx] != NUL) {

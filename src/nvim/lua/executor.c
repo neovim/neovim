@@ -965,7 +965,7 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
                             typval_T *const args, int argcount, bool special,
                             typval_T *ret_tv)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     if (ret_tv) {
       ret_tv->v_type = VAR_NUMBER;
       ret_tv->vval.v_number = 0;
