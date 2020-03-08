@@ -36,8 +36,7 @@ $scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'
   Invoke-Expression $scoop
 }
 
-scoop install diffutils perl
-diff3 --version
+scoop install perl
 perl --version
 cpanm.bat --version
 
@@ -81,7 +80,7 @@ if ($compiler -eq 'MINGW') {
   # in MSYS2, but we cannot build inside the MSYS2 shell.
   $cmakeGenerator = 'Ninja'
   $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake').ForEach({
+  $mingwPackages = @('ninja', 'cmake', 'diffutils').ForEach({
     "mingw-w64-$arch-$_"
   })
 
