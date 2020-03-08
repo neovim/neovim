@@ -376,6 +376,10 @@ else
   elseif s:line1 =~? '-\*-.*erlang.*-\*-'
     set ft=erlang
 
+  " YAML
+  elseif s:line1 =~# '^%YAML'
+    set ft=yaml
+
   " CVS diff
   else
     let s:lnum = 1
