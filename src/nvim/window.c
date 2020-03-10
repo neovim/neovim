@@ -2372,9 +2372,10 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
                                       tabpage_T *prev_curtab)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (!ONE_WINDOW) {
+  if (!one_nonfloat()) {
     return false;
   }
+
   buf_T   *old_curbuf = curbuf;
 
   Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
@@ -2873,7 +2874,8 @@ winframe_remove (
   /*
    * If there is only one window there is nothing to remove.
    */
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin)
+  if (tp == NULL ? one_nonfloat() :
+     (tp->tp_firstwin->w_next == NULL || tp->tp_firstwin->w_next->w_floating))
     return NULL;
 
   /*
@@ -3016,7 +3018,8 @@ win_altframe (
 {
   frame_T     *frp;
 
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
+  if (tp == NULL ? one_nonfloat() :
+     (tp->tp_firstwin->w_next == NULL || tp->tp_firstwin->w_next->w_floating)) {
     return alt_tabpage()->tp_curwin->w_frame;
   }
 
