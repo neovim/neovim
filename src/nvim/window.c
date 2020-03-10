@@ -2872,8 +2872,9 @@ winframe_remove (
   /*
    * If there is only one window there is nothing to remove.
    */
-  if (tp == NULL ? ONE_WINDOW :tp->tp_firstwin == tp->tp_lastwin)
+  if (tp == NULL ? ONE_WINDOW :tp->tp_firstwin == tp->tp_lastwin) {
     return NULL;
+  }
 
   /*
    * Remove the window from its frame.

@@ -6428,12 +6428,12 @@ ex_win_close(
 
   win_T *wp = (tp) ? tp->tp_firstwin : firstwin;
 
-  while(wp) {
+  while (wp) {
     win_T *next_win = wp->w_next;
     if (wp->w_floating) {
       if (wp->w_float_config.relative == kFloatRelativeWindow
           && wp->w_float_config.window == win->handle) {
-        ex_win_close(forceit, wp, tp);  
+        ex_win_close(forceit, wp, tp);
       }
     }
     wp = next_win;
