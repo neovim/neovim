@@ -2372,10 +2372,9 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
                                       tabpage_T *prev_curtab)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (!one_nonfloat()) {
+  if (!ONE_WINDOW) {
     return false;
   }
-
   buf_T   *old_curbuf = curbuf;
 
   Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
@@ -2452,12 +2451,11 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
-  /*if ((firstwin == win && lastwin_nofloating() == win)
+  if ((firstwin == win && lastwin_nofloating() == win)
       && lastwin->w_floating) {
-    // TODO(bfredl): we might close the float also instead
-    EMSG(e_floatonly);
-    return FAIL;
-  }*/
+    win_close(lastwin, true);
+    win_close(win, true);
+  }
 
   /* When closing the last window in a tab page first go to another tab page
    * and then close the window and the tab page to avoid that curwin and
@@ -2874,8 +2872,7 @@ winframe_remove (
   /*
    * If there is only one window there is nothing to remove.
    */
-  if (tp == NULL ? one_nonfloat() :
-     (tp->tp_firstwin->w_next == NULL || tp->tp_firstwin->w_next->w_floating))
+  if (tp == NULL ? ONE_WINDOW :tp->tp_firstwin == tp->tp_lastwin)
     return NULL;
 
   /*
@@ -3018,8 +3015,7 @@ win_altframe (
 {
   frame_T     *frp;
 
-  if (tp == NULL ? one_nonfloat() :
-     (tp->tp_firstwin->w_next == NULL || tp->tp_firstwin->w_next->w_floating)) {
+  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
     return alt_tabpage()->tp_curwin->w_frame;
   }
 
