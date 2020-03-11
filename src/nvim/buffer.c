@@ -1637,12 +1637,22 @@ void do_autochdir(void)
 
 void no_write_message(void)
 {
-  EMSG(_("E37: No write since last change (add ! to override)"));
+  if (curbuf->terminal
+      && channel_job_running((uint64_t)curbuf->b_p_channel)) {
+    EMSG(_("E948: Job still running (add ! to end the job)"));
+  } else {
+    EMSG(_("E37: No write since last change (add ! to override)"));
+  }
 }
 
 void no_write_message_nobang(void)
 {
-  EMSG(_("E37: No write since last change"));
+  if (curbuf->terminal
+      && channel_job_running((uint64_t)curbuf->b_p_channel)) {
+    EMSG(_("E948: Job still running"));
+  } else {
+    EMSG(_("E37: No write since last change"));
+  }
 }
 
 //
