@@ -22,6 +22,12 @@
 
 #define KEY_BUFFER_SIZE 0xfff
 
+typedef enum {
+  kIncomplete = -1,
+  kNotApplicable = 0,
+  kComplete = 1,
+} HandleState;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
 #endif
@@ -339,8 +345,14 @@ static void tk_getkeys(TermInput *input, bool force)
 
 static void tinput_timer_cb(TimeWatcher *watcher, void *data)
 {
-  tk_getkeys(data, true);
-  tinput_flush(data, true);
+  TermInput *input = (TermInput *)data;
+  // If the raw buffer is not empty, process the raw buffer first because it is
+  // processing an incomplete bracketed paster sequence.
+  if (rbuffer_size(input->read_stream.buffer)) {
+    handle_raw_buffer(input, true);
+  }
+  tk_getkeys(input, true);
+  tinput_flush(input, true);
 }
 
 /// Handle focus events.
@@ -365,19 +377,22 @@ static bool handle_focus_event(TermInput *input)
   return false;
 }
 
-static bool handle_bracketed_paste(TermInput *input)
+#define START_PASTE "\x1b[200~"
+#define END_PASTE   "\x1b[201~"
+static HandleState handle_bracketed_paste(TermInput *input)
 {
-  if (rbuffer_size(input->read_stream.buffer) > 5
-      && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6)
-          || !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
+  size_t buf_size = rbuffer_size(input->read_stream.buffer);
+  if (buf_size > 5
+      && (!rbuffer_cmp(input->read_stream.buffer, START_PASTE, 6)
+          || !rbuffer_cmp(input->read_stream.buffer, END_PASTE, 6))) {
     bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
     if (input->paste && enable) {
-      return false;  // Pasting "start paste" code literally.
+      return kNotApplicable;  // Pasting "start paste" code literally.
     }
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 6);
     if (!!input->paste == enable) {
-      return true;  // Spurious "disable paste" code.
+      return kComplete;  // Spurious "disable paste" code.
     }
 
     if (enable) {
@@ -392,9 +407,15 @@ static bool handle_bracketed_paste(TermInput *input)
       // Paste phase: "disabled".
       input->paste = 0;
     }
-    return true;
+    return kComplete;
+  } else if (buf_size < 6
+             && (!rbuffer_cmp(input->read_stream.buffer, START_PASTE, buf_size)
+                 || !rbuffer_cmp(input->read_stream.buffer,
+                                 END_PASTE, buf_size))) {
+    // Wait for further input, as the sequence may be split.
+    return kIncomplete;
   }
-  return false;
+  return kNotApplicable;
 }
 
 // ESC NUL => <Esc>
@@ -518,21 +539,21 @@ bool ut_handle_background_color(TermInput *input)
 }
 #endif
 
-static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
-                           void *data, bool eof)
+static void handle_raw_buffer(TermInput *input, bool force)
 {
-  TermInput *input = data;
-
-  if (eof) {
-    loop_schedule_fast(&main_loop, event_create(tinput_done_event, 0));
-    return;
-  }
+  HandleState is_paste;
 
   do {
-    if (handle_focus_event(input)
-        || handle_bracketed_paste(input)
-        || handle_forced_escape(input)
-        || handle_background_color(input)) {
+    if (!force
+        && (handle_focus_event(input)
+            || (is_paste = handle_bracketed_paste(input)) != kNotApplicable
+            || handle_forced_escape(input)
+            || handle_background_color(input))) {
+      if (is_paste == kIncomplete) {
+        // Wait for the next input, leaving it in the raw buffer due to an
+        // incomplete sequence.
+        return;
+      }
       continue;
     }
 
@@ -578,7 +599,34 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
       }
     }
   } while (rbuffer_size(input->read_stream.buffer));
+}
+
+static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
+                           void *data, bool eof)
+{
+  TermInput *input = data;
+
+  if (eof) {
+    loop_schedule_fast(&main_loop, event_create(tinput_done_event, 0));
+    return;
+  }
+
+  handle_raw_buffer(input, false);
   tinput_flush(input, true);
+
+  // An incomplete sequence was found. Leave it in the raw buffer and wait for
+  // the next input.
+  if (rbuffer_size(input->read_stream.buffer)) {
+    // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
+    // the next input.
+    long ms = input->ttimeout ?
+      (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
+    // Stop the current timer if already running
+    time_watcher_stop(&input->timer_handle);
+    time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+    return;
+  }
+
   // Make sure the next input escape sequence fits into the ring buffer without
   // wraparound, else it could be misinterpreted (because rbuffer_read_ptr()
   // exposes the underlying buffer to callers unaware of the wraparound).
