@@ -462,39 +462,47 @@ static void set_bg_deferred(void **argv)
 // ignored in the calculations.
 //
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-static bool handle_background_color(TermInput *input)
+static HandleState handle_background_color(TermInput *input)
 {
   if (input->waiting_for_bg_response <= 0) {
-    return false;
+    return kNotApplicable;
   }
   size_t count = 0;
   size_t component = 0;
   size_t header_size = 0;
   size_t num_components = 0;
+  size_t buf_size = rbuffer_size(input->read_stream.buffer);
   uint16_t rgb[] = { 0, 0, 0 };
   uint16_t rgb_max[] = { 0, 0, 0 };
   bool eat_backslash = false;
   bool done = false;
   bool bad = false;
-  if (rbuffer_size(input->read_stream.buffer) >= 9
+  if (buf_size >= 9
       && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgb:", 9)) {
     header_size = 9;
     num_components = 3;
-  } else if (rbuffer_size(input->read_stream.buffer) >= 10
+  } else if (buf_size >= 10
              && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgba:", 10)) {
     header_size = 10;
     num_components = 4;
+  } else if (buf_size < 10
+             && !rbuffer_cmp(input->read_stream.buffer,
+                             "\x1b]11;rgba", buf_size)) {
+    // An incomplete sequence was found, waiting for the next input.
+    return kIncomplete;
   } else {
     input->waiting_for_bg_response--;
     if (input->waiting_for_bg_response == 0) {
       DLOG("did not get a response for terminal background query");
     }
-    return false;
+    return kNotApplicable;
   }
-  input->waiting_for_bg_response = 0;
-  rbuffer_consumed(input->read_stream.buffer, header_size);
   RBUFFER_EACH(input->read_stream.buffer, c, i) {
     count = i + 1;
+    // Skip the header.
+    if (i < header_size) {
+      continue;
+    }
     if (eat_backslash) {
       done = true;
       break;
@@ -516,8 +524,8 @@ static bool handle_background_color(TermInput *input)
       bad = true;
     }
   }
-  rbuffer_consumed(input->read_stream.buffer, count);
   if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
+    rbuffer_consumed(input->read_stream.buffer, count);
     double r = (double)rgb[0] / (double)rgb_max[0];
     double g = (double)rgb[1] / (double)rgb_max[1];
     double b = (double)rgb[2] / (double)rgb_max[2];
@@ -526,11 +534,17 @@ static bool handle_background_color(TermInput *input)
     DLOG("bg response: %s", bgvalue);
     loop_schedule_deferred(&main_loop,
                            event_create(set_bg_deferred, 1, bgvalue));
+    input->waiting_for_bg_response = 0;
+  } else if (!done && !bad) {
+    // An incomplete sequence was found, waiting for the next input.
+    return kIncomplete;
   } else {
+    input->waiting_for_bg_response = 0;
+    rbuffer_consumed(input->read_stream.buffer, count);
     DLOG("failed to parse bg response");
-    return false;
+    return kNotApplicable;
   }
-  return true;
+  return kComplete;
 }
 #ifdef UNIT_TESTING
 bool ut_handle_background_color(TermInput *input)
@@ -542,14 +556,15 @@ bool ut_handle_background_color(TermInput *input)
 static void handle_raw_buffer(TermInput *input, bool force)
 {
   HandleState is_paste;
+  HandleState is_bc;
 
   do {
     if (!force
         && (handle_focus_event(input)
             || (is_paste = handle_bracketed_paste(input)) != kNotApplicable
             || handle_forced_escape(input)
-            || handle_background_color(input))) {
-      if (is_paste == kIncomplete) {
+            || (is_bc = handle_background_color(input)) != kNotApplicable)) {
+      if (is_paste == kIncomplete || is_bc == kIncomplete) {
         // Wait for the next input, leaving it in the raw buffer due to an
         // incomplete sequence.
         return;
