@@ -1645,10 +1645,11 @@ void no_write_message(void)
   }
 }
 
-void no_write_message_nobang(void)
+void no_write_message_nobang(const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (curbuf->terminal
-      && channel_job_running((uint64_t)curbuf->b_p_channel)) {
+  if (buf->terminal
+      && channel_job_running((uint64_t)buf->b_p_channel)) {
     EMSG(_("E948: Job still running"));
   } else {
     EMSG(_("E37: No write since last change"));
