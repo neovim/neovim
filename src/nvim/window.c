@@ -2324,7 +2324,7 @@ void close_windows(buf_T *buf, int keep_curwin)
 ///
 /// @return true if the current window is the only window that exists, false if
 ///         there is another, possibly in another tab page.
-static bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return one_window() && first_tabpage->tp_next == NULL;
 }
@@ -2434,27 +2434,9 @@ int win_close(win_T *win, bool free_buf)
   frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
   const bool had_diffmode = win->w_p_diff;
 
-  if (last_window() && !win->w_floating) {
-    EMSG(_("E444: Cannot close last window"));
-    return FAIL;
-  }
-
   if (win->w_closing
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
-  }
-  if (win == aucmd_win) {
-    EMSG(_("E813: Cannot close autocmd window"));
-    return FAIL;
-  }
-  if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
-    EMSG(_("E814: Cannot close window, only autocmd window would remain"));
-    return FAIL;
-  }
-  if ((firstwin == win && lastwin_nofloating() == win)
-      && lastwin->w_floating) {
-    win_close(lastwin, true);
-    win_close(win, true);
   }
 
   /* When closing the last window in a tab page first go to another tab page
