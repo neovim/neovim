@@ -1952,7 +1952,10 @@ void do_wqall(exarg_T *eap)
   }
 
   FOR_ALL_BUFFERS(buf) {
-    if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
+    if (exiting && channel_job_running((uint64_t)buf->b_p_channel)) {
+      no_write_message_nobang(buf);
+      error++;
+    } else if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
       continue;
     }
     /*
