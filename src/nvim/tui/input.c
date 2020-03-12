@@ -22,11 +22,13 @@
 
 #define KEY_BUFFER_SIZE 0xfff
 
+#ifndef UNIT_TESTING
 typedef enum {
   kIncomplete = -1,
   kNotApplicable = 0,
   kComplete = 1,
 } HandleState;
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
@@ -547,7 +549,7 @@ static HandleState handle_background_color(TermInput *input)
   return kComplete;
 }
 #ifdef UNIT_TESTING
-bool ut_handle_background_color(TermInput *input)
+HandleState ut_handle_background_color(TermInput *input)
 {
   return handle_background_color(input);
 }

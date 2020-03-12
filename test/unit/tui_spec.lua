@@ -14,10 +14,13 @@ itp('handle_background_color', function()
   local handle_background_color = cinput.ut_handle_background_color
   local term_input = ffi.new('TermInput', {})
   local events = globals.main_loop.thread_events
+  local kIncomplete = cinput.kIncomplete
+  local kNotApplicable = cinput.kNotApplicable
+  local kComplete = cinput.kComplete
 
   -- Short-circuit when not waiting for response.
   term_input.waiting_for_bg_response = 0
-  eq(false, handle_background_color(term_input))
+  eq(kNotApplicable, handle_background_color(term_input))
 
   local capacity = 100
   local rbuf = ffi.gc(rbuffer.rbuffer_new(capacity), rbuffer.rbuffer_free)
@@ -28,7 +31,7 @@ itp('handle_background_color', function()
     rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
     term_input.waiting_for_bg_response = 1
-    eq(true, handle_background_color(term_input))
+    eq(kComplete, handle_background_color(term_input))
     eq(0, term_input.waiting_for_bg_response)
     eq(1, multiqueue.multiqueue_size(events))
 
@@ -97,14 +100,42 @@ itp('handle_background_color', function()
   assert_bg('rgba', 'f/f/f/f', 'light')
 
 
-  -- Incomplete sequence: not necessarily correct behavior, but tests it.
+  -- Incomplete sequence: necessarily correct behavior.
   local term_response = '\027]11;rgba:f/f/f/f'  -- missing '\007
   rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
   term_input.waiting_for_bg_response = 1
-  eq(false, handle_background_color(term_input))
+  eq(kIncomplete, handle_background_color(term_input))
+  eq(1, term_input.waiting_for_bg_response)
+  eq(#term_response, rbuf.size)
+
+  term_response = '\007'
+  rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+  eq(kComplete, handle_background_color(term_input))
   eq(0, term_input.waiting_for_bg_response)
 
+  local event = multiqueue.multiqueue_get(events)
+  local bg_event = ffi.cast("Event*", event.argv[1])
+  eq('light', ffi.string(bg_event.argv[0]))
+  eq(0, multiqueue.multiqueue_size(events))
+  eq(0, rbuf.size)
+
+  term_response = '\027]11;rg'
+  rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+
+  term_input.waiting_for_bg_response = 1
+  eq(kIncomplete, handle_background_color(term_input))
+  eq(1, term_input.waiting_for_bg_response)
+  eq(#term_response, rbuf.size)
+
+  term_response = 'ba:f/f/f/f\007'
+  rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+  eq(kComplete, handle_background_color(term_input))
+  eq(0, term_input.waiting_for_bg_response)
+
+  event = multiqueue.multiqueue_get(events)
+  bg_event = ffi.cast("Event*", event.argv[1])
+  eq('light', ffi.string(bg_event.argv[0]))
   eq(0, multiqueue.multiqueue_size(events))
   eq(0, rbuf.size)
 
@@ -114,7 +145,7 @@ itp('handle_background_color', function()
   rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
   term_input.waiting_for_bg_response = 3
-  eq(false, handle_background_color(term_input))
+  eq(kNotApplicable, handle_background_color(term_input))
   eq(2, term_input.waiting_for_bg_response)
 
   eq(0, multiqueue.multiqueue_size(events))
@@ -127,7 +158,7 @@ itp('handle_background_color', function()
   rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
   term_input.waiting_for_bg_response = 1
-  eq(true, handle_background_color(term_input))
+  eq(kComplete, handle_background_color(term_input))
   eq(0, term_input.waiting_for_bg_response)
 
   eq(1, multiqueue.multiqueue_size(events))
