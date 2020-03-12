@@ -96,8 +96,20 @@ describe("folded lines", function()
       {1:                                            ~}|
       :set rightleft                               |
     ]]}
-  end)
 
+    feed_command("set norightleft")
+    meths.input_mouse('left', 'press', '', 0, 0, 1)
+    screen:expect{grid=[[
+    {7:▾▸}{5:^+---  5 lines: aa··························}|
+    {7:│ }ff                                         |
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    :set norightleft                             |
+    ]]}
+  end)
 
   it("works with multibyte text", function()
     -- Currently the only allowed value of 'maxcombine'
@@ -282,5 +294,65 @@ describe("folded lines", function()
       /                                            |
     ]])
 
+  end)
+
+  it("work with autoresize", function()
+
+    funcs.setline(1, 'line 1')
+    funcs.setline(2, 'line 2')
+    funcs.setline(3, 'line 3')
+    funcs.setline(4, 'line 4')
+
+    feed("zfj")
+    command("set foldcolumn=0")
+    screen:expect{grid=[[
+      {5:^+--  2 lines: line 1·························}|
+      line 3                                       |
+      line 4                                       |
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+                                                   |
+    ]]}
+    -- should adapt to the current nesting of folds (e.g., 1)
+    command("set foldcolumn=auto:1")
+    screen:expect{grid=[[
+    {7:+}{5:^+--  2 lines: line 1························}|
+    {7: }line 3                                      |
+    {7: }line 4                                      |
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+                                                 |
+    ]]}
+    -- fdc should not change with a new fold as the maximum is 1
+    feed("zf3j")
+
+    screen:expect{grid=[[
+    {7:+}{5:^+--  4 lines: line 1························}|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+                                                 |
+    ]]}
+
+    -- relax the maximum fdc thus fdc should expand to
+    -- accomodate the current number of folds
+    command("set foldcolumn=auto:4")
+    screen:expect{grid=[[
+    {7:+ }{5:^+--  4 lines: line 1·······················}|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+                                                 |
+    ]]}
   end)
 end)

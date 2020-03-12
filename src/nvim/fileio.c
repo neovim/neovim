@@ -2032,14 +2032,16 @@ readfile_linenr(
  * Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary to be
  * equal to the buffer "buf".  Used for calling readfile().
  */
-void prep_exarg(exarg_T *eap, buf_T *buf)
+void prep_exarg(exarg_T *eap, const buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
-  eap->cmd = xmalloc(STRLEN(buf->b_p_ff) + STRLEN(buf->b_p_fenc) + 15);
+  const size_t cmd_len = 15 + STRLEN(buf->b_p_fenc);
+  eap->cmd = xmalloc(cmd_len);
 
-  sprintf((char *)eap->cmd, "e ++ff=%s ++enc=%s", buf->b_p_ff, buf->b_p_fenc);
-  eap->force_enc = 14 + (int)STRLEN(buf->b_p_ff);
+  snprintf((char *)eap->cmd, cmd_len, "e ++enc=%s", buf->b_p_fenc);
+  eap->force_enc = 8;
   eap->bad_char = buf->b_bad_char;
-  eap->force_ff = 7;
+  eap->force_ff = *buf->b_p_ff;
 
   eap->force_bin = buf->b_p_bin ? FORCE_BIN : FORCE_NOBIN;
   eap->read_edit = FALSE;

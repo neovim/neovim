@@ -37,7 +37,7 @@
 " For neovim compatibility, the vim specific calls were replaced with neovim
 " specific calls:
 "   term_start -> term_open
-"   term_sendkeys -> jobsend
+"   term_sendkeys -> chansend
 "   term_getline -> getbufline
 "   job_info && term_getjob -> using linux command ps to get the tty
 "   balloon -> nvim floating window
@@ -47,8 +47,6 @@
 " https://github.com/autozimu/LanguageClient-neovim/blob/0ed9b69dca49c415390a8317b19149f97ae093fa/autoload/LanguageClient.vim#L304
 "
 " Neovim terminal also works seamlessly on windows, which is why the ability
-" to use the prompt buffer was removed.
-"
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
 
@@ -57,6 +55,12 @@ if exists(':Termdebug')
   finish
 endif
 
+" The terminal feature does not work with gdb on win32.
+if !has('win32')
+  let s:way = 'terminal'
+else
+  let s:way = 'prompt'
+endif
 
 let s:keepcpo = &cpo
 set cpo&vim
@@ -138,7 +142,19 @@ func s:StartDebug_internal(dict)
     let s:vertical = 0
   endif
 
-  call s:StartDebug_term(a:dict)
+  " Override using a terminal window by setting g:termdebug_use_prompt to 1.
+  let use_prompt = exists('g:termdebug_use_prompt') && g:termdebug_use_prompt
+  if !has('win32') && !use_prompt
+    let s:way = 'terminal'
+   else
+    let s:way = 'prompt'
+   endif
+
+  if s:way == 'prompt'
+    call s:StartDebug_prompt(a:dict)
+  else
+    call s:StartDebug_term(a:dict)
+  endif
 endfunc
 
 " Use when debugger didn't start or ended.
@@ -214,11 +230,11 @@ func s:StartDebug_term(dict)
 
   " Set arguments to be run
   if len(proc_args)
-    call jobsend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
+    call chansend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
   endif
 
   " Connect gdb to the communication pty, using the GDB/MI interface
-  call jobsend(s:gdb_job_id, 'new-ui mi ' . commpty . "\r")
+  call chansend(s:gdb_job_id, 'new-ui mi ' . commpty . "\r")
 
   " Wait for the response to show up, users may not notice the error and wonder
   " why the debugger doesn't work.
@@ -275,6 +291,100 @@ func s:StartDebug_term(dict)
   call s:StartDebugCommon(a:dict)
 endfunc
 
+func s:StartDebug_prompt(dict)
+  " Open a window with a prompt buffer to run gdb in.
+  if s:vertical
+    vertical new
+  else
+    new
+  endif
+  let s:gdbwin = win_getid(winnr())
+  let s:promptbuf = bufnr('')
+  call prompt_setprompt(s:promptbuf, 'gdb> ')
+  set buftype=prompt
+  file gdb
+  call prompt_setcallback(s:promptbuf, function('s:PromptCallback'))
+  call prompt_setinterrupt(s:promptbuf, function('s:PromptInterrupt'))
+
+  if s:vertical
+    " Assuming the source code window will get a signcolumn, use two more
+    " columns for that, thus one less for the terminal window.
+    exe (&columns / 2 - 1) . "wincmd |"
+  endif
+
+  " Add -quiet to avoid the intro message causing a hit-enter prompt.
+  let gdb_args = get(a:dict, 'gdb_args', [])
+  let proc_args = get(a:dict, 'proc_args', [])
+
+  let cmd = [g:termdebugger, '-quiet', '--interpreter=mi2'] + gdb_args
+  "call ch_log('executing "' . join(cmd) . '"')
+
+  let s:gdbjob = jobstart(cmd, {
+	\ 'on_exit': function('s:EndPromptDebug'),
+	\ 'on_stdout': function('s:GdbOutCallback'),
+	\ })
+  if s:gdbjob == 0
+    echoerr 'invalid argument (or job table is full) while starting gdb job'
+    exe 'bwipe! ' . s:ptybuf
+    return
+  elseif s:gdbjob == -1
+    echoerr 'Failed to start the gdb job'
+    call s:CloseBuffers()
+    return
+  endif
+
+  " Interpret commands while the target is running.  This should usualy only
+  " be exec-interrupt, since many commands don't work properly while the
+  " target is running.
+  call s:SendCommand('-gdb-set mi-async on')
+  " Older gdb uses a different command.
+  call s:SendCommand('-gdb-set target-async on')
+
+  let s:ptybuf = 0
+  if has('win32')
+    " MS-Windows: run in a new console window for maximum compatibility
+    call s:SendCommand('set new-console on')
+  else
+    " Unix: Run the debugged program in a terminal window.  Open it below the
+    " gdb window.
+    execute 'new'
+    wincmd x | wincmd j
+    belowright let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
+    if s:pty_job_id == 0
+      echoerr 'invalid argument (or job table is full) while opening terminal window'
+      return
+    elseif s:pty_job_id == -1
+      echoerr 'Failed to open the program terminal window'
+      return
+    endif
+    let pty_job_info = nvim_get_chan_info(s:pty_job_id)
+    let s:ptybuf = pty_job_info['buffer']
+    let pty = pty_job_info['pty']
+    let s:ptywin = win_getid(winnr())
+    call s:SendCommand('tty ' . pty)
+
+    " Since GDB runs in a prompt window, the environment has not been set to
+    " match a terminal window, need to do that now.
+    call s:SendCommand('set env TERM = xterm-color')
+    call s:SendCommand('set env ROWS = ' . winheight(s:ptywin))
+    call s:SendCommand('set env LINES = ' . winheight(s:ptywin))
+    call s:SendCommand('set env COLUMNS = ' . winwidth(s:ptywin))
+    call s:SendCommand('set env COLORS = ' . &t_Co)
+    call s:SendCommand('set env VIM_TERMINAL = ' . v:version)
+  endif
+  call s:SendCommand('set print pretty on')
+  call s:SendCommand('set breakpoint pending on')
+  " Disable pagination, it causes everything to stop at the gdb
+  call s:SendCommand('set pagination off')
+
+  " Set arguments to be run
+  if len(proc_args)
+    call s:SendCommand('set args ' . join(proc_args))
+  endif
+
+  call s:StartDebugCommon(a:dict)
+  startinsert
+endfunc
 
 func s:StartDebugCommon(dict)
   " Sign used to highlight the line where the program has stopped.
@@ -316,21 +426,97 @@ endfunc
 " Send a command to gdb.  "cmd" is the string without line terminator.
 func s:SendCommand(cmd)
   "call ch_log('sending to gdb: ' . a:cmd)
-  call jobsend(s:comm_job_id, a:cmd . "\r")
+  if s:way == 'prompt'
+    call chansend(s:gdbjob, a:cmd . "\n")
+  else
+    call chansend(s:comm_job_id, a:cmd . "\r")
+  endif
 endfunc
 
 " This is global so that a user can create their mappings with this.
 func TermDebugSendCommand(cmd)
-  let do_continue = 0
-  if !s:stopped
-    let do_continue = 1
-    call s:SendCommand('-exec-interrupt')
-    sleep 10m
+  if s:way == 'prompt'
+    call chansend(s:gdbjob, a:cmd . "\n")
+  else
+    let do_continue = 0
+    if !s:stopped
+      let do_continue = 1
+      if s:way == 'prompt'
+        " Need to send a signal to get the UI to listen.  Strangely this is only
+        " needed once.
+        call jobstop(s:gdbjob)
+      else
+        call s:SendCommand('-exec-interrupt')
+      endif
+      sleep 10m
+    endif
+    call chansend(s:gdb_job_id, a:cmd . "\r")
+    if do_continue
+      Continue
+    endif
   endif
-  call jobsend(s:gdb_job_id, a:cmd . "\r")
-  if do_continue
-    Continue
+endfunc
+
+" Function called when entering a line in the prompt buffer.
+func s:PromptCallback(text)
+  call s:SendCommand(a:text)
+endfunc
+
+" Function called when pressing CTRL-C in the prompt buffer and when placing a
+" breakpoint.
+func s:PromptInterrupt()
+  if s:pid == 0
+    echoerr 'Cannot interrupt gdb, did not find a process ID'
+  else
+    "call ch_log('Interrupting gdb')
+    " Using job_stop(s:gdbjob, 'int') does not work.
+    call debugbreak(s:pid)
   endif
+endfunc
+
+" Function called when gdb outputs text.
+func s:GdbOutCallback(job_id, msgs, event)
+  "call ch_log('received from gdb: ' . a:text)
+
+  " Drop the gdb prompt, we have our own.
+  " Drop status and echo'd commands.
+  call filter(a:msgs, { index, val ->
+        \ val !=# '(gdb)' && val !=# '^done' && val[0] !=# '&'})
+
+  let lines = []
+  let index = 0
+
+  for msg in a:msgs
+    if msg =~ '^^error,msg='
+      if exists('s:evalexpr')
+            \ && s:DecodeMessage(msg[11:])
+            \    =~ 'A syntax error in expression, near\|No symbol .* in current context'
+        " Silently drop evaluation errors.
+        call remove(a:msgs, index)
+        unlet s:evalexpr
+        continue
+      endif
+    elseif msg[0] == '~'
+      call add(lines, s:DecodeMessage(msg[1:]))
+      call remove(a:msgs, index)
+      continue
+    endif
+    let index += 1
+  endfor
+
+  let curwinid = win_getid(winnr())
+  call win_gotoid(s:gdbwin)
+
+  " Add the output above the current prompt.
+  for line in lines
+    call append(line('$') - 1, line)
+  endfor
+  if !empty(lines)
+    set modified
+  endif
+
+  call win_gotoid(curwinid)
+  call s:CommOutput(a:job_id, a:msgs, a:event)
 endfunc
 
 " Decode a message from gdb.  quotedText starts with a ", return the text up
@@ -396,6 +582,19 @@ func s:EndDebugCommon()
   au! TermDebug
 endfunc
 
+func s:EndPromptDebug(job_id, exit_code, event)
+  let curwinid = win_getid(winnr())
+  call win_gotoid(s:gdbwin)
+  close
+  if curwinid != s:gdbwin
+    call win_gotoid(curwinid)
+  endif
+
+  call s:EndDebugCommon()
+  unlet s:gdbwin
+  "call ch_log("Returning from EndPromptDebug()")
+endfunc
+
 func s:CommOutput(job_id, msgs, event)
 
   for msg in a:msgs
@@ -436,7 +635,11 @@ func s:InstallCommands()
   command Stop call s:SendCommand('-exec-interrupt')
 
   " using -exec-continue results in CTRL-C in gdb window not working
-  command Continue call jobsend(s:gdb_job_id, "continue\r")
+  if s:way == 'prompt'
+    command Continue call s:SendCommand('continue')
+  else
+    command Continue call chansend(s:gdb_job_id, "continue\r")
+  endif
 
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
@@ -494,7 +697,11 @@ func s:SetBreakpoint()
   let do_continue = 0
   if !s:stopped
     let do_continue = 1
-    call s:SendCommand('-exec-interrupt')
+    if s:way == 'prompt'
+      call s:PromptInterrupt()
+    else
+      call s:SendCommand('-exec-interrupt')
+    endif
     sleep 10m
   endif
   " Use the fname:lnum format, older gdb can't handle --source.

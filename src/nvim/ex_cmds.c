@@ -3010,18 +3010,18 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/*
- * Check if the restricted flag is set.
- * If so, give an error message and return TRUE.
- * Otherwise, return FALSE.
- */
-int check_restricted(void)
+// Check if the restricted flag is set.
+// If so, give an error message and return true.
+// Otherwise, return false.
+bool check_restricted(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (restricted) {
-    EMSG(_("E145: Shell commands not allowed in restricted mode"));
-    return TRUE;
+    EMSG(_("E145: Shell commands and some functionality not allowed"
+           " in restricted mode"));
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4484,8 +4484,9 @@ prepare_tagpreview (
       curwin->w_p_wfh = TRUE;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
-      curwin->w_p_diff = FALSE;             /* no 'diff' */
-      curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
+      curwin->w_p_diff = false;             // no 'diff'
+      set_string_option_direct((char_u *)"fdc", -1,     // no 'foldcolumn'
+                               (char_u *)"0", OPT_FREE, SID_NONE);
       return true;
     }
   }

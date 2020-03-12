@@ -89,6 +89,10 @@ struct block_def {
 # include "ops.c.generated.h"
 #endif
 
+// Flags for third item in "opchars".
+#define OPF_LINES  1  // operator always works on lines
+#define OPF_CHANGE 2  // operator changes text
+
 /*
  * The names of operators.
  * IMPORTANT: Index must correspond with defines in vim.h!!!
@@ -96,36 +100,36 @@ struct block_def {
  */
 static char opchars[][3] =
 {
-  { NUL,    NUL, false },    // OP_NOP
-  { 'd',    NUL, false },    // OP_DELETE
-  { 'y',    NUL, false },    // OP_YANK
-  { 'c',    NUL, false },    // OP_CHANGE
-  { '<',    NUL, true },     // OP_LSHIFT
-  { '>',    NUL, true },     // OP_RSHIFT
-  { '!',    NUL, true },     // OP_FILTER
-  { 'g',    '~', false },    // OP_TILDE
-  { '=',    NUL, true },     // OP_INDENT
-  { 'g',    'q', true },     // OP_FORMAT
-  { ':',    NUL, true },     // OP_COLON
-  { 'g',    'U', false },    // OP_UPPER
-  { 'g',    'u', false },    // OP_LOWER
-  { 'J',    NUL, true },     // DO_JOIN
-  { 'g',    'J', true },     // DO_JOIN_NS
-  { 'g',    '?', false },    // OP_ROT13
-  { 'r',    NUL, false },    // OP_REPLACE
-  { 'I',    NUL, false },    // OP_INSERT
-  { 'A',    NUL, false },    // OP_APPEND
-  { 'z',    'f', true },     // OP_FOLD
-  { 'z',    'o', true },     // OP_FOLDOPEN
-  { 'z',    'O', true },     // OP_FOLDOPENREC
-  { 'z',    'c', true },     // OP_FOLDCLOSE
-  { 'z',    'C', true },     // OP_FOLDCLOSEREC
-  { 'z',    'd', true },     // OP_FOLDDEL
-  { 'z',    'D', true },     // OP_FOLDDELREC
-  { 'g',    'w', true },     // OP_FORMAT2
-  { 'g',    '@', false },    // OP_FUNCTION
-  { Ctrl_A, NUL, false },    // OP_NR_ADD
-  { Ctrl_X, NUL, false },    // OP_NR_SUB
+  { NUL, NUL, 0 },                       // OP_NOP
+  { 'd', NUL, OPF_CHANGE },              // OP_DELETE
+  { 'y', NUL, 0 },                       // OP_YANK
+  { 'c', NUL, OPF_CHANGE },              // OP_CHANGE
+  { '<', NUL, OPF_LINES | OPF_CHANGE },  // OP_LSHIFT
+  { '>', NUL, OPF_LINES | OPF_CHANGE },  // OP_RSHIFT
+  { '!', NUL, OPF_LINES | OPF_CHANGE },  // OP_FILTER
+  { 'g', '~', OPF_CHANGE },              // OP_TILDE
+  { '=', NUL, OPF_LINES | OPF_CHANGE },  // OP_INDENT
+  { 'g', 'q', OPF_LINES | OPF_CHANGE },  // OP_FORMAT
+  { ':', NUL, OPF_LINES },               // OP_COLON
+  { 'g', 'U', OPF_CHANGE },              // OP_UPPER
+  { 'g', 'u', OPF_CHANGE },              // OP_LOWER
+  { 'J', NUL, OPF_LINES | OPF_CHANGE },  // DO_JOIN
+  { 'g', 'J', OPF_LINES | OPF_CHANGE },  // DO_JOIN_NS
+  { 'g', '?', OPF_CHANGE },              // OP_ROT13
+  { 'r', NUL, OPF_CHANGE },              // OP_REPLACE
+  { 'I', NUL, OPF_CHANGE },              // OP_INSERT
+  { 'A', NUL, OPF_CHANGE },              // OP_APPEND
+  { 'z', 'f', OPF_LINES },               // OP_FOLD
+  { 'z', 'o', OPF_LINES },               // OP_FOLDOPEN
+  { 'z', 'O', OPF_LINES },               // OP_FOLDOPENREC
+  { 'z', 'c', OPF_LINES },               // OP_FOLDCLOSE
+  { 'z', 'C', OPF_LINES },               // OP_FOLDCLOSEREC
+  { 'z', 'd', OPF_LINES },               // OP_FOLDDEL
+  { 'z', 'D', OPF_LINES },               // OP_FOLDDELREC
+  { 'g', 'w', OPF_LINES | OPF_CHANGE },  // OP_FORMAT2
+  { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
+  { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
+  { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
 };
 
 /*
@@ -169,7 +173,13 @@ int get_op_type(int char1, int char2)
  */
 int op_on_lines(int op)
 {
-  return opchars[op][2];
+  return opchars[op][2] & OPF_LINES;
+}
+
+// Return TRUE if operator "op" changes text.
+int op_is_change(int op)
+{
+    return opchars[op][2] & OPF_CHANGE;
 }
 
 /*
@@ -832,6 +842,15 @@ static bool is_append_register(int regname)
   return ASCII_ISUPPER(regname);
 }
 
+/// @see get_yank_register
+/// @returns true when register should be inserted literally
+/// (selection or clipboard)
+static inline bool is_literal_register(int regname)
+  FUNC_ATTR_CONST
+{
+  return regname == '*' || regname == '+';
+}
+
 /// Returns a copy of contents in register `name`
 /// for use in do_put. Should be freed by caller.
 yankreg_T *copy_register(int name)
@@ -1142,11 +1161,12 @@ static int put_in_typebuf(
  */
 int insert_reg(
     int regname,
-    int literally                  /* insert literally, not as if typed */
+    bool literally_arg            // insert literally, not as if typed
 )
 {
   int retval = OK;
   bool allocated;
+  const bool literally = literally_arg || is_literal_register(regname);
 
   /*
    * It is possible to get into an endless loop by having CTRL-R a in
@@ -1316,12 +1336,14 @@ bool get_spec_reg(
 /// register contents will be interpreted as commands.
 ///
 /// @param regname   Register name.
-/// @param literally Insert text literally instead of "as typed".
+/// @param literally_arg Insert text literally instead of "as typed".
 /// @param remcr     When true, don't add CR characters.
 ///
 /// @returns FAIL for failure, OK otherwise
-bool cmdline_paste_reg(int regname, bool literally, bool remcr)
+bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
 {
+  const bool literally = literally_arg || is_literal_register(regname);
+
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
   if (reg->y_array == NULL)
     return FAIL;
@@ -2524,7 +2546,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     case kMTCharWise:
     {
       colnr_T startcol = 0, endcol = MAXCOL;
-      int is_oneChar = FALSE;
+      int is_oneChar = false;
       colnr_T cs, ce;
       p = ml_get(lnum);
       bd.startspaces = 0;
@@ -2555,8 +2577,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
                                    && utf_head_off(p, p + endcol) == 0)) {
             if (oap->start.lnum == oap->end.lnum
                 && oap->start.col == oap->end.col) {
-              /* Special case: inside a single char */
-              is_oneChar = TRUE;
+              // Special case: inside a single char
+              is_oneChar = true;
               bd.startspaces = oap->end.coladd
                                - oap->start.coladd + oap->inclusive;
               endcol = startcol;
@@ -4415,8 +4437,8 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   bdp->textlen = 0;
   bdp->start_vcol = 0;
   bdp->end_vcol = 0;
-  bdp->is_short = FALSE;
-  bdp->is_oneChar = FALSE;
+  bdp->is_short = false;
+  bdp->is_oneChar = false;
   bdp->pre_whitesp = 0;
   bdp->pre_whitesp_c = 0;
   bdp->end_char_vcols = 0;
@@ -4442,9 +4464,10 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   bdp->start_char_vcols = incr;
   if (bdp->start_vcol < oap->start_vcol) {      /* line too short */
     bdp->end_vcol = bdp->start_vcol;
-    bdp->is_short = TRUE;
-    if (!is_del || oap->op_type == OP_APPEND)
+    bdp->is_short = true;
+    if (!is_del || oap->op_type == OP_APPEND) {
       bdp->endspaces = oap->end_vcol - oap->start_vcol + 1;
+    }
   } else {
     /* notice: this converts partly selected Multibyte characters to
      * spaces, too. */
@@ -4453,11 +4476,11 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
       bdp->startspaces = bdp->start_char_vcols - bdp->startspaces;
     pend = pstart;
     bdp->end_vcol = bdp->start_vcol;
-    if (bdp->end_vcol > oap->end_vcol) {        /* it's all in one character */
-      bdp->is_oneChar = TRUE;
-      if (oap->op_type == OP_INSERT)
+    if (bdp->end_vcol > oap->end_vcol) {  // it's all in one character
+      bdp->is_oneChar = true;
+      if (oap->op_type == OP_INSERT) {
         bdp->endspaces = bdp->start_char_vcols - bdp->startspaces;
-      else if (oap->op_type == OP_APPEND) {
+      } else if (oap->op_type == OP_APPEND) {
         bdp->startspaces += oap->end_vcol - oap->start_vcol + 1;
         bdp->endspaces = bdp->start_char_vcols - bdp->startspaces;
       } else {
@@ -4482,17 +4505,16 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
       if (bdp->end_vcol <= oap->end_vcol
           && (!is_del
               || oap->op_type == OP_APPEND
-              || oap->op_type == OP_REPLACE)) {         /* line too short */
-        bdp->is_short = TRUE;
-        /* Alternative: include spaces to fill up the block.
-         * Disadvantage: can lead to trailing spaces when the line is
-         * short where the text is put */
-        /* if (!is_del || oap->op_type == OP_APPEND) */
-        if (oap->op_type == OP_APPEND || virtual_op)
+              || oap->op_type == OP_REPLACE)) {  // line too short
+        bdp->is_short = true;
+        // Alternative: include spaces to fill up the block.
+        // Disadvantage: can lead to trailing spaces when the line is
+        // short where the text is put
+        // if (!is_del || oap->op_type == OP_APPEND)
+        if (oap->op_type == OP_APPEND || virtual_op) {
           bdp->endspaces = oap->end_vcol - bdp->end_vcol
                            + oap->inclusive;
-        else
-          bdp->endspaces = 0;           /* replace doesn't add characters */
+        }
       } else if (bdp->end_vcol > oap->end_vcol) {
         bdp->endspaces = bdp->end_vcol - oap->end_vcol - 1;
         if (!is_del && bdp->endspaces) {

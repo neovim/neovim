@@ -448,7 +448,6 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     } else {
       buffer[len] = NUL;
     }
-    i = 0;
     for (p = buffer; p < buffer + len; p++) {
       if (*p == NUL || (*p == ' ' && check_spaces)) {       // count entry
         i++;

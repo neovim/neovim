@@ -11,6 +11,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/handle.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/vim.h"
@@ -19,6 +20,7 @@
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/regexp.h"
 #include "nvim/macros.h"
 #include "nvim/screen.h"
 #include "nvim/cursor.h"
@@ -244,6 +246,14 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }
 
+static struct luaL_Reg regex_meta[] = {
+  { "__gc", regex_gc },
+  { "__tostring", regex_tostring },
+  { "match_str", regex_match_str },
+  { "match_line", regex_match_line },
+  { NULL, NULL }
+};
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -291,6 +301,15 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // call
   lua_pushcfunction(lstate, &nlua_call);
   lua_setfield(lstate, -2, "call");
+  // regex
+  lua_pushcfunction(lstate, &nlua_regex);
+  lua_setfield(lstate, -2, "regex");
+
+  luaL_newmetatable(lstate, "nvim_regex");
+  luaL_register(lstate, NULL, regex_meta);
+  lua_pushvalue(lstate, -1);  // [meta, meta]
+  lua_setfield(lstate, -2, "__index");  // [meta]
+  lua_pop(lstate, 1);  // don't use metatable now
 
   // rpcrequest
   lua_pushcfunction(lstate, &nlua_rpcrequest);
@@ -1036,4 +1055,137 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, ts_lua_parse_query);
   lua_setfield(lstate, -2, "_ts_parse_query");
+}
+
+static int nlua_regex(lua_State *lstate)
+{
+  Error err = ERROR_INIT;
+  const char *text = luaL_checkstring(lstate, 1);
+  regprog_T *prog = NULL;
+
+  TRY_WRAP({
+    try_start();
+    prog = vim_regcomp((char_u *)text, RE_AUTO | RE_MAGIC | RE_STRICT);
+    try_end(&err);
+  });
+
+  if (ERROR_SET(&err)) {
+    return luaL_error(lstate, "couldn't parse regex: %s", err.msg);
+  }
+  assert(prog);
+
+  regprog_T **p = lua_newuserdata(lstate, sizeof(regprog_T *));
+  *p = prog;
+
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim_regex");  // [udata, meta]
+  lua_setmetatable(lstate, -2);  // [udata]
+  return 1;
+}
+
+static regprog_T **regex_check(lua_State *L)
+{
+  return luaL_checkudata(L, 1, "nvim_regex");
+}
+
+
+static int regex_gc(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+  vim_regfree(*prog);
+  return 0;
+}
+
+static int regex_tostring(lua_State *lstate)
+{
+  lua_pushstring(lstate, "<regex>");
+  return 1;
+}
+
+static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
+{
+  regmatch_T rm;
+  rm.regprog = *prog;
+  rm.rm_ic = false;
+  bool match = vim_regexec(&rm, str, 0);
+  *prog = rm.regprog;
+
+  if (match) {
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0]-str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0]-str));
+    return 2;
+  }
+  return 0;
+}
+
+static int regex_match_str(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+  const char *str = luaL_checkstring(lstate, 2);
+  int nret = regex_match(lstate, prog, (char_u *)str);
+
+  if (!*prog) {
+    return luaL_error(lstate, "regex: internal error");
+  }
+
+  return nret;
+}
+
+static int regex_match_line(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+
+  int narg = lua_gettop(lstate);
+  if (narg < 3) {
+    return luaL_error(lstate, "not enough args");
+  }
+
+  long bufnr = luaL_checkinteger(lstate, 2);
+  long rownr = luaL_checkinteger(lstate, 3);
+  long start = 0, end = -1;
+  if (narg >= 4) {
+    start = luaL_checkinteger(lstate, 4);
+  }
+  if (narg >= 5) {
+    end = luaL_checkinteger(lstate, 5);
+    if (end < 0) {
+      return luaL_error(lstate, "invalid end");
+    }
+  }
+
+  buf_T *buf = bufnr ? handle_get_buffer((int)bufnr) : curbuf;
+  if (!buf || buf->b_ml.ml_mfp == NULL) {
+    return luaL_error(lstate, "invalid buffer");
+  }
+
+  if (rownr >= buf->b_ml.ml_line_count) {
+    return luaL_error(lstate, "invalid row");
+  }
+
+  char_u *line = ml_get_buf(buf, rownr+1, false);
+  size_t len = STRLEN(line);
+
+  if (start < 0 || (size_t)start > len) {
+    return luaL_error(lstate, "invalid start");
+  }
+
+  char_u save = NUL;
+  if (end >= 0) {
+    if ((size_t)end > len || end < start) {
+      return luaL_error(lstate, "invalid end");
+    }
+    save = line[end];
+    line[end] = NUL;
+  }
+
+  int nret = regex_match(lstate, prog, line+start);
+
+  if (end >= 0) {
+    line[end] = save;
+  }
+
+  if (!*prog) {
+    return luaL_error(lstate, "regex: internal error");
+  }
+
+  return nret;
 }

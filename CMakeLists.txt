@@ -308,6 +308,11 @@ if(UNIX)
   endif()
 endif()
 
+check_c_compiler_flag(-fno-common HAVE_FNO_COMMON)
+if (HAVE_FNO_COMMON)
+  add_compile_options(-fno-common)
+endif()
+
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
   if(CMAKE_GENERATOR MATCHES "Ninja")

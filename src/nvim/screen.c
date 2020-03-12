@@ -334,10 +334,10 @@ int update_screen(int type)
     }
     return FAIL;
   }
+  updating_screen = 1;
 
-  updating_screen = TRUE;
-  ++display_tick;           /* let syntax code know we're in a next round of
-                             * display updating */
+  display_tick++;           // let syntax code know we're in a next round of
+                            // display updating
 
   // Tricky: vim code can reset msg_scrolled behind our back, so need
   // separate bookkeeping for now.
@@ -565,7 +565,7 @@ int update_screen(int type)
     wp->w_buffer->b_mod_set = false;
   }
 
-  updating_screen = FALSE;
+  updating_screen = 0;
 
   /* Clear or redraw the command line.  Done last, because scrolling may
    * mess up the command line. */
@@ -1744,7 +1744,7 @@ static int advance_color_col(int vcol, int **color_cols)
 // space is available for window "wp", minus "col".
 static int compute_foldcolumn(win_T *wp, int col)
 {
-  int fdc = wp->w_p_fdc;
+  int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
   int wwidth = wp->w_grid.Columns;
 
@@ -2215,9 +2215,10 @@ win_line (
 
   int n_skip = 0;                       /* nr of chars to skip for 'nowrap' */
 
-  int fromcol = 0, tocol = 0;           // start/end of inverting
+  int fromcol = -10;                    // start of inverting
+  int tocol = MAXCOL;                   // end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
-  int noinvcur = false;                 // don't invert the cursor
+  bool noinvcur = false;                // don't invert the cursor
   pos_T *top, *bot;
   int lnum_in_visual_area = false;
   pos_T pos;
@@ -2416,27 +2417,26 @@ win_line (
       capcol_lnum = 0;
     }
 
-    //
-    // handle visual active in this window
-    //
-    fromcol = -10;
-    tocol = MAXCOL;
+    // handle Visual active in this window
     if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
-      // Visual is after curwin->w_cursor
       if (ltoreq(curwin->w_cursor, VIsual)) {
+        // Visual is after curwin->w_cursor
         top = &curwin->w_cursor;
         bot = &VIsual;
-      } else {                          // Visual is before curwin->w_cursor
+      } else {
+        // Visual is before curwin->w_cursor
         top = &VIsual;
         bot = &curwin->w_cursor;
       }
       lnum_in_visual_area = (lnum >= top->lnum && lnum <= bot->lnum);
-      if (VIsual_mode == Ctrl_V) {        // block mode
+      if (VIsual_mode == Ctrl_V) {
+        // block mode
         if (lnum_in_visual_area) {
           fromcol = wp->w_old_cursor_fcol;
           tocol = wp->w_old_cursor_lcol;
         }
-      } else {                          // non-block mode
+      } else {
+        // non-block mode
         if (lnum > top->lnum && lnum <= bot->lnum) {
           fromcol = 0;
         } else if (lnum == top->lnum) {
@@ -3647,8 +3647,9 @@ win_line (
               tab_len += n_extra - tab_len;
             }
 
-            /* if n_extra > 0, it gives the number of chars to use for
-             * a tab, else we need to calculate the width for a tab */
+            // if n_extra > 0, it gives the number of chars
+            // to use for a tab, else we need to calculate the width
+            // for a tab
             int len = (tab_len * mb_char2len(wp->w_p_lcs_chars.tab2));
             if (n_extra > 0) {
               len += n_extra - tab_len;
@@ -3660,10 +3661,16 @@ win_line (
             xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
-              utf_char2bytes(wp->w_p_lcs_chars.tab2, p);
-              p += mb_char2len(wp->w_p_lcs_chars.tab2);
-              n_extra += mb_char2len(wp->w_p_lcs_chars.tab2)
-                         - (saved_nextra > 0 ? 1: 0);
+              int lcs = wp->w_p_lcs_chars.tab2;
+
+              // if tab3 is given, need to change the char
+              // for tab
+              if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
+                lcs = wp->w_p_lcs_chars.tab3;
+              }
+              utf_char2bytes(lcs, p);
+              p += mb_char2len(lcs);
+              n_extra += mb_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
             }
             p_extra = p_extra_free;
 

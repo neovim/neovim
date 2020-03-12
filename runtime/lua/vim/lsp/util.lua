@@ -148,14 +148,35 @@ function M.get_current_line_to_cursor()
   return line:sub(pos[2]+1)
 end
 
+-- Sort by CompletionItem.sortText
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+local function sort_completion_items(items)
+  if items[1] and items[1].sortText then
+    table.sort(items, function(a, b) return a.sortText < b.sortText
+    end)
+  end
+end
+
+-- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
+-- So we exclude completion candidates whose prefix does not match.
+local function remove_unmatch_completion_items(items, prefix)
+  return vim.tbl_filter(function(item)
+    local word = item.insertText or item.label
+    return vim.startswith(word, prefix)
+  end, items)
+end
+
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-function M.text_document_completion_list_to_complete_items(result)
+function M.text_document_completion_list_to_complete_items(result, prefix)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
+
+  items = remove_unmatch_completion_items(items, prefix)
+  sort_completion_items(items)
 
   local matches = {}
 
@@ -180,7 +201,7 @@ function M.text_document_completion_list_to_complete_items(result)
       menu = completion_item.detail or '',
       info = info,
       icase = 1,
-      dup = 0,
+      dup = 1,
       empty = 1,
     })
   end
@@ -248,7 +269,7 @@ function M.convert_input_to_markdown_lines(input, contents)
       end
     end
   end
-  if contents[1] == '' or contents[1] == nil then
+  if (contents[1] == '' or contents[1] == nil) and #contents == 1 then
     return {}
   end
   return contents
@@ -548,7 +569,8 @@ do
   local all_buffer_diagnostics = {}
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
-
+  local reference_ns = api.nvim_create_namespace("vim_lsp_references")
+  local sign_ns = 'vim_lsp_signs'
   local underline_highlight_name = "LspDiagnosticsUnderline"
   vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
   for kind, _ in pairs(protocol.DiagnosticSeverity) do
@@ -582,6 +604,11 @@ do
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+
+    -- clear sign group
+    vim.fn.sign_unplace(sign_ns, {buffer=bufnr})
+
+    -- clear virtual text namespace
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
   end
 
@@ -662,7 +689,6 @@ do
     end
   end
 
-
   function M.buf_diagnostics_underline(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
       local start = diagnostic.range["start"]
@@ -681,6 +707,25 @@ do
         {start.line, start.character},
         {finish.line, finish.character}
       )
+    end
+  end
+
+  function M.buf_clear_references(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    api.nvim_buf_clear_namespace(bufnr, reference_ns, 0, -1)
+  end
+
+  function M.buf_highlight_references(bufnr, references)
+    validate { bufnr = {bufnr, 'n', true} }
+    for _, reference in ipairs(references) do
+      local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
+      local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
+      local document_highlight_kind = {
+        [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
+        [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
+        [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
+      }
+      highlight_range(bufnr, reference_ns, document_highlight_kind[reference["kind"]], start_pos, end_pos)
     end
   end
 
@@ -704,6 +749,34 @@ do
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
+  function M.buf_diagnostics_count(kind)
+    local bufnr = vim.api.nvim_get_current_buf()
+    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_line_diagnostics then return end
+    local count = 0
+    for _, line_diags in pairs(buffer_line_diagnostics) do
+      for _, diag in ipairs(line_diags) do
+        if protocol.DiagnosticSeverity[kind] == diag.severity then count = count + 1 end
+      end
+    end
+    return count
+  end
+  function M.buf_diagnostics_signs(bufnr, diagnostics)
+    vim.fn.sign_define('LspDiagnosticsErrorSign', {text=vim.g['LspDiagnosticsErrorSign'] or 'E', texthl='LspDiagnosticsError', linehl='', numhl=''})
+    vim.fn.sign_define('LspDiagnosticsWarningSign', {text=vim.g['LspDiagnosticsWarningSign'] or 'W', texthl='LspDiagnosticsWarning', linehl='', numhl=''})
+    vim.fn.sign_define('LspDiagnosticsInformationSign', {text=vim.g['LspDiagnosticsInformationSign'] or 'I', texthl='LspDiagnosticsInformation', linehl='', numhl=''})
+    vim.fn.sign_define('LspDiagnosticsHintSign', {text=vim.g['LspDiagnosticsHintSign'] or 'H', texthl='LspDiagnosticsHint', linehl='', numhl=''})
+
+    for _, diagnostic in ipairs(diagnostics) do
+      local diagnostic_severity_map = {
+        [protocol.DiagnosticSeverity.Error] = "LspDiagnosticsErrorSign";
+        [protocol.DiagnosticSeverity.Warning] = "LspDiagnosticsWarningSign";
+        [protocol.DiagnosticSeverity.Information] = "LspDiagnosticsInformationSign";
+        [protocol.DiagnosticSeverity.Hint] = "LspDiagnosticsHintSign";
+      }
+      vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1)})
+    end
+  end
 end
 
 local position_sort = sort_by_key(function(v)
@@ -724,7 +797,7 @@ function M.locations_to_items(locations)
   for _, d in ipairs(locations) do
     local start = d.range.start
     local fname = assert(vim.uri_to_fname(d.uri))
-    table.insert(grouped[fname], {start = start, msg= d.message })
+    table.insert(grouped[fname], {start = start})
   end
 
 
@@ -751,7 +824,7 @@ function M.locations_to_items(locations)
             filename = fname,
             lnum = row + 1,
             col = col + 1;
-            text = temp.msg;
+            text = line;
           })
         end
       end
@@ -761,21 +834,58 @@ function M.locations_to_items(locations)
   return items
 end
 
--- locations is Location[]
--- Only sets for the current window.
-function M.set_loclist(locations)
+function M.set_loclist(items)
   vim.fn.setloclist(0, {}, ' ', {
     title = 'Language Server';
-    items = M.locations_to_items(locations);
+    items = items;
   })
 end
 
--- locations is Location[]
-function M.set_qflist(locations)
+function M.set_qflist(items)
   vim.fn.setqflist({}, ' ', {
     title = 'Language Server';
-    items = M.locations_to_items(locations);
+    items = items;
   })
+end
+
+--- Convert symbols to quickfix list items
+---
+--@symbols DocumentSymbol[] or SymbolInformation[]
+function M.symbols_to_items(symbols, bufnr)
+  local function _symbols_to_items(_symbols, _items, _bufnr)
+    for _, symbol in ipairs(_symbols) do
+      if symbol.location then -- SymbolInformation type
+        local range = symbol.location.range
+        local kind = protocol.SymbolKind[symbol.kind]
+        table.insert(_items, {
+          filename = vim.uri_to_fname(symbol.location.uri),
+          lnum = range.start.line + 1,
+          col = range.start.character + 1,
+          kind = kind,
+          text = '['..kind..'] '..symbol.name,
+        })
+      elseif symbol.range then -- DocumentSymbole type
+        local kind = protocol.SymbolKind[symbol.kind]
+        table.insert(_items, {
+          -- bufnr = _bufnr,
+          filename = vim.api.nvim_buf_get_name(_bufnr),
+          lnum = symbol.range.start.line + 1,
+          col = symbol.range.start.character + 1,
+          kind = kind,
+          text = '['..kind..'] '..symbol.name
+        })
+        if symbol.children then
+          for _, child in ipairs(symbol) do
+            for _, v in ipairs(_symbols_to_items(child, _items, _bufnr)) do
+              vim.list_extend(_items, v)
+            end
+          end
+        end
+      end
+    end
+    return _items
+  end
+  return _symbols_to_items(symbols, {}, bufnr)
 end
 
 -- Remove empty lines from the beginning and end.
@@ -830,9 +940,13 @@ function M.make_position_params()
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   col = str_utfindex(line, col)
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) };
+    textDocument = M.make_text_document_params();
     position = { line = row; character = col; }
   }
+end
+
+function M.make_text_document_params()
+  return { uri = vim.uri_from_bufnr(0) }
 end
 
 -- @param buf buffer handle or 0 for current.

@@ -326,7 +326,7 @@ struct expr_ast_node {
   } data;
 };
 
-enum {
+enum ExprParserFlags {
   /// Allow multiple expressions in a row: e.g. for :echo
   ///
   /// Parser will still parse only one of them though.
@@ -345,7 +345,7 @@ enum {
   //     viml_expressions_parser.c, nvim_parse_expression() flags parsing
   //     alongside with its documentation and flag sets in check_parsing()
   //     function in expressions parser functional and unit tests.
-} ExprParserFlags;
+};
 
 /// AST error definition
 typedef struct {

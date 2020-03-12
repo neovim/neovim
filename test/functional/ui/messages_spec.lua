@@ -969,6 +969,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     -- edge case: only one window was set NOT_VALID. Orginal report
     -- used :make, but fake it using one command to set the current
     -- window NOT_VALID and another to show a long message.
+    command("set more")
     feed(':new<cr><c-w><c-w>')
     screen:expect{grid=[[
                                                                   |
@@ -982,16 +983,16 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
 
     feed(':set colorcolumn=10 | digraphs<cr>')
     screen:expect{grid=[[
-      er {5:ㄦ} 12582  i4 {5:ㄧ} 12583  u4 {5:ㄨ} 12584  iu {5:ㄩ} 12585          |
-      v4 {5:ㄪ} 12586  nG {5:ㄫ} 12587  gn {5:ㄬ} 12588  1c {5:㈠} 12832          |
-      2c {5:㈡} 12833  3c {5:㈢} 12834  4c {5:㈣} 12835  5c {5:㈤} 12836          |
-      6c {5:㈥} 12837  7c {5:㈦} 12838  8c {5:㈧} 12839  9c {5:㈨} 12840          |
-      ff {5:ﬀ}  64256  fi {5:ﬁ}  64257  fl {5:ﬂ}  64258  ft {5:ﬅ}  64261          |
-      st {5:ﬆ}  64262                                                 |
-      {4:Press ENTER or type command to continue}^                     |
+      :set colorcolumn=10 | digraphs                              |
+      NU {5:^@}  10    SH {5:^A}   1    SX {5:^B}   2    EX {5:^C}   3            |
+      ET {5:^D}   4    EQ {5:^E}   5    AK {5:^F}   6    BL {5:^G}   7            |
+      BS {5:^H}   8    HT {5:^I}   9    LF {5:^@}  10    VT {5:^K}  11            |
+      FF {5:^L}  12    CR {5:^M}  13    SO {5:^N}  14    SI {5:^O}  15            |
+      DL {5:^P}  16    D1 {5:^Q}  17    D2 {5:^R}  18    D3 {5:^S}  19            |
+      {4:-- More --}^                                                  |
     ]]}
 
-    feed('<cr>')
+    feed('q')
     screen:expect{grid=[[
                                                                   |
       {1:~                                                           }|

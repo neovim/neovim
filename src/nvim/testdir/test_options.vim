@@ -546,3 +546,11 @@ func Test_local_scrolloff()
   set so&
   set siso&
 endfunc
+
+func Test_visualbell()
+  set belloff=
+  set visualbell
+  call assert_beeps('normal 0h')
+  set novisualbell
+  set belloff=all
+endfunc

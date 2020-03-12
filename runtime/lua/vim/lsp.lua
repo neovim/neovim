@@ -101,7 +101,7 @@ local function for_each_buffer_client(bufnr, callback)
   for client_id in pairs(client_ids) do
     local client = active_clients[client_id]
     if client then
-      callback(client, client_id)
+      callback(client, client_id, bufnr)
     end
   end
 end
@@ -121,13 +121,9 @@ local function validate_encoding(encoding)
       or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
-local function validate_command(input)
+function lsp._cmd_parts(input)
   local cmd, cmd_args
-  if type(input) == 'string' then
-    -- Use a shell to execute the command if it is a string.
-    cmd = vim.api.nvim_get_option('shell')
-    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), input}
-  elseif vim.tbl_islist(input) then
+  if vim.tbl_islist(input) then
     cmd = input[1]
     cmd_args = {}
     -- Don't mutate our input.
@@ -138,7 +134,7 @@ local function validate_command(input)
       end
     end
   else
-    error("cmd type must be string or list.")
+    error("cmd type must be list.")
   end
   return cmd, cmd_args
 end
@@ -158,7 +154,7 @@ local function validate_client_config(config)
     callbacks       = { config.callbacks, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
-    cmd_env         = { config.cmd_env, "f", true };
+    cmd_env         = { config.cmd_env, "t", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
@@ -166,7 +162,7 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
-  local cmd, cmd_args = validate_command(config.cmd)
+  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
@@ -524,23 +520,24 @@ function lsp.start_client(config)
   end
 
   --- Checks capabilities before rpc.request-ing.
-  function client.request(method, params, callback)
+  function client.request(method, params, callback, bufnr)
     if not callback then
       callback = resolve_callback(method)
         or error("not found: request callback for client "..client.name)
     end
-    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
+    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
     -- TODO keep these checks or just let it go anyway?
     if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
       or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
+      or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
     then
-      callback(unsupported_method(method), method, nil, client_id)
+      callback(unsupported_method(method), method, nil, client_id, bufnr)
       return
     end
     return rpc.request(method, params, function(err, result)
-      callback(err, method, result, client_id)
+      callback(err, method, result, client_id, bufnr)
     end)
   end
 
@@ -840,8 +837,8 @@ function lsp.buf_request(bufnr, method, params, callback)
     callback = { callback, 'f', true };
   }
   local client_request_ids = {}
-  for_each_buffer_client(bufnr, function(client, client_id)
-    local request_success, request_id = client.request(method, params, callback)
+  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
+    local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
 
     -- This could only fail if the client shut down in the time since we looked
     -- it up and we did the request, which should be rare.
@@ -897,21 +894,22 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   return request_results
 end
 
---- Sends a notification to all servers attached to the buffer.
----
---@param bufnr (optional, number) Buffer handle, or 0 for current
---@param method (string) LSP method name
---@param params (string) Parameters to send to the server
----
---@returns nil
+--- Send a notification to a server
+-- @param bufnr [number] (optional): The number of the buffer
+-- @param method [string]: Name of the request method
+-- @param params [string]: Arguments to send to the server
+--
+-- @returns true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
   validate {
     bufnr    = { bufnr, 'n', true };
     method   = { method, 's' };
   }
-  for_each_buffer_client(bufnr, function(client, _client_id)
-    client.rpc.notify(method, params)
+  local resp = false
+  for_each_buffer_client(bufnr, function(client, _client_id, _resolved_bufnr)
+    if client.rpc.notify(method, params) then resp = true end
   end)
+  return resp
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
@@ -949,12 +947,14 @@ function lsp.omnifunc(findstart, base)
 
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local prefix = line_to_cursor:sub(textMatch+1)
+
   local params = util.make_position_params()
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
     if err or not result then return end
-    local matches = util.text_document_completion_list_to_complete_items(result)
+    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(textMatch+1, items)

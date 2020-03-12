@@ -174,8 +174,19 @@ const TSLanguage *ts_parser_language(const TSParser *self);
  * The second and third parameters specify the location and length of an array
  * of ranges. The parser does *not* take ownership of these ranges; it copies
  * the data, so it doesn't matter how these ranges are allocated.
+ *
+ * If `length` is zero, then the entire document will be parsed. Otherwise,
+ * the given ranges must be ordered from earliest to latest in the document,
+ * and they must not overlap. That is, the following must hold for all
+ * `i` < `length - 1`:
+ *
+ *     ranges[i].end_byte <= ranges[i + 1].start_byte
+ *
+ * If this requirement is not satisfied, the operation will fail, the ranges
+ * will not be assigned, and this function will return `false`. On success,
+ * this function returns `true`
  */
-void ts_parser_set_included_ranges(
+bool ts_parser_set_included_ranges(
   TSParser *self,
   const TSRange *ranges,
   uint32_t length
@@ -324,14 +335,6 @@ TSLogger ts_parser_logger(const TSParser *self);
  * SVG output. You can turn off this logging by passing a negative number.
  */
 void ts_parser_print_dot_graphs(TSParser *self, int file);
-
-/**
- * Set whether or not the parser should halt immediately upon detecting an
- * error. This will generally result in a syntax tree with an error at the
- * root, and one or more partial syntax trees within the error. This behavior
- * may not be supported long-term.
- */
-void ts_parser_halt_on_error(TSParser *self, bool halt);
 
 /******************/
 /* Section - Tree */
@@ -732,11 +735,21 @@ const char *ts_query_string_value_for_id(
 );
 
 /**
- * Disable a certain capture within a query. This prevents the capture
- * from being returned in matches, and also avoids any resource usage
- * associated with recording the capture.
+ * Disable a certain capture within a query.
+ *
+ * This prevents the capture from being returned in matches, and also avoids
+ * any resource usage associated with recording the capture. Currently, there
+ * is no way to undo this.
  */
 void ts_query_disable_capture(TSQuery *, const char *, uint32_t);
+
+/**
+ * Disable a certain pattern within a query.
+ *
+ * This prevents the pattern from matching and removes most of the overhead
+ * associated with the pattern. Currently, there is no way to undo this.
+ */
+void ts_query_disable_pattern(TSQuery *, uint32_t);
 
 /**
  * Create a new cursor for executing a given query.

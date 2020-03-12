@@ -2852,7 +2852,8 @@ void ex_call(exarg_T *eap)
     }
   }
 
-  if (!failed) {
+  // When inside :try we need to check for following "| catch".
+  if (!failed || eap->cstack->cs_trylevel > 0) {
     // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
       emsg_severe = TRUE;
@@ -5152,6 +5153,10 @@ bool garbage_collect(bool testing)
     }
     // buffer ShaDa additional data
     ABORTING(set_ref_dict)(buf->additional_data, copyID);
+
+    // buffer callback functions
+    set_ref_in_callback(&buf->b_prompt_callback, copyID, NULL, NULL);
+    set_ref_in_callback(&buf->b_prompt_interrupt, copyID, NULL, NULL);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -7315,9 +7320,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   return dict;
 }
 
-/*
- * Find window specified by "vp" in tabpage "tp".
- */
+// Find window specified by "vp" in tabpage "tp".
 win_T *
 find_win_by_nr(
     typval_T *vp,
@@ -8111,10 +8114,16 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 bool callback_from_typval(Callback *const callback, typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  int r = OK;
+
   if (arg->v_type == VAR_PARTIAL && arg->vval.v_partial != NULL) {
     callback->data.partial = arg->vval.v_partial;
     callback->data.partial->pt_refcount++;
     callback->type = kCallbackPartial;
+  } else if (arg->v_type == VAR_STRING
+             && arg->vval.v_string != NULL
+             && ascii_isdigit(*arg->vval.v_string)) {
+    r = FAIL;
   } else if (arg->v_type == VAR_FUNC || arg->v_type == VAR_STRING) {
     char_u *name = arg->vval.v_string;
     func_ref(name);
@@ -8123,6 +8132,10 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
   } else if (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0) {
     callback->type = kCallbackNone;
   } else {
+    r = FAIL;
+  }
+
+  if (r == FAIL) {
     EMSG(_("E921: Invalid callback argument"));
     return false;
   }
@@ -9149,10 +9162,7 @@ char_u *v_throwpoint(char_u *oldval)
  */
 char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
 {
-  char_u      *oldval;
-  char_u      *newval;
-
-  oldval = vimvars[VV_CMDARG].vv_str;
+  char_u *oldval = vimvars[VV_CMDARG].vv_str;
   if (eap == NULL) {
     xfree(oldval);
     vimvars[VV_CMDARG].vv_str = oldarg;
@@ -9168,14 +9178,18 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     len += 7;
 
-  if (eap->force_ff != 0)
-    len += STRLEN(eap->cmd + eap->force_ff) + 6;
-  if (eap->force_enc != 0)
+  if (eap->force_ff != 0) {
+    len += 10;  // " ++ff=unix"
+  }
+  if (eap->force_enc != 0) {
     len += STRLEN(eap->cmd + eap->force_enc) + 7;
-  if (eap->bad_char != 0)
-    len += 7 + 4;      /* " ++bad=" + "keep" or "drop" */
+  }
+  if (eap->bad_char != 0) {
+    len += 7 + 4;  // " ++bad=" + "keep" or "drop"
+  }
 
-  newval = xmalloc(len + 1);
+  const size_t newval_len = len + 1;
+  char_u *newval = xmalloc(newval_len);
 
   if (eap->force_bin == FORCE_BIN)
     sprintf((char *)newval, " ++bin");
@@ -9187,18 +9201,23 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     STRCAT(newval, " ++edit");
 
-  if (eap->force_ff != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++ff=%s",
-        eap->cmd + eap->force_ff);
-  if (eap->force_enc != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++enc=%s",
-        eap->cmd + eap->force_enc);
-  if (eap->bad_char == BAD_KEEP)
+  if (eap->force_ff != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++ff=%s",
+             eap->force_ff == 'u' ? "unix" :
+             eap->force_ff == 'd' ? "dos" : "mac");
+  }
+  if (eap->force_enc != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++enc=%s",
+             eap->cmd + eap->force_enc);
+  }
+  if (eap->bad_char == BAD_KEEP) {
     STRCPY(newval + STRLEN(newval), " ++bad=keep");
-  else if (eap->bad_char == BAD_DROP)
+  } else if (eap->bad_char == BAD_DROP) {
     STRCPY(newval + STRLEN(newval), " ++bad=drop");
-  else if (eap->bad_char != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++bad=%c", eap->bad_char);
+  } else if (eap->bad_char != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++bad=%c",
+             eap->bad_char);
+  }
   vimvars[VV_CMDARG].vv_str = newval;
   return oldval;
 }
@@ -9448,6 +9467,27 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
     rettv->v_type = VAR_PARTIAL;
     rettv->vval.v_partial = pt;
   }
+}
+
+// Turn a typeval into a string.  Similar to tv_get_string_buf() but uses
+// string() on Dict, List, etc.
+static const char *tv_stringify(typval_T *varp, char *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (varp->v_type == VAR_LIST
+      || varp->v_type == VAR_DICT
+      || varp->v_type == VAR_FUNC
+      || varp->v_type == VAR_PARTIAL
+      || varp->v_type == VAR_FLOAT) {
+    typval_T tmp;
+
+    f_string(varp, &tmp, NULL);
+    const char *const res = tv_get_string_buf(&tmp, buf);
+    tv_clear(varp);
+    *varp = tmp;
+    return res;
+  }
+  return tv_get_string_buf(varp, buf);
 }
 
 // Find variable "name" in the list of variables.
@@ -10340,7 +10380,10 @@ void ex_execute(exarg_T *eap)
     }
 
     if (!eap->skip) {
-      const char *const argstr = tv_get_string(&rettv);
+      char buf[NUMBUFLEN];
+      const char *const argstr = eap->cmdidx == CMD_execute
+        ? tv_get_string_buf(&rettv, buf)
+        : tv_stringify(&rettv, buf);
       const size_t len = strlen(argstr);
       ga_grow(&ga, len + 2);
       if (!GA_EMPTY(&ga)) {
@@ -13686,4 +13729,52 @@ void ex_checkhealth(exarg_T *eap)
   do_cmdline_cmd(buf);
 
   xfree(buf);
+}
+
+void invoke_prompt_callback(void)
+{
+    typval_T rettv;
+    typval_T argv[2];
+    char_u *text;
+    char_u *prompt;
+    linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+    // Add a new line for the prompt before invoking the callback, so that
+    // text can always be inserted above the last line.
+    ml_append(lnum, (char_u  *)"", 0, false);
+    curwin->w_cursor.lnum = lnum + 1;
+    curwin->w_cursor.col = 0;
+
+    if (curbuf->b_prompt_callback.type == kCallbackNone) {
+      return;
+    }
+    text = ml_get(lnum);
+    prompt = prompt_text();
+    if (STRLEN(text) >= STRLEN(prompt)) {
+      text += STRLEN(prompt);
+    }
+    argv[0].v_type = VAR_STRING;
+    argv[0].vval.v_string = vim_strsave(text);
+    argv[1].v_type = VAR_UNKNOWN;
+
+    callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
+    tv_clear(&argv[0]);
+    tv_clear(&rettv);
+}
+
+// Return true When the interrupt callback was invoked.
+bool invoke_prompt_interrupt(void)
+{
+    typval_T rettv;
+    typval_T argv[1];
+
+    if (curbuf->b_prompt_interrupt.type == kCallbackNone) {
+      return false;
+    }
+    argv[0].v_type = VAR_UNKNOWN;
+
+    got_int = false;  // don't skip executing commands
+    callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+    tv_clear(&rettv);
+    return true;
 }

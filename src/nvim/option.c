@@ -299,7 +299,8 @@ static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
 static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
 static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
 static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
-                                        "help", "acwrite", "terminal", NULL };
+                                        "help", "acwrite", "terminal",
+                                        "prompt", NULL };
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };
@@ -314,6 +315,9 @@ static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
   "yes:9", NULL };
+static char *(p_fdc_values[]) =       { "auto:1", "auto:2",
+  "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL };
 
 /// All possible flags for 'shm'.
 static char_u SHM_ALL[] = {
@@ -2572,7 +2576,7 @@ static bool valid_filetype(const char_u *val)
 bool valid_spellang(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return valid_name(val, ".-_,");
+  return valid_name(val, ".-_,@");
 }
 
 /// Return true if "val" is a valid 'spellfile' value.
@@ -3204,6 +3208,11 @@ ambw_end:
   } else if (varp == &curwin->w_p_scl) {
     // 'signcolumn'
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
+      errmsg = e_invarg;
+    }
+  } else if (varp == &curwin->w_p_fdc || varp == &curwin->w_allbuf_opt.wo_fdc) {
+    // 'foldcolumn'
+    if (check_opt_strings(*varp, p_fdc_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_pt) {
@@ -4369,12 +4378,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
     if (value < 0) {
       errmsg = e_positive;
-    }
-  } else if (pp == &curwin->w_p_fdc || pp == &curwin->w_allbuf_opt.wo_fdc) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else if (value > 12) {
-      errmsg = e_invarg;
     }
   } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
     if (value < 0) {
@@ -5955,8 +5958,9 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_diff_saved = from->wo_diff_saved;
   to->wo_cocu = vim_strsave(from->wo_cocu);
   to->wo_cole = from->wo_cole;
-  to->wo_fdc = from->wo_fdc;
-  to->wo_fdc_save = from->wo_fdc_save;
+  to->wo_fdc = vim_strsave(from->wo_fdc);
+  to->wo_fdc_save = from->wo_diff_saved
+                    ? vim_strsave(from->wo_fdc_save) : empty_option;
   to->wo_fen = from->wo_fen;
   to->wo_fen_save = from->wo_fen_save;
   to->wo_fdi = vim_strsave(from->wo_fdi);
@@ -5992,6 +5996,8 @@ void check_win_options(win_T *win)
  */
 static void check_winopt(winopt_T *wop)
 {
+  check_string_option(&wop->wo_fdc);
+  check_string_option(&wop->wo_fdc_save);
   check_string_option(&wop->wo_fdi);
   check_string_option(&wop->wo_fdm);
   check_string_option(&wop->wo_fdm_save);
@@ -6014,6 +6020,8 @@ static void check_winopt(winopt_T *wop)
  */
 void clear_winopt(winopt_T *wop)
 {
+  clear_string_option(&wop->wo_fdc);
+  clear_string_option(&wop->wo_fdc_save);
   clear_string_option(&wop->wo_fdi);
   clear_string_option(&wop->wo_fdm);
   clear_string_option(&wop->wo_fdm_save);
@@ -6092,10 +6100,8 @@ void buf_copy_options(buf_T *buf, int flags)
         save_p_isk = buf->b_p_isk;
         buf->b_p_isk = NULL;
       }
-      /*
-       * Always free the allocated strings.
-       * If not already initialized, set 'readonly' and copy 'fileformat'.
-       */
+      // Always free the allocated strings.  If not already initialized,
+      // reset 'readonly' and copy 'fileformat'.
       if (!buf->b_p_initialized) {
         free_buf_options(buf, true);
         buf->b_p_ro = false;                    // don't copy readonly
@@ -7111,10 +7117,13 @@ static int check_opt_wim(void)
  */
 bool can_bs(int what)
 {
+  if (what == BS_START && bt_prompt(curbuf)) {
+    return false;
+  }
   switch (*p_bs) {
-  case '2':       return true;
-  case '1':       return what != BS_START;
-  case '0':       return false;
+    case '2':       return true;
+    case '1':       return what != BS_START;
+    case '0':       return false;
   }
   return vim_strchr(p_bs, what) != NULL;
 }
@@ -7310,12 +7319,13 @@ int get_fileformat(buf_T *buf)
 /// argument.
 ///
 /// @param eap  can be NULL!
-int get_fileformat_force(buf_T *buf, exarg_T *eap)
+int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int c;
 
   if (eap != NULL && eap->force_ff != 0) {
-    c = eap->cmd[eap->force_ff];
+    c = eap->force_ff;
   } else {
     if ((eap != NULL && eap->force_bin != 0)
         ? (eap->force_bin == FORCE_BIN) : buf->b_p_bin) {

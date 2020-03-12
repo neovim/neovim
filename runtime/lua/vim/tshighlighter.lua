@@ -69,6 +69,8 @@ function TSHighlighter:set_query(query)
     end
     self.id_map[i] = hl
   end
+
+    a.nvim__buf_redraw_range(self.buf, 0, a.nvim_buf_line_count(self.buf))
 end
 
 function TSHighlighter:on_change(changes)

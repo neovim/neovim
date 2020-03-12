@@ -130,20 +130,21 @@ endfunc
 func Test_spellinfo()
   throw 'skipped: Nvim does not support enc=latin1'
   new
+  let runtime = substitute($VIMRUNTIME, '\\', '/', 'g')
 
   set enc=latin1 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.latin1.spl\n$", execute('spellinfo'))
 
   set enc=cp1250 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.ascii.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.ascii.spl\n$", execute('spellinfo'))
 
   set enc=utf-8 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.utf-8.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.utf-8.spl\n$", execute('spellinfo'))
 
   set enc=latin1 spell spelllang=en_us,en_nz
   call assert_match("^\n" .
-                 \  "file: .*/runtime/spell/en.latin1.spl\n" .
-                 \  "file: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+                 \  "file: " .. runtime .. "/spell/en.latin1.spl\n" .
+                 \  "file: " .. runtime .. "/spell/en.latin1.spl\n$", execute('spellinfo'))
 
   set spell spelllang=
   call assert_fails('spellinfo', 'E756:')

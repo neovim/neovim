@@ -698,3 +698,9 @@ func Test_search_display_pattern()
     set norl
   endif
 endfunc
+
+func Test_search_special()
+  " this was causing illegal memory access and an endless loop
+  set t_PE=
+  exe "norm /\x80PS"
+endfunc

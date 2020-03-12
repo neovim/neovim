@@ -763,6 +763,9 @@ static void free_buffer(buf_T *buf)
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
   tv_dict_unref(buf->additional_data);
+  xfree(buf->b_prompt_text);
+  callback_free(&buf->b_prompt_callback);
+  callback_free(&buf->b_prompt_interrupt);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1875,6 +1878,10 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       return NULL;
     }
   }
+
+  buf->b_prompt_callback.type = kCallbackNone;
+  buf->b_prompt_interrupt.type = kCallbackNone;
+  buf->b_prompt_text = NULL;
 
   return buf;
 }
@@ -3390,14 +3397,27 @@ int build_stl_str_hl(
     fillchar = '-';
   }
 
+  // The cursor in windows other than the current one isn't always
+  // up-to-date, esp. because of autocommands and timers.
+  linenr_T lnum = wp->w_cursor.lnum;
+  if (lnum > wp->w_buffer->b_ml.ml_line_count) {
+    lnum = wp->w_buffer->b_ml.ml_line_count;
+    wp->w_cursor.lnum = lnum;
+  }
+
   // Get line & check if empty (cursorpos will show "0-1").
-  char_u *line_ptr = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false);
+  const char_u *line_ptr = ml_get_buf(wp->w_buffer, lnum, false);
   bool empty_line = (*line_ptr == NUL);
 
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr)) {
+  const size_t len = STRLEN(line_ptr);
+  if (wp->w_cursor.col > (colnr_T)len) {
+    // Line may have changed since checking the cursor column, or the lnum
+    // was adjusted above.
+    wp->w_cursor.col = (colnr_T)len;
+    wp->w_cursor.coladd = 0;
     byteval = 0;
   } else {
     byteval = utf_ptr2char(line_ptr + wp->w_cursor.col);
@@ -4824,6 +4844,12 @@ do_arg_all(
   xfree(opened);
 }
 
+// Return TRUE if "buf" is a prompt buffer.
+int bt_prompt(buf_T *buf)
+{
+    return buf != NULL && buf->b_p_bt[0] == 'p';
+}
+
 /*
  * Open a window for a number of buffers.
  */
@@ -5218,14 +5244,18 @@ bool bt_nofile(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
-                         || buf->b_p_bt[0] == 'a' || buf->terminal);
+                         || buf->b_p_bt[0] == 'a'
+                         || buf->terminal
+                         || buf->b_p_bt[0] == 'p');
 }
 
 // Return true if "buf" is a "nowrite", "nofile" or "terminal" buffer.
 bool bt_dontwrite(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
+  return buf != NULL && (buf->b_p_bt[0] == 'n'
+                         || buf->terminal
+                         || buf->b_p_bt[0] == 'p');
 }
 
 bool bt_dontwrite_msg(const buf_T *const buf)
@@ -5277,6 +5307,9 @@ char_u *buf_spname(buf_T *buf)
   if (bt_nofile(buf)) {
     if (buf->b_fname != NULL) {
       return buf->b_fname;
+    }
+    if (bt_prompt(buf)) {
+      return (char_u *)_("[Prompt]");
     }
     return (char_u *)_("[Scratch]");
   }

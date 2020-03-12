@@ -339,4 +339,8 @@ func Test_nocatch_garbage_collect()
   delfunc FeedChar
 endfunc
 
+func Test_timer_invalid_callback()
+  call assert_fails('call timer_start(0, "0")', 'E921')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

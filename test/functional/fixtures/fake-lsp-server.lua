@@ -1,23 +1,14 @@
 local protocol = require 'vim.lsp.protocol'
 
--- Internal utility methods.
 
--- TODO replace with a better implementation.
-local function json_encode(data)
-  local status, result = pcall(vim.fn.json_encode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
-end
-local function json_decode(data)
-  local status, result = pcall(vim.fn.json_decode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
+-- Logs to $NVIM_LOG_FILE.
+--
+-- TODO(justinmk): remove after https://github.com/neovim/neovim/pull/7062
+local function log(loglevel, area, msg)
+  vim.fn.writefile(
+    {string.format('%s %s: %s', loglevel, area, msg)},
+    vim.env.NVIM_LOG_FILE,
+    'a')
 end
 
 local function message_parts(sep, ...)
@@ -49,16 +40,14 @@ local function format_message_with_content_length(encoded_message)
   }
 end
 
--- Server utility methods.
-
 local function read_message()
   local line = io.read("*l")
   local length = line:lower():match("content%-length:%s*(%d+)")
-  return assert(json_decode(io.read(2 + length):sub(2)), "read_message.json_decode")
+  return vim.fn.json_decode(io.read(2 + length):sub(2))
 end
 
 local function send(payload)
-  io.stdout:write(format_message_with_content_length(json_encode(payload)))
+  io.stdout:write(format_message_with_content_length(vim.fn.json_encode(payload)))
 end
 
 local function respond(id, err, result)
@@ -390,7 +379,7 @@ function tests.basic_check_buffer_open_and_change_incremental()
   }
 end
 
-function tests.basic_check_buffer_open_and_change_incremental_editting()
+function tests.basic_check_buffer_open_and_change_incremental_editing()
   skeleton {
     on_init = function(params)
       local expected_capabilities = protocol.make_client_capabilities()
@@ -443,6 +432,7 @@ local kill_timer = vim.loop.new_timer()
 kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
   kill_timer:stop()
   kill_timer:close()
+  log('ERROR', 'LSP', 'TIMEOUT')
   io.stderr:write("TIMEOUT")
   os.exit(100)
 end)
@@ -453,7 +443,8 @@ local status, err = pcall(assert(tests[test_name], "Test not found"))
 kill_timer:stop()
 kill_timer:close()
 if not status then
+  log('ERROR', 'LSP', tostring(err))
   io.stderr:write(err)
-  os.exit(1)
+  os.exit(101)
 end
 os.exit(0)

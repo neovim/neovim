@@ -120,24 +120,20 @@ typedef off_t off_T;
 # endif
 #endif
 
-/*
- * When vgetc() is called, it sets mod_mask to the set of modifiers that are
- * held down based on the MOD_MASK_* symbols that are read first.
- */
-EXTERN int mod_mask INIT(= 0x0);                /* current key modifiers */
+// When vgetc() is called, it sets mod_mask to the set of modifiers that are
+// held down based on the MOD_MASK_* symbols that are read first.
+EXTERN int mod_mask INIT(= 0x0);  // current key modifiers
 
 
 EXTERN bool lua_attr_active INIT(= false);
 
-/*
- * Cmdline_row is the row where the command line starts, just below the
- * last window.
- * When the cmdline gets longer than the available space the screen gets
- * scrolled up. After a CTRL-D (show matches), after hitting ':' after
- * "hit return", and for the :global command, the command line is
- * temporarily moved.  The old position is restored with the next call to
- * update_screen().
- */
+// Cmdline_row is the row where the command line starts, just below the
+// last window.
+// When the cmdline gets longer than the available space the screen gets
+// scrolled up. After a CTRL-D (show matches), after hitting ':' after
+// "hit return", and for the :global command, the command line is
+// temporarily moved.  The old position is restored with the next call to
+// update_screen().
 EXTERN int cmdline_row;
 
 EXTERN int redraw_cmdline INIT(= false);          // cmdline must be redrawn
@@ -149,42 +145,38 @@ EXTERN int cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
 
 EXTERN int exec_from_reg INIT(= false);         // executing register
 
-/*
- * When '$' is included in 'cpoptions' option set:
- * When a change command is given that deletes only part of a line, a dollar
- * is put at the end of the changed text. dollar_vcol is set to the virtual
- * column of this '$'.  -1 is used to indicate no $ is being displayed.
- */
+// When '$' is included in 'cpoptions' option set:
+// When a change command is given that deletes only part of a line, a dollar
+// is put at the end of the changed text. dollar_vcol is set to the virtual
+// column of this '$'.  -1 is used to indicate no $ is being displayed.
 EXTERN colnr_T dollar_vcol INIT(= -1);
 
-/*
- * Variables for Insert mode completion.
- */
+// Variables for Insert mode completion.
 
-/* Length in bytes of the text being completed (this is deleted to be replaced
- * by the match.) */
+// Length in bytes of the text being completed (this is deleted to be replaced
+// by the match.)
 EXTERN int compl_length INIT(= 0);
 
-/* Set when character typed while looking for matches and it means we should
- * stop looking for matches. */
-EXTERN int compl_interrupted INIT(= FALSE);
+// Set when character typed while looking for matches and it means we should
+// stop looking for matches.
+EXTERN int compl_interrupted INIT(= false);
 
 // Set when doing something for completion that may call edit() recursively,
 // which is not allowed. Also used to disable folding during completion
 EXTERN int compl_busy INIT(= false);
 
-/* List of flags for method of completion. */
+// List of flags for method of completion.
 EXTERN int compl_cont_status INIT(= 0);
-# define CONT_ADDING    1       /* "normal" or "adding" expansion */
-# define CONT_INTRPT    (2 + 4) /* a ^X interrupted the current expansion */
-                                /* it's set only iff N_ADDS is set */
-# define CONT_N_ADDS    4       /* next ^X<> will add-new or expand-current */
-# define CONT_S_IPOS    8       /* next ^X<> will set initial_pos?
-                                 * if so, word-wise-expansion will set SOL */
-# define CONT_SOL       16      /* pattern includes start of line, just for
-                                 * word-wise expansion, not set for ^X^L */
-# define CONT_LOCAL     32      /* for ctrl_x_mode 0, ^X^P/^X^N do a local
-                                 * expansion, (eg use complete=.) */
+# define CONT_ADDING    1       // "normal" or "adding" expansion
+# define CONT_INTRPT   (2 + 4)  // a ^X interrupted the current expansion
+                                // it's set only iff N_ADDS is set
+# define CONT_N_ADDS    4       // next ^X<> will add-new or expand-current
+# define CONT_S_IPOS    8       // next ^X<> will set initial_pos?
+                                // if so, word-wise-expansion will set SOL
+# define CONT_SOL       16      // pattern includes start of line, just for
+                                // word-wise expansion, not set for ^X^L
+# define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
+                                // expansion, (eg use complete=.)
 
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
@@ -200,49 +192,49 @@ EXTERN bool msg_scrolled_ign INIT(= false);
 EXTERN bool msg_did_scroll INIT(= false);
 
 
-EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw */
-EXTERN int keep_msg_attr INIT(= 0);         /* highlight attr for keep_msg */
-EXTERN int keep_msg_more INIT(= FALSE);      /* keep_msg was set by msgmore() */
-EXTERN int need_fileinfo INIT(= FALSE);     /* do fileinfo() after redraw */
-EXTERN int msg_scroll INIT(= FALSE);        /* msg_start() will scroll */
-EXTERN int msg_didout INIT(= FALSE);        /* msg_outstr() was used in line */
-EXTERN int msg_didany INIT(= FALSE);        /* msg_outstr() was used at all */
-EXTERN int msg_nowait INIT(= FALSE);        /* don't wait for this msg */
-EXTERN int emsg_off INIT(= 0);              /* don't display errors for now,
-                                               unless 'debug' is set. */
-EXTERN int info_message INIT(= FALSE);      /* printing informative message */
-EXTERN int msg_hist_off INIT(= FALSE);      /* don't add messages to history */
-EXTERN int need_clr_eos INIT(= FALSE);      /* need to clear text before
-                                               displaying a message. */
-EXTERN int emsg_skip INIT(= 0);             /* don't display errors for
-                                               expression that is skipped */
-EXTERN int emsg_severe INIT(= FALSE);        /* use message of next of several
-                                                emsg() calls for throw */
-EXTERN int did_endif INIT(= FALSE);         /* just had ":endif" */
-EXTERN dict_T vimvardict;                   /* Dictionary with v: variables */
-EXTERN dict_T globvardict;                  /* Dictionary with g: variables */
-EXTERN int did_emsg;                        /* set by emsg() when the message
-                                               is displayed or thrown */
+EXTERN char_u *keep_msg INIT(= NULL);       // msg to be shown after redraw
+EXTERN int keep_msg_attr INIT(= 0);         // highlight attr for keep_msg
+EXTERN int keep_msg_more INIT(= false);     // keep_msg was set by msgmore()
+EXTERN int need_fileinfo INIT(= false);     // do fileinfo() after redraw
+EXTERN int msg_scroll INIT(= false);        // msg_start() will scroll
+EXTERN int msg_didout INIT(= false);        // msg_outstr() was used in line
+EXTERN int msg_didany INIT(= false);        // msg_outstr() was used at all
+EXTERN int msg_nowait INIT(= false);        // don't wait for this msg
+EXTERN int emsg_off INIT(= 0);              // don't display errors for now,
+                                            // unless 'debug' is set.
+EXTERN int info_message INIT(= false);      // printing informative message
+EXTERN int msg_hist_off INIT(= false);      // don't add messages to history
+EXTERN int need_clr_eos INIT(= false);      // need to clear text before
+                                            // displaying a message.
+EXTERN int emsg_skip INIT(= 0);             // don't display errors for
+                                            // expression that is skipped
+EXTERN int emsg_severe INIT(= false);       // use message of next of several
+                                            //  emsg() calls for throw
+EXTERN int did_endif INIT(= false);         // just had ":endif"
+EXTERN dict_T vimvardict;                   // Dictionary with v: variables
+EXTERN dict_T globvardict;                  // Dictionary with g: variables
+EXTERN int did_emsg;                        // set by emsg() when the message
+                                            // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
-EXTERN int did_emsg_syntax;                 /* did_emsg set because of a
-                                               syntax error */
-EXTERN int called_emsg;                     /* always set by emsg() */
-EXTERN int ex_exitval INIT(= 0);            /* exit value for ex mode */
-EXTERN int emsg_on_display INIT(= FALSE);       /* there is an error message */
-EXTERN int rc_did_emsg INIT(= FALSE);       /* vim_regcomp() called emsg() */
+EXTERN int did_emsg_syntax;                 // did_emsg set because of a
+                                            // syntax error
+EXTERN int called_emsg;                     // always set by emsg()
+EXTERN int ex_exitval INIT(= 0);            // exit value for ex mode
+EXTERN int emsg_on_display INIT(= false);   // there is an error message
+EXTERN int rc_did_emsg INIT(= false);       // vim_regcomp() called emsg()
 
-EXTERN int no_wait_return INIT(= 0);        /* don't wait for return for now */
-EXTERN int need_wait_return INIT(= 0);      /* need to wait for return later */
-EXTERN int did_wait_return INIT(= FALSE);       /* wait_return() was used and
-                                                   nothing written since then */
-EXTERN int need_maketitle INIT(= TRUE);      /* call maketitle() soon */
+EXTERN int no_wait_return INIT(= 0);        // don't wait for return for now
+EXTERN int need_wait_return INIT(= 0);      // need to wait for return later
+EXTERN int did_wait_return INIT(= false);   // wait_return() was used and
+                                            // nothing written since then
+EXTERN int need_maketitle INIT(= true);     // call maketitle() soon
 
 EXTERN int quit_more INIT(= false);         // 'q' hit at "--more--" msg
 EXTERN int ex_keep_indent INIT(= false);    // getexmodeline(): keep indent
 EXTERN int vgetc_busy INIT(= 0);            // when inside vgetc() then > 0
 
-EXTERN int didset_vim INIT(= FALSE);        /* did set $VIM ourselves */
-EXTERN int didset_vimruntime INIT(= FALSE);        /* idem for $VIMRUNTIME */
+EXTERN int didset_vim INIT(= false);         // did set $VIM ourselves
+EXTERN int didset_vimruntime INIT(= false);  // idem for $VIMRUNTIME
 
 /// Lines left before a "more" message.  Ex mode needs to be able to reset this
 /// after you type something.
@@ -250,8 +242,8 @@ EXTERN int lines_left INIT(= -1);           // lines left for listing
 EXTERN int msg_no_more INIT(= false);       // don't use more prompt, truncate
                                             // messages
 
-EXTERN char_u   *sourcing_name INIT( = NULL); /* name of error message source */
-EXTERN linenr_T sourcing_lnum INIT(= 0);    /* line number of the source file */
+EXTERN char_u *sourcing_name INIT(= NULL);  // name of error message source
+EXTERN linenr_T sourcing_lnum INIT(= 0);    // line number of the source file
 
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
 EXTERN int debug_break_level INIT(= -1);        // break below this level
@@ -282,11 +274,11 @@ EXTERN int check_cstack INIT(= false);
 /// commands).
 EXTERN int trylevel INIT(= 0);
 
-/// When "force_abort" is TRUE, always skip commands after an error message,
+/// When "force_abort" is true, always skip commands after an error message,
 /// even after the outermost ":endif", ":endwhile" or ":endfor" or for a
-/// function without the "abort" flag.  It is set to TRUE when "trylevel" is
+/// function without the "abort" flag.  It is set to true when "trylevel" is
 /// non-zero (and ":silent!" was not used) or an exception is being thrown at
-/// the time an error is detected.  It is set to FALSE when "trylevel" gets
+/// the time an error is detected.  It is set to false when "trylevel" gets
 /// zero again and there was no error or interrupt or throw.
 EXTERN int force_abort INIT(= false);
 
@@ -357,41 +349,38 @@ EXTERN int provider_call_nesting INIT(= 0);
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 
-/*
- * When highlight_match is TRUE, highlight a match, starting at the cursor
- * position.  Search_match_lines is the number of lines after the match (0 for
- * a match within one line), search_match_endcol the column number of the
- * character just after the match in the last line.
- */
-EXTERN int highlight_match INIT(= FALSE);       /* show search match pos */
-EXTERN linenr_T search_match_lines;             /* lines of of matched string */
-EXTERN colnr_T search_match_endcol;             /* col nr of match end */
+// When highlight_match is true, highlight a match, starting at the cursor
+// position.  Search_match_lines is the number of lines after the match (0 for
+// a match within one line), search_match_endcol the column number of the
+// character just after the match in the last line.
+EXTERN int highlight_match INIT(= false);       // show search match pos
+EXTERN linenr_T search_match_lines;             // lines of of matched string
+EXTERN colnr_T search_match_endcol;             // col nr of match end
 
-EXTERN int no_smartcase INIT(= FALSE);          /* don't use 'smartcase' once */
+EXTERN int no_smartcase INIT(= false);          // don't use 'smartcase' once
 
-EXTERN int need_check_timestamps INIT(= FALSE);      /* need to check file
-                                                        timestamps asap */
-EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
-                                                       recently */
-EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
+EXTERN int need_check_timestamps INIT(= false);  // need to check file
+                                                 // timestamps asap
+EXTERN int did_check_timestamps INIT(= false);   // did check timestamps
+                                                 // recently
+EXTERN int no_check_timestamps INIT(= 0);        // Don't check timestamps
 
-EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
-EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */
-EXTERN int autocmd_no_leave INIT(= FALSE);      /* *Leave autocmds disabled */
-EXTERN int modified_was_set;                    /* did ":set modified" */
-EXTERN int did_filetype INIT(= FALSE);          /* FileType event found */
-EXTERN int keep_filetype INIT(= FALSE);         /* value for did_filetype when
-                                                   starting to execute
-                                                   autocommands */
+EXTERN int autocmd_busy INIT(= false);           // Is apply_autocmds() busy?
+EXTERN int autocmd_no_enter INIT(= false);       // *Enter autocmds disabled
+EXTERN int autocmd_no_leave INIT(= false);       // *Leave autocmds disabled
+EXTERN int modified_was_set;                     // did ":set modified"
+EXTERN int did_filetype INIT(= false);           // FileType event found
+// value for did_filetype when starting to execute autocommands
+EXTERN int keep_filetype INIT(= false);
 
 // When deleting the current buffer, another one must be loaded.
 // If we know which one is preferred, au_new_curbuf is set to it.
 EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
 
-// When deleting a buffer/window and autocmd_busy is TRUE, do not free the
+// When deleting a buffer/window and autocmd_busy is true, do not free the
 // buffer/window. but link it in the list starting with
 // au_pending_free_buf/ap_pending_free_win, using b_next/w_next.
-// Free the buffer/window when autocmd_busy is being set to FALSE.
+// Free the buffer/window when autocmd_busy is being set to false.
 EXTERN buf_T *au_pending_free_buf INIT(= NULL);
 EXTERN win_T *au_pending_free_win INIT(= NULL);
 
@@ -399,31 +388,27 @@ EXTERN win_T *au_pending_free_win INIT(= NULL);
 EXTERN int mouse_grid;
 EXTERN int mouse_row;
 EXTERN int mouse_col;
-EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
-EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
-EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
-                                                   mouse dragging */
+EXTERN bool mouse_past_bottom INIT(= false);  // mouse below last line
+EXTERN bool mouse_past_eol INIT(= false);     // mouse right of line
+EXTERN int mouse_dragging INIT(= 0);          // extending Visual area with
+                                              // mouse dragging
 
-/* The root of the menu hierarchy. */
+// The root of the menu hierarchy.
 EXTERN vimmenu_T        *root_menu INIT(= NULL);
-/*
- * While defining the system menu, sys_menu is TRUE.  This avoids
- * overruling of menus that the user already defined.
- */
-EXTERN int sys_menu INIT(= FALSE);
+// While defining the system menu, sys_menu is true.  This avoids
+// overruling of menus that the user already defined.
+EXTERN int sys_menu INIT(= false);
 
-/* While redrawing the screen this flag is set.  It means the screen size
- * ('lines' and 'rows') must not be changed. */
-EXTERN int updating_screen INIT(= FALSE);
+// While redrawing the screen this flag is set.  It means the screen size
+// ('lines' and 'rows') must not be changed.
+EXTERN int updating_screen INIT(= 0);
 
-/*
- * All windows are linked in a list. firstwin points to the first entry,
- * lastwin to the last entry (can be the same as firstwin) and curwin to the
- * currently active window.
- */
-EXTERN win_T    *firstwin;              /* first window */
-EXTERN win_T    *lastwin;               /* last window */
-EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
+// All windows are linked in a list. firstwin points to the first entry,
+// lastwin to the last entry (can be the same as firstwin) and curwin to the
+// currently active window.
+EXTERN win_T    *firstwin;              // first window
+EXTERN win_T    *lastwin;               // last window
+EXTERN win_T    *prevwin INIT(= NULL);  // previous window
 # define ONE_WINDOW (firstwin == lastwin)
 # define FOR_ALL_FRAMES(frp, first_frame) \
   for (frp = first_frame; frp != NULL; frp = frp->fr_next)  // NOLINT
@@ -439,33 +424,27 @@ EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
-EXTERN win_T    *curwin;        /* currently active window */
+EXTERN win_T    *curwin;        // currently active window
 
-EXTERN win_T    *aucmd_win;     /* window used in aucmd_prepbuf() */
-EXTERN int aucmd_win_used INIT(= FALSE);        /* aucmd_win is being used */
+EXTERN win_T    *aucmd_win;     // window used in aucmd_prepbuf()
+EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
 
-/*
- * The window layout is kept in a tree of frames.  topframe points to the top
- * of the tree.
- */
-EXTERN frame_T  *topframe;      /* top of the window frame tree */
+// The window layout is kept in a tree of frames.  topframe points to the top
+// of the tree.
+EXTERN frame_T  *topframe;      // top of the window frame tree
 
-/*
- * Tab pages are alternative topframes.  "first_tabpage" points to the first
- * one in the list, "curtab" is the current one.
- */
+// Tab pages are alternative topframes.  "first_tabpage" points to the first
+// one in the list, "curtab" is the current one.
 EXTERN tabpage_T    *first_tabpage;
 EXTERN tabpage_T    *lastused_tabpage;
 EXTERN tabpage_T    *curtab;
-EXTERN int redraw_tabline INIT(= FALSE);           /* need to redraw tabline */
+EXTERN int redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list
 # define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
 
-/*
- * All buffers are linked in a list. 'firstbuf' points to the first entry,
- * 'lastbuf' to the last entry and 'curbuf' to the currently active buffer.
- */
+// All buffers are linked in a list. 'firstbuf' points to the first entry,
+// 'lastbuf' to the last entry and 'curbuf' to the currently active buffer.
 EXTERN buf_T    *firstbuf INIT(= NULL);  // first buffer
 EXTERN buf_T    *lastbuf INIT(= NULL);   // last buffer
 EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
@@ -481,23 +460,19 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
   for (sign = buf->b_signlist; sign != NULL; sign = sign->next)   // NOLINT
 
 
-/*
- * List of files being edited (global argument list).  curwin->w_alist points
- * to this when the window is using the global argument list.
- */
-EXTERN alist_T global_alist;    /* global argument list */
+// List of files being edited (global argument list).  curwin->w_alist points
+// to this when the window is using the global argument list.
+EXTERN alist_T global_alist;    // global argument list
 EXTERN int max_alist_id INIT(= 0);     ///< the previous argument list id
 EXTERN bool arg_had_last INIT(= false);     // accessed last file in
                                             // global_alist
 
-EXTERN int ru_col;              /* column for ruler */
-EXTERN int ru_wid;              /* 'rulerfmt' width of ruler when non-zero */
-EXTERN int sc_col;              /* column for shown command */
+EXTERN int ru_col;              // column for ruler
+EXTERN int ru_wid;              // 'rulerfmt' width of ruler when non-zero
+EXTERN int sc_col;              // column for shown command
 
-//
 // When starting or exiting some things are done differently (e.g. screen
 // updating).
-//
 
 // First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT(= NO_SCREEN);
@@ -546,98 +521,78 @@ EXTERN int VIsual_select INIT(= false);
 EXTERN int VIsual_reselect;
 /// Type of Visual mode.
 EXTERN int VIsual_mode INIT(= 'v');
-/// TRUE when redoing Visual.
+/// true when redoing Visual.
 EXTERN int redo_VIsual_busy INIT(= false);
 
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Insstart.
 EXTERN pos_T where_paste_started;
 
-/*
- * This flag is used to make auto-indent work right on lines where only a
- * <RETURN> or <ESC> is typed. It is set when an auto-indent is done, and
- * reset when any other editing is done on the line. If an <ESC> or <RETURN>
- * is received, and did_ai is TRUE, the line is truncated.
- */
+// This flag is used to make auto-indent work right on lines where only a
+// <RETURN> or <ESC> is typed. It is set when an auto-indent is done, and
+// reset when any other editing is done on the line. If an <ESC> or <RETURN>
+// is received, and did_ai is true, the line is truncated.
 EXTERN bool did_ai INIT(= false);
 
-/*
- * Column of first char after autoindent.  0 when no autoindent done.  Used
- * when 'backspace' is 0, to avoid backspacing over autoindent.
- */
+// Column of first char after autoindent.  0 when no autoindent done.  Used
+// when 'backspace' is 0, to avoid backspacing over autoindent.
 EXTERN colnr_T ai_col INIT(= 0);
 
-/*
- * This is a character which will end a start-middle-end comment when typed as
- * the first character on a new line.  It is taken from the last character of
- * the "end" comment leader when the COM_AUTO_END flag is given for that
- * comment end in 'comments'.  It is only valid when did_ai is TRUE.
- */
+// This is a character which will end a start-middle-end comment when typed as
+// the first character on a new line.  It is taken from the last character of
+// the "end" comment leader when the COM_AUTO_END flag is given for that
+// comment end in 'comments'.  It is only valid when did_ai is true.
 EXTERN int end_comment_pending INIT(= NUL);
 
-/*
- * This flag is set after a ":syncbind" to let the check_scrollbind() function
- * know that it should not attempt to perform scrollbinding due to the scroll
- * that was a result of the ":syncbind." (Otherwise, check_scrollbind() will
- * undo some of the work done by ":syncbind.")  -ralston
- */
-EXTERN int did_syncbind INIT(= FALSE);
+// This flag is set after a ":syncbind" to let the check_scrollbind() function
+// know that it should not attempt to perform scrollbinding due to the scroll
+// that was a result of the ":syncbind." (Otherwise, check_scrollbind() will
+// undo some of the work done by ":syncbind.")  -ralston
+EXTERN int did_syncbind INIT(= false);
 
-/*
- * This flag is set when a smart indent has been performed. When the next typed
- * character is a '{' the inserted tab will be deleted again.
- */
+// This flag is set when a smart indent has been performed. When the next typed
+// character is a '{' the inserted tab will be deleted again.
 EXTERN bool did_si INIT(= false);
 
-/*
- * This flag is set after an auto indent. If the next typed character is a '}'
- * one indent will be removed.
- */
+// This flag is set after an auto indent. If the next typed character is a '}'
+// one indent will be removed.
 EXTERN bool can_si INIT(= false);
 
-/*
- * This flag is set after an "O" command. If the next typed character is a '{'
- * one indent will be removed.
- */
+// This flag is set after an "O" command. If the next typed character is a '{'
+// one indent will be removed.
 EXTERN bool can_si_back INIT(= false);
 
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT(= { 0, 0, 0 });
 
-/*
- * Stuff for insert mode.
- */
-EXTERN pos_T Insstart;                  /* This is where the latest
-                                         * insert/append mode started. */
+// Stuff for insert mode.
+EXTERN pos_T Insstart;                  // This is where the latest
+                                        // insert/append mode started.
 
 // This is where the latest insert/append mode started. In contrast to
 // Insstart, this won't be reset by certain keys and is needed for
 // op_insert(), to detect correctly where inserting by the user started.
 EXTERN pos_T Insstart_orig;
 
-/*
- * Stuff for VREPLACE mode.
- */
-EXTERN int orig_line_count INIT(= 0);       /* Line count when "gR" started */
-EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
+// Stuff for VREPLACE mode.
+EXTERN int orig_line_count INIT(= 0);       // Line count when "gR" started
+EXTERN int vr_lines_changed INIT(= 0);      // #Lines changed by "gR" so far
 
 // increase around internal delete/replace
 EXTERN int inhibit_delete_count INIT(= 0);
 
-/*
- * These flags are set based upon 'fileencoding'.
- * Note that "enc_utf8" is also set for "unicode", because the characters are
- * internally stored as UTF-8 (to avoid trouble with NUL bytes).
- */
-# define DBCS_JPN       932     /* japan */
-# define DBCS_JPNU      9932    /* euc-jp */
-# define DBCS_KOR       949     /* korea */
-# define DBCS_KORU      9949    /* euc-kr */
-# define DBCS_CHS       936     /* chinese */
-# define DBCS_CHSU      9936    /* euc-cn */
-# define DBCS_CHT       950     /* taiwan */
-# define DBCS_CHTU      9950    /* euc-tw */
-# define DBCS_2BYTE     1       /* 2byte- */
+// These flags are set based upon 'fileencoding'.
+// Note that "enc_utf8" is also set for "unicode", because the characters are
+// internally stored as UTF-8 (to avoid trouble with NUL bytes).
+# define DBCS_JPN       932     // japan
+# define DBCS_JPNU      9932    // euc-jp
+# define DBCS_KOR       949     // korea
+# define DBCS_KORU      9949    // euc-kr
+# define DBCS_CHS       936     // chinese
+# define DBCS_CHSU      9936    // euc-cn
+# define DBCS_CHT       950     // taiwan
+# define DBCS_CHTU      9950    // euc-tw
+# define DBCS_2BYTE     1       // 2byte-
 # define DBCS_DEBUG     -1
 
 // mbyte flags that used to depend on 'encoding'. These are now deprecated, as
@@ -678,40 +633,40 @@ EXTERN int u_sync_once INIT(= 0);       // Call u_sync() once when evaluating
 
 EXTERN bool force_restart_edit INIT(= false);  // force restart_edit after
                                                // ex_normal returns
-EXTERN int restart_edit INIT(= 0);      /* call edit when next cmd finished */
-EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after
-                                         * hitting cursor key in insert mode.
-                                         * Used by vgetorpeek() to decide when
-                                         * to call u_sync() */
-EXTERN int ins_at_eol INIT(= FALSE);      /* put cursor after eol when
-                                             restarting edit after CTRL-O */
+EXTERN int restart_edit INIT(= 0);      // call edit when next cmd finished
+EXTERN int arrow_used;                  // Normally false, set to true after
+                                        // hitting cursor key in insert mode.
+                                        // Used by vgetorpeek() to decide when
+                                        // to call u_sync()
+EXTERN int ins_at_eol INIT(= false);    // put cursor after eol when
+                                        // restarting edit after CTRL-O
 EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
 EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
 EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
 EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
-EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
+EXTERN int no_abbr INIT(= true);        // true when no abbreviations loaded
 
 EXTERN int mapped_ctrl_c INIT(= 0);  // Modes where CTRL-C is mapped.
 
-EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
+EXTERN cmdmod_T cmdmod;                 // Ex command modifiers
 
 EXTERN int msg_silent INIT(= 0);         // don't print messages
 EXTERN int emsg_silent INIT(= 0);        // don't print error messages
 EXTERN bool emsg_noredir INIT(= false);  // don't redirect error messages
 EXTERN bool cmd_silent INIT(= false);    // don't echo the command line
 
-/* Values for swap_exists_action: what to do when swap file already exists */
-#define SEA_NONE        0       /* don't use dialog */
-#define SEA_DIALOG      1       /* use dialog when possible */
-#define SEA_QUIT        2       /* quit editing the file */
-#define SEA_RECOVER     3       /* recover the file */
+// Values for swap_exists_action: what to do when swap file already exists
+#define SEA_NONE        0       // don't use dialog
+#define SEA_DIALOG      1       // use dialog when possible
+#define SEA_QUIT        2       // quit editing the file
+#define SEA_RECOVER     3       // recover the file
 
 EXTERN int swap_exists_action INIT(= SEA_NONE);
-/* For dialog when swap file already
- * exists. */
-EXTERN int swap_exists_did_quit INIT(= FALSE);
-/* Selected "quit" at the dialog. */
+// For dialog when swap file already
+// exists.
+EXTERN int swap_exists_did_quit INIT(= false);
+// Selected "quit" at the dialog.
 
 EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
 EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
@@ -724,11 +679,11 @@ IOSIZE
 #endif
 ];
 
-/* When non-zero, postpone redrawing. */
+// When non-zero, postpone redrawing.
 EXTERN int RedrawingDisabled INIT(= 0);
 
-EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
-EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
+EXTERN int readonlymode INIT(= false);      // Set to true for "view"
+EXTERN int recoverymode INIT(= false);      // Set to true for "-r" option
 
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
@@ -738,7 +693,7 @@ EXTERN int ex_normal_lock INIT(= 0);     // forbid use of ex_normal()
 EXTERN int ignore_script INIT(= false);  // ignore script input
 EXTERN int stop_insert_mode;             // for ":stopinsert" and 'insertmode'
 EXTERN bool KeyTyped;                    // true if user typed current char
-EXTERN int KeyStuffed;                   // TRUE if current char from stuffbuf
+EXTERN int KeyStuffed;                   // true if current char from stuffbuf
 EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
 
 EXTERN int must_redraw INIT(= 0);           // type of redraw necessary
@@ -754,15 +709,15 @@ EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 // volatile because it is used in a signal handler.
 EXTERN volatile int got_int INIT(= false);  // set to true when interrupt
                                             // signal occurred
-EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */
-EXTERN int searchcmdlen;                    /* length of previous search cmd */
-EXTERN int reg_do_extmatch INIT(= 0);       /* Used when compiling regexp:
-                                             * REX_SET to allow \z\(...\),
-                                             * REX_USE to allow \z\1 et al. */
-EXTERN reg_extmatch_T *re_extmatch_in INIT(= NULL); /* Used by vim_regexec():
-                                                     * strings for \z\1...\z\9 */
-EXTERN reg_extmatch_T *re_extmatch_out INIT(= NULL); /* Set by vim_regexec()
-                                                      * to store \z\(...\) matches */
+EXTERN int bangredo INIT(= false);          // set to true with ! command
+EXTERN int searchcmdlen;                    // length of previous search cmd
+EXTERN int reg_do_extmatch INIT(= 0);       // Used when compiling regexp:
+                                            // REX_SET to allow \z\(...\),
+                                            // REX_USE to allow \z\1 et al.
+// Used by vim_regexec(): strings for \z\1...\z\9
+EXTERN reg_extmatch_T *re_extmatch_in INIT(= NULL);
+// Set by vim_regexec() to store \z\(...\) matches
+EXTERN reg_extmatch_T *re_extmatch_out INIT(= NULL);
 
 EXTERN int did_outofmem_msg INIT(= false);
 // set after out of memory msg
@@ -781,11 +736,11 @@ EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 
-EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
-EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
-EXTERN int postponed_split_tab INIT(= 0);       /* cmdmod.tab */
-EXTERN int g_do_tagpreview INIT(= 0);       /* for tag preview commands:
-                                               height of preview window */
+EXTERN int postponed_split INIT(= 0);        // for CTRL-W CTRL-] command
+EXTERN int postponed_split_flags INIT(= 0);  // args for win_split()
+EXTERN int postponed_split_tab INIT(= 0);    // cmdmod.tab
+EXTERN int g_do_tagpreview INIT(= 0);  // for tag preview commands:
+                                       // height of preview window
 EXTERN int g_tag_at_cursor INIT(= false);  // whether the tag command comes
                                            // from the command line (0) or was
                                            // invoked as a normal command (1)
@@ -793,15 +748,13 @@ EXTERN int g_tag_at_cursor INIT(= false);  // whether the tag command comes
 EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
 EXTERN char_u   *escape_chars INIT(= (char_u *)" \t\\\"|");
-/* need backslash in cmd line */
+// need backslash in cmd line
 
-EXTERN int keep_help_flag INIT(= FALSE);      /* doing :ta from help file */
+EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
 
-/*
- * When a string option is NULL (which only happens in out-of-memory
- * situations), it is set to empty_option, to avoid having to check for NULL
- * everywhere.
- */
+// When a string option is NULL (which only happens in out-of-memory
+// situations), it is set to empty_option, to avoid having to check for NULL
+// everywhere.
 EXTERN char_u   *empty_option INIT(= (char_u *)"");
 
 EXTERN int redir_off INIT(= false);         // no redirection for a moment
@@ -810,10 +763,10 @@ EXTERN int redir_reg INIT(= 0);             // message redirection register
 EXTERN int redir_vname INIT(= 0);           // message redirection variable
 EXTERN garray_T *capture_ga INIT(= NULL);   // captured output for execute()
 
-EXTERN char_u langmap_mapchar[256];     /* mapping for language keys */
+EXTERN char_u langmap_mapchar[256];     // mapping for language keys
 
-EXTERN int save_p_ls INIT(= -1);        /* Save 'laststatus' setting */
-EXTERN int save_p_wmh INIT(= -1);       /* Save 'winminheight' setting */
+EXTERN int save_p_ls INIT(= -1);        // Save 'laststatus' setting
+EXTERN int save_p_wmh INIT(= -1);       // Save 'winminheight' setting
 EXTERN int wild_menu_showing INIT(= 0);
 enum {
   WM_SHOWN = 1,     ///< wildmenu showing
@@ -822,10 +775,8 @@ enum {
 };
 
 
-/*
- * Some file names are stored in pathdef.c, which is generated from the
- * Makefile to make their value depend on the Makefile.
- */
+// Some file names are stored in pathdef.c, which is generated from the
+// Makefile to make their value depend on the Makefile.
 #ifdef HAVE_PATHDEF
 extern char *default_vim_dir;
 extern char *default_vimruntime_dir;
@@ -834,14 +785,14 @@ extern char_u *compiled_user;
 extern char_u *compiled_sys;
 #endif
 
-/* When a window has a local directory, the absolute path of the global
- * current directory is stored here (in allocated memory).  If the current
- * directory is not a local directory, globaldir is NULL. */
+// When a window has a local directory, the absolute path of the global
+// current directory is stored here (in allocated memory).  If the current
+// directory is not a local directory, globaldir is NULL.
 EXTERN char_u   *globaldir INIT(= NULL);
 
-/* Whether 'keymodel' contains "stopsel" and "startsel". */
-EXTERN int km_stopsel INIT(= FALSE);
-EXTERN int km_startsel INIT(= FALSE);
+// Whether 'keymodel' contains "stopsel" and "startsel".
+EXTERN int km_stopsel INIT(= false);
+EXTERN int km_startsel INIT(= false);
 
 EXTERN int cedit_key INIT(= -1);     ///< key value of 'cedit' option
 EXTERN int cmdwin_type INIT(= 0);    ///< type of cmdline window or 0
@@ -850,18 +801,16 @@ EXTERN int cmdwin_level INIT(= 0);   ///< cmdline recursion level
 
 EXTERN char_u no_lines_msg[] INIT(= N_("--No lines in buffer--"));
 
-/*
- * When ":global" is used to number of substitutions and changed lines is
- * accumulated until it's finished.
- * Also used for ":spellrepall".
- */
-EXTERN long sub_nsubs;          /* total number of substitutions */
-EXTERN linenr_T sub_nlines;     /* total number of lines changed */
+// When ":global" is used to number of substitutions and changed lines is
+// accumulated until it's finished.
+// Also used for ":spellrepall".
+EXTERN long sub_nsubs;       // total number of substitutions
+EXTERN linenr_T sub_nlines;  // total number of lines changed
 
-/* table to store parsed 'wildmode' */
+// table to store parsed 'wildmode'
 EXTERN char_u wim_flags[4];
 
-/* whether titlestring and iconstring contains statusline syntax */
+// whether titlestring and iconstring contains statusline syntax
 # define STL_IN_ICON    1
 # define STL_IN_TITLE   2
 EXTERN int stl_syntax INIT(= 0);
@@ -869,7 +818,7 @@ EXTERN int stl_syntax INIT(= 0);
 // don't use 'hlsearch' temporarily
 EXTERN bool no_hlsearch INIT(= false);
 
-/* Page number used for %N in 'pageheader' and 'guitablabel'. */
+// Page number used for %N in 'pageheader' and 'guitablabel'.
 EXTERN linenr_T printer_page_num;
 
 
@@ -887,18 +836,16 @@ EXTERN char pseps[2] INIT(= { '\\', 0 });  // normal path separator string
 // kNone when no operator is being executed, kFalse otherwise.
 EXTERN TriState virtual_op INIT(= kNone);
 
-/* Display tick, incremented for each call to update_screen() */
+// Display tick, incremented for each call to update_screen()
 EXTERN disptick_T display_tick INIT(= 0);
 
-/* Line in which spell checking wasn't highlighted because it touched the
- * cursor position in Insert mode. */
+// Line in which spell checking wasn't highlighted because it touched the
+// cursor position in Insert mode.
 EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 
 
-/*
- * The error messages that can be shared are included here.
- * Excluded are errors that are only used once and debugging messages.
- */
+// The error messages that can be shared are included here.
+// Excluded are errors that are only used once and debugging messages.
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
 EXTERN char_u e_afterinit[] INIT(= N_(
         "E905: Cannot set this option after startup"));
@@ -1070,7 +1017,7 @@ EXTERN char line_msg[] INIT(= N_(" line "));
 // For undo we need to know the lowest time possible.
 EXTERN time_t starttime;
 
-EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
+EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
 
 // Some compilers warn for not using a return value, but in some situations we
 // can't do anything useful with the value.  Assign to this variable to avoid
@@ -1106,4 +1053,4 @@ typedef enum {
 #define MIN_CD_SCOPE  kCdScopeWindow
 #define MAX_CD_SCOPE  kCdScopeGlobal
 
-#endif /* NVIM_GLOBALS_H */
+#endif  // NVIM_GLOBALS_H

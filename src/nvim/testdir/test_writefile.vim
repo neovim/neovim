@@ -1,4 +1,4 @@
-" Tests for the writefile() function.
+" Tests for the writefile() function and some :write commands.
 
 func Test_writefile()
   let f = tempname()
@@ -14,6 +14,11 @@ func Test_writefile()
   call assert_equal("morning", l[3])
   call assert_equal("vimmers", l[4])
   call delete(f)
+endfunc
+
+func Test_writefile_ignore_regexp_error()
+  write Xt[z-a]est.txt
+  call delete('Xt[z-a]est.txt')
 endfunc
 
 func Test_writefile_fails_gently()

@@ -32,12 +32,19 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
   util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
-  -- util.set_loclist(result.diagnostics)
+  util.buf_diagnostics_signs(bufnr, result.diagnostics)
+  vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
 end
 
 M['textDocument/references'] = function(_, _, result)
   if not result then return end
-  util.set_qflist(result)
+  util.set_qflist(util.locations_to_items(result))
+end
+
+M['textDocument/documentSymbol'] = function(_, _, result, _, bufnr)
+  if not result or vim.tbl_isempty(result) then return end
+
+  util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
   api.nvim_command("wincmd p")
 end
@@ -63,8 +70,9 @@ M['textDocument/completion'] = function(_, _, result)
   local line = assert(api.nvim_buf_get_lines(0, row-1, row, false)[1])
   local line_to_cursor = line:sub(col+1)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
+  local prefix = line_to_cursor:sub(textMatch+1)
 
-  local matches = util.text_document_completion_list_to_complete_items(result)
+  local matches = util.text_document_completion_list_to_complete_items(result, prefix)
   vim.fn.complete(textMatch+1, matches)
 end
 
@@ -95,7 +103,7 @@ local function location_callback(_, method, result)
   end
   util.jump_to_location(result[1])
   if #result > 1 then
-    util.set_qflist(result)
+    util.set_qflist(util.locations_to_items(result))
     api.nvim_command("copen")
     api.nvim_command("wincmd p")
   end
@@ -195,7 +203,33 @@ M['textDocument/peekDefinition'] = function(_, _, result, _)
   api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
 end
 
-local function log_message(_, _, result, client_id)
+M['textDocument/documentHighlight'] = function(_, _, result, _)
+  if not result then return end
+  local bufnr = api.nvim_get_current_buf()
+  util.buf_highlight_references(bufnr, result)
+end
+
+M['window/logMessage'] = function(_, _, result, client_id)
+  local message_type = result.type
+  local message = result.message
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
+  if not client then
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
+  end
+  if message_type == protocol.MessageType.Error then
+    log.error(message)
+  elseif message_type == protocol.MessageType.Warning then
+    log.warn(message)
+  elseif message_type == protocol.MessageType.Info then
+    log.info(message)
+  else
+    log.debug(message)
+  end
+  return result
+end
+
+M['window/showMessage'] = function(_, _, result, client_id)
   local message_type = result.type
   local message = result.message
   local client = vim.lsp.get_client_by_id(client_id)
@@ -211,9 +245,6 @@ local function log_message(_, _, result, client_id)
   end
   return result
 end
-
-M['window/showMessage'] = log_message
-M['window/logMessage'] = log_message
 
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do

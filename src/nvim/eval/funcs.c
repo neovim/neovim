@@ -1408,9 +1408,31 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 0;
 }
 
-/*
- * "deepcopy()" function
- */
+// "debugbreak()" function
+static void f_debugbreak(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int pid;
+
+  rettv->vval.v_number = FAIL;
+  pid = (int)tv_get_number(&argvars[0]);
+  if (pid == 0) {
+    EMSG(_(e_invarg));
+  } else {
+#ifdef WIN32
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+
+    if (hProcess != NULL) {
+      DebugBreakProcess(hProcess);
+      CloseHandle(hProcess);
+      rettv->vval.v_number = OK;
+    }
+#else
+    uv_kill(pid, SIGINT);
+#endif
+  }
+}
+
+// "deepcopy()" function
 static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int noref = 0;
@@ -2079,6 +2101,31 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     modes = get_menu_cmd_modes(strmodes, false, NULL, NULL);
   }
   menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
+}
+
+// "expandcmd()" function
+// Expand all the special characters in a command string.
+static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *errormsg = NULL;
+
+  rettv->v_type = VAR_STRING;
+  char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
+
+  exarg_T eap = {
+    .cmd = cmdstr,
+    .arg = cmdstr,
+    .usefilter = false,
+    .nextcmd = NULL,
+    .cmdidx = CMD_USER,
+  };
+  eap.argt |= NOSPC;
+
+  expand_filename(&eap, &cmdstr, &errormsg);
+  if (errormsg != NULL && *errormsg != NUL) {
+    EMSG(errormsg);
+  }
+  rettv->vval.v_string = cmdstr;
 }
 
 /*
@@ -4270,7 +4317,7 @@ static void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   HistoryType histype;
 
   rettv->vval.v_number = false;
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
   const char *str = tv_get_string_chk(&argvars[0]);  // NULL on type error
@@ -5224,6 +5271,35 @@ static void f_lispindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "list2str()" function
+static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  garray_T ga;
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  list_T *const l = argvars[0].vval.v_list;
+  if (l == NULL) {
+    return;  // empty list results in empty string
+  }
+
+  ga_init(&ga, 1, 80);
+  char_u buf[MB_MAXBYTES + 1];
+
+  TV_LIST_ITER_CONST(l, li, {
+    buf[utf_char2bytes(tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
+    ga_concat(&ga, buf);
+  });
+  ga_append(&ga, NUL);
+
+  rettv->vval.v_string = ga.ga_data;
+}
+
 /*
  * "localtime()" function
  */
@@ -6074,6 +6150,76 @@ static void f_printf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     did_emsg |= saved_did_emsg;
   }
+}
+
+// "prompt_setcallback({buffer}, {callback})" function
+static void f_prompt_setcallback(typval_T *argvars,
+                                 typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    Callback prompt_callback = { .type = kCallbackNone };
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+      if (!callback_from_typval(&prompt_callback, &argvars[1])) {
+        return;
+      }
+    }
+
+    callback_free(&buf->b_prompt_callback);
+    buf->b_prompt_callback = prompt_callback;
+}
+
+// "prompt_setinterrupt({buffer}, {callback})" function
+static void f_prompt_setinterrupt(typval_T *argvars,
+                                  typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    Callback interrupt_callback = { .type = kCallbackNone };
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+      if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+        return;
+      }
+    }
+
+    callback_free(&buf->b_prompt_interrupt);
+    buf->b_prompt_interrupt= interrupt_callback;
+}
+
+// "prompt_setprompt({buffer}, {text})" function
+static void f_prompt_setprompt(typval_T *argvars,
+                               typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    const char_u *text;
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    text = (const char_u *)tv_get_string(&argvars[1]);
+    xfree(buf->b_prompt_text);
+    buf->b_prompt_text = vim_strsave(text);
 }
 
 // "pum_getpos()" function
@@ -7633,8 +7779,7 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted()
-      || check_secure()
+  if (check_secure()
       || !tv_check_str_or_nr(&argvars[0])) {
     return;
   }
@@ -8138,7 +8283,7 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -9261,6 +9406,17 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_FLOAT;
 }
 
+// "str2list()" function
+static void f_str2list(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenUnknown);
+  const char_u *p = (const char_u *)tv_get_string(&argvars[0]);
+
+  for (; *p != NUL; p += utf_ptr2len(p)) {
+    tv_list_append_number(rettv->vval.v_list, utf_ptr2char(p));
+  }
+}
+
 // "str2nr()" function
 static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -9425,7 +9581,7 @@ static void f_stridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * "string()" function
  */
-static void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)encode_tv2string(&argvars[0], NULL);
@@ -10848,7 +11004,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 

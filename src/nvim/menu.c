@@ -868,7 +868,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         if (*menu->strings[bit] == NUL) {
           msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
         } else {
-          msg_outtrans_special(menu->strings[bit], false);
+          msg_outtrans_special(menu->strings[bit], false, 0);
         }
       }
   } else {
