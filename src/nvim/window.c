@@ -2324,7 +2324,7 @@ void close_windows(buf_T *buf, int keep_curwin)
 ///
 /// @return true if the current window is the only window that exists, false if
 ///         there is another, possibly in another tab page.
-bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+static bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return one_window() && first_tabpage->tp_next == NULL;
 }
