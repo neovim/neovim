@@ -6329,6 +6329,13 @@ static void ex_quit(exarg_T *eap)
     }
     not_exiting();
     // close window; may free buffer
+    // close floats anchored to it first
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win == wp) continue;
+      if(win->w_floating && win->w_float_config.relative == kFloatRelativeWindow
+        && win->w_float_config.window == wp->handle)
+        win_close(win, !buf_hide(win->w_buffer) || eap->forceit);
+    }
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
 }
@@ -6425,48 +6432,15 @@ ex_win_close(
 {
   int need_hide;
   buf_T       *buf = win->w_buffer;
+  win_T	      *wp = (tp) ? tp->tp_firstwin : firstwin;
 
-  if (last_window() && !win->w_floating) {
-    EMSG(_("E444: Cannot close last window"));
-    return;
-  }
-  if (win == aucmd_win) {
-    EMSG(_("E813: Cannot close autocmd window"));
-    return;
-  }
-  if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
-    EMSG(_("E814: Cannot close window, only autocmd window would remain"));
-    return;
-  }
-
-  win_T *wp = (tp) ? tp->tp_firstwin : firstwin;
-  int unanchored_floats = 0;
-
-  for (; wp; wp = wp->w_next) {
-    if (wp == win) {
-      continue;
-    }
-    if (wp->w_floating && wp->w_float_config.relative != kFloatRelativeWindow) {
-      unanchored_floats++;
-    }
-  }
-
-  if ((firstwin == win && lastwin_nofloating() == win)
-    && unanchored_floats) {
-    // TODO(bfredl): we might close the float also instead
-    EMSG(e_floatonly);
-    return;
-  }
-
-  wp = (tp) ? tp->tp_firstwin : firstwin;
   while (wp) {
     win_T *next_win = wp->w_next;
-    if (wp->w_floating) {
-      if (wp->w_float_config.relative == kFloatRelativeWindow
-          && wp->w_float_config.window == win->handle) {
+    if (wp->w_floating
+      &&wp->w_float_config.relative == kFloatRelativeWindow
+      && wp->w_float_config.window == win->handle) {
         ex_win_close(forceit, wp, tp);
       }
-    }
     wp = next_win;
   }
 
