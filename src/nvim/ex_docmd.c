@@ -6334,7 +6334,9 @@ static void ex_quit(exarg_T *eap)
       if (win == wp) continue;
       if(win->w_floating && win->w_float_config.relative == kFloatRelativeWindow
         && win->w_float_config.window == wp->handle)
-        win_close(win, !buf_hide(win->w_buffer) || eap->forceit);
+        if (win_close(win, !buf_hide(win->w_buffer) || eap->forceit) == FAIL) {
+	   return;
+	}
     }
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
@@ -6440,6 +6442,9 @@ ex_win_close(
       &&wp->w_float_config.relative == kFloatRelativeWindow
       && wp->w_float_config.window == win->handle) {
         ex_win_close(forceit, wp, tp);
+	if (win_valid(wp)) {
+	  return;
+	}
       }
     wp = next_win;
   }
