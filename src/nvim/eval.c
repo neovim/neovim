@@ -7323,6 +7323,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
+  tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
   tv_dict_add_nr(dict, S_LEN("width"), wp->w_width);
   tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
   tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
@@ -10364,13 +10365,7 @@ void ex_echo(exarg_T *eap)
  */
 void ex_echohl(exarg_T *eap)
 {
-  int id;
-
-  id = syn_name2id(eap->arg);
-  if (id == 0)
-    echo_attr = 0;
-  else
-    echo_attr = syn_id2attr(id);
+  echo_attr = syn_name2attr(eap->arg);
 }
 
 /*

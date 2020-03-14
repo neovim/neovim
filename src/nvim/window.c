@@ -4782,6 +4782,7 @@ win_free (
 
   qf_free_all(wp);
 
+  remove_winbar(wp);
 
   xfree(wp->w_p_cc_cols);
 
@@ -5708,11 +5709,10 @@ void set_fraction(win_T *wp)
   }
 }
 
-/*
- * Set the height of a window.
- * This takes care of the things inside the window, not what happens to the
- * window position, the frame or to other windows.
- */
+// Set the height of a window.
+// "height" excludes any window toolbar.
+// This takes care of the things inside the window, not what happens to the
+// window position, the frame or to other windows.
 void win_new_height(win_T *wp, int height)
 {
   // Don't want a negative height.  Happens when splitting a tiny window.

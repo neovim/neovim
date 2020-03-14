@@ -134,6 +134,14 @@ retnomove:
     }
     fdc = win_fdccol_count(wp);
     dragwin = NULL;
+
+    if (row == -1) {
+      // A click in the window toolbar does not enter another window or
+      // change Visual highlighting.
+      winbar_click(wp, col);
+      return IN_OTHER_WIN;
+    }
+
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
       // In (or below) status line
@@ -471,6 +479,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
+      *rowp -= wp->w_winbar_height;
       return wp;
     }
   }
