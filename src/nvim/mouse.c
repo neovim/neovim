@@ -94,10 +94,24 @@ int jump_to_mouse(int flags,
 retnomove:
     // before moving the cursor for a left click which is NOT in a status
     // line, stop Visual mode
-    if (on_status_line)
+    if (on_status_line) {
       return IN_STATUS_LINE;
-    if (on_sep_line)
+    }
+    if (on_sep_line) {
       return IN_SEP_LINE;
+    }
+    if (in_winbar) {
+      // A quick second click may arrive as a double-click, but we use it
+      // as a second click in the WinBar.
+      if ((mod_mask & MOD_MASK_MULTI_CLICK) && !(flags & MOUSE_RELEASED)) {
+        wp = mouse_find_win(&grid, &row, &col);
+        if (wp == NULL) {
+          return IN_UNKNOWN;
+        }
+        winbar_click(wp, col);
+      }
+      return IN_OTHER_WIN | MOUSE_WINBAR;
+    }
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
