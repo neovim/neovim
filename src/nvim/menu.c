@@ -1410,7 +1410,7 @@ static int menu_is_hidden(char_u *name)
 static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  int idx;
+  int idx = -1;
   char_u *mode;
 
   // Use the Insert mode entry when returning to Insert mode.
@@ -1464,9 +1464,13 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
 
     /* Adjust the cursor to make sure it is in the correct pos
      * for exclusive mode */
-    if (*p_sel == 'e' && gchar_cursor() != NUL)
-      ++curwin->w_cursor.col;
-  } else {
+    if (*p_sel == 'e' && gchar_cursor() != NUL) {
+      curwin->w_cursor.col++;
+    }
+  }
+
+  // For the WinBar menu always use the Normal mode menu.
+  if (idx == -1 || eap == NULL) {
     mode = (char_u *)"Normal";
     idx = MENU_INDEX_NORMAL;
   }
@@ -1477,8 +1481,15 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
     // Also for the window toolbar
     // Otherwise put them in the typeahead buffer.
     if (eap == NULL || current_sctx.sc_sid != 0) {
-      exec_normal_cmd(menu->strings[idx], menu->noremap[idx],
-                      menu->silent[idx]);
+      save_state_T save_state;
+
+      ex_normal_busy++;
+      if (save_current_state(&save_state)) {
+        exec_normal_cmd(menu->strings[idx], menu->noremap[idx],
+                        menu->silent[idx]);
+      }
+      restore_current_state(&save_state);
+      ex_normal_busy--;
     } else {
       ins_typebuf(menu->strings[idx], menu->noremap[idx], 0, true,
                   menu->silent[idx]);
@@ -1540,11 +1551,17 @@ void winbar_click(win_T *wp, int col)
 
     if (col >= item->wb_startcol && col <= item->wb_endcol) {
       win_T *save_curwin = NULL;
+      const pos_T save_visual = VIsual;
+      const int save_visual_active = VIsual_active;
+      const int save_visual_select = VIsual_select;
+      const int save_visual_reselect = VIsual_reselect;
+      const int save_visual_mode = VIsual_mode;
 
       if (wp != curwin) {
         // Clicking in the window toolbar of a not-current window.
-        // Make that window the current one and go to Normal mode.
+        // Make that window the current one and save Visual mode.
         save_curwin = curwin;
+        VIsual_active = false;
         curwin = wp;
         curbuf = curwin->w_buffer;
         check_cursor();
@@ -1555,6 +1572,11 @@ void winbar_click(win_T *wp, int col)
       if (save_curwin != NULL) {
         curwin = save_curwin;
         curbuf = curwin->w_buffer;
+        VIsual = save_visual;
+        VIsual_active = save_visual_active;
+        VIsual_select = save_visual_select;
+        VIsual_reselect = save_visual_reselect;
+        VIsual_mode = save_visual_mode;
       }
     }
   }

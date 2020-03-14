@@ -334,7 +334,7 @@ typedef struct {
 // Struct to hold the saved typeahead for save_typeahead().
 typedef struct {
   typebuf_T save_typebuf;
-  int typebuf_valid;                        // TRUE when save_typebuf valid
+  bool typebuf_valid;                       // true when save_typebuf valid
   int old_char;
   int old_mod_mask;
   buffheader_T save_readbuf1;

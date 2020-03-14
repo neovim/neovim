@@ -8209,6 +8209,57 @@ void update_topline_cursor(void)
   update_curswant();
 }
 
+// Save the current State and go to Normal mode.
+// Return true if the typeahead could be saved.
+bool save_current_state(save_state_T *sst)
+  FUNC_ATTR_NONNULL_ALL
+{
+  sst->save_msg_scroll = msg_scroll;
+  sst->save_restart_edit = restart_edit;
+  sst->save_msg_didout = msg_didout;
+  sst->save_State = State;
+  sst->save_insertmode = p_im;
+  sst->save_finish_op = finish_op;
+  sst->save_opcount = opcount;
+  sst->save_reg_executing = reg_executing;
+
+  msg_scroll = false;   // no msg scrolling in Normal mode
+  restart_edit = 0;     // don't go to Insert mode
+  p_im = false;         // don't use 'insertmode
+
+  // Save the current typeahead.  This is required to allow using ":normal"
+  // from an event handler and makes sure we don't hang when the argument
+  // ends with half a command.
+  save_typeahead(&sst->tabuf);
+  return sst->tabuf.typebuf_valid;
+}
+
+void restore_current_state(save_state_T *sst)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Restore the previous typeahead.
+  restore_typeahead(&sst->tabuf);
+
+  msg_scroll = sst->save_msg_scroll;
+  if (force_restart_edit) {
+    force_restart_edit = false;
+  } else {
+    // Some function (terminal_enter()) was aware of ex_normal and decided to
+    // override the value of restart_edit anyway.
+    restart_edit = sst->save_restart_edit;
+  }
+  p_im = sst->save_insertmode;
+  finish_op = sst->save_finish_op;
+  opcount = sst->save_opcount;
+  reg_executing = sst->save_reg_executing;
+  msg_didout |= sst->save_msg_didout;  // don't reset msg_didout now
+
+  // Restore the state (needed when called from a function executed for
+  // 'indentexpr'). Update the mouse and cursor, they may have changed.
+  State = sst->save_State;
+  ui_cursor_shape();  // may show different cursor shape
+}
+
 /*
  * ":normal[!] {commands}": Execute normal mode commands.
  */
@@ -8218,15 +8269,7 @@ static void ex_normal(exarg_T *eap)
     EMSG("Can't re-enter normal mode from terminal mode");
     return;
   }
-  int save_msg_scroll = msg_scroll;
-  int save_restart_edit = restart_edit;
-  int save_msg_didout = msg_didout;
-  int save_State = State;
-  tasave_T tabuf;
-  int save_insertmode = p_im;
-  int save_finish_op = finish_op;
-  long save_opcount = opcount;
-  const int save_reg_executing = reg_executing;
+  save_state_T save_state;
   char_u      *arg = NULL;
   int l;
   char_u      *p;
@@ -8239,11 +8282,6 @@ static void ex_normal(exarg_T *eap)
     EMSG(_("E192: Recursive use of :normal too deep"));
     return;
   }
-  ++ex_normal_busy;
-
-  msg_scroll = FALSE;       /* no msg scrolling in Normal mode */
-  restart_edit = 0;         /* don't go to Insert mode */
-  p_im = FALSE;             /* don't use 'insertmode' */
 
   /*
    * vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
@@ -8277,19 +8315,11 @@ static void ex_normal(exarg_T *eap)
     }
   }
 
-  /*
-   * Save the current typeahead.  This is required to allow using ":normal"
-   * from an event handler and makes sure we don't hang when the argument
-   * ends with half a command.
-   */
-  save_typeahead(&tabuf);
-  // TODO(philix): after save_typeahead() this is always TRUE
-  if (tabuf.typebuf_valid) {
-    /*
-     * Repeat the :normal command for each line in the range.  When no
-     * range given, execute it just once, without positioning the cursor
-     * first.
-     */
+  ex_normal_busy++;
+  if (save_current_state(&save_state)) {
+    // Repeat the :normal command for each line in the range.  When no
+    // range given, execute it just once, without positioning the cursor
+    // first.
     do {
       if (eap->addr_count != 0) {
         curwin->w_cursor.lnum = eap->line1++;
@@ -8306,29 +8336,12 @@ static void ex_normal(exarg_T *eap)
   /* Might not return to the main loop when in an event handler. */
   update_topline_cursor();
 
-  /* Restore the previous typeahead. */
-  restore_typeahead(&tabuf);
+  restore_current_state(&save_state);
 
-  --ex_normal_busy;
-  msg_scroll = save_msg_scroll;
-  if (force_restart_edit) {
-    force_restart_edit = false;
-  } else {
-    // Some function (terminal_enter()) was aware of ex_normal and decided to
-    // override the value of restart_edit anyway.
-    restart_edit = save_restart_edit;
-  }
-  p_im = save_insertmode;
-  finish_op = save_finish_op;
-  opcount = save_opcount;
-  reg_executing = save_reg_executing;
-  msg_didout |= save_msg_didout;        // don't reset msg_didout now
+  ex_normal_busy--;
 
-  /* Restore the state (needed when called from a function executed for
-   * 'indentexpr'). Update the mouse and cursor, they may have changed. */
-  State = save_State;
   setmouse();
-  ui_cursor_shape(); /* may show different cursor shape */
+  ui_cursor_shape();  // may show different cursor shape
   xfree(arg);
 }
 
