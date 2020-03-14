@@ -1407,12 +1407,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & (WSP_TOP | WSP_BOT)) {
       /* set height and row of new window to full height */
       wp->w_winrow = tabline_height();
-      win_new_height(wp, curfrp->fr_height - (p_ls > 0));
+      win_new_height(wp, curfrp->fr_height - (p_ls > 0) - wp->w_winbar_height);
       wp->w_status_height = (p_ls > 0);
     } else {
       /* height and row of new window is same as current window */
       wp->w_winrow = oldwin->w_winrow;
-      win_new_height(wp, oldwin->w_height);
+      win_new_height(wp, oldwin->w_height + oldwin->w_winbar_height);
       wp->w_status_height = oldwin->w_status_height;
     }
     frp->fr_height = curfrp->fr_height;
@@ -1459,7 +1459,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * one row for the status line */
     win_new_height(wp, new_size);
     if (flags & (WSP_TOP | WSP_BOT)) {
-      int new_fr_height = curfrp->fr_height - new_size;
+      int new_fr_height = curfrp->fr_height - new_size + wp->w_winbar_height;
 
       if (!((flags & WSP_BOT) && p_ls == 0)) {
         new_fr_height -= STATUS_HEIGHT;
@@ -3144,15 +3144,18 @@ frame_new_height (
     int wfh                        /* obey 'winfixheight' when there is a choice;
                                    may cause the height not to be set */
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   frame_T     *frp;
   int extra_lines;
   int h;
 
   if (topfrp->fr_win != NULL) {
-    /* Simple case: just one window. */
+    // Simple case: just one window.
     win_new_height(topfrp->fr_win,
-        height - topfrp->fr_win->w_status_height);
+                   height
+                   - topfrp->fr_win->w_status_height
+                   - topfrp->fr_win->w_winbar_height);
   } else if (topfrp->fr_layout == FR_ROW) {
     do {
       // All frames in this row get the same new height.
@@ -3457,8 +3460,10 @@ static void frame_fix_width(win_T *wp)
  * Set frame height from the window it contains.
  */
 static void frame_fix_height(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  wp->w_frame->fr_height = wp->w_height + wp->w_status_height;
+  wp->w_frame->fr_height =
+    wp->w_height + wp->w_status_height + wp->w_winbar_height;
 }
 
 /*
