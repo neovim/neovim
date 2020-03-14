@@ -3318,6 +3318,14 @@ func Test_lvimgrep_crash()
   enew | only
 endfunc
 
+func Test_lvimgrep_crash2()
+  au BufNewFile x sfind
+  call assert_fails('lvimgrep x x', 'E480:')
+  call assert_fails('lvimgrep x x x', 'E480:')
+
+  au! BufNewFile
+endfunc
+
 " Test for the position of the quickfix and location list window
 func Test_qfwin_pos()
   " Open two windows
