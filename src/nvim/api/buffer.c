@@ -1402,7 +1402,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 
   uint64_t ns_id = src2ns(&src_id);
 
-  if (!(0 <= line && line < buf->b_ml.ml_line_count)) {
+  if (!(line < buf->b_ml.ml_line_count)) {
     // safety check, we can't add marks outside the range
     return src_id;
   }
