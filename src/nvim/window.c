@@ -1472,8 +1472,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       wp->w_winrow = oldwin->w_winrow;
       wp->w_status_height = STATUS_HEIGHT;
       oldwin->w_winrow += wp->w_height + STATUS_HEIGHT;
-    } else {          /* new window below current one */
-      wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
+    } else {            // new window below current one
+      wp->w_winrow = oldwin->w_winrow + oldwin->w_height
+        + STATUS_HEIGHT + oldwin->w_winbar_height;
       wp->w_status_height = oldwin->w_status_height;
       if (!(flags & WSP_BOT)) {
         oldwin->w_status_height = STATUS_HEIGHT;
