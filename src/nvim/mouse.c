@@ -60,6 +60,7 @@ int jump_to_mouse(int flags,
 {
   static int on_status_line = 0;        // #lines below bottom of window
   static int on_sep_line = 0;           // on separator right of window
+  static bool in_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
   static win_T *dragwin = NULL;         // window being dragged
@@ -139,8 +140,10 @@ retnomove:
       // A click in the window toolbar does not enter another window or
       // change Visual highlighting.
       winbar_click(wp, col);
-      return IN_OTHER_WIN;
+      in_winbar = true;
+      return IN_OTHER_WIN | MOUSE_WINBAR;
     }
+    in_winbar = false;
 
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
@@ -231,6 +234,9 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         // Cursor didn't move
+  } else if (in_winbar) {
+    // After a click on the window toolbar don't start Visual mode.
+    return IN_OTHER_WIN | MOUSE_WINBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode
