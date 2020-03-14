@@ -51,7 +51,7 @@ static char_u e_nomenu[] = N_("E329: No menu \"%s\"");
 static bool menu_is_winbar(const char_u *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return (STRNCMP(name, "WinBar", 5) == 0);
+  return (STRNCMP(name, "WinBar", 6) == 0);
 }
 
 int winbar_height(const win_T *const wp)
@@ -1361,29 +1361,27 @@ static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
   return text;
 }
 
-/*
- * Return TRUE if "name" can be a menu in the MenuBar.
- */
-int menu_is_menubar(char_u *name)
+// Return true if "name" can be a menu in the MenuBar.
+bool menu_is_menubar(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return !menu_is_popup(name)
          && !menu_is_toolbar(name)
+         && !menu_is_winbar(name)
          && *name != MNU_HIDDEN_CHAR;
 }
 
-/*
- * Return TRUE if "name" is a popup menu name.
- */
-int menu_is_popup(char_u *name)
+// Return true if "name" is a popup menu name.
+bool menu_is_popup(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return STRNCMP(name, "PopUp", 5) == 0;
 }
 
 
-/*
- * Return TRUE if "name" is a toolbar menu name.
- */
-int menu_is_toolbar(char_u *name)
+// Return true if "name" is a toolbar menu name.
+bool menu_is_toolbar(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return STRNCMP(name, "ToolBar", 7) == 0;
 }
