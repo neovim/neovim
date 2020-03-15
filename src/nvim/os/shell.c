@@ -20,6 +20,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/path.h"
+#include "nvim/probe.h"
 #include "nvim/types.h"
 #include "nvim/main.h"
 #include "nvim/vim.h"
@@ -640,6 +641,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   int current_state = State;
   bool forward_output = true;
 
+  PROBE_OS_CALL_SHELL_ENTRY(cmd);
+
   // While the child is running, ignore terminating signals
   signal_reject_deadly();
 
@@ -680,6 +683,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 
   State = current_state;
   signal_accept_deadly();
+
+  PROBE_OS_CALL_SHELL_RETURN(exitcode);
 
   return exitcode;
 }
@@ -722,6 +727,8 @@ static int do_os_system(char **argv,
                         bool silent,
                         bool forward_output)
 {
+  PROBE_OS_SYSTEM_ENTRY(argv, input, len);
+
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
   bool has_input = (input != NULL && input[0] != '\0');
@@ -832,6 +839,8 @@ static int do_os_system(char **argv,
 
   assert(multiqueue_empty(events));
   multiqueue_free(events);
+
+  PROBE_OS_SYSTEM_RETURN(exitcode, output, nread);
 
   return exitcode;
 }

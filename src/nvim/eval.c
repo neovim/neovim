@@ -40,6 +40,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
+#include "nvim/probe.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -5106,6 +5107,8 @@ static garray_T funcargs = GA_EMPTY_INIT_VALUE;
 /// @returns        true if some memory was freed.
 bool garbage_collect(bool testing)
 {
+  PROBE_EVAL_GC_ENTRY(testing);
+
   bool abort = false;
 #define ABORTING(func) abort = abort || func
 
@@ -5303,6 +5306,8 @@ bool garbage_collect(bool testing)
         "Not enough memory to set references, garbage collection aborted!"));
   }
 #undef ABORTING
+
+  PROBE_EVAL_GC_RETURN(did_free);
   return did_free;
 }
 
@@ -6305,6 +6310,8 @@ call_func(
   // be changed or deleted in the called function.
   name = vim_strnsave(funcname, len);
 
+  PROBE_EVAL_CALL_FUNC_ENTRY(name, len);
+
   fname = fname_trans_sid(name, fname_buf, &tofree, &error);
 
   *doesrange = false;
@@ -6450,6 +6457,8 @@ call_func(
       break;
     }
   }
+
+  PROBE_EVAL_CALL_FUNC_RETURN(funcname, len, ret);
 
   while (argv_clear > 0) {
     tv_clear(&argv[--argv_clear]);
@@ -11117,6 +11126,8 @@ void ex_function(exarg_T *eap)
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
   fp->uf_script_ctx.sc_lnum += sourcing_lnum_top;
+
+  PROBE_EVAL_DEFINE_FUNCTION(sourcing_name, &fp->uf_name);
 
   goto ret_free;
 
