@@ -5761,19 +5761,22 @@ cleanup_suggestions (
     int maxscore,
     int keep                       // nr of suggestions to keep
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   suggest_T   *stp = &SUG(*gap, 0);
 
-  // Sort the list.
-  qsort(gap->ga_data, (size_t)gap->ga_len, sizeof(suggest_T), sug_compare);
+  if (gap->ga_len > 0) {
+    // Sort the list.
+    qsort(gap->ga_data, (size_t)gap->ga_len, sizeof(suggest_T), sug_compare);
 
-  // Truncate the list to the number of suggestions that will be displayed.
-  if (gap->ga_len > keep) {
-    for (int i = keep; i < gap->ga_len; ++i) {
-      xfree(stp[i].st_word);
+    // Truncate the list to the number of suggestions that will be displayed.
+    if (gap->ga_len > keep) {
+      for (int i = keep; i < gap->ga_len; i++) {
+        xfree(stp[i].st_word);
+      }
+      gap->ga_len = keep;
+      return stp[keep - 1].st_score;
     }
-    gap->ga_len = keep;
-    return stp[keep - 1].st_score;
   }
   return maxscore;
 }
