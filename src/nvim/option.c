@@ -3668,7 +3668,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= set ? 1 : 0; round++) {
+  for (round = 0; round <= (set ? 1 : 0); round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults
       for (i = 0; i < entries; i++) {
