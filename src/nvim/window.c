@@ -6997,7 +6997,7 @@ win_T *lastwin_nofloating(void) {
 /*
  * check if there is at least one unanchored floating window.
  */
-bool check_unanchored_floats() {
+bool check_unanchored_floats(void) {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_floating && wp->w_float_config.relative != kFloatRelativeWindow) {
       return true;
