@@ -1047,7 +1047,9 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
            */
           qi = (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
                ?  wp->w_llist_ref : wp->w_llist;
-        qf_jump(qi, 0, 0, forceit);
+        if(totmatches == 1) {
+          qf_jump(qi, 0, 0, forceit);
+        }
       }
     }
     os_remove((char *)tmp);
