@@ -188,7 +188,6 @@ do_cscope_general(
   if (make_split) {
     if (!cmdp->cansplit) {
       (void)MSG_PUTS(_(
-
               "This cscope command does not support splitting the window.\n"));
       return;
     }
