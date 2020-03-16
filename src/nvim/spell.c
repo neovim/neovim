@@ -2827,9 +2827,6 @@ void spell_suggest(int count)
       smsg(_("Sorry, only %" PRId64 " suggestions"),
            (int64_t)sug.su_ga.ga_len);
   } else {
-    XFREE_CLEAR(repl_from);
-    XFREE_CLEAR(repl_to);
-
     // When 'rightleft' is set the list is drawn right-left.
     cmdmsg_rl = curwin->w_p_rl;
     if (cmdmsg_rl)
@@ -2909,6 +2906,9 @@ void spell_suggest(int count)
 
   if (selected > 0 && selected <= sug.su_ga.ga_len && u_save_cursor() == OK) {
     // Save the from and to text for :spellrepall.
+    XFREE_CLEAR(repl_from);
+    XFREE_CLEAR(repl_to);
+
     stp = &SUG(sug.su_ga, selected - 1);
     if (sug.su_badlen > stp->st_orglen) {
       // Replacing less than "su_badlen", append the remainder to
