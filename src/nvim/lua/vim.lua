@@ -217,13 +217,12 @@ do
         for _, line in ipairs(lines) do
             nchars = nchars + line:len()
         end
-        local pos = vim.api.nvim_win_get_cursor(0)
-        local row, col = pos[1], pos[2]
-        local line = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
+        local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+        local bufline = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
         local firstline = lines[1]
-        firstline = line:sub(1, col)..firstline
+        firstline = bufline:sub(1, col)..firstline
         lines[1] = firstline
-        lines[#lines] = lines[#lines]..line:sub(col + nchars + 1, line:len())
+        lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
         vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
       else
         vim.api.nvim_put(lines, 'c', false, true)
