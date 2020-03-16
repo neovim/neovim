@@ -1362,7 +1362,6 @@ void scroll_cursor_top(int min_scroll, int always)
   linenr_T old_topfill = curwin->w_topfill;
   linenr_T new_topline;
   int off = (int)get_scrolloff_value();
-  assert(off <= INT_MAX);
 
   if (mouse_dragging > 0)
     off = mouse_dragging - 1;
@@ -1739,7 +1738,6 @@ void cursor_correct(void)
    */
   int above_wanted = (int)get_scrolloff_value();
   int below_wanted = (int)get_scrolloff_value();
-  assert(below_wanted <= INT_MAX);
   if (mouse_dragging > 0) {
     above_wanted = mouse_dragging - 1;
     below_wanted = mouse_dragging - 1;
