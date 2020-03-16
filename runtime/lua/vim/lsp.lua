@@ -614,6 +614,8 @@ do
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
       return
     end
+
+    util.buf_versions[bufnr] = changedtick
     -- Lazy initialize these because clients may not even need them.
     local incremental_changes = once(function(client)
       local size_index = encoding_index[client.offset_encoding]

@@ -135,7 +135,7 @@ function M.apply_text_document_edit(text_document_edit)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
   -- TODO(ashkan) check this is correct.
-  if api.nvim_buf_get_changedtick(bufnr) > text_document.version then
+  if (M.buf_versions[bufnr] or 0) > text_document.version then
     print("Buffer ", text_document.uri, " newer than edits.")
     return
   end
@@ -960,6 +960,8 @@ function M.character_offset(buf, row, col)
   end
   return str_utfindex(line, col)
 end
+
+M.buf_versions = {}
 
 return M
 -- vim:sw=2 ts=2 et
