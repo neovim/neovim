@@ -60,8 +60,9 @@ syn keyword htmlTagName contained article aside audio bdi canvas data
 syn keyword htmlTagName contained datalist details embed figcaption figure
 syn keyword htmlTagName contained footer header hgroup keygen main mark
 syn keyword htmlTagName contained menuitem meter nav output picture
-syn keyword htmlTagName contained progress rb rp rt rtc ruby section
-syn keyword htmlTagName contained slot source template time track video wbr
+syn keyword htmlTagName contained progress rb rp rt rtc ruby section 
+syn keyword htmlTagName contained slot source summary template time track
+syn keyword htmlTagName contained video wbr
 
 " legal arg names
 syn keyword htmlArg contained action
