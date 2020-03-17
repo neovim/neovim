@@ -6987,7 +6987,7 @@ win_T *lastwin_nofloating(void) {
  * check if there is at least one unanchored floating window
  * in the tab page tp.
  */
-bool check_unanchored_floats(tabpage_T *tp) {
+bool has_unanchored_floats(tabpage_T *tp) {
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
     if (wp->w_floating && wp->w_float_config.relative != kFloatRelativeWindow) {
       return true;
@@ -6999,12 +6999,15 @@ bool check_unanchored_floats(tabpage_T *tp) {
 /*
  * check if there is only one nonfloat in the tabpage tp
  */
-bool check_one_nonfloat_in_tab(tabpage_T *tp) {
+bool one_nonfloat_in_tab(tabpage_T *tp) {
   int w_nonfloats = 0;
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
     if(!wp->w_floating) {
       w_nonfloats++;
+      if(w_nonfloats > 1) {
+        return false;
+      }
     }
   }
-  return (w_nonfloats == 1 ? true : false);
+  return true;
 }

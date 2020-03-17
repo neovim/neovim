@@ -6283,7 +6283,7 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
-  if (check_one_nonfloat_in_tab(curtab) && check_unanchored_floats(curtab)) {
+  if (one_nonfloat_in_tab(curtab) && has_unanchored_floats(curtab)) {
     EMSG(e_floatonly);
     return;
   }
@@ -6442,10 +6442,9 @@ ex_win_close(
 {
   int need_hide;
   buf_T       *buf = win->w_buffer;
-  win_T	      *wp = (tp) ? tp->tp_firstwin : firstwin;
 
-  if (check_unanchored_floats(tp ? tp : curtab) 
-    && check_one_nonfloat_in_tab(tp ? tp : curtab)) {
+  if (!win->w_floating && has_unanchored_floats(tp ? tp : curtab)
+    && one_nonfloat_in_tab(tp ? tp : curtab)) {
     EMSG(e_floatonly);
     return;
   }
@@ -6456,6 +6455,7 @@ ex_win_close(
     return;
   }
 
+  win_T	      *wp = (tp) ? tp->tp_firstwin : firstwin;
   while (wp) {
     win_T *next_win = wp->w_next;
     if (wp->w_floating
