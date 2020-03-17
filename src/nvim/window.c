@@ -2450,18 +2450,7 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
-  if (win->w_floating && win->w_float_config.relative == kFloatRelativeWindow
-    && firstwin->handle == win->w_float_config.window
-    && lastwin_nofloating()->handle == win->w_float_config.window
-    && check_unanchored_floats()) {
-    EMSG(e_floatonly);
-    return FAIL;
-  }
-  if (firstwin == win && lastwin_nofloating() == win
-    && check_unanchored_floats()) {
-    EMSG(e_floatonly);
-    return FAIL;
-  }
+  
   /* When closing the last window in a tab page first go to another tab page
    * and then close the window and the tab page to avoid that curwin and
    * curtab are invalid while we are freeing memory. */
@@ -6995,13 +6984,27 @@ win_T *lastwin_nofloating(void) {
 }
 
 /*
- * check if there is at least one unanchored floating window.
+ * check if there is at least one unanchored floating window
+ * in the tab page tp.
  */
-bool check_unanchored_floats(void) {
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
+bool check_unanchored_floats(tabpage_T *tp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
     if (wp->w_floating && wp->w_float_config.relative != kFloatRelativeWindow) {
       return true;
     }
   }
   return false;
+}
+
+/*
+ * check if there is only one nonfloat in the tabpage tp
+ */
+bool check_one_nonfloat_in_tab(tabpage_T *tp) {
+  int w_nonfloats = 0;
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    if(!wp->w_floating) {
+      w_nonfloats++;
+    }
+  }
+  return (w_nonfloats == 1 ? true : false);
 }
