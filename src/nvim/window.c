@@ -4689,6 +4689,10 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_floating = 0;
   new_wp->w_float_config = FLOAT_CONFIG_INIT;
 
+  // use global option for global-local options
+  new_wp->w_p_so = -1;
+  new_wp->w_p_siso = -1;
+
   /* We won't calculate w_fraction until resizing the window */
   new_wp->w_fraction = 0;
   new_wp->w_prev_fraction_row = -1;
@@ -5799,9 +5803,10 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   if (wp == curwin) {
-    if (p_so)
+    if (get_scrolloff_value()) {
       update_topline();
-    curs_columns(FALSE);        /* validate w_wrow */
+    }
+    curs_columns(false);        // validate w_wrow
   }
   if (prev_height > 0) {
     wp->w_prev_fraction_row = wp->w_wrow;

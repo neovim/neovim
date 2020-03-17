@@ -2227,6 +2227,8 @@ showmatch(
   pos_T       *lpos, save_cursor;
   pos_T mpos;
   colnr_T vcol;
+  long *so = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
+  long *siso = curwin->w_p_siso >= 0 ? &curwin->w_p_siso : &p_siso;
   long save_so;
   long save_siso;
   int save_state;
@@ -2262,23 +2264,24 @@ showmatch(
             && vcol < curwin->w_leftcol + curwin->w_width_inner)) {
       mpos = *lpos;  // save the pos, update_screen() may change it
       save_cursor = curwin->w_cursor;
-      save_so = p_so;
-      save_siso = p_siso;
-      /* Handle "$" in 'cpo': If the ')' is typed on top of the "$",
-       * stop displaying the "$". */
-      if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol)
+      save_so = *so;
+      save_siso = *siso;
+      // Handle "$" in 'cpo': If the ')' is typed on top of the "$",
+      // stop displaying the "$".
+      if (dollar_vcol >= 0 && dollar_vcol == curwin->w_virtcol) {
         dollar_vcol = -1;
-      ++curwin->w_virtcol;              /* do display ')' just before "$" */
-      update_screen(VALID);             /* show the new char first */
+      }
+      curwin->w_virtcol++;              // do display ')' just before "$"
+      update_screen(VALID);             // show the new char first
 
       save_dollar_vcol = dollar_vcol;
       save_state = State;
       State = SHOWMATCH;
-      ui_cursor_shape();                /* may show different cursor shape */
-      curwin->w_cursor = mpos;          /* move to matching char */
-      p_so = 0;                         /* don't use 'scrolloff' here */
-      p_siso = 0;                       /* don't use 'sidescrolloff' here */
-      showruler(FALSE);
+      ui_cursor_shape();                // may show different cursor shape
+      curwin->w_cursor = mpos;          // move to matching char
+      *so = 0;                          // don't use 'scrolloff' here
+      *siso = 0;                        // don't use 'sidescrolloff' here
+      showruler(false);
       setcursor();
       ui_flush();
       /* Restore dollar_vcol(), because setcursor() may call curs_rows()
@@ -2294,11 +2297,11 @@ showmatch(
         os_delay(p_mat * 100L, true);
       else if (!char_avail())
         os_delay(p_mat * 100L, false);
-      curwin->w_cursor = save_cursor;           /* restore cursor position */
-      p_so = save_so;
-      p_siso = save_siso;
+      curwin->w_cursor = save_cursor;           // restore cursor position
+      *so = save_so;
+      *siso = save_siso;
       State = save_state;
-      ui_cursor_shape();                /* may show different cursor shape */
+      ui_cursor_shape();                // may show different cursor shape
     }
   }
 }

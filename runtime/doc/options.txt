@@ -4900,13 +4900,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'scrolloff'* *'so'*
 'scrolloff' 'so'	number	(default 0)
-			global
+			global or local to window |global-local|
 	Minimal number of screen lines to keep above and below the cursor.
 	This will make some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
 	in the middle of the window (except at the start or end of the file or
 	when long lines wrap).
-	For scrolling horizontally see 'sidescrolloff'.
+	After using the local value, go back the global value with one of
+	these two: >
+		setlocal scrolloff<
+		setlocal scrolloff=-1
+<	For scrolling horizontally see 'sidescrolloff'.
 
 						*'scrollopt'* *'sbo'*
 'scrollopt' 'sbo'	string	(default "ver,jump")
@@ -5515,7 +5519,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)
-			global
+			global or local to window |global-local|
 	The minimal number of screen columns to keep to the left and to the
 	right of the cursor if 'nowrap' is set.  Setting this option to a
 	value greater than 0 while having |'sidescroll'| also at a non-zero
@@ -5524,7 +5528,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to a large value (like 999) has the effect of keeping the cursor
 	horizontally centered in the window, as long as one does not come too
 	close to the beginning of the line.
-
+	After using the local value, go back the global value with one of
+	these two: >
+		setlocal sidescrolloff<
+		setlocal sidescrolloff=-1
+<
 	Example: Try this together with 'sidescroll' and 'listchars' as
 		 in the following example to never allow the cursor to move
 		 onto the "extends" character: >

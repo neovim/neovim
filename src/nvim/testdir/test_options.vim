@@ -512,6 +512,41 @@ func Test_shortmess_F2()
   bwipe
 endfunc
 
+func Test_local_scrolloff()
+  set so=5
+  set siso=7
+  split
+  call assert_equal(5, &so)
+  setlocal so=3
+  call assert_equal(3, &so)
+  wincmd w
+  call assert_equal(5, &so)
+  wincmd w
+  setlocal so<
+  call assert_equal(5, &so)
+  setlocal so=0
+  call assert_equal(0, &so)
+  setlocal so=-1
+  call assert_equal(5, &so)
+
+  call assert_equal(7, &siso)
+  setlocal siso=3
+  call assert_equal(3, &siso)
+  wincmd w
+  call assert_equal(7, &siso)
+  wincmd w
+  setlocal siso<
+  call assert_equal(7, &siso)
+  setlocal siso=0
+  call assert_equal(0, &siso)
+  setlocal siso=-1
+  call assert_equal(7, &siso)
+
+  close
+  set so&
+  set siso&
+endfunc
+
 func Test_visualbell()
   set belloff=
   set visualbell

@@ -593,7 +593,7 @@ static int insert_check(VimState *state)
 
     if (curwin->w_wcol < s->mincol - curbuf->b_p_ts
         && curwin->w_wrow == curwin->w_winrow
-        + curwin->w_height_inner - 1 - p_so
+        + curwin->w_height_inner - 1 - get_scrolloff_value()
         && (curwin->w_cursor.lnum != curwin->w_topline
             || curwin->w_topfill > 0)) {
       if (curwin->w_topfill > 0) {

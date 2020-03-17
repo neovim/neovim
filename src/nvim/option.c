@@ -904,11 +904,19 @@ set_option_default(
       if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        *(long *)varp = (long)(intptr_t)options[opt_idx].def_val[dvi];
+        long def_val = (long)options[opt_idx].def_val[dvi];
+        if ((long *)varp == &curwin->w_p_so
+            || (long *)varp == &curwin->w_p_siso) {
+          // 'scrolloff' and 'sidescrolloff' local values have a
+          // different default value than the global default.
+          *(long *)varp = -1;
+        } else {
+          *(long *)varp = def_val;
+        }
         // May also set global value for local option.
         if (both) {
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+            def_val;
         }
       }
     } else {  // P_BOOL
@@ -4349,7 +4357,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &p_so) {
     if (value < 0 && full_screen) {
-      errmsg = e_scroll;
+      errmsg = e_positive;
     }
   } else if (pp == &p_siso) {
     if (value < 0 && full_screen) {
@@ -5326,20 +5334,20 @@ showoneopt(
  * Write modified options as ":set" commands to a file.
  *
  * There are three values for "opt_flags":
- * OPT_GLOBAL:		   Write global option values and fresh values of
- *			   buffer-local options (used for start of a session
- *			   file).
+ * OPT_GLOBAL:         Write global option values and fresh values of
+ *             buffer-local options (used for start of a session
+ *             file).
  * OPT_GLOBAL + OPT_LOCAL: Idem, add fresh values of window-local options for
- *			   curwin (used for a vimrc file).
- * OPT_LOCAL:		   Write buffer-local option values for curbuf, fresh
- *			   and local values for window-local options of
- *			   curwin.  Local values are also written when at the
- *			   default value, because a modeline or autocommand
- *			   may have set them when doing ":edit file" and the
- *			   user has set them back at the default or fresh
- *			   value.
- *			   When "local_only" is true, don't write fresh
- *			   values, only local values (for ":mkview").
+ *             curwin (used for a vimrc file).
+ * OPT_LOCAL:          Write buffer-local option values for curbuf, fresh
+ *             and local values for window-local options of
+ *             curwin.  Local values are also written when at the
+ *             default value, because a modeline or autocommand
+ *             may have set them when doing ":edit file" and the
+ *             user has set them back at the default or fresh
+ *             value.
+ *             When "local_only" is true, don't write fresh
+ *             values, only local values (for ":mkview").
  * (fresh value = value used for a new buffer or window for a local option).
  *
  * Return FAIL on error, OK otherwise.
@@ -5634,6 +5642,12 @@ void unset_global_local_option(char *name, void *from)
       clear_string_option(&buf->b_p_tc);
       buf->b_tc_flags = 0;
       break;
+    case PV_SISO:
+      curwin->w_p_siso = -1;
+      break;
+    case PV_SO:
+      curwin->w_p_so = -1;
+      break;
     case PV_DEF:
       clear_string_option(&buf->b_p_def);
       break;
@@ -5706,6 +5720,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_AR:   return (char_u *)&(curbuf->b_p_ar);
     case PV_TAGS: return (char_u *)&(curbuf->b_p_tags);
     case PV_TC:   return (char_u *)&(curbuf->b_p_tc);
+    case PV_SISO: return (char_u *)&(curwin->w_p_siso);
+    case PV_SO:   return (char_u *)&(curwin->w_p_so);
     case PV_DEF:  return (char_u *)&(curbuf->b_p_def);
     case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
@@ -5750,6 +5766,10 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
   case PV_TC:     return *curbuf->b_p_tc != NUL
            ? (char_u *)&(curbuf->b_p_tc) : p->var;
+  case PV_SISO:   return curwin->w_p_siso >= 0
+           ? (char_u *)&(curwin->w_p_siso) : p->var;
+  case PV_SO:     return curwin->w_p_so >= 0
+           ? (char_u *)&(curwin->w_p_so) : p->var;
   case PV_BKC:    return *curbuf->b_p_bkc != NUL
            ? (char_u *)&(curbuf->b_p_bkc) : p->var;
   case PV_DEF:    return *curbuf->b_p_def != NUL
@@ -6034,10 +6054,10 @@ void didset_window_options(win_T *wp)
  * Copy global option values to local options for one buffer.
  * Used when creating a new buffer and sometimes when entering a buffer.
  * flags:
- * BCO_ENTER	We will enter the buf buffer.
- * BCO_ALWAYS	Always copy the options, but only set b_p_initialized when
- *		appropriate.
- * BCO_NOHELP	Don't copy the values to a help buffer.
+ * BCO_ENTER    We will enter the buf buffer.
+ * BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
+ *      appropriate.
+ * BCO_NOHELP   Don't copy the values to a help buffer.
  */
 void buf_copy_options(buf_T *buf, int flags)
 {
@@ -7485,3 +7505,18 @@ dict_T *get_winbuf_options(const int bufopt)
 
   return d;
 }
+
+/// Return the effective 'scrolloff' value for the current window, using the
+/// global value when appropriate.
+long get_scrolloff_value(void)
+{
+  return curwin->w_p_so < 0 ? p_so : curwin->w_p_so;
+}
+
+/// Return the effective 'sidescrolloff' value for the current window, using the
+/// global value when appropriate.
+long get_sidescrolloff_value(void)
+{
+  return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
+}
+
