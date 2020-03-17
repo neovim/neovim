@@ -16,6 +16,7 @@ func Test_profile_func()
       while l:count > 0
         let l:count = l:count - 1
       endwhile
+      sleep 1m
     endfunc
     func! Foo3()
     endfunc
@@ -51,7 +52,7 @@ func Test_profile_func()
   " - Unlike Foo3(), Foo2() should not be deleted since there is a check
   "   for v:profiling.
   " - Bar() is not reported since it does not match "profile func Foo*".
-  call assert_equal(30, len(lines))
+  call assert_equal(31, len(lines))
 
   call assert_equal('FUNCTION  Foo1()',                            lines[0])
   call assert_match('Defined:.*Xprofile_func.vim:3',               lines[1])
@@ -71,17 +72,18 @@ func Test_profile_func()
   call assert_match('^\s*101\s\+.*\swhile l:count > 0$',           lines[16])
   call assert_match('^\s*100\s\+.*\s  let l:count = l:count - 1$', lines[17])
   call assert_match('^\s*101\s\+.*\sendwhile$',                    lines[18])
-  call assert_equal('',                                            lines[19])
-  call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[20])
-  call assert_equal('count  total (s)   self (s)  function',       lines[21])
-  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[22])
-  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[23])
-  call assert_equal('',                                            lines[24])
-  call assert_equal('FUNCTIONS SORTED ON SELF TIME',               lines[25])
-  call assert_equal('count  total (s)   self (s)  function',       lines[26])
-  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[27])
-  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[28])
-  call assert_equal('',                                            lines[29])
+  call assert_match('^\s*1\s\+.\+sleep 1m$',                       lines[19])
+  call assert_equal('',                                            lines[20])
+  call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[21])
+  call assert_equal('count  total (s)   self (s)  function',       lines[22])
+  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[23])
+  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[24])
+  call assert_equal('',                                            lines[25])
+  call assert_equal('FUNCTIONS SORTED ON SELF TIME',               lines[26])
+  call assert_equal('count  total (s)   self (s)  function',       lines[27])
+  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[28])
+  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[29])
+  call assert_equal('',                                            lines[30])
 
   call delete('Xprofile_func.vim')
   call delete('Xprofile_func.log')
