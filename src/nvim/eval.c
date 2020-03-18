@@ -6382,7 +6382,9 @@ call_func(
         error = ERROR_DELETED;
       } else if (fp != NULL) {
         if (argv_func != NULL) {
-          argcount = argv_func(argcount, argvars, fp->uf_args.ga_len);
+          // postponed filling in the arguments, do it now
+          argcount = argv_func(argcount, argvars, argv_clear,
+                               fp->uf_args.ga_len);
         }
         if (fp->uf_flags & FC_RANGE) {
           *doesrange = true;
