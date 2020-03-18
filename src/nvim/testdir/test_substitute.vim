@@ -616,9 +616,20 @@ endfunc
 func SubReplacer(text, submatches)
   return a:text .. a:submatches[0] .. a:text
 endfunc
+func SubReplacer20(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, submatches)
+  return a:t3 .. a:submatches[0] .. a:t11
+endfunc
 
 func Test_substitute_partial()
-   call assert_equal('1foo2foo3', substitute('123', '2', function('SubReplacer', ['foo']), 'g'))
+  call assert_equal('1foo2foo3', substitute('123', '2', function('SubReplacer', ['foo']), 'g'))
+
+  " 19 arguments plus one is just OK
+  let Replacer = function('SubReplacer20', repeat(['foo'], 19))
+  call assert_equal('1foo2foo3', substitute('123', '2', Replacer, 'g'))
+
+  " 20 arguments plus one is too many
+  let Replacer = function('SubReplacer20', repeat(['foo'], 20))
+  call assert_fails("call substitute('123', '2', Replacer, 'g')", 'E118')
 endfunc
 
 func Test_sub_cmd_9()

@@ -6683,10 +6683,15 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           // fill_submatch_list() was called.
           clear_submatch_list(&matchList);
         }
-        char buf[NUMBUFLEN];
-        eval_result = (char_u *)tv_get_string_buf_chk(&rettv, buf);
-        if (eval_result != NULL) {
-          eval_result = vim_strsave(eval_result);
+        if (rettv.v_type == VAR_UNKNOWN) {
+          // something failed, no need to report another error
+          eval_result = NULL;
+        } else {
+          char buf[NUMBUFLEN];
+          eval_result = (char_u *)tv_get_string_buf_chk(&rettv, buf);
+          if (eval_result != NULL) {
+            eval_result = vim_strsave(eval_result);
+          }
         }
         tv_clear(&rettv);
       } else {
