@@ -164,6 +164,7 @@ jobs:
       arch: s390x
       compiler: gcc
       env:
+        - FUNCTIONALTEST=functionaltest-lua
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
         - *common-job-env
