@@ -2587,6 +2587,7 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
+      redraw={'ui_option'},
       varname='p_ttimeout',
       defaults={if_true={vi=true}}
     },
@@ -2594,6 +2595,7 @@ return {
       full_name='ttimeoutlen', abbreviation='ttm',
       type='number', scope={'global'},
       vi_def=true,
+      redraw={'ui_option'},
       varname='p_ttm',
       defaults={if_true={vi=50}}
     },
