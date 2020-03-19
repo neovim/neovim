@@ -172,6 +172,7 @@ jobs:
         apt:
           packages:
             - *common-apt-packages
+            - gettext
             - python-pip
             - python3-pip
             - python-setuptools
