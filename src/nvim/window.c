@@ -2450,7 +2450,7 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
-  
+
   /* When closing the last window in a tab page first go to another tab page
    * and then close the window and the tab page to avoid that curwin and
    * curtab are invalid while we are freeing memory. */
@@ -6983,10 +6983,7 @@ win_T *lastwin_nofloating(void) {
   return res;
 }
 
-/*
- * check if there is at least one unanchored floating window
- * in the tab page tp.
- */
+// Check if there is at least one unanchored floating window in the tabpage tp
 bool has_unanchored_floats(tabpage_T *tp)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -6997,9 +6994,7 @@ bool has_unanchored_floats(tabpage_T *tp)
   return false;
 }
 
-/*
- * check if there is only one nonfloat in the tabpage tp
- */
+// Check if there is only one nonfloat in the tabpage tp
 bool one_nonfloat_in_tab(tabpage_T *tp)
 {
   int w_nonfloats = 0;
