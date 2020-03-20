@@ -2416,9 +2416,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
 
 int mch_print_begin(prt_settings_T *psettings)
 {
-  time_t now;
   int bbox[4];
-  char        *p_time;
   double left;
   double right;
   double top;
@@ -2442,10 +2440,10 @@ int mch_print_begin(prt_settings_T *psettings)
   }
   prt_dsc_textline("For", buffer);
   prt_dsc_textline("Creator", longVersion);
-  /* Note: to ensure Clean8bit I don't think we can use LC_TIME */
-  now = time(NULL);
-  p_time = ctime(&now);
-  /* Note: ctime() adds a \n so we have to remove it :-( */
+  // Note: to ensure Clean8bit I don't think we can use LC_TIME
+  char ctime_buf[50];
+  char *p_time = os_ctime(ctime_buf, sizeof(ctime_buf));
+  // Note: os_ctime() adds a \n so we have to remove it :-(
   p = vim_strchr((char_u *)p_time, '\n');
   if (p != NULL)
     *p = NUL;
