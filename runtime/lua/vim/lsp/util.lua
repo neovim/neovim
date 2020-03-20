@@ -134,8 +134,7 @@ end
 function M.apply_text_document_edit(text_document_edit)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
-  -- TODO(ashkan) check this is correct.
-  if (M.buf_versions[bufnr] or 0) > text_document.version then
+  if M.buf_versions[bufnr] > text_document.version then
     print("Buffer ", text_document.uri, " newer than edits.")
     return
   end
