@@ -329,3 +329,19 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   return true;
 }
 
+// TODO: WTF is this?
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+void blog(char *fmt, ...)
+  FUNC_ATTR_PRINTF(1, 2)
+{
+  static char buf[IOSIZE];
+  va_list args;
+  va_start(args, fmt);
+  size_t size = (size_t)vsnprintf(buf, sizeof(buf), fmt, args);
+
+  FIXED_TEMP_ARRAY(luargs, 1);
+  luargs.items[0] = STRING_OBJ(((String){ .data =buf, .size = size }));
+  Error err = ERROR_INIT;
+  nvim_exec_lua(STATIC_CSTR_AS_STRING("vim.schedule_wrap(require'luadev'.print)(...)"), luargs, &err);
+}
