@@ -116,7 +116,7 @@ function TSHighlighter:on_line(_, _win, buf, line)
     end
   end
   self.line_count[line] = (self.line_count[line] or 0) + 1
-  --return tostring(self.line_count[line])
+  return tostring(self.line_count[line])
 end
 
 return TSHighlighter
