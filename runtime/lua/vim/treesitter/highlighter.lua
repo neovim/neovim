@@ -60,7 +60,7 @@ function TSHighlighter.new(query, bufnr, ft)
     ft,
     {
       on_changedtree = function(...) self:on_changedtree(...) end,
-      on_lines = function() self.root = self.parser:parse():root() end
+      on_bytes = function() self.root = self.parser:parse():root() end
     }
   )
 
