@@ -13,7 +13,7 @@
  * For MSDOS some keys produce codes larger than 0xff. They are split into two
  * chars, the first one is K_NUL.
  */
-#define K_NUL                   (0xce)  /* for MSDOS: special key follows */
+#define K_NUL                   (0xce)  // for MSDOS: special key follows
 
 /*
  * K_SPECIAL is the first byte of a special key code and is always followed by
@@ -78,13 +78,13 @@
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
-/* Used a termcap entry that produces a normal character. */
+// Used a termcap entry that produces a normal character.
 #define KS_KEY                  242
 
-/* Used for click in a tab pages label. */
+// Used for click in a tab pages label.
 #define KS_TABLINE              240
 
-/* Used for menu in a tab pages line. */
+// Used for menu in a tab pages line.
 #define KS_TABMENU              239
 
 /*
@@ -274,13 +274,13 @@ enum key_extra {
 #define K_TAB           TERMCAP2KEY(KS_EXTRA, KE_TAB)
 #define K_S_TAB         TERMCAP2KEY('k', 'B')
 
-/* extra set of function keys F1-F4, for vt100 compatible xterm */
+// extra set of function keys F1-F4, for vt100 compatible xterm
 #define K_XF1           TERMCAP2KEY(KS_EXTRA, KE_XF1)
 #define K_XF2           TERMCAP2KEY(KS_EXTRA, KE_XF2)
 #define K_XF3           TERMCAP2KEY(KS_EXTRA, KE_XF3)
 #define K_XF4           TERMCAP2KEY(KS_EXTRA, KE_XF4)
 
-/* extra set of cursor keys for vt100 compatible xterm */
+// extra set of cursor keys for vt100 compatible xterm
 #define K_XUP           TERMCAP2KEY(KS_EXTRA, KE_XUP)
 #define K_XDOWN         TERMCAP2KEY(KS_EXTRA, KE_XDOWN)
 #define K_XLEFT         TERMCAP2KEY(KS_EXTRA, KE_XLEFT)
@@ -327,7 +327,7 @@ enum key_extra {
 #define K_F36           TERMCAP2KEY('F', 'Q')
 #define K_F37           TERMCAP2KEY('F', 'R')
 
-/* extra set of shifted function keys F1-F4, for vt100 compatible xterm */
+// extra set of shifted function keys F1-F4, for vt100 compatible xterm
 #define K_S_XF1         TERMCAP2KEY(KS_EXTRA, KE_S_XF1)
 #define K_S_XF2         TERMCAP2KEY(KS_EXTRA, KE_S_XF2)
 #define K_S_XF3         TERMCAP2KEY(KS_EXTRA, KE_S_XF3)
@@ -346,7 +346,7 @@ enum key_extra {
 
 #define K_S_F11         TERMCAP2KEY(KS_EXTRA, KE_S_F11)
 #define K_S_F12         TERMCAP2KEY(KS_EXTRA, KE_S_F12)
-/* K_S_F13 to K_S_F37  are currently not used */
+// K_S_F13 to K_S_F37  are currently not used
 
 #define K_HELP          TERMCAP2KEY('%', '1')
 #define K_UNDO          TERMCAP2KEY('&', '8')
@@ -443,8 +443,8 @@ enum key_extra {
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
 
-/* Bits for modifier mask */
-/* 0x01 cannot be used, because the modifier must be 0x02 or higher */
+// Bits for modifier mask
+// 0x01 cannot be used, because the modifier must be 0x02 or higher
 #define MOD_MASK_SHIFT      0x02
 #define MOD_MASK_CTRL       0x04
 #define MOD_MASK_ALT        0x08        // aka META
