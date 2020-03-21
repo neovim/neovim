@@ -5648,8 +5648,11 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char grpbuf[NUMBUFLEN];
   char patbuf[NUMBUFLEN];
+  // group
   const char *const grp = tv_get_string_buf_chk(&argvars[0], grpbuf);
+  // pattern
   const char *const pat = tv_get_string_buf_chk(&argvars[1], patbuf);
+  // default priority
   int prio = 10;
   int id = -1;
   bool error = false;
