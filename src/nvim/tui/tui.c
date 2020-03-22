@@ -1292,6 +1292,12 @@ static void tui_option_set(UI *ui, String name, Object value)
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
   }
+  if (strequal(name.data, "ttimeout")) {
+    data->input.ttimeout = value.data.boolean;
+  }
+  if (strequal(name.data, "ttimeoutlen")) {
+    data->input.ttimeoutlen = (long)value.data.integer;
+  }
 }
 
 static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
