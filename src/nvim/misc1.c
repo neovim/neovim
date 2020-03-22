@@ -1162,3 +1162,26 @@ int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
 }
+
+/// Put the timestamp of an undo header in "buf[buflen]" in a nice format.
+void add_time(char_u *buf, size_t buflen, time_t tt)
+{
+  struct tm curtime;
+
+  if (time(NULL) - tt >= 100) {
+    os_localtime_r(&tt, &curtime);
+    if (time(NULL) - tt < (60L * 60L * 12L)) {
+      // within 12 hours
+      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
+    } else {
+      // longer ago
+      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
+    }
+  } else {
+    int64_t seconds = time(NULL) - tt;
+    vim_snprintf((char *)buf, buflen,
+                 NGETTEXT("%" PRId64 " second ago",
+                          "%" PRId64 " seconds ago", (uint32_t)seconds),
+                 seconds);
+  }
+}

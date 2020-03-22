@@ -4164,6 +4164,9 @@ getbufinfo([{dict}])
 			changed		TRUE if the buffer is modified.
 			changedtick	number of changes made to the buffer.
 			hidden		TRUE if the buffer is hidden.
+			lastused	timestamp in seconds, like
+					|localtime()|, when the buffer was
+					last used.
 			listed		TRUE if the buffer is listed.
 			lnum		current line number in buffer.
 			linecount	number of lines in the buffer (only

@@ -6742,6 +6742,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			complete first match.
 	"list:longest"	When more than one match, list all matches and
 			complete till longest common string.
+	"list:lastused" When more than one buffer matches, sort buffers
+			by time last used (other than the current buffer).
 	When there is only a single match, it is fully completed in all cases.
 
 	Examples: >
