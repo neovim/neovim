@@ -2998,8 +2998,12 @@ error:
   decor_provider_clear(p);
 }
 
-/// TODO: Documentation
+/// Gets api function documentation
+//
+// @return Dictionary of the form
+// { "nvim_win_set_option": {...}, "nvim_win_get_option": {...}, ... }
 Dictionary nvim_api_get_doc()
+    FUNC_API_SINCE(7)
 {
     msgpack_unpacked unpacked;
     msgpack_unpacked_init(&unpacked);
