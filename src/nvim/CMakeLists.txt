@@ -34,6 +34,7 @@ set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
+set(GENERATED_API_DOC_METADATA ${GENERATED_DIR}/api/private/api_doc_metadata.generated.h)
 set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
@@ -306,10 +307,13 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
          ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
+         ${GENERATED_API_DOC_METADATA}
   COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${GENERATED_API_DISPATCH}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
                      ${MSGPACK_LUA_C_BINDINGS}
+                     ${GENERATED_API_DOC_METADATA}
+                     ${PROJECT_SOURCE_DIR}/runtime/doc/api.mpack
                      ${API_HEADERS}
   DEPENDS
     ${API_HEADERS}
@@ -317,6 +321,7 @@ add_custom_command(
     ${API_DISPATCH_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+    ${PROJECT_SOURCE_DIR}/runtime/doc/api.mpack
 )
 
 add_custom_command(

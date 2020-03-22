@@ -56,6 +56,7 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
+# include "api/private/api_doc_metadata.generated.h"
 #endif
 
 void api_vim_init(void)
@@ -2995,4 +2996,26 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   return;
 error:
   decor_provider_clear(p);
+}
+
+/// TODO: Documentation
+Dictionary nvim_api_get_doc()
+{
+    msgpack_unpacked unpacked;
+    msgpack_unpacked_init(&unpacked);
+    if (msgpack_unpack_next(&unpacked,
+                (const char *)api_doc_metadata,
+                sizeof(api_doc_metadata),
+                NULL) != MSGPACK_UNPACK_SUCCESS) {
+        abort();
+    }
+
+    Object api_doc_obj;
+    msgpack_rpc_to_object(&unpacked.data, &api_doc_obj);
+    msgpack_unpacked_destroy(&unpacked);
+
+    Dictionary api_doc = ARRAY_DICT_INIT;
+    PUT(api_doc, "api_functions", DICTIONARY_OBJ(api_doc));
+
+    return api_doc;
 }

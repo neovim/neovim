@@ -8,9 +8,11 @@ if arg[1] == '--help' then
   print('      3: functions metadata output file (funcs_metadata.generated.h)')
   print('      4: API metadata output file (api_metadata.mpack)')
   print('      5: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
+  print('      6: api docs metadata output file (api_doc_metadata.generated.h)')
+  print('      7: api docs msgpack file path (api.mpack)')
   print('      rest: C files where API functions are defined')
 end
-assert(#arg >= 4)
+assert(#arg >= 5)
 local functions = {}
 
 local nvimdir = arg[1]
@@ -28,13 +30,15 @@ local funcs_metadata_outputf = arg[3]
 local mpack_outputf = arg[4]
 local lua_c_bindings_outputf = arg[5]
 
+local api_doc_metadata_outpuf = arg[6]
+
 -- set of function names, used to detect duplicates
 local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
 -- read each input file, parse and append to the api metadata
-for i = 6, #arg do
+for i = 8, #arg do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -167,6 +171,16 @@ local packed = mpack.pack(exported_functions)
 local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
+
+
+local api_doc_metadata_output = io.open(api_doc_metadata_outpuf, 'wb')
+-- TODO: How to get api.mpack?
+local api_mpack = io.open(arg[7], 'r')
+local packed = mpack.pack(api_mpack:read('*all'))
+api_mpack:close()
+dump_bin_array(api_doc_metadata_output, 'api_doc_metadata', packed)
+api_doc_metadata_output:close()
+
 
 -- start building the dispatch wrapper output
 local output = io.open(dispatch_outputf, 'wb')
