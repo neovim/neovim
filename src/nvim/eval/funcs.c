@@ -971,15 +971,16 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   fp = var2fpos(&argvars[0], FALSE, &fnum);
   if (fp != NULL && fnum == curbuf->b_fnum) {
     if (fp->col == MAXCOL) {
-      /* '> can be MAXCOL, get the length of the line then */
-      if (fp->lnum <= curbuf->b_ml.ml_line_count)
+      // '> can be MAXCOL, get the length of the line then
+      if (fp->lnum <= curbuf->b_ml.ml_line_count) {
         col = (colnr_T)STRLEN(ml_get(fp->lnum)) + 1;
-      else
+      } else {
         col = MAXCOL;
+      }
     } else {
       col = fp->col + 1;
-      /* col(".") when the cursor is on the NUL at the end of the line
-       * because of "coladd" can be seen as an extra column. */
+      // col(".") when the cursor is on the NUL at the end of the line
+      // because of "coladd" can be seen as an extra column.
       if (virtual_active() && fp == &curwin->w_cursor) {
         char_u  *p = get_cursor_pos_ptr();
 
@@ -1664,25 +1665,29 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int filler_lines;
   int col;
 
-  if (lnum < 0)         /* ignore type error in {lnum} arg */
+  if (lnum < 0) {       // ignore type error in {lnum} arg
     lnum = 0;
+  }
   if (lnum != prev_lnum
       || changedtick != buf_get_changedtick(curbuf)
       || fnum != curbuf->b_fnum) {
-    /* New line, buffer, change: need to get the values. */
+    // New line, buffer, change: need to get the values.
     filler_lines = diff_check(curwin, lnum);
     if (filler_lines < 0) {
       if (filler_lines == -1) {
         change_start = MAXCOL;
         change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end))
-          hlID = HLF_ADD;               /* added line */
-        else
-          hlID = HLF_CHD;               /* changed line */
-      } else
-        hlID = HLF_ADD;         /* added line */
-    } else
+        if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
+          hlID = HLF_ADD;               // added line
+        } else {
+          hlID = HLF_CHD;               // changed line
+        }
+      } else {
+        hlID = HLF_ADD;         // added line
+      }
+    } else {
       hlID = (hlf_T)0;
+    }
     prev_lnum = lnum;
     changedtick = buf_get_changedtick(curbuf);
     fnum = curbuf->b_fnum;
@@ -2060,8 +2065,8 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else
       rettv->vval.v_string = result;
   } else {
-    /* When the optional second argument is non-zero, don't remove matches
-    * for 'wildignore' and don't put matches for 'suffixes' at the end. */
+    // When the optional second argument is non-zero, don't remove matches
+    // for 'wildignore' and don't put matches for 'suffixes' at the end.
     if (argvars[1].v_type != VAR_UNKNOWN
         && tv_get_number_chk(&argvars[1], &error)) {
       options |= WILD_KEEP_ALL;
@@ -2480,9 +2485,9 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
-    /* Find interesting text in this line. */
+    // Find interesting text in this line.
     s = skipwhite(ml_get(lnum));
-    /* skip C comment-start */
+    // skip C comment-start
     if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
       s = skipwhite(s + 2);
       if (*skipwhite(s) == NUL && lnum + 1 < foldend) {
@@ -2500,7 +2505,7 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     sprintf((char *)r, txt, dashes, count);
     len = (int)STRLEN(r);
     STRCAT(r, s);
-    /* remove 'foldmarker' and 'commentstring' */
+    // remove 'foldmarker' and 'commentstring'
     foldtext_cleanup(r + len);
     rettv->vval.v_string = r;
   }
@@ -2925,10 +2930,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = n;
   if (IS_SPECIAL(n) || mod_mask != 0) {
-    char_u temp[10];                /* modifier: 3, mbyte-char: 6, NUL: 1 */
+    char_u temp[10];                // modifier: 3, mbyte-char: 6, NUL: 1
     int i = 0;
 
-    /* Turn a special key into three bytes, plus modifier. */
+    // Turn a special key into three bytes, plus modifier.
     if (mod_mask != 0) {
       temp[i++] = K_SPECIAL;
       temp[i++] = KS_MODIFIER;
@@ -3277,7 +3282,7 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       rettv->vval.v_number = (varnumber_T)filesize;
 
-      /* non-perfect check for overflow */
+      // non-perfect check for overflow
       if ((uint64_t)rettv->vval.v_number != filesize) {
         rettv->vval.v_number = -2;
       }
@@ -4026,7 +4031,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "dialog_con",
     "diff",
     "digraphs",
-    "eval",         /* always present, of course! */
+    "eval",         // always present, of course!
     "ex_extra",
     "extra_search",
     "file_in_path",
@@ -4094,7 +4099,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "textobjects",
     "timers",
     "title",
-    "user-commands",        /* was accidentally included in 5.4 */
+    "user-commands",        // was accidentally included in 5.4
     "user_commands",
     "vertsplit",
     "virtualedit",
@@ -4550,9 +4555,9 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   msg_start();
-  msg_row = Rows - 1;   /* for when 'cmdheight' > 1 */
-  lines_left = Rows;    /* avoid more prompt */
-  msg_scroll = TRUE;
+  msg_row = Rows - 1;   // for when 'cmdheight' > 1
+  lines_left = Rows;    // avoid more prompt
+  msg_scroll = true;
   msg_clr_eos();
 
   TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
@@ -5426,7 +5431,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   long idx = 0;
   char_u      *tofree = NULL;
 
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
+  // Make 'cpoptions' empty, the 'l' flag should not be used here.
   save_cpo = p_cpo;
   p_cpo = (char_u *)"";
 
@@ -5492,12 +5497,12 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         start = 0;
       if (start > len)
         goto theend;
-      /* When "count" argument is there ignore matches before "start",
-       * otherwise skip part of the string.  Differs when pattern is "^"
-       * or "\<". */
-      if (argvars[3].v_type != VAR_UNKNOWN)
+      // When "count" argument is there ignore matches before "start",
+      // otherwise skip part of the string.  Differs when pattern is "^"
+      // or "\<".
+      if (argvars[3].v_type != VAR_UNKNOWN) {
         startcol = start;
-      else {
+      } else {
         str += start;
         len -= start;
       }
@@ -5536,7 +5541,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
       if (l == NULL && !match)
         break;
 
-      /* Advance to just after the match. */
+      // Advance to just after the match.
       if (l != NULL) {
         li = TV_LIST_ITEM_NEXT(l, li);
         idx++;
@@ -6309,12 +6314,12 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   bool binary = false;
   FILE        *fd;
-  char_u buf[(IOSIZE/256)*256];         /* rounded to avoid odd + 1 */
+  char_u buf[(IOSIZE/256) * 256];       // rounded to avoid odd + 1
   int io_size = sizeof(buf);
-  int readlen;                          /* size of last fread() */
-  char_u      *prev    = NULL;          /* previously read bytes, if any */
-  long prevlen  = 0;                    /* length of data in prev */
-  long prevsize = 0;                    /* size of prev buffer */
+  int readlen;                          // size of last fread()
+  char_u      *prev    = NULL;          // previously read bytes, if any
+  long prevlen  = 0;                    // length of data in prev
+  long prevsize = 0;                    // size of prev buffer
   long maxline  = MAXLNUM;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -6353,14 +6358,17 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         char_u      *s  = NULL;
         size_t len = p - start;
 
-        /* Finished a line.  Remove CRs before NL. */
+        // Finished a line.  Remove CRs before NL.
         if (readlen > 0 && !binary) {
-          while (len > 0 && start[len - 1] == '\r')
-            --len;
-          /* removal may cross back to the "prev" string */
-          if (len == 0)
-            while (prevlen > 0 && prev[prevlen - 1] == '\r')
-              --prevlen;
+          while (len > 0 && start[len - 1] == '\r') {
+            len--;
+          }
+          // removal may cross back to the "prev" string
+          if (len == 0) {
+            while (prevlen > 0 && prev[prevlen - 1] == '\r') {
+              prevlen--;
+            }
+          }
         }
         if (prevlen == 0) {
           assert(len < INT_MAX);
@@ -6372,7 +6380,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           s = xrealloc(prev, prevlen + len + 1);
           memcpy(s + prevlen, start, len);
           s[prevlen + len] = NUL;
-          prev = NULL;             /* the list will own the string */
+          prev = NULL;             // the list will own the string
           prevlen = prevsize = 0;
         }
 
@@ -6411,13 +6419,12 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (back2 == 0xef && back1 == 0xbb) {
           char_u *dest = p - 2;
 
-          /* Usually a BOM is at the beginning of a file, and so at
-           * the beginning of a line; then we can just step over it.
-           */
-          if (start == dest)
+          // Usually a BOM is at the beginning of a file, and so at
+          // the beginning of a line; then we can just step over it.
+          if (start == dest) {
             start = p + 1;
-          else {
-            /* have to shuffle buf to close gap */
+          } else {
+            // have to shuffle buf to close gap
             int adjust_prevlen = 0;
 
             if (dest < buf) {  // -V782
@@ -6433,13 +6440,13 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           }
         }
       }
-    }     /* for */
+    }     // for
 
     if ((maxline >= 0 && tv_list_len(l) >= maxline) || readlen <= 0) {
       break;
     }
     if (start < p) {
-      /* There's part of a line in buf, store it in "prev". */
+      // There's part of a line in buf, store it in "prev".
       if (p - start + prevlen >= prevsize) {
         /* A common use case is ordinary text files and "prev" gets a
          * fragment of a line, so the first allocation is made
@@ -6454,11 +6461,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
         prev = xrealloc(prev, prevsize);
       }
-      /* Add the line part to end of "prev". */
+      // Add the line part to end of "prev".
       memmove(prev + prevlen, start, p - start);
       prevlen += (long)(p - start);
     }
-  }   /* while */
+  }   // while
 
   xfree(prev);
   fclose(fd);
@@ -6950,7 +6957,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   pos_T save_cursor;
   bool save_p_ws = p_ws;
   int dir;
-  int retval = 0;               /* default: FAIL */
+  int retval = 0;               // default: FAIL
   long lnum_stop = 0;
   proftime_T tm;
   long time_limit = 0;
@@ -6974,7 +6981,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     options |= SEARCH_COL;
   }
 
-  /* Optional arguments: line number to stop searching and timeout. */
+  // Optional arguments: line number to stop searching and timeout.
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     lnum_stop = tv_get_number_chk(&argvars[2], NULL);
     if (lnum_stop < 0) {
@@ -6988,7 +6995,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     }
   }
 
-  /* Set the time limit, if there is one. */
+  // Set the time limit, if there is one.
   tm = profile_setlimit(time_limit);
 
   /*
@@ -7018,20 +7025,21 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
       setpcmark();
     curwin->w_cursor = pos;
     if (match_pos != NULL) {
-      /* Store the match cursor position */
+      // Store the match cursor position
       match_pos->lnum = pos.lnum;
       match_pos->col = pos.col + 1;
     }
-    /* "/$" will put the cursor after the end of the line, may need to
-     * correct that here */
+    // "/$" will put the cursor after the end of the line, may need to
+    // correct that here
     check_cursor();
   }
 
-  /* If 'n' flag is used: restore cursor position. */
-  if (flags & SP_NOMOVE)
+  // If 'n' flag is used: restore cursor position.
+  if (flags & SP_NOMOVE) {
     curwin->w_cursor = save_cursor;
-  else
-    curwin->w_set_curswant = TRUE;
+  } else {
+    curwin->w_set_curswant = true;
+  }
 theend:
   p_ws = save_p_ws;
 
@@ -7370,7 +7378,7 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int thisblock = 0;
   bool error = false;
 
-  rettv->vval.v_number = 1;     /* default: FAIL */
+  rettv->vval.v_number = 1;     // default: FAIL
 
   const char *const name = tv_get_string_chk(&argvars[0]);
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -7528,11 +7536,11 @@ do_searchpair(
   size_t pat2_len;
   size_t pat3_len;
 
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
+  // Make 'cpoptions' empty, the 'l' flag should not be used here.
   save_cpo = p_cpo;
   p_cpo = empty_option;
 
-  /* Set the time limit, if there is one. */
+  // Set the time limit, if there is one.
   tm = profile_setlimit(time_limit);
 
   // Make two search patterns: start/end (pat2, for in nested pairs) and
@@ -7580,17 +7588,18 @@ do_searchpair(
     if (firstpos.lnum == 0)
       firstpos = pos;
     if (equalpos(pos, foundpos)) {
-      /* Found the same position again.  Can happen with a pattern that
-       * has "\zs" at the end and searching backwards.  Advance one
-       * character and try again. */
-      if (dir == BACKWARD)
+      // Found the same position again.  Can happen with a pattern that
+      // has "\zs" at the end and searching backwards.  Advance one
+      // character and try again.
+      if (dir == BACKWARD) {
         decl(&pos);
-      else
+      } else {
         incl(&pos);
+      }
     }
     foundpos = pos;
 
-    /* clear the start flag to avoid getting stuck here */
+    // clear the start flag to avoid getting stuck here
     options &= ~SEARCH_START;
 
     // If the skip pattern matches, ignore this match.
@@ -7601,7 +7610,7 @@ do_searchpair(
       const bool r = eval_expr_to_bool(skip, &err);
       curwin->w_cursor = save_pos;
       if (err) {
-        /* Evaluating {skip} caused an error, break here. */
+        // Evaluating {skip} caused an error, break here.
         curwin->w_cursor = save_cursor;
         retval = -1;
         break;
@@ -7611,49 +7620,54 @@ do_searchpair(
     }
 
     if ((dir == BACKWARD && n == 3) || (dir == FORWARD && n == 2)) {
-      /* Found end when searching backwards or start when searching
-       * forward: nested pair. */
-      ++nest;
-      pat = pat2;               /* nested, don't search for middle */
+      // Found end when searching backwards or start when searching
+      // forward: nested pair.
+      nest++;
+      pat = pat2;               // nested, don't search for middle
     } else {
-      /* Found end when searching forward or start when searching
-       * backward: end of (nested) pair; or found middle in outer pair. */
-      if (--nest == 1)
-        pat = pat3;             /* outer level, search for middle */
+      // Found end when searching forward or start when searching
+      // backward: end of (nested) pair; or found middle in outer pair.
+      if (--nest == 1) {
+        pat = pat3;             // outer level, search for middle
+      }
     }
 
     if (nest == 0) {
-      /* Found the match: return matchcount or line number. */
-      if (flags & SP_RETCOUNT)
-        ++retval;
-      else
+      // Found the match: return matchcount or line number.
+      if (flags & SP_RETCOUNT) {
+        retval++;
+      } else {
         retval = pos.lnum;
-      if (flags & SP_SETPCMARK)
+      }
+      if (flags & SP_SETPCMARK) {
         setpcmark();
+      }
       curwin->w_cursor = pos;
       if (!(flags & SP_REPEAT))
         break;
-      nest = 1;             /* search for next unmatched */
+      nest = 1;             // search for next unmatched
     }
   }
 
   if (match_pos != NULL) {
-    /* Store the match cursor position */
+    // Store the match cursor position
     match_pos->lnum = curwin->w_cursor.lnum;
     match_pos->col = curwin->w_cursor.col + 1;
   }
 
-  /* If 'n' flag is used or search failed: restore cursor position. */
-  if ((flags & SP_NOMOVE) || retval == 0)
+  // If 'n' flag is used or search failed: restore cursor position.
+  if ((flags & SP_NOMOVE) || retval == 0) {
     curwin->w_cursor = save_cursor;
+  }
 
   xfree(pat2);
   xfree(pat3);
-  if (p_cpo == empty_option)
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
-  else
-    /* Darn, evaluating the {skip} expression changed the value. */
+  } else {
+    // Darn, evaluating the {skip} expression changed the value.
     free_string_option(save_cpo);
+  }
 
   return retval;
 }
@@ -9031,7 +9045,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     info.item_compare_selfdict = NULL;
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      /* optional second argument: {func} */
+      // optional second argument: {func}
       if (argvars[1].v_type == VAR_FUNC) {
         info.item_compare_func = (const char *)argvars[1].vval.v_string;
       } else if (argvars[1].v_type == VAR_PARTIAL) {
@@ -9292,7 +9306,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool keepempty = false;
   bool typeerr = false;
 
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
+  // Make 'cpoptions' empty, the 'l' flag should not be used here.
   save_cpo = p_cpo;
   p_cpo = (char_u *)"";
 
@@ -9480,10 +9494,10 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   struct tm curtime;
   struct tm *curtime_ptr = os_localtime_r(&seconds, &curtime);
-  /* MSVC returns NULL for an invalid value of seconds. */
-  if (curtime_ptr == NULL)
+  // MSVC returns NULL for an invalid value of seconds.
+  if (curtime_ptr == NULL) {
     rettv->vval.v_string = vim_strsave((char_u *)_("(Invalid)"));
-  else {
+  } else {
     vimconv_T conv;
     char_u      *enc;
 
@@ -10180,7 +10194,7 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
     for (wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
          wp != twin; wp = wp->w_next) {
       if (wp == NULL) {
-        /* didn't find it in this tabpage */
+        // didn't find it in this tabpage
         nr = 0;
         break;
       }
@@ -10769,9 +10783,10 @@ static void f_visualmode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   str[1] = NUL;
   rettv->vval.v_string = vim_strsave(str);
 
-  /* A non-zero number or non-empty string argument: reset mode. */
-  if (non_zero_arg(&argvars[0]))
+  // A non-zero number or non-empty string argument: reset mode.
+  if (non_zero_arg(&argvars[0])) {
     curbuf->b_visual_mode_eval = NUL;
+  }
 }
 
 /*

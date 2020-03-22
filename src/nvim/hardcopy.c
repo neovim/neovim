@@ -990,9 +990,8 @@ static struct prt_ps_font_S prt_ps_mb_font =
   {NULL, NULL, NULL, NULL}
 };
 
-/* Pointer to current font set being used */
-static struct prt_ps_font_S* prt_ps_font;
-
+// Pointer to current font set being used
+static struct prt_ps_font_S *prt_ps_font;
 
 #define CS_JIS_C_1978   (0x01)
 #define CS_JIS_X_1983   (0x02)

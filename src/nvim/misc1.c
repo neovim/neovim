@@ -73,7 +73,8 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
+int get_leader_len(char_u *line, char_u **flags,
+                   bool backward, bool include_space)
 {
   int i, j;
   int result;
