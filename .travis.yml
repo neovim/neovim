@@ -77,7 +77,6 @@ addons:
       - gdb
       - gperf
       - language-pack-tr
-      - libc6-dev-i386
       - libtool-bin
       - locales
       - ninja-build
@@ -160,6 +159,26 @@ jobs:
         # Minimum required CMake.
         - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
         - *common-job-env
+    - name: big-endian
+      os: linux
+      arch: s390x
+      compiler: gcc
+      env:
+        - FUNCTIONALTEST=functionaltest-lua
+        - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
+        - *common-job-env
+      addons:
+        apt:
+          packages:
+            - *common-apt-packages
+            - gettext
+            - python-pip
+            - python3-pip
+            - python-setuptools
+            - python3-setuptools
+            - python-dev
+            - python3-dev
     - name: clang-tsan
       os: linux
       compiler: clang
