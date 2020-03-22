@@ -1021,6 +1021,8 @@ list of buffers. |unlisted-buffer|
 			x	buffers with a read error
 			%	current buffer
 			#	alternate buffer
+			R	terminal buffers with a running job
+			F	terminal buffers with a finished job
 		Combining flags means they are "and"ed together, e.g.:
 			h+	hidden buffers which are modified
 			a+	active buffers which are modified

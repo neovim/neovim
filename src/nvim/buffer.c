@@ -2600,6 +2600,9 @@ void buflist_list(exarg_T *eap)
   int i;
 
   for (buf = firstbuf; buf != NULL && !got_int; buf = buf->b_next) {
+    const bool is_terminal = buf->terminal;
+    const bool job_running = buf->terminal && terminal_running(buf->terminal);
+
     // skip unspecified buffers
     if ((!buf->b_p_bl && !eap->forceit && !strchr((char *)eap->arg, 'u'))
         || (strchr((char *)eap->arg, 'u') && buf->b_p_bl)
@@ -2609,6 +2612,8 @@ void buflist_list(exarg_T *eap)
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
         || (strchr((char *)eap->arg, 'h')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
+        || (strchr((char *)eap->arg, 'R') && (!is_terminal || !job_running))
+        || (strchr((char *)eap->arg, 'F') && (!is_terminal || job_running))
         || (strchr((char *)eap->arg, '-') && buf->b_p_ma)
         || (strchr((char *)eap->arg, '=') && !buf->b_p_ro)
         || (strchr((char *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))

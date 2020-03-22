@@ -650,6 +650,11 @@ Buffer terminal_buf(const Terminal *term)
   return term->buf_handle;
 }
 
+bool terminal_running(const Terminal *term)
+{
+  return !term->closed;
+}
+
 // }}}
 // libvterm callbacks {{{
 
