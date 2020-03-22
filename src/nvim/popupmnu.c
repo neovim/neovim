@@ -902,18 +902,6 @@ int pum_get_height(void)
   return pum_height;
 }
 
-/// Gets the internal pum geometry.
-///
-/// @return the internal pum geometry. Ignores UI external pum geometry.
-/// Only valid when pum_visible() returns TRUE!
-void pum_get_internal_pos(int *pwidth, int *pheight, int *prow, int *pcol)
-{
-  *pwidth = pum_width;
-  *pheight = pum_height;
-  *prow = pum_row;
-  *pcol = pum_col;
-}
-
 /// Add size information about the pum to "dict".
 void pum_set_event_info(dict_T *dict)
 {
@@ -921,7 +909,12 @@ void pum_set_event_info(dict_T *dict)
     return;
   }
   double w, h, r, c;
-  ui_pum_get_pos(&w, &h, &r, &c);
+  if (!ui_pum_get_pos(&w, &h, &r, &c)) {
+    w = (double)pum_width;
+    h = (double)pum_height;
+    r = (double)pum_row;
+    c = (double)pum_col;
+  }
   tv_dict_add_float(dict, S_LEN("height"), h);
   tv_dict_add_float(dict, S_LEN("width"), w);
   tv_dict_add_float(dict, S_LEN("row"), r);

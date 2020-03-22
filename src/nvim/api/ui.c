@@ -349,15 +349,15 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   ui->pum_nlines = (int)height;
 }
 
-/// Tells Nvim the geometry of the popumenu, to align floating
-/// windows with an external popup menu. Note that this method
-/// is not to be confused with |nvim_ui_pum_set_height()|, which
-/// sets the number of visible items in the popup menu, while
-/// this function sets the bounding box of the popup menu,
-/// including visual decorations such as boarders and sliders.
-/// Floats need not use the same font size, nor be anchored to
-/// exact grid corners, so one can set floating-point numbers
-/// to the popup menu geometry.
+/// Tells Nvim the geometry of the popumenu, to align floating windows with an
+/// external popup menu.
+///
+/// Note that this method is not to be confused with |nvim_ui_pum_set_height()|,
+/// which sets the number of visible items in the popup menu, while this
+/// function sets the bounding box of the popup menu, including visual
+/// decorations such as boarders and sliders. Floats need not use the same font
+/// size, nor be anchored to exact grid corners, so one can set floating-point
+/// numbers to the popup menu geometry.
 ///
 /// @param channel_id
 /// @param width   Popupmenu width.

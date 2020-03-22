@@ -8,7 +8,7 @@ local command = helpers.command
 local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
-local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -421,22 +421,16 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('an error occurs if set 0 or less', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(true, ok)
-      ok, err = pcall(meths.ui_pum_set_height, 0)
-      eq(false, ok)
-      matches('.*: Expected pum height > 0', err)
+      meths.ui_pum_set_height(1)
+      eq('Expected pum height > 0',
+         pcall_err(meths.ui_pum_set_height, 0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(true, ok)
+      meths.ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      ok, err = pcall(meths.ui_pum_set_height, 1)
-      eq(false, ok)
-      matches('.*: It must support the ext_popupmenu option', err)
+      eq('It must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_height, 1))
     end)
   end)
 
@@ -482,35 +476,24 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('no error occurs if row or col set less than 0', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
-      eq(true, ok)
-      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, -1.0, 0.0)
-      eq(true, ok)
-      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, -1.0)
-      eq(true, ok)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      meths.ui_pum_set_bounds(1.0, 1.0, -1.0, 0.0)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, -1.0)
     end)
 
     it('an error occurs if width or height set 0 or less', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
-      eq(true, ok)
-      ok, err = pcall(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0)
-      eq(false, ok)
-      matches('.*: Expected pumpos width > 0', err)
-      ok, err = pcall(meths.ui_pum_set_bounds, 1.0, 0.0, 1.0, 0.0)
-      eq(false, ok)
-      matches('.*: Expected pumpos height > 0', err)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      eq('Expected width > 0',
+         pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
+      eq('Expected height > 0',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
-      eq(true, ok)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
       screen:set_option('ext_popupmenu', false)
-      ok, err = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
-      eq(false, ok)
-      matches('.*: UI must support the ext_popupmenu option', err)
+      eq('UI must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5))
     end)
   end)
 
