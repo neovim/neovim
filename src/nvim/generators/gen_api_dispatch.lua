@@ -174,7 +174,6 @@ funcs_metadata_output:close()
 
 
 local api_doc_metadata_output = io.open(api_doc_metadata_outpuf, 'wb')
--- TODO: How to get api.mpack?
 local api_mpack = io.open(arg[7], 'r')
 local packed = mpack.pack(api_mpack:read('*all'))
 api_mpack:close()
