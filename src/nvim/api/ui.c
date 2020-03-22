@@ -382,17 +382,11 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height,
     return;
   }
 
-  if (row < 0) {
-    api_set_error(err, kErrorTypeValidation, "Expected pumpos row >= 0");
-    return;
-  } else if (col < 0) {
-    api_set_error(err, kErrorTypeValidation, "Expected pumpos col >= 0");
-    return;
-  } else if (width <= 0) {
-    api_set_error(err, kErrorTypeValidation, "Expected pumpos width > 0");
+  if (width <= 0) {
+    api_set_error(err, kErrorTypeValidation, "Expected width > 0");
     return;
   } else if (height <= 0) {
-    api_set_error(err, kErrorTypeValidation, "Expected pumpos height > 0");
+    api_set_error(err, kErrorTypeValidation, "Expected height > 0");
     return;
   }
 

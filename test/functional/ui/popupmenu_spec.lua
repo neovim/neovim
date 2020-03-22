@@ -481,16 +481,14 @@ describe('ui/ext_popupmenu', function()
       }}
     end)
 
-    it('an error occurs if row or col set less than 0', function()
+    it('no error occurs if row or col set less than 0', function()
       local ok, err, _
       ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5)
       eq(true, ok)
-      ok, err = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, -1.0, 0.0)
-      eq(false, ok)
-      matches('.*: Expected pumpos row >= 0', err)
-      ok, err = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, -1.0)
-      eq(false, ok)
-      matches('.*: Expected pumpos col >= 0', err)
+      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, -1.0, 0.0)
+      eq(true, ok)
+      ok, _ = pcall(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, -1.0)
+      eq(true, ok)
     end)
 
     it('an error occurs if width or height set 0 or less', function()
