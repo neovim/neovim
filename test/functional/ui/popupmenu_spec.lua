@@ -1338,7 +1338,7 @@ describe('builtin popupmenu', function()
   end)
 
   it('with rightleft window', function()
-    command("set rl")
+    command("set rl wildoptions+=pum")
     feed('isome rightleft ')
     screen:expect([[
                       ^  tfelthgir emos|
@@ -1435,6 +1435,55 @@ describe('builtin popupmenu', function()
       {1:                               ~}|
       {2:-- INSERT --}                    |
     ]])
+
+    -- not rightleft on the cmdline
+    feed('<esc>:sign ')
+    screen:expect{grid=[[
+                   drow tfelthgir emos|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      :sign ^                          |
+    ]]}
+
+    feed('<tab>')
+    screen:expect{grid=[[
+                   drow tfelthgir emos|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:     }{s: define         }{1:          ~}|
+      {1:     }{n: jump           }{1:          ~}|
+      {1:     }{n: list           }{1:          ~}|
+      {1:     }{n: place          }{1:          ~}|
+      {1:     }{n: undefine       }{1:          ~}|
+      {1:     }{n: unplace        }{1:          ~}|
+      :sign define^                    |
+    ]]}
   end)
 
   it('with multiline messages', function()
