@@ -200,7 +200,21 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
       mch_errmsg("\n");
       preserve_exit();
     }
+
+    int type = lua_type(lstate, -1);
+    if (type != LUA_TSTRING && type != LUA_TNUMBER) {
+      lua_getglobal(lstate, "tostring");
+      lua_insert(lstate, lua_gettop(lstate)-1);  // swap
+      // no error check: if tostring() fails print its error instead
+      lua_pcall(lstate, 1, 1, 0);
+    }
     const char *error = lua_tostring(lstate, -1);
+    if (error == NULL) {
+      // Someone replaced tostring() with a function that doesn't return
+      // a string or throws a non-string error. Please, do not do this.
+      error = "<tostring() internal error, cannot display error>";
+    }
+
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    1, xstrdup(error));
