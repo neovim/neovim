@@ -1368,30 +1368,36 @@ static bool parse_one_cmd(
       out->cmdmod.keepjumps = true;
       continue;
 
-    case 'f': {  // only accept ":filter {pat} cmd"
-      char_u *reg_pat;
-
-      if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
-        break;
+    case 'f':
+      if (checkforcmd(&ea.cmd, "float", 5)) {
+        out->cmdmod.floating = true;
+        continue;
       }
-      if (*p == '!') {
-        out->cmdmod.filter_force = true;
-        p = skipwhite(p + 1);
+      if (checkforcmd(&p, "filter", 4)) {
+        char_u *reg_pat;
+
         if (*p == NUL || ends_excmd(*p)) {
           break;
         }
+        if (*p == '!') {
+          out->cmdmod.filter_force = true;
+          p = skipwhite(p + 1);
+          if (*p == NUL || ends_excmd(*p)) {
+            break;
+          }
+        }
+        p = skip_vimgrep_pat(p, &reg_pat, NULL);
+        if (p == NULL || *p == NUL) {
+          break;
+        }
+        out->cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+        if (out->cmdmod.filter_regmatch.regprog == NULL) {
+          break;
+        }
+        ea.cmd = p;
+        continue;
       }
-      p = skip_vimgrep_pat(p, &reg_pat, NULL);
-      if (p == NULL || *p == NUL) {
-        break;
-      }
-      out->cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
-      if (out->cmdmod.filter_regmatch.regprog == NULL) {
-        break;
-      }
-      ea.cmd = p;
-      continue;
-    }
+      break;
 
     // ":hide" and ":hide | cmd" are not modifiers
     case 'h':   if (p != ea.cmd || !checkforcmd(&p, "hide", 3)
@@ -5830,6 +5836,8 @@ uc_check_code(
       result += add_cmd_modifier(buf, "botright", &multi_mods);
     }
 
+    // TODO(float-ex): Add floating here? Need to read add_cmd_modifier and
+    // this func more
     typedef struct {
       bool *set;
       char *name;
