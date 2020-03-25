@@ -1147,6 +1147,30 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
          && file_id->device_id == file_info->stat.st_dev;
 }
 
+/// Return the canonicalized absolute pathname.
+///
+/// @param[in] name Filename to be canonicalized.
+/// @param[out] buf Buffer to store the canonicalized values. A minimum length
+//                  of MAXPATHL+1 is required. If it is NULL, memory is
+//                  allocated. In that case, the caller should deallocate this
+//                  buffer.
+///
+/// @return pointer to the buf on success, or NULL.
+char *os_realpath(const char *name, char *buf)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  uv_fs_t request;
+  int result = uv_fs_realpath(&fs_loop, &request, name, NULL);
+  if (result == kLibuvSuccess) {
+    if (buf == NULL) {
+      buf = xmallocz(MAXPATHL);
+    }
+    xstrlcpy(buf, request.ptr, MAXPATHL + 1);
+  }
+  uv_fs_req_cleanup(&request);
+  return result == kLibuvSuccess ? buf : NULL;
+}
+
 #ifdef WIN32
 # include <shlobj.h>
 

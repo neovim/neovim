@@ -6709,7 +6709,10 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   const char *fname = tv_get_string(&argvars[0]);
 #ifdef WIN32
-  char *const v = os_resolve_shortcut(fname);
+  char *v = os_resolve_shortcut(fname);
+  if (v == NULL) {
+    v = os_realpath(fname, v);
+  }
   rettv->vval.v_string = (char_u *)(v == NULL ? xstrdup(fname) : v);
 #else
 # ifdef HAVE_READLINK
