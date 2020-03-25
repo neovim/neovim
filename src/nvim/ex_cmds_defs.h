@@ -208,6 +208,7 @@ struct expand {
 typedef struct {
   int split;                   ///< flags for win_split()
   int tab;                     ///< > 0 when ":tab" was used
+  bool floating;               ///< true ":float" was used
   bool browse;                 ///< true to invoke file dialog
   bool confirm;                ///< true to invoke yes/no dialog
   bool hide;                   ///< true when ":hide" was used
