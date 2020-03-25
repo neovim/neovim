@@ -50,6 +50,36 @@ typedef struct {
 # include "lua/executor.c.generated.h"
 #endif
 
+/// get error on top of stack as a string
+///
+/// "error" points to memory on the lua stack, use
+/// or duplicate the string before using "lstate" again
+///
+/// @param[out] len length of error (can be NULL)
+static const char *nlua_get_error(lua_State *lstate, size_t *len)
+{
+  int status = 0;
+  int type = lua_type(lstate, -1);
+  if (type != LUA_TSTRING && type != LUA_TNUMBER) {
+    lua_getglobal(lstate, "tostring");
+    lua_insert(lstate, lua_gettop(lstate)-1);  // swap
+    status = lua_pcall(lstate, 1, 1, 0);
+  }
+
+  const char *error = lua_tolstring(lstate, -1, len);
+  if (error == NULL || status) {
+    // Someone replaced tostring() with a function which
+    // doesn't return a string. Please, do not do this.
+#define ERRMSG "<tostring() internal error, cannot display error>"
+    error = ERRMSG;
+    if (len) {
+      *len = sizeof(ERRMSG)-1;
+    }
+#undef ERRMSG
+  }
+  return error;
+}
+
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -58,7 +88,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
-  const char *const str = lua_tolstring(lstate, -1, &len);
+  const char *const str = nlua_get_error(lstate, &len);
 
   msg_ext_set_kind("lua_error");
   emsgf_multiline(msg, (int)len, str);
@@ -201,20 +231,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
       preserve_exit();
     }
 
-    int type = lua_type(lstate, -1);
-    if (type != LUA_TSTRING && type != LUA_TNUMBER) {
-      lua_getglobal(lstate, "tostring");
-      lua_insert(lstate, lua_gettop(lstate)-1);  // swap
-      // no error check: if tostring() fails print its error instead
-      lua_pcall(lstate, 1, 1, 0);
-    }
-    const char *error = lua_tostring(lstate, -1);
-    if (error == NULL) {
-      // Someone replaced tostring() with a function that doesn't return
-      // a string or throws a non-string error. Please, do not do this.
-      error = "<tostring() internal error, cannot display error>";
-    }
-
+    const char *error = nlua_get_error(lstate, NULL);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    1, xstrdup(error));
