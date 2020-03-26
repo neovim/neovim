@@ -99,6 +99,9 @@ function module.matches(pat, actual)
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
+function module.contains(pat, actual)
+  return module.matches(".*" .. pat .. ".*", actual)
+end
 
 --- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
 ---

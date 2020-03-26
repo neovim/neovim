@@ -6,6 +6,7 @@ local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local contains = helpers.contains
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
 local insert = helpers.insert
@@ -747,8 +748,8 @@ describe('LSP', function()
     end)
 
     it('should invalid cmd argument', function()
-      eq('Error executing lua: .../shared.lua: cmd: expected list, got nvim', pcall_err(_cmd_parts, "nvim"))
-      eq('Error executing lua: .../shared.lua: cmd argument: expected string, got number', pcall_err(_cmd_parts, {"nvim", 1}))
+      contains('cmd: expected list, got nvim', pcall_err(_cmd_parts, "nvim"))
+      contains('cmd argument: expected string, got number', pcall_err(_cmd_parts, {"nvim", 1}))
     end)
   end)
 end)

@@ -13,6 +13,7 @@ local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
+local contains = helpers.contains
 local source = helpers.source
 local NIL = helpers.NIL
 local retry = helpers.retry
@@ -262,12 +263,9 @@ describe('lua stdlib', function()
 
     -- Validates args.
     eq(true, pcall(split, 'string', 'string'))
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
-      pcall_err(split, 1, 'string'))
-    eq('Error executing lua: .../shared.lua: sep: expected string, got number',
-      pcall_err(split, 'string', 1))
-    eq('Error executing lua: .../shared.lua: plain: expected boolean, got number',
-      pcall_err(split, 'string', 'string', 1))
+    contains('s: expected string, got number', pcall_err(split, 1, 'string'))
+    contains('sep: expected string, got number', pcall_err(split, 'string', 1))
+    contains('plain: expected boolean, got number', pcall_err(split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -287,8 +285,7 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
-      pcall_err(trim, 2))
+    contains('s: expected string, got number', pcall_err(trim, 2))
   end)
 
   it('vim.inspect', function()
@@ -366,7 +363,7 @@ describe('lua stdlib', function()
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
+    contains('s: expected string, got number',
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
@@ -624,14 +621,14 @@ describe('lua stdlib', function()
 
   it('vim.list_extend', function()
     eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
-    eq('Error executing lua: .../shared.lua: src: expected table, got nil',
-      pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
     eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
     eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
     eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1) ]])
     eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 2) ]])
     eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1, -1) ]])
     eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, -1, 2) ]])
+
+    contains('src: expected table, got nil', pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
   end)
 
   it('vim.tbl_add_reverse_lookup', function()
@@ -820,33 +817,29 @@ describe('lua stdlib', function()
     exec_lua("vim.validate{arg1={{}, 't' }, arg2={ 'foo', 's' }}")
     exec_lua("vim.validate{arg1={2, function(a) return (a % 2) == 0  end, 'even number' }}")
 
-    eq("Error executing lua: .../shared.lua: 1: expected table, got number",
-      pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
-    eq("Error executing lua: .../shared.lua: invalid type name: x",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: 1",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1, 1 }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: nil",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1 }}"))
+    contains("expected table, got number", pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
+    contains("invalid type name: x", pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
+    contains("invalid type name: 1", pcall_err(exec_lua, "vim.validate{ arg1={ 1, 1 }}"))
+    contains("invalid type name: nil", pcall_err(exec_lua, "vim.validate{ arg1={ 1 }}"))
 
     -- Validated parameters are required by default.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+    contains("arg1: expected string, got nil",
       pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's' }}"))
     -- Explicitly required.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+    contains("arg1: expected string, got nil",
       pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's', false }}"))
 
-    eq("Error executing lua: .../shared.lua: arg1: expected table, got number",
+    contains("arg1: expected table, got number",
       pcall_err(exec_lua, "vim.validate{arg1={1, 't'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got number",
+    contains("arg2: expected string, got number",
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
+    contains("arg2: expected string, got nil",
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
+    contains("arg2: expected string, got nil",
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected even number, got 3",
+    contains("arg1: expected even number, got 3",
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected ?, got 3",
+    contains("arg1: expected %?, got 3",
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
   end)
 
