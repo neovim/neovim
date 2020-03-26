@@ -360,7 +360,7 @@ CTRL-L		when 'insertmode' is set: go to Normal mode  *i_CTRL-L*
 CTRL-G u	break undo sequence, start new change	     *i_CTRL-G_u*
 CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
 		movement, if the cursor stays within
-		same the line
+		the same line
 -----------------------------------------------------------------------
 
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
