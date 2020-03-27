@@ -6711,7 +6711,9 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef WIN32
   char *v = os_resolve_shortcut(fname);
   if (v == NULL) {
-    v = os_realpath(fname, v);
+    if (os_is_reparse_point_include(fname)) {
+      v = os_realpath(fname, v);
+    }
   }
   rettv->vval.v_string = (char_u *)(v == NULL ? xstrdup(fname) : v);
 #else
