@@ -70,6 +70,7 @@ local function uri_from_bufnr(bufnr)
 end
 
 local function uri_to_fname(uri)
+  uri = uri_decode(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:///', '')
@@ -77,7 +78,7 @@ local function uri_to_fname(uri)
   else
     uri = uri:gsub('^file://', '')
   end
-  return uri_decode(uri)
+  return uri
 end
 
 -- Return or create a buffer for a uri.

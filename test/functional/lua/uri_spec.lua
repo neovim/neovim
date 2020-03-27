@@ -85,6 +85,15 @@ describe('URI methods', function()
         eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
       end)
 
+      it('file path includes only ascii charactors with encoded colon character', function()
+        local test_case = [[
+        local uri = 'file:///C%3A/Foo/Bar/Baz.txt'
+        return vim.uri_to_fname(uri)
+        ]]
+
+        eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
+      end)
+
       it('file path including white space', function()
         local test_case = [[
         local uri = 'file:///C:/Foo%20/Bar/Baz.txt'
