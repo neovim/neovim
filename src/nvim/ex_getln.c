@@ -621,6 +621,16 @@ static int command_line_execute(VimState *state, int key)
       s->c = Ctrl_N;
     }
   }
+  if (compl_match_array || s->did_wild_list) {
+    if (s->c == Ctrl_E) {
+      s->res = nextwild(&s->xpc, WILD_CANCEL, WILD_NO_BEEP,
+                        s->firstc != '@');
+    } else if (s->c == Ctrl_Y) {
+      s->res = nextwild(&s->xpc, WILD_APPLY, WILD_NO_BEEP,
+                        s->firstc != '@');
+      s->c = Ctrl_E;
+    }
+  }
 
   // Hitting CR after "emenu Name.": complete submenu
   if (s->xpc.xp_context == EXPAND_MENUNAMES && p_wmnu
@@ -3790,6 +3800,12 @@ ExpandOne (
       return NULL;
   }
 
+  if (mode == WILD_CANCEL) {
+    ss = vim_strsave(orig_save);
+  } else if (mode == WILD_APPLY) {
+    ss =  vim_strsave(findex == -1 ? orig_save : xp->xp_files[findex]);
+  }
+
   /* free old names */
   if (xp->xp_numfiles != -1 && mode != WILD_ALL && mode != WILD_LONGEST) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
@@ -3801,7 +3817,7 @@ ExpandOne (
   if (mode == WILD_FREE)        /* only release file name */
     return NULL;
 
-  if (xp->xp_numfiles == -1) {
+  if (xp->xp_numfiles == -1 && mode != WILD_APPLY && mode != WILD_CANCEL) {
     xfree(orig_save);
     orig_save = orig;
     orig_saved = TRUE;
