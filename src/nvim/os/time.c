@@ -2,9 +2,6 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <time.h>
 #include <limits.h>
 
 #include <uv.h>
@@ -13,7 +10,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
-#include "nvim/vim.h"
+#include "nvim/os/os.h"
 #include "nvim/main.h"
 
 static uv_mutex_t delay_mutex;
@@ -112,6 +109,10 @@ void os_microdelay(uint64_t us, bool ignoreinput)
   uv_mutex_unlock(&delay_mutex);
 }
 
+// Cache of the current timezone name as retrieved from TZ, or an empty string
+// where unset, up to 64 octets long including trailing null byte.
+static char tz_cache[64];
+
 /// Portable version of POSIX localtime_r()
 ///
 /// @return NULL in case of error
@@ -120,6 +121,19 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 {
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
+  //
+  // Check to see if the environment variable TZ has changed since the last run.
+  // Call tzset(3) to update the global timezone variables if it has.
+  // POSIX standard doesn't require localtime_r() implementations to do that
+  // as it does with localtime(), and we don't want to call tzset() every time.
+  const char *tz = os_getenv("TZ");
+  if (tz == NULL) {
+    tz = "";
+  }
+  if (strncmp(tz_cache, tz, sizeof(tz_cache) - 1) != 0) {
+    tzset();
+    xstrlcpy(tz_cache, tz, sizeof(tz_cache));
+  }
   return localtime_r(clock, result);  // NOLINT(runtime/threadsafe_fn)
 #else
   // Windows version of localtime() is thread-safe.
