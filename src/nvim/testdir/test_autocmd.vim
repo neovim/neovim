@@ -1072,6 +1072,40 @@ func Test_Cmd_Autocmds()
   enew!
 endfunc
 
+func s:ReadFile()
+  setl noswapfile nomodified
+  let filename = resolve(expand("<afile>:p"))
+  execute 'read' fnameescape(filename)
+  1d_
+  exe 'file' fnameescape(filename)
+  setl buftype=acwrite
+endfunc
+
+func s:WriteFile()
+  let filename = resolve(expand("<afile>:p"))
+  setl buftype=
+  noautocmd execute 'write' fnameescape(filename)
+  setl buftype=acwrite
+  setl nomodified
+endfunc
+
+func Test_BufReadCmd()
+  autocmd BufReadCmd *.test call s:ReadFile()
+  autocmd BufWriteCmd *.test call s:WriteFile()
+
+  call writefile(['one', 'two', 'three'], 'Xcmd.test')
+  edit Xcmd.test
+  call assert_match('Xcmd.test" line 1 of 3', execute('file'))
+  normal! Gofour
+  write
+  call assert_equal(['one', 'two', 'three', 'four'], readfile('Xcmd.test'))
+
+  bwipe!
+  call delete('Xcmd.test')
+  au! BufReadCmd
+  au! BufWriteCmd
+endfunc
+
 func SetChangeMarks(start, end)
   exe a:start. 'mark ['
   exe a:end. 'mark ]'
