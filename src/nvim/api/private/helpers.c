@@ -177,6 +177,29 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   return vim_to_object(&di->di_tv);
 }
 
+dictitem_T *dict_check_writable(dict_T *dict, String key, bool del, Error *err)
+{
+  dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
+
+  if (di != NULL) {
+    if (di->di_flags & DI_FLAGS_RO) {
+      api_set_error(err, kErrorTypeException, "Key is read-only: %s", key.data);
+    } else if (di->di_flags & DI_FLAGS_LOCK) {
+      api_set_error(err, kErrorTypeException, "Key is locked: %s", key.data);
+    } else if (del && (di->di_flags & DI_FLAGS_FIX)) {
+      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
+    }
+  } else if (dict->dv_lock) {
+    api_set_error(err, kErrorTypeException, "Dictionary is locked");
+  } else if (key.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "Key name is empty");
+  } else if (key.size > INT_MAX) {
+    api_set_error(err, kErrorTypeValidation, "Key name is too long");
+  }
+
+  return di;
+}
+
 /// Set a value in a scope dict. Objects are recursively expanded into their
 /// vimscript equivalents.
 ///
@@ -192,27 +215,9 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
                     bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
-  dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
+  dictitem_T *di = dict_check_writable(dict, key, del, err);
 
-  if (di != NULL) {
-    if (di->di_flags & DI_FLAGS_RO) {
-      api_set_error(err, kErrorTypeException, "Key is read-only: %s", key.data);
-      return rv;
-    } else if (di->di_flags & DI_FLAGS_LOCK) {
-      api_set_error(err, kErrorTypeException, "Key is locked: %s", key.data);
-      return rv;
-    } else if (del && (di->di_flags & DI_FLAGS_FIX)) {
-      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
-      return rv;
-    }
-  } else if (dict->dv_lock) {
-    api_set_error(err, kErrorTypeException, "Dictionary is locked");
-    return rv;
-  } else if (key.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "Key name is empty");
-    return rv;
-  } else if (key.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "Key name is too long");
+  if (ERROR_SET(err)) {
     return rv;
   }
 

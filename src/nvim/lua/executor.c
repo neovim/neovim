@@ -471,6 +471,15 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
 
+  // _getvar
+  lua_pushcfunction(lstate, &nlua_getvar);
+  lua_setfield(lstate, -2, "_getvar");
+
+  // _setvar
+  lua_pushcfunction(lstate, &nlua_setvar);
+  lua_setfield(lstate, -2, "_setvar");
+
+
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
   luv_set_callback(lstate, nlua_luv_cfpcall);
@@ -868,6 +877,109 @@ check_err:
   }
 
   return request ? 1 : 0;
+}
+
+static dict_T *nlua_get_var_scope(lua_State *lstate) {
+  const char *scope = luaL_checkstring(lstate, 1);
+  handle_T handle = (handle_T)luaL_checkinteger(lstate, 2);
+  dict_T *dict = NULL;
+  Error err = ERROR_INIT;
+  if (strequal(scope, "g")) {
+    dict = &globvardict;
+  } else if (strequal(scope, "v")) {
+    dict = &vimvardict;
+  } else if (strequal(scope, "b")) {
+    buf_T *buf = find_buffer_by_handle(handle, &err);
+    if (buf) {
+      dict = buf->b_vars;
+    }
+  } else if (strequal(scope, "w")) {
+    win_T *win = find_window_by_handle(handle, &err);
+    if (win) {
+      dict = win->w_vars;
+    }
+  } else if (strequal(scope, "t")) {
+    tabpage_T *tabpage = find_tab_by_handle(handle, &err);
+    if (tabpage) {
+      dict = tabpage->tp_vars;
+    }
+  } else {
+    luaL_error(lstate, "invalid scope", err.msg);
+    return NULL;
+  }
+
+  if (ERROR_SET(&err)) {
+    luaL_error(lstate, "FAIL: %s", err.msg);
+    return NULL;
+  }
+  return dict;
+}
+
+
+static int nlua_getvar(lua_State *lstate)
+{
+  // non-local return if not found
+  dict_T *dict = nlua_get_var_scope(lstate);
+  size_t len;
+  const char *name = luaL_checklstring(lstate, 3, &len);
+
+  dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
+  if (di == NULL) {
+    return 0;  // nil
+  }
+  nlua_push_typval(lstate, &di->di_tv, false);
+  return 1;
+}
+
+static int nlua_setvar(lua_State *lstate)
+{
+  // non-local return if not found
+  dict_T *dict = nlua_get_var_scope(lstate);
+  String key;
+  key.data = (char *)luaL_checklstring(lstate, 3, &key.size);
+
+  bool del = (lua_gettop(lstate) < 4) || lua_isnil(lstate, 4);
+
+  Error err = ERROR_INIT;
+  dictitem_T *di = dict_check_writable(dict, key, del, &err);
+  if (ERROR_SET(&err)) {
+    return 0;
+  }
+
+  if (del) {
+    // Delete the key
+    if (di == NULL) {
+      // Doesn't exist, nothing to do
+      return 0;
+    } else {
+      // Delete the entry
+      tv_dict_item_remove(dict, di);
+    }
+  } else {
+    // Update the key
+    typval_T tv;
+
+    // Convert the lua value to a vimscript type in the temporary variable
+    lua_pushvalue(lstate, 4);
+    if (!nlua_pop_typval(lstate, &tv)) {
+      return luaL_error(lstate, "Couldn't convert lua value");
+    }
+
+    if (di == NULL) {
+      // Need to create an entry
+      di = tv_dict_item_alloc_len(key.data, key.size);
+      tv_dict_add(dict, di);
+    } else {
+      // Clear the old value
+      tv_clear(&di->di_tv);
+    }
+
+    // Update the value
+    tv_copy(&tv, &di->di_tv);
+    // Clear the temporary variable
+    tv_clear(&tv);
+  }
+  return 0;
 }
 
 static int nlua_nil_tostring(lua_State *lstate)
