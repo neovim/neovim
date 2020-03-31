@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Lex
-" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Last Change:	Aug 31, 2016
-" Version:	16
+" Version:	17
 " URL:	http://mysite.verizon.net/astronaut/vim/index.html#SYNTAX_LEX
 "
 " Option:
