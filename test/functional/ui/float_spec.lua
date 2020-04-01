@@ -976,6 +976,28 @@ describe('floatwin', function()
           {2:~                   }|
         ]], float_pos={
           [5] = {{id = 1002}, "NE", 4, 0, 50, true}
+        }, win_viewport = {
+          [2] = {
+              topline = 0,
+              botline = 3,
+              curline = 0,
+              curcol = 3,
+              win = { id = 1000 }
+          },
+          [4] = {
+              topline = 0,
+              botline = 3,
+              curline = 0,
+              curcol = 3,
+              win = { id = 1001 }
+          },
+          [5] = {
+            topline = 0,
+            botline = 2,
+            curline = 0,
+            curcol = 0,
+            win = { id = 1002 }
+          }
         }}
       else
         screen:expect([[

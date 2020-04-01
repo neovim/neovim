@@ -86,6 +86,7 @@ static void comp_botline(win_T *wp)
   /* wp->w_botline is the line that is just below the window */
   wp->w_botline = lnum;
   wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
+  wp->w_viewport_invalid = true;
 
   set_empty_rows(wp, done);
 
@@ -151,6 +152,7 @@ void update_topline(void)
     curwin->w_topline = curwin->w_cursor.lnum;
     curwin->w_botline = curwin->w_topline;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
+    curwin->w_viewport_invalid = true;
     curwin->w_scbind_pos = 1;
     return;
   }
@@ -175,6 +177,7 @@ void update_topline(void)
     curwin->w_topline = 1;
     curwin->w_botline = 2;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
+    curwin->w_viewport_invalid = true;
     curwin->w_scbind_pos = 1;
   }
   /*
@@ -311,6 +314,7 @@ void update_topline(void)
     }
   }
   curwin->w_valid |= VALID_TOPLINE;
+  curwin->w_viewport_invalid = true;
   win_check_anchored_floats(curwin);
 
   /*
@@ -407,6 +411,7 @@ void check_cursor_moved(win_T *wp)
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
     wp->w_valid_cursor = wp->w_cursor;
     wp->w_valid_leftcol = wp->w_leftcol;
+    wp->w_viewport_invalid = true;
   } else if (wp->w_cursor.col != wp->w_valid_cursor.col
              || wp->w_leftcol != wp->w_valid_leftcol
              || wp->w_cursor.coladd != wp->w_valid_cursor.coladd
@@ -415,6 +420,7 @@ void check_cursor_moved(win_T *wp)
     wp->w_valid_cursor.col = wp->w_cursor.col;
     wp->w_valid_leftcol = wp->w_leftcol;
     wp->w_valid_cursor.coladd = wp->w_cursor.coladd;
+    wp->w_viewport_invalid = true;
   }
 }
 
@@ -1458,6 +1464,7 @@ void scroll_cursor_top(int min_scroll, int always)
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
     curwin->w_valid |= VALID_TOPLINE;
+    curwin->w_viewport_invalid = true;
   }
 }
 
@@ -1662,6 +1669,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     curwin->w_valid = old_valid;
   }
   curwin->w_valid |= VALID_TOPLINE;
+  curwin->w_viewport_invalid = true;
 }
 
 /// Recompute topline to put the cursor halfway across the window
@@ -1818,6 +1826,7 @@ void cursor_correct(void)
     }
   }
   curwin->w_valid |= VALID_TOPLINE;
+  curwin->w_viewport_invalid = true;
 }
 
 
