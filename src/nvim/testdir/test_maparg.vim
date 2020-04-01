@@ -41,6 +41,11 @@ function Test_maparg()
   map abc y<S-char-114>y
   call assert_equal("yRy", maparg('abc'))
 
+  omap { w
+  let d = maparg('{', 'o', 0, 1)
+  call assert_equal(['{', 'w', 'o'], [d.lhs, d.rhs, d.mode])
+  ounmap {
+
   map abc <Nop>
   call assert_equal("<Nop>", maparg('abc'))
   unmap abc
@@ -62,3 +67,5 @@ function Test_range_map()
   execute "normal a\uf040\<Esc>"
   call assert_equal("abcd", getline(1))
 endfunction
+
+" vim: shiftwidth=2 sts=2 expandtab
