@@ -537,6 +537,8 @@ void terminal_send(Terminal *term, char *data, size_t size)
 
 void terminal_paste(long count, char_u **y_array, size_t y_size)
 {
+  vterm_keyboard_start_paste(curbuf->terminal->vt);
+  terminal_flush_output(curbuf->terminal);
   for (int i = 0; i < count; i++) {  // -V756
     // feed the lines to the terminal
     for (size_t j = 0; j < y_size; j++) {
@@ -547,6 +549,8 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
       terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
     }
   }
+  vterm_keyboard_end_paste(curbuf->terminal->vt);
+  terminal_flush_output(curbuf->terminal);
 }
 
 void terminal_flush_output(Terminal *term)
