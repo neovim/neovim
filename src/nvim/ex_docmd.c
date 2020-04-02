@@ -6283,7 +6283,8 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
-  if (one_nonfloat_in_tab(curtab) && has_unanchored_floats(curtab)) {
+  if (first_tabpage->tp_next && one_nonfloat_in_tab(curtab)
+      && has_unanchored_floats(curtab)) {
     EMSG(e_floatonly);
     return;
   }
@@ -6450,7 +6451,7 @@ ex_win_close(
     return;
   }
 
-  if (!first_tabpage->tp_next 
+  if (!win->w_floating && !first_tabpage->tp_next
       && (!firstwin->w_next || firstwin->w_next->w_floating)) {
     EMSG(_("E444: Cannot close last window"));
     return;
