@@ -539,6 +539,8 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
 {
   vterm_keyboard_start_paste(curbuf->terminal->vt);
   terminal_flush_output(curbuf->terminal);
+  size_t buff_len = STRLEN(y_array[0]);
+  char_u *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {  // -V756
     // feed the lines to the terminal
     for (size_t j = 0; j < y_size; j++) {
@@ -546,9 +548,24 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
         // terminate the previous line
         terminal_send(curbuf->terminal, "\n", 1);
       }
-      terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+      size_t len = STRLEN(y_array[j]);
+      if (len > buff_len) {
+        buff = xrealloc(buff, len);
+        buff_len = len;
+      }
+      char_u *p = buff;
+      char_u *q = y_array[j];
+      while (*q != '\0') {
+        if ((*q > '\x07' && *q < '\x0e' && *q != '\x0b' && *q != '\x0c')
+            || *q > '\x1f') {
+          *(p++) = *q;
+        }
+        q++;
+      }
+      terminal_send(curbuf->terminal, (char *)buff, (size_t)(p - buff));
     }
   }
+  xfree(buff);
   vterm_keyboard_end_paste(curbuf->terminal->vt);
   terminal_flush_output(curbuf->terminal);
 }
