@@ -2971,6 +2971,9 @@ static char_u *u_save_line(linenr_T lnum)
 bool bufIsChanged(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (channel_job_running((uint64_t)buf->b_p_channel)) {
+    return true;
+  }
   // In a "prompt" buffer we do respect 'modified', so that we can control
   // closing the window by setting or resetting that option.
   return  (!bt_dontwrite(buf) || bt_prompt(buf))
