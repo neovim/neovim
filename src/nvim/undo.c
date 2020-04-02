@@ -2964,6 +2964,7 @@ static char_u *u_save_line(linenr_T lnum)
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to
 /// check the first character, because it can only be "dos", "unix" or "mac").
 /// "nofile" and "scratch" type buffers are considered to always be unchanged.
+/// Also considers a buffer changed when a terminal window contains a running
 ///
 /// @param buf The buffer to check
 ///
@@ -2974,6 +2975,13 @@ bool bufIsChanged(buf_T *buf)
   if (channel_job_running((uint64_t)buf->b_p_channel)) {
     return true;
   }
+  return bufIsChangedNotTerm(buf);
+}
+
+// Like bufIsChanged() but ignoring a terminal window.
+bool bufIsChangedNotTerm(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
   // In a "prompt" buffer we do respect 'modified', so that we can control
   // closing the window by setting or resetting that option.
   return  (!bt_dontwrite(buf) || bt_prompt(buf))

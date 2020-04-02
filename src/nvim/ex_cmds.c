@@ -1388,7 +1388,7 @@ do_shell(
       && !autocmd_busy
       && msg_silent == 0)
     FOR_ALL_BUFFERS(buf) {
-      if (bufIsChanged(buf)) {
+      if (bufIsChangedNotTerm(buf)) {
         MSG_PUTS(_("[No write since last change]\n"));
         break;
       }
