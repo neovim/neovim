@@ -6334,7 +6334,6 @@ static void ex_quit(exarg_T *eap)
       getout(0);
     }
     not_exiting();
-    // close window; may free buffer
     // close floats anchored to it first
     FOR_ALL_TAB_WINDOWS(tp, win) {
       if (win == wp) {
@@ -6343,11 +6342,13 @@ static void ex_quit(exarg_T *eap)
       if (win->w_floating
           && win->w_float_config.relative == kFloatRelativeWindow
           && win->w_float_config.window == wp->handle) {
+        // if we fail closing a window, terminate.
         if (win_close(win, !buf_hide(win->w_buffer) || eap->forceit) == FAIL) {
-      	  return;
+         return;
         }
       }
     }
+    // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
 }
@@ -6457,13 +6458,15 @@ ex_win_close(
     return;
   }
 
-  win_T	      *wp = (tp) ? tp->tp_firstwin : firstwin;
+  // close floats anchored to this window first.
+  win_T       *wp = (tp) ? tp->tp_firstwin : firstwin;
   while (wp) {
     win_T *next_win = wp->w_next;
     if (wp->w_floating
         &&wp->w_float_config.relative == kFloatRelativeWindow
         && wp->w_float_config.window == win->handle) {
       ex_win_close(forceit, wp, tp);
+      // if we fail closing any float, terminate.
       if (win_valid(wp)) {
         return;
       }
