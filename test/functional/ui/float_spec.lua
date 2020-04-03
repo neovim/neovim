@@ -4983,11 +4983,11 @@ describe('floatwin', function()
               {0:~                                       }|
               {0:~                                       }|
               {0:~                                       }|
-            ## grid 7
+            ## grid 6
               {1: }|
             ]], float_pos={
-              [7] = { {
-                  id = 1004
+              [6] = { {
+                  id = 1003
                 }, "NE", 5, 1, 1, false }
             }}
         else
