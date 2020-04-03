@@ -4943,11 +4943,10 @@ describe('floatwin', function()
         ]], float_pos=expected_pos}
         end
       end)
-        
+
       it("c (:close) closes floats anchored to a window", function()
         meths.command('tabnew')
-        local buf = meths.create_buf(0, 1)
-        meths.open_win(0, false, { 
+        meths.open_win(0, false, {
           relative = 'win';
           width = 1;
           height = 1;
