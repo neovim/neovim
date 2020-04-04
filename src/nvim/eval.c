@@ -9536,7 +9536,8 @@ dictitem_T *find_var(const char *const name, const size_t name_len,
   return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
 }
 
-/// Find variable in hashtab
+/// Find variable in hashtab.
+/// When "varname" is empty returns curwin/curtab/etc vars dictionary.
 ///
 /// @param[in]  ht  Hashtab to find variable in.
 /// @param[in]  htname  Hashtab name (first character).

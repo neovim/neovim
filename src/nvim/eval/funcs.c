@@ -2831,8 +2831,10 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       // Look up the variable.
       // Let getbufvar({nr}, "") return the "b:" dictionary.
-      dictitem_T *const v = find_var_in_ht(&buf->b_vars->dv_hashtab, 'b',
-                                           varname, strlen(varname), false);
+      dictitem_T *const v = *varname == NUL
+        ? (dictitem_T *)&buf->b_bufvar
+        : find_var_in_ht(&buf->b_vars->dv_hashtab, 'b',
+                         varname, strlen(varname), false);
       if (v != NULL) {
         tv_copy(&v->di_tv, rettv);
         done = true;
