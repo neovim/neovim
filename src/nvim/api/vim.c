@@ -73,11 +73,13 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
-/// Logs a message to the global logger.
+/// Posts a message to the global logger (which by default synchronously writes
+/// to |$NVIM_LOG_FILE| using a best-effort, naive implementation).
 ///
-/// Global logger by default synchronously writes to |$NVIM_LOG_FILE|.
+/// Message is ignored (not logged) if `level` is not "error", unless 'verbose'
+/// is set.
 ///
-/// Produced log message looks like:
+/// Example log message:
 ///
 /// <pre>
 ///   ERROR 2020-01-12T01:56:19.484 93296 pynvim:remote: connected…
@@ -88,7 +90,9 @@ void api_vim_free_all_mem(void)
 /// @see |nvim_set_client_info()|
 ///
 /// @param channel_id Channel id (implicit dispatcher arg)
-/// @param level  Logging depth: "error", "warn", "info", "debug"
+/// @param level  Log level (from highest to lowest: "error", "warn", "info",
+///   "debug").  If 'verbose' is not set, only "error" messages are written to
+///   |$NVIM_LOG_FILE|.
 /// @param msg  Message body
 /// @param opt  Map of optional parameters:
 ///   - type: String name of the subsystem or grouping (e.g. "UI", "RPC",

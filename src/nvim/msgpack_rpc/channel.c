@@ -698,6 +698,8 @@ Dictionary rpc_client_info(Channel *chan)
   return copy_dictionary(chan->rpc.info);
 }
 
+/// Describes a channel, for use in log messages etc.
+///
 /// @param chan_id  Channel id
 /// @param desc[out]  Description result
 /// @param desc_len  Size of `desc` storage

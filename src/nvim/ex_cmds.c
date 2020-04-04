@@ -2655,7 +2655,7 @@ int do_ecmd(
 
     /* Obey the 'O' flag in 'cpoptions': overwrite any previous file
      * message. */
-    if (shortmess(SHM_OVERALL) && !exiting && p_verbose == 0)
+    if (shortmess(SHM_OVERALL) && !exiting && p_verbose <= 1)
       msg_scroll = FALSE;
     if (!msg_scroll)            /* wait a bit when overwriting an error msg */
       check_for_delay(FALSE);

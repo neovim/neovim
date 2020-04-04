@@ -874,7 +874,7 @@ static int shada_read_file(const char *const file, const int flags)
   ShaDaReadDef sd_reader;
   const int of_ret = open_shada_file_for_reading(fname, &sd_reader);
 
-  if (p_verbose > 0) {
+  if (p_verbose > 1) {
     verbose_enter();
     smsg(_("Reading ShaDa file \"%s\"%s%s%s%s"),
          fname,
@@ -3113,7 +3113,7 @@ shada_write_file_nomerge: {}
     return FAIL;
   }
 
-  if (p_verbose > 0) {
+  if (p_verbose > 1) {
     verbose_enter();
     smsg(_("Writing ShaDa file \"%s\""), fname);
     verbose_leave();

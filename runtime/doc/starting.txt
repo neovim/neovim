@@ -245,9 +245,7 @@ argument.
 
 							*-V* *verbose*
 -V[N]		Verbose.  Sets the 'verbose' option to [N] (default: 10).
-		Messages will be given for each file that is ":source"d and
-		for reading or writing a ShaDa file.  Can be used to find
-		out what is happening upon startup and exit.
+		Can be used to debug behavior during startup and exit.
 		Example: >
 			nvim -V8
 
