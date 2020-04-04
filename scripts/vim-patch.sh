@@ -670,9 +670,11 @@ review_pr() {
   echo
   echo "Downloading data for pull request #${pr}."
 
-  local pr_commit_urls=(
-    "$(curl -Ssf "https://api.github.com/repos/neovim/neovim/pulls/${pr}/commits" \
-      | jq -r '.[].html_url')")
+  local -a pr_commit_urls
+  while IFS= read -r pr_commit_url; do
+    pr_commit_urls+=("$pr_commit_url")
+  done < <(curl -Ssf "https://api.github.com/repos/neovim/neovim/pulls/${pr}/commits" \
+    | jq -r '.[].html_url')
 
   echo "Found ${#pr_commit_urls[@]} commit(s)."
 
