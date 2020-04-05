@@ -5845,6 +5845,7 @@ uc_check_code(
     static mod_entry_T mod_entries[] = {
       { &cmdmod.browse, "browse" },
       { &cmdmod.confirm, "confirm" },
+      { &cmdmod.floating, "float" },
       { &cmdmod.hide, "hide" },
       { &cmdmod.keepalt, "keepalt" },
       { &cmdmod.keepjumps, "keepjumps" },

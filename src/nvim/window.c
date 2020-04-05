@@ -1039,6 +1039,8 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
  */
 int win_split(int size, int flags)
 {
+  // TODO(float-ex): Add :float handling here
+
   /* When the ":tab" modifier was used open a new tab page instead. */
   if (may_open_tabpage() == OK)
     return OK;
