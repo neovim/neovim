@@ -4986,9 +4986,7 @@ describe('floatwin', function()
             ## grid 6
               {1: }|
             ]], float_pos={
-              [6] = { {
-                  id = 1003
-                }, "NE", 5, 1, 1, false }
+              [6] = {{id = 1003}, "NE", 5, 1, 1, false}
             }}
         else
           screen:expect{grid=[[
