@@ -5763,6 +5763,17 @@ int syn_get_stack_item(int i)
   return CUR_STATE(i).si_id;
 }
 
+static int syn_cur_foldlevel(void)
+{
+  int level = 0;
+  for (int i = 0; i < current_state.ga_len; i++) {
+    if (CUR_STATE(i).si_flags & HL_FOLD) {
+      level++;
+    }
+  }
+  return level;
+}
+
 /*
  * Function called to get folding level for line "lnum" in window "wp".
  */
@@ -5776,11 +5787,7 @@ int syn_get_foldlevel(win_T *wp, long lnum)
       && !wp->w_s->b_syn_slow) {
     syntax_start(wp, lnum);
 
-    for (int i = 0; i < current_state.ga_len; ++i) {
-      if (CUR_STATE(i).si_flags & HL_FOLD) {
-        ++level;
-      }
-    }
+    level = syn_cur_foldlevel();
   }
   if (level > wp->w_p_fdn) {
     level = wp->w_p_fdn;
