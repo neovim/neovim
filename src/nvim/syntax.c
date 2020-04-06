@@ -3079,6 +3079,41 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   }
 }
 
+/// Handle ":syntax foldlevel" command.
+static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
+{
+  char_u *arg = eap->arg;
+  char_u *arg_end;
+
+  eap->nextcmd = find_nextcmd(arg);
+  if (eap->skip)
+    return;
+
+  if (*arg == NUL) {
+    switch (curwin->w_s->b_syn_foldlevel) {
+    case SYNFLD_START:   MSG(_("syntax foldlevel start"));   break;
+    case SYNFLD_MINIMUM: MSG(_("syntax foldlevel minimum")); break;
+    default: break;
+    }
+    return;
+  }
+
+  arg_end = skiptowhite(arg);
+  if (STRNICMP(arg, "start", 5) == 0 && arg_end - arg == 5) {
+    curwin->w_s->b_syn_foldlevel = SYNFLD_START;
+  } else if (STRNICMP(arg, "minimum", 7) == 0 && arg_end - arg == 7) {
+    curwin->w_s->b_syn_foldlevel = SYNFLD_MINIMUM;
+  } else {
+    EMSG2(_(e_illegal_arg), arg);
+    return;
+  }
+
+  arg = skipwhite(arg_end);
+  if (*arg != NUL) {
+    EMSG2(_(e_illegal_arg), arg);
+  }
+}
+
 /*
  * Handle ":syntax spell" command.
  */
@@ -3163,6 +3198,7 @@ void syntax_clear(synblock_T *block)
   block->b_syn_error = false;           // clear previous error
   block->b_syn_slow = false;            // clear previous timeout
   block->b_syn_ic = false;              // Use case, by default
+  block->b_syn_foldlevel = SYNFLD_START;
   block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
   block->b_syn_containedin = false;
   block->b_syn_conceal = false;
@@ -5487,6 +5523,7 @@ static struct subcommand subcommands[] =
   { "cluster",   syn_cmd_cluster },
   { "conceal",   syn_cmd_conceal },
   { "enable",    syn_cmd_enable },
+  { "foldlevel", syn_cmd_foldlevel },
   { "include",   syn_cmd_include },
   { "iskeyword", syn_cmd_iskeyword },
   { "keyword",   syn_cmd_keyword },
@@ -5789,7 +5826,24 @@ int syn_get_foldlevel(win_T *wp, long lnum)
       && !wp->w_s->b_syn_slow) {
     syntax_start(wp, lnum);
 
+    // Start with the fold level at the start of the line.
     level = syn_cur_foldlevel();
+
+    if (wp->w_s->b_syn_foldlevel == SYNFLD_MINIMUM) {
+      // Find the lowest fold level that is followed by a higher one.
+      int cur_level = level;
+      int low_level = cur_level;
+      while (!current_finished) {
+        (void)syn_current_attr(false, false, NULL, false);
+        cur_level = syn_cur_foldlevel();
+        if (cur_level < low_level) {
+          low_level = cur_level;
+        } else if (cur_level > low_level) {
+          level = low_level;
+        }
+        current_col++;
+      }
+    }
   }
   if (level > wp->w_p_fdn) {
     level = wp->w_p_fdn;
