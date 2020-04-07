@@ -6,8 +6,8 @@ set -u
 set -p
 
 # Ensure that the user has a bash that supports -A
-if [ "${BASH_VERSINFO[0]}" -lt 4  ]; then
-  echo "Update your bash version to one that supports -A syntax (>3)"
+if [[ "${BASH_VERSINFO[0]}" -lt 4  ]]; then
+  echo "This script requires bash version 3 or later (you have ${BASH_VERSION})." >&2
   exit 1
 fi
 
