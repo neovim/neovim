@@ -5460,6 +5460,11 @@ fun! netrw#CheckIfRemote(...)
   else
    let curfile= expand("%")
   endif
+
+  " Ignore terminal buffers
+  if &buftype ==# 'terminal'
+    return 0
+  endif
 "  call Decho("curfile<".curfile.">")
   if curfile =~ '^\a\{3,}://'
 "   call Dret("netrw#CheckIfRemote 1")
