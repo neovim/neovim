@@ -1903,7 +1903,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-  } else if ((xterm || rxvt || alacritty)
+  } else if ((xterm || rxvt || tmux || alacritty)
              && (vte_version == 0 || vte_version >= 3900)) {
     // Supported in urxvt, newer VTE.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
