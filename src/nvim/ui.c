@@ -424,7 +424,7 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
-  win_ui_flush();
+  win_ui_flush_positions();
   msg_ext_ui_flush();
   msg_scroll_flush();
 
