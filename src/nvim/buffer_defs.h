@@ -1190,6 +1190,8 @@ struct window_S {
                                        to adjust w_valid */
   colnr_T w_valid_leftcol;          /* last known w_leftcol */
 
+  bool w_viewport_invalid;
+
   /*
    * w_cline_height is the number of physical lines taken by the buffer line
    * that the cursor is on.  We use this to avoid extra calls to plines().

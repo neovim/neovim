@@ -773,6 +773,21 @@ static void ui_ext_win_position(win_T *wp)
 
 }
 
+void ui_ext_win_viewport(win_T *wp)
+{
+  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid) {
+    int botline = wp->w_botline;
+    if (botline == wp->w_buffer->b_ml.ml_line_count+1
+        && wp->w_empty_rows == 0) {
+      // TODO(bfredl): The might be more cases to consider, like how does this
+      // interact with incomplete final line? Diff filler lines?
+      botline = wp->w_buffer->b_ml.ml_line_count;
+    }
+    ui_call_win_viewport(wp->w_grid.handle, wp->handle, wp->w_topline-1,
+                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col);
+    wp->w_viewport_invalid = false;
+  }
+}
 
 static bool parse_float_anchor(String anchor, FloatAnchor *out)
 {
@@ -4688,6 +4703,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_scbind_pos = 1;
   new_wp->w_floating = 0;
   new_wp->w_float_config = FLOAT_CONFIG_INIT;
+  new_wp->w_viewport_invalid = true;
 
   // use global option for global-local options
   new_wp->w_p_so = -1;
@@ -6992,7 +7008,7 @@ void get_framelayout(const frame_T *fr, list_T *l, bool outer)
   }
 }
 
-void win_ui_flush_positions(void)
+void win_ui_flush(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_pos_changed && wp->w_grid.chars != NULL) {
@@ -7002,6 +7018,9 @@ void win_ui_flush_positions(void)
         ui_call_win_hide(wp->w_grid.handle);
       }
       wp->w_pos_changed = false;
+    }
+    if (tp == curtab) {
+      ui_ext_win_viewport(wp);
     }
   }
 }
