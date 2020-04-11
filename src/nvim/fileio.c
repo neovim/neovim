@@ -62,6 +62,11 @@
 #define BUFSIZE         8192    /* size of normal write buffer */
 #define SMBUFSIZE       256     /* size of emergency write buffer */
 
+// For compatibility with libuv < 1.20.0 (tested on 1.18.0)
+#ifndef UV_FS_COPYFILE_FICLONE
+#define UV_FS_COPYFILE_FICLONE 0
+#endif
+
 //
 // The autocommands are stored in a list for each event.
 // Autocommands for the same pattern, that are consecutive, are joined
