@@ -1192,6 +1192,7 @@ int do_search(
         len = STRLEN(p) + off_len + 3;
       }
 
+      xfree(msgbuf);
       msgbuf = xmalloc(len);
       {
         memset(msgbuf, ' ', len);
