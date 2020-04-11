@@ -2844,12 +2844,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		      Normally you would use "cDEFAULT".
 
 	  Use a ':' to separate the options.
-	- A '_' can be used in the place of a space, so you don't need to use
-	  backslashes to escape the spaces.
-	- Examples: >
-	    :set guifont=courier_new:h12:w5:b:cRUSSIAN
-	    :set guifont=Andale_Mono:h7.5:w4.5
-<
 
 					*'guifontset'* *'gfs'*
 					*E250* *E252* *E234* *E597* *E598*
