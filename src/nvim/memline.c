@@ -1504,16 +1504,15 @@ static time_t swapfile_info(char_u *fname)
   int fd;
   struct block0 b0;
   time_t x = (time_t)0;
-  char            *p;
 #ifdef UNIX
   char uname[B0_UNAME_SIZE];
 #endif
 
-  /* print the swap file date */
+  // print the swap file date
   FileInfo file_info;
   if (os_fileinfo((char *)fname, &file_info)) {
 #ifdef UNIX
-    /* print name of owner of the file */
+    // print name of owner of the file
     if (os_get_uname(file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
       MSG_PUTS(_("          owned by: "));
       msg_outtrans((char_u *)uname);
@@ -1522,11 +1521,8 @@ static time_t swapfile_info(char_u *fname)
 #endif
     MSG_PUTS(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;
-    p = ctime(&x);  // includes '\n'
-    if (p == NULL)
-      MSG_PUTS("(invalid)\n");
-    else
-      MSG_PUTS(p);
+    char ctime_buf[50];
+    MSG_PUTS(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
   }
 
   /*
@@ -3267,15 +3263,13 @@ attention_message (
 )
 {
   assert(buf->b_fname != NULL);
-  time_t x, sx;
-  char        *p;
 
   ++no_wait_return;
   (void)EMSG(_("E325: ATTENTION"));
   MSG_PUTS(_("\nFound a swap file by the name \""));
   msg_home_replace(fname);
   MSG_PUTS("\"\n");
-  sx = swapfile_info(fname);
+  const time_t swap_mtime = swapfile_info(fname);
   MSG_PUTS(_("While opening file \""));
   msg_outtrans(buf->b_fname);
   MSG_PUTS("\"\n");
@@ -3284,14 +3278,12 @@ attention_message (
     MSG_PUTS(_("      CANNOT BE FOUND"));
   } else {
     MSG_PUTS(_("             dated: "));
-    x = file_info.stat.st_mtim.tv_sec;
-    p = ctime(&x);  // includes '\n'
-    if (p == NULL)
-      MSG_PUTS("(invalid)\n");
-    else
-      MSG_PUTS(p);
-    if (sx != 0 && x > sx)
+    time_t x = file_info.stat.st_mtim.tv_sec;
+    char ctime_buf[50];
+    MSG_PUTS(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
+    if (swap_mtime != 0 && x > swap_mtime) {
       MSG_PUTS(_("      NEWER than swap file!\n"));
+    }
   }
   /* Some of these messages are long to allow translation to
    * other languages. */
