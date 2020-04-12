@@ -7447,21 +7447,23 @@ static void ins_reg(void)
   }
 
 
-  /*
-   * Don't map the register name. This also prevents the mode message to be
-   * deleted when ESC is hit.
-   */
-  ++no_mapping;
-  regname = plain_vgetc();
-  LANGMAP_ADJUST(regname, TRUE);
-  if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P) {
-    /* Get a third key for literal register insertion */
-    literally = regname;
-    add_to_showcmd_c(literally);
+  // Don't map the register name.
+  // This also prevents the mode message to be deleted when ESC is hit.
+  // Also, pretend it's normal mode so that LANGMAP is applied.
+  {
+    no_mapping++;
+    int save_State = State;
+    State = NORMAL;
     regname = plain_vgetc();
-    LANGMAP_ADJUST(regname, TRUE);
+    if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P) {
+      // Get a third key for literal register insertion
+      literally = regname;
+      add_to_showcmd_c(literally);
+      regname = plain_vgetc();
+    }
+    State = save_State;
+    no_mapping--;
   }
-  --no_mapping;
 
   /* Don't call u_sync() while typing the expression or giving an error
    * message for it. Only call it explicitly. */

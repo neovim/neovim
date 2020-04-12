@@ -651,7 +651,6 @@ static void normal_get_additional_char(NormalState *s)
     // For 'g' get the next character now, so that we can check for
     // "gr", "g'" and "g`".
     s->ca.nchar = plain_vgetc();
-    LANGMAP_ADJUST(s->ca.nchar, true);
     s->need_flushbuf |= add_to_showcmd(s->ca.nchar);
     if (s->ca.nchar == 'r' || s->ca.nchar == '\'' || s->ca.nchar == '`'
         || s->ca.nchar == Ctrl_BSL) {
@@ -713,8 +712,6 @@ static void normal_get_additional_char(NormalState *s)
         }
       }
 
-      // adjust chars > 127, except after "tTfFr" commands
-      LANGMAP_ADJUST(*cp, !lang);
       // adjust Hebrew mapped char
       if (p_hkmap && lang && KeyTyped) {
         *cp = hkmap(*cp);
@@ -827,10 +824,9 @@ static bool normal_get_command_count(NormalState *s)
       no_mapping++;
     }
 
-    ++no_zero_mapping;                // don't map zero here
+    no_zero_mapping++;                // don't map zero here
     s->c = plain_vgetc();
-    LANGMAP_ADJUST(s->c, true);
-    --no_zero_mapping;
+    no_zero_mapping--;
     if (s->ctrl_w) {
       no_mapping--;
     }
@@ -844,7 +840,6 @@ static bool normal_get_command_count(NormalState *s)
     s->ca.count0 = 0;
     no_mapping++;
     s->c = plain_vgetc();                // get next character
-    LANGMAP_ADJUST(s->c, true);
     no_mapping--;
     s->need_flushbuf |= add_to_showcmd(s->c);
     return true;
@@ -961,8 +956,6 @@ static int normal_execute(VimState *state, int key)
   s->ctrl_w = false;                  /* got CTRL-W command */
   s->old_col = curwin->w_curswant;
   s->c = key;
-
-  LANGMAP_ADJUST(s->c, get_real_state() != SELECTMODE);
 
   // If a mapping was started in Visual or Select mode, remember the length
   // of the mapping.  This is used below to not return to Insert mode for as
@@ -4150,7 +4143,6 @@ static void nv_zet(cmdarg_T *cap)
     for (;; ) {
       no_mapping++;
       nchar = plain_vgetc();
-      LANGMAP_ADJUST(nchar, true);
       no_mapping--;
       (void)add_to_showcmd(nchar);
       if (nchar == K_DEL || nchar == K_KDEL)
@@ -4483,7 +4475,6 @@ dozet:
   case 'u':     // "zug" and "zuw": undo "zg" and "zw"
     no_mapping++;
     nchar = plain_vgetc();
-    LANGMAP_ADJUST(nchar, true);
     no_mapping--;
     (void)add_to_showcmd(nchar);
     if (vim_strchr((char_u *)"gGwW", nchar) == NULL) {
