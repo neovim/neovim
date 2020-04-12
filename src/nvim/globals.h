@@ -296,7 +296,7 @@ EXTERN struct msglist **msg_list INIT(= NULL);
 /// interrupt message or reporting an exception that is still uncaught at the
 /// top level (which has already been discarded then).  Also used for the error
 /// message when no exception can be thrown.
-EXTERN int suppress_errthrow INIT(= false);
+EXTERN bool suppress_errthrow INIT(= false);
 
 /// The stack of all caught and not finished exceptions.  The exception on the
 /// top of the stack is the one got by evaluation of v:exception.  The complete
