@@ -573,7 +573,6 @@ set_target_properties(
   libnvim
   PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME nvim
 )
 set_property(
   TARGET libnvim
