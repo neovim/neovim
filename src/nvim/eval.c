@@ -6328,6 +6328,10 @@ call_func(
     }
     if (error == ERROR_NONE && partial->pt_argc > 0) {
       for (argv_clear = 0; argv_clear < partial->pt_argc; argv_clear++) {
+        if (argv_clear + argcount_in >= MAX_FUNC_ARGS) {
+          error = ERROR_TOOMANY;
+          goto theend;
+        }
         tv_copy(&partial->pt_argv[argv_clear], &argv[argv_clear]);
       }
       for (int i = 0; i < argcount_in; i++) {
@@ -6382,7 +6386,9 @@ call_func(
         error = ERROR_DELETED;
       } else if (fp != NULL) {
         if (argv_func != NULL) {
-          argcount = argv_func(argcount, argvars, fp->uf_args.ga_len);
+          // postponed filling in the arguments, do it now
+          argcount = argv_func(argcount, argvars, argv_clear,
+                               fp->uf_args.ga_len);
         }
         if (fp->uf_flags & FC_RANGE) {
           *doesrange = true;
@@ -6430,10 +6436,9 @@ call_func(
   if (error == ERROR_NONE)
     ret = OK;
 
-  /*
-   * Report an error unless the argument evaluation or function call has been
-   * cancelled due to an aborting error, an interrupt, or an exception.
-   */
+theend:
+  // Report an error unless the argument evaluation or function call has been
+  // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
     switch (error) {
     case ERROR_UNKNOWN:
@@ -7130,6 +7135,10 @@ void common_function(typval_T *argvars, typval_T *rettv,
         list = argvars[arg_idx].vval.v_list;
         if (tv_list_len(list) == 0) {
           arg_idx = 0;
+        } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
+          emsg_funcname((char *)e_toomanyarg, name);
+          xfree(name);
+          goto theend;
         }
       }
     }
@@ -9527,7 +9536,8 @@ dictitem_T *find_var(const char *const name, const size_t name_len,
   return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
 }
 
-/// Find variable in hashtab
+/// Find variable in hashtab.
+/// When "varname" is empty returns curwin/curtab/etc vars dictionary.
 ///
 /// @param[in]  ht  Hashtab to find variable in.
 /// @param[in]  htname  Hashtab name (first character).

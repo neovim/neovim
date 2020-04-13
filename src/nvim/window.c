@@ -6544,10 +6544,12 @@ void restore_buffer(bufref_T *save_curbuf)
 /// @param[in] id a desired ID 'id' can be specified
 ///               (greater than or equal to 1). -1 must be specified if no
 ///               particular ID is desired
+/// @param[in] conceal_char pointer to conceal replacement char
 /// @return ID of added match, -1 on failure.
 int match_add(win_T *wp, const char *const grp, const char *const pat,
               int prio, int id, list_T *pos_list,
               const char *const conceal_char)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   matchitem_T *cur;
   matchitem_T *prev;
@@ -6584,7 +6586,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
     return -1;
   }
 
-  /* Find available match ID. */
+  // Find available match ID.
   while (id == -1) {
     cur = wp->w_match_head;
     while (cur != NULL && cur->id != wp->w_next_match_id)
@@ -6594,7 +6596,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
     wp->w_next_match_id++;
   }
 
-  /* Build new match. */
+  // Build new match.
   m = xcalloc(1, sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
@@ -6702,9 +6704,9 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       rtype = VALID;
     }
   }
- 
-  /* Insert new match.  The match list is in ascending order with regard to
-   * the match priorities. */
+
+  // Insert new match.  The match list is in ascending order with regard to
+  // the match priorities.
   cur = wp->w_match_head;
   prev = cur;
   while (cur != NULL && prio >= cur->priority) {

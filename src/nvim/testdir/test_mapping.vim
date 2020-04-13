@@ -390,3 +390,77 @@ func Test_motionforce_omap()
   delfunc Select
   delfunc GetCommand
 endfunc
+
+" Test for mapping errors
+func Test_map_error()
+  call assert_fails('unmap', 'E474:')
+  call assert_fails("exe 'map ' .. repeat('a', 51) .. ' :ls'", 'E474:')
+  call assert_fails('unmap abc', 'E31:')
+  call assert_fails('unabbr abc', 'E24:')
+  call assert_equal('', maparg(''))
+  call assert_fails('echo maparg("abc", [])', 'E730:')
+
+  " unique map
+  map ,w /[#&!]<CR>
+  call assert_fails("map <unique> ,w /[#&!]<CR>", 'E227:')
+  " unique buffer-local map
+  call assert_fails("map <buffer> <unique> ,w /[.,;]<CR>", 'E225:')
+  unmap ,w
+
+  " unique abbreviation
+  abbr SP special
+  call assert_fails("abbr <unique> SP special", 'E226:')
+  " unique buffer-local map
+  call assert_fails("abbr <buffer> <unique> SP special", 'E224:')
+  unabbr SP
+
+  call assert_fails('mapclear abc', 'E474:')
+  call assert_fails('abclear abc', 'E474:')
+endfunc
+
+" Test for <special> key mapping
+func Test_map_special()
+  throw 'skipped: Nvim does not support cpoptions flag "<"'
+  new
+  let old_cpo = &cpo
+  set cpo+=<
+  imap <F12> Blue
+  call feedkeys("i\<F12>", "x")
+  call assert_equal("<F12>", getline(1))
+  call feedkeys("ddi<F12>", "x")
+  call assert_equal("Blue", getline(1))
+  iunmap <F12>
+  imap <special> <F12> Green
+  call feedkeys("ddi\<F12>", "x")
+  call assert_equal("Green", getline(1))
+  call feedkeys("ddi<F12>", "x")
+  call assert_equal("<F12>", getline(1))
+  iunmap <special> <F12>
+  let &cpo = old_cpo
+  %bwipe!
+endfunc
+
+" Test for hasmapto()
+func Test_hasmapto()
+  call assert_equal(0, hasmapto('/^\k\+ ('))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'n'))
+  nmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ ('))
+  call assert_equal(1, hasmapto('/^\k\+ (', 'n'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'v'))
+
+  call assert_equal(0, hasmapto('/^\k\+ (', 'n', 1))
+endfunc
+
+" Test for command-line completion of maps
+func Test_mapcomplete()
+  call assert_equal(['<buffer>', '<expr>', '<nowait>', '<script>',
+	      \ '<silent>', '<special>', '<unique>'],
+	      \ getcompletion('', 'mapping'))
+  call assert_equal([], getcompletion(',d', 'mapping'))
+
+  call feedkeys(":abbr! \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match("abbr! \x01", @:)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -2807,11 +2807,12 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   buf_T *const buf = tv_get_buf(&argvars[0], false);
 
   if (buf != NULL && varname != NULL) {
-    // set curbuf to be our buf, temporarily
-    buf_T *const save_curbuf = curbuf;
-    curbuf = buf;
-
     if (*varname == '&') {  // buffer-local-option
+      buf_T *const save_curbuf = curbuf;
+
+      // set curbuf to be our buf, temporarily
+      curbuf = buf;
+
       if (varname[1] == NUL) {
         // get all buffer-local options in a dict
         dict_T *opts = get_winbuf_options(true);
@@ -2824,19 +2825,21 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         // buffer-local-option
         done = true;
       }
+
+      // restore previous notion of curbuf
+      curbuf = save_curbuf;
     } else {
       // Look up the variable.
       // Let getbufvar({nr}, "") return the "b:" dictionary.
-      dictitem_T *const v = find_var_in_ht(&curbuf->b_vars->dv_hashtab, 'b',
-                                           varname, strlen(varname), false);
+      dictitem_T *const v = *varname == NUL
+        ? (dictitem_T *)&buf->b_bufvar
+        : find_var_in_ht(&buf->b_vars->dv_hashtab, 'b',
+                         varname, strlen(varname), false);
       if (v != NULL) {
         tv_copy(&v->di_tv, rettv);
         done = true;
       }
     }
-
-    // restore previous notion of curbuf
-    curbuf = save_curbuf;
   }
   emsg_off--;
 
@@ -5648,8 +5651,11 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char grpbuf[NUMBUFLEN];
   char patbuf[NUMBUFLEN];
+  // group
   const char *const grp = tv_get_string_buf_chk(&argvars[0], grpbuf);
+  // pattern
   const char *const pat = tv_get_string_buf_chk(&argvars[1], patbuf);
+  // default priority
   int prio = 10;
   int id = -1;
   bool error = false;
@@ -7821,10 +7827,9 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // reset notion of buffer
       aucmd_restbuf(&aco);
     } else {
-      buf_T *save_curbuf = curbuf;
-
       const size_t varname_len = STRLEN(varname);
       char *const bufvarname = xmalloc(varname_len + 3);
+      buf_T *const save_curbuf = curbuf;
       curbuf = buf;
       memcpy(bufvarname, "b:", 2);
       memcpy(bufvarname + 2, varname, varname_len + 1);

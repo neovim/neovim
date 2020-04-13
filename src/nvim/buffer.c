@@ -1750,6 +1750,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
     }
     if (aborting()) {           // autocmds may abort script processing
+      xfree(ffname);
       return NULL;
     }
     if (buf == curbuf) {

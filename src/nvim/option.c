@@ -3668,7 +3668,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= set ? 1 : 0; round++) {
+  for (round = 0; round <= (set ? 1 : 0); round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults
       for (i = 0; i < entries; i++) {
@@ -3843,11 +3843,12 @@ static char_u *did_set_spell_option(bool is_spellfile)
  * Return error message when failed, NULL when OK.
  */
 static char_u *compile_cap_prog(synblock_T *synblock)
+  FUNC_ATTR_NONNULL_ALL
 {
   regprog_T   *rp = synblock->b_cap_prog;
   char_u      *re;
 
-  if (*synblock->b_p_spc == NUL) {
+  if (synblock->b_p_spc == NULL || *synblock->b_p_spc == NUL) {
     synblock->b_cap_prog = NULL;
   } else {
     // Prepend a ^ so that we only match at one column

@@ -187,7 +187,7 @@ extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
 
 #undef LAST_MSGPACK_TYPE
 
-typedef int (*ArgvFunc)(int current_argcount, typval_T *argv,
+typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
                         int called_func_argcount);
 
 /// trans_function_name() flags

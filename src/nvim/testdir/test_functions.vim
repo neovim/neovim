@@ -666,6 +666,16 @@ func Test_getbufvar()
   call assert_equal('iso-8859-2', getbufvar(bufnr('%'), '&fenc'))
   close
 
+  " Get the b: dict.
+  let b:testvar = 'one'
+  new
+  let b:testvar = 'two'
+  let thebuf = bufnr()
+  wincmd w
+  call assert_equal('two', getbufvar(thebuf, 'testvar'))
+  call assert_equal('two', getbufvar(thebuf, '').testvar)
+  bwipe!
+
   set fileformats&
 endfunc
 

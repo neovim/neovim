@@ -261,7 +261,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
         sprintf((char *)IObuff, _("%" PRId64 " lines %sed %d times"),
             (int64_t)oap->line_count, s, amount);
     }
-    msg(IObuff);
+    msg_attr_keep(IObuff, 0, true, false);
   }
 
   /*

@@ -407,11 +407,27 @@ readfile(
 
     if (newfile) {
       if (apply_autocmds_exarg(EVENT_BUFREADCMD, NULL, sfname,
-              FALSE, curbuf, eap))
-        return aborting() ? FAIL : OK;
+                               false, curbuf, eap)) {
+        int status = OK;
+
+        if (aborting()) {
+          status = FAIL;
+        }
+
+        // The BufReadCmd code usually uses ":read" to get the text and
+        // perhaps ":file" to change the buffer name. But we should
+        // consider this to work like ":edit", thus reset the
+        // BF_NOTEDITED flag.  Then ":write" will work to overwrite the
+        // same file.
+        if (status == OK) {
+          curbuf->b_flags &= ~BF_NOTEDITED;
+        }
+        return status;
+      }
     } else if (apply_autocmds_exarg(EVENT_FILEREADCMD, sfname, sfname,
-                   FALSE, NULL, eap))
+                                    false, NULL, eap)) {
       return aborting() ? FAIL : OK;
+    }
 
     curbuf->b_op_start = pos;
   }

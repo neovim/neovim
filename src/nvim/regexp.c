@@ -6491,20 +6491,24 @@ typedef struct {
 
 static regsubmatch_T rsm;  // can only be used when can_f_submatch is true
 
-/// Put the submatches in "argv[0]" which is a list passed into call_func() by
-/// vim_regsub_both().
-static int fill_submatch_list(int argc, typval_T *argv, int argcount)
+/// Put the submatches in "argv[argskip]" which is a list passed into
+/// call_func() by vim_regsub_both().
+static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv,
+                              int argskip, int argcount)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (argcount == 0) {
-    // called function doesn't take an argument
-    return 0;
+  typval_T *listarg = argv + argskip;
+
+  if (argcount == argskip) {
+    // called function doesn't take a submatches argument
+    return argskip;
   }
 
   // Relies on sl_list to be the first item in staticList10_T.
-  tv_list_init_static10((staticList10_T *)argv->vval.v_list);
+  tv_list_init_static10((staticList10_T *)listarg->vval.v_list);
 
   // There are always 10 list items in staticList10_T.
-  listitem_T *li = tv_list_first(argv->vval.v_list);
+  listitem_T *li = tv_list_first(listarg->vval.v_list);
   for (int i = 0; i < 10; i++) {
     char_u *s = rsm.sm_match->startp[i];
     if (s == NULL || rsm.sm_match->endp[i] == NULL) {
@@ -6516,7 +6520,7 @@ static int fill_submatch_list(int argc, typval_T *argv, int argcount)
     TV_LIST_ITEM_TV(li)->vval.v_string = s;
     li = TV_LIST_ITEM_NEXT(argv->vval.v_list, li);
   }
-  return 1;
+  return argskip + 1;
 }
 
 static void clear_submatch_list(staticList10_T *sl)
@@ -6679,10 +6683,15 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           // fill_submatch_list() was called.
           clear_submatch_list(&matchList);
         }
-        char buf[NUMBUFLEN];
-        eval_result = (char_u *)tv_get_string_buf_chk(&rettv, buf);
-        if (eval_result != NULL) {
-          eval_result = vim_strsave(eval_result);
+        if (rettv.v_type == VAR_UNKNOWN) {
+          // something failed, no need to report another error
+          eval_result = NULL;
+        } else {
+          char buf[NUMBUFLEN];
+          eval_result = (char_u *)tv_get_string_buf_chk(&rettv, buf);
+          if (eval_result != NULL) {
+            eval_result = vim_strsave(eval_result);
+          }
         }
         tv_clear(&rettv);
       } else {
