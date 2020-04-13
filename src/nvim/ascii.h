@@ -23,26 +23,26 @@
 #define NL              '\012'
 #define NL_STR          "\012"
 #define FF              '\014'
-#define CAR             '\015'  /* CR is used by Mac OS X */
+#define CAR             '\015'  // CR is used by Mac OS X
 #define ESC             '\033'
 #define ESC_STR         "\033"
 #define DEL             0x7f
 #define DEL_STR         "\177"
 #define CSI             0x9b    // Control Sequence Introducer
 #define CSI_STR         "\233"
-#define DCS             0x90    /* Device Control String */
-#define STERM           0x9c    /* String Terminator */
+#define DCS             0x90    // Device Control String
+#define STERM           0x9c    // String Terminator
 
 #define POUND           0xA3
 
-#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40) /* '?' -> DEL, '@' -> ^@, etc. */
+#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
 #define Meta(x)         ((x) | 0x80)
 
 #define CTRL_F_STR      "\006"
 #define CTRL_H_STR      "\010"
 #define CTRL_V_STR      "\026"
 
-#define Ctrl_AT         0   /* @ */
+#define Ctrl_AT         0   // @
 #define Ctrl_A          1
 #define Ctrl_B          2
 #define Ctrl_C          3
@@ -69,16 +69,14 @@
 #define Ctrl_X          24
 #define Ctrl_Y          25
 #define Ctrl_Z          26
-/* CTRL- [ Left Square Bracket == ESC*/
-#define Ctrl_BSL        28  /* \ BackSLash */
-#define Ctrl_RSB        29  /* ] Right Square Bracket */
-#define Ctrl_HAT        30  /* ^ */
+// CTRL- [ Left Square Bracket == ESC
+#define Ctrl_BSL        28  // \ BackSLash
+#define Ctrl_RSB        29  // ] Right Square Bracket
+#define Ctrl_HAT        30  // ^
 #define Ctrl__          31
 
 
-/*
- * Character that separates dir names in a path.
- */
+// Character that separates dir names in a path.
 #ifdef BACKSLASH_IN_FILENAME
 # define PATHSEP        psepc
 # define PATHSEPSTR     pseps
@@ -168,4 +166,4 @@ static inline bool ascii_isspace(int c)
   return (c >= 9 && c <= 13) || c == ' ';
 }
 
-#endif /* NVIM_ASCII_H */
+#endif  // NVIM_ASCII_H

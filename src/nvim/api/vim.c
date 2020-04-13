@@ -253,7 +253,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   if (execute) {
     int save_msg_scroll = msg_scroll;
 
-    /* Avoid a 1 second delay when the keys start Insert mode. */
+    // Avoid a 1 second delay when the keys start Insert mode.
     msg_scroll = false;
     if (!dangerous) {
       ex_normal_busy++;

@@ -220,7 +220,7 @@ EXTERN int did_emsg_syntax;                 // did_emsg set because of a
                                             // syntax error
 EXTERN int called_emsg;                     // always set by emsg()
 EXTERN int ex_exitval INIT(= 0);            // exit value for ex mode
-EXTERN int emsg_on_display INIT(= false);   // there is an error message
+EXTERN bool emsg_on_display INIT(= false);  // there is an error message
 EXTERN int rc_did_emsg INIT(= false);       // vim_regcomp() called emsg()
 
 EXTERN int no_wait_return INIT(= 0);        // don't wait for return for now
@@ -296,7 +296,7 @@ EXTERN struct msglist **msg_list INIT(= NULL);
 /// interrupt message or reporting an exception that is still uncaught at the
 /// top level (which has already been discarded then).  Also used for the error
 /// message when no exception can be thrown.
-EXTERN int suppress_errthrow INIT(= false);
+EXTERN bool suppress_errthrow INIT(= false);
 
 /// The stack of all caught and not finished exceptions.  The exception on the
 /// top of the stack is the one got by evaluation of v:exception.  The complete
@@ -638,7 +638,7 @@ EXTERN int arrow_used;                  // Normally false, set to true after
                                         // hitting cursor key in insert mode.
                                         // Used by vgetorpeek() to decide when
                                         // to call u_sync()
-EXTERN int ins_at_eol INIT(= false);    // put cursor after eol when
+EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
                                         // restarting edit after CTRL-O
 EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
 EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode

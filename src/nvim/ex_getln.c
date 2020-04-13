@@ -2447,9 +2447,10 @@ redraw:
   /* make following messages go to the next line */
   msg_didout = FALSE;
   msg_col = 0;
-  if (msg_row < Rows - 1)
-    ++msg_row;
-  emsg_on_display = FALSE;              /* don't want os_delay() */
+  if (msg_row < Rows - 1) {
+    msg_row++;
+  }
+  emsg_on_display = false;              // don't want os_delay()
 
   if (got_int)
     ga_clear(&line_ga);

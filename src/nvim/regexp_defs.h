@@ -91,7 +91,7 @@ typedef struct {
   char_u              *regmust;
   int regmlen;
   char_u reghasz;
-  char_u program[1];                    /* actually longer.. */
+  char_u program[1];                    // actually longer..
 } bt_regprog_T;
 
 // Structure representing a NFA state.
@@ -102,7 +102,7 @@ struct nfa_state {
   nfa_state_T         *out;
   nfa_state_T         *out1;
   int id;
-  int lastlist[2];                   /* 0: normal, 1: recursive */
+  int lastlist[2];                   // 0: normal, 1: recursive
   int val;
 };
 
@@ -116,19 +116,19 @@ typedef struct {
   unsigned re_engine;
   unsigned re_flags;  ///< Second argument for vim_regcomp().
 
-  nfa_state_T         *start;           /* points into state[] */
+  nfa_state_T         *start;           // points into state[]
 
-  int reganch;                          /* pattern starts with ^ */
-  int regstart;                         /* char at start of pattern */
-  char_u              *match_text;      /* plain text to match with */
+  int reganch;                          // pattern starts with ^
+  int regstart;                         // char at start of pattern
+  char_u              *match_text;      // plain text to match with
 
-  int has_zend;                         /* pattern contains \ze */
-  int has_backref;                      /* pattern contains \1 .. \9 */
+  int has_zend;                         // pattern contains \ze
+  int has_backref;                      // pattern contains \1 .. \9
   int reghasz;
   char_u              *pattern;
-  int nsubexp;                          /* number of () */
+  int nsubexp;                          // number of ()
   int nstate;
-  nfa_state_T state[1];                 /* actually longer.. */
+  nfa_state_T state[1];                 // actually longer..
 } nfa_regprog_T;
 
 /*

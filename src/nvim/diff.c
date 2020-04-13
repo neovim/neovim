@@ -648,8 +648,8 @@ void diff_redraw(bool dofold)
       foldUpdateAll(wp);
     }
 
-    /* A change may have made filler lines invalid, need to take care
-     * of that for other windows. */
+    // A change may have made filler lines invalid, need to take care
+    // of that for other windows.
     int n = diff_check(wp, wp->w_topline);
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
