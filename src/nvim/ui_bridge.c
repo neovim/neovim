@@ -64,6 +64,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.option_set = ui_bridge_option_set;
   rv->bridge.raw_line = ui_bridge_raw_line;
   rv->bridge.inspect = ui_bridge_inspect;
+  rv->bridge.term_unhandled = ui_bridge_term_unhandled;
   rv->scheduler = scheduler;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {

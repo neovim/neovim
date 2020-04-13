@@ -75,6 +75,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/os/input.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 
@@ -153,6 +154,11 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
+static VTermParserCallbacks vterm_parser_callbacks = {
+  .dcs = term_unhandled_dcs,
+  .osc = term_unhandled_osc,
+};
+
 static PMap(ptr_t) *invalidated_terminals;
 
 void terminal_init(void)
@@ -187,6 +193,8 @@ Terminal *terminal_open(TerminalOptions opts)
   vterm_set_utf8(rv->vt, 1);
   // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
+  // handle custom escape sequences
+  vterm_state_set_unrecognised_fallbacks(state, &vterm_parser_callbacks, rv);
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);
@@ -652,6 +660,24 @@ Buffer terminal_buf(const Terminal *term)
 
 // }}}
 // libvterm callbacks {{{
+
+static int term_unhandled_dcs(const char *cmd, size_t cmdlen, void *user)
+{
+  char *seq = xmalloc(cmdlen + 5);
+  snprintf(seq, cmdlen + 5, "\033P%s\033\\", cmd);
+  ui_call_term_unhandled((String){.data = seq, .size = cmdlen + 4});
+  free(seq);
+  return 1;
+}
+
+static int term_unhandled_osc(const char *cmd, size_t cmdlen, void *user)
+{
+  char *seq = xmalloc(cmdlen + 4);
+  snprintf(seq, cmdlen + 4, "\033]%s\007", cmd);
+  ui_call_term_unhandled((String){.data = seq, .size = cmdlen + 3});
+  free(seq);
+  return 1;
+}
 
 static int term_damage(VTermRect rect, void *data)
 {
