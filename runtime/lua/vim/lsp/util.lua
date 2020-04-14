@@ -322,40 +322,22 @@ end
 
 function M.jump_to_location(location)
   if location.uri == nil then return end
+  local bufnr = vim.uri_to_bufnr(location.uri)
   -- Save position in jumplist
   vim.cmd "normal! m'"
-  -- TODO(ashkan) use tagfunc here to update tagstack.
-  local tag_temp_path = os.tmpname()
-  local jump_word = vim.fn.expand("<cword>")
-  local jump_fname = vim.uri_to_fname(location.uri)
-  local jump_row = location.range.start.line
-  local jump_col = location.range.start.character
-  local tag_file = io.open(tag_temp_path, "w")
-  local tag_file_content = string.format("%s\t%s\tcall cursor(%d, %d)",
-      jump_word,
-      jump_fname,
-      tonumber(jump_row)+1,
-      tonumber(jump_col)
-  )
-  tag_file:write(tag_file_content)
-  tag_file:close()
 
-  -- Store the original setting and set temporary new setting
-  local ori_tag_setting = vim.api.nvim_get_option("tags")
-  local ori_wildignore = vim.api.nvim_get_option("wildignore")
-  vim.api.nvim_set_option("tags", tag_temp_path)
-  vim.api.nvim_set_option("wildignore", "")
+  -- Push a new item into tagstack
+  local items = {}
+  table.insert(items, {tagname=vim.fn.expand("<cword>"), from=vim.fn.getpos('.')})
+  vim.fn.settagstack(vim.fn.bufnr('%'), {items=items}, 't')
 
-  -- Jump to the new location
-  vim.cmd(string.format("tjump %s", jump_word))
-
-  -- Restore the orignal setting
-  vim.api.nvim_set_option("tags", ori_tag_setting)
-  vim.api.nvim_set_option("wildignore", ori_wildignore)
-
-  -- Remove the temp tag file
-  os.remove(tag_temp_path)
-
+  --- Jump to new location
+  api.nvim_set_current_buf(bufnr)
+  local row = location.range.start.line
+  local col = location.range.start.character
+  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  col = vim.str_byteindex(line, col)
+  api.nvim_win_set_cursor(0, {row + 1, col})
   return true
 end
 
