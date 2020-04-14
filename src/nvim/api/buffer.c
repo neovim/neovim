@@ -1687,10 +1687,10 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     return 0;
   }
 
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
-    return 0;
-  }
+  // if (opts.size > 0) {
+  //   api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+  //   return 0;
+  // }
 
   uint64_t ns_id = src2ns(&src_id);
 
