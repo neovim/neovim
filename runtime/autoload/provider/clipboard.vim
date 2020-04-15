@@ -113,8 +113,13 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     return 'doitclient'
   elseif executable('win32yank.exe')
-    let s:copy['+'] = 'win32yank.exe -i --crlf'
-    let s:paste['+'] = 'win32yank.exe -o --lf'
+    if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
+      let win32yank = resolve(exepath('win32yank.exe'))
+    else
+      let win32yank = 'win32yank.exe'
+    endif
+    let s:copy['+'] = win32yank.' -i --crlf'
+    let s:paste['+'] = win32yank.' -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
