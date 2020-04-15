@@ -324,6 +324,12 @@ static bool ts_parser__can_reuse_first_leaf(
   TSStateId leaf_state = ts_subtree_leaf_parse_state(tree);
   TSLexMode leaf_lex_mode = self->language->lex_modes[leaf_state];
 
+  // At the end of a non-terminal extra node, the lexer normally returns
+  // NULL, which indicates that the parser should look for a reduce action
+  // at symbol `0`. Avoid reusing tokens in this situation to ensure that
+  // the same thing happens when incrementally reparsing.
+  if (current_lex_mode.lex_state == (uint16_t)(-1)) return false;
+
   // If the token was created in a state with the same set of lookaheads, it is reusable.
   if (
     table_entry->action_count > 0 &&
@@ -592,6 +598,10 @@ static Subtree ts_parser__reuse_node(
   while ((result = reusable_node_tree(&self->reusable_node)).ptr) {
     uint32_t byte_offset = reusable_node_byte_offset(&self->reusable_node);
     uint32_t end_byte_offset = byte_offset + ts_subtree_total_bytes(result);
+
+    // Do not reuse an EOF node if the included ranges array has changes
+    // later on in the file.
+    if (ts_subtree_is_eof(result)) end_byte_offset = UINT32_MAX;
 
     if (byte_offset > position) {
       LOG("before_reusable_node symbol:%s", TREE_NAME(result));
@@ -1605,8 +1615,8 @@ static unsigned ts_parser__condense_stack(TSParser *self) {
 
 static bool ts_parser_has_outstanding_parse(TSParser *self) {
   return (
-    self->lexer.current_position.bytes > 0 ||
-    ts_stack_state(self->stack, 0) != 1
+    ts_stack_state(self->stack, 0) != 1 ||
+    ts_stack_node_count_since_error(self->stack, 0) != 0
   );
 }
 
