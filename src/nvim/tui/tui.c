@@ -1637,6 +1637,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+    // Fix an issue where smglr is inherited by TERM=screen.xterm.
+    if (unibi_get_str(ut, unibi_set_lr_margin)) {
+      ILOG("Disabling smglr with TERM=screen.xterm for screen.");
+      unibi_set_str(ut, unibi_set_lr_margin, NULL);
+    }
   } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
