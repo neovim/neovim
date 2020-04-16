@@ -725,7 +725,8 @@ do
         [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
         [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
       }
-      highlight_range(bufnr, reference_ns, document_highlight_kind[reference["kind"]], start_pos, end_pos)
+      local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
+      highlight_range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
     end
   end
 
