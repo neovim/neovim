@@ -4,8 +4,11 @@
 #include <uv.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#include "nvim/eval.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
+#include "nvim/path.h"
 
 #ifndef EXTENDED_STARTUPINFO_PRESENT
 # define EXTENDED_STARTUPINFO_PRESENT 0x00080000
@@ -30,10 +33,23 @@ bool os_has_conpty_working(void)
 
 TriState os_dyn_conpty_init(void)
 {
-  uv_lib_t kernel;
-  if (uv_dlopen("kernel32.dll", &kernel)) {
-    uv_dlclose(&kernel);
-    return kFalse;
+#define OPENCONSOLE "OpenConsole.exe"
+  char *prog_path = xstrdup((const char *)get_vim_var_str(VV_PROGPATH));
+  char *tail = (char *)path_tail((char_u *)prog_path);
+  *tail = NUL;
+  size_t len = sizeof OPENCONSOLE + (size_t)(tail - prog_path);
+  char *exe_path = xmalloc(len);
+  snprintf(exe_path, len, "%s%s", prog_path, OPENCONSOLE);
+  const bool has_openconsole = os_can_exe(exe_path, NULL, false);
+  xfree(prog_path);
+  xfree(exe_path);
+  uv_lib_t lib;
+  if (uv_dlopen("conpty.dll", &lib) || !has_openconsole) {
+    uv_dlclose(&lib);
+    if (uv_dlopen("kernel32.dll", &lib)) {
+      uv_dlclose(&lib);
+      return kFalse;
+    }
   }
   static struct {
     char *name;
@@ -46,12 +62,13 @@ TriState os_dyn_conpty_init(void)
   };
   for (int i = 0;
        conpty_entry[i].name != NULL && conpty_entry[i].ptr != NULL; i++) {
-    if (uv_dlsym(&kernel, conpty_entry[i].name, (void **)conpty_entry[i].ptr)) {
-      uv_dlclose(&kernel);
+    if (uv_dlsym(&lib, conpty_entry[i].name, (void **)conpty_entry[i].ptr)) {
+      uv_dlclose(&lib);
       return kFalse;
     }
   }
   return kTrue;
+#undef OPENCONSOLE
 }
 
 conpty_t *os_conpty_init(char **in_name, char **out_name,
