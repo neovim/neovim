@@ -4647,8 +4647,8 @@ in their own color.
 			":colorscheme" in a color scheme script.
 
 			To customize a colorscheme use another name, e.g.
-			"~/.vim/colors/mine.vim", and use `:runtime` to load
-			the original colorscheme: >
+			"~/.config/nvim/colors/mine.vim", and use `:runtime` to
+			load the original colorscheme: >
 				runtime colors/evening.vim
 				hi Statement ctermfg=Blue guifg=Blue
 
