@@ -37,6 +37,8 @@
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
 #include "nvim/ops.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/private/helpers.h"
 
 /* local declarations. {{{1 */
 /* typedef fold_T {{{2 */
@@ -55,6 +57,7 @@ typedef struct {
   TriState fd_small;            // kTrue, kFalse, or kNone: fold smaller than
                                 // 'foldminlines'; kNone applies to nested
                                 // folds too
+  uint64_t mark_id;             // Extmark ID associated to the fold
 } fold_T;
 
 #define FD_OPEN         0       /* fold is open (nested ones can be closed) */
@@ -82,6 +85,8 @@ typedef struct {
 // Flag is set when redrawing is needed.
 static bool fold_changed;
 
+
+static uint64_t folds_ns = 0;
 /* Function used by foldUpdateIEMSRecurse */
 typedef void (*LevelGetter)(fline_T *);
 
@@ -117,6 +122,11 @@ static int prev_lnum_lvl = -1;
 static size_t foldstartmarkerlen;
 static char_u *foldendmarker;
 static size_t foldendmarkerlen;
+
+void fold_init(void) {
+  int64_t ns = nvim_create_namespace(STATIC_CSTR_AS_STRING("folds"));
+  folds_ns = src2ns(&ns);
+}
 
 /* Exported folding functions. {{{1 */
 /* copyFoldingState() {{{2 */
