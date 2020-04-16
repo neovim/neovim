@@ -504,7 +504,7 @@ then Vim will try to guess.
 
 			Multiple {inname} arguments can be given to combine
 			regions into one Vim spell file.  Example: >
-		:mkspell ~/.vim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
+		:mkspell ~/.config/nvim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
 <			This combines the English word lists for US, CA and AU
 			into one en.spl file.
 			Up to eight regions can be combined. *E754* *E755*
