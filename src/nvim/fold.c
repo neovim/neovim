@@ -648,6 +648,8 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
     fp->fd_nested = fold_ga;
     fp->fd_top = start_rel;
     fp->fd_len = end_rel - start_rel + 1;
+    Decoration *decor = xcalloc(1, sizeof(*decor));
+    fp->mark_id = extmark_set(curwin->w_buffer, folds_ns, 0, start, 0, end, 0, decor, kExtmarkUndo);
 
     /* We want the new fold to be closed.  If it would remain open because
      * of using 'foldlevel', need to adjust fd_flags of containing folds.
