@@ -55,6 +55,7 @@ typedef struct {
   TriState fd_small;            // kTrue, kFalse, or kNone: fold smaller than
                                 // 'foldminlines'; kNone applies to nested
                                 // folds too
+  uint64_t fmark_id;             // Extmark ID associated to the fold
 } fold_T;
 
 #define FD_OPEN         0       /* fold is open (nested ones can be closed) */
@@ -82,6 +83,8 @@ typedef struct {
 // Flag is set when redrawing is needed.
 static bool fold_changed;
 
+
+static uint64_t folds_ns = 0;
 /* Function used by foldUpdateIEMSRecurse */
 typedef void (*LevelGetter)(fline_T *);
 
@@ -117,6 +120,11 @@ static int prev_lnum_lvl = -1;
 static size_t foldstartmarkerlen;
 static char_u *foldendmarker;
 static size_t foldendmarkerlen;
+
+void fold_init(void) {
+  int64_t ns = nvim_create_namespace(STATIC_CSTR_AS_STRING("folds"));
+  folds_ns = src2ns(&ns);
+}
 
 /* Exported folding functions. {{{1 */
 /* copyFoldingState() {{{2 */
@@ -638,6 +646,8 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
     fp->fd_nested = fold_ga;
     fp->fd_top = start_rel;
     fp->fd_len = end_rel - start_rel + 1;
+    Decoration *decor = xcalloc(1, sizeof(*decor));
+    fp->fmark_id = extmark_set(wp->w_buffer, folds_ns, 0, start, 0, end, 0, decor, kExtmarkUndo);
 
     /* We want the new fold to be closed.  If it would remain open because
      * of using 'foldlevel', need to adjust fd_flags of containing folds.
@@ -1766,6 +1776,10 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     // Set "v:foldstart" and "v:foldend".
     set_vim_var_nr(VV_FOLDSTART, (varnumber_T) lnum);
     set_vim_var_nr(VV_FOLDEND, (varnumber_T) lnume);
+
+    // Set "v:foldstartcol" and "v:foldendcol".
+    set_vim_var_nr(VV_FOLDSTARTCOL, (varnumber_T) 10);
+    set_vim_var_nr(VV_FOLDENDCOL, (varnumber_T) 20);
 
     /* Set "v:folddashes" to a string of "level" dashes. */
     /* Set "v:foldlevel" to "level". */
