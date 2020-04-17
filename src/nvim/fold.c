@@ -723,7 +723,7 @@ void deleteFold(
       lnum = found_fp->fd_top + found_fp->fd_len + found_off;
 
       if (foldmethodIsManual(wp)) {
-        deleteFoldEntry(found_ga,
+        deleteFoldEntry(wp, found_ga,
                         (int)(found_fp - (fold_T *)found_ga->ga_data),
                         recursive);
       } else {

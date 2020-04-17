@@ -835,13 +835,7 @@ bool decorations_redraw_start(buf_T *buf, int top_row,
     Decoration *decor = item->decor;
 
     if ((!(mark.id&MARKTREE_END_FLAG) && altpos.row < top_row
-<<<<<<< HEAD
-         && item && !kv_size(item->virt_text))
-||||||| parent of 3b05fe29b... extmark: refiy "Decoration" abstraction
-         && !kv_size(item->virt_text))
-=======
-         && !kv_size(decor->virt_text))
->>>>>>> 3b05fe29b... extmark: refiy "Decoration" abstraction
+         && item && !kv_size(decor->virt_text))
         || ((mark.id&MARKTREE_END_FLAG) && altpos.row >= top_row)) {
       goto next_mark;
     }
