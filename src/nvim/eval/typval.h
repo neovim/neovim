@@ -33,7 +33,7 @@ typedef double float_T;
 enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
 
 /// Additional values for tv_list_alloc() len argument
-enum {
+typedef enum {
   /// List length is not known in advance
   ///
   /// To be used when there is neither a way to know how many elements will be

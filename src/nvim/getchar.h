@@ -10,7 +10,7 @@
 /// Values for "noremap" argument of ins_typebuf()
 ///
 /// Also used for map->m_noremap and menu->noremap[].
-enum {
+typedef enum {
   REMAP_YES = 0,  ///< Allow remapping.
   REMAP_NONE = -1,  ///< No remapping.
   REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
