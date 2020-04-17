@@ -1968,7 +1968,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_FOLD:
       VIsual_reselect = false;          // don't reselect now
-      foldCreate(curwin, oap->start.lnum, oap->end.lnum);
+      // TODO(teto): pass visual debut
+      foldCreate(curwin, oap->start.lnum, oap->end.lnum,
+                 // oap->start_vcol, oap->end_vcol
+                 oap->start.col, oap->end.col
+      );
       break;
 
     case OP_FOLDOPEN:

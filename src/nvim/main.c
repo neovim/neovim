@@ -195,6 +195,8 @@ void early_init(void)
   fs_init();
   handle_init();
   extmark_init();
+  fold_init();
+
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.

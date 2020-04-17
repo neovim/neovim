@@ -350,11 +350,13 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint64_t ns_id, uint64_t id)
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, false);
   ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, NULL };
   if (!ns) {
+    DLOG("Could not find ns");
     return ret;
   }
 
   uint64_t mark = map_get(uint64_t, uint64_t)(ns->map, id);
   if (!mark) {
+    DLOG("Could not find mark");
     return ret;
   }
 

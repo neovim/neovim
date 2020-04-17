@@ -1935,6 +1935,24 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   /*
    * 4. Compose the folded-line string with 'foldtext', if set.
    */
+  {
+    // we want to pass the starting/end columns startcol/endcol
+    fold_T *current = NULL;
+    // #include "nvim/globals.h"
+    uint64_t fold_ns = fold_init();
+    int res = foldFind(&curwin->w_folds, lnum, &current);
+    if (res) {
+
+      ExtmarkInfo mark = extmark_from_id(curbuf, fold_ns, current->fd_mark_id);
+      ILOG("Looked for extmark: fold_ns=%lu mark_id=%lu: resulting id=%lu",
+           fold_ns, current->fd_mark_id, mark.mark_id);
+      // if(mark.mark_id == 0)
+      foldinfo->fi_startcol = mark.col;
+      foldinfo->fi_endcol = mark.end_col;
+    }
+    ILOG("res= %d", res);
+  }
+  ILOG("columns start=%d / end=%d", foldinfo->fi_startcol, foldinfo->fi_endcol);
   text = get_foldtext(wp, lnum, lnume, foldinfo, buf);
 
   txtcol = col;         /* remember where text starts */

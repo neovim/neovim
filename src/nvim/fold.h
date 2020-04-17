@@ -18,8 +18,27 @@ typedef struct foldinfo {
                                    other fields are invalid */
   int fi_low_level;             /* lowest fold level that starts in the same
                                    line */
+  colnr_T fi_startcol;             /* starting column of the fold */
+  colnr_T fi_endcol;               /* end column of the fold */
 } foldinfo_T;
 
+/*
+ * The toplevel folds for each window are stored in the w_folds growarray.
+ * Each toplevel fold can contain an array of second level folds in the
+ * fd_nested growarray.
+ * The info stored in both growarrays is the same: An array of fold_T.
+ */
+typedef struct {
+  linenr_T fd_top;              // first line of fold; for nested fold
+                                // relative to parent
+  linenr_T fd_len;              // number of lines in the fold
+  garray_T fd_nested;           // array of nested folds
+  char fd_flags;                // see below
+  TriState fd_small;            // kTrue, kFalse, or kNone: fold smaller than
+                                // 'foldminlines'; kNone applies to nested
+                                // folds too
+  uint64_t fd_mark_id;            // Extmark ID associated to the fold
+} fold_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"

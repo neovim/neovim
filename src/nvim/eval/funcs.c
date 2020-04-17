@@ -2464,6 +2464,8 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   linenr_T    foldstart;
   linenr_T    foldend;
+  // colnr_T    foldstartcol;
+  // colnr_T    foldendcol;
   char_u      *dashes;
   linenr_T    lnum;
   char_u      *s;
@@ -2476,6 +2478,8 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   foldstart = (linenr_T)get_vim_var_nr(VV_FOLDSTART);
   foldend = (linenr_T)get_vim_var_nr(VV_FOLDEND);
+  // foldstartcol = (colnr_T)get_vim_var_nr(VV_FOLDSTARTCOL);
+  // foldendcol = (colnr_T)get_vim_var_nr(VV_FOLDENDCOL);
   dashes = get_vim_var_str(VV_FOLDDASHES);
   if (foldstart > 0 && foldend <= curbuf->b_ml.ml_line_count) {
     // Find first non-empty line in the fold.

@@ -196,7 +196,7 @@ enum {
 
 #define DIALOG_MSG_SIZE 1000    // buffer size for dialog_msg()
 
-enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
+enum { FOLD_TEXT_LEN = 101 };  //!< buffer size for get_foldtext()
 
 
 // Maximum length of key sequence to be mapped.
