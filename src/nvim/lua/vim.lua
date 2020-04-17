@@ -270,6 +270,65 @@ vim.fn = setmetatable({}, {
   end
 })
 
+
+__LuaAutoFuncMapper = {}
+do
+  -- Load the auto wrapper function
+  vim.fn.execute([[
+  function! __VimlLuaAutoWrapper(name, ...) abort
+    return luaeval(printf("__LuaAutoFuncMapper['%s'](unpack(unpack(_A)))", a:name), a:000)
+  endfunction
+  ]])
+
+  local function convert_recurse(val)
+    if type(val) == 'function' then
+      local function_identity = string.format("function_%s", vim.split(tostring(val), "x")[2])
+      local function_name = string.format("_AutoConvertedLuaType__%s", function_identity)
+
+      if __LuaAutoFuncMapper[function_identity] ~= val then
+        __LuaAutoFuncMapper[function_identity] = val
+
+        vim.fn.execute(
+          string.format(
+            [[
+            function! %s(...) abort
+              return __VimlLuaAutoWrapper("%s", a:000)
+            endfunction
+            ]], function_name, function_identity
+          )
+        )
+      end
+
+      return function_name
+    elseif type(val) == 'table' then
+      if vim.tbl_islist(val) then
+        for i, v in ipairs(val) do
+          val[i] = convert_recurse(v)
+        end
+      else
+        for i, v in pairs(val) do
+          val[i] = convert_recurse(v)
+        end
+      end
+    end
+
+    return val
+  end
+
+  -- vim.wrap_fn.{func}(...)
+  vim.wrap_fn = setmetatable({}, {
+    __index = function(t, key)
+      local function _fn(...)
+        return vim.call(key, unpack(convert_recurse({...})))
+      end
+
+      t[key] = _fn
+      return _fn
+    end
+  })
+end
+
+
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 local function __index(t, key)

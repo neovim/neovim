@@ -585,6 +585,51 @@ describe('lua stdlib', function()
 
     -- error handling
     eq({false, 'Vim:E714: List required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
+
+    eq(
+      {false, 'error converting argument 2'},
+      exec_lua([[
+        return {
+          pcall(
+            function()
+              return vim.fn.timer_start(
+                2000,
+                function(...)
+                  return {...}
+                end
+              )
+          end)
+        }
+      ]])
+    )
+
+    -- NOTE: vim.wrap_fn, not vim.fn
+    eq(
+      {true, 1},
+      exec_lua([[
+        return {
+          pcall(
+            function()
+              -- Set the value to false
+              vim.g.test_wrap_fn_result = false
+
+              local result = vim.wrap_fn.timer_start(
+                0,
+                function(...)
+                  -- Timer will set the value new
+                  vim.g.test_wrap_fn_result = true
+                  return {...}
+                end
+              )
+
+              vim.cmd('sleep 100m')
+
+              return result
+          end)
+        }
+      ]])
+    )
+    eq(true, exec_lua([[return vim.g.test_wrap_fn_result]]))
   end)
 
   it('vim.rpcrequest and vim.rpcnotify', function()
