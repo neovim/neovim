@@ -2736,152 +2736,168 @@ buf_write(
       backup_ext = p_bex;
 
     if (backup_copy) {
-      char_u *wp;
-      int some_error = false;
-      char_u      *dirp;
-      char_u      *rootname;
-      char_u      *p;
-
-      /*
-       * Try to make the backup in each directory in the 'bdir' option.
-       *
-       * Unix semantics has it, that we may have a writable file,
-       * that cannot be recreated with a simple open(..., O_CREAT, ) e.g:
-       *  - the directory is not writable,
-       *  - the file may be a symbolic link,
-       *  - the file may belong to another user/group, etc.
-       *
-       * For these reasons, the existing writable file must be truncated
-       * and reused. Creation of a backup COPY will be attempted.
-       */
-      dirp = p_bdir;
-      while (*dirp) {
-        /*
-         * Isolate one directory name, using an entry in 'bdir'.
-         */
-        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        p = IObuff + STRLEN(IObuff);
-        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
-          // Ends with '//', Use Full path
-          if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
-              != NULL) {
-            backup = (char_u *)modname((char *)p, (char *)backup_ext,
-                                       no_prepend_dot);
-            xfree(p);
-          }
-        }
-
-        rootname = get_file_in_dir(fname, IObuff);
-        if (rootname == NULL) {
-          some_error = TRUE;                /* out of memory */
-          goto nobackup;
-        }
-
-        FileInfo file_info_new;
-        {
-          //
-          // Make the backup file name.
-          //
-          if (backup == NULL) {
-            backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
-                                       no_prepend_dot);
-          }
-
-          if (backup == NULL) {
-            xfree(rootname);
-            some_error = TRUE;                          /* out of memory */
-            goto nobackup;
-          }
-
-          /*
-           * Check if backup file already exists.
-           */
-          if (os_fileinfo((char *)backup, &file_info_new)) {
-            if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
-              //
-              // Backup file is same as original file.
-              // May happen when modname() gave the same file back (e.g. silly
-              // link). If we don't check here, we either ruin the file when
-              // copying or erase it after writing.
-              //
-              XFREE_CLEAR(backup);              // no backup file to delete
-            } else if (!p_bk) {
-              // We are not going to keep the backup file, so don't
-              // delete an existing one, and try to use another name instead.
-              // Change one character, just before the extension.
-              //
-              wp = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
-              if (wp < backup) {                // empty file name ???
-                wp = backup;
-              }
-              *wp = 'z';
-              while (*wp > 'a'
-                     && os_fileinfo((char *)backup, &file_info_new)) {
-                --*wp;
-              }
-              // They all exist??? Must be something wrong.
-              if (*wp == 'a') {
-                XFREE_CLEAR(backup);
-              }
-            }
-          }
-        }
-        xfree(rootname);
-
-        /*
-         * Try to create the backup file
-         */
-        if (backup != NULL) {
-          /* remove old backup, if present */
-          os_remove((char *)backup);
-
-          // set file protection same as original file, but
-          // strip s-bit.
-          (void)os_setperm((const char *)backup, perm & 0777);
-
-#ifdef UNIX
-          //
-          // Try to set the group of the backup same as the original file. If
-          // this fails, set the protection bits for the group same as the
-          // protection bits for others.
-          //
-          if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-              && os_chown((char *)backup, -1, file_info_old.stat.st_gid) != 0) {
-            os_setperm((const char *)backup,
-                       (perm & 0707) | ((perm & 07) << 3));
-          }
-#endif
-
-          // copy the file
-          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
-              != 0) {
-            SET_ERRMSG(_("E506: Can't write to backup file "
-                         "(add ! to override)"));
-          }
-
-#ifdef UNIX
-          os_file_settime((char *)backup,
-                          file_info_old.stat.st_atim.tv_sec,
-                          file_info_old.stat.st_mtim.tv_sec);
-#endif
-#ifdef HAVE_ACL
-          mch_set_acl(backup, acl);
-#endif
-          break;
-        }
-      }
-
-nobackup:
-      if (backup == NULL && errmsg == NULL) {
-        SET_ERRMSG(_(
-            "E509: Cannot create backup file (add ! to override)"));
-      }
-      // Ignore errors when forceit is TRUE.
-      if ((some_error || errmsg != NULL) && !forceit) {
-        retval = FAIL;
+      if(create_backup_copy(fname, &file_info_old, forceit) == FAIL) {
+        SET_ERRMSG(_("ERR: My fail"));
         goto fail;
       }
-      SET_ERRMSG(NULL);
+      //char_u *wp;
+      //int some_error = false;
+      //char_u      *dirp;
+      //char_u      *rootname;
+      //char_u      *p;
+
+      ///*
+      // * Try to make the backup in each directory in the 'bdir' option.
+      // *
+      // * Unix semantics has it, that we may have a writable file,
+      // * that cannot be recreated with a simple open(..., O_CREAT, ) e.g:
+      // *  - the directory is not writable,
+      // *  - the file may be a symbolic link,
+      // *  - the file may belong to another user/group, etc.
+      // *
+      // * For these reasons, the existing writable file must be truncated
+      // * and reused. Creation of a backup COPY will be attempted.
+      // */
+      //dirp = p_bdir;
+      //FileInfo file_info_new;
+      ////if (backup_name(backup, fname, dirp, &file_info_old, backup_ext, no_prepend_dot) == FAIL) {
+      ////  xfree(backup);
+      ////  goto nobackup;
+      ////}
+
+      //while (*dirp) {
+      //  /*
+      //   * Isolate one directory name, using an entry in 'bdir'.
+      //   */
+      //  (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+      //  backup = bname_in_dir(fname, IObuff, &file_info_old, backup_ext, no_prepend_dot);
+      //  //p = IObuff + STRLEN(IObuff);
+      //  //if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+      //  //  // Ends with '//', Use Full path
+      //  //  if(backup_name_full(backup, backup_ext, IObuff, fname, no_prepend_dot) == OK)
+      //  //    break;
+      //  //  //if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
+      //  //  //    != NULL) {
+      //  //  //  backup = (char_u *)modname((char *)p, (char *)backup_ext,
+      //  //  //                             no_prepend_dot);
+      //  //  //  xfree(p);
+      //  //  //}
+      //  //}
+
+      //  //rootname = get_file_in_dir(fname, IObuff);
+      //  //if (rootname == NULL) {
+      //  //  some_error = TRUE;                /* out of memory */
+      //  //  goto nobackup;
+      //  //}
+
+      //  //{
+      //  //  //
+      //  //  // Make the backup file name.
+      //  //  //
+      //  //  if (backup == NULL) {
+      //  //    backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
+      //  //                               no_prepend_dot);
+      //  //  }
+
+      //  //  if (backup == NULL) {
+      //  //    xfree(rootname);
+      //  //    some_error = TRUE;                          /* out of memory */
+      //  //    goto nobackup;
+      //  //  }
+
+      //  //  /*
+      //  //   * Check if backup file already exists.
+      //  //   */
+      //  //  if (os_fileinfo((char *)backup, &file_info_new)) {
+      //  //    if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
+      //  //      //
+      //  //      // Backup file is same as original file.
+      //  //      // May happen when modname() gave the same file back (e.g. silly
+      //  //      // link). If we don't check here, we either ruin the file when
+      //  //      // copying or erase it after writing.
+      //  //      //
+      //  //      XFREE_CLEAR(backup);              // no backup file to delete
+      //  //    } else if (!p_bk) {
+      //  //      // We are not going to keep the backup file, so don't
+      //  //      // delete an existing one, and try to use another name instead.
+      //  //      // Change one character, just before the extension.
+      //  //      //
+      //  //      get_temp_backup_name(backup, backup_ext);
+      //  //      //wp = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
+      //  //      //if (wp < backup) {                // empty file name ???
+      //  //      //  wp = backup;
+      //  //      //}
+      //  //      //*wp = 'z';
+      //  //      //while (*wp > 'a'
+      //  //      //       && os_fileinfo((char *)backup, &file_info_new)) {
+      //  //      //  --*wp;
+      //  //      //}
+      //  //      //// They all exist??? Must be something wrong.
+      //  //      //if (*wp == 'a') {
+      //  //      //  XFREE_CLEAR(backup);
+      //  //      //}
+      //  //    }
+      //  //  }
+      //  //}
+      //  //xfree(rootname);
+
+      //  if(backup == NULL)
+      //    continue;
+      //  break;
+      //}
+      ///*
+      // * Try to create the backup file
+      // */
+      //if (backup != NULL) {
+      //  /* remove old backup, if present */
+      //  os_remove((char *)backup);
+
+      //  // set file protection same as original file, but
+      //  // strip s-bit.
+      //  (void)os_setperm((const char *)backup, perm & 0777);
+
+//#ifdef// UNIX
+      //  //
+      //  // Try to set the group of the backup same as the original file. If
+      //  // this fails, set the protection bits for the group same as the
+      //  // protection bits for others.
+      //  //
+      //  if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
+      //      && os_chown((char *)backup, -1, file_info_old.stat.st_gid) != 0) {
+      //    os_setperm((const char *)backup,
+      //               (perm & 0707) | ((perm & 07) << 3));
+      //  }
+//#endif//
+
+      //  // copy the file
+      //  if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
+      //      != 0) {
+      //    SET_ERRMSG(_("E506: Can't write to backup file "
+      //                 "(add ! to override)"));
+      //  }
+
+//#ifdef// UNIX
+      //  os_file_settime((char *)backup,
+      //                  file_info_old.stat.st_atim.tv_sec,
+      //                  file_info_old.stat.st_mtim.tv_sec);
+//#endif//
+//#ifdef// HAVE_ACL
+      //  mch_set_acl(backup, acl);
+//#endif//
+      // break;
+      //}
+
+//nobackup:
+      //if (backup == NULL && errmsg == NULL) {
+      //  SET_ERRMSG(_(
+      //      "E509: Cannot create backup file (add ! to override)"));
+      //}
+      //// Ignore errors when forceit is TRUE.
+      //if ((some_error || errmsg != NULL) && !forceit) {
+      //  retval = FAIL;
+      //  goto fail;
+      //}
+      //SET_ERRMSG(NULL);
     } else {
       char_u      *dirp;
       char_u      *p;
