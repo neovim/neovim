@@ -124,7 +124,7 @@ end
 function M.parse_query(lang, query)
   M.require_language(lang)
   local self = setmetatable({}, Query)
-  self.query = vim._ts_parse_query(lang, query)
+  self.query = vim._ts_parse_query(lang, vim.fn.escape(query,'\\'))
   self.info = self.query:inspect()
   self.captures = self.info.captures
   self.regexes = {}
