@@ -799,7 +799,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   //
   if (fprintf(fd, "%s",
               "let s:sx = expand(\"<sfile>:p:r\").\"x.vim\"\n"
-              "if file_readable(s:sx)\n"
+              "if filereadable(s:sx)\n"
               "  exe \"source \" . fnameescape(s:sx)\n"
               "endif\n") < 0) {
     return FAIL;
