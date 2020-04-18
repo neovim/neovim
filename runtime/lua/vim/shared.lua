@@ -513,5 +513,111 @@ function vim.is_callable(f)
   return type(m.__call) == 'function'
 end
 
+
+--- Returns an object with methods to be used to log to `filename`
+--
+-- Example:
+--   local log = vim.get_logger('vim-lsp.log')
+--   log.info('Log this message', some_var, another_var)
+--
+-- Loggers are cached by filename.
+--
+--@param filename filename as string
+--@param fmt_f a function used to format the arguments.
+--             Optional, defaults to `vim.inspect(arg, {newline=''})`
+--@return a logger which has the following functions to log:
+--
+--          .trace(...)
+--          .debug(...)
+--          .info(...)
+--          .warn(...)
+--          .error(...)
+--
+--        Each method can be called without arguments to check if the log level
+--        matches. If called with arguments each argument is formatted via
+--        `fmt_f` and logged to `stdpath('data') </> filename`.
+--
+--        It also contains
+--
+--          .levels           -- a table with the available log levels
+--          .set_level(level) -- set the level to one of (`trace`, `debug`,
+--                               `info`, `warn`, `error`)
+--          .get_filename()   -- Returns the full path to the logfile
+--
+--
+local loggers = {}
+function vim.get_logger(filename, fmt_f)
+  local log = loggers[filename]
+  if log then return log end
+  log = {}
+
+  local levels = {
+    TRACE = 0;
+    DEBUG = 1;
+    INFO  = 2;
+    WARN  = 3;
+    ERROR = 4;
+  }
+  local log_date_format = "%FT%H:%M:%SZ%z"
+  local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+  local function path_join(...)
+    return table.concat(vim.tbl_flatten{...}, path_sep)
+  end
+  local logfilename = path_join(vim.fn.stdpath('data'), filename)
+  log.levels = vim.deepcopy(levels)
+  vim.tbl_add_reverse_lookup(log.levels)
+
+  function log.get_filename()
+    return logfilename
+  end
+
+  local current_log_level = levels.WARN
+  function log.set_level(level)
+    if type(level) == 'string' then
+      current_log_level = assert(log.levels[level:upper()], string.format("Invalid log level: %q", level))
+    else
+      assert(type(level) == 'number', "level must be a number or string")
+      current_log_level = assert(log.levels[level], string.format("Invalid log level: %d", level))
+    end
+  end
+
+  vim.fn.mkdir(vim.fn.stdpath('data'), "p")
+  local logfile = assert(io.open(logfilename, "a+"))
+
+  function log.close()
+    logfile:close()
+    loggers[filename] = nil
+  end
+
+  log.fmt = fmt_f or function(x) return vim.inspect(x, {newline=''}) end
+  for level, levelnr in pairs(levels) do
+    log[level:lower()] = function(...)
+      if levelnr < current_log_level then
+        return false
+      end
+      local argc = select("#", ...)
+      if argc == 0 then
+        return true
+      end
+      local info = debug.getinfo(2, "Sl")
+      local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
+      local parts = { table.concat({"[", level, "]", os.date(log_date_format), "]", fileinfo, "]"}, " ") }
+      for i = 1, argc do
+        local arg = select(i, ...)
+        if arg == nil then
+          table.insert(parts, "nil")
+        else
+          table.insert(parts, log.fmt(arg))
+        end
+      end
+      logfile:write(table.concat(parts, '\t'), "\n")
+      logfile:flush()
+    end
+  end
+  -- Add some space to make it easier to distinguish different neovim runs.
+  logfile:write("\n")
+  return log
+end
+
 return vim
 -- vim:sw=2 ts=2 et
