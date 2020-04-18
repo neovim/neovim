@@ -70,16 +70,23 @@ char *errmsg = NULL;
 int errmsgarg = 0;
 int some_error = false;
 
+/*
+ * Creates a backup of the file fname by creating a copy of the file.
+ * @param[in]   fname         The name of the file whose backup is needed.
+ * @param[in]   original_file The stat file info of the original file.
+ */
 int create_backup_copy(char_u *fname, FileInfo *original_file, int forceit) {
   char_u *backup;
   vim_acl_T acl = mch_get_acl(fname);
   int retval;
-  backup = create_bname(fname, original_file);
-  if (backup == NULL) {
-    retval = FAIL;
-  } else {
-    if (create_bfile(backup, fname, original_file, acl) == FAIL) {
-      retval = FAIL;
+  char_u *dirp = p_bdir;
+  while(dirp) {
+    backup = create_bname(fname, dirp, original_file);
+    if (backup != NULL) {
+      if (create_bfile(backup, fname, original_file, acl) == OK) {
+        XFREE_CLEAR(backup);
+        return OK;
+      }
     }
   }
   if (backup == NULL && errmsg == NULL) {
@@ -94,12 +101,41 @@ int create_backup_copy(char_u *fname, FileInfo *original_file, int forceit) {
     SET_ERRMSG(NULL);
     retval = OK;
   }
+  XFREE_CLEAR(backup);
   return retval;
 }
 
-char_u *create_bname(char_u *fname, FileInfo *original_file) {
+/*
+ * Creates a backup of the file fname by renaming the original file.
+ * @param[in]   fname         The name of the file whose backup is needed.
+ * @param[in]   original_file The stat file info of the original file.
+ * @param[in]   forceit       True if `:w!`
+ */
+int create_backup_rename(char_u *fname, FileInfo *original_file, int forceit) {
+  char_u *backup;
+  vim_acl_T acl = mch_get_acl(fname);
+  int retval;
+  char_u *dirp = p_bdir;
+  while(dirp) {
+    backup = create_bname(fname, dirp, original_file);
+    if(backup != NULL) {
+      // if the renaming of the original file to the backup file
+      // works quit here.
+      if(vim_rename(fname, backup) == 0) {
+        XFREE_CLEAR(backup);
+        return OK;
+      }
+      XFREE_CLEAR(backup);
+    }
+  }
+  if(backup == NULL && !forceit) {
+    SET_ERRMSG(_("E510: Can't make backup file (add ! to override)"));
+    return FAIL;
+  }
+}
+
+char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file) {
   char_u      *wp;
-  char_u      *dirp;
   char_u      *rootname;
   char_u      *backup = NULL;
   char_u      *backup_ext;
@@ -121,9 +157,6 @@ char_u *create_bname(char_u *fname, FileInfo *original_file) {
    * For these reasons, the existing writable file must be truncated
    * and reused. Creation of a backup COPY will be attempted.
    */
-  dirp = p_bdir;
-  FileInfo backup_file;
-
   while (*dirp) {
     /*
      * Isolate one directory name,nusing an entry in 'bdir'.

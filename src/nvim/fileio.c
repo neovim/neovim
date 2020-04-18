@@ -2899,9 +2899,9 @@ buf_write(
       //}
       //SET_ERRMSG(NULL);
     } else {
-      char_u      *dirp;
-      char_u      *p;
-      char_u      *rootname;
+      //char_u      *dirp;
+      //char_u      *p;
+      //char_u      *rootname;
 
       /*
        * Make a backup by renaming the original file.
@@ -2916,80 +2916,85 @@ buf_write(
         goto fail;
       }
 
+      if(create_backup_rename(fname, &file_info_old, forceit) == FAIL) {
+        SET_ERRMSG_NUM("E999", _("Oops"));
+        goto fail;
+      }
+
       /*
        *
        * Form the backup file name - change path/fo.o.h to
        * path/fo.o.h.bak Try all directories in 'backupdir', first one
        * that works is used.
        */
-      dirp = p_bdir;
-      while (*dirp) {
-        /*
-         * Isolate one directory name and make the backup file name.
-         */
-        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        p = IObuff + STRLEN(IObuff);
-        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
-          // path ends with '//', use full path
-          if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
-              != NULL) {
-            backup = (char_u *)modname((char *)p, (char *)backup_ext,
-                                       no_prepend_dot);
-            xfree(p);
-          }
-        }
+      //dirp = p_bdir;
+      //while (*dirp) {
+      //  /*
+      //   * Isolate one directory name and make the backup file name.
+      //   */
+      //  (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+      //  p = IObuff + STRLEN(IObuff);
+      //  if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+      //    // path ends with '//', use full path
+      //    if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
+      //        != NULL) {
+      //      backup = (char_u *)modname((char *)p, (char *)backup_ext,
+      //                                 no_prepend_dot);
+      //      xfree(p);
+      //    }
+      //  }
 
-        if (backup == NULL) {
-          rootname = get_file_in_dir(fname, IObuff);
-          if (rootname == NULL) {
-            backup = NULL;
-          } else {
-            backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
-                                       no_prepend_dot);
-            xfree(rootname);
-          }
-        }
+      //  if (backup == NULL) {
+      //    rootname = get_file_in_dir(fname, IObuff);
+      //    if (rootname == NULL) {
+      //      backup = NULL;
+      //    } else {
+      //      backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
+      //                                 no_prepend_dot);
+      //      xfree(rootname);
+      //    }
+      //  }
 
-        if (backup != NULL) {
-          /*
-           * If we are not going to keep the backup file, don't
-           * delete an existing one, try to use another name.
-           * Change one character, just before the extension.
-           */
-          if (!p_bk && os_path_exists(backup)) {
-            p = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
-            if (p < backup)             /* empty file name ??? */
-              p = backup;
-            *p = 'z';
-            while (*p > 'a' && os_path_exists(backup)) {
-              (*p)--;
-            }
-            // They all exist??? Must be something wrong!
-            if (*p == 'a') {
-              XFREE_CLEAR(backup);
-            }
-          }
-        }
-        if (backup != NULL) {
-          // Delete any existing backup and move the current version
-          // to the backup. For safety, we don't remove the backup
-          // until the write has finished successfully. And if the
-          // 'backup' option is set, leave it around.
+      //  if (backup != NULL) {
+      //    /*
+      //     * If we are not going to keep the backup file, don't
+      //     * delete an existing one, try to use another name.
+      //     * Change one character, just before the extension.
+      //     */
+      //    if (!p_bk && os_path_exists(backup)) {
+      //      p = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
+      //      if (p < backup)             /* empty file name ??? */
+      //        p = backup;
+      //      *p = 'z';
+      //      while (*p > 'a' && os_path_exists(backup)) {
+      //        (*p)--;
+      //      }
+      //      // They all exist??? Must be something wrong!
+      //      if (*p == 'a') {
+      //        XFREE_CLEAR(backup);
+      //      }
+      //    }
+      //  }
+      //  if (backup != NULL) {
+      //    // Delete any existing backup and move the current version
+      //    // to the backup. For safety, we don't remove the backup
+      //    // until the write has finished successfully. And if the
+      //    // 'backup' option is set, leave it around.
 
-          // If the renaming of the original file to the backup file
-          // works, quit here.
-          ///
-          if (vim_rename(fname, backup) == 0) {
-            break;
-          }
+      //    // If the renaming of the original file to the backup file
+      //    // works, quit here.
+      //    ///
+      //    if (vim_rename(fname, backup) == 0) {
+      //      break;
+      //    }
 
-          XFREE_CLEAR(backup);             // don't do the rename below
-        }
-      }
-      if (backup == NULL && !forceit) {
-        SET_ERRMSG(_("E510: Can't make backup file (add ! to override)"));
-        goto fail;
-      }
+      //    XFREE_CLEAR(backup);             // don't do the rename below
+      //  }
+      //}
+      //if (backup == NULL && !forceit) {
+      //  SET_ERRMSG(_("E510: Can't make backup file (add ! to override)"));
+      //  goto fail;
+      //}
     }
   }
 
