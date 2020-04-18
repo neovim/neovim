@@ -908,7 +908,10 @@ deep_equal({a}, {b})                                        *vim.deep_equal()*
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
                 copied as in a typical Lua assignment, whereas table objects
-                are copied recursively.
+                are copied recursively. Functions are naively copied, so
+                functions in the copied table point to the same functions as
+                those in the input table. Userdata and threads are not copied
+                and will throw an error.
 
                 Parameters: ~
                     {orig}  Table to copy

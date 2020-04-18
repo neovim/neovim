@@ -8,6 +8,9 @@ local vim = vim or {}
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.
+--- Functions are naively copied, so functions in the copied table point to the
+--- same functions as those in the input table. Userdata and threads are not
+--- copied and will throw an error.
 ---
 --@param orig Table to copy
 --@returns New table of copied keys and (nested) values.
@@ -34,10 +37,16 @@ vim.deepcopy = (function()
     string = _id,
     ['nil'] = _id,
     boolean = _id,
+    ['function'] = _id,
   }
 
   return function(orig)
-    return deepcopy_funcs[type(orig)](orig)
+    local f = deepcopy_funcs[type(orig)]
+    if f then
+      return f(orig)
+    else
+      error("Cannot deepcopy object of type "..type(orig))
+    end
   end
 end)()
 

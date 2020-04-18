@@ -341,6 +341,22 @@ describe('lua stdlib', function()
         and vim.tbl_count(b) == 2
         and tostring(a) ~= tostring(b)
     ]]))
+
+    ok(exec_lua([[
+      local f1 = function() return 1 end
+      local f2 = function() return 2 end
+      local t1 = {f = f1}
+      local t2 = vim.deepcopy(t1)
+      t1.f = f2
+      return t1.f() ~= t2.f()
+    ]]))
+
+    eq('Error executing lua: .../shared.lua: Cannot deepcopy object of type thread',
+      pcall_err(exec_lua, [[
+        local thread = coroutine.create(function () return 0 end)
+        local t = {thr = thread}
+        vim.deepcopy(t)
+      ]]))
   end)
 
   it('vim.pesc', function()
