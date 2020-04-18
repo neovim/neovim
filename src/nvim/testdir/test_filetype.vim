@@ -79,7 +79,7 @@ let s:filename_checks = {
     \ 'bib': ['file.bib'],
     \ 'bindzone': ['named.root'],
     \ 'blank': ['file.bl'],
-    \ 'bsdl': ['file.bsdl'],
+    \ 'bsdl': ['file.bsd', 'file.bsdl'],
     \ 'bst': ['file.bst'],
     \ 'bzr': ['bzr_log.any'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c'],
