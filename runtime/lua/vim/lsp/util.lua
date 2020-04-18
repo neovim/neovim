@@ -522,8 +522,7 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  -- TODO make InsertCharPre disappearing optional?
-  api.nvim_command("autocmd CursorMoved,BufHidden,InsertCharPre <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+  M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden"}, floating_winnr)
   return floating_bufnr, floating_winnr
 end
 
