@@ -150,7 +150,9 @@ static inline TSNode ts_node__child(
     while (ts_node_child_iterator_next(&iterator, &child)) {
       if (ts_node__is_relevant(child, include_anonymous)) {
         if (index == child_index) {
-          ts_tree_set_cached_parent(self.tree, &child, &self);
+          if (ts_node__is_relevant(self, true)) {
+            ts_tree_set_cached_parent(self.tree, &child, &self);
+          }
           return child;
         }
         index++;
