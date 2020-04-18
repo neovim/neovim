@@ -29,6 +29,17 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
     return
   end
   util.buf_clear_diagnostics(bufnr)
+
+  -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
+  -- The diagnostic's severity. Can be omitted. If omitted it is up to the
+  -- client to interpret diagnostics as error, warning, info or hint.
+  -- TODO: Replace this with server-specific heuristics to infer severity.
+  for _, diagnostic in ipairs(result.diagnostics) do
+    if diagnostic.severity == nil then
+      diagnostic.severity = protocol.DiagnosticSeverity.Error
+    end
+  end
+
   util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
   util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
