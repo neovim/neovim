@@ -1618,6 +1618,7 @@ void enter_buffer(buf_T *buf)
   if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     (void)did_set_spelllang(curwin);
   }
+  curbuf->b_last_used = time(NULL);
 
   redraw_later(NOT_VALID);
 }

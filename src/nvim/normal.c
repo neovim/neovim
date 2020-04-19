@@ -1260,6 +1260,8 @@ static void normal_redraw(NormalState *s)
     maketitle();
   }
 
+  curbuf->b_last_used = time(NULL);
+
   // Display message after redraw. If an external message is still visible,
   // it contains the kept message already.
   if (keep_msg != NULL && !msg_ext_is_visible()) {

@@ -2670,6 +2670,8 @@ int do_ecmd(
     msg_scrolled_ign = FALSE;
   }
 
+  curbuf->b_last_used = time(NULL);
+
   if (command != NULL)
     do_cmdline(command, NULL, NULL, DOCMD_VERBOSE);
 
