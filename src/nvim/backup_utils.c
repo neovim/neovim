@@ -55,53 +55,45 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
-#define BUFSIZE         8192    /* size of normal write buffer */
-#define SMBUFSIZE       256     /* size of emergency write buffer */
-
-#define SET_ERRMSG_NUM(num, msg) \
-  errnum = num, errmsg = msg, errmsgarg = 0
-#define SET_ERRMSG_ARG(msg, error) \
-  errnum = NULL, errmsg = msg, errmsgarg = error
-#define SET_ERRMSG(msg) \
-  errnum = NULL, errmsg = msg, errmsgarg = 0
-
-const char *errnum = NULL;
-char *errmsg = NULL;
-int errmsgarg = 0;
-int some_error = false;
-
 /*
  * Creates a backup of the file fname by creating a copy of the file.
  * @param[in]   fname         The name of the file whose backup is needed.
  * @param[in]   original_file The stat file info of the original file.
+ * @param[in]   forceit       True if `:w!`
  */
 int create_backup_copy(char_u *fname, FileInfo *original_file, int forceit) {
+  char *errmsg = NULL;
   char_u *backup;
-  vim_acl_T acl = mch_get_acl(fname);
-  int retval;
   char_u *dirp = p_bdir;
+  int some_error = false;
   while(dirp) {
-    backup = create_bname(fname, dirp, original_file);
+    backup = create_bname(fname, dirp, original_file, &some_error);
     if (backup != NULL) {
-      if (create_bfile(backup, fname, original_file, acl) == OK) {
+      if (create_bfile(backup, fname, original_file, errmsg) == OK) {
         XFREE_CLEAR(backup);
         return OK;
       }
     }
   }
-  if (backup == NULL && errmsg == NULL) {
-    SET_ERRMSG(_(
-        "E509: Cannot create backup file (add ! to override)"));
+  return after_backup(errmsg, some_error, backup, forceit);
+}
+
+int after_backup(char_u *errmsg, int some_error, char_u *backup, int forceit) {
+  int retval;
+  if(backup == NULL && errmsg == NULL) {
+    errmsg = _("E509: Cannot create backup file (add ! to override");
   }
   if ((some_error || errmsg != NULL) && !forceit) {
     retval = FAIL;
   }
-  // Ignore errors when forceit is TRUE.
   if(forceit) {
-    SET_ERRMSG(NULL);
+    XFREE_CLEAR(errmsg);
     retval = OK;
   }
-  XFREE_CLEAR(backup);
+  if(errmsg != NULL) {
+    EMSG(errmsg);
+    XFREE_CLEAR(errmsg);
+  }
   return retval;
 }
 
@@ -113,11 +105,12 @@ int create_backup_copy(char_u *fname, FileInfo *original_file, int forceit) {
  */
 int create_backup_rename(char_u *fname, FileInfo *original_file, int forceit) {
   char_u *backup;
-  vim_acl_T acl = mch_get_acl(fname);
   int retval;
   char_u *dirp = p_bdir;
+  char_u *errmsg = NULL;
+  int some_error = false;
   while(dirp) {
-    backup = create_bname(fname, dirp, original_file);
+    backup = create_bname(fname, dirp, original_file, &some_error);
     if(backup != NULL) {
       // if the renaming of the original file to the backup file
       // works quit here.
@@ -129,12 +122,13 @@ int create_backup_rename(char_u *fname, FileInfo *original_file, int forceit) {
     }
   }
   if(backup == NULL && !forceit) {
-    SET_ERRMSG(_("E510: Can't make backup file (add ! to override)"));
-    return FAIL;
+    errmsg = _("E510: Can't make backup file (add ! to override)");
   }
+  return after_backup(errmsg, some_error, backup, forceit);
 }
 
-char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file) {
+
+char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file, int *some_error) {
   char_u      *wp;
   char_u      *rootname;
   char_u      *backup = NULL;
@@ -177,13 +171,11 @@ char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file) {
 
     rootname = get_file_in_dir(fname, IObuff);
     if (rootname == NULL) {
-      some_error = TRUE;                /* out of memory */
+      *some_error = TRUE;                /* out of memory */
       return NULL;
     }
 
-    //
     // Make the backup file name if still NULL.
-    //
     if (backup == NULL) {
       backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
                                  no_prepend_dot);
@@ -191,7 +183,7 @@ char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file) {
 
     if (backup == NULL) {
       xfree(rootname);
-      some_error = TRUE;                          /* out of memory */
+      *some_error = TRUE;                          /* out of memory */
       return NULL;
     }
 
@@ -209,11 +201,12 @@ char_u *create_bname(char_u *fname, char_u *dirp, FileInfo *original_file) {
   return NULL;
 }
 
-int create_bfile(char_u *backup, char_u *fname, FileInfo *original_file, vim_acl_T acl) {
+int create_bfile(char_u *backup, char_u *fname, FileInfo *original_file, char_u *errmsg) {
   /*
    * Try to create the backup file
    */
   FileInfo backup_file;
+  vim_acl_T acl = mch_get_acl(fname);
   os_fileinfo((char *)backup, &backup_file);
   int perm = original_file->stat.st_mode;
   /* remove old backup, if present */
@@ -239,8 +232,8 @@ int create_bfile(char_u *backup, char_u *fname, FileInfo *original_file, vim_acl
   // copy the file
   if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
       != 0) {
-    SET_ERRMSG(_("E506: Can't write to backup file "
-                 "(add ! to override)"));
+    errmsg = _("E506: Can't write to backup file "
+                 "(add ! to override)");
   }
 
 #ifdef UNIX
@@ -252,25 +245,6 @@ int create_bfile(char_u *backup, char_u *fname, FileInfo *original_file, vim_acl
   mch_set_acl(backup, acl);
 #endif
   if(errmsg != NULL) {
-    return FAIL;
-  }
-  return OK;
-}
-
-/*
- * Manages the condition when we are not going to create a backup copy.
- */
-int nobackup(char_u *backup, int forceit) {
-  // Ignore errors when forceit is TRUE.
-  if(forceit) {
-    SET_ERRMSG(NULL);
-    return OK;
-  }
-  if (backup == NULL && errmsg == NULL) {
-    SET_ERRMSG(_(
-        "E509: Cannot create backup file (add ! to override)"));
-  }
-  if ((some_error || errmsg != NULL) && !forceit) {
     return FAIL;
   }
   return OK;

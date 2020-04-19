@@ -2737,7 +2737,6 @@ buf_write(
 
     if (backup_copy) {
       if(create_backup_copy(fname, &file_info_old, forceit) == FAIL) {
-        SET_ERRMSG(_("ERR: My fail"));
         goto fail;
       }
       //char_u *wp;
@@ -2917,7 +2916,6 @@ buf_write(
       }
 
       if(create_backup_rename(fname, &file_info_old, forceit) == FAIL) {
-        SET_ERRMSG_NUM("E999", _("Oops"));
         goto fail;
       }
 
