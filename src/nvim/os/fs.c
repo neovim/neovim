@@ -1147,6 +1147,30 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
          && file_id->device_id == file_info->stat.st_dev;
 }
 
+/// Return the canonicalized absolute pathname.
+///
+/// @param[in] name Filename to be canonicalized.
+/// @param[out] buf Buffer to store the canonicalized values. A minimum length
+//                  of MAXPATHL+1 is required. If it is NULL, memory is
+//                  allocated. In that case, the caller should deallocate this
+//                  buffer.
+///
+/// @return pointer to the buf on success, or NULL.
+char *os_realpath(const char *name, char *buf)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  uv_fs_t request;
+  int result = uv_fs_realpath(&fs_loop, &request, name, NULL);
+  if (result == kLibuvSuccess) {
+    if (buf == NULL) {
+      buf = xmallocz(MAXPATHL);
+    }
+    xstrlcpy(buf, request.ptr, MAXPATHL + 1);
+  }
+  uv_fs_req_cleanup(&request);
+  return result == kLibuvSuccess ? buf : NULL;
+}
+
 #ifdef WIN32
 # include <shlobj.h>
 
@@ -1233,4 +1257,49 @@ shortcut_end:
   return rfname;
 }
 
+#define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
+/// Returns true if the path contains a reparse point (junction or symbolic
+/// link). Otherwise false in returned.
+bool os_is_reparse_point_include(const char *path)
+{
+  wchar_t *p, *q, *utf16_path;
+  wchar_t buf[MAX_PATH];
+  DWORD attr;
+  bool result = false;
+
+  const int r = utf8_to_utf16(path, -1, &utf16_path);
+  if (r != 0) {
+    EMSG2("utf8_to_utf16 failed: %d", r);
+    return false;
+  }
+
+  p = utf16_path;
+  if (isalpha(p[0]) && p[1] == L':' && is_path_sep(p[2])) {
+    p += 3;
+  } else if (is_path_sep(p[0]) && is_path_sep(p[1])) {
+    p += 2;
+  }
+
+  while (*p != L'\0') {
+    q = wcspbrk(p, L"\\/");
+    if (q == NULL) {
+      p = q = utf16_path + wcslen(utf16_path);
+    } else {
+      p = q + 1;
+    }
+    if (q - utf16_path >= MAX_PATH) {
+      break;
+    }
+    wcsncpy(buf, utf16_path, (size_t)(q - utf16_path));
+    buf[q - utf16_path] = L'\0';
+    attr = GetFileAttributesW(buf);
+    if (attr != INVALID_FILE_ATTRIBUTES
+        && (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+      result = true;
+      break;
+    }
+  }
+  xfree(utf16_path);
+  return result;
+}
 #endif
