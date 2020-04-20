@@ -813,3 +813,35 @@ describe('LSP', function()
     end)
   end)
 end)
+
+describe('LSP', function()
+  describe('completion_list_to_complete_items', function()
+    it('should choose right completion option ', function ()
+      local prefix = 'foo'
+      local completion_list = {
+        -- resolves into label
+        { label='foobar' },
+        { label='foobar', textEdit={} },
+        -- resolves into insertText
+        { label='foocar', insertText='foobar' },
+        { label='foocar', insertText='foobar', textEdit={} },
+        -- resolves into textEdit.newText
+        { label='foocar', insertText='foodar', textEdit={newText='foobar'} },
+        { label='foocar', textEdit={newText='foobar'} }
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+  end)
+end)
