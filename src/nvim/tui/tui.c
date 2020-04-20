@@ -1973,7 +1973,23 @@ static void flush_buf(UI *ui)
   uv_buf_t *bufp = &bufs[0];
   TUIData *data = ui->data;
 
-  if (data->bufpos <= 0 && data->busy == data->is_invisible) {
+  // The content of the output for each condition is shown in the following
+  // table. Therefore, if data->bufpos == 0 and N/A or invis + norm, there is
+  // no need to output it.
+  //
+  //                         | is_invisible | !is_invisible
+  // ------+-----------------+--------------+---------------
+  // busy  | want_invisible  |     N/A      |    invis
+  //       | !want_invisible |     N/A      |    invis
+  // ------+-----------------+--------------+---------------
+  // !busy | want_invisible  |     N/A      |    invis
+  //       | !want_invisible |     norm     | invis + norm
+  // ------+-----------------+--------------+---------------
+  //
+  if (data->bufpos <= 0
+      && ((data->is_invisible && data->busy)
+          || (data->is_invisible && !data->busy && data->want_invisible)
+          || (!data->is_invisible && !data->busy && !data->want_invisible))) {
     return;
   }
 
@@ -2000,8 +2016,8 @@ static void flush_buf(UI *ui)
       bufp->base = data->norm;
       bufp->len = UV_BUF_LEN(data->normlen);
       bufp++;
+      data->is_invisible = false;
     }
-    data->is_invisible = false;
   }
 
   uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
