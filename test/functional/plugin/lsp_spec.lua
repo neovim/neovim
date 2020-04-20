@@ -812,11 +812,12 @@ describe('LSP', function()
       }, buf_lines(1))
     end)
   end)
-end)
 
-describe('LSP', function()
   describe('completion_list_to_complete_items', function()
-    it('should choose right completion option ', function ()
+    -- Completion option precedence:
+    -- textEdit.newText > insertText > label
+    -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+    it('should choose right completion option', function ()
       local prefix = 'foo'
       local completion_list = {
         -- resolves into label
