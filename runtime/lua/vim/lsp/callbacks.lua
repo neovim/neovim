@@ -112,11 +112,20 @@ local function location_callback(_, method, result)
     local _ = log.info() and log.info(method, 'No location found')
     return nil
   end
-  util.jump_to_location(result[1])
-  if #result > 1 then
-    util.set_qflist(util.locations_to_items(result))
-    api.nvim_command("copen")
-    api.nvim_command("wincmd p")
+
+  -- textDocument/definition can return Location or Location[]
+  -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
+
+  if vim.tbl_islist(result) then
+    util.jump_to_location(result[1])
+
+    if #result > 1 then
+      util.set_qflist(util.locations_to_items(result))
+      api.nvim_command("copen")
+      api.nvim_command("wincmd p")
+    end
+  else
+    util.jump_to_location(result)
   end
 end
 
