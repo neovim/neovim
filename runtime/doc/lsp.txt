@@ -950,7 +950,22 @@ buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 TODO: Documentation
 
 buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
-                TODO: Documentation
+                Returns the number of diagnostics of given kind for current
+                buffer.
+
+                Useful for showing diagnostics counts in statusline. eg: ` function! LspStatus() abort let sl = '' if
+                luaeval('vim.lsp.buf.server_ready()') let
+                sl.='%#MyStatuslineLSP#E:' let
+                sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error")")}'
+                let sl.='%#MyStatuslineLSP# W:' let
+                sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning")")}'
+                else let sl.='%#MyStatuslineLSPErrors#off' endif return sl
+                endfunction let &l:statusline = '%#MyStatuslineLSP#LSP
+                '.LspStatus() `
+
+                Parameters: ~
+                    {kind}  Diagnostic severity kind: Error, Warning,
+                            Information or Hint.
 
                                *vim.lsp.util.buf_diagnostics_save_positions()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
@@ -1015,6 +1030,9 @@ focusable_float({unique_name}, {fn})          *vim.lsp.util.focusable_float()*
 
                                             *vim.lsp.util.focusable_preview()*
 focusable_preview({unique_name}, {fn})
+                TODO: Documentation
+
+get_completion_word({item})               *vim.lsp.util.get_completion_word()*
                 TODO: Documentation
 
                                    *vim.lsp.util.get_current_line_to_cursor()*
