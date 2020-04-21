@@ -64,7 +64,7 @@ FAQ                                                     *lsp-faq*
 - Q: How to force-reload LSP?
   A: Stop all clients, then reload the buffer. >
 
-  :lua vim.lsp.stop_all_clients()
+  :lua vim.lsp.stop_client(vim.lsp.get_active_clients())
   :edit
 
 - Q: Why isn't completion working?
