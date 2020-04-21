@@ -140,14 +140,23 @@ local function format_rpc_error(err)
   validate {
     err = { err, 't' };
   }
-  local code_name = assert(protocol.ErrorCodes[err.code], "err.code is invalid")
-  local message_parts = {"RPC", code_name}
+
+  -- There is ErrorCodes in the LSP specification,
+  -- but in ResponseError.code it is not used and the actual type is number.
+  local code
+  if protocol.ErrorCodes[err.code] then
+    code = string.format("code_name = %s,", protocol.ErrorCodes[err.code])
+  else
+    code = string.format("code_name = unknown, code = %s,", err.code)
+  end
+
+  local message_parts = {"RPC[Error]", code}
   if err.message then
-    table.insert(message_parts, "message = ")
+    table.insert(message_parts, "message =")
     table.insert(message_parts, string.format("%q", err.message))
   end
   if err.data then
-    table.insert(message_parts, "data = ")
+    table.insert(message_parts, "data =")
     table.insert(message_parts, vim.inspect(err.data))
   end
   return table.concat(message_parts, ' ')
