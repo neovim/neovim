@@ -302,6 +302,7 @@ AUTOCOMMANDS                                                *lsp-autocommands*
 LspDiagnosticsChanged           After receiving publishDiagnostics server response
 
 
+
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
 
@@ -335,13 +336,13 @@ buf_is_attached({bufnr}, {client_id})              *vim.lsp.buf_is_attached()*
                     {client_id}  (number) the client id
 
 buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
-                Sends a notification to all servers attached to the buffer.
+                Send a notification to a server
 
                 Parameters: ~
-                    {bufnr}   (optional, number) Buffer handle, or 0 for
+                    {bufnr}   (number) (optional): Buffer handle, or 0 for
                               current
-                    {method}  (string) LSP method name
-                    {params}  (string) Parameters to send to the server
+                    {method}  (string): Name of the request method
+                    {params}  (string): Arguments to send to the server
 
                 Return: ~
                     true if any client returns true; false otherwise
@@ -518,7 +519,7 @@ once({fn})                                                    *vim.lsp.once()*
 optional_validator({fn})                        *vim.lsp.optional_validator()*
                 TODO: Documentation
 
-request({method}, {params}, {callback})                    *vim.lsp.request()*
+request({method}, {params}, {callback}, {bufnr})           *vim.lsp.request()*
                 TODO: Documentation
 
 resolve_bufnr({bufnr})                               *vim.lsp.resolve_bufnr()*
@@ -554,7 +555,7 @@ start_client({config})                                *vim.lsp.start_client()*
                     {root_dir}         (required, string) Directory where the
                                        LSP server will base its rootUri on
                                        initialization.
-                    {cmd}              (required, list treated like
+                    {cmd}              (required, string or list treated like
                                        |jobstart()|) Base command that
                                        initiates the LSP client.
                     {cmd_cwd}          (string, default=|getcwd()|) Directory
@@ -680,9 +681,6 @@ unsupported_method({method})                    *vim.lsp.unsupported_method()*
 validate_client_config({config})            *vim.lsp.validate_client_config()*
                 TODO: Documentation
 
-validate_command({input})                         *vim.lsp.validate_command()*
-                TODO: Documentation
-
 validate_encoding({encoding})                    *vim.lsp.validate_encoding()*
                 TODO: Documentation
 
@@ -709,6 +707,15 @@ resolve_capabilities({server_capabilities})
                 `example.0` , `example.1` , …) `[!...]` to negate a range of
                 characters to match in a path segment (e.g., `example.[!0-9]`
                 to match on `example.a` , `example.b` , but not `example.0` )
+                `*` to match one or more characters in a path segment `?` to
+                match on one character in a path segment `**` to match any
+                number of path segments, including none `{}` to group
+                conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and
+                JavaScript files) `[]` to declare a range of characters to
+                match in a path segment (e.g., `example.[0-9]` to match on
+                `example.0` , `example.1` , …) `[!...]` to negate a range of
+                characters to match in a path segment (e.g., `example.[!0-9]`
+                to match on `example.a` , `example.b` , but not `example.0` )
 
                                 *vim.lsp.protocol.transform_schema_comments()*
 transform_schema_comments()
@@ -722,6 +729,9 @@ transform_schema_to_table()
 ==============================================================================
 Lua module: vim.lsp.buf                                              *lsp-buf*
 
+clear_references()                            *vim.lsp.buf.clear_references()*
+                TODO: Documentation
+
 completion({context})                               *vim.lsp.buf.completion()*
                 TODO: Documentation
 
@@ -732,7 +742,14 @@ definition()                                        *vim.lsp.buf.definition()*
                 TODO: Documentation
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
-                TODO: Documentation
+                Send request to server to resolve document highlights for the
+                current text document position. This request can be associated
+                to key mapping or to events such as `CursorHold` , eg:
+>
+                vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
+                vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
+                vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
+<
 
 document_symbol()                              *vim.lsp.buf.document_symbol()*
                 TODO: Documentation
@@ -769,8 +786,7 @@ request({method}, {params}, {callback})                *vim.lsp.buf.request()*
                 TODO: Documentation
 
 server_ready()                                    *vim.lsp.buf.server_ready()*
-                Sends a notification through all clients associated with current
-                buffer and returns `true` if server responds.
+                TODO: Documentation
 
 signature_help()                                *vim.lsp.buf.signature_help()*
                 TODO: Documentation
@@ -787,14 +803,6 @@ err_message({...})                           *vim.lsp.callbacks.err_message()*
 
                                        *vim.lsp.callbacks.location_callback()*
 location_callback({_}, {method}, {result})
-                TODO: Documentation
-
-                                             *vim.lsp.callbacks.log_message()*
-log_message({_}, {_}, {result}, {client_id})
-                TODO: Documentation
-
-                      *vim.lsp.callbacks.signature_help_to_preview_contents()*
-signature_help_to_preview_contents({input})
                 TODO: Documentation
 
 
@@ -828,8 +836,13 @@ create_and_start_client({cmd}, {cmd_args}, {handlers},
 encode_and_send({payload})                     *vim.lsp.rpc.encode_and_send()*
                 TODO: Documentation
 
-force_env_list({final_env})                     *vim.lsp.rpc.force_env_list()*
-                TODO: Documentation
+env_merge({env})                                     *vim.lsp.rpc.env_merge()*
+                Merges current process env with the given env and returns the
+                result as a list of "k=v" strings.
+
+                Example: { PRODUCTION="false", PATH="/usr/bin/", PORT=123,
+                HOST="0.0.0.0", } => { "PRODUCTION=false", "PATH=/usr/bin/", "PORT=123",
+                "HOST=0.0.0.0", }
 
                             *vim.lsp.rpc.format_message_with_content_length()*
 format_message_with_content_length({encoded_message})
@@ -932,35 +945,14 @@ diagnostics_by_buf
 
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
                 TODO: Documentation
- 
-                                        *vim.lsp.util.buf_diagnostics_count()*
-buf_diagnostics_count({kind})
-                Returns the number of diagnostics of given kind for current buffer.
-                Useful for showing diagnostics counts in statusline. eg:
-
->
-    function! LspStatus() abort
-        let sl = ''
-        if luaeval('vim.lsp.buf.server_ready()')
-            let sl.='%#MyStatuslineLSP#E:'
-            let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error\")")}'
-            let sl.='%#MyStatuslineLSP# W:'
-            let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning\")")}'
-        else
-            let sl.='%#MyStatuslineLSPErrors#off'
-        endif
-        return sl
-    endfunction
-    let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus() 
-<
-
-                Parameters: ~
-                    {kind}       Diagnostic severity kind: Error, Warning, Information or Hint.
 
 buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 TODO: Documentation
 
-                                        *vim.lsp.util.buf_diagnostics_save()*
+buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
+                TODO: Documentation
+
+                               *vim.lsp.util.buf_diagnostics_save_positions()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
                 Stores the diagnostics into |vim.lsp.util.diagnostics_by_buf|
 
@@ -968,6 +960,17 @@ buf_diagnostics_save_positions({bufnr}, {diagnostics})
                     {bufr}         bufnr for which the diagnostics are for.
                     {diagnostics}  Diagnostics[] received from the
                                    langauge server.
+
+                                        *vim.lsp.util.buf_diagnostics_signs()*
+buf_diagnostics_signs({bufnr}, {diagnostics})
+                Place signs for each diagnostic in the sign column. Sign
+                characters can be customized with the following options:
+>
+                  let g:LspDiagnosticsErrorSign = 'E'
+                  let g:LspDiagnosticsWarningSign = 'W'
+                  let g:LspDiagnosticsInformationSign = 'I'
+                  let g:LspDiagnosticsHintSign = 'H'
+<
 
                                     *vim.lsp.util.buf_diagnostics_underline()*
 buf_diagnostics_underline({bufnr}, {diagnostics})
@@ -977,17 +980,9 @@ buf_diagnostics_underline({bufnr}, {diagnostics})
 buf_diagnostics_virtual_text({bufnr}, {diagnostics})
                 TODO: Documentation
 
-                                 *vim.lsp.util.buf_diagnostics_signs()*
-buf_diagnostics_signs({bufnr}, {diagnostics})
-                Place signs for each diagnostic in the sign column.
-                Sign characters can be customized with the following options:
->
-let g:LspDiagnosticsErrorSign = 'E'
-let g:LspDiagnosticsWarningSign = 'W'
-let g:LspDiagnosticsInformationSign = 'I'
-let g:LspDiagnosticsHintSign = 'H'
-<
-
+                                     *vim.lsp.util.buf_highlight_references()*
+buf_highlight_references({bufnr}, {references})
+                TODO: Documentation
 
 character_offset({buf}, {row}, {col})        *vim.lsp.util.character_offset()*
                 TODO: Documentation
@@ -998,6 +993,10 @@ close_preview_autocmd({events}, {winnr})
 
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
+                TODO: Documentation
+
+                     *vim.lsp.util.convert_signature_help_to_markdown_lines()*
+convert_signature_help_to_markdown_lines({signature_help})
                 TODO: Documentation
 
                                      *vim.lsp.util.extract_completion_items()*
@@ -1047,6 +1046,9 @@ make_floating_popup_options({width}, {height}, {opts})
 make_position_params()                   *vim.lsp.util.make_position_params()*
                 TODO: Documentation
 
+make_text_document_params()         *vim.lsp.util.make_text_document_params()*
+                TODO: Documentation
+
 npcall({fn}, {...})                                    *vim.lsp.util.npcall()*
                 TODO: Documentation
 
@@ -1061,13 +1063,17 @@ open_floating_peek_preview({bufnr}, {start}, {finish}, {opts})
 open_floating_preview({contents}, {filetype}, {opts})
                 TODO: Documentation
 
+                              *vim.lsp.util.remove_unmatch_completion_items()*
+remove_unmatch_completion_items({items}, {prefix})
+                TODO: Documentation
+
 set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
                 TODO: Documentation
 
-set_loclist({locations})                          *vim.lsp.util.set_loclist()*
+set_loclist({items})                              *vim.lsp.util.set_loclist()*
                 TODO: Documentation
 
-set_qflist({locations})                            *vim.lsp.util.set_qflist()*
+set_qflist({items})                                *vim.lsp.util.set_qflist()*
                 TODO: Documentation
 
 show_line_diagnostics()                 *vim.lsp.util.show_line_diagnostics()*
@@ -1076,11 +1082,20 @@ show_line_diagnostics()                 *vim.lsp.util.show_line_diagnostics()*
 sort_by_key({fn})                                 *vim.lsp.util.sort_by_key()*
                 TODO: Documentation
 
+sort_completion_items({items})          *vim.lsp.util.sort_completion_items()*
+                TODO: Documentation
+
 split_lines({value})                              *vim.lsp.util.split_lines()*
                 TODO: Documentation
 
+symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
+                Convert symbols to quickfix list items
+
+                Parameters: ~
+                    {symbols}  DocumentSymbol[] or SymbolInformation[]
+
               *vim.lsp.util.text_document_completion_list_to_complete_items()*
-text_document_completion_list_to_complete_items({result})
+text_document_completion_list_to_complete_items({result}, {prefix})
                 TODO: Documentation
 
 trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*

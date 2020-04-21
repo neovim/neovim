@@ -701,7 +701,7 @@ export interface DocumentFilter {
 }
 --]=]
 
---[[
+--[=[
 --Static registration options to be returned in the initialize request.
 interface StaticRegistrationOptions {
   --The id used to register the request. The id can be used to deregister
@@ -822,7 +822,7 @@ interface ServerCapabilities {
   --Experimental server capabilities.
   experimental?: any;
 }
---]]
+--]=]
 
 --- Creates a normalized object describing LSP server capabilities.
 function protocol.resolve_capabilities(server_capabilities)

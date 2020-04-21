@@ -38,7 +38,12 @@ Each function :help block is formatted as follows:
   - Parameters are omitted for the `void` and `Error *` types, or if the
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
+
+TODO:
+- Handle defs like 'vim.g' and others getting generated
+- Handle local functions being exported, even though they should not be
 """
+
 import os
 import re
 import sys
@@ -54,6 +59,18 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 5:
     print("requires Python 3.5+")
     sys.exit(1)
 
+if not shutil.which('doxygen'):
+    print("Missing Requirement: doxygen")
+    sys.exit(1)
+
+if not any(
+    shutil.which(x) for x in {'lua', 'luajit', 'texlua', './.deps/usr/bin/luajit'}
+):
+    print("Missing Requirement: Need lua or luajit")
+    sys.exit(1)
+
+# TODO: Why are we just checking if they are in the environ or not,
+#       instead of checking their values?
 DEBUG = ('DEBUG' in os.environ)
 TARGET = os.environ.get('TARGET', None)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
@@ -64,9 +81,10 @@ text_width = 78
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
-filter_cmd = '%s %s' % (sys.executable, script_path)
-seen_funcs = set()
-lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
+filter_cmd = "{} {}".format(
+    sys.executable,
+    os.path.join(base_dir, 'scripts', 'vim2dox_filter.py')
+)
 
 CONFIG = {
     'api': {
@@ -130,6 +148,11 @@ CONFIG = {
         'append_only': [
             'shared.lua',
         ],
+        # TODO(tjdevries): local function exclusion
+        'excluded_symbols': [
+            'make_meta_accessor',
+        ],
+
     },
     'lsp': {
         'mode': 'lua',
@@ -394,10 +417,16 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ' [verbatim] {}'.format(get_text(n))
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
+            result = render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+
+            # It's possible to get empty list items, so we should skip them.
+            if is_blank(result):
+                continue
+
             text += (
                 indent
                 + prefix
-                + render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+                + result
             )
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
@@ -788,8 +817,11 @@ def delete_lines_below(filename, tokenstr):
         if tokenstr in line:
             found = True
             break
+
     if not found:
-        raise RuntimeError(f'not found: "{tokenstr}"')
+        # raise RuntimeError(f'not found: "{tokenstr}" in filename "{filename}"')
+        print(f'not found: "{tokenstr}" in filename "{filename}"')
+
     i = max(0, i - 2)
     with open(filename, 'wt') as fp:
         fp.writelines(lines[0:i])
@@ -804,145 +836,151 @@ def main(config):
     Doxygen is called and configured through stdin.
     """
     for target in CONFIG:
+        log("Processing target:", target)
+
         if TARGET is not None and target != TARGET:
+            log("==> Skipping target:", target)
             continue
+
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
-            CONFIG[target]['filename'].replace('.txt', '.mpack'))
+            CONFIG[target]['filename'].replace('.txt', '.mpack')
+        )
+
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(target=target)
-        p = subprocess.Popen(
-                ['doxygen', '-'],
-                stdin=subprocess.PIPE,
-                # silence warnings
-                # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-                stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL))
-        p.communicate(
-            config.format(
+        try:
+            p = subprocess.Popen(
+                    ['doxygen', '-'],
+                    stdin=subprocess.PIPE,
+                    # silence warnings
+                    # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
+                    stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL))
+
+            doxy_config = config.format(
                 input=CONFIG[target]['files'],
                 output=output_dir,
                 filter=filter_cmd,
-                file_patterns=CONFIG[target]['file_patterns'])
-            .encode('utf8')
-        )
-        if p.returncode:
-            sys.exit(p.returncode)
+                file_patterns=CONFIG[target]['file_patterns'],
+                excluded=" ".join(CONFIG[target].get('excluded_symbols', [])),
+            )
 
-        fn_map_full = {}  # Collects all functions as each module is processed.
-        sections = {}
-        intros = {}
-        sep = '=' * text_width
+            log(doxy_config)
 
-        base = os.path.join(output_dir, 'xml')
-        dom = minidom.parse(os.path.join(base, 'index.xml'))
+            p.communicate(doxy_config.encode('utf8'))
+            if p.returncode:
+                print("Doxygen failed for target:", target)
+                sys.exit(p.returncode)
 
-        # generate docs for section intros
-        for compound in dom.getElementsByTagName('compound'):
-            if compound.getAttribute('kind') != 'group':
-                continue
+            fn_map_full = {}  # Collects all functions as each module is processed.
+            sections = {}
+            intros = {}
+            sep = '=' * text_width
 
-            groupname = get_text(find_first(compound, 'name'))
-            groupxml = os.path.join(base, '%s.xml' %
-                                    compound.getAttribute('refid'))
+            base = os.path.join(output_dir, 'xml')
+            dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-            desc = find_first(minidom.parse(groupxml), 'detaileddescription')
-            if desc:
-                doc = fmt_node_as_vimhelp(desc)
-                if doc:
-                    intros[groupname] = doc
-
-        for compound in dom.getElementsByTagName('compound'):
-            if compound.getAttribute('kind') != 'file':
-                continue
-
-            filename = get_text(find_first(compound, 'name'))
-            if filename.endswith('.c') or filename.endswith('.lua'):
-                # Extract unformatted (*.mpack).
-                fn_map, _ = extract_from_xml(os.path.join(base, '{}.xml'.format(
-                    compound.getAttribute('refid'))), target, width=9999)
-                # Extract formatted (:help).
-                functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
-                    os.path.join(base, '{}.xml'.format(
-                                 compound.getAttribute('refid'))), target)
-
-                if not functions_text and not deprecated_text:
+            # generate docs for section intros
+            for compound in dom.getElementsByTagName('compound'):
+                if compound.getAttribute('kind') != 'group':
                     continue
-                else:
-                    name = os.path.splitext(
-                            os.path.basename(filename))[0].lower()
-                    sectname = name.upper() if name == 'ui' else name.title()
-                    doc = ''
-                    intro = intros.get(f'api-{name}')
-                    if intro:
-                        doc += '\n\n' + intro
 
-                    if functions_text:
-                        doc += '\n\n' + functions_text
+                groupname = get_text(find_first(compound, 'name'))
+                groupxml = os.path.join(base, '%s.xml' %
+                                        compound.getAttribute('refid'))
 
-                    if INCLUDE_DEPRECATED and deprecated_text:
-                        doc += f'\n\n\nDeprecated {sectname} Functions: ~\n\n'
-                        doc += deprecated_text
-
+                desc = find_first(minidom.parse(groupxml), 'detaileddescription')
+                if desc:
+                    doc = fmt_node_as_vimhelp(desc)
                     if doc:
-                        filename = os.path.basename(filename)
-                        sectname = CONFIG[target]['section_name'].get(
-                                filename, sectname)
-                        title = CONFIG[target]['section_fmt'](sectname)
-                        helptag = CONFIG[target]['helptag_fmt'](sectname)
-                        sections[filename] = (title, helptag, doc)
-                        fn_map_full.update(fn_map)
+                        intros[groupname] = doc
 
-        assert sections
-        if len(sections) > len(CONFIG[target]['section_order']):
-            raise RuntimeError(
-                'found new modules "{}"; update the "section_order" map'.format(
-                    set(sections).difference(CONFIG[target]['section_order'])))
+            for compound in dom.getElementsByTagName('compound'):
+                if compound.getAttribute('kind') != 'file':
+                    continue
 
-        docs = ''
+                filename = get_text(find_first(compound, 'name'))
+                if filename.endswith('.c') or filename.endswith('.lua'):
+                    # Extract unformatted (*.mpack).
+                    fn_map, _ = extract_from_xml(os.path.join(base, '{}.xml'.format(
+                        compound.getAttribute('refid'))), target, width=9999)
+                    # Extract formatted (:help).
+                    functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
+                        os.path.join(base, '{}.xml'.format(
+                                     compound.getAttribute('refid'))), target)
 
-        i = 0
-        for filename in CONFIG[target]['section_order']:
-            title, helptag, section_doc = sections.pop(filename)
-            i += 1
-            if filename not in CONFIG[target]['append_only']:
-                docs += sep
-                docs += '\n%s%s' % (title,
-                                    helptag.rjust(text_width - len(title)))
-            docs += section_doc
-            docs += '\n\n\n'
+                    if not functions_text and not deprecated_text:
+                        continue
+                    else:
+                        name = os.path.splitext(
+                                os.path.basename(filename))[0].lower()
+                        sectname = name.upper() if name == 'ui' else name.title()
+                        doc = ''
+                        intro = intros.get(f'api-{name}')
 
-        docs = docs.rstrip() + '\n\n'
-        docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
+                        if intro:
+                            doc += '\n\n' + intro
 
-        doc_file = os.path.join(base_dir, 'runtime', 'doc',
-                                CONFIG[target]['filename'])
+                        if functions_text:
+                            doc += '\n\n' + functions_text
 
-        delete_lines_below(doc_file, CONFIG[target]['section_start_token'])
-        with open(doc_file, 'ab') as fp:
-            fp.write(docs.encode('utf8'))
+                        if INCLUDE_DEPRECATED and deprecated_text:
+                            doc += f'\n\n\nDeprecated {sectname} Functions: ~\n\n'
+                            doc += deprecated_text
 
-        fn_map_full = collections.OrderedDict(sorted(fn_map_full.items()))
-        with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
+                        if doc:
+                            filename = os.path.basename(filename)
+                            sectname = CONFIG[target]['section_name'].get(
+                                    filename, sectname)
+                            title = CONFIG[target]['section_fmt'](sectname)
+                            helptag = CONFIG[target]['helptag_fmt'](sectname)
+                            sections[filename] = (title, helptag, doc)
+                            fn_map_full.update(fn_map)
 
-        shutil.rmtree(output_dir)
+            assert sections, filename
+            if len(sections) > len(CONFIG[target]['section_order']):
+                raise RuntimeError(
+                    'found new modules "{}"; update the "section_order" map'.format(
+                        set(sections).difference(CONFIG[target]['section_order'])))
+
+            docs = ''
+
+            i = 0
+            for filename in CONFIG[target]['section_order']:
+                title, helptag, section_doc = sections.pop(filename)
+                i += 1
+                if filename not in CONFIG[target]['append_only']:
+                    docs += sep
+                    docs += '\n%s%s' % (title,
+                                        helptag.rjust(text_width - len(title)))
+                docs += section_doc
+                docs += '\n\n\n'
+
+            docs = docs.rstrip() + '\n\n'
+            docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
+
+            doc_file = os.path.join(
+                base_dir, 'runtime', 'doc', CONFIG[target]['filename']
+            )
+
+            delete_lines_below(doc_file, CONFIG[target]['section_start_token'])
+            with open(doc_file, 'ab') as fp:
+                fp.write(docs.encode('utf8'))
+
+            fn_map_full = collections.OrderedDict(sorted(fn_map_full.items()))
+            with open(mpack_file, 'wb') as fp:
+                fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
+
+        finally:
+            shutil.rmtree(output_dir)
+            os.remove(mpack_file)
 
 
-def filter_source(filename):
-    name, extension = os.path.splitext(filename)
-    if extension == '.lua':
-        p = subprocess.run([lua2dox_filter, filename], stdout=subprocess.PIPE)
-        op = ('?' if 0 != p.returncode else p.stdout.decode('utf-8'))
-        print(op)
-    else:
-        """Filters the source to fix macros that confuse Doxygen."""
-        with open(filename, 'rt') as fp:
-            print(re.sub(r'^(ArrayOf|DictionaryOf)(\(.*?\))',
-                         lambda m: m.group(1)+'_'.join(
-                             re.split(r'[^\w]+', m.group(2))),
-                         fp.read(), flags=re.M))
+def log(*args, **kwargs):
+    if DEBUG:
+        print(*args, **kwargs)
 
 
 Doxyfile = textwrap.dedent('''
@@ -955,7 +993,7 @@ Doxyfile = textwrap.dedent('''
     EXCLUDE                =
     EXCLUDE_SYMLINKS       = NO
     EXCLUDE_PATTERNS       = */private/*
-    EXCLUDE_SYMBOLS        =
+    EXCLUDE_SYMBOLS        = {excluded}
     EXTENSION_MAPPING      = lua=C
     EXTRACT_PRIVATE        = NO
 
@@ -981,9 +1019,6 @@ Doxyfile = textwrap.dedent('''
 ''')
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        filter_source(sys.argv[1])
-    else:
-        main(Doxyfile)
+    main(Doxyfile)
 
 # vim: set ft=python ts=4 sw=4 tw=79 et :

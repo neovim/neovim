@@ -29,6 +29,7 @@ test_executable(){
 	if test -z "${WHICH}"
 	then
 		echo "not found \"${P_EXE}\""
+		exit 1
 	else
 		EXE="${P_EXE}"
 	fi
@@ -36,12 +37,28 @@ test_executable(){
 
 ##! \brief sets the lua interpreter
 set_lua(){
-	test_executable 'texlua'
+	# Default to using bundled luajit.
+	#	This should bring down likelihood of failure
+	if test -z "${EXE}"
+	then
+		test_executable './.deps/usr/bin/luajit'
+	fi
+
+	if test -z "${EXE}"
+	then
+		test_executable 'texlua'
+	fi
+
 	if test -z "${EXE}"
 	then
 		test_executable 'lua'
 	fi
-	#echo "final EXE=\"${EXE}\""
+
+	if test -z "${EXE}"
+	then
+		test_executable 'luajit'
+	fi
+	# echo "final EXE=\"${EXE}\""
 	}
 
 ##! \brief makes canonical name of file
@@ -73,6 +90,7 @@ set_lua
 if test -z "${EXE}"
 then
 	echo "no lua interpreter available"
+	exit 1
 else
 	BASENAME=`basename "$0"`
 	do_readlink "$0"

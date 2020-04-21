@@ -853,6 +853,16 @@ do
     end
     return count
   end
+
+  --- Place signs for each diagnostic in the sign column.
+  --- Sign characters can be customized with the following options:
+  ---
+  --- <pre>
+  ---   let g:LspDiagnosticsErrorSign = 'E'
+  ---   let g:LspDiagnosticsWarningSign = 'W'
+  ---   let g:LspDiagnosticsInformationSign = 'I'
+  ---   let g:LspDiagnosticsHintSign = 'H'
+  --- </pre>
   function M.buf_diagnostics_signs(bufnr, diagnostics)
     vim.fn.sign_define('LspDiagnosticsErrorSign', {text=vim.g['LspDiagnosticsErrorSign'] or 'E', texthl='LspDiagnosticsError', linehl='', numhl=''})
     vim.fn.sign_define('LspDiagnosticsWarningSign', {text=vim.g['LspDiagnosticsWarningSign'] or 'W', texthl='LspDiagnosticsWarning', linehl='', numhl=''})
@@ -942,7 +952,7 @@ end
 
 --- Convert symbols to quickfix list items
 ---
---@symbols DocumentSymbol[] or SymbolInformation[]
+--- @param symbols DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do

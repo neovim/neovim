@@ -130,7 +130,7 @@ function TCore_Clock.getTimeStamp(this,T0)
   else
     t0 = this.t0
   end
-  return os.date('%c %Z',t0)
+  return os.date('%c %Z', math.floor(t0))
 end
 
 
@@ -369,7 +369,7 @@ local function checkComment4fn(Fn_magic,MagicLines)
 
   local magicLines = string_split(MagicLines,'\n')
 
-  local macro,tail
+  local macro,tail 
 
   for k,line in ipairs(magicLines) do
     macro,tail = getMagicDirective(line)
@@ -411,6 +411,14 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           state = 'in_magic_comment'
           local magic = string.sub(line,4)
           outStream:writeln('/// @' .. magic)
+
+          -- TODO(tjdevries): Figure out how to get var defs working
+          -- local t_macro, t_tail = getMagicDirective(line)
+          -- if t_macro == 'var' then
+          --   -- assert(False)
+          --   outStream:writeln(string.format('%s', t_tail))
+          -- end
+
           fn_magic = checkComment4fn(fn_magic,magic)
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment
           local comment = string.sub(line,4)
@@ -451,6 +459,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           fn_magic = nil
         end
       elseif string.find(line,'^function') or string.find(line,'^local%s+function') then
+      -- elseif string.find(line,'^function') then
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
