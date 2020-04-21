@@ -960,12 +960,12 @@ buf_diagnostics_virtual_text({bufnr}, {diagnostics})
                                  *vim.lsp.util.buf_diagnostics_signs()*
 buf_diagnostics_signs({bufnr}, {diagnostics})
                 Place signs for each diagnostic in the sign column.
-                Sign characters can be customized with the following options:
+                Sign characters can be customized with the following commands:
 >
-let g:LspDiagnosticsErrorSign = 'E'
-let g:LspDiagnosticsWarningSign = 'W'
-let g:LspDiagnosticsInformationSign = 'I'
-let g:LspDiagnosticsHintSign = 'H'
+sign define LspDiagnosticsErrorSign text=E texthl=LspDiagnosticsError linehl= numhl=
+sign define LspDiagnosticsWarningSign text=W texthl=LspDiagnosticsWarning linehl= numhl=
+sign define LspDiagnosticsInformationSign text=I texthl=LspDiagnosticsInformation linehl= numhl=
+sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
 <
 
 
