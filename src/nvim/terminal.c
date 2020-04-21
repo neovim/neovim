@@ -992,8 +992,9 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 static bool send_mouse_event(Terminal *term, int c)
 {
   int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  int offset;
   win_T *mouse_win = mouse_find_win(&grid, &row, &col);
-  if (mouse_win == NULL) {
+  if (mouse_win == NULL || (offset = win_col_off(mouse_win)) > col) {
     goto end;
   }
 
@@ -1015,7 +1016,7 @@ static bool send_mouse_event(Terminal *term, int c)
       default: return false;
     }
 
-    mouse_action(term, button, row, col, drag, 0);
+    mouse_action(term, button, row, col - offset, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
                                    sizeof(term->textbuf));
     terminal_send(term, term->textbuf, (size_t)len);
