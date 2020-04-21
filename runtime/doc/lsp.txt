@@ -953,15 +953,23 @@ buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
                 Returns the number of diagnostics of given kind for current
                 buffer.
 
-                Useful for showing diagnostics counts in statusline. eg: ` function! LspStatus() abort let sl = '' if
-                luaeval('vim.lsp.buf.server_ready()') let
-                sl.='%#MyStatuslineLSP#E:' let
-                sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error")")}'
-                let sl.='%#MyStatuslineLSP# W:' let
-                sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning")")}'
-                else let sl.='%#MyStatuslineLSPErrors#off' endif return sl
-                endfunction let &l:statusline = '%#MyStatuslineLSP#LSP
-                '.LspStatus() `
+                Useful for showing diagnostics counts in statusline. eg:
+>
+
+                 function! LspStatus() abort
+                     let sl = ''
+                     if luaeval('vim.lsp.buf.server_ready()')
+                         let sl.='%#MyStatuslineLSP#E:'
+                         let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error")")}'
+                         let sl.='%#MyStatuslineLSP# W:'
+                         let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning")")}'
+                     else
+                         let sl.='%#MyStatuslineLSPErrors#off'
+                     endif
+                     return sl
+                 endfunction
+                 let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
+<
 
                 Parameters: ~
                     {kind}  Diagnostic severity kind: Error, Warning,

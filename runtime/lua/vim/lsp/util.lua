@@ -841,10 +841,12 @@ do
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
+
   --- Returns the number of diagnostics of given kind for current buffer.
   ---
   --- Useful for showing diagnostics counts in statusline. eg:
-  --- <code>
+  ---
+  --- <pre>
   --- function! LspStatus() abort
   ---     let sl = ''
   ---     if luaeval('vim.lsp.buf.server_ready()')
@@ -858,7 +860,7 @@ do
   ---     return sl
   --- endfunction
   --- let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus() 
-  --- </code>
+  --- </pre>
   --@param kind Diagnostic severity kind: Error, Warning, Information or Hint.
   function M.buf_diagnostics_count(kind)
     local bufnr = vim.api.nvim_get_current_buf()
@@ -971,7 +973,7 @@ end
 
 --- Convert symbols to quickfix list items
 ---
---- @param symbols DocumentSymbol[] or SymbolInformation[]
+--@param symbols DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do
