@@ -5,6 +5,12 @@ set -u
 # Use privileged mode, which e.g. skips using CDPATH.
 set -p
 
+# Ensure that the user has a bash that supports -A
+if [[ "${BASH_VERSINFO[0]}" -lt 4  ]]; then
+  echo "This script requires bash version 3 or later (you have ${BASH_VERSION})." >&2
+  exit 1
+fi
+
 readonly NVIM_SOURCE_DIR="${NVIM_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 readonly VIM_SOURCE_DIR_DEFAULT="${NVIM_SOURCE_DIR}/.vim-src"
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
