@@ -271,6 +271,12 @@ static const char *input_cb(void *payload, uint32_t byte_index,
   }
   char_u *line = ml_get_buf(bp, position.row+1, false);
   size_t len = STRLEN(line);
+  if (position.column > len) {
+    blog("Tree-sitter requested invalid position %d,%d in buffer %d\n",
+         (int)position.row, (int)position.column, bp->handle);
+    *bytes_read = 0;
+    return "";
+  }
   size_t tocopy = MIN(len-position.column, BUFSIZE);
 
   memcpy(buf, line+position.column, tocopy);

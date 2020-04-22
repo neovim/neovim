@@ -21,12 +21,16 @@ function Parser:parse()
   return self.tree, changes
 end
 
-function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
-  local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-  local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-  local old_stop_byte = start_byte + old_byte_size
-  self._parser:edit(start_byte,old_stop_byte,stop_byte,
-                    start_row,0,old_stop_row,0,stop_row,0)
+function Parser:_on_bytes(bufnr, _,
+                          start_row, start_col, start_byte,
+                          old_row, old_col, old_byte,
+                          new_row, new_col, new_byte)
+  local old_end_col = old_col + ((old_row == 0) and start_col or 0)
+  local new_end_col = new_col + ((new_row == 0) and start_col or 0)
+  self._parser:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
+                    start_row, start_col,
+                    start_row+old_row, old_end_col,
+                    start_row+new_row, new_end_col)
   self.valid = false
 end
 
@@ -75,8 +79,8 @@ function M.create_parser(bufnr, lang, id)
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
     -- using it.
-  local function lines_cb(_, ...)
-    return self:_on_lines(...)
+  local function bytes_cb(_, ...)
+    return self:_on_bytes(...)
   end
   local detach_cb = nil
   if id ~= nil then
@@ -86,7 +90,7 @@ function M.create_parser(bufnr, lang, id)
       end
     end
   end
-  a.nvim_buf_attach(self.bufnr, false, {on_lines=lines_cb, on_detach=detach_cb})
+  a.nvim_buf_attach(self.bufnr, false, {on_bytes=bytes_cb, on_detach=detach_cb})
   return self
 end
 

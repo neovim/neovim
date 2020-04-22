@@ -170,8 +170,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
       }
       cb.on_lines = v->data.luaref;
       v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("_on_bytes", k.data)) {
-      // NB: undocumented, untested and incomplete interface!
+    } else if (is_lua && strequal("on_bytes", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
@@ -1716,6 +1715,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // NB: this should be zero at any time API functions are called,
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+  PUT(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
 
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {

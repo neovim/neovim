@@ -63,8 +63,8 @@
 #define FIXED_TEMP_ARRAY(name, fixsize) \
   Array name = ARRAY_DICT_INIT; \
   Object name##__items[fixsize]; \
-  args.size = fixsize; \
-  args.items = name##__items; \
+  name.size = fixsize; \
+  name.items = name##__items; \
 
 #define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
 
