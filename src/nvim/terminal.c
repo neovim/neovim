@@ -161,6 +161,10 @@ void terminal_init(void)
   time_watcher_init(&main_loop, &refresh_timer, NULL);
   // refresh_timer_cb will redraw the screen which can call vimscript
   refresh_timer.events = multiqueue_new_child(main_loop.events);
+#ifdef NVIM_VTERM_HAS_USER_FUNC
+  vterm_set_user_unicode_width(utf_uint2cells);
+  vterm_set_user_unicode_is_combining(utf_iscomposing_uint);
+#endif
 }
 
 void terminal_teardown(void)

@@ -434,6 +434,25 @@ endif()
 find_package(LIBVTERM 0.1 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
+list(APPEND CMAKE_REQUIRED_INCLUDES "${LIBVTERM_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${LIBVTERM_LIBRARIES}")
+check_c_source_compiles("
+#include <vterm.h>
+
+int
+main(void)
+{
+  vterm_set_user_unicode_width(NULL);
+  vterm_set_user_unicode_is_combining(NULL);
+  return 0;
+}
+" VTERM_HAS_USER_FUNC)
+list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${LIBVTERM_INCLUDE_DIRS}")
+list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${LIBVTERM_LIBRARIES}")
+if(VTERM_HAS_USER_FUNC)
+  add_definitions(-DNVIM_VTERM_HAS_USER_FUNC)
+endif()
+
 if(WIN32)
   find_package(Winpty 0.4.3 REQUIRED)
   include_directories(SYSTEM ${WINPTY_INCLUDE_DIRS})

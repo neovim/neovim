@@ -1,0 +1,69 @@
+commit 89098a9a1daf4c1613af8ff843ea7ec6e5cb0c44
+Author: erw7 <erw7.github@gmail.com>
+Date:   Wed Apr 22 19:40:52 2020 +0900
+
+    Add user function
+    
+    Change user program functions to be available instead of
+    vterm_unicode_width() and vterm_unicode_is_combining().
+
+diff --git a/include/vterm.h b/include/vterm.h
+index 03c2f77..4b51e91 100644
+--- a/include/vterm.h
++++ b/include/vterm.h
+@@ -526,6 +526,12 @@ void vterm_copy_cells(VTermRect dest,
+                       void (*copycell)(VTermPos dest, VTermPos src, void *user),
+                       void *user);
+ 
++typedef int VTermUserUnicodeWidth(uint32_t codepoint);
++void vterm_set_user_unicode_width(VTermUserUnicodeWidth *func);
++
++typedef int VTermUserUnicodeIsCombining(uint32_t codepoint);
++void vterm_set_user_unicode_is_combining(VTermUserUnicodeIsCombining *func);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/unicode.c b/src/unicode.c
+index 0d1b5ff..da0f4bc 100644
+--- a/src/unicode.c
++++ b/src/unicode.c
+@@ -67,6 +67,19 @@
+  * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
+  */
+ 
++static VTermUserUnicodeWidth *user_unicode_width = NULL;
++static VTermUserUnicodeIsCombining *user_unicode_is_combining = NULL;
++
++void vterm_set_user_unicode_width(VTermUserUnicodeWidth *func)
++{
++  user_unicode_width = func;
++}
++
++void vterm_set_user_unicode_is_combining(VTermUserUnicodeIsCombining *func)
++{
++  user_unicode_is_combining = func;
++}
++
+ struct interval {
+   int first;
+   int last;
+@@ -325,6 +338,9 @@ static const struct interval fullwidth[] = {
+ 
+ INTERNAL int vterm_unicode_width(uint32_t codepoint)
+ {
++  if (user_unicode_width) {
++    return user_unicode_width(codepoint);
++  }
+   if(bisearch(codepoint, fullwidth, sizeof(fullwidth) / sizeof(fullwidth[0]) - 1))
+     return 2;
+ 
+@@ -333,5 +349,8 @@ INTERNAL int vterm_unicode_width(uint32_t codepoint)
+ 
+ INTERNAL int vterm_unicode_is_combining(uint32_t codepoint)
+ {
++  if (user_unicode_is_combining) {
++    return user_unicode_is_combining(codepoint);
++  }
+   return bisearch(codepoint, combining, sizeof(combining) / sizeof(struct interval) - 1);
+ }

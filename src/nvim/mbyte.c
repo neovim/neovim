@@ -458,6 +458,19 @@ static bool intable(const struct interval *table, size_t n_items, int c)
   return false;
 }
 
+#ifdef NVIM_VTERM_HAS_USER_FUNC
+///
+/// utf_char2cells() with different argument type for libvterm.
+///
+int utf_uint2cells(uint32_t c)
+{
+  if (c >= 0x100 && utf_iscomposing((int)c)) {
+    return 0;
+  }
+  return utf_char2cells((int)c);
+}
+#endif
+
 /// For UTF-8 character "c" return 2 for a double-width character, 1 for others.
 /// Returns 4 or 6 for an unprintable character.
 /// Is only correct for characters >= 0x80.
@@ -1018,6 +1031,16 @@ int utf_char2bytes(const int c, char_u *const buf)
     return 6;
   }
 }
+
+#ifdef NVIM_VTERM_HAS_USER_FUNC
+///
+/// utf_iscomposing() with different argument type for libvterm.
+///
+int utf_iscomposing_uint(uint32_t c)
+{
+  return utf_iscomposing((int)c);
+}
+#endif
 
 /*
  * Return true if "c" is a composing UTF-8 character.  This means it will be
