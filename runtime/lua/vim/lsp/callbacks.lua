@@ -157,11 +157,12 @@ M['textDocument/peekDefinition'] = function(_, _, result, _)
   local finish = loc.range["end"]
   util.open_floating_peek_preview(bufnr, start, finish, { offset_x = 1 })
   local headbuf = util.open_floating_preview({"Peek:"}, nil, {
-    offset_y = -(finish.line - start.line);
-    width = finish.character - start.character + 2;
+    offset_x = 1;
+    offset_y = -1;
+    width = finish.character - start.character + 1;
   })
   -- TODO(ashkan) change highlight group?
-  api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
+  api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, 0, -1)
 end
 
 M['textDocument/documentHighlight'] = function(_, _, result, _)
