@@ -187,6 +187,7 @@ bool hasFoldingWin(
   linenr_T first = 0;
   linenr_T last = 0;
   linenr_T lnum_rel = lnum;
+  colnr_T startcol = 0;
   fold_T      *fp;
   int level = 0;
   bool use_level = false;
@@ -237,6 +238,8 @@ bool hasFoldingWin(
       if (had_folded) {
         /* Fold closed: Set last and quit loop. */
         last += fp->fd_len - 1;
+        ExtmarkInfo mark = extmark_from_id(curbuf, fold_ns, fp->fd_mark_id);
+        startcol = mark.col;
         break;
       }
 
@@ -270,7 +273,7 @@ bool hasFoldingWin(
     infop->fi_level = level + 1;
     infop->fi_lnum = first;
     infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
-    infop->fi_startcol = 0;
+    infop->fi_startcol = startcol;
     infop->fi_endcol = 0;
   }
   return true;
@@ -313,8 +316,8 @@ bool lineFolded(win_T *const win, const linenr_T lnum)
 /// Normally "lnum" is the first line of a possible fold, and the returned
 /// number is the number of lines in the fold.
 /// Doesn't use caching from the displayed window.
-/// Returns number of folded lines from "lnum", or 0 if line is not folded.
 /// @param[out] infop filled with the fold level info when not null
+/// @return number of folded lines from "lnum", or 0 if line is not folded.
 long foldedCount(win_T *win, linenr_T lnum, foldinfo_T *infop)
 {
   linenr_T last;
@@ -2182,6 +2185,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
  * and then created again.  But we would lose all information about the
  * folds, even when making changes that don't affect the folding (e.g. "vj~").
  *
+ * @param flp saves values
  * @param getlevel function that fills a flp
  *
  * Returns bot, which may have been increased for lines that also need to be
@@ -2411,7 +2415,8 @@ static linenr_T foldUpdateIEMSRecurse(
            * end earlier. */
           fp->fd_top = firstlnum;
           fp->fd_len = bot - firstlnum + 1;
-          // flp->startcol
+          // flp->startcol = ;
+          ILOG("creating extmark with column %d", flp->startcol);
           fp->fd_mark_id = extmark_set(
               flp->wp->w_buffer, fold_ns, 0,
               (int)fp->fd_top,

@@ -1841,6 +1841,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     col++;
   }
 
+// pos/value/limit (number of elements to set)
 # define RL_MEMSET(p, v, l) \
   do { \
     if (wp->w_p_rl) { \
@@ -1873,9 +1874,15 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     col += fdc;
   }
 
+
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
-  RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_grid.Columns - col);
+  // TODO(teto): use endcol as well for the limit
+  ILOG("col %d + startcol %d", col, foldinfo->fi_startcol);
+  // Here is the bug
+  RL_MEMSET(col, wp->w_hl_attr_normal, foldinfo->fi_startcol);
+  RL_MEMSET(col + foldinfo->fi_startcol+1, win_hl_attr(wp, HLF_FL),
+            wp->w_grid.Columns - col - foldinfo->fi_startcol - 1);
 
   // If signs are being displayed, add spaces.
   if (win_signcol_count(wp) > 0) {
