@@ -46,6 +46,12 @@ set_lua(){
 
 	if test -z "${EXE}"
 	then
+		test_executable './.deps/usr/bin/lua'
+	fi
+
+
+	if test -z "${EXE}"
+	then
 		test_executable 'texlua'
 	fi
 
@@ -62,16 +68,16 @@ set_lua(){
 	}
 
 ##! \brief makes canonical name of file
-##! 
+##!
 ##! Note that "readlink -f" doesn't work in MacOSX
-##! 
+##!
 do_readlink(){
 	pushd . > /dev/null
 	TARGET_FILE=$1
-	
+
 	cd `dirname $TARGET_FILE`
 	TARGET_FILE=`basename $TARGET_FILE`
-	
+
 	# Iterate down a (possible) chain of symlinks
 	while [ -L "$TARGET_FILE" ]
 	do
@@ -79,7 +85,7 @@ do_readlink(){
 		cd `dirname $TARGET_FILE`
 		TARGET_FILE=`basename $TARGET_FILE`
 	done
-	
+
 	PHYS_DIR=`pwd -P`
 	RESULT=$PHYS_DIR
 	popd > /dev/null
@@ -92,14 +98,20 @@ then
 	echo "no lua interpreter available"
 	exit 1
 else
+	# Use `--test` to check that we found a lua interpeter
+	# Must be the only parameter passed.
+	if [[ "$1"  == "--test" ]]; then
+		exit 0
+	fi
+
 	BASENAME=`basename "$0"`
 	do_readlink "$0"
 	DIRNAME="${RESULT}"
-		
+
 	LUASCRIPT="${DIRNAME}/lua2dox.lua ${BASENAME}"
 	#echo "lua[${LUASCRIPT}]"
 
 	${EXE} ${LUASCRIPT} $@
 fi
-# 
+#
 ##eof
