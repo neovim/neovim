@@ -2432,9 +2432,10 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
   if (line == NULL)             /* just checking... */
     return FAIL;
 
-  /* When starting up, we might still need to create the memfile */
-  if (buf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
+  // When starting up, we might still need to create the memfile
+  if (buf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL) {
     return FAIL;
+  }
 
   bool readlen = true;
 
@@ -4000,7 +4001,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
-  /* take care of cached line first */
+  // take care of cached line first
   ml_flush_line(buf);
 
   if (buf->b_ml.ml_usedchunks == -1
