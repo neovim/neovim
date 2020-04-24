@@ -361,8 +361,8 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
 /// insert/delete bytes at column
 ///
-/// Like changed_bytes() but also adjust extmark for "added" bytes.
-/// When "added" is negative text was deleted.
+/// Like changed_bytes() but also adjust extmark for "new" bytes.
+/// When "new" is negative text was deleted.
 static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
   if (curbuf_splice_pending == 0) {
