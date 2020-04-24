@@ -356,3 +356,37 @@ describe("folded lines", function()
     ]]}
   end)
 end)
+
+
+
+describe("folded lines", function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(45, 8)
+    screen:attach({rgb=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {reverse = true},
+      [3] = {bold = true, reverse = true},
+      [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
+      [6] = {background = Screen.colors.Yellow},
+      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+    })
+  end)
+
+-- function! TestFoldTextWithColumns()
+--   let l:line = getline(v:foldstart)
+--   let l:foldcount = v:foldend - v:foldstart + 1
+--   let l:res = "v:foldstartcol not supported " . l:foldcount
+--   if exists("v:foldstartcol")
+-- 	"foldstartcol exists :". v:foldstartcol . "/". v:foldendcol
+--     let l:res = strpart(line, 0, v:foldstartcol)
+-- 	let l:res .= " +-- " . l:foldcount . " lines with startcol=".v:foldstartcol
+--   endif
+--   return l:res
+-- endfunc
+
+-- set foldtext=TestFoldTextWithColumns()
+end)
