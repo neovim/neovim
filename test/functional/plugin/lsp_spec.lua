@@ -754,14 +754,18 @@ describe('LSP', function()
 
   it('highlight groups', function()
     eq({'LspDiagnosticsError',
+        'LspDiagnosticsErrorSign',
         'LspDiagnosticsHint',
+        'LspDiagnosticsHintSign',
         'LspDiagnosticsInformation',
+        'LspDiagnosticsInformationSign',
         'LspDiagnosticsUnderline',
         'LspDiagnosticsUnderlineError',
         'LspDiagnosticsUnderlineHint',
         'LspDiagnosticsUnderlineInformation',
         'LspDiagnosticsUnderlineWarning',
         'LspDiagnosticsWarning',
+        'LspDiagnosticsWarningSign',
       },
       exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
   end)
