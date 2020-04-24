@@ -188,6 +188,7 @@ bool hasFoldingWin(
   linenr_T last = 0;
   linenr_T lnum_rel = lnum;
   colnr_T startcol = 0;
+  colnr_T endcol = 0;
   fold_T      *fp;
   int level = 0;
   bool use_level = false;
@@ -240,6 +241,7 @@ bool hasFoldingWin(
         last += fp->fd_len - 1;
         ExtmarkInfo mark = extmark_from_id(curbuf, fold_ns, fp->fd_mark_id);
         startcol = mark.col;
+        endcol = mark.end_col;
         break;
       }
 
@@ -274,7 +276,8 @@ bool hasFoldingWin(
     infop->fi_lnum = first;
     infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
     infop->fi_startcol = startcol;
-    infop->fi_endcol = 0;
+    // TODO set endcol
+    infop->fi_endcol = endcol;
   }
   return true;
 }
@@ -670,7 +673,7 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end,
     fp->fd_mark_id = extmark_set(wp->w_buffer, fold_ns, 0,
                                  (int)start-1, startcol,
                                  // use -1 to disble paired mark (end)
-                                 (int)-1, endcol,
+                                 (int)end-1, endcol,
                                  NULL, kExtmarkUndo);
 
     /* We want the new fold to be closed.  If it would remain open because
@@ -2424,8 +2427,8 @@ static linenr_T foldUpdateIEMSRecurse(
               (int)fp->fd_top-1,
               // startcol may be wrong if folds are nested ?
               flp->startcol,
-              // use -1 instead of bot
-              (int)-1, 0,
+              // use -1 instead of bot + pass the column (for marker)
+              (int)bot-1, 0,
               NULL, kExtmarkUndo);
           /* When the containing fold is open, the new fold is open.
            * The new fold is closed if the fold above it is closed.
@@ -2656,7 +2659,7 @@ static void foldSplit(buf_T *buf, garray_T *const gap,
                                // bugs)
                                0,
                                // -1 to prevent use (use "bot")
-                               (int)-1, 0,
+                               (int)bot-1, 0,
                                NULL, kExtmarkUndo);
 
   /* Move nested folds below bot to new fold.  There can't be
