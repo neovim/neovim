@@ -854,9 +854,12 @@ bool marktree_splice(MarkTree *b,
 
   mtpos_t oldbase[MT_MAX_DEPTH];
 
+  DLOG("May_delete %d", may_delete);
+
   marktree_itr_get_ext(b, start, itr, false, true, oldbase);
   if (!itr->node) {
     // den e FÄRDIG
+    DLOG("Could not find node");
     return false;
   }
   mtpos_t delta = { new_extent.row - old_extent.row,

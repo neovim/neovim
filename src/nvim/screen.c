@@ -1881,7 +1881,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   ILOG("col %d + startcol %d", col, foldinfo->fi_startcol);
   // Here is the bug
   RL_MEMSET(col, wp->w_hl_attr_normal, foldinfo->fi_startcol);
-  RL_MEMSET(col + foldinfo->fi_startcol+1, win_hl_attr(wp, HLF_FL),
+  RL_MEMSET(col + foldinfo->fi_startcol, win_hl_attr(wp, HLF_FL),
             wp->w_grid.Columns - col - foldinfo->fi_startcol - 1);
 
   // If signs are being displayed, add spaces.

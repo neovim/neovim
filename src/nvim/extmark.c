@@ -71,6 +71,7 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// Create or update an extmark
 ///
 /// must not be used during iteration!
+/// @param end_row if != -1 creates a pair
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      int row, colnr_T col, int end_row, colnr_T end_col,
@@ -581,6 +582,7 @@ void extmark_splice_impl(buf_T *buf,
                          ExtmarkOp undo)
 {
   curbuf->deleted_bytes2 = 0;
+  ILOG("called with startcol %d old %d new %d", start_col, old_col, new_col);
   buf_updates_send_splice(buf, start_row, start_col, start_byte,
                           old_row, old_col, old_byte,
                           new_row, new_col, new_byte);
@@ -597,9 +599,13 @@ void extmark_splice_impl(buf_T *buf,
   }
 
 
-  marktree_splice(buf->b_marktree, start_row, start_col,
+  bool moved = marktree_splice(buf->b_marktree, start_row, start_col,
                   old_row, old_col,
                   new_row, new_col);
+
+  // if (!res) {
+  ILOG("marktree_splice moved or not %d", moved);
+  // }
 
   if (undo == kExtmarkUndo) {
     u_header_T  *uhp = u_force_get_undo_header(buf);

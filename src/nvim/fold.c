@@ -668,8 +668,10 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end,
     // Decoration *decor = xcalloc(1, sizeof(*decor));
     ILOG("Creating fold for columns start/end %d/%d", startcol, endcol);
     fp->fd_mark_id = extmark_set(wp->w_buffer, fold_ns, 0,
-                                 (int)start, startcol, (int)end,
-                                 endcol, NULL, kExtmarkUndo);
+                                 (int)start-1, startcol,
+                                 // use -1 to disble paired mark (end)
+                                 (int)-1, endcol,
+                                 NULL, kExtmarkUndo);
 
     /* We want the new fold to be closed.  If it would remain open because
      * of using 'foldlevel', need to adjust fd_flags of containing folds.
@@ -2419,11 +2421,12 @@ static linenr_T foldUpdateIEMSRecurse(
           ILOG("creating extmark with column %d", flp->startcol);
           fp->fd_mark_id = extmark_set(
               flp->wp->w_buffer, fold_ns, 0,
-              (int)fp->fd_top,
+              (int)fp->fd_top-1,
               // startcol may be wrong if folds are nested ?
               flp->startcol,
-              (int)bot,
-              0, NULL, kExtmarkUndo);
+              // use -1 instead of bot
+              (int)-1, 0,
+              NULL, kExtmarkUndo);
           /* When the containing fold is open, the new fold is open.
            * The new fold is closed if the fold above it is closed.
            * The first fold depends on the containing fold. */
@@ -2619,12 +2622,6 @@ static void foldInsert(garray_T *gap, int i)
   ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
 }
 
-///
-///
-// static void foldRawConfigure() 
-// {
-// }
-
 
 /* foldSplit() {{{2 */
 /*
@@ -2654,10 +2651,13 @@ static void foldSplit(buf_T *buf, garray_T *const gap,
   fp->fd_small = kNone;
   // TODO add correct columns
   fp->fd_mark_id = extmark_set(buf, fold_ns, 0,
-                               (int)fp->fd_top,
-                               // temporary value
-                               3,
-                               (int)bot, 0, NULL, kExtmarkUndo);
+                               (int)fp->fd_top - 1,
+                               // temporary value for startcol (use 0 to prevent
+                               // bugs)
+                               0,
+                               // -1 to prevent use (use "bot")
+                               (int)-1, 0,
+                               NULL, kExtmarkUndo);
 
   /* Move nested folds below bot to new fold.  There can't be
    * any between top and bot, they have been removed by the caller. */

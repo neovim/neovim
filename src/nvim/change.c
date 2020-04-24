@@ -365,6 +365,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 /// When "new" is negative text was deleted.
 static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
+  ILOG("curbuf_splice_pending %d col %d new: %d", curbuf_splice_pending, col, new);
   if (curbuf_splice_pending == 0) {
     extmark_splice_cols(curbuf, (int)lnum-1, col, old, new, kExtmarkUndo);
   }
