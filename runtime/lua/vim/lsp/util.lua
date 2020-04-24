@@ -597,31 +597,6 @@ function M.open_floating_preview(contents, filetype, opts)
   return floating_bufnr, floating_winnr
 end
 
-local function validate_lsp_position(pos)
-  validate { pos = {pos, 't'} }
-  validate {
-    line = {pos.line, 'n'};
-    character = {pos.character, 'n'};
-  }
-  return true
-end
-
-function M.open_floating_peek_preview(bufnr, start, finish, opts)
-  validate {
-    bufnr = {bufnr, 'n'};
-    start = {start, validate_lsp_position, 'valid start Position'};
-    finish = {finish, validate_lsp_position, 'valid finish Position'};
-    opts = { opts, 't', true };
-  }
-  local width = math.max(finish.character - start.character + 1, 1)
-  local height = math.max(finish.line - start.line + 1, 1)
-  local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
-  api.nvim_win_set_cursor(floating_winnr, {start.line+1, start.character})
-  api.nvim_command("autocmd CursorMoved * ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
-  return floating_winnr
-end
-
-
 local function highlight_range(bufnr, ns, hiname, start, finish)
   if start[1] == finish[1] then
     -- TODO care about encoding here since this is in byte index?

@@ -149,21 +149,6 @@ M['textDocument/signatureHelp'] = function(_, method, result)
   end)
 end
 
-M['textDocument/peekDefinition'] = function(_, _, result, _)
-  if not (result and result[1]) then return end
-  local loc = result[1]
-  local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
-  local start = loc.range.start
-  local finish = loc.range["end"]
-  util.open_floating_peek_preview(bufnr, start, finish, { offset_x = 1 })
-  local headbuf = util.open_floating_preview({"Peek:"}, nil, {
-    offset_y = -(finish.line - start.line);
-    width = finish.character - start.character + 2;
-  })
-  -- TODO(ashkan) change highlight group?
-  api.nvim_buf_add_highlight(headbuf, -1, 'Keyword', 0, -1)
-end
-
 M['textDocument/documentHighlight'] = function(_, _, result, _)
   if not result then return end
   local bufnr = api.nvim_get_current_buf()

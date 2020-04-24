@@ -32,12 +32,6 @@ function M.hover()
   request('textDocument/hover', params)
 end
 
-function M.peek_definition()
-  local params = util.make_position_params()
-  request('textDocument/peekDefinition', params)
-end
-
-
 function M.declaration()
   local params = util.make_position_params()
   request('textDocument/declaration', params)

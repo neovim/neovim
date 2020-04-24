@@ -752,9 +752,6 @@ npcall({fn}, {...})                                     *vim.lsp.buf.npcall()*
 ok_or_nil({status}, {...})                           *vim.lsp.buf.ok_or_nil()*
                 TODO: Documentation
 
-peek_definition()                              *vim.lsp.buf.peek_definition()*
-                TODO: Documentation
-
                                               *vim.lsp.buf.range_formatting()*
 range_formatting({options}, {start_pos}, {end_pos})
                 TODO: Documentation
@@ -1031,10 +1028,6 @@ npcall({fn}, {...})                                    *vim.lsp.util.npcall()*
                 TODO: Documentation
 
 ok_or_nil({status}, {...})                          *vim.lsp.util.ok_or_nil()*
-                TODO: Documentation
-
-                                   *vim.lsp.util.open_floating_peek_preview()*
-open_floating_peek_preview({bufnr}, {start}, {finish}, {opts})
                 TODO: Documentation
 
                                         *vim.lsp.util.open_floating_preview()*
