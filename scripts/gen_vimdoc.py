@@ -44,6 +44,7 @@ TODO:
 - Handle local functions being exported, even though they should not be
 """
 
+import argparse
 import collections
 import os
 import re
@@ -55,7 +56,11 @@ from typing import Any
 from typing import Dict
 from xml.dom import minidom
 
-import msgpack
+try:
+    import msgpack
+except ImportError:
+    print("package 'msgpack' is required to run the script", file=sys.stderr)
+    sys.exit(1)
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 5:
     print("requires Python 3.5+", file=sys.stderr)
@@ -826,7 +831,9 @@ def main(config):
             log("==> Skipping target:", target)
             continue
 
-        mpack_file = os.path.join(base_dir, "runtime", "doc", CONFIG[target]["filename"].replace(".txt", ".mpack"))
+        output_dir = os.path.join(base_dir, "runtime", "doc")
+        generate_help_and_mpack_for_target(target, CONFIG[target], config, output_dir)
+        mpack_file = os.path.join(output_dir, CONFIG[target]["filename"].replace(".txt", ".mpack"))
 
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
@@ -872,6 +879,60 @@ def main(config):
 
         finally:
             # shutil.rmtree(output_dir)
+            os.remove(mpack_file)
+
+
+def generate_help_and_mpack_for_target(
+    target: str, target_conf: Dict[str, Any], doxy_string: str, output_dir: str, remove_files: bool = False
+):
+    mpack_file = os.path.join(output_dir, target_conf["filename"].replace(".txt", ".mpack"))
+
+    # Always remove the file at start.
+    if os.path.exists(mpack_file):
+        os.remove(mpack_file)
+
+    tmp_output_dir = out_dir.format(target=target)
+    try:
+        p = subprocess.Popen(
+            ["doxygen", "-"],
+            stdin=subprocess.PIPE,
+            # silence warnings
+            # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
+            stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL),
+        )
+
+        doxy_config = doxy_string.format(
+            input=CONFIG[target]["files"],
+            output=tmp_output_dir,
+            filter=filter_cmd,
+            file_patterns=CONFIG[target]["file_patterns"],
+            excluded=" ".join(CONFIG[target].get("excluded_symbols", [])),
+        )
+
+        log(doxy_config)
+
+        p.communicate(doxy_config.encode("utf8"))
+        if p.returncode:
+            print("Doxygen failed for target:", target, file=sys.stderr)
+            sys.exit(p.returncode)
+
+        base = os.path.join(tmp_output_dir, "xml")
+        dom = minidom.parse(os.path.join(base, "index.xml"))
+
+        associated_doms_from_ref_ids = get_associated_doms_from_ref_ids(dom, base)
+        docs, fn_map_full = get_doc_from_dom(dom, associated_doms_from_ref_ids, target, CONFIG[target], text_width)
+
+        doc_file = os.path.join(base_dir, "runtime", "doc", CONFIG[target]["filename"])
+        delete_lines_below(doc_file, CONFIG[target]["section_start_token"])
+        with open(doc_file, "ab") as fp:
+            fp.write(docs.encode("utf8"))
+
+        with open(mpack_file, "wb") as fp:
+            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
+
+    finally:
+        if remove_files:
+            shutil.rmtree(tmp_output_dir)
             os.remove(mpack_file)
 
 
@@ -1033,6 +1094,21 @@ Doxyfile = textwrap.dedent(
 )
 
 if __name__ == "__main__":
-    main(Doxyfile)
+    parser = argparse.ArgumentParser(prog="gen_vimdoc", description="Generate vim docs from Lua & C Files.")
+
+    parser.add_argument(
+        "--doxy-template",
+        help="Optional Doxygen template file. Used to pass params to doxygen. See 'Doxyfile' in script for example",
+    )
+
+    args = parser.parse_args()
+
+    if args.doxy_template:
+        with open(args.doxy_template, "r") as reader:
+            doxy_file = reader.read()
+    else:
+        doxy_file = Doxyfile
+
+    main(doxy_file)
 
 # vim: set ft=python ts=4 sw=4 tw=120 et :
