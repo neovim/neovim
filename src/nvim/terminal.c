@@ -963,6 +963,32 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_F35:       return VTERM_KEY_FUNCTION(35);
     case K_F36:       return VTERM_KEY_FUNCTION(36);
     case K_F37:       return VTERM_KEY_FUNCTION(37);
+    case K_F38:       return VTERM_KEY_FUNCTION(38);
+    case K_F39:       return VTERM_KEY_FUNCTION(39);
+    case K_F40:       return VTERM_KEY_FUNCTION(40);
+    case K_F41:       return VTERM_KEY_FUNCTION(41);
+    case K_F42:       return VTERM_KEY_FUNCTION(42);
+    case K_F43:       return VTERM_KEY_FUNCTION(43);
+    case K_F44:       return VTERM_KEY_FUNCTION(44);
+    case K_F45:       return VTERM_KEY_FUNCTION(45);
+    case K_F46:       return VTERM_KEY_FUNCTION(46);
+    case K_F47:       return VTERM_KEY_FUNCTION(47);
+    case K_F48:       return VTERM_KEY_FUNCTION(48);
+    case K_F49:       return VTERM_KEY_FUNCTION(49);
+    case K_F50:       return VTERM_KEY_FUNCTION(50);
+    case K_F51:       return VTERM_KEY_FUNCTION(51);
+    case K_F52:       return VTERM_KEY_FUNCTION(52);
+    case K_F53:       return VTERM_KEY_FUNCTION(53);
+    case K_F54:       return VTERM_KEY_FUNCTION(54);
+    case K_F55:       return VTERM_KEY_FUNCTION(55);
+    case K_F56:       return VTERM_KEY_FUNCTION(56);
+    case K_F57:       return VTERM_KEY_FUNCTION(57);
+    case K_F58:       return VTERM_KEY_FUNCTION(58);
+    case K_F59:       return VTERM_KEY_FUNCTION(59);
+    case K_F60:       return VTERM_KEY_FUNCTION(60);
+    case K_F61:       return VTERM_KEY_FUNCTION(61);
+    case K_F62:       return VTERM_KEY_FUNCTION(62);
+    case K_F63:       return VTERM_KEY_FUNCTION(63);
 
     default:          return VTERM_KEY_NONE;
   }
