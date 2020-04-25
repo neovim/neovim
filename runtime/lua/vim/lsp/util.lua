@@ -6,6 +6,31 @@ local list_extend = vim.list_extend
 
 local M = {}
 
+--- Diagnostics received from the server via `textDocument/publishDiagnostics`
+-- by buffer.
+--
+--  {<bufnr>: {diagnostics}}
+--
+-- This contains only entries for active buffers. Entries for detached buffers
+-- are discarded.
+--
+-- If you override the `textDocument/publishDiagnostic` callback,
+-- this will be empty unless you call `buf_diagnostics_save_positions`.
+--
+--
+-- Diagnostic is:
+--
+-- {
+--    range: Range
+--    message: string
+--    severity?: DiagnosticSeverity
+--    code?: number | string
+--    source?: string
+--    tags?: DiagnosticTag[]
+--    relatedInformation?: DiagnosticRelatedInformation[]
+-- }
+M.diagnostics_by_buf = {}
+
 local split = vim.split
 local function split_lines(value)
   return split(value, '\n', true)
@@ -635,8 +660,6 @@ local function highlight_range(bufnr, ns, hiname, start, finish)
 end
 
 do
-  local all_buffer_diagnostics = {}
-
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
   local reference_ns = api.nvim_create_namespace("vim_lsp_references")
   local sign_ns = 'vim_lsp_signs'
@@ -692,13 +715,12 @@ do
     -- if #marks == 0 then
     --   return
     -- end
-    -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
     local lines = {"Diagnostics:"}
     local highlights = {{0, "Bold"}}
 
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+    local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
     if not buffer_diagnostics then return end
-    local line_diagnostics = buffer_diagnostics[line]
+    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics[line])
     if not line_diagnostics then return end
 
     for i, diagnostic in ipairs(line_diagnostics) do
@@ -726,6 +748,8 @@ do
     return popup_bufnr, winnr
   end
 
+  --- Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf
+  --
   function M.buf_diagnostics_save_positions(bufnr, diagnostics)
     validate {
       bufnr = {bufnr, 'n', true};
@@ -734,28 +758,15 @@ do
     if not diagnostics then return end
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
 
-    if not all_buffer_diagnostics[bufnr] then
+    if not M.diagnostics_by_buf[bufnr] then
       -- Clean up our data when the buffer unloads.
       api.nvim_buf_attach(bufnr, false, {
         on_detach = function(b)
-          all_buffer_diagnostics[b] = nil
+          M.diagnostics_by_buf[b] = nil
         end
       })
     end
-    all_buffer_diagnostics[bufnr] = {}
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
-
-    for _, diagnostic in ipairs(diagnostics) do
-      local start = diagnostic.range.start
-      -- local mark_id = api.nvim_buf_set_extmark(bufnr, diagnostic_ns, 0, start.line, 0, {})
-      -- buffer_diagnostics[mark_id] = diagnostic
-      local line_diagnostics = buffer_diagnostics[start.line]
-      if not line_diagnostics then
-        line_diagnostics = {}
-        buffer_diagnostics[start.line] = line_diagnostics
-      end
-      table.insert(line_diagnostics, diagnostic)
-    end
+    M.diagnostics_by_buf[bufnr] = diagnostics
   end
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)
@@ -799,15 +810,26 @@ do
     end
   end
 
-  function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
-    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
-      M.buf_diagnostics_save_positions(bufnr, diagnostics)
+  function M.diagnostics_group_by_line(diagnostics)
+    if not diagnostics then return end
+    local diagnostics_by_line = {}
+    for _, diagnostic in ipairs(diagnostics) do
+      local start = diagnostic.range.start
+      local line_diagnostics = diagnostics_by_line[start.line]
+      if not line_diagnostics then
+        line_diagnostics = {}
+        diagnostics_by_line[start.line] = line_diagnostics
+      end
+      table.insert(line_diagnostics, diagnostic)
     end
-    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then
+    return diagnostics_by_line
+  end
+
+  function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
+    if not diagnostics then
       return
     end
+    local buffer_line_diagnostics = M.diagnostics_group_by_line(diagnostics)
     for line, line_diags in pairs(buffer_line_diagnostics) do
       local virt_texts = {}
       for i = 1, #line_diags - 1 do
@@ -821,12 +843,12 @@ do
   end
   function M.buf_diagnostics_count(kind)
     local bufnr = vim.api.nvim_get_current_buf()
-    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
-    if not buffer_line_diagnostics then return end
+    local diagnostics = M.diagnostics_by_buf[bufnr]
+    if not diagnostics then return end
     local count = 0
-    for _, line_diags in pairs(buffer_line_diagnostics) do
-      for _, diag in ipairs(line_diags) do
-        if protocol.DiagnosticSeverity[kind] == diag.severity then count = count + 1 end
+    for _, diagnostic in pairs(diagnostics) do
+      if protocol.DiagnosticSeverity[kind] == diagnostic.severity then
+        count = count + 1
       end
     end
     return count

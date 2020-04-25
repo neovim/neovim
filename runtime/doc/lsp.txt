@@ -915,6 +915,21 @@ apply_text_edits({text_edits}, {bufnr})
 apply_workspace_edit({workspace_edit})
                 TODO: Documentation
 
+                                         *vim.lsp.util.diagnostics_by_buf*
+diagnostics_by_buf
+                A table containing diagnostics grouped by buf.
+
+                {<bufnr>: {diagnostics}}
+
+		{diagnostics} is an array of diagnostics.
+
+                By default this is populated by the
+                `textDocument/publishDiagnostics` callback via
+                |vim.lsp.util.buf_diagnostics_save_positions|.
+
+                It contains entries for active buffers. Once a buffer is
+                detached the entries for it are discarded.
+
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
                 TODO: Documentation
  
@@ -945,9 +960,14 @@ buf_diagnostics_count({kind})
 buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 TODO: Documentation
 
-                               *vim.lsp.util.buf_diagnostics_save_positions()*
+                                        *vim.lsp.util.buf_diagnostics_save()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
-                TODO: Documentation
+                Stores the diagnostics into |vim.lsp.util.diagnostics_by_buf|
+
+                Parameters: ~
+                    {bufr}         bufnr for which the diagnostics are for.
+                    {diagnostics}  Diagnostics[] received from the
+                                   langauge server.
 
                                     *vim.lsp.util.buf_diagnostics_underline()*
 buf_diagnostics_underline({bufnr}, {diagnostics})
