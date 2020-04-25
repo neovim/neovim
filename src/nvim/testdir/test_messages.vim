@@ -6,6 +6,9 @@ function Test_messages()
     set nomore
     " Avoid the "message maintainer" line.
     let $LANG = ''
+    let $LC_ALL = ''
+    let $LC_MESSAGES = ''
+    let $LC_COLLATE = ''
 
     let arr = map(range(10), '"hello" . v:val')
     for s in arr
