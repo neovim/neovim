@@ -10,6 +10,12 @@ fi
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 
+# Enable ipv6 on Travis. ref: a39c8b7ce30d
+if ! test "${TRAVIS_OS_NAME}" = osx ; then
+  echo "before_script.sh: enable ipv6"
+  sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+fi
+
 # Test some of the configuration variables.
 if [[ -n "${GCOV}" ]] && [[ ! $(type -P "${GCOV}") ]]; then
   echo "\$GCOV: '${GCOV}' is not executable."
