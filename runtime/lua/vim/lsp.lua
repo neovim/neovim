@@ -198,6 +198,7 @@ local function text_document_did_open_handler(bufnr, client)
     }
   }
   client.notify('textDocument/didOpen', params)
+  util.buf_versions[bufnr] = params.textDocument.version
 end
 
 --- LSP client object.
@@ -722,6 +723,7 @@ function lsp.buf_attach_client(bufnr, client_id)
             client.notify('textDocument/didClose', params)
           end
         end)
+        util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
       end;
       -- TODO if we know all of the potential clients ahead of time, then we
