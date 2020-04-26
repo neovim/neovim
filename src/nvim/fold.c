@@ -120,22 +120,22 @@ uint64_t fold_init(void) {
 /// @param[in] gap array to search for matching folds
 /// @param lnum line whose folds we are looking for
 /// @param[out] out array of folds that contain the line 'lnum'
-// void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
-//   fold_T *fp;
-//   int level = 0;
-//   linenr_T lnum_rel = lnum;
-//   // Recursively search for a fold that contains "lnum".
-//   while (true) {
-//     if (!foldFind(gap, lnum_rel, &fp)) {
-//       break;
-//     }
-//     assert(fp != 0);
-//     GA_APPEND(fold_T *, out, fp);
-//     gap = &fp->fd_nested;
-//     lnum_rel -= fp->fd_top;
-//     level++;
-//   }
-// }
+void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
+  fold_T *fp;
+  int level = 0;
+  linenr_T lnum_rel = lnum;
+  // Recursively search for a fold that contains "lnum".
+  while (true) {
+    if (!foldFind(gap, lnum_rel, &fp)) {
+      break;
+    }
+    assert(fp != 0);
+    GA_APPEND(fold_T *, out, fp);
+    gap = &fp->fd_nested;
+    lnum_rel -= fp->fd_top;
+    level++;
+  }
+}
 
 
 /* Exported folding functions. {{{1 */
@@ -174,13 +174,19 @@ bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 }
 
 /* hasFoldingWin() {{{2 */
+/// Search folds starting at lnum 
+/// @param lnum
+/// @param[out] first first line of fold containing lnum
+/// @param[out] lastp last line with a fold
+/// @param[out] infop where to store fold info
+/// @return true if range contains folds
 bool hasFoldingWin(
     win_T *const win,
     const linenr_T lnum,
     linenr_T *const firstp,
     linenr_T *const lastp,
     const bool cache,             // when true: use cached values of window
-    foldinfo_T *const infop       // where to store fold info
+    foldinfo_T *const infop
 )
 {
   bool had_folded = false;
@@ -672,7 +678,7 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end,
     ILOG("Creating fold for columns start/end %d/%d", startcol, endcol);
     fp->fd_mark_id = extmark_set(wp->w_buffer, fold_ns, 0,
                                  (int)start-1, startcol,
-                                 // use -1 to disble paired mark (end)
+                                 // use -1 to disable paired mark (end)
                                  (int)end-1, endcol,
                                  NULL, kExtmarkUndo);
 
@@ -1081,6 +1087,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
     to_p->fd_len = from_p->fd_len;
     to_p->fd_flags = from_p->fd_flags;
     to_p->fd_small = from_p->fd_small;
+    // TODO(teto): copy the extmark too
     cloneFoldGrowArray(&from_p->fd_nested, &to_p->fd_nested);
     ++to->ga_len;
     ++from_p;

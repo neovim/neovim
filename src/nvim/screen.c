@@ -699,7 +699,7 @@ static void win_update(win_T *wp)
   long j;
   static int recursive = FALSE;         /* being called recursively */
   int old_botline = wp->w_botline;
-  long fold_count;
+  long fold_count;              // TODO rename to folded_lines instead
   // Remember what happened to the previous line.
 #define DID_NONE 1      // didn't update a line
 #define DID_LINE 2      // updated a normal line
@@ -1448,6 +1448,10 @@ static void win_update(win_T *wp)
        * Otherwise, display normally (can be several display lines when
        * 'wrap' is on).
        */
+      // TODO(teto): add an option to control wether to call fold_line ?
+      // TODO pass only the outer fold
+      garray_T results = GA_EMPTY_INIT_VALUE;
+      getFolds(&wp->w_folds, lnum, &results);
       fold_count = foldedCount(wp, lnum, &win_foldinfo);
       if (fold_count != 0) {
         fold_line(wp, fold_count, &win_foldinfo, lnum, row);
@@ -1474,10 +1478,15 @@ static void win_update(win_T *wp)
             && syntax_present(wp))
           syntax_end_parsing(syntax_last_parsed + 1);
 
-        /*
-         * Display one line.
-         */
-        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false);
+        // Display one line.
+        // TODO pass possible fold
+        ILOG("win_line called with #folds %d", results.ga_len );
+        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false,
+                       // pass the outer fold
+                       // should be fine as long as we dont have nested inline
+                       // folds
+                       (results.ga_len > 0) ? &((fold_T *)(results.ga_data))[0] : NULL
+                       );
 
         wp->w_lines[idx].wl_folded = FALSE;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1508,7 +1517,7 @@ static void win_update(win_T *wp)
         if (fold_count != 0) {
           fold_line(wp, fold_count, &win_foldinfo, lnum, row);
         } else {
-          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
+          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true, NULL);
         }
       }
 
@@ -2187,13 +2196,15 @@ fill_foldcolumn(
   return MAX(char_counter + (fdc-i), (size_t)fdc);
 }
 
-/*
- * Display line "lnum" of window 'wp' on the screen.
- * Start at row "startrow", stop when "endrow" is reached.
- * wp->w_virtcol needs to be valid.
- *
- * Return the number of last row the line occupies.
- */
+
+/// Display line "lnum" of window 'wp' on the screen.
+/// Start at row "startrow", stop when "endrow" is reached.
+/// wp->w_virtcol needs to be valid.
+///
+/// @param number_only only update the number column
+/// @param fp only update the number column
+///
+/// @return the number of last row the line occupies.
 static int
 win_line (
     win_T *wp,
@@ -2201,7 +2212,8 @@ win_line (
     int startrow,
     int endrow,
     bool nochange,                    // not updating for changed text
-    bool number_only                  // only update the number column
+    bool number_only,
+    fold_T *fp
 )
 {
   int c = 0;                          // init for GCC
@@ -2320,7 +2332,7 @@ win_line (
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
-  int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
+  // int conceal_attr    = 
   int is_concealing   = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
@@ -2838,6 +2850,7 @@ win_line (
   // Repeat for the whole displayed line.
   for (;; ) {
     int has_match_conc = 0;  ///< match wants to conceal
+    int has_match_fold = 0;  ///< when inline fold
     bool did_decrement_ptr = false;
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
@@ -3227,6 +3240,7 @@ win_line (
         }
       }
 
+      // apply 'diff' attributes
       if (diff_hlf != (hlf_T)0) {
         if (diff_hlf == HLF_CHD && ptr - line >= change_start
             && n_extra == 0) {
@@ -3836,13 +3850,14 @@ win_line (
         }
       }
 
+      // deal with conceal
       if (wp->w_p_cole > 0
           && (wp != curwin || lnum != wp->w_cursor.lnum
               || conceal_cursor_line(wp))
           && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
           && !(lnum_in_visual_area
                && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
-        char_attr = conceal_attr;
+        char_attr = win_hl_attr(wp, HLF_CONCEAL);
         if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
             && (syn_get_sub_char() != NUL || match_conc
                 || wp->w_p_cole == 1)
@@ -3891,6 +3906,71 @@ win_line (
         prev_syntax_id = 0;
         is_concealing = FALSE;
       }
+
+      // TODO(teto): hacked stuff
+      // copied the conceal block before and adapting it to display inline folds
+      // deal with conceal
+      // MAY CRASH if used with conceal etc
+      // TODO understand how conceal can print several characters
+      if (fp != NULL) {
+          // && (fp->
+          //     || conceal_cursor_line(wp))
+          // && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
+          // && !(lnum_in_visual_area
+          //      && vim_strchr(wp->w_p_cocu, 'v') == NULL)
+
+        ILOG("looking for %lu ", fp->fd_mark_id);
+        ExtmarkInfo mark = extmark_from_id(wp->w_buffer, fold_init(), fp->fd_mark_id);
+        ILOG("FP mark id %lu col %d vs mark.col %d", mark.mark_id, col, mark.col );
+        // check cols
+        // mark.end_col
+        // check for && mark.endcol if endline
+        if (mark.col >= col) {
+        char_attr = win_hl_attr(wp, HLF_FL);
+        // if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
+        //     && (syn_get_sub_char() != NUL || match_conc || wp->w_p_cole == 1)
+        //     && wp->w_p_cole != 3) {
+        // supposedly first time we enter this
+        if(true) {
+
+          // hardcode the character for now,
+          if (wp->w_p_lcs_chars.conceal != NUL) {
+            c = wp->w_p_lcs_chars.conceal;
+          } else {
+            c = 'X';
+          }
+
+          if (n_extra > 0)
+            vcol_off += n_extra;
+          vcol += n_extra;
+          if (wp->w_p_wrap && n_extra > 0) {
+            if (wp->w_p_rl) {
+              col -= n_extra;
+              boguscols -= n_extra;
+            } else {
+              boguscols += n_extra;
+              col += n_extra;
+            }
+          }
+          n_extra = 0;
+          n_attr = 0;
+        } else if (n_skip == 0) {
+          is_concealing = TRUE;
+          n_skip = 1;
+        }
+        mb_c = c;
+        if (utf_char2len(c) > 1) {
+          mb_utf8 = true;
+          u8cc[0] = 0;
+          c = 0xc0;
+        } else {
+          mb_utf8 = false;              // don't draw as UTF-8
+        }
+      } else {
+        prev_syntax_id = 0;
+        is_concealing = FALSE;
+      }
+      } // if mark.col
 
       if (n_skip > 0 && did_decrement_ptr) {
         // not showing the '>', put pointer back to avoid getting stuck
