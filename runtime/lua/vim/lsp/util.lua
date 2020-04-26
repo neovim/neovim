@@ -696,7 +696,7 @@ do
 
     local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
     if not buffer_diagnostics then return end
-    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics[line])
+    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics)[line]
     if not line_diagnostics then return end
 
     for i, diagnostic in ipairs(line_diagnostics) do
@@ -707,6 +707,7 @@ do
       -- TODO(ashkan) make format configurable?
       local prefix = string.format("%d. ", i)
       local hiname = severity_highlights[diagnostic.severity]
+      assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
       local message_lines = split_lines(diagnostic.message)
       table.insert(lines, prefix..message_lines[1])
       table.insert(highlights, {#prefix + 1, hiname})
