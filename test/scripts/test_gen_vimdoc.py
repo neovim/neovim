@@ -6,6 +6,12 @@ from xml.dom import minidom
 import gen_vimdoc
 
 
+def setup_module(module):
+    base_dir = "tmp-test-dir"
+    shutil.rmtree(base_dir, ignore_errors=True)
+    os.mkdir(base_dir)
+
+
 def _make_xml_text(name, detailed_description, prot="public"):
     return f"""
         <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.19">
@@ -132,7 +138,6 @@ def test_ignores_private_functions():
 
 def _process_temp_lua_file(lua_text: str):
     base_dir = "tmp-test-dir"
-    shutil.rmtree(os.path.join(base_dir, "/xml"), ignore_errors=True)
 
     with NamedTemporaryFile(
         prefix="tmp_lua", suffix=".lua", dir=base_dir, mode="w+"
@@ -146,8 +151,10 @@ def _process_temp_lua_file(lua_text: str):
         test_config["section_order"] = [fp.name]
 
         docs, fn_map_full = gen_vimdoc.process_target(
-            "test", test_config, gen_vimdoc.Doxyfile, "./tmp-test-dir"
+            "test", test_config, gen_vimdoc.Doxyfile, "./tmp-test-dir",
         )
+
+        # input()
 
     return docs, fn_map_full
 
@@ -163,6 +170,69 @@ function test_func()
 end
 
 return test_func
+"""
+    )
+
+    assert fn_map_full["test_func"]["doc"] == [
+        "This is a test function",
+        "Wow, very cool",
+    ]
+
+
+def test_local_functions_are_not_exported():
+    docs, fn_map_full = _process_temp_lua_file(
+        """
+--- This is a test function
+---
+--- Wow, very cool
+local function test_func()
+    return 5
+end
+
+return test_func
+"""
+    )
+
+    assert fn_map_full == {}
+
+
+def test_function_module_name_show_up():
+    docs, fn_map_full = _process_temp_lua_file(
+        """
+
+local M = {}
+
+--- This is a test function
+---
+--- Wow, very cool
+function M.test_func()
+    return 5
+end
+
+return M
+"""
+    )
+
+    assert fn_map_full["test_func"]["doc"] == [
+        "This is a test function",
+        "Wow, very cool",
+    ]
+
+
+def test_module_name_function_show_up():
+    docs, fn_map_full = _process_temp_lua_file(
+        """
+
+local M = {}
+
+--- This is a test function
+---
+--- Wow, very cool
+M.test_func = function()
+    return 5
+end
+
+return M
 """
     )
 

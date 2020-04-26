@@ -1087,7 +1087,10 @@ def get_doc_from_dom(
                     sections[filename] = SectionTuple(title, helptag, doc)
                     fn_map_full.update(fn_map)
 
-    assert sections, filename
+    # TODO(tjdevries): It is possible to put this back,
+    # but I don't think we need it anymore after writing tests.
+    # assert sections, filename
+
     if len(sections) > len(target_config["section_order"]):
         raise RuntimeError(
             'found new modules "{}"; update the "section_order" map'.format(
