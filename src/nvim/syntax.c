@@ -6400,7 +6400,7 @@ static int color_numbers_88[28] = { 0, 4, 2, 6,
   75, 11, 78, 15, -1 };
 // for xterm with 256 colors...
 static int color_numbers_256[28] = { 0, 4, 2, 6,
-  1, 5, 130, 130,
+  1, 5, 130, 3,
   248, 248, 7, 7,
   242, 242,
   12, 81, 10, 121,
