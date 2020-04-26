@@ -864,8 +864,8 @@ describe('LSP', function()
   describe('lsp.util.show_line_diagnostics', function()
     it('creates floating window and returns popup bufnr and winnr if current line contains diagnostics', function()
       eq(3, exec_lua [[
-        BUFFER = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+        local buffer = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
           "testing";
           "123";
         })
@@ -879,8 +879,8 @@ describe('LSP', function()
             message = "Syntax error";
           },
         }
-        vim.api.nvim_win_set_buf(0, BUFFER)
-        vim.lsp.util.buf_diagnostics_save_positions(vim.fn.bufnr(BUFFER), diagnostics)
+        vim.api.nvim_win_set_buf(0, buffer)
+        vim.lsp.util.buf_diagnostics_save_positions(vim.fn.bufnr(buffer), diagnostics)
         local popup_bufnr, winnr = vim.lsp.util.show_line_diagnostics()
         return popup_bufnr
       ]])
