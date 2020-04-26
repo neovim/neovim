@@ -66,15 +66,22 @@ def test_can_import():
 
 def test_simple_extract_from_xml():
     dom = minidom.parseString(EMPTY_DICT_TEXT)
-    functions, dep_functions = gen_vimdoc.extract_from_xml(dom, BASIC_LUA_CONFIG, width=9999)
+    functions, dep_functions = gen_vimdoc.extract_from_xml(
+        dom, BASIC_LUA_CONFIG, width=9999
+    )
 
     assert functions["empty_dict"]["signature"] == "empty_dict()"
-    assert functions["empty_dict"]["doc"] == ["A detailed description", "Another line"]
+    assert functions["empty_dict"]["doc"] == [
+        "A detailed description",
+        "Another line",
+    ]
 
 
 def test_simple_text_from_xml():
     dom = minidom.parseString(EMPTY_DICT_TEXT)
-    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(dom, BASIC_LUA_CONFIG)
+    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(
+        dom, BASIC_LUA_CONFIG
+    )
 
     assert (
         """empty_dict()                                                *vim.empty_dict()*
@@ -88,25 +95,37 @@ def test_simple_text_from_xml():
 
 
 def test_ignores_underscore_prefixed_names():
-    dom = minidom.parseString(_make_xml_text("_ignored_func", "Does not matter"))
-    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(dom, BASIC_LUA_CONFIG)
+    dom = minidom.parseString(
+        _make_xml_text("_ignored_func", "Does not matter")
+    )
+    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(
+        dom, BASIC_LUA_CONFIG
+    )
 
     assert "" == fn_text
     assert "" == dep_text
 
-    functions, dep_functions = gen_vimdoc.extract_from_xml(dom, BASIC_LUA_CONFIG, width=9999)
+    functions, dep_functions = gen_vimdoc.extract_from_xml(
+        dom, BASIC_LUA_CONFIG, width=9999
+    )
     assert {} == functions
     assert {} == dep_functions
 
 
 def test_ignores_private_functions():
-    dom = minidom.parseString(_make_xml_text("ignored_func", "Does not matter", prot="private"))
-    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(dom, BASIC_LUA_CONFIG)
+    dom = minidom.parseString(
+        _make_xml_text("ignored_func", "Does not matter", prot="private")
+    )
+    fn_text, dep_text = gen_vimdoc.fmt_doxygen_xml_as_vimhelp(
+        dom, BASIC_LUA_CONFIG
+    )
 
     assert "" == fn_text
     assert "" == dep_text
 
-    functions, dep_functions = gen_vimdoc.extract_from_xml(dom, BASIC_LUA_CONFIG, width=9999)
+    functions, dep_functions = gen_vimdoc.extract_from_xml(
+        dom, BASIC_LUA_CONFIG, width=9999
+    )
     assert {} == functions
     assert {} == dep_functions
 
@@ -115,7 +134,9 @@ def _process_temp_lua_file(lua_text: str):
     base_dir = "tmp-test-dir"
     shutil.rmtree(os.path.join(base_dir, "/xml"), ignore_errors=True)
 
-    with NamedTemporaryFile(prefix="tmp_lua", suffix=".lua", dir=base_dir, mode="w+") as fp:
+    with NamedTemporaryFile(
+        prefix="tmp_lua", suffix=".lua", dir=base_dir, mode="w+"
+    ) as fp:
         fp.write(lua_text)
         fp.flush()
 
@@ -124,7 +145,9 @@ def _process_temp_lua_file(lua_text: str):
         test_config["recursive"] = False
         test_config["section_order"] = [fp.name]
 
-        docs, fn_map_full = gen_vimdoc.process_target("test", test_config, gen_vimdoc.Doxyfile, "./tmp-test-dir")
+        docs, fn_map_full = gen_vimdoc.process_target(
+            "test", test_config, gen_vimdoc.Doxyfile, "./tmp-test-dir"
+        )
 
     return docs, fn_map_full
 
@@ -143,4 +166,10 @@ return test_func
 """
     )
 
-    assert fn_map_full["test_func"]["doc"] == ["This is a test function", "Wow, very cool"]
+    assert fn_map_full["test_func"]["doc"] == [
+        "This is a test function",
+        "Wow, very cool",
+    ]
+
+
+# vim: set ft=python ts=4 sw=4 tw=79 et :

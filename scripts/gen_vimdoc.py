@@ -81,14 +81,25 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 5:
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, "tmp-{target}-doc")
-filter_cmd = "{} {}".format(sys.executable, os.path.join(base_dir, "scripts", "vim2dox_filter.py"))
+filter_cmd = "{} {}".format(
+    sys.executable, os.path.join(base_dir, "scripts", "vim2dox_filter.py")
+)
 lua2dox_filter = os.path.join(base_dir, "scripts", "lua2dox_filter")
 
 if not shutil.which("doxygen"):
     print("Missing Requirement: doxygen", file=sys.stderr)
     sys.exit(1)
 
-if not any(shutil.which(x) for x in {"./.deps/usr/bin/luajit", "./.deps/usr/bin/lua", "lua", "luajit", "texlua"}):
+if not any(
+    shutil.which(x)
+    for x in {
+        "./.deps/usr/bin/luajit",
+        "./.deps/usr/bin/lua",
+        "lua",
+        "luajit",
+        "texlua",
+    }
+):
     print("Missing Requirement: Need lua or luajit", file=sys.stderr)
     sys.exit(1)
 
@@ -244,7 +255,12 @@ def debug_this(cond, o):
             o = o.toprettyxml(indent="  ", newl="\n")
         except Exception:
             pass
-    if (callable(cond) and cond()) or (not callable(cond) and cond) or (not callable(cond) and cond in o):
+
+    if (
+        (callable(cond) and cond())
+        or (not callable(cond) and cond)
+        or (not callable(cond) and cond in o)
+    ):
         raise RuntimeError("xxx: {}\n{}".format(name, o))
 
 
@@ -288,7 +304,9 @@ def clean_lines(text):
 
     The beginning and end of the string is trimmed.  Empty lines are collapsed.
     """
-    return re.sub(r"\A\n\s*\n*|\n\s*\n*\Z", "", re.sub(r"(\n\s*\n+)+", "\n\n", text))
+    return re.sub(
+        r"\A\n\s*\n*|\n\s*\n*\Z", "", re.sub(r"(\n\s*\n+)+", "\n\n", text)
+    )
 
 
 def is_blank(text):
@@ -368,7 +386,11 @@ def doc_wrap(text, prefix="", width=70, func=False, indent=None):
         prefix = indent
 
     tw = textwrap.TextWrapper(
-        break_long_words=False, break_on_hyphens=False, width=width, initial_indent=prefix, subsequent_indent=indent
+        break_long_words=False,
+        break_on_hyphens=False,
+        width=width,
+        initial_indent=prefix,
+        subsequent_indent=indent,
     )
     result = "\n".join(tw.wrap(text.strip()))
 
@@ -406,7 +428,9 @@ def update_params_map(parent, ret_map, width=62):
         desc = ""
         desc_node = get_child(node, "parameterdescription")
         if desc_node:
-            desc = fmt_node_as_vimhelp(desc_node, width=width, indent=(" " * max_name_len))
+            desc = fmt_node_as_vimhelp(
+                desc_node, width=width, indent=(" " * max_name_len)
+            )
             ret_map[name] = desc
     return ret_map
 
@@ -434,7 +458,9 @@ def render_node(n, text, prefix="", indent="", width=62):
         text += " [verbatim] {}".format(get_text(n))
     elif n.nodeName == "listitem":
         for c in n.childNodes:
-            result = render_node(c, text, indent=indent + (" " * len(prefix)), width=width)
+            result = render_node(
+                c, text, indent=indent + (" " * len(prefix)), width=width
+            )
 
             # It's possible to get empty list items, so we should skip them.
             if is_blank(result):
@@ -446,14 +472,24 @@ def render_node(n, text, prefix="", indent="", width=62):
             text += render_node(c, text, indent=indent, width=width)
     elif n.nodeName == "itemizedlist":
         for c in n.childNodes:
-            text += "{}\n".format(render_node(c, text, prefix="• ", indent=indent, width=width))
+            text += "{}\n".format(
+                render_node(c, text, prefix="• ", indent=indent, width=width)
+            )
     elif n.nodeName == "orderedlist":
         i = 1
         for c in n.childNodes:
             if is_blank(get_text(c)):
                 text += "\n"
                 continue
-            text += "{}\n".format(render_node(c, text, prefix="{}. ".format(i), indent=indent, width=width))
+            text += "{}\n".format(
+                render_node(
+                    c,
+                    text,
+                    prefix="{}. ".format(i),
+                    indent=indent,
+                    width=width,
+                )
+            )
             i = i + 1
     elif n.nodeName == "simplesect" and "note" == n.getAttribute("kind"):
         text += "Note:\n    "
@@ -465,12 +501,19 @@ def render_node(n, text, prefix="", indent="", width=62):
         for c in n.childNodes:
             text += render_node(c, text, indent="    ", width=width)
         text += "\n"
-    elif n.nodeName == "simplesect" and n.getAttribute("kind") in ("return", "see"):
+    elif n.nodeName == "simplesect" and n.getAttribute("kind") in (
+        "return",
+        "see",
+    ):
         text += ind("    ")
         for c in n.childNodes:
             text += render_node(c, text, indent="    ", width=width)
     else:
-        raise RuntimeError("unhandled node type: {}\n{}".format(n.nodeName, n.toprettyxml(indent="  ", newl="\n")))
+        raise RuntimeError(
+            "unhandled node type: {}\n{}".format(
+                n.nodeName, n.toprettyxml(indent="  ", newl="\n")
+            )
+        )
 
     return text
 
@@ -485,10 +528,18 @@ def para_as_map(parent, indent="", width=62):
         'seealso': List of @see strings
         'xrefs': ?
     """
-    chunks = {"text": "", "params": collections.OrderedDict(), "return": [], "seealso": [], "xrefs": []}
+    chunks = {
+        "text": "",
+        "params": collections.OrderedDict(),
+        "return": [],
+        "seealso": [],
+        "xrefs": [],
+    }
 
     # Ordered dict of ordered lists.
-    groups = collections.OrderedDict([("params", []), ("return", []), ("seealso", []), ("xrefs", [])])
+    groups = collections.OrderedDict(
+        [("params", []), ("return", []), ("seealso", []), ("xrefs", [])]
+    )
 
     # Gather nodes into groups.  Mostly this is because we want "parameterlist"
     # nodes to appear together.
@@ -513,11 +564,14 @@ def para_as_map(parent, indent="", width=62):
                 elif kind == "see":
                     groups["seealso"].append(child)
                 elif kind in ("note", "warning"):
-                    text += render_node(child, text, indent=indent, width=width)
+                    text += render_node(
+                        child, text, indent=indent, width=width
+                    )
                 else:
                     raise RuntimeError(
                         "unhandled simplesect: {}\n{}".format(
-                            child.nodeName, child.toprettyxml(indent="  ", newl="\n")
+                            child.nodeName,
+                            child.toprettyxml(indent="  ", newl="\n"),
                         )
                     )
             else:
@@ -542,16 +596,22 @@ def para_as_map(parent, indent="", width=62):
         for child in groups["params"]:
             update_params_map(child, ret_map=chunks["params"], width=width)
     for child in groups["return"]:
-        chunks["return"].append(render_node(child, "", indent=indent, width=width))
+        chunks["return"].append(
+            render_node(child, "", indent=indent, width=width)
+        )
     for child in groups["seealso"]:
-        chunks["seealso"].append(render_node(child, "", indent=indent, width=width))
+        chunks["seealso"].append(
+            render_node(child, "", indent=indent, width=width)
+        )
     for child in groups["xrefs"]:
         # XXX: Add a space (or any char) to `title` here, otherwise xrefs
         # ("Deprecated" section) acts very weird...
         title = get_text(get_child(child, "xreftitle")) + " "
         xrefs.add(title)
         xrefdesc = get_text(get_child(child, "xrefdescription"))
-        chunks["xrefs"].append(doc_wrap(xrefdesc, prefix="{}: ".format(title), width=width) + "\n")
+        chunks["xrefs"].append(
+            doc_wrap(xrefdesc, prefix="{}: ".format(title), width=width) + "\n"
+        )
 
     return chunks
 
@@ -651,7 +711,9 @@ def extract_from_xml(dom, target_config, width):
         # non-void functions.  Special-case void functions here.
         if name == "nvim_get_mode" and len(annotations) == 0:
             annotations += "FUNC_API_FAST"
-        annotations = filter(None, map(lambda x: annotation_map.get(x), annotations.split()))
+        annotations = filter(
+            None, map(lambda x: annotation_map.get(x), annotations.split())
+        )
 
         if not fmt_vimhelp:
             pass
@@ -688,23 +750,33 @@ def extract_from_xml(dom, target_config, width):
         c_args = []
         for param_type, param_name in params:
             c_args.append(
-                ("    " if fmt_vimhelp else "") + ("%s %s" % (param_type.ljust(type_length), param_name)).strip()
+                ("    " if fmt_vimhelp else "")
+                + (
+                    "%s %s" % (param_type.ljust(type_length), param_name)
+                ).strip()
             )
 
         prefix = "%s(" % name
-        suffix = "%s)" % ", ".join("{%s}" % a[1] for a in params if a[0] not in ("void", "Error"))
+        suffix = "%s)" % ", ".join(
+            "{%s}" % a[1] for a in params if a[0] not in ("void", "Error")
+        )
         if not fmt_vimhelp:
             c_decl = "%s %s(%s);" % (return_type, name, ", ".join(c_args))
             signature = prefix + suffix
         else:
-            c_decl = textwrap.indent("%s %s(\n%s\n);" % (return_type, name, ",\n".join(c_args)), "    ")
+            c_decl = textwrap.indent(
+                "%s %s(\n%s\n);" % (return_type, name, ",\n".join(c_args)),
+                "    ",
+            )
 
             # Minimum 8 chars between signature and vimtag
             lhs = (width - 8) - len(vimtag)
 
             if len(prefix) + len(suffix) > lhs:
                 signature = vimtag.rjust(width) + "\n"
-                signature += doc_wrap(suffix, width=width - 8, prefix=prefix, func=True)
+                signature += doc_wrap(
+                    suffix, width=width - 8, prefix=prefix, func=True
+                )
             else:
                 signature = prefix + suffix
                 signature += vimtag.rjust(width - len(signature))
@@ -715,7 +787,16 @@ def extract_from_xml(dom, target_config, width):
             for child in desc.childNodes:
                 paras.append(para_as_map(child))
             if DEBUG:
-                print(textwrap.indent(re.sub(r"\n\s*\n+", "\n", desc.toprettyxml(indent="  ", newl="\n")), " " * 16))
+                print(
+                    textwrap.indent(
+                        re.sub(
+                            r"\n\s*\n+",
+                            "\n",
+                            desc.toprettyxml(indent="  ", newl="\n"),
+                        ),
+                        " " * 16,
+                    )
+                )
 
         fn = {
             "annotations": list(annotations),
@@ -779,7 +860,9 @@ def fmt_doxygen_xml_as_vimhelp(doxygen_dom, target_config):
 
         annotations = "\n".join(fn["annotations"])
         if annotations:
-            annotations = "\n\nAttributes: ~\n" + textwrap.indent(annotations, "    ")
+            annotations = "\n\nAttributes: ~\n" + textwrap.indent(
+                annotations, "    "
+            )
             i = doc.rfind("Parameters: ~")
             if i == -1:
                 doc += annotations
@@ -803,7 +886,10 @@ def fmt_doxygen_xml_as_vimhelp(doxygen_dom, target_config):
         xrefs.clear()
 
     fmt_vimhelp = False
-    return ("\n\n".join(list(fns_txt.values())), "\n\n".join(list(deprecated_fns_txt.values())))
+    return (
+        "\n\n".join(list(fns_txt.values())),
+        "\n\n".join(list(deprecated_fns_txt.values())),
+    )
 
 
 def delete_lines_below(filename, tokenstr):
@@ -847,13 +933,21 @@ def main(config):
             continue
 
         output_dir = os.path.join(base_dir, "runtime", "doc")
-        generate_help_and_mpack_for_target(target, CONFIG[target], config, output_dir)
+        generate_help_and_mpack_for_target(
+            target, CONFIG[target], config, output_dir
+        )
 
 
 def generate_help_and_mpack_for_target(
-    target: str, target_conf: Dict[str, Any], doxy_string: str, output_dir: str, remove_files: bool = False
+    target: str,
+    target_conf: Dict[str, Any],
+    doxy_string: str,
+    output_dir: str,
+    remove_files: bool = False,
 ):
-    mpack_file = os.path.join(output_dir, target_conf["filename"].replace(".txt", ".mpack"))
+    mpack_file = os.path.join(
+        output_dir, target_conf["filename"].replace(".txt", ".mpack")
+    )
 
     # Always remove the file at start.
     if os.path.exists(mpack_file):
@@ -861,9 +955,13 @@ def generate_help_and_mpack_for_target(
 
     tmp_output_dir = out_dir.format(target=target)
     try:
-        docs, fn_map_full = process_target(target, target_conf, doxy_string, tmp_output_dir)
+        docs, fn_map_full = process_target(
+            target, target_conf, doxy_string, tmp_output_dir
+        )
 
-        doc_file = os.path.join(base_dir, "runtime", "doc", target_conf["filename"])
+        doc_file = os.path.join(
+            base_dir, "runtime", "doc", target_conf["filename"]
+        )
         delete_lines_below(doc_file, target_conf["section_start_token"])
         with open(doc_file, "ab") as fp:
             fp.write(docs.encode("utf8"))
@@ -877,7 +975,9 @@ def generate_help_and_mpack_for_target(
             os.remove(mpack_file)
 
 
-def process_target(target: str, target_conf: Dict[str, Any], doxy_string: str, output_dir: str):
+def process_target(
+    target: str, target_conf: Dict[str, Any], doxy_string: str, output_dir: str
+):
     p = doxygen_subprocess(DEBUG)
 
     doxy_config = format_doxy_config(
@@ -901,20 +1001,28 @@ def process_target(target: str, target_conf: Dict[str, Any], doxy_string: str, o
     dom = minidom.parse(os.path.join(base, "index.xml"))
 
     associated_doms_from_ref_ids = get_associated_doms_from_ref_ids(dom, base)
-    docs, fn_map_full = get_doc_from_dom(dom, associated_doms_from_ref_ids, target, target_conf, text_width)
+    docs, fn_map_full = get_doc_from_dom(
+        dom, associated_doms_from_ref_ids, target, target_conf, text_width
+    )
 
     return docs, fn_map_full
 
 
-SectionTuple = collections.namedtuple("SectionTuple", ["title", "helptag", "doc"])
+SectionTuple = collections.namedtuple(
+    "SectionTuple", ["title", "helptag", "doc"]
+)
 
 
-def get_associated_doms_from_ref_ids(dom: TypeDom, base: str) -> Dict[str, TypeDom]:
+def get_associated_doms_from_ref_ids(
+    dom: TypeDom, base: str
+) -> Dict[str, TypeDom]:
     associated_doms_from_ref_ids: Dict[str, TypeDom] = {}
 
     for compound in dom.getElementsByTagName("compound"):
         ref_id = compound.getAttribute("refid")
-        associated_doms_from_ref_ids[ref_id] = minidom.parse(os.path.join(base, "{}.xml".format(ref_id)))
+        associated_doms_from_ref_ids[ref_id] = minidom.parse(
+            os.path.join(base, "{}.xml".format(ref_id))
+        )
 
     return associated_doms_from_ref_ids
 
@@ -938,13 +1046,17 @@ def get_doc_from_dom(
 
         filename = get_text(find_first(compound, "name"))
         if filename.endswith(".c") or filename.endswith(".lua"):
-            ref_dom = associated_doms_from_ref_ids[compound.getAttribute("refid")]
+            ref_dom = associated_doms_from_ref_ids[
+                compound.getAttribute("refid")
+            ]
 
             # Extract unformatted (*.mpack).
             fn_map, _ = extract_from_xml(ref_dom, target_config, width=9999)
 
             # Extract formatted (:help).
-            functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(ref_dom, target_config)
+            functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
+                ref_dom, target_config
+            )
 
             if not functions_text and not deprecated_text:
                 continue
@@ -966,7 +1078,9 @@ def get_doc_from_dom(
 
                 if doc:
                     filename = os.path.basename(filename)
-                    sectname = target_config["section_name"].get(filename, sectname)
+                    sectname = target_config["section_name"].get(
+                        filename, sectname
+                    )
                     title = target_config["section_fmt"](sectname)
                     helptag = target_config["helptag_fmt"](sectname)
 
@@ -1005,7 +1119,9 @@ def get_doc_from_dom(
     return docs, fn_map_full
 
 
-def get_intros_from_dom(dom: TypeDom, associated_doms_from_ref_ids: Dict[str, TypeDom]) -> Dict[str, str]:
+def get_intros_from_dom(
+    dom: TypeDom, associated_doms_from_ref_ids: Dict[str, TypeDom]
+) -> Dict[str, str]:
     intros = {}
 
     # generate docs for section intros
@@ -1032,11 +1148,21 @@ def log(*args, **kwargs):
 
 def doxygen_subprocess(show_stderr):
     return subprocess.Popen(
-        ["doxygen", "-"], stdin=subprocess.PIPE, stderr=(subprocess.STDOUT if show_stderr else subprocess.DEVNULL),
+        ["doxygen", "-"],
+        stdin=subprocess.PIPE,
+        stderr=(subprocess.STDOUT if show_stderr else subprocess.DEVNULL),
     )
 
 
-def format_doxy_config(doxy_file, doxygen_input, output, doxygen_filter, file_patterns, excluded, recursive=True):
+def format_doxy_config(
+    doxy_file,
+    doxygen_input,
+    output,
+    doxygen_filter,
+    file_patterns,
+    excluded,
+    recursive=True,
+):
     return doxy_file.format(
         doxygen_input=doxygen_input,
         output=output,
@@ -1085,7 +1211,9 @@ Doxyfile = textwrap.dedent(
 )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="gen_vimdoc", description="Generate vim docs from Lua & C Files.")
+    parser = argparse.ArgumentParser(
+        prog="gen_vimdoc", description="Generate vim docs from Lua & C Files."
+    )
 
     parser.add_argument(
         "--doxy-template",
@@ -1102,4 +1230,4 @@ if __name__ == "__main__":
 
     main(doxy_file)
 
-# vim: set ft=python ts=4 sw=4 tw=120 et :
+# vim: set ft=python ts=4 sw=4 tw=79 et :

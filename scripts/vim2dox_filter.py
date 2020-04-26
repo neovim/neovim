@@ -20,7 +20,8 @@ def filter_source(filename):
             print(
                 re.sub(
                     r"^(ArrayOf|DictionaryOf)(\(.*?\))",
-                    lambda m: m.group(1) + "_".join(re.split(r"[^\w]+", m.group(2))),
+                    lambda m: m.group(1)
+                    + "_".join(re.split(r"[^\w]+", m.group(2))),
                     fp.read(),
                     flags=re.M,
                 )
@@ -37,3 +38,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     filter_source(sys.argv[1])
+
+# vim: set ft=python ts=4 sw=4 tw=79 et :
