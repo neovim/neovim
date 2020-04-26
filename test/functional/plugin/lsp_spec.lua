@@ -862,7 +862,7 @@ describe('LSP', function()
     end)
   end)
   describe('lsp.util.show_line_diagnostics', function()
-    it('show_line_diagnotics shows diagnostics for current line', function()
+    it('creates floating window and returns popup bufnr and winnr if current line contains diagnostics', function()
       eq(3, exec_lua [[
         BUFFER = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
