@@ -619,11 +619,9 @@ static void set_runtimepath_default(void)
 
 #undef NVIM_SIZE
 
-/*
- * Initialize the options, first part.
- *
- * Called only once from main(), just after creating the first buffer.
- */
+/// Initialize the options, first part.
+///
+/// Called only once from main(), just after creating the first buffer.
 void set_init_1(void)
 {
   int opt_idx;
@@ -868,10 +866,8 @@ void set_init_1(void)
   set_helplang_default(get_mess_lang());
 }
 
-/*
- * Set an option to its default value.
- * This does not take care of side effects!
- */
+/// Set an option to its default value.
+/// This does not take care of side effects!
 static void
 set_option_default(
     int opt_idx,
@@ -942,9 +938,7 @@ set_option_default(
   set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
 }
 
-/*
- * Set all options (except terminal options) to their default value.
- */
+/// Set all options (except terminal options) to their default value.
 static void
 set_options_default(
     int opt_flags               // OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
@@ -987,10 +981,8 @@ static void set_string_default(const char *name, char *val, bool allocated)
   }
 }
 
-/*
- * Set the Vi-default value of a number option.
- * Used for 'lines' and 'columns'.
- */
+/// Set the Vi-default value of a number option.
+/// Used for 'lines' and 'columns'.
 void set_number_default(char *name, long val)
 {
   int opt_idx;
@@ -1117,10 +1109,8 @@ void set_init_3(void)
   set_title_defaults();  // 'title', 'icon'
 }
 
-/*
- * When 'helplang' is still at its default value, set it to "lang".
- * Only the first two characters of "lang" are used.
- */
+/// When 'helplang' is still at its default value, set it to "lang".
+/// Only the first two characters of "lang" are used.
 void set_helplang_default(const char *lang)
 {
   if (lang == NULL) {
@@ -1152,13 +1142,11 @@ void set_helplang_default(const char *lang)
 }
 
 
-/*
- * 'title' and 'icon' only default to true if they have not been set or reset
- * in .vimrc and we can read the old value.
- * When 'title' and 'icon' have been reset in .vimrc, we won't even check if
- * they can be reset.  This reduces startup time when using X on a remote
- * machine.
- */
+/// 'title' and 'icon' only default to true if they have not been set or reset
+/// in .vimrc and we can read the old value.
+/// When 'title' and 'icon' have been reset in .vimrc, we won't even check if
+/// they can be reset.  This reduces startup time when using X on a remote
+/// machine.
 void set_title_defaults(void)
 {
   int idx1;
@@ -2023,10 +2011,8 @@ static char_u *illegal_char(char_u *errbuf, size_t errbuflen, int c)
   return errbuf;
 }
 
-/*
- * Convert a key name or string into a key value.
- * Used for 'wildchar' and 'cedit' options.
- */
+/// Convert a key name or string into a key value.
+/// Used for 'wildchar' and 'cedit' options.
 static int string_to_key(char_u *arg)
 {
   if (*arg == '<') {
@@ -2038,10 +2024,8 @@ static int string_to_key(char_u *arg)
   return *arg;
 }
 
-/*
- * Check value of 'cedit' and set cedit_key.
- * Returns NULL if value is OK, error message otherwise.
- */
+/// Check value of 'cedit' and set cedit_key.
+/// Returns NULL if value is OK, error message otherwise.
 static char_u *check_cedit(void)
 {
   int n;
@@ -2125,13 +2109,11 @@ void set_options_bin(
   }
 }
 
-/*
- * Find the parameter represented by the given character (eg ', :, ", or /),
- * and return its associated value in the 'shada' string.
- * Only works for number parameters, not for 'r' or 'n'.
- * If the parameter is not specified in the string or there is no following
- * number, return -1.
- */
+/// Find the parameter represented by the given character (eg ', :, ", or /),
+/// and return its associated value in the 'shada' string.
+/// Only works for number parameters, not for 'r' or 'n'.
+/// If the parameter is not specified in the string or there is no following
+/// number, return -1.
 int get_shada_parameter(int type)
 {
   char_u  *p;
@@ -2143,11 +2125,9 @@ int get_shada_parameter(int type)
   return -1;
 }
 
-/*
- * Find the parameter represented by the given character (eg ''', ':', '"', or
- * '/') in the 'shada' option and return a pointer to the string after it.
- * Return NULL if the parameter is not specified in the string.
- */
+/// Find the parameter represented by the given character (eg ''', ':', '"', or
+/// '/') in the 'shada' option and return a pointer to the string after it.
+/// Return NULL if the parameter is not specified in the string.
 char_u *find_shada_parameter(int type)
 {
   char_u  *p;
@@ -2167,12 +2147,10 @@ char_u *find_shada_parameter(int type)
   return NULL;
 }
 
-/*
- * Expand environment variables for some string options.
- * These string options cannot be indirect!
- * If "val" is NULL expand the current value of the option.
- * Return pointer to NameBuff, or NULL when not expanded.
- */
+/// Expand environment variables for some string options.
+/// These string options cannot be indirect!
+/// If "val" is NULL expand the current value of the option.
+/// Return pointer to NameBuff, or NULL when not expanded.
 static char_u *option_expand(int opt_idx, char_u *val)
 {
   // if option doesn't need expansion nothing to do
@@ -2256,9 +2234,7 @@ static void didset_options2(void)
   check_opt_wim();
 }
 
-/*
- * Check for string options that are NULL (normally only termcap options).
- */
+/// Check for string options that are NULL (normally only termcap options).
 void check_options(void)
 {
   int opt_idx;
@@ -2270,9 +2246,7 @@ void check_options(void)
   }
 }
 
-/*
- * Check string options in a buffer for NULL value.
- */
+/// Check string options in a buffer for NULL value.
 void check_buf_options(buf_T *buf)
 {
   check_string_option(&buf->b_p_bh);
@@ -2325,13 +2299,11 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_menc);
 }
 
-/*
- * Free the string allocated for an option.
- * Checks for the string being empty_option. This may happen if we're out of
- * memory, vim_strsave() returned NULL, which was replaced by empty_option by
- * check_options().
- * Does NOT check for P_ALLOCED flag!
- */
+/// Free the string allocated for an option.
+/// Checks for the string being empty_option. This may happen if we're out of
+/// memory, vim_strsave() returned NULL, which was replaced by empty_option by
+/// check_options().
+/// Does NOT check for P_ALLOCED flag!
 void free_string_option(char_u *p)
 {
   if (p != empty_option) {
@@ -2369,10 +2341,8 @@ int was_set_insecurely(char_u *opt, int opt_flags)
   return -1;
 }
 
-/*
- * Get a pointer to the flags used for the P_INSECURE flag of option
- * "opt_idx".  For some local options a local flags field is used.
- */
+/// Get a pointer to the flags used for the P_INSECURE flag of option
+/// "opt_idx".  For some local options a local flags field is used.
 static uint32_t *insecure_flag(int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL)
@@ -2390,9 +2360,7 @@ static uint32_t *insecure_flag(int opt_idx, int opt_flags)
 }
 
 
-/*
- * Redraw the window title and/or tab page text later.
- */
+/// Redraw the window title and/or tab page text later.
 static void redraw_titles(void)
 {
   need_maketitle = true;
@@ -2473,9 +2441,7 @@ set_string_option_direct(
   }
 }
 
-/*
- * Set global value for string option when it's a local option.
- */
+/// Set global value for string option when it's a local option.
 static void
 set_string_option_global(
     int opt_idx,                    // option index
@@ -3742,10 +3708,8 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
   return NULL;          // no error
 }
 
-/*
- * Check validity of options with the 'statusline' format.
- * Return error message or NULL.
- */
+/// Check validity of options with the 'statusline' format.
+/// Return error message or NULL.
 char_u *check_stl_option(char_u *s)
 {
   int itemcnt = 0;
@@ -3838,10 +3802,8 @@ static char_u *did_set_spell_option(bool is_spellfile)
   return errmsg;
 }
 
-/*
- * Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
- * Return error message when failed, NULL when OK.
- */
+/// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
+/// Return error message when failed, NULL when OK.
 static char_u *compile_cap_prog(synblock_T *synblock)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4683,9 +4645,7 @@ static void trigger_optionsset_string(int opt_idx, int opt_flags,
   }
 }
 
-/*
- * Called after an option changed: check if something needs to be redrawn.
- */
+/// Called after an option changed: check if something needs to be redrawn.
 static void check_redraw(uint32_t flags)
 {
   // Careful: P_RCLR and P_RALL are a combination of other P_ flags
@@ -5140,10 +5100,8 @@ static int find_key_option(const char_u *arg, bool has_lt)
   return find_key_option_len(arg, STRLEN(arg), has_lt);
 }
 
-/*
- * if 'all' == 0: show changed options
- * if 'all' == 1: show all normal options
- */
+/// if 'all' == 0: show changed options
+/// if 'all' == 1: show all normal options
 static void
 showoptions(
     int all,
@@ -5292,10 +5250,8 @@ void ui_refresh_options(void)
   }
 }
 
-/*
- * showoneopt: show the value of one option
- * must not be called with a hidden option!
- */
+/// showoneopt: show the value of one option
+/// must not be called with a hidden option!
 static void
 showoneopt(
     vimoption_T *p,
@@ -5331,28 +5287,26 @@ showoneopt(
   info_message = false;
 }
 
-/*
- * Write modified options as ":set" commands to a file.
- *
- * There are three values for "opt_flags":
- * OPT_GLOBAL:         Write global option values and fresh values of
- *             buffer-local options (used for start of a session
- *             file).
- * OPT_GLOBAL + OPT_LOCAL: Idem, add fresh values of window-local options for
- *             curwin (used for a vimrc file).
- * OPT_LOCAL:          Write buffer-local option values for curbuf, fresh
- *             and local values for window-local options of
- *             curwin.  Local values are also written when at the
- *             default value, because a modeline or autocommand
- *             may have set them when doing ":edit file" and the
- *             user has set them back at the default or fresh
- *             value.
- *             When "local_only" is true, don't write fresh
- *             values, only local values (for ":mkview").
- * (fresh value = value used for a new buffer or window for a local option).
- *
- * Return FAIL on error, OK otherwise.
- */
+/// Write modified options as ":set" commands to a file.
+///
+/// There are three values for "opt_flags":
+/// OPT_GLOBAL:         Write global option values and fresh values of
+///             buffer-local options (used for start of a session
+///             file).
+/// OPT_GLOBAL + OPT_LOCAL: Idem, add fresh values of window-local options for
+///             curwin (used for a vimrc file).
+/// OPT_LOCAL:          Write buffer-local option values for curbuf, fresh
+///             and local values for window-local options of
+///             curwin.  Local values are also written when at the
+///             default value, because a modeline or autocommand
+///             may have set them when doing ":edit file" and the
+///             user has set them back at the default or fresh
+///             value.
+///             When "local_only" is true, don't write fresh
+///             values, only local values (for ":mkview").
+/// (fresh value = value used for a new buffer or window for a local option).
+///
+/// Return FAIL on error, OK otherwise.
 int makeset(FILE *fd, int opt_flags, int local_only)
 {
   vimoption_T    *p;
@@ -5463,10 +5417,8 @@ int makeset(FILE *fd, int opt_flags, int local_only)
   return OK;
 }
 
-/*
- * Generate set commands for the local fold options only.  Used when
- * 'sessionoptions' or 'viewoptions' contains "folds" but not "options".
- */
+/// Generate set commands for the local fold options only.  Used when
+/// 'sessionoptions' or 'viewoptions' contains "folds" but not "options".
 int makefoldset(FILE *fd)
 {
   if (put_setstring(fd, "setlocal", "fdm", &curwin->w_p_fdm, false) == FAIL
@@ -5559,12 +5511,10 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
   return OK;
 }
 
-/*
- * Compute columns for ruler and shown command. 'sc_col' is also used to
- * decide what the maximum length of a message on the status line can be.
- * If there is a status line for the last window, 'sc_col' is independent
- * of 'ru_col'.
- */
+/// Compute columns for ruler and shown command. 'sc_col' is also used to
+/// decide what the maximum length of a message on the status line can be.
+/// If there is a status line for the last window, 'sc_col' is independent
+/// of 'ru_col'.
 
 #define COL_RULER 17        // columns needed by standard ruler
 
@@ -5698,9 +5648,7 @@ void unset_global_local_option(char *name, void *from)
   }
 }
 
-/*
- * Get pointer to option variable, depending on local or global scope.
- */
+/// Get pointer to option variable, depending on local or global scope.
 static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
 {
   if ((opt_flags & OPT_GLOBAL) && p->indir != PV_NONE) {
@@ -5741,9 +5689,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
   return get_varp(p);
 }
 
-/*
- * Get pointer to option variable.
- */
+/// Get pointer to option variable.
 static char_u *get_varp(vimoption_T *p)
 {
   // hidden option, always return NULL
@@ -5905,9 +5851,7 @@ static char_u *get_varp(vimoption_T *p)
   return (char_u *)&(curbuf->b_p_wm);
 }
 
-/*
- * Get the value of 'equalprg', either the buffer-local one or the global one.
- */
+/// Get the value of 'equalprg', either the buffer-local one or the global one.
 char_u *get_equalprg(void)
 {
   if (*curbuf->b_p_ep == NUL) {
@@ -5916,22 +5860,18 @@ char_u *get_equalprg(void)
   return curbuf->b_p_ep;
 }
 
-/*
- * Copy options from one window to another.
- * Used when splitting a window.
- */
+/// Copy options from one window to another.
+/// Used when splitting a window.
 void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
 }
 
-/*
- * Copy the options from one winopt_T to another.
- * Doesn't free the old option values in "to", use clear_winopt() for that.
- * The 'scroll' option is not copied, because it depends on the window height.
- * The 'previewwindow' option is reset, there can be only one preview window.
- */
+/// Copy the options from one winopt_T to another.
+/// Doesn't free the old option values in "to", use clear_winopt() for that.
+/// The 'scroll' option is not copied, because it depends on the window height.
+/// The 'previewwindow' option is reset, there can be only one preview window.
 void copy_winopt(winopt_T *from, winopt_T *to)
 {
   to->wo_arab = from->wo_arab;
@@ -5983,18 +5923,14 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   check_winopt(to);             // don't want NULL pointers
 }
 
-/*
- * Check string options in a window for a NULL value.
- */
+/// Check string options in a window for a NULL value.
 void check_win_options(win_T *win)
 {
   check_winopt(&win->w_onebuf_opt);
   check_winopt(&win->w_allbuf_opt);
 }
 
-/*
- * Check for NULL pointers in a winopt_T and replace them with empty_option.
- */
+/// Check for NULL pointers in a winopt_T and replace them with empty_option.
 static void check_winopt(winopt_T *wop)
 {
   check_string_option(&wop->wo_fdc);
@@ -6016,9 +5952,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_lcs);
 }
 
-/*
- * Free the allocated memory inside a winopt_T.
- */
+/// Free the allocated memory inside a winopt_T.
 void clear_winopt(winopt_T *wop)
 {
   clear_string_option(&wop->wo_fdc);
@@ -6051,15 +5985,13 @@ void didset_window_options(win_T *wp)
 }
 
 
-/*
- * Copy global option values to local options for one buffer.
- * Used when creating a new buffer and sometimes when entering a buffer.
- * flags:
- * BCO_ENTER    We will enter the buf buffer.
- * BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
- *      appropriate.
- * BCO_NOHELP   Don't copy the values to a help buffer.
- */
+/// Copy global option values to local options for one buffer.
+/// Used when creating a new buffer and sometimes when entering a buffer.
+/// flags:
+/// BCO_ENTER    We will enter the buf buffer.
+/// BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
+///      appropriate.
+/// BCO_NOHELP   Don't copy the values to a help buffer.
 void buf_copy_options(buf_T *buf, int flags)
 {
   int should_copy = true;
@@ -6254,9 +6186,7 @@ void buf_copy_options(buf_T *buf, int flags)
   }
 }
 
-/*
- * Reset the 'modifiable' option and its default value.
- */
+/// Reset the 'modifiable' option and its default value.
 void reset_modifiable(void)
 {
   int opt_idx;
@@ -6269,17 +6199,13 @@ void reset_modifiable(void)
   }
 }
 
-/*
- * Set the global value for 'iminsert' to the local value.
- */
+/// Set the global value for 'iminsert' to the local value.
 void set_iminsert_global(void)
 {
   p_iminsert = curbuf->b_p_iminsert;
 }
 
-/*
- * Set the global value for 'imsearch' to the local value.
- */
+/// Set the global value for 'imsearch' to the local value.
 void set_imsearch_global(void)
 {
   p_imsearch = curbuf->b_p_imsearch;
@@ -6581,10 +6507,8 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   *num_file = 1;
 }
 
-/*
- * Get the value for the numeric or string option *opp in a nice format into
- * NameBuff[].  Must not be called with a hidden option!
- */
+/// Get the value for the numeric or string option///opp in a nice format into
+/// NameBuff[].  Must not be called with a hidden option!
 static void
 option_value2string(
     vimoption_T *opp,
@@ -6637,21 +6561,18 @@ static int wc_use_keyname(char_u *varp, long *wcp)
   return false;
 }
 
-/*
- * Any character has an equivalent 'langmap' character.  This is used for
- * keyboards that have a special language mode that sends characters above
- * 128 (although other characters can be translated too).  The "to" field is a
- * Vim command character.  This avoids having to switch the keyboard back to
- * ASCII mode when leaving Insert mode.
- *
- * langmap_mapchar[] maps any of 256 chars to an ASCII char used for Vim
- * commands.
- * langmap_mapga.ga_data is a sorted table of langmap_entry_T.
- * This does the same as langmap_mapchar[] for characters >= 256.
- */
-/*
- * With multi-byte support use growarray for 'langmap' chars >= 256
- */
+/// Any character has an equivalent 'langmap' character.  This is used for
+/// keyboards that have a special language mode that sends characters above
+/// 128 (although other characters can be translated too).  The "to" field is a
+/// Vim command character.  This avoids having to switch the keyboard back to
+/// ASCII mode when leaving Insert mode.
+///
+/// langmap_mapchar[] maps any of 256 chars to an ASCII char used for Vim
+/// commands.
+/// langmap_mapga.ga_data is a sorted table of langmap_entry_T.
+/// This does the same as langmap_mapchar[] for characters >= 256.
+///
+/// With multi-byte support use growarray for 'langmap' chars >= 256
 typedef struct {
   int from;
   int to;
@@ -6659,10 +6580,8 @@ typedef struct {
 
 static garray_T langmap_mapga = GA_EMPTY_INIT_VALUE;
 
-/*
- * Search for an entry in "langmap_mapga" for "from".  If found set the "to"
- * field.  If not found insert a new entry at the appropriate location.
- */
+/// Search for an entry in "langmap_mapga" for "from".  If found set the "to"
+/// field.  If not found insert a new entry at the appropriate location.
 static void langmap_set_entry(int from, int to)
 {
   langmap_entry_T *entries = (langmap_entry_T *)(langmap_mapga.ga_data);
@@ -6697,9 +6616,7 @@ static void langmap_set_entry(int from, int to)
   entries[0].to = to;
 }
 
-/*
- * Apply 'langmap' to multi-byte character "c" and return the result.
- */
+/// Apply 'langmap' to multi-byte character "c" and return the result.
 int langmap_adjust_mb(int c)
 {
   langmap_entry_T *entries = (langmap_entry_T *)(langmap_mapga.ga_data);
@@ -6730,10 +6647,8 @@ static void langmap_init(void)
   ga_init(&langmap_mapga, sizeof(langmap_entry_T), 8);
 }
 
-/*
- * Called when langmap option is set; the language map can be
- * changed at any time!
- */
+/// Called when langmap option is set; the language map can be
+/// changed at any time!
 static void langmap_set(void)
 {
   char_u  *p;
@@ -6836,9 +6751,7 @@ bool shortmess(int x)
                   && vim_strchr((char_u *)SHM_ALL_ABBREVIATIONS, x) != NULL)));
 }
 
-/*
- * paste_option_changed() - Called after p_paste was set or reset.
- */
+/// paste_option_changed() - Called after p_paste was set or reset.
 static void paste_option_changed(void)
 {
   static int old_p_paste = false;
@@ -6985,9 +6898,7 @@ void reset_option_was_set(const char *name)
   }
 }
 
-/*
- * fill_breakat_flags() -- called when 'breakat' changes value.
- */
+/// fill_breakat_flags() -- called when 'breakat' changes value.
 static void fill_breakat_flags(void)
 {
   char_u      *p;
@@ -7004,12 +6915,10 @@ static void fill_breakat_flags(void)
   }
 }
 
-/*
- * Check an option that can be a range of string values.
- *
- * Return OK for correct value, FAIL otherwise.
- * Empty is always OK.
- */
+/// Check an option that can be a range of string values.
+///
+/// Return OK for correct value, FAIL otherwise.
+/// Empty is always OK.
 static int check_opt_strings(
     char_u *val,
     char **values,
@@ -7019,13 +6928,11 @@ static int check_opt_strings(
   return opt_strings_flags(val, values, NULL, list);
 }
 
-/*
- * Handle an option that can be a range of string values.
- * Set a flag in "*flagp" for each string present.
- *
- * Return OK for correct value, FAIL otherwise.
- * Empty is always OK.
- */
+/// Handle an option that can be a range of string values.
+/// Set a flag in "*flagp" for each string present.
+///
+/// Return OK for correct value, FAIL otherwise.
+/// Empty is always OK.
 static int opt_strings_flags(
     char_u *val,             // new value
     char **values,           // array of valid string values
@@ -7058,9 +6965,7 @@ static int opt_strings_flags(
   return OK;
 }
 
-/*
- * Read the 'wildmode' option, fill wim_flags[].
- */
+/// Read the 'wildmode' option, fill wim_flags[].
 static int check_opt_wim(void)
 {
   char_u new_wim_flags[4];
@@ -7111,11 +7016,9 @@ static int check_opt_wim(void)
   return OK;
 }
 
-/*
- * Check if backspacing over something is allowed.
- * The parameter what is one of the following: whatBS_INDENT, BS_EOL
- * or BS_START
- */
+/// Check if backspacing over something is allowed.
+/// The parameter what is one of the following: whatBS_INDENT, BS_EOL
+/// or BS_START
 bool can_bs(int what)
 {
   if (what == BS_START && bt_prompt(curbuf)) {
@@ -7129,10 +7032,8 @@ bool can_bs(int what)
   return vim_strchr(p_bs, what) != NULL;
 }
 
-/*
- * Save the current values of 'fileformat' and 'fileencoding', so that we know
- * the file must be considered changed when the value is different.
- */
+/// Save the current values of 'fileformat' and 'fileencoding', so that we know
+/// the file must be considered changed when the value is different.
 void save_file_ff(buf_T *buf)
 {
   buf->b_start_ffc = *buf->b_p_ff;
@@ -7182,18 +7083,14 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   return STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0;
 }
 
-/*
- * return OK if "p" is a valid fileformat name, FAIL otherwise.
- */
+/// return OK if "p" is a valid fileformat name, FAIL otherwise.
 int check_ff_value(char_u *p)
 {
   return check_opt_strings(p, p_ff_values, false);
 }
 
-/*
- * Return the effective shiftwidth value for current buffer, using the
- * 'tabstop' value when 'shiftwidth' is zero.
- */
+/// Return the effective shiftwidth value for current buffer, using the
+/// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
 {
   long result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
@@ -7201,8 +7098,8 @@ int get_sw_value(buf_T *buf)
   return (int)result;
 }
 
-// Return the effective softtabstop value for the current buffer,
-// using the effective shiftwidth  value when 'softtabstop' is negative.
+/// Return the effective softtabstop value for the current buffer,
+/// using the effective shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
 {
   long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
@@ -7210,12 +7107,10 @@ int get_sts_value(void)
   return (int)result;
 }
 
-/*
- * Check matchpairs option for "*initc".
- * If there is a match set "*initc" to the matching character and "*findc" to
- * the opposite character.  Set "*backwards" to the direction.
- * When "switchit" is true swap the direction.
- */
+/// Check matchpairs option for "*initc".
+/// If there is a match set "*initc" to the matching character and "*findc" to
+/// the opposite character.  Set "*backwards" to the direction.
+/// When "switchit" is true swap the direction.
 void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
 {
   char_u *ptr = curbuf->b_p_mps;
