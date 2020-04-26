@@ -695,7 +695,7 @@ do
 
     local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
     if not buffer_diagnostics then return end
-    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics[line])
+    local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics)[line]
     if not line_diagnostics then return end
 
     for i, diagnostic in ipairs(line_diagnostics) do
