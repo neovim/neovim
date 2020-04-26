@@ -50,22 +50,13 @@ void signal_init(void)
   signal_watcher_init(&main_loop, &shup, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
   signal_watcher_init(&main_loop, &sterm, NULL);
-#ifdef SIGPIPE
-  signal_watcher_start(&spipe, on_signal, SIGPIPE);
-#endif
-  signal_watcher_start(&shup, on_signal, SIGHUP);
-#ifdef SIGQUIT
-  signal_watcher_start(&squit, on_signal, SIGQUIT);
-#endif
-  signal_watcher_start(&sterm, on_signal, SIGTERM);
 #ifdef SIGPWR
   signal_watcher_init(&main_loop, &spwr, NULL);
-  signal_watcher_start(&spwr, on_signal, SIGPWR);
 #endif
 #ifdef SIGUSR1
   signal_watcher_init(&main_loop, &susr1, NULL);
-  signal_watcher_start(&susr1, on_signal, SIGUSR1);
 #endif
+  signal_start();
 }
 
 void signal_teardown(void)
@@ -83,11 +74,33 @@ void signal_teardown(void)
 #endif
 }
 
+void signal_start(void)
+{
+#ifdef SIGPIPE
+  signal_watcher_start(&spipe, on_signal, SIGPIPE);
+#endif
+  signal_watcher_start(&shup, on_signal, SIGHUP);
+#ifdef SIGQUIT
+  signal_watcher_start(&squit, on_signal, SIGQUIT);
+#endif
+  signal_watcher_start(&sterm, on_signal, SIGTERM);
+#ifdef SIGPWR
+  signal_watcher_start(&spwr, on_signal, SIGPWR);
+#endif
+#ifdef SIGUSR1
+  signal_watcher_start(&susr1, on_signal, SIGUSR1);
+#endif
+}
+
 void signal_stop(void)
 {
+#ifdef SIGPIPE
   signal_watcher_stop(&spipe);
+#endif
   signal_watcher_stop(&shup);
+#ifdef SIGQUIT
   signal_watcher_stop(&squit);
+#endif
   signal_watcher_stop(&sterm);
 #ifdef SIGPWR
   signal_watcher_stop(&spwr);
