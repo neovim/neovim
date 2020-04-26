@@ -132,7 +132,7 @@
                                 // cursor would not move
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
-#define CPO_VIM         "aABceFs_"
+#define CPO_VIM         "aABceFs"
 #define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
 // characters for p_ww option:
