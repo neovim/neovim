@@ -159,7 +159,8 @@ end
 function M.apply_text_document_edit(text_document_edit)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
-  if M.buf_versions[bufnr] > text_document.version then
+  -- `VersionedTextDocumentIdentifier`s version may be nil https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
+  if text_document.version ~= nil and M.buf_versions[bufnr] > text_document.version then
     print("Buffer ", text_document.uri, " newer than edits.")
     return
   end
