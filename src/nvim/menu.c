@@ -28,6 +28,7 @@
 #include "nvim/ui.h"
 #include "nvim/eval/typval.h"
 #include "nvim/screen.h"
+#include "nvim/window.h"
 
 #define MENUDEPTH   10          /* maximum depth of menus */
 
@@ -1567,9 +1568,10 @@ void winbar_click(win_T *wp, int col)
         check_cursor();
       }
 
+      // Note: the command might close the current window.
       execute_menu(NULL, item->wb_menu);
 
-      if (save_curwin != NULL) {
+      if (save_curwin != NULL && win_valid(save_curwin)) {
         curwin = save_curwin;
         curbuf = curwin->w_buffer;
         VIsual = save_visual;
@@ -1577,6 +1579,9 @@ void winbar_click(win_T *wp, int col)
         VIsual_select = save_visual_select;
         VIsual_reselect = save_visual_reselect;
         VIsual_mode = save_visual_mode;
+      }
+      if (!win_valid(wp)) {
+        break;
       }
     }
   }
