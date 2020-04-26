@@ -23,6 +23,8 @@ local function request(method, params, callback)
   return vim.lsp.buf_request(0, method, params, callback)
 end
 
+--- Sends a notification through all clients associated with current buffer
+--- and returns `true` if server responds.
 function M.server_ready()
   return not not vim.lsp.buf_notify(0, "window/progress", {})
 end

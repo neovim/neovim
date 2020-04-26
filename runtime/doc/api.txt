@@ -937,7 +937,7 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
                 Find files in runtime directories
 
                 'name' can contain wildcards. For example
-                nvim_get_runtime_file("colors/*.vim", true) will return all
+                nvim_get_runtime_file("colors/*.vim", v:true) will return all
                 color scheme files.
 
                 It is not an error to not find any files. An empty array is
@@ -2060,7 +2060,7 @@ nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
-                    {ns_id}   Namespace to use or 0 to create a namespace, or
+                    {src_id}  Namespace to use or 0 to create a namespace, or
                               -1 for a ungrouped annotation
                     {line}    Line to annotate with virtual text
                               (zero-indexed)

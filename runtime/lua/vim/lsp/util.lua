@@ -748,8 +748,9 @@ do
     return popup_bufnr, winnr
   end
 
-  --- Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf
-  --
+  --- Stores the diagnostics (Diagnostic[]) into |vim.lsp.util.diagnostics_by_buf|
+  --@param bufnr bufnr for which the diagnostics are for.
+  --@param diagnostics Diagnostics[] received from the language server
   function M.buf_diagnostics_save_positions(bufnr, diagnostics)
     validate {
       bufnr = {bufnr, 'n', true};

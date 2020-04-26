@@ -521,6 +521,7 @@ function lsp.start_client(config)
   end
 
   --- Checks capabilities before rpc.request-ing.
+  ---
   function client.request(method, params, callback, bufnr)
     if not callback then
       callback = resolve_callback(method)
@@ -697,8 +698,8 @@ end
 ---
 --- Without calling this, the server won't be notified of changes to a buffer.
 ---
---- @param bufnr (number) Buffer handle, or 0 for current
---- @param client_id (number) Client id
+--@param bufnr (number) Buffer handle, or 0 for current
+--@param client_id (number) Client id
 function lsp.buf_attach_client(bufnr, client_id)
   validate {
     bufnr     = {bufnr, 'n', true};
@@ -898,12 +899,12 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   return request_results
 end
 
---- Send a notification to a server
---- @param bufnr (number) (optional): Buffer handle, or 0 for current
---- @param method (string): Name of the request method
---- @param params (string): Arguments to send to the server
+--- Sends a notification to all servers attached to the buffer.
+--@param bufnr (optional, number): Buffer handle, or 0 for current
+--@param method (string): LSP method name
+--@param params (string): Parameters to send to the server
 ---
---- @returns true if any client returns true; false otherwise
+--@returns true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
   validate {
     bufnr    = { bufnr, 'n', true };

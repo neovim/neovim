@@ -1539,7 +1539,7 @@ free_exit:
 /// virtual text, the allocated id is then returned.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      Namespace to use or 0 to create a namespace,
+/// @param src_id     Namespace to use or 0 to create a namespace,
 ///                   or -1 for a ungrouped annotation
 /// @param line       Line to annotate with virtual text (zero-indexed)
 /// @param chunks     A list of [text, hl_group] arrays, each representing a

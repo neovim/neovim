@@ -706,7 +706,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 /// Find files in runtime directories
 ///
 /// 'name' can contain wildcards. For example
-/// nvim_get_runtime_file("colors/*.vim", true) will return all color
+/// nvim_get_runtime_file("colors/*.vim", v:true) will return all color
 /// scheme files.
 ///
 /// It is not an error to not find any files. An empty array is returned then.

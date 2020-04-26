@@ -336,13 +336,13 @@ buf_is_attached({bufnr}, {client_id})              *vim.lsp.buf_is_attached()*
                     {client_id}  (number) the client id
 
 buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
-                Send a notification to a server
+                Sends a notification to all servers attached to the buffer.
 
                 Parameters: ~
-                    {bufnr}   (number) (optional): Buffer handle, or 0 for
+                    {bufnr}   (optional, number): Buffer handle, or 0 for
                               current
-                    {method}  (string): Name of the request method
-                    {params}  (string): Arguments to send to the server
+                    {method}  (string): LSP method name
+                    {params}  (string): Parameters to send to the server
 
                 Return: ~
                     true if any client returns true; false otherwise
@@ -520,7 +520,7 @@ optional_validator({fn})                        *vim.lsp.optional_validator()*
                 TODO: Documentation
 
 request({method}, {params}, {callback}, {bufnr})           *vim.lsp.request()*
-                TODO: Documentation
+                Checks capabilities before rpc.request-ing.
 
 resolve_bufnr({bufnr})                               *vim.lsp.resolve_bufnr()*
                 TODO: Documentation
@@ -786,7 +786,8 @@ request({method}, {params}, {callback})                *vim.lsp.buf.request()*
                 TODO: Documentation
 
 server_ready()                                    *vim.lsp.buf.server_ready()*
-                TODO: Documentation
+                Sends a notification through all clients associated with
+                current buffer and returns `true` if server responds.
 
 signature_help()                                *vim.lsp.buf.signature_help()*
                 TODO: Documentation
@@ -928,21 +929,6 @@ apply_text_edits({text_edits}, {bufnr})
 apply_workspace_edit({workspace_edit})
                 TODO: Documentation
 
-                                         *vim.lsp.util.diagnostics_by_buf*
-diagnostics_by_buf
-                A table containing diagnostics grouped by buf.
-
-                {<bufnr>: {diagnostics}}
-
-		{diagnostics} is an array of diagnostics.
-
-                By default this is populated by the
-                `textDocument/publishDiagnostics` callback via
-                |vim.lsp.util.buf_diagnostics_save_positions|.
-
-                It contains entries for active buffers. Once a buffer is
-                detached the entries for it are discarded.
-
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
                 TODO: Documentation
 
@@ -977,12 +963,13 @@ buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
 
                                *vim.lsp.util.buf_diagnostics_save_positions()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
-                Stores the diagnostics into |vim.lsp.util.diagnostics_by_buf|
+                Stores the diagnostics (Diagnostic[]) into
+                |vim.lsp.util.diagnostics_by_buf|
 
                 Parameters: ~
-                    {bufr}         bufnr for which the diagnostics are for.
-                    {diagnostics}  Diagnostics[] received from the
-                                   langauge server.
+                    {bufnr}        bufnr for which the diagnostics are for.
+                    {diagnostics}  Diagnostics[] received from the language
+                                   server
 
                                         *vim.lsp.util.buf_diagnostics_signs()*
 buf_diagnostics_signs({bufnr}, {diagnostics})
@@ -1020,6 +1007,10 @@ convert_input_to_markdown_lines({input}, {contents})
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
 convert_signature_help_to_markdown_lines({signature_help})
+                TODO: Documentation
+
+                                    *vim.lsp.util.diagnostics_group_by_line()*
+diagnostics_group_by_line({diagnostics})
                 TODO: Documentation
 
                                      *vim.lsp.util.extract_completion_items()*
