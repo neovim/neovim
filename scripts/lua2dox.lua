@@ -458,8 +458,11 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           outStream:writeln('// zz:"' .. line .. '"')
           fn_magic = nil
         end
-      elseif string.find(line,'^function') or string.find(line,'^local%s+function') then
-      -- elseif string.find(line,'^function') then
+      elseif string.find(line, '^%s*function')
+          -- TODO: Remove local functions. They aren't exported and shouldn't show up in doxygen
+          or string.find(line,'^local%s+function')
+          or (not string.find(line, '^local') and string.find(line, '=%s*function'))
+          then
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
@@ -472,7 +475,15 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           else
             fn_type = ''
           end
-          local fn = TString_removeCommentFromLine(string_trim(string.sub(line,pos_fn+8)))
+
+          local fn
+          if string.find(line, '=%s+function') then
+            local start = string.find(line, '=%s*function')
+            -- fn = TString_removeCommentFromLine(string_trim(string.sub(line, start)))
+            fn = TString_removeCommentFromLine(string_trim(string.sub(line,pos_fn+8)))
+          else
+            fn = TString_removeCommentFromLine(string_trim(string.sub(line,pos_fn+8)))
+          end
           if fn_magic then
             fn = fn_magic
           end

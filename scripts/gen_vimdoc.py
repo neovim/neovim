@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
 
 Also generates *.mpack files. To inspect the *.mpack structure:
@@ -41,7 +42,18 @@ Each function :help block is formatted as follows:
 
 TODO:
 - Handle defs like 'vim.g' and others getting generated
+
 - Handle local functions being exported, even though they should not be
+    - I think I fixed this, but there is a new problem
+
+    ```lua
+    local function do_x()
+    end
+
+    return {
+      do_stuff = do_x
+    }
+    ```
 """
 
 import argparse
@@ -509,12 +521,15 @@ def para_as_map(parent, indent="", width=62):
                         )
                     )
             else:
+                # if not text:
+                #     assert False, get_text(parent)
+
                 if (
                     prev is not None
                     and is_inline(self_or_child(prev))
                     and is_inline(self_or_child(child))
                     and "" != get_text(self_or_child(child)).strip()
-                    and " " != text[-1]
+                    and (text and " " != text[-1])
                 ):
                     text += " "
                 text += render_node(child, text, indent=indent, width=width)
@@ -833,53 +848,6 @@ def main(config):
 
         output_dir = os.path.join(base_dir, "runtime", "doc")
         generate_help_and_mpack_for_target(target, CONFIG[target], config, output_dir)
-        mpack_file = os.path.join(output_dir, CONFIG[target]["filename"].replace(".txt", ".mpack"))
-
-        if os.path.exists(mpack_file):
-            os.remove(mpack_file)
-
-        output_dir = out_dir.format(target=target)
-        try:
-            p = subprocess.Popen(
-                ["doxygen", "-"],
-                stdin=subprocess.PIPE,
-                # silence warnings
-                # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-                stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL),
-            )
-
-            doxy_config = config.format(
-                input=CONFIG[target]["files"],
-                output=output_dir,
-                filter=filter_cmd,
-                file_patterns=CONFIG[target]["file_patterns"],
-                excluded=" ".join(CONFIG[target].get("excluded_symbols", [])),
-            )
-
-            log(doxy_config)
-
-            p.communicate(doxy_config.encode("utf8"))
-            if p.returncode:
-                print("Doxygen failed for target:", target)
-                sys.exit(p.returncode)
-
-            base = os.path.join(output_dir, "xml")
-            dom = minidom.parse(os.path.join(base, "index.xml"))
-
-            associated_doms_from_ref_ids = get_associated_doms_from_ref_ids(dom, base)
-            docs, fn_map_full = get_doc_from_dom(dom, associated_doms_from_ref_ids, target, CONFIG[target], text_width)
-
-            doc_file = os.path.join(base_dir, "runtime", "doc", CONFIG[target]["filename"])
-            delete_lines_below(doc_file, CONFIG[target]["section_start_token"])
-            with open(doc_file, "ab") as fp:
-                fp.write(docs.encode("utf8"))
-
-            with open(mpack_file, "wb") as fp:
-                fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
-
-        finally:
-            # shutil.rmtree(output_dir)
-            os.remove(mpack_file)
 
 
 def generate_help_and_mpack_for_target(
@@ -893,37 +861,10 @@ def generate_help_and_mpack_for_target(
 
     tmp_output_dir = out_dir.format(target=target)
     try:
-        p = subprocess.Popen(
-            ["doxygen", "-"],
-            stdin=subprocess.PIPE,
-            # silence warnings
-            # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-            stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL),
-        )
+        docs, fn_map_full = process_target(target, target_conf, doxy_string, tmp_output_dir)
 
-        doxy_config = doxy_string.format(
-            input=CONFIG[target]["files"],
-            output=tmp_output_dir,
-            filter=filter_cmd,
-            file_patterns=CONFIG[target]["file_patterns"],
-            excluded=" ".join(CONFIG[target].get("excluded_symbols", [])),
-        )
-
-        log(doxy_config)
-
-        p.communicate(doxy_config.encode("utf8"))
-        if p.returncode:
-            print("Doxygen failed for target:", target, file=sys.stderr)
-            sys.exit(p.returncode)
-
-        base = os.path.join(tmp_output_dir, "xml")
-        dom = minidom.parse(os.path.join(base, "index.xml"))
-
-        associated_doms_from_ref_ids = get_associated_doms_from_ref_ids(dom, base)
-        docs, fn_map_full = get_doc_from_dom(dom, associated_doms_from_ref_ids, target, CONFIG[target], text_width)
-
-        doc_file = os.path.join(base_dir, "runtime", "doc", CONFIG[target]["filename"])
-        delete_lines_below(doc_file, CONFIG[target]["section_start_token"])
+        doc_file = os.path.join(base_dir, "runtime", "doc", target_conf["filename"])
+        delete_lines_below(doc_file, target_conf["section_start_token"])
         with open(doc_file, "ab") as fp:
             fp.write(docs.encode("utf8"))
 
@@ -934,6 +875,35 @@ def generate_help_and_mpack_for_target(
         if remove_files:
             shutil.rmtree(tmp_output_dir)
             os.remove(mpack_file)
+
+
+def process_target(target: str, target_conf: Dict[str, Any], doxy_string: str, output_dir: str):
+    p = doxygen_subprocess(DEBUG)
+
+    doxy_config = format_doxy_config(
+        doxy_string,
+        doxygen_input=target_conf["files"],
+        output=output_dir,
+        doxygen_filter=filter_cmd,
+        file_patterns=target_conf["file_patterns"],
+        excluded=" ".join(target_conf.get("excluded_symbols", [])),
+        recursive=target_conf.get("recursive", True),
+    )
+
+    print(doxy_config)
+
+    p.communicate(doxy_config.encode("utf8"))
+    if p.returncode:
+        print("Doxygen failed for target:", target, file=sys.stderr)
+        sys.exit(p.returncode)
+
+    base = os.path.join(output_dir, "xml")
+    dom = minidom.parse(os.path.join(base, "index.xml"))
+
+    associated_doms_from_ref_ids = get_associated_doms_from_ref_ids(dom, base)
+    docs, fn_map_full = get_doc_from_dom(dom, associated_doms_from_ref_ids, target, target_conf, text_width)
+
+    return docs, fn_map_full
 
 
 SectionTuple = collections.namedtuple("SectionTuple", ["title", "helptag", "doc"])
@@ -1015,6 +985,10 @@ def get_doc_from_dom(
 
     i = 0
     for filename in target_config["section_order"]:
+        if filename not in sections:
+            # assert False, f"{filename} not in {set(sections.keys())}"
+            continue
+
         title, helptag, section_doc = sections.pop(filename)
         i += 1
         if filename not in target_config["append_only"]:
@@ -1056,14 +1030,31 @@ def log(*args, **kwargs):
         print(*args, **kwargs)
 
 
+def doxygen_subprocess(show_stderr):
+    return subprocess.Popen(
+        ["doxygen", "-"], stdin=subprocess.PIPE, stderr=(subprocess.STDOUT if show_stderr else subprocess.DEVNULL),
+    )
+
+
+def format_doxy_config(doxy_file, doxygen_input, output, doxygen_filter, file_patterns, excluded, recursive=True):
+    return doxy_file.format(
+        doxygen_input=doxygen_input,
+        output=output,
+        doxygen_filter=doxygen_filter,
+        file_patterns=file_patterns,
+        excluded=excluded,
+        recursive=recursive,
+    )
+
+
 Doxyfile = textwrap.dedent(
     """
     OUTPUT_DIRECTORY       = {output}
-    INPUT                  = {input}
+    INPUT                  = {doxygen_input}
     INPUT_ENCODING         = UTF-8
     FILE_PATTERNS          = {file_patterns}
-    RECURSIVE              = YES
-    INPUT_FILTER           = "{filter}"
+    RECURSIVE              = {recursive}
+    INPUT_FILTER           = "{doxygen_filter}"
     EXCLUDE                =
     EXCLUDE_SYMLINKS       = NO
     EXCLUDE_PATTERNS       = */private/*
@@ -1084,7 +1075,7 @@ Doxyfile = textwrap.dedent(
 
     GENERATE_XML           = YES
     XML_OUTPUT             = xml
-    XML_PROGRAMLISTING     = NO
+    XML_PROGRAMLISTING     = YES
 
     ENABLE_PREPROCESSING   = YES
     MACRO_EXPANSION        = YES

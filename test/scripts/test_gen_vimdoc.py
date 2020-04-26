@@ -1,3 +1,6 @@
+import os
+import shutil
+from tempfile import NamedTemporaryFile
 from xml.dom import minidom
 
 import gen_vimdoc
@@ -45,8 +48,13 @@ EMPTY_DICT_TEXT = _make_xml_text(
 BASIC_LUA_CONFIG = {
     "mode": "lua",
     "fn_name_prefix": "",
-    "module_override": {},
     "fn_helptag_fmt": lambda fstem, name: f"*{fstem}.{name}()*",
+    "file_patterns": "*.lua",
+    "module_override": {},
+    "section_name": {},
+    "section_fmt": lambda name: f"{name} Functions",
+    "helptag_fmt": lambda name: f"*lua-{name.lower()}*",
+    "append_only": [],
 }
 
 
@@ -101,3 +109,38 @@ def test_ignores_private_functions():
     functions, dep_functions = gen_vimdoc.extract_from_xml(dom, BASIC_LUA_CONFIG, width=9999)
     assert {} == functions
     assert {} == dep_functions
+
+
+def _process_temp_lua_file(lua_text: str):
+    base_dir = "tmp-test-dir"
+    shutil.rmtree(os.path.join(base_dir, "/xml"), ignore_errors=True)
+
+    with NamedTemporaryFile(prefix="tmp_lua", suffix=".lua", dir=base_dir, mode="w+") as fp:
+        fp.write(lua_text)
+        fp.flush()
+
+        test_config = BASIC_LUA_CONFIG.copy()
+        test_config["files"] = os.path.join(base_dir, fp.name)
+        test_config["recursive"] = False
+        test_config["section_order"] = [fp.name]
+
+        docs, fn_map_full = gen_vimdoc.process_target("test", test_config, gen_vimdoc.Doxyfile, "./tmp-test-dir")
+
+    return docs, fn_map_full
+
+
+def test_gen_doxy():
+    docs, fn_map_full = _process_temp_lua_file(
+        """
+--- This is a test function
+---
+--- Wow, very cool
+function test_func()
+    return 5
+end
+
+return test_func
+"""
+    )
+
+    assert fn_map_full["test_func"]["doc"] == ["This is a test function", "Wow, very cool"]
