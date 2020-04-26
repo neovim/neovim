@@ -642,15 +642,17 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
     /* We want the new fold to be closed.  If it would remain open because
      * of using 'foldlevel', need to adjust fd_flags of containing folds.
      */
-    if (use_level && !closed && level < curwin->w_p_fdl)
+    if (use_level && !closed && level < wp->w_p_fdl) {
       closeFold(start, 1L);
-    if (!use_level)
-      curwin->w_fold_manual = true;
+    }
+    if (!use_level) {
+      wp->w_fold_manual = true;
+    }
     fp->fd_flags = FD_CLOSED;
     fp->fd_small = kNone;
 
-    /* redraw */
-    changed_window_setting();
+    // redraw
+    changed_window_setting_win(wp);
   }
 }
 
@@ -711,7 +713,7 @@ void deleteFold(
       lnum = found_fp->fd_top + found_fp->fd_len + found_off;
 
       if (foldmethodIsManual(wp)) {
-        deleteFoldEntry(found_ga,
+        deleteFoldEntry(wp, found_ga,
                         (int)(found_fp - (fold_T *)found_ga->ga_data),
                         recursive);
       } else {
@@ -724,22 +726,24 @@ void deleteFold(
         if (!did_one) {
           parseMarker(wp);
         }
-        deleteFoldMarkers(found_fp, recursive, found_off);
+        deleteFoldMarkers(wp, found_fp, recursive, found_off);
       }
       did_one = true;
 
-      /* redraw window */
-      changed_window_setting();
+      // redraw window
+      changed_window_setting_win(wp);
     }
   }
   if (!did_one) {
     EMSG(_(e_nofold));
-    /* Force a redraw to remove the Visual highlighting. */
-    if (had_visual)
-      redraw_curbuf_later(INVERTED);
-  } else
-    /* Deleting markers may make cursor column invalid. */
-    check_cursor_col();
+    // Force a redraw to remove the Visual highlighting.
+    if (had_visual) {
+      redraw_buf_later(wp->w_buffer, INVERTED);
+    }
+  } else {
+    // Deleting markers may make cursor column invalid
+    check_cursor_col_win(wp);
+  }
 
   if (last_lnum > 0) {
     // TODO(teto): pass the buffer
@@ -751,7 +755,7 @@ void deleteFold(
     // the modification of the *first* line of the fold, but we send through a
     // notification that includes every line that was part of the fold
     int64_t num_changed = last_lnum - first_lnum;
-    buf_updates_send_changes(curbuf, first_lnum, num_changed,
+    buf_updates_send_changes(wp->w_buffer, first_lnum, num_changed,
                              num_changed, true);
   }
 }
@@ -1303,7 +1307,7 @@ static void foldOpenNested(fold_T *fpr)
 // Delete fold "idx" from growarray "gap".
 // When "recursive" is true also delete all the folds contained in it.
 // When "recursive" is false contained folds are moved one level up.
-static void deleteFoldEntry(garray_T *const gap, const int idx,
+static void deleteFoldEntry(win_T *const wp, garray_T *const gap, const int idx,
                             const bool recursive)
 {
   fold_T *fp = (fold_T *)gap->ga_data + idx;
@@ -1369,13 +1373,17 @@ void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
     line2 = line1 - amount_after - 1;
   /* If appending a line in Insert mode, it should be included in the fold
    * just above the line. */
-  if ((State & INSERT) && amount == (linenr_T)1 && line2 == MAXLNUM)
-    --line1;
-  foldMarkAdjustRecurse(&wp->w_folds, line1, line2, amount, amount_after);
+  if ((State & INSERT) && amount == (linenr_T)1 && line2 == MAXLNUM) {
+    line1--;
+  }
+  foldMarkAdjustRecurse(wp, &wp->w_folds, line1, line2, amount, amount_after);
 }
 
-/* foldMarkAdjustRecurse() {{{2 */
-static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2, long amount, long amount_after)
+// foldMarkAdjustRecurse() {{{2
+static void foldMarkAdjustRecurse(
+    win_T *wp, garray_T *gap,
+    linenr_T line1, linenr_T line2, long amount, long amount_after
+)
 {
   fold_T      *fp;
   linenr_T last;
@@ -1423,7 +1431,7 @@ static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2,
         // 4. fold completely contained in range
         if (amount == MAXLNUM) {
           // Deleting lines: delete the fold completely
-          deleteFoldEntry(gap, i, true);
+          deleteFoldEntry(wp, gap, i, true);
           i--;              // adjust index for deletion
           fp--;
         } else {
@@ -1431,9 +1439,9 @@ static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2,
         }
       } else {
         if (fp->fd_top < top) {
-          /* 2 or 3: need to correct nested folds too */
-          foldMarkAdjustRecurse(&fp->fd_nested, line1 - fp->fd_top,
-              line2 - fp->fd_top, amount, amount_after);
+          // 2 or 3: need to correct nested folds too
+          foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
+                                line2 - fp->fd_top, amount, amount_after);
           if (last <= line2) {
             /* 2. fold contains line1, line2 is below fold */
             if (amount == MAXLNUM)
@@ -1448,13 +1456,13 @@ static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2,
           /* 5. fold is below line1 and contains line2; need to
            * correct nested folds too */
           if (amount == MAXLNUM) {
-            foldMarkAdjustRecurse(&fp->fd_nested, line1 - fp->fd_top,
+            foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
                                   line2 - fp->fd_top, amount,
                                   amount_after + (fp->fd_top - top));
             fp->fd_len -= line2 - fp->fd_top + 1;
             fp->fd_top = line1;
           } else {
-            foldMarkAdjustRecurse(&fp->fd_nested, line1 - fp->fd_top,
+            foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
                                   line2 - fp->fd_top, amount,
                                   amount_after - amount);
             fp->fd_len += amount_after - amount;
@@ -1497,16 +1505,18 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /// Check if a fold is closed and update the info needed to check nested folds.
 ///
 /// @param[in,out] use_levelp true: outer fold had FD_LEVEL
+/// @param[in,out] fp fold to check
 /// @param level folding depth
-/// @param[out] maybe_smallp TRUE: outer this had fd_small == kNone
+/// @param[out] maybe_smallp true: outer this had fd_small == kNone
 /// @param lnum_off line number offset for fp->fd_top
+/// @return true if fold is closed
 static bool check_closed(
     win_T *const wp,
     fold_T *const fp,
-    bool *const use_levelp,     // true: outer fold had FD_LEVEL
-    const int level,            // folding depth
-    bool *const maybe_smallp,   // true: outer this had fd_small == kNone
-    const linenr_T lnum_off     // line number offset for fp->fd_top
+    bool *const use_levelp,
+    const int level,
+    bool *const maybe_smallp,
+    const linenr_T lnum_off
 )
 {
   bool closed = false;
@@ -1552,13 +1562,13 @@ checkSmall(
     // Mark any nested folds to maybe-small
     setSmallMaybe(&fp->fd_nested);
 
-    if (fp->fd_len > curwin->w_p_fml) {
+    if (fp->fd_len > wp->w_p_fml) {
       fp->fd_small = kFalse;
     } else {
       int count = 0;
       for (int n = 0; n < fp->fd_len; n++) {
         count += plines_win_nofold(wp, fp->fd_top + lnum_off + n);
-        if (count > curwin->w_p_fml) {
+        if (count > wp->w_p_fml) {
           fp->fd_small = kFalse;
           return;
         }
@@ -1604,7 +1614,7 @@ static void foldCreateMarkers(win_T *wp, linenr_T start, linenr_T end)
   // u_save() is unable to save the buffer line, but we send the
   // nvim_buf_lines_event anyway since it won't do any harm.
   int64_t num_changed = 1 + end - start;
-  buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
+  buf_updates_send_changes(buf, start, num_changed, num_changed, true);
 }
 
 /* foldAddMarker() {{{2 */
@@ -1621,7 +1631,7 @@ static void foldAddMarker(
   bool line_is_comment = false;
 
   // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
-  line = ml_get(lnum);
+  line = ml_get_buf(buf, lnum, false);
   size_t line_len = STRLEN(line);
   size_t added = 0;
 
@@ -1640,11 +1650,10 @@ static void foldAddMarker(
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
       added = markerlen + STRLEN(cms)-2;
     }
-    ml_replace(lnum, newline, false);
+    ml_replace_buf(buf, lnum, newline, false);
     if (added) {
-      extmark_splice(buf, (int)lnum-1, (int)line_len,
-                     0, 0,
-                     0, (int)added, kExtmarkUndo);
+      extmark_splice_cols(buf, (int)lnum-1, (int)line_len,
+                          0, (int)added, kExtmarkUndo);
     }
   }
 }
@@ -1655,20 +1664,22 @@ static void foldAddMarker(
  */
 static void
 deleteFoldMarkers(
+    win_T *wp,
     fold_T *fp,
     int recursive,
     linenr_T lnum_off             // offset for fp->fd_top
 )
 {
   if (recursive) {
-    for (int i = 0; i < fp->fd_nested.ga_len; ++i) {
-      deleteFoldMarkers((fold_T *)fp->fd_nested.ga_data + i, TRUE,
+    for (int i = 0; i < fp->fd_nested.ga_len; i++) {
+      deleteFoldMarkers(wp, (fold_T *)fp->fd_nested.ga_data + i, true,
                         lnum_off + fp->fd_top);
     }
   }
-  foldDelMarker(fp->fd_top + lnum_off, curwin->w_p_fmr, foldstartmarkerlen);
-  foldDelMarker(fp->fd_top + lnum_off + fp->fd_len - 1, foldendmarker,
-                foldendmarkerlen);
+  foldDelMarker(wp->w_buffer, fp->fd_top+lnum_off, wp->w_p_fmr,
+                foldstartmarkerlen);
+  foldDelMarker(wp->w_buffer, fp->fd_top + lnum_off + fp->fd_len - 1,
+                foldendmarker, foldendmarkerlen);
 }
 
 // foldDelMarker() {{{2
@@ -1677,18 +1688,20 @@ deleteFoldMarkers(
 // Delete 'commentstring' if it matches.
 // If the marker is not found, there is no error message.  Could be a missing
 // close-marker.
-static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
+static void foldDelMarker(
+    buf_T *buf, linenr_T lnum, char_u *marker, size_t markerlen
+)
 {
   char_u      *newline;
-  char_u      *cms = curbuf->b_p_cms;
+  char_u      *cms = buf->b_p_cms;
   char_u      *cms2;
 
   // end marker may be missing and fold extends below the last line
-  if (lnum > curbuf->b_ml.ml_line_count) {
+  if (lnum > buf->b_ml.ml_line_count) {
     return;
   }
-  char_u *line = ml_get(lnum);
-  for (char_u *p = line; *p != NUL; ++p) {
+  char_u *line = ml_get_buf(buf, lnum, false);
+  for (char_u *p = line; *p != NUL; p++) {
     if (STRNCMP(p, marker, markerlen) != 0) {
       continue;
     }
@@ -1712,10 +1725,10 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
-      ml_replace(lnum, newline, false);
-      extmark_splice(curbuf, (int)lnum-1, (int)(p - line),
-                     0, (int)len,
-                     0, 0, kExtmarkUndo);
+      ml_replace_buf(buf, lnum, newline, false);
+      extmark_splice_cols(buf, (int)lnum-1, (int)(p - line),
+                          (int)len,
+                          0, kExtmarkUndo);
     }
     break;
   }
@@ -1903,13 +1916,12 @@ void foldtext_cleanup(char_u *str)
 /* foldUpdateIEMS() {{{2 */
 /*
  * Update the folding for window "wp", at least from lines "top" to "bot".
- * Return TRUE if any folds did change.
  * IEMS = "Indent Expr Marker Syntax"
  */
 static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
 {
   fline_T fline;
-  void        (*getlevel)(fline_T *);
+  LevelGetter getlevel = NULL;
   fold_T      *fp;
 
   /* Avoid problems when being called recursively. */
@@ -2091,8 +2103,8 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
     }
   }
 
-  /* There can't be any folds from start until end now. */
-  foldRemove(&wp->w_folds, start, end);
+  // There can't be any folds from start until end now.
+  foldRemove(wp, &wp->w_folds, start, end);
 
   /* If some fold changed, need to redraw and position cursor. */
   if (fold_changed && wp->w_p_fen)
@@ -2272,12 +2284,12 @@ static linenr_T foldUpdateIEMSRecurse(
               if (fp->fd_top > firstlnum) {
                 // We will move the start of this fold up, hence we move all
                 // nested folds (with relative line numbers) down.
-                foldMarkAdjustRecurse(&fp->fd_nested,
+                foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                       (linenr_T)0, (linenr_T)MAXLNUM,
                                       (long)(fp->fd_top - firstlnum), 0L);
               } else {
                 // Will move fold down, move nested folds relatively up.
-                foldMarkAdjustRecurse(&fp->fd_nested,
+                foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                       (linenr_T)0,
                                       (long)(firstlnum - fp->fd_top - 1),
                                       (linenr_T)MAXLNUM,
@@ -2307,10 +2319,10 @@ static linenr_T foldUpdateIEMSRecurse(
                 breakstart = flp->lnum;
                 breakend = flp->lnum;
               }
-              foldRemove(&fp->fd_nested, breakstart - fp->fd_top,
+              foldRemove(flp->wp, &fp->fd_nested, breakstart - fp->fd_top,
                          breakend - fp->fd_top);
               i = (int)(fp - (fold_T *)gap->ga_data);
-              foldSplit(gap, i, breakstart, breakend - 1);
+              foldSplit(flp->wp->w_buffer, gap, i, breakstart, breakend - 1);
               fp = (fold_T *)gap->ga_data + i + 1;
               /* If using the "marker" or "syntax" method, we
                * need to continue until the end of the fold is
@@ -2326,7 +2338,7 @@ static linenr_T foldUpdateIEMSRecurse(
               if (i != 0) {
                 fp2 = fp - 1;
                 if (fp2->fd_top + fp2->fd_len == fp->fd_top) {
-                  foldMerge(fp2, gap, fp);
+                  foldMerge(flp->wp, fp2, gap, fp);
                   fp = fp2;
                 }
               }
@@ -2337,12 +2349,13 @@ static linenr_T foldUpdateIEMSRecurse(
             // A fold that starts at or after startlnum and stops
             // before the new fold must be deleted.  Continue
             // looking for the next one.
-            deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), true);
+            deleteFoldEntry(flp->wp, gap,
+                            (int)(fp - (fold_T *)gap->ga_data), true);
           } else {
             /* A fold has some lines above startlnum, truncate it
              * to stop just above startlnum.  */
             fp->fd_len = startlnum - fp->fd_top;
-            foldMarkAdjustRecurse(&fp->fd_nested,
+            foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                   (linenr_T)fp->fd_len, (linenr_T)MAXLNUM,
                                   (linenr_T)MAXLNUM, 0L);
             fold_changed = true;
@@ -2471,8 +2484,8 @@ static linenr_T foldUpdateIEMSRecurse(
 
   // Delete contained folds from the end of the last one found until where
   // we stopped looking.
-  foldRemove(&fp->fd_nested, startlnum2 - fp->fd_top,
-      flp->lnum - 1 - fp->fd_top);
+  foldRemove(flp->wp, &fp->fd_nested, startlnum2 - fp->fd_top,
+             flp->lnum - 1 - fp->fd_top);
 
   if (lvl < level) {
     // End of fold found, update the length when it got shorter.
@@ -2490,7 +2503,7 @@ static linenr_T foldUpdateIEMSRecurse(
           // indent or expr method: split fold to create a new one
           // below bot
           i = (int)(fp - (fold_T *)gap->ga_data);
-          foldSplit(gap, i, flp->lnum, bot);
+          foldSplit(flp->wp->w_buffer, gap, i, flp->lnum, bot);
           fp = (fold_T *)gap->ga_data + i;
         }
       } else {
@@ -2508,23 +2521,23 @@ static linenr_T foldUpdateIEMSRecurse(
       break;
     if (fp2->fd_top + fp2->fd_len > flp->lnum) {
       if (fp2->fd_top < flp->lnum) {
-        /* Make fold that includes lnum start at lnum. */
-        foldMarkAdjustRecurse(&fp2->fd_nested,
-            (linenr_T)0, (long)(flp->lnum - fp2->fd_top - 1),
-            (linenr_T)MAXLNUM, (long)(fp2->fd_top - flp->lnum));
+        // Make fold that includes lnum start at lnum.
+        foldMarkAdjustRecurse(flp->wp, &fp2->fd_nested,
+                              (linenr_T)0, (long)(flp->lnum - fp2->fd_top - 1),
+                              (linenr_T)MAXLNUM, (long)(fp2->fd_top-flp->lnum));
         fp2->fd_len -= flp->lnum - fp2->fd_top;
         fp2->fd_top = flp->lnum;
         fold_changed = true;
       }
 
       if (lvl >= level) {
-        /* merge new fold with existing fold that follows */
-        foldMerge(fp, gap, fp2);
+        // merge new fold with existing fold that follows
+        foldMerge(flp->wp, fp, gap, fp2);
       }
       break;
     }
     fold_changed = true;
-    deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
+    deleteFoldEntry(flp->wp, gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
   }
 
   /* Need to redraw the lines we inspected, which might be further down than
@@ -2560,8 +2573,10 @@ static void foldInsert(garray_T *gap, int i)
  * The caller must first have taken care of any nested folds from "top" to
  * "bot"!
  */
-static void foldSplit(garray_T *const gap, const int i, const linenr_T top,
-                      const linenr_T bot)
+static void foldSplit(buf_T *buf, garray_T *const gap,
+                      const int i, const linenr_T top,
+                      const linenr_T bot
+                      )
 {
   fold_T      *fp2;
 
@@ -2616,7 +2631,9 @@ static void foldSplit(garray_T *const gap, const int i, const linenr_T top,
  * 5: made to start below "bot".
  * 6: not changed
  */
-static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
+static void foldRemove(
+    win_T *const wp, garray_T *gap, linenr_T top, linenr_T bot
+)
 {
   fold_T      *fp = NULL;
 
@@ -2628,10 +2645,11 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
     // Find fold that includes top or a following one.
     if (foldFind(gap, top, &fp) && fp->fd_top < top) {
       // 2: or 3: need to delete nested folds
-      foldRemove(&fp->fd_nested, top - fp->fd_top, bot - fp->fd_top);
+      foldRemove(wp, &fp->fd_nested, top - fp->fd_top, bot - fp->fd_top);
       if (fp->fd_top + fp->fd_len - 1 > bot) {
         // 3: need to split it.
-        foldSplit(gap, (int)(fp - (fold_T *)gap->ga_data), top, bot);
+        foldSplit(wp->w_buffer, gap,
+                  (int)(fp - (fold_T *)gap->ga_data), top, bot);
       } else {
         // 2: truncate fold at "top".
         fp->fd_len = top - fp->fd_top;
@@ -2649,7 +2667,8 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
       fold_changed = true;
       if (fp->fd_top + fp->fd_len - 1 > bot) {
         // 5: Make fold that includes bot start below bot.
-        foldMarkAdjustRecurse(&fp->fd_nested,
+        foldMarkAdjustRecurse(
+            wp, &fp->fd_nested,
             (linenr_T)0, (long)(bot - fp->fd_top),
             (linenr_T)MAXLNUM, (long)(fp->fd_top - bot - 1));
         fp->fd_len -= bot - fp->fd_top + 1;
@@ -2658,7 +2677,7 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
       }
 
       // 4: Delete completely contained fold.
-      deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), true);
+      deleteFoldEntry(wp, gap, (int)(fp - (fold_T *)gap->ga_data), true);
     }
   }
 }
@@ -2710,19 +2729,22 @@ static void foldReverseOrder(
 // 8. truncated below dest and shifted up.
 // 9. shifted up
 // 10. not changed
-static void truncate_fold(fold_T *fp, linenr_T end)
+static void truncate_fold(win_T *const wp, fold_T *fp, linenr_T end)
 {
   // I want to stop *at here*, foldRemove() stops *above* top
   end += 1;
-  foldRemove(&fp->fd_nested, end - fp->fd_top, MAXLNUM);
+  foldRemove(wp, &fp->fd_nested, end - fp->fd_top, MAXLNUM);
   fp->fd_len = end - fp->fd_top;
 }
 
 #define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
 #define VALID_FOLD(fp, gap) ((fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
 #define FOLD_INDEX(fp, gap) ((size_t)(fp - ((fold_T *)(gap)->ga_data)))
-void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
-                   const linenr_T dest)
+void foldMoveRange(
+    win_T *const wp, garray_T *gap,
+    const linenr_T line1, const linenr_T line2,
+    const linenr_T dest
+)
 {
   fold_T *fp;
   const linenr_T range_len = line2 - line1 + 1;
@@ -2733,20 +2755,20 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
     if (FOLD_END(fp) > dest) {
       // Case 4 -- don't have to change this fold, but have to move nested
       // folds.
-      foldMoveRange(&fp->fd_nested, line1 - fp->fd_top, line2 -
+      foldMoveRange(wp, &fp->fd_nested, line1 - fp->fd_top, line2 -
                     fp->fd_top, dest - fp->fd_top);
       return;
     } else if (FOLD_END(fp) > line2) {
       // Case 3 -- Remove nested folds between line1 and line2 & reduce the
       // length of fold by "range_len".
       // Folds after this one must be dealt with.
-      foldMarkAdjustRecurse(&fp->fd_nested, line1 - fp->fd_top,
+      foldMarkAdjustRecurse(wp, &fp->fd_nested, line1 - fp->fd_top,
                             line2 - fp->fd_top, MAXLNUM, -range_len);
       fp->fd_len -= range_len;
     } else {
       // Case 2 -- truncate fold *above* line1.
       // Folds after this one must be dealt with.
-      truncate_fold(fp, line1 - 1);
+      truncate_fold(wp, fp, line1 - 1);
     }
     // Look at the next fold, and treat that one as if it were the first after
     // "line1" (because now it is).
@@ -2764,13 +2786,13 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
     }
     if (VALID_FOLD(fp, gap) && fp->fd_top <= dest) {
       // Case 8. -- ensure truncated at dest, shift up
-      truncate_fold(fp, dest);
+      truncate_fold(wp, fp, dest);
       fp->fd_top -= range_len;
     }
     return;
   } else if (FOLD_END(fp) > dest) {
     // Case 7 -- remove nested folds and shrink
-    foldMarkAdjustRecurse(&fp->fd_nested, line2 + 1 - fp->fd_top,
+    foldMarkAdjustRecurse(wp, &fp->fd_nested, line2 + 1 - fp->fd_top,
                           dest - fp->fd_top, MAXLNUM, -move_len);
     fp->fd_len -= move_len;
     fp->fd_top += move_len;
@@ -2786,7 +2808,7 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
       // 5, or 6
       if (FOLD_END(fp) > line2) {
         // 6, truncate before moving
-        truncate_fold(fp, line2);
+        truncate_fold(wp, fp, line2);
       }
       fp->fd_top += move_len;
       continue;
@@ -2798,7 +2820,7 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
     }
 
     if (FOLD_END(fp) > dest) {
-      truncate_fold(fp, dest);
+      truncate_fold(wp, fp, dest);
     }
 
     fp->fd_top -= range_len;
@@ -2830,7 +2852,7 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
  * The resulting fold is "fp1", nested folds are moved from "fp2" to "fp1".
  * Fold entry "fp2" in "gap" is deleted.
  */
-static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
+static void foldMerge(win_T *const wp, fold_T *fp1, garray_T *gap, fold_T *fp2)
 {
   fold_T      *fp3;
   fold_T      *fp4;
@@ -2840,8 +2862,9 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
 
   /* If the last nested fold in fp1 touches the first nested fold in fp2,
    * merge them recursively. */
-  if (foldFind(gap1, fp1->fd_len - 1L, &fp3) && foldFind(gap2, 0L, &fp4))
-    foldMerge(fp3, gap2, fp4);
+  if (foldFind(gap1, fp1->fd_len - 1L, &fp3) && foldFind(gap2, 0L, &fp4)) {
+    foldMerge(wp, fp3, gap2, fp4);
+  }
 
   /* Move nested folds in fp2 to the end of fp1. */
   if (!GA_EMPTY(gap2)) {
@@ -2856,7 +2879,7 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
   }
 
   fp1->fd_len += fp2->fd_len;
-  deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
+  deleteFoldEntry(wp, gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
   fold_changed = true;
 }
 

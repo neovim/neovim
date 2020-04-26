@@ -2390,19 +2390,30 @@ static int ml_append_int(
 
 void ml_add_deleted_len(char_u *ptr, ssize_t len)
 {
+  ml_add_deleted_len_buf(curbuf, ptr, len);
+}
+
+void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
+{
   if (inhibit_delete_count) {
     return;
   }
   if (len == -1) {
     len = STRLEN(ptr);
   }
-  curbuf->deleted_bytes += len+1;
-  if (curbuf->update_need_codepoints) {
-    mb_utflen(ptr, len, &curbuf->deleted_codepoints,
-              &curbuf->deleted_codeunits);
-    curbuf->deleted_codepoints++;  // NL char
-    curbuf->deleted_codeunits++;
+  buf->deleted_bytes += len+1;
+  if (buf->update_need_codepoints) {
+    mb_utflen(ptr, len, &buf->deleted_codepoints,
+              &buf->deleted_codeunits);
+    buf->deleted_codepoints++;  // NL char
+    buf->deleted_codeunits++;
   }
+}
+
+
+int ml_replace(linenr_T lnum, char_u *line, bool copy)
+{
+  return ml_replace_buf(curbuf, lnum, line, copy);
 }
 
 /*
@@ -2416,36 +2427,37 @@ void ml_add_deleted_len(char_u *ptr, ssize_t len)
  *
  * return FAIL for failure, OK otherwise
  */
-int ml_replace(linenr_T lnum, char_u *line, bool copy)
+int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
 {
   if (line == NULL)             /* just checking... */
     return FAIL;
 
-  /* When starting up, we might still need to create the memfile */
-  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
+  // When starting up, we might still need to create the memfile
+  if (buf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL) {
     return FAIL;
+  }
 
   bool readlen = true;
 
   if (copy) {
     line = vim_strsave(line);
   }
-  if (curbuf->b_ml.ml_line_lnum != lnum) {  // other line buffered
-    ml_flush_line(curbuf);  // flush it
-  } else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
-    ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, -1);
+  if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
+    ml_flush_line(buf);  // flush it
+  } else if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
+    ml_add_deleted_len(buf->b_ml.ml_line_ptr, -1);
     readlen = false;  // already added the length
 
-    xfree(curbuf->b_ml.ml_line_ptr);  // free it
+    xfree(buf->b_ml.ml_line_ptr);  // free it
   }
 
-  if (readlen && kv_size(curbuf->update_callbacks)) {
-    ml_add_deleted_len(ml_get_buf(curbuf, lnum, false), -1);
+  if (readlen && kv_size(buf->update_callbacks)) {
+    ml_add_deleted_len(ml_get_buf(buf, lnum, false), -1);
   }
 
-  curbuf->b_ml.ml_line_ptr = line;
-  curbuf->b_ml.ml_line_lnum = lnum;
-  curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
+  buf->b_ml.ml_line_ptr = line;
+  buf->b_ml.ml_line_lnum = lnum;
+  buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
 
   return OK;
 }
@@ -3989,8 +4001,8 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
-  /* take care of cached line first */
-  ml_flush_line(curbuf);
+  // take care of cached line first
+  ml_flush_line(buf);
 
   if (buf->b_ml.ml_usedchunks == -1
       || buf->b_ml.ml_chunksize == NULL
