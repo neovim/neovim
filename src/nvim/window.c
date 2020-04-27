@@ -1112,7 +1112,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   // add a status line when p_ls == 1 and splitting the first window
   if (one_nonfloat() && p_ls == 1 && oldwin->w_status_height == 0) {
-    if (oldwin->w_height <= p_wmh && new_in_layout) {
+    if ((oldwin->w_height + oldwin->w_winbar_height) <= p_wmh
+        && new_in_layout) {
       EMSG(_(e_noroom));
       return FAIL;
     }
@@ -1209,7 +1210,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * height.
      */
     // Current window requires at least 1 space.
-    wmh1 = (p_wmh == 0 ? 1 : p_wmh);
+    wmh1 = (p_wmh == 0 ? 1 : p_wmh) + curwin->w_winbar_height;
     needed = wmh1 + STATUS_HEIGHT;
     if (flags & WSP_ROOM) {
       needed += p_wh - wmh1;
@@ -1690,8 +1691,9 @@ make_windows (
     maxcount = (curwin->w_width + curwin->w_vsep_width
                 - (p_wiw - p_wmw)) / (p_wmw + 1);
   } else {
-    /* Each window needs at least 'winminheight' lines and a status line. */
-    maxcount = (curwin->w_height + curwin->w_status_height
+    // Each window needs at least 'winminheight' lines and a status line.
+    maxcount = (curwin->w_height + curwin->w_winbar_height
+                + curwin->w_status_height
                 - (p_wh - p_wmh)) / (p_wmh + STATUS_HEIGHT);
   }
 
@@ -3481,14 +3483,18 @@ static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
   int n;
 
   if (topfrp->fr_win != NULL) {
-    if (topfrp->fr_win == next_curwin)
+    if (topfrp->fr_win == next_curwin) {
       m = p_wh + topfrp->fr_win->w_status_height;
-    else {
-      /* window: minimal height of the window plus status line */
+    } else {
+      // window: minimal height of the window plus status line
       m = p_wmh + topfrp->fr_win->w_status_height;
-      /* Current window is minimal one line high */
-      if (p_wmh == 0 && topfrp->fr_win == curwin && next_curwin == NULL)
-        ++m;
+      if (topfrp->fr_win == curwin && next_curwin == NULL) {
+        // Current window is minimal one line high and WinBar is visible.
+        if (p_wmh == 0) {
+          m++;
+        }
+        m += curwin->w_winbar_height;
+      }
     }
   } else if (topfrp->fr_layout == FR_ROW) {
     /* get the minimal height from each frame in this row */
@@ -5055,7 +5061,9 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       wp->w_redr_status = true;
       wp->w_pos_changed = true;
     }
-    *row += wp->w_height + wp->w_status_height;
+    // WinBar will not show if the window height is zero
+    const int h = wp->w_height + wp->w_winbar_height + wp->w_status_height;
+    *row += h > topfrp->fr_height ? topfrp->fr_height : h;
     *col += wp->w_width + wp->w_vsep_width;
   } else {
     startrow = *row;
@@ -5088,12 +5096,15 @@ void win_setheight(int height)
 void win_setheight_win(int height, win_T *win)
 {
   if (win == curwin) {
-    /* Always keep current window at least one line high, even when
-     * 'winminheight' is zero. */
-    if (height < p_wmh)
+    // Always keep current window at least one line high, even when
+    // 'winminheight' is zero.
+    if (height < p_wmh) {
       height = p_wmh;
-    if (height == 0)
+    }
+    if (height == 0) {
       height = 1;
+    }
+    height += curwin->w_winbar_height;
   }
 
   if (win->w_floating) {
@@ -5190,7 +5201,7 @@ static void frame_setheight(frame_T *curfrp, int height)
       } else {
         win_T *wp = lastwin_nofloating();
         room_cmdline = Rows - p_ch - (wp->w_winrow
-                                      + wp->w_height +
+                                      + wp->w_height + wp->w_winbar_height +
                                       wp->w_status_height);
         if (room_cmdline < 0) {
           room_cmdline = 0;
