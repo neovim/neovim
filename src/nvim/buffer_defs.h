@@ -543,6 +543,8 @@ struct file_buffer {
   long b_mtime_read;            // last change time when reading
   uint64_t b_orig_size;         // size of original file in bytes
   int b_orig_mode;              // mode of original file
+  time_t b_last_used;           // time when the buffer was last used; used
+                                // for viminfo
 
   fmark_T b_namedm[NMARKS];     // current named marks (mark.c)
 

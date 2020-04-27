@@ -7241,6 +7241,8 @@ dict_T *get_buffer_info(buf_T *buf)
     tv_dict_add_list(dict, S_LEN("signs"), get_buffer_signs(buf));
   }
 
+  tv_dict_add_nr(dict, S_LEN("lastused"), buf->b_last_used);
+
   return dict;
 }
 

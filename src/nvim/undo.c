@@ -2441,10 +2441,11 @@ static void u_undo_end(
     uhp = curbuf->b_u_newhead;
   }
 
-  if (uhp == NULL)
+  if (uhp == NULL) {
     *msgbuf = NUL;
-  else
-    u_add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
+  } else {
+    add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
+  }
 
   {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2509,8 +2510,8 @@ void ex_undolist(exarg_T *eap)
         && uhp->uh_walk != mark) {
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ",
                    uhp->uh_seq, changes);
-      u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
-          uhp->uh_time);
+      add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
+               uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (STRLEN(IObuff) < 33)
           STRCAT(IObuff, " ");
@@ -2571,30 +2572,6 @@ void ex_undolist(exarg_T *eap)
     msg_end();
 
     ga_clear_strings(&ga);
-  }
-}
-
-/*
- * Put the timestamp of an undo header in "buf[buflen]" in a nice format.
- */
-static void u_add_time(char_u *buf, size_t buflen, time_t tt)
-{
-  struct tm curtime;
-
-  if (time(NULL) - tt >= 100) {
-    os_localtime_r(&tt, &curtime);
-    if (time(NULL) - tt < (60L * 60L * 12L))
-      /* within 12 hours */
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
-    else
-      /* longer ago */
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-  } else {
-    int64_t seconds = time(NULL) - tt;
-    vim_snprintf((char *)buf, buflen,
-                 NGETTEXT("%" PRId64 " second ago",
-                          "%" PRId64 " seconds ago", (uint32_t)seconds),
-                 seconds);
   }
 }
 

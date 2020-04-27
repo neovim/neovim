@@ -755,3 +755,49 @@ func Test_cmdwin_feedkeys()
   " This should not generate E488
   call feedkeys("q:\<CR>", 'x')
 endfunc
+
+func Test_buffers_lastused()
+  " check that buffers are sorted by time when wildmode has lastused
+  edit bufc " oldest
+
+  sleep 1200m
+  enew
+  edit bufa " middle
+
+  sleep 1200m
+  enew
+  edit bufb " newest
+
+  enew
+
+  call assert_equal(['bufc', 'bufa', 'bufb'],
+	\ getcompletion('', 'buffer'))
+
+  let save_wildmode = &wildmode
+  set wildmode=full:lastused
+
+  let cap = "\<c-r>=execute('let X=getcmdline()')\<cr>"
+  call feedkeys(":b \<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufb', X)
+  call feedkeys(":b \<tab>\<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufa', X)
+  call feedkeys(":b \<tab>\<tab>\<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufc', X)
+  enew
+
+  sleep 1200m
+  edit other
+  call feedkeys(":b \<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufb', X)
+  call feedkeys(":b \<tab>\<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufa', X)
+  call feedkeys(":b \<tab>\<tab>\<tab>" .. cap .. "\<esc>", 'xt')
+  call assert_equal('b bufc', X)
+  enew
+
+  let &wildmode = save_wildmode
+
+  bwipeout bufa
+  bwipeout bufb
+  bwipeout bufc
+endfunc

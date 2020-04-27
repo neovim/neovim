@@ -6988,6 +6988,8 @@ static int check_opt_wim(void)
       new_wim_flags[idx] |= WIM_FULL;
     } else if (i == 4 && STRNCMP(p, "list", 4) == 0) {
       new_wim_flags[idx] |= WIM_LIST;
+    } else if (i == 8 && STRNCMP(p, "lastused", 8) == 0) {
+      new_wim_flags[idx] |= WIM_BUFLASTUSED;
     } else {
       return FAIL;
     }

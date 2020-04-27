@@ -1618,6 +1618,7 @@ void enter_buffer(buf_T *buf)
   if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     (void)did_set_spelllang(curwin);
   }
+  curbuf->b_last_used = time(NULL);
 
   redraw_later(NOT_VALID);
 }
@@ -2250,6 +2251,23 @@ int buflist_findpat(
   return match;
 }
 
+typedef struct {
+    buf_T   *buf;
+    char_u  *match;
+} bufmatch_T;
+
+/// Compare functions for qsort() below, that compares b_last_used.
+static int
+buf_time_compare(const void *s1, const void *s2)
+{
+  buf_T *buf1 = *(buf_T **)s1;
+  buf_T *buf2 = *(buf_T **)s2;
+
+  if (buf1->b_last_used == buf2->b_last_used) {
+    return 0;
+  }
+  return buf1->b_last_used > buf2->b_last_used ? -1 : 1;
+}
 
 /*
  * Find all buffer names that match.
@@ -2263,6 +2281,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   char_u      *p;
   int attempt;
   char_u      *patc;
+  bufmatch_T  *matches = NULL;
 
   *num_file = 0;                    // return values in case of FAIL
   *file = NULL;
@@ -2313,7 +2332,13 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
             } else {
               p = vim_strsave(p);
             }
-            (*file)[count++] = p;
+            if (matches != NULL) {
+              matches[count].buf = buf;
+              matches[count].match = p;
+              count++;
+            } else {
+              (*file)[count++] = p;
+            }
           }
         }
       }
@@ -2322,6 +2347,10 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       }
       if (round == 1) {
         *file = xmalloc((size_t)count * sizeof(**file));
+
+        if (options & WILD_BUFLASTUSED) {
+          matches = xmalloc((size_t)count * sizeof(*matches));
+        }
       }
     }
     vim_regfree(regmatch.regprog);
@@ -2332,6 +2361,25 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 
   if (patc != pat) {
     xfree(patc);
+  }
+
+  if (matches != NULL) {
+    if (count > 1) {
+      qsort(matches, (size_t)count, sizeof(bufmatch_T), buf_time_compare);
+    }
+
+    // if the current buffer is first in the list, place it at the end
+    if (matches[0].buf == curbuf) {
+      for (int i = 1; i < count; i++) {
+        (*file)[i-1] = matches[i].match;
+      }
+      (*file)[count-1] = matches[0].match;
+    } else {
+      for (int i = 0; i < count; i++) {
+        (*file)[i] = matches[i].match;
+      }
+    }
+    xfree(matches);
   }
 
   *num_file = count;
@@ -2594,11 +2642,35 @@ linenr_T buflist_findlnum(buf_T *buf)
 // List all known file names (for :files and :buffers command).
 void buflist_list(exarg_T *eap)
 {
-  buf_T       *buf;
+  buf_T       *buf = firstbuf;
   int len;
   int i;
 
-  for (buf = firstbuf; buf != NULL && !got_int; buf = buf->b_next) {
+  garray_T buflist;
+  buf_T **buflist_data = NULL, **p;
+
+  if (vim_strchr(eap->arg, 't')) {
+    ga_init(&buflist, sizeof(buf_T *), 50);
+    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+      ga_grow(&buflist, 1);
+      ((buf_T **)buflist.ga_data)[buflist.ga_len++] = buf;
+    }
+
+    qsort(buflist.ga_data, (size_t)buflist.ga_len,
+          sizeof(buf_T *), buf_time_compare);
+
+    p = buflist_data = (buf_T **)buflist.ga_data;
+    buf = *p;
+  }
+
+  for (;
+       buf != NULL && !got_int;
+       buf = buflist_data
+       ? (++p < buflist_data + buflist.ga_len ? *p : NULL)
+       : buf->b_next) {
+    const bool is_terminal = buf->terminal;
+    const bool job_running = buf->terminal && terminal_running(buf->terminal);
+
     // skip unspecified buffers
     if ((!buf->b_p_bl && !eap->forceit && !strchr((char *)eap->arg, 'u'))
         || (strchr((char *)eap->arg, 'u') && buf->b_p_bl)
@@ -2608,6 +2680,8 @@ void buflist_list(exarg_T *eap)
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
         || (strchr((char *)eap->arg, 'h')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
+        || (strchr((char *)eap->arg, 'R') && (!is_terminal || !job_running))
+        || (strchr((char *)eap->arg, 'F') && (!is_terminal || job_running))
         || (strchr((char *)eap->arg, '-') && buf->b_p_ma)
         || (strchr((char *)eap->arg, '=') && !buf->b_p_ro)
         || (strchr((char *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))
@@ -2654,12 +2728,21 @@ void buflist_list(exarg_T *eap)
     do {
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
-    vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
-        _("line %" PRId64),
-        buf == curbuf ? (int64_t)curwin->w_cursor.lnum
-                      : (int64_t)buflist_findlnum(buf));
+    if (vim_strchr(eap->arg, 't') && buf->b_last_used) {
+      add_time(IObuff + len, (size_t)(IOSIZE - len), buf->b_last_used);
+    } else {
+      vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
+                   _("line %" PRId64),
+                   buf == curbuf ? (int64_t)curwin->w_cursor.lnum
+                   : (int64_t)buflist_findlnum(buf));
+    }
+
     msg_outtrans(IObuff);
     line_breakcheck();
+  }
+
+  if (buflist_data) {
+    ga_clear(&buflist);
   }
 }
 
