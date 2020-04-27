@@ -56,6 +56,7 @@
 #include "nvim/regexp.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"

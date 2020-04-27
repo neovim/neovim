@@ -248,6 +248,9 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 
 # define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
 
+// Character used as separated in autoload function/variable names.
+#define AUTOLOAD_CHAR '#'
+
 #include "nvim/message.h"
 
 // Prefer using emsgf(), because perror() may send the output to the wrong
@@ -256,6 +259,8 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 #define STL_MAX_ITEM 80                 // max nr of %<flag> in statusline
+
+#include "nvim/path.h"
 
 /// Compare file names
 ///

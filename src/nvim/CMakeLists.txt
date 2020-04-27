@@ -151,6 +151,7 @@ set(CONV_SOURCES
   edit.c
   eval.c
   eval/funcs.c
+  eval/userfunc.c
   ex_cmds.c
   ex_docmd.c
   fileio.c

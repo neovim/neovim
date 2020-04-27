@@ -15,6 +15,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/types.h"
 #include "nvim/assert.h"
 #include "nvim/memory.h"
