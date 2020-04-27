@@ -1216,7 +1216,7 @@ void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
   alloc_typebuf();
-  tp->typebuf_valid = TRUE;
+  tp->typebuf_valid = true;
   tp->old_char = old_char;
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;

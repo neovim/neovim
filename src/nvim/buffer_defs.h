@@ -334,7 +334,7 @@ typedef struct {
 // Struct to hold the saved typeahead for save_typeahead().
 typedef struct {
   typebuf_T save_typebuf;
-  int typebuf_valid;                        // TRUE when save_typebuf valid
+  bool typebuf_valid;                       // true when save_typebuf valid
   int old_char;
   int old_mod_mask;
   buffheader_T save_readbuf1;
@@ -1062,6 +1062,48 @@ typedef struct
   pos_T w_cursor_corr;  // corrected cursor position
 } pos_save_T;
 
+/// Indices into vimmenu_T->strings[] and vimmenu_T->noremap[] for each mode
+/// \addtogroup MENU_INDEX
+/// @{
+enum {
+  MENU_INDEX_INVALID      = -1,
+  MENU_INDEX_NORMAL       =  0,
+  MENU_INDEX_VISUAL       =  1,
+  MENU_INDEX_SELECT       =  2,
+  MENU_INDEX_OP_PENDING   =  3,
+  MENU_INDEX_INSERT       =  4,
+  MENU_INDEX_CMDLINE      =  5,
+  MENU_INDEX_TIP          =  6,
+  MENU_MODES              =  7,
+};
+
+typedef struct VimMenu vimmenu_T;
+
+struct VimMenu {
+  int modes;                         ///< Which modes is this menu visible for
+  int enabled;                       ///< for which modes the menu is enabled
+  char_u      *name;                 ///< Name of menu, possibly translated
+  char_u      *dname;                ///< Displayed Name ("name" without '&')
+  char_u      *en_name;              ///< "name" untranslated, NULL when
+                                     ///< was not translated
+  char_u      *en_dname;             ///< NULL when "dname" untranslated
+  int mnemonic;                      ///< mnemonic key (after '&')
+  char_u      *actext;               ///< accelerator text (after TAB)
+  long priority;                     ///< Menu order priority
+  char_u      *strings[MENU_MODES];  ///< Mapped string for each mode
+  int noremap[MENU_MODES];           ///< A \ref REMAP_VALUES flag for each mode
+  bool silent[MENU_MODES];           ///< A silent flag for each mode
+  vimmenu_T   *children;             ///< Children of sub-menu
+  vimmenu_T   *parent;               ///< Parent of menu
+  vimmenu_T   *next;                 ///< Next item in menu
+};
+
+typedef struct {
+  int wb_startcol;
+  int wb_endcol;
+  vimmenu_T *wb_menu;
+} winbar_item_T;
+
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1163,7 +1205,7 @@ struct window_S {
   //
   int w_winrow;                     // first row of window in screen
   int w_height;                     // number of rows in window, excluding
-                                    // status/command line(s)
+                                    // status/command/winbar line(s)
   int w_status_height;              // number of status lines (0 or 1)
   int w_wincol;                     // Leftmost column of window in screen.
   int w_width;                      // Width of window, excluding separation.
@@ -1271,13 +1313,15 @@ struct window_S {
 
   char_u      *w_localdir;          /* absolute path of local directory or
                                        NULL */
-  /*
-   * Options local to a window.
-   * They are local because they influence the layout of the window or
-   * depend on the window layout.
-   * There are two values: w_onebuf_opt is local to the buffer currently in
-   * this window, w_allbuf_opt is for all buffers in this window.
-   */
+  vimmenu_T *w_winbar;            // The root of the WinBar menu hierarchy.
+  winbar_item_T *w_winbar_items;  // list of items in the WinBar
+  int w_winbar_height;            // 1 if there is a window toolbar
+
+  // Options local to a window.
+  // They are local because they influence the layout of the window or
+  // depend on the window layout.
+  // There are two values: w_onebuf_opt is local to the buffer currently in
+  // this window, w_allbuf_opt is for all buffers in this window.
   winopt_T w_onebuf_opt;
   winopt_T w_allbuf_opt;
 
