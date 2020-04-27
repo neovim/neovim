@@ -817,6 +817,62 @@ describe('LSP', function()
     end)
   end)
 
+  describe('apply_text_document_edit', function()
+    before_each(function()
+      insert(dedent([[
+        First line of text
+        Second line of text]]))
+    end)
+    it('correctly goes ahead with the edit when all is normal', function()
+      local text_document_edit = {
+        edits = {
+          make_edit(0, 0, 0, 0, "hi")
+        },
+        textDocument = {
+          uri = "file://fake/uri";
+          version = 5
+        }
+      }
+      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      eq({
+        'hiline of text';
+        'Second line of text';
+      }, buf_lines(1))
+    end)
+    it('correctly goes ahead with the edit whe the version is nil', function()
+      local text_document_edit = {
+        edits = {
+          make_edit(0, 0, 0, 0, "hi")
+        },
+        textDocument = {
+          uri = "file://fake/uri";
+          version = vim.NIL
+        }
+      }
+      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      eq({
+        'hiline of text';
+        'Second line of text';
+      }, buf_lines(1))
+    end)
+    it('skips the edit if the version of the edit is behind the local buffer ', function()
+      local text_document_edit = {
+        edits = {
+          make_edit(0, 0, 0, 0, "hi")
+        },
+        textDocument = {
+          uri = "file://fake/uri";
+          version = 1
+        }
+      }
+      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      eq({
+        'First line of text';
+        'Second line of text';
+      }, buf_lines(1))
+    end)
+  end)
+
   describe('completion_list_to_complete_items', function()
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
