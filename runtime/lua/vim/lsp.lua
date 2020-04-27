@@ -1018,7 +1018,7 @@ function lsp.get_log_path()
 end
 
 local function define_default_sign(name, properties)
-  if not vim.fn.sign_getdefined(name) then
+  if #vim.fn.sign_getdefined(name) == 0 then
     vim.fn.sign_define(name, properties)
   end
 end
