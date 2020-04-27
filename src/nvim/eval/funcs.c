@@ -8489,6 +8489,7 @@ static void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   xfree(linehl);
   xfree(text);
   xfree(texthl);
+  xfree(numhl);
 }
 
 /// "sign_getdefined()" function
