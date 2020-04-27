@@ -237,6 +237,12 @@ for i = 1, #functions do
             (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
+        if rt:match('^Float$') then
+          -- accept integers for Floats
+          output:write('\n  } else if (args.items['..
+            (j - 1)..'].type == kObjectTypeInteger) {')
+          output:write('\n    '..converted..' = (Float)args.items['..(j - 1)..'].data.integer;')
+        end
         -- accept empty lua tables as empty dictionarys
         if rt:match('^Dictionary') then
           output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631

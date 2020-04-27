@@ -979,9 +979,9 @@ func Test_CompleteChanged()
   call cursor(4, 1)
 
   call feedkeys("Sf\<C-N>", 'tx')
-  call assert_equal({'completed_item': {}, 'width': 15,
-        \ 'height': 2, 'size': 2,
-        \ 'col': 0, 'row': 4, 'scrollbar': v:false}, g:event)
+  call assert_equal({'completed_item': {}, 'width': 15.0,
+        \ 'height': 2.0, 'size': 2,
+        \ 'col': 0.0, 'row': 4.0, 'scrollbar': v:false}, g:event)
   call feedkeys("a\<C-N>\<C-N>\<C-E>", 'tx')
   call assert_equal('foo', g:word)
   call feedkeys("a\<C-N>\<C-N>\<C-N>\<C-E>", 'tx')
@@ -1009,10 +1009,10 @@ func Test_pum_getpos()
   setlocal completefunc=UserDefinedComplete
 
    let d = {
-    \   'height':    5,
-    \   'width':     15,
-    \   'row':       1,
-    \   'col':       0,
+    \   'height':    5.0,
+    \   'width':     15.0,
+    \   'row':       1.0,
+    \   'col':       0.0,
     \   'size':      5,
     \   'scrollbar': v:false,
     \ }

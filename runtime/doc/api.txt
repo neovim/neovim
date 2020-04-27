@@ -2341,6 +2341,22 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
                 Parameters: ~
                     {height}  Popupmenu height, must be greater than zero.
 
+                                                    *nvim_ui_pum_set_bounds()*
+nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
+
+                Tells Nvim the geometry of the popumenu, to align floating 
+		windows with an external popup menu. Note that this method
+		is not to be confused with |nvim_ui_pum_set_height()|, which
+		sets the number of visible items in the popup menu, while
+		this function sets the bounding box of the popup menu, 
+		including visual decorations such as boarders and sliders.
+
+                Parameters: ~
+                    {width}   Popupmenu width.
+                    {height}  Popupmenu height.
+                    {row}     Popupmenu row.
+                    {height}  Popupmenu height.
+
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation
 

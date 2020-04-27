@@ -8,7 +8,7 @@ local command = helpers.command
 local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
-local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -382,7 +382,7 @@ describe('ui/ext_popupmenu', function()
   end
 
   describe('pum_set_height', function()
-    it('can be set pum height', function()
+    it('can set pum height', function()
       source_complete_month()
       local month_expected = {
         {'January', '', '', ''},
@@ -421,22 +421,79 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('an error occurs if set 0 or less', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, true)
-      ok, err = pcall(meths.ui_pum_set_height, 0)
-      eq(ok, false)
-      matches('.*: Expected pum height > 0', err)
+      meths.ui_pum_set_height(1)
+      eq('Expected pum height > 0',
+         pcall_err(meths.ui_pum_set_height, 0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, true)
+      meths.ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      ok, err = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, false)
-      matches('.*: It must support the ext_popupmenu option', err)
+      eq('It must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_height, 1))
+    end)
+  end)
+
+  describe('pum_set_bounds', function()
+    it('can set pum bounds', function()
+      source_complete_month()
+      local month_expected = {
+        {'January', '', '', ''},
+        {'February', '', '', ''},
+        {'March', '', '', ''},
+        {'April', '', '', ''},
+        {'May', '', '', ''},
+        {'June', '', '', ''},
+        {'July', '', '', ''},
+        {'August', '', '', ''},
+        {'September', '', '', ''},
+        {'October', '', '', ''},
+        {'November', '', '', ''},
+        {'December', '', '', ''},
+      }
+      local pum_height = 6
+      feed('o<C-r>=TestCompleteMonth()<CR>')
+      meths.ui_pum_set_height(pum_height)
+      -- set bounds w h r c
+      meths.ui_pum_set_bounds(10.5, 5.2, 6.3, 7.4)
+      feed('<PageDown>')
+      -- pos becomes pum_height-2 because it is subtracting 2 to keep some
+      -- context in ins_compl_key2count()
+      screen:expect{grid=[[
+                                                                  |
+      January^                                                     |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+      ]], popupmenu={
+        items=month_expected,
+        pos=pum_height-2,
+        anchor={1,1,0},
+      }}
+    end)
+
+    it('no error occurs if row or col set less than 0', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      meths.ui_pum_set_bounds(1.0, 1.0, -1.0, 0.0)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, -1.0)
+    end)
+
+    it('an error occurs if width or height set 0 or less', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      eq('Expected width > 0',
+         pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
+      eq('Expected height > 0',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
+    end)
+
+    it('an error occurs when ext_popupmenu is false', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      screen:set_option('ext_popupmenu', false)
+      eq('UI must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5))
     end)
   end)
 
