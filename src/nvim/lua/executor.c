@@ -27,6 +27,7 @@
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
 #include "nvim/change.h"
+#include "nvim/eval/userfunc.h"
 
 #ifdef WIN32
 #include "nvim/os/os.h"

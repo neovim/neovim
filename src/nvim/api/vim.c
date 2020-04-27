@@ -36,6 +36,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/fileio.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
