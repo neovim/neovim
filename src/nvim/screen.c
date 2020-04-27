@@ -1450,8 +1450,11 @@ static void win_update(win_T *wp)
        */
       // TODO(teto): add an option to control wether to call fold_line ?
       // TODO pass only the outer fold
-      garray_T results = GA_EMPTY_INIT_VALUE;
-      getFolds(&wp->w_folds, lnum, &results);
+      // garray_T results = GA_EMPTY_INIT_VALUE;
+      // ga_init(&results, sizeof(fold_T *), 32);
+      // this function might be broken
+      // getFolds(&wp->w_folds, lnum, &results);
+
       fold_count = foldedCount(wp, lnum, &win_foldinfo);
       if (fold_count != 0) {
         fold_line(wp, fold_count, &win_foldinfo, lnum, row);
@@ -1480,12 +1483,16 @@ static void win_update(win_T *wp)
 
         // Display one line.
         // TODO pass possible fold
-        ILOG("win_line called with #folds %d", results.ga_len );
+        fold_T *fp = NULL;
+        bool fold_found = foldFind(&wp->w_folds, lnum, &fp);
+        // ILOG("win_line called with folds ? %d ");
+
         row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false,
                        // pass the outer fold
                        // should be fine as long as we dont have nested inline
                        // folds
-                       (results.ga_len > 0) ? &((fold_T *)(results.ga_data))[0] : NULL
+                       // (results.ga_len > 0) ? &((fold_T *)(results.ga_data))[0] : NULL
+                       (fold_found) ? fp : NULL
                        );
 
         wp->w_lines[idx].wl_folded = FALSE;
@@ -2198,12 +2205,13 @@ fill_foldcolumn(
 
 
 /// Display line "lnum" of window 'wp' on the screen.
-/// Start at row "startrow", stop when "endrow" is reached.
 /// wp->w_virtcol needs to be valid.
 ///
+/// @param lnum line to display
 /// @param number_only only update the number column
 /// @param fp only update the number column
-///
+/// 
+/// Start at row "startrow", stop when "endrow" is reached.
 /// @return the number of last row the line occupies.
 static int
 win_line (
@@ -2332,7 +2340,6 @@ win_line (
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
-  // int conceal_attr    = 
   int is_concealing   = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
@@ -2850,7 +2857,7 @@ win_line (
   // Repeat for the whole displayed line.
   for (;; ) {
     int has_match_conc = 0;  ///< match wants to conceal
-    int has_match_fold = 0;  ///< when inline fold
+    // int has_match_fold = 0;  ///< when inline fold
     bool did_decrement_ptr = false;
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
@@ -3912,20 +3919,29 @@ win_line (
       // deal with conceal
       // MAY CRASH if used with conceal etc
       // TODO understand how conceal can print several characters
-      if (fp != NULL) {
+      if (fp != NULL && fp->fd_flags == FD_CLOSED) {
           // && (fp->
           //     || conceal_cursor_line(wp))
           // && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
           // && !(lnum_in_visual_area
           //      && vim_strchr(wp->w_p_cocu, 'v') == NULL)
 
-        ILOG("looking for %lu ", fp->fd_mark_id);
+        // ILOG("looking for mark id %lu ", fp->fd_mark_id);
         ExtmarkInfo mark = extmark_from_id(wp->w_buffer, fold_init(), fp->fd_mark_id);
-        ILOG("FP mark id %lu col %d vs mark.col %d", mark.mark_id, col, mark.col );
+        bool inline_fold = mark.row == mark.end_row;
+
+        // ILOG("FP mark id %lu ", mark.mark_id);
+        ILOG("FP: fold start %ld", fp->fd_top);
+        ILOG("FP vcol/col %ld/%d vs mark.col %d / end_col %d (inline fold %d)",
+             vcol, col, mark.col, mark.end_col, inline_fold);
         // check cols
         // mark.end_col
         // check for && mark.endcol if endline
-        if (mark.col >= col) {
+        // TODO display inline
+        if ((vcol < grid->Columns)
+            && ((inline_fold && mark.col <= vcol && vcol < mark.end_col)
+                || (!inline_fold && mark.col <= vcol))
+        ) {
         char_attr = win_hl_attr(wp, HLF_FL);
         // if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
         //     && (syn_get_sub_char() != NUL || match_conc || wp->w_p_cole == 1)
@@ -3970,7 +3986,7 @@ win_line (
         prev_syntax_id = 0;
         is_concealing = FALSE;
       }
-      } // if mark.col
+      } // if fp present
 
       if (n_skip > 0 && did_decrement_ptr) {
         // not showing the '>', put pointer back to avoid getting stuck

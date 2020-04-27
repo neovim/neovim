@@ -33,12 +33,17 @@ typedef struct {
                                 // relative to parent
   linenr_T fd_len;              // number of lines in the fold
   garray_T fd_nested;           // array of nested folds
-  char fd_flags;                // see below
+  char fd_flags;                // see below kFoldState FD_OPEN/FD_CLOSED
   TriState fd_small;            // kTrue, kFalse, or kNone: fold smaller than
                                 // 'foldminlines'; kNone applies to nested
                                 // folds too
   uint64_t fd_mark_id;            // Extmark ID associated to the fold
 } fold_T;
+
+#define FD_OPEN         0       /* fold is open (nested ones can be closed) */
+#define FD_CLOSED       1       /* fold is closed */
+#define FD_LEVEL        2       /* depends on 'foldlevel' (nested folds too) */
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"

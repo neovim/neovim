@@ -43,10 +43,6 @@
 /* local declarations. {{{1 */
 /* typedef fold_T {{{2 */
 
-#define FD_OPEN         0       /* fold is open (nested ones can be closed) */
-#define FD_CLOSED       1       /* fold is closed */
-#define FD_LEVEL        2       /* depends on 'foldlevel' (nested folds too) */
-
 #define MAX_LEVEL       20      /* maximum fold depth */
 
 /* Define "fline_T", passed to get fold level for a line. {{{2 */
@@ -131,6 +127,7 @@ void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
     }
     assert(fp != 0);
     GA_APPEND(fold_T *, out, fp);
+    // this is tricky ?!
     gap = &fp->fd_nested;
     lnum_rel -= fp->fd_top;
     level++;
