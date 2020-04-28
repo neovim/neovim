@@ -48,8 +48,7 @@ local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
 
 local function vimconv_alloc()
   return ffi.gc(
-    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
-    function(vc)
+    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))), function(vc)
       lib.convert_setup(vc, nil, nil)
       lib.xfree(vc)
     end)
@@ -2838,6 +2837,7 @@ describe('typval.c', function()
             {lib.VAR_FUNC, 'E729: using Funcref as a String'},
             {lib.VAR_LIST, 'E730: using List as a String'},
             {lib.VAR_DICT, 'E731: using Dictionary as a String'},
+            {lib.VAR_BOOL, nil},
             {lib.VAR_SPECIAL, nil},
             {lib.VAR_UNKNOWN, 'E908: using an invalid value as a String'},
           }) do
@@ -2868,8 +2868,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2897,8 +2897,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2931,8 +2931,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', -1},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', -1},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
           }) do
             lib.curwin.w_cursor.lnum = 46
@@ -2961,8 +2961,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E893: Using a List as a Float', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E894: Using a Dictionary as a Float', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, 'E907: Using a special value as a Float', 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, 'E907: Using a special value as a Float', 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, 'E907: Using a special value as a Float', 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, 'E362: Using a boolean value as a Float', 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, 'E362: Using a boolean value as a Float', 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_float(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2993,8 +2993,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr in place of Neovim allocated string, cannot
@@ -3005,7 +3005,8 @@ describe('typval.c', function()
             local ret = v[4]
             eq(ret, check_emsg(function()
               local res = lib.tv_get_string(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3036,8 +3037,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3047,7 +3048,8 @@ describe('typval.c', function()
             local ret = v[4]
             eq(ret, check_emsg(function()
               local res = lib.tv_get_string_chk(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3077,8 +3079,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3089,7 +3091,8 @@ describe('typval.c', function()
             eq(ret, check_emsg(function()
               local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
               local res = lib.tv_get_string_buf(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3119,8 +3122,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3131,7 +3134,8 @@ describe('typval.c', function()
             eq(ret, check_emsg(function()
               local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
               local res = lib.tv_get_string_buf_chk(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)

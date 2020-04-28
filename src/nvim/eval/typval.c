@@ -1693,21 +1693,21 @@ int tv_dict_add_float(dict_T *const d, const char *const key,
   return OK;
 }
 
-/// Add a special entry to dictionary
+/// Add a boolean entry to dictionary
 ///
 /// @param[out]  d  Dictionary to add entry to.
 /// @param[in]  key  Key to add.
 /// @param[in]  key_len  Key length.
-/// @param[in]  val SpecialVarValue to add.
+/// @param[in]  val BoolVarValue to add.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_special(dict_T *const d, const char *const key,
-                        const size_t key_len, SpecialVarValue val)
+int tv_dict_add_bool(dict_T *const d, const char *const key,
+                     const size_t key_len, BoolVarValue val)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_type = VAR_SPECIAL;
-  item->di_tv.vval.v_special = val;
+  item->di_tv.v_type = VAR_BOOL;
+  item->di_tv.vval.v_bool = val;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
@@ -2013,12 +2013,15 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
     do { \
-      tv->vval.v_special = kSpecialVarFalse; \
+      tv->vval.v_special = kSpecialVarNull; \
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    TYPVAL_ENCODE_CONV_NIL(tv)
+    do { \
+      tv->vval.v_bool = kBoolVarFalse; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     do { \
@@ -2293,6 +2296,7 @@ void tv_free(typval_T *tv)
         tv_dict_unref(tv->vval.v_dict);
         break;
       }
+      case VAR_BOOL:
       case VAR_SPECIAL:
       case VAR_NUMBER:
       case VAR_FLOAT:
@@ -2324,6 +2328,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
   switch (from->v_type) {
     case VAR_NUMBER:
     case VAR_FLOAT:
+    case VAR_BOOL:
     case VAR_SPECIAL: {
       break;
     }
@@ -2425,6 +2430,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
     case VAR_STRING:
     case VAR_FUNC:
     case VAR_PARTIAL:
+    case VAR_BOOL:
     case VAR_SPECIAL: {
       break;
     }
@@ -2588,6 +2594,9 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
       const char *s2 = tv_get_string_buf(tv2, buf2);
       return mb_strcmp_ic((bool)ic, s1, s2) == 0;
     }
+    case VAR_BOOL: {
+      return tv1->vval.v_bool == tv2->vval.v_bool;
+    }
     case VAR_SPECIAL: {
       return tv1->vval.v_special == tv2->vval.v_special;
     }
@@ -2638,6 +2647,10 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       EMSG(_("E728: Expected a Number or a String, Dictionary found"));
       return false;
     }
+    case VAR_BOOL: {
+      EMSG(_("E5299: Expected a Number or a String, Boolean found"));
+      return false;
+    }
     case VAR_SPECIAL: {
       EMSG(_("E5300: Expected a Number or a String"));
       return false;
@@ -2677,6 +2690,7 @@ bool tv_check_num(const typval_T *const tv)
 {
   switch (tv->v_type) {
     case VAR_NUMBER:
+    case VAR_BOOL:
     case VAR_SPECIAL:
     case VAR_STRING: {
       return true;
@@ -2721,6 +2735,7 @@ bool tv_check_str(const typval_T *const tv)
 {
   switch (tv->v_type) {
     case VAR_NUMBER:
+    case VAR_BOOL:
     case VAR_SPECIAL:
     case VAR_STRING: {
       return true;
@@ -2791,8 +2806,11 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
       }
       return n;
     }
+    case VAR_BOOL: {
+      return tv->vval.v_bool == kBoolVarTrue ? 1 : 0;
+    }
     case VAR_SPECIAL: {
-      return tv->vval.v_special == kSpecialVarTrue ? 1 : 0;
+      return 0;
     }
     case VAR_UNKNOWN: {
       emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
@@ -2860,6 +2878,10 @@ float_T tv_get_float(const typval_T *const tv)
       EMSG(_("E894: Using a Dictionary as a Float"));
       break;
     }
+    case VAR_BOOL: {
+      EMSG(_("E362: Using a boolean value as a Float"));
+      break;
+    }
     case VAR_SPECIAL: {
       EMSG(_("E907: Using a special value as a Float"));
       break;
@@ -2896,6 +2918,10 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
         return (const char *)tv->vval.v_string;
       }
       return "";
+    }
+    case VAR_BOOL: {
+      STRCPY(buf, encode_bool_var_names[tv->vval.v_bool]);
+      return buf;
     }
     case VAR_SPECIAL: {
       STRCPY(buf, encode_special_var_names[tv->vval.v_special]);

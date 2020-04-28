@@ -432,8 +432,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
     // not readonly:
-    tv_dict_add_special(dict, S_LEN("abort"),
-                        s->gotesc ? kSpecialVarTrue : kSpecialVarFalse);
+    tv_dict_add_bool(dict, S_LEN("abort"),
+                     s->gotesc ? kBoolVarTrue : kBoolVarFalse);
     try_enter(&tstate);
     apply_autocmds(EVENT_CMDLINELEAVE, (char_u *)firstcbuf, (char_u *)firstcbuf,
                    false, curbuf);

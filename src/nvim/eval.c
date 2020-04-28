@@ -213,8 +213,8 @@ static struct vimvar {
   VV(VV_ERRORS,         "errors",           VAR_LIST, 0),
   VV(VV_MSGPACK_TYPES,  "msgpack_types",    VAR_DICT, VV_RO),
   VV(VV_EVENT,          "event",            VAR_DICT, VV_RO),
-  VV(VV_FALSE,          "false",            VAR_SPECIAL, VV_RO),
-  VV(VV_TRUE,           "true",             VAR_SPECIAL, VV_RO),
+  VV(VV_FALSE,          "false",            VAR_BOOL, VV_RO),
+  VV(VV_TRUE,           "true",             VAR_BOOL, VV_RO),
   VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
@@ -237,6 +237,7 @@ static struct vimvar {
 // shorthand
 #define vv_type         vv_di.di_tv.v_type
 #define vv_nr           vv_di.di_tv.vval.v_number
+#define vv_bool         vv_di.di_tv.vval.v_bool
 #define vv_special      vv_di.di_tv.vval.v_special
 #define vv_float        vv_di.di_tv.vval.v_float
 #define vv_str          vv_di.di_tv.vval.v_string
@@ -388,8 +389,8 @@ void eval_init(void)
   set_vim_var_nr(VV_TYPE_FLOAT,  VAR_TYPE_FLOAT);
   set_vim_var_nr(VV_TYPE_BOOL,   VAR_TYPE_BOOL);
 
-  set_vim_var_special(VV_FALSE, kSpecialVarFalse);
-  set_vim_var_special(VV_TRUE, kSpecialVarTrue);
+  set_vim_var_bool(VV_FALSE, kBoolVarFalse);
+  set_vim_var_bool(VV_TRUE, kBoolVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
@@ -4199,6 +4200,7 @@ eval_index(
       }
       return FAIL;
     }
+    case VAR_BOOL:
     case VAR_SPECIAL: {
       if (verbose) {
         EMSG(_("E909: Cannot index a special variable"));
@@ -4420,6 +4422,7 @@ eval_index(
         *rettv = var1;
         break;
       }
+      case VAR_BOOL:
       case VAR_SPECIAL:
       case VAR_FUNC:
       case VAR_FLOAT:
@@ -5273,6 +5276,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
       abort = set_ref_in_func(tv->vval.v_string, NULL, copyID);
       break;
     case VAR_UNKNOWN:
+    case VAR_BOOL:
     case VAR_SPECIAL:
     case VAR_FLOAT:
     case VAR_NUMBER:
@@ -5743,11 +5747,11 @@ int assert_bool(typval_T *argvars, bool is_true)
   if ((argvars[0].v_type != VAR_NUMBER
        || (tv_get_number_chk(&argvars[0], &error) == 0) == is_true
        || error)
-      && (argvars[0].v_type != VAR_SPECIAL
-          || (argvars[0].vval.v_special
-              != (SpecialVarValue) (is_true
-                                    ? kSpecialVarTrue
-                                    : kSpecialVarFalse)))) {
+      && (argvars[0].v_type != VAR_BOOL
+          || (argvars[0].vval.v_bool
+              != (BoolVarValue)(is_true
+                                ? kBoolVarTrue
+                                : kBoolVarFalse)))) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
                       (char_u *)(is_true ? "True" : "False"),
@@ -8049,6 +8053,17 @@ void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
   vimvars[idx].vv_nr = val;
 }
 
+/// Set boolean v: {true, false} to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_bool(const VimVarIndex idx, const BoolVarValue val)
+{
+  tv_clear(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_BOOL;
+  vimvars[idx].vv_bool = val;
+}
+
 /// Set special v: variable to the given value
 ///
 /// @param[in]  idx  Index of variable to set.
@@ -9143,6 +9158,7 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_FLOAT:
   case VAR_FUNC:
   case VAR_PARTIAL:
+  case VAR_BOOL:
   case VAR_SPECIAL:
     tv_copy(from, to);
     break;

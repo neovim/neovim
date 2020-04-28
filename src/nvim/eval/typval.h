@@ -91,10 +91,14 @@ typedef struct dict_watcher {
   bool busy;  // prevent recursion if the dict is changed in the callback
 } DictWatcher;
 
+/// Bool variable values
+typedef enum {
+  kBoolVarFalse,         ///< v:false
+  kBoolVarTrue,          ///< v:true
+} BoolVarValue;
+
 /// Special variable values
 typedef enum {
-  kSpecialVarFalse,  ///< v:false
-  kSpecialVarTrue,   ///< v:true
   kSpecialVarNull,   ///< v:null
 } SpecialVarValue;
 
@@ -114,6 +118,7 @@ typedef enum {
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
+  VAR_BOOL,         ///< true, false
   VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
                     ///< is used.
   VAR_PARTIAL,      ///< Partial, .v_partial is used.
@@ -125,6 +130,7 @@ typedef struct {
   VarLockStatus v_lock;  ///< Variable lock status.
   union typval_vval_union {
     varnumber_T v_number;  ///< Number, for VAR_NUMBER.
+    BoolVarValue v_bool;        ///< Bool value, for VAR_BOOL
     SpecialVarValue v_special;  ///< Special value, for VAR_SPECIAL.
     float_T v_float;  ///< Floating-point number, for VAR_FLOAT.
     char_u *v_string;  ///< String, for VAR_STRING and VAR_FUNC, can be NULL.

@@ -11,7 +11,7 @@ before_each(clear)
 
 describe('uniq()', function()
   it('errors out when processing special values', function()
-    eq('Vim(call):E907: Using a special value as a Float',
+    eq('Vim(call):E362: Using a boolean value as a Float',
        exc_exec('call uniq([v:true, v:false], "f")'))
   end)
 

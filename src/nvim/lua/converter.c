@@ -286,10 +286,10 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         break;
       }
       case LUA_TBOOLEAN: {
-        cur.tv->v_type = VAR_SPECIAL;
-        cur.tv->vval.v_special = (lua_toboolean(lstate, -1)
-                                  ? kSpecialVarTrue
-                                  : kSpecialVarFalse);
+        cur.tv->v_type = VAR_BOOL;
+        cur.tv->vval.v_bool = (lua_toboolean(lstate, -1)
+                               ? kBoolVarTrue
+                               : kBoolVarFalse);
         break;
       }
       case LUA_TSTRING: {

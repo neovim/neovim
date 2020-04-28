@@ -14,7 +14,7 @@ before_each(clear)
 
 describe('sort()', function()
   it('errors out when sorting special values', function()
-    eq('Vim(call):E907: Using a special value as a Float',
+    eq('Vim(call):E362: Using a boolean value as a Float',
        exc_exec('call sort([v:true, v:false], "f")'))
   end)
 
@@ -30,6 +30,7 @@ describe('sort()', function()
       errors[err] = true
     end
     eq({
+      ['E362: Using a boolean value as a Float']=true,
       ['E891: Using a Funcref as a Float']=true,
       ['E892: Using a String as a Float']=true,
       ['E893: Using a List as a Float']=true,

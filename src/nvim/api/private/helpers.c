@@ -1075,8 +1075,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeBoolean:
-      tv->v_type = VAR_SPECIAL;
-      tv->vval.v_special = obj.data.boolean? kSpecialVarTrue: kSpecialVarFalse;
+      tv->v_type = VAR_BOOL;
+      tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
       break;
 
     case kObjectTypeBuffer:

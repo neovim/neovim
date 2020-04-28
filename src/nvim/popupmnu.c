@@ -923,6 +923,6 @@ void pum_set_event_info(dict_T *dict)
   tv_dict_add_float(dict, S_LEN("row"), r);
   tv_dict_add_float(dict, S_LEN("col"), c);
   tv_dict_add_nr(dict, S_LEN("size"), pum_size);
-  tv_dict_add_special(dict, S_LEN("scrollbar"),
-                      pum_scrollbar ? kSpecialVarTrue : kSpecialVarFalse);
+  tv_dict_add_bool(dict, S_LEN("scrollbar"),
+                   pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
 }

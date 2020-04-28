@@ -136,11 +136,15 @@ local function typvalt2lua_tab_init()
     return
   end
   typvalt2lua_tab = {
+    [tonumber(eval.VAR_BOOL)] = function(t)
+      return ({
+        [tonumber(eval.kBoolVarFalse)] = false,
+        [tonumber(eval.kBoolVarTrue)] = true,
+      })[tonumber(t.vval.v_bool)]
+    end,
     [tonumber(eval.VAR_SPECIAL)] = function(t)
       return ({
-        [tonumber(eval.kSpecialVarFalse)] = false,
         [tonumber(eval.kSpecialVarNull)] = nil_value,
-        [tonumber(eval.kSpecialVarTrue)] = true,
       })[tonumber(t.vval.v_special)]
     end,
     [tonumber(eval.VAR_NUMBER)] = function(t)
@@ -349,8 +353,8 @@ lua2typvalt = function(l, processed)
       [null_list] = {'VAR_LIST', {v_list=ffi.cast('list_T*', nil)}},
       [null_dict] = {'VAR_DICT', {v_dict=ffi.cast('dict_T*', nil)}},
       [nil_value] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarNull}},
-      [true] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarTrue}},
-      [false] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarFalse}},
+      [true] = {'VAR_BOOL', {v_bool=eval.kBoolVarTrue}},
+      [false] = {'VAR_BOOL', {v_bool=eval.kBoolVarFalse}},
     }
 
     for k, v in pairs(special_vals) do
