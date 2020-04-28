@@ -1439,7 +1439,7 @@ func Test_edit_alt()
   call delete('XAltFile')
 endfunc
 
-func Test_leave_insert_autocmd()
+func Test_edit_InsertLeave()
   new
   au InsertLeave * let g:did_au = 1
   let g:did_au = 0
@@ -1467,6 +1467,21 @@ func Test_leave_insert_autocmd()
   bwipe!
   au! InsertLeave
   iunmap x
+endfunc
+
+func Test_edit_InsertLeave_undo()
+  new XtestUndo
+  set undofile
+  au InsertLeave * wall
+  exe "normal ofoo\<Esc>"
+  call assert_equal(2, line('$'))
+  normal u
+  call assert_equal(1, line('$'))
+
+  bwipe!
+  au! InsertLeave
+  call delete('XtestUndo')
+  set undofile&
 endfunc
 
 " Test for inserting characters using CTRL-V followed by a number.
