@@ -9129,7 +9129,8 @@ static int ins_apply_autocmds(event_T event)
 
   // If u_savesub() was called then we are not prepared to start
   // a new line.  Call u_save() with no contents to fix that.
-  if (tick != buf_get_changedtick(curbuf)) {
+  // Except when leaving Insert mode.
+  if (event != EVENT_INSERTLEAVE && tick != buf_get_changedtick(curbuf)) {
     u_save(curwin->w_cursor.lnum, (linenr_T)(curwin->w_cursor.lnum + 1));
   }
 
