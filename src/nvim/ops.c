@@ -2740,8 +2740,8 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   tv_dict_add_str(dict, S_LEN("regname"), buf);
 
   // Motion type: inclusive or exclusive.
-  tv_dict_add_special(dict, S_LEN("inclusive"),
-                      oap->inclusive ? kSpecialVarTrue : kSpecialVarFalse);
+  tv_dict_add_bool(dict, S_LEN("inclusive"),
+                   oap->inclusive ? kBoolVarTrue : kBoolVarFalse);
 
   // Kind of operation: yank, delete, change).
   buf[0] = (char)get_op_char(oap->op_type);
@@ -2749,8 +2749,8 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   tv_dict_add_str(dict, S_LEN("operator"), buf);
 
   // Selection type: visual or not.
-  tv_dict_add_special(dict, S_LEN("visual"),
-                      oap->is_VIsual ? kSpecialVarTrue : kSpecialVarFalse);
+  tv_dict_add_bool(dict, S_LEN("visual"),
+                   oap->is_VIsual ? kBoolVarTrue : kBoolVarFalse);
 
   tv_dict_set_keys_readonly(dict);
   textlock++;

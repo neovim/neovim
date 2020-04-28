@@ -34,10 +34,13 @@
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
 
+const char *const encode_bool_var_names[] = {
+  [kBoolVarTrue] = "true",
+  [kBoolVarFalse] = "false",
+};
+
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
-  [kSpecialVarTrue] = "true",
-  [kSpecialVarFalse] = "false",
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
