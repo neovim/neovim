@@ -421,7 +421,13 @@ function M.jump_to_location(location)
   local bufnr = vim.uri_to_bufnr(location.uri)
   -- Save position in jumplist
   vim.cmd "normal! m'"
-  -- TODO(ashkan) use tagfunc here to update tagstack.
+
+  -- Push a new item into tagstack
+  local items = {}
+  table.insert(items, {tagname=vim.fn.expand("<cword>"), from=vim.fn.getpos('.')})
+  vim.fn.settagstack(vim.fn.bufnr('%'), {items=items}, 't')
+
+  --- Jump to new location
   api.nvim_set_current_buf(bufnr)
   local row = location.range.start.line
   local col = location.range.start.character
