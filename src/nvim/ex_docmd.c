@@ -2476,8 +2476,11 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg)
     if (*eap->cmd == ';') {
       if (!eap->skip) {
         curwin->w_cursor.lnum = eap->line2;
-        // don't leave the cursor on an illegal line or column
-        check_cursor();
+        // Don't leave the cursor on an illegal line or column, but do
+        // accept zero as address, so 0;/PATTERN/ works correctly.
+        if (eap->line2 > 0) {
+          check_cursor();
+        }
       }
     } else if (*eap->cmd != ',') {
       break;
