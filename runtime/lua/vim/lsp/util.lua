@@ -240,6 +240,13 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       icase = 1,
       dup = 1,
       empty = 1,
+      user_data = {
+        nvim = {
+          lsp = {
+            completion_item = completion_item
+          }
+        }
+      },
     })
   end
 
