@@ -1,6 +1,7 @@
 " Tests for ":highlight" and highlighting.
 
 source view_util.vim
+source screendump.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash

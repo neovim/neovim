@@ -6,6 +6,9 @@ if !has('mksession')
   finish
 endif
 
+source shared.vim
+source term_util.vim
+
 func Test_mksession()
   tabnew
   let wrap_save = &wrap
