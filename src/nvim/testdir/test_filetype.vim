@@ -437,7 +437,7 @@ let s:filename_checks = {
     \ 'swiftgyb': ['file.swift.gyb'],
     \ 'sil': ['file.sil'],
     \ 'sysctl': ['/etc/sysctl.conf', '/etc/sysctl.d/file.conf'],
-    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.mount', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file', '/home/user/.config/systemd/user/some.d/mine.conf', '/home/user/.config/systemd/user/some.d/.#file'],
+    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.mount', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file', '/etc/systemd/system/.#otherfile', '/home/user/.config/systemd/user/some.d/mine.conf', '/home/user/.config/systemd/user/some.d/.#file', '/home/user/.config/systemd/user/.#otherfile'],
     \ 'systemverilog': ['file.sv', 'file.svh'],
     \ 'tags': ['tags'],
     \ 'tak': ['file.tak'],
