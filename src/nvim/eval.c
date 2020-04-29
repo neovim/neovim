@@ -5026,7 +5026,7 @@ bool garbage_collect(bool testing)
 
     // 3. Check if any funccal can be freed now.
     //    This may call us back recursively.
-    did_free = did_free || free_unref_funccal(copyID, testing);
+    did_free = free_unref_funccal(copyID, testing) || did_free;
   } else if (p_verbose > 0) {
     verb_msg(_(
         "Not enough memory to set references, garbage collection aborted!"));
