@@ -1024,10 +1024,10 @@ do
       vim.fn.sign_define(name, properties)
     end
   end
-  define_default_sign('LspDiagnosticsErrorSign', {text='E', texthl='LspDiagnosticsError', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsWarningSign', {text='W', texthl='LspDiagnosticsWarning', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsInformationSign', {text='I', texthl='LspDiagnosticsInformation', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsHintSign', {text='H', texthl='LspDiagnosticsHint', linehl='', numhl=''})
+  define_default_sign('LspDiagnosticsErrorSign', {text='E', texthl='LspDiagnosticsErrorSign', linehl='', numhl=''})
+  define_default_sign('LspDiagnosticsWarningSign', {text='W', texthl='LspDiagnosticsWarningSign', linehl='', numhl=''})
+  define_default_sign('LspDiagnosticsInformationSign', {text='I', texthl='LspDiagnosticsInformationSign', linehl='', numhl=''})
+  define_default_sign('LspDiagnosticsHintSign', {text='H', texthl='LspDiagnosticsHintSign', linehl='', numhl=''})
 end
 
 return lsp

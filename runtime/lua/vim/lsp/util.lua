@@ -672,6 +672,7 @@ do
       table.insert(cmd_parts, k.."="..v)
     end
     api.nvim_command(table.concat(cmd_parts, ' '))
+    api.nvim_command('highlight link ' .. highlight_name .. 'Sign ' .. highlight_name)
     severity_highlights[severity] = highlight_name
   end
 
