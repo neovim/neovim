@@ -98,11 +98,6 @@ func GetAllocId(name)
   return lnum - top - 1
 endfunc
 
-func CanRunVimInTerminal()
-  " Nvim: always false, we use Lua screen-tests instead.
-  return 0
-endfunc
-
 func RunTheTest(test)
   echo 'Executing ' . a:test
 

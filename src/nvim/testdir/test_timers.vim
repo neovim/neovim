@@ -5,7 +5,7 @@ if !has('timers')
 endif
 
 source shared.vim
-source screendump.vim
+source term_util.vim
 source load.vim
 
 func MyHandler(timer)
