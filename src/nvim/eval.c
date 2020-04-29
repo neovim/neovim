@@ -1838,12 +1838,15 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
       int opt_type;
       long numval;
       char *stringval = NULL;
+      const char *s = NULL;
 
       const char c1 = *p;
       *p = NUL;
 
       varnumber_T n = tv_get_number(tv);
-      const char *s = tv_get_string_chk(tv);  // != NULL if number or string.
+      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+        s = tv_get_string_chk(tv);  // != NULL if number or string.
+      }
       if (s != NULL && op != NULL && *op != '=') {
         opt_type = get_option_value(arg, &numval, (char_u **)&stringval,
                                     opt_flags);
@@ -1869,7 +1872,8 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
           }
         }
       }
-      if (s != NULL) {
+      if (s != NULL || tv->v_type == VAR_BOOL
+          || tv->v_type == VAR_SPECIAL) {
         set_option_value((const char *)arg, n, s, opt_flags);
         arg_end = (char_u *)p;
       }
