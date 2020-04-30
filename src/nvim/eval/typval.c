@@ -1429,6 +1429,23 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
   return TV_DICT_HI2DI(hi);
 }
 
+/// Get a typval item from a dictionary and copy it into "rettv".
+///
+/// @param[in]  d  Dictionary to check.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  rettv  Return value.
+/// @return OK in case of success or FAIL if nothing was found.
+int tv_dict_get_tv(dict_T *d, const char *const key, typval_T *rettv)
+{
+  dictitem_T *const di = tv_dict_find(d, key, -1);
+  if (di == NULL) {
+    return FAIL;
+  }
+
+  tv_copy(&di->di_tv, rettv);
+  return OK;
+}
+
 /// Get a number item from a dictionary
 ///
 /// Returns 0 if the entry does not exist.
@@ -1584,6 +1601,26 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
+  }
+  return OK;
+}
+
+/// Add a typval entry to dictionary.
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+///
+/// @return FAIL if out of memory or key already exists.
+int tv_dict_add_tv(dict_T *d, const char *key, const size_t key_len,
+                   typval_T *tv)
+{
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
+
+  tv_copy(tv, &item->di_tv);
+  if (tv_dict_add(d, item) == FAIL) {
+      tv_dict_item_free(item);
+      return FAIL;
   }
   return OK;
 }

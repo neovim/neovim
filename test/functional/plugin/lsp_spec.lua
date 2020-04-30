@@ -836,12 +836,12 @@ describe('LSP', function()
       }
       local completion_list_items = {items=completion_list}
       local expected = {
-        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
-        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar'},
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label = 'foobar' } } } } },
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foobar', textEdit={} } } }  } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar' } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar', textEdit={} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar'} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='foobar'} } } } } },
       }
 
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
