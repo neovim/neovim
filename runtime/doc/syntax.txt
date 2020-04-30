@@ -1715,7 +1715,7 @@ There are several html preprocessor languages out there.  html.vim has been
 written such that it should be trivial to include it.  To do so add the
 following two lines to the syntax coloring file for that language
 (the example comes from the asp.vim file):
-
+>
     runtime! syntax/html.vim
     syn cluster htmlPreproc add=asp
 

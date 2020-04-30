@@ -1,8 +1,8 @@
 " Vim indent file
 " Language:	    	Tcl
-" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
 " Latest Update:  	Chris Heithoff <chrisheithoff@gmail.com>
-" Latest Revision:  	2018-12-05
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2018-12-05
 
 if exists("b:did_indent")
   finish

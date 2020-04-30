@@ -865,6 +865,7 @@ Note: these are typed literally, they are not special keys!
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
 The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<sfile>",
 "<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
+
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
 		changes "~/" (and "~user/" for Unix) to the path for the home
