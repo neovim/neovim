@@ -3,7 +3,9 @@ local clear, feed_command, feed, ok, eval =
   helpers.clear, helpers.feed_command, helpers.feed, helpers.ok, helpers.eval
 
 describe(':grep', function()
-  before_each(clear)
+  before_each(function()
+    clear{args_rm={'--headless'}}
+  end)
 
   it('does not hang on large input #2983', function()
     if eval("executable('grep')") == 0 then
