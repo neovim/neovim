@@ -240,6 +240,13 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       icase = 1,
       dup = 1,
       empty = 1,
+      user_data = {
+        nvim = {
+          lsp = {
+            completion_item = completion_item
+          }
+        }
+      },
     })
   end
 
@@ -672,6 +679,7 @@ do
       table.insert(cmd_parts, k.."="..v)
     end
     api.nvim_command(table.concat(cmd_parts, ' '))
+    api.nvim_command('highlight link ' .. highlight_name .. 'Sign ' .. highlight_name)
     severity_highlights[severity] = highlight_name
   end
 

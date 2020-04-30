@@ -143,6 +143,7 @@ struct compl_S {
   compl_T     *cp_prev;
   char_u      *cp_str;          // matched text
   char_u      *(cp_text[CPT_COUNT]);    // text for the menu
+  typval_T    cp_user_data;
   char_u      *cp_fname;        // file containing the match, allocated when
                                 // cp_flags has CP_FREE_FNAME
   int cp_flags;                 // CP_ values
@@ -2291,7 +2292,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     flags |= CP_ICASE;
   }
 
-  return ins_compl_add(str, len, fname, NULL, false, dir, flags, false);
+  return ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false);
 }
 
 /// Add a match to the list of matches
@@ -2315,6 +2316,7 @@ static int ins_compl_add(char_u *const str, int len,
                          char_u *const fname,
                          char_u *const *const cptext,
                          const bool cptext_allocated,
+                         typval_T *user_data,
                          const Direction cdir, int flags_arg, const bool adup)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -2401,6 +2403,10 @@ static int ins_compl_add(char_u *const str, int len,
         xfree(cptext[i]);
       }
     }
+  }
+
+  if (user_data != NULL) {
+    match->cp_user_data = *user_data;
   }
 
   /*
@@ -2521,7 +2527,7 @@ static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
   int dir = compl_direction;
 
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
-    if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, dir,
+    if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
                                icase ? CP_ICASE : 0, false)) == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
@@ -2596,7 +2602,7 @@ void set_completion(colnr_T startcol, list_T *list)
   if (p_ic) {
     flags |= CP_ICASE;
   }
-  if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, 0,
+  if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
                     flags, false) != OK) {
     return;
   }
@@ -3120,6 +3126,7 @@ static void ins_compl_free(void)
     for (int i = 0; i < CPT_COUNT; i++) {
       xfree(match->cp_text[i]);
     }
+    tv_clear(&match->cp_user_data);
     xfree(match);
   } while (compl_curr_match != NULL && compl_curr_match != compl_first_match);
   compl_first_match = compl_curr_match = NULL;
@@ -3215,8 +3222,11 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
                           (char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
           tv_dict_add_str(di, S_LEN("info"),
                           (char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
-          tv_dict_add_str(di, S_LEN("user_data"),
-                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_USER_DATA]));
+          if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+              tv_dict_add_str(di, S_LEN("user_data"), "");
+          } else {
+              tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
+          }
         }
         match = match->cp_next;
       } while (match != NULL && match != compl_first_match);
@@ -3930,15 +3940,16 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
   bool empty = false;
   int flags = 0;
   char *(cptext[CPT_COUNT]);
+  typval_T user_data;
 
+  user_data.v_type = VAR_UNKNOWN;
   if (tv->v_type == VAR_DICT && tv->vval.v_dict != NULL) {
     word = tv_dict_get_string(tv->vval.v_dict, "word", false);
     cptext[CPT_ABBR] = tv_dict_get_string(tv->vval.v_dict, "abbr", true);
     cptext[CPT_MENU] = tv_dict_get_string(tv->vval.v_dict, "menu", true);
     cptext[CPT_KIND] = tv_dict_get_string(tv->vval.v_dict, "kind", true);
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
-    cptext[CPT_USER_DATA] = tv_dict_get_string(tv->vval.v_dict,
-                                               "user_data", true);
+    tv_dict_get_tv(tv->vval.v_dict, "user_data", &user_data);
 
     if (tv_dict_get_number(tv->vval.v_dict, "icase")) {
       flags |= CP_ICASE;
@@ -3960,7 +3971,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     return FAIL;
   }
   return ins_compl_add((char_u *)word, -1, NULL,
-                       (char_u **)cptext, true, dir, flags, dup);
+                       (char_u **)cptext, true, &user_data, dir, flags, dup);
 }
 
 // Get the next expansion(s), using "compl_pattern".
@@ -4450,9 +4461,11 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
   tv_dict_add_str(
       dict, S_LEN("info"),
       (const char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
-  tv_dict_add_str(
-      dict, S_LEN("user_data"),
-      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_USER_DATA]));
+  if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+    tv_dict_add_str(dict, S_LEN("user_data"), "");
+  } else {
+    tv_dict_add_tv(dict, S_LEN("user_data"), &match->cp_user_data);
+  }
   return dict;
 }
 
@@ -5155,7 +5168,7 @@ static int ins_complete(int c, bool enable_pum)
     if (p_ic) {
       flags |= CP_ICASE;
     }
-    if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, 0,
+    if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
                       flags, false) != OK) {
       XFREE_CLEAR(compl_pattern);
       XFREE_CLEAR(compl_orig_text);
