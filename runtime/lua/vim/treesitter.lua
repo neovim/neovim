@@ -160,7 +160,7 @@ function Query:match_preds(match, pattern, bufnr)
   local regexes = self.regexes[pattern]
   for i, pred in pairs(preds) do
     -- Here we only want to return if a predicate DOES NOT match, and
-    -- continue on the other case. This way unknown predicates will not be considered, 
+    -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
     if pred[1] == "eq?" then
       local node = match[pred[2]]
