@@ -137,6 +137,12 @@ function M.document_symbol()
   request('textDocument/documentSymbol', params)
 end
 
+function M.workspace_symbol(query)
+  query = query or npcall(vfn.input, "Query: ")
+  local params = {query = query}
+  request('workspace/symbol', params)
+end
+
 --- Send request to server to resolve document highlights for the
 --- current text document position. This request can be associated
 --- to key mapping or to events such as `CursorHold`, eg:
