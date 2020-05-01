@@ -101,11 +101,11 @@ function M.apply_text_edits(text_edits, bufnr)
   for i, e in ipairs(text_edits) do
     local start_row = e.range.start.line
     local start_col = e.range.start.character
-    local start_bline = api.nvim_buf_get_lines(0, start_row, start_row+1, true)[1]
+    local start_bline = api.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
     start_col = vim.str_byteindex(start_bline, start_col)
     local end_row = e.range["end"].line
     local end_col = e.range["end"].character
-    local end_bline = api.nvim_buf_get_lines(0, end_row, end_row+1, true)[1]
+    local end_bline = api.nvim_buf_get_lines(bufnr, end_row, end_row+1, true)[1]
     end_col = vim.str_byteindex(end_bline, end_col)
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
