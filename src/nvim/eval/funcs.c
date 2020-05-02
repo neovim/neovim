@@ -2063,8 +2063,10 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (result != NULL) {
         tv_list_append_string(rettv->vval.v_list, (const char *)result, -1);
       }
-    } else
+      XFREE_CLEAR(result);
+    } else {
       rettv->vval.v_string = result;
+    }
   } else {
     // When the optional second argument is non-zero, don't remove matches
     // for 'wildignore' and don't put matches for 'suffixes' at the end.
