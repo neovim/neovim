@@ -890,4 +890,255 @@ describe('LSP', function()
       ]])
     end)
   end)
+  describe('lsp.util.symbols_to_items', function()
+    describe('convert DocumentSymbol[] to items', function()
+      it('DocumentSymbol has children', function()
+        local expected = {
+          {
+            col = 1,
+            filename = '',
+            kind = 'File',
+            lnum = 2,
+            text = '[File] TestA'
+          },
+          {
+            col = 1,
+            filename = '',
+            kind = 'Module',
+            lnum = 4,
+            text = '[Module] TestB'
+          },
+          {
+            col = 1,
+            filename = '',
+            kind = 'Namespace',
+            lnum = 6,
+            text = '[Namespace] TestC'
+          }
+        }
+        eq(expected, exec_lua [[
+          local doc_syms = {
+            {
+              deprecated = false,
+              detail = "A",
+              kind = 1,
+              name = "TestA",
+              range = {
+                start = {
+                  character = 0,
+                  line = 1
+                },
+                ["end"] = {
+                  character = 0,
+                  line = 2
+                }
+              },
+              selectionRange = {
+                start = {
+                  character = 0,
+                  line = 1
+                },
+                ["end"] = {
+                  character = 4,
+                  line = 1
+                }
+              },
+              children = {
+                {
+                  children = {},
+                  deprecated = false,
+                  detail = "B",
+                  kind = 2,
+                  name = "TestB",
+                  range = {
+                    start = {
+                      character = 0,
+                      line = 3
+                    },
+                    ["end"] = {
+                      character = 0,
+                      line = 4
+                    }
+                  },
+                  selectionRange = {
+                    start = {
+                      character = 0,
+                      line = 3
+                    },
+                    ["end"] = {
+                      character = 4,
+                      line = 3
+                    }
+                  }
+                }
+              }
+            },
+            {
+              deprecated = false,
+              detail = "C",
+              kind = 3,
+              name = "TestC",
+              range = {
+                start = {
+                  character = 0,
+                  line = 5
+                },
+                ["end"] = {
+                  character = 0,
+                  line = 6
+                }
+              },
+              selectionRange = {
+                start = {
+                  character = 0,
+                  line = 5
+                },
+                ["end"] = {
+                  character = 4,
+                  line = 5
+                }
+              }
+            }
+          }
+          return vim.lsp.util.symbols_to_items(doc_syms, nil)
+        ]])
+      end)
+      it('DocumentSymbol has no children', function()
+        local expected = {
+          {
+            col = 1,
+            filename = '',
+            kind = 'File',
+            lnum = 2,
+            text = '[File] TestA'
+          },
+          {
+            col = 1,
+            filename = '',
+            kind = 'Namespace',
+            lnum = 6,
+            text = '[Namespace] TestC'
+          }
+        }
+        eq(expected, exec_lua [[
+          local doc_syms = {
+            {
+              deprecated = false,
+              detail = "A",
+              kind = 1,
+              name = "TestA",
+              range = {
+                start = {
+                  character = 0,
+                  line = 1
+                },
+                ["end"] = {
+                  character = 0,
+                  line = 2
+                }
+              },
+              selectionRange = {
+                start = {
+                  character = 0,
+                  line = 1
+                },
+                ["end"] = {
+                  character = 4,
+                  line = 1
+                }
+              },
+            },
+            {
+              deprecated = false,
+              detail = "C",
+              kind = 3,
+              name = "TestC",
+              range = {
+                start = {
+                  character = 0,
+                  line = 5
+                },
+                ["end"] = {
+                  character = 0,
+                  line = 6
+                }
+              },
+              selectionRange = {
+                start = {
+                  character = 0,
+                  line = 5
+                },
+                ["end"] = {
+                  character = 4,
+                  line = 5
+                }
+              }
+            }
+          }
+          return vim.lsp.util.symbols_to_items(doc_syms, nil)
+        ]])
+      end)
+    end)
+    describe('convert SymbolInformation[] to items', function()
+        local expected = {
+          {
+            col = 1,
+            filename = 'test_a',
+            kind = 'File',
+            lnum = 2,
+            text = '[File] TestA'
+          },
+          {
+            col = 1,
+            filename = 'test_b',
+            kind = 'Module',
+            lnum = 4,
+            text = '[Module] TestB'
+          }
+        }
+        eq(expected, exec_lua [[
+          local sym_info = {
+            {
+              deprecated = false,
+              kind = 1,
+              name = "TestA",
+              location = {
+                range = {
+                  start = {
+                    character = 0,
+                    line = 1
+                  },
+                  ["end"] = {
+                    character = 0,
+                    line = 2
+                  }
+                },
+                uri = "file://test_a"
+              },
+              contanerName = "TestAContainer"
+            },
+            {
+              deprecated = false,
+              kind = 2,
+              name = "TestB",
+              location = {
+                range = {
+                  start = {
+                    character = 0,
+                    line = 3
+                  },
+                  ["end"] = {
+                    character = 0,
+                    line = 4
+                  }
+                },
+                uri = "file://test_b"
+              },
+              contanerName = "TestBContainer"
+            }
+          }
+          return vim.lsp.util.symbols_to_items(sym_info, nil)
+        ]])
+    end)
+  end)
 end)
