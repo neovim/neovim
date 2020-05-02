@@ -688,6 +688,19 @@ function protocol.make_client_capabilities()
         };
         hierarchicalDocumentSymbolSupport = true;
       };
+      workspaceSymbol = {
+        dynamicRegistration = false;
+        symbolKind = {
+          valueSet = (function()
+            local res = {}
+            for k in pairs(protocol.SymbolKind) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+        hierarchicalWorkspaceSymbolSupport = true;
+      };
     };
     workspace = nil;
     experimental = nil;

@@ -54,13 +54,15 @@ M['textDocument/references'] = function(_, _, result)
   api.nvim_command("wincmd p")
 end
 
-M['textDocument/documentSymbol'] = function(_, _, result, _, bufnr)
+local symbol_callback = function(_, _, result, _, bufnr)
   if not result or vim.tbl_isempty(result) then return end
 
   util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
   api.nvim_command("wincmd p")
 end
+M['textDocument/documentSymbol'] = symbol_callback
+M['workspace/symbol'] = symbol_callback
 
 M['textDocument/rename'] = function(_, _, result)
   if not result then return end

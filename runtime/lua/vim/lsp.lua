@@ -533,6 +533,7 @@ function lsp.start_client(config)
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
       or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
+      or (not client.resolved_capabilities.workspace_symbol and method == 'textDocument/workspaceSymbol')
     then
       callback(unsupported_method(method), method, nil, client_id, bufnr)
       return
