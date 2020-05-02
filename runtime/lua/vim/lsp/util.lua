@@ -956,10 +956,8 @@ function M.symbols_to_items(symbols, bufnr)
           text = '['..kind..'] '..symbol.name
         })
         if symbol.children then
-          for _, child in ipairs(symbol) do
-            for _, v in ipairs(_symbols_to_items(child, _items, _bufnr)) do
-              vim.list_extend(_items, v)
-            end
+          for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
+            vim.list_extend(_items, v)
           end
         end
       end
