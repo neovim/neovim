@@ -1307,3 +1307,33 @@ func Test_bufadd_bufload()
   bwipe otherName
   call assert_equal(0, bufexists('someName'))
 endfunc
+
+func Test_readdir()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/foo.txt')
+  call writefile([], 'Xdir/bar.txt')
+  call mkdir('Xdir/dir')
+
+  " All results
+  let files = readdir('Xdir')
+  call assert_equal(['bar.txt', 'dir', 'foo.txt'], sort(files))
+
+  " Only results containing "f"
+  let files = readdir('Xdir', { x -> stridx(x, 'f') !=- 1 })
+  call assert_equal(['foo.txt'], sort(files))
+
+  " Only .txt files
+  let files = readdir('Xdir', { x -> x =~ '.txt$' })
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Only .txt files with string
+  let files = readdir('Xdir', 'v:val =~ ".txt$"')
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Limit to 1 result.
+  let l = []
+  let files = readdir('Xdir', {x -> len(add(l, x)) == 2 ? -1 : 1})
+  call assert_equal(1, len(files))
+
+  call delete('Xdir', 'rf')
+endfunc

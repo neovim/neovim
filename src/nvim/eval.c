@@ -915,7 +915,7 @@ varnumber_T eval_to_number(char_u *expr)
  * Save the current typeval in "save_tv".
  * When not used yet add the variable to the v: hashtable.
  */
-static void prepare_vimvar(int idx, typval_T *save_tv)
+void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
   if (vimvars[idx].vv_type == VAR_UNKNOWN)
@@ -926,7 +926,7 @@ static void prepare_vimvar(int idx, typval_T *save_tv)
  * Restore v: variable "idx" to typeval "save_tv".
  * When no longer defined, remove the variable from the v: hashtable.
  */
-static void restore_vimvar(int idx, typval_T *save_tv)
+void restore_vimvar(int idx, typval_T *save_tv)
 {
   hashitem_T  *hi;
 

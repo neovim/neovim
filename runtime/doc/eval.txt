@@ -6689,6 +6689,33 @@ range({expr} [, {max} [, {stride}]])				*range()*
 			range(0)		" []
 			range(2, 0)		" error!
 <
+							*readdir()*
+readdir({directory} [, {expr}])
+		Return a list with file and directory names in {directory}.
+
+		When {expr} is omitted all entries are included.
+		When {expr} is given, it is evaluated to check what to do:
+			If {expr} results in -1 then no further entries will
+			be handled.
+			If {expr} results in 0 then this entry will not be
+			added to the list.
+			If {expr} results in 1 then this entry will be added
+			to the list.
+		Each time {expr} is evaluated |v:val| is set to the entry name.
+		When {expr} is a function the name is passed as the argument.
+		For example, to get a list of files ending in ".txt": >
+		  readdir(dirname, {n -> n =~ '.txt$'})
+<		To skip hidden and backup files: >
+		  readdir(dirname, {n -> n !~ '^\.\|\~$'})
+
+<		If you want to get a directory tree: >
+                  function! s:tree(dir)
+                      return {a:dir : map(readdir(a:dir),
+		      \ {_, x -> isdirectory(x) ?
+		      \          {x : s:tree(a:dir . '/' . x)} : x})}
+                  endfunction
+                  echo s:tree(".")
+<
 							*readfile()*
 readfile({fname} [, {binary} [, {max}]])
 		Read file {fname} and return a |List|, each line of the file
@@ -6719,17 +6746,6 @@ readfile({fname} [, {binary} [, {max}]])
 		When the file can't be opened an error message is given and
 		the result is an empty list.
 		Also see |writefile()|.
-
-							*readdir()*
-readdir({directory} [, {expr}])
-		Return a list with file and directory names in {directory}.
-		You can also use |glob()| if you don't need to do complicated
-		things, such as limiting the number of matches.
-
-		When {expr} is omitted all entries are included.
-		When {expr} is given, it is evaluated to check what to do:
-			If {expr} results in -1 then no further entries will
-			be handled.
 
 reg_executing()						*reg_executing()*
 		Returns the single letter name of the register being executed.
