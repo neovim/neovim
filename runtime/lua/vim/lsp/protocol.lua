@@ -687,7 +687,7 @@ function protocol.make_client_capabilities()
             return res
           end)();
         };
-        hierarchicalWorkspaceSymbolSupport = false;
+        hierarchicalWorkspaceSymbolSupport = true;
       };
     };
     workspace = nil;
