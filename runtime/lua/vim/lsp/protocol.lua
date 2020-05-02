@@ -688,7 +688,9 @@ function protocol.make_client_capabilities()
         };
         hierarchicalDocumentSymbolSupport = true;
       };
-      workspaceSymbol = {
+    };
+    workspace = {
+      symbol = {
         dynamicRegistration = false;
         symbolKind = {
           valueSet = (function()
@@ -702,7 +704,6 @@ function protocol.make_client_capabilities()
         hierarchicalWorkspaceSymbolSupport = true;
       };
     };
-    workspace = nil;
     experimental = nil;
   }
 end
