@@ -49,6 +49,7 @@ go-to-definition, hover, etc.  Example config: >
   nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
   nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
   nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
+  nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
 
 Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
 |i_CTRL-X_CTRL-O| to consume LSP completion. Example config (note the use of
@@ -782,6 +783,13 @@ signature_help()                                *vim.lsp.buf.signature_help()*
 
 type_definition()                              *vim.lsp.buf.type_definition()*
                 TODO: Documentation
+
+workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
+                Lists all symbols in the current workspace in the quickfix
+                window. The list is filtered against the optional argument 
+                {query}; if the argument is omitted from the call, the user 
+                is prompted to enter a string on the command line. An empty
+                string means no filtering is done. 
 
 
 ==============================================================================
