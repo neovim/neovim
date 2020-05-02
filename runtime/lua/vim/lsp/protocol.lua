@@ -644,6 +644,18 @@ function protocol.make_client_capabilities()
         -- TODO(tjdevries): Implement this
         contextSupport = false;
       };
+      declaration = {
+        linkSupport = true;
+      };
+      definition = {
+        linkSupport = true;
+      };
+      implementation = {
+        linkSupport = true;
+      };
+      typeDefinition = {
+        linkSupport = true;
+      };
       hover = {
         dynamicRegistration = false;
         contentFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
