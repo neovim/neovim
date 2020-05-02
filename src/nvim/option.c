@@ -7453,6 +7453,10 @@ dict_T *get_winbuf_options(const int bufopt)
 /// global value when appropriate.
 long get_scrolloff_value(void)
 {
+  // Disallow scrolloff in terminal-mode. #11915
+  if (State & TERM_FOCUS) {
+    return 0;
+  }
   return curwin->w_p_so < 0 ? p_so : curwin->w_p_so;
 }
 
@@ -7462,4 +7466,3 @@ long get_sidescrolloff_value(void)
 {
   return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
 }
-
