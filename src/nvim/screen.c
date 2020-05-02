@@ -5714,6 +5714,7 @@ void grid_puts_line_flush(bool set_cursor)
 static void start_search_hl(void)
 {
   if (p_hls && !no_hlsearch) {
+    end_search_hl();  // just in case it wasn't called before
     last_pat_prog(&search_hl.rm);
     // Set the time limit to 'redrawtime'.
     search_hl.tm = profile_setlimit(p_rdt);
