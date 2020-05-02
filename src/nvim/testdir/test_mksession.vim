@@ -2,7 +2,7 @@
 
 scriptencoding latin1
 
-if !has('multi_byte') || !has('mksession')
+if !has('mksession')
   finish
 endif
 
@@ -120,6 +120,34 @@ func Test_mksession_large_winheight()
   set winheight&
   source Xtest_mks_winheight.out
   call delete('Xtest_mks_winheight.out')
+endfunc
+
+func Test_mksession_rtp()
+  if has('win32')
+    " TODO: fix problem with backslashes
+    return
+  endif
+  new
+  set sessionoptions+=options
+  let _rtp=&rtp
+  " Make a real long (invalid) runtimepath value,
+  " that should exceed PATH_MAX (hopefully)
+  let newrtp=&rtp.',~'.repeat('/foobar', 1000)
+  let newrtp.=",".expand("$HOME")."/.vim"
+  let &rtp=newrtp
+
+  " determine expected value
+  let expected=split(&rtp, ',')
+  let expected = map(expected, '"set runtimepath+=".v:val')
+  let expected = ['set runtimepath='] + expected
+  let expected = map(expected, {v,w -> substitute(w, $HOME, "~", "g")})
+
+  mksession! Xtest_mks.out
+  let &rtp=_rtp
+  let li = filter(readfile('Xtest_mks.out'), 'v:val =~# "runtimepath"')
+  call assert_equal(expected, li)
+
+  call delete('Xtest_mks.out')
 endfunc
 
 " Verify that arglist is stored correctly to the session file.
