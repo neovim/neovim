@@ -52,6 +52,35 @@ function M.implementation()
   request('textDocument/implementation', params)
 end
 
+local function peek_location_callback(_, method, result)
+  if result == nil or vim.tbl_isempty(result) then
+    local _ = log.info() and log.info(method, 'No location found')
+    return nil
+  end
+  if vim.tbl_islist(result) then
+    util.peek_location(result[1])
+  else
+    util.peek_location(result)
+  end
+end
+
+function M.peek_definition()
+  local params = util.make_position_params()
+  request('textDocument/definition', params, peek_location_callback)
+end
+function M.peek_declaration()
+  local params = util.make_position_params()
+  request('textDocument/declaration', params, peek_location_callback)
+end
+function M.peek_implementation()
+  local params = util.make_position_params()
+  request('textDocument/implementation', params, peek_location_callback)
+end
+function M.peek_typeDefinition()
+  local params = util.make_position_params()
+  request('textDocument/typeDefinition', params, peek_location_callback)
+end
+
 function M.signature_help()
   local params = util.make_position_params()
   request('textDocument/signatureHelp', params)
