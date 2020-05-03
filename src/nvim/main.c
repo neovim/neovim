@@ -1069,9 +1069,14 @@ static void command_line_scan(mparm_T *parmp)
               } else {
                 a = argv[0];
               }
-              size_t s_size = STRLEN(a) + 4;
+
+              size_t s_size = STRLEN(a) + 9;
               char *s = xmalloc(s_size);
-              snprintf(s, s_size, "so %s", a);
+              if (path_with_extension(a, "lua")) {
+                snprintf(s, s_size, "luafile %s", a);
+              } else {
+                snprintf(s, s_size, "so %s", a);
+              }
               parmp->cmds_tofree[parmp->n_commands] = true;
               parmp->commands[parmp->n_commands++] = s;
             } else {

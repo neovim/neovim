@@ -493,3 +493,27 @@ describe('user config init', function()
     end)
   end)
 end)
+
+describe('user session', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local session_file = table.concat({xhome, 'session.lua'}, pathsep)
+
+  before_each(function()
+    rmdir(xhome)
+
+    mkdir(xhome)
+    write_file(session_file, [[
+      vim.g.lua_session = 1
+    ]])
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads session from the provided lua file', function()
+    clear{ args={'-S', session_file }, env={ HOME=xhome }}
+    eq(1, eval('g:lua_session'))
+  end)
+end)
