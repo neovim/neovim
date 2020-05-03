@@ -9,6 +9,7 @@ local eq = helpers.eq
 local pesc = helpers.pesc
 local insert = helpers.insert
 local retry = helpers.retry
+local merge_args = helpers.merge_args
 local NIL = helpers.NIL
 
 -- Use these to get access to a coroutine so that I can run async tests and use
@@ -947,18 +948,40 @@ describe('LSP', function()
     end)
   end)
   describe('buf_diagnostics_save_positions', function()
-    it('stores the diagnostics in diagnostics_by_buf', function ()
+    it('stores the diagnostics in diagnostics_by_buf_and_client_id', function ()
       local diagnostics = {
         { range = {}; message = "diag1" },
         { range = {}; message = "diag2" },
       }
       exec_lua([[
-        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, diagnostics)
-      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf ]])
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 1, diagnostics)
+      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf_and_client_id ]])
+      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf_and_client_id[1] ]])
       eq(diagnostics, exec_lua [[
-        for _, diagnostics in pairs(vim.lsp.util.diagnostics_by_buf) do
+        for _, diagnostics in pairs(vim.lsp.util.diagnostics_by_buf_and_client_id[1]) do
           return diagnostics
         end
+      ]])
+    end)
+  end)
+  describe('buf_get_diagnostics', function()
+    it('returns diagnostics across client_ids', function()
+      local client_A_diagnostics = {
+        { range = {}; message = "diag1" },
+        { range = {}; message = "diag2" },
+      }
+      local client_B_diagnostics = {
+        { range = {}; message = "diag3" },
+        { range = {}; message = "diag4" },
+      }
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 1, client_A_diagnostics)
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 2, client_B_diagnostics)
+      local all_diagnostics = merge_args(client_A_diagnostics, client_B_diagnostics)
+
+      eq(all_diagnostics, exec_lua [[
+        return vim.lsp.util.buf_get_diagnostics(0)
       ]])
     end)
   end)
@@ -981,7 +1004,7 @@ describe('LSP', function()
           },
         }
         vim.api.nvim_win_set_buf(0, buffer)
-        vim.lsp.util.buf_diagnostics_save_positions(vim.fn.bufnr(buffer), diagnostics)
+        vim.lsp.util.buf_diagnostics_save_positions(vim.fn.bufnr(buffer), 1, diagnostics)
         local popup_bufnr, winnr = vim.lsp.util.show_line_diagnostics()
         return popup_bufnr
       ]])
