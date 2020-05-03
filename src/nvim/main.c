@@ -1770,6 +1770,23 @@ static bool do_user_initialization(void)
     do_exrc = p_exrc;
     return do_exrc;
   }
+
+  char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
+  if (os_path_exists(init_lua_path)
+      && load_init_lua((const char *)init_lua_path)) {
+    os_setenv("MYVIMRC", (const char *)init_lua_path, 1);
+    char_u *vimrc_path = (char_u *)stdpaths_user_conf_subpath("init.vim");
+
+    if (os_path_exists(vimrc_path)) {
+      EMSG3(_("Conflicting configs: \"%s\" \"%s\""), init_lua_path, vimrc_path);
+    }
+
+    xfree(vimrc_path);
+    xfree(init_lua_path);
+    return false;
+  }
+  xfree(init_lua_path);
+
   char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
@@ -1829,8 +1846,12 @@ static void source_startup_scripts(const mparm_T *const parmp)
         || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
-      if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
-        EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+      if (path_with_extension(parmp->use_vimrc, "lua")) {
+        load_init_lua(parmp->use_vimrc);
+      } else {
+        if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
+          EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+        }
       }
     }
   } else if (!silent_mode) {

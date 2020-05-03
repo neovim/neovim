@@ -1244,6 +1244,23 @@ void ex_luafile(exarg_T *const eap)
   }
 }
 
+bool load_init_lua(const char *script_path)
+{
+  lua_State *const lstate = nlua_enter();
+
+  if (luaL_loadfile(lstate, script_path)) {
+    nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
+    return false;
+  }
+
+  if (lua_pcall(lstate, 0, 0, 0)) {
+    nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
+    return false;
+  }
+
+  return true;
+}
+
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
