@@ -7,7 +7,7 @@ local Screen = require('test.functional.ui.screen')
 describe(':digraphs', function()
   local screen
   before_each(function()
-    clear{args_rm={'--headless'}}
+    clear()
     screen = Screen.new(65, 8)
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
