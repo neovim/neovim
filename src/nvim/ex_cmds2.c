@@ -2394,7 +2394,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
   char_u *rtp_copy = vim_strsave(path);
   char_u *buf = xmallocz(MAXPATHL);
   {
-    if (p_verbose > 1 && name != NULL) {
+    if (p_verbose > 10 && name != NULL) {
       verbose_enter();
       smsg(_("Searching for \"%s\" in \"%s\""),
            (char *)name, (char *)path);
@@ -2436,7 +2436,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
           copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
                            "\t ");
 
-          if (p_verbose > 2) {
+          if (p_verbose > 10) {
             verbose_enter();
             smsg(_("Searching for \"%s\""), buf);
             verbose_leave();
