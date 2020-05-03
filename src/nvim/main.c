@@ -513,14 +513,6 @@ int main(int argc, char **argv)
   // Execute any "+", "-c" and "-S" arguments.
   if (params.n_commands > 0) {
     exe_commands(&params);
-    // If in headless mode, we need to exit at this point.
-    // If we continue, we will enter the normal mode and the
-    // message "Press ENTER or type command to continue" will be
-    // displayed and we will be in the input waiting state.
-    if (headless_mode) {
-      msg_putchar('\n');
-      return 0;
-    }
   }
 
   starting = 0;
