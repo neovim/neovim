@@ -20,7 +20,7 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
   util.apply_workspace_edit(workspace_edit.edit)
 end
 
-M['textDocument/publishDiagnostics'] = function(_, _, result)
+M['textDocument/publishDiagnostics'] = function(_, _, result, client_id)
   if not result then return end
   local uri = result.uri
   local bufnr = vim.uri_to_bufnr(uri)
@@ -40,10 +40,13 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
     end
   end
 
-  util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
-  util.buf_diagnostics_underline(bufnr, result.diagnostics)
-  util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
-  util.buf_diagnostics_signs(bufnr, result.diagnostics)
+  util.buf_diagnostics_save_positions(bufnr, client_id, result.diagnostics)
+
+  -- Get all diagnostics across clients and redraw
+  local buf_diagnostics = util.buf_get_diagnostics(bufnr)
+  util.buf_diagnostics_underline(bufnr, buf_diagnostics)
+  util.buf_diagnostics_virtual_text(bufnr, buf_diagnostics)
+  util.buf_diagnostics_signs(bufnr, buf_diagnostics)
   vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
 end
 

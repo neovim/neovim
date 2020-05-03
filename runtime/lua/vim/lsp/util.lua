@@ -7,9 +7,9 @@ local list_extend = vim.list_extend
 local M = {}
 
 --- Diagnostics received from the server via `textDocument/publishDiagnostics`
--- by buffer.
+-- by buffer and client_id.
 --
---  {<bufnr>: {diagnostics}}
+--  {<bufnr>: { <client_id>: {diagnostics}}}
 --
 -- This contains only entries for active buffers. Entries for detached buffers
 -- are discarded.
@@ -29,7 +29,7 @@ local M = {}
 --    tags?: DiagnosticTag[]
 --    relatedInformation?: DiagnosticRelatedInformation[]
 -- }
-M.diagnostics_by_buf = {}
+M.diagnostics_by_buf_and_client_id = {}
 
 local split = vim.split
 local function split_lines(value)
@@ -703,6 +703,20 @@ do
     severity_highlights[severity] = highlight_name
   end
 
+  function M.buf_get_diagnostics(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+
+    local diagnostics = {}
+    for _, client_diagnostics in ipairs(M.diagnostics_by_buf_and_client_id[bufnr]) do
+      for _, diagnostic in ipairs(client_diagnostics) do
+        table.insert(diagnostics, diagnostic)
+      end
+    end
+
+    return diagnostics
+  end
+
   function M.buf_clear_diagnostics(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
@@ -728,7 +742,7 @@ do
     local lines = {"Diagnostics:"}
     local highlights = {{0, "Bold"}}
 
-    local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
+    local buffer_diagnostics = M.buf_get_diagnostics(bufnr)
     if not buffer_diagnostics then return end
     local line_diagnostics = M.diagnostics_group_by_line(buffer_diagnostics)[line]
     if not line_diagnostics then return end
@@ -759,25 +773,26 @@ do
     return popup_bufnr, winnr
   end
 
-  --- Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf
+  --- Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf_and_client_id
   --
-  function M.buf_diagnostics_save_positions(bufnr, diagnostics)
+  function M.buf_diagnostics_save_positions(bufnr, client_id, diagnostics)
     validate {
       bufnr = {bufnr, 'n', true};
+      client_id = {client_id, 'n', true};
       diagnostics = {diagnostics, 't', true};
     }
     if not diagnostics then return end
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-
-    if not M.diagnostics_by_buf[bufnr] then
+    if not M.diagnostics_by_buf_and_client_id[bufnr] then
       -- Clean up our data when the buffer unloads.
       api.nvim_buf_attach(bufnr, false, {
         on_detach = function(b)
-          M.diagnostics_by_buf[b] = nil
+          M.diagnostics_by_buf_and_client_id[b] = nil
         end
       })
+      M.diagnostics_by_buf_and_client_id[bufnr] = {}
     end
-    M.diagnostics_by_buf[bufnr] = diagnostics
+    M.diagnostics_by_buf_and_client_id[bufnr][client_id] = diagnostics
   end
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)
@@ -855,7 +870,7 @@ do
 
   function M.buf_diagnostics_count(kind)
     local bufnr = vim.api.nvim_get_current_buf()
-    local diagnostics = M.diagnostics_by_buf[bufnr]
+    local diagnostics = M.buf_get_diagnostics(bufnr)
     if not diagnostics then return end
     local count = 0
     for _, diagnostic in pairs(diagnostics) do
