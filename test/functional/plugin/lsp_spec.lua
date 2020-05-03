@@ -818,58 +818,83 @@ describe('LSP', function()
   end)
 
   describe('apply_text_document_edit', function()
+    local target_bufnr
     before_each(function()
-      insert(dedent([[
-        First line of text
-        Second line of text]]))
+      target_bufnr = exec_lua [[
+        local bufnr = vim.fn.bufadd("fake/uri")
+        local lines = {"1st line of text", "2nd line of text"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+        return bufnr
+      ]]
     end)
-    it('correctly goes ahead with the edit when all is normal', function()
+    it('correctly goes ahead with the edit if all is normal', function()
       local text_document_edit = {
         edits = {
-          make_edit(0, 0, 0, 0, "hi")
+          make_edit(0, 0, 0, 3, "First")
         },
         textDocument = {
           uri = "file://fake/uri";
           version = 5
         }
       }
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      exec_lua([[
+        local args = {...}
+        local target_bufnr = args[2]
+        vim.lsp.util.buf_versions[target_bufnr] = 4
+        vim.lsp.util.apply_text_document_edit(...)
+      ]], text_document_edit, target_bufnr)
       eq({
-        'hiline of text';
-        'Second line of text';
-      }, buf_lines(1))
+        'First line of text';
+        '2nd line of text';
+      }, buf_lines(target_bufnr))
     end)
-    it('correctly goes ahead with the edit whe the version is nil', function()
+    it('correctly goes ahead with the edit if the version is vim.NIL', function()
+      -- we get vim.NIL when we decode json null value.
+      local json = exec_lua[[
+        return vim.fn.json_decode("{ \"a\": 1, \"b\": null }")
+      ]]
+      eq(json.b, exec_lua("return vim.NIL"))
+
       local text_document_edit = {
         edits = {
-          make_edit(0, 0, 0, 0, "hi")
+          make_edit(0, 0, 0, 3, "First")
         },
         textDocument = {
           uri = "file://fake/uri";
-          version = vim.NIL
+          version = exec_lua("return vim.NIL")
         }
       }
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      exec_lua([[
+        local args = {...}
+        local target_bufnr = args[2]
+        vim.lsp.util.buf_versions[target_bufnr] = vim.NIL
+        vim.lsp.util.apply_text_document_edit(...)
+      ]], text_document_edit, target_bufnr)
       eq({
-        'hiline of text';
-        'Second line of text';
-      }, buf_lines(1))
+        'First line of text';
+        '2nd line of text';
+      }, buf_lines(target_bufnr))
     end)
     it('skips the edit if the version of the edit is behind the local buffer ', function()
       local text_document_edit = {
         edits = {
-          make_edit(0, 0, 0, 0, "hi")
+          make_edit(0, 0, 0, 3, "First")
         },
         textDocument = {
           uri = "file://fake/uri";
           version = 1
         }
       }
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit, 1)
+      exec_lua([[
+        local args = {...}
+        local target_bufnr = args[2]
+        vim.lsp.util.buf_versions[target_bufnr] = 2
+        vim.lsp.util.apply_text_document_edit(...)
+      ]], text_document_edit, target_bufnr)
       eq({
-        'First line of text';
-        'Second line of text';
-      }, buf_lines(1))
+        '1st line of text';
+        '2nd line of text';
+      }, buf_lines(target_bufnr))
     end)
   end)
 
