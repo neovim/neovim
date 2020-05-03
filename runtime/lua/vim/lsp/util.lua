@@ -102,6 +102,7 @@ function M.apply_text_edits(text_edits, bufnr)
   local start_line, finish_line = math.huge, -1
   local cleaned = {}
   for i, e in ipairs(text_edits) do
+    -- adjust start and end column for UTF-16 encoding of non-ASCII characters
     local start_row = e.range.start.line
     local start_col = e.range.start.character
     local start_bline = api.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
@@ -444,7 +445,7 @@ function M.jump_to_location(location)
   table.insert(items, {tagname=vim.fn.expand("<cword>"), from=vim.fn.getpos('.')})
   vim.fn.settagstack(vim.fn.bufnr('%'), {items=items}, 't')
 
-  --- Jump to new location
+  --- Jump to new location (adjusting for UTF-16 encoding of characters)
   api.nvim_set_current_buf(bufnr)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
