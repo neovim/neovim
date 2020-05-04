@@ -808,7 +808,6 @@ void nvim_buf_set_text(uint64_t channel_id,
     }
 
     // Same as with replacing, but we also need to free lines
-    xfree(lines[i]);
     lines[i] = NULL;
     extra++;
   }
