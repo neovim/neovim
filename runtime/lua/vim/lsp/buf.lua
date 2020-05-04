@@ -3,7 +3,6 @@ local validate = vim.validate
 local api = vim.api
 local vfn = vim.fn
 local util = require 'vim.lsp.util'
-local log = require 'vim.lsp.log'
 local list_extend = vim.list_extend
 
 local M = {}
@@ -51,35 +50,6 @@ end
 function M.implementation()
   local params = util.make_position_params()
   request('textDocument/implementation', params)
-end
-
-local function preview_location_callback(_, method, result)
-  if result == nil or vim.tbl_isempty(result) then
-    local _ = log.info() and log.info(method, 'No location found')
-    return nil
-  end
-  if vim.tbl_islist(result) then
-    util.preview_location(result[1])
-  else
-    util.preview_location(result)
-  end
-end
-
-function M.peek_definition()
-  local params = util.make_position_params()
-  request('textDocument/definition', params, preview_location_callback)
-end
-function M.peek_declaration()
-  local params = util.make_position_params()
-  request('textDocument/declaration', params, preview_location_callback)
-end
-function M.peek_implementation()
-  local params = util.make_position_params()
-  request('textDocument/implementation', params, preview_location_callback)
-end
-function M.peek_typeDefinition()
-  local params = util.make_position_params()
-  request('textDocument/typeDefinition', params, preview_location_callback)
 end
 
 function M.signature_help()
