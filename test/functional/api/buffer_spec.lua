@@ -392,6 +392,89 @@ describe('api/buf', function()
     end)
   end)
 
+  describe('nvim_buf_get_lines, nvim_buf_set_text', function()
+    local get_lines, set_text = curbufmeths.get_lines, curbufmeths.set_text
+    local line_count = curbufmeths.line_count
+
+    it('works', function()
+      insert([[
+      hello foo!
+      text
+      ]])
+
+      eq({'hello foo!'}, get_lines(0, 1, true))
+
+
+      -- can replace a single word
+      set_text(0, 6, 0, 9, {'world'})
+      eq({'hello world!', 'text'}, get_lines(0, 2, true))
+
+      -- can replace with multiple lines
+      local err = set_text(0, 6, 0, 11, {'foo', 'wo', 'more'})
+      eq({'hello foo', 'wo', 'more!', 'text'}, get_lines(0,  4, true))
+
+      -- will join multiple lines if needed
+      set_text(0, 6, 3, 4, {'bar'})
+      eq({'hello bar'}, get_lines(0,  1, true))
+    end)
+
+    it('updates the cursor position', function()
+      insert([[
+      hello world!
+      ]])
+
+      -- position the cursor on `!`
+      curwin('set_cursor', {1, 11})
+      -- replace 'world' with 'foo'
+      set_text(0, 6, 0, 11, {'foo'})
+      eq('hello foo!', curbuf_depr('get_line', 0))
+      -- cursor should be moved left by two columns (replacement is shorter by 2 chars)
+      eq({1, 9}, curwin('get_cursor'))
+    end)
+
+    it('can handle NULs', function()
+      set_text(0, 0, 0, 0, {'ab\0cd'})
+      eq('ab\0cd', curbuf_depr('get_line', 0))
+    end)
+
+    it('adjusts extmarks', function()
+      local ns = request('nvim_create_namespace', "my-fancy-plugin")
+      insert([[
+      foo bar
+      baz
+      ]])
+      local id1 = curbufmeths.set_extmark(ns, 0, 0, 1, {})
+      local id2 = curbufmeths.set_extmark(ns, 0, 0, 7, {})
+      local id3 = curbufmeths.set_extmark(ns, 0, 1, 1, {})
+      set_text(0, 4, 0, 7, {"q"})
+
+      -- TODO: if we set text at 0,3, what happens to the mark at 0,3
+
+      eq({'foo q', 'baz'}, get_lines(0, 2, true))
+      -- mark before replacement point is unaffected
+      rv = curbufmeths.get_extmark_by_id(ns, id1)
+      eq({0, 1}, rv)
+      -- mark gets shifted back because the replacement was shorter
+      rv = curbufmeths.get_extmark_by_id(ns, id2)
+      eq({0, 5}, rv)
+      -- mark on the next line is unaffected
+      rv = curbufmeths.get_extmark_by_id(ns, id3)
+      eq({1, 1}, rv)
+
+      -- replacing the text spanning two lines will adjust the mark on the next line
+      set_text(0, 3, 1, 3, {"qux"})
+      rv = curbufmeths.get_extmark_by_id(ns, id3)
+      eq({'fooqux', ''}, get_lines(0, 2, true))
+      eq({0, 6}, rv)
+      -- but mark before replacement point is still unaffected
+      rv = curbufmeths.get_extmark_by_id(ns, id1)
+      eq({0, 1}, rv)
+      -- and the mark in the middle was shifted to the end of the insertion
+      rv = curbufmeths.get_extmark_by_id(ns, id2)
+      eq({0, 6}, rv)
+    end)
+  end)
+
   describe('nvim_buf_get_offset', function()
     local get_offset = curbufmeths.get_offset
     it('works', function()

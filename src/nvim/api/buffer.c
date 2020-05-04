@@ -672,6 +672,23 @@ end:
   try_end(err);
 }
 
+/// Sets (replaces) a range in the buffer.
+///
+/// Indexing is zero-based, end-exclusive.
+///
+/// To insert text at a given index, set `start` and `end` ranges to the same
+/// index. To delete a range, set `replacement` to an empty array.
+///
+/// Prefer nvim_buf_set_lines when modifying entire lines.
+///
+/// @param channel_id
+/// @param buffer           Buffer handle, or 0 for current buffer
+/// @param start_row        First line index
+/// @param start_column     Last column
+/// @param end_row          Last line index (exclusive)
+/// @param end_column       Last column
+/// @param replacement      Array of lines to use as replacement
+/// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id,
                        Buffer buffer,
                        Integer start_row,
