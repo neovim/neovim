@@ -770,13 +770,14 @@ describe('LSP', function()
       exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
   end)
 
-  describe('apply_edits', function()
+  describe('apply_text_edits', function()
     before_each(function()
       insert(dedent([[
         First line of text
         Second line of text
         Third line of text
-        Fourth line of text]]))
+        Fourth line of text
+        å å ɧ 汉语 ↥ 🤦 🦄]]))
     end)
     it('applies apply simple edits', function()
       local edits = {
@@ -790,6 +791,7 @@ describe('LSP', function()
         '2econd line of text';
         '3ird line of text';
         'Fourth line of text';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
     it('applies complex edits', function()
@@ -813,6 +815,21 @@ describe('LSP', function()
         'The next line of text';
         'another line of text';
         'before this!';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+      }, buf_lines(1))
+    end)
+    pending('applies non-ASCII characters edits', function()
+      -- FIXME: We don't handle non-ASCII characters well in UTF-16
+      local edits = {
+        make_edit(4, 0, 4, 14, {"a a h"});
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'First line of text';
+        'Second line of text';
+        'Third line of text';
+        'Fourth line of text';
+        'a a h';
       }, buf_lines(1))
     end)
   end)
