@@ -444,7 +444,8 @@ function M.jump_to_location(location)
   return true
 end
 
-function M.peek_location(location)
+-- Show a LocationLink or Location in a floating windows
+function M.preview_location(location)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
   if uri == nil then return end
