@@ -89,7 +89,7 @@ end
 
 -- Return or create a buffer for a uri.
 local function uri_to_bufnr(uri)
-  local scheme = uri:match("^([a-z]+)://.*") or 'file'
+  local scheme = assert(uri:match("^([a-z]+)://.*"), 'Uri must contain a scheme: ' .. uri)
   if scheme == 'file' then
     return vim.fn.bufadd(uri_to_fname(uri))
   else
