@@ -722,15 +722,16 @@ do
 
   function M.get_line_diagnostics()
     local bufnr = api.nvim_get_current_buf()
-    local line = api.nvim_win_get_cursor(0)[1] - 1
+    local linenr = api.nvim_win_get_cursor(0)[1] - 1
 
     local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
+
     if not buffer_diagnostics then
       return {}
     end
 
-    local line_diagnostics = buffer_diagnostics[line]
-    return line_diagnostics or {}
+    local diagnostics_by_line = M.diagnostics_group_by_line(buffer_diagnostics)
+    return diagnostics_by_line[linenr]
   end
 
   function M.show_line_diagnostics()
