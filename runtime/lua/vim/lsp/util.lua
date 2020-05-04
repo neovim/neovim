@@ -724,7 +724,7 @@ do
     local bufnr = api.nvim_get_current_buf()
     local line = api.nvim_win_get_cursor(0)[1] - 1
 
-    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+    local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
     if not buffer_diagnostics then
       return {}
     end
