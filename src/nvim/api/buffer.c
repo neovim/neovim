@@ -688,13 +688,6 @@ void nvim_buf_set_text(uint64_t channel_id,
   if (!buf) {
     return;
   }
-  size_t new_len = replacement.size;
-
-  // TODO: do the nl-for-NUL dance as well?
-  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, disallow_nl, err)) {
-    return;
-  }
 
   // TODO: check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
@@ -711,6 +704,13 @@ void nvim_buf_set_text(uint64_t channel_id,
     return;
   }
 
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  if (!check_string_array(replacement, disallow_nl, err)) {
+    return;
+  }
+
+  size_t new_len = replacement.size;
+
   String first_item = replacement.items[0].data.string;
   String last_item = replacement.items[replacement.size-1].data.string;
   size_t firstlen = (size_t)start_col+first_item.size;
@@ -721,18 +721,26 @@ void nvim_buf_set_text(uint64_t channel_id,
   char *first = xmallocz(firstlen), *last = NULL;
   memcpy(first, str_at_start, (size_t)start_col);
   memcpy(first+start_col, first_item.data, first_item.size);
+  memchrsub(first+start_col, NUL, NL, first_item.size);
   if (replacement.size == 1) {
     memcpy(first+start_col+first_item.size, str_at_end+end_col, last_part_len);
   } else {
     last = xmallocz(last_item.size+last_part_len);
     memcpy(last, last_item.data, last_item.size);
+    memchrsub(last, NUL, NL, last_item.size);
     memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
   }
 
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
   lines[0] = first;
   for (size_t i = 1; i < new_len-1; i++) {
-    lines[i] = replacement.items[i].data.string.data;
+    const String l = replacement.items[i].data.string;
+
+    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
+    // NL-used-for-NUL.
+    lines[i] = xmemdupz(l.data, l.size);
+    memchrsub(lines[i], NUL, NL, l.size);
+    /* lines[i] = replacement.items[i].data.string.data; */
   }
   if (replacement.size > 1) {
     lines[replacement.size-1] = last;
@@ -808,6 +816,7 @@ void nvim_buf_set_text(uint64_t channel_id,
     }
 
     // Same as with replacing, but we also need to free lines
+    xfree(lines[i]);
     lines[i] = NULL;
     extra++;
   }
@@ -834,6 +843,10 @@ void nvim_buf_set_text(uint64_t channel_id,
   fix_cursor((linenr_T)start_row+1, (linenr_T)end_row+1, (linenr_T)extra);
 
 end:
+  for (size_t i = 0; i < new_len; i++) {
+    xfree(lines[i]);
+  }
+  xfree(lines);
   aucmd_restbuf(&aco);
   try_end(err);
 }
