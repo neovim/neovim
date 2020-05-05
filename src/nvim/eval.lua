@@ -255,6 +255,7 @@ return {
     pyeval={args=1},
     pyxeval={args=1},
     range={args={1, 3}},
+    readdir={args={1, 2}},
     readfile={args={1, 3}},
     reg_executing={},
     reg_recording={},
