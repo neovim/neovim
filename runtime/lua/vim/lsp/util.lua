@@ -432,9 +432,9 @@ function M.jump_to_location(location)
   vim.cmd "normal! m'"
 
   -- Push a new item into tagstack
-  local items = {}
-  table.insert(items, {tagname=vim.fn.expand("<cword>"), from=vim.fn.getpos('.')})
-  vim.fn.settagstack(vim.fn.bufnr('%'), {items=items}, 't')
+  local from = {vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0}
+  local items = {{tagname=vim.fn.expand('<cword>'), from=from}}
+  vim.fn.settagstack(vim.fn.win_getid(), {items=items}, 't')
 
   --- Jump to new location
   api.nvim_set_current_buf(bufnr)
