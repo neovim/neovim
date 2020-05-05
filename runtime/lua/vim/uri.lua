@@ -66,7 +66,13 @@ local function uri_from_fname(path)
 end
 
 local function uri_from_bufnr(bufnr)
-  return uri_from_fname(vim.api.nvim_buf_get_name(bufnr))
+  local fname = vim.api.nvim_buf_get_name(bufnr)
+  local scheme = fname:match("^([a-z]+)://.*")
+  if scheme then
+    return fname
+  else
+    return uri_from_fname(fname)
+  end
 end
 
 local function uri_to_fname(uri)
@@ -83,7 +89,12 @@ end
 
 -- Return or create a buffer for a uri.
 local function uri_to_bufnr(uri)
-  return vim.fn.bufadd((uri_to_fname(uri)))
+  local scheme = assert(uri:match("^([a-z]+)://.*"), 'Uri must contain a scheme: ' .. uri)
+  if scheme == 'file' then
+    return vim.fn.bufadd(uri_to_fname(uri))
+  else
+    return vim.fn.bufadd(uri)
+  end
 end
 
 return {
