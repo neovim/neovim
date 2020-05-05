@@ -689,18 +689,37 @@ void nvim_buf_set_text(uint64_t channel_id,
     return;
   }
 
-  // TODO: check range is ordered and everything!
+  bool oob = false;
+
+  // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
-  char *str_at_start = (char *)ml_get_buf(buf, start_row+1, false);
+  start_row = normalize_index(buf, start_row, &oob);
+  if (oob) {
+    api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
+    return;
+  }
+
+  end_row = normalize_index(buf, end_row, &oob);
+  /* if (oob) { */
+  /*   api_set_error(err, kErrorTypeValidation, "end_row out of bounds"); */
+  /*   return; */
+  /* } */
+
+  char *str_at_start = (char *)ml_get_buf(buf, start_row, false);
   if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
     api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
     return;
   }
 
-  char *str_at_end = (char *)ml_get_buf(buf, end_row+1, false);
+  char *str_at_end = (char *)ml_get_buf(buf, end_row, false);
   size_t len_at_end = strlen(str_at_end);
   if (end_col < 0 || (size_t)end_col > len_at_end) {
     api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
+    return;
+  }
+
+  if (start_row > end_row || (end_row == start_row && start_col > end_col)) {
+    api_set_error(err, kErrorTypeValidation, "start is higher than end");
     return;
   }
 
@@ -755,12 +774,10 @@ void nvim_buf_set_text(uint64_t channel_id,
     goto end;
   }
 
-  // TODO: dubbel KOLLA KOLLA indexen här
-  if (u_save((linenr_T)start_row, (linenr_T)end_row+2) == FAIL) {
+  if (u_save((linenr_T)start_row - 1, (linenr_T)end_row) == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;
   }
-
 
   ptrdiff_t extra = 0;  // lines added to text, can be negative
   size_t old_len = (size_t)(end_row-start_row+1);
@@ -770,7 +787,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   // repeatedly deleting line "start".
   size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
   for (size_t i = 0; i < to_delete; i++) {
-    if (ml_delete((linenr_T)start_row+1, false) == FAIL) {
+    if (ml_delete((linenr_T)start_row, false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to delete line");
       goto end;
     }
@@ -785,7 +802,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
   for (size_t i = 0; i < to_replace; i++) {
-    int64_t lnum = start_row + 1 + (int64_t)i;
+    int64_t lnum = start_row + (int64_t)i;
 
     if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
@@ -803,7 +820,7 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   // Now we may need to insert the remaining new old_len
   for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start_row + (int64_t)i;
+    int64_t lnum = start_row + (int64_t)i - 1;
 
     if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
@@ -832,15 +849,15 @@ void nvim_buf_set_text(uint64_t channel_id,
               kExtmarkNOOP);
 
   colnr_T col_extent = (colnr_T)(end_col
-                                 - ((end_row > start_col) ? start_col : 0));
-  extmark_splice(buf, (int)start_row, (colnr_T)start_col,
+                                 - ((end_col > start_col) ? start_col : 0));
+  extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
                  (int)(end_row-start_row), col_extent,
                  (int)new_len-1, (colnr_T)last_item.size, kExtmarkUndo);
 
-  changed_lines((linenr_T)start_row+1, 0, (linenr_T)end_row+1, (long)extra, true);
+  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row, (long)extra, true);
 
   // TODO: adjust cursor like an extmark ( i e it was inside last_part_len)
-  fix_cursor((linenr_T)start_row+1, (linenr_T)end_row+1, (linenr_T)extra);
+  fix_cursor((linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
 
 end:
   for (size_t i = 0; i < new_len; i++) {
