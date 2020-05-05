@@ -1182,7 +1182,7 @@ static int find_tagfunc_tags(
   if (result == FAIL) {
     return FAIL;
   }
-  if (rettv.v_type == VAR_SPECIAL && rettv.vval.v_number == VV_NULL) {
+  if (rettv.v_type == VAR_SPECIAL && rettv.vval.v_special == kSpecialVarNull) {
     tv_clear(&rettv);
     return NOTDONE;
   }
