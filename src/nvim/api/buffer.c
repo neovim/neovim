@@ -651,7 +651,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  // Only adjust mapks if we managed to switch to a window that holds
+  // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   mark_adjust((linenr_T)start,
               (linenr_T)(end - 1),
@@ -840,7 +840,7 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  // Only adjust mapks if we managed to switch to a window that holds
+  // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   mark_adjust((linenr_T)start_row,
               (linenr_T)end_row,
@@ -856,7 +856,10 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   changed_lines((linenr_T)start_row, 0, (linenr_T)end_row, (long)extra, true);
 
-  // TODO: adjust cursor like an extmark ( i e it was inside last_part_len)
+  // adjust cursor like an extmark ( i e it was inside last_part_len)
+  if (curwin->w_cursor.lnum == end_row && curwin->w_cursor.col > end_col) {
+    curwin->w_cursor.col -= col_extent - (colnr_T)last_item.size;
+  }
   fix_cursor((linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
 
 end:
