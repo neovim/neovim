@@ -343,12 +343,16 @@ void terminal_enter(void)
   RedrawingDisabled = false;
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
-  // placed at end of buffer to "follow" output.
+  // placed at end of buffer to "follow" output. #11072
   win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
+  long save_w_p_so = curwin->w_p_so;
+  long save_w_p_siso = curwin->w_p_siso;
   curwin->w_p_cul = false;
   curwin->w_p_cuc = false;
+  curwin->w_p_so = 0;
+  curwin->w_p_siso = 0;
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
@@ -370,6 +374,8 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;
+    curwin->w_p_so = save_w_p_so;
+    curwin->w_p_siso = save_w_p_siso;
   }
 
   // draw the unfocused cursor
