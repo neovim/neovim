@@ -17,6 +17,18 @@ describe(':terminal buffer', function()
     screen = thelpers.screen_setup()
   end)
 
+  it('terminal-mode forces various options', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline cursorcolumn scrolloff=4 sidescrolloff=7')
+    eq({ 1, 1, 4, 7 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq('n', eval('mode()'))
+
+    -- Enter terminal-mode ("insert" mode in :terminal).
+    feed('i')
+    eq('t', eval('mode()'))
+    eq({ 0, 0, 0, 0 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+  end)
+
   describe('when a new file is edited', function()
     before_each(function()
       feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')

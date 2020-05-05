@@ -50,6 +50,13 @@ mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
 except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
 to normal-mode. |CTRL-\_CTRL-N|
 
+Terminal-mode forces these local options:
+
+    'nocursorline'
+    'nocursorcolumn'
+    'scrolloff' = 0
+    'sidescrolloff' = 0
+
 Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
 to automate any terminal interaction.
 
