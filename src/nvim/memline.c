@@ -3477,7 +3477,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           // - the swap file has no changes and looks OK
           if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
             choice = 4;
-            if (p_verbose > 0) {
+            if (p_verbose > 1) {
               verb_msg(_("Found a swap file that is not useful, deleting it"));
             }
           }

@@ -456,7 +456,8 @@ end
 ---             - type_name: string type name, one of: ("table", "t", "string",
 ---               "s", "number", "n", "boolean", "b", "function", "f", "nil",
 ---               "thread", "userdata")
----             - optional: (optional) boolean, if true, `nil` is valid
+---             - optional: (optional, boolean, default=false) if true the
+---               parameter is not required (thus `nil` is valid)
 ---          2. (arg_value, fn, msg)
 ---             - arg_value: argument value
 ---             - fn: any function accepting one argument, returns true if and

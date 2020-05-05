@@ -6511,24 +6511,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'verbose'* *'vbs'*
 'verbose' 'vbs'		number	(default 0)
 			global
-	When bigger than zero, Vim will give messages about what it is doing.
-	Currently, these messages are given:
-	>= 1	When the shada file is read or written.
-	>= 2	When a file is ":source"'ed.
+	When greater than zero, Nvim displays (or logs) more messages for
+	debugging, where each level enables all lower levels respectively.
+
+	Level	Trace info ~
+	>= 1	|nvim_log()| messages, regardless of level.
+	>= 2	|shada|, |swap-file|, |spell|, 'undofile', |:source|.
 	>= 3	UI info, terminal capabilities
-	>= 5	Every searched tags file and include file.
-	>= 8	Files for which a group of autocommands is executed.
-	>= 9	Every executed autocommand.
-	>= 12	Every executed function.
-	>= 13	When an exception is thrown, caught, finished, or discarded.
-	>= 14	Anything pending in a ":finally" clause.
-	>= 15	Every executed Ex command (truncated at 200 characters).
+	>= 5	'tags', 'include' activity
+	>= 8	Filenames where autocommands executed.
+	>= 9	Event handler (autocommands) execution.
+	>= 12	Vimscript function execution.
+	>= 13	Exceptions thrown, caught, finished, or discarded.
+	>= 14	Pending ":finally" clauses.
+	>= 15	Ex commands (truncated at 200 characters).
 
-	This option can also be set with the "-V" argument.  See |-V|.
-	This option is also set by the |:verbose| command.
+	Set also by |-V| and |:verbose|.
 
-	When the 'verbosefile' option is set then the verbose messages are not
-	displayed.
+	If 'verbosefile' is set then messages are only logged, not displayed.
 
 						*'verbosefile'* *'vfile'*
 'verbosefile' 'vfile'	string	(default empty)

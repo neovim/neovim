@@ -2466,7 +2466,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
 
     if (flags & DIP_ERR) {
       EMSG3(_(e_dirnotf), basepath, name);
-    } else if (p_verbose > 0) {
+    } else if (p_verbose > 1) {
       verbose_enter();
       smsg(_("not found in '%s': \"%s\""), basepath, name);
       verbose_leave();
@@ -3154,7 +3154,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
 
   if (cookie.fp == NULL) {
-    if (p_verbose > 0) {
+    if (p_verbose > 1) {
       verbose_enter();
       if (sourcing_name == NULL) {
         smsg(_("could not source \"%s\""), fname);

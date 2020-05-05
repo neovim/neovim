@@ -411,6 +411,7 @@ end
 function module.clear(...)
   local argv, env = module.new_argv(...)
   module.set_session(module.spawn(argv, nil, env))
+  module.request('nvim_set_client_info', 'testclient', {}, 'remote', {}, {})
 end
 
 -- Builds an argument list for use in clear().

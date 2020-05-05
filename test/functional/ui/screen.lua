@@ -1194,7 +1194,7 @@ function Screen:redraw_debug(attrs, ignore, timeout)
   local function notification_cb(method, args)
     assert(method == 'redraw')
     for _, update in ipairs(args) do
-      -- mode_info_set is quite verbose, comment out the condition to debug it.
+      -- `mode_info_set` is very noisy. Remove this condition to debug it.
       if update[1] ~= "mode_info_set" then
         print(inspect(update))
       end

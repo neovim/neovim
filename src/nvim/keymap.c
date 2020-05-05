@@ -952,5 +952,5 @@ void log_key(int log_level, int key)
   char *keyname = key == K_EVENT
     ? "K_EVENT"
     : (char *)get_special_key_name(key, mod_mask);
-  LOG(log_level, "input: %s", keyname);
+  LOG(log_level, false, 0, "input: %s", keyname);
 }

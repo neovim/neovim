@@ -7226,7 +7226,7 @@ void vim_regfree(regprog_T *prog)
 
 static void report_re_switch(char_u *pat)
 {
-  if (p_verbose > 0) {
+  if (p_verbose > 1) {
     verbose_enter();
     MSG_PUTS(_("Switching to backtracking RE engine for pattern: "));
     MSG_PUTS(pat);

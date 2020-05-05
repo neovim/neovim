@@ -3115,15 +3115,15 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     hash = hash_hash(dw);
     hi = hash_lookup(&ht, (const char *)dw, STRLEN(dw), hash);
     if (!HASHITEM_EMPTY(hi)) {
-      if (p_verbose > 0)
-        smsg(_("Duplicate word in %s line %d: %s"),
-             fname, lnum, dw);
-      else if (duplicate == 0)
-        smsg(_("First duplicate word in %s line %d: %s"),
-             fname, lnum, dw);
+      if (p_verbose > 1) {
+        smsg(_("Duplicate word in %s line %d: %s"), fname, lnum, dw);
+      } else if (duplicate == 0) {
+        smsg(_("First duplicate word in %s line %d: %s"), fname, lnum, dw);
+      }
       ++duplicate;
-    } else
+    } else {
       hash_add_item(&ht, hi, dw, hash);
+    }
 
     flags = 0;
     store_afflist[0] = NUL;

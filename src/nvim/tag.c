@@ -3114,7 +3114,7 @@ add_tag_field(
 
   // Check that the field name doesn't exist yet.
   if (tv_dict_find(dict, field_name, -1) != NULL) {
-    if (p_verbose > 0) {
+    if (p_verbose > 1) {
       verbose_enter();
       smsg(_("Duplicate field name: %s"), field_name);
       verbose_leave();
