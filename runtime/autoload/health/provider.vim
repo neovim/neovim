@@ -589,7 +589,7 @@ function! s:check_ruby() abort
           \  'Are you behind a firewall or proxy?'])
     return
   endif
-  let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 1, 'not found')
+  let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 0, 'not found')
 
   let current_gem_cmd = host .' --version'
   let current_gem = s:system(current_gem_cmd)
