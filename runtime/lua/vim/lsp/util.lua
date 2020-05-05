@@ -438,6 +438,7 @@ function M.jump_to_location(location)
 
   --- Jump to new location
   api.nvim_set_current_buf(bufnr)
+  api.nvim_buf_set_option(0, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
   local col = range.start.character
