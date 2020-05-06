@@ -836,12 +836,12 @@ describe('LSP', function()
       }
       local completion_list_items = {items=completion_list}
       local expected = {
-        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label = 'foobar' } } } } },
-        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foobar', textEdit={} } } }  } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar' } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar', textEdit={} } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar'} } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = '', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='foobar'} } } } } },
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label = 'foobar' } } } } },
+        { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foobar', textEdit={} } } }  } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar' } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar', textEdit={} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar'} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='foobar'} } } } } },
       }
 
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
@@ -1139,6 +1139,30 @@ describe('LSP', function()
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil)
         ]])
+    end)
+  end)
+
+  describe('lsp.util.get_completion_item_kind_name', function()
+    describe('returns the name specified by protocol', function()
+      eq("Text", exec_lua("return vim.lsp.util.get_completion_item_kind_name(1)"))
+      eq("TypeParameter", exec_lua("return vim.lsp.util.get_completion_item_kind_name(25)"))
+    end)
+    describe('returns the name not specified by protocol', function()
+      eq("Unknown", exec_lua("return vim.lsp.util.get_completion_item_kind_name(nil)"))
+      eq("Unknown", exec_lua("return vim.lsp.util.get_completion_item_kind_name(vim.NIL)"))
+      eq("Unknown", exec_lua("return vim.lsp.util.get_completion_item_kind_name(1000)"))
+    end)
+  end)
+
+  describe('lsp.util.get_symbol_kind_name', function()
+    describe('returns the name specified by protocol', function()
+      eq("File", exec_lua("return vim.lsp.util.get_symbol_kind_name(1)"))
+      eq("TypeParameter", exec_lua("return vim.lsp.util.get_symbol_kind_name(26)"))
+    end)
+    describe('returns the name not specified by protocol', function()
+      eq("Unknown", exec_lua("return vim.lsp.util.get_symbol_kind_name(nil)"))
+      eq("Unknown", exec_lua("return vim.lsp.util.get_symbol_kind_name(vim.NIL)"))
+      eq("Unknown", exec_lua("return vim.lsp.util.get_symbol_kind_name(1000)"))
     end)
   end)
 end)
