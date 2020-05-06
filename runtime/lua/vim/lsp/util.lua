@@ -203,6 +203,13 @@ local function remove_unmatch_completion_items(items, prefix)
   end, items)
 end
 
+-- Acording to LSP spec, if the client set "completionItemKind.valueSet",
+-- the client must handle it properly even if it receives a value outside the specification.
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+function M.get_completion_item_kind_name(completion_item_kind)
+  return protocol.CompletionItemKind[completion_item_kind] or "Unknown"
+end
+
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
@@ -234,7 +241,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
-      kind = protocol.CompletionItemKind[completion_item.kind] or '',
+      kind = M.get_completion_item_kind_name(completion_item.kind),
       menu = completion_item.detail or '',
       info = info,
       icase = 1,
@@ -934,6 +941,13 @@ function M.set_qflist(items)
   })
 end
 
+-- Acording to LSP spec, if the client set "symbolKind.valueSet",
+-- the client must handle it properly even if it receives a value outside the specification.
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
+function M.get_symbol_kind_name(symbol_kind)
+  return protocol.SymbolKind[symbol_kind] or "Unknown"
+end
+
 --- Convert symbols to quickfix list items
 ---
 --@symbols DocumentSymbol[] or SymbolInformation[]
@@ -942,7 +956,7 @@ function M.symbols_to_items(symbols, bufnr)
     for _, symbol in ipairs(_symbols) do
       if symbol.location then -- SymbolInformation type
         local range = symbol.location.range
-        local kind = protocol.SymbolKind[symbol.kind]
+        local kind = M.get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
           filename = vim.uri_to_fname(symbol.location.uri),
           lnum = range.start.line + 1,
@@ -951,7 +965,7 @@ function M.symbols_to_items(symbols, bufnr)
           text = '['..kind..'] '..symbol.name,
         })
       elseif symbol.range then -- DocumentSymbole type
-        local kind = protocol.SymbolKind[symbol.kind]
+        local kind = M.get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
           -- bufnr = _bufnr,
           filename = vim.api.nvim_buf_get_name(_bufnr),
