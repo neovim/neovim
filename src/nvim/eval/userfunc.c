@@ -592,6 +592,8 @@ static void cleanup_function_call(funccall_T *fc)
   if (!fc_referenced(fc)) {
     free_funccal(fc, false);
   } else {
+    static int made_copy = 0;
+
     // "fc" is still in use.  This can happen when returning "a:000",
     // assigning "l:" to a global variable or defining a closure.
     // Link "fc" in the list for garbage collection later.
@@ -607,6 +609,15 @@ static void cleanup_function_call(funccall_T *fc)
     TV_LIST_ITER(&fc->l_varlist, li, {
       tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
     });
+
+    if (++made_copy == 10000) {
+      // We have made a lot of copies.  This can happen when
+      // repetitively calling a function that creates a reference to
+      // itself somehow.  Call the garbage collector soon to avoid using
+      // too much memory.
+      made_copy = 0;
+      want_garbage_collect = true;
+    }
   }
 }
 

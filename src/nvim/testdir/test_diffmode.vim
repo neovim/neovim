@@ -1,4 +1,6 @@
 " Tests for diff mode
+source shared.vim
+source screendump.vim
 
 func Test_diff_fold_sync()
   enew!

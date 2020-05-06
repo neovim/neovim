@@ -1,6 +1,6 @@
 " Tests for tabpage
 
-" source screendump.vim
+source screendump.vim
 
 function Test_tabpage()
   bw!

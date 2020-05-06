@@ -271,7 +271,7 @@ func Test_V_arg()
   call assert_equal("  verbose=0\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
-  " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n", out)
+  " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline \\d\\+: sourcing \"[^\"]*runtime[\\/]filetype\.vim\".*\n", out)
   call assert_match("  verbose=2\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')

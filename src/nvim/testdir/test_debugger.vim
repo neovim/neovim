@@ -1,7 +1,7 @@
 " Tests for the Vim script debug commands
 
 source shared.vim
-" source screendump.vim
+source screendump.vim
 
 " Run a Vim debugger command
 " If the expected output argument is supplied, then check for it.

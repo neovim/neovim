@@ -1,9 +1,11 @@
 " Functions shared by several tests.
 
 " Only load this script once.
-if exists('*WaitFor')
+if exists('*PythonProg')
   finish
 endif
+
+source view_util.vim
 
 " {Nvim}
 " Filepath captured from output may be truncated, like this:
@@ -326,17 +328,6 @@ func RunVimPiped(before, after, arguments, pipecmd)
     call delete('Xafter.vim')
   endif
   return 1
-endfunc
-
-" Get line "lnum" as displayed on the screen.
-" Trailing white space is trimmed.
-func! Screenline(lnum)
-  let chars = []
-  for c in range(1, winwidth(0))
-    call add(chars, nr2char(screenchar(a:lnum, c)))
-  endfor
-  let line = join(chars, '')
-  return matchstr(line, '^.\{-}\ze\s*$')
 endfunc
 
 func CanRunGui()
