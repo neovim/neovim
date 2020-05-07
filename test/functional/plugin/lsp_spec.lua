@@ -914,7 +914,21 @@ describe('LSP', function()
       }, buf_lines(target_bufnr))
     end)
   end)
-
+  describe('workspace_apply_edit', function()
+    it('workspace/applyEdit returns ApplyWorkspaceEditResponse', function()
+      local expected = {
+        applied = true;
+        failureReason = nil;
+      }
+      eq(expected, exec_lua [[
+        local apply_edit = {
+          label = nil;
+          edit = {};
+        }
+        return vim.lsp.callbacks['workspace/applyEdit'](nil, nil, apply_edit)
+      ]])
+    end)
+  end)
   describe('completion_list_to_complete_items', function()
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
