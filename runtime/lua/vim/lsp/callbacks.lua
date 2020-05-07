@@ -98,9 +98,10 @@ M['textDocument/references'] = function(_, _, result)
   api.nvim_command("wincmd p")
 end
 
-local symbol_callback = function(_, _, result, _, bufnr)
+local symbol_callback = function(_, _, result, _)
   if not result or vim.tbl_isempty(result) then return end
 
+  local bufnr = api.nvim_get_current_buf()
   util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
   api.nvim_command("wincmd p")

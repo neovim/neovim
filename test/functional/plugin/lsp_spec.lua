@@ -997,21 +997,18 @@ describe('LSP', function()
         local expected = {
           {
             col = 1,
-            filename = '',
             kind = 'File',
             lnum = 2,
             text = '[File] TestA'
           },
           {
             col = 1,
-            filename = '',
             kind = 'Module',
             lnum = 4,
             text = '[Module] TestB'
           },
           {
             col = 1,
-            filename = '',
             kind = 'Namespace',
             lnum = 6,
             text = '[Namespace] TestC'
@@ -1108,14 +1105,12 @@ describe('LSP', function()
         local expected = {
           {
             col = 1,
-            filename = '',
             kind = 'File',
             lnum = 2,
             text = '[File] TestA'
           },
           {
             col = 1,
-            filename = '',
             kind = 'Namespace',
             lnum = 6,
             text = '[Namespace] TestC'
@@ -1183,15 +1178,15 @@ describe('LSP', function()
     describe('convert SymbolInformation[] to items', function()
         local expected = {
           {
+            bufnr = 2,
             col = 1,
-            filename = 'test_a',
             kind = 'File',
             lnum = 2,
             text = '[File] TestA'
           },
           {
+            bufnr = 3,
             col = 1,
-            filename = 'test_b',
             kind = 'Module',
             lnum = 4,
             text = '[Module] TestB'

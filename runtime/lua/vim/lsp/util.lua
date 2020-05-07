@@ -979,7 +979,7 @@ function M.symbols_to_items(symbols, bufnr)
         local range = symbol.location.range
         local kind = M._get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
-          filename = vim.uri_to_fname(symbol.location.uri),
+          bufnr = vim.uri_to_bufnr(symbol.location.uri),
           lnum = range.start.line + 1,
           col = range.start.character + 1,
           kind = kind,
@@ -988,8 +988,7 @@ function M.symbols_to_items(symbols, bufnr)
       elseif symbol.range then -- DocumentSymbole type
         local kind = M._get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
-          -- bufnr = _bufnr,
-          filename = vim.api.nvim_buf_get_name(_bufnr),
+          bufnr = _bufnr,
           lnum = symbol.range.start.line + 1,
           col = symbol.range.start.character + 1,
           kind = kind,
