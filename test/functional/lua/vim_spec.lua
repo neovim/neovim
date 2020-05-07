@@ -769,10 +769,96 @@ describe('lua stdlib', function()
     exec_lua [[
     vim.api.nvim_set_var("testing", "hi")
     vim.api.nvim_set_var("other", 123)
+    vim.api.nvim_set_var("to_delete", {hello="world"})
     ]]
+
     eq('hi', funcs.luaeval "vim.g.testing")
     eq(123, funcs.luaeval "vim.g.other")
     eq(NIL, funcs.luaeval "vim.g.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
+    exec_lua [[
+    vim.g.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.g.to_delete")
+  end)
+
+  it('vim.b', function()
+    exec_lua [[
+    vim.api.nvim_buf_set_var(0, "testing", "hi")
+    vim.api.nvim_buf_set_var(0, "other", 123)
+    vim.api.nvim_buf_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.b.testing")
+    eq(123, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.b.to_delete")
+    exec_lua [[
+    vim.b.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.b.to_delete")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.b.testing")
+    eq(NIL, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+  end)
+
+  it('vim.w', function()
+    exec_lua [[
+    vim.api.nvim_win_set_var(0, "testing", "hi")
+    vim.api.nvim_win_set_var(0, "other", 123)
+    vim.api.nvim_win_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.w.testing")
+    eq(123, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.w.to_delete")
+    exec_lua [[
+    vim.w.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.w.to_delete")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.w.testing")
+    eq(NIL, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+  end)
+
+  it('vim.t', function()
+    exec_lua [[
+    vim.api.nvim_tabpage_set_var(0, "testing", "hi")
+    vim.api.nvim_tabpage_set_var(0, "other", 123)
+    vim.api.nvim_tabpage_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.t.testing")
+    eq(123, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.t.to_delete")
+    exec_lua [[
+    vim.t.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.t.to_delete")
+
+    exec_lua [[
+    vim.cmd "tabnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.t.testing")
+    eq(NIL, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
   end)
 
   it('vim.env', function()
