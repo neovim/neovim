@@ -775,6 +775,63 @@ describe('lua stdlib', function()
     eq(NIL, funcs.luaeval "vim.g.nonexistant")
   end)
 
+  it('vim.b', function()
+    exec_lua [[
+    vim.api.nvim_buf_set_var(0, "testing", "hi")
+    vim.api.nvim_buf_set_var(0, "other", 123)
+    ]]
+
+    eq('hi', funcs.luaeval "vim.b.testing")
+    eq(123, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.b.testing")
+    eq(NIL, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+  end)
+
+  it('vim.w', function()
+    exec_lua [[
+    vim.api.nvim_win_set_var(0, "testing", "hi")
+    vim.api.nvim_win_set_var(0, "other", 123)
+    ]]
+
+    eq('hi', funcs.luaeval "vim.w.testing")
+    eq(123, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.w.testing")
+    eq(NIL, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+  end)
+
+  it('vim.t', function()
+    exec_lua [[
+    vim.api.nvim_tabpage_set_var(0, "testing", "hi")
+    vim.api.nvim_tabpage_set_var(0, "other", 123)
+    ]]
+
+    eq('hi', funcs.luaeval "vim.t.testing")
+    eq(123, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+
+    exec_lua [[
+    vim.cmd "tabnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.t.testing")
+    eq(NIL, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+  end)
+
   it('vim.env', function()
     exec_lua [[
     vim.fn.setenv("A", 123)
