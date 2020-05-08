@@ -33,7 +33,8 @@ return function(event, higroup, timeout)
         api.nvim_buf_add_highlight(bufnr, namespace, higroup, linenr, cols[1], cols[2])
     end
 
-    vim.loop.new_timer():start(timeout, 0, vim.schedule_wrap(function() 
+    local timer = vim.loop.new_timer()
+    timer:start(timeout, 0, vim.schedule_wrap(function() 
         api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) 
         timer:stop(); timer:close()
     end))
