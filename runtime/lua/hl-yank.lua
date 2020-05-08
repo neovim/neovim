@@ -2,6 +2,7 @@ local api = vim.api
 local namespace = api.nvim_create_namespace('hlyank')
 
 -- get table of lines with start, end columns for given marks
+-- TODO: edge case if regtype==b where block ends at end of line
 local function region(mark1, mark2, regtype, inclusive)
     local pos1 = vim.fn.getpos("'[")
     local buf1, lin1, col1, off1 = pos1[1], pos1[2] - 1, pos1[3] - 1, pos1[4]
@@ -19,7 +20,6 @@ end
 -- highlight the yanked region with highlight group higroup for timeout ms 
 -- use from init.vim via
 --   au TextYankPost * lua require'hl_yank'(vim.v.event, 'IncSearch', 500)
--- TODO: edge case if end of block is at end of line, left of starting col
 return function(event, higroup, timeout)
     if event.operator ~= 'y' or event.regtype == '' then return end
     local event = event or vim.v.event
@@ -35,7 +35,7 @@ return function(event, higroup, timeout)
 
     local timer = vim.loop.new_timer()
     timer:start(timeout, 0, vim.schedule_wrap(function() 
-        api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) 
         timer:stop(); timer:close()
+        api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) 
     end))
 end
