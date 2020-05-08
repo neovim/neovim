@@ -6,6 +6,7 @@ local namespace = api.nvim_create_namespace('hlyank')
 --   au TextYankPost * lua require'hl_yank'(vim.v.event, 'IncSearch', 500)
 return function(event, higroup, timeout)
     if event.operator ~= 'y' or event.regtype == '' then return end
+    local event = event or vim.v.event
     local higroup = higroup or 'IncSearch'
     local timeout = timeout or 500
 
