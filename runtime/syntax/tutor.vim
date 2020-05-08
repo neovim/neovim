@@ -42,7 +42,7 @@ syn region tutorCommand matchgroup=Delimiter start=/^\~\{3} cmd\( :\)\?\s*$/ end
 syn region tutorInlineCommand matchgroup=Delimiter start=/\\\@<!`\(.*`{vim}\)\@=/ end=/\\\@<!`\({vim}\)\@=/ nextgroup=tutorInlineType contains=@VIM concealends keepend
 
 syn region tutorNormal matchgroup=Delimiter start=/^\~\{3} norm\(al\?\)\?\s*$/ end=/^\~\{3}/ contains=@VIMNORMAL concealends
-syn region tutorInlineNormal matchgroup=Delimiter start=/\\\@<!`\(\S*`{normal}\)\@=/ end=/\\\@<!`\({normal}\)\@=/ nextgroup=tutorInlineType contains=@VIMNORMAL concealends
+syn region tutorInlineNormal matchgroup=Delimiter start=/\\\@<!`\(\S*`{normal}\)\@=/ end=/\\\@<!`\({normal}\)\@=/ nextgroup=tutorInlineType contains=@VIMNORMAL concealends keepend
 
 syn match tutorInlineType /{\(normal\|vim\)}/ contained conceal
 
