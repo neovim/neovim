@@ -96,16 +96,28 @@ end)
 
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
+  if not api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+  end
   local start_line, finish_line = math.huge, -1
   local cleaned = {}
   for i, e in ipairs(text_edits) do
+    -- adjust start and end column for UTF-16 encoding of non-ASCII characters
+    local start_row = e.range.start.line
+    local start_col = e.range.start.character
+    local start_bline = api.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
+    start_col = vim.str_byteindex(start_bline, start_col)
+    local end_row = e.range["end"].line
+    local end_col = e.range["end"].character
+    local end_bline = api.nvim_buf_get_lines(bufnr, end_row, end_row+1, true)[1]
+    end_col = vim.str_byteindex(end_bline, end_col)
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
     -- TODO(ashkan) sanity check ranges for overlap.
     table.insert(cleaned, {
       i = i;
-      A = {e.range.start.line; e.range.start.character};
-      B = {e.range["end"].line; e.range["end"].character};
+      A = {start_row; start_col};
+      B = {end_row; end_col};
       lines = vim.split(e.newText, '\n', true);
     })
   end
@@ -113,9 +125,6 @@ function M.apply_text_edits(text_edits, bufnr)
   -- Reverse sort the orders so we can apply them without interfering with
   -- eachother. Also add i as a sort key to mimic a stable sort.
   table.sort(cleaned, edit_sort_key)
-  if not api.nvim_buf_is_loaded(bufnr) then
-    vim.fn.bufload(bufnr)
-  end
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
   local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
@@ -443,7 +452,7 @@ function M.jump_to_location(location)
   local items = {{tagname=vim.fn.expand('<cword>'), from=from}}
   vim.fn.settagstack(vim.fn.win_getid(), {items=items}, 't')
 
-  --- Jump to new location
+  --- Jump to new location (adjusting for UTF-16 encoding of characters)
   api.nvim_set_current_buf(bufnr)
   api.nvim_buf_set_option(0, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
