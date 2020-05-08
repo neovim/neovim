@@ -28,15 +28,15 @@ end
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
 function schedule_fn(fn, timeout)
-  local timer = vim.loop.new_timer()
-  timer:start(timeout, 0, vim.schedule_wrap(function()
-    timer:stop()
-    timer:close()
+    local timer = vim.loop.new_timer()
+    timer:start(timeout, 0, vim.schedule_wrap(function()
+        timer:stop()
+        timer:close()
 
-    fn()
-  end))
+        fn()
+    end))
 
-  return timer
+    return timer
 end
 
 --- Highlight the yanked region 
@@ -59,5 +59,8 @@ return function(event, higroup, timeout)
         api.nvim_buf_add_highlight(bufnr, namespace, higroup, linenr, cols[1], cols[2])
     end
 
-    schedule_fn(api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1), timeout)
+    schedule_fn(
+        function() api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) end, 
+        timeout
+    )
 end
