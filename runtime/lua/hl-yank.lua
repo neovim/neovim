@@ -8,7 +8,7 @@ local namespace = api.nvim_create_namespace('hlyank')
 -- @param mark2 mark of end of range
 -- @param regtype type of selection that is yanked (:help setreg)
 -- @param boolean indicating whether the selection is end-inclusive
-local function region(mark1, mark2, regtype, inclusive)
+local function marks_to_region(mark1, mark2, regtype, inclusive)
     local pos1 = vim.fn.getpos(mark1)
     local buf1, lin1, col1, off1 = pos1[1], pos1[2] - 1, pos1[3] - 1, pos1[4]
     local pos2 = vim.fn.getpos(mark2)
@@ -27,7 +27,8 @@ end
 --- Use to do a one-shot timer that calls `fn`
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
-function schedule_fn(fn, timeout)
+local function schedule_fn(fn, timeout)
+    vim.validate { fn = { fn, 'f', true}; }
     local timer = vim.loop.new_timer()
     timer:start(timeout, 0, vim.schedule_wrap(function()
         timer:stop()
@@ -39,7 +40,7 @@ function schedule_fn(fn, timeout)
     return timer
 end
 
---- Highlight the yanked region 
+--- Highlight the yanked region
 --
 --- use from init.vim via
 ---   au TextYankPost * lua require'hl_yank'(vim.v.event, 'IncSearch', 500)
@@ -55,12 +56,12 @@ return function(event, higroup, timeout)
     local bufnr = api.nvim_get_current_buf()
     api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 
-    for linenr, cols in pairs(region("'[", "']", event.regtype, event.inclusive)) do
+    for linenr, cols in pairs(marks_to_region("'[", "']", event.regtype, event.inclusive)) do
         api.nvim_buf_add_highlight(bufnr, namespace, higroup, linenr, cols[1], cols[2])
     end
 
     schedule_fn(
-        function() api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) end, 
+        function() api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) end,
         timeout
     )
 end
