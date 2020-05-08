@@ -1045,9 +1045,10 @@ static void profile_reset(void)
         uf->uf_tm_self      = profile_zero();
         uf->uf_tm_children  = profile_zero();
 
-        XFREE_CLEAR(uf->uf_tml_count);
-        XFREE_CLEAR(uf->uf_tml_total);
-        XFREE_CLEAR(uf->uf_tml_self);
+        for (int i = 0; i < uf->uf_lines.ga_len; i++) {
+          uf->uf_tml_count[i] = 0;
+          uf->uf_tml_total[i] = uf->uf_tml_self[i] = 0;
+        }
 
         uf->uf_tml_start    = profile_zero();
         uf->uf_tml_children = profile_zero();
