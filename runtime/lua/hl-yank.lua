@@ -4,6 +4,7 @@ local namespace = api.nvim_create_namespace('hlyank')
 -- highlight the yanked region with highlight group higroup for timeout ms 
 -- use from init.vim via
 --   au TextYankPost * lua require'hl_yank'(vim.v.event, 'IncSearch', 500)
+-- TODO: edge case if end of block is at end of line, left of starting col
 return function(event, higroup, timeout)
     if event.operator ~= 'y' or event.regtype == '' then return end
     local event = event or vim.v.event
@@ -25,5 +26,6 @@ return function(event, higroup, timeout)
 
     vim.loop.new_timer():start(timeout, 0, vim.schedule_wrap(function() 
         api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1) 
+        timer:stop(); timer:close()
     end))
 end
