@@ -779,7 +779,7 @@ describe('LSP', function()
         Fourth line of text
         å å ɧ 汉语 ↥ 🤦 🦄]]))
     end)
-    it('applies apply simple edits', function()
+    it('applies simple edits', function()
       local edits = {
         make_edit(0, 0, 0, 0, {"123"});
         make_edit(1, 0, 1, 1, {"2"});
@@ -818,10 +818,9 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
-    pending('applies non-ASCII characters edits', function()
-      -- FIXME: We don't handle non-ASCII characters well in UTF-16
+    it('applies non-ASCII characters edits', function()
       local edits = {
-        make_edit(4, 0, 4, 14, {"a a h"});
+        make_edit(4, 3, 4, 4, {"ä"});
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
       eq({
@@ -829,7 +828,7 @@ describe('LSP', function()
         'Second line of text';
         'Third line of text';
         'Fourth line of text';
-        'a a h';
+        'å ä ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
   end)
