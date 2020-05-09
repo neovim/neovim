@@ -433,7 +433,7 @@ end
 --- Use to do a one-shot timer that calls `fn`
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
-function vim.schedule_fn(fn, timeout)
+function vim.defer_fn(fn, timeout)
   vim.validate { fn = { fn, 'f', true}; }
   local timer = vim.loop.new_timer()
   timer:start(timeout, 0, vim.schedule_wrap(function()

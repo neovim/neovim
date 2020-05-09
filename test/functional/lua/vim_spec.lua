@@ -862,10 +862,10 @@ describe('lua stdlib', function()
     eq({0,3}, exec_lua[[return {re1:match_line(0, 1, 0, 7)}]])
   end)
 
-  it('vim.schedule_fn', function()
+  it('vim.defer_fn', function()
       exec_lua [[
       vim.g.test = 0
-      vim.schedule_fn(function() vim.g.test = 1 end, 5)
+      vim.defer_fn(function() vim.g.test = 1 end, 5)
       vim.cmd("sleep 10m")
       ]]
       eq(1, exec_lua[[return vim.g.test]])

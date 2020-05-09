@@ -32,7 +32,7 @@ function highlight.on_yank(higroup, timeout, event)
     api.nvim_buf_add_highlight(bufnr, yank_ns, higroup, linenr, cols[1], cols[2])
   end
 
-  vim.schedule_fn(
+  vim.defer_fn(
   function() api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1) end,
   timeout
   )
