@@ -12,12 +12,28 @@ local function marks_to_region(mark1, mark2, regtype, inclusive)
     local buf1, lin1, col1, off1 = pos1[1], pos1[2] - 1, pos1[3] - 1, pos1[4]
     local pos2 = vim.fn.getpos(mark2)
     local buf2, lin2, col2, off2 = pos2[1], pos2[2] - 1, pos2[3] - (inclusive and 0 or 1), pos2[4]
+
+    -- in case of block selection, columns need to be adjusted for multibyte characters
+    local bufline
+    if regtype:byte() == 22 then
+        bufline = api.nvim_buf_get_lines(0, lin1, lin1+1, true)[1]
+        col1 = vim.str_utfindex(bufline, col1)
+    end
+
     local region = {}
     for l = lin1, lin2 do
         local c1,c2
         if regtype:byte() == 22 then  -- block selection: take width from regtype
             c1 = col1 + off1
-            c2 = col1 + off1 + regtype:sub(2)
+            c2 = c1 + regtype:sub(2) 
+            -- and adjust for multibyte characters
+            bufline = api.nvim_buf_get_lines(0, l, l+1, true)[1]
+            if c1 < #bufline then
+                c1 = vim.str_byteindex(bufline, c1)
+            end
+            if c2 < #bufline then
+                c2 = vim.str_byteindex(bufline, c2)
+            end
         else
             c1 = (l == lin1) and (col1 + off1) or 0
             c2 = (l == lin2) and (col2 + off2) or -1
