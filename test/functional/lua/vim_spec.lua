@@ -863,11 +863,21 @@ describe('lua stdlib', function()
   end)
 
   it('vim.defer_fn', function()
-      exec_lua [[
-      vim.g.test = 0
-      vim.defer_fn(function() vim.g.test = 1 end, 5)
-      vim.cmd("sleep 10m")
-      ]]
-      eq(1, exec_lua[[return vim.g.test]])
+    exec_lua [[
+    vim.g.test = 0
+    vim.defer_fn(function() vim.g.test = 1 end, 5)
+    vim.cmd("sleep 10m")
+    ]]
+    eq(1, exec_lua[[return vim.g.test]])
   end)
-end)
+
+  it('vim.region', function()
+    helpers.insert(helpers.dedent( [[
+    text tααt tααt text
+    text tαxt txtα tex
+    text tαxt tαxt
+    ]]))
+    eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
+  end)
+
+  end)
