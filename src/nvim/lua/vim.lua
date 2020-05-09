@@ -386,4 +386,64 @@ do
   vim.wo = new_win_opt_accessor(nil)
 end
 
+--- Get table of lines with start, end columns for given marks
+---
+-- @param mark1 mark of beginning of range
+-- @param mark2 mark of end of range
+-- @param regtype type of selection that is yanked (:help setreg)
+-- @param boolean indicating whether the selection is end-inclusive
+function vim.marks_to_region(mark1, mark2, regtype, inclusive)
+    local pos1 = vim.fn.getpos(mark1)
+    local buf1, lin1, col1, off1 = pos1[1], pos1[2] - 1, pos1[3] - 1, pos1[4]
+    local pos2 = vim.fn.getpos(mark2)
+    local buf2, lin2, col2, off2 = pos2[1], pos2[2] - 1, pos2[3] - (inclusive and 0 or 1), pos2[4]
+
+    -- in case of block selection, columns need to be adjusted for multibyte characters
+    local bufline
+    if regtype:byte() == 22 then
+        bufline = vim.api.nvim_buf_get_lines(buf1, lin1, lin1 + 1, true)[1]
+        col1 = vim.str_utfindex(bufline, col1)
+    end
+
+    local region = {}
+    for l = lin1, lin2 do
+        local c1, c2
+        if regtype:byte() == 22 then  -- block selection: take width from regtype
+            c1 = col1 + off1
+            c2 = c1 + regtype:sub(2)
+            -- and adjust for multibyte characters
+            bufline = vim.api.nvim_buf_get_lines(buf2, l, l + 1, true)[1]
+            if c1 < #bufline then
+                c1 = vim.str_byteindex(bufline, c1)
+            end
+            if c2 < #bufline then
+                c2 = vim.str_byteindex(bufline, c2)
+            end
+        else
+            c1 = (l == lin1) and (col1 + off1) or 0
+            c2 = (l == lin2) and (col2 + off2) or -1
+        end
+        table.insert(region,l , {c1, c2})
+    end
+    return region
+end
+
+--- Defers calling `fn` until `timeout` ms passes.
+---
+--- Use to do a one-shot timer that calls `fn`
+--@param fn Callback to call once `timeout` expires
+--@param timeout Number of milliseconds to wait before calling `fn`
+function vim.schedule_fn(fn, timeout)
+    vim.validate { fn = { fn, 'f', true}; }
+    local timer = vim.loop.new_timer()
+    timer:start(timeout, 0, vim.schedule_wrap(function()
+        timer:stop()
+        timer:close()
+
+        fn()
+    end))
+
+    return timer
+end
+
 return module
