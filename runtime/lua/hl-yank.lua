@@ -3,7 +3,6 @@ local namespace = api.nvim_create_namespace('hlyank')
 
 --- Get table of lines with start, end columns for given marks
 ---
---- TODO: edge case if regtype==b where block ends at end of line
 -- @param mark1 mark of beginning of range
 -- @param mark2 mark of end of range
 -- @param regtype type of selection that is yanked (:help setreg)
@@ -15,8 +14,14 @@ local function marks_to_region(mark1, mark2, regtype, inclusive)
     local buf2, lin2, col2, off2 = pos2[1], pos2[2] - 1, pos2[3] - (inclusive and 0 or 1), pos2[4]
     local region = {}
     for l = lin1, lin2 do
-        local c1 = (l == lin1 or regtype:byte() == 22) and (col1 + off1) or 0
-        local c2 = (l == lin2 or regtype:byte() == 22) and (col2 + off2) or -1
+        local c1,c2
+        if regtype:byte() == 22 then  -- block selection: take width from regtype
+            c1 = col1 + off1
+            c2 = col1 + off1 + regtype:sub(2)
+        else
+            c1 = (l == lin1) and (col1 + off1) or 0
+            c2 = (l == lin2) and (col2 + off2) or -1
+        end
         table.insert(region,l,{c1,c2})
     end
     return region
