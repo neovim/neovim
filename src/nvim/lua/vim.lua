@@ -386,33 +386,33 @@ do
   vim.wo = new_win_opt_accessor(nil)
 end
 
---- Get table of lines with start, end columns for given marks
+--- Get a table of lines with start, end columns for a region marked by two points
 ---
--- @param mark1 mark of beginning of range
--- @param mark2 mark of end of range
--- @param regtype type of selection that is yanked (:help setreg)
--- @param boolean indicating whether the selection is end-inclusive
-function vim.marks_to_region(mark1, mark2, regtype, inclusive)
-  local pos1 = vim.fn.getpos(mark1)
-  local buf1, lin1, col1, off1 = pos1[1], pos1[2] - 1, pos1[3] - 1, pos1[4]
-  local pos2 = vim.fn.getpos(mark2)
-  local buf2, lin2, col2, off2 = pos2[1], pos2[2] - 1, pos2[3] - (inclusive and 0 or 1), pos2[4]
+-- @param bufnr number of buffer
+-- @param pos1 (line, column) tuple marking beginning of region
+-- @param pos2 (line, column) tuple marking end of region
+-- @param regtype type of selection (:help setreg)
+-- @param inclusive boolean indicating whether the selection is end-inclusive
+function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+  end
 
   -- in case of block selection, columns need to be adjusted for multibyte characters
   local bufline
   if regtype:byte() == 22 then
-    bufline = vim.api.nvim_buf_get_lines(buf1, lin1, lin1 + 1, true)[1]
-    col1 = vim.str_utfindex(bufline, col1)
+    bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    pos1[2] = vim.str_utfindex(bufline, pos1[2])
   end
 
   local region = {}
-  for l = lin1, lin2 do
+  for l = pos1[1], pos2[1] do
     local c1, c2
     if regtype:byte() == 22 then  -- block selection: take width from regtype
-      c1 = col1 + off1
+      c1 = pos1[2]
       c2 = c1 + regtype:sub(2)
       -- and adjust for multibyte characters
-      bufline = vim.api.nvim_buf_get_lines(buf2, l, l + 1, true)[1]
+      bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       if c1 < #bufline then
         c1 = vim.str_byteindex(bufline, c1)
       end
@@ -420,10 +420,10 @@ function vim.marks_to_region(mark1, mark2, regtype, inclusive)
         c2 = vim.str_byteindex(bufline, c2)
       end
     else
-      c1 = (l == lin1) and (col1 + off1) or 0
-      c2 = (l == lin2) and (col2 + off2) or -1
+      c1 = (l == pos1[1]) and (pos1[2]) or 0
+      c2 = (l == pos2[1]) and (pos2[2] + (inclusive and 1 or 0)) or -1
     end
-    table.insert(region,l , {c1, c2})
+    table.insert(region, l, {c1, c2})
   end
   return region
 end
