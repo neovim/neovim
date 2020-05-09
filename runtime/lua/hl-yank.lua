@@ -16,18 +16,18 @@ local function marks_to_region(mark1, mark2, regtype, inclusive)
     -- in case of block selection, columns need to be adjusted for multibyte characters
     local bufline
     if regtype:byte() == 22 then
-        bufline = api.nvim_buf_get_lines(0, lin1, lin1+1, true)[1]
+        bufline = api.nvim_buf_get_lines(buf1, lin1, lin1 + 1, true)[1]
         col1 = vim.str_utfindex(bufline, col1)
     end
 
     local region = {}
     for l = lin1, lin2 do
-        local c1,c2
+        local c1, c2
         if regtype:byte() == 22 then  -- block selection: take width from regtype
             c1 = col1 + off1
-            c2 = c1 + regtype:sub(2) 
+            c2 = c1 + regtype:sub(2)
             -- and adjust for multibyte characters
-            bufline = api.nvim_buf_get_lines(0, l, l+1, true)[1]
+            bufline = api.nvim_buf_get_lines(buf2, l, l + 1, true)[1]
             if c1 < #bufline then
                 c1 = vim.str_byteindex(bufline, c1)
             end
@@ -38,7 +38,7 @@ local function marks_to_region(mark1, mark2, regtype, inclusive)
             c1 = (l == lin1) and (col1 + off1) or 0
             c2 = (l == lin2) and (col2 + off2) or -1
         end
-        table.insert(region,l,{c1,c2})
+        table.insert(region,l , {c1, c2})
     end
     return region
 end
@@ -64,14 +64,16 @@ end
 --- Highlight the yanked region
 --
 --- use from init.vim via
----   au TextYankPost * lua require'hl_yank'(vim.v.event, 'IncSearch', 500)
--- @param event event structure
+---   au TextYankPost * lua require'hl_yank'()
+--- customize highlight group and timeout via
+---   au TextYankPost * lua require'hl_yank'("IncSearch", 500)
 -- @param higroup highlight group for yanked region
 -- @param timeout time in ms before highlight is cleared
-return function(event, higroup, timeout)
-    if event.operator ~= 'y' or event.regtype == '' then return end
+-- @param event event structure
+return function(higroup, timeout, event)
     local event = event or vim.v.event
-    local higroup = higroup or 'IncSearch'
+    if event.operator ~= 'y' or event.regtype == '' then return end
+    local higroup = higroup or "IncSearch"
     local timeout = timeout or 500
 
     local bufnr = api.nvim_get_current_buf()
