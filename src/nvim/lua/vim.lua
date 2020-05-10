@@ -398,7 +398,8 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     vim.fn.bufload(bufnr)
   end
 
-  -- in case of block selection, columns need to be adjusted for multibyte characters
+  -- in case of block selection, columns need to be adjusted for non-ASCII characters
+  -- TODO: handle double-width characters
   local bufline
   if regtype:byte() == 22 then
     bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
@@ -411,7 +412,8 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     if regtype:byte() == 22 then  -- block selection: take width from regtype
       c1 = pos1[2]
       c2 = c1 + regtype:sub(2)
-      -- and adjust for multibyte characters
+      print(regtype:sub(2))
+      -- and adjust for non-ASCII characters
       bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       if c1 < #bufline then
         c1 = vim.str_byteindex(bufline, c1)
