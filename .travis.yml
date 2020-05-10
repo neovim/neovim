@@ -157,7 +157,7 @@ jobs:
         - CMAKE_FLAGS="$CMAKE_FLAGS -m32 -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -m32 -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
         # Minimum required CMake.
-        - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
+        - CMAKE_URL=https://cmake.org/files/v3.4/cmake-3.4.3-Linux-i386.sh
         - *common-job-env
     - name: big-endian
       os: linux

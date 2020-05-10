@@ -52,7 +52,7 @@ if [[ -n "$CMAKE_URL" ]]; then
   bash /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
   ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
   cmake_version="$(cmake --version)"
-  echo "$cmake_version" | grep -qF '2.8.12' || {
+  echo "$cmake_version" | grep -qF '3.4.3' || {
     echo "Unexpected CMake version: $cmake_version"
     exit 1
   }

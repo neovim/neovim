@@ -28,7 +28,7 @@ void os_tty_guess_term(const char **term, int out_fd)
   if (winpty) {
     // Force TERM=win32con when running in winpty.
     *term = "win32con";
-    uv_set_vterm_state(UV_UNSUPPORTED);
+    uv_tty_set_vterm_state(UV_TTY_UNSUPPORTED);
     return;
   }
 
@@ -55,7 +55,7 @@ void os_tty_guess_term(const char **term, int out_fd)
   }
 
   if (conemu_ansi) {
-    uv_set_vterm_state(UV_SUPPORTED);
+    uv_tty_set_vterm_state(UV_TTY_SUPPORTED);
   }
 }
 #endif
