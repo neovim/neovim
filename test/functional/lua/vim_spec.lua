@@ -551,85 +551,101 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, code))
   end)
 
-  it('vim.call, vim.fn', function()
-    eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
-    eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
-    -- compat: nvim_call_function uses "special" value for vimL float
-    eq(false, exec_lua([[return vim.api.nvim_call_function('sin', {0.0}) == 0.0 ]]))
 
-    source([[
-      func! FooFunc(test)
-        let g:test = a:test
-        return {}
-      endfunc
-      func! VarArg(...)
-        return a:000
-      endfunc
-      func! Nilly()
-        return [v:null, v:null]
-      endfunc
-    ]])
-    eq(true, exec_lua([[return next(vim.fn.FooFunc(3)) == nil ]]))
-    eq(3, eval("g:test"))
-    -- compat: nvim_call_function uses "special" value for empty dict
-    eq(true, exec_lua([[return next(vim.api.nvim_call_function("FooFunc", {5})) == true ]]))
-    eq(5, eval("g:test"))
+  describe('vim.call, vim.fn', function()
+    it('should handle basic cases for call and fn', function()
+      eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
+      eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
+      -- compat: nvim_call_function uses "special" value for vimL float
+      eq(false, exec_lua([[return vim.api.nvim_call_function('sin', {0.0}) == 0.0 ]]))
 
-    eq({2, "foo", true}, exec_lua([[return vim.fn.VarArg(2, "foo", true)]]))
-
-    eq(true, exec_lua([[
-      local x = vim.fn.Nilly()
-      return #x == 2 and x[1] == vim.NIL and x[2] == vim.NIL
-    ]]))
-    eq({NIL, NIL}, exec_lua([[return vim.fn.Nilly()]]))
-
-    -- error handling
-    eq({false, 'Vim:E714: List required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
-
-    eq(
-      {false, 'error converting argument 2'},
-      exec_lua([[
-        return {
-          pcall(
-            function()
-              return vim.fn.timer_start(
-                2000,
-                function(...)
-                  return {...}
-                end
-              )
-          end)
-        }
+      source([[
+        func! FooFunc(test)
+          let g:test = a:test
+          return {}
+        endfunc
+        func! VarArg(...)
+          return a:000
+        endfunc
+        func! Nilly()
+          return [v:null, v:null]
+        endfunc
       ]])
-    )
+      eq(true, exec_lua([[return next(vim.fn.FooFunc(3)) == nil ]]))
+      eq(3, eval("g:test"))
+      -- compat: nvim_call_function uses "special" value for empty dict
+      eq(true, exec_lua([[return next(vim.api.nvim_call_function("FooFunc", {5})) == true ]]))
+      eq(5, eval("g:test"))
 
-    -- NOTE: vim.wrap_fn, not vim.fn
-    eq(
-      {true, 1},
-      exec_lua([[
-        return {
-          pcall(
-            function()
-              -- Set the value to false
-              vim.g.test_wrap_fn_result = false
+      eq({2, "foo", true}, exec_lua([[return vim.fn.VarArg(2, "foo", true)]]))
 
-              local result = vim.wrap_fn.timer_start(
-                0,
-                function(...)
-                  -- Timer will set the value new
-                  vim.g.test_wrap_fn_result = true
-                  return {...}
-                end
-              )
+      eq(true, exec_lua([[
+        local x = vim.fn.Nilly()
+        return #x == 2 and x[1] == vim.NIL and x[2] == vim.NIL
+      ]]))
+      eq({NIL, NIL}, exec_lua([[return vim.fn.Nilly()]]))
+    end)
 
-              vim.cmd('sleep 100m')
+    it('should do error handling', function()
+      eq(
+        {false, 'Vim:E714: List required'},
+        exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]])
+      )
+    end)
 
-              return result
-          end)
-        }
-      ]])
-    )
-    eq(true, exec_lua([[return vim.g.test_wrap_fn_result]]))
+    it('should convert lua functions', function()
+      eq(
+        {true, 1},
+        exec_lua([[
+          return {
+            pcall(
+              function()
+                -- Set the value to false
+                vim.g.test_fn_result = false
+
+                local result = vim.fn.timer_start(
+                  0,
+                  function(...)
+                    -- Timer will set the value new
+                    vim.g.test_fn_result = true
+                    return {...}
+                  end
+                )
+
+                vim.cmd('sleep 100m')
+
+                return result
+            end)
+          }
+        ]])
+      )
+
+      eq(true, exec_lua([[return vim.g.test_fn_result]]))
+    end)
+
+    it('should delete inaccesible functions', function()
+      local result = exec_lua [=[
+        local temp_cb
+
+        temp_cb = function(...) return 1 end
+        vim.fn.timer_start(0, temp_cb)
+
+        temp_cb = function(...) return 2 end
+
+        -- Clear the old temp_cb val.
+        collectgarbage()
+
+        vim.fn.timer_start(0, temp_cb)
+
+        return vim.split(
+          vim.trim(vim.fn.execute [[function /^_AutoConverted]]),
+          "\n"
+        )
+      ]=]
+
+      -- Only one _AutoConverted function should exist.
+      eq(1, #result)
+    end)
   end)
 
   it('vim.rpcrequest and vim.rpcnotify', function()

@@ -259,34 +259,41 @@ function vim.empty_dict()
   return setmetatable({}, vim._empty_dict_mt)
 end
 
--- vim.fn.{func}(...)
-vim.fn = setmetatable({}, {
-  __index = function(t, key)
-    local function _fn(...)
-      return vim.call(key, ...)
-    end
-    t[key] = _fn
-    return _fn
-  end
-})
 
-
-__LuaAutoFuncMapper = {}
 do
+  local function lua_function_identity(f)
+    vim.validate { f = { f, 'f' } }
+
+    return string.format("function_%s", vim.split(tostring(f), "x")[2])
+  end
+
+  local function viml_function_name(f_identity)
+    return string.format("_AutoConvertedLuaType__%s", f_identity)
+  end
+
+  __LuaAutoFuncMapper = setmetatable({}, {__mode = 'v'})
+  __LuaAutoFuncTracker = {}
+
   -- Load the auto wrapper function
-  vim.fn.execute([[
-  function! __VimlLuaAutoWrapper(name, ...) abort
-    return luaeval(printf("__LuaAutoFuncMapper['%s'](unpack(unpack(_A)))", a:name), a:000)
-  endfunction
-  ]])
+  vim.call(
+    'execute',
+    {
+      [[
+      function! __VimlLuaAutoWrapper(name, ...) abort
+        return luaeval(printf("__LuaAutoFuncMapper['%s'](unpack(unpack(_A)))", a:name), a:000)
+      endfunction
+      ]]
+    }
+  )
 
   local function convert_recurse(val)
     if type(val) == 'function' then
-      local function_identity = string.format("function_%s", vim.split(tostring(val), "x")[2])
-      local function_name = string.format("_AutoConvertedLuaType__%s", function_identity)
+      local f_identity = lua_function_identity(val)
+      local f_name = viml_function_name(f_identity)
 
-      if __LuaAutoFuncMapper[function_identity] ~= val then
-        __LuaAutoFuncMapper[function_identity] = val
+      if __LuaAutoFuncMapper[f_identity] ~= val then
+        __LuaAutoFuncMapper[f_identity] = val
+        __LuaAutoFuncTracker[f_identity] = true
 
         vim.fn.execute(
           string.format(
@@ -294,12 +301,24 @@ do
             function! %s(...) abort
               return __VimlLuaAutoWrapper("%s", a:000)
             endfunction
-            ]], function_name, function_identity
+            ]], f_name, f_identity
           )
         )
+
+        -- Whenever we set a new function for the first time we are going to
+        -- clean up old functions (this will have some cost but it's probably
+        -- better than just leaking every lua function into a vimL function
+        -- forever).
+        for existing_f_identity, _ in pairs(__LuaAutoFuncTracker) do
+          if __LuaAutoFuncMapper[existing_f_identity] == nil then
+            -- Delete the function in VimL and stop tracking the function
+            vim.cmd(string.format('silent! delfunction %s', viml_function_name(existing_f_identity)))
+            __LuaAutoFuncTracker[existing_f_identity] = nil
+          end
+        end
       end
 
-      return function_name
+      return f_name
     elseif type(val) == 'table' then
       if vim.tbl_islist(val) then
         for i, v in ipairs(val) do
@@ -315,8 +334,8 @@ do
     return val
   end
 
-  -- vim.wrap_fn.{func}(...)
-  vim.wrap_fn = setmetatable({}, {
+  -- vim.fn.{func}(...)
+  vim.fn = setmetatable({}, {
     __index = function(t, key)
       local function _fn(...)
         return vim.call(key, unpack(convert_recurse({...})))
