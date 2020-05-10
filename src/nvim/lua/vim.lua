@@ -412,7 +412,6 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     if regtype:byte() == 22 then  -- block selection: take width from regtype
       c1 = pos1[2]
       c2 = c1 + regtype:sub(2)
-      print(regtype:sub(2))
       -- and adjust for non-ASCII characters
       bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       if c1 < #bufline then
