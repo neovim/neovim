@@ -29,7 +29,7 @@ local M = {}
 --    tags?: DiagnosticTag[]
 --    relatedInformation?: DiagnosticRelatedInformation[]
 -- }
-M.diagnostics_by_buf_and_client_id = {}
+local diagnostics_by_buf_and_client_id = {}
 
 local split = vim.split
 local function split_lines(value)
@@ -703,12 +703,17 @@ do
     severity_highlights[severity] = highlight_name
   end
 
-  function M.buf_get_diagnostics(bufnr)
-    validate { bufnr = {bufnr, 'n', true} }
+  function M.buf_get_diagnostics(bufnr, client_id)
+    validate { bufnr = {bufnr, 'n', false}, client_id = {client_id, 'n', true} }be
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
 
+    if client_id then
+      return diagnostics_by_buf_and_client_id[bufnr][client_id]
+    end
+
+    -- Aggregate diagnostics across all clients into a single table
     local diagnostics = {}
-    for _, client_diagnostics in ipairs(M.diagnostics_by_buf_and_client_id[bufnr]) do
+    for _, client_diagnostics in ipairs(diagnostics_by_buf_and_client_id[bufnr]) do
       for _, diagnostic in ipairs(client_diagnostics) do
         table.insert(diagnostics, diagnostic)
       end
@@ -783,16 +788,16 @@ do
     }
     if not diagnostics then return end
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-    if not M.diagnostics_by_buf_and_client_id[bufnr] then
+    if not diagnostics_by_buf_and_client_id[bufnr] then
       -- Clean up our data when the buffer unloads.
       api.nvim_buf_attach(bufnr, false, {
         on_detach = function(b)
-          M.diagnostics_by_buf_and_client_id[b] = nil
+          diagnostics_by_buf_and_client_id[b] = nil
         end
       })
-      M.diagnostics_by_buf_and_client_id[bufnr] = {}
+      diagnostics_by_buf_and_client_id[bufnr] = {}
     end
-    M.diagnostics_by_buf_and_client_id[bufnr][client_id] = diagnostics
+    diagnostics_by_buf_and_client_id[bufnr][client_id] = diagnostics
   end
 
   function M.buf_diagnostics_underline(bufnr, diagnostics)

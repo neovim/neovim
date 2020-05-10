@@ -928,19 +928,24 @@ apply_text_edits({text_edits}, {bufnr})
 apply_workspace_edit({workspace_edit})
                 TODO: Documentation
 
-                                         *vim.lsp.util.diagnostics_by_buf*
-diagnostics_by_buf
-                A table containing diagnostics grouped by buf.
+                                         *vim.lsp.util.buf_get_diagnostics()*
+buf_get_diagnostics({bufnr}, {client_id})
+                Returns a table containing diagnostics for bufnr and client_id.
 
-                {<bufnr>: {diagnostics}}
+                Parameters: ~
+                    {bufnr}      (number) Buffer handle, or 0 for current
+                    {client_id}  (number, optional) Client id
 
-		{diagnostics} is an array of diagnostics.
+                With no client_id, returns diagnostics across all clients for
+                the buffer.
+
+                {diagnostics} is an array of diagnostics.
 
                 By default this is populated by the
                 `textDocument/publishDiagnostics` callback via
                 |vim.lsp.util.buf_diagnostics_save_positions|.
 
-                It contains entries for active buffers. Once a buffer is
+                It returns entries for active buffers. Once a buffer is
                 detached the entries for it are discarded.
 
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*

@@ -984,6 +984,46 @@ describe('LSP', function()
         return vim.lsp.util.buf_get_diagnostics(0)
       ]])
     end)
+    it('returns diagnostics for a single client', function()
+      local client_A_diagnostics = {
+        { range = {}; message = "diag1" },
+        { range = {}; message = "diag2" },
+      }
+      local client_B_diagnostics = {
+        { range = {}; message = "diag3" },
+        { range = {}; message = "diag4" },
+      }
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 1, client_A_diagnostics)
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 2, client_B_diagnostics)
+
+      eq(client_B_diagnostics, exec_lua [[
+        return vim.lsp.util.buf_get_diagnostics(0, 2)
+      ]])
+    end)
+    it('returns updated diagnostics for a single client', function()
+      local client_A_diagnostics = {
+        { range = {}; message = "diag1" },
+        { range = {}; message = "diag2" },
+      }
+      local client_B_diagnostics = {
+        { range = {}; message = "diag3" },
+        { range = {}; message = "diag4" },
+      }
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 1, client_A_diagnostics)
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 2, client_B_diagnostics)
+
+      -- No more error for client A
+      exec_lua([[
+        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, 1, {})
+
+      eq(client_B_diagnostics, exec_lua [[
+        return vim.lsp.util.buf_get_diagnostics(0, 2)
+      ]])
+    end)
   end)
   describe('lsp.util.show_line_diagnostics', function()
     it('creates floating window and returns popup bufnr and winnr if current line contains diagnostics', function()
