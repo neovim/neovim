@@ -435,7 +435,7 @@ end
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
 function vim.defer_fn(fn, timeout)
-  vim.validate { fn = { fn, 'f', true}; }
+  vim.validate { fn = { fn, 'c', true}; }
   local timer = vim.loop.new_timer()
   timer:start(timeout, 0, vim.schedule_wrap(function()
     timer:stop()
