@@ -388,11 +388,11 @@ end
 
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
--- @param bufnr number of buffer
--- @param pos1 (line, column) tuple marking beginning of region
--- @param pos2 (line, column) tuple marking end of region
--- @param regtype type of selection (:help setreg)
--- @param inclusive boolean indicating whether the selection is end-inclusive
+--@param bufnr number of buffer
+--@param pos1 (line, column) tuple marking beginning of region
+--@param pos2 (line, column) tuple marking end of region
+--@param regtype type of selection (:help setreg)
+--@param inclusive boolean indicating whether the selection is end-inclusive
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)

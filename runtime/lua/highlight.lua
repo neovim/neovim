@@ -33,8 +33,8 @@ function highlight.on_yank(higroup, timeout, event)
   end
 
   vim.defer_fn(
-  function() api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1) end,
-  timeout
+    function() api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1) end,
+    timeout
   )
 end
 
