@@ -2994,7 +2994,7 @@ win_line (
           c_final = NUL;
           n_extra =
             get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
-          if (wp->w_skipcol > 0 && wp->w_p_wrap) {
+          if (wp->w_skipcol > 0 && wp->w_p_wrap && wp->w_p_brisbr) {
             need_showbreak = false;
           }
           // Correct end of highlighted area for 'breakindent',
