@@ -7229,9 +7229,9 @@ static bool briopt_check(win_T *wp)
     }
   }
 
-  wp->w_p_brishift = bri_shift;
-  wp->w_p_brimin   = bri_min;
-  wp->w_p_brisbr   = bri_sbr;
+  wp->w_briopt_shift = bri_shift;
+  wp->w_briopt_min = bri_min;
+  wp->w_briopt_sbr = bri_sbr;
 
   return true;
 }

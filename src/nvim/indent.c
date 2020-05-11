@@ -398,10 +398,10 @@ int get_breakindent_win(win_T *wp, const char_u *line)
     prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_indent = get_indent_str(line, (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
-  bri = prev_indent + wp->w_p_brishift;
+  bri = prev_indent + wp->w_briopt_shift;
 
   // indent minus the length of the showbreak string
-  if (wp->w_p_brisbr) {
+  if (wp->w_briopt_sbr) {
     bri -= vim_strsize(p_sbr);
   }
   // Add offset for number column, if 'n' is in 'cpoptions'
@@ -410,11 +410,11 @@ int get_breakindent_win(win_T *wp, const char_u *line)
   // never indent past left window margin
   if (bri < 0) {
     bri = 0;
-  } else if (bri > eff_wwidth - wp->w_p_brimin) {
+  } else if (bri > eff_wwidth - wp->w_briopt_min) {
     // always leave at least bri_min characters on the left,
     // if text width is sufficient
-    bri = (eff_wwidth - wp->w_p_brimin < 0)
-      ? 0 : eff_wwidth - wp->w_p_brimin;
+    bri = (eff_wwidth - wp->w_briopt_min < 0)
+      ? 0 : eff_wwidth - wp->w_briopt_min;
   }
 
   return bri;
