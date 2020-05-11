@@ -12,10 +12,10 @@ local highlight = {}
 -- @param timeout time in ms before highlight is cleared
 -- @param event event structure
 function highlight.on_yank(higroup, timeout, event)
-  local event = event or vim.v.event
+  event = event or vim.v.event
   if event.operator ~= 'y' or event.regtype == '' then return end
-  local higroup = higroup or "IncSearch"
-  local timeout = timeout or 500
+  higroup = higroup or "IncSearch"
+  timeout = timeout or 500
 
   local bufnr = api.nvim_get_current_buf()
   local yank_ns = api.nvim_create_namespace('')
