@@ -71,7 +71,7 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      int row, colnr_T col, int end_row, colnr_T end_col,
-                     Decoration *decor, ExtmarkOp op)
+                     Decoration *decor, ExtmarkOp op, bool right_gravity)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   assert(ns != NULL);
@@ -112,7 +112,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                              row, col, true,
                              end_row, end_col, false);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, true);
+    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
   }
 
 revised:

@@ -1369,6 +1369,22 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     return 0;
   }
 
+  bool right_gravity = true;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("right_gravity", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "right_gravity is not a boolean");
+        return 0;
+      }
+      right_gravity = v->data.boolean;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return 0;
+    }
+  }
+
   size_t len = 0;
   if (line < 0 || line > buf->b_ml.ml_line_count) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
@@ -1527,6 +1543,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   return (Integer)id;
+  /* id_num = extmark_set(buf, (uint64_t)ns_id, id_num, */
+  /*                      (int)line, (colnr_T)col, kExtmarkUndo, right_gravity); */
 
 error:
   clear_virttext(&virt_text);
