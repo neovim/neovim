@@ -71,7 +71,7 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// must not be used during iteration!
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
-                     int row, colnr_T col, ExtmarkOp op)
+                     int row, colnr_T col, ExtmarkOp op, bool right_gravity)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   mtpos_t old_pos;
@@ -101,7 +101,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
     }
   }
 
-  mark = marktree_put(buf->b_marktree, row, col, true);
+  mark = marktree_put(buf->b_marktree, row, col, right_gravity);
 revised:
   map_put(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark,
                                  (ExtmarkItem){ ns_id, id, 0,
