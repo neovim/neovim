@@ -878,7 +878,6 @@ vim.o                                                                 *vim.o*
         Table with values from |options|
         Invalid keys will result in an error.
 
-
 vim.b                                                                 *vim.b*
         Gets a buffer-scoped (b:) variable.
         Keys with no values set will result in `nil`.
@@ -898,7 +897,6 @@ vim.wo                                                                *vim.wo*
 vim.t                                                                 *vim.t*
         Gets a tabpage-scoped (t:) variable.
         Keys with no values set will result in `nil`.
-
 
 vim.v                                                                 *vim.v*
         Gets a v: variable.
