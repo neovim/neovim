@@ -852,6 +852,24 @@ vim.types						*vim.types*
 ==============================================================================
 Lua module: vim dicts                                           *lua-vim-dicts*
 
+Built-in Vim dictionaries can be accessed and set idiomatically in Lua by each
+of the following tables.
+
+To set a value: >
+
+  vim.g.my_global_variable = 5
+<
+
+To read a value: >
+
+  print(vim.g.my_global_variable)
+<
+
+To delete a value: >
+
+  vim.g.my_global_variable = nil
+<
+
 vim.g                                                                 *vim.g*
         Table with values from |g:|
         Keys with no values set will result in `nil`.
