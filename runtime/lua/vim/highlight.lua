@@ -5,9 +5,9 @@ local highlight = {}
 --- Highlight the yanked region
 --
 --- use from init.vim via
----   au TextYankPost * lua require'highlight'.on_yank()
+---   au TextYankPost * lua require'vim.highlight'.on_yank()
 --- customize highlight group and timeout via
----   au TextYankPost * lua require'highlight'.on_yank("IncSearch", 500)
+---   au TextYankPost * lua require'vim.highlight'.on_yank("IncSearch", 500)
 -- @param higroup highlight group for yanked region
 -- @param timeout time in ms before highlight is cleared
 -- @param event event structure
