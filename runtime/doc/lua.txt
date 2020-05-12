@@ -850,6 +850,45 @@ vim.types						*vim.types*
 	only contain values for these three types.
 
 ==============================================================================
+Lua module: vim dicts                                           *lua-vim-dicts*
+
+vim.g                                                                 *vim.g*
+        Table with values from |g:|
+        Keys with no values set will result in `nil`.
+
+vim.o                                                                 *vim.o*
+        Table with values from |options|
+        Invalid keys will result in an error.
+
+
+vim.b                                                                 *vim.b*
+        Gets a buffer-scoped (b:) variable.
+        Keys with no values set will result in `nil`.
+
+vim.bo                                                                *vim.bo*
+        Gets a buffer-scoped option.
+        Invalid keys will result in an error.
+
+vim.w                                                                 *vim.w*
+        gets a window-scoped (w:) variable.
+        Keys with no values set will result in `nil`.
+
+vim.wo                                                                *vim.wo*
+        Gets a window-scoped option.
+        Invalid keys will result in an error.
+
+vim.t                                                                 *vim.t*
+        Gets a tabpage-scoped (t:) variable.
+        Keys with no values set will result in `nil`.
+
+
+vim.v                                                                 *vim.v*
+        Gets a v: variable.
+        Keys with no values set will result in `nil`.
+
+
+
+==============================================================================
 Lua module: vim                                                      *lua-vim*
 
 inspect({object}, {options})                                   *vim.inspect()*
