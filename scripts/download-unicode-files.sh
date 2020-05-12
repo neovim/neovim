@@ -1,11 +1,11 @@
 #!/bin/sh
 
 set -e
-
-files="UnicodeData.txt CaseFolding.txt EastAsianWidth.txt"
+data_files="UnicodeData.txt CaseFolding.txt EastAsianWidth.txt"
+emoji_files="emoji-data.txt"
 
 UNIDIR_DEFAULT=unicode
-DOWNLOAD_URL_BASE_DEFAULT='http://unicode.org/Public/UNIDATA'
+DOWNLOAD_URL_BASE_DEFAULT='http://unicode.org/Public'
 
 if test x$1 = 'x--help' ; then
   echo 'Usage:'
@@ -21,8 +21,16 @@ fi
 UNIDIR=${1:-$UNIDIR_DEFAULT}
 DOWNLOAD_URL_BASE=${2:-$DOWNLOAD_URL_BASE_DEFAULT}
 
-for filename in $files ; do
-  curl -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/$filename"
+for filename in $data_files ; do
+  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/UNIDATA/$filename"
+  (
+    cd "$UNIDIR"
+    git add $filename
+  )
+done
+
+for filename in $emoji_files ; do
+  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/emoji/latest/$filename"
   (
     cd "$UNIDIR"
     git add $filename

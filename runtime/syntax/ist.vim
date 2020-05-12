@@ -3,22 +3,15 @@
 " Maintainer:	Peter Meszaros <pmeszaros@effice.hu>
 " Last Change:	2012 Jan 08 by Thilo Six
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 let s:cpo_save = &cpo
 set cpo&vim
 
-if version >= 600
-  setlocal iskeyword=$,@,48-57,_
-else
-  set iskeyword=$,@,48-57,_
-endif
+setlocal iskeyword=$,@,48-57,_
 
 syn case ignore
 syn keyword IstInpSpec  actual  arg_close arg_open encap       escape
@@ -45,28 +38,18 @@ syn match   IstSpecial	   "\\\\\|{\|}\|#\|\\n"  contained
 syn match   IstTodo	   "DEBUG\|TODO"	 contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dummy_syn_inits")
-  if version < 508
-    let did_dummy_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink IstInpSpec	Type
-  HiLink IstOutSpec	Identifier
-  HiLink IstString	String
-  HiLink IstNumber	Number
-  HiLink IstComment	Comment
-  HiLink IstTodo	Todo
-  HiLink IstSpecial	Special
-  HiLink IstDoubleQuote	Label
-  HiLink IstCharacter	Label
+hi def link IstInpSpec	Type
+hi def link IstOutSpec	Identifier
+hi def link IstString	String
+hi def link IstNumber	Number
+hi def link IstComment	Comment
+hi def link IstTodo	Todo
+hi def link IstSpecial	Special
+hi def link IstDoubleQuote	Label
+hi def link IstCharacter	Label
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "ist"
 

@@ -1,22 +1,15 @@
-*intro.txt*     For Vim version 7.4.  Last change: 2015 Jan 20
+*intro.txt*     Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+			    NVIM REFERENCE MANUAL
 
 
 Introduction to Vim					*ref* *reference*
 
-1. Introduction			|intro|
-2. Vim on the internet		|internet|
-3. Credits			|credits|
-4. Notation			|notation|
-5. Modes, introduction		|vim-modes-intro|
-6. Switching from mode to mode	|mode-switching|
-7. The window contents		|window-contents|
-8. Definitions			|definitions|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction						*intro*
+Introduction						*intro*
 
 Vim stands for Vi IMproved.  It used to be Vi IMitation, but there are so many
 improvements that a name change was appropriate.  Vim is a text editor which
@@ -34,14 +27,9 @@ It can be accessed from within Vim with the <Help> or <F1> key and with the
 is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
-This manual refers to Vim on various machines.  There may be small differences
-between different computers and terminals.  Besides the remarks given in this
-document, there is a separate document for each supported system, see
-|sys-file-list|.
-
 							*pronounce*
-Vim is pronounced as one word, like Jim, not vi-ai-em.  It's written with a
-capital, since it's a name, again like Jim.
+Vim is pronounced as one word, like Jim.  Nvim is pronounced as N-vim, or,
+continuing with the Jim simile, N-Jim, which sounds like Ninja.
 
 This manual is a reference for all the Vim commands and options.  This is not
 an introduction to the use of Vi or Vim, it gets a bit complicated here and
@@ -49,135 +37,67 @@ there.  For beginners, there is a hands-on |tutor|.  To learn using Vim, read
 the user manual |usr_toc.txt|.
 
 							*book*
-There are many books on Vi that contain a section for beginners.  There are
-two books I can recommend:
+There are many books on Vi and Vim.  We recommend these books:
+
+	"Practical Vim" by Drew Neil
+	"Modern Vim" by Drew Neil
+	https://vimcasts.org/publications/
+
+"Practical Vim" is acclaimed for its focus on quickly learning common editing
+tasks with Vim.  "Modern Vim" explores new features in Nvim and Vim 8.
 
 	"Vim - Vi Improved" by Steve Oualline
 
-This is the very first book completely dedicated to Vim.  It is very good for
-beginners.  The most often used commands are explained with pictures and
-examples.  The less often used commands are also explained, the more advanced
-features are summarized.  There is a comprehensive index and a quick
-reference.  Parts of this book have been included in the user manual
-|frombook|.
-Published by New Riders Publishing.  ISBN: 0735710015
+This is the first book dedicated to Vim.  Parts of it were included in the
+user manual. |frombook|  ISBN: 0735710015
 For more information try one of these:
-	http://iccf-holland.org/click5.html
-	http://www.vim.org/iccf/click5.html
-
-	"Learning the Vi editor" by Linda Lamb and Arnold Robbins
-
-This is a book about Vi that includes a chapter on Vim (in the sixth edition).
-The first steps in Vi are explained very well.  The commands that Vim adds are
-only briefly mentioned.  There is also a German translation.
-Published by O'Reilly.  ISBN: 1-56592-426-6.
+	https://iccf-holland.org/click5.html
+	https://www.vim.org/iccf/click5.html
 
 ==============================================================================
-2. Vim on the internet					*internet*
+Nvim on the interwebs					*internet*
 
-			*www* *WWW*  *faq* *FAQ* *distribution* *download*
-The Vim pages contain the most recent information about Vim.  They also
-contain links to the most recent version of Vim.  The FAQ is a list of
-Frequently Asked Questions.  Read this if you have problems.
+			*www* *faq* *distribution* *download*
 
-	VIM home page:	  http://www.vim.org/
-	VIM FAQ:	  http://vimdoc.sf.net/
-	Downloading:	  ftp://ftp.vim.org/pub/vim/MIRRORS
-
-
-Usenet News group where Vim is discussed:		*news* *usenet*
-	comp.editors
-This group is also for other editors.  If you write about Vim, don't forget to
-mention that.
-
-						*mail-list* *maillist*
-There are several mailing lists for Vim:
-<vim@vim.org>
-	For discussions about using existing versions of Vim: Useful mappings,
-	questions, answers, where to get a specific version, etc.  There are
-	quite a few people watching this list and answering questions, also
-	for beginners.  Don't hesitate to ask your question here.
-<vim-dev@vim.org>				*vim-dev* *vimdev*
-	For discussions about changing Vim: New features, porting, patches,
-	beta-test versions, etc.
-<vim-announce@vim.org>				*vim-announce*
-	Announcements about new versions of Vim; also for beta-test versions
-	and ports to different systems.  This is a read-only list.
-<vim-multibyte@vim.org>				*vim-multibyte*
-	For discussions about using and improving the multi-byte aspects of
-	Vim.
-<vim-mac@vim.org>				*vim-mac*
-	For discussions about using and improving the Macintosh version of
-	Vim.
-
-See http://www.vim.org/maillist.php for the latest information.
-
-NOTE:
-- You can only send messages to these lists if you have subscribed!
-- You need to send the messages from the same location as where you subscribed
-  from (to avoid spam mail).
-- Maximum message size is 40000 characters.
-
-						*subscribe-maillist*
-If you want to join, send a message to
-	<vim-subscribe@vim.org>
-Make sure that your "From:" address is correct.  Then the list server will
-give you help on how to subscribe.
-
-						*maillist-archive*
-For more information and archives look on the Vim maillist page:
-http://www.vim.org/maillist.php
+	Nvim home page:	  https://neovim.io/
+	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
+	Downloads:	  https://github.com/neovim/neovim/releases
+	Vim FAQ:	  https://vimhelp.appspot.com/vim_faq.txt.html
+	Vim home page:	  https://www.vim.org/
 
 
-Bug reports:				*bugs* *bug-reports* *bugreport.vim*
+			*bugs* *bug-report* *bugreport.vim* *feature-request* 
 
-Send bug reports to: Vim Developers <vim-dev@vim.org>
-This is a maillist, you need to become a member first and many people will see
-the message.  If you don't want that, e.g. because it is a security issue,
-send it to <bugs@vim.org>, this only goes to the Vim maintainer (that's Bram).
+Report bugs and request features here:
+https://github.com/neovim/neovim/issues
 
-Please be brief; all the time that is spent on answering mail is subtracted
-from the time that is spent on improving Vim!  Always give a reproducible
-example and try to find out which settings or other things influence the
-appearance of the bug.  Try different machines, if possible.  Send me patches
-if you can!
+Be brief, yet complete.  Always give a reproducible example and try to find
+out which settings or other things trigger the bug.
 
-It will help to include information about the version of Vim you are using and
-your setup.  You can get the information with this command: >
-   :so $VIMRUNTIME/bugreport.vim
-This will create a file "bugreport.txt" in the current directory, with a lot
-of information of your environment.  Before sending this out, check if it
-doesn't contain any confidential information!
-
-If Vim crashes, please try to find out where.  You can find help on this here:
-|debug.txt|.
-
-In case of doubt or when you wonder if the problem has already been fixed but
-you can't find a fix for it, become a member of the vim-dev maillist and ask
-your question there. |maillist|
-
-							*year-2000* *Y2K*
-Since Vim internally doesn't use dates for editing, there is no year 2000
-problem to worry about.  Vim does use the time in the form of seconds since
-January 1st 1970.  It is used for a time-stamp check of the edited file and
-the swap file, which is not critical and should only cause warning messages.
-
-There might be a year 2038 problem, when the seconds don't fit in a 32 bit int
-anymore.  This depends on the compiler, libraries and operating system.
-Specifically, time_t and the ctime() function are used.  And the time_t is
-stored in four bytes in the swap file.  But that's only used for printing a
-file date/time for recovery, it will never affect normal editing.
-
-The Vim strftime() function directly uses the strftime() system function.
-localtime() uses the time() system function.  getftime() uses the time
-returned by the stat() system function.  If your system libraries are year
-2000 compliant, Vim is too.
-
-The user may create scripts for Vim that use external commands.  These might
-introduce Y2K problems, but those are not really part of Vim itself.
+If Nvim crashes, try to get a backtrace.  See |debug.txt|.
 
 ==============================================================================
-3. Credits				*credits* *author* *Bram* *Moolenaar*
+Sponsor Vim/Nvim development				*sponsor* *register*
+
+Fixing bugs and adding new features takes a lot of time and effort.  To show
+your appreciation for the work and motivate Bram and others to continue
+working on Vim please send a donation.
+
+Since Bram is back to a paid job the money will now be used to help children
+in Uganda.  See |uganda|.  But at the same time donations increase Bram's
+motivation to keep working on Vim!
+
+For the most recent information about sponsoring look on the Vim web site:
+
+	https://www.vim.org/sponsor/
+
+
+Neovim development is funded separately from Vim:
+
+	https://neovim.io/#sponsor
+
+==============================================================================
+Credits				*credits* *author* *Bram* *Moolenaar*
 
 Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
 
@@ -254,6 +174,10 @@ Vim would never have become what it is now, without the help of these people!
 	Juergen Weigert		Lattice version, AUX improvements, Unix and
 				MS-DOS ports, autoconf
 	Stefan 'Sec' Zehl	Maintainer of vim.org
+	Yasuhiro Matsumoto	many MS-Windows improvements
+	Ken Takata		fixes and features
+	Kazunobu Kuriyama	GTK 3
+	Christian Brabandt	many fixes, features, user support, etc.
 
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without
@@ -267,8 +191,7 @@ Vi	"the original".  Without further remarks this is the version
 	of Vi that appeared in Sun OS 4.x.  ":version" returns
 	"Version 3.7, 6/7/85".  Sometimes other versions are referred
 	to.  Only runs under Unix.  Source code only available with a
-	license.  More information on Vi can be found through:
-		http://vi-editor.org	[doesn't currently work...]
+	license.
 							*Nvi*
 Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
 	Very good compatibility with the original Vi, with a few extensions.
@@ -283,7 +206,7 @@ Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
 	freely available.
 
 ==============================================================================
-4. Notation						*notation*
+Notation						*notation*
 
 When syntax highlighting is used to read this, text that is not typed
 literally is often highlighted with the Special group.  These are items in [],
@@ -348,7 +271,7 @@ and <> are part of what you type, the context should make this clear.
 		  operator is pending.
 		- Ex commands can be used to move the cursor.  This can be
 		  used to call a function that does some complicated motion.
-		  The motion is always characterwise exclusive, no matter
+		  The motion is always charwise exclusive, no matter
 		  what ":" command is used.  This means it's impossible to
 		  include the last character of a line without the line break
 		  (unless 'virtualedit' is set).
@@ -392,8 +315,7 @@ CTRL-{char}	{char} typed as a control character; that is, typing {char}
 
 					*key-notation* *key-codes* *keycodes*
 These names for keys are used in the documentation.  They can also be used
-with the ":map" command (insert the key name by pressing CTRL-K and then the
-key you want the name for).
+with the ":map" command.
 
 notation	meaning		    equivalent	decimal value(s)	~
 -----------------------------------------------------------------------
@@ -417,6 +339,8 @@ notation	meaning		    equivalent	decimal value(s)	~
 
 <EOL>		end-of-line (can be <CR>, <LF> or <CR><LF>,
 		depends on system and 'fileformat')	*<EOL>*
+<Ignore>	cancel wait-for-character		*<Ignore>*
+<NOP>		no-op: do nothing (useful in mappings)	*<Nop>*
 
 <Up>		cursor-up			*cursor-up* *cursor_up*
 <Down>		cursor-down			*cursor-down* *cursor_down*
@@ -437,23 +361,30 @@ notation	meaning		    equivalent	decimal value(s)	~
 <End>		end				*end*
 <PageUp>	page-up				*page_up* *page-up*
 <PageDown>	page-down			*page_down* *page-down*
+<kUp>		keypad cursor-up		*keypad-cursor-up*
+<kDown>		keypad cursor-down		*keypad-cursor-down*
+<kLeft>		keypad cursor-left		*keypad-cursor-left*
+<kRight>	keypad cursor-right		*keypad-cursor-right*
 <kHome>		keypad home (upper left)	*keypad-home*
 <kEnd>		keypad end (lower left)		*keypad-end*
+<kOrigin>	keypad origin (middle)		*keypad-origin*
 <kPageUp>	keypad page-up (upper right)	*keypad-page-up*
 <kPageDown>	keypad page-down (lower right)	*keypad-page-down*
+<kDel>		keypad delete 			*keypad-delete*
 <kPlus>		keypad +			*keypad-plus*
 <kMinus>	keypad -			*keypad-minus*
 <kMultiply>	keypad *			*keypad-multiply*
 <kDivide>	keypad /			*keypad-divide*
+<kPoint>	keypad .			*keypad-point*
+<kComma>	keypad ,			*keypad-comma*
+<kEqual>	keypad =			*keypad-equal*
 <kEnter>	keypad Enter			*keypad-enter*
-<kPoint>	keypad Decimal point		*keypad-point*
 <k0> - <k9>	keypad 0 to 9			*keypad-0* *keypad-9*
-<S-...>		shift-key			*shift* *<S-*
-<C-...>		control-key			*control* *ctrl* *<C-*
-<M-...>		alt-key or meta-key		*meta* *alt* *<M-*
-<A-...>		same as <M-...>			*<A-*
-<D-...>		command-key or "super" key	*<D-*
-<t_xx>		key with "xx" entry in termcap
+<S-…>		shift-key			*shift* *<S-*
+<C-…>		control-key			*control* *ctrl* *<C-*
+<M-…>		alt-key or meta-key		*META* *ALT* *<M-*
+<A-…>		same as <M-…>			*<A-*
+<D-…>		command-key or "super" key	*<D-*
 -----------------------------------------------------------------------
 
 Note: The shifted cursor keys, the help key, and the undo key are only
@@ -461,8 +392,8 @@ available on a few terminals.
 
 Note: There are two codes for the delete key.  127 is the decimal ASCII value
 for the delete key, which is always recognized.  Some delete keys send another
-value, in which case this value is obtained from the termcap entry "kD".  Both
-values have the same effect.
+value, in which case this value is obtained from the |terminfo| entry "key_dc".
+Both values have the same effect.
 
 Note: The keypad keys are used in the same way as the corresponding "normal"
 keys.  For example, <kHome> has the same effect as <Home>.  If a keypad key
@@ -470,6 +401,12 @@ sends the same raw key code as its non-keypad equivalent, it will be
 recognized as the non-keypad code.  For example, when <kHome> sends the same
 code as <Home>, when pressing <kHome> Vim will think <Home> was pressed.
 Mapping <kHome> will not work then.
+
+Note: If numlock is on, the |TUI| receives plain ASCII values, so
+mappings to <k0> - <k9> and <kPoint> will not work.
+
+Note: Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`.
+Which combinations actually are usable depends on the terminal emulator or GUI.
 
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make
@@ -488,7 +425,6 @@ the ":map" command.  The rules are:
 	   <S-F11>		Shifted function key 11
 	   <M-a>		Meta- a  ('a' with bit 8 set)
 	   <M-A>		Meta- A  ('A' with bit 8 set)
-	   <t_kd>		"kd" termcap entry (cursor down key)
 
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.
@@ -507,9 +443,9 @@ examples and use them directly.  Or type them literally, including the '<' and
 ":autocmd"!
 
 ==============================================================================
-5. Modes, introduction				*vim-modes-intro* *vim-modes*
+Modes, introduction				*vim-modes-intro* *vim-modes*
 
-Vim has six BASIC modes:
+Vim has seven BASIC modes:
 
 					*Normal* *Normal-mode* *command-mode*
 Normal mode		In Normal mode you can enter all the normal editor
@@ -545,6 +481,13 @@ Ex mode			Like Command-line mode, but after entering a command
 			you remain in Ex mode.  Very limited editing of the
 			command line.  |Ex-mode|
 
+							*Terminal-mode*
+Terminal mode		In Terminal mode all input (except |c_CTRL-\_CTRL-N|)
+			is sent to the process running in the current
+			|terminal| buffer.
+			If the 'showmode' option is on "-- TERMINAL --" is shown
+			at the bottom of the window.
+
 There are six ADDITIONAL modes.  These are variants of the BASIC modes:
 
 				*Operator-pending* *Operator-pending-mode*
@@ -565,9 +508,9 @@ Virtual Replace mode	Virtual Replace mode is similar to Replace mode, but
 			If the 'showmode' option is on "-- VREPLACE --" is
 			shown at the bottom of the window.
 
-Insert Normal mode	Entered when CTRL-O given in Insert mode.  This is
-			like Normal mode, but after executing one command Vim
-			returns to Insert mode.
+Insert Normal mode	Entered when CTRL-O is typed in Insert mode (see
+			|i_CTRL-O|).  This is like Normal mode, but after
+			executing one command Vim returns to Insert mode.
 			If the 'showmode' option is on "-- (insert) --" is
 			shown at the bottom of the window.
 
@@ -585,7 +528,7 @@ Insert Select mode	Entered when starting Select mode from Insert mode.
 			is shown at the bottom of the window.
 
 ==============================================================================
-6. Switching from mode to mode				*mode-switching*
+Switching from mode to mode				*mode-switching*
 
 If for any reason you do not know which mode you are in, you can always get
 back to Normal mode by typing <Esc> twice.  This doesn't work for Ex mode
@@ -648,31 +591,15 @@ The command CTRL-\ CTRL-G or <C-\><C-G> can be used to go to Insert mode when
 make sure Vim is in the mode indicated by 'insertmode', without knowing in
 what mode Vim currently is.
 
-				    *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
-Q			Switch to "Ex" mode.  This is a bit like typing ":"
-			commands one after another, except:
+				*gQ* *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+Q or gQ			Switch to Ex mode.  This is like typing ":" commands
+			one after another, except:
 			- You don't have to keep pressing ":".
 			- The screen doesn't get updated after each command.
-			- There is no normal command-line editing.
-			- Mappings and abbreviations are not used.
-			In fact, you are editing the lines with the "standard"
-			line-input editing commands (<Del> or <BS> to erase,
-			CTRL-U to kill the whole line).
-			Vim will enter this mode by default if it's invoked as
-			"ex" on the command-line.
-			Use the ":vi" command |:visual| to exit "Ex" mode.
-			Note: In older versions of Vim "Q" formatted text,
-			that is now done with |gq|.  But if you use the
-			|vimrc_example.vim| script "Q" works like "gq".
-
-					*gQ*
-gQ			Switch to "Ex" mode like with "Q", but really behave
-			like typing ":" commands after another.  All command
-			line editing, completion etc. is available.
-			Use the ":vi" command |:visual| to exit "Ex" mode.
+			Use the ":vi" command |:visual| to exit this mode.
 
 ==============================================================================
-7. The window contents					*window-contents*
+The window contents					*window-contents*
 
 In Normal mode and Insert/Replace mode the screen window will show the current
 contents of the buffer: What You See Is What You Get.  There are two
@@ -728,9 +655,9 @@ special situation.  Vim will show only part of the line, around where the
 cursor is.  There are no special characters shown, so that you can edit all
 parts of this line.
 
-The '@' occasion in the 'highlight' option can be used to set special
-highlighting for the '@' and '~' characters.  This makes it possible to
-distinguish them from real characters in the buffer.
+The |hl-NonText| highlight group can be used to set special highlighting
+for the '@' and '~' characters.  This makes it possible to distinguish them
+from real characters in the buffer.
 
 The 'showbreak' option contains the string to put in front of wrapped lines.
 
@@ -791,16 +718,15 @@ window.  You may make the window as small as you like, but if it gets too
 small not a single line will fit in it.  Make it at least 40 characters wide
 to be able to read most messages on the last line.
 
-On most Unix systems, resizing the window is recognized and handled correctly
-by Vim.
-
 ==============================================================================
-8. Definitions						*definitions*
+Definitions						*definitions* *jargon*
 
-  screen		The whole area that Vim uses to work in.  This can be
-			a terminal emulator window.  Also called "the Vim
-			window".
-  window		A view on a buffer.
+  buffer		Contains lines of text, usually from a file.
+  screen		The whole area that Nvim uses to display things.
+  window		A view on a buffer.  There can be multiple windows for
+			one buffer.
+  frame			Windows are kept in a tree of frames.  Each frame
+			contains a column, row, or window ("leaf" frame).
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.
@@ -833,7 +759,7 @@ A difference is made between four types of lines:
 			lines with wrapping, line breaks, etc.  applied.  They
 			can only be as long as the width of the window allows,
 			longer lines are wrapped or truncated.
-  screen lines		The lines of the screen that Vim uses.  Consists of
+  screen lines		The lines of the screen that Nvim uses.  Consists of
 			the window lines of all windows, with status lines
 			and the command line added.  They can only be as long
 			as the width of the screen allows.  When the command
@@ -857,5 +783,27 @@ buffer lines	logical lines	window lines	screen lines ~
 				5. ddd		13. (command line)
 				6. ~ 
 
+
+API client ~
+All external UIs and remote plugins (as opposed to regular Vim plugins) are
+"clients" in general; but we call something an "API client" if its purpose is
+to abstract or wrap the RPC API for the convenience of other applications
+(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
+using an HTTP client like curl, but boto3 wraps that in a convenient python
+interface). For example, the Nvim lua-client is an API client:
+    https://github.com/neovim/lua-client
+
+
+Host ~
+A plugin "host" is both a client (of the Nvim API) and a server (of an
+external platform, e.g. python). It is a remote plugin that hosts other
+plugins.
+
+
+Remote plugin ~
+Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
+process and communicates with Nvim via the |api|.
+
+
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

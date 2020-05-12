@@ -6,11 +6,20 @@
 /*
  * Array indexes used for cptext argument of ins_compl_add().
  */
-#define CPT_ABBR    0   /* "abbr" */
-#define CPT_MENU    1   /* "menu" */
-#define CPT_KIND    2   /* "kind" */
-#define CPT_INFO    3   /* "info" */
-#define CPT_COUNT   4   /* Number of entries */
+#define CPT_ABBR        0   // "abbr"
+#define CPT_MENU        1   // "menu"
+#define CPT_KIND        2   // "kind"
+#define CPT_INFO        3   // "info"
+#define CPT_COUNT       4   // Number of entries
+
+// values for cp_flags
+typedef enum {
+  CP_ORIGINAL_TEXT = 1,  // the original text when the expansion begun
+  CP_FREE_FNAME = 2,     // cp_fname is allocated
+  CP_CONT_S_IPOS = 4,    // use CONT_S_IPOS for compl_cont_status
+  CP_EQUAL = 8,          // ins_compl_equal() always returns true
+  CP_ICASE = 16,         // ins_compl_equal ignores case
+} cp_flags_T;
 
 typedef int (*IndentGetter)(void);
 
@@ -35,12 +44,6 @@ typedef int (*IndentGetter)(void);
 #define INSCHAR_CTRLV   4       /* char typed just after CTRL-V */
 #define INSCHAR_NO_FEX  8       /* don't use 'formatexpr' */
 #define INSCHAR_COM_LIST 16     /* format comments with list/2nd line indent */
-
-/* direction for nv_mousescroll() and ins_mousescroll() */
-#define MSCR_DOWN       0       /* DOWN must be FALSE */
-#define MSCR_UP         1
-#define MSCR_LEFT       -1
-#define MSCR_RIGHT      -2
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.h.generated.h"

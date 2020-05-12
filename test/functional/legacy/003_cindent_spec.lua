@@ -1,40 +1,43 @@
 -- Test for 'cindent'.
+-- For new tests, consider putting them in test_cindent.vim.
 --
 -- There are 50+ test command blocks (the stuff between STARTTEST and ENDTEST)
 -- in the original test. These have been converted to "it" test cases here.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 -- Inserts text as usual, and additionally positions the cursor on line 1 and
 -- sets 'cindent' and tab settings. (In the original "test3.in" the modeline at
 -- the top of the file takes care of this.)
 local function insert_(content)
   insert(content)
-  execute('1', 'set cin ts=4 sw=4')
+  feed_command('1', 'set cin ts=4 sw=4')
 end
 
+-- luacheck: ignore 621 (Indentation)
+-- luacheck: ignore 613 (Trailing whitespace in a string)
 describe('cindent', function()
   before_each(clear)
 
   it('1 is working', function()
     insert_([=[
-      
+
       /* start of AUTO matically checked vim: set ts=4 : */
       {
       	if (test)
       		cmd1;
       	cmd2;
       }
-      
+
       {
       	if (test)
       		cmd1;
       	else
       		cmd2;
       }
-      
+
       {
       	if (test)
       	{
@@ -42,7 +45,7 @@ describe('cindent', function()
       		cmd2;
       	}
       }
-      
+
       {
       	if (test)
       	{
@@ -50,14 +53,14 @@ describe('cindent', function()
       		else
       	}
       }
-      
+
       {
       	while (this)
       		if (test)
       			cmd1;
       	cmd2;
       }
-      
+
       {
       	while (this)
       		if (test)
@@ -65,25 +68,25 @@ describe('cindent', function()
       		else
       			cmd2;
       }
-      
+
       {
       	if (test)
       	{
       		cmd;
       	}
-      
+
       	if (test)
       		cmd;
       }
-      
+
       {
       	if (test) {
       		cmd;
       	}
-      
+
       	if (test) cmd;
       }
-      
+
       {
       	cmd1;
       	for (blah)
@@ -92,7 +95,7 @@ describe('cindent', function()
       				cmd2;
       	cmd3;
       }
-      
+
       {
       	cmd1;
       	for (blah)
@@ -100,7 +103,7 @@ describe('cindent', function()
       			if (test)
       				cmd2;
       	cmd3;
-      
+
       	if (test)
       	{
       		cmd1;
@@ -108,23 +111,23 @@ describe('cindent', function()
       		cmd3;
       	}
       }
-      
-      
+
+
       /* Test for 'cindent' do/while mixed with if/else: */
-      
+
       {
       	do
       		if (asdf)
       			asdfasd;
       	while (cond);
-      
+
       	do
       		if (asdf)
       			while (asdf)
       				asdf;
       	while (asdf);
       }
-      
+
       /* Test for 'cindent' with two ) on a continuation line */
       {
       	if (asdfasdf;asldkfj asdlkfj as;ldkfj sal;d
@@ -132,14 +135,14 @@ describe('cindent', function()
       					al;sdjfka ;slkdf ) sa;ldkjfsa dlk;)
       		line up here;
       }
-      
-      
+
+
       /* C++ tests: */
-      
+
       // foo()		these three lines should remain in column 0
       // {
       // }
-      
+
       /* Test for continuation and unterminated lines: */
       {
       	i = 99 + 14325 +
@@ -151,12 +154,12 @@ describe('cindent', function()
       		1234;
       	c = 1;
       }
-      
+
       /*
          testje for indent with empty line
-      
+
          here */
-      
+
       {
       	if (testing &&
       			not a joke ||
@@ -171,8 +174,8 @@ describe('cindent', function()
       			 line up here))
       		hay;
       }
-      
-      
+
+
       {
       	switch (c)
       	{
@@ -191,7 +194,7 @@ describe('cindent', function()
       			testing;
       	}
       }
-      
+
       {
       	if (cond) {
       		foo;
@@ -201,7 +204,7 @@ describe('cindent', function()
       		bar;
       	}
       }
-      
+
       {
       	if (alskdfj ;alsdkfjal;skdjf (;sadlkfsa ;dlkf j;alksdfj ;alskdjf
       			alsdkfj (asldk;fj
@@ -210,7 +213,7 @@ describe('cindent', function()
       					asdfasdf;)))
       		asdfasdf;
       }
-      
+
       	int
       func(a, b)
       	int a;
@@ -223,7 +226,7 @@ describe('cindent', function()
       			(c2 || c3)
       	   )
       }
-      
+
       {
       	while (asd)
       	{
@@ -245,13 +248,13 @@ describe('cindent', function()
       		asdf;
       	}
       }
-      
+
       {
       	s = "/*"; b = ';'
       		s = "/*"; b = ';';
       	a = b;
       }
-      
+
       {
       	switch (a)
       	{
@@ -285,7 +288,7 @@ describe('cindent', function()
       				break;
       	}
       }
-      
+
       {
       	if (!(vim_strchr(p_cpo, CPO_BUFOPTGLOB) != NULL && entering) &&
       			(bp_to->b_p_initialized ||
@@ -297,57 +300,57 @@ describe('cindent', function()
       	asdf = asdf ?
       		asdf: asdf;
       }
-      
+
       /* Special Comments	: This function has the added complexity (compared  */
       /*					: to addtolist) of having to check for a detail     */
       /*					: texture and add that to the list first.	 	    */
-      
+
       char *(array[100]) = {
       	"testje",
       	"foo",
       	"bar",
       }
-      
+
       enum soppie
       {
       yes = 0,
       no,
       maybe
       };
-      
+
       typedef enum soppie
       {
       yes = 0,
       no,
       maybe
       };
-      
+
       static enum
       {
       yes = 0,
       no,
       maybe
       } soppie;
-      
+
       public static enum
       {
       yes = 0,
       no,
       maybe
       } soppie;
-      
+
       static private enum
       {
       yes = 0,
       no,
       maybe
       } soppie;
-      
+
       {
       	int a,
       		b;
       }
-      
+
       {
       	struct Type
       	{
@@ -360,7 +363,7 @@ describe('cindent', function()
       		2, "two",
       		3, "three"
       	};
-      
+
       	float matrix[3][3] =
       	{
       		{
@@ -380,14 +383,14 @@ describe('cindent', function()
       		}
       	};
       }
-      
+
       {
       	/* blah ( blah */
       	/* where does this go? */
-      
+
       	/* blah ( blah */
       	cmd;
-      
+
       	func(arg1,
       			/* comment */
       			arg2);
@@ -398,7 +401,7 @@ describe('cindent', function()
       			c; /* Hey, NOW it indents?! */
       		}
       	}
-      
+
       	{
       		func(arg1,
       				arg2,
@@ -406,7 +409,7 @@ describe('cindent', function()
       		/* Hey, what am I doing here?  Is this coz of the ","? */
       	}
       }
-      
+
       main ()
       {
       	if (cond)
@@ -420,7 +423,7 @@ describe('cindent', function()
       		a = d;
       	return;
       }
-      
+
       {
       	case 2: if (asdf &&
       					asdfasdf)
@@ -431,42 +434,42 @@ describe('cindent', function()
       			a = 9;
       	case 4:    x = 1;
       			   y = 2;
-      
+
       label:	if (asdf)
       			here;
-      
+
       label:  if (asdf &&
       				asdfasdf)
       		{
       		}
-      
+
       label:  if (asdf &&
       				asdfasdf) {
       			there;
       		}
-      
+
       label:  if (asdf &&
       				asdfasdf)
       			there;
       }
-      
+
       {
       	/*
       	   hello with ":set comments= cino=c5"
       	 */
-      
+
       	/*
       	   hello with ":set comments= cino="
       	 */
       }
-      
-      
+
+
       {
       	if (a < b) {
       		a = a + 1;
       	} else
       		a = a + 2;
-      
+
       	if (a)
       		do {
       			testing;
@@ -474,7 +477,7 @@ describe('cindent', function()
       	a = b + 1;
       	asdfasdf
       }
-      
+
       {
       for ( int i = 0;
       	i < 10; i++ )
@@ -482,13 +485,13 @@ describe('cindent', function()
       }
       	i = 0;
       }
-      
+
       class bob
       {
       	int foo() {return 1;}
       		int bar;
       }
-      
+
       main()
       {
       while(1)
@@ -501,32 +504,32 @@ describe('cindent', function()
       }
       misplacedline;
       }
-      
+
       {
       	if (clipboard.state == SELECT_DONE
       	&& ((row == clipboard.start.lnum
       	&& col >= clipboard.start.col)
       	|| row > clipboard.start.lnum))
       }
-      
+
       {
       if (1) {i += 4;}
       where_am_i;
       return 0;
       }
-      
+
       {
       {
       } // sdf(asdf
       if (asdf)
       asd;
       }
-      
+
       {
       label1:
       label2:
       }
-      
+
       {
       int fooRet = foo(pBar1, false /*fKB*/,
       	true /*fPTB*/, 3 /*nT*/, false /*fDF*/);
@@ -538,12 +541,12 @@ describe('cindent', function()
       }
       }
       }
-      
+
       {
       	f1(/*comment*/);
       	f2();
       }
-      
+
       {
       do {
       if (foo) {
@@ -552,25 +555,25 @@ describe('cindent', function()
       } while (foo);
       foo();	// was wrong
       }
-      
+
       int x;	    // no extra indent because of the ;
       void func()
       {
       }
-      
+
       char *tab[] = {"aaa",
       	"};", /* }; */ NULL}
       	int indented;
       {}
-      
+
       char *a[] = {"aaa", "bbb",
       	"ccc", NULL};
       // here
-      
+
       char *tab[] = {"aaa",
       	"xx", /* xx */};    /* asdf */
       int not_indented;
-      
+
       {
       	do {
       		switch (bla)
@@ -581,23 +584,23 @@ describe('cindent', function()
       	} while (boo);
       					wrong;
       }
-      
+
       int	foo,
       	bar;
       int foo;
-      
+
       #if defined(foo) \
       	&& defined(bar)
       char * xx = "asdf\
       	foo\
       	bor";
       int x;
-      
+
       char    *foo = "asdf\
       	asdf\
       	asdf",
       	*bar;
-      
+
       void f()
       {
       #if defined(foo) \
@@ -616,19 +619,19 @@ describe('cindent', function()
       #endif
       }
       #endif
-      
+
       int y;		// comment
       		// comment
-      
+
       	// comment
-      
+
       {
       	Constructor(int a,
       			int b )  : BaseClass(a)
       	{
       	}
       }
-      
+
       void foo()
       {
       	char one,
@@ -645,13 +648,13 @@ describe('cindent', function()
       	kees,
       	jan;
       }
-      
+
       {
       	t(int f,
       			int d);		// )
       	d();
       }
-      
+
       Constructor::Constructor(int a,
                                int b 
                               )  : 
@@ -661,33 +664,33 @@ describe('cindent', function()
          mMember(b),
       {
       }
-      
+
       Constructor::Constructor(int a,
                                int b )  : 
          BaseClass(a)
       {
       }
-      
+
       Constructor::Constructor(int a,
                                int b ) /*x*/ : /*x*/ BaseClass(a),
                                                      member(b)
       {
       }
-      
+
       A::A(int a, int b)
       : aa(a),
       bb(b),
       cc(c)
       {
       }
-      
+
       class CAbc :
          public BaseClass1,
          protected BaseClass2
       {
          int Test() { return FALSE; }
          int Test1() { return TRUE; }
-      
+
          CAbc(int a, int b )  : 
             BaseClass(a)
          { 
@@ -696,24 +699,24 @@ describe('cindent', function()
                case abc:
                   asdf();
                   break;
-      
+
                case 999:
                   baer();
                   break;
             }
          }
-      
+
       public: // <-- this was incoreectly indented before!!
          void testfall();
       protected:
          void testfall();
       };
-      
+
       class CAbc : public BaseClass1,
                    protected BaseClass2
       {
       };
-      
+
       static struct
       {
           int a;
@@ -729,7 +732,7 @@ describe('cindent', function()
               456
           }
       };
-      
+
       static struct
       {
           int a;
@@ -739,7 +742,7 @@ describe('cindent', function()
           { 123, 456 },
       	{ 123, 456 }
       };
-      
+
       void asdf()		/* ind_maxparen may cause trouble here */
       {
       	if ((0
@@ -769,17 +772,17 @@ describe('cindent', function()
       				&& 1
       				&& 1)) break;
       }
-      
+
       foo()
       {
       	a = cond ? foo() : asdf
       					   + asdf;
-      
+
       	a = cond ?
       		foo() : asdf
       				+ asdf;
       }
-      
+
       int  main(void)
       {
       	if (a)
@@ -788,7 +791,7 @@ describe('cindent', function()
       		else 3;
       	next_line_of_code();
       }
-      
+
       barry()
       {
       	Foo::Foo (int one,
@@ -796,14 +799,14 @@ describe('cindent', function()
       		: something(4)
       	{}
       }
-      
+
       barry()
       {
       	Foo::Foo (int one, int two)
       		: something(4)
       	{}
       }
-      
+
       Constructor::Constructor(int a,
       		int b 
       		)  : 
@@ -822,7 +825,7 @@ describe('cindent', function()
       		  && lele);
       	   lulu;
              }
-      
+
       int main ()
       {
       switch (c)
@@ -832,13 +835,13 @@ describe('cindent', function()
       }
       }
       }
-      
+
       main()
       {
       	(void) MyFancyFuasdfadsfnction(
       			argument);
       }
-      
+
       main()
       {
       	char	foo[] = "/*";
@@ -846,7 +849,7 @@ describe('cindent', function()
       	df */
       		hello
       }
-      
+
       /* valid namespaces with normal indent */
       namespace
       {
@@ -885,7 +888,7 @@ describe('cindent', function()
         22222222222222222;
       }
       }
-      
+
       /* invalid namespaces use block indent */
       namespace test test2 {
         111111111111111111111;
@@ -925,7 +928,7 @@ describe('cindent', function()
         }
           )foo";
            }
-      
+
       {
       int a[4] = {
       [0] = 0,
@@ -934,12 +937,12 @@ describe('cindent', function()
       [3] = 3,
       };
       }
-      
+
       {
       a = b[2]
       + 3;
       }
-      
+
       {
       if (1)
       /* aaaaa
@@ -947,7 +950,7 @@ describe('cindent', function()
       */
       a = 1;
       }
-      
+
       void func()
       {
       switch (foo)
@@ -974,29 +977,29 @@ describe('cindent', function()
       break;
       }
       }
-      
+
       /* end of AUTO */
       ]=])
 
-    execute('/start of AUTO')
+    feed_command('/start of AUTO')
     feed('=/end of AUTO<cr>')
 
     expect([=[
-      
+
       /* start of AUTO matically checked vim: set ts=4 : */
       {
       	if (test)
       		cmd1;
       	cmd2;
       }
-      
+
       {
       	if (test)
       		cmd1;
       	else
       		cmd2;
       }
-      
+
       {
       	if (test)
       	{
@@ -1004,7 +1007,7 @@ describe('cindent', function()
       		cmd2;
       	}
       }
-      
+
       {
       	if (test)
       	{
@@ -1012,14 +1015,14 @@ describe('cindent', function()
       		else
       	}
       }
-      
+
       {
       	while (this)
       		if (test)
       			cmd1;
       	cmd2;
       }
-      
+
       {
       	while (this)
       		if (test)
@@ -1027,25 +1030,25 @@ describe('cindent', function()
       		else
       			cmd2;
       }
-      
+
       {
       	if (test)
       	{
       		cmd;
       	}
-      
+
       	if (test)
       		cmd;
       }
-      
+
       {
       	if (test) {
       		cmd;
       	}
-      
+
       	if (test) cmd;
       }
-      
+
       {
       	cmd1;
       	for (blah)
@@ -1054,7 +1057,7 @@ describe('cindent', function()
       				cmd2;
       	cmd3;
       }
-      
+
       {
       	cmd1;
       	for (blah)
@@ -1062,7 +1065,7 @@ describe('cindent', function()
       			if (test)
       				cmd2;
       	cmd3;
-      
+
       	if (test)
       	{
       		cmd1;
@@ -1070,23 +1073,23 @@ describe('cindent', function()
       		cmd3;
       	}
       }
-      
-      
+
+
       /* Test for 'cindent' do/while mixed with if/else: */
-      
+
       {
       	do
       		if (asdf)
       			asdfasd;
       	while (cond);
-      
+
       	do
       		if (asdf)
       			while (asdf)
       				asdf;
       	while (asdf);
       }
-      
+
       /* Test for 'cindent' with two ) on a continuation line */
       {
       	if (asdfasdf;asldkfj asdlkfj as;ldkfj sal;d
@@ -1094,14 +1097,14 @@ describe('cindent', function()
       				al;sdjfka ;slkdf ) sa;ldkjfsa dlk;)
       		line up here;
       }
-      
-      
+
+
       /* C++ tests: */
-      
+
       // foo()		these three lines should remain in column 0
       // {
       // }
-      
+
       /* Test for continuation and unterminated lines: */
       {
       	i = 99 + 14325 +
@@ -1113,12 +1116,12 @@ describe('cindent', function()
       		1234;
       	c = 1;
       }
-      
+
       /*
          testje for indent with empty line
-      
+
          here */
-      
+
       {
       	if (testing &&
       			not a joke ||
@@ -1133,8 +1136,8 @@ describe('cindent', function()
       			 line up here))
       		hay;
       }
-      
-      
+
+
       {
       	switch (c)
       	{
@@ -1153,7 +1156,7 @@ describe('cindent', function()
       			testing;
       	}
       }
-      
+
       {
       	if (cond) {
       		foo;
@@ -1163,7 +1166,7 @@ describe('cindent', function()
       		bar;
       	}
       }
-      
+
       {
       	if (alskdfj ;alsdkfjal;skdjf (;sadlkfsa ;dlkf j;alksdfj ;alskdjf
       				alsdkfj (asldk;fj
@@ -1172,7 +1175,7 @@ describe('cindent', function()
       					asdfasdf;)))
       		asdfasdf;
       }
-      
+
       	int
       func(a, b)
       	int a;
@@ -1185,7 +1188,7 @@ describe('cindent', function()
       			(c2 || c3)
       	   )
       }
-      
+
       {
       	while (asd)
       	{
@@ -1207,13 +1210,13 @@ describe('cindent', function()
       		asdf;
       	}
       }
-      
+
       {
       	s = "/*"; b = ';'
       		s = "/*"; b = ';';
       	a = b;
       }
-      
+
       {
       	switch (a)
       	{
@@ -1247,7 +1250,7 @@ describe('cindent', function()
       				break;
       	}
       }
-      
+
       {
       	if (!(vim_strchr(p_cpo, CPO_BUFOPTGLOB) != NULL && entering) &&
       			(bp_to->b_p_initialized ||
@@ -1259,57 +1262,57 @@ describe('cindent', function()
       	asdf = asdf ?
       		asdf: asdf;
       }
-      
+
       /* Special Comments	: This function has the added complexity (compared  */
       /*					: to addtolist) of having to check for a detail     */
       /*					: texture and add that to the list first.	 	    */
-      
+
       char *(array[100]) = {
       	"testje",
       	"foo",
       	"bar",
       }
-      
+
       enum soppie
       {
       	yes = 0,
       	no,
       	maybe
       };
-      
+
       typedef enum soppie
       {
       	yes = 0,
       	no,
       	maybe
       };
-      
+
       static enum
       {
       	yes = 0,
       	no,
       	maybe
       } soppie;
-      
+
       public static enum
       {
       	yes = 0,
       	no,
       	maybe
       } soppie;
-      
+
       static private enum
       {
       	yes = 0,
       	no,
       	maybe
       } soppie;
-      
+
       {
       	int a,
       		b;
       }
-      
+
       {
       	struct Type
       	{
@@ -1322,7 +1325,7 @@ describe('cindent', function()
       		2, "two",
       		3, "three"
       	};
-      
+
       	float matrix[3][3] =
       	{
       		{
@@ -1342,14 +1345,14 @@ describe('cindent', function()
       		}
       	};
       }
-      
+
       {
       	/* blah ( blah */
       	/* where does this go? */
-      
+
       	/* blah ( blah */
       	cmd;
-      
+
       	func(arg1,
       			/* comment */
       			arg2);
@@ -1360,7 +1363,7 @@ describe('cindent', function()
       			c; /* Hey, NOW it indents?! */
       		}
       	}
-      
+
       	{
       		func(arg1,
       				arg2,
@@ -1368,7 +1371,7 @@ describe('cindent', function()
       		/* Hey, what am I doing here?  Is this coz of the ","? */
       	}
       }
-      
+
       main ()
       {
       	if (cond)
@@ -1382,7 +1385,7 @@ describe('cindent', function()
       		a = d;
       	return;
       }
-      
+
       {
       	case 2: if (asdf &&
       					asdfasdf)
@@ -1393,42 +1396,42 @@ describe('cindent', function()
       			a = 9;
       	case 4:    x = 1;
       			   y = 2;
-      
+
       label:	if (asdf)
       			here;
-      
+
       label:  if (asdf &&
       				asdfasdf)
       		{
       		}
-      
+
       label:  if (asdf &&
       				asdfasdf) {
       			there;
       		}
-      
+
       label:  if (asdf &&
       				asdfasdf)
       			there;
       }
-      
+
       {
       	/*
       	   hello with ":set comments= cino=c5"
       	 */
-      
+
       	/*
       	   hello with ":set comments= cino="
       	 */
       }
-      
-      
+
+
       {
       	if (a < b) {
       		a = a + 1;
       	} else
       		a = a + 2;
-      
+
       	if (a)
       		do {
       			testing;
@@ -1436,7 +1439,7 @@ describe('cindent', function()
       	a = b + 1;
       	asdfasdf
       }
-      
+
       {
       	for ( int i = 0;
       			i < 10; i++ )
@@ -1444,13 +1447,13 @@ describe('cindent', function()
       	}
       	i = 0;
       }
-      
+
       class bob
       {
       	int foo() {return 1;}
       	int bar;
       }
-      
+
       main()
       {
       	while(1)
@@ -1463,32 +1466,32 @@ describe('cindent', function()
       		}
       	misplacedline;
       }
-      
+
       {
       	if (clipboard.state == SELECT_DONE
       			&& ((row == clipboard.start.lnum
       					&& col >= clipboard.start.col)
       				|| row > clipboard.start.lnum))
       }
-      
+
       {
       	if (1) {i += 4;}
       	where_am_i;
       	return 0;
       }
-      
+
       {
       	{
       	} // sdf(asdf
       	if (asdf)
       		asd;
       }
-      
+
       {
       label1:
       label2:
       }
-      
+
       {
       	int fooRet = foo(pBar1, false /*fKB*/,
       			true /*fPTB*/, 3 /*nT*/, false /*fDF*/);
@@ -1500,12 +1503,12 @@ describe('cindent', function()
       		}
       	}
       }
-      
+
       {
       	f1(/*comment*/);
       	f2();
       }
-      
+
       {
       	do {
       		if (foo) {
@@ -1514,25 +1517,25 @@ describe('cindent', function()
       	} while (foo);
       	foo();	// was wrong
       }
-      
+
       int x;	    // no extra indent because of the ;
       void func()
       {
       }
-      
+
       char *tab[] = {"aaa",
       	"};", /* }; */ NULL}
       	int indented;
       {}
-      
+
       char *a[] = {"aaa", "bbb",
       	"ccc", NULL};
       // here
-      
+
       char *tab[] = {"aaa",
       	"xx", /* xx */};    /* asdf */
       int not_indented;
-      
+
       {
       	do {
       		switch (bla)
@@ -1543,23 +1546,23 @@ describe('cindent', function()
       	} while (boo);
       	wrong;
       }
-      
+
       int	foo,
       	bar;
       int foo;
-      
+
       #if defined(foo) \
       	&& defined(bar)
       char * xx = "asdf\
       			 foo\
       			 bor";
       int x;
-      
+
       char    *foo = "asdf\
       				asdf\
       				asdf",
       		*bar;
-      
+
       void f()
       {
       #if defined(foo) \
@@ -1578,19 +1581,19 @@ describe('cindent', function()
       #endif
       }
       #endif
-      
+
       int y;		// comment
       // comment
-      
+
       // comment
-      
+
       {
       	Constructor(int a,
       			int b )  : BaseClass(a)
       	{
       	}
       }
-      
+
       void foo()
       {
       	char one,
@@ -1607,13 +1610,13 @@ describe('cindent', function()
       		kees,
       		jan;
       }
-      
+
       {
       	t(int f,
       			int d);		// )
       	d();
       }
-      
+
       Constructor::Constructor(int a,
       		int b 
       		)  : 
@@ -1623,33 +1626,33 @@ describe('cindent', function()
       	mMember(b),
       {
       }
-      
+
       Constructor::Constructor(int a,
       		int b )  : 
       	BaseClass(a)
       {
       }
-      
+
       Constructor::Constructor(int a,
       		int b ) /*x*/ : /*x*/ BaseClass(a),
       	member(b)
       {
       }
-      
+
       A::A(int a, int b)
       	: aa(a),
       	bb(b),
       	cc(c)
       {
       }
-      
+
       class CAbc :
       	public BaseClass1,
       	protected BaseClass2
       {
       	int Test() { return FALSE; }
       	int Test1() { return TRUE; }
-      
+
       	CAbc(int a, int b )  : 
       		BaseClass(a)
       	{ 
@@ -1658,24 +1661,24 @@ describe('cindent', function()
       			case abc:
       				asdf();
       				break;
-      
+
       			case 999:
       				baer();
       				break;
       		}
       	}
-      
+
       	public: // <-- this was incoreectly indented before!!
       	void testfall();
       	protected:
       	void testfall();
       };
-      
+
       class CAbc : public BaseClass1,
       	protected BaseClass2
       {
       };
-      
+
       static struct
       {
       	int a;
@@ -1691,7 +1694,7 @@ describe('cindent', function()
       		456
       	}
       };
-      
+
       static struct
       {
       	int a;
@@ -1701,7 +1704,7 @@ describe('cindent', function()
       	{ 123, 456 },
       	{ 123, 456 }
       };
-      
+
       void asdf()		/* ind_maxparen may cause trouble here */
       {
       	if ((0
@@ -1731,17 +1734,17 @@ describe('cindent', function()
       				&& 1
       				&& 1)) break;
       }
-      
+
       foo()
       {
       	a = cond ? foo() : asdf
       		+ asdf;
-      
+
       	a = cond ?
       		foo() : asdf
       		+ asdf;
       }
-      
+
       int  main(void)
       {
       	if (a)
@@ -1750,7 +1753,7 @@ describe('cindent', function()
       		else 3;
       	next_line_of_code();
       }
-      
+
       barry()
       {
       	Foo::Foo (int one,
@@ -1758,14 +1761,14 @@ describe('cindent', function()
       		: something(4)
       	{}
       }
-      
+
       barry()
       {
       	Foo::Foo (int one, int two)
       		: something(4)
       	{}
       }
-      
+
       Constructor::Constructor(int a,
       		int b 
       		)  : 
@@ -1784,7 +1787,7 @@ describe('cindent', function()
       				&& lele);
       	lulu;
       }
-      
+
       int main ()
       {
       	switch (c)
@@ -1794,13 +1797,13 @@ describe('cindent', function()
       				  }
       	}
       }
-      
+
       main()
       {
       	(void) MyFancyFuasdfadsfnction(
       			argument);
       }
-      
+
       main()
       {
       	char	foo[] = "/*";
@@ -1808,7 +1811,7 @@ describe('cindent', function()
       	   df */
       	hello
       }
-      
+
       /* valid namespaces with normal indent */
       namespace
       {
@@ -1847,7 +1850,7 @@ describe('cindent', function()
       		22222222222222222;
       	}
       }
-      
+
       /* invalid namespaces use block indent */
       namespace test test2 {
       	111111111111111111111;
@@ -1887,7 +1890,7 @@ describe('cindent', function()
         }
           )foo";
       }
-      
+
       {
       	int a[4] = {
       		[0] = 0,
@@ -1896,12 +1899,12 @@ describe('cindent', function()
       		[3] = 3,
       	};
       }
-      
+
       {
       	a = b[2]
       		+ 3;
       }
-      
+
       {
       	if (1)
       		/* aaaaa
@@ -1909,7 +1912,7 @@ describe('cindent', function()
       		 */
       		a = 1;
       }
-      
+
       void func()
       {
       	switch (foo)
@@ -1936,16 +1939,16 @@ describe('cindent', function()
       			break;
       	}
       }
-      
+
       /* end of AUTO */
       ]=])
   end)
 
   it('2 is working', function()
     insert_([=[
-      
+
       {
-      
+
       /* this is
        * a real serious important big
        * comment
@@ -1954,14 +1957,15 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set tw=0 wm=60 columns=80 noai fo=croq')
-    execute('/serious/e')
+    feed_command('set tw=0 noai fo=croq')
+    feed_command('let &wm = &columns - 20')
+    feed_command('/serious/e')
     feed('a about life, the universe, and the rest<esc>')
 
     expect([=[
-      
+
       {
-      
+
       /* this is
        * a real serious
        * about life, the
@@ -1976,48 +1980,48 @@ describe('cindent', function()
 
   it('3 is working', function()
     insert_([=[
-      
+
       {
       	/*
       	 * Testing for comments, without 'cin' set
       	 */
-      
+
       /*
       * what happens here?
       */
-      
+
       	/*
       	   the end of the comment, try inserting a line below */
-      
+
       		/* how about
       		                this one */
       }
       ]=])
 
-    execute('set nocin')
-    execute('/comments')
+    feed_command('set nocin')
+    feed_command('/comments')
     feed('joabout life<esc>/happens<cr>')
     feed('jothere<esc>/below<cr>')
     feed('oline<esc>/this<cr>')
     feed('Ohello<esc>')
 
     expect([=[
-      
+
       {
       	/*
       	 * Testing for comments, without 'cin' set
       	 */
       about life
-      
+
       /*
       * what happens here?
       */
       there
-      
+
       	/*
       	   the end of the comment, try inserting a line below */
       line
-      
+
       		/* how about
       hello
       		                this one */
@@ -2027,19 +2031,19 @@ describe('cindent', function()
 
   it('4 is working', function()
     insert_([=[
-      
+
       {
           var = this + that + vec[0] * vec[0]
       				      + vec[1] * vec[1]
       					  + vec2[2] * vec[2];
       }
       ]=])
-    execute('set cin')
-    execute('/vec2')
+    feed_command('set cin')
+    feed_command('/vec2')
     feed('==<cr>')
 
     expect([=[
-      
+
       {
           var = this + that + vec[0] * vec[0]
       				      + vec[1] * vec[1]
@@ -2050,7 +2054,7 @@ describe('cindent', function()
 
   it('5 is working', function()
     insert_([=[
-      
+
       {
       		asdf asdflkajds f;
       	if (tes & ting) {
@@ -2067,14 +2071,14 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cin')
-    execute('set cino=}4')
-    execute('/testing1')
+    feed_command('set cin')
+    feed_command('set cino=}4')
+    feed_command('/testing1')
     feed('k2==/testing2<cr>')
     feed('k2==<cr>')
 
     expect([=[
-      
+
       {
       		asdf asdflkajds f;
       	if (tes & ting) {
@@ -2094,7 +2098,7 @@ describe('cindent', function()
 
   it('6 is working', function()
     insert_([=[
-      
+
       main ( int first_par, /*
                              * Comment for
                              * first par
@@ -2114,17 +2118,17 @@ describe('cindent', function()
                             * second par
                             */
               );
-      
+
       }
       ]=])
 
-    execute('set cin')
-    execute('set cino=(0,)20')
-    execute('/main')
+    feed_command('set cin')
+    feed_command('set cino=(0,)20')
+    feed_command('/main')
     feed('=][<cr>')
 
     expect([=[
-      
+
       main ( int first_par, /*
       					   * Comment for
       					   * first par
@@ -2144,14 +2148,14 @@ describe('cindent', function()
       					  * second par
       					  */
       		);
-      
+
       }
       ]=])
   end)
 
   it('7 is working', function()
     insert_([=[
-      
+
       main(void)
       {
       	/* Make sure that cino=X0s is not parsed like cino=Xs. */
@@ -2164,13 +2168,13 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cin')
-    execute('set cino=es,n0s')
-    execute('/main')
+    feed_command('set cin')
+    feed_command('set cino=es,n0s')
+    feed_command('/main')
     feed('=][<cr>')
 
     expect([=[
-      
+
       main(void)
       {
       	/* Make sure that cino=X0s is not parsed like cino=Xs. */
@@ -2186,7 +2190,7 @@ describe('cindent', function()
 
   it('8 is working', function()
     insert_([=[
-      
+
       {
       	do
       	{
@@ -2202,12 +2206,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cin')
-    execute('set cino=')
+    feed_command('set cin')
+    feed_command('set cino=')
     feed(']]=][<cr>')
 
     expect([=[
-      
+
       {
       	do
       	{
@@ -2226,16 +2230,16 @@ describe('cindent', function()
 
   it('9 is working', function()
     insert_([=[
-      
+
       void f()
       {
           if ( k() ) {
               l();
-      
+
           } else { /* Start (two words) end */
               m();
           }
-      
+
           n();
       }
       ]=])
@@ -2243,16 +2247,16 @@ describe('cindent', function()
     feed(']]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	if ( k() ) {
       		l();
-      
+
       	} else { /* Start (two words) end */
       		m();
       	}
-      
+
       	n();
       }
       ]=])
@@ -2267,7 +2271,7 @@ describe('cindent', function()
     -- indented properly. And that's why we've had to add one explicitly.
     insert_([=[
       { <= THIS IS THE CURLY BRACKET EXPLAINED IN THE COMMENT.
-      
+
       void f()
       {
           if ( k() )
@@ -2280,12 +2284,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino={s,e-s')
+    feed_command('set cino={s,e-s')
     feed(']]=][<cr>')
 
     expect([=[
       { <= THIS IS THE CURLY BRACKET EXPLAINED IN THE COMMENT.
-      
+
       void f()
       	{
       	if ( k() )
@@ -2301,7 +2305,7 @@ describe('cindent', function()
 
   it('11 is working', function()
     insert_([=[
-      
+
       void bar(void)
       {
       	static array[2][2] =
@@ -2309,12 +2313,12 @@ describe('cindent', function()
       		{ 1, 2 },
       		{ 3, 4 },
       	}
-      
+
       	while (a)
       	{
       		foo(&a);
       	}
-      
+
       	{
       		int a;
       		{
@@ -2323,7 +2327,7 @@ describe('cindent', function()
       	}
       	b = a;
       	}
-      
+
       void func(void)
       	{
       	a = 1;
@@ -2336,11 +2340,11 @@ describe('cindent', function()
       /* foo */
       ]=])
 
-    execute('set cino={s,fs')
+    feed_command('set cino={s,fs')
     feed(']]=/ foo<cr>')
 
     expect([=[
-      
+
       void bar(void)
       	{
       	static array[2][2] =
@@ -2348,12 +2352,12 @@ describe('cindent', function()
       			{ 1, 2 },
       			{ 3, 4 },
       		}
-      
+
       	while (a)
       		{
       		foo(&a);
       		}
-      
+
       		{
       		int a;
       			{
@@ -2362,7 +2366,7 @@ describe('cindent', function()
       		}
       	b = a;
       	}
-      
+
       void func(void)
       	{
       	a = 1;
@@ -2378,7 +2382,7 @@ describe('cindent', function()
 
   it('12 is working', function()
     insert_([=[
-      
+
       a()
       {
         do {
@@ -2390,12 +2394,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=')
-    execute('/while')
+    feed_command('set cino=')
+    feed_command('/while')
     feed('ohere<esc>')
 
     expect([=[
-      
+
       a()
       {
         do {
@@ -2411,7 +2415,7 @@ describe('cindent', function()
 
   it('13 is working', function()
     insert_([=[
-      
+
       a()
       {
       label1:
@@ -2420,12 +2424,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino= com=')
-    execute('/comment')
+    feed_command('set cino= com=')
+    feed_command('/comment')
     feed('olabel2: b();<cr>label3 /* post */:<cr>/* pre */ label4:<cr>f(/*com*/);<cr>if (/*com*/)<cr>cmd();<esc>')
 
     expect([=[
-      
+
       a()
       {
       label1:
@@ -2443,26 +2447,26 @@ describe('cindent', function()
 
   it('14 is working', function()
     insert_([=[
-      
+
       /*
         * A simple comment
          */
-      
+
       /*
         ** A different comment
          */
       ]=])
 
-    execute('set comments& comments^=s:/*,m:**,ex:*/')
-    execute('/simple')
+    feed_command('set comments& comments^=s:/*,m:**,ex:*/')
+    feed_command('/simple')
     feed('=5j<cr>')
 
     expect([=[
-      
+
       /*
        * A simple comment
        */
-      
+
       /*
       ** A different comment
       */
@@ -2471,26 +2475,26 @@ describe('cindent', function()
 
   it('15 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
-      
+
       	/*********
         A comment.
       *********/
       }
       ]=])
 
-    execute('set cino=c0')
-    execute('set comments& comments-=s1:/* comments^=s0:/*')
+    feed_command('set cino=c0')
+    feed_command('set comments& comments-=s1:/* comments^=s0:/*')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
-      
+
       	/*********
       	  A comment.
       	*********/
@@ -2500,26 +2504,26 @@ describe('cindent', function()
 
   it('16 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
-      
+
       	/*********
         A comment.
       *********/
       }
       ]=])
 
-    execute('set cino=c0,C1')
-    execute('set comments& comments-=s1:/* comments^=s0:/*')
+    feed_command('set cino=c0,C1')
+    feed_command('set comments& comments-=s1:/* comments^=s0:/*')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
-      
+
       	/*********
       	A comment.
       	*********/
@@ -2529,7 +2533,7 @@ describe('cindent', function()
 
   it('17 is working', function()
     insert_([=[
-      
+
       void f()
       {
       	c = c1 &&
@@ -2540,11 +2544,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=')
+    feed_command('set cino=')
     feed(']]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	c = c1 &&
@@ -2558,8 +2562,8 @@ describe('cindent', function()
 
   it('18 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	c = c1 &&
@@ -2570,11 +2574,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(s')
+    feed_command('set cino=(s')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	c = c1 &&
@@ -2588,8 +2592,8 @@ describe('cindent', function()
 
   it('19 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	c = c1 &&
@@ -2600,11 +2604,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(s,U1  ')
+    feed_command('set cino=(s,U1  ')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	c = c1 &&
@@ -2618,8 +2622,8 @@ describe('cindent', function()
 
   it('20 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	if (   c1
@@ -2629,11 +2633,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0')
+    feed_command('set cino=(0')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	if (   c1
@@ -2646,8 +2650,8 @@ describe('cindent', function()
 
   it('21 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	if (   c1
@@ -2657,11 +2661,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0,w1  ')
+    feed_command('set cino=(0,w1  ')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	if (   c1
@@ -2674,8 +2678,8 @@ describe('cindent', function()
 
   it('22 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	c = c1 && (
@@ -2689,11 +2693,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(s')
+    feed_command('set cino=(s')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	c = c1 && (
@@ -2710,8 +2714,8 @@ describe('cindent', function()
 
   it('23 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	c = c1 && (
@@ -2725,11 +2729,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(s,m1  ')
+    feed_command('set cino=(s,m1  ')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	c = c1 && (
@@ -2746,8 +2750,8 @@ describe('cindent', function()
 
   it('24 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	switch (x)
@@ -2762,11 +2766,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=b1')
+    feed_command('set cino=b1')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	switch (x)
@@ -2784,8 +2788,8 @@ describe('cindent', function()
 
   it('25 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	invokeme(
@@ -2801,11 +2805,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0,W5')
+    feed_command('set cino=(0,W5')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	invokeme(
@@ -2824,8 +2828,8 @@ describe('cindent', function()
 
   it('26 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	statement;
@@ -2834,11 +2838,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=/6')
+    feed_command('set cino=/6')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	statement;
@@ -2850,8 +2854,8 @@ describe('cindent', function()
 
   it('27 is working', function()
     insert_([=[
-      
-      
+
+
       void f()
       {
       	statement;
@@ -2860,12 +2864,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=')
+    feed_command('set cino=')
     feed('2kdd]]/comment 1/+1<cr>')
     feed('==<cr>')
 
     expect([=[
-      
+
       void f()
       {
       	statement;
@@ -2877,12 +2881,12 @@ describe('cindent', function()
 
   it('28 is working', function()
     insert_([=[
-      
-      
+
+
       class CAbc
       {
          int Test() { return FALSE; }
-      
+
       public: // comment
          void testfall();
       protected:
@@ -2890,15 +2894,15 @@ describe('cindent', function()
       };
       ]=])
 
-    execute('set cino=g0')
+    feed_command('set cino=g0')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       class CAbc
       {
       	int Test() { return FALSE; }
-      
+
       public: // comment
       	void testfall();
       protected:
@@ -2909,8 +2913,8 @@ describe('cindent', function()
 
   it('29 is working', function()
     insert_([=[
-      
-      
+
+
       class Foo : public Bar
       {
       public:
@@ -2921,11 +2925,11 @@ describe('cindent', function()
       };
       ]=])
 
-    execute('set cino=(0,gs,hs')
+    feed_command('set cino=(0,gs,hs')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       class Foo : public Bar
       {
       	public:
@@ -2939,8 +2943,8 @@ describe('cindent', function()
 
   it('30 is working', function()
     insert_([=[
-      
-      
+
+
       	void
       foo()
       {
@@ -2951,11 +2955,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=+20')
+    feed_command('set cino=+20')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       	void
       foo()
       {
@@ -2969,8 +2973,8 @@ describe('cindent', function()
 
   it('31 is working', function()
     insert_([=[
-      
-      
+
+
       {
          averylongfunctionnamelongfunctionnameaverylongfunctionname()->asd(
                asdasdf,
@@ -2978,9 +2982,9 @@ describe('cindent', function()
                     asdfadsf),
                asdfasdf
                );
-      
+
          /* those are ugly, but consequent */
-      
+
          func()->asd(asdasdf,
                      averylongfunctionname(
                            abc,
@@ -2994,7 +2998,7 @@ describe('cindent', function()
                          ),
                      asdasdf
                     );
-      
+
          averylongfunctionnameaverylongfunctionnameavery()->asd(fasdf(
                      abc,
                      dec)->asdfasdfasdf(
@@ -3009,11 +3013,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0,W2s')
+    feed_command('set cino=(0,W2s')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       {
       	averylongfunctionnamelongfunctionnameaverylongfunctionname()->asd(
       			asdasdf,
@@ -3021,9 +3025,9 @@ describe('cindent', function()
       				 asdfadsf),
       			asdfasdf
       			);
-      
+
       	/* those are ugly, but consequent */
-      
+
       	func()->asd(asdasdf,
       				averylongfunctionname(
       						abc,
@@ -3037,7 +3041,7 @@ describe('cindent', function()
       					),
       				asdasdf
       			   );
-      
+
       	averylongfunctionnameaverylongfunctionnameavery()->asd(fasdf(
       					abc,
       					dec)->asdfasdfasdf(
@@ -3055,8 +3059,8 @@ describe('cindent', function()
 
   it('32 is working', function()
     insert_([=[
-      
-      
+
+
       int main ()
       {
       	if (cond1 &&
@@ -3066,11 +3070,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=M1')
+    feed_command('set cino=M1')
     feed('2kdd]]=][<cr>')
 
     expect([=[
-      
+
       int main ()
       {
       	if (cond1 &&
@@ -3083,8 +3087,8 @@ describe('cindent', function()
 
   it('33 is working', function()
     insert_([=[
-      
-      
+
+
       void func(int a
       #if defined(FOO)
       		  , int b
@@ -3095,11 +3099,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0,ts')
+    feed_command('set cino=(0,ts')
     feed('2kdd2j=][<cr>')
 
     expect([=[
-      
+
       void func(int a
       #if defined(FOO)
       		  , int b
@@ -3113,9 +3117,9 @@ describe('cindent', function()
 
   it('34 is working', function()
     insert_([=[
-      
-      
-      
+
+
+
       void
       func(int a
       #if defined(FOO)
@@ -3127,12 +3131,12 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=(0')
+    feed_command('set cino=(0')
     feed('2kdd2j=][<cr>')
 
     expect([=[
-      
-      
+
+
       	void
       func(int a
       #if defined(FOO)
@@ -3147,8 +3151,8 @@ describe('cindent', function()
 
   it('35 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if(x==y)
@@ -3159,7 +3163,7 @@ describe('cindent', function()
       		}
       	printf("Foo!\n");
       }
-      
+
       void func1(void)
       {
       	char* tab[] = {"foo", "bar",
@@ -3167,37 +3171,37 @@ describe('cindent', function()
       			"this line used", "to be indented incorrectly"};
       	foo();
       }
-      
+
       void func2(void)
       {
       	int tab[] =
       	{1, 2,
       		3, 4,
       		5, 6};
-      
+
       		printf("This line used to be indented incorrectly.\n");
       }
-      
+
       int foo[]
       #ifdef BAR
-      
+
       = { 1, 2, 3,
       	4, 5, 6 }
-      
+
       #endif
       ;
       	int baz;
-      
+
       void func3(void)
       {
       	int tab[] = {
       	1, 2,
       	3, 4,
       	5, 6};
-      
+
       printf("Don't you dare indent this line incorrectly!\n");
       }
-      
+
       void
       func4(a, b,
       		c)
@@ -3206,14 +3210,14 @@ describe('cindent', function()
       int c;
       {
       }
-      
+
       void
       func5(
       		int a,
       		int b)
       {
       }
-      
+
       void
       func6(
       		int a)
@@ -3221,11 +3225,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino&')
+    feed_command('set cino&')
     feed('2kdd2j=7][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if(x==y)
@@ -3236,7 +3240,7 @@ describe('cindent', function()
       		}
       	printf("Foo!\n");
       }
-      
+
       void func1(void)
       {
       	char* tab[] = {"foo", "bar",
@@ -3244,37 +3248,37 @@ describe('cindent', function()
       		"this line used", "to be indented incorrectly"};
       	foo();
       }
-      
+
       void func2(void)
       {
       	int tab[] =
       	{1, 2,
       		3, 4,
       		5, 6};
-      
+
       	printf("This line used to be indented incorrectly.\n");
       }
-      
+
       int foo[]
       #ifdef BAR
-      
+
       = { 1, 2, 3,
       	4, 5, 6 }
-      
+
       #endif
       	;
       int baz;
-      
+
       void func3(void)
       {
       	int tab[] = {
       		1, 2,
       		3, 4,
       		5, 6};
-      
+
       	printf("Don't you dare indent this line incorrectly!\n");
       }
-      
+
       	void
       func4(a, b,
       		c)
@@ -3283,14 +3287,14 @@ describe('cindent', function()
       	int c;
       {
       }
-      
+
       	void
       func5(
       		int a,
       		int b)
       {
       }
-      
+
       	void
       func6(
       		int a)
@@ -3301,17 +3305,17 @@ describe('cindent', function()
 
   it('36 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	int tab[] =
       	{
       		1, 2, 3,
       		4, 5, 6};
-      
+
       	printf("Indent this line correctly!\n");
-      
+
       	switch (foo)
       	{
       		case bar:
@@ -3328,21 +3332,21 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino&')
-    execute('set cino+=l1')
+    feed_command('set cino&')
+    feed_command('set cino+=l1')
     feed('2kdd2j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	int tab[] =
       	{
       		1, 2, 3,
       		4, 5, 6};
-      
+
       	printf("Indent this line correctly!\n");
-      
+
       	switch (foo)
       	{
       		case bar:
@@ -3362,8 +3366,8 @@ describe('cindent', function()
 
   it('37 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	cout << "a"
@@ -3373,11 +3377,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino&')
+    feed_command('set cino&')
     feed('2kdd2j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	cout << "a"
@@ -3390,7 +3394,7 @@ describe('cindent', function()
 
   it('38 is working', function()
     insert_([=[
-      
+
       void func(void)
       {
       	/*
@@ -3399,11 +3403,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set com=s1:/*,m:*,ex:*/')
+    feed_command('set com=s1:/*,m:*,ex:*/')
     feed(']]3jofoo();<esc>')
 
     expect([=[
-      
+
       void func(void)
       {
       	/*
@@ -3416,8 +3420,8 @@ describe('cindent', function()
 
   it('39 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	for (int i = 0; i < 10; ++i)
@@ -3429,11 +3433,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino&')
+    feed_command('set cino&')
     feed('2kdd2j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	for (int i = 0; i < 10; ++i)
@@ -3448,8 +3452,8 @@ describe('cindent', function()
 
   it('40 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3457,7 +3461,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3465,7 +3469,7 @@ describe('cindent', function()
       	(c2 || c3))
       	{
       	}
-      
+
       	if (   c1
       	&& (      c2
       	|| c3))
@@ -3477,11 +3481,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,(0')
+    feed_command('set cino=k2s,(0')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3489,7 +3493,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       			 && argument2);
-      
+
       	if (c1 && (c2 ||
       				c3))
       		foo;
@@ -3497,7 +3501,7 @@ describe('cindent', function()
       			(c2 || c3))
       	{
       	}
-      
+
       	if (   c1
       			&& (      c2
       					  || c3))
@@ -3512,8 +3516,8 @@ describe('cindent', function()
 
   it('41 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3521,7 +3525,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3529,7 +3533,7 @@ describe('cindent', function()
       	(c2 || c3))
       	{
       	}
-      
+
       	if (   c1
       	&& (      c2
       	|| c3))
@@ -3541,11 +3545,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,(s')
+    feed_command('set cino=k2s,(s')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3553,7 +3557,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       		&& argument2);
-      
+
       	if (c1 && (c2 ||
       				c3))
       		foo;
@@ -3561,7 +3565,7 @@ describe('cindent', function()
       			(c2 || c3))
       	{
       	}
-      
+
       	if (   c1
       			&& (      c2
       				|| c3))
@@ -3576,8 +3580,8 @@ describe('cindent', function()
 
   it('42 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3585,7 +3589,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3597,7 +3601,7 @@ describe('cindent', function()
       	&& (c22345
       	|| c3))
       	printf("foo\n");
-      
+
       	c = c1 &&
       	(
       	c2 ||
@@ -3606,11 +3610,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,(s,U1')
+    feed_command('set cino=k2s,(s,U1')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3618,7 +3622,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       		&& argument2);
-      
+
       	if (c1 && (c2 ||
       				c3))
       		foo;
@@ -3630,7 +3634,7 @@ describe('cindent', function()
       			&& (c22345
       				|| c3))
       		printf("foo\n");
-      
+
       	c = c1 &&
       		(
       			c2 ||
@@ -3642,8 +3646,8 @@ describe('cindent', function()
 
   it('43 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3651,7 +3655,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3663,12 +3667,12 @@ describe('cindent', function()
       	&& (c22345
       	|| c3))
       	printf("foo\n");
-      
+
       	if (   c1
       	&& (   c2
       	|| c3))
       	foo;
-      
+
       	a_long_line(
       	argument,
       	argument);
@@ -3677,11 +3681,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,(0,W4')
+    feed_command('set cino=k2s,(0,W4')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3689,7 +3693,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       			 && argument2);
-      
+
       	if (c1 && (c2 ||
       				c3))
       		foo;
@@ -3701,12 +3705,12 @@ describe('cindent', function()
       			&& (c22345
       				|| c3))
       		printf("foo\n");
-      
+
       	if (   c1
       			&& (   c2
       				   || c3))
       		foo;
-      
+
       	a_long_line(
       		argument,
       		argument);
@@ -3718,8 +3722,8 @@ describe('cindent', function()
 
   it('44 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3727,7 +3731,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3742,11 +3746,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,u2')
+    feed_command('set cino=k2s,u2')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3754,7 +3758,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       			&& argument2);
-      
+
       	if (c1 && (c2 ||
       			  c3))
       		foo;
@@ -3772,8 +3776,8 @@ describe('cindent', function()
 
   it('45 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3781,7 +3785,7 @@ describe('cindent', function()
       	action();
       	function(argument1
       	&& argument2);
-      
+
       	if (c1 && (c2 ||
       	c3))
       	foo;
@@ -3793,7 +3797,7 @@ describe('cindent', function()
       	&& (c22345
       	|| c3))
       	printf("foo\n");
-      
+
       	if (   c1
       	&& (      c2
       	|| c3))
@@ -3805,11 +3809,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2s,(0,w1')
+    feed_command('set cino=k2s,(0,w1')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3817,7 +3821,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       			 && argument2);
-      
+
       	if (c1 && (c2 ||
       				c3))
       		foo;
@@ -3829,7 +3833,7 @@ describe('cindent', function()
       			&& (c22345
       				|| c3))
       		printf("foo\n");
-      
+
       	if (   c1
       			&& (      c2
       				|| c3))
@@ -3844,8 +3848,8 @@ describe('cindent', function()
 
   it('46 is working', function()
     insert_([=[
-      
-      
+
+
       void func(void)
       {
       	if (condition1
@@ -3853,7 +3857,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       		&& argument2);
-      
+
       	if (c1 && (c2 ||
       		  c3))
       		foo;
@@ -3864,11 +3868,11 @@ describe('cindent', function()
       }
       ]=])
 
-    execute('set cino=k2,(s')
+    feed_command('set cino=k2,(s')
     feed('2kdd3j=][<cr>')
 
     expect([=[
-      
+
       void func(void)
       {
       	if (condition1
@@ -3876,7 +3880,7 @@ describe('cindent', function()
       		action();
       	function(argument1
       		&& argument2);
-      
+
       	if (c1 && (c2 ||
       		  c3))
       		foo;
@@ -3890,7 +3894,7 @@ describe('cindent', function()
 
   it('47 is working', function()
     insert_([=[
-      
+
       NAMESPACESTART
       /* valid namespaces with normal indent */
       namespace
@@ -3915,6 +3919,26 @@ describe('cindent', function()
       {
         111111111111111111;
       }
+      namespace test::cpp17
+      {
+        111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+        111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+        111111111111111111;
+      }
       namespace{
         111111111111111111;
       }
@@ -3930,7 +3954,7 @@ describe('cindent', function()
         22222222222222222;
       }
       }
-      
+
       /* invalid namespaces use block indent */
       namespace test test2 {
         111111111111111111111;
@@ -3956,12 +3980,12 @@ describe('cindent', function()
       NAMESPACEEND
       ]=])
 
-    execute('set cino=N-s')
-    execute('/^NAMESPACESTART')
+    feed_command('set cino=N-s')
+    feed_command('/^NAMESPACESTART')
     feed('=/^NAMESPACEEND<cr>')
 
     expect([=[
-      
+
       NAMESPACESTART
       /* valid namespaces with normal indent */
       namespace
@@ -3986,6 +4010,26 @@ describe('cindent', function()
       {
       111111111111111111;
       }
+      namespace test::cpp17
+      {
+      111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+      	111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+      	111111111111111111;
+      }
       namespace{
       111111111111111111;
       }
@@ -4001,7 +4045,7 @@ describe('cindent', function()
       22222222222222222;
       }
       }
-      
+
       /* invalid namespaces use block indent */
       namespace test test2 {
       	111111111111111111111;
@@ -4030,7 +4074,7 @@ describe('cindent', function()
 
   it('48 is working', function()
     insert_([=[
-      
+
       JSSTART
       var bar = {
       foo: {
@@ -4047,12 +4091,12 @@ describe('cindent', function()
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       var bar = {
       	foo: {
@@ -4072,7 +4116,7 @@ describe('cindent', function()
 
   it('49 is working', function()
     insert_([=[
-      
+
       JSSTART
       var foo = [
       1,
@@ -4082,12 +4126,12 @@ describe('cindent', function()
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       var foo = [
       	1,
@@ -4100,7 +4144,7 @@ describe('cindent', function()
 
   it('50 is working', function()
     insert_([=[
-      
+
       JSSTART
       function bar() {
       var foo = [
@@ -4112,12 +4156,12 @@ describe('cindent', function()
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       function bar() {
       	var foo = [
@@ -4132,10 +4176,10 @@ describe('cindent', function()
 
   it('51 is working', function()
     insert_([=[
-      
+
       JSSTART
       (function($){
-      
+
       if (cond &&
       cond) {
       stmt;
@@ -4143,18 +4187,18 @@ describe('cindent', function()
       window.something.left =
       (width - 50 + offset) + "px";
       var class_name='myclass';
-      
+
       function private_method() {
       }
-      
+
       var public_method={
       method: function(options,args){
       private_method();
       }
       }
-      
+
       function init(options) {
-      
+
       $(this).data(class_name+'_public',$.extend({},{
       foo: 'bar',
       bar: 2,
@@ -4168,19 +4212,19 @@ describe('cindent', function()
       }
       }, options||{}));
       }
-      
+
       $.fn[class_name]=function() {
-      
+
       var _arguments=arguments;
       return this.each(function(){
-      
+
       var options=$(this).data(class_name+'_public');
       if (!options) {
       init.apply(this,_arguments);
-      
+
       } else {
       var method=public_method[_arguments[0]];
-      
+
       if (typeof(method)!='function') {
       console.log(class_name+' has no method "'+_arguments[0]+'"');
       return false;
@@ -4190,20 +4234,20 @@ describe('cindent', function()
       }
       });
       }
-      
+
       })(jQuery);
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       (function($){
-      
+
       	if (cond &&
       			cond) {
       		stmt;
@@ -4211,18 +4255,18 @@ describe('cindent', function()
       	window.something.left =
       		(width - 50 + offset) + "px";
       	var class_name='myclass';
-      
+
       	function private_method() {
       	}
-      
+
       	var public_method={
       		method: function(options,args){
       			private_method();
       		}
       	}
-      
+
       	function init(options) {
-      
+
       		$(this).data(class_name+'_public',$.extend({},{
       			foo: 'bar',
       			bar: 2,
@@ -4236,19 +4280,19 @@ describe('cindent', function()
       			}
       		}, options||{}));
       	}
-      
+
       	$.fn[class_name]=function() {
-      
+
       		var _arguments=arguments;
       		return this.each(function(){
-      
+
       			var options=$(this).data(class_name+'_public');
       			if (!options) {
       				init.apply(this,_arguments);
-      
+
       			} else {
       				var method=public_method[_arguments[0]];
-      
+
       				if (typeof(method)!='function') {
       					console.log(class_name+' has no method "'+_arguments[0]+'"');
       					return false;
@@ -4258,7 +4302,7 @@ describe('cindent', function()
       			}
       		});
       	}
-      
+
       })(jQuery);
       JSEND
       ]=])
@@ -4266,7 +4310,7 @@ describe('cindent', function()
 
   it('52 is working', function()
     insert_([=[
-      
+
       JSSTART
       function init(options) {
       $(this).data(class_name+'_public',$.extend({},{
@@ -4285,12 +4329,12 @@ describe('cindent', function()
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       function init(options) {
       	$(this).data(class_name+'_public',$.extend({},{
@@ -4312,7 +4356,7 @@ describe('cindent', function()
 
   it('53 is working', function()
     insert_([=[
-      
+
       JSSTART
       (function($){
       function init(options) {
@@ -4333,12 +4377,12 @@ describe('cindent', function()
       JSEND
       ]=])
 
-    execute('set cino=j1,J1')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       (function($){
       	function init(options) {
@@ -4362,7 +4406,7 @@ describe('cindent', function()
 
   it('javascript indent / vim-patch 7.4.670', function()
     insert_([=[
-      
+
       JSSTART
       // Results of JavaScript indent
       // 1
@@ -4379,7 +4423,7 @@ describe('cindent', function()
       'i'
       ];
       }())
-      
+
       // 2
       (function(){
       var a = [
@@ -4400,7 +4444,7 @@ describe('cindent', function()
       'i'
       ];
       }())
-      
+
       // 3
       (function(){
       var a = [
@@ -4423,7 +4467,7 @@ describe('cindent', function()
       'i'
       ];
       }())
-      
+
       // 4
       {
       var a = [
@@ -4433,7 +4477,7 @@ describe('cindent', function()
       var b;
       var c;
       }
-      
+
       // 5
       {
       var a = [
@@ -4444,7 +4488,7 @@ describe('cindent', function()
       3
       ];
       }
-      
+
       // 6
       {
       var a = [
@@ -4456,7 +4500,7 @@ describe('cindent', function()
       3
       ];
       }
-      
+
       // 7
       {
       var a = [
@@ -4468,7 +4512,7 @@ describe('cindent', function()
       3
       ];
       }
-      
+
       // 8
       var x = [
       (function(){
@@ -4483,7 +4527,7 @@ describe('cindent', function()
       i;
       })
       ];
-      
+
       // 9
       var a = [
       0 +
@@ -4502,7 +4546,7 @@ describe('cindent', function()
       'h',
       'i'
       ];
-      
+
       // 10
       var a,
       b,
@@ -4517,12 +4561,12 @@ describe('cindent', function()
       ]=])
 
     -- :set cino=j1,J1,+2
-    execute('set cino=j1,J1,+2')
-    execute('/^JSSTART')
+    feed_command('set cino=j1,J1,+2')
+    feed_command('/^JSSTART')
     feed('=/^JSEND<cr>')
 
     expect([=[
-      
+
       JSSTART
       // Results of JavaScript indent
       // 1
@@ -4539,7 +4583,7 @@ describe('cindent', function()
       	  'i'
       	];
       }())
-      
+
       // 2
       (function(){
       	var a = [
@@ -4560,7 +4604,7 @@ describe('cindent', function()
       	  'i'
       	];
       }())
-      
+
       // 3
       (function(){
       	var a = [
@@ -4583,7 +4627,7 @@ describe('cindent', function()
       	  'i'
       	];
       }())
-      
+
       // 4
       {
       	var a = [
@@ -4593,7 +4637,7 @@ describe('cindent', function()
       	var b;
       	var c;
       }
-      
+
       // 5
       {
       	var a = [
@@ -4604,7 +4648,7 @@ describe('cindent', function()
       	  3
       	];
       }
-      
+
       // 6
       {
       	var a = [
@@ -4616,7 +4660,7 @@ describe('cindent', function()
       	  3
       	];
       }
-      
+
       // 7
       {
       	var a = [
@@ -4628,7 +4672,7 @@ describe('cindent', function()
       	  3
       	];
       }
-      
+
       // 8
       var x = [
         (function(){
@@ -4643,7 +4687,7 @@ describe('cindent', function()
       	  i;
         })
       ];
-      
+
       // 9
       var a = [
         0 +
@@ -4662,7 +4706,7 @@ describe('cindent', function()
         'h',
         'i'
       ];
-      
+
       // 10
       var a,
       	b,
@@ -4675,5 +4719,56 @@ describe('cindent', function()
       	i;
       JSEND
       ]=])
+  end)
+
+  it('line continuations in macros / vim-patch 8.0.0148', function()
+    insert_([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      BBB\
+      CCC
+
+      #define CNT \
+      1 + \
+      2 + \
+      4
+      /* end of define */]=])
+
+    feed_command('set cino&')
+    feed_command('/start of define')
+    feed('=/end of define<cr>')
+
+    expect([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      	BBB\
+      	CCC
+
+      #define CNT \
+      	1 + \
+      	2 + \
+      	4
+      /* end of define */]=])
+  end)
+
+  it('* immediately follows comment / vim-patch 8.0.1291', function()
+    insert_([=[
+      {
+        a = second/*bug*/*line;
+      }]=])
+
+    feed_command('set cin cino&')
+    feed_command('/a = second')
+    feed('ox')
+
+    expect([=[
+      {
+        a = second/*bug*/*line;
+        x
+      }]=])
   end)
 end)

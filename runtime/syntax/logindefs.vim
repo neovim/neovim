@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         login.defs(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2010-11-29
+" Language:             login.defs(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2010-11-29
 
 if exists("b:current_syntax")
   finish

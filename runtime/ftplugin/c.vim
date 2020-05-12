@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Jul 10
+" Last Change:	2017 Sep 28
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -30,9 +30,9 @@ endif
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
 
 " When the matchit plugin is loaded, this makes the % command skip parens and
-" braces in comments.
-let b:match_words = &matchpairs . ',^\s*#\s*if\(\|def\|ndef\)\>:^\s*#\s*elif\>:^\s*#\s*else\>:^\s*#\s*endif\>'
-let b:match_skip = 's:comment\|string\|character'
+" braces in comments properly.
+let b:match_words = '^\s*#\s*if\(\|def\|ndef\)\>:^\s*#\s*elif\>:^\s*#\s*else\>:^\s*#\s*endif\>'
+let b:match_skip = 's:comment\|string\|character\|special'
 
 " Win32 can filter files in the browse dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
@@ -54,6 +54,8 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 	  \ "All Files (*.*)\t*.*\n"
   endif
 endif
+
+let b:man_default_sects = '3,2'
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

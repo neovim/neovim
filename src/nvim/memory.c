@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
@@ -6,25 +9,34 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/context.h"
 #include "nvim/eval.h"
+#include "nvim/highlight.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/ui.h"
+#include "nvim/sign.h"
+#include "nvim/api/vim.h"
 
-#ifdef HAVE_JEMALLOC
-// Force je_ prefix on jemalloc functions.
-# define JEMALLOC_NO_DEMANGLE
-# include <jemalloc/jemalloc.h>
-# define malloc(size) je_malloc(size)
-# define calloc(count, size) je_calloc(count, size)
-# define realloc(ptr, size) je_realloc(ptr, size)
-# define free(ptr) je_free(ptr)
+#ifdef UNIT_TESTING
+# define malloc(size) mem_malloc(size)
+# define calloc(count, size) mem_calloc(count, size)
+# define realloc(ptr, size) mem_realloc(ptr, size)
+# define free(ptr) mem_free(ptr)
+MemMalloc mem_malloc = &malloc;
+MemFree mem_free = &free;
+MemCalloc mem_calloc = &calloc;
+MemRealloc mem_realloc = &realloc;
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.c.generated.h"
+#endif
+
+#ifdef EXITFREE
+bool entered_free_all_mem = false;
 #endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
@@ -38,7 +50,7 @@ void try_to_free_memory(void)
   trying_to_free = true;
 
   // free any scrollback text
-  clear_sb_text();
+  clear_sb_text(true);
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
 
@@ -99,7 +111,9 @@ void *xmalloc(size_t size)
   return ret;
 }
 
-/// free wrapper that returns delegates to the backing memory manager
+/// free() wrapper that delegates to the backing memory manager
+///
+/// @note Use XFREE_CLEAR() instead, if possible.
 void xfree(void *ptr)
 {
   free(ptr);
@@ -283,18 +297,16 @@ size_t memcnt(const void *data, char c, size_t len)
   return cnt;
 }
 
-/// The xstpcpy() function shall copy the string pointed to by src (including
-/// the terminating NUL character) into the array pointed to by dst.
+/// Copies the string pointed to by src (including the terminating NUL
+/// character) into the array pointed to by dst.
 ///
-/// The xstpcpy() function shall return a pointer to the terminating NUL
-/// character copied into the dst buffer. This is the only difference with
-/// strcpy(), which returns dst.
+/// @returns pointer to the terminating NUL char copied into the dst buffer.
+///          This is the only difference with strcpy(), which returns dst.
 ///
-/// WARNING: If copying takes place between objects that overlap, the behavior is
-/// undefined.
+/// WARNING: If copying takes place between objects that overlap, the behavior
+/// is undefined.
 ///
-/// This is the Neovim version of stpcpy(3) as defined in POSIX 2008. We
-/// don't require that supported platforms implement POSIX 2008, so we
+/// Nvim version of POSIX 2008 stpcpy(3). We do not require POSIX 2008, so
 /// implement our own version.
 ///
 /// @param dst
@@ -306,23 +318,18 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
   return (char *)memcpy(dst, src, len + 1) + len;
 }
 
-/// The xstpncpy() function shall copy not more than n bytes (bytes that follow
-/// a NUL character are not copied) from the array pointed to by src to the
-/// array pointed to by dst.
+/// Copies not more than n bytes (bytes that follow a NUL character are not
+/// copied) from the array pointed to by src to the array pointed to by dst.
 ///
-/// If a NUL character is written to the destination, the xstpncpy() function
-/// shall return the address of the first such NUL character. Otherwise, it
-/// shall return &dst[maxlen].
+/// If a NUL character is written to the destination, xstpncpy() returns the
+/// address of the first such NUL character. Otherwise, it shall return
+/// &dst[maxlen].
 ///
-/// WARNING: If copying takes place between objects that overlap, the behavior is
-/// undefined.
+/// WARNING: If copying takes place between objects that overlap, the behavior
+/// is undefined.
 ///
 /// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
 /// maxlen, zeroes will be written to the remaining bytes.
-///
-/// TODO(aktau): I don't see a good reason to have this last behaviour, and
-/// it is potentially wasteful. Could we perhaps deviate from the standard
-/// and not zero the rest of the buffer?
 ///
 /// @param dst
 /// @param src
@@ -342,29 +349,62 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
-/// xstrlcpy - Copy a %NUL terminated string into a sized buffer
+/// xstrlcpy - Copy a NUL-terminated string into a sized buffer
 ///
-/// Compatible with *BSD strlcpy: the result is always a valid
-/// NUL-terminated string that fits in the buffer (unless,
-/// of course, the buffer size is zero). It does not pad
-/// out the result like strncpy() does.
+/// Compatible with *BSD strlcpy: the result is always a valid NUL-terminated
+/// string that fits in the buffer (unless, of course, the buffer size is
+/// zero). It does not pad out the result like strncpy() does.
 ///
-/// @param dst Where to copy the string to
-/// @param src Where to copy the string from
-/// @param size Size of destination buffer
-/// @return Length of the source string (i.e.: strlen(src))
-size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+/// @param[out]  dst  Buffer to store the result.
+/// @param[in]  src  String to be copied.
+/// @param[in]  dsize  Size of `dst`.
+///
+/// @return Length of `src`. May be greater than `dsize - 1`, which would mean
+///         that string was truncated.
+size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
-    size_t ret = strlen(src);
+  size_t slen = strlen(src);
 
-    if (size) {
-        size_t len = (ret >= size) ? size - 1 : ret;
-        memcpy(dst, src, len);
-        dst[len] = '\0';
-    }
+  if (dsize) {
+    size_t len = MIN(slen, dsize - 1);
+    memcpy(dst, src, len);
+    dst[len] = '\0';
+  }
 
-    return ret;
+  return slen;  // Does not include NUL.
+}
+
+/// Appends `src` to string `dst` of size `dsize` (unlike strncat, dsize is the
+/// full size of `dst`, not space left).  At most dsize-1 characters
+/// will be copied.  Always NUL terminates. `src` and `dst` may overlap.
+///
+/// @see vim_strcat from Vim.
+/// @see strlcat from OpenBSD.
+///
+/// @param[in,out]  dst  Buffer to be appended-to. Must have a NUL byte.
+/// @param[in]  src  String to put at the end of `dst`.
+/// @param[in]  dsize  Size of `dst` including NUL byte. Must be greater than 0.
+///
+/// @return Length of the resulting string as if destination size was #SIZE_MAX.
+///         May be greater than `dsize - 1`, which would mean that string was
+///         truncated.
+size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(dsize > 0);
+  const size_t dlen = strlen(dst);
+  assert(dlen < dsize);
+  const size_t slen = strlen(src);
+
+  if (slen > dsize - dlen - 1) {
+    memmove(dst + dlen, src, dsize - dlen - 1);
+    dst[dsize - 1] = '\0';
+  } else {
+    memmove(dst + dlen, src, slen + 1);
+  }
+
+  return slen + dlen;  // Does not include NUL.
 }
 
 /// strdup() wrapper
@@ -374,8 +414,22 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   return xmemdupz(str, strlen(str));
+}
+
+/// strdup() wrapper
+///
+/// Unlike xstrdup() allocates a new empty string if it receives NULL.
+char *xstrdupnul(const char *const str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  if (str == NULL) {
+    return xmallocz(0);
+  } else {
+    return xstrdup(str);
+  }
 }
 
 /// A version of memchr that starts the search at `src + len`.
@@ -404,6 +458,7 @@ void *xmemrchr(const void *src, uint8_t c, size_t len)
 /// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
@@ -422,6 +477,20 @@ void *xmemdup(const void *data, size_t len)
   return memcpy(xmalloc(len), data, len);
 }
 
+/// Returns true if strings `a` and `b` are equal. Arguments may be NULL.
+bool strequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
+}
+
+/// Case-insensitive `strequal`.
+bool striequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
+}
+
 /*
  * Avoid repeating the error message many times (they take 1 second each).
  * Did_outofmem_msg is reset when a character is read.
@@ -437,6 +506,16 @@ void do_outofmem_msg(size_t size)
     did_outofmem_msg = true;
 
     EMSGU(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), size);
+  }
+}
+
+/// Writes time_t to "buf[8]".
+void time_to_bytes(time_t time_, uint8_t buf[8])
+{
+  // time_t can be up to 8 bytes in size, more than uintmax_t in 32 bits
+  // systems, thus we can't use put_bytes() here.
+  for (size_t i = 7, bufi = 0; bufi < 8; i--, bufi++) {
+    buf[bufi] = (uint8_t)((uint64_t)time_ >> (i * 8));
   }
 }
 
@@ -470,6 +549,7 @@ void do_outofmem_msg(size_t size)
 #include "nvim/tag.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/eval/typval.h"
 
 /*
  * Free everything that we allocated.
@@ -481,13 +561,13 @@ void do_outofmem_msg(size_t size)
 void free_all_mem(void)
 {
   buf_T       *buf, *nextbuf;
-  static bool entered = false;
 
-  /* When we cause a crash here it is caught and Vim tries to exit cleanly.
-   * Don't try freeing everything again. */
-  if (entered)
+  // When we cause a crash here it is caught and Vim tries to exit cleanly.
+  // Don't try freeing everything again.
+  if (entered_free_all_mem) {
     return;
-  entered = true;
+  }
+  entered_free_all_mem = true;
 
   // Don't want to trigger autocommands from here on.
   block_autocmds();
@@ -496,8 +576,13 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (firstwin != lastwin)
+
+  if (!ONE_WINDOW) {
+    // to keep things simple, don't perform this
+    // ritual inside a float
+    curwin = firstwin;
     do_cmdline_cmd("only!");
+  }
 
   /* Free all spell info. */
   spell_free_all();
@@ -524,7 +609,6 @@ void free_all_mem(void)
 
   /* Obviously named calls. */
   free_all_autocmds();
-  free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
@@ -539,7 +623,7 @@ void free_all_mem(void)
   free_signs();
   set_expr_line(NULL);
   diff_clear(curtab);
-  clear_sb_text();            /* free any scrollback text */
+  clear_sb_text(true);            // free any scrollback text
 
   /* Free some global vars. */
   xfree(last_cmdline);
@@ -562,19 +646,10 @@ void free_all_mem(void)
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
 
-  /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
-   * were freed already. */
-  p_acd = false;
-  for (buf = firstbuf; buf != NULL; ) {
-    nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, false);
-    if (buf_valid(buf))
-      buf = nextbuf;            /* didn't work, try next one */
-    else
-      buf = firstbuf;
-  }
+  // Free all option values.  Must come after closing windows.
+  free_all_options();
 
-  free_cmdline_buf();
+  free_arshape_buf();
 
   /* Clear registers. */
   clear_registers();
@@ -596,11 +671,30 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+  api_vim_free_all_mem();
+  ctx_free_all();
 
-  /* screenlines (can't display anything now!) */
-  free_screenlines();
+  // Free all buffers.  Reset 'autochdir' to avoid accessing things that
+  // were freed already.
+  // Must be after eval_clear to avoid it trying to access b:changedtick after
+  // freeing it.
+  p_acd = false;
+  for (buf = firstbuf; buf != NULL; ) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
+    nextbuf = buf->b_next;
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
+    // Didn't work, try next one.
+    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
+  }
 
-  clear_hl_tables();
+  // free screenlines (can't display anything now!)
+  screen_free_all_mem();
+
+  clear_hl_tables(false);
+  list_free_log();
+
+  check_quickfix_busy();
 }
 
 #endif

@@ -46,17 +46,17 @@ function! GetSDLIndent()
   if (getline(lnum) =~? '^\s*\(start\|state\|system\|package\|connection\|channel\|alternative\|macro\|operator\|newtype\|select\|substructure\|decision\|generator\|refinement\|service\|method\|exceptionhandler\|asntype\|syntype\|value\|(.*):\|\(priority\s\+\)\=input\|provided\)'
     \ || getline(lnum) =~? virtuality . '\(process\|procedure\|block\|object\)')
     \ && getline(lnum) !~? 'end[[:alpha:]]\+;$'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   " Subtract a 'shiftwidth' after states
   if getline(lnum) =~? '^\s*\(stop\|return\>\|nextstate\)'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   " Subtract a 'shiftwidth' on on end (uncompleted line)
   if getline(v:lnum) =~? '^\s*end\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   " Put each alternatives where the corresponding decision was

@@ -1,11 +1,11 @@
 " Vim syntax file
-" Language:         Quake[1-3] configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-17
+" Language:             Quake[1-3] configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-06-17
 "               quake_is_quake1 - the syntax is to be used for quake1 configs
 "               quake_is_quake2 - the syntax is to be used for quake2 configs
 "               quake_is_quake3 - the syntax is to be used for quake3 configs
-" Credits:          Tomasz Kalkosinski wrote the original quake3Colors stuff
+" Credits:              Tomasz Kalkosinski wrote the original quake3Colors stuff
 
 if exists("b:current_syntax")
   finish

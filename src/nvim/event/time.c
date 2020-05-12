@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdint.h>
 
 #include <uv.h>
@@ -17,6 +20,7 @@ void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   watcher->uv.data = watcher;
   watcher->data = data;
   watcher->events = loop->fast_events;
+  watcher->blockable = false;
 }
 
 void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout,
@@ -50,13 +54,24 @@ static void time_watcher_cb(uv_timer_t *handle)
   FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
+  if (watcher->blockable && !multiqueue_empty(watcher->events)) {
+    // the timer blocked and there already is an unprocessed event waiting
+    return;
+  }
   CREATE_EVENT(watcher->events, time_event, 1, watcher);
 }
 
+static void close_event(void **argv)
+{
+  TimeWatcher *watcher = argv[0];
+  watcher->close_cb(watcher, watcher->data);
+}
+
 static void close_cb(uv_handle_t *handle)
+  FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
   if (watcher->close_cb) {
-    watcher->close_cb(watcher, watcher->data);
+    CREATE_EVENT(watcher->events, close_event, 1, watcher);
   }
 }

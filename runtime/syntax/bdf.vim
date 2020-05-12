@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         BDF font definition
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             BDF font definition
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish

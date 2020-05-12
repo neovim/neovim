@@ -1197,7 +1197,7 @@ msgstr "E141: No existe un nombre de archivo para el búfer %<PRId64>"
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr ""
-"E142: No se ha escrito el archivo: escritura desactivada por \n"
+"E142: No se ha escrito el archivo: escritura desactivada por "
 "la opción 'write'"
 
 #: ../ex_cmds.c:2434
@@ -2209,7 +2209,7 @@ msgstr "es de solo lectura (añada ! para sobreescribir)"
 #: ../fileio.c:2886
 msgid "E506: Can't write to backup file (add ! to override)"
 msgstr ""
-"E506: No se pudo escribir en el archivo de recuperación\n"
+"E506: No se pudo escribir en el archivo de recuperación "
 "(añada ! para forzar la orden)"
 
 #: ../fileio.c:2898
@@ -2525,7 +2525,7 @@ msgstr "E216: No existe tal grupo o evento: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Auto-órdenes ---"
@@ -2549,7 +2549,7 @@ msgstr "E218: La auto-orden se anida en exceso"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Auto-órdenes para \"%s\""
 
 #: ../fileio.c:7149
@@ -2746,11 +2746,6 @@ msgstr "E49: La longitud de desplazamiento no es válida"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3141,7 +3136,7 @@ msgstr ""
 #: ../hardcopy.c:2254
 msgid "E675: No default font specified for multi-byte printing."
 msgstr ""
-"E675: No se ha definido un tipo de letra predeterminado para impresión\n"
+"E675: No se ha definido un tipo de letra predeterminado para impresión "
 "multi-byte"
 
 #: ../hardcopy.c:2426
@@ -3398,7 +3393,7 @@ msgstr "Basura después de la opción"
 #: ../main.c:152
 msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
 msgstr ""
-"Demasiados argumentos tales como: \"+orden\", \"-c orden\" \n"
+"Demasiados argumentos tales como: \"+orden\", \"-c orden\" "
 "o \"--cmd orden\""
 
 #: ../main.c:154
@@ -3469,7 +3464,7 @@ msgstr "-q [fich. err.] Editar el archivo con el primer error"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -3802,7 +3797,7 @@ msgstr "E302: No pude cambiar el nombre del archivo de intercambio"
 #, c-format
 msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
 msgstr ""
-"E303: Incapaz de abrir el archivo de intercambio para %s,\n"
+"E303: Incapaz de abrir el archivo de intercambio para %s, "
 "recuperación imposible"
 
 #: ../memline.c:666
@@ -3921,7 +3916,7 @@ msgstr "??? desde aquí hasta ???FIN las líneas pueden estar desordenadas"
 #: ../memline.c:1164
 msgid "??? from here until ???END lines may have been inserted/deleted"
 msgstr ""
-"??? desde aquí hasta ???FIN las líneas pueden haber sido\n"
+"??? desde aquí hasta ???FIN las líneas pueden haber sido "
 "insertadas/borradas"
 
 #: ../memline.c:1181
@@ -3936,7 +3931,7 @@ msgstr "E311: Recuperación interrumpida"
 msgid ""
 "E312: Errors detected while recovering; look for lines starting with ???"
 msgstr ""
-"E312: Se han detectado errores al recuperar; busque líneas que\n"
+"E312: Se han detectado errores al recuperar; busque líneas que "
 "empiecen con ???"
 
 #: ../memline.c:1245
@@ -4276,7 +4271,8 @@ msgstr ""
 "&Abrir para lectura únicamente\n"
 "&Editar de todas formas\n"
 "&Recuperar\n"
-"&Borrar&Salir\n"
+"&Borrar\n"
+"&Salir\n"
 "&Abortar"
 
 #.
@@ -4375,12 +4371,6 @@ msgstr "línea %4ld"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Nombre de registro no válido: '%s'"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr ""
-"Traducción: Proyecto vim-doc-es <http://www.assembla.com/wiki/show/vim-doc-"
-"es>"
 
 #: ../message.c:986
 msgid "Interrupt: "
@@ -5392,7 +5382,7 @@ msgstr "E756: La corrección ortográfica está desactivada"
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr ""
-"Advertencia: No se pudo hallar la lista de palabras \"%s.%s.spl\" \n"
+"Advertencia: No se pudo hallar la lista de palabras \"%s.%s.spl\" "
 "or \"%s.ascii.spl\""
 
 #: ../spell.c:2473
@@ -5423,7 +5413,7 @@ msgstr "Advertencia: la región %s no es compatible"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Leyendo el archivo de afijos \"%s\"..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
@@ -5453,8 +5443,7 @@ msgid ""
 "%d"
 msgstr ""
 "Definir COMPOUNDFORBIDFLAG después de un elemento PFX puede dar resultados "
-"erróneos\n"
-"en %s línea %d"
+"erróneos en %s línea %d"
 
 #: ../spell.c:4731
 #, c-format
@@ -5463,8 +5452,7 @@ msgid ""
 "%d"
 msgstr ""
 "Definir COMPOUNDPERMITFLAG después de un ítem PFX puede dar resultados "
-"erróneos\n"
-"en %s línea %d"
+"erróneos en %s línea %d"
 
 #: ../spell.c:4747
 #, c-format
@@ -5495,7 +5483,7 @@ msgstr "Valor equivocado de CHECKCOMPOUNDPATTERN en %s línea %d: %s"
 #, c-format
 msgid "Different combining flag in continued affix block in %s line %d: %s"
 msgstr ""
-"Marca de combinación diferente en el bloque de afijos continuo\n"
+"Marca de combinación diferente en el bloque de afijos continuo "
 "en %s línea %d: %s"
 
 #: ../spell.c:4850
@@ -5510,8 +5498,7 @@ msgid ""
 "line %d: %s"
 msgstr ""
 "Afijo usado también para BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST "
-"en\n"
-"%s línea %d: %s"
+"en %s línea %d: %s"
 
 #: ../spell.c:4893
 #, c-format
@@ -5591,8 +5578,8 @@ msgstr "El valor %s difiere de los que se usa en otro archivo .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Leyendo el archivo de diccionario %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Leyendo el archivo de diccionario %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5626,8 +5613,8 @@ msgstr "Ignorando %d palabra(s) con caracteres no-ASCII en %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Leyendo archivo de palabras \"%s\" ..."
+msgid "Reading word file %s..."
+msgstr "Leyendo archivo de palabras \"%s\"..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5696,8 +5683,8 @@ msgstr "Número total de palabras: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Escribiendo el archivo de sugerencias %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Escribiendo el archivo de sugerencias %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5724,8 +5711,8 @@ msgstr "Advertencia: Se especificó \"compounding\" y NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Escribiendo archivo de ortografía \"%s\" ..."
+msgid "Writing spell file %s..."
+msgstr "Escribiendo archivo de ortografía \"%s\"..."
 
 #: ../spell.c:7925
 msgid "Done!"
@@ -5952,7 +5939,7 @@ msgstr "E402: Basura después del patrón: %s"
 #: ../syntax.c:5120
 msgid "E403: syntax sync: line continuations pattern specified twice"
 msgstr ""
-"E403: Sincronización de sintaxis: Se especificó dos veces un\n"
+"E403: Sincronización de sintaxis: Se especificó dos veces un "
 "patrón de continuación de línea"
 
 #: ../syntax.c:5169
@@ -6579,7 +6566,7 @@ msgstr "E813: No se puede cerrar la ventana de autocmd"
 #: ../window.c:1814
 msgid "E814: Cannot close window, only autocmd window would remain"
 msgstr ""
-"E814: No se pudo cerrar la última ventana, solo quedará\n"
+"E814: No se pudo cerrar la última ventana, solo quedará "
 "la ventana de autocmd"
 
 #: ../window.c:2717

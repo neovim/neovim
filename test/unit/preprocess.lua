@@ -2,34 +2,29 @@
 -- windows, will probably need quite a bit of adjustment to run there.
 
 local ffi = require("ffi")
+local global_helpers = require('test.helpers')
+
+local argss_to_cmd = global_helpers.argss_to_cmd
+local repeated_read_cmd = global_helpers.repeated_read_cmd
 
 local ccs = {}
 
 local env_cc = os.getenv("CC")
 if env_cc then
-  table.insert(ccs, {path = "/usr/bin/env " .. tostring(env_cc), type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
 end
 
 if ffi.os == "Windows" then
-  table.insert(ccs, {path = "cl", type = "msvc"})
+  table.insert(ccs, {path = {"cl"}, type = "msvc"})
 end
 
-table.insert(ccs, {path = "/usr/bin/env cc", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.9", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.8", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env gcc-4.7", type = "gcc"})
-table.insert(ccs, {path = "/usr/bin/env clang", type = "clang"})
-table.insert(ccs, {path = "/usr/bin/env icc", type = "gcc"})
-
-local quote_me = '[^%w%+%-%=%@%_%/]' -- complement (needn't quote)
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
-  else
-    return str
-  end
-end
+table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
+table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
+table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
 
 -- parse Makefile format dependencies into a Lua table
 local function parse_make_deps(deps)
@@ -61,12 +56,12 @@ end
 -- will produce a string that represents a meta C header file that includes
 -- all the passed in headers. I.e.:
 --
--- headerize({"stdio.h", "math.h", true}
+-- headerize({"stdio.h", "math.h"}, true)
 -- produces:
 -- #include <stdio.h>
 -- #include <math.h>
 --
--- headerize({"vim.h", "memory.h", false}
+-- headerize({"vim.h", "memory.h"}, false)
 -- produces:
 -- #include "vim.h"
 -- #include "memory.h"
@@ -79,8 +74,7 @@ local function headerize(headers, global)
   end
 
   local formatted = {}
-  for i = 1, #headers do
-    local hdr = headers[i]
+  for _, hdr in ipairs(headers) do
     formatted[#formatted + 1] = "#include " ..
                                 tostring(pre) ..
                                 tostring(hdr) ..
@@ -91,44 +85,73 @@ local function headerize(headers, global)
 end
 
 local Gcc = {
+  preprocessor_extra_flags = {},
+  get_defines_extra_flags = {'-std=c99', '-dM', '-E'},
+  get_declarations_extra_flags = {'-std=c99', '-P', '-E'},
+}
+if ffi.abi("32bit") then
+  table.insert(Gcc.get_defines_extra_flags, '-m32')
+  table.insert(Gcc.get_declarations_extra_flags, '-m32')
+end
+
+function Gcc:define(name, args, val)
+  local define = '-D' .. name
+  if args ~= nil then
+    define = define .. '(' .. table.concat(args, ',') .. ')'
+  end
+  if val ~= nil then
+    define = define .. '=' .. val
+  end
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = define
+end
+
+function Gcc:undefine(name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
+      '-U' .. name)
+end
+
+function Gcc:init_defines()
   -- preprocessor flags that will hopefully make the compiler produce C
   -- declarations that the LuaJIT ffi understands.
-  preprocessor_extra_flags = {
-   '-D "aligned(ARGS)="',
-   '-D "__attribute__(ARGS)="',
-   '-D "__asm(ARGS)="',
-   '-D "__asm__(ARGS)="',
-   '-D "__inline__="',
-   '-D "EXTERN=extern"',
-   '-D "INIT(...)="',
-   '-D_GNU_SOURCE',
-   '-DINCLUDE_GENERATED_DECLARATIONS',
-
-   -- Needed for FreeBSD
-   '-D "_Thread_local="'
-  }
-}
+  self:define('aligned', {'ARGS'}, '')
+  self:define('__attribute__', {'ARGS'}, '')
+  self:define('__asm', {'ARGS'}, '')
+  self:define('__asm__', {'ARGS'}, '')
+  self:define('__inline__', nil, '')
+  self:define('EXTERN', nil, 'extern')
+  self:define('INIT', {'...'}, '')
+  self:define('_GNU_SOURCE')
+  self:define('INCLUDE_GENERATED_DECLARATIONS')
+  self:define('UNIT_TESTING')
+  self:define('UNIT_TESTING_LUA_PREPROCESSING')
+  -- Needed for FreeBSD
+  self:define('_Thread_local', nil, '')
+  -- Needed for macOS Sierra
+  self:define('_Nullable', nil, '')
+  self:define('_Nonnull', nil, '')
+  self:undefine('__BLOCKS__')
+end
 
 function Gcc:new(obj)
   obj = obj or {}
   setmetatable(obj, self)
   self.__index = self
+  self:init_defines()
   return obj
 end
 
 function Gcc:add_to_include_path(...)
-  local paths = {...}
-  for i = 1, #paths do
-    local path = paths[i]
-    local directive = '-I ' .. '"' .. path .. '"'
+  for i = 1, select('#', ...) do
+    local path = select(i, ...)
     local ef = self.preprocessor_extra_flags
-    ef[#ef + 1] = directive
+    ef[#ef + 1] = '-I' .. path
   end
 end
 
 -- returns a list of the headers files upon which this file relies
 function Gcc:dependencies(hdr)
-  local out = io.popen(tostring(self.path) .. " -M " .. tostring(hdr) .. " 2>&1")
+  local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
+  local out = io.popen(cmd)
   local deps = out:read("*a")
   out:close()
   if deps then
@@ -138,23 +161,63 @@ function Gcc:dependencies(hdr)
   end
 end
 
+function Gcc:filter_standard_defines(defines)
+  if not self.standard_defines then
+    local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
+    local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+    pseudoheader_file:close()
+    local standard_defines = repeated_read_cmd(self.path,
+                                               self.preprocessor_extra_flags,
+                                               self.get_defines_extra_flags,
+                                               {pseudoheader_fname})
+    os.remove(pseudoheader_fname)
+    self.standard_defines = {}
+    for line in standard_defines:gmatch('[^\n]+') do
+      self.standard_defines[line] = true
+    end
+  end
+  local ret = {}
+  for line in defines:gmatch('[^\n]+') do
+    if not self.standard_defines[line] then
+      ret[#ret + 1] = line
+    end
+  end
+  return table.concat(ret, "\n")
+end
+
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
-function Gcc:preprocess_stream(...)
+function Gcc:preprocess(previous_defines, ...)
   -- create pseudo-header
   local pseudoheader = headerize({...}, false)
-  local defines = table.concat(self.preprocessor_extra_flags, ' ')
-  local cmd = ("echo $hdr | " ..
-               tostring(self.path) ..
-               " " ..
-               tostring(defines) ..
-               " -std=c99 -P -E -"):gsub('$hdr', shell_quote(pseudoheader))
+  local pseudoheader_fname = 'tmp_pseudoheader.h'
+  local pseudoheader_file = io.open(pseudoheader_fname, 'w')
+  pseudoheader_file:write(previous_defines)
+  pseudoheader_file:write("\n")
+  pseudoheader_file:write(pseudoheader)
+  pseudoheader_file:flush()
+  pseudoheader_file:close()
+
+  local defines = repeated_read_cmd(self.path, self.preprocessor_extra_flags,
+                                    self.get_defines_extra_flags,
+                                    {pseudoheader_fname})
+  defines = self:filter_standard_defines(defines)
+
   -- lfs = require("lfs")
   -- print("CWD: #{lfs.currentdir!}")
   -- print("CMD: #{cmd}")
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
-  return io.popen(cmd)
+
+  local declarations = repeated_read_cmd(self.path,
+                                         self.preprocessor_extra_flags,
+                                         self.get_declarations_extra_flags,
+                                         {pseudoheader_fname})
+
+  os.remove(pseudoheader_fname)
+
+  assert(declarations and defines)
+  return declarations, defines
 end
 
 local Clang = Gcc:new()
@@ -192,8 +255,8 @@ return {
   includes = function(hdr)
     return cc:dependencies(hdr)
   end,
-  preprocess_stream = function(...)
-    return cc:preprocess_stream(...)
+  preprocess = function(...)
+    return cc:preprocess(...)
   end,
   add_to_include_path = function(...)
     return cc:add_to_include_path(...)

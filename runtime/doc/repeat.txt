@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2015 Apr 13
+*repeat.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,15 +8,10 @@ Repeating commands, Vim scripts and debugging			*repeating*
 
 Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 
-1. Single repeats	|single-repeat|
-2. Multiple repeats	|multi-repeat|
-3. Complex repeats	|complex-repeat|
-4. Using Vim scripts	|using-scripts|
-5. Debugging scripts	|debug-scripts|
-6. Profiling		|profiling|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Single repeats					*single-repeat*
+Single repeats						*single-repeat*
 
 							*.*
 .			Repeat last change, with count replaced with [count].
@@ -40,9 +35,9 @@ of area is used, see |visual-repeat|.
 
 
 ==============================================================================
-2. Multiple repeats					*multi-repeat*
+Multiple repeats					*multi-repeat*
 
-						*:g* *:global* *E147* *E148*
+						*:g* *:global* *E148*
 :[range]g[lobal]/{pattern}/[cmd]
 			Execute the Ex command [cmd] (default ":p") on the
 			lines within [range] where {pattern} matches.
@@ -68,15 +63,22 @@ examples.
 The global commands work by first scanning through the [range] lines and
 marking each line where a match occurs (for a multi-line pattern, only the
 start of the match matters).
-In a second scan the [cmd] is executed for each marked line with its line
-number prepended.  For ":v" and ":g!" the command is executed for each not
+In a second scan the [cmd] is executed for each marked line, as if the cursor
+was in that line.  For ":v" and ":g!" the command is executed for each not
 marked line.  If a line is deleted its mark disappears.
 The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
 line is aborted and the global command continues with the next marked or
 unmarked line.
+								*E147* 
+When the command is used recursively, it only works on one line.  Giving a
+range is then not allowed. This is useful to find all lines that match a
+pattern and do not match another pattern: >
+	:g/found/v/notfound/{cmd}
+This first finds all lines containing "found", but only executes {cmd} when
+there is no match for "notfound".
 
-To repeat a non-Ex command, you can use the ":normal" command: >
+To execute a non-Ex command, you can use the `:normal` command: >
 	:g/pat/normal {commands}
 Make sure that {commands} ends with a whole command, otherwise Vim will wait
 for you to type the rest of the command for each match.  The screen will not
@@ -101,7 +103,7 @@ repeated for each matching line.  While doing this you cannot use ":global".
 To abort this type CTRL-C twice.
 
 ==============================================================================
-3. Complex repeats					*complex-repeat*
+Complex repeats						*complex-repeat*
 
 							*q* *recording*
 q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
@@ -150,12 +152,12 @@ q			Stops recording.
 :[addr]@:		Repeat last command-line.  First set cursor at line
 			[addr] (default is current line).
 
-							*:@@*
+:[addr]@							*:@@*
 :[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
 			line [addr] (default is current line).
 
 ==============================================================================
-4. Using Vim scripts					*using-scripts*
+Using Vim scripts					*using-scripts*
 
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
@@ -163,7 +165,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :so[urce] {file}	Read Ex commands from {file}.  These are commands that
 			start with a ":".
 			Triggers the |SourcePre| autocommand.
-
+							*:source!*
 :so[urce]! {file}	Read Vim commands from {file}.  These are commands
 			that are executed from Normal mode, like you type
 			them.
@@ -171,12 +173,15 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			|:bufdo|, in a loop or when another command follows
 			the display won't be updated while executing the
 			commands.
+			Cannot be used in the |sandbox|.
 
 							*:ru* *:runtime*
-:ru[ntime][!] {file} ..
+:ru[ntime][!] [where] {file} ..
 			Read Ex commands from {file} in each directory given
-			by 'runtimepath'.  There is no error for non-existing
-			files.  Example: >
+			by 'runtimepath' and/or 'packpath'.  There is no error
+			for non-existing files.
+			
+			Example: >
 				:runtime syntax/c.vim
 
 <			There can be multiple {file} arguments, separated by
@@ -190,6 +195,15 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When it is not included only the first found file is
 			sourced.
 
+			When [where] is omitted only 'runtimepath' is used.
+			Other values:
+				START	search under "start" in 'packpath'
+				OPT 	search under "opt" in 'packpath'
+				PACK	search under "start" and "opt" in
+					'packpath'
+				ALL	first use 'runtimepath', then search
+					under "start" and "opt" in 'packpath'
+
 			When {file} contains wildcards it is expanded to all
 			matching files.  Example: >
 				:runtime! plugin/*.vim
@@ -202,6 +216,70 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			when no file could be found.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
+
+							*:pa* *:packadd* *E919*
+:pa[ckadd][!] {name}	Search for an optional plugin directory in 'packpath'
+			and source any plugin files found.  The directory must
+			match:
+				pack/*/opt/{name} ~
+			The directory is added to 'runtimepath' if it wasn't
+			there yet.
+			If the directory pack/*/opt/{name}/after exists it is
+			added at the end of 'runtimepath'.
+
+			If loading packages from "pack/*/start" was skipped,
+			then this directory is searched first:
+				pack/*/start/{name} ~
+
+			Note that {name} is the directory name, not the name
+			of the .vim file.  All the files matching the pattern
+				pack/*/opt/{name}/plugin/**/*.vim ~
+			will be sourced.  This allows for using subdirectories
+			below "plugin", just like with plugins in
+			'runtimepath'.
+
+			If the filetype detection was not enabled yet (this
+			is usually done with a "syntax enable" or "filetype
+			on" command in your .vimrc file), this will also look
+			for "{name}/ftdetect/*.vim" files.
+
+			When the optional ! is added no plugin files or
+			ftdetect scripts are loaded, only the matching
+			directories are added to 'runtimepath'.  This is
+			useful in your .vimrc.  The plugins will then be
+			loaded during initialization, see |load-plugins|.
+
+			Also see |pack-add|.
+
+						*:packl* *:packloadall*
+:packl[oadall][!]	Load all packages in the "start" directory under each
+			entry in 'packpath'.
+			
+			First all the directories found are added to
+			'runtimepath', then the plugins found in the
+			directories are sourced.  This allows for a plugin to
+			depend on something of another plugin, e.g. an
+			"autoload" directory.  See |packload-two-steps| for
+			how this can be useful.
+
+			This is normally done automatically during startup,
+			after loading your .vimrc file.  With this command it
+			can be done earlier.
+
+			Packages will be loaded only once.  Using
+			`:packloadall` a second time will have no effect.
+			When the optional ! is added this command will load
+			packages even when done before.
+
+			Note that when using `:packloadall` in the |vimrc|
+			file, the 'runtimepath' option is updated, and later
+			all plugins in 'runtimepath' will be loaded, which
+			means they are loaded again.  Plugins are expected to
+			handle that.
+
+			An error only causes sourcing the script where it
+			happens to be aborted, further plugins will be loaded.
+			See |packages|.
 
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			Specify the character encoding used in the script.
@@ -220,7 +298,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 				... not converted ...
 
 <			When conversion isn't supported by the system, there
-			is no error message and no conversion is done.
+			is no error message and no conversion is done.  When a
+			line can't be converted there is no error and the
+			original line is kept.
 
 			Don't use "ucs-2" or "ucs-4", scripts cannot be in
 			these encodings (they would contain NUL bytes).
@@ -232,6 +312,12 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
+
+:scr[iptnames][!] {scriptId}			*:script*
+			Edit script {scriptId}.  Although ":scriptnames name"
+			works, using ":script name" is recommended.
+			When the current buffer can't be |abandon|ed and the !
+			is not present, the command fails.
 
 						*:fini* *:finish* *E168*
 :fini[sh]		Stop sourcing a script.  Can only be used in a Vim
@@ -289,8 +375,7 @@ terminal-independent two character codes.  This means that they can be used
 in the same way on different kinds of terminals.  The first character of a
 key code is 0x80 or 128, shown on the screen as "~@".  The second one can be
 found in the list |key-notation|.  Any of these codes can also be entered
-with CTRL-V followed by the three digit decimal code.  This does NOT work for
-the <t_xx> termcap codes, these can only be used in mappings.
+with CTRL-V followed by the three digit decimal code.
 
 							*:source_crnl* *W15*
 Windows: Files that are read with ":source" normally have <CR><NL> <EOL>s.
@@ -300,12 +385,6 @@ the first line does not end in a <CR>.  This fails if the first line has
 something like ":map <F1> :help^M", where "^M" is a <CR>.  If the first line
 ends in a <CR>, but following ones don't, you will get an error message,
 because the <CR> from the first lines will be lost.
-
-Mac Classic: Files that are read with ":source" normally have <CR> <EOL>s.
-These always work.  If you are using a file with <NL> <EOL>s (for example, a
-file made on Unix), this will be recognized if 'fileformats' is not empty and
-the first line does not end in a <CR>.  Be careful not to use a file with <NL>
-linebreaks which has a <CR> in first line.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a
@@ -364,6 +443,16 @@ flag when defining the function, it is not relevant when executing it. >
    .
    :endfunction
    :set cpo-=C
+<
+					*line-continuation-comment*
+To add a comment in between the lines start with '\" '.  Notice the space
+after the double quote.  Example: >
+	let array = [
+		"\ first entry comment
+		\ 'first',
+		"\ second entry comment
+		\ 'second',
+		\ ]
 
 Rationale:
 	Most programs work with a trailing backslash to indicate line
@@ -372,8 +461,198 @@ Rationale:
 		:map xx  asdf\
 <	Therefore the unusual leading backslash is used.
 
+	Starting a comment in a continuation line results in all following
+	continuation lines to be part of the comment.  Since it was like this
+	for a long time, when making it possible to add a comment halfway a
+	sequence of continuation lines, it was not possible to use \", since
+	that was a valid continuation line.  Using '"\ ' comes closest, even
+	though it may look a bit weird.  Requiring the space after the
+	backslash is to make it very unlikely this is a normal comment line.
+
 ==============================================================================
-5. Debugging scripts					*debug-scripts*
+Using Vim packages					*packages*
+
+A Vim package is a directory that contains one or more plugins.  The
+advantages over normal plugins:
+- A package can be downloaded as an archive and unpacked in its own directory.
+  Thus the files are not mixed with files of other plugins.  That makes it
+  easy to update and remove.
+- A package can be a git, mercurial, etc. repository.  That makes it really
+  easy to update.
+- A package can contain multiple plugins that depend on each other.
+- A package can contain plugins that are automatically loaded on startup and
+  ones that are only loaded when needed with `:packadd`.
+
+
+Using a package and loading automatically ~
+
+Let's assume your Vim files are in the "~/.local/share/nvim/site" directory
+and you want to add a package from a zip archive "/tmp/foopack.zip":
+	% mkdir -p ~/.local/share/nvim/site/pack/foo
+	% cd ~/.local/share/nvim/site/pack/foo
+	% unzip /tmp/foopack.zip
+
+The directory name "foo" is arbitrary, you can pick anything you like.
+
+You would now have these files under ~/.local/share/nvim/site:
+	pack/foo/README.txt
+	pack/foo/start/foobar/plugin/foo.vim
+	pack/foo/start/foobar/syntax/some.vim
+	pack/foo/opt/foodebug/plugin/debugger.vim
+
+When Vim starts up, after processing your .vimrc, it scans all directories in
+'packpath' for plugins under the "pack/*/start" directory.  First all those
+directories are added to 'runtimepath'.  Then all the plugins are loaded.
+See |packload-two-steps| for how these two steps can be useful.
+
+In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds 
+"~/.local/share/nvim/site/pack/foo/start/foobar" to 'runtimepath'.
+
+If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
+find the syntax/some.vim file, because its directory is in 'runtimepath'.
+
+Vim will also load ftdetect files, if there are any.
+
+Note that the files under "pack/foo/opt" are not loaded automatically, only the
+ones under "pack/foo/start".  See |pack-add| below for how the "opt" directory
+is used.
+
+Loading packages automatically will not happen if loading plugins is disabled,
+see |load-plugins|.
+
+To load packages earlier, so that 'runtimepath' gets updated: >
+	:packloadall
+This also works when loading plugins is disabled.  The automatic loading will
+only happen once.
+
+If the package has an "after" directory, that directory is added to the end of
+'runtimepath', so that anything there will be loaded later.
+
+
+Using a single plugin and loading it automatically ~
+
+If you don't have a package but a single plugin, you need to create the extra
+directory level:
+	% mkdir -p ~/.local/share/nvim/site/pack/foo/start/foobar
+	% cd ~/.local/share/nvim/site/pack/foo/start/foobar
+	% unzip /tmp/someplugin.zip
+
+You would now have these files:
+	pack/foo/start/foobar/plugin/foo.vim
+	pack/foo/start/foobar/syntax/some.vim
+
+From here it works like above.
+
+
+Optional plugins ~
+							*pack-add*
+To load an optional plugin from a pack use the `:packadd` command: >
+	:packadd foodebug
+This searches for "pack/*/opt/foodebug" in 'packpath' and will find
+~/.local/share/nvim/site/pack/foo/opt/foodebug/plugin/debugger.vim and source
+it.
+
+This could be done if some conditions are met.  For example, depending on
+whether Vim supports a feature or a dependency is missing.
+
+You can also load an optional plugin at startup, by putting this command in
+your |.vimrc|: >
+	:packadd! foodebug
+The extra "!" is so that the plugin isn't loaded if Vim was started with
+|--noplugin|.
+
+It is perfectly normal for a package to only have files in the "opt"
+directory.  You then need to load each plugin when you want to use it.
+
+
+Where to put what ~
+
+Since color schemes, loaded with `:colorscheme`, are found below
+"pack/*/start" and "pack/*/opt", you could put them anywhere.  We recommend
+you put them below "pack/*/opt", for example
+".vim/pack/mycolors/opt/dark/colors/very_dark.vim".
+
+Filetype plugins should go under "pack/*/start", so that they are always
+found.  Unless you have more than one plugin for a file type and want to
+select which one to load with `:packadd`.  E.g. depending on the compiler
+version: >
+	if foo_compiler_version > 34
+	  packadd foo_new
+	else
+	  packadd foo_old
+	endif
+
+The "after" directory is most likely not useful in a package.  It's not
+disallowed though.
+
+==============================================================================
+Creating Vim packages					*package-create*
+
+This assumes you write one or more plugins that you distribute as a package.
+
+If you have two unrelated plugins you would use two packages, so that Vim
+users can chose what they include or not.  Or you can decide to use one
+package with optional plugins, and tell the user to add the ones he wants with
+`:packadd`.
+
+Decide how you want to distribute the package.  You can create an archive or
+you could use a repository.  An archive can be used by more users, but is a
+bit harder to update to a new version.  A repository can usually be kept
+up-to-date easily, but it requires a program like "git" to be available.
+You can do both, github can automatically create an archive for a release.
+
+Your directory layout would be like this:
+   start/foobar/plugin/foo.vim    	" always loaded, defines commands
+   start/foobar/plugin/bar.vim    	" always loaded, defines commands
+   start/foobar/autoload/foo.vim  	" loaded when foo command used
+   start/foobar/doc/foo.txt       	" help for foo.vim
+   start/foobar/doc/tags          	" help tags
+   opt/fooextra/plugin/extra.vim  	" optional plugin, defines commands
+   opt/fooextra/autoload/extra.vim  	" loaded when extra command used
+   opt/fooextra/doc/extra.txt  	        " help for extra.vim
+   opt/fooextra/doc/tags  	        " help tags
+
+This allows for the user to do: >
+	mkdir ~/.local/share/nvim/site/pack/myfoobar
+	cd ~/.local/share/nvim/site/pack/myfoobar
+	git clone https://github.com/you/foobar.git
+
+Here "myfoobar" is a name that the user can choose, the only condition is that
+it differs from other packages.
+
+In your documentation you explain what the plugins do, and tell the user how
+to load the optional plugin: >
+	:packadd! fooextra
+
+You could add this packadd command in one of your plugins, to be executed when
+the optional plugin is needed.
+
+Run the `:helptags` command to generate the doc/tags file.  Including this
+generated file in the package means that the user can drop the package in his
+pack directory and the help command works right away.  Don't forget to re-run
+the command after changing the plugin help: >
+	:helptags path/start/foobar/doc
+	:helptags path/opt/fooextra/doc
+
+
+Dependencies between plugins ~
+							*packload-two-steps*
+Suppose you have two plugins that depend on the same functionality. You can
+put the common functionality in an autoload directory, so that it will be
+found automatically.  Your package would have these files:
+
+	pack/foo/start/one/plugin/one.vim  >
+		call foolib#getit()
+<	pack/foo/start/two/plugin/two.vim >
+		call foolib#getit()
+<	pack/foo/start/lib/autoload/foolib.vim >
+		func foolib#getit()
+
+This works, because loading packages will first add all found directories to
+'runtimepath' before sourcing the plugins.
+
+==============================================================================
+Debugging scripts					*debug-scripts*
 
 Besides the obvious messages that you can add to your scripts to find out what
 they are doing, Vim offers a debug mode.  This allows you to step through a
@@ -467,15 +746,43 @@ Additionally, these commands can be used:
 	finish		Finish the current script or user function and come
 			back to debug mode for the command after the one that
 			sourced or called it.
+							*>bt*
+							*>backtrace*
+							*>where*
+	backtrace	Show the call stacktrace for current debugging session.
+	bt
+	where
+							*>frame*
+	frame N		Goes to N backtrace level. + and - signs make movement
+			relative.  E.g., ":frame +3" goes three frames up.
+							*>up*
+	up		Goes one level up from call stacktrace.
+							*>down*
+	down		Goes one level down from call stacktrace.
 
 About the additional commands in debug mode:
 - There is no command-line completion for them, you get the completion for the
   normal Ex commands only.
-- You can shorten them, up to a single character: "c", "n", "s" and "f".
+- You can shorten them, up to a single character, unless more than one command
+  starts with the same letter.  "f" stands for "finish", use "fr" for "frame".
 - Hitting <CR> will repeat the previous one.  When doing another command, this
   is reset (because it's not clear what you want to repeat).
 - When you want to use the Ex command with the same name, prepend a colon:
   ":cont", ":next", ":finish" (or shorter).
+
+The backtrace shows the hierarchy of function calls, e.g.:
+	>bt ~
+	  3 function One[3] ~
+	  2 Two[3] ~
+	->1 Three[3] ~
+	  0 Four ~
+	line 1: let four = 4 ~
+
+The "->" points to the current frame.  Use "up", "down" and "frame N" to
+select another frame.
+
+In the current frame you can evaluate the local function variables.  There is
+no way to see the command at the current line yet.
 
 
 DEFINING BREAKPOINTS
@@ -569,7 +876,7 @@ OBSCURE
 		user, don't use typeahead for debug commands.
 
 ==============================================================================
-6. Profiling						*profile* *profiling*
+Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
 functions and/or scripts.  The |+profile| feature is required for this.
@@ -686,5 +993,32 @@ mind there are various things that may clobber the results:
 
 - The "self" time is wrong when a function is used recursively.
 
+==============================================================================
+Context							*Context* *context*
 
- vim:tw=78:ts=8:ft=help:norl:
+The editor state is represented by the Context concept. This includes things
+like the current |jumplist|, values of |registers|, and more, described below.
+
+							*context-types*
+The following Context items are supported:
+	"jumps"		|jumplist|
+	"regs"		|registers|
+	"bufs"		|buffer-list|
+	"gvars"		|global-variable|s
+	"sfuncs"	|script-local| functions
+	"funcs"		global and |script-local| functions
+
+							*context-dict*
+Context objects are dictionaries with the following key-value pairs:
+- "jumps", "regs", "bufs", "gvars":
+      |readfile()|-style |List| representation of corresponding msgpack
+      objects (see |msgpackdump()| and |msgpackparse()|).
+- "funcs" (includes |script-local| functions as well):
+      |List| of |:function| definitions.
+
+							*context-stack*
+An initially-empty internal Context stack is maintained by the ctx-family
+functions (see |ctx-functions|).
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

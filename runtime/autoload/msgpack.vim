@@ -40,9 +40,10 @@ function s:msgpack_init_python() abort
     return s:msgpack_python_type
   endif
   let s:msgpack_python_initialized = 1
-  for suf in ['', '3']
+  for suf in (has('win32') ? ['3'] : ['', '3'])
     try
       execute 'python' . suf
+              \. "\n"
               \. "def shada_dict_strftime():\n"
               \. "  import datetime\n"
               \. "  import vim\n"
@@ -60,12 +61,15 @@ function s:msgpack_init_python() abort
               \. "  fmt = vim.eval('a:format')\n"
               \. "  timestr = vim.eval('a:string')\n"
               \. "  timestamp = datetime.datetime.strptime(timestr, fmt)\n"
-              \. "  timestamp = int(timestamp.timestamp())\n"
+              \. "  try:\n"
+              \. "    timestamp = int(timestamp.timestamp())\n"
+              \. "  except:\n"
+              \. "    timestamp = int(timestamp.strftime('%s'))\n"
               \. "  if timestamp > 2 ** 31:\n"
-              \. "    tsabs = abs(timestamp)"
+              \. "    tsabs = abs(timestamp)\n"
               \. "    return ('{\"_TYPE\": v:msgpack_types.integer,'\n"
               \. "            + '\"_VAL\": [{sign},{v1},{v2},{v3}]}').format(\n"
-              \. "              sign=1 if timestamp >= 0 else -1,\n"
+              \. "              sign=(1 if timestamp >= 0 else -1),\n"
               \. "              v1=((tsabs >> 62) & 0x3),\n"
               \. "              v2=((tsabs >> 31) & (2 ** 31 - 1)),\n"
               \. "              v3=(tsabs & (2 ** 31 - 1)))\n"
@@ -356,6 +360,8 @@ let s:MSGPACK_STANDARD_TYPES = {
   \type(''): 'binary',
   \type([]): 'array',
   \type({}): 'map',
+  \type(v:true): 'boolean',
+  \type(v:null): 'nil',
 \}
 
 ""
@@ -379,7 +385,7 @@ endfunction
 ""
 " Dump boolean value.
 function s:msgpack_dump_boolean(v) abort
-  return a:v._VAL ? 'TRUE' : 'FALSE'
+  return (a:v is v:true || (a:v isnot v:false && a:v._VAL)) ? 'TRUE' : 'FALSE'
 endfunction
 
 ""
@@ -599,13 +605,10 @@ function msgpack#eval(s, special_objs) abort
           call add(expr, dec)
         endif
       endif
-    elseif s =~# '-\?\%(inf\|nan\)'
-      if s[0] is# '-'
-        call add(expr, '-')
-        let s = s[1:]
-      endif
-      call add(expr, s:MSGPACK_SPECIAL_OBJECTS[s[0:2]])
-      let s = s[3:]
+    elseif s =~# '\v^\-%(inf|nan)'
+      call add(expr, '-')
+      call add(expr, s:MSGPACK_SPECIAL_OBJECTS[s[1:3]])
+      let s = s[4:]
     elseif stridx('="+', s[0]) != -1
       let match = matchlist(s, '\v\C^(\=|\+\((\-?\d+)\)|)(\"%(\\.|[^\\"]+)*\")')
       if empty(match)
@@ -663,11 +666,15 @@ function msgpack#eval(s, special_objs) abort
       call add(expr, ']}')
       let s = s[1:]
     elseif s[0] is# ''''
-      let char = matchstr(s, '\m\C^''\zs.\ze''')
+      let char = matchstr(s, '\v\C^\''\zs%(\\\d+|.)\ze\''')
       if empty(char)
         throw 'char-invalid:Invalid integer character literal format: ' . s
       endif
-      call add(expr, char2nr(char))
+      if char[0] is# '\'
+        call add(expr, +char[1:])
+      else
+        call add(expr, char2nr(char))
+      endif
       let s = s[len(char) + 2:]
     else
       throw 'unknown:Invalid non-space character: ' . s

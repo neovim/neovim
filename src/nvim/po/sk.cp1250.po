@@ -2472,7 +2472,7 @@ msgstr "E216: Udalos alebo skupina %s neexistuje"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Automatické príkazy ---"
@@ -2496,7 +2496,7 @@ msgstr "E218: vnorenia automatického príkazu sú príliš hlboké"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Automatické príkazy pre \"%s\""
 
 #: ../fileio.c:7149
@@ -2687,11 +2687,6 @@ msgstr "E49: Chybná hodnota ve¾kosti rolovania"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3395,7 +3390,7 @@ msgstr "-q [chybovı súbor]  upravi súbor na mieste vıskytu prvej chyby"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -3875,6 +3870,7 @@ msgid ""
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr "Potom vymate odkladací súbor s príponou .swp.\n"
+"\n"
 
 #. use msg() to start the scrolling properly
 #: ../memline.c:1327
@@ -4272,10 +4268,6 @@ msgstr "riadok %4ld:"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: '%s' nie je prístupné meno registru"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Správca prekladu: Lubomir Host <rajo@platon.sk>"
 
 #: ../message.c:986
 msgid "Interrupt: "
@@ -5322,8 +5314,8 @@ msgstr "Varovanie: región %s nie je podporovanı"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Naèítavam súbor s príponami %s ..."
+msgid "Reading affix file %s..."
+msgstr "Naèítavam súbor s príponami %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5481,8 +5473,8 @@ msgstr "Hodnota %s sa odlišuje od hodnoty pouitej v inom .aff súbore"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Naèítavam slovník %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Naèítavam slovník %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5516,8 +5508,8 @@ msgstr "Ignorovanıch %d slov s nepísmennımi znakmi v %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Naèítavam súbor so slovami %s ..."
+msgid "Reading word file %s..."
+msgstr "Naèítavam súbor so slovami %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5614,8 +5606,8 @@ msgstr "Varovanie: špecifikované spájanie a nezalamovanie"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Ukládám slovníkovı súbor %s ..."
+msgid "Writing spell file %s..."
+msgstr "Ukládám slovníkovı súbor %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

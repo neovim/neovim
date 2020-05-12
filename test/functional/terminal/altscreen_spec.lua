@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed = helpers.feed
@@ -6,7 +6,9 @@ local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
 local exit_altscreen = thelpers.exit_altscreen
 
-describe('terminal altscreen', function()
+if helpers.pending_win32(pending) then return end
+
+describe(':terminal altscreen', function()
   local screen
 
   before_each(function()
@@ -21,7 +23,7 @@ describe('terminal altscreen', function()
       line7                                             |
       line8                                             |
       {1: }                                                 |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
     enter_altscreen()
     screen:expect([[
@@ -31,7 +33,7 @@ describe('terminal altscreen', function()
                                                         |
                                                         |
       {1: }                                                 |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
     eq(10, curbuf('line_count'))
   end)
@@ -60,7 +62,7 @@ describe('terminal altscreen', function()
         line7                                             |
         line8                                             |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       feed('<c-\\><c-n>gg')
       screen:expect([[
@@ -86,7 +88,7 @@ describe('terminal altscreen', function()
         line15                                            |
         line16                                            |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -116,7 +118,7 @@ describe('terminal altscreen', function()
                                                           |
         rows: 4, cols: 50                                 |
         {1: }                                                 |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
     end
 
@@ -149,7 +151,7 @@ describe('terminal altscreen', function()
           line5                                             |
           line6                                             |
           line7                                             |
-          -- TERMINAL --                                    |
+          {3:-- TERMINAL --}                                    |
         ]])
       end)
     end)

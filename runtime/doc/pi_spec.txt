@@ -1,4 +1,4 @@
-*pi_spec.txt*   For Vim version 7.4.  Last change: 2006 Apr 24
+*pi_spec.txt*   Nvim
 
 by Gustavo Niemeyer ~
 
@@ -108,4 +108,4 @@ If you don't like the release updating feature and don't want to answer
 
 Good luck!!
 
-vim:tw=78:ts=8:ft=help:norl:
+vim:tw=78:ts=8:noet:ft=help:norl:

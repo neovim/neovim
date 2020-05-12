@@ -10,6 +10,8 @@ typedef void (*terminal_write_cb)(char *buffer, size_t size, void *data);
 typedef void (*terminal_resize_cb)(uint16_t width, uint16_t height, void *data);
 typedef void (*terminal_close_cb)(void *data);
 
+#include "nvim/buffer_defs.h"
+
 typedef struct {
   void *data;
   uint16_t width, height;

@@ -3,20 +3,13 @@
 " Maintainer:	Scott Bigham <dsb@killerbunnies.org>
 " Last Change:	10 Aug 1999
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C++ syntax to start with
-if version < 600
-  syn include @cppTopLevel <sfile>:p:h/cpp.vim
-else
-  syn include @cppTopLevel syntax/cpp.vim
-endif
+syn include @cppTopLevel syntax/cpp.vim
 
 syn region pcctsAction matchgroup=pcctsDelim start="<<" end=">>?\=" contains=@cppTopLevel,pcctsRuleRef
 
@@ -72,34 +65,24 @@ syn sync match pcctsSyncRule grouphere pcctsRule "\<[a-z][A-Za-z0-9_]*\>\s*\[[^]
 syn sync match pcctsSyncRule grouphere pcctsRule "\<[a-z][A-Za-z0-9_]*\>\(\s*\[[^]]*\]\)\=\s*>\s*\[[^]]*\]\s*:"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_pccts_syntax_inits")
-  if version < 508
-    let did_pccts_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink pcctsDelim		Special
-  HiLink pcctsTokenName		Identifier
-  HiLink pcctsRuleName		Statement
-  HiLink pcctsLabelHack		Label
-  HiLink pcctsDirective		PreProc
-  HiLink pcctsString		String
-  HiLink pcctsComment		Comment
-  HiLink pcctsClass		Statement
-  HiLink pcctsClassName		Identifier
-  HiLink pcctsException		Statement
-  HiLink pcctsExceptionHandler	Keyword
-  HiLink pcctsExceptionRuleRef	pcctsDelim
-  HiLink pcctsExceptionID	Identifier
-  HiLink pcctsRuleRef		Identifier
-  HiLink pcctsSpecialChar	SpecialChar
+hi def link pcctsDelim		Special
+hi def link pcctsTokenName		Identifier
+hi def link pcctsRuleName		Statement
+hi def link pcctsLabelHack		Label
+hi def link pcctsDirective		PreProc
+hi def link pcctsString		String
+hi def link pcctsComment		Comment
+hi def link pcctsClass		Statement
+hi def link pcctsClassName		Identifier
+hi def link pcctsException		Statement
+hi def link pcctsExceptionHandler	Keyword
+hi def link pcctsExceptionRuleRef	pcctsDelim
+hi def link pcctsExceptionID	Identifier
+hi def link pcctsRuleRef		Identifier
+hi def link pcctsSpecialChar	SpecialChar
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "pccts"
 

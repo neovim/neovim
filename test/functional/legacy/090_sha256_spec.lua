@@ -1,6 +1,6 @@
 -- Tests for sha256() function.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 

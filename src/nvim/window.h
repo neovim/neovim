@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "nvim/buffer_defs.h"
+
 /* Values for file_name_in_line() */
 #define FNAME_MESS      1       /* give error message */
 #define FNAME_EXP       2       /* expand to path */

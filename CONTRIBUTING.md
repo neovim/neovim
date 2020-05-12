@@ -1,162 +1,209 @@
-# Contributing to Neovim
+Contributing to Neovim
+======================
 
-## Getting started
+Getting started
+---------------
 
-- Help us review [open pull requests](https://github.com/neovim/neovim/pulls)!
-- Look for [entry-level issues][entry-level] to work on.
-    - [Documentation](https://github.com/neovim/neovim/labels/documentation)
-      improvements are also much appreciated.
-- Look at [Waffle][waffle] to see who is working on what issues.
-- If needed, refer to [the wiki][wiki-contributing] for guidance.
+If you want to help but don't know where to start, here are some
+low-risk/isolated tasks:
 
-## Reporting problems
+- [Merge a Vim patch].
+- Try a [good first issue](../../labels/good%20first%20issue) or [complexity:low] issue.
+- Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
+  [Coverity](#coverity).
 
-Before reporting an issue, see the following wiki articles:
+Reporting problems
+------------------
 
-- [Troubleshooting][wiki-troubleshooting]
-- [Frequently asked questions][wiki-faq]
+- [Check the FAQ][wiki-faq].
+- [Search existing issues][github-issues] (including closed!)
+- Update Neovim to the latest version to see if your problem persists.
+- Disable plugins incrementally, to narrow down the cause of the issue.
+- When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
+- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
+- Check `$NVIM_LOG_FILE`, if it exists.
+- Include `cmake --system-information` for build-related issues.
 
-If your issue isn't mentioned there:
+Developer guidelines
+--------------------
 
-- Verify that it hasn't already been reported.
-- If not already running the latest version of Neovim, update to it to see if
-  your problem persists.
-- If you're experiencing compile or runtime warnings/failures, try searching for
-  the error message(s) you received (if any) on [Neovim's issue tracker][github-issues].
-- For runtime issues, try reproducing it using `nvim` with the smallest
-  possible `vimrc` (or none at all via `nvim -u NONE`), to rule out bugs in
-  plugins you're using. If you're using a plugin manager, comment out your
-  plugins, then add them back in one by one.
+- Nvim contributors should read `:help dev`.
+- External UI developers should read `:help dev-ui`.
+- API client developers should read `:help dev-api-client`.
+- Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
+  ```
+  sudo apt-get install ninja-build
+  make distclean
+  make  # Nvim build system uses ninja automatically, if available.
+  ```
 
-Include as much detail as possible; we generally need to know:
+Pull requests (PRs)
+---------------------
 
-- What operating system you're using.
-- Which version of Neovim you're using. To get this, run `nvim --version` from
-  a shell, or run `:version` from inside `nvim`.
-- Whether the bug is present in Vim (not Neovim), and if so which version of
-  Vim. It's fine to report Vim bugs on the Neovim bug tracker, but it saves
-  everyone time if we know from the start that the bug is not a regression
-  caused by Neovim.
-- This isn't required, but what commit introduced the issue for you. You can
-  use [`git bisect`][git-bisect] for this.
+- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
+- Your PR must include **test coverage.** See [test/README.md][run-tests].
+- Avoid cosmetic changes to unrelated files in the same commit.
+- Use a [feature branch][git-feature-branch] instead of the master branch.
+- Use a **rebase workflow** for small PRs.
+  - After addressing review comments, it's fine to rebase and force-push.
+- Use a **merge workflow** for big, high-risk PRs.
+  - Merge `master` into your PR when there are conflicts or when master
+    introduces breaking changes.
+  - Use the `ri` git alias:
+    ```
+    [alias]
+    ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\"; mb=\"$(git merge-base \"$t\" \"$s\")\"; if test \"x$mb\" = x ; then o=\"$t\"; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\"; if test \"x$lm\" = x ; then o=\"$mb\"; else o=\"$lm\"; fi; fi; test $# -gt 0 && shift; test $# -gt 0 && shift; git rebase --interactive \"$o\" \"$@\"'"
+    ```
+    This avoids unnecessary rebases yet still allows you to combine related
+    commits, separate monolithic commits, etc.
+  - Do not edit commits that come before the merge commit.
+- During a squash/fixup, use `exec make -C build unittest` between each
+  pick/edit/reword.
 
-## Submitting contributions
+### Stages: WIP, RFC, RDY
 
-- Make it clear in the issue tracker what you are working on.
-- Be descriptive in your pull request description: what is it for, why is it
-  needed, etc.
-- Do ***not*** make cosmetic changes to unrelated files in the same pull
-  request. This creates noise, making reviews harder to do. If your text
-  editor strips all trailing whitespace in a file when you edit it, disable
-  it.
+Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
+For Comment) and `[RDY]` (Ready).
 
-### Tagging in the issue tracker
+1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
+   noise to merge commit messages).
+2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
+   is still in flux.
+3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
 
-When submitting pull requests (commonly referred to as "PRs"), include one of
-the following tags prepended to the title:
+### Commit messages
 
-- `[WIP]` - Work In Progress: the PR will change, so while there is no
-  immediate need for review, the submitter still might appreciate it.
-- `[RFC]` - Request For Comment: the PR needs reviewing and/or comments.
-- `[RDY]` - Ready: the PR has been reviewed by at least one other person and
-  has no outstanding issues.
-
-Assuming the above criteria has been met, feel free to change your PR's tag
-yourself, as opposed to waiting for a contributor to do it for you.
-
-### Branching & history
-
-- Do ***not*** work on your PR on the master branch, [use a feature branch
-  instead][git-feature-branch].
-- [Rebase your feature branch onto][git-rebasing] (upstream) master before
-  opening the PR.
-- Keep up to date with changes in (upstream) master so your PR is easy to
-  merge.
-- [Try to actively tidy your history][git-history-rewriting]: combine related
-  commits with interactive rebasing, separate monolithic commits, etc. If your
-  PR is still `[WIP]`, feel free to force-push to your feature branch to tidy
-  your history.
-
-### For code pull requests
-
-#### Testing
-
-We are unlikely to merge your PR if the Travis build fails:
-
-- Travis builds are compiled with the [`-Werror`][gcc-warnings] flag, so if
-  your PR introduces any compiler warnings then the Travis build will fail.
-- If any tests fail, the Travis build will fail.
-  See [Building Neovim#running-tests][wiki-building-running-tests] for
-  information on running tests locally.
-  Tests passing locally doesn't guarantee they'll pass in the Travis
-  build, as different compilers and platforms will be used.
-- Travis runs [Valgrind][valgrind] for the GCC/Linux build, but you may also
-  do so locally by running the following from a shell: `VALGRIND=1 make test`
-
-#### Coding style
-
-We have a [style guide][style-guide] that all new code should follow.
-However, large portions of the existing Vim codebase violate it to some
-degree, and fixing them would increase merge conflicts and add noise to `git
-blame`.
-
-Weigh those costs when making cosmetic changes. In general, avoid pull
-requests dominated by style changes, but feel free to fix up lines that you
-happen to be modifying anyway. Fix anything that looks outright
-[barbarous](http://www.orwell.ru/library/essays/politics/english/e_polit), but
-otherwise prefer to leave things as they are.
-
-For new code, run `make lint` (which runs [clint.py][clint]) to detect style
-errors. It's not perfect, so some warnings may be false positives/negatives.
-To have `clint.py` ignore certain cases, put `// NOLINT` at the end of the
-line.
-
-We also provide a configuration file for [`clang-format`][clang-format], which
-can be used to format code according to the style guidelines. Be aware that
-this formatting method might need user supervision. To have `clang-format`
-ignore certain line ranges, use the following special comments:
-
-```c
-int formatted_code;
-// clang-format off
-    void    unformatted_code  ;
-// clang-format on
-    void formatted_code_again;
-```
-
-### Commit guidelines
-
-The purpose of these guidelines is to *make reviews easier* and make the
-[VCS][vcs] logs more valuable.
+Follow [commit message hygiene][hygiene] to *make reviews easier* and to make
+the VCS/git logs more valuable.
 
 - Try to keep the first line under 72 characters.
-- If necessary, include further description after a blank line.
-    - Don't make the description too verbose by including obvious things, but
-      don't spare clarifications for anything that may be not so obvious.
-      Some commit messages are pages long, and that's fine if there's no
-      better place for those comments to live.
-    - **Recommended:** Prefix logically-related commits with a consistent
-      identifier in each commit message. For already used identifiers, see the
-      commit history for the respective file(s) you're editing.
-      [For example](https://github.com/neovim/neovim/commits?author=elmart),
-      the following commits are related by task (*Introduce nvim namespace*) and
-      sub-task (*Contrib YCM*).
-      <br/> `Introduce nvim namespace: Contrib YCM: Fix style issues`
-      <br/> `Introduce nvim namespace: Contrib YCM: Fix build dir calculation`
-        - Sub-tasks can be *activity-oriented* (doing different things on the same area)
-          or *scope-oriented* (doing the same thing in different areas).
-    - Granularity helps, but it's conceptual size that matters, not extent size.
-- Use the [imperative voice][imperative]: "Fix bug" rather than "Fixed bug" or "Fixes bug."
+- **Prefix the commit subject with a _scope_:** `doc:`, `test:`, `foo.c:`,
+  `runtime:`, ...
+    - Subject line for commits with only style/lint changes can be a single
+      word: `style` or `lint`.
+- A blank line must separate the subject from the description.
+- Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
-### Reviewing pull requests
+### Automated builds (CI)
 
-Using a checklist during reviews is highly recommended, so we [provide one at
-the wiki][wiki-review-checklist]. If you think it could be improved, feel free
-to edit it.
+Each pull request must pass the automated builds on [Travis CI], [sourcehut]
+and [AppVeyor].
+
+- CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
+  will fail the build.
+- If any tests fail, the build will fail.
+  See [test/README.md#running-tests][run-tests] to run tests locally.
+  Passing locally doesn't guarantee passing the CI build, because of the
+  different compilers and platforms tested against.
+- CI runs [ASan] and other analyzers.
+    - To run valgrind locally: `VALGRIND=1 make test`
+    - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
+- The [lint](#lint) build checks modified lines _and their immediate
+  neighbors_, to encourage incrementally updating the legacy style to meet our
+  [style](#style). (See [#3174][3174] for background.)
+- CI for freebsd and openbsd runs on [sourcehut].
+    - To get a backtrace on freebsd (after connecting via ssh):
+      ```sh
+      sudo pkg install tmux  # If you want tmux.
+      lldb build/bin/nvim -c nvim.core
+
+      # To get a full backtrace:
+      #   1. Rebuild with debug info.
+      rm -rf nvim.core build
+      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
+      #   2. Run the failing test to generate a new core file.
+      TEST_FILE=test/functional/foo.lua gmake functionaltest
+      lldb build/bin/nvim -c nvim.core
+      ```
+
+### Clang scan-build
+
+View the [Clang report] to see potential bugs found by the Clang
+[scan-build](https://clang-analyzer.llvm.org/scan-build.html) analyzer.
+
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep clang
+  ```
+- To verify a fix locally, run `scan-build` like this:
+  ```
+  rm -rf build/
+  scan-build --use-analyzer=/usr/bin/clang make
+  ```
+
+### PVS-Studio
+
+View the [PVS report](https://neovim.io/doc/reports/pvs/PVS-studio.html.d/) to
+see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
+
+- Use this format for commit messages (where `{id}` is the PVS warning-id)):
+  ```
+  PVS/V{id}: {description}
+  ```
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep PVS
+  ```
+- Try `./scripts/pvscheck.sh` to run PVS locally.
+
+### Coverity
+
+[Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
+master build. To view the defects, just request access; you will be approved.
+
+- Use this format for commit messages (where `{id}` is the CID (Coverity ID);
+  ([example](https://github.com/neovim/neovim/pull/804))):
+  ```
+  coverity/{id}: {description}
+  ```
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep coverity
+  ```
+
+
+Coding
+------
+
+### Lint
+
+You can run the linter locally by:
+
+    make lint
+
+The lint step downloads the [master error list] and excludes them, so only lint
+errors related to the local changes are reported.
+
+You can lint a single file (but this will _not_ exclude legacy errors):
+
+    ./src/clint.py src/nvim/ops.c
+
+### Style
+
+The repo includes a `.clang-format` config file which (mostly) matches the
+[style-guide].  You can use `clang-format` to format code with the `gq`
+operator in Nvim:
+
+    if !empty(findfile('.clang-format', ';'))
+      setlocal formatprg=clang-format\ -style=file
+    endif
+
+### Navigate
+
+- Use **[universal-ctags](https://github.com/universal-ctags/ctags).**
+  ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
+  unmaintained and won't recognize many function signatures in Neovim source.)
+- Explore the source code [on the web](https://sourcegraph.com/github.com/neovim/neovim).
+
+
+Reviewing
+---------
+
+To help review pull requests, start with [this checklist][review-checklist].
 
 Reviewing can be done on GitHub, but you may find it easier to do locally.
-Using [`hub`][hub], you can do the following to create a new branch with the
-contents of a pull request, such as [#1820][github-pr-1820]:
+Using [`hub`][hub], you can create a new branch with the contents of a pull
+request, e.g. [#1820][1820]:
 
     hub checkout https://github.com/neovim/neovim/pull/1820
 
@@ -165,29 +212,26 @@ commits in the feature branch which aren't in the `master` branch; `-p`
 shows each commit's diff. To show the whole surrounding function of a change
 as context, use the `-W` argument as well.
 
-You may find it easier to instead use an interactive program for code reviews,
-such as [`tig`][tig].
-
-[clang-format]: http://clang.llvm.org/docs/ClangFormat.html
-[clint]: clint.py
-[entry-level]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
-[git-bisect]: http://git-scm.com/book/tr/v2/Git-Tools-Debugging-with-Git
+[git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
 [git-history-filtering]: https://www.atlassian.com/git/tutorials/git-log/filtering-the-commit-history
 [git-history-rewriting]: http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
 [git-rebasing]: http://git-scm.com/book/en/v2/Git-Branching-Rebasing
 [github-issues]: https://github.com/neovim/neovim/issues
-[github-pr-1820]: https://github.com/neovim/neovim/pull/1820
+[1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
-[imperative]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[hygiene]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [style-guide]: http://neovim.io/develop/style-guide.xml
-[tig]: https://github.com/jonas/tig
-[valgrind]: http://valgrind.org/
-[vcs]: https://en.wikipedia.org/wiki/Revision_control
-[waffle]: https://waffle.io/neovim/neovim
-[wiki-building-running-tests]: https://github.com/neovim/neovim/wiki/Building-Neovim#running-tests
-[wiki-contributing]: https://github.com/neovim/neovim/wiki/Contributing
+[ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
+[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
-[wiki-review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
-[wiki-troubleshooting]: https://github.com/neovim/neovim/wiki/Troubleshooting
+[review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
+[3174]: https://github.com/neovim/neovim/issues/3174
+[Travis CI]: https://travis-ci.org/neovim/neovim
+[sourcehut]: https://builds.sr.ht/~jmk
+[AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
+[Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[Clang report]: https://neovim.io/doc/reports/clang/
+[complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
+[master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json

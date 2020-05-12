@@ -1,20 +1,17 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Nov 19
+" Last Change:	2019 Jul 18
 
 " If there already is an option window, jump to that one.
-if bufwinnr("option-window") > 0
-  let s:thiswin = winnr()
-  while 1
-    if @% == "option-window"
+let buf = bufnr('option-window')
+if buf >= 0
+  let winids = win_findbuf(buf)
+  if len(winids) > 0
+    if win_gotoid(winids[0]) == 1
       finish
     endif
-    wincmd w
-    if s:thiswin == winnr()
-      break
-    endif
-  endwhile
+  endif
 endif
 
 " Make sure the '<' flag is not included in 'cpoptions', otherwise <CR> would
@@ -125,11 +122,13 @@ fun! <SID>Update(lnum, line, local, thiswin)
 endfun
 
 " Reset 'title' and 'icon' to make it work faster.
+" Reset 'undolevels' to avoid undo'ing until the buffer is empty.
 let s:old_title = &title
 let s:old_icon = &icon
 let s:old_sc = &sc
 let s:old_ru = &ru
-set notitle noicon nosc noru
+let s:old_ul = &ul
+set notitle noicon nosc noru ul=-1
 
 " If the current window is a help window, try finding a non-help window.
 " Relies on syntax highlighting to be switched on.
@@ -141,8 +140,8 @@ while exists("b:current_syntax") && b:current_syntax == "help"
   endif
 endwhile
 
-" Open the window
-new option-window
+" Open the window.  $OPTWIN_CMD is set to "tab" for ":tab options".
+exe $OPTWIN_CMD . ' new option-window'
 setlocal ts=15 tw=0 noro buftype=nofile
 
 " Insert help and a "set" command for each option.
@@ -228,6 +227,8 @@ else
 endif
 call append("$", "runtimepath\tlist of directories used for runtime files and plugins")
 call <SID>OptionG("rtp", &rtp)
+call append("$", "packpath\tlist of directories used for plugin packages")
+call <SID>OptionG("pp", &pp)
 call append("$", "helpfile\tname of the main help file")
 call <SID>OptionG("hf", &hf)
 
@@ -289,12 +290,21 @@ call append("$", " \tset tl=" . &tl)
 call append("$", "tags\tlist of file names to search for tags")
 call append("$", "\t(global or local to buffer)")
 call <SID>OptionG("tag", &tag)
+call append("$", "tagcase\thow to handle case when searching in tags files:")
+call append("$", "\t\"followic\" to follow 'ignorecase', \"ignore\" or \"match\"")
+call append("$", "\t(global or local to buffer)")
+call <SID>OptionG("tc", &tc)
 call append("$", "tagrelative\tfile names in a tags file are relative to the tags file")
 call <SID>BinOptionG("tr", &tr)
 call append("$", "tagstack\ta :tag command will use the tagstack")
 call <SID>BinOptionG("tgst", &tgst)
 call append("$", "showfulltag\twhen completing tags in Insert mode show more info")
 call <SID>BinOptionG("sft", &sft)
+if has("eval")
+  call append("$", "tagfunc\ta function to be used to perform tag searches")
+  call append("$", "\t(local to buffer)")
+  call <SID>OptionL("tfu")
+endif
 if has("cscope")
   call append("$", "cscopeprg\tcommand for executing cscope")
   call <SID>OptionG("csprg", &csprg)
@@ -320,7 +330,8 @@ call <SID>OptionL("scr")
 call append("$", "scrolloff\tnumber of screen lines to show around the cursor")
 call append("$", " \tset so=" . &so)
 call append("$", "wrap\tlong lines wrap")
-call <SID>BinOptionG("wrap", &wrap)
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("wrap")
 call append("$", "linebreak\twrap long lines at a character in 'breakat'")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("lbr")
@@ -389,11 +400,9 @@ endif
 call <SID>Header("syntax, highlighting and spelling")
 call append("$", "background\t\"dark\" or \"light\"; the background color brightness")
 call <SID>OptionG("bg", &bg)
-if has("autocmd")
-  call append("$", "filetype\ttype of file; triggers the FileType event when set")
-  call append("$", "\t(local to buffer)")
-  call <SID>OptionL("ft")
-endif
+call append("$", "filetype\ttype of file; triggers the FileType event when set")
+call append("$", "\t(local to buffer)")
+call <SID>OptionL("ft")
 if has("syntax")
   call append("$", "syntax\tname of syntax highlighting used")
   call append("$", "\t(local to buffer)")
@@ -406,6 +415,10 @@ call append("$", "highlight\twhich highlighting to use for various occasions")
 call <SID>OptionG("hl", &hl)
 call append("$", "hlsearch\thighlight all matches for the last used search pattern")
 call <SID>BinOptionG("hls", &hls)
+if has("termguicolors")
+  call append("$", "termguicolors\tuse GUI colors for the terminal")
+  call <SID>BinOptionG("tgc", &tgc)
+endif
 if has("syntax")
   call append("$", "cursorcolumn\thighlight the screen column of the cursor")
   call append("$", "\t(local to window)")
@@ -444,10 +457,8 @@ if has("statusline")
 endif
 call append("$", "equalalways\tmake all windows the same size when adding/removing windows")
 call <SID>BinOptionG("ea", &ea)
-if has("vertsplit")
-  call append("$", "eadirection\tin which direction 'equalalways' works: \"ver\", \"hor\" or \"both\"")
-  call <SID>OptionG("ead", &ead)
-endif
+call append("$", "eadirection\tin which direction 'equalalways' works: \"ver\", \"hor\" or \"both\"")
+call <SID>OptionG("ead", &ead)
 call append("$", "winheight\tminimal number of lines used for the current window")
 call append("$", " \tset wh=" . &wh)
 call append("$", "winminheight\tminimal number of lines used for any window")
@@ -455,18 +466,18 @@ call append("$", " \tset wmh=" . &wmh)
 call append("$", "winfixheight\tkeep the height of the window")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("wfh")
-if has("vertsplit")
 call append("$", "winfixwidth\tkeep the width of the window")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("wfw")
-  call append("$", "winwidth\tminimal number of columns used for the current window")
-  call append("$", " \tset wiw=" . &wiw)
-  call append("$", "winminwidth\tminimal number of columns used for any window")
-  call append("$", " \tset wmw=" . &wmw)
-endif
+call append("$", "winwidth\tminimal number of columns used for the current window")
+call append("$", " \tset wiw=" . &wiw)
+call append("$", "winminwidth\tminimal number of columns used for any window")
+call append("$", " \tset wmw=" . &wmw)
 call append("$", "helpheight\tinitial height of the help window")
 call append("$", " \tset hh=" . &hh)
 if has("quickfix")
+  " call append("$", "previewpopup\tuse a popup window for preview")
+  " call append("$", " \tset pvp=" . &pvp)
   call append("$", "previewheight\tdefault height for the preview window")
   call append("$", " \tset pvh=" . &pvh)
   call append("$", "previewwindow\tidentifies the preview window")
@@ -480,21 +491,23 @@ call append("$", "\tto a buffer")
 call <SID>OptionG("swb", &swb)
 call append("$", "splitbelow\ta new window is put below the current one")
 call <SID>BinOptionG("sb", &sb)
-if has("vertsplit")
-  call append("$", "splitright\ta new window is put right of the current one")
-  call <SID>BinOptionG("spr", &spr)
-endif
-if has("scrollbind")
-  call append("$", "scrollbind\tthis window scrolls together with other bound windows")
+call append("$", "splitright\ta new window is put right of the current one")
+call <SID>BinOptionG("spr", &spr)
+call append("$", "scrollbind\tthis window scrolls together with other bound windows")
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("scb")
+call append("$", "scrollopt\t\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'")
+call <SID>OptionG("sbo", &sbo)
+call append("$", "cursorbind\tthis window's cursor moves together with other bound windows")
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("crb")
+if has("terminal")
+  call append("$", "termsize\tsize of a terminal window")
   call append("$", "\t(local to window)")
-  call <SID>BinOptionL("scb")
-  call append("$", "scrollopt\t\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'")
-  call <SID>OptionG("sbo", &sbo)
-endif
-if has("cursorbind")
-  call append("$", "cursorbind\tthis window's cursor moves together with other bound windows")
+  call <SID>OptionL("tms")
+  call append("$", "termkey\tkey that precedes Vim commands in a terminal window")
   call append("$", "\t(local to window)")
-  call <SID>BinOptionL("crb")
+  call <SID>OptionL("tk")
 endif
 
 
@@ -514,8 +527,6 @@ endif
 
 
 call <SID>Header("terminal")
-call append("$", "esckeys\trecognize keys that start with <Esc> in Insert mode")
-call <SID>BinOptionG("ek", &ek)
 call append("$", "scrolljump\tminimal number of lines to scroll at a time")
 call append("$", " \tset sj=" . &sj)
 if has("gui") || has("msdos") || has("win32")
@@ -581,8 +592,6 @@ if has("gui")
       call append("$", "toolbariconsize\tsize of toolbar icons")
       call <SID>OptionG("tbis", &tbis)
     endif
-    call append("$", "guiheadroom\troom (in pixels) left above/below the window")
-    call append("$", " \tset ghr=" . &ghr)
   endif
   if has("browse")
     call append("$", "browsedir\t\"last\", \"buffer\" or \"current\": which directory used for the file browser")
@@ -600,11 +609,17 @@ if has("gui")
   endif
   call append("$", "linespace\tnumber of pixel lines to use between characters")
   call append("$", " \tset lsp=" . &lsp)
-  if has("balloon_eval")
+  if has("balloon_eval") || has("balloon_eval_term")
     call append("$", "balloondelay\tdelay in milliseconds before a balloon may pop up")
     call append("$", " \tset bdlay=" . &bdlay)
-    call append("$", "ballooneval\twhether the balloon evaluation is to be used")
-    call <SID>BinOptionG("beval", &beval)
+    if has("balloon_eval")
+      call append("$", "ballooneval\tuse balloon evaluation in the GUI")
+      call <SID>BinOptionG("beval", &beval)
+    endif
+    if has("balloon_eval_term")
+      call append("$", "balloonevalterm\tuse balloon evaluation in the terminal")
+      call <SID>BinOptionG("bevalterm", &beval)
+    endif
     if has("eval")
       call append("$", "balloonexpr\texpression to show in balloon eval")
       call append("$", " \tset bexpr=" . &bexpr)
@@ -673,6 +688,8 @@ call append("$", "errorbells\tring the bell for error messages")
 call <SID>BinOptionG("eb", &eb)
 call append("$", "visualbell\tuse a visual bell instead of beeping")
 call <SID>BinOptionG("vb", &vb)
+call append("$", "belloff\tdo not ring the bell for these reasons")
+call <SID>OptionG("belloff", &belloff)
 if has("multi_lang")
   call append("$", "helplang\tlist of preferred languages for finding help")
   call <SID>OptionG("hlg", &hlg)
@@ -697,7 +714,11 @@ call <SID>OptionG("km", &km)
 call <SID>Header("editing text")
 call append("$", "undolevels\tmaximum number of changes that can be undone")
 call append("$", "\t(global or local to buffer)")
-call append("$", " \tset ul=" . &ul)
+call append("$", " \tset ul=" . s:old_ul)
+call append("$", "undofile\tautomatically save and restore undo history")
+call <SID>BinOptionG("udf", &udf)
+call append("$", "undodir\tlist of directories for undo files")
+call <SID>OptionG("udir", &udir)
 call append("$", "undoreload\tmaximum number lines to save for undo on a buffer reload")
 call append("$", " \tset ur=" . &ur)
 call append("$", "modified\tchanges have been made and not written to a file")
@@ -739,6 +760,10 @@ if has("insert_expand")
   call <SID>OptionG("cot", &cot)
   call append("$", "pumheight\tmaximum height of the popup menu")
   call <SID>OptionG("ph", &ph)
+  if exists("&pw")
+    call append("$", "pumwidth\tminimum width of the popup menu")
+    call <SID>OptionG("pw", &pw)
+  endif
   call append("$", "completefunc\tuser defined function for Insert mode completion")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("cfu")
@@ -756,7 +781,7 @@ call append("$", "infercase\tadjust case of a keyword completion match")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("inf")
 if has("digraphs")
-  call append("$", "digraph\tenable entering digraps with c1 <BS> c2")
+  call append("$", "digraph\tenable entering digraphs with c1 <BS> c2")
   call <SID>BinOptionG("dg", &dg)
 endif
 call append("$", "tildeop\tthe \"~\" command behaves like an operator")
@@ -875,7 +900,7 @@ if has("folding")
   call append("$", "foldmarker\tmarkers used when 'foldmethod' is \"marker\"")
   call append("$", "\t(local to window)")
   call <SID>OptionL("fmr")
-  call append("$", "foldnestmax\tmaximum fold depth for when 'foldmethod is \"indent\" or \"syntax\"")
+  call append("$", "foldnestmax\tmaximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\"")
   call append("$", "\t(local to window)")
   call <SID>OptionL("fdn")
 endif
@@ -914,6 +939,8 @@ call <SID>Header("reading and writing files")
 call append("$", "modeline\tenable using settings from modelines when reading a file")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("ml")
+call append("$", "modelineexpr\tallow setting expression options from a modeline")
+call <SID>BinOptionG("mle", &mle)
 call append("$", "modelines\tnumber of lines to check for modelines")
 call append("$", " \tset mls=" . &mls)
 call append("$", "binary\tbinary file editing")
@@ -922,7 +949,7 @@ call <SID>BinOptionL("bin")
 call append("$", "endofline\tlast line in the file has an end-of-line")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("eol")
-call append("$", "fixeol\tfixes missing end-of-line at end of text file")
+call append("$", "fixendofline\tfixes missing end-of-line at end of text file")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("fixeol")
 if has("multi_byte")
@@ -976,10 +1003,6 @@ call append("$", "updatecount\tnumber of characters typed to cause a swap file u
 call append("$", " \tset uc=" . &uc)
 call append("$", "updatetime\ttime in msec after which the swap file will be updated")
 call append("$", " \tset ut=" . &ut)
-call append("$", "maxmem\tmaximum amount of memory in Kbyte used for one buffer")
-call append("$", " \tset mm=" . &mm)
-call append("$", "maxmemtot\tmaximum amount of memory in Kbyte used for all buffers")
-call append("$", " \tset mmt=" . &mmt)
 
 
 call <SID>Header("command line editing")
@@ -1014,16 +1037,10 @@ if has("wildmenu")
   call append("$", "wildmenu\tcommand-line completion shows a list of matches")
   call <SID>BinOptionG("wmnu", &wmnu)
 endif
-if has("vertsplit")
-  call append("$", "cedit\tkey used to open the command-line window")
-  call <SID>OptionG("cedit", &cedit)
-  call append("$", "cmdwinheight\theight of the command-line window")
-  call <SID>OptionG("cwh", &cwh)
-endif
-call append("$", "undofile\tautomatically save and restore undo history")
-call <SID>BinOptionG("udf", &udf)
-call append("$", "undodir\tlist of directories for undo files")
-call <SID>OptionG("udir", &udir)
+call append("$", "cedit\tkey used to open the command-line window")
+call <SID>OptionG("cedit", &cedit)
+call append("$", "cmdwinheight\theight of the command-line window")
+call <SID>OptionG("cwh", &cwh)
 
 
 call <SID>Header("executing external commands")
@@ -1071,6 +1088,9 @@ if has("quickfix")
   call <SID>OptionG("gp", &gp)
   call append("$", "grepformat\tlist of formats for output of 'grepprg'")
   call <SID>OptionG("gfm", &gfm)
+  call append("$", "makeencoding\tencoding of the \":make\" and \":grep\" output")
+  call append("$", "\t(global or local to buffer)")
+  call <SID>OptionG("menc", &menc)
 endif
 
 
@@ -1116,12 +1136,6 @@ if has("rightleft")
   call append("$", "hkmapp\tuse phonetic Hebrew keyboard mapping")
   call <SID>BinOptionG("hkp", &hkp)
 endif
-if has("farsi")
-  call append("$", "altkeymap\tuse Farsi as the second language when 'revins' is set")
-  call <SID>BinOptionG("akm", &akm)
-  call append("$", "fkmap\tuse Farsi keyboard mapping")
-  call <SID>BinOptionG("fk", &fk)
-endif
 if has("arabic")
   call append("$", "arabic\tprepare for editing Arabic text")
   call append("$", "\t(local to window)")
@@ -1132,14 +1146,14 @@ if has("arabic")
   call <SID>BinOptionG("tbidi", &tbidi)
 endif
 if has("keymap")
-  call append("$", "keymap\tname of a keyboard mappping")
+  call append("$", "keymap\tname of a keyboard mapping")
   call <SID>OptionL("kmp")
 endif
 if has("langmap")
   call append("$", "langmap\tlist of characters that are translated in Normal mode")
   call <SID>OptionG("lmap", &lmap)
-  call append("$", "langnoremap\tdon't apply 'langmap' to mapped characters")
-  call <SID>BinOptionG("lnr", &lnr)
+  call append("$", "langremap\tapply 'langmap' to mapped characters")
+  call <SID>BinOptionG("lrm", &lrm)
 endif
 if has("xim")
   call append("$", "imdisable\twhen set never use IM; overrules following IM options")
@@ -1183,18 +1197,16 @@ if has("multi_byte")
   endif
   call append("$", "ambiwidth\twidth of ambiguous width characters")
   call <SID>OptionG("ambw", &ambw)
+  call append("$", "emoji\temoji characters are full width")
+  call <SID>BinOptionG("emo", &emo)
 endif
 
 
 call <SID>Header("various")
-if has("virtualedit")
-  call append("$", "virtualedit\twhen to use virtual editing: \"block\", \"insert\" and/or \"all\"")
-  call <SID>OptionG("ve", &ve)
-endif
-if has("autocmd")
-  call append("$", "eventignore\tlist of autocommand events which are to be ignored")
-  call <SID>OptionG("ei", &ei)
-endif
+call append("$", "virtualedit\twhen to use virtual editing: \"block\", \"insert\" and/or \"all\"")
+call <SID>OptionG("ve", &ve)
+call append("$", "eventignore\tlist of autocommand events which are to be ignored")
+call <SID>OptionG("ei", &ei)
 call append("$", "loadplugins\tload plugin scripts when starting up")
 call <SID>BinOptionG("lpl", &lpl)
 call append("$", "exrc\tenable reading .vimrc/.exrc/.gvimrc in the current directory")
@@ -1236,6 +1248,9 @@ call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("bl")
 call append("$", "debug\tset to \"msg\" to see all error messages")
 call append("$", " \tset debug=" . &debug)
+call append("$", "signcolumn\twhether to show the signcolumn")
+call append("$", "\t(local to window)")
+call <SID>OptionL("scl")
 
 set cpo&vim
 
@@ -1258,6 +1273,16 @@ if has("syntax")
     hi link optwinName Identifier
     hi link optwinComment Comment
   endif
+endif
+if exists("&mzschemedll")
+  call append("$", "mzschemedll\tname of the Tcl dynamic library")
+  call <SID>OptionG("mzschemedll", &mzschemedll)
+  call append("$", "mzschemegcdll\tname of the Tcl GC dynamic library")
+  call <SID>OptionG("mzschemegcdll", &mzschemegcdll)
+endif
+if has('pythonx')
+  call append("$", "pyxversion\twhether to use Python 2 or 3")
+  call append("$", " \tset pyx=" . &wd)
 endif
 
 " Install autocommands to enable mappings in option-window
@@ -1292,6 +1317,7 @@ let &icon = s:old_icon
 let &ru = s:old_ru
 let &sc = s:old_sc
 let &cpo = s:cpo_save
-unlet s:old_title s:old_icon s:old_ru s:old_sc s:cpo_save s:idx s:lnum
+let &ul = s:old_ul
+unlet s:old_title s:old_icon s:old_ru s:old_sc s:cpo_save s:idx s:lnum s:old_ul
 
 " vim: ts=8 sw=2 sts=2

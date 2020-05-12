@@ -7,11 +7,8 @@
 "		lua_subversion = 0 (4.0, 5.0) or 1 (5.1) or 2 (5.2)
 "		default 5.2
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -325,40 +322,30 @@ elseif lua_version == 5
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lua_syntax_inits")
-  if version < 508
-    let did_lua_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink luaStatement		Statement
-  HiLink luaRepeat		Repeat
-  HiLink luaFor			Repeat
-  HiLink luaString		String
-  HiLink luaString2		String
-  HiLink luaNumber		Number
-  HiLink luaOperator		Operator
-  HiLink luaIn			Operator
-  HiLink luaConstant		Constant
-  HiLink luaCond		Conditional
-  HiLink luaElse		Conditional
-  HiLink luaFunction		Function
-  HiLink luaComment		Comment
-  HiLink luaTodo		Todo
-  HiLink luaTable		Structure
-  HiLink luaError		Error
-  HiLink luaParenError		Error
-  HiLink luaBraceError		Error
-  HiLink luaSpecial		SpecialChar
-  HiLink luaFunc		Identifier
-  HiLink luaLabel		Label
+hi def link luaStatement		Statement
+hi def link luaRepeat		Repeat
+hi def link luaFor			Repeat
+hi def link luaString		String
+hi def link luaString2		String
+hi def link luaNumber		Number
+hi def link luaOperator		Operator
+hi def link luaIn			Operator
+hi def link luaConstant		Constant
+hi def link luaCond		Conditional
+hi def link luaElse		Conditional
+hi def link luaFunction		Function
+hi def link luaComment		Comment
+hi def link luaTodo		Todo
+hi def link luaTable		Structure
+hi def link luaError		Error
+hi def link luaParenError		Error
+hi def link luaBraceError		Error
+hi def link luaSpecial		SpecialChar
+hi def link luaFunc		Identifier
+hi def link luaLabel		Label
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "lua"
 

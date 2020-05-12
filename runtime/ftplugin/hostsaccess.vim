@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         hosts_access(5) control file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             hosts_access(5) control file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

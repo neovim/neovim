@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/fstab.vim
-" Last Change: 2013 May 21
-" Version: 1.0
+" Last Change: 2019 Jun 06
+" Version: 1.3
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -19,9 +19,8 @@
 "   let fstab_unknown_device_errors = 0
 "     do not highlight unknown devices as errors
 
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -39,10 +38,14 @@ syn match fsDeviceError /\%([^a-zA-Z0-9_\/#@:\.-]\|^\w\{-}\ze\W\)/ contained
 syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs
 syn keyword fsDeviceKeyword contained LABEL nextgroup=fsDeviceLabel
 syn keyword fsDeviceKeyword contained UUID nextgroup=fsDeviceUUID
+syn keyword fsDeviceKeyword contained PARTLABEL nextgroup=fsDevicePARTLABEL
+syn keyword fsDeviceKeyword contained PARTUUID nextgroup=fsDevicePARTUUID
 syn keyword fsDeviceKeyword contained sshfs nextgroup=fsDeviceSshfs
 syn match fsDeviceKeyword contained /^[a-zA-Z0-9.\-]\+\ze:/
 syn match fsDeviceLabel contained /=[^ \t]\+/hs=s+1 contains=fsOperator
 syn match fsDeviceUUID contained /=[^ \t]\+/hs=s+1 contains=fsOperator
+syn match fsDevicePARTLABEL contained /=[^ \t]\+/hs=s+1 contains=fsOperator
+syn match fsDevicePARTUUID contained /=[^ \t]\+/hs=s+1 contains=fsOperator
 syn match fsDeviceSshfs contained /#[_=[:alnum:]\.\/+-]\+@[a-z0-9._-]\+\a\{2}:[^ \t]\+/hs=s+1 contains=fsOperator
 
 " Mount Point
@@ -65,7 +68,7 @@ syn match fsOptionsString /[a-zA-Z0-9_-]\+/
 syn keyword fsOptionsYesNo yes no
 syn cluster fsOptionsCheckCluster contains=fsOptionsExt2Check,fsOptionsFatCheck
 syn keyword fsOptionsSize 512 1024 2048
-syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand nosuid nosymfollow nouser owner rbind rdonly remount ro rq rw suid suiddir supermount sw sync union update user users xx
+syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand norelatime nosuid nosymfollow nouser owner rbind rdonly relatime remount ro rq rw suid suiddir supermount sw sync union update user users wxallowed xx nofail
 syn match fsOptionsGeneral /_netdev/
 
 " Options: adfs
@@ -138,7 +141,7 @@ syn match fsOptionsKeywords contained /\<\%(dir\|file\|\)_umask=/ nextgroup=fsOp
 syn match fsOptionsKeywords contained /\<\%(session\|part\)=/ nextgroup=fsOptionsNumber
 
 " Options: ffs
-syn keyword fsOptionsKeyWords contained softdep
+syn keyword fsOptionsKeyWords contained noperm softdep
 
 " Options: hpfs
 syn match fsOptionsKeywords contained /\<case=/ nextgroup=fsOptionsHpfsCase
@@ -229,65 +232,56 @@ syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster 
 " Whole line comments
 syn match fsCommentLine /^#.*$/ contains=@Spell
 
-if version >= 508 || !exists("did_config_syntax_inits")
-	if version < 508
-		let did_config_syntax_inits = 1
-		command! -nargs=+ HiLink hi link <args>
-	else
-		command! -nargs=+ HiLink hi def link <args>
-	endif
+hi def link fsOperator Operator
+hi def link fsComment Comment
+hi def link fsCommentLine Comment
 
-	HiLink fsOperator Operator
-	HiLink fsComment Comment
-	HiLink fsCommentLine Comment
+hi def link fsTypeKeyword Type
+hi def link fsDeviceKeyword Identifier
+hi def link fsDeviceLabel String
+hi def link fsDeviceUUID String
+hi def link fsDevicePARTLABEL String
+hi def link fsDevicePARTUUID String
+hi def link fsDeviceSshfs String
+hi def link fsFreqPassNumber Number
 
-	HiLink fsTypeKeyword Type
-	HiLink fsDeviceKeyword Identifier
-	HiLink fsDeviceLabel String
-	HiLink fsDeviceUUID String
-	HiLink fsDeviceSshfs String
-	HiLink fsFreqPassNumber Number
-
-	if exists('fstab_unknown_fs_errors') && fstab_unknown_fs_errors == 1
-		HiLink fsTypeUnknown Error
-	endif
-
-	if !exists('fstab_unknown_device_errors') || fstab_unknown_device_errors == 1
-		HiLink fsDeviceError Error
-	endif
-
-	HiLink fsMountPointError Error
-	HiLink fsMountPointKeyword Keyword
-	HiLink fsFreqPassError Error
-
-	HiLink fsOptionsGeneral Type
-	HiLink fsOptionsKeywords Keyword
-	HiLink fsOptionsNumber Number
-	HiLink fsOptionsNumberOctal Number
-	HiLink fsOptionsString String
-	HiLink fsOptionsSize Number
-	HiLink fsOptionsExt2Check String
-	HiLink fsOptionsExt2Errors String
-	HiLink fsOptionsExt3Journal String
-	HiLink fsOptionsExt3Data String
-	HiLink fsOptionsExt4Journal String
-	HiLink fsOptionsExt4Data String
-	HiLink fsOptionsExt4Barrier Number
-	HiLink fsOptionsFatCheck String
-	HiLink fsOptionsConv String
-	HiLink fsOptionsFatType Number
-	HiLink fsOptionsYesNo String
-	HiLink fsOptionsHpfsCase String
-	HiLink fsOptionsIsoMap String
-	HiLink fsOptionsReiserHash String
-	HiLink fsOptionsSshYesNoAsk String
-	HiLink fsOptionsUfsType String
-	HiLink fsOptionsUfsError String
-
-	HiLink fsOptionsVfatShortname String
-
-	delcommand HiLink
+if exists('fstab_unknown_fs_errors') && fstab_unknown_fs_errors == 1
+	hi def link fsTypeUnknown Error
 endif
+
+if !exists('fstab_unknown_device_errors') || fstab_unknown_device_errors == 1
+	hi def link fsDeviceError Error
+endif
+
+hi def link fsMountPointError Error
+hi def link fsMountPointKeyword Keyword
+hi def link fsFreqPassError Error
+
+hi def link fsOptionsGeneral Type
+hi def link fsOptionsKeywords Keyword
+hi def link fsOptionsNumber Number
+hi def link fsOptionsNumberOctal Number
+hi def link fsOptionsString String
+hi def link fsOptionsSize Number
+hi def link fsOptionsExt2Check String
+hi def link fsOptionsExt2Errors String
+hi def link fsOptionsExt3Journal String
+hi def link fsOptionsExt3Data String
+hi def link fsOptionsExt4Journal String
+hi def link fsOptionsExt4Data String
+hi def link fsOptionsExt4Barrier Number
+hi def link fsOptionsFatCheck String
+hi def link fsOptionsConv String
+hi def link fsOptionsFatType Number
+hi def link fsOptionsYesNo String
+hi def link fsOptionsHpfsCase String
+hi def link fsOptionsIsoMap String
+hi def link fsOptionsReiserHash String
+hi def link fsOptionsSshYesNoAsk String
+hi def link fsOptionsUfsType String
+hi def link fsOptionsUfsError String
+
+hi def link fsOptionsVfatShortname String
 
 let b:current_syntax = "fstab"
 

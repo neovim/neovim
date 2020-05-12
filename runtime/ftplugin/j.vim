@@ -2,7 +2,7 @@
 " Language:	J
 " Maintainer:	David Bürgin <676c7473@gmail.com>
 " URL:		https://github.com/glts/vim-j
-" Last Change:	2015-03-27
+" Last Change:	2015-09-27
 
 if exists('b:did_ftplugin')
   finish
@@ -12,13 +12,20 @@ let b:did_ftplugin = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
-setlocal iskeyword=48-57,A-Z,_,a-z
+setlocal iskeyword=48-57,A-Z,a-z,_
 setlocal comments=:NB.
 setlocal commentstring=NB.\ %s
 setlocal formatoptions-=t
 setlocal matchpairs=(:)
+setlocal path-=/usr/include
 
-let b:undo_ftplugin = 'setlocal matchpairs< formatoptions< commentstring< comments< iskeyword<'
+" Includes. To make the shorthand form "require 'web/cgi'" work, double the
+" last path component. Also strip off leading folder names like "~addons/".
+setlocal include=\\v^\\s*(load\|require)\\s*'\\zs\\f+\\ze'
+setlocal includeexpr=substitute(substitute(tr(v:fname,'\\','/'),'\\v^[^~][^/.]*(/[^/.]+)$','&\\1',''),'\\v^\\~[^/]+/','','')
+setlocal suffixesadd=.ijs
+
+let b:undo_ftplugin = 'setlocal matchpairs< formatoptions< commentstring< comments< iskeyword< path< include< includeexpr< suffixesadd<'
 
 " Section movement with ]] ][ [[ []. The start/end patterns below are amended
 " inside the function in order to avoid matching on the current cursor line.

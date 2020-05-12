@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         aliases(5) local alias database file
-" Maintainer:       Nikolai Weibull <nikolai@bitwi.se>
-" Latest Revision:  2008-04-14
+" Language:             aliases(5) local alias database file
+" Previous Maintainer:  Nikolai Weibull <nikolai@bitwi.se>
+" Latest Revision:      2008-04-14
 
 if exists("b:current_syntax")
   finish

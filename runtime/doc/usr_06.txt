@@ -1,4 +1,4 @@
-*usr_06.txt*	For Vim version 7.4.  Last change: 2009 Oct 28
+*usr_06.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -55,8 +55,7 @@ There can be a number of reasons why you don't see colors:
 - Your terminal does not support colors.
 	Vim will use bold, italic and underlined text, but this doesn't look
 	very nice.  You probably will want to try to get a terminal with
-	colors.  For Unix, I recommend the xterm from the XFree86 project:
-	|xfree-xterm|.
+	colors.
 
 - Your terminal does support colors, but Vim doesn't know this.
 	Make sure your $TERM setting is correct.  For example, when using an
@@ -68,9 +67,7 @@ There can be a number of reasons why you don't see colors:
 
 		TERM=xterm-color; export TERM
 
-<	The terminal name must match the terminal you are using.  If it
-	still doesn't work, have a look at |xterm-color|, which shows a few
-	ways to make Vim display colors (not only for an xterm).
+<	The terminal name must match the terminal you are using.
 
 - The file type is not recognized.
 	Vim doesn't know all file types, and sometimes it's near to impossible
@@ -152,7 +149,7 @@ You could also write your own color scheme.  This is how you do it:
    directory.  For Unix, this should work: >
 
 	!mkdir -p ~/.config/nvim/colors
-	!cp $VIMRUNTIME/colors/morning.vim ~/.vim/colors/mine.vim
+	!cp $VIMRUNTIME/colors/morning.vim ~/.config/nvim/colors/mine.vim
 <
    This is done from Vim, because it knows the value of $VIMRUNTIME.
 
@@ -196,13 +193,12 @@ too slow, you might want to disable syntax highlighting for a moment: >
 
 When editing another file (or the same one) the colors will come back.
 
-							*:syn-off*
 If you want to stop highlighting completely use: >
 
 	:syntax off
 
 This will completely disable syntax highlighting and remove it immediately for
-all buffers.
+all buffers.  See |:syntax-off| for more details.
 
 							*:syn-manual*
 If you want syntax highlighting only for specific files, use this: >
@@ -277,4 +273,4 @@ others look at the colored text.
 
 Next chapter: |usr_07.txt|  Editing more than one file
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

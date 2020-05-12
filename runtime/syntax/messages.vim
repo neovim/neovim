@@ -3,6 +3,7 @@
 " Maintainer:       Yakov Lerner <iler.ml@gmail.com>
 " Latest Revision:  2008-06-29
 " Changes:          2008-06-29 support for RFC3339 tuimestamps James Vega
+" 		    2016 Jan 19: messagesDate changed by Bram
 
 if exists("b:current_syntax")
   finish
@@ -13,7 +14,7 @@ set cpo&vim
 
 syn match   messagesBegin       display '^' nextgroup=messagesDate,messagesDateRFC3339
 
-syn match   messagesDate        contained display '\a\a\a [ 0-9]\d *'
+syn match   messagesDate        contained display '[[:lower:][:upper:]][[:lower:][:upper:]][[:lower:][:upper:]] [ 0-9]\d *'
                                 \ nextgroup=messagesHour
 
 syn match   messagesHour        contained display '\d\d:\d\d:\d\d\s*'

@@ -1,10 +1,10 @@
 " Vim syntax file
-" Language:         indent(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2010-01-23
-"   indent_is_bsd:  If exists, will change somewhat to match BSD implementation
+" Language:             indent(1) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2010-01-23
+"   indent_is_bsd:      If exists, will change somewhat to match BSD implementation
 "
-" TODO: is the deny-all (a la lilo.vim nice or no?)...
+" TODO:     is the deny-all (a la lilo.vim nice or no?)...
 "       irritating to be wrong to the last char...
 "       would be sweet if right until one char fails
 

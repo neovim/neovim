@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 "               Translations by Jakson Alves de Aquino.
-" Last Change:	2015 Feb 03
+" Last Change:	2016 Apr 02
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -342,7 +342,7 @@ syn match diffLine	"^\<\d\+\>.*"
 syn match diffLine	"^\*\*\*\*.*"
 syn match diffLine	"^---$"
 
-"Some versions of diff have lines like "#c#" and "#d#" (where # is a number)
+" Some versions of diff have lines like "#c#" and "#d#" (where # is a number)
 syn match diffLine	"^\d\+\(,\d\+\)\=[cda]\d\+\>.*"
 
 syn match diffFile	"^diff\>.*"
@@ -352,12 +352,16 @@ syn match diffFile	"^==== .*"
 syn match diffOldFile	"^\*\*\* .*"
 syn match diffNewFile	"^--- .*"
 
+" Used by git
+syn match diffIndexLine	"^index \x\x\x\x.*"
+
 syn match diffComment	"^#.*"
 
 " Define the default highlighting.
 " Only used when an item doesn't have highlighting yet
 hi def link diffOldFile		diffFile
 hi def link diffNewFile		diffFile
+hi def link diffIndexLine	PreProc
 hi def link diffFile		Type
 hi def link diffOnly		Constant
 hi def link diffIdentical	Constant

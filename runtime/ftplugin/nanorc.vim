@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         nanorc(5) - GNU nano configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             nanorc(5) - GNU nano configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

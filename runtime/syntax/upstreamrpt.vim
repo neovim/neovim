@@ -307,4 +307,4 @@ hi def link upstreamdat_Parameter Type
 "hi def link upstreamdat_Filespec Underlined
 hi def link upstreamdat_Comment Comment
 
-let b:current_syntax = "upstreamdat"
+let b:current_syntax = "upstreamrpt"

@@ -1,4 +1,4 @@
-*usr_44.txt*	For Vim version 7.4.  Last change: 2008 Dec 28
+*usr_44.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -686,7 +686,7 @@ that included files do this too, you might have to reset "b:current_syntax" if
 you include two files.
 
 If you want your syntax file to work with Vim 5.x, add a check for v:version.
-See yacc.vim for an example.
+Find an syntax file in the Vim 7.2 distribution for an example.
 
 Do not include anything that is a user preference.  Don't set 'tabstop',
 'expandtab', etc.  These belong in a filetype plugin.
@@ -716,4 +716,4 @@ up scrolling backwards and CTRL-L.
 
 Next chapter: |usr_45.txt|  Select your language
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

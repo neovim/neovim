@@ -1,4 +1,4 @@
-*help.txt*	For Vim version 7.4.  Last change: 2015 Apr 15
+*help.txt*	Nvim
 
 			VIM - main help file
 									 k
@@ -9,14 +9,14 @@ Close this window:  Use ":q<Enter>".
 
 Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
    With the mouse:  Double-click the left mouse button on a tag, e.g. |bars|.
-	Jump back:  Type CTRL-T or CTRL-O (repeat to go further back).
+	Jump back:  Type CTRL-O.  Repeat to go further back.
 
 Get specific help:  It is possible to go directly to whatever you want help
 		    on, by giving an argument to the |:help| command.
-		    It is possible to further specify the context:
-							*help-context*
+		    Prepend something to specify the context:  *help-context*
+
 			  WHAT			PREPEND    EXAMPLE	~
-		      Normal mode command      (nothing)   :help x
+		      Normal mode command		   :help x
 		      Visual mode command	  v_	   :help v_u
 		      Insert mode command	  i_	   :help i_<Esc>
 		      Command-line command	  :	   :help :quit
@@ -24,17 +24,23 @@ Get specific help:  It is possible to go directly to whatever you want help
 		      Vim command argument	  -	   :help -r
 		      Option			  '	   :help 'textwidth'
 		      Regular expression	  /	   :help /[
+		    See |help-summary| for more contexts and an explanation.
+
   Search for help:  Type ":help word", then hit CTRL-D to see matching
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
 
-VIM stands for Vi IMproved.  Most of VIM was made by Bram Moolenaar, but only
+  Getting started:  Do the Vim tutor, a 20 minute interactive training for the
+		    basic commands, see |vimtutor|.
+		    Read the user manual from start to end: |usr_01.txt|
+
+Vim stands for Vi IMproved.  Most of Vim was made by Bram Moolenaar, but only
 through the help of many others.  See |credits|.
 ------------------------------------------------------------------------------
 						*doc-file-list* *Q_ct*
 BASIC:
 |quickref|	Overview of the most common commands you will use
-|tutor|		30 minutes training course for beginners
+|tutor|		20 minutes training course for beginners
 |copying|	About copyrights
 |iccf|		Helping poor children in Uganda
 |sponsor|	Sponsor Vim development, become a registered Vim user
@@ -91,11 +97,9 @@ General subjects ~
 |helphelp.txt|	about using the help files
 |index.txt|	alphabetical index of all commands
 |help-tags|	all the tags you can jump to (index of tags)
-|howto.txt|	how to do the most common editing tasks
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
-|quotes.txt|	remarks from users of Vim
-|develop.txt|	development of Vim
+|develop.txt|	development of Nvim
 |debug.txt|	debugging Vim itself
 |uganda.txt|	Vim distribution conditions and what to do with your money
 
@@ -106,7 +110,6 @@ Basic editing ~
 |scroll.txt|	scrolling the text in the window
 |insert.txt|	Insert and Replace mode
 |change.txt|	deleting and replacing text
-|indent.txt|	automatic indenting for C and other languages
 |undo.txt|	Undo and Redo
 |repeat.txt|	repeating commands, Vim scripts and debugging
 |visual.txt|	using the Visual mode (selecting a text area)
@@ -119,55 +122,60 @@ Advanced editing ~
 |pattern.txt|	regexp patterns and search commands
 |map.txt|	key mapping and abbreviations
 |tagsrch.txt|	tags and special searches
-|quickfix.txt|	commands for a quick edit-compile-fix cycle
 |windows.txt|	commands for using multiple windows and buffers
 |tabpage.txt|	commands for using multiple tab pages
-|syntax.txt|	syntax highlighting
 |spell.txt|	spell checking
 |diff.txt|	working with two to four versions of the same file
 |autocmd.txt|	automatically executing commands on an event
-|filetype.txt|	settings done specifically for a type of file
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
+|lua.txt|	Lua API
 
 Special issues ~
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
-|term.txt|	using different terminals and mice
+
+Programming language support ~
+|indent.txt|	automatic indenting for C and other languages
+|lsp.txt|         Language Server Protocol (LSP)
+|syntax.txt|	syntax highlighting
+|filetype.txt|	settings done specifically for a type of file
+|quickfix.txt|	commands for a quick edit-compile-fix cycle
+|ft_ada.txt|	Ada (the programming language) support
+|ft_rust.txt|	Filetype plugin for Rust
+|ft_sql.txt|	about the SQL filetype plugin
+
+Language support ~
 |digraph.txt|	list of available digraphs
 |mbyte.txt|	multi-byte text support
 |mlang.txt|	non-English language support
+|rileft.txt|	right-to-left editing mode
 |arabic.txt|	Arabic language support and editing
-|farsi.txt|	Farsi (Persian) editing
 |hebrew.txt|	Hebrew language support and editing
 |russian.txt|	Russian language support and editing
-|ft_ada.txt|	Ada (the programming language) support
-|ft_sql.txt|	about the SQL filetype plugin
-|rileft.txt|	right-to-left editing mode
 
 GUI ~
 |gui.txt|	Graphical User Interface (GUI)
-|gui_w32.txt|	Win32 GUI
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim
 |if_pyth.txt|	Python interface
-|debugger.txt|	Interface with a debugger
+|if_ruby.txt|	Ruby interface
 |sign.txt|	debugging signs
 
 Versions ~
 |vim_diff.txt|	Main differences between Nvim and Vim
 |vi_diff.txt|	Main differences between Vim and Vi
-						*sys-file-list*
-Remarks about specific systems ~
-|os_win32.txt|	MS-Windows
 						*standard-plugin-list*
 Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
+|pi_health.txt|    Healthcheck framework
+|pi_matchit.txt|   Extended |%| matching
+|pi_msgpack.txt|   msgpack utilities
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens
+|pi_spec.txt|      Filetype plugin to work with rpm spec files
 |pi_tar.txt|       Tar file explorer
-|pi_vimball.txt|   Create a self-installing Vim script
 |pi_zip.txt|       Zip archive explorer
 
 LOCAL ADDITIONS:				*local-additions*
@@ -186,4 +194,4 @@ will try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
 ------------------------------------------------------------------------------
- vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
+ vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:

@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         passwd(5) password file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-10-03
+" Language:             passwd(5) password file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-10-03
 
 if exists("b:current_syntax")
   finish

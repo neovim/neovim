@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file sha256.c
 ///
 /// FIPS-180-2 compliant SHA-256 implementation
@@ -259,11 +262,11 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 ///
 /// @returns hex digest of "buf[buf_len]" in a static array.
 ///          if "salt" is not NULL also do "salt[salt_len]".
-char_u *sha256_bytes(const char_u *restrict buf,  size_t buf_len,
-                     const char_u *restrict salt, size_t salt_len)
+const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len,
+                         const uint8_t *restrict salt, size_t salt_len)
 {
   char_u sha256sum[SHA256_SUM_SIZE];
-  static char_u hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
+  static char hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
 
   sha256_self_test();
@@ -277,7 +280,7 @@ char_u *sha256_bytes(const char_u *restrict buf,  size_t buf_len,
   sha256_finish(&ctx, sha256sum);
 
   for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
-    snprintf((char *) hexit + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
+    snprintf(hexit + j * SHA_STEP, SHA_STEP + 1, "%02x", sha256sum[j]);
   }
   hexit[sizeof(hexit) - 1] = '\0';
   return hexit;
@@ -308,7 +311,7 @@ bool sha256_self_test(void)
   context_sha256_T ctx;
   char_u buf[1000];
   char_u sha256sum[SHA256_SUM_SIZE];
-  char_u *hexit;
+  const char *hexit;
 
   static bool sha256_self_tested = false;
   static bool failures = false;
@@ -320,8 +323,8 @@ bool sha256_self_test(void)
 
   for (size_t i = 0; i < 3; i++) {
     if (i < 2) {
-      hexit = sha256_bytes((char_u *) sha_self_test_msg[i],
-                           STRLEN(sha_self_test_msg[i]),
+      hexit = sha256_bytes((uint8_t *)sha_self_test_msg[i],
+                           strlen(sha_self_test_msg[i]),
                            NULL, 0);
       STRCPY(output, hexit);
     } else {

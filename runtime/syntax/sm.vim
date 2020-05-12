@@ -1,10 +1,9 @@
 " Vim syntax file
 " Language:	sendmail
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	7
+" Last Change:	Oct 25, 2016
+" Version:	8
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SM
-
 if exists("b:current_syntax")
   finish
 endif
@@ -56,36 +55,25 @@ syn match smClauseCont	contained	"^\t"
 syn region smClause	matchgroup=Delimiter start="\$?." matchgroup=Delimiter end="\$\." contains=smElse,smClause,smVar,smClauseCont
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_smil_syntax_inits")
-  if version < 508
-    let did_smil_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink smClause	Special
-  HiLink smClauseError	Error
-  HiLink smComment	Comment
-  HiLink smDefine	Statement
-  HiLink smElse		Delimiter
-  HiLink smHeader	Statement
-  HiLink smHeaderSep	String
-  HiLink smMesg		Special
-  HiLink smPrecedence	Number
-  HiLink smRewrite	Statement
-  HiLink smRewriteComment	Comment
-  HiLink smRewriteLhsToken	String
-  HiLink smRewriteLhsUser	Statement
-  HiLink smRewriteRhsToken	String
-  HiLink smRuleset	Preproc
-  HiLink smTrusted	Special
-  HiLink smVar		String
-
-  delcommand HiLink
-endif
+hi def link smClause	Special
+hi def link smClauseError	Error
+hi def link smComment	Comment
+hi def link smDefine	Statement
+hi def link smElse	Delimiter
+hi def link smHeader	Statement
+hi def link smHeaderSep	String
+hi def link smMesg	Special
+hi def link smPrecedence	Number
+hi def link smRewrite	Statement
+hi def link smRewriteComment	Comment
+hi def link smRewriteLhsToken	String
+hi def link smRewriteLhsUser	Statement
+hi def link smRewriteRhsToken	String
+hi def link smRuleset	Preproc
+hi def link smTrusted	Special
+hi def link smVar		String
 
 let b:current_syntax = "sm"
 

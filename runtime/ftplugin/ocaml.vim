@@ -5,12 +5,12 @@
 "              Pierre Vittet       <pierre-vittet@pvittet.com>
 "              Stefano Zacchiroli  <zack@bononia.it>
 "              Vincent Aravantinos <firstname.name@imag.fr>
-" URL:         http://www.ocaml.info/vim/ftplugin/ocaml.vim
+" URL:         https://github.com/rgrinberg/vim-ocaml
 " Last Change:
+"              2013 Oct 27 - Added commentstring (MM)
 "              2013 Jul 26 - load default compiler settings (MM)
 "              2013 Jul 24 - removed superfluous efm-setting (MM)
 "              2013 Jul 22 - applied fixes supplied by Hirotaka Hamada (MM)
-"              2013 Mar 15 - Improved error format (MM)
 
 if exists("b:did_ftplugin")
   finish
@@ -37,6 +37,10 @@ endif
 let s:cposet=&cpoptions
 set cpo&vim
 
+" Comment string
+setlocal comments=
+setlocal commentstring=(*%s*)
+
 " Add mappings, unless the user didn't want this.
 if !exists("no_plugin_maps") && !exists("no_ocaml_maps")
   " (un)commenting
@@ -60,15 +64,38 @@ if !exists("no_plugin_maps") && !exists("no_ocaml_maps")
 endif
 
 " Let % jump between structure elements (due to Issac Trotts)
-let b:mw = ''
-let b:mw = b:mw . ',\<let\>:\<and\>:\(\<in\>\|;;\)'
+let b:mw =         '\<let\>:\<and\>:\(\<in\>\|;;\)'
 let b:mw = b:mw . ',\<if\>:\<then\>:\<else\>'
-let b:mw = b:mw . ',\<\(for\|while\)\>:\<do\>:\<done\>,'
+let b:mw = b:mw . ',\<\(for\|while\)\>:\<do\>:\<done\>'
 let b:mw = b:mw . ',\<\(object\|sig\|struct\|begin\)\>:\<end\>'
 let b:mw = b:mw . ',\<\(match\|try\)\>:\<with\>'
 let b:match_words = b:mw
 
 let b:match_ignorecase=0
+
+function! s:OcpGrep(bang,args) abort
+  let grepprg = &l:grepprg
+  let grepformat = &l:grepformat
+  let shellpipe = &shellpipe
+  try
+    let &l:grepprg = "ocp-grep -c never"
+    setlocal grepformat=%f:%l:%m
+    if &shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee'
+      let &shellpipe = "| tee"
+    endif
+    execute 'grep! '.a:args
+    if empty(a:bang) && !empty(getqflist())
+      return 'cfirst'
+    else
+      return ''
+    endif
+  finally
+    let &l:grepprg = grepprg
+    let &l:grepformat = grepformat
+    let &shellpipe = shellpipe
+  endtry
+endfunction
+command! -bar -bang -complete=file -nargs=+ Ocpgrep exe s:OcpGrep(<q-bang>, <q-args>)
 
 " switching between interfaces (.mli) and implementations (.ml)
 if !exists("g:did_ocaml_switch")
@@ -97,15 +124,8 @@ endif
 " Folding support
 
 " Get the modeline because folding depends on indentation
-let s:s = line2byte(line('.'))+col('.')-1
-if search('^\s*(\*:o\?caml:')
-  let s:modeline = getline(".")
-else
-  let s:modeline = ""
-endif
-if s:s > 0
-  exe 'goto' s:s
-endif
+let lnum = search('^\s*(\*:o\?caml:', 'n')
+let s:modeline = lnum? getline(lnum): ""
 
 " Get the indentation params
 let s:m = matchstr(s:modeline,'default\s*=\s*\d\+')
@@ -372,8 +392,8 @@ endfunction
   endfun
 
   " This variable contain a dictionnary of list. Each element of the dictionnary
-  " represent an annotation system. An annotation system is a list with :
-  " - annotation file name as it's key
+  " represent an annotation system. An annotation system is a list with:
+  " - annotation file name as its key
   " - annotation file path as first element of the contained list
   " - build path as second element of the contained list
   " - annot_file_last_mod (contain the date of .annot file) as third element

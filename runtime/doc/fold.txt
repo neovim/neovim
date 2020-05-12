@@ -1,4 +1,4 @@
-*fold.txt*      For Vim version 7.4.  Last change: 2013 Dec 04
+*fold.txt*      Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -9,10 +9,7 @@ Folding						*Folding* *folding* *folds*
 You can find an introduction on folding in chapter 28 of the user manual.
 |usr_28.txt|
 
-1. Fold methods		|fold-methods|
-2. Fold commands	|fold-commands|
-3. Fold options		|fold-options|
-4. Behavior of folds	|fold-behavior|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Fold methods					*fold-methods*
@@ -61,7 +58,7 @@ whichever is lower.  These are empty or white lines and lines starting
 with a character in 'foldignore'.  White space is skipped before checking for
 characters in 'foldignore'.  For C use "#" to ignore preprocessor lines.
 
-When you want to ignore lines in another way, use the 'expr' method.  The
+When you want to ignore lines in another way, use the "expr" method.  The
 |indent()| function can be used in 'foldexpr' to get the indent of a line.
 
 
@@ -76,7 +73,7 @@ This will call a function to compute the fold level: >
 	:set foldexpr=MyFoldLevel(v:lnum)
 This will make a fold out of paragraphs separated by blank lines: >
 	:set foldexpr=getline(v:lnum)=~'^\\s*$'&&getline(v:lnum+1)=~'\\S'?'<1':1
-this does the same: >
+This does the same: >
 	:set foldexpr=getline(v:lnum-1)=~'^\\s*$'&&getline(v:lnum)=~'\\S'?'>1':1
 
 Note that backslashes must be used to escape characters that ":set" handles
@@ -94,9 +91,9 @@ These are the conditions with which the expression is evaluated:
 			lowest.
   "="			use fold level from the previous line
   "a1", "a2", ..	add one, two, .. to the fold level of the previous
-			line
+			line, use the result for the current line
   "s1", "s2", ..	subtract one, two, .. from the fold level of the
-			previous line
+			previous line, use the result for the next line
   "<1", "<2", ..	a fold with this level ends at this line
   ">1", ">2", ..	a fold with this level starts at this line
 
@@ -119,12 +116,24 @@ method can be very slow!
 Try to avoid the "=", "a" and "s" return values, since Vim often has to search
 backwards for a line for which the fold level is defined.  This can be slow.
 
+An example of using "a1" and "s1": For a multi-line C comment, a line
+containing "/*" would return "a1" to start a fold, and a line containing "*/"
+would return "s1" to end the fold after that line: >
+  if match(thisline, '/\*') >= 0
+    return 'a1'
+  elseif match(thisline, '\*/') >= 0
+    return 's1'
+  else
+    return '='
+  endif
+However, this won't work for single line comments, strings, etc.
+
 |foldlevel()| can be useful to compute a fold level relative to a previous
 fold level.  But note that foldlevel() may return -1 if the level is not known
 yet.  And it returns the level at the start of the line, while a fold might
 end in that line.
 
-It may happened that folds are not updated properly.  You can use |zx| or |zX|
+It may happen that folds are not updated properly.  You can use |zx| or |zX|
 to force updating folds.
 
 
@@ -188,7 +197,7 @@ and the level given by the marker:
 1. If a marker with the same fold level is encountered, the previous fold
    ends and another fold with the same level starts.
 2. If a marker with a higher fold level is found, a nested fold is started.
-3. if a marker with a lower fold level is found, all folds up to and including
+3. If a marker with a lower fold level is found, all folds up to and including
    this level end and a fold with the specified level starts.
 
 The number indicates the fold level.  A zero cannot be used (a marker with
@@ -427,7 +436,7 @@ zk		Move upwards to the end of the previous fold.  A closed fold
 
 EXECUTING COMMANDS ON FOLDS ~
 
-:[range]foldd[oopen] {cmd}			*:foldd* *:folddoopen*
+:[range]foldd[oopen] {cmd}			*:foldd* *:folddo* *:folddoopen*
 		Execute {cmd} on all lines that are not in a closed fold.
 		When [range] is given, only these lines are used.
 		Each time {cmd} is executed the cursor is positioned on the
@@ -518,8 +527,7 @@ FOLDCOLUMN						*fold-foldcolumn*
 
 'foldcolumn' is a number, which sets the width for a column on the side of the
 window to indicate folds.  When it is zero, there is no foldcolumn.  A normal
-value is 4 or 5.  The minimal useful value is 2, although 1 still provides
-some information.  The maximum is 12.
+value is auto:9. The maximum is 9.
 
 An open fold is indicated with a column that has a '-' at the top and '|'
 characters below it.  This column stops where the open fold stops.  When folds
@@ -570,8 +578,9 @@ what you type!
 When using an operator, a closed fold is included as a whole.  Thus "dl"
 deletes the whole closed fold under the cursor.
 
-For Ex commands the range is adjusted to always start at the first line of a
-closed fold and end at the last line of a closed fold.  Thus this command: >
+For Ex commands that work on buffer lines the range is adjusted to always
+start at the first line of a closed fold and end at the last line of a closed
+fold.  Thus this command: >
 	:s/foo/bar/g
 when used with the cursor on a closed fold, will replace "foo" with "bar" in
 all lines of the fold.
@@ -585,4 +594,4 @@ used.  Otherwise the values from the window where the buffer was edited last
 are used.
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

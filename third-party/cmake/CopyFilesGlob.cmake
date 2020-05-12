@@ -9,6 +9,8 @@ if(NOT TO)
   message(FATAL_ERROR "TO must be set")
 endif()
 
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${TO})
+
 file(GLOB files ${FROM_GLOB})
 foreach(file ${files})
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${file} ${TO} RESULT_VARIABLE rv)

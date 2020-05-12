@@ -1,6 +1,6 @@
 " Vim autoload file for editing compressed files.
 " Maintainer: Bram Moolenaar <Bram@vim.org>
-" Last Change: 2014 Nov 05
+" Last Change: 2016 Sep 28
 
 " These functions are used by the gzip plugin.
 
@@ -63,6 +63,9 @@ fun gzip#read(cmd)
   " set 'modifiable'
   let ma_save = &ma
   setlocal ma
+  " set 'write'
+  let write_save = &write
+  set write
   " Reset 'foldenable', otherwise line numbers get adjusted.
   if has("folding")
     let fen_save = &fen
@@ -127,6 +130,7 @@ fun gzip#read(cmd)
   let &pm = pm_save
   let &cpo = cpo_save
   let &l:ma = ma_save
+  let &write = write_save
   if has("folding")
     let &l:fen = fen_save
   endif

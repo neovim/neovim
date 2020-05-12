@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         sudoers(5) configuration files
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             sudoers(5) configuration files
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

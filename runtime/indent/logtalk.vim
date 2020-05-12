@@ -1,5 +1,5 @@
 "  Maintainer:	Paulo Moura <pmoura@logtalk.org>
-"  Revised on:	2008.06.02
+"  Revised on:	2018.08.04
 "  Language:	Logtalk
 
 " This Logtalk indent file is a modified version of the Prolog
@@ -38,24 +38,27 @@ function! GetLogtalkIndent()
 	endif
 	" Check for entity opening directive on previous line
 	if pline =~ '^\s*:-\s\(object\|protocol\|category\)\ze(.*,$'
-		let ind = ind + &sw
+		let ind = ind + shiftwidth()
 	" Check for clause head on previous line
 	elseif pline =~ ':-\s*\(%.*\)\?$'
-		let ind = ind + &sw
+		let ind = ind + shiftwidth()
+	" Check for grammar rule head on previous line
+	elseif pline =~ '-->\s*\(%.*\)\?$'
+		let ind = ind + shiftwidth()
 	" Check for entity closing directive on previous line
 	elseif pline =~ '^\s*:-\send_\(object\|protocol\|category\)\.\(%.*\)\?$'
-		let ind = ind - &sw
+		let ind = ind - shiftwidth()
 	" Check for end of clause on previous line
 	elseif pline =~ '\.\s*\(%.*\)\?$'
-		let ind = ind - &sw
+		let ind = ind - shiftwidth()
 	endif
 	" Check for opening conditional on previous line
 	if pline =~ '^\s*\([(;]\|->\)' && pline !~ '\.\s*\(%.*\)\?$' && pline !~ '^.*\([)][,]\s*\(%.*\)\?$\)'
-		let ind = ind + &sw
+		let ind = ind + shiftwidth()
 	endif
 	" Check for closing an unclosed paren, or middle ; or ->
 	if line =~ '^\s*\([);]\|->\)'
-		let ind = ind - &sw
+		let ind = ind - shiftwidth()
 	endif
 	return ind
 endfunction

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         protocols(5) - Internet protocols definition file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             protocols(5) - Internet protocols definition file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

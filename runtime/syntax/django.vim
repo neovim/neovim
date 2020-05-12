@@ -3,11 +3,8 @@
 " Maintainer:	Dave Hodder <dmh@dmh.org.uk>
 " Last Change:	2014 Jul 13
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -68,29 +65,19 @@ syn region djangoComment start="{%\s*comment\(\s\+.\{-}\)\?%}" end="{%\s*endcomm
 syn region djangoComBlock start="{#" end="#}" contains=djangoTodo
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_django_syn_inits")
-  if version < 508
-    let did_django_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink djangoTagBlock PreProc
-  HiLink djangoVarBlock PreProc
-  HiLink djangoStatement Statement
-  HiLink djangoFilter Identifier
-  HiLink djangoArgument Constant
-  HiLink djangoTagError Error
-  HiLink djangoVarError Error
-  HiLink djangoError Error
-  HiLink djangoComment Comment
-  HiLink djangoComBlock Comment
-  HiLink djangoTodo Todo
+hi def link djangoTagBlock PreProc
+hi def link djangoVarBlock PreProc
+hi def link djangoStatement Statement
+hi def link djangoFilter Identifier
+hi def link djangoArgument Constant
+hi def link djangoTagError Error
+hi def link djangoVarError Error
+hi def link djangoError Error
+hi def link djangoComment Comment
+hi def link djangoComBlock Comment
+hi def link djangoTodo Todo
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "django"

@@ -11,22 +11,15 @@
 " Version:              13
 " Last Change:		Nov 11 2012
 
-" For version 5.x: Clear all syntax item
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
 let s:cpo_save = &cpo
 set cpo&vim
 
-if version >= 600
-  setlocal iskeyword=@,48-57,_,-,!,#,$,%
-else
-  set iskeyword=@,48-57,_,-,!,#,$,%
-endif
+setlocal iskeyword=@,48-57,_,-,!,#,$,%
 
 " The Progress editor doesn't cope with tabs very well.
 set expandtab
@@ -282,44 +275,34 @@ syn keyword ProgressType	char[acter] int[eger] int64 dec[imal] log[ical] da[te] 
 syn sync lines=800
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_progress_syntax_inits")
-	if version < 508
-		let did_progress_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	" The default methods for highlighting. Can be overridden later.
-	HiLink ProgressByte		Number
-	HiLink ProgressCase		Repeat
-	HiLink ProgressComment		Comment
-	HiLink ProgressConditional	Conditional
-	HiLink ProgressDebug		Debug
-	HiLink ProgressDo		Repeat
-	HiLink ProgressEndError		Error
-	HiLink ProgressFor		Repeat
-	HiLink ProgressFunction		Procedure
-	HiLink ProgressIdentifier	Identifier
-	HiLink ProgressInclude		Include
-	HiLink ProgressMatrixDelimiter	Identifier
-	HiLink ProgressNumber		Number
-	HiLink ProgressOperator		Operator
-	HiLink ProgressPreProc		PreProc
-	HiLink ProgressProcedure	Procedure
-	HiLink ProgressQuote		Delimiter
-	HiLink ProgressRepeat		Repeat
-	HiLink ProgressReserved		Statement
-	HiLink ProgressSpaceError	Error
-	HiLink ProgressString		String
-	HiLink ProgressTodo		Todo
-	HiLink ProgressType		Statement
-	HiLink ProgressShowTab		Error
+" The default methods for highlighting. Can be overridden later.
+hi def link ProgressByte		Number
+hi def link ProgressCase		Repeat
+hi def link ProgressComment		Comment
+hi def link ProgressConditional	Conditional
+hi def link ProgressDebug		Debug
+hi def link ProgressDo		Repeat
+hi def link ProgressEndError		Error
+hi def link ProgressFor		Repeat
+hi def link ProgressFunction		Procedure
+hi def link ProgressIdentifier	Identifier
+hi def link ProgressInclude		Include
+hi def link ProgressMatrixDelimiter	Identifier
+hi def link ProgressNumber		Number
+hi def link ProgressOperator		Operator
+hi def link ProgressPreProc		PreProc
+hi def link ProgressProcedure	Procedure
+hi def link ProgressQuote		Delimiter
+hi def link ProgressRepeat		Repeat
+hi def link ProgressReserved		Statement
+hi def link ProgressSpaceError	Error
+hi def link ProgressString		String
+hi def link ProgressTodo		Todo
+hi def link ProgressType		Statement
+hi def link ProgressShowTab		Error
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "progress"
 

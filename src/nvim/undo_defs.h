@@ -4,8 +4,10 @@
 #include <time.h>  // for time_t
 
 #include "nvim/pos.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
+
+typedef struct u_header u_header_T;
 
 /* Structure to store info about the Visual area. */
 typedef struct {
@@ -15,8 +17,9 @@ typedef struct {
   colnr_T vi_curswant;          /* MAXCOL from w_curswant */
 } visualinfo_T;
 
+#include "nvim/buffer_defs.h"
+
 typedef struct u_entry u_entry_T;
-typedef struct u_header u_header_T;
 struct u_entry {
   u_entry_T   *ue_next;         /* pointer to next entry in list */
   linenr_T ue_top;              /* number of line above undo block */
@@ -54,14 +57,15 @@ struct u_header {
   u_entry_T   *uh_getbot_entry;   /* pointer to where ue_bot must be set */
   pos_T uh_cursor;              /* cursor position before saving */
   long uh_cursor_vcol;
-  int uh_flags;                 /* see below */
-  fmark_T uh_namedm[NMARKS];    /* marks before undo/after redo */
-  visualinfo_T uh_visual;       /* Visual areas before undo/after redo */
-  time_t uh_time;               /* timestamp when the change was made */
-  long uh_save_nr;              /* set when the file was saved after the
-                                   changes in this block */
+  int uh_flags;                 // see below
+  fmark_T uh_namedm[NMARKS];    // marks before undo/after redo
+  extmark_undo_vec_t uh_extmark;  // info to move extmarks
+  visualinfo_T uh_visual;       // Visual areas before undo/after redo
+  time_t uh_time;               // timestamp when the change was made
+  long uh_save_nr;              // set when the file was saved after the
+                                // changes in this block
 #ifdef U_DEBUG
-  int uh_magic;                 /* magic number to check allocation */
+  int uh_magic;                 // magic number to check allocation
 #endif
 };
 

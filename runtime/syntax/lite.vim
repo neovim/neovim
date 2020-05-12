@@ -8,11 +8,8 @@
 " Options	lite_sql_query = 1 for SQL syntax highligthing inside strings
 "		lite_minlines = x     to sync at least x lines backwards
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -138,39 +135,29 @@ if main_syntax == 'lite'
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lite_syn_inits")
-  if version < 508
-    let did_lite_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink liteComment		Comment
-  HiLink liteString		String
-  HiLink liteNumber		Number
-  HiLink liteFloat		Float
-  HiLink liteIdentifier	Identifier
-  HiLink liteGlobalIdentifier	Identifier
-  HiLink liteIntVar		Identifier
-  HiLink liteFunctions		Function
-  HiLink liteRepeat		Repeat
-  HiLink liteConditional	Conditional
-  HiLink liteStatement		Statement
-  HiLink liteType		Type
-  HiLink liteInclude		Include
-  HiLink liteDefine		Define
-  HiLink liteSpecialChar	SpecialChar
-  HiLink liteParentError	liteError
-  HiLink liteError		Error
-  HiLink liteTodo		Todo
-  HiLink liteOperator		Operator
-  HiLink liteRelation		Operator
+hi def link liteComment		Comment
+hi def link liteString		String
+hi def link liteNumber		Number
+hi def link liteFloat		Float
+hi def link liteIdentifier	Identifier
+hi def link liteGlobalIdentifier	Identifier
+hi def link liteIntVar		Identifier
+hi def link liteFunctions		Function
+hi def link liteRepeat		Repeat
+hi def link liteConditional	Conditional
+hi def link liteStatement		Statement
+hi def link liteType		Type
+hi def link liteInclude		Include
+hi def link liteDefine		Define
+hi def link liteSpecialChar	SpecialChar
+hi def link liteParentError	liteError
+hi def link liteError		Error
+hi def link liteTodo		Todo
+hi def link liteOperator		Operator
+hi def link liteRelation		Operator
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "lite"
 

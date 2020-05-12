@@ -9,11 +9,8 @@
 " dosbatch_cmdextversion	- 1 = Windows NT, 2 = Windows 2000 [default]
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -111,49 +108,39 @@ syn keyword dosbatchImplicit    sort start subst time title tree type ver verify
 syn keyword dosbatchImplicit    vol xcopy
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dosbatch_syntax_inits")
-  if version < 508
-    let did_dosbatch_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink dosbatchTodo		Todo
+hi def link dosbatchTodo		Todo
 
-  HiLink dosbatchStatement	Statement
-  HiLink dosbatchCommands	dosbatchStatement
-  HiLink dosbatchLabel		Label
-  HiLink dosbatchConditional	Conditional
-  HiLink dosbatchRepeat		Repeat
+hi def link dosbatchStatement	Statement
+hi def link dosbatchCommands	dosbatchStatement
+hi def link dosbatchLabel		Label
+hi def link dosbatchConditional	Conditional
+hi def link dosbatchRepeat		Repeat
 
-  HiLink dosbatchOperator       Operator
-  HiLink dosbatchEchoOperator   dosbatchOperator
-  HiLink dosbatchIfOperator     dosbatchOperator
+hi def link dosbatchOperator       Operator
+hi def link dosbatchEchoOperator   dosbatchOperator
+hi def link dosbatchIfOperator     dosbatchOperator
 
-  HiLink dosbatchArgument	Identifier
-  HiLink dosbatchIdentifier     Identifier
-  HiLink dosbatchVariable	dosbatchIdentifier
+hi def link dosbatchArgument	Identifier
+hi def link dosbatchIdentifier     Identifier
+hi def link dosbatchVariable	dosbatchIdentifier
 
-  HiLink dosbatchSpecialChar	SpecialChar
-  HiLink dosbatchString		String
-  HiLink dosbatchNumber		Number
-  HiLink dosbatchInteger	dosbatchNumber
-  HiLink dosbatchHex		dosbatchNumber
-  HiLink dosbatchBinary		dosbatchNumber
-  HiLink dosbatchOctal		dosbatchNumber
+hi def link dosbatchSpecialChar	SpecialChar
+hi def link dosbatchString		String
+hi def link dosbatchNumber		Number
+hi def link dosbatchInteger	dosbatchNumber
+hi def link dosbatchHex		dosbatchNumber
+hi def link dosbatchBinary		dosbatchNumber
+hi def link dosbatchOctal		dosbatchNumber
 
-  HiLink dosbatchComment	Comment
-  HiLink dosbatchImplicit	Function
+hi def link dosbatchComment	Comment
+hi def link dosbatchImplicit	Function
 
-  HiLink dosbatchSwitch		Special
+hi def link dosbatchSwitch		Special
 
-  HiLink dosbatchCmd		PreProc
+hi def link dosbatchCmd		PreProc
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "dosbatch"
 

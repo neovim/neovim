@@ -2,7 +2,7 @@
 :" information about the environment of a possible bug in Vim.
 :"
 :" Maintainer:	Bram Moolenaar <Bram@vim.org>
-:" Last change:	2005 Jun 12
+:" Last change:	2019 Jan 27
 :"
 :" To use inside Vim:
 :"	:so $VIMRUNTIME/bugreport.vim
@@ -53,7 +53,6 @@
 :  scriptnames
 :endif
 :set all
-:set termcap
 :if has("autocmd")
 :  au
 :endif

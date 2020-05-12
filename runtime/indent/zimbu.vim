@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Zimbu
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Sep 08
+" Last Change:	2016 Jan 25
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -74,9 +74,9 @@ func GetZimbuIndent(lnum)
 	  \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
 	  \ . " =~ '\\(Comment\\|String\\|Char\\)$'")
       if pp > 0
-	return indent(prevLnum) + &sw
+	return indent(prevLnum) + shiftwidth()
       endif
-      return indent(prevLnum) + &sw * 2
+      return indent(prevLnum) + shiftwidth() * 2
     endif
     if plnumstart == p
       return indent(prevLnum)
@@ -102,13 +102,13 @@ func GetZimbuIndent(lnum)
   endif
 
   if prevline =~ '^\s*\(IF\|\|ELSEIF\|ELSE\|GENERATE_IF\|\|GENERATE_ELSEIF\|GENERATE_ELSE\|WHILE\|REPEAT\|TRY\|CATCH\|FINALLY\|FOR\|DO\|SWITCH\|CASE\|DEFAULT\|FUNC\|VIRTUAL\|ABSTRACT\|DEFINE\|REPLACE\|FINAL\|PROC\|MAIN\|NEW\|ENUM\|CLASS\|INTERFACE\|BITS\|MODULE\|SHARED\)\>'
-    let plindent += &sw
+    let plindent += shiftwidth()
   endif
   if thisline =~ '^\s*\(}\|ELSEIF\>\|ELSE\>\|CATCH\|FINALLY\|GENERATE_ELSEIF\>\|GENERATE_ELSE\>\|UNTIL\>\)'
-    let plindent -= &sw
+    let plindent -= shiftwidth()
   endif
   if thisline =~ '^\s*\(CASE\>\|DEFAULT\>\)' && prevline !~ '^\s*SWITCH\>'
-    let plindent -= &sw
+    let plindent -= shiftwidth()
   endif
 
   " line up continued comment that started after some code

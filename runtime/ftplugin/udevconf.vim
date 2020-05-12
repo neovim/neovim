@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         udev(8) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             udev(8) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

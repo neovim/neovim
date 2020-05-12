@@ -2,6 +2,7 @@
 " Language:	    CSS
 " Maintainer:	    Nikolai Weibull <now@bitwi.se>
 " Latest Revision:  2012-05-30
+"		    Use of shiftwidth() added by Oleg Zubchenko.	
 
 if exists("b:did_indent")
   finish
@@ -75,8 +76,8 @@ function GetCSSIndent()
     return 0
   endif
 
-  return indent(pnum) + s:count_braces(pnum, 1) * &sw
-        \ - s:count_braces(v:lnum, 0) * &sw
+  return indent(pnum) + s:count_braces(pnum, 1) * shiftwidth()
+        \ - s:count_braces(v:lnum, 0) * shiftwidth()
 endfunction
 
 let &cpo = s:keepcpo

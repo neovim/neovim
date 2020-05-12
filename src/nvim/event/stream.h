@@ -13,11 +13,8 @@ typedef struct stream Stream;
 /// Type of function called when the Stream buffer is filled with data
 ///
 /// @param stream The Stream instance
-/// @param rbuffer The associated RBuffer instance
-/// @param count Number of bytes to read. This must be respected if keeping
-///              the order of events is a requirement. This is because events
-///              may be queued and only processed later when more data is copied
-///              into to the buffer, so one read may starve another.
+/// @param buf The associated RBuffer instance
+/// @param count Number of bytes that was read.
 /// @param data User-defined data
 /// @param eof If the stream reached EOF.
 typedef void (*stream_read_cb)(Stream *stream, RBuffer *buf, size_t count,
@@ -26,17 +23,22 @@ typedef void (*stream_read_cb)(Stream *stream, RBuffer *buf, size_t count,
 /// Type of function called when the Stream has information about a write
 /// request.
 ///
-/// @param wstream The Stream instance
+/// @param stream The Stream instance
 /// @param data User-defined data
 /// @param status 0 on success, anything else indicates failure
 typedef void (*stream_write_cb)(Stream *stream, void *data, int status);
 typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
+  bool closed;
+  bool did_eof;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
     uv_idle_t idle;
+#ifdef WIN32
+    uv_tty_t tty;
+#endif
   } uv;
   uv_stream_t *uvstream;
   uv_buf_t uvbuf;
@@ -44,14 +46,15 @@ struct stream {
   uv_file fd;
   stream_read_cb read_cb;
   stream_write_cb write_cb;
+  void *cb_data;
   stream_close_cb close_cb, internal_close_cb;
+  void *close_cb_data, *internal_data;
   size_t fpos;
   size_t curmem;
   size_t maxmem;
   size_t pending_reqs;
-  void *data, *internal_data;
-  bool closed;
-  Queue *events;
+  size_t num_bytes;
+  MultiQueue *events;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

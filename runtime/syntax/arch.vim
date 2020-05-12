@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         GNU Arch inventory file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-17
+" Language:             GNU Arch inventory file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-06-17
 
 if exists("b:current_syntax")
   finish

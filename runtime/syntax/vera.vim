@@ -10,11 +10,8 @@
 
 " (change the value for guibg to any color you like)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -287,74 +284,64 @@ endif
 exec "syn sync ccomment veraComment minlines=" . b:vera_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_vera_syn_inits")
-  if version < 508
-    let did_vera_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink veraClass		Identifier
-  HiLink veraObject		Identifier
-  HiLink veraUserMethod		Function
-  HiLink veraTask		Keyword
-  HiLink veraModifier		Tag
-  HiLink veraDeprecated		veraError
-  HiLink veraMethods		Statement
-  " HiLink veraInterface		Label
-  HiLink veraInterface		Function
+hi def link veraClass		Identifier
+hi def link veraObject		Identifier
+hi def link veraUserMethod		Function
+hi def link veraTask		Keyword
+hi def link veraModifier		Tag
+hi def link veraDeprecated		veraError
+hi def link veraMethods		Statement
+" hi def link veraInterface		Label
+hi def link veraInterface		Function
 
-  HiLink veraFormat		veraSpecial
-  HiLink veraCppString		veraString
-  HiLink veraCommentL		veraComment
-  HiLink veraCommentStart		veraComment
-  HiLink veraLabel			Label
-  HiLink veraUserLabel		Label
-  HiLink veraConditional		Conditional
-  HiLink veraRepeat		Repeat
-  HiLink veraCharacter		Character
-  HiLink veraSpecialCharacter	veraSpecial
-  HiLink veraNumber		Number
-  HiLink veraOctal			Number
-  HiLink veraOctalZero		PreProc	 " link this to Error if you want
-  HiLink veraFloat			Float
-  HiLink veraOctalError		veraError
-  HiLink veraParenError		veraError
-  HiLink veraErrInParen		veraError
-  HiLink veraErrInBracket		veraError
-  HiLink veraCommentError		veraError
-  HiLink veraCommentStartError	veraError
-  HiLink veraSpaceError         SpaceError
-  HiLink veraSpecialError		veraError
-  HiLink veraOperator		Operator
-  HiLink veraStructure		Structure
-  HiLink veraInclude		Include
-  HiLink veraPreProc		PreProc
-  HiLink veraDefine		Macro
-  HiLink veraIncluded		veraString
-  HiLink veraError			Error
-  HiLink veraStatement		Statement
-  HiLink veraPreCondit		PreCondit
-  HiLink veraType			Type
-  " HiLink veraConstant		Constant
-  HiLink veraConstant		Keyword
-  HiLink veraUserConstant		Constant
-  HiLink veraCommentString		veraString
-  HiLink veraComment2String	veraString
-  HiLink veraCommentSkip		veraComment
-  HiLink veraString		String
-  HiLink veraComment		Comment
-  HiLink veraSpecial		SpecialChar
-  HiLink veraTodo			Todo
-  HiLink veraCppSkip		veraCppOut
-  HiLink veraCppOut2		veraCppOut
-  HiLink veraCppOut		Comment
+hi def link veraFormat		veraSpecial
+hi def link veraCppString		veraString
+hi def link veraCommentL		veraComment
+hi def link veraCommentStart		veraComment
+hi def link veraLabel			Label
+hi def link veraUserLabel		Label
+hi def link veraConditional		Conditional
+hi def link veraRepeat		Repeat
+hi def link veraCharacter		Character
+hi def link veraSpecialCharacter	veraSpecial
+hi def link veraNumber		Number
+hi def link veraOctal			Number
+hi def link veraOctalZero		PreProc	 " link this to Error if you want
+hi def link veraFloat			Float
+hi def link veraOctalError		veraError
+hi def link veraParenError		veraError
+hi def link veraErrInParen		veraError
+hi def link veraErrInBracket		veraError
+hi def link veraCommentError		veraError
+hi def link veraCommentStartError	veraError
+hi def link veraSpaceError         SpaceError
+hi def link veraSpecialError		veraError
+hi def link veraOperator		Operator
+hi def link veraStructure		Structure
+hi def link veraInclude		Include
+hi def link veraPreProc		PreProc
+hi def link veraDefine		Macro
+hi def link veraIncluded		veraString
+hi def link veraError			Error
+hi def link veraStatement		Statement
+hi def link veraPreCondit		PreCondit
+hi def link veraType			Type
+" hi def link veraConstant		Constant
+hi def link veraConstant		Keyword
+hi def link veraUserConstant		Constant
+hi def link veraCommentString		veraString
+hi def link veraComment2String	veraString
+hi def link veraCommentSkip		veraComment
+hi def link veraString		String
+hi def link veraComment		Comment
+hi def link veraSpecial		SpecialChar
+hi def link veraTodo			Todo
+hi def link veraCppSkip		veraCppOut
+hi def link veraCppOut2		veraCppOut
+hi def link veraCppOut		Comment
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "vera"
 

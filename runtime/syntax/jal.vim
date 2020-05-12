@@ -9,11 +9,8 @@
 "
 " TODO test.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -171,77 +168,67 @@ endif
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_jal_syn_inits")
-if version < 508
-  let did_jal_syn_inits = 1
-  command -nargs=+ HiLink hi link <args>
-else
-  command -nargs=+ HiLink hi def link <args>
-endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink jalAcces		jalStatement
-  HiLink jalBoolean		Boolean
-  HiLink jalBit			Boolean
-  HiLink jalComment		Comment
-  HiLink jalConditional		Conditional
-  HiLink jalConstant		Constant
-  HiLink jalDelimiter		Identifier
-  HiLink jalDirective		PreProc
-  HiLink jalException		Exception
-  HiLink jalFloat		Float
-  HiLink jalFunction		Function
-  HiLink jalPsudoVarsKey	Function
-  HiLink jalLabel		Label
-  HiLink jalMatrixDelimiter	Identifier
-  HiLink jalModifier		Type
-  HiLink jalNumber		Number
-  HiLink jalBinNumber		Number
-  HiLink jalHexNumber		Number
-  HiLink jalOperator		Operator
-  HiLink jalPredefined		Constant
-  HiLink jalPreProc		PreProc
-  HiLink jalRepeat		Repeat
-  HiLink jalStatement		Statement
-  HiLink jalString		String
-  HiLink jalStringEscape	Special
-  HiLink jalStringEscapeGPC	Special
-  HiLink jalStringError		Error
-  HiLink jalStruct		jalStatement
-  HiLink jalSymbolOperator	jalOperator
-  HiLink jalTodo		Todo
-  HiLink jalType		Type
-  HiLink jalUnclassified	Statement
-  HiLink jalAsm			Assembler
-  HiLink jalError		Error
-  HiLink jalAsmKey		Statement
-  HiLink jalPIC			Statement
+hi def link jalAcces		jalStatement
+hi def link jalBoolean		Boolean
+hi def link jalBit			Boolean
+hi def link jalComment		Comment
+hi def link jalConditional		Conditional
+hi def link jalConstant		Constant
+hi def link jalDelimiter		Identifier
+hi def link jalDirective		PreProc
+hi def link jalException		Exception
+hi def link jalFloat		Float
+hi def link jalFunction		Function
+hi def link jalPsudoVarsKey	Function
+hi def link jalLabel		Label
+hi def link jalMatrixDelimiter	Identifier
+hi def link jalModifier		Type
+hi def link jalNumber		Number
+hi def link jalBinNumber		Number
+hi def link jalHexNumber		Number
+hi def link jalOperator		Operator
+hi def link jalPredefined		Constant
+hi def link jalPreProc		PreProc
+hi def link jalRepeat		Repeat
+hi def link jalStatement		Statement
+hi def link jalString		String
+hi def link jalStringEscape	Special
+hi def link jalStringEscapeGPC	Special
+hi def link jalStringError		Error
+hi def link jalStruct		jalStatement
+hi def link jalSymbolOperator	jalOperator
+hi def link jalTodo		Todo
+hi def link jalType		Type
+hi def link jalUnclassified	Statement
+hi def link jalAsm			Assembler
+hi def link jalError		Error
+hi def link jalAsmKey		Statement
+hi def link jalPIC			Statement
 
-  HiLink jalShowTab		Error
+hi def link jalShowTab		Error
 
-  HiLink picTodo		Todo
-  HiLink picComment		Comment
-  HiLink picDirective		Statement
-  HiLink picLabel		Label
-  HiLink picString		String
+hi def link picTodo		Todo
+hi def link picComment		Comment
+hi def link picDirective		Statement
+hi def link picLabel		Label
+hi def link picString		String
 
-  HiLink picOpcode		Keyword
-  HiLink picRegister		Structure
-  HiLink picRegisterPart	Special
-  HiLink picPinDir		SPecial
-  HiLink picPortDir		SPecial
+hi def link picOpcode		Keyword
+hi def link picRegister		Structure
+hi def link picRegisterPart	Special
+hi def link picPinDir		SPecial
+hi def link picPortDir		SPecial
 
-  HiLink picASCII		String
-  HiLink picBinary		Number
-  HiLink picDecimal		Number
-  HiLink picHexadecimal		Number
-  HiLink picOctal		Number
+hi def link picASCII		String
+hi def link picBinary		Number
+hi def link picDecimal		Number
+hi def link picHexadecimal		Number
+hi def link picOctal		Number
 
-  HiLink picIdentifier		Identifier
+hi def link picIdentifier		Identifier
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "jal"

@@ -1,8 +1,8 @@
 -- Test for autocommand that changes the buffer list, when doing ":ball".
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe(':ball', function()
   setup(clear)
@@ -14,44 +14,44 @@ describe(':ball', function()
           this is a test
       end of test file Xxx]])
 
-    execute('w! Xxx0')
+    feed_command('w! Xxx0')
     feed('gg')
 
     -- Write test file Xxx1
     feed('A1:.,/end of/w! Xxx1<cr>')
-    execute('sp Xxx1')
-    execute('close')
+    feed_command('sp Xxx1')
+    feed_command('close')
 
     -- Write test file Xxx2
     feed('$r2:.,/end of/w! Xxx2<cr>')
-    execute('sp Xxx2')
-    execute('close')
+    feed_command('sp Xxx2')
+    feed_command('close')
 
     -- Write test file Xxx3
     feed('$r3:.,/end of/w! Xxx3<cr>')
-    execute('sp Xxx3')
-    execute('close')
+    feed_command('sp Xxx3')
+    feed_command('close')
 
-    execute('au BufReadPost Xxx2 bwipe')
+    feed_command('au BufReadPost Xxx2 bwipe')
 
     -- Open window for all args, close Xxx2
     feed('$r4:ball<cr>')
-   
+
     -- Write contents of this file
-    execute('%yank A')
-    
-    -- Append contents of second window (Xxx1) 
+    feed_command('%yank A')
+
+    -- Append contents of second window (Xxx1)
     feed('')
-    execute('%yank A')
+    feed_command('%yank A')
 
     -- Append contents of last window (this file)
     feed('')
-    execute('%yank A')
+    feed_command('%yank A')
 
-    execute('bf')
-    execute('%d')
-    execute('0put=@a')
-    execute('$d')
+    feed_command('bf')
+    feed_command('%d')
+    feed_command('0put=@a')
+    feed_command('$d')
 
     expect([[
       start of test file Xxx4

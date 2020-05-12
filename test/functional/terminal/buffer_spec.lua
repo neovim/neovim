@@ -1,19 +1,32 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local wait = helpers.wait
-local eval, execute, source = helpers.eval, helpers.execute, helpers.source
+local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
+local write_file = helpers.write_file
+local command= helpers.command
 
-
-describe('terminal buffer', function()
+describe(':terminal buffer', function()
   local screen
 
   before_each(function()
     clear()
-    execute('set modifiable swapfile undolevels=20')
+    feed_command('set modifiable swapfile undolevels=20')
     wait()
     screen = thelpers.screen_setup()
+  end)
+
+  it('terminal-mode forces various options', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline cursorcolumn scrolloff=4 sidescrolloff=7')
+    eq({ 1, 1, 4, 7 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq('n', eval('mode()'))
+
+    -- Enter terminal-mode ("insert" mode in :terminal).
+    feed('i')
+    eq('t', eval('mode()'))
+    eq({ 0, 0, 0, 0 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
   end)
 
   describe('when a new file is edited', function()
@@ -21,11 +34,11 @@ describe('terminal buffer', function()
       feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
         :enew                                             |
       ]])
     end)
@@ -34,11 +47,11 @@ describe('terminal buffer', function()
       feed(':bnext:l<esc>')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
-        ~                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
                                                           |
       ]])
     end)
@@ -49,17 +62,17 @@ describe('terminal buffer', function()
       feed('<c-\\><c-n>')
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
 
     it('does not create swap files', function()
-      local swapfile = nvim('command_output', 'swapname'):gsub('\n', '')
+      local swapfile = nvim('exec', 'swapname', true):gsub('\n', '')
       eq(nil, io.open(swapfile))
     end)
 
@@ -73,18 +86,18 @@ describe('terminal buffer', function()
     feed('<c-\\><c-n>dd')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
-      E21: Cannot make changes, 'modifiable' is off     |
+                                                        |
+      {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
   end)
 
   it('sends data to the terminal when the "put" operator is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    execute('let @a = "appended " . @a')
+    feed_command('let @a = "appended " . @a')
     feed('"ap"ap')
     screen:expect([[
       ^tty ready                                         |
@@ -110,8 +123,8 @@ describe('terminal buffer', function()
 
   it('sends data to the terminal when the ":put" command is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    execute('let @a = "appended " . @a')
-    execute('put a')
+    feed_command('let @a = "appended " . @a')
+    feed_command('put a')
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |
@@ -122,7 +135,7 @@ describe('terminal buffer', function()
       :put a                                            |
     ]])
     -- line argument is only used to move the cursor
-    execute('6put a')
+    feed_command('6put a')
     screen:expect([[
       tty ready                                         |
       appended tty ready                                |
@@ -138,42 +151,43 @@ describe('terminal buffer', function()
     feed('<c-\\><c-n>:bd!<cr>')
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
       :bd!                                              |
     ]])
-    execute('bnext')
+    feed_command('bnext')
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
-      ~                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
       :bnext                                            |
     ]])
   end)
 
   it('handles loss of focus gracefully', function()
-    -- Temporarily change the statusline to avoid printing the file name, which
-    -- varies be where the test is run.
+    -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
-    execute('set laststatus=0')
+    feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-
+    local exitcmd = helpers.iswin()
+      and "['cmd', '/c', 'exit']"
+      or "['sh', '-c', 'exit']"
     source([[
-    function! SplitWindow()
+    function! SplitWindow(id, data, event)
       new
       call feedkeys("iabc\<Esc>")
     endfunction
 
     startinsert
-    call jobstart(['sh', '-c', 'exit'], {'on_exit': function("SplitWindow")})
+    call jobstart(]]..exitcmd..[[, {'on_exit': function("SplitWindow")})
     call feedkeys("\<C-\>", 't')  " vim will expect <C-n>, but be exited out of
                                   " the terminal before it can be entered.
     ]])
@@ -181,8 +195,8 @@ describe('terminal buffer', function()
     -- We should be in a new buffer now.
     screen:expect([[
       ab^c                                               |
-      ~                                                 |
-      ==========                                        |
+      {4:~                                                 }|
+      {5:==========                                        }|
       rows: 2, cols: 50                                 |
       {2: }                                                 |
       {1:==========                                        }|
@@ -190,10 +204,75 @@ describe('terminal buffer', function()
     ]])
 
     neq(tbuf, eval('bufnr("%")'))
-    execute('quit!')  -- Should exit the new window, not the terminal.
+    feed_command('quit!')  -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
 
-    execute('set laststatus=1')  -- Restore laststatus to the default.
+    feed_command('set laststatus=1')  -- Restore laststatus to the default.
+  end)
+
+  it('term_close() use-after-free #4393', function()
+    feed_command('terminal yes')
+    feed([[<C-\><C-n>]])
+    feed_command('bdelete!')
+  end)
+
+  describe('handles confirmations', function()
+    it('with :confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('confirm bdelete')
+      screen:expect{any='Close "term://'}
+    end)
+
+    it('with &confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('bdelete')
+      screen:expect{any='E89'}
+      feed('<cr>')
+      eq('terminal', eval('&buftype'))
+      feed_command('set confirm | bdelete')
+      screen:expect{any='Close "term://'}
+      feed('y')
+      neq('terminal', eval('&buftype'))
+    end)
+  end)
+
+  it('it works with set rightleft #11438', function()
+    local columns = eval('&columns')
+    feed(string.rep('a', columns))
+    command('set rightleft')
+    screen:expect([[
+                                               ydaer ytt|
+      {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('bdelete!')
   end)
 end)
 
+describe('No heap-buffer-overflow when using', function()
+  local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
+
+  before_each(function()
+    write_file(testfilename, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+  end)
+
+  after_each(function()
+    os.remove(testfilename)
+  end)
+
+  it('termopen(echo) #3161', function()
+    feed_command('edit ' .. testfilename)
+    -- Move cursor away from the beginning of the line
+    feed('$')
+    -- Let termopen() modify the buffer
+    feed_command('call termopen("echo")')
+    eq(2, eval('1+1')) -- check nvim still running
+    feed_command('bdelete!')
+  end)
+end)

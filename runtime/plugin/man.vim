@@ -1,6 +1,15 @@
-if get(g:, 'loaded_man', 0)
+" Maintainer: Anmol Sethi <hi@nhooyr.io>
+
+if exists('g:loaded_man')
   finish
 endif
 let g:loaded_man = 1
 
-command! -count=0 -nargs=+ Man call man#get_page(<count>, <f-args>)
+command! -bang -bar -range=0 -complete=customlist,man#complete -nargs=* Man
+      \ if <bang>0 | set ft=man |
+      \ else | call man#open_page(v:count, v:count1, <q-mods>, <f-args>) | endif
+
+augroup man
+  autocmd!
+  autocmd BufReadCmd man://* call man#read_page(matchstr(expand('<amatch>'), 'man://\zs.*'))
+augroup END

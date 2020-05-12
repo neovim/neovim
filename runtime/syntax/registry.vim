@@ -6,11 +6,8 @@
 "		Included patch from Alexander A. Ulitin
 
 " clear any unwanted syntax defs
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -85,29 +82,20 @@ syn match registryHex		"^\s*\([0-9a-fA-F]\{2},\)\{0,999}\([0-9a-fA-F]\{2}\|\\\)$
 " Dword (32 bits)
 syn match registryDword		"dword:[0-9a-fA-F]\{8}$" contains=registrySpecial
 
-if version >= 508 || !exists("did_registry_syntax_inits")
-  if version < 508
-    let did_registry_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
 " The default methods for highlighting.  Can be overridden later
-   HiLink registryComment	Comment
-   HiLink registryHead		Constant
-   HiLink registryHKEY		Constant
-   HiLink registryPath		Special
-   HiLink registryRemove	PreProc
-   HiLink registryGUID		Identifier
-   HiLink registrySpecial	Special
-   HiLink registrySubKey	Type
-   HiLink registryString	String
-   HiLink registryHex		Number
-   HiLink registryDword		Number
+hi def link registryComment	Comment
+hi def link registryHead		Constant
+hi def link registryHKEY		Constant
+hi def link registryPath		Special
+hi def link registryRemove	PreProc
+hi def link registryGUID		Identifier
+hi def link registrySpecial	Special
+hi def link registrySubKey	Type
+hi def link registryString	String
+hi def link registryHex		Number
+hi def link registryDword		Number
 
-   delcommand HiLink
-endif
 
 
 let b:current_syntax = "registry"

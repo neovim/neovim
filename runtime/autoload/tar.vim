@@ -117,7 +117,7 @@ fun! tar#Browse(tarfile)
   if !filereadable(a:tarfile)
 "   call Decho('a:tarfile<'.a:tarfile.'> not filereadable')
    if a:tarfile !~# '^\a\+://'
-    " if its an url, don't complain, let url-handlers such as vim do its thing
+    " if it's an url, don't complain, let url-handlers such as vim do its thing
     redraw!
     echohl Error | echo "***error*** (tar#Browse) File not readable<".a:tarfile.">" | echohl None
    endif
@@ -152,10 +152,12 @@ fun! tar#Browse(tarfile)
    " assuming cygwin
    let tarfile=substitute(system("cygpath -u ".shellescape(tarfile,0)),'\n$','','e')
   endif
+
   let curlast= line("$")
   if tarfile =~# '\.\(gz\|tgz\)$'
+    let gzip_command = s:get_gzip_command(tarfile)
 "   call Decho("1: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
-   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+   exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.lrp'
 "   call Decho("2: exe silent r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
@@ -287,12 +289,14 @@ fun! tar#Read(fname,mode)
   else
    let tar_secure= " "
   endif
+
   if tarfile =~# '\.bz2$'
 "   call Decho("7: exe silent r! bzip2 -d -c ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.\(gz\|tgz\)$'
+    let gzip_command = s:get_gzip_command(tarfile)
 "   call Decho("5: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd.' -'.g:tar_readoptions.' - '.tar_secure.shellescape(fname,1))
-   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.lrp$'
 "   call Decho("6: exe silent r! cat ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
@@ -389,6 +393,8 @@ fun! tar#Write(fname)
   let tarfile = substitute(b:tarfile,'tarfile:\(.\{-}\)::.*$','\1','')
   let fname   = substitute(b:tarfile,'tarfile:.\{-}::\(.*\)$','\1','')
 
+  let gzip_command = s:get_gzip_command(tarfile)
+
   " handle compressed archives
   if tarfile =~# '\.bz2'
    call system("bzip2 -d -- ".shellescape(tarfile,0))
@@ -396,12 +402,12 @@ fun! tar#Write(fname)
    let compress= "bzip2 -- ".shellescape(tarfile,0)
 "   call Decho("compress<".compress.">")
   elseif tarfile =~# '\.gz'
-   call system("gzip -d -- ".shellescape(tarfile,0))
+   call system(gzip_command . " -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.gz','','e')
    let compress= "gzip -- ".shellescape(tarfile,0)
 "   call Decho("compress<".compress.">")
   elseif tarfile =~# '\.tgz'
-   call system("gzip -d -- ".shellescape(tarfile,0))
+   call system(gzip_command . " -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.tgz','.tar','e')
    let compress= "gzip -- ".shellescape(tarfile,0)
    let tgz     = 1
@@ -581,7 +587,10 @@ fun! tar#Vimuntar(...)
 
   " if necessary, decompress the tarball; then, extract it
   if tartail =~ '\.tgz'
-   if executable("gunzip")
+   let gzip_command = s:get_gzip_command(tarfile)
+   if executable(gzip_command)
+    silent exe "!" . gzip_command . " -d ".shellescape(tartail)
+   elseif executable("gunzip")
     silent exe "!gunzip ".shellescape(tartail)
    elseif executable("gzip")
     silent exe "!gzip -d ".shellescape(tartail)
@@ -618,6 +627,28 @@ fun! tar#Vimuntar(...)
 
 "  call Dret("tar#Vimuntar")
 endfun
+
+func s:get_gzip_command(file)
+  " Try using the "file" command to get the actual compression type, since
+  " there is no standard way for the naming: ".tgz", ".tbz", ".txz", etc.
+  " If the "file" command doesn't work fall back to just using the file name.
+  if a:file =~# 'z$'
+    let filetype = system('file ' . a:file)
+    if filetype =~ 'bzip2 compressed' && executable('bzip2')
+      return 'bzip2'
+    endif
+    if filetype =~ 'XZ compressed' && executable('xz')
+      return 'xz'
+    endif
+  endif
+  if a:file =~# 'bz2$'
+    return 'bzip2'
+  endif
+  if a:file =~# 'xz$'
+    return 'xz'
+  endif
+  return 'gzip'
+endfunc
 
 " =====================================================================
 " Modelines And Restoration: {{{1

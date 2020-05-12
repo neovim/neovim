@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Thu Mar 26, 2015  05:36PM
+" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Sun Aug 19, 2018  09:13PM
 
 
 " Only load this indent file when no other was loaded.
@@ -18,22 +19,16 @@ if exists("*GetRIndent")
   finish
 endif
 
+let s:cpo_save = &cpo
+set cpo&vim
+
 " Options to make the indentation more similar to Emacs/ESS:
-if !exists("g:r_indent_align_args")
-  let g:r_indent_align_args = 1
-endif
-if !exists("g:r_indent_ess_comments")
-  let g:r_indent_ess_comments = 0
-endif
-if !exists("g:r_indent_comment_column")
-  let g:r_indent_comment_column = 40
-endif
-if ! exists("g:r_indent_ess_compatible")
-  let g:r_indent_ess_compatible = 0
-endif
-if ! exists("g:r_indent_op_pattern")
-  let g:r_indent_op_pattern = '\(+\|-\|\*\|/\|=\|\~\|%\)$'
-endif
+let g:r_indent_align_args     = get(g:, 'r_indent_align_args',      1)
+let g:r_indent_ess_comments   = get(g:, 'r_indent_ess_comments',    0)
+let g:r_indent_comment_column = get(g:, 'r_indent_comment_column', 40)
+let g:r_indent_ess_compatible = get(g:, 'r_indent_ess_compatible',  0)
+let g:r_indent_op_pattern     = get(g:, 'r_indent_op_pattern',
+      \ '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$')
 
 function s:RDelete_quotes(line)
   let i = 0
@@ -230,7 +225,7 @@ function GetRIndent()
 
   let cline = SanitizeRLine(cline)
 
-  if cline =~ '^\s*}' || cline =~ '^\s*}\s*)$'
+  if cline =~ '^\s*}'
     let indline = s:Get_matching_brace(clnum, '{', '}', 1)
     if indline > 0 && indline != clnum
       let iline = SanitizeRLine(getline(indline))
@@ -241,6 +236,11 @@ function GetRIndent()
         return indent(indline)
       endif
     endif
+  endif
+
+  if cline =~ '^\s*)$'
+    let indline = s:Get_matching_brace(clnum, '(', ')', 1)
+    return indent(indline)
   endif
 
   " Find the first non blank line above the current line
@@ -265,7 +265,7 @@ function GetRIndent()
     return 0
   endif
 
-  if cline =~ '^\s*{'
+  if cline =~ '^\s*{' && s:Get_paren_balance(cline, '{', '}') > 0
     if g:r_indent_ess_compatible && line =~ ')$'
       let nlnum = lnum
       let nline = line
@@ -273,7 +273,7 @@ function GetRIndent()
         let nlnum = s:Get_prev_line(nlnum)
         let nline = SanitizeRLine(getline(nlnum)) . nline
       endwhile
-      if nline =~ '^\s*function\s*(' && indent(nlnum) == &sw
+      if nline =~ '^\s*function\s*(' && indent(nlnum) == shiftwidth()
         return 0
       endif
     endif
@@ -283,8 +283,8 @@ function GetRIndent()
   endif
 
   " line is an incomplete command:
-  if line =~ '\<\(if\|while\|for\|function\)\s*()$' || line =~ '\<else$' || line =~ '<-$'
-    return indent(lnum) + &sw
+  if line =~ '\<\(if\|while\|for\|function\)\s*()$' || line =~ '\<else$' || line =~ '<-$' || line =~ '->$'
+    return indent(lnum) + shiftwidth()
   endif
 
   " Deal with () and []
@@ -292,14 +292,14 @@ function GetRIndent()
   let pb = s:Get_paren_balance(line, '(', ')')
 
   if line =~ '^\s*{$' || line =~ '(\s*{' || (pb == 0 && (line =~ '{$' || line =~ '(\s*{$'))
-    return indent(lnum) + &sw
+    return indent(lnum) + shiftwidth()
   endif
 
   let s:curtabstop = repeat(' ', &tabstop)
 
   if g:r_indent_align_args == 1
     if pb > 0 && line =~ '{$'
-      return s:Get_last_paren_idx(line, '(', ')', pb) + &sw
+      return s:Get_last_paren_idx(line, '(', ')', pb) + shiftwidth()
     endif
 
     let bb = s:Get_paren_balance(line, '[', ']')
@@ -344,7 +344,7 @@ function GetRIndent()
   endif
 
   let post_block = 0
-  if line =~ '}$'
+  if line =~ '}$' && s:Get_paren_balance(line, '{', '}') < 0
     let lnum = s:Get_matching_brace(lnum, '{', '}', 0)
     let line = SanitizeRLine(getline(lnum))
     if lnum > 0 && line =~ '^\s*{'
@@ -359,15 +359,15 @@ function GetRIndent()
   let olnum = s:Get_prev_line(lnum)
   let oline = getline(olnum)
   if olnum > 0
-    if line =~ g:r_indent_op_pattern
-      if oline =~ g:r_indent_op_pattern
+    if line =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
         return indent(lnum)
       else
-        return indent(lnum) + &sw
+        return indent(lnum) + shiftwidth()
       endif
     else
-      if oline =~ g:r_indent_op_pattern
-        return indent(lnum) - &sw
+      if oline =~ g:r_indent_op_pattern && s:Get_paren_balance(line, "(", ")") == 0
+        return indent(lnum) - shiftwidth()
       endif
     endif
   endif
@@ -382,7 +382,7 @@ function GetRIndent()
       let line = linepiece . line
     endwhile
     if line =~ '{$' && post_block == 0
-      return indent(lnum) + &sw
+      return indent(lnum) + shiftwidth()
     endif
 
     " Now we can do some tests again
@@ -392,19 +392,19 @@ function GetRIndent()
     if post_block == 0
       let newl = SanitizeRLine(line)
       if newl =~ '\<\(if\|while\|for\|function\)\s*()$' || newl =~ '\<else$' || newl =~ '<-$'
-        return indent(lnum) + &sw
+        return indent(lnum) + shiftwidth()
       endif
     endif
   endif
 
   if cline =~ '^\s*else'
     if line =~ '<-\s*if\s*()'
-      return indent(lnum) + &sw
+      return indent(lnum) + shiftwidth()
     else
       if line =~ '\<if\s*()'
         return indent(lnum)
       else
-        return indent(lnum) - &sw
+        return indent(lnum) - shiftwidth()
       endif
     endif
   endif
@@ -471,19 +471,24 @@ function GetRIndent()
   endif
 
   let ind = indent(lnum)
-  let pind = indent(plnum)
 
   if g:r_indent_align_args == 0 && pb != 0
-    let ind += pb * &sw
+    let ind += pb * shiftwidth()
     return ind
   endif
 
   if g:r_indent_align_args == 0 && bb != 0
-    let ind += bb * &sw
+    let ind += bb * shiftwidth()
     return ind
   endif
 
-  if ind == pind || (ind == (pind  + &sw) && pline =~ '{$' && ppost_else == 0)
+  if plnum > 0
+    let pind = indent(plnum)
+  else
+    let pind = 0
+  endif
+
+  if ind == pind || (ind == (pind  + shiftwidth()) && pline =~ '{$' && ppost_else == 0)
     return ind
   endif
 
@@ -503,13 +508,15 @@ function GetRIndent()
       let pbb = s:Get_paren_balance(pline, '[', ']')
     endwhile
     let pind = indent(plnum)
-    if ind == (pind  + &sw) && pline =~ '{$'
+    if ind == (pind  + shiftwidth()) && pline =~ '{$'
       return ind
     endif
   endwhile
 
   return ind
-
 endfunction
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim: sw=2

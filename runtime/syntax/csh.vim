@@ -1,15 +1,12 @@
 " Vim syntax file
 " Language:	C-shell (csh)
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	11
+" Last Change:	Aug 31, 2016
+" Version:	13
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_CSH
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -100,59 +97,45 @@ syn match cshNumber	"-\=\<\d\+\>"
 "syn match cshIdentifier	"\<[a-zA-Z._][a-zA-Z0-9._]*\>"
 
 " Shell Input Redirection (Here Documents)
-if version < 600
-  syn region cshHereDoc matchgroup=cshRedir start="<<-\=\s*\**END[a-zA-Z_0-9]*\**" matchgroup=cshRedir end="^END[a-zA-Z_0-9]*$"
-  syn region cshHereDoc matchgroup=cshRedir start="<<-\=\s*\**EOF\**" matchgroup=cshRedir end="^EOF$"
-else
-  syn region cshHereDoc matchgroup=cshRedir start="<<-\=\s*\**\z(\h\w*\)\**" matchgroup=cshRedir end="^\z1$"
-endif
+syn region cshHereDoc matchgroup=cshRedir start="<<-\=\s*\**\z(\h\w*\)\**" matchgroup=cshRedir end="^\z1$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_csh_syntax_inits")
-  if version < 508
-    let did_csh_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+if !exists("skip_csh_syntax_inits")
 
-  HiLink cshArgv		cshVariables
-  HiLink cshBckQuote	cshCommand
-  HiLink cshDblQuote	cshString
-  HiLink cshExtVar	cshVariables
-  HiLink cshHereDoc	cshString
-  HiLink cshNoEndlineBQ	cshNoEndline
-  HiLink cshNoEndlineDQ	cshNoEndline
-  HiLink cshNoEndlineSQ	cshNoEndline
-  HiLink cshQtyWord	cshVariables
-  HiLink cshRedir		cshOperator
-  HiLink cshSelector	cshVariables
-  HiLink cshSetStmt	cshStatement
-  HiLink cshSetVariables	cshVariables
-  HiLink cshSnglQuote	cshString
-  HiLink cshSubst		cshVariables
+  hi def link cshArgv		cshVariables
+  hi def link cshBckQuote	cshCommand
+  hi def link cshDblQuote	cshString
+  hi def link cshExtVar	cshVariables
+  hi def link cshHereDoc	cshString
+  hi def link cshNoEndlineBQ	cshNoEndline
+  hi def link cshNoEndlineDQ	cshNoEndline
+  hi def link cshNoEndlineSQ	cshNoEndline
+  hi def link cshQtyWord	cshVariables
+  hi def link cshRedir		cshOperator
+  hi def link cshSelector	cshVariables
+  hi def link cshSetStmt	cshStatement
+  hi def link cshSetVariables	cshVariables
+  hi def link cshSnglQuote	cshString
+  hi def link cshSubst		cshVariables
 
-  HiLink cshCommand	Statement
-  HiLink cshComment	Comment
-  HiLink cshConditional	Conditional
-  HiLink cshIdentifier	Error
-  HiLink cshModifier	Special
-  HiLink cshNoEndline	Error
-  HiLink cshNumber	Number
-  HiLink cshOperator	Operator
-  HiLink cshRedir		Statement
-  HiLink cshRepeat	Repeat
-  HiLink cshShellVariables	Special
-  HiLink cshSpecial	Special
-  HiLink cshStatement	Statement
-  HiLink cshString	String
-  HiLink cshSubstError	Error
-  HiLink cshTodo		Todo
-  HiLink cshVariables	Type
+  hi def link cshCommand	Statement
+  hi def link cshComment	Comment
+  hi def link cshConditional	Conditional
+  hi def link cshIdentifier	Error
+  hi def link cshModifier	Special
+  hi def link cshNoEndline	Error
+  hi def link cshNumber	Number
+  hi def link cshOperator	Operator
+  hi def link cshRedir		Statement
+  hi def link cshRepeat	Repeat
+  hi def link cshShellVariables	Special
+  hi def link cshSpecial	Special
+  hi def link cshStatement	Statement
+  hi def link cshString	String
+  hi def link cshSubstError	Error
+  hi def link cshTodo		Todo
+  hi def link cshVariables	Type
 
-  delcommand HiLink
 endif
 
 let b:current_syntax = "csh"

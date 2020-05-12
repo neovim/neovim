@@ -1,13 +1,14 @@
-*usr_09.txt*	For Vim version 7.4.  Last change: 2006 Apr 24
+*usr_09.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
 				Using the GUI
 
 
-Vim works in an ordinary terminal.  GVim can do the same things and a few
-more.  The GUI offers menus, a toolbar, scrollbars and other items.  This
-chapter is about these extra things that the GUI offers.
+Vim works in an ordinary terminal, while gVim has a Graphical User Interface
+(GUI).  It can do the same things and a few more.  The GUI offers menus, a
+toolbar, scrollbars and other items.  This chapter is about these extra things
+that the GUI offers.
 
 |09.1|	Parts of the GUI
 |09.2|	Using the mouse
@@ -21,7 +22,7 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *09.1*	Parts of the GUI
 
-You might have an icon on your desktop that starts gVim.  Otherwise, one of
+You might have an icon on your desktop that starts gvim.  Otherwise, one of
 these commands should do it: >
 
 	gvim file.txt
@@ -60,7 +61,7 @@ THE WINDOW TITLE
 At the very top is the window title.  This is drawn by your window system.
 Vim will set the title to show the name of the current file.  First comes the
 name of the file.  Then some special characters and the directory of the file
-in parens.  These special character can be present:
+in parens.  These special characters can be present:
 
 	-	The file cannot be modified (e.g., a help file)
 	+	The file contains changes
@@ -180,14 +181,14 @@ currently highlighted.  In Vim this is the Visual area (this assumes you are
 using the default option settings).  You can paste this selection in another
 application without any further action.
    For example, in this text select a few words with the mouse.  Vim will
-switch to Visual mode and highlight the text.  Now start another gVim, without
+switch to Visual mode and highlight the text.  Now start another gvim, without
 a file name argument, so that it displays an empty window.  Click the middle
 mouse button.  The selected text will be inserted.
 
 The "current selection" will only remain valid until some other text is
-selected.  After doing the paste in the other gVim, now select some characters
+selected.  After doing the paste in the other gvim, now select some characters
 in that window.  You will notice that the words that were previously selected
-in the other gVim window are displayed differently.  This means that it no
+in the other gvim window are displayed differently.  This means that it no
 longer is the current selection.
 
 You don't need to select text with the mouse, using the keyboard commands for
@@ -200,10 +201,10 @@ Now for the other place with which text can be exchanged.  We call this the
 "real clipboard", to avoid confusion.  Often both the "current selection" and
 the "real clipboard" are called clipboard, you'll have to get used to that.
    To put text on the real clipboard, select a few different words in one of
-the gVims you have running.  Then use the Edit/Copy menu entry.  Now the text
+the gvims you have running.  Then use the Edit/Copy menu entry.  Now the text
 has been copied to the real clipboard.  You can't see this, unless you have
-some application that shows the clipboard contents (e.g., KDE's klipper).
-   Now select the other gVim, position the cursor somewhere and use the
+some application that shows the clipboard contents (e.g., KDE's Klipper).
+   Now select the other gvim, position the cursor somewhere and use the
 Edit/Paste menu.  You will see the text from the real clipboard is inserted.
 
 
@@ -211,7 +212,7 @@ USING BOTH
 
 This use of both the "current selection" and the "real clipboard" might sound
 a bit confusing.  But it is very useful.  Let's show this with an example.
-Use one gVim with a text file and perform these actions:
+Use one gvim with a text file and perform these actions:
 
 -  Select two words in Visual mode.
 -  Use the Edit/Copy menu to get these words onto the clipboard.
@@ -282,4 +283,4 @@ You can tune the way Select mode works with the 'selectmode' option.
 
 Next chapter: |usr_10.txt|  Making big changes
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

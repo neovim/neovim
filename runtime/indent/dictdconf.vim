@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         dictd(8) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
+" Language:             dictd(8) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
 
 if exists("b:did_indent")
   finish

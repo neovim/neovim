@@ -4,21 +4,14 @@
 " URL:		http://marcobari.altervista.org/pyrex_vim.html
 " Last Change:	2009 Nov 09
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the Python syntax to start with
-if version < 600
-  so <sfile>:p:h/python.vim
-else
-  runtime! syntax/python.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/python.vim
+unlet b:current_syntax
 
 " Pyrex extentions
 syn keyword pyrexStatement      cdef typedef ctypedef sizeof
@@ -44,24 +37,15 @@ syn match   pythonInclude     "from"
 syn match   pyrexForFrom        "\(for[^:]*\)\@<=from"
 
 " Default highlighting
-if version >= 508 || !exists("did_pyrex_syntax_inits")
-  if version < 508
-    let did_pyrex_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink pyrexStatement		Statement
-  HiLink pyrexType		Type
-  HiLink pyrexStructure		Structure
-  HiLink pyrexInclude		PreCondit
-  HiLink pyrexAccess		pyrexStatement
-  if exists("python_highlight_builtins") || exists("pyrex_highlight_builtins")
-      HiLink pyrexBuiltin	Function
-  endif
-  HiLink pyrexForFrom		Statement
-
-  delcommand HiLink
+hi def link pyrexStatement		Statement
+hi def link pyrexType		Type
+hi def link pyrexStructure		Structure
+hi def link pyrexInclude		PreCondit
+hi def link pyrexAccess		pyrexStatement
+if exists("python_highlight_builtins") || exists("pyrex_highlight_builtins")
+hi def link pyrexBuiltin	Function
 endif
+hi def link pyrexForFrom		Statement
+
 
 let b:current_syntax = "pyrex"

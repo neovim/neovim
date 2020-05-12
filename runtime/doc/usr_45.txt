@@ -1,4 +1,4 @@
-*usr_45.txt*	For Vim version 7.4.  Last change: 2008 Nov 15
+*usr_45.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -152,12 +152,6 @@ language than the text.
 language, the default should work fine and you don't need to do anything.  The
 following is only relevant when you want to edit different languages.
 
-	Note:
-	Using different encodings only works when Vim was compiled to handle
-	it.  To find out if it works, use the ":version" command and check the
-	output for "+multi_byte".  If it's there, you are OK.  If you see
-	"-multi_byte" you will have to find another Vim.
-
 
 USING UNICODE IN THE GUI
 
@@ -203,8 +197,7 @@ USING UNICODE IN A UNICODE TERMINAL
 
 There are terminals that support Unicode directly.  The standard xterm that
 comes with XFree86 is one of them.  Let's use that as an example.
-   First of all, the xterm must have been compiled with Unicode support.  See
-|UTF8-xterm| how to check that and how to compile it when needed.
+   First of all, the xterm must have been compiled with Unicode support.
    Start the xterm with the "-u8" argument.  You might also need so specify a
 font.  Example: >
 
@@ -392,4 +385,4 @@ Don't type the spaces.  See |i_CTRL-V_digit| for the details.
 
 ==============================================================================
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

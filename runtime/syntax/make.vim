@@ -1,14 +1,12 @@
 " Vim syntax file
 " Language:	Makefile
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/make.vim
-" Last Change:	2015 Feb 28
+" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>
+" Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" URL:		https://github.com/vim/vim/syntax/make.vim
+" Last Change:	2019 Apr 02
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -21,7 +19,7 @@ syn match makeSpecial	"^\s*[@+-]\+"
 syn match makeNextLine	"\\\n\s*"
 
 " some directives
-syn match makePreCondit	"^ *\(ifeq\>\|else\>\|endif\>\|ifneq\>\|ifdef\>\|ifndef\>\)"
+syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
 syn match makeInclude	"^ *[-s]\=include"
 syn match makeStatement	"^ *vpath"
 syn match makeExport    "^ *\(export\|unexport\)\>"
@@ -34,8 +32,8 @@ syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$" contains
 
 " Microsoft Makefile specials
 syn case ignore
-syn match makeInclude	"^! *include"
-syn match makePreCondit "! *\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|elseif\|else if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
+syn match makeInclude	"^!\s*include"
+syn match makePreCondit "^!\s*\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|else\s*if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
 syn case match
 
 " identifiers
@@ -67,7 +65,7 @@ syn match makeCmdNextLine	"\\\n."he=e-1 contained
 
 
 " Statements / Functions (GNU make)
-syn match makeStatement contained "(\(subst\|abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
+syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
 
 " Comment
 if exists("make_microsoft")
@@ -101,40 +99,30 @@ syn sync match makeCommandSync groupthere makeCommands "^[A-Za-z0-9_./$()%-][A-Z
 syn sync match makeCommandSync groupthere makeCommands "^[A-Za-z0-9_./$()%-][A-Za-z0-9_./\t $()%-]*:\{1,2}\s*$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_make_syn_inits")
-  if version < 508
-    let did_make_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink makeNextLine		makeSpecial
-  HiLink makeCmdNextLine	makeSpecial
-  HiLink makeSpecTarget		Statement
-  if !exists("make_no_commands")
-    HiLink makeCommands		Number
-  endif
-  HiLink makeImplicit		Function
-  HiLink makeTarget		Function
-  HiLink makeInclude		Include
-  HiLink makePreCondit		PreCondit
-  HiLink makeStatement		Statement
-  HiLink makeIdent		Identifier
-  HiLink makeSpecial		Special
-  HiLink makeComment		Comment
-  HiLink makeDString		String
-  HiLink makeSString		String
-  HiLink makeBString		Function
-  HiLink makeError		Error
-  HiLink makeTodo		Todo
-  HiLink makeDefine		Define
-  HiLink makeCommandError	Error
-  HiLink makeConfig		PreCondit
-  delcommand HiLink
+hi def link makeNextLine	makeSpecial
+hi def link makeCmdNextLine	makeSpecial
+hi def link makeSpecTarget	Statement
+if !exists("make_no_commands")
+hi def link makeCommands	Number
 endif
+hi def link makeImplicit	Function
+hi def link makeTarget		Function
+hi def link makeInclude		Include
+hi def link makePreCondit	PreCondit
+hi def link makeStatement	Statement
+hi def link makeIdent		Identifier
+hi def link makeSpecial		Special
+hi def link makeComment		Comment
+hi def link makeDString		String
+hi def link makeSString		String
+hi def link makeBString		Function
+hi def link makeError		Error
+hi def link makeTodo		Todo
+hi def link makeDefine		Define
+hi def link makeCommandError	Error
+hi def link makeConfig		PreCondit
 
 let b:current_syntax = "make"
 

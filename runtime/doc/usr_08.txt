@@ -1,4 +1,4 @@
-*usr_08.txt*	For Vim version 7.4.  Last change: 2014 Jul 06
+*usr_08.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -45,7 +45,7 @@ top one:
 	+----------------------------------+
 
 What you see here is two windows on the same file.  The line with "====" is
-that status line.  It displays information about the window above it.  (In
+the status line.  It displays information about the window above it.  (In
 practice the status line will be in reverse video.)
    The two windows allow you to view two parts of the same file.  For example,
 you could make the top window show the variable declarations of a program, and
@@ -597,4 +597,4 @@ For more information about tab pages see |tab-page|.
 
 Next chapter: |usr_09.txt|  Using the GUI
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

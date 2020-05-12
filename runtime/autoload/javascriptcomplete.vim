@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	Java Script
 " Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2006 Apr 30
+" Last Change:	2017 Mar 04
 
 function! javascriptcomplete#CompleteJS(findstart, base)
   if a:findstart
@@ -563,7 +563,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	for i in arguments
 		let g:ia = i
 		let f_elements = matchlist(i, 'function\s\+\(\k\+\)\s*(\(.\{-}\))')
-		if len(f_elements) == 3
+		if len(f_elements) >= 3
 			let b:js_menuinfo[f_elements[1].'('] = f_elements[2]
 		endif
 	endfor

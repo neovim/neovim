@@ -2509,10 +2509,10 @@ msgstr "E216: 無此群組或事件: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 
 #: ../fileio.c:6293
 #, fuzzy, c-format
@@ -2533,8 +2533,8 @@ msgstr "E218: autocommand 層數過深"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
-msgstr "%s Auto commands: \"%s\""
+msgid "%s Autocommands for \"%s\""
+msgstr "%s Autocommands: \"%s\""
 
 #: ../fileio.c:7149
 #, c-format
@@ -2723,11 +2723,6 @@ msgstr "E49: 錯誤的捲動大小"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3427,7 +3422,7 @@ msgstr "-q [errorfile]  編輯時載入第一個錯誤"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4303,12 +4298,6 @@ msgstr "行 %4ld:"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: 暫存器名稱錯誤: '%s'"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr ""
-"正體中文訊息維護者: Francis S.Lin <piaip@csie.ntu.edu."
-"tw>,                                 Cecil Sheng   <b7506022@csie.ntu.edu.tw>"
 
 #: ../message.c:986
 msgid "Interrupt: "

@@ -1,9 +1,8 @@
--- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for [ CTRL-I with a count and CTRL-W CTRL-I with a count
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('CTRL-W CTRL-I', function()
   setup(clear)
@@ -19,19 +18,19 @@ describe('CTRL-W CTRL-I', function()
       start found wrong line
       test text]])
 
-    -- Search for the second occurence of start and append to register
-    execute('/start')
+    -- Search for the second occurrence of start and append to register
+    feed_command('/start')
     feed('2[<C-i>')
-    execute('yank A')
+    feed_command('yank A')
 
     -- Same as above but using different keystrokes.
     feed('?start<cr>')
     feed('2<C-w><Tab>')
-    execute('yank A')
+    feed_command('yank A')
 
     -- Clean buffer and put register
     feed('ggdG"ap')
-    execute('1d')
+    feed_command('1d')
 
     -- The buffer should now contain:
     expect([[

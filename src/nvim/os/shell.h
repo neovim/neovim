@@ -1,6 +1,8 @@
 #ifndef NVIM_OS_SHELL_H
 #define NVIM_OS_SHELL_H
 
+#include <stdio.h>
+
 #include "nvim/types.h"
 
 // Flags for os_call_shell() second argument

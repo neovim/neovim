@@ -1,37 +1,43 @@
-" Vim filetype plugin file
-" Language:	man
-" Maintainer:	SungHyun Nam <goweol@gmail.com>
+" Maintainer:          Anmol Sethi <hi@nhooyr.io>
+" Previous Maintainer: SungHyun Nam <goweol@gmail.com>
 
-if has('vim_starting') && &filetype !=# 'man'
-  finish
-endif
-
-" Only do this when not done yet for this buffer
-if exists('b:did_ftplugin')
+if exists('b:did_ftplugin') || &filetype !=# 'man'
   finish
 endif
 let b:did_ftplugin = 1
 
-" Ensure Vim is not recursively invoked (man-db does this)
-" when doing ctrl-[ on a man page reference.
-if exists('$MANPAGER')
-  let $MANPAGER = ''
+let s:pager = get(s:, 'pager', 0) || !exists('b:man_sect')
+
+if s:pager
+  call man#init_pager()
 endif
 
-setlocal iskeyword+=\.,-,(,)
+setlocal noswapfile buftype=nofile bufhidden=hide
+setlocal nomodified readonly nomodifiable
+setlocal noexpandtab tabstop=8 softtabstop=8 shiftwidth=8
+setlocal wrap breakindent linebreak
 
-setlocal buftype=nofile noswapfile
-setlocal nomodifiable readonly bufhidden=hide nobuflisted tabstop=8
+setlocal nonumber norelativenumber
+setlocal foldcolumn=0 colorcolumn=0 nolist nofoldenable
 
-if !exists("g:no_plugin_maps") && !exists("g:no_man_maps")
-  nnoremap <silent> <buffer> <C-]>    :call man#get_page(v:count)<CR>
-  nnoremap <silent> <buffer> <C-T>    :call man#pop_page()<CR>
-  nnoremap <silent> <nowait><buffer>  q <C-W>c
-  if &keywordprg !=# ':Man'
-    nnoremap <silent> <buffer> K      :call man#get_page(v:count)<CR>
+setlocal tagfunc=man#goto_tag
+
+if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
+  nnoremap <silent> <buffer> j          gj
+  nnoremap <silent> <buffer> k          gk
+  nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
+  if 1 == bufnr('%') || s:pager
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
+  else
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c
   endif
 endif
 
-let b:undo_ftplugin = 'setlocal iskeyword<'
+if get(g:, 'ft_man_folding_enable', 0)
+  setlocal foldenable
+  setlocal foldmethod=indent
+  setlocal foldnestmax=1
+endif
 
+let b:undo_ftplugin = ''
 " vim: set sw=2:

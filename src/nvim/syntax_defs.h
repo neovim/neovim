@@ -1,9 +1,7 @@
 #ifndef NVIM_SYNTAX_DEFS_H
 #define NVIM_SYNTAX_DEFS_H
 
-#include "nvim/regexp_defs.h"
-
-typedef int32_t RgbValue;
+#include "nvim/highlight_defs.h"
 
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 # define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
@@ -11,13 +9,16 @@ typedef int32_t RgbValue;
 # define SST_DIST        16     /* normal distance between entries */
 # define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
 
-typedef unsigned short disptick_T;      /* display tick type */
+typedef struct syn_state synstate_T;
+
+#include "nvim/buffer_defs.h"
+#include "nvim/regexp_defs.h"
 
 /* struct passed to in_id_list() */
 struct sp_syn {
-  int inc_tag;                  /* ":syn include" unique tag */
-  short id;                     /* highlight group ID of item */
-  short       *cont_in_list;    /* cont.in group IDs, if non-zero */
+  int inc_tag;                  // ":syn include" unique tag
+  int16_t id;                   // highlight group ID of item
+  int16_t *cont_in_list;        // cont.in group IDs, if non-zero
 };
 
 /*
@@ -26,12 +27,12 @@ struct sp_syn {
 typedef struct keyentry keyentry_T;
 
 struct keyentry {
-  keyentry_T  *ke_next;         /* next entry with identical "keyword[]" */
-  struct sp_syn k_syn;          /* struct passed to in_id_list() */
-  short       *next_list;       /* ID list for next match (if non-zero) */
+  keyentry_T  *ke_next;         // next entry with identical "keyword[]"
+  struct sp_syn k_syn;          // struct passed to in_id_list()
+  int16_t *next_list;           // ID list for next match (if non-zero)
   int flags;
-  int k_char;                   /* conceal substitute character */
-  char_u keyword[1];            /* actually longer */
+  int k_char;                   // conceal substitute character
+  char_u keyword[1];            // actually longer
 };
 
 /*
@@ -49,8 +50,6 @@ typedef struct buf_state {
  * syn_state contains the syntax state stack for the start of one line.
  * Used by b_sst_array[].
  */
-typedef struct syn_state synstate_T;
-
 struct syn_state {
   synstate_T  *sst_next;        /* next entry in used or free list */
   linenr_T sst_lnum;            /* line number for this state */
@@ -58,20 +57,13 @@ struct syn_state {
     bufstate_T sst_stack[SST_FIX_STATES];          /* short state stack */
     garray_T sst_ga;            /* growarray for long state stack */
   } sst_union;
-  int sst_next_flags;           /* flags for sst_next_list */
-  int sst_stacksize;            /* number of states on the stack */
-  short       *sst_next_list;   /* "nextgroup" list in this state
-                                 * (this is a copy, don't free it! */
-  disptick_T sst_tick;          /* tick when last displayed */
-  linenr_T sst_change_lnum;     /* when non-zero, change in this line
-                                 * may have made the state invalid */
+  int sst_next_flags;           // flags for sst_next_list
+  int sst_stacksize;            // number of states on the stack
+  int16_t *sst_next_list;       // "nextgroup" list in this state
+                                // (this is a copy, don't free it!
+  disptick_T sst_tick;          // tick when last displayed
+  linenr_T sst_change_lnum;     // when non-zero, change in this line
+                                // may have made the state invalid
 };
-
-// Structure shared between syntax.c, screen.c
-typedef struct attr_entry {
-  short rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
-  RgbValue rgb_fg_color, rgb_bg_color;
-  int cterm_fg_color, cterm_bg_color;
-} attrentry_T;
 
 #endif // NVIM_SYNTAX_DEFS_H

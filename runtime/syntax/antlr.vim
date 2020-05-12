@@ -4,11 +4,8 @@
 " LastChange:	02 May 2001
 " Original:	Comes from JavaCC.vim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
@@ -18,12 +15,8 @@ endif
 " Those files usually have the extension  *.jj
 
 " source the java.vim file
-if version < 600
-   so <sfile>:p:h/java.vim
-else
-   runtime! syntax/java.vim
-   unlet b:current_syntax
-endif
+runtime! syntax/java.vim
+unlet b:current_syntax
 
 "remove catching errors caused by wrong parenthesis (does not work in antlr
 "files) (first define them in case they have not been defined in java)
@@ -53,17 +46,8 @@ syn match antlrSep "[|:]\|\.\."
 syn keyword antlrActionToken TOKEN SKIP MORE SPECIAL_TOKEN
 syn keyword antlrError DEBUG IGNORE_IN_BNF
 
-if version >= 508 || !exists("did_antlr_syntax_inits")
-   if version < 508
-      let did_antlr_syntax_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
-   HiLink antlrSep Statement
-   HiLink antlrPackages Statement
-  delcommand HiLink
-endif
+hi def link antlrSep Statement
+hi def link antlrPackages Statement
 
 let b:current_syntax = "antlr"
 

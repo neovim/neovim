@@ -3,9 +3,8 @@
 " Last Change:  2003 May 11
 
 
-if version < 600
- syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
  finish
 endif
 
@@ -115,33 +114,24 @@ syn keyword amplTodo contained	 TODO FIXME XXX
 
 
 
-if version >= 508 || !exists("did_ampl_syntax_inits")
-  if version < 508
-    let did_ampl_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  " The default methods for highlighting. Can be overridden later.
-  HiLink amplEntityKeyword	Keyword
-  HiLink amplType		Type
-  HiLink amplStatement		Statement
-  HiLink amplOperators		Operator
-  HiLink amplBasicOperators	Operator
-  HiLink amplConditional	Conditional
-  HiLink amplRepeat		Repeat
-  HiLink amplStrings		String
-  HiLink amplNumerics		Number
-  HiLink amplSetFunction	Function
-  HiLink amplBuiltInFunction	Function
-  HiLink amplRandomGenerator	Function
-  HiLink amplComment		Comment
-  HiLink amplDotSuffix		Special
-  HiLink amplPiecewise		Special
+" The default methods for highlighting. Can be overridden later.
+hi def link amplEntityKeyword	Keyword
+hi def link amplType		Type
+hi def link amplStatement		Statement
+hi def link amplOperators		Operator
+hi def link amplBasicOperators	Operator
+hi def link amplConditional	Conditional
+hi def link amplRepeat		Repeat
+hi def link amplStrings		String
+hi def link amplNumerics		Number
+hi def link amplSetFunction	Function
+hi def link amplBuiltInFunction	Function
+hi def link amplRandomGenerator	Function
+hi def link amplComment		Comment
+hi def link amplDotSuffix		Special
+hi def link amplPiecewise		Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "ampl"
 

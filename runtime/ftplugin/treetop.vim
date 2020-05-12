@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         Treetop
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-03-14
+" Language:             Treetop
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-03-14
 
 if exists("b:did_ftplugin")
   finish

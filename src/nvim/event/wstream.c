@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -5,12 +8,13 @@
 
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/wstream.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-#define DEFAULT_MAXMEM 1024 * 1024 * 10
+#define DEFAULT_MAXMEM 1024 * 1024 * 2000
 
 typedef struct {
   Stream *stream;
@@ -22,19 +26,17 @@ typedef struct {
 # include "event/wstream.c.generated.h"
 #endif
 
-void wstream_init_fd(Loop *loop, Stream *stream, int fd, size_t maxmem,
-    void *data)
+void wstream_init_fd(Loop *loop, Stream *stream, int fd, size_t maxmem)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
-  stream_init(loop, stream, fd, NULL, data);
+  stream_init(loop, stream, fd, NULL);
   wstream_init(stream, maxmem);
 }
 
-void wstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t maxmem,
-    void *data)
+void wstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t maxmem)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
-  stream_init(NULL, stream, -1, uvstream, data);
+  stream_init(NULL, stream, -1, uvstream);
   wstream_init(stream, maxmem);
 }
 
@@ -54,10 +56,11 @@ void wstream_init(Stream *stream, size_t maxmem)
 ///
 /// @param stream The `Stream` instance
 /// @param cb The callback
-void wstream_set_write_cb(Stream *stream, stream_write_cb cb)
-  FUNC_ATTR_NONNULL_ALL
+void wstream_set_write_cb(Stream *stream, stream_write_cb cb, void *data)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream->write_cb = cb;
+  stream->cb_data = data;
 }
 
 /// Queues data for writing to the backing file descriptor of a `Stream`
@@ -87,7 +90,7 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
 
   uv_buf_t uvbuf;
   uvbuf.base = buffer->data;
-  uvbuf.len = buffer->size;
+  uvbuf.len = UV_BUF_LEN(buffer->size);
 
   if (uv_write(&data->uv_req, stream->uvstream, &uvbuf, 1, write_cb)) {
     xfree(data);
@@ -138,7 +141,7 @@ static void write_cb(uv_write_t *req, int status)
   wstream_release_wbuffer(data->buffer);
 
   if (data->stream->write_cb) {
-    data->stream->write_cb(data->stream, data->stream->data, status);
+    data->stream->write_cb(data->stream, data->stream->cb_data, status);
   }
 
   data->stream->pending_reqs--;

@@ -1,4 +1,4 @@
-*vi_diff.txt*   For Vim version 7.4.  Last change: 2013 Aug 22
+*vi_diff.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,8 +6,7 @@
 
 Differences between Vim and Vi				*vi-differences*
 
-1. Limits				|limits|
-2. The most interesting additions	|vim-additions|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Limits						*limits*
@@ -39,18 +38,6 @@ Information for undo and text in registers is kept in memory, thus when making
 undo levels and the text that can be kept in registers.  Other things are also
 kept in memory:  Command-line history, error messages for Quickfix mode, etc.
 
-Memory usage limits
--------------------
-
-The option 'maxmem' ('mm') is used to set the maximum memory used for one
-buffer (in kilobytes).  'maxmemtot' is used to set the maximum memory used for
-all buffers (in kilobytes).  The defaults depend on the system used.
-These are not hard limits, but tell Vim when to move text into a swap file.
-If you don't like Vim to swap to a file, set 'maxmem' and 'maxmemtot' to a
-very large value.  The swap file will then only be used for recovery.  If you
-don't want a swap file at all, set 'updatecount' to 0, or use the "-n"
-argument when starting Vim.
-
 ==============================================================================
 2. The most interesting additions			*vim-additions*
 
@@ -60,7 +47,7 @@ Support for different systems.
 	- Windows (XP SP 2 or greater)
 	- OS X
 
-Multi level undo.					|undo|
+Multi level persistent undo.					|undo|
 	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
 	'undolevels' to the number of changes to be remembered (default 1000).
 	Set 'undolevels' to 0 for a Vi-compatible one level undo.  Set it to
@@ -71,6 +58,9 @@ Multi level undo.					|undo|
 	create a branch in the undo tree.  This means you can go back to any
 	state of the text, there is no risk of a change causing text to be
 	lost forever. |undo-tree|
+	The undo information is stored in a file when the 'undofile' option is
+	set.  This means you can exit Vim, start Vim on a previously edited
+	file and undo changes that were made before exiting Vim.
 
 Graphical User Interface (GUI).				|gui|
 	Included support for GUI: menu's, mouse, scrollbars, etc.  You can
@@ -124,6 +114,13 @@ Plugins.						|add-plugin|
 	right directory.  That's an easy way to start using Vim scripts
 	written by others.  Plugins can be for all kind of files, or
 	specifically for a filetype.
+	Packages make this even easier. |packages|
+
+Asynchronous communication and timers.			|job-control| |timer|
+	Vim can exchange messages with other processes in the background.
+	Vim can start a job, communicate with it and stop it. |job-control|
+	Timers can fire once or repeatedly and invoke a function to do any
+	work. |timer|
 
 Repeat a series of commands.				|q|
 	"q{c}" starts recording typed characters into named register {c}.
@@ -182,6 +179,12 @@ Command-line editing and history.			|cmdline-editing|
 	forward/backward one character.  The shifted right/left cursor keys
 	can be used to move forward/backward one word.  CTRL-B/CTRL-E can be
 	used to go to the begin/end of the command-line.
+	{Vi: can only alter the last character in the line}
+	{Vi: when hitting <Esc> the command-line is executed.  This is
+	unexpected for most people; therefore it was changed in Vim.  But when
+	the <Esc> is part of a mapping, the command-line is executed.  If you
+	want the Vi behaviour also when typing <Esc>, use ":cmap ^V<Esc>
+	^V^M"}
 							|cmdline-history|
 	The command-lines are remembered.  The up/down cursor keys can be used
 	to recall previous command-lines.  The 'history' option can be set to
@@ -325,7 +328,7 @@ Scripts and Expressions.				|expression|
 	Debugging and profiling are supported. |debug-scripts| |profile|
 	If this is not enough, an interface is provided to |Python|.
 
-Viminfo.						|viminfo-file|
+Viminfo.
 	The command-line history, marks and registers can be stored in a file
 	that is read on startup.  This can be used to repeat a search command
 	or command-line command after exiting and restarting Vim.  It is also
@@ -366,4 +369,4 @@ Move cursor beyond lines.
 	and figures easily.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

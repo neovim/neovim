@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:	automake Makefile.am
-" Maintainer:   Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
-" Former Maintainer:	John Williams <jrw@pobox.com>
-" Last Change:	2011-06-13
-" URL: http://anonscm.debian.org/hg/pkg-vim/vim/raw-file/unstable/runtime/syntax/automake.vim
+" Language: automake Makefile.am
+" Maintainer: Debian Vim Maintainers
+" Former Maintainer: John Williams <jrw@pobox.com>
+" Last Change: 2018 Dec 27
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/automake.vim
 "
 " XXX This file is in need of a new maintainer, Debian VIM Maintainers maintain
 "     it only because patches have been submitted for it by Debian users and the
@@ -18,18 +18,12 @@
 " EXTRA_SOURCES.
 
 " Standard syntax initialization
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
 " Read the Makefile syntax to start with
-if version < 600
-  source <sfile>:p:h/make.vim
-else
-  runtime! syntax/make.vim
-endif
+runtime! syntax/make.vim
 
 syn match automakePrimary "^\w\+\(_PROGRAMS\|_LIBRARIES\|_LISP\|_PYTHON\|_JAVA\|_SCRIPTS\|_DATA\|_HEADERS\|_MANS\|_TEXINFOS\|_LTLIBRARIES\)\s*\ze+\=="
 syn match automakePrimary "^TESTS\s*\ze+\=="me=e-1
@@ -43,8 +37,8 @@ syn match automakeConditional "^\(if\s*!\=\w\+\|else\|endif\)\s*$"
 
 syn match automakeSubst     "@\w\+@"
 syn match automakeSubst     "^\s*@\w\+@"
-syn match automakeComment1 "#.*$" contains=automakeSubst
-syn match automakeComment2 "##.*$"
+syn match automakeComment1 "#.*$" contains=automakeSubst,@Spell
+syn match automakeComment2 "##.*$" contains=@Spell
 
 syn match automakeMakeError "$[{(][^})]*[^a-zA-Z0-9_})][^})]*[})]" " GNU make function call
 syn match automakeMakeError "^AM_LDADD\s*\ze+\==" " Common mistake
@@ -59,35 +53,25 @@ syn region  automakeMakeSString start=+'+  skip=+\\'+  end=+'+  contains=makeIde
 syn region  automakeMakeBString start=+`+  skip=+\\`+  end=+`+  contains=makeIdent,makeSString,makeDString,makeNextLine,automakeSubstitution
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_automake_syntax_inits")
-  if version < 508
-    let did_automake_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink automakePrimary     Statement
-  HiLink automakeSecondary   Type
-  HiLink automakeExtra       Special
-  HiLink automakeOptions     Special
-  HiLink automakeClean       Special
-  HiLink automakeSubdirs     Statement
-  HiLink automakeConditional PreProc
-  HiLink automakeSubst       PreProc
-  HiLink automakeComment1    makeComment
-  HiLink automakeComment2    makeComment
-  HiLink automakeMakeError   makeError
-  HiLink automakeBadSubst    makeError
-  HiLink automakeMakeDString makeDString
-  HiLink automakeMakeSString makeSString
-  HiLink automakeMakeBString makeBString
+hi def link automakePrimary     Statement
+hi def link automakeSecondary   Type
+hi def link automakeExtra       Special
+hi def link automakeOptions     Special
+hi def link automakeClean       Special
+hi def link automakeSubdirs     Statement
+hi def link automakeConditional PreProc
+hi def link automakeSubst       PreProc
+hi def link automakeComment1    makeComment
+hi def link automakeComment2    makeComment
+hi def link automakeMakeError   makeError
+hi def link automakeBadSubst    makeError
+hi def link automakeMakeDString makeDString
+hi def link automakeMakeSString makeSString
+hi def link automakeMakeBString makeBString
 
-  delcommand HiLink
-endif
 
-let b:current_syntax = "automake"
+let b:current_syntax = 'automake'
 
 " vi: ts=8 sw=4 sts=4

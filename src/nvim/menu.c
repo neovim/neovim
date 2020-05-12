@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * Code for menus.  Used for the GUI and 'wildmenu'.
  * GUI/Motif support by Robert Webb
@@ -18,12 +21,14 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
-
+#include "nvim/eval/typval.h"
+#include "nvim/screen.h"
+#include "nvim/window.h"
 
 #define MENUDEPTH   10          /* maximum depth of menus */
 
@@ -35,37 +40,51 @@
 
 
 
-/* The character for each menu mode */
-static char_u menu_mode_chars[] = {'n', 'v', 's', 'o', 'i', 'c', 't'};
+/// The character for each menu mode
+static char_u menu_mode_chars[] = { 'n', 'v', 's', 'o', 'i', 'c', 't' };
 
 static char_u e_notsubmenu[] = N_(
     "E327: Part of menu-item path is not sub-menu");
 static char_u e_othermode[] = N_("E328: Menu only exists in another mode");
 static char_u e_nomenu[] = N_("E329: No menu \"%s\"");
 
+// Return true if "name" is a window toolbar menu name.
+static bool menu_is_winbar(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  return (STRNCMP(name, "WinBar", 6) == 0);
+}
 
-/*
- * Do the :menu command and relatives.
- */
-void 
-ex_menu (
-    exarg_T *eap                   /* Ex command arguments */
-)
+int winbar_height(const win_T *const wp)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  return wp->w_winbar != NULL && wp->w_winbar->children != NULL ? 1 : 0;
+}
+
+static vimmenu_T **get_root_menu(const char_u *const name)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  return menu_is_winbar(name) ? &curwin->w_winbar : &root_menu;
+}
+
+/// Do the :menu command and relatives.
+/// @param eap Ex command arguments
+void
+ex_menu(exarg_T *eap)
 {
   char_u      *menu_path;
   int modes;
-  char_u      *map_to;
+  char_u      *map_to;            // command mapped to the menu entry
   int noremap;
   bool silent = false;
-  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
   char_u      *p;
   int i;
   long pri_tab[MENUDEPTH + 1];
-  int enable = MAYBE;               /* TRUE for "menu enable", FALSE for "menu
-                                     * disable */
+  TriState enable = kNone;        // kTrue for "menu enable",
+                                  // kFalse for "menu disable
   vimmenu_T menuarg;
 
   modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
@@ -83,7 +102,7 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = true;
+      // Ignore obsolete "<special>" modifier.
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -91,13 +110,14 @@ ex_menu (
   }
 
 
-  /* Locate an optional "icon=filename" argument. */
+  // Locate an optional "icon=filename" argument
+  // TODO(nvim): Currently this is only parsed. Should expose it to UIs.
   if (STRNCMP(arg, "icon=", 5) == 0) {
     arg += 5;
     while (*arg != NUL && *arg != ' ') {
       if (*arg == '\\')
         STRMOVE(arg, arg + 1);
-      mb_ptr_adv(arg);
+      MB_PTR_ADV(arg);
     }
     if (*arg != NUL) {
       *arg++ = NUL;
@@ -105,19 +125,21 @@ ex_menu (
     }
   }
 
-  /*
-   * Fill in the priority table.
-   */
-  for (p = arg; *p; ++p)
-    if (!ascii_isdigit(*p) && *p != '.')
+  // Fill in the priority table.
+  for (p = arg; *p; p++) {
+    if (!ascii_isdigit(*p) && *p != '.') {
       break;
+    }
+  }
   if (ascii_iswhite(*p)) {
-    for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); ++i) {
-      pri_tab[i] = getdigits_long(&arg);
-      if (pri_tab[i] == 0)
+    for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); i++) {
+      pri_tab[i] = getdigits_long(&arg, false, 0);
+      if (pri_tab[i] == 0) {
         pri_tab[i] = 500;
-      if (*arg == '.')
-        ++arg;
+      }
+      if (*arg == '.') {
+        arg++;
+      }
     }
     arg = skipwhite(arg);
   } else if (eap->addr_count && eap->line2 != 0) {
@@ -133,10 +155,10 @@ ex_menu (
    * Check for "disable" or "enable" argument.
    */
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
-    enable = TRUE;
+    enable = kTrue;
     arg = skipwhite(arg + 6);
   } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
-    enable = FALSE;
+    enable = kFalse;
     arg = skipwhite(arg + 7);
   }
 
@@ -160,32 +182,37 @@ ex_menu (
   /*
    * If there is only a menu name, display menus with that name.
    */
-  if (*map_to == NUL && !unmenu && enable == MAYBE) {
+  if (*map_to == NUL && !unmenu && enable == kNone) {
     show_menus(menu_path, modes);
     goto theend;
-  } else if (*map_to != NUL && (unmenu || enable != MAYBE)) {
+  } else if (*map_to != NUL && (unmenu || enable != kNone)) {
     EMSG(_(e_trailing));
     goto theend;
   }
 
-  if (enable != MAYBE) {
-    /*
-     * Change sensitivity of the menu.
-     * For the PopUp menu, remove a menu for each mode separately.
-     * Careful: menu_nable_recurse() changes menu_path.
-     */
-    if (STRCMP(menu_path, "*") == 0)            /* meaning: do all menus */
+  vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
+  if (root_menu_ptr == &curwin->w_winbar) {
+    // Assume the window toolbar menu will change.
+    redraw_later(NOT_VALID);
+  }
+
+  if (enable != kNone) {
+    // Change sensitivity of the menu.
+    // For the PopUp menu, remove a menu for each mode separately.
+    // Careful: menu_enable_recurse() changes menu_path.
+    if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
       menu_path = (char_u *)"";
+    }
 
     if (menu_is_popup(menu_path)) {
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          menu_nable_recurse(root_menu, p, MENU_ALL_MODES, enable);
+          menu_enable_recurse(*root_menu_ptr, p, MENU_ALL_MODES, enable);
           xfree(p);
         }
     }
-    menu_nable_recurse(root_menu, menu_path, modes, enable);
+    menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
   } else if (unmenu) {
     /*
      * Delete menu(s).
@@ -200,13 +227,13 @@ ex_menu (
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          remove_menu(&root_menu, p, MENU_ALL_MODES, TRUE);
+          remove_menu(root_menu_ptr, p, MENU_ALL_MODES, true);
           xfree(p);
         }
     }
 
-    /* Careful: remove_menu() changes menu_path */
-    remove_menu(&root_menu, menu_path, modes, FALSE);
+    // Careful: remove_menu() changes menu_path
+    remove_menu(root_menu_ptr, menu_path, modes, false);
   } else {
     /*
      * Add menu(s).
@@ -215,15 +242,16 @@ ex_menu (
     if (STRICMP(map_to, "<nop>") == 0) {        /* "<Nop>" means nothing */
       map_to = (char_u *)"";
       map_buf = NULL;
-    } else if (modes & MENU_TIP_MODE)
-      map_buf = NULL;           /* Menu tips are plain text. */
-    else
-      map_to = replace_termcodes(map_to, &map_buf, FALSE, TRUE, special);
+    } else if (modes & MENU_TIP_MODE) {
+      map_buf = NULL;  // Menu tips are plain text.
+    } else {
+      map_to = replace_termcodes(map_to, STRLEN(map_to), &map_buf, false, true,
+                                 true, CPO_TO_CPO_FLAGS);
+    }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
     menuarg.silent[0] = silent;
-    add_menu_path(menu_path, &menuarg, pri_tab, map_to
-        );
+    add_menu_path(menu_path, &menuarg, pri_tab, map_to);
 
     /*
      * For the PopUp menu, add a menu for each mode separately.
@@ -242,27 +270,41 @@ ex_menu (
     xfree(map_buf);
   }
 
-  ui_update_menu();
+  if (root_menu_ptr == &curwin->w_winbar) {
+    const int h = winbar_height(curwin);
+
+    if (h != curwin->w_winbar_height) {
+      if (h == 0) {
+        curwin->w_height++;
+      } else if (curwin->w_height > 0) {
+        curwin->w_height--;
+      }
+      curwin->w_winbar_height = h;
+    }
+  }
+
+  ui_call_update_menu();
 
 theend:
   ;
 }
 
-/*
- * Add the menu with the given name to the menu hierarchy
- */
-static int 
-add_menu_path (
-    char_u *menu_path,
-    vimmenu_T *menuarg,           /* passes modes, iconfile, iconidx,
-                                   icon_builtin, silent[0], noremap[0] */
-    long *pri_tab,
-    char_u *call_data
+
+/// Add the menu with the given name to the menu hierarchy
+///
+/// @param[out]  menuarg menu entry
+/// @param[] pri_tab priority table
+/// @param[in] call_data Right hand side command
+static int
+add_menu_path(
+    const char_u *const menu_path,
+    vimmenu_T *menuarg,
+    const long *const pri_tab,
+    const char_u *const call_data
 )
 {
   char_u      *path_name;
   int modes = menuarg->modes;
-  vimmenu_T   **menup;
   vimmenu_T   *menu = NULL;
   vimmenu_T   *parent;
   vimmenu_T   **lower_pri;
@@ -281,7 +323,8 @@ add_menu_path (
 
   /* Make a copy so we can stuff around with it, since it could be const */
   path_name = vim_strsave(menu_path);
-  menup = &root_menu;
+  vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
+  vimmenu_T **menup = root_menu_ptr;
   parent = NULL;
   name = path_name;
   while (*name) {
@@ -292,8 +335,9 @@ add_menu_path (
     if (map_to != NULL) {
       en_name = name;
       name = map_to;
-    } else
+    } else {
       en_name = NULL;
+    }
     dname = menu_text(name, NULL, NULL);
     if (*dname == NUL) {
       /* Only a mnemonic or accelerator is not valid. */
@@ -307,14 +351,15 @@ add_menu_path (
     while (menu != NULL) {
       if (menu_name_equal(name, menu) || menu_name_equal(dname, menu)) {
         if (*next_name == NUL && menu->children != NULL) {
-          if (!sys_menu)
+          if (!sys_menu) {
             EMSG(_("E330: Menu path must not lead to a sub-menu"));
+          }
           goto erret;
         }
-        if (*next_name != NUL && menu->children == NULL
-            ) {
-          if (!sys_menu)
+        if (*next_name != NUL && menu->children == NULL) {
+          if (!sys_menu) {
             EMSG(_(e_notsubmenu));
+          }
           goto erret;
         }
         break;
@@ -348,7 +393,7 @@ add_menu_path (
       menu->modes = modes;
       menu->enabled = MENU_ALL_MODES;
       menu->name = vim_strsave(name);
-      /* separate mnemonic and accelerator text from actual menu name */
+      // separate mnemonic and accelerator text from actual menu name
       menu->dname = menu_text(name, &menu->mnemonic, &menu->actext);
       if (en_name != NULL) {
         menu->en_name = vim_strsave(en_name);
@@ -360,9 +405,7 @@ add_menu_path (
       menu->priority = pri_tab[pri_idx];
       menu->parent = parent;
 
-      /*
-       * Add after menu that has lower priority.
-       */
+      // Add after menu that has lower priority.
       menu->next = *lower_pri;
       *lower_pri = menu;
 
@@ -386,10 +429,10 @@ add_menu_path (
     menup = &menu->children;
     parent = menu;
     name = next_name;
-    xfree(dname);
-    dname = NULL;
-    if (pri_tab[pri_idx + 1] != -1)
-      ++pri_idx;
+    XFREE_CLEAR(dname);
+    if (pri_tab[pri_idx + 1] != -1) {
+      pri_idx++;
+    }
   }
   xfree(path_name);
 
@@ -415,8 +458,7 @@ add_menu_path (
         // Don't do this for "<Nop>".
         c = 0;
         d = 0;
-        if (amenu && call_data != NULL && *call_data != NUL
-            ) {
+        if (amenu && call_data != NULL && *call_data != NUL) {
           switch (1 << i) {
           case MENU_VISUAL_MODE:
           case MENU_SELECT_MODE:
@@ -434,9 +476,9 @@ add_menu_path (
         if (c != 0) {
           menu->strings[i] = xmalloc(STRLEN(call_data) + 5 );
           menu->strings[i][0] = c;
-          if (d == 0)
+          if (d == 0) {
             STRCPY(menu->strings[i] + 1, call_data);
-          else {
+          } else {
             menu->strings[i][1] = d;
             STRCPY(menu->strings[i] + 2, call_data);
           }
@@ -448,8 +490,9 @@ add_menu_path (
             menu->strings[i][len + 1] = Ctrl_G;
             menu->strings[i][len + 2] = NUL;
           }
-        } else
+        } else {
           menu->strings[i] = p;
+        }
         menu->noremap[i] = menuarg->noremap[0];
         menu->silent[i] = menuarg->silent[0];
       }
@@ -464,14 +507,16 @@ erret:
   /* Delete any empty submenu we added before discovering the error.  Repeat
    * for higher levels. */
   while (parent != NULL && parent->children == NULL) {
-    if (parent->parent == NULL)
-      menup = &root_menu;
-    else
+    if (parent->parent == NULL) {
+      menup = root_menu_ptr;
+    } else {
       menup = &parent->parent->children;
-    for (; *menup != NULL && *menup != parent; menup = &((*menup)->next))
-      ;
-    if (*menup == NULL)     /* safety check */
+    }
+    for (; *menup != NULL && *menup != parent; menup = &((*menup)->next)) {
+    }
+    if (*menup == NULL) {   // safety check
       break;
+    }
     parent = parent->parent;
     free_menu(menup);
   }
@@ -482,7 +527,10 @@ erret:
  * Set the (sub)menu with the given name to enabled or disabled.
  * Called recursively.
  */
-static int menu_nable_recurse(vimmenu_T *menu, char_u *name, int modes, int enable)
+static int menu_enable_recurse(vimmenu_T *menu,
+                               char_u *name,
+                               int modes,
+                               int enable)
 {
   char_u      *p;
 
@@ -500,13 +548,14 @@ static int menu_nable_recurse(vimmenu_T *menu, char_u *name, int modes, int enab
           EMSG(_(e_notsubmenu));
           return FAIL;
         }
-        if (menu_nable_recurse(menu->children, p, modes, enable)
-            == FAIL)
+        if (menu_enable_recurse(menu->children, p, modes, enable) == FAIL) {
           return FAIL;
-      } else if (enable)
+        }
+      } else if (enable) {
         menu->enabled |= modes;
-      else
+      } else {
         menu->enabled &= ~modes;
+      }
 
       /*
        * When name is empty, we are doing all menu items for the given
@@ -612,6 +661,14 @@ remove_menu (
   return OK;
 }
 
+// Remove the WinBar menu from window "wp".
+void remove_winbar(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  remove_menu(&wp->w_winbar, (char_u *)"", MENU_ALL_MODES, true);
+  xfree(wp->w_winbar_items);
+}
+
 /*
  * Free the given menu structure and remove it from the linked list.
  */
@@ -653,60 +710,162 @@ static void free_menu_string(vimmenu_T *menu, int idx)
   menu->strings[idx] = NULL;
 }
 
-/*
- * Show the mapping associated with a menu item or hierarchy in a sub-menu.
- */
-static int show_menus(char_u *path_name, int modes)
+/// Export menus
+///
+/// @param[in] menu if null, starts from root_menu
+/// @param modes, a choice of \ref MENU_MODES
+/// @return dict with name/commands
+/// @see show_menus_recursive
+/// @see menu_get
+static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 {
-  char_u      *p;
-  char_u      *name;
-  vimmenu_T   *menu;
-  vimmenu_T   *parent = NULL;
+  dict_T *dict;
 
-  menu = root_menu;
-  name = path_name = vim_strsave(path_name);
+  if (!menu || (menu->modes & modes) == 0x0) {
+    return NULL;
+  }
 
-  /* First, find the (sub)menu with the given name */
+  dict = tv_dict_alloc();
+  tv_dict_add_str(dict, S_LEN("name"), (char *)menu->dname);
+  tv_dict_add_nr(dict, S_LEN("priority"), (int)menu->priority);
+  tv_dict_add_nr(dict, S_LEN("hidden"), menu_is_hidden(menu->dname));
+
+  if (menu->mnemonic) {
+    char buf[MB_MAXCHAR + 1] = { 0 };  // > max value of utf8_char2bytes
+    utf_char2bytes(menu->mnemonic, (char_u *)buf);
+    tv_dict_add_str(dict, S_LEN("shortcut"), buf);
+  }
+
+  if (menu->actext) {
+    tv_dict_add_str(dict, S_LEN("actext"), (char *)menu->actext);
+  }
+
+  if (menu->modes & MENU_TIP_MODE && menu->strings[MENU_INDEX_TIP]) {
+    tv_dict_add_str(dict, S_LEN("tooltip"),
+                    (char *)menu->strings[MENU_INDEX_TIP]);
+  }
+
+  if (!menu->children) {
+    // leaf menu
+    dict_T *commands = tv_dict_alloc();
+    tv_dict_add_dict(dict, S_LEN("mappings"), commands);
+
+    for (int bit = 0; bit < MENU_MODES; bit++) {
+      if ((menu->modes & modes & (1 << bit)) != 0) {
+        dict_T *impl = tv_dict_alloc();
+        tv_dict_add_allocated_str(impl, S_LEN("rhs"),
+                                  str2special_save((char *)menu->strings[bit],
+                                                   false, false));
+        tv_dict_add_nr(impl, S_LEN("silent"), menu->silent[bit]);
+        tv_dict_add_nr(impl, S_LEN("enabled"),
+                       (menu->enabled & (1 << bit)) ? 1 : 0);
+        tv_dict_add_nr(impl, S_LEN("noremap"),
+                       (menu->noremap[bit] & REMAP_NONE) ? 1 : 0);
+        tv_dict_add_nr(impl, S_LEN("sid"),
+                       (menu->noremap[bit] & REMAP_SCRIPT) ? 1 : 0);
+        tv_dict_add_dict(commands, (char *)&menu_mode_chars[bit], 1, impl);
+      }
+    }
+  } else {
+    // visit recursively all children
+    list_T *const children_list = tv_list_alloc(kListLenMayKnow);
+    for (menu = menu->children; menu != NULL; menu = menu->next) {
+      dict_T *d = menu_get_recursive(menu, modes);
+      if (tv_dict_len(d) > 0) {
+        tv_list_append_dict(children_list, d);
+      }
+    }
+    tv_dict_add_list(dict, S_LEN("submenus"), children_list);
+  }
+  return dict;
+}
+
+
+/// Export menus matching path \p path_name
+///
+/// @param path_name
+/// @param modes supported modes, see \ref MENU_MODES
+/// @param[in,out] list must be allocated
+/// @return false if could not find path_name
+bool menu_get(char_u *const path_name, int modes, list_T *list)
+{
+  vimmenu_T *menu = find_menu(*get_root_menu(path_name), path_name, modes);
+  if (!menu) {
+    return false;
+  }
+  for (; menu != NULL; menu = menu->next) {
+    dict_T *d = menu_get_recursive(menu, modes);
+    if (d && tv_dict_len(d) > 0) {
+      tv_list_append_dict(list, d);
+    }
+    if (*path_name != NUL) {
+      // If a (non-empty) path query was given, only the first node in the
+      // find_menu() result is relevant.  Else we want all nodes.
+      break;
+    }
+  }
+  return true;
+}
+
+
+/// Find menu matching `name` and `modes`.
+///
+/// @param menu top menu to start looking from
+/// @param name path towards the menu
+/// @return menu if \p name is null, found menu or NULL
+static vimmenu_T *find_menu(vimmenu_T *menu, char_u *name, int modes)
+{
+  char_u *p;
+
   while (*name) {
+    // find the end of one dot-separated name and put a NUL at the dot
     p = menu_name_skip(name);
     while (menu != NULL) {
       if (menu_name_equal(name, menu)) {
-        /* Found menu */
+        // Found menu
         if (*p != NUL && menu->children == NULL) {
-          EMSG(_(e_notsubmenu));
-          xfree(path_name);
-          return FAIL;
+            EMSG(_(e_notsubmenu));
+            return NULL;
         } else if ((menu->modes & modes) == 0x0) {
           EMSG(_(e_othermode));
-          xfree(path_name);
-          return FAIL;
+          return NULL;
+        } else if (*p == NUL) {  // found a full match
+          return menu;
         }
         break;
       }
       menu = menu->next;
     }
+
     if (menu == NULL) {
       EMSG2(_(e_nomenu), name);
-      xfree(path_name);
-      return FAIL;
+      return NULL;
     }
+    // Found a match, search the sub-menu.
     name = p;
-    parent = menu;
     menu = menu->children;
   }
-  xfree(path_name);
+  return menu;
+}
+
+/// Show the mapping associated with a menu item or hierarchy in a sub-menu.
+static int show_menus(char_u *const path_name, int modes)
+{
+  // First, find the (sub)menu with the given name
+  vimmenu_T *menu = find_menu(*get_root_menu(path_name), path_name, modes);
+  if (!menu) {
+    return FAIL;
+  }
 
   /* Now we have found the matching menu, and we list the mappings */
   /* Highlight title */
   MSG_PUTS_TITLE(_("\n--- Menus ---"));
 
-  show_menus_recursive(parent, modes, 0);
+  show_menus_recursive(menu->parent, modes, 0);
   return OK;
 }
 
-/*
- * Recursively show the mappings associated with the menus under the given one
- */
+/// Recursively show the mappings associated with the menus under the given one
 static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
 {
   int i;
@@ -725,8 +884,8 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
       msg_outnum((long)menu->priority);
       MSG_PUTS(" ");
     }
-    /* Same highlighting as for directories!? */
-    msg_outtrans_attr(menu->name, hl_attr(HLF_D));
+    // Same highlighting as for directories!?
+    msg_outtrans_attr(menu->name, HL_ATTR(HLF_D));
   }
 
   if (menu != NULL && menu->children == NULL) {
@@ -753,10 +912,11 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         else
           msg_putchar(' ');
         MSG_PUTS(" ");
-        if (*menu->strings[bit] == NUL)
-          msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
-        else
-          msg_outtrans_special(menu->strings[bit], FALSE);
+        if (*menu->strings[bit] == NUL) {
+          msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
+        } else {
+          msg_outtrans_special(menu->strings[bit], false, 0);
+        }
       }
   } else {
     if (menu == NULL) {
@@ -777,6 +937,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  * Used when expanding menu names.
  */
 static vimmenu_T        *expand_menu = NULL;
+static vimmenu_T *expand_menu_alt = NULL;
 static int expand_modes = 0x0;
 static int expand_emenu;                /* TRUE for ":emenu" command */
 
@@ -827,14 +988,15 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
   // ":popup" only uses menues, not entries
   expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
-  if (expand_menus && ascii_iswhite(*p))
-    return NULL;        /* TODO: check for next command? */
-  if (*p == NUL) {              /* Complete the menu name */
-    /*
-     * With :unmenu, you only want to match menus for the appropriate mode.
-     * With :menu though you might want to add a menu with the same name as
-     * one in another mode, so match menus from other modes too.
-     */
+  if (expand_menus && ascii_iswhite(*p)) {
+    return NULL;  // TODO(vim): check for next command?
+  }
+  if (*p == NUL) {  // Complete the menu name
+    bool try_alt_menu = true;
+
+    // With :unmenu, you only want to match menus for the appropriate mode.
+    // With :menu though you might want to add a menu with the same name as
+    // one in another mode, so match menus from other modes too.
     expand_modes = get_menu_cmd_modes(cmd, forceit, NULL, &unmenu);
     if (!unmenu)
       expand_modes = MENU_ALL_MODES;
@@ -863,6 +1025,10 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
           break;
         }
         menu = menu->next;
+        if (menu == NULL && try_alt_menu) {
+          menu = curwin->w_winbar;
+          try_alt_menu = false;
+        }
       }
       if (menu == NULL) {
         /* No menu found with the name we were looking for */
@@ -871,14 +1037,21 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
       }
       name = p;
       menu = menu->children;
+      try_alt_menu = false;
     }
     xfree(path_name);
 
     xp->xp_context = expand_menus ? EXPAND_MENUNAMES : EXPAND_MENUS;
     xp->xp_pattern = after_dot;
     expand_menu = menu;
-  } else                        /* We're in the mapping part */
+    if (expand_menu == root_menu) {
+      expand_menu_alt = curwin->w_winbar;
+    } else {
+      expand_menu_alt = NULL;
+    }
+  } else {                      // We're in the mapping part
     xp->xp_context = EXPAND_NOTHING;
+  }
   return NULL;
 }
 
@@ -889,19 +1062,26 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 char_u *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
+  static bool did_alt_menu = false;
   char_u              *str;
   static int should_advance = FALSE;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    should_advance = FALSE;
+    did_alt_menu = false;
+    should_advance = false;
   }
 
   /* Skip PopUp[nvoci]. */
   while (menu != NULL && (menu_is_hidden(menu->dname)
                           || menu_is_separator(menu->dname)
-                          || menu->children == NULL))
+                          || menu->children == NULL)) {
     menu = menu->next;
+    if (menu == NULL && !did_alt_menu) {
+      menu = expand_menu_alt;
+      did_alt_menu = true;
+    }
+  }
 
   if (menu == NULL)         /* at end of linked list */
     return NULL;
@@ -917,9 +1097,14 @@ char_u *get_menu_name(expand_T *xp, int idx)
   else
     str = (char_u *)"";
 
-  if (should_advance)
-    /* Advance to next menu entry. */
+  if (should_advance) {
+    // Advance to next menu entry.
     menu = menu->next;
+    if (menu == NULL && !did_alt_menu) {
+      menu = expand_menu_alt;
+      did_alt_menu = true;
+    }
+  }
 
   should_advance = !should_advance;
 
@@ -933,6 +1118,7 @@ char_u *get_menu_name(expand_T *xp, int idx)
 char_u *get_menu_names(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
+  static bool did_alt_menu = false;
 #define TBUFFER_LEN 256
   static char_u tbuffer[TBUFFER_LEN];         /*hack*/
   char_u              *str;
@@ -940,16 +1126,21 @@ char_u *get_menu_names(expand_T *xp, int idx)
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    should_advance = FALSE;
+    did_alt_menu = false;
+    should_advance = false;
   }
 
   /* Skip Browse-style entries, popup menus and separators. */
   while (menu != NULL
-         && (   menu_is_hidden(menu->dname)
-                || (expand_emenu && menu_is_separator(menu->dname))
-                || menu->dname[STRLEN(menu->dname) - 1] == '.'
-                ))
+         && (menu_is_hidden(menu->dname)
+             || (expand_emenu && menu_is_separator(menu->dname))
+             || menu->dname[STRLEN(menu->dname) - 1] == '.')) {
     menu = menu->next;
+    if (menu == NULL && !did_alt_menu) {
+      menu = expand_menu_alt;
+      did_alt_menu = true;
+    }
+  }
 
   if (menu == NULL)         /* at end of linked list */
     return NULL;
@@ -979,25 +1170,31 @@ char_u *get_menu_names(expand_T *xp, int idx)
   } else
     str = (char_u *)"";
 
-  if (should_advance)
-    /* Advance to next menu entry. */
+  if (should_advance) {
+    // Advance to next menu entry.
     menu = menu->next;
+    if (menu == NULL && !did_alt_menu) {
+      menu = expand_menu_alt;
+      did_alt_menu = true;
+    }
+  }
 
   should_advance = !should_advance;
 
   return str;
 }
 
-/*
- * Skip over this element of the menu path and return the start of the next
- * element.  Any \ and ^Vs are removed from the current element.
- * "name" may be modified.
- */
-char_u *menu_name_skip(char_u *name)
+
+/// Skip over this element of the menu path and return the start of the next
+/// element.  Any \ and ^Vs are removed from the current element.
+///
+/// @param name may be modified.
+/// @return start of the next element
+char_u *menu_name_skip(char_u *const name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p)) {
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
     if (*p == '\\' || *p == Ctrl_V) {
       STRMOVE(p, p + 1);
       if (*p == NUL)
@@ -1013,16 +1210,16 @@ char_u *menu_name_skip(char_u *name)
  * Return TRUE when "name" matches with menu "menu".  The name is compared in
  * two ways: raw menu name and menu name without '&'.  ignore part after a TAB.
  */
-static int menu_name_equal(char_u *name, vimmenu_T *menu)
+static bool menu_name_equal(const char_u *const name, vimmenu_T *const menu)
 {
   if (menu->en_name != NULL
       && (menu_namecmp(name, menu->en_name)
           || menu_namecmp(name, menu->en_dname)))
-    return TRUE;
+    return true;
   return menu_namecmp(name, menu->name) || menu_namecmp(name, menu->dname);
 }
 
-static int menu_namecmp(char_u *name, char_u *mname)
+static bool menu_namecmp(const char_u *const name, const char_u *const mname)
 {
   int i;
 
@@ -1033,18 +1230,20 @@ static int menu_namecmp(char_u *name, char_u *mname)
          && (mname[i] == NUL || mname[i] == TAB);
 }
 
-/*
- * Return the modes specified by the given menu command (eg :menu! returns
- * MENU_CMDLINE_MODE | MENU_INSERT_MODE).
- * If "noremap" is not NULL, then the flag it points to is set according to
- * whether the command is a "nore" command.
- * If "unmenu" is not NULL, then the flag it points to is set according to
- * whether the command is an "unmenu" command.
- */
-static int 
-get_menu_cmd_modes (
-    char_u *cmd,
-    int forceit,                /* Was there a "!" after the command? */
+
+/// Returns the \ref MENU_MODES specified by menu command `cmd`.
+///  (eg :menu! returns MENU_CMDLINE_MODE | MENU_INSERT_MODE)
+///
+/// @param[in] cmd      string like "nmenu", "vmenu", etc.
+/// @param[in] forceit  bang (!) was given after the command
+/// @param[out] noremap If not NULL, the flag it points to is set according
+///                     to whether the command is a "nore" command.
+/// @param[out] unmenu  If not NULL, the flag it points to is set according
+///                     to whether the command is an "unmenu" command.
+int
+get_menu_cmd_modes(
+    const char_u * cmd,
+    bool forceit,
     int *noremap,
     int *unmenu
 )
@@ -1083,14 +1282,17 @@ get_menu_cmd_modes (
       modes = MENU_NORMAL_MODE;
       break;
     }
-  /* FALLTHROUGH */
+    FALLTHROUGH;
   default:
-    --cmd;
-    if (forceit)                        /* menu!! */
+    cmd--;
+    if (forceit) {
+      // menu!!
       modes = MENU_INSERT_MODE | MENU_CMDLINE_MODE;
-    else                                /* menu */
+    } else {
+      // menu
       modes = MENU_NORMAL_MODE | MENU_VISUAL_MODE | MENU_SELECT_MODE
               | MENU_OP_PENDING_MODE;
+    }
   }
 
   if (noremap != NULL)
@@ -1129,7 +1331,7 @@ static char_u *popup_mode_name(char_u *name, int idx)
 ///
 /// @return a pointer to allocated memory.
 static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
@@ -1160,29 +1362,27 @@ static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
   return text;
 }
 
-/*
- * Return TRUE if "name" can be a menu in the MenuBar.
- */
-int menu_is_menubar(char_u *name)
+// Return true if "name" can be a menu in the MenuBar.
+bool menu_is_menubar(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return !menu_is_popup(name)
          && !menu_is_toolbar(name)
+         && !menu_is_winbar(name)
          && *name != MNU_HIDDEN_CHAR;
 }
 
-/*
- * Return TRUE if "name" is a popup menu name.
- */
-int menu_is_popup(char_u *name)
+// Return true if "name" is a popup menu name.
+bool menu_is_popup(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return STRNCMP(name, "PopUp", 5) == 0;
 }
 
 
-/*
- * Return TRUE if "name" is a toolbar menu name.
- */
-int menu_is_toolbar(char_u *name)
+// Return true if "name" is a toolbar menu name.
+bool menu_is_toolbar(const char_u *const name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return STRNCMP(name, "ToolBar", 7) == 0;
 }
@@ -1196,62 +1396,26 @@ int menu_is_separator(char_u *name)
   return name[0] == '-' && name[STRLEN(name) - 1] == '-';
 }
 
-/*
- * Return TRUE if the menu is hidden:  Starts with ']'
- */
+
+/// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
+///
+/// @return true if the menu is hidden
 static int menu_is_hidden(char_u *name)
 {
-  return (name[0] == ']') || (menu_is_popup(name) && name[5] != NUL);
+  return (name[0] == MNU_HIDDEN_CHAR)
+          || (menu_is_popup(name) && name[5] != NUL);
 }
 
-/*
- * Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy and
- * execute it.
- */
-void ex_emenu(exarg_T *eap)
+// Execute "menu".  Use by ":emenu" and the window toolbar.
+// "eap" is NULL for the window toolbar.
+static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  vimmenu_T   *menu;
-  char_u      *name;
-  char_u      *saved_name;
-  char_u      *p;
-  int idx;
-  char_u      *mode;
+  int idx = -1;
+  char_u *mode;
 
-  saved_name = vim_strsave(eap->arg);
-
-  menu = root_menu;
-  name = saved_name;
-  while (*name) {
-    /* Find in the menu hierarchy */
-    p = menu_name_skip(name);
-
-    while (menu != NULL) {
-      if (menu_name_equal(name, menu)) {
-        if (*p == NUL && menu->children != NULL) {
-          EMSG(_("E333: Menu path must lead to a menu item"));
-          menu = NULL;
-        } else if (*p != NUL && menu->children == NULL) {
-          EMSG(_(e_notsubmenu));
-          menu = NULL;
-        }
-        break;
-      }
-      menu = menu->next;
-    }
-    if (menu == NULL || *p == NUL)
-      break;
-    menu = menu->children;
-    name = p;
-  }
-  xfree(saved_name);
-  if (menu == NULL) {
-    EMSG2(_("E334: Menu not found: %s"), eap->arg);
-    return;
-  }
-
-  /* Found the menu, so execute.
-   * Use the Insert mode entry when returning to Insert mode. */
-  if (((State & INSERT) || restart_edit) && !current_SID) {
+  // Use the Insert mode entry when returning to Insert mode.
+  if (((State & INSERT) || restart_edit) && !current_sctx.sc_sid) {
     mode = (char_u *)"Insert";
     idx = MENU_INDEX_INSERT;
   } else if (State & CMDLINE) {
@@ -1263,7 +1427,7 @@ void ex_emenu(exarg_T *eap)
      * is. Just execute the visual binding for the menu. */
     mode = (char_u *)"Visual";
     idx = MENU_INDEX_VISUAL;
-  } else if (eap->addr_count) {
+  } else if (eap != NULL && eap->addr_count) {
     pos_T tpos;
 
     mode = (char_u *)"Visual";
@@ -1301,24 +1465,126 @@ void ex_emenu(exarg_T *eap)
 
     /* Adjust the cursor to make sure it is in the correct pos
      * for exclusive mode */
-    if (*p_sel == 'e' && gchar_cursor() != NUL)
-      ++curwin->w_cursor.col;
-  } else {
+    if (*p_sel == 'e' && gchar_cursor() != NUL) {
+      curwin->w_cursor.col++;
+    }
+  }
+
+  // For the WinBar menu always use the Normal mode menu.
+  if (idx == -1 || eap == NULL) {
     mode = (char_u *)"Normal";
     idx = MENU_INDEX_NORMAL;
   }
 
-  if (idx != MENU_INDEX_INVALID && menu->strings[idx] != NULL) {
-    /* When executing a script or function execute the commands right now.
-     * Otherwise put them in the typeahead buffer. */
-    if (current_SID != 0)
-      exec_normal_cmd(menu->strings[idx], menu->noremap[idx],
-          menu->silent[idx]);
-    else
-      ins_typebuf(menu->strings[idx], menu->noremap[idx], 0,
-          TRUE, menu->silent[idx]);
-  } else
+  assert(idx != MENU_INDEX_INVALID);
+  if (menu->strings[idx] != NULL) {
+    // When executing a script or function execute the commands right now.
+    // Also for the window toolbar
+    // Otherwise put them in the typeahead buffer.
+    if (eap == NULL || current_sctx.sc_sid != 0) {
+      save_state_T save_state;
+
+      ex_normal_busy++;
+      if (save_current_state(&save_state)) {
+        exec_normal_cmd(menu->strings[idx], menu->noremap[idx],
+                        menu->silent[idx]);
+      }
+      restore_current_state(&save_state);
+      ex_normal_busy--;
+    } else {
+      ins_typebuf(menu->strings[idx], menu->noremap[idx], 0, true,
+                  menu->silent[idx]);
+    }
+  } else if (eap != NULL) {
     EMSG2(_("E335: Menu not defined for %s mode"), mode);
+  }
+}
+
+// Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy and
+// execute it.
+void ex_emenu(exarg_T *eap)
+{
+  char_u *saved_name = vim_strsave(eap->arg);
+  vimmenu_T *menu = *get_root_menu(saved_name);
+  char_u *name = saved_name;
+  while (*name) {
+    // Find in the menu hierarchy
+    char_u *p = menu_name_skip(name);
+
+    while (menu != NULL) {
+      if (menu_name_equal(name, menu)) {
+        if (*p == NUL && menu->children != NULL) {
+          EMSG(_("E333: Menu path must lead to a menu item"));
+          menu = NULL;
+        } else if (*p != NUL && menu->children == NULL) {
+          EMSG(_(e_notsubmenu));
+          menu = NULL;
+        }
+        break;
+      }
+      menu = menu->next;
+    }
+    if (menu == NULL || *p == NUL) {
+      break;
+    }
+    menu = menu->children;
+    name = p;
+  }
+  xfree(saved_name);
+  if (menu == NULL) {
+    EMSG2(_("E334: Menu not found: %s"), eap->arg);
+    return;
+  }
+
+  // Found the menu, so execute.
+  execute_menu(eap, menu);
+}
+
+// Handle a click in the window toolbar of "wp" at column "col".
+void winbar_click(win_T *wp, int col)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (wp->w_winbar_items == NULL) {
+    return;
+  }
+  for (int idx = 0; wp->w_winbar_items[idx].wb_menu != NULL; idx++) {
+    winbar_item_T *item = &wp->w_winbar_items[idx];
+
+    if (col >= item->wb_startcol && col <= item->wb_endcol) {
+      win_T *save_curwin = NULL;
+      const pos_T save_visual = VIsual;
+      const int save_visual_active = VIsual_active;
+      const int save_visual_select = VIsual_select;
+      const int save_visual_reselect = VIsual_reselect;
+      const int save_visual_mode = VIsual_mode;
+
+      if (wp != curwin) {
+        // Clicking in the window toolbar of a not-current window.
+        // Make that window the current one and save Visual mode.
+        save_curwin = curwin;
+        VIsual_active = false;
+        curwin = wp;
+        curbuf = curwin->w_buffer;
+        check_cursor();
+      }
+
+      // Note: the command might close the current window.
+      execute_menu(NULL, item->wb_menu);
+
+      if (save_curwin != NULL && win_valid(save_curwin)) {
+        curwin = save_curwin;
+        curbuf = curwin->w_buffer;
+        VIsual = save_visual;
+        VIsual_active = save_visual_active;
+        VIsual_select = save_visual_select;
+        VIsual_reselect = save_visual_reselect;
+        VIsual_mode = save_visual_mode;
+      }
+      if (!win_valid(wp)) {
+        break;
+      }
+    }
+  }
 }
 
 /*
@@ -1409,7 +1675,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   char_u              *dname;
 
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
+    if (STRNICMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
     }
   }
@@ -1420,7 +1686,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   dname = menu_text(name, NULL, NULL);
   name[len] = c;
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRCMP(dname, tp[i].from_noamp) == 0) {
+    if (STRICMP(dname, tp[i].from_noamp) == 0) {
       xfree(dname);
       return tp[i].to;
     }
@@ -1437,9 +1703,11 @@ static void menu_unescape_name(char_u *name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p))
-    if (*p == '\\')
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
       STRMOVE(p, p + 1);
+    }
+  }
 }
 
 /*

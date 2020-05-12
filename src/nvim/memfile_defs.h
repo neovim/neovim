@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "nvim/types.h"
+#include "nvim/pos.h"
 
 /// A block number.
 ///
@@ -54,7 +56,6 @@ typedef struct mf_hashtab {
 ///
 /// The used list is a doubly linked list, most recently used block first.
 /// The blocks in the used list have a block of memory allocated.
-/// mf_used_count is the number of pages in the used list.
 /// The hash lists are used to quickly find a block in the used list.
 /// The free list is a single linked list, not sorted.
 /// The blocks in the free list have no block of memory allocated and
@@ -93,8 +94,6 @@ typedef struct memfile {
   bhdr_T *mf_free_first;             /// first block header in free list
   bhdr_T *mf_used_first;             /// mru block header in used list
   bhdr_T *mf_used_last;              /// lru block header in used list
-  unsigned mf_used_count;            /// number of pages in used list
-  unsigned mf_used_count_max;        /// maximum number of pages in memory
   mf_hashtab_T mf_hash;              /// hash lists
   mf_hashtab_T mf_trans;             /// trans lists
   blocknr_T mf_blocknr_max;          /// highest positive block number + 1

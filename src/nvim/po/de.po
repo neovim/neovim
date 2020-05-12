@@ -12,7 +12,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-26 15:13+0200\n"
 "PO-Revision-Date: 2008-05-24 17:26+0200\n"
-"Last-Translator: Georg Dahn <georg.dahn@gmail.com>\n"
+"Last-Translator: was: Georg Dahn\n"
 "Language-Team: German <de@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -377,7 +377,7 @@ msgstr " Definitions-Ergänzung (^D^N^P)"
 
 #: ../edit.c:92
 msgid " Dictionary completion (^K^N^P)"
-msgstr " Wörterbuch-Ergänzung (^K^N^P) "
+msgstr " Dictionary-Ergänzung (^K^N^P) "
 
 #: ../edit.c:93
 msgid " Thesaurus completion (^T^N^P)"
@@ -401,7 +401,7 @@ msgstr " Vorschlag der Rechtschreibprüfung (s^N^P)"
 
 #: ../edit.c:98
 msgid " Keyword Local completion (^N^P)"
-msgstr " Lokale Schlüsselwort-Ergänzung(^N^P)"
+msgstr " Lokale Stichwort-Ergänzung(^N^P)"
 
 #: ../edit.c:101
 msgid "Hit end of paragraph"
@@ -443,7 +443,7 @@ msgstr "Durchsuche: %s"
 
 #: ../edit.c:3513
 msgid "Scanning tags."
-msgstr "Durchsuchen von Tags."
+msgstr "Durchsuche Tags"
 
 #: ../edit.c:4418
 msgid " Adding"
@@ -633,6 +633,9 @@ msgstr ""
 
 #: ../ex_cmds.c:2433
 #, c-format
+msgid "Pattern not found: %s"
+msgstr "Muster nicht gefunden: %s"
+
 msgid ""
 "File permissions of \"%s\" are read-only.\n"
 "It may still be possible to write it.\n"
@@ -712,11 +715,6 @@ msgstr "E148: Regulärer Ausdruck fehlt in global"
 #, c-format
 msgid "Pattern found in every line: %s"
 msgstr "Muster in jeder Zeile gefunden: %s"
-
-#: ../ex_cmds.c:4504
-#, c-format
-msgid "Pattern not found: %s"
-msgstr "Muster nicht gefunden: %s"
 
 #: ../ex_cmds.c:4581
 msgid ""
@@ -1920,7 +1918,7 @@ msgstr "E216: Keine solche Gruppe oder Ereignis: %s"
 #: ../fileio.c:5993
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandos ---"
@@ -1944,7 +1942,7 @@ msgstr "E218: Autokommandos zu tief verschachtelt"
 
 #: ../fileio.c:7042
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandos für \"%s\""
 
 #: ../fileio.c:7048
@@ -1996,7 +1994,7 @@ msgstr "E223: rekursive Zuordnung"
 #: ../getchar.c:2835
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: Globale Abkürzung für %s existiert bereits"
+msgstr "E224: Globale Kurzform für %s existiert bereits"
 
 #: ../getchar.c:2838
 #, c-format
@@ -2137,11 +2135,6 @@ msgstr "E900: Ungültige Job-ID"
 msgid "E901: Job table is full"
 msgstr "E901: Job-Tabelle ist voll"
 
-#: ../globals.h:1021
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr "E902: \"%s\" ist nicht ausführbar"
-
 #: ../globals.h:1023
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
@@ -2169,7 +2162,7 @@ msgstr "E23: Keine alternative Datei"
 
 #: ../globals.h:1031
 msgid "E24: No such abbreviation"
-msgstr "E24: Keine Abkürzung gefunden"
+msgstr "E24: Diese Kurzform nicht gefunden"
 
 #: ../globals.h:1032
 msgid "E477: No ! allowed"
@@ -2842,7 +2835,7 @@ msgstr "-q [Fehler-Datei]  öffne Datei mit erstem Fehler"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4778,8 +4771,8 @@ msgstr "Achtung: Region %s nicht unterstützt"
 
 #: ../spell.c:4364
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Lese Affix-Datei %s ..."
+msgid "Reading affix file %s..."
+msgstr "Lese Affix-Datei %s..."
 
 #: ../spell.c:4403 ../spell.c:5449 ../spell.c:5954
 #, c-format
@@ -4945,8 +4938,8 @@ msgstr ""
 
 #: ../spell.c:5416
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Lese Wörterbuch-Datei %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Lese Wörterbuch-Datei %s..."
 
 #: ../spell.c:5425
 #, c-format
@@ -4980,8 +4973,8 @@ msgstr "%d Wort(e) mit Nicht-ASCII-Zeichen ignoriert in %s"
 
 #: ../spell.c:5929
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lese Wort-Datei %s ..."
+msgid "Reading word file %s..."
+msgstr "Lese Wort-Datei %s..."
 
 #: ../spell.c:5969
 #, c-format
@@ -5050,8 +5043,8 @@ msgstr "Gesamte Anzahl von Wörtern: %d"
 
 #: ../spell.c:7468
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Schreibe Datei %s für Vorschläge ..."
+msgid "Writing suggestion file %s..."
+msgstr "Schreibe Datei %s für Vorschläge..."
 
 #: ../spell.c:7520 ../spell.c:7740
 #, c-format
@@ -5077,8 +5070,8 @@ msgstr "Achtung: Sowohl zusammengesetzte Wörter als auch NOBREAK angegeben"
 
 #: ../spell.c:7733
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Schreibe Rechtschreibwörterbuch %s ..."
+msgid "Writing spell file %s..."
+msgstr "Schreibe Rechtschreibwörterbuch %s..."
 
 #: ../spell.c:7738
 msgid "Done!"
@@ -6493,7 +6486,7 @@ msgid ""
 "\tLast set from "
 msgstr ""
 "\n"
-"\tZuletzt gesetzt von "
+"\tZuletzt gesetzt in "
 
 #: ../eval.c:18682
 msgid "No old files"

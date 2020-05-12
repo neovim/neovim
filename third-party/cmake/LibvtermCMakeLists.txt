@@ -1,0 +1,92 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(libvterm LANGUAGES C)
+
+include(GNUInstallDirs)
+find_package(Perl)
+
+if(MSVC)
+  add_compile_options(/W3)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+else()
+  add_compile_options(-Wall -std=c99)
+endif()
+
+# Generate includes from tables
+file(GLOB TBL_FILES ${CMAKE_SOURCE_DIR}/src/encoding/*.tbl)
+set(TBL_FILES_HEADERS)
+foreach(file ${TBL_FILES})
+  get_filename_component(basename ${file} NAME_WE)
+  set(tname encoding/${basename}.inc)
+  add_custom_command(OUTPUT
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/encoding/
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/tbl2inc_c.cmake ${file} ${CMAKE_BINARY_DIR}/${tname}
+    COMMENT "Generating ${tname}"
+    OUTPUT ${CMAKE_BINARY_DIR}/${tname}
+    )
+  list(APPEND TBL_FILES_HEADERS ${tname})
+  # Only used for verifying that the output of tbl2inc_c.cmake is correct
+  set(tname encoding-test/${basename}.inc)
+  add_custom_command(OUTPUT
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/encoding-test/
+    COMMAND ${PERL_EXECUTABLE} -CSD ${CMAKE_SOURCE_DIR}/tbl2inc_c.pl ${file} > ${CMAKE_BINARY_DIR}/${tname}
+    COMMENT "Generating ${tname}"
+    OUTPUT ${CMAKE_BINARY_DIR}/${tname}
+    )
+endforeach()
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_BINARY_DIR})
+
+file(GLOB VTERM_SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
+add_library(vterm ${VTERM_SOURCES} ${TBL_FILES_HEADERS})
+install(TARGETS vterm ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+add_library(vterm-shared SHARED ${VTERM_SOURCES} ${TBL_FILES_HEADERS})
+set_target_properties(vterm-shared PROPERTIES
+  OUTPUT_NAME vterm
+  SOVERSION 0)
+install(TARGETS vterm-shared
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(FILES include/vterm.h include/vterm_keycodes.h
+  DESTINATION include)
+
+if(NOT WIN32)
+  file(GLOB BIN_SOURCES ${CMAKE_SOURCE_DIR}/bin/*.c)
+  foreach(EXE_C ${BIN_SOURCES})
+    get_filename_component(target_name ${EXE_C} NAME_WE)
+    add_executable(${target_name} ${EXE_C})
+    target_link_libraries(${target_name} vterm)
+    install(TARGETS ${target_name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endforeach()
+endif()
+
+# Tests
+add_executable(harness EXCLUDE_FROM_ALL t/harness.c)
+target_link_libraries(harness vterm)
+set_target_properties(harness PROPERTIES
+  # run-test.pl expects to find the harness in t/.libs/
+  RUNTIME_OUTPUT_DIRECTORY t/.libs)
+
+if(Perl_FOUND)
+  file(GLOB TESTFILES ${CMAKE_SOURCE_DIR}/t/*.test)
+  add_custom_target(check)
+  foreach(testfile ${TESTFILES})
+    get_filename_component(target_name ${testfile} NAME_WE)
+    add_custom_target(${target_name}
+      COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/t/run-test.pl ${testfile}
+      COMMENT "**${target_name} **"
+      DEPENDS harness)
+    add_dependencies(check ${target_name})
+  endforeach()
+
+  foreach(header_path ${TBL_FILES_HEADERS})
+    get_filename_component(header_name ${header_path} NAME)
+    set(perl_header_path ${CMAKE_BINARY_DIR}/encoding-test/${header_name})
+    add_custom_target(test-${header_name}
+      COMMAND ${CMAKE_COMMAND} -E compare_files
+              ${header_path} ${perl_header_path}
+      DEPENDS ${header_path} ${perl_header_path})
+  endforeach()
+endif()

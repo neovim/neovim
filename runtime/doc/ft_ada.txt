@@ -1,4 +1,4 @@
-*ft_ada.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+*ft_ada.txt*	Nvim
 
 
 		    ADA FILE TYPE PLUG-INS REFERENCE MANUAL~
@@ -116,7 +116,7 @@ NOTE: "gnat xref -v" is very tricky to use as it has almost no diagnostic
     then "gnat xref -v *.ad?"
 4)  Project manager support is completely broken - don't even try "gnat xref
     -Padacl.gpr".
-5)  VIM is faster when the tags file is sorted - use "sort --unique
+5)  Vim is faster when the tags file is sorted - use "sort --unique
     --ignore-case --output=tags tags" .
 6)  Remember to insert "!_TAG_FILE_SORTED 2 %sort ui" as first line to mark
     the file assorted.
@@ -249,7 +249,7 @@ g:decada.Make_Command	string
 		External command used for |g:decada.Make()| (|'makeprg'|).
 
 						       *g:decada.Error_Format*
-g:decada.Error_Format|	string
+g:decada.Error_Format	string
 		Error format (|'errorformat'|).
 
 ==============================================================================

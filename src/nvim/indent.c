@@ -1,16 +1,22 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
+#include "nvim/change.h"
 #include "nvim/indent.h"
 #include "nvim/eval.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/mark.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/regexp.h"
@@ -18,6 +24,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
+#include "nvim/buffer.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -49,14 +56,16 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 // Count the size (in window cells) of the indent in line "ptr", with
 // 'tabstop' at "ts".
 // If @param list is TRUE, count only screen size for tabs.
-int get_indent_str(char_u *ptr, int ts, int list)
+int get_indent_str(const char_u *ptr, int ts, int list)
+  FUNC_ATTR_NONNULL_ALL
 {
   int count = 0;
 
   for (; *ptr; ++ptr) {
     // Count a tab for what it is worth.
     if (*ptr == TAB) {
-      if (!list || lcs_tab1) {  // count a tab for what it is worth
+      if (!list || curwin->w_p_lcs_chars.tab1) {
+        // count a tab for what it is worth
         count += ts - (count % ts);
       } else {
         // In list mode, when tab is not set, count screen char width
@@ -81,6 +90,7 @@ int get_indent_str(char_u *ptr, int ts, int list)
 //  SIN_CHANGED:    call changed_bytes() if the line was changed.
 //  SIN_INSERT: insert the indent in front of the line.
 //  SIN_UNDO:   save line for undo before changing it.
+//  SIN_NOMARK: don't move extmarks (because just after ml_append or something)
 //  @param size measured in spaces
 // Returns true if the line was changed.
 int set_indent(int size, int flags)
@@ -198,9 +208,14 @@ int set_indent(int size, int flags)
   // If 'preserveindent' and 'expandtab' are both set keep the original
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
+  int skipcols = 0;  // number of columns (in bytes) that were presved
   if (orig_char_len != -1) {
-    assert(orig_char_len + size - ind_done + line_len >= 0);
-    newline = xmalloc((size_t)(orig_char_len + size - ind_done + line_len));
+    int newline_size;  // = orig_char_len + size - ind_done + line_len
+    STRICT_ADD(orig_char_len, size, &newline_size, int);
+    STRICT_SUB(newline_size, ind_done, &newline_size, int);
+    STRICT_ADD(newline_size, line_len, &newline_size, int);
+    assert(newline_size >= 0);
+    newline = xmalloc((size_t)newline_size);
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -208,6 +223,7 @@ int set_indent(int size, int flags)
     ind_len = orig_char_len + todo;
     p = oldline;
     s = newline;
+    skipcols = orig_char_len;
 
     while (orig_char_len > 0) {
       *s++ = *p++;
@@ -222,7 +238,9 @@ int set_indent(int size, int flags)
   } else {
     todo = size;
     assert(ind_len + line_len >= 0);
-    newline = xmalloc((size_t)(ind_len + line_len));
+    size_t newline_size;
+    STRICT_ADD(ind_len, line_len, &newline_size, size_t);
+    newline = xmalloc(newline_size);
     s = newline;
   }
 
@@ -250,6 +268,7 @@ int set_indent(int size, int flags)
           ind_done++;
         }
         *s++ = *p++;
+        skipcols++;
       }
 
       // Fill to next tabstop with a tab, if possible.
@@ -277,6 +296,13 @@ int set_indent(int size, int flags)
   // Replace the line (unless undo fails).
   if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursor.lnum) == OK)) {
     ml_replace(curwin->w_cursor.lnum, newline, false);
+    if (!(flags & SIN_NOMARK)) {
+      extmark_splice(curbuf,
+                     (int)curwin->w_cursor.lnum-1, skipcols,
+                     0, (int)(p-oldline) - skipcols,
+                     0, (int)(s-newline) - skipcols,
+                     kExtmarkUndo);
+    }
 
     if (flags & SIN_CHANGED) {
       changed_bytes(curwin->w_cursor.lnum, 0);
@@ -301,107 +327,6 @@ int set_indent(int size, int flags)
   }
   curwin->w_cursor.col = ind_len;
   return retval;
-}
-
-
-// Copy the indent from ptr to the current line (and fill to size).
-// Leaves the cursor on the first non-blank in the line.
-// @return true if the line was changed.
-int copy_indent(int size, char_u *src)
-{
-  char_u *p = NULL;
-  char_u *line = NULL;
-  char_u *s;
-  int todo;
-  int ind_len;
-  int line_len = 0;
-  int tab_pad;
-  int ind_done;
-  int round;
-
-  // Round 1: compute the number of characters needed for the indent
-  // Round 2: copy the characters.
-  for (round = 1; round <= 2; ++round) {
-    todo = size;
-    ind_len = 0;
-    ind_done = 0;
-    s = src;
-
-    // Count/copy the usable portion of the source line.
-    while (todo > 0 && ascii_iswhite(*s)) {
-      if (*s == TAB) {
-        tab_pad = (int)curbuf->b_p_ts
-                  - (ind_done % (int)curbuf->b_p_ts);
-
-        // Stop if this tab will overshoot the target.
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_done += tab_pad;
-      } else {
-        todo--;
-        ind_done++;
-      }
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = *s;
-      }
-      s++;
-    }
-
-    // Fill to next tabstop with a tab, if possible.
-    tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
-
-    if ((todo >= tab_pad) && !curbuf->b_p_et) {
-      todo -= tab_pad;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Add tabs required for indent.
-    while (todo >= (int)curbuf->b_p_ts && !curbuf->b_p_et) {
-      todo -= (int)curbuf->b_p_ts;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Count/add spaces required for indent.
-    while (todo > 0) {
-      todo--;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = ' ';
-      }
-    }
-
-    if (p == NULL) {
-      // Allocate memory for the result: the copied indent, new indent
-      // and the rest of the line.
-      line_len = (int)STRLEN(get_cursor_line_ptr()) + 1;
-      assert(ind_len + line_len >= 0);
-      line = xmalloc((size_t)(ind_len + line_len));
-      p = line;
-    }
-  }
-
-  // Append the original line
-  memmove(p, get_cursor_line_ptr(), (size_t)line_len);
-
-  // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, false);
-
-  // Put the cursor after the indent.
-  curwin->w_cursor.col = ind_len;
-  return true;
 }
 
 
@@ -451,44 +376,46 @@ int get_number_indent(linenr_T lnum)
  * parameters into account. Window must be specified, since it is not
  * necessarily always the current one.
  */
-int get_breakindent_win(win_T *wp, char_u *line) {
-  static int prev_indent = 0;  /* cached indent value */
-  static long prev_ts = 0; /* cached tabstop value */
-  static char_u *prev_line = NULL; /* cached pointer to line */
-  static int prev_tick = 0;  // changedtick of cached value
+int get_breakindent_win(win_T *wp, const char_u *line)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static int prev_indent = 0;  // Cached indent value.
+  static long prev_ts = 0;  // Cached tabstop value.
+  static const char_u *prev_line = NULL;  // cached pointer to line.
+  static varnumber_T prev_tick = 0;  // Changedtick of cached value.
   int bri = 0;
-  /* window width minus window margin space, i.e. what rests for text */
-  const int eff_wwidth = wp->w_width
+  // window width minus window margin space, i.e. what rests for text
+  const int eff_wwidth = wp->w_width_inner
     - ((wp->w_p_nu || wp->w_p_rnu)
         && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
         ? number_width(wp) + 1 : 0);
 
-  /* used cached indent, unless pointer or 'tabstop' changed */
+  // used cached indent, unless pointer or 'tabstop' changed
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
-      || prev_tick != wp->w_buffer->b_changedtick) {
+      || prev_tick != buf_get_changedtick(wp->w_buffer)) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
-    prev_tick = wp->w_buffer->b_changedtick;
-    prev_indent = get_indent_str(line,
-            (int)wp->w_buffer->b_p_ts, wp->w_p_list);
+    prev_tick = buf_get_changedtick(wp->w_buffer);
+    prev_indent = get_indent_str(line, (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
   bri = prev_indent + wp->w_p_brishift;
 
-  /* indent minus the length of the showbreak string */
-  if (wp->w_p_brisbr)
+  // indent minus the length of the showbreak string
+  if (wp->w_p_brisbr) {
     bri -= vim_strsize(p_sbr);
-
-  /* Add offset for number column, if 'n' is in 'cpoptions' */
+  }
+  // Add offset for number column, if 'n' is in 'cpoptions'
   bri += win_col_off2(wp);
 
-  /* never indent past left window margin */
-  if (bri < 0)
+  // never indent past left window margin
+  if (bri < 0) {
     bri = 0;
-  /* always leave at least bri_min characters on the left,
-   * if text width is sufficient */
-  else if (bri > eff_wwidth - wp->w_p_brimin)
+  } else if (bri > eff_wwidth - wp->w_p_brimin) {
+    // always leave at least bri_min characters on the left,
+    // if text width is sufficient
     bri = (eff_wwidth - wp->w_p_brimin < 0)
       ? 0 : eff_wwidth - wp->w_p_brimin;
+  }
 
   return bri;
 }
@@ -517,7 +444,7 @@ int inindent(int extra)
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int indent;
+  int indent = -1;
   pos_T save_pos;
   colnr_T save_curswant;
   int save_set_curswant;
@@ -529,13 +456,18 @@ int get_expr_indent(void)
   save_pos = curwin->w_cursor;
   save_curswant = curwin->w_curswant;
   save_set_curswant = curwin->w_set_curswant;
-  set_vim_var_nr(VV_LNUM, curwin->w_cursor.lnum);
+  set_vim_var_nr(VV_LNUM, (varnumber_T) curwin->w_cursor.lnum);
 
   if (use_sandbox) {
     sandbox++;
   }
   textlock++;
-  indent = eval_to_number(curbuf->b_p_inde);
+
+  // Need to make a copy, the 'indentexpr' option could be changed while
+  // evaluating it.
+  char_u *inde_copy = vim_strsave(curbuf->b_p_inde);
+  indent = (int)eval_to_number(inde_copy);
+  xfree(inde_copy);
 
   if (use_sandbox) {
     sandbox--;
@@ -599,7 +531,7 @@ int get_lisp_indent(void)
     paren = *pos;
     pos = findmatch(NULL, '[');
 
-    if ((pos == NULL) || ltp(pos, &paren)) {
+    if ((pos == NULL) || lt(*pos, paren)) {
       pos = &paren;
     }
   }

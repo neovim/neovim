@@ -15,12 +15,8 @@ if exists("b:current_syntax")
 endif
 
 " For a starter we just use conf.vim for highlighting
-if version < 600
-  so <sfile>:p:h/conf.vim
-else
-  runtime! syntax/conf.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/conf.vim
+unlet b:current_syntax
 
 
 let b:current_syntax = "hostsaccess"

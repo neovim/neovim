@@ -7,18 +7,16 @@
 "		(ss) repaired several quoting and grouping glitches
 "		(ss) fixed regex parsing issue with multiple qualifiers [gi]
 "		(ss) additional factoring of keywords, globals, and members
-" Last Change:	2012 Oct 05
+" Last Change:	2018 Jul 28
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
+" 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
 " tuning parameters:
 " unlet javaScript_fold
 
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  " quit when a syntax file was already loaded
+  if exists("b:current_syntax")
     finish
   endif
   let main_syntax = 'javascript'
@@ -29,11 +27,6 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-" Drop fold if it set but vim doesn't support it.
-if version < 600 && exists("javaScript_fold")
-  unlet javaScript_fold
-endif
-
 
 syn keyword javaScriptCommentTodo      TODO FIXME XXX TBD contained
 syn match   javaScriptLineComment      "\/\/.*" contains=@Spell,javaScriptCommentTodo
@@ -42,10 +35,13 @@ syn region  javaScriptComment	       start="/\*"  end="\*/" contains=@Spell,java
 syn match   javaScriptSpecial	       "\\\d\d\d\|\\."
 syn region  javaScriptStringD	       start=+"+  skip=+\\\\\|\\"+  end=+"\|$+	contains=javaScriptSpecial,@htmlPreproc
 syn region  javaScriptStringS	       start=+'+  skip=+\\\\\|\\'+  end=+'\|$+	contains=javaScriptSpecial,@htmlPreproc
+syn region  javaScriptStringT	       start=+`+  skip=+\\\\\|\\`+  end=+`+	contains=javaScriptSpecial,javaScriptEmbed,@htmlPreproc
+
+syn region  javaScriptEmbed	       start=+${+  end=+}+	contains=@javaScriptEmbededExpr
 
 syn match   javaScriptSpecialCharacter "'\\.'"
 syn match   javaScriptNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
-syn region  javaScriptRegexpString     start=+/[^/*]+me=e-1 skip=+\\\\\|\\/+ end=+/[gim]\{0,2\}\s*$+ end=+/[gim]\{0,2\}\s*[;.,)\]}]+me=e-1 contains=@htmlPreproc oneline
+syn region  javaScriptRegexpString     start=+[,(=+]\s*/[^/*]+ms=e-1,me=e-1 skip=+\\\\\|\\/+ end=+/[gimuys]\{0,2\}\s*$+ end=+/[gimuys]\{0,2\}\s*[+;.,)\]}]+me=e-1 end=+/[gimuys]\{0,2\}\s\+\/+me=e-1 contains=@htmlPreproc,javaScriptComment oneline
 
 syn keyword javaScriptConditional	if else switch
 syn keyword javaScriptRepeat		while for do in
@@ -63,6 +59,8 @@ syn keyword javaScriptGlobal		self window top parent
 syn keyword javaScriptMember		document event location 
 syn keyword javaScriptDeprecated	escape unescape
 syn keyword javaScriptReserved		abstract boolean byte char class const debugger double enum export extends final float goto implements import int interface long native package private protected public short static super synchronized throws transient volatile 
+
+syn cluster  javaScriptEmbededExpr	contains=javaScriptBoolean,javaScriptNull,javaScriptIdentifier,javaScriptStringD,javaScriptStringS,javaScriptStringT
 
 if exists("javaScript_fold")
     syn match	javaScriptFunction	"\<function\>"
@@ -87,51 +85,44 @@ if main_syntax == "javascript"
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_javascript_syn_inits")
-  if version < 508
-    let did_javascript_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink javaScriptComment		Comment
-  HiLink javaScriptLineComment		Comment
-  HiLink javaScriptCommentTodo		Todo
-  HiLink javaScriptSpecial		Special
-  HiLink javaScriptStringS		String
-  HiLink javaScriptStringD		String
-  HiLink javaScriptCharacter		Character
-  HiLink javaScriptSpecialCharacter	javaScriptSpecial
-  HiLink javaScriptNumber		javaScriptValue
-  HiLink javaScriptConditional		Conditional
-  HiLink javaScriptRepeat		Repeat
-  HiLink javaScriptBranch		Conditional
-  HiLink javaScriptOperator		Operator
-  HiLink javaScriptType			Type
-  HiLink javaScriptStatement		Statement
-  HiLink javaScriptFunction		Function
-  HiLink javaScriptBraces		Function
-  HiLink javaScriptError		Error
-  HiLink javaScrParenError		javaScriptError
-  HiLink javaScriptNull			Keyword
-  HiLink javaScriptBoolean		Boolean
-  HiLink javaScriptRegexpString		String
+" Only when an item doesn't have highlighting yet
+hi def link javaScriptComment		Comment
+hi def link javaScriptLineComment		Comment
+hi def link javaScriptCommentTodo		Todo
+hi def link javaScriptSpecial		Special
+hi def link javaScriptStringS		String
+hi def link javaScriptStringD		String
+hi def link javaScriptStringT		String
+hi def link javaScriptCharacter		Character
+hi def link javaScriptSpecialCharacter	javaScriptSpecial
+hi def link javaScriptNumber		javaScriptValue
+hi def link javaScriptConditional		Conditional
+hi def link javaScriptRepeat		Repeat
+hi def link javaScriptBranch		Conditional
+hi def link javaScriptOperator		Operator
+hi def link javaScriptType			Type
+hi def link javaScriptStatement		Statement
+hi def link javaScriptFunction		Function
+hi def link javaScriptBraces		Function
+hi def link javaScriptError		Error
+hi def link javaScrParenError		javaScriptError
+hi def link javaScriptNull			Keyword
+hi def link javaScriptBoolean		Boolean
+hi def link javaScriptRegexpString		String
 
-  HiLink javaScriptIdentifier		Identifier
-  HiLink javaScriptLabel		Label
-  HiLink javaScriptException		Exception
-  HiLink javaScriptMessage		Keyword
-  HiLink javaScriptGlobal		Keyword
-  HiLink javaScriptMember		Keyword
-  HiLink javaScriptDeprecated		Exception 
-  HiLink javaScriptReserved		Keyword
-  HiLink javaScriptDebug		Debug
-  HiLink javaScriptConstant		Label
+hi def link javaScriptIdentifier		Identifier
+hi def link javaScriptLabel		Label
+hi def link javaScriptException		Exception
+hi def link javaScriptMessage		Keyword
+hi def link javaScriptGlobal		Keyword
+hi def link javaScriptMember		Keyword
+hi def link javaScriptDeprecated		Exception 
+hi def link javaScriptReserved		Keyword
+hi def link javaScriptDebug		Debug
+hi def link javaScriptConstant		Label
+hi def link javaScriptEmbed		Special
 
-  delcommand HiLink
-endif
+
 
 let b:current_syntax = "javascript"
 if main_syntax == 'javascript'

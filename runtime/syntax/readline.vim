@@ -1,9 +1,10 @@
 " Vim syntax file
-" Language:         readline(3) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2012-04-25
-"   readline_has_bash - if defined add support for bash specific
-"                       settings/functions
+" Language:             readline(3) configuration file
+" Maintainer:           Daniel Moch <daniel@danielmoch.com>
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2018-07-26
+"                       Add new functions for Readline 7 / Bash 4.4
+"                       (credit: Github user bewuethr)
 
 if exists('b:current_syntax')
   finish
@@ -110,7 +111,7 @@ syn keyword readlineKeyword     contained
                               \ nextgroup=readlineVariable
                               \ skipwhite
 
-syn keyword readlineVariable    contained 
+syn keyword readlineVariable    contained
                               \ nextgroup=readlineBellStyle
                               \ skipwhite
                               \ bell-style
@@ -119,11 +120,15 @@ syn keyword readlineVariable    contained
                               \ nextgroup=readlineBoolean
                               \ skipwhite
                               \ bind-tty-special-chars
+                              \ blink-matching-paren
+                              \ colored-completion-prefix
+                              \ colored-stats
                               \ completion-ignore-case
                               \ completion-map-case
                               \ convert-meta
                               \ disable-completion
                               \ echo-control-characters
+                              \ enable-bracketed-paste
                               \ enable-keypad
                               \ enable-meta-key
                               \ expand-tilde
@@ -142,6 +147,7 @@ syn keyword readlineVariable    contained
                               \ revert-all-at-newline
                               \ show-all-if-ambiguous
                               \ show-all-if-unmodified
+                              \ show-mode-in-prompt
                               \ skip-completed-text
                               \ visible-stats
 
@@ -150,6 +156,9 @@ syn keyword readlineVariable    contained
                               \ skipwhite
                               \ comment-begin
                               \ isearch-terminators
+                              \ vi-cmd-mode-string
+                              \ vi-ins-mode-string
+                              \ emacs-mode-string
 
 syn keyword readlineVariable    contained
                               \ nextgroup=readlineNumber
@@ -158,6 +167,7 @@ syn keyword readlineVariable    contained
                               \ completion-prefix-display-length
                               \ completion-query-items
                               \ history-size
+                              \ keyseq-timeout
 
 syn keyword readlineVariable    contained
                               \ nextgroup=readlineEditingMode
@@ -262,6 +272,7 @@ syn keyword readlineFunction    contained
                               \ start-kbd-macro
                               \ end-kbd-macro
                               \ call-last-kbd-macro
+                              \ print-last-kbd-macro
                               \
                               \ re-read-init-file
                               \ abort
@@ -332,6 +343,8 @@ syn keyword readlineFunction    contained
 
 if exists("readline_has_bash")
   syn keyword readlineFunction  contained
+                              \ shell-forward-word
+                              \ shell-backward-word
                               \ shell-expand-line
                               \ history-expand-line
                               \ magic-space
@@ -340,6 +353,8 @@ if exists("readline_has_bash")
                               \ insert-last-argument
                               \ operate-and-get-next
                               \ forward-backward-delete-char
+                              \ shell-kill-word
+                              \ shell-backward-kill-word
                               \ delete-char-or-list
                               \ complete-filename
                               \ possible-filename-completions
@@ -352,6 +367,7 @@ if exists("readline_has_bash")
                               \ complete-command
                               \ possible-command-completions
                               \ dynamic-complete-history
+                              \ dabbrev-expand
                               \ complete-into-braces
                               \ glob-expand-word
                               \ glob-list-expansions

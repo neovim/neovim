@@ -3,14 +3,12 @@
 "		according to freedesktop.org specification 0.9.4
 " http://pdx.freedesktop.org/Standards/desktop-entry-spec/desktop-entry-spec-0.9.4.html
 " Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2004 May 16
+" Last Change:	2016 Apr 02
+" 		(added "Keywords")
 " Version Info: desktop.vim 0.9.4-1.2
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -53,8 +51,8 @@ syn keyword dtBooleanKey StartupNotify ReadOnly Terminal Hidden NoDisplay nextgr
 syn keyword dtBooleanValue true false containedin=dtBoolean contained
 
 " String
-syn match   dtString /^\s*\<\(Encoding\|Icon\|Path\|Actions\|FSType\|MountPoint\|UnmountIcon\|URL\|Categories\|OnlyShowIn\|NotShowIn\|StartupWMClass\|FilePattern\|MimeType\)\>.*/ contains=dtStringKey,dtDelim transparent
-syn keyword dtStringKey Type Encoding TryExec Exec Path Actions FSType MountPoint URL Categories OnlyShowIn NotShowIn StartupWMClass FilePattern MimeType nextgroup=dtDelim containedin=dtString contained
+syn match   dtString /^\s*\<\(Encoding\|Icon\|Path\|Actions\|FSType\|MountPoint\|UnmountIcon\|URL\|Keywords\|Categories\|OnlyShowIn\|NotShowIn\|StartupWMClass\|FilePattern\|MimeType\)\>.*/ contains=dtStringKey,dtDelim transparent
+syn keyword dtStringKey Type Encoding TryExec Exec Path Actions FSType MountPoint URL Keywords Categories OnlyShowIn NotShowIn StartupWMClass FilePattern MimeType nextgroup=dtDelim containedin=dtString contained
 
 " Exec
 syn match   dtExec /^\s*\<\(Exec\|TryExec\|SwallowExec\)\>.*/ contains=dtExecKey,dtDelim,dtExecParam transparent
@@ -78,41 +76,31 @@ syn match   dtALocale /\[.\{-}\]\s*=\@=/ containedin=ALL
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_desktop_syntax_inits")
-	if version < 508
-		let did_dosini_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	HiLink dtGroup		 Special
-	HiLink dtComment	 Comment
-	HiLink dtDelim		 String
+hi def link dtGroup		 Special
+hi def link dtComment	 Comment
+hi def link dtDelim		 String
 
-	HiLink dtLocaleKey	 Type
-	HiLink dtLocaleName	 Identifier
-	HiLink dtXLocale	 Identifier
-	HiLink dtALocale	 Identifier
+hi def link dtLocaleKey	 Type
+hi def link dtLocaleName	 Identifier
+hi def link dtXLocale	 Identifier
+hi def link dtALocale	 Identifier
 
-	HiLink dtNumericKey	 Type
+hi def link dtNumericKey	 Type
 
-	HiLink dtBooleanKey	 Type
-	HiLink dtBooleanValue	 Constant
+hi def link dtBooleanKey	 Type
+hi def link dtBooleanValue	 Constant
 
-	HiLink dtStringKey	 Type
+hi def link dtStringKey	 Type
 
-	HiLink dtExecKey	 Type
-	HiLink dtExecParam	 Special
-	HiLink dtTypeKey	 Type
-	HiLink dtTypeValue	 Constant
-	HiLink dtNotStLabel	 Type
-	HiLink dtXAddKey	 Type
+hi def link dtExecKey	 Type
+hi def link dtExecParam	 Special
+hi def link dtTypeKey	 Type
+hi def link dtTypeValue	 Constant
+hi def link dtNotStLabel	 Type
+hi def link dtXAddKey	 Type
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "desktop"
 

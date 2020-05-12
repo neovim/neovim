@@ -2,6 +2,7 @@
 "  Maintainer	: Gergely Kontra <kgergely@mcl.hu>
 "  Revised on	: 2002.02.18. 23:34:05
 "  Language	: Prolog
+"  Last change by: Takuya Fujiwara, 2018 Sep 23
 
 " TODO:
 "   checking with respect to syntax highlighting
@@ -37,22 +38,30 @@ function! GetPrologIndent()
     let ind = indent(pnum)
     " Previous line was comment -> use previous line's indent
     if pline =~ '^\s*%'
-	retu ind
+	return ind
+    endif
+    " Previous line was the start of block comment -> +1 after '/*' comment
+    if pline =~ '^\s*/\*'
+	return ind + 1
+    endif
+    " Previous line was the end of block comment -> -1 after '*/' comment
+    if pline =~ '^\s*\*/'
+	return ind - 1
     endif
     " Check for clause head on previous line
-    if pline =~ ':-\s*\(%.*\)\?$'
-	let ind = ind + &sw
+    if pline =~ '\%(:-\|-->\)\s*\(%.*\)\?$'
+	let ind = ind + shiftwidth()
     " Check for end of clause on previous line
     elseif pline =~ '\.\s*\(%.*\)\?$'
-	let ind = ind - &sw
+	let ind = ind - shiftwidth()
     endif
     " Check for opening conditional on previous line
     if pline =~ '^\s*\([(;]\|->\)'
-	let ind = ind + &sw
+	let ind = ind + shiftwidth()
     endif
     " Check for closing an unclosed paren, or middle ; or ->
     if line =~ '^\s*\([);]\|->\)'
-	let ind = ind - &sw
+	let ind = ind - shiftwidth()
     endif
     return ind
 endfunction

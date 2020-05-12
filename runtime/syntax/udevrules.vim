@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         udev(8) rules file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-18
+" Language:             udev(8) rules file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-18
 
 if exists("b:current_syntax")
   finish

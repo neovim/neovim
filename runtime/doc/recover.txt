@@ -1,4 +1,4 @@
-*recover.txt*   For Vim version 7.4.  Last change: 2014 Mar 27
+*recover.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -15,8 +15,7 @@ You can recover most of your changes from the files that Vim uses to store
 the contents of the file.  Mostly you can recover your work with one command:
 	vim -r filename
 
-1. The swap file	|swap-file|
-2. Recovery		|recovery|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. The swap file					*swap-file*
@@ -27,6 +26,9 @@ you started from plus the swap file you can mostly recover your work.
 You can see the name of the current swap file being used with the command:
 
 	:sw[apname]					*:sw* *:swapname*
+
+Or you can use the |swapname()| function, which also allows for seeing the
+swap file name of other buffers.
 
 The name of the swap file is normally the same as the file you are editing,
 with the extension ".swp".
@@ -64,10 +66,8 @@ following ones in your vimrc:
 This is also very handy when editing files on floppy.  Of course you will have
 to create that "tmp" directory for this to work!
 
-For read-only files, a swap file is not used.  Unless the file is big, causing
-the amount of memory used to be higher than given with 'maxmem' or
-'maxmemtot'.  And when making a change to a read-only file, the swap file is
-created anyway.
+For read-only files, a swap file is not used right away. The swap file is
+created only when making changes.
 
 The 'swapfile' option can be reset to avoid creating a swapfile.  And the
 |:noswapfile| modifier can be used to not create a swapfile for a new buffer.
@@ -173,4 +173,4 @@ Once you are sure the recovery is ok delete the swap file.  Otherwise, you
 will continue to get warning messages that the ".swp" file already exists.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

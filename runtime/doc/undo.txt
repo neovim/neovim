@@ -1,4 +1,4 @@
-*undo.txt*      For Vim version 7.4.  Last change: 2014 May 24
+*undo.txt*      Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,12 +8,7 @@ Undo and redo						*undo-redo*
 
 The basics are explained in section |02.5| of the user manual.
 
-1. Undo and redo commands	|undo-commands|
-2. Two ways of undo		|undo-two-ways|
-3. Undo blocks			|undo-blocks|
-4. Undo branches		|undo-branches|
-5. Undo persistence		|undo-persistence|
-6. Remarks about undo		|undo-remarks|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Undo and redo commands				*undo-commands*
@@ -250,8 +245,8 @@ ignored if its owner differs from the owner of the edited file, except when
 the owner of the undo file is the current user.  Set 'verbose' to get a
 message about that when opening a file.
 
-Undo files are normally saved in the same directory as the file.  This can be
-changed with the 'undodir' option.
+Location of the undo files is controlled by the 'undodir' option, by default 
+they are saved to the dedicated directory in the application data folder.
 
 You can also save and restore undo histories by using ":wundo" and ":rundo"
 respectively:
@@ -388,4 +383,4 @@ if it is not what you want do 'u.'.  This will remove the contents of the
 first put, and repeat the put command for the second register.  Repeat the
 'u.' until you got what you want.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

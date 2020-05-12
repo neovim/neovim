@@ -1,4 +1,4 @@
-*usr_02.txt*	For Vim version 7.4.  Last change: 2015 Apr 12
+*usr_02.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -397,7 +397,15 @@ original version of the file.
 
 Everything you always wanted to know can be found in the Vim help files.
 Don't be afraid to ask!
-   To get generic help use this command: >
+
+If you know what you are looking for, it is usually easier to search for it
+using the help system, instead of using Google.  Because the subjects follow
+a certain style guide.
+
+Also the help has the advantage of belonging to your particular Vim version.
+You won't see help for commands added later.  These would not work for you.
+
+To get generic help use this command: >
 
 	:help
 
@@ -471,7 +479,7 @@ example, use the following command: >
 
 	:help 'number'
 
-The table with all mode prefixes can be found here: |help-context|.
+The table with all mode prefixes can be found below: |help-summary|.
 
 Special keys are enclosed in angle brackets.  To find help on the up-arrow key
 in Insert mode, for instance, use this command: >
@@ -488,68 +496,195 @@ You can use the error ID at the start to find help about it: >
 
 
 Summary: 					*help-summary*  >
-	:help
-<		Gives you very general help.  Scroll down to see a list of all
-		helpfiles, including those added locally (i.e. not distributed
-		with Vim). >
-	:help user-toc.txt
-<		Table of contents of the User Manual. >
-	:help :subject
-<		Ex-command "subject", for instance the following: >
-	:help :help
-<		Help on getting help. >
-	:help abc
-<		normal-mode command "abc". >
-	:help CTRL-B
-<		Control key <C-B> in Normal mode. >
-	:help i_abc
-	:help i_CTRL-B
-<		The same in Insert mode. >
-	:help v_abc
-	:help v_CTRL-B
-<		The same in Visual mode. >
-	:help c_abc
-	:help c_CTRL-B
-<		The same in Command-line mode. >
-	:help 'subject'
-<		Option 'subject'. >
-	:help subject()
-<		Function "subject". >
-	:help -subject
-<		Command-line argument "-subject". >
-	:help +subject
-<		Compile-time feature "+subject". >
-	:help /*
-<		Regular expression item "*" >
-	:help EventName
-<		Autocommand event "EventName". >
-	:help digraphs.txt
-<		The top of the helpfile "digraph.txt".
-		Similarly for any other helpfile. >
-	:help pattern<Tab>
-<		Find a help tag starting with "pattern".  Repeat <Tab> for
-		others. >
-	:help pattern<Ctrl-D>
-<		See all possible help tag matches "pattern" at once. >
-	:helpgrep pattern
-<		Search the whole text of all help files for pattern "pattern".
-		Jumps to the first match.  Jump to other matches with: >
-	    :cn
-<			next match >
-	    :cprev
-	    :cN
-<			previous match >
-	    :cfirst
-	    :clast
-<			first or last match >
-	    :copen
-	    :cclose
-<			open/close the quickfix window; press <Enter> to jump
-			to the item under the cursor
+
+1) Use Ctrl-D after typing a topic and let Vim show all available topics.
+   Or press Tab to complete: >
+    	:help some<Tab>
+<   More information on how to use the help: >
+	:help helphelp
+
+2) Follow the links in bars to related help.  You can go from the detailed
+   help to the user documentation, which describes certain commands more from
+   a user perspective and less detailed.  E.g. after: >
+   	:help pattern.txt
+<   You can see the user guide topics |03.9| and |usr_27.txt| in the
+   introduction.
+
+3) Options are enclosed in single apostrophes.  To go to the help topic for the
+   list option: >
+	:help 'list'
+<   If you only know you are looking for a certain option, you can also do: >
+	:help options.txt
+<   to open the help page which describes all option handling and then search
+   using regular expressions, e.g. textwidth.
+   Certain options have their own namespace, e.g.: >
+   	:help cpo-<letter>
+<   for the corresponding flag of the 'cpoptions' settings, substitute <letter>
+   by a specific flag, e.g.: >
+  	:help cpo-;
+<   And for the guioption flags: >
+  	:help go-<letter>
+
+4) Normal mode commands do not have a prefix. To go to the help page for the
+   "gt" command: >
+   	:help gt
+
+5) Insert mode commands start with i_.  Help for deleting a word: >
+   	:help i_CTRL-W
+
+6) Visual mode commands start with v_.  Help for jumping to the other side of
+   the Visual area: >
+   	:help v_o
+
+7) Command line editing and arguments start with c_.  Help for using the
+   command argument %: >
+   	:help c_%
+
+8) Ex-commands always start with ":", so to go to the :s command help: >
+	:help :s
+
+9) Commands specifically for debugging start with ">".  To go to the help
+   for the "cont" debug command: >
+	:help >cont
+
+10) Key combinations.  They usually start with a single letter indicating
+    the mode for which they can be used.  E.g.: >
+   	:help i_CTRL-X
+<    takes you to the family of Ctrl-X commands for insert mode which can be
+    used to auto complete different things.  Note, that certain keys will
+    always be written the same, e.g. Control will always be CTRL.
+    For normal mode commands there is no prefix and the topic is available at
+    :h CTRL-<Letter>. E.g.  >
+   	:help CTRL-W
+<    In contrast >
+	:help c_CTRL-R
+<    will describe what the Ctrl-R does when entering commands in the Command
+    line and >
+   	:help v_Ctrl-A
+<    talks about incrementing numbers in visual mode and >
+	:help g_CTRL-A
+<    talks about the g<C-A> command (e.g. you have to press "g" then <Ctrl-A>).
+    Here the "g" stand for the normal command "g" which always expects a second
+    key before doing something similar to the commands starting with "z"
+
+11) Regexp items always start with /.  So to get help for the "\+" quantifier
+    in Vim regexes: >
+   	:help /\+
+<    If you need to know everything about regular expressions, start reading
+    at: >
+   	:help pattern.txt
+
+12) Registers always start with "quote". To find out about the special ":"
+    register: >
+   	:help quote:
+
+13) Vim Script is available at >
+	:help eval.txt
+<   Certain aspects of the language are available at :h expr-X where "X" is a
+   single letter. E.g.  >
+   	:help expr-!
+<   will take you to the topic describing the "!" (Not) operator for
+   VimScript.
+   Also important is >
+   	:help function-list
+<   to find a short description of all functions available.  Help topics for
+   Vim script functions always include the "()", so: >
+   	:help append()
+<   talks about the append Vim script function rather than how to append text
+   in the current buffer.
+
+14) Mappings are talked about in the help page :h |map.txt|. Use >
+    	:help mapmode-i
+<    to find out about the |:imap| command.  Also use :map-topic
+    to find out about certain subtopics particular for mappings.  e.g: >
+    	:help :map-local
+<    for buffer-local mappings or >
+	:help map-bar
+<    for how the '|' is handled in mappings.
+
+15) Command definitions are talked about :h command-topic, so use >
+	:help command-bar
+<    to find out about the '!' argument for custom commands.
+
+16) Window management commands always start with CTRL-W, so you find the
+    corresponding help at :h CTRL-W_letter.  E.g. >
+   	:help CTRL-W_p
+<    for moving the previous accessed window.  You can also access >
+	:help windows.txt
+<    and read your way through if you are looking for window handling
+    commands.
+
+17) Use |:helpgrep| to search in all help pages (and also of any installed
+    plugins).  See |:helpgrep| for how to use it.
+    To search for a topic: >
+    	:helpgrep topic
+<    This takes you to the first match.  To go to the next one: >
+	:cnext
+<    All matches are available in the quickfix window which can be opened
+    with: >
+    	:copen
+<    Move around to the match you like and press Enter to jump to that help.
+
+18) The user manual.  This describes help topics for beginners in a rather
+    friendly way.  Start at |usr_toc.txt| to find the table of content (as you
+    might have guessed): >
+    	:help usr_toc.txt
+<    Skim over the contents to find interesting topics. The "Digraphs" and
+    "Entering special characters" items are in chapter 24, so to go to that
+    particular help page: >
+    	:help usr_24.txt
+<    Also if you want to access a certain chapter in the help, the chapter
+    number can be accessed directly like this: >
+    	:help 10.1
+<    goes to chapter 10.1 in |usr_10.txt| and talks about recording macros.
+
+19) Highlighting groups.  Always start with hl-groupname.  E.g. >
+    	:help hl-WarningMsg
+<    talks about the WarningMsg highlighting group.
+
+20) Syntax highlighting is namespaced to :syn-topic e.g. >
+	:help :syn-conceal
+<    talks about the conceal argument for the :syn command.
+
+21) Quickfix commands usually start with :c while location list commands
+    usually start with :l
+
+22) Autocommand events can be found by their name: >
+     	:help BufWinLeave
+<    To see all possible events: >
+	:help autocommand-events
+
+23) Command-line switches always start with "-".  So for the help of the -f
+    command switch of Vim use: >
+    	:help -f
+
+24) Optional features always start with "+".  To find out about the
+    conceal feature use: >
+    	:help +conceal
+
+25) Documentation for included filetype specific functionality is usually
+    available  in the form ft-<filetype>-<functionality>.  So >
+    	:help ft-c-syntax
+<    talks about the C syntax file and the option it provides.  Sometimes,
+    additional sections for omni completion >
+    	:help ft-php-omni
+<    or filetype plugins >
+	:help ft-tex-plugin
+<    are available.
+
+26) Error and Warning codes can be looked up directly in the help.  So >
+	:help E297
+<    takes you exactly to the description of the swap error message and >
+	:help W10
+<    talks about the warning "Changing a readonly file".
+    Sometimes however, those error codes are not described, but rather are
+    listed at the Vim command that usually causes this.  So: >
+    	:help E128
+<    takes you to the |:function| command
 
 
 ==============================================================================
 
 Next chapter: |usr_03.txt|  Moving around
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

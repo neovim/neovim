@@ -3,11 +3,8 @@
 " Maintainer:	Philippe Coulonges <cphil@cphil.net>
 " Last change:	2003 May 11
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -103,43 +100,33 @@ syn keyword plm386w16BuiltIn SETD SKIPD SKIPRD
 syn sync lines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_plm_syntax_inits")
-  if version < 508
-    let did_plm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
- " The default methods for highlighting.  Can be overridden later
-"  HiLink plmLabel			Label
-"  HiLink plmConditional		Conditional
-"  HiLink plmRepeat			Repeat
-  HiLink plmTodo			Todo
-  HiLink plmNumber			Number
-  HiLink plmOperator			Operator
-  HiLink plmDelimiter			Operator
-  "HiLink plmShowTab			Error
-  "HiLink plmShowTabc			Error
-  HiLink plmIdentifier			Identifier
-  HiLink plmBuiltIn			Statement
-  HiLink plm286BuiltIn			Statement
-  HiLink plm386BuiltIn			Statement
-  HiLink plm386w16BuiltIn		Statement
-  HiLink plmReserved			Statement
-  HiLink plm386Reserved			Statement
-  HiLink plmPreProc			PreProc
-  HiLink plmCommentError		plmError
-  HiLink plmCommentString		plmString
-  HiLink plmComment2String		plmString
-  HiLink plmCommentSkip			plmComment
-  HiLink plmString			String
-  HiLink plmComment			Comment
+" The default methods for highlighting.  Can be overridden later
+"  hi def link plmLabel			Label
+"  hi def link plmConditional		Conditional
+"  hi def link plmRepeat			Repeat
+hi def link plmTodo			Todo
+hi def link plmNumber			Number
+hi def link plmOperator			Operator
+hi def link plmDelimiter			Operator
+"hi def link plmShowTab			Error
+"hi def link plmShowTabc			Error
+hi def link plmIdentifier			Identifier
+hi def link plmBuiltIn			Statement
+hi def link plm286BuiltIn			Statement
+hi def link plm386BuiltIn			Statement
+hi def link plm386w16BuiltIn		Statement
+hi def link plmReserved			Statement
+hi def link plm386Reserved			Statement
+hi def link plmPreProc			PreProc
+hi def link plmCommentError		plmError
+hi def link plmCommentString		plmString
+hi def link plmComment2String		plmString
+hi def link plmCommentSkip			plmComment
+hi def link plmString			String
+hi def link plmComment			Comment
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "plm"
 

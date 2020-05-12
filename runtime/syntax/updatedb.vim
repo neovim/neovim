@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         updatedb.conf(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2009-05-25
+" Language:             updatedb.conf(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2009-05-25
 
 if exists("b:current_syntax")
   finish

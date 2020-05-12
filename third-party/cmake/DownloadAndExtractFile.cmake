@@ -18,7 +18,10 @@ if(NOT DEFINED TARGET)
   message(FATAL_ERROR "TARGET must be defined.")
 endif()
 
-set(SRC_DIR ${PREFIX}/src/${TARGET})
+if(NOT DEFINED SRC_DIR)
+  set(SRC_DIR ${PREFIX}/src/${TARGET})
+endif()
+set(BINARY_DIR ${PREFIX}/src/${TARGET}-build)
 
 # Check whether the source has been downloaded. If true, skip it.
 # Useful for external downloads like homebrew.
@@ -39,7 +42,7 @@ if(TIMEOUT)
   set(timeout_args TIMEOUT ${timeout})
   set(timeout_msg "${timeout} seconds")
 else()
-  set(timeout_args "# no TIMEOUT")
+  set(timeout_args "")
   set(timeout_msg "none")
 endif()
 
@@ -71,11 +74,27 @@ list(GET status 0 status_code)
 list(GET status 1 status_string)
 
 if(NOT status_code EQUAL 0)
-  message(FATAL_ERROR "error: downloading '${URL}' failed
+  # Retry on certain errors, e.g. CURLE_COULDNT_RESOLVE_HOST, which is often
+  # seen with libtermkey (www.leonerd.org.uk).
+  if((status_code EQUAL 6)  # "Couldn't resolve host name"
+    OR (status_code EQUAL 7))  # "Couldn't connect to server"
+    message(STATUS "warning: retrying '${URL}' (${status_string}, status ${status_code})")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 10)
+    file(DOWNLOAD ${URL} ${file}
+      ${timeout_args}
+      ${hash_args}
+      STATUS status
+      LOG log)
+    list(GET status 0 status_code)
+    list(GET status 1 status_string)
+  endif()
+  if(NOT status_code EQUAL 0)
+    message(FATAL_ERROR "error: downloading '${URL}' failed
   status_code: ${status_code}
   status_string: ${status_string}
   log: ${log}
 ")
+  endif()
 endif()
 
 set(NULL_SHA256 "0000000000000000000000000000000000000000000000000000000000000000")
@@ -153,6 +172,13 @@ message(STATUS "extracting... [rename]")
 file(REMOVE_RECURSE ${SRC_DIR})
 get_filename_component(contents ${contents} ABSOLUTE)
 file(RENAME ${contents} ${SRC_DIR})
+
+# Remove any existing BINARY_DIR, to force a new build.
+# Without this a necessary output (e.g. libluv.a) might not be updated/installed.
+#
+message(STATUS "extracting... [clean binary dir]")
+file(REMOVE_RECURSE ${BINARY_DIR})
+file(MAKE_DIRECTORY ${BINARY_DIR})
 
 # Clean up:
 #

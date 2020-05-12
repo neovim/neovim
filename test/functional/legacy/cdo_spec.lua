@@ -1,6 +1,6 @@
 -- Tests for the :cdo, :cfdo, :ldo and :lfdo commands
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local nvim, clear = helpers.meths, helpers.clear
 local call, feed = helpers.call, helpers.feed
 local source, eq = helpers.source, helpers.eq

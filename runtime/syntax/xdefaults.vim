@@ -10,11 +10,8 @@
 "   xrdb manual page
 "   xrdb source: ftp://ftp.x.org/pub/R6.4/xc/programs/xrdb/xrdb.c
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -109,36 +106,26 @@ syn keyword xdefaultsSymbol contained X_RESOLUTION
 syn keyword xdefaultsSymbol contained Y_RESOLUTION
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_xdefaults_syntax_inits")
-  if version < 508
-    let did_xdefaults_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink xdefaultsLabel		Type
-  HiLink xdefaultsValue		Constant
-  HiLink xdefaultsComment	Comment
-  HiLink xdefaultsCommentH	xdefaultsComment
-  HiLink xdefaultsPreProc	PreProc
-  HiLink xdefaultsInclude	xdefaultsPreProc
-  HiLink xdefaultsCppSkip	xdefaultsCppOut
-  HiLink xdefaultsCppOut2	xdefaultsCppOut
-  HiLink xdefaultsCppOut	Comment
-  HiLink xdefaultsIncluded	String
-  HiLink xdefaultsDefine	Macro
-  HiLink xdefaultsSymbol	Statement
-  HiLink xdefaultsSpecial	Statement
-  HiLink xdefaultsErrorLine	Error
-  HiLink xdefaultsCommentError	Error
-  HiLink xdefaultsPunct		Normal
-  HiLink xdefaultsLineEnd	Special
-  HiLink xdefaultsTodo		Todo
+" Only when an item doesn't have highlighting yet
+hi def link xdefaultsLabel		Type
+hi def link xdefaultsValue		Constant
+hi def link xdefaultsComment	Comment
+hi def link xdefaultsCommentH	xdefaultsComment
+hi def link xdefaultsPreProc	PreProc
+hi def link xdefaultsInclude	xdefaultsPreProc
+hi def link xdefaultsCppSkip	xdefaultsCppOut
+hi def link xdefaultsCppOut2	xdefaultsCppOut
+hi def link xdefaultsCppOut	Comment
+hi def link xdefaultsIncluded	String
+hi def link xdefaultsDefine	Macro
+hi def link xdefaultsSymbol	Statement
+hi def link xdefaultsSpecial	Statement
+hi def link xdefaultsErrorLine	Error
+hi def link xdefaultsCommentError	Error
+hi def link xdefaultsPunct		Normal
+hi def link xdefaultsLineEnd	Special
+hi def link xdefaultsTodo		Todo
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "xdefaults"
 

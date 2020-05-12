@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         LiteStep RC file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-02-22
+" Language:             LiteStep RC file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-02-22
 
 if exists("b:current_syntax")
   finish

@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Sep 25
+" Last Change:	2016 Nov 04
 
 " This file sets up for syntax highlighting.
 " It is loaded from "syntax.vim" and "manual.vim".
@@ -60,8 +60,8 @@ fun! s:SynSet()
 endfun
 
 
-" Handle adding doxygen to other languages (C, C++, C#, IDL)
-au Syntax c,cpp,cs,idl,php
+" Handle adding doxygen to other languages (C, C++, C#, IDL, java, php, DataScript)
+au Syntax c,cpp,cs,idl,java,php,datascript
 	\ if (exists('b:load_doxygen_syntax') && b:load_doxygen_syntax)
 	\	|| (exists('g:load_doxygen_syntax') && g:load_doxygen_syntax)
 	\   | runtime! syntax/doxygen.vim
@@ -69,8 +69,11 @@ au Syntax c,cpp,cs,idl,php
 
 
 " Source the user-specified syntax highlighting file
-if exists("mysyntaxfile") && filereadable(expand(mysyntaxfile))
-  execute "source " . mysyntaxfile
+if exists("mysyntaxfile")
+  let s:fname = expand(mysyntaxfile)
+  if filereadable(s:fname)
+    execute "source " . fnameescape(s:fname)
+  endif
 endif
 
 " Restore 'cpoptions'

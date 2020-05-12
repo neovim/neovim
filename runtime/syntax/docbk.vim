@@ -13,11 +13,8 @@
 "   http://www.open-oasis.org/docbook/
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -174,26 +171,15 @@ syn region docbkRemark start="<comment>"lc=9  end="</comment>"me=e-10	contains=x
 syn region docbkCite   start="<citation>"lc=10 end="</citation>"me=e-11 contains=xmlRegion,xmlEntity,sgmlRegion,sgmlEntity keepend
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_docbk_syn_inits")
-  if version < 508
-    let did_docbk_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-    hi DocbkBold term=bold cterm=bold gui=bold
-  else
-    command -nargs=+ HiLink hi def link <args>
-    hi def DocbkBold term=bold cterm=bold gui=bold
-  endif
+" Only when an item doesn't have highlighting yet
+hi def DocbkBold term=bold cterm=bold gui=bold
 
-  HiLink docbkKeyword	Statement
-  HiLink docbkRegion	DocbkBold
-  HiLink docbkTitle	Title
-  HiLink docbkRemark	Comment
-  HiLink docbkCite	Constant
+hi def link docbkKeyword	Statement
+hi def link docbkRegion	DocbkBold
+hi def link docbkTitle	Title
+hi def link docbkRemark	Comment
+hi def link docbkCite	Constant
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "docbk"
 

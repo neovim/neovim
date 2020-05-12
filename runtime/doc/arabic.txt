@@ -1,4 +1,4 @@
-*arabic.txt*	For Vim version 7.4.  Last change: 2010 Nov 13
+*arabic.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Nadim Shaikli
@@ -36,7 +36,7 @@ the user interface remains the standard Vi interface.
 
 Highlights
 ----------
-o  Editing left-to-right files as in the original VIM hasn't changed.
+o  Editing left-to-right files as in the original Vim hasn't changed.
 
 o  Viewing and editing files in right-to-left windows.	 File
    orientation is per window, so it is possible to view the same
@@ -46,7 +46,7 @@ o  No special terminal with right-to-left capabilities is required.
    The right-to-left changes are completely hardware independent.
    Only Arabic fonts are necessary.
 
-o  Compatible with the original VIM.   Almost all features work in
+o  Compatible with the original Vim.   Almost all features work in
    right-to-left mode (there are liable to be bugs).
 
 o  Changing keyboard mapping and reverse insert modes using a single
@@ -60,14 +60,14 @@ o  While in Arabic mode, numbers are entered from left to right.  Upon
 
 o  Arabic keymapping on the command line in reverse insert mode.
 
-o  Proper Bidirectional functionality is possible given VIM is
+o  Proper Bidirectional functionality is possible given Vim is
    started within a Bidi capable terminal emulator.
 
 
 Arabic Fonts						*arabicfonts*
 ------------
 
-VIM requires monospaced fonts of which there are many out there.
+Vim requires monospaced fonts of which there are many out there.
 Arabic requires ISO-8859-6 as well as Presentation Form-B fonts
 (without Form-B, Arabic will _NOT_ be usable).	It is highly
 recommended that users search for so-called 'ISO-10646-1' fonts.
@@ -90,13 +90,13 @@ o  Installation of fonts for X Window systems (Unix/Linux)
 
 Usage
 -----
-Prior to the actual usage of Arabic within VIM, a number of settings
+Prior to the actual usage of Arabic within Vim, a number of settings
 need to be accounted for and invoked.
 
 o  Setting the Arabic fonts
 
-   +  For VIM GUI set the 'guifont' to your_ARABIC_FONT.  This is done
-      by entering the following command in the VIM window.
+   +  For Vim GUI set the 'guifont' to your_ARABIC_FONT.  This is done
+      by entering the following command in the Vim window.
 >
 		:set guifont=your_ARABIC_FONT
 <
@@ -109,7 +109,7 @@ o  Setting the Arabic fonts
       you can include ':set guifont=your_ARABIC_FONT' to your vimrc
       file.
 
-   +  Under the X Window environment, you can also start VIM with
+   +  Under the X Window environment, you can also start Vim with
       '-fn your_ARABIC_FONT' option.
 
 o  Setting the appropriate character Encoding
@@ -131,11 +131,11 @@ o  Setting the appropriate character Encoding
 o  Enable Arabic settings [short-cut]
 
    In order to simplify and streamline things, you can either invoke
-   VIM with the command-line option,
+   Vim with the command-line option,
 
      % vim -A my_utf8_arabic_file ...
 
-   or enable 'arabic' via the following command within VIM
+   or enable 'arabic' via the following command within Vim
 >
 		:set arabic
 <
@@ -196,7 +196,7 @@ o  Enable Arabic settings [short-cut]
 
    +  Arabic deletion of a combined pair character
 
-      By default VIM has the 'delcombine' option disabled.  This option
+      By default Vim has the 'delcombine' option disabled.  This option
       allows the deletion of ALEF in a LAM_ALEF (LAA) combined character
       and still retain the LAM (i.e. it reverts to treating the combined
       character as its natural two characters form -- this also pertains
@@ -255,7 +255,7 @@ o  Enable Arabic settings [short-cut]
 Keymap/Keyboard						*arabickeymap*
 ---------------
 
-The character/letter encoding used in VIM is the standard UTF-8.
+The character/letter encoding used in Vim is the standard UTF-8.
 It is widely discouraged that any other encoding be used or even
 attempted.
 
@@ -288,7 +288,7 @@ o  Keyboard
 Restrictions
 ------------
 
-o  VIM in its GUI form does not currently support Bi-directionality
+o  Vim in its GUI form does not currently support Bi-directionality
    (i.e. the ability to see both Arabic and Latin intermixed within
    the same line).
 
@@ -313,4 +313,4 @@ There is one known minor bug,
 
 No other bugs are known to exist.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

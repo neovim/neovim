@@ -1,4 +1,4 @@
-*russian.txt*   For Vim version 7.4.  Last change: 2006 Apr 24
+*russian.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Vassily Ragosin
@@ -6,10 +6,7 @@
 
 Russian language localization and support in Vim	   *russian* *Russian*
 
-1. Introduction				  |russian-intro|
-2. Russian keymaps			  |russian-keymap|
-3. Localization				  |russian-l18n|
-4. Known issues				  |russian-issues|
+                                      Type |gO| to see the table of contents.
 
 ===============================================================================
 1. Introduction							*russian-intro*
@@ -55,8 +52,7 @@ automatic installs.  Vim also needs to be compiled with |+gettext| feature for
 user interface items translations to work.
 
 After downloading an archive from RuVim project, unpack it into your
-$VIMRUNTIME directory.  We recommend using UTF-8 archive, if your version of
-Vim is compiled with |+multi_byte| feature enabled.
+$VIMRUNTIME directory.  We recommend using UTF-8 archive.
 
 In order to use the Russian documentation, make sure you have set the
 'helplang' option to "ru".
@@ -71,4 +67,4 @@ In order to use the Russian documentation, make sure you have set the
    releases of gettext.
 
 ===============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -5,7 +5,7 @@ include(CMakeParseArguments)
 # Failing to pass a command argument will result in no command being run
 function(BuildLibuv)
   cmake_parse_arguments(_libuv
-    ""
+    "BUILD_IN_SOURCE"
     "TARGET"
     "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
     ${ARGN})
@@ -30,6 +30,7 @@ function(BuildLibuv)
       -DTARGET=${_libuv_TARGET}
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
@@ -42,7 +43,7 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
 
 if(UNIX)
   BuildLibuv(
-    CONFIGURE_COMMAND ${UNIX_CFGCMD}
+    CONFIGURE_COMMAND ${UNIX_CFGCMD} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
@@ -56,27 +57,28 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
+elseif(WIN32)
 
-elseif(WIN32 AND MSVC)
-
-  find_package(PythonInterp 2.6 REQUIRED)
-  if(NOT PYTHONINTERP_FOUND OR PYTHON_VERSION_MAJOR GREATER 2)
-    message(FATAL_ERROR "Python2 is required to build libuv on windows, use -DPYTHON_EXECUTABLE to set a python interpreter")
-  endif()
-
-  string(FIND ${CMAKE_GENERATOR} Win64 VS_WIN64)
-  if(VS_WIN64 EQUAL -1)
-    set(VS_ARCH x86)
+  set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
+  if(MSVC)
+    set(BUILD_SHARED ON)
+  elseif(MINGW)
+    set(BUILD_SHARED OFF)
   else()
-    set(VS_ARCH x64)
+    message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
   endif()
-  BuildLibuv(
-    # By default this creates Debug builds
-    BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat static debug ${VS_ARCH}
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/libuv/Debug/lib/libuv.lib ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include)
+  BuildLibUv(BUILD_IN_SOURCE
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibuvCMakeLists.txt
+        ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+      COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DBUILD_SHARED_LIBS=${BUILD_SHARED}
+        -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 else()
   message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")

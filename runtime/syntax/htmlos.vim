@@ -6,11 +6,8 @@
 " Last Change:	2003 May 11
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -18,12 +15,8 @@ if !exists("main_syntax")
   let main_syntax = 'htmlos'
 endif
 
-if version < 600
-  so <sfile>:p:h/html.vim
-else
-  runtime! syntax/html.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/html.vim
+unlet b:current_syntax
 
 syn cluster htmlPreproc add=htmlosRegion
 
@@ -121,42 +114,32 @@ else
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_htmlos_syn_inits")
-  if version < 508
-    let did_htmlos_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink	 htmlosSpecialIdentifier	Operator
-  HiLink	 htmlosIdentifier	Identifier
-  HiLink	 htmlosStorageClass	StorageClass
-  HiLink	 htmlosComment	Comment
-  HiLink	 htmlosBoolean	Boolean
-  HiLink	 htmlosStringSingle	String
-  HiLink	 htmlosStringDouble	String
-  HiLink	 htmlosNumber	Number
-  HiLink	 htmlosFloat	Float
-  HiLink	 htmlosFunctions	Function
-  HiLink	 htmlosRepeat	Repeat
-  HiLink	 htmlosConditional	Conditional
-  HiLink	 htmlosLabel	Label
-  HiLink	 htmlosStatement	Statement
-  HiLink	 htmlosKeyword	Statement
-  HiLink	 htmlosType	Type
-  HiLink	 htmlosDefine	Define
-  HiLink	 htmlosParent	Delimiter
-  HiLink	 htmlosError	Error
-  HiLink	 htmlosTodo	Todo
-  HiLink	htmlosOperator	Operator
-  HiLink	htmlosRelation	Operator
+" The default methods for highlighting.  Can be overridden later
+hi def link htmlosSpecialIdentifier	Operator
+hi def link htmlosIdentifier	Identifier
+hi def link htmlosStorageClass	StorageClass
+hi def link htmlosComment	Comment
+hi def link htmlosBoolean	Boolean
+hi def link htmlosStringSingle	String
+hi def link htmlosStringDouble	String
+hi def link htmlosNumber	Number
+hi def link htmlosFloat	Float
+hi def link htmlosFunctions	Function
+hi def link htmlosRepeat	Repeat
+hi def link htmlosConditional	Conditional
+hi def link htmlosLabel	Label
+hi def link htmlosStatement	Statement
+hi def link htmlosKeyword	Statement
+hi def link htmlosType	Type
+hi def link htmlosDefine	Define
+hi def link htmlosParent	Delimiter
+hi def link htmlosError	Error
+hi def link htmlosTodo	Todo
+hi def link htmlosOperator	Operator
+hi def link htmlosRelation	Operator
 
-  delcommand HiLink
-endif
 let b:current_syntax = "htmlos"
 
 if main_syntax == 'htmlos'

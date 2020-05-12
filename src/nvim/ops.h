@@ -6,8 +6,10 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/os/time.h"
+#include "nvim/normal.h" // for MotionType and oparg_T
+#include "nvim/ex_cmds_defs.h" // for exarg_T
 
 typedef int (*Indenter)(void);
 
@@ -78,10 +80,10 @@ enum GRegFlags {
 
 /// Definition of one register
 typedef struct yankreg {
-  char_u **y_array;  ///< Pointer to an array of line pointers.
-  linenr_T y_size;   ///< Number of lines in y_array.
-  char_u y_type;     ///< Register type: MLINE, MCHAR or MBLOCK.
-  colnr_T y_width;   ///< Register width (only valid for y_type == MBLOCK).
+  char_u **y_array;   ///< Pointer to an array of line pointers.
+  size_t y_size;      ///< Number of lines in y_array.
+  MotionType y_type;  ///< Register type
+  colnr_T y_width;    ///< Register width (only valid for y_type == kBlockWise).
   Timestamp timestamp;  ///< Time when register was last modified.
   dict_T *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;

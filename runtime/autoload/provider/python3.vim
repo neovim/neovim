@@ -1,5 +1,5 @@
 " The Python3 provider uses a Python3 host to emulate an environment for running
-" python3 plugins. See ":help nvim-provider" for more information.
+" python3 plugins. :help provider
 "
 " Associating the plugin with the Python3 host is the first step because
 " plugins will be passed as command-line arguments
@@ -7,31 +7,23 @@
 if exists('g:loaded_python3_provider')
   finish
 endif
-let g:loaded_python3_provider = 1
-
 let [s:prog, s:err] = provider#pythonx#Detect(3)
+let g:loaded_python3_provider = empty(s:prog) ? 1 : 2
 
-function! provider#python3#Prog()
+function! provider#python3#Prog() abort
   return s:prog
 endfunction
 
-function! provider#python3#Error()
+function! provider#python3#Error() abort
   return s:err
 endfunction
-
-if s:prog == ''
-  " Detection failed
-  finish
-endif
-
-let s:plugin_path = expand('<sfile>:p:h').'/script_host.py'
 
 " The Python3 provider plugin will run in a separate instance of the Python3
 " host.
 call remote#host#RegisterClone('legacy-python3-provider', 'python3')
-call remote#host#RegisterPlugin('legacy-python3-provider', s:plugin_path, [])
+call remote#host#RegisterPlugin('legacy-python3-provider', 'script_host.py', [])
 
-function! provider#python3#Call(method, args)
+function! provider#python3#Call(method, args) abort
   if s:err != ''
     return
   endif

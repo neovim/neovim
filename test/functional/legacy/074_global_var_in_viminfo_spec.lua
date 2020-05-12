@@ -1,9 +1,10 @@
 -- Tests for storing global variables in the .shada file
 
-local helpers, lfs = require('test.functional.helpers'), require('lfs')
-local clear, execute, eq, neq, eval, wait, spawn =
-  helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.eval,
-  helpers.wait, helpers.spawn
+local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
+local clear, command, eq, neq, eval, wait =
+  helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval,
+  helpers.wait
 
 describe('storing global variables in ShaDa files', function()
   local tempname = 'Xtest-functional-legacy-074'
@@ -13,9 +14,7 @@ describe('storing global variables in ShaDa files', function()
   end)
 
   it('is working', function()
-    local nvim2 = spawn({helpers.nvim_prog, '-u', 'NONE',
-                                 '-i', 'Xviminfo', '--embed'})
-    helpers.set_session(nvim2)
+    clear{args_rm={'-i'}, args={'-i', 'Xviminfo'}}
 
     local test_dict = {foo = 1, bar = 0, longvarible = 1000}
     local test_list = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
@@ -25,31 +24,29 @@ describe('storing global variables in ShaDa files', function()
       71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88,
       89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100}
 
-    execute(
-      -- This will cause a few errors, do it silently.
-      'set visualbell',
-      'set shada+=!',
-      "let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}",
-      -- Store a really long list. Initially this was testing line wrapping in 
-      -- viminfo, but shada files has no line wrapping, no matter how long the 
-      -- list is.
-      'let MY_GLOBAL_LIST=range(1,100)'
-    )
+    command('set visualbell')
+    command('set shada+=!')
+    command('let MY_GLOBAL_DICT={\'foo\': 1, \'bar\': 0, \'longvarible\': 1000}')
+    -- Store a really long list. Initially this was testing line wrapping in
+    -- viminfo, but shada files has no line wrapping, no matter how long the
+    -- list is.
+    command('let MY_GLOBAL_LIST=range(1, 100)')
+
     eq(test_dict, eval('MY_GLOBAL_DICT'))
     eq(test_list, eval('MY_GLOBAL_LIST'))
 
-    execute('wsh! ' .. tempname)
+    command('wsh! ' .. tempname)
     wait()
 
     -- Assert that the shada file exists.
     neq(nil, lfs.attributes(tempname))
-    execute('unlet MY_GLOBAL_DICT',
-            'unlet MY_GLOBAL_LIST')
+    command('unlet MY_GLOBAL_DICT')
+    command('unlet MY_GLOBAL_LIST')
     -- Assert that the variables where deleted.
     eq(0, eval('exists("MY_GLOBAL_DICT")'))
     eq(0, eval('exists("MY_GLOBAL_LIST")'))
 
-    execute('rsh! ' .. tempname)
+    command('rsh! ' .. tempname)
 
     eq(test_list, eval('MY_GLOBAL_LIST'))
     eq(test_dict, eval('MY_GLOBAL_DICT'))

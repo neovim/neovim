@@ -13,11 +13,8 @@
 " TODO: names, and leaves C/C++ comments as such. (On the other hand,
 " TODO: switching to TeX mode in C/C++ comments might be colour overkill.)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -25,12 +22,8 @@ endif
 " level in the CWEB syntax, e.g., in the preamble.  In general, a CWEB source
 " code can be seen as a normal TeX document with some C/C++ material
 " interspersed in certain defined regions.
-if version < 600
-  source <sfile>:p:h/tex.vim
-else
-  runtime! syntax/tex.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/tex.vim
+unlet b:current_syntax
 
 " Read the C/C++ syntax too; C/C++ syntax items are treated as such in the
 " C/C++ section of a CWEB chunk or in inner C/C++ context in "|...|" groups.
@@ -63,20 +56,10 @@ syntax region webRestrictedTeX start="@[\^\.:t=q]" end="@>" oneline
 syntax match webIgnoredStuff "@@"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cweb_syntax_inits")
-  if version < 508
-    let did_cweb_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink webRestrictedTeX String
+hi def link webRestrictedTeX String
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "cweb"
 

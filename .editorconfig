@@ -3,10 +3,11 @@ root = true
 [*]
 indent_style = space
 indent_size = 2
+tab_width = 8
 end_of_line = lf
 insert_final_newline = true
-charset = utf_8
+charset = utf-8
 
-[Makefile]
+[{Makefile,**/Makefile,runtime/doc/*.txt}]
 indent_style = tab
-tab_width = 4
+indent_size = 8

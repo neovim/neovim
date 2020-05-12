@@ -27,13 +27,13 @@ function HamGetIndent(lnum)
   " Add a shiftwidth to statements following if,  else, elseif,
   " case, select, default, do, until, while, for, start
   if prevline =~? '^\s*\<\(if\|else\%(if\)\?\|for\|repeat\|do\|while\|sub\)\>' 
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   " Subtract a shiftwidth from else, elseif, end(if|while|for), until
   let line = getline(v:lnum)
   if line =~? '^\s*\(else\|elseif\|loop\|until\|end\%(if\|while\|for\|sub\)\)\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

@@ -1,29 +1,27 @@
 " Vim syntax file
 " Language:    Debian changelog files
-" Maintainer:  Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
+" Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2015 Apr 30
-" URL: http://anonscm.debian.org/hg/pkg-vim/vim/raw-file/unstable/runtime/syntax/debchangelog.vim
+" Last Change: 2019 Apr 21
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debchangelog.vim
 
 " Standard syntax initialization
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
 " Case doesn't matter for us
 syn case ignore
 
-let urgency='urgency=\(low\|medium\|high\|critical\)\( [^[:space:],][^,]*\)\='
-let binNMU='binary-only=yes'
+let s:urgency='urgency=\(low\|medium\|high\|emergency\|critical\)\( [^[:space:],][^,]*\)\='
+let s:binNMU='binary-only=yes'
 
 " Define some common expressions we can use later on
 syn match debchangelogName	contained "^[[:alnum:]][[:alnum:].+-]\+ "
-exe 'syn match debchangelogFirstKV	contained "; \('.urgency.'\|'.binNMU.'\)"'
-exe 'syn match debchangelogOtherKV	contained ", \('.urgency.'\|'.binNMU.'\)"'
-syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|squeeze-%(backports%(-sloppy)=|volatile|lts|security)|wheezy-%(backports%(-sloppy)=|security)|jessie%(-backports|-security)=|stretch|%(devel|lucid|precise|trusty|utopic)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
+exe 'syn match debchangelogFirstKV	contained "; \('.s:urgency.'\|'.s:binNMU.'\)"'
+exe 'syn match debchangelogOtherKV	contained ", \('.s:urgency.'\|'.s:binNMU.'\)"'
+syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|%(squeeze|wheezy|jessie)-%(backports%(-sloppy)=|lts|security)|stretch%(-backports%(-sloppy)=|-security)=|buster%(-backports|-security)=|bullseye|%(devel|precise|trusty|vivid|wily|xenial|yakkety|zesty|artful|bionic|cosmic|disco|eoan)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
 syn match debchangelogVersion	contained "(.\{-})"
 syn match debchangelogCloses	contained "closes:\_s*\(bug\)\=#\=\_s\=\d\+\(,\_s*\(bug\)\=#\=\_s\=\d\+\)*"
 syn match debchangelogLP	contained "\clp:\s\+#\d\+\(,\s*#\d\+\)*"
@@ -36,29 +34,18 @@ syn region debchangelogFooter start="^ [^ ]" end="$" contains=debchangelogEmail 
 syn region debchangelogEntry start="^  " end="$" contains=debchangelogCloses,debchangelogLP oneline
 
 " Associate our matches and regions with pretty colours
-if version >= 508 || !exists("did_debchangelog_syn_inits")
-  if version < 508
-    let did_debchangelog_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+hi def link debchangelogHeader  Error
+hi def link debchangelogFooter  Identifier
+hi def link debchangelogEntry   Normal
+hi def link debchangelogCloses  Statement
+hi def link debchangelogLP      Statement
+hi def link debchangelogFirstKV Identifier
+hi def link debchangelogOtherKV Identifier
+hi def link debchangelogName    Comment
+hi def link debchangelogVersion Identifier
+hi def link debchangelogTarget  Identifier
+hi def link debchangelogEmail   Special
 
-  HiLink debchangelogHeader		Error
-  HiLink debchangelogFooter		Identifier
-  HiLink debchangelogEntry		Normal
-  HiLink debchangelogCloses		Statement
-  HiLink debchangelogLP			Statement
-  HiLink debchangelogFirstKV		Identifier
-  HiLink debchangelogOtherKV		Identifier
-  HiLink debchangelogName		Comment
-  HiLink debchangelogVersion		Identifier
-  HiLink debchangelogTarget		Identifier
-  HiLink debchangelogEmail		Special
-
-  delcommand HiLink
-endif
-
-let b:current_syntax = "debchangelog"
+let b:current_syntax = 'debchangelog'
 
 " vim: ts=8 sw=2

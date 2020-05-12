@@ -2623,11 +2623,6 @@ msgstr ""
 msgid "E901: Job table is full"
 msgstr ""
 
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr ""
-
 #: ../globals.h:1024
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
@@ -4127,10 +4122,6 @@ msgstr ""
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr ""
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Messages maintainer: Mike Williams <mrw@eandem.co.uk>"
 
 #: ../message.c:986
 msgid "Interrupt: "

@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:		JSON
 " Mantainer:		Eli Parra <eli@elzr.com> https://github.com/elzr/vim-json
-" Last Change:          2014 Aug 29
+" Last Change:          2017 Jun 13
 "   https://github.com/jakar/vim-json/commit/20b650e22aa750c4ab6a66aa646bdd95d7cd548a#diff-e81fc111b2052e306d126bd9989f7b7c
 " Original Author:	Rogerz Zhang <rogerz.zhang at gmail.com> http://github.com/rogerz/vim-json
 " Acknowledgement:      Based off of vim-javascript maintained by Darrick Wiebe 
@@ -141,7 +141,7 @@ function GetJSONIndent()
 
   " If the previous line ended with a block opening, add a level of indent.
   " if s:Match(lnum, s:block_regex)
-    " return indent(lnum) + &sw
+    " return indent(lnum) + shiftwidth()
   " endif
 
   " If the previous line contained an opening bracket, and we are still in it,
@@ -149,7 +149,7 @@ function GetJSONIndent()
   if line =~ '[[({]'
     let counts = s:LineHasOpeningBrackets(lnum)
     if counts[0] == '1' || counts[1] == '1' || counts[2] == '1'
-      return ind + &sw
+      return ind + shiftwidth()
     else
       call cursor(v:lnum, vcol)
     end

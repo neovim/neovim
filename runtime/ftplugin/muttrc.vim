@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         mutt RC File
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             mutt RC File
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:did_ftplugin")
   finish

@@ -1,18 +1,15 @@
 " Vim syntax file
 " Language:	Lex
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Nov 14, 2012
-" Version:	14
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Last Change:	Aug 31, 2016
+" Version:	16
+" URL:	http://mysite.verizon.net/astronaut/vim/index.html#SYNTAX_LEX
 "
 " Option:
 "   lex_uses_cpp : if this variable exists, then C++ is loaded rather than C
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -122,22 +119,24 @@ syn sync match lexSyncPat	groupthere lexPatBlock	"^<$"
 syn sync match lexSyncPat	groupthere lexPatBlock	"^%%$"
 
 " The default highlighting.
-hi def link lexAbbrvComment	lexPatComment
-hi def link lexAbbrvRegExp	Macro
-hi def link lexAbbrv	SpecialChar
-hi def link lexBrace	lexPat
-hi def link lexCFunctions	Function
-hi def link lexCstruct	cStructure
-hi def link lexMorePat	SpecialChar
-hi def link lexOptions	PreProc
-hi def link lexPatComment	Comment
-hi def link lexPat		Function
-hi def link lexPatString	Function
-hi def link lexPatTag	Special
-hi def link lexPatTagZone	lexPatTag
-hi def link lexSep		Delimiter
-hi def link lexSlashQuote	lexPat
-hi def link lexStartState	Statement
+if !exists("skip_lex_syntax_inits")
+ hi def link lexAbbrvComment	lexPatComment
+ hi def link lexAbbrvRegExp	Macro
+ hi def link lexAbbrv	SpecialChar
+ hi def link lexBrace	lexPat
+ hi def link lexCFunctions	Function
+ hi def link lexCstruct	cStructure
+ hi def link lexMorePat	SpecialChar
+ hi def link lexOptions	PreProc
+ hi def link lexPatComment	Comment
+ hi def link lexPat		Function
+ hi def link lexPatString	Function
+ hi def link lexPatTag	Special
+ hi def link lexPatTagZone	lexPatTag
+ hi def link lexSep		Delimiter
+ hi def link lexSlashQuote	lexPat
+ hi def link lexStartState	Statement
+endif
 
 let b:current_syntax = "lex"
 

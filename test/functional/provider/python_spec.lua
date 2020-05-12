@@ -1,63 +1,91 @@
-local helpers = require('test.functional.helpers')
-local eval, command, feed = helpers.eval, helpers.command, helpers.feed
-local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
-local expect, write_file = helpers.expect, helpers.write_file
+local helpers = require('test.functional.helpers')(after_each)
+
+local eq = helpers.eq
+local neq = helpers.neq
+local feed = helpers.feed
+local clear = helpers.clear
+local funcs = helpers.funcs
+local meths = helpers.meths
+local insert = helpers.insert
+local expect = helpers.expect
+local command = helpers.command
+local exc_exec = helpers.exc_exec
+local write_file = helpers.write_file
+local curbufmeths = helpers.curbufmeths
+local missing_provider = helpers.missing_provider
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 do
   clear()
-  command('let [g:interp, g:errors] = provider#pythonx#Detect(2)')
-  local errors = eval('g:errors')
-  if errors ~= '' then
-    pending(
-      'Python 2 (or the Python 2 neovim module) is broken or missing:\n' .. errors,
-      function() end)
+  local reason = missing_provider('python')
+  if reason then
+    it(':python reports E319 if provider is missing', function()
+      local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
+      matches(expected, pcall_err(command, 'py print("foo")'))
+      matches(expected, pcall_err(command, 'pyfile foo'))
+    end)
+    pending(string.format('Python 2 (or the pynvim module) is broken/missing (%s)', reason), function() end)
     return
   end
 end
 
-describe('python commands and functions', function()
-  before_each(function()
-    clear()
-    command('python import vim')
-  end)
+before_each(function()
+  clear()
+  command('python import vim')
+end)
 
-  it('feature test', function()
-    eq(1, eval('has("python")'))
+describe('python feature test', function()
+  it('works', function()
+    eq(1, funcs.has('python'))
+    eq(1, funcs.has('python_compiled'))
+    eq(1, funcs.has('python_dynamic'))
+    eq(0, funcs.has('python_dynamic_'))
+    eq(0, funcs.has('python_'))
   end)
+end)
 
-  it('python_execute', function()
+describe(':python command', function()
+  it('works with a line', function()
     command('python vim.vars["set_by_python"] = [100, 0]')
-    eq({100, 0}, eval('g:set_by_python'))
+    eq({100, 0}, meths.get_var('set_by_python'))
   end)
 
-  it('python_execute with nested commands', function()
+  -- TODO(ZyX-I): works with << EOF
+  -- TODO(ZyX-I): works with execute 'python' line1."\n".line2."\n"…
+
+  it('supports nesting', function()
     command([[python vim.command('python vim.command("python vim.command(\'let set_by_nested_python = 555\')")')]])
-    eq(555, eval('g:set_by_nested_python'))
+    eq(555, meths.get_var('set_by_nested_python'))
   end)
 
-  it('python_execute with range', function()
+  it('supports range', function()
     insert([[
       line1
       line2
       line3
       line4]])
     feed('ggjvj:python vim.vars["range"] = vim.current.range[:]<CR>')
-    eq({'line2', 'line3'}, eval('g:range'))
+    eq({'line2', 'line3'}, meths.get_var('range'))
   end)
+end)
 
-  it('pyfile', function()
+describe(':pyfile command', function()
+  it('works', function()
     local fname = 'pyfile.py'
     write_file(fname, 'vim.command("let set_by_pyfile = 123")')
     command('pyfile pyfile.py')
-    eq(123, eval('g:set_by_pyfile'))
+    eq(123, meths.get_var('set_by_pyfile'))
     os.remove(fname)
   end)
+end)
 
-  it('pydo', function()
+describe(':pydo command', function()
+  it('works', function()
     -- :pydo 42 returns None for all lines,
     -- the buffer should not be changed
     command('normal :pydo 42')
-    eq(0, eval('&mod'))
+    eq(false, curbufmeths.get_option('modified'))
     -- insert some text
     insert('abc\ndef\nghi')
     expect([[
@@ -71,8 +99,25 @@ describe('python commands and functions', function()
       2
       ghi]])
   end)
+end)
 
-  it('pyeval', function()
-    eq({1, 2, {['key'] = 'val'}}, eval([[pyeval('[1, 2, {"key": "val"}]')]]))
+describe('pyeval()', function()
+  it('works', function()
+    eq({1, 2, {['key'] = 'val'}}, funcs.pyeval('[1, 2, {"key": "val"}]'))
+  end)
+
+  it('errors out when given non-string', function()
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(10)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(v:_null_dict)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(v:_null_list)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(0.0)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(function("tr"))'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(v:true)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(v:false)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call pyeval(v:null)'))
+  end)
+
+  it('accepts NULL string', function()
+    neq(0, exc_exec('call pyeval($XXX_NONEXISTENT_VAR_XXX)'))
   end)
 end)

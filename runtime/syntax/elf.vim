@@ -10,11 +10,8 @@
 "      This is the Applix Inc., Macro and Builder programming language.
 "      It has nothing in common with the binary format called ELF.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -63,32 +60,22 @@ syn match elfParens "[\[\]()]"
 syn match elfPunct "[,;]"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_elf_syn_inits")
-	if version < 508
-		let did_elf_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-   endif
+" Only when an item doesn't have highlighting yet
 
-  " The default methods for highlighting. Can be overridden later.
-  HiLink elfComment Comment
-  HiLink elfPPCom Include
-  HiLink elfKeyword Keyword
-  HiLink elfSpecial Special
-  HiLink elfEnvironment Special
-  HiLink elfBraceError Error
-  HiLink elfConditional Conditional
-  HiLink elfMacro Function
-  HiLink elfNumber Number
-  HiLink elfString String
-  HiLink elfParens Delimiter
-  HiLink elfPunct Delimiter
+" The default methods for highlighting. Can be overridden later.
+hi def link elfComment Comment
+hi def link elfPPCom Include
+hi def link elfKeyword Keyword
+hi def link elfSpecial Special
+hi def link elfEnvironment Special
+hi def link elfBraceError Error
+hi def link elfConditional Conditional
+hi def link elfMacro Function
+hi def link elfNumber Number
+hi def link elfString String
+hi def link elfParens Delimiter
+hi def link elfPunct Delimiter
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "elf"
 

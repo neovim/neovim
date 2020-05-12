@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
@@ -15,20 +15,16 @@ describe("update_menu notification", function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   local function expect_sent(expected)
-    screen:wait(function()
+    screen:expect{condition=function()
       if screen.update_menu ~= expected then
         if expected then
-          return 'update_menu was expected but not sent'
+          error('update_menu was expected but not sent')
         else
-          return 'update_menu was sent unexpectedly'
+          error('update_menu was sent unexpectedly')
         end
       end
-    end)
+    end, unchanged=(not expected)}
   end
 
   it("should be sent when adding a menu", function()

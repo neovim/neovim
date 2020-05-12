@@ -1,4 +1,4 @@
-*usr_03.txt*	For Vim version 7.4.  Last change: 2006 Jun 21
+*usr_03.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -57,8 +57,11 @@ paragraph, much faster than using "l".  "b" does the same in the other
 direction.
 
 A word ends at a non-word character, such as a ".", "-" or ")".  To change
-what Vim considers to be a word, see the 'iskeyword' option.
-   It is also possible to move by white-space separated WORDs.  This is not a
+what Vim considers to be a word, see the 'iskeyword' option.  If you try this
+out in the help directly, 'iskeyword' needs to be reset for the examples to
+work: >
+	:set iskeyword&
+It is also possible to move by white-space separated WORDs.  This is not a
 word in the normal sense, that's why the uppercase is used.  The commands for
 moving by WORDs are also uppercase, as this figure shows:
 
@@ -179,7 +182,7 @@ the following:
 
 This tells you that you might want to fix something on line 33.  So how do you
 find line 33?  One way is to do "9999k" to go to the top of the file and "32j"
-to go down thirty two lines.  It is not a good way, but it works.  A much
+to go down thirty-two lines.  It is not a good way, but it works.  A much
 better way of doing things is to use the "G" command.  With a count, this
 command positions you at the given line number.  For example, "33G" puts you
 on line 33.  (For a better way of going through a compiler's error list, see
@@ -350,7 +353,7 @@ The "?" command works like "/" but searches backwards: >
 	?word
 
 The "N" command repeats the last search the opposite direction.  Thus using
-"N" after a "/" command search backwards, using "N" after "?" searches
+"N" after a "/" command searches backwards, using "N" after "?" searches
 forward.
 
 
@@ -411,8 +414,8 @@ in "the" use: >
 	/the\>
 
 The "\>" item is a special marker that only matches at the end of a word.
-Similarly "\<" only matches at the begin of a word.  Thus to search for the
-word "the" only: >
+Similarly "\<" only matches at the beginning of a word.  Thus to search for
+the word "the" only: >
 
 	/\<the\>
 
@@ -505,7 +508,7 @@ only if it is at the beginning of a line.
    The $ character matches the end of a line.  Therefore, "was$" matches the
 word was only if it is at the end of a line.
 
-Let's mark the places where "the" matches in this example line with "x"s:
+Let's mark the places where "/the" matches in this example line with "x"s:
 
 	the solder holding one of the chips melted and the ~
 	xxx			  xxx		       xxx
@@ -647,4 +650,4 @@ You will notice a few special marks.  These include:
 
 Next chapter: |usr_04.txt|  Making small changes
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
+*editing.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,17 +6,7 @@
 
 Editing files						*edit-files*
 
-1.  Introduction		|edit-intro|
-2.  Editing a file		|edit-a-file|
-3.  The argument list		|argument-list|
-4.  Writing			|writing|
-5.  Writing and quitting	|write-quit|
-6.  Dialogs			|edit-dialogs|
-7.  The current directory	|current-directory|
-8.  Editing binary files	|edit-binary|
-9.  Encryption			|encryption|
-10. Timestamps			|timestamps|
-11. File Searching		|file-searching|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*edit-intro*
@@ -77,7 +67,8 @@ g CTRL-G		Prints the current position of the cursor in five
 			than one position on the screen (<Tab> or special
 			character), both the "real" column and the screen
 			column are shown, separated with a dash.
-			See also 'ruler' option.
+			Also see the 'ruler' option and the |wordcount()|
+			function.
 
 							*v_g_CTRL-G*
 {Visual}g CTRL-G	Similar to "g CTRL-G", but Word, Character, Line, and
@@ -159,7 +150,8 @@ start editing another file, Vim will refuse this.  In order to overrule this
 protection, add a '!' to the command.  The changes will then be lost.  For
 example: ":q" will not work if the buffer was changed, but ":q!" will.  To see
 whether the buffer was changed use the "CTRL-G" command.  The message includes
-the string "[Modified]" if the buffer has been changed.
+the string "[Modified]" if the buffer has been changed, or "+" if the 'm' flag
+is in 'shortmess'.
 
 If you want to automatically save the changes without asking, switch on the
 'autowriteall' option.  'autowrite' is the associated Vi-compatible option
@@ -244,7 +236,7 @@ If you want to keep the changed buffer without saving it, switch on the
 
 							*:vie* *:view*
 :vie[w][!] [++opt] [+cmd] file
-			When used in Ex mode: Leave |Ex mode|, go back to
+			When used in Ex mode: Leave |Ex-mode|, go back to
 			Normal mode.  Otherwise same as |:edit|, but set
 			'readonly' option for this buffer.
 
@@ -265,9 +257,6 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			":e #[count]").  This is a quick way to switch between
 			files.
 			See |CTRL-^| above for further details.
-
-[count]]f						*]f* *[f*
-[count][f		Same as "gf".  Deprecated.
 
 							*gf* *E446* *E447*
 [count]gf		Edit the file whose name is under or after the cursor.
@@ -357,7 +346,7 @@ These are the common ones:
 To avoid the special meaning of the wildcards prepend a backslash.  However,
 on MS-Windows the backslash is a path separator and "path\[abc]" is still seen
 as a wildcard when "[" is in the 'isfname' option.  A simple way to avoid this
-is to use "path\[[]abc]".  Then the file "path[abc]" literally.
+is to use "path\[[]abc]", this matches the file "path\[abc]".
 
 					*starstar-wildcard*
 Expanding "**" is possible on Unix, Win32, Mac OS/X and a few other systems.
@@ -367,36 +356,63 @@ Note there are some commands where this works slightly differently, see
 Example: >
 	:n **/*.txt
 Finds files:
-	ttt.txt
-	subdir/ttt.txt
-	a/b/c/d/ttt.txt
-When non-wildcard characters are used these are only matched in the first
-directory.  Example: >
-	:n /usr/inc**/*.h
+	aaa.txt ~
+	subdir/bbb.txt ~
+	a/b/c/d/ccc.txt ~
+When non-wildcard characters are used right before or after "**" these are
+only matched in the top directory.  They are not used for directories further
+down in the tree. For example: >
+	:n /usr/inc**/types.h
 Finds files:
-	/usr/include/types.h
-	/usr/include/sys/types.h
-	/usr/inc_old/types.h
+	/usr/include/types.h ~
+	/usr/include/sys/types.h ~
+	/usr/inc/old/types.h ~
+Note that the path with "/sys" is included because it does not need to match
+"/inc".  Thus it's like matching "/usr/inc*/*/*...", not
+"/usr/inc*/inc*/inc*".
+
 					*backtick-expansion* *`-expansion*
-On Unix and a few other systems you can also use backticks in the file name,
-for example: >
-	:e `find . -name ver\\*.c -print`
-The backslashes before the star are required to prevent "ver*.c" to be
-expanded by the shell before executing the find program.
+On Unix and a few other systems you can also use backticks for the file name
+argument, for example: >
+	:next `find . -name ver\\*.c -print`
+	:view `ls -t *.patch  \| head -n1`
+Vim will run the command in backticks using the 'shell' and use the standard
+output as argument for the given Vim command (error messages from the shell
+command will be discarded).
+To see what shell command Vim is running, set the 'verbose' option to 4. When
+the shell command returns a non-zero exit code, an error message will be
+displayed and the Vim command will be aborted. To avoid this make the shell
+always return zero like so: >
+       :next `find . -name ver\\*.c -print \|\| true`
+
+The backslashes before the star are required to prevent the shell from
+expanding "ver*.c" prior to execution of the find program.  The backslash
+before the shell pipe symbol "|" prevents Vim from parsing it as command
+termination.
 This also works for most other systems, with the restriction that the
 backticks must be around the whole item.  It is not possible to have text
 directly before the first or just after the last backtick.
 
 							*`=*
-You can have the backticks expanded as a Vim expression, instead of an
-external command, by using the syntax `={expr}` e.g.: >
+You can have the backticks expanded as a Vim expression, instead of as an
+external command, by putting an equal sign right after the first backtick,
+e.g.: >
 	:e `=tempname()`
 The expression can contain just about anything, thus this can also be used to
 avoid the special meaning of '"', '|', '%' and '#'.  However, 'wildignore'
 does apply like to other wildcards.
+
+Environment variables in the expression are expanded when evaluating the
+expression, thus this works: >
+	:e `=$HOME . '/.vimrc'`
+This does not work, $HOME is inside a string and used literally: >
+	:e `='$HOME' . '/.vimrc'`
+
 If the expression returns a string then names are to be separated with line
 breaks.  When the result is a |List| then each item is used as a name.  Line
 breaks also separate names.
+Note that such expressions are only supported in places where a filename is
+expected as an argument to an Ex-command.
 
 							*++opt* *[++opt]*
 The [++opt] argument can be used to force the value of 'fileformat',
@@ -539,7 +555,7 @@ You can use the argument list with the following commands, and with the
 expression functions |argc()| and |argv()|.  These all work on the argument
 list of the current window.
 
-							*:ar* *:args*
+							*:ar* *:arg* *:args*
 :ar[gs]			Print the argument list, with the current file in
 			square brackets.
 
@@ -555,16 +571,16 @@ list of the current window.
 			buffer.
 			Also see |++opt| and |+cmd|.
 
-:[count]arge[dit][!] [++opt] [+cmd] {name}		*:arge* *:argedit*
-			Add {name} to the argument list and edit it.
+:[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
+			Add {name}s to the argument list and edit it.
 			When {name} already exists in the argument list, this
 			entry is edited.
 			This is like using |:argadd| and then |:edit|.
-			Note that only one file name is allowed, and spaces
-			inside the file name are allowed, like with |:edit|.
+			Spaces in filenames have to be escaped with "\".
 			[count] is used like with |:argadd|.
-			[!] is required if the current file cannot be
-			|abandon|ed.
+			If the current file cannot be |abandon|ed {name}s will
+			still be added to the argument list, but won't be
+			edited. No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
 :[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*
@@ -582,6 +598,7 @@ list of the current window.
 				:0argadd x	x a b c
 				:1argadd x	a x b c
 				:$argadd x	a b c x
+			And after the last one:
 				:+2argadd y	a b c x y
 			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.
@@ -816,8 +833,8 @@ flag is used for the ":substitute" command to avoid an error for files where
 Note: When the 'write' option is off, you are not able to write any file.
 
 							*:w* *:write*
-						*E502* *E503* *E504* *E505*
-						*E512* *E514* *E667* *E796*
+					*E502* *E503* *E504* *E505*
+					*E512* *E514* *E667* *E796* *E949*
 :w[rite] [++opt]	Write the whole buffer to the current file.  This is
 			the normal way to save changes to a file.  It fails
 			when the 'readonly' option is set or when there is
@@ -873,6 +890,9 @@ used, for example, when the write fails and you want to try again later with
 ":w #".  This can be switched off by removing the 'A' flag from the
 'cpoptions' option.
 
+Note that the 'fsync' option matters here.  If it's set it may make writes
+slower (but safer).
+
 							*:sav* *:saveas*
 :sav[eas][!] [++opt] {file}
 			Save the current buffer under the name {file} and set
@@ -893,11 +913,12 @@ WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 							*:wa* *:wall*
 :wa[ll]			Write all changed buffers.  Buffers without a file
-			name or which are readonly are not written.
+			name cause an error message.  Buffers which are
+			readonly are not written.
 
 :wa[ll]!		Write all changed buffers, even the ones that are
 			readonly.  Buffers without a file name are not
-			written.
+			written and cause an error message.
 
 
 Vim will warn you if you try to overwrite a file that has been changed
@@ -932,7 +953,7 @@ the newly written file (it might be there but contain bogus data).  In that
 case try recovery, because the swap file is synced to disk and might still be
 there. |:recover|
 
-The directories given with the 'backupdir' option is used to put the backup
+The directories given with the 'backupdir' option are used to put the backup
 file in.  (default: same directory as the written file).
 
 Whether the backup is a new file, which is a copy of the original file, or the
@@ -1023,16 +1044,19 @@ The names can be in upper- or lowercase.
 			window in the current tab page the current tab page is
 			closed |tab-page|.
 			Triggers the |QuitPre| autocommand event.
+			See |CTRL-W_q| for quitting another window.
 
 :conf[irm] q[uit]	Quit, but give prompt when changes have been made, or
 			the last file in the argument list has not been
 			edited.  See |:confirm| and 'confirm'.
 
-:q[uit]!		Quit without writing, also when currently visible
-			buffers have changes.  Does not exit when this is the
-			last window and there is a changed hidden buffer.
-			In this case, the first changed hidden buffer becomes
-			the current buffer.
+:q[uit]!		Quit without writing, also when the current buffer has
+			changes.  The buffer is unloaded, also when it has
+			'hidden' set.
+			If this is the last window and there is a modified
+			hidden buffer, the current buffer is abandoned and the
+			first changed hidden buffer becomes the current
+			buffer.
 			Use ":qall!" to exit always.
 
 :cq[uit]		Quit always, without writing, and return an error
@@ -1133,7 +1157,7 @@ Examples: >
 
 If you want to always use ":confirm", set the 'confirm' option.
 
-			*:browse* *:bro* *E338* *E614* *E615* *E616* *E578*
+			*:browse* *:bro* *E338* *E614* *E615* *E616*
 :bro[wse] {command}	Open a file selection dialog for an argument to
 			{command}.  At present this works for |:e|, |:w|,
 			|:wall|, |:wq|, |:wqall|, |:x|, |:xall|, |:exit|,
@@ -1146,9 +1170,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			and |:qall| if 'confirm' is set.
 			{only in Win32 GUI}
 			When ":browse" is not possible you get an error
-			message.  If the |+browse| feature is missing or the
-			{command} doesn't support browsing, the {command} is
-			executed without a dialog.
+			message.  If {command} doesn't support browsing, the
+			{command} is executed without a dialog.
 			":browse set" works like |:options|.
 			See also |:oldfiles| for ":browse oldfiles".
 
@@ -1203,12 +1226,15 @@ use has("browsefilter"): >
 ==============================================================================
 7. The current directory				*current-directory*
 
-You may use the |:cd| and |:lcd| commands to change to another directory, so
-you will not have to type that directory name in front of the file names.  It
-also makes a difference for executing external commands, e.g. ":!ls".
+You can use |:cd|, |:tcd| and |:lcd| to change to another directory, so you
+will not have to type that directory name in front of the file names.  It also
+makes a difference for executing external commands, e.g. ":!ls" or ":te ls".
 
-Changing directory fails when the current buffer is modified, the '.' flag is
-present in 'cpoptions' and "!" is not used in the command.
+There are three current-directory "scopes": global, tab and window.  The
+window-local working directory takes precedence over the tab-local
+working directory, which in turn takes precedence over the global
+working directory.  If a local working directory (tab or window) does not
+exist, the next-higher scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*
 :cd[!]			On non-Unix systems: Print the current directory
@@ -1233,29 +1259,50 @@ present in 'cpoptions' and "!" is not used in the command.
 							*:chd* *:chdir*
 :chd[ir][!] [path]	Same as |:cd|.
 
+					*:tc* *:tcd* *E5000* *E5001* *E5002*
+:tc[d][!] {path}        Like |:cd|, but set the current directory for the
+			current tab and window.  The current directory for
+			other tabs and windows is not changed.
+
+							*:tcd-*
+:tcd[!] -		Change to the previous current directory (before the
+			previous ":tcd {path}" command).
+
+							*:tch* *:tchdir*
+:tch[dir][!]		Same as |:tcd|.
+
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows is not changed.
+			windows or tabs is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
+
+							*:lcd-* 
+:lcd[!] -		Change to the previous current directory (before the
+			previous ":lcd {path}" command).
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
 			Also see |getcwd()|.
 
-So long as no |:lcd| command has been used, all windows share the same current
-directory.  Using a command to jump to another window doesn't change anything
-for the current directory.
-When a |:lcd| command has been used for a window, the specified directory
-becomes the current directory for that window.  Windows where the |:lcd|
-command has not been used stick to the global current directory.  When jumping
-to another window the current directory will become the last specified local
-current directory.  If none was specified, the global current directory is
-used.
-When a |:cd| command is used, the current window will lose his local current
-directory and will use the global current directory from now on.
+So long as no |:tcd| or |:lcd| command has been used, all windows share the
+same "current directory".  Using a command to jump to another window doesn't
+change anything for the current directory.
+
+When |:lcd| has been used for a window, the specified directory becomes the
+current directory for that window.  Windows where the |:lcd| command has not
+been used stick to the global or tab-local directory.  When jumping to another
+window the current directory will become the last specified local current
+directory.  If none was specified, the global or tab-local directory is used.
+
+When changing tabs the same behaviour applies.  If the current tab has no
+local working directory the global working directory is used.  When a |:cd|
+command is used, the current window and tab will lose their local current
+directories and will use the global current directory from now on.  When
+a |:tcd| command is used, only the current window will lose its local working
+directory.
 
 After using |:cd| the full path name will be used for reading and writing
 files.  On some networked file systems this may cause problems.  The result of
@@ -1292,7 +1339,7 @@ There are a few things to remember when editing binary files:
   and when the file is written the <NL> will be replaced with <CR> <NL>.
 - <Nul> characters are shown on the screen as ^@.  You can enter them with
   "CTRL-V CTRL-@" or "CTRL-V 000".
-- To insert a <NL> character in the file split up a line.  When writing the
+- To insert a <NL> character in the file split a line.  When writing the
   buffer to a file a <NL> will be written for the <EOL>.
 - Vim normally appends an <EOL> at the end of the file if there is none.
   Setting the 'binary' option prevents this.  If you want to add the final
@@ -1304,9 +1351,7 @@ There are a few things to remember when editing binary files:
 9. Encryption						*encryption*
 
 					                *:X* *E817* *E818* *E819* *E820*
-Support for editing encrypted files has been removed, but may be added back in
-the future.  See the following discussions for more information:
-
+Support for editing encrypted files has been removed.
 	https://github.com/neovim/neovim/issues/694
 	https://github.com/neovim/neovim/issues/701
 
@@ -1327,6 +1372,13 @@ focus.
 If you want to automatically reload a file when it has been changed outside of
 Vim, set the 'autoread' option.  This doesn't work at the moment you write the
 file though, only when the file wasn't changed inside of Vim.
+
+If you do not want to be asked or automatically reload the file, you can use
+this: >
+	set buftype=nofile
+
+Or, when starting gvim from a shell: >
+	gvim file.log -c "set buftype=nofile"
 
 Note that if a FileChangedShell autocommand is defined you will not get a
 warning message or prompt.  The autocommand is expected to handle this.
@@ -1406,8 +1458,6 @@ problem goes away the next day.
 
 ==============================================================================
 11. File Searching					*file-searching*
-
-{not available when compiled without the |+path_extra| feature}
 
 The file searching is currently used for the 'path', 'cdpath' and 'tags'
 options, for |finddir()| and |findfile()|.  Other commands use |wildcards|
@@ -1498,7 +1548,7 @@ There are three different types of searching:
    This searches the same directories, but in a different order.
 
    Note that completion for ":find", ":sfind", and ":tabfind" commands do not
-   currently work with 'path' items that contain a url or use the double star
+   currently work with 'path' items that contain a URL or use the double star
    with depth limiter (/usr/**2) or upward search (;) notations.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -65,11 +65,12 @@ local tokens = P { "tokens";
   identifier = Ct(C(R("az","AZ","__") * R("09","az","AZ","__")^0) * Cc"identifier"),
 
   -- Single character in a string
-  string_char = R("az","AZ","09") + S"$%^&*()_-+={[}]:;@~#<,>.!?/ \t" + (P"\\" * S[[ntvbrfa\?'"0x]]),
+  sstring_char = R("\001&","([","]\255") + (P"\\" * S[[ntvbrfa\?'"0x]]),
+  dstring_char = R("\001!","#[","]\255") + (P"\\" * S[[ntvbrfa\?'"0x]]),
 
   -- String literal
-  string = Ct(C(P"'" * (V"string_char" + P'"')^0 * P"'" +
-                P'"' * (V"string_char" + P"'")^0 * P'"') * Cc"string"),
+  string = Ct(C(P"'" * (V"sstring_char" + P'"')^0 * P"'" +
+                P'"' * (V"dstring_char" + P"'")^0 * P'"') * Cc"string"),
 
   -- Operator
   operator = Ct(C(P">>=" + P"<<=" + P"..." +
@@ -219,13 +220,7 @@ local function standalone(...)  -- luacheck: ignore
   Preprocess.add_to_include_path('./../../build/include')
   Preprocess.add_to_include_path('./../../.deps/usr/include')
 
-  local input = Preprocess.preprocess_stream(arg[1])
-  local raw = input:read('*all')
-  input:close()
-
-  if raw == nil then
-    print("ERROR: Preprocess.preprocess_stream():read() returned empty")
-  end
+  local raw = Preprocess.preprocess('', arg[1])
 
   local formatted
   if #arg == 2 and arg[2] == 'no' then
@@ -238,7 +233,7 @@ local function standalone(...)  -- luacheck: ignore
 end
 -- uncomment this line (and comment the `return`) for standalone debugging
 -- example usage:
---    ../../.deps/usr/bin/luajit formatc.lua ../../include/tempfile.h.generated.h
+--    ../../.deps/usr/bin/luajit formatc.lua ../../include/fileio.h.generated.h
 --    ../../.deps/usr/bin/luajit formatc.lua /usr/include/malloc.h
 -- standalone(...)
 return formatc

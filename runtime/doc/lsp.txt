@@ -1,0 +1,1105 @@
+*lsp.txt*   LSP
+
+
+                            NVIM REFERENCE MANUAL
+
+
+LSP client/framework                                     *lsp*
+
+Nvim supports the Language Server Protocol (LSP), which means it acts as
+a client to LSP servers and includes a Lua framework `vim.lsp` for building
+enhanced LSP tools.
+  https://microsoft.github.io/language-server-protocol/
+
+LSP facilitates features like go-to-definition, find-references, hover,
+completion, rename, format, refactor, etc., using semantic whole-project
+analysis (unlike |ctags|).
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+QUICKSTART                                              *lsp-quickstart*
+
+Nvim provides a LSP client, but the servers are provided by third parties.
+Follow these steps to get LSP features:
+
+  1. Install the nvim-lsp plugin.  It provides common configuration for
+     various servers so you can get started quickly.
+     https://github.com/neovim/nvim-lsp
+  2. Install a language server.  Try ":LspInstall <tab>" or use your system
+     package manager to install the relevant language server:
+     https://microsoft.github.io/language-server-protocol/implementors/servers/
+  3. Add `nvim_lsp.xx.setup{…}` to your vimrc, where "xx" is the name of the
+     relevant config.  See the nvim-lsp README for details.
+
+To check LSP clients attached to the current buffer:  >
+
+  :lua print(vim.inspect(vim.lsp.buf_get_clients()))
+<
+                                                        *lsp-config*
+Inline diagnostics are enabled automatically, e.g. syntax errors will be
+annotated in the buffer.  But you probably want to use other features like
+go-to-definition, hover, etc.  Example config: >
+
+  nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
+  nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
+  nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
+  nnoremap <silent> gD    <cmd>lua vim.lsp.buf.implementation()<CR>
+  nnoremap <silent> <c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+  nnoremap <silent> 1gD   <cmd>lua vim.lsp.buf.type_definition()<CR>
+  nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
+  nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
+  nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
+
+Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
+|i_CTRL-X_CTRL-O| to consume LSP completion. Example config (note the use of
+|v:lua| to call Lua from Vimscript): >
+
+  " Use LSP omni-completion in Python files.
+  autocmd Filetype python setlocal omnifunc=v:lua.vim.lsp.omnifunc
+
+
+================================================================================
+FAQ                                                     *lsp-faq*
+
+- Q: How to force-reload LSP?
+  A: Stop all clients, then reload the buffer. >
+
+  :lua vim.lsp.stop_client(vim.lsp.get_active_clients())
+  :edit
+
+- Q: Why isn't completion working?
+  A: In the buffer where you want to use LSP, check that 'omnifunc' is set to
+  "v:lua.vim.lsp.omnifunc": >
+
+  :verbose set omnifunc?
+
+<  Some other plugin may be overriding the option. To avoid that, you could
+  set the option in an |after-directory| ftplugin, e.g.
+  "after/ftplugin/python.vim".
+
+================================================================================
+LSP API                                                 *lsp-api*
+
+The `vim.lsp` Lua module is a framework for building LSP plugins.
+
+  1. Start with |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|.
+  2. Peek at the API: >
+     :lua print(vim.inspect(vim.lsp))
+<  3. See |lsp-extension-example| for a full example.
+
+LSP core API is described at |lsp-core|.  Those are the core functions for
+creating and managing clients.
+
+The `vim.lsp.buf_…` functions perform operations for all LSP clients attached
+to the given buffer. |lsp-buf|
+
+LSP request/response handlers are implemented as Lua callbacks.
+|lsp-callbacks| The `vim.lsp.callbacks` table defines default callbacks used
+when creating a new client. Keys are LSP method names: >
+
+  :lua print(vim.inspect(vim.tbl_keys(vim.lsp.callbacks)))
+
+These LSP requests/notifications are defined by default:
+
+  textDocument/publishDiagnostics
+  window/logMessage
+  window/showMessage
+
+You can check these via `vim.tbl_keys(vim.lsp.callbacks)`.
+
+These will be used preferentially in `vim.lsp.buf_…` methods for handling
+requests. They will also be used when responding to server requests and
+notifications.
+
+Use cases:
+- Users can modify this to customize to their preferences.
+- UI plugins can modify this by assigning to
+  `vim.lsp.callbacks[method]` so as to provide more specialized
+  handling, allowing you to leverage the UI capabilities available. UIs should
+  try to be conscientious of any existing changes the user may have set
+  already by checking for existing values.
+
+Any callbacks passed directly to `request` methods on a server client will
+have the highest precedence, followed by the `callbacks`.
+
+You can override the default handlers,
+- globally: by modifying the `vim.lsp.callbacks` table
+- per-client: by passing the {callbacks} table parameter to
+  |vim.lsp.start_client|
+
+Each handler has this signature: >
+
+  function(err, method, params, client_id)
+
+Callbacks are functions which are called in a variety of situations by the
+client. Their signature is `function(err, method, params, client_id)` They can
+be set by the {callbacks} parameter for |vim.lsp.start_client| or via the
+|vim.lsp.callbacks|.
+
+Handlers are called for:
+- Notifications from the server (`err` is always `nil`).
+- Requests initiated by the server (`err` is always `nil`).
+  The handler can respond by returning two values: `result, err`
+  where `err` must be shaped like an RPC error:
+    `{ code, message, data? }`
+  You can use |vim.lsp.rpc_response_error()| to create this object.
+- Handling requests initiated by the client if the request doesn't explicitly
+  specify a callback (such as in |vim.lsp.buf_request|).
+
+
+VIM.LSP.PROTOCOL                                              *vim.lsp.protocol*
+
+Module `vim.lsp.protocol` defines constants dictated by the LSP specification,
+and helper functions for creating protocol-related objects.
+https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
+
+For example `vim.lsp.protocol.ErrorCodes` allows reverse lookup by number or
+name: >
+
+  vim.lsp.protocol.TextDocumentSyncKind.Full == 1
+  vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
+
+================================================================================
+LSP HIGHLIGHT                                                    *lsp-highlight*
+
+                                                        *hl-LspDiagnosticsError*
+LspDiagnosticsError          used for "Error" diagnostic virtual text
+                                                    *hl-LspDiagnosticsErrorSign*
+LspDiagnosticsErrorSign      used for "Error" diagnostic signs in sign column
+                                                      *hl-LspDiagnosticsWarning*
+LspDiagnosticsWarning        used for "Warning" diagnostic virtual text
+                                                  *hl-LspDiagnosticsWarningSign*
+LspDiagnosticsWarningSign    used for "Warning" diagnostic signs in sign column
+                                                  *hl-LspDiagnosticsInformation*
+LspDiagnosticInformation     used for "Information" diagnostic virtual text
+                                              *hl-LspDiagnosticsInformationSign*
+LspDiagnosticInformationSign used for "Information" signs in sign column
+                                                         *hl-LspDiagnosticsHint*
+LspDiagnosticHint            used for "Hint" diagnostic virtual text
+                                                     *hl-LspDiagnosticsHintSign*
+LspDiagnosticHintSign        used for "Hint" diagnostic signs in sign column
+                                                           *hl-LspReferenceText*
+LspReferenceText          used for highlighting "text" references
+                                                           *hl-LspReferenceRead*
+LspReferenceRead          used for highlighting "read" references
+                                                          *hl-LspReferenceWrite*
+LspReferenceWrite         used for highlighting "write" references
+
+
+================================================================================
+LSP EXAMPLE                                            *lsp-extension-example*
+
+This example is for plugin authors or users who want a lot of control. If you
+are just getting started see |lsp-quickstart|.
+
+For more advanced configurations where just filtering by filetype isn't
+sufficient, you can use the `vim.lsp.start_client()` and
+`vim.lsp.buf_attach_client()` commands to easily customize the configuration
+however you please. For example, if you want to do your own filtering, or
+start a new LSP client based on the root directory for if you plan to work
+with multiple projects in a single session. Below is a fully working Lua
+example which can do exactly that.
+
+The example will:
+1. Check for each new buffer whether or not we want to start an LSP client.
+2. Try to find a root directory by ascending from the buffer's path.
+3. Create a new LSP for that root directory if one doesn't exist.
+4. Attach the buffer to the client for that root directory.
+
+>
+  -- Some path manipulation utilities
+  local function is_dir(filename)
+    local stat = vim.loop.fs_stat(filename)
+    return stat and stat.type == 'directory' or false
+  end
+
+  local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+  -- Asumes filepath is a file.
+  local function dirname(filepath)
+    local is_changed = false
+    local result = filepath:gsub(path_sep.."([^"..path_sep.."]+)$", function()
+      is_changed = true
+      return ""
+    end)
+    return result, is_changed
+  end
+
+  local function path_join(...)
+    return table.concat(vim.tbl_flatten {...}, path_sep)
+  end
+
+  -- Ascend the buffer's path until we find the rootdir.
+  -- is_root_path is a function which returns bool
+  local function buffer_find_root_dir(bufnr, is_root_path)
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if vim.fn.filereadable(bufname) == 0 then
+      return nil
+    end
+    local dir = bufname
+    -- Just in case our algo is buggy, don't infinite loop.
+    for _ = 1, 100 do
+      local did_change
+      dir, did_change = dirname(dir)
+      if is_root_path(dir, bufname) then
+        return dir, bufname
+      end
+      -- If we can't ascend further, then stop looking.
+      if not did_change then
+        return nil
+      end
+    end
+  end
+
+  -- A table to store our root_dir to client_id lookup. We want one LSP per
+  -- root directory, and this is how we assert that.
+  local javascript_lsps = {}
+  -- Which filetypes we want to consider.
+  local javascript_filetypes = {
+    ["javascript.jsx"] = true;
+    ["javascript"]     = true;
+    ["typescript"]     = true;
+    ["typescript.jsx"] = true;
+  }
+
+  -- Create a template configuration for a server to start, minus the root_dir
+  -- which we will specify later.
+  local javascript_lsp_config = {
+    name = "javascript";
+    cmd = { path_join(os.getenv("JAVASCRIPT_LANGUAGE_SERVER_DIRECTORY"), "lib", "language-server-stdio.js") };
+  }
+
+  -- This needs to be global so that we can call it from the autocmd.
+  function check_start_javascript_lsp()
+    local bufnr = vim.api.nvim_get_current_buf()
+    -- Filter which files we are considering.
+    if not javascript_filetypes[vim.api.nvim_buf_get_option(bufnr, 'filetype')] then
+      return
+    end
+    -- Try to find our root directory. We will define this as a directory which contains
+    -- node_modules. Another choice would be to check for `package.json`, or for `.git`.
+    local root_dir = buffer_find_root_dir(bufnr, function(dir)
+      return is_dir(path_join(dir, 'node_modules'))
+      -- return vim.fn.filereadable(path_join(dir, 'package.json')) == 1
+      -- return is_dir(path_join(dir, '.git'))
+    end)
+    -- We couldn't find a root directory, so ignore this file.
+    if not root_dir then return end
+
+    -- Check if we have a client alredy or start and store it.
+    local client_id = javascript_lsps[root_dir]
+    if not client_id then
+      local new_config = vim.tbl_extend("error", javascript_lsp_config, {
+        root_dir = root_dir;
+      })
+      client_id = vim.lsp.start_client(new_config)
+      javascript_lsps[root_dir] = client_id
+    end
+    -- Finally, attach to the buffer to track changes. This will do nothing if we
+    -- are already attached.
+    vim.lsp.buf_attach_client(bufnr, client_id)
+  end
+
+  vim.api.nvim_command [[autocmd BufReadPost * lua check_start_javascript_lsp()]]
+<
+
+
+==============================================================================
+AUTOCOMMANDS                                                *lsp-autocommands*
+
+                                                       *LspDiagnosticsChanged*
+LspDiagnosticsChanged           After receiving publishDiagnostics server response
+
+
+==============================================================================
+Lua module: vim.lsp                                                 *lsp-core*
+
+buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
+                Implements the `textDocument/did…` notifications required to
+                track a buffer for any language server.
+
+                Without calling this, the server won't be notified of changes
+                to a buffer.
+
+                Parameters: ~
+                    {bufnr}      (number) Buffer handle, or 0 for current
+                    {client_id}  (number) Client id
+
+buf_get_clients({bufnr})                           *vim.lsp.buf_get_clients()*
+                Gets a map of client_id:client pairs for the given buffer,
+                where each value is a |vim.lsp.client| object.
+
+                Parameters: ~
+                    {bufnr}  (optional, number): Buffer handle, or 0 for
+                             current
+
+buf_get_full_text({bufnr})                       *vim.lsp.buf_get_full_text()*
+                TODO: Documentation
+
+buf_is_attached({bufnr}, {client_id})              *vim.lsp.buf_is_attached()*
+                Checks if a buffer is attached for a particular client.
+
+                Parameters: ~
+                    {bufnr}      (number) Buffer handle, or 0 for current
+                    {client_id}  (number) the client id
+
+buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
+                Sends a notification to all servers attached to the buffer.
+
+                Parameters: ~
+                    {bufnr}   (optional, number) Buffer handle, or 0 for
+                              current
+                    {method}  (string) LSP method name
+                    {params}  (string) Parameters to send to the server
+
+                Return: ~
+                    true if any client returns true; false otherwise
+
+                                                       *vim.lsp.buf_request()*
+buf_request({bufnr}, {method}, {params}, {callback})
+                Sends an async request for all active clients attached to the
+                buffer.
+
+                Parameters: ~
+                    {bufnr}     (number) Buffer handle, or 0 for current.
+                    {method}    (string) LSP method name
+                    {params}    (optional, table) Parameters to send to the
+                                server
+                    {callback}  (optional, functionnil) Handler
+
+                Return: ~
+                    2-tuple:
+                    • Map of client-id:request-id pairs for all successful
+                      requests.
+                    • Function which can be used to cancel all the requests.
+                      You could instead iterate all clients and call their
+                      `cancel_request()` methods.
+
+                                                  *vim.lsp.buf_request_sync()*
+buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
+                Sends a request to a server and waits for the response.
+
+                Calls |vim.lsp.buf_request()| but blocks Nvim while awaiting
+                the result. Parameters are the same as |vim.lsp.buf_request()|
+                but the return result is different. Wait maximum of
+                {timeout_ms} (default 100) ms.
+
+                Parameters: ~
+                    {bufnr}       (number) Buffer handle, or 0 for current.
+                    {method}      (string) LSP method name
+                    {params}      (optional, table) Parameters to send to the
+                                  server
+                    {timeout_ms}  (optional, number, default=100) Maximum time
+                                  in milliseconds to wait for a result.
+
+                Return: ~
+                    Map of client_id:request_result. On timeout, cancel or
+                    error, returns `(nil, err)` where `err` is a string
+                    describing the failure reason.
+
+cancel_request({id})                                *vim.lsp.cancel_request()*
+                TODO: Documentation
+
+client()                                                      *vim.lsp.client*
+                LSP client object.
+
+                • Methods:
+                  • request(method, params, [callback]) Send a request to the
+                    server. If callback is not specified, it will use
+                    {client.callbacks} to try to find a callback. If one is
+                    not found there, then an error will occur. This is a thin
+                    wrapper around {client.rpc.request} with some additional
+                    checking. Returns a boolean to indicate if the
+                    notification was successful. If it is false, then it will
+                    always be false (the client has shutdown). If it was
+                    successful, then it will return the request id as the
+                    second result. You can use this with `notify("$/cancel", {
+                    id = request_id })` to cancel the request. This helper is
+                    made automatically with |vim.lsp.buf_request()| Returns:
+                    status, [client_id]
+                  • notify(method, params) This is just {client.rpc.notify}()
+                    Returns a boolean to indicate if the notification was
+                    successful. If it is false, then it will always be false
+                    (the client has shutdown). Returns: status
+                  • cancel_request(id) This is just
+                    {client.rpc.notify}("$/cancelRequest", { id = id })
+                    Returns the same as `notify()` .
+                  • stop([force]) Stop a client, optionally with force. By
+                    default, it will just ask the server to shutdown without
+                    force. If you request to stop a client which has
+                    previously been requested to shutdown, it will
+                    automatically escalate and force shutdown.
+                  • is_stopped() Returns true if the client is fully stopped.
+
+                • Members
+                  • id (number): The id allocated to the client.
+                  • name (string): If a name is specified on creation, that
+                    will be used. Otherwise it is just the client id. This is
+                    used for logs and messages.
+                  • offset_encoding (string): The encoding used for
+                    communicating with the server. You can modify this in the
+                    `on_init` method before text is sent to the server.
+                  • callbacks (table): The callbacks used by the client as
+                    described in |lsp-callbacks|.
+                  • config (table): copy of the table that was passed by the
+                    user to |vim.lsp.start_client()|.
+                  • server_capabilities (table): Response from the server sent
+                    on `initialize` describing the server's capabilities.
+                  • resolved_capabilities (table): Normalized table of
+                    capabilities that we have detected based on the initialize
+                    response from the server in `server_capabilities` .
+
+client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
+                TODO: Documentation
+
+err_message({...})                                     *vim.lsp.err_message()*
+                TODO: Documentation
+
+                                            *vim.lsp.for_each_buffer_client()*
+for_each_buffer_client({bufnr}, {callback})
+                TODO: Documentation
+
+get_active_clients()                            *vim.lsp.get_active_clients()*
+                Gets all active clients.
+
+                Return: ~
+                    Table of |vim.lsp.client| objects
+
+get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
+                Gets an active client by id, or nil if the id is invalid or
+                the client is not yet initialized.
+
+                Parameters: ~
+                    {client_id}  client id number
+
+                Return: ~
+                    |vim.lsp.client| object, or nil
+
+get_log_path()                                        *vim.lsp.get_log_path()*
+                TODO: Documentation
+
+initialize()                                            *vim.lsp.initialize()*
+                TODO: Documentation
+
+is_dir({filename})                                          *vim.lsp.is_dir()*
+                TODO: Documentation
+
+is_stopped()                                            *vim.lsp.is_stopped()*
+                TODO: Documentation
+
+next_client_id()                                    *vim.lsp.next_client_id()*
+                TODO: Documentation
+
+notification({method}, {params})                      *vim.lsp.notification()*
+                TODO: Documentation
+
+notify({...})                                               *vim.lsp.notify()*
+                TODO: Documentation
+
+omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
+                Implements 'omnifunc' compatible LSP completion.
+
+                Parameters: ~
+                    {findstart}  0 or 1, decides behavior
+                    {base}       If findstart=0, text to match against
+
+                Return: ~
+                    (number) Decided by`findstart`:
+                    • findstart=0: column where the completion starts, or -2
+                      or -3
+                    • findstart=1: list of matches (actually just calls
+                      |complete()|)
+
+                See also: ~
+                    |complete-functions|
+                    |complete-items|
+                    |CompleteDone|
+
+on_error({code}, {err})                                   *vim.lsp.on_error()*
+                TODO: Documentation
+
+on_exit({code}, {signal})                                  *vim.lsp.on_exit()*
+                TODO: Documentation
+
+once({fn})                                                    *vim.lsp.once()*
+                TODO: Documentation
+
+optional_validator({fn})                        *vim.lsp.optional_validator()*
+                TODO: Documentation
+
+request({method}, {params}, {callback})                    *vim.lsp.request()*
+                TODO: Documentation
+
+resolve_bufnr({bufnr})                               *vim.lsp.resolve_bufnr()*
+                TODO: Documentation
+
+resolve_callback({method})                        *vim.lsp.resolve_callback()*
+                TODO: Documentation
+
+server_request({method}, {params})                  *vim.lsp.server_request()*
+                TODO: Documentation
+
+set_log_level({level})                               *vim.lsp.set_log_level()*
+                Sets the global log level for LSP logging.
+
+                Levels by name: "trace", "debug", "info", "warn", "error"
+                Level numbers begin with "trace" at 0
+
+                Use `lsp.log_levels` for reverse lookup.
+
+                Parameters: ~
+                    {level}  [number|string] the case insensitive level name
+                             or number
+
+                See also: ~
+                    |vim.lsp.log_levels|
+
+start_client({config})                                *vim.lsp.start_client()*
+                Starts and initializes a client with the given configuration.
+
+                Parameters `cmd` and `root_dir` are required.
+
+                Parameters: ~
+                    {root_dir}         (required, string) Directory where the
+                                       LSP server will base its rootUri on
+                                       initialization.
+                    {cmd}              (required, list treated like
+                                       |jobstart()|) Base command that
+                                       initiates the LSP client.
+                    {cmd_cwd}          (string, default=|getcwd()|) Directory
+                                       to launch the `cmd` process. Not
+                                       related to `root_dir` .
+                    {cmd_env}          (table) Environment flags to pass to
+                                       the LSP on spawn. Can be specified
+                                       using keys like a map or as a list with `k=v` pairs or both. Non-string values are
+                                       coerced to string. Example: >
+
+                 { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
+<
+                    {capabilities}     Map overriding the default capabilities
+                                       defined by
+                                       |vim.lsp.protocol.make_client_capabilities()|,
+                                       passed to the language server on
+                                       initialization. Hint: use
+                                       make_client_capabilities() and modify
+                                       its result.
+                                       • Note: To send an empty dictionary use
+                                         `{[vim.type_idx]=vim.types.dictionary}`
+                                         , else it will be encoded as an
+                                         array.
+                    {callbacks}        Map of language server method names to `function(err, method, params,
+                                       client_id)` handler. Invoked for:
+                                       • Notifications from the server, where
+                                         `err` will always be `nil` .
+                                       • Requests initiated by the server. For
+                                         these you can respond by returning
+                                         two values: `result, err` where err
+                                         must be shaped like a RPC error, i.e.
+                                         `{ code, message, data? }` . Use
+                                         |vim.lsp.rpc_response_error()| to
+                                         help with this.
+                                       • Default callback for client requests
+                                         not explicitly specifying a callback.
+                    {init_options}     Values to pass in the initialization
+                                       request as `initializationOptions` .
+                                       See `initialize` in the LSP spec.
+                    {name}             (string, default=client-id) Name in log
+                                       messages.
+                    {offset_encoding}  (default="utf-16") One of "utf-8",
+                                       "utf-16", or "utf-32" which is the
+                                       encoding that the LSP server expects.
+                                       Client does not verify this is correct.
+                    {on_error}         Callback with parameters (code, ...),
+                                       invoked when the client operation
+                                       throws an error. `code` is a number
+                                       describing the error. Other arguments
+                                       may be passed depending on the error
+                                       kind. See |vim.lsp.client_errors| for
+                                       possible errors. Use
+                                       `vim.lsp.client_errors[code]` to get
+                                       human-friendly name.
+                    {before_init}      Callback with parameters
+                                       (initialize_params, config) invoked
+                                       before the LSP "initialize" phase,
+                                       where `params` contains the parameters
+                                       being sent to the server and `config`
+                                       is the config that was passed to
+                                       `start_client()` . You can use this to
+                                       modify parameters before they are sent.
+                    {on_init}          Callback (client, initialize_result)
+                                       invoked after LSP "initialize", where
+                                       `result` is a table of `capabilities`
+                                       and anything else the server may send.
+                                       For example, clangd sends
+                                       `initialize_result.offsetEncoding` if
+                                       `capabilities.offsetEncoding` was sent
+                                       to it. You can only modify the
+                                       `client.offset_encoding` here before
+                                       any notifications are sent.
+                    {on_exit}          Callback (code, signal, client_id)
+                                       invoked on client exit.
+                                       • code: exit code of the process
+                                       • signal: number describing the signal
+                                         used to terminate (if any)
+                                       • client_id: client handle
+                    {on_attach}        Callback (client, bufnr) invoked when
+                                       client attaches to a buffer.
+                    {trace}            "off" | "messages" | "verbose" | nil
+                                       passed directly to the language server
+                                       in the initialize request.
+                                       Invalid/empty values will default to
+                                       "off"
+
+                Return: ~
+                    Client id. |vim.lsp.get_client_by_id()| Note: client is
+                    only available after it has been initialized, which may
+                    happen after a small delay (or never if there is an
+                    error). Use `on_init` to do any actions once the client
+                    has been initialized.
+
+stop({force})                                                 *vim.lsp.stop()*
+                TODO: Documentation
+
+stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
+                Stops a client(s).
+
+                You can also use the `stop()` function on a |vim.lsp.client|
+                object. To stop all clients:
+>
+
+                 vim.lsp.stop_client(lsp.get_active_clients())
+<
+
+                By default asks the server to shutdown, unless stop was
+                requested already for this client, then force-shutdown is
+                attempted.
+
+                Parameters: ~
+                    {client_id}  client id or |vim.lsp.client| object, or list
+                                 thereof
+                    {force}      boolean (optional) shutdown forcefully
+
+                                    *vim.lsp.text_document_did_open_handler()*
+text_document_did_open_handler({bufnr}, {client})
+                TODO: Documentation
+
+unsupported_method({method})                    *vim.lsp.unsupported_method()*
+                TODO: Documentation
+
+validate_client_config({config})            *vim.lsp.validate_client_config()*
+                TODO: Documentation
+
+validate_command({input})                         *vim.lsp.validate_command()*
+                TODO: Documentation
+
+validate_encoding({encoding})                    *vim.lsp.validate_encoding()*
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.lsp.protocol                                    *lsp-protocol*
+
+ifnil({a}, {b})                                     *vim.lsp.protocol.ifnil()*
+                TODO: Documentation
+
+                                 *vim.lsp.protocol.make_client_capabilities()*
+make_client_capabilities()
+                Gets a new ClientCapabilities object describing the LSP client
+                capabilities.
+
+                                     *vim.lsp.protocol.resolve_capabilities()*
+resolve_capabilities({server_capabilities})
+                `*` to match one or more characters in a path segment `?` to
+                match on one character in a path segment `**` to match any
+                number of path segments, including none `{}` to group
+                conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and
+                JavaScript files) `[]` to declare a range of characters to
+                match in a path segment (e.g., `example.[0-9]` to match on
+                `example.0` , `example.1` , …) `[!...]` to negate a range of
+                characters to match in a path segment (e.g., `example.[!0-9]`
+                to match on `example.a` , `example.b` , but not `example.0` )
+
+                                *vim.lsp.protocol.transform_schema_comments()*
+transform_schema_comments()
+                TODO: Documentation
+
+                                *vim.lsp.protocol.transform_schema_to_table()*
+transform_schema_to_table()
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.lsp.buf                                              *lsp-buf*
+
+completion({context})                               *vim.lsp.buf.completion()*
+                TODO: Documentation
+
+declaration()                                      *vim.lsp.buf.declaration()*
+                TODO: Documentation
+
+definition()                                        *vim.lsp.buf.definition()*
+                TODO: Documentation
+
+document_highlight()                        *vim.lsp.buf.document_highlight()*
+                TODO: Documentation
+
+document_symbol()                              *vim.lsp.buf.document_symbol()*
+                TODO: Documentation
+
+formatting({options})                               *vim.lsp.buf.formatting()*
+                TODO: Documentation
+
+hover()                                                  *vim.lsp.buf.hover()*
+                TODO: Documentation
+
+implementation()                                *vim.lsp.buf.implementation()*
+                TODO: Documentation
+
+npcall({fn}, {...})                                     *vim.lsp.buf.npcall()*
+                TODO: Documentation
+
+ok_or_nil({status}, {...})                           *vim.lsp.buf.ok_or_nil()*
+                TODO: Documentation
+
+                                              *vim.lsp.buf.range_formatting()*
+range_formatting({options}, {start_pos}, {end_pos})
+                TODO: Documentation
+
+references({context})                               *vim.lsp.buf.references()*
+                TODO: Documentation
+
+rename({new_name})                                      *vim.lsp.buf.rename()*
+                TODO: Documentation
+
+request({method}, {params}, {callback})                *vim.lsp.buf.request()*
+                TODO: Documentation
+
+server_ready()                                    *vim.lsp.buf.server_ready()*
+                Sends a notification through all clients associated with current
+                buffer and returns `true` if server responds.
+
+signature_help()                                *vim.lsp.buf.signature_help()*
+                TODO: Documentation
+
+type_definition()                              *vim.lsp.buf.type_definition()*
+                TODO: Documentation
+
+workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
+                Lists all symbols in the current workspace in the quickfix
+                window. The list is filtered against the optional argument 
+                {query}; if the argument is omitted from the call, the user 
+                is prompted to enter a string on the command line. An empty
+                string means no filtering is done. 
+
+
+==============================================================================
+Lua module: vim.lsp.callbacks                                  *lsp-callbacks*
+
+err_message({...})                           *vim.lsp.callbacks.err_message()*
+                TODO: Documentation
+
+                                       *vim.lsp.callbacks.location_callback()*
+location_callback({_}, {method}, {result})
+                TODO: Documentation
+
+                                             *vim.lsp.callbacks.log_message()*
+log_message({_}, {_}, {result}, {client_id})
+                TODO: Documentation
+
+                      *vim.lsp.callbacks.signature_help_to_preview_contents()*
+signature_help_to_preview_contents({input})
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.lsp.log                                              *lsp-log*
+
+get_filename()                                    *vim.lsp.log.get_filename()*
+                TODO: Documentation
+
+path_join({...})                                     *vim.lsp.log.path_join()*
+                TODO: Documentation
+
+set_level({level})                                   *vim.lsp.log.set_level()*
+                TODO: Documentation
+
+should_log({level})                                 *vim.lsp.log.should_log()*
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.lsp.rpc                                              *lsp-rpc*
+
+convert_NIL({v})                                   *vim.lsp.rpc.convert_NIL()*
+                TODO: Documentation
+
+                                       *vim.lsp.rpc.create_and_start_client()*
+create_and_start_client({cmd}, {cmd_args}, {handlers},
+                        {extra_spawn_params})
+                TODO: Documentation
+
+encode_and_send({payload})                     *vim.lsp.rpc.encode_and_send()*
+                TODO: Documentation
+
+force_env_list({final_env})                     *vim.lsp.rpc.force_env_list()*
+                TODO: Documentation
+
+                            *vim.lsp.rpc.format_message_with_content_length()*
+format_message_with_content_length({encoded_message})
+                TODO: Documentation
+
+format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
+                TODO: Documentation
+
+handle_body({body})                                *vim.lsp.rpc.handle_body()*
+                TODO: Documentation
+
+is_dir({filename})                                      *vim.lsp.rpc.is_dir()*
+                TODO: Documentation
+
+json_decode({data})                                *vim.lsp.rpc.json_decode()*
+                TODO: Documentation
+
+json_encode({data})                                *vim.lsp.rpc.json_encode()*
+                TODO: Documentation
+
+notification({method}, {params})                  *vim.lsp.rpc.notification()*
+                TODO: Documentation
+
+on_error({errkind}, {...})                            *vim.lsp.rpc.on_error()*
+                TODO: Documentation
+
+on_exit({code}, {signal})                              *vim.lsp.rpc.on_exit()*
+                TODO: Documentation
+
+onexit({code}, {signal})                                *vim.lsp.rpc.onexit()*
+                TODO: Documentation
+
+parse_headers({header})                          *vim.lsp.rpc.parse_headers()*
+                TODO: Documentation
+
+                                                 *vim.lsp.rpc.pcall_handler()*
+pcall_handler({errkind}, {status}, {head}, {...})
+                TODO: Documentation
+
+request_parser_loop()                      *vim.lsp.rpc.request_parser_loop()*
+                TODO: Documentation
+
+                                            *vim.lsp.rpc.rpc_response_error()*
+rpc_response_error({code}, {message}, {data})
+                Creates an RPC response object/table.
+
+                Parameters: ~
+                    {code}     RPC error code defined in
+                               `vim.lsp.protocol.ErrorCodes`
+                    {message}  (optional) arbitrary message to send to server
+                    {data}     (optional) arbitrary data to send to server
+
+send_notification({method}, {params})        *vim.lsp.rpc.send_notification()*
+                TODO: Documentation
+
+                                                  *vim.lsp.rpc.send_request()*
+send_request({method}, {params}, {callback})
+                TODO: Documentation
+
+                                                 *vim.lsp.rpc.send_response()*
+send_response({request_id}, {err}, {result})
+                TODO: Documentation
+
+server_request({method}, {params})              *vim.lsp.rpc.server_request()*
+                TODO: Documentation
+
+try_call({errkind}, {fn}, {...})                      *vim.lsp.rpc.try_call()*
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.lsp.util                                            *lsp-util*
+
+                                     *vim.lsp.util.apply_text_document_edit()*
+apply_text_document_edit({text_document_edit})
+                TODO: Documentation
+
+                                             *vim.lsp.util.apply_text_edits()*
+apply_text_edits({text_edits}, {bufnr})
+                TODO: Documentation
+
+                                         *vim.lsp.util.apply_workspace_edit()*
+apply_workspace_edit({workspace_edit})
+                TODO: Documentation
+
+                                         *vim.lsp.util.diagnostics_by_buf*
+diagnostics_by_buf
+                A table containing diagnostics grouped by buf.
+
+                {<bufnr>: {diagnostics}}
+
+		{diagnostics} is an array of diagnostics.
+
+                By default this is populated by the
+                `textDocument/publishDiagnostics` callback via
+                |vim.lsp.util.buf_diagnostics_save_positions|.
+
+                It contains entries for active buffers. Once a buffer is
+                detached the entries for it are discarded.
+
+buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
+                TODO: Documentation
+ 
+                                        *vim.lsp.util.buf_diagnostics_count()*
+buf_diagnostics_count({kind})
+                Returns the number of diagnostics of given kind for current buffer.
+                Useful for showing diagnostics counts in statusline. eg:
+
+>
+    function! LspStatus() abort
+        let sl = ''
+        if luaeval('vim.lsp.buf.server_ready()')
+            let sl.='%#MyStatuslineLSP#E:'
+            let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error\")")}'
+            let sl.='%#MyStatuslineLSP# W:'
+            let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning\")")}'
+        else
+            let sl.='%#MyStatuslineLSPErrors#off'
+        endif
+        return sl
+    endfunction
+    let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus() 
+<
+
+                Parameters: ~
+                    {kind}       Diagnostic severity kind: Error, Warning, Information or Hint.
+
+buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
+                TODO: Documentation
+
+                                        *vim.lsp.util.buf_diagnostics_save()*
+buf_diagnostics_save_positions({bufnr}, {diagnostics})
+                Stores the diagnostics into |vim.lsp.util.diagnostics_by_buf|
+
+                Parameters: ~
+                    {bufr}         bufnr for which the diagnostics are for.
+                    {diagnostics}  Diagnostics[] received from the
+                                   langauge server.
+
+                                    *vim.lsp.util.buf_diagnostics_underline()*
+buf_diagnostics_underline({bufnr}, {diagnostics})
+                TODO: Documentation
+
+                                 *vim.lsp.util.buf_diagnostics_virtual_text()*
+buf_diagnostics_virtual_text({bufnr}, {diagnostics})
+                TODO: Documentation
+
+                                 *vim.lsp.util.buf_diagnostics_signs()*
+buf_diagnostics_signs({bufnr}, {diagnostics})
+                Place signs for each diagnostic in the sign column.
+                Sign characters can be customized with the following commands:
+>
+sign define LspDiagnosticsErrorSign text=E texthl=LspDiagnosticsError linehl= numhl=
+sign define LspDiagnosticsWarningSign text=W texthl=LspDiagnosticsWarning linehl= numhl=
+sign define LspDiagnosticsInformationSign text=I texthl=LspDiagnosticsInformation linehl= numhl=
+sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
+<
+
+
+character_offset({buf}, {row}, {col})        *vim.lsp.util.character_offset()*
+                TODO: Documentation
+
+                                        *vim.lsp.util.close_preview_autocmd()*
+close_preview_autocmd({events}, {winnr})
+                TODO: Documentation
+
+                              *vim.lsp.util.convert_input_to_markdown_lines()*
+convert_input_to_markdown_lines({input}, {contents})
+                TODO: Documentation
+
+                                     *vim.lsp.util.extract_completion_items()*
+extract_completion_items({result})
+                TODO: Documentation
+
+                                      *vim.lsp.util.fancy_floating_markdown()*
+fancy_floating_markdown({contents}, {opts})
+                TODO: Documentation
+
+find_window_by_var({name}, {value})        *vim.lsp.util.find_window_by_var()*
+                TODO: Documentation
+
+focusable_float({unique_name}, {fn})          *vim.lsp.util.focusable_float()*
+                TODO: Documentation
+
+                                            *vim.lsp.util.focusable_preview()*
+focusable_preview({unique_name}, {fn})
+                TODO: Documentation
+
+                                   *vim.lsp.util.get_current_line_to_cursor()*
+get_current_line_to_cursor()
+                TODO: Documentation
+
+                                  *vim.lsp.util.get_severity_highlight_name()*
+get_severity_highlight_name({severity})
+                TODO: Documentation
+
+                                              *vim.lsp.util.highlight_range()*
+highlight_range({bufnr}, {ns}, {hiname}, {start}, {finish})
+                TODO: Documentation
+
+                                             *vim.lsp.util.highlight_region()*
+highlight_region({ft}, {start}, {finish})
+                TODO: Documentation
+
+jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
+                TODO: Documentation
+
+locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
+                TODO: Documentation
+
+                                  *vim.lsp.util.make_floating_popup_options()*
+make_floating_popup_options({width}, {height}, {opts})
+                TODO: Documentation
+
+make_position_params()                   *vim.lsp.util.make_position_params()*
+                TODO: Documentation
+
+npcall({fn}, {...})                                    *vim.lsp.util.npcall()*
+                TODO: Documentation
+
+ok_or_nil({status}, {...})                          *vim.lsp.util.ok_or_nil()*
+                TODO: Documentation
+
+                                        *vim.lsp.util.open_floating_preview()*
+open_floating_preview({contents}, {filetype}, {opts})
+                TODO: Documentation
+
+set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
+                TODO: Documentation
+
+set_loclist({locations})                          *vim.lsp.util.set_loclist()*
+                TODO: Documentation
+
+set_qflist({locations})                            *vim.lsp.util.set_qflist()*
+                TODO: Documentation
+
+show_line_diagnostics()                 *vim.lsp.util.show_line_diagnostics()*
+                TODO: Documentation
+
+sort_by_key({fn})                                 *vim.lsp.util.sort_by_key()*
+                TODO: Documentation
+
+split_lines({value})                              *vim.lsp.util.split_lines()*
+                TODO: Documentation
+
+              *vim.lsp.util.text_document_completion_list_to_complete_items()*
+text_document_completion_list_to_complete_items({result})
+                TODO: Documentation
+
+trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*
+                TODO: Documentation
+
+                                *vim.lsp.util.try_trim_markdown_code_blocks()*
+try_trim_markdown_code_blocks({lines})
+                TODO: Documentation
+
+validate_lsp_position({pos})            *vim.lsp.util.validate_lsp_position()*
+                TODO: Documentation
+
+ vim:tw=78:ts=8:ft=help:norl:

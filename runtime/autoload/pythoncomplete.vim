@@ -42,7 +42,7 @@
 "
 
 if !has('python')
-    echo "Error: Required vim compiled with +python"
+    echo 'Error: Requires python + pynvim.  :help provider-python'
     finish
 endif
 
@@ -377,6 +377,7 @@ class PyParser:
     def __init__(self):
         self.top = Scope('global',0)
         self.scope = self.top
+        self.parserline = 0
 
     def _parsedotname(self,pre=None):
         #returns (dottedname, nexttoken)

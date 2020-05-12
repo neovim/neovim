@@ -16,7 +16,7 @@
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
-#if defined(PATH_MAX) && (PATH_MAX > 1000)
+#if defined(PATH_MAX) && (PATH_MAX > 1024)
 # define MAXPATHL PATH_MAX
 #else
 # define MAXPATHL 1024
@@ -25,15 +25,6 @@
 // Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
 
-// Use up to 5 Mbyte for a buffer.
-#ifndef DFLT_MAXMEM
-# define DFLT_MAXMEM (5*1024)
-#endif
-// use up to 10 Mbyte for Vim.
-#ifndef DFLT_MAXMEMTOT
-# define DFLT_MAXMEMTOT (10*1024)
-#endif
-
 // Note: Some systems need both string.h and strings.h (Savage).  However,
 // some systems can't handle both, only use string.h in that case.
 #include <string.h>
@@ -41,9 +32,16 @@
 # include <strings.h>
 #endif
 
-/// Function to convert libuv error to char * error description
-///
-/// negative libuv error codes are returned by a number of os functions.
+/// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror
+
+/// Converts system error code to libuv error code.
+#define os_translate_sys_error uv_translate_sys_error
+
+#ifdef WIN32
+# define os_strtok strtok_s
+#else
+# define os_strtok strtok_r
+#endif
 
 #endif  // NVIM_OS_OS_DEFS_H

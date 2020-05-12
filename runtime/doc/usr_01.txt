@@ -1,4 +1,4 @@
-*usr_01.txt*	For Vim version 7.4.  Last change: 2010 Nov 03
+*usr_01.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -57,21 +57,20 @@ make them visible with: >
 ==============================================================================
 *01.2*	Vim installed					   *setup-vimrc_example*
 
-It's not required for this tutorial, but we provide an example vimrc you may
-use:
+To create an empty vimrc: >
 
-	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.config/nvim/init.vim
-
-If the file already exists you probably want to keep it.
+	:call mkdir(stdpath('config'),'p')
+	:exe 'edit' stdpath('config').'/init.vim'
+	:write
 
 For more info see |vimrc|.
 
 ==============================================================================
 *01.3*	Using the Vim tutor			         *tutor* *vimtutor*
 
-Instead of reading the text (boring!) you can use the vimtutor to learn your
-first Vim commands.  This is a 30 minute tutorial that teaches the most basic
-Vim functionality hands-on.
+Instead of reading the text (boring!) you can use :Tutor to learn your first
+Vim commands.  This is a 30 minute tutorial that teaches the most basic Vim
+functionality hands-on.
 
 To start the tutorial, execute >
 
@@ -110,4 +109,4 @@ donate part of the profit to help AIDS victims in Uganda.  See |iccf|.
 
 Next chapter: |usr_02.txt|  The first steps in Vim
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

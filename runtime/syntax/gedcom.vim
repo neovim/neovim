@@ -3,11 +3,8 @@
 " Maintainer:	Paul Johnson (pjcj@transeda.com)
 " Version 1.059 - 23rd December 1999
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -41,26 +38,16 @@ syntax match gedcom_date "\d\{1,2}\s\+\(jan\|feb\|mar\|apr\|may\|jun\|jul\|aug\|
 syntax match gedcom_date ".*" contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_gedcom_syntax_inits")
-  if version < 508
-    let did_gedcom_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink gedcom_record Statement
-  HiLink gedcom_id Comment
-  HiLink gedcom_ii PreProc
-  HiLink gedcom_in Type
-  HiLink gedcom_name PreProc
-  HiLink gedcom_cname Type
-  HiLink gedcom_surname Identifier
-  HiLink gedcom_date Constant
+hi def link gedcom_record Statement
+hi def link gedcom_id Comment
+hi def link gedcom_ii PreProc
+hi def link gedcom_in Type
+hi def link gedcom_name PreProc
+hi def link gedcom_cname Type
+hi def link gedcom_surname Identifier
+hi def link gedcom_date Constant
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "gedcom"

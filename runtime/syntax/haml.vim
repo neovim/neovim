@@ -2,7 +2,7 @@
 " Language:	Haml
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Filenames:	*.haml
-" Last Change:	2010 Aug 09
+" Last Change:	2016 Aug 29
 
 if exists("b:current_syntax")
   finish
@@ -67,7 +67,7 @@ syn region  hamlJavascriptFilter matchgroup=hamlFilter start="^\z(\s*\):javascri
 syn region  hamlCSSFilter        matchgroup=hamlFilter start="^\z(\s*\):css\s*$"        end="^\%(\z1 \| *$\)\@!" contains=@htmlCss,hamlInterpolation keepend
 syn region  hamlSassFilter       matchgroup=hamlFilter start="^\z(\s*\):sass\s*$"       end="^\%(\z1 \| *$\)\@!" contains=@hamlSassTop
 
-syn region  hamlJavascriptBlock start="^\z(\s*\)%script" nextgroup=@hamlComponent,hamlError end="^\%(\z1 \| *$\)\@!" contains=@hamlTop,@htmlJavaScript keepend
+syn region  hamlJavascriptBlock start="^\z(\s*\)%script\%((type=[\"']text/javascript[\"'])\)\=\s*$" nextgroup=@hamlComponent,hamlError end="^\%(\z1 \| *$\)\@!" contains=@hamlTop,@htmlJavaScript keepend
 syn region  hamlCssBlock        start="^\z(\s*\)%style" nextgroup=@hamlComponent,hamlError  end="^\%(\z1 \| *$\)\@!" contains=@hamlTop,@htmlCss keepend
 syn match   hamlError "\$" contained
 

@@ -1,4 +1,4 @@
-*pi_zip.txt*	For Vim version 7.4.  Last change: 2013 Apr 17
+*pi_zip.txt*	Nvim
 
 				+====================+
 				| Zip File Interface |
@@ -6,7 +6,7 @@
 
 Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
-Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
+Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 	The VIM LICENSE (see |copyright|) applies to the files in this
 	package, including zipPlugin.vim, zip.vim, and pi_zip.vim.  except use
 	"zip.vim" instead of "VIM".  Like anything else that's free, zip.vim
@@ -32,6 +32,9 @@ Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
    the desired file, then hit the <return> key.  After editing, one may
    also write to the file.  Currently, one may not make a new file in
    zip archives via the plugin.
+
+								*zip-x*
+   x : may extract a listed file when the cursor is atop it
 
    OPTIONS
 
@@ -61,6 +64,11 @@ Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
    file; by default: >
    	let g:zip_zipcmd= "zip"
 <
+							*g:zip_extractcmd*
+   This option specifies the program (and any options needed) used to
+   extract a file from a zip archive.  By default, >
+   	let g:zip_extractcmd= g:zip_unzipcmd
+<
    PREVENTING LOADING~
 
    If for some reason you do not wish to use vim to examine zipped files,
@@ -83,8 +91,26 @@ Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
    One can simply extend this line to accommodate additional extensions that
    should be treated as zip files.
 
+   Alternatively, one may change *g:zipPlugin_ext* in one's .vimrc.
+   Currently (11/30/15) it holds: >
+
+	let g:zipPlugin_ext= '*.zip,*.jar,*.xpi,*.ja,*.war,*.ear,*.celzip,
+       \ *.oxt,*.kmz,*.wsz,*.xap,*.docx,*.docm,*.dotx,*.dotm,*.potx,*.potm,
+       \ *.ppsx,*.ppsm,*.pptx,*.pptm,*.ppam,*.sldx,*.thmx,*.xlam,*.xlsx,*.xlsm,
+       \ *.xlsb,*.xltx,*.xltm,*.xlam,*.crtx,*.vdw,*.glox,*.gcsx,*.gqsx,*.epub'
+
 ==============================================================================
 4. History							*zip-history* {{{1
+   v28 Oct 08, 2014 * changed the sanity checks for executables to reflect
+   		      the command actually to be attempted in zip#Read()
+		      and zip#Write()
+		    * added the extraction of a file capability
+       Nov 30, 2015 * added *.epub to the |g:zipPlugin_ext| list
+       Sep 13, 2016 * added *.apk to the |g:zipPlugin_ext| list and
+		      sorted the suffices.
+   v27 Jul 02, 2013 * sanity check: zipfile must have "PK" as its first
+		      two bytes.
+		    * modified to allow zipfile: entries in quickfix lists
    v26 Nov 15, 2012 * (Jason Spiro) provided a lot of new extensions that
 		      are synonyms for .zip
    v25 Jun 27, 2011 * using keepj with unzip -Z
@@ -123,4 +149,4 @@ Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
    v1 Sep 15, 2005 * Initial release, had browsing, reading, and writing
 
 ==============================================================================
-vim:tw=78:ts=8:ft=help:fdm=marker
+vim:tw=78:ts=8:noet:ft=help:fdm=marker

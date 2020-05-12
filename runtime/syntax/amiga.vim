@@ -1,15 +1,12 @@
 " Vim syntax file
 " Language:	AmigaDos
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:     7
+" Last Change:	Aug 31, 2016
+" Version:     9
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_AMIGA
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -72,30 +69,20 @@ syn match	amiComment	";.*$" contains=amiCommentGroup
 syn sync lines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_amiga_syn_inits")
-  if version < 508
-    let did_amiga_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+if !exists("skip_amiga_syntax_inits")
 
-  HiLink amiAlias	Type
-  HiLink amiComment	Comment
-  HiLink amiDev	Type
-  HiLink amiEcho	String
-  HiLink amiElse	Statement
-  HiLink amiError	Error
-  HiLink amiKey	Statement
-  HiLink amiNumber	Number
-  HiLink amiString	String
-  HiLink amiTest	Special
+  hi def link amiAlias	Type
+  hi def link amiComment	Comment
+  hi def link amiDev	Type
+  hi def link amiEcho	String
+  hi def link amiElse	Statement
+  hi def link amiError	Error
+  hi def link amiKey	Statement
+  hi def link amiNumber	Number
+  hi def link amiString	String
+  hi def link amiTest	Special
 
-  delcommand HiLink
 endif
-
 let b:current_syntax = "amiga"
 
 " vim:ts=15

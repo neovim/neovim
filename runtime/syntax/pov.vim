@@ -5,14 +5,8 @@
 " Required Vim Version: 6.0
 
 " Setup
-if version >= 600
-  " Quit when a syntax file was already loaded
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  " Croak when an old Vim is sourcing us.
-  echo "Sorry, but this syntax file relies on Vim 6 features.  Either upgrade Vim or use a version of " . expand("<sfile>:t:r") . " syntax file appropriate for Vim " . version/100 . "." . version %100 . "."
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

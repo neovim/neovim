@@ -10,9 +10,8 @@
 "		check for 'b:current_syntax', removed 'did_smcl_syntax_inits'
 " 26apr2006	changed 'stata_smcl' to 'smcl'
 
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 

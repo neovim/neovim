@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Haskell
 " Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
-" Last Change:		2008 Dec 15
+" Last Change:		2018 Mar 29 by Marcin Szamotulski
 " Original Author:	John Williams <jrw@pobox.com>
 "
 " Thanks to Ryan Crumley for suggestions and John Meacham for
@@ -32,16 +32,14 @@
 "	       to attribution of work.
 " 2008 Dec 15: Added comments as contained element in import statements
 
-" Remove any old syntax stuff hanging around
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " (Qualified) identifiers (no default highlighting)
-syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[A-Z][a-zA-Z0-9_']*\>"
-syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[a-z][a-zA-Z0-9_']*\>"
+syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[A-Z][a-zA-Z0-9_']*\>" contains=@NoSpell
+syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[a-z][a-zA-Z0-9_']*\>" contains=@NoSpell
 
 " Infix operators--most punctuation characters and any (qualified) identifier
 " enclosed in `backquotes`. An operator starting with : is a constructor,
@@ -58,18 +56,18 @@ syn match hsDelimiter  "(\|)\|\[\|\]\|,\|;\|_\|{\|}"
 syn match   hsSpecialChar	contained "\\\([0-9]\+\|o[0-7]\+\|x[0-9a-fA-F]\+\|[\"\\'&\\abfnrtv]\|^[A-Z^_\[\\\]]\)"
 syn match   hsSpecialChar	contained "\\\(NUL\|SOH\|STX\|ETX\|EOT\|ENQ\|ACK\|BEL\|BS\|HT\|LF\|VT\|FF\|CR\|SO\|SI\|DLE\|DC1\|DC2\|DC3\|DC4\|NAK\|SYN\|ETB\|CAN\|EM\|SUB\|ESC\|FS\|GS\|RS\|US\|SP\|DEL\)"
 syn match   hsSpecialCharError	contained "\\&\|'''\+"
-syn region  hsString		start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=hsSpecialChar
+syn region  hsString		start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=hsSpecialChar,@NoSpell
 syn match   hsCharacter		"[^a-zA-Z0-9_']'\([^\\]\|\\[^']\+\|\\'\)'"lc=1 contains=hsSpecialChar,hsSpecialCharError
 syn match   hsCharacter		"^'\([^\\]\|\\[^']\+\|\\'\)'" contains=hsSpecialChar,hsSpecialCharError
-syn match   hsNumber		"\<[0-9]\+\>\|\<0[xX][0-9a-fA-F]\+\>\|\<0[oO][0-7]\+\>"
-syn match   hsFloat		"\<[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
+syn match   hsNumber		"\v<[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*>|<0[oO]_*%(_*[0-7])*>|<0[bB]_*[01]%(_*[01])*>"
+syn match   hsFloat		"\v<[0-9]%(_*[0-9])*\.[0-9]%(_*[0-9])*%(_*[eE][-+]?[0-9]%(_*[0-9])*)?>|<[0-9]%(_*[0-9])*_*[eE][-+]?[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*\.[0-9a-fA-F]%(_*[0-9a-fA-F])*%(_*[pP][-+]?[0-9]%(_*[0-9])*)?>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*_*[pP][-+]?[0-9]%(_*[0-9])*>"
 
-" Keyword definitions. These must be patters instead of keywords
+" Keyword definitions. These must be patterns instead of keywords
 " because otherwise they would match as keywords at the start of a
 " "literate" comment (see lhs.vim).
 syn match hsModule		"\<module\>"
-syn match hsImport		"\<import\>.*"he=s+6 contains=hsImportMod,hsLineComment,hsBlockComment
-syn match hsImportMod		contained "\<\(as\|qualified\|hiding\)\>"
+syn match hsImport		"\<import\>.*"he=s+6 contains=hsImportMod,hsLineComment,hsBlockComment,@NoSpell
+syn match hsImportMod		contained "\<\(as\|qualified\|hiding\)\>" contains=@NoSpell
 syn match hsInfix		"\<\(infix\|infixl\|infixr\)\>"
 syn match hsStructure		"\<\(class\|data\|deriving\|instance\|default\|where\)\>"
 syn match hsTypedef		"\<\(type\|newtype\)\>"
@@ -99,8 +97,8 @@ endif
 
 
 " Comments
-syn match   hsLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$"
-syn region  hsBlockComment     start="{-"  end="-}" contains=hsBlockComment
+syn match   hsLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$" contains=@Spell
+syn region  hsBlockComment     start="{-"  end="-}" contains=hsBlockComment,@Spell
 syn region  hsPragma	       start="{-#" end="#-}"
 
 " C Preprocessor directives. Shamelessly ripped from c.vim and trimmed
@@ -127,67 +125,57 @@ syntax match	cCommentStartError display "/\*"me=e-1 contained
 syn region	cCppString	start=+L\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"+ end='$' contains=cSpecial contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_hs_syntax_inits")
-  if version < 508
-    let did_hs_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink hsModule			  hsStructure
-  HiLink hsImport			  Include
-  HiLink hsImportMod			  hsImport
-  HiLink hsInfix			  PreProc
-  HiLink hsStructure			  Structure
-  HiLink hsStatement			  Statement
-  HiLink hsConditional			  Conditional
-  HiLink hsSpecialChar			  SpecialChar
-  HiLink hsTypedef			  Typedef
-  HiLink hsVarSym			  hsOperator
-  HiLink hsConSym			  hsOperator
-  HiLink hsOperator			  Operator
-  if exists("hs_highlight_delimiters")
-    " Some people find this highlighting distracting.
-    HiLink hsDelimiter			  Delimiter
-  endif
-  HiLink hsSpecialCharError		  Error
-  HiLink hsString			  String
-  HiLink hsCharacter			  Character
-  HiLink hsNumber			  Number
-  HiLink hsFloat			  Float
-  HiLink hsConditional			  Conditional
-  HiLink hsLiterateComment		  hsComment
-  HiLink hsBlockComment		  hsComment
-  HiLink hsLineComment			  hsComment
-  HiLink hsComment			  Comment
-  HiLink hsPragma			  SpecialComment
-  HiLink hsBoolean			  Boolean
-  HiLink hsType			  Type
-  HiLink hsMaybe			  hsEnumConst
-  HiLink hsOrdering			  hsEnumConst
-  HiLink hsEnumConst			  Constant
-  HiLink hsDebug			  Debug
-
-  HiLink cCppString		hsString
-  HiLink cCommentStart		hsComment
-  HiLink cCommentError		hsError
-  HiLink cCommentStartError	hsError
-  HiLink cInclude		Include
-  HiLink cPreProc		PreProc
-  HiLink cDefine		Macro
-  HiLink cIncluded		hsString
-  HiLink cError			Error
-  HiLink cPreCondit		PreCondit
-  HiLink cComment		Comment
-  HiLink cCppSkip		cCppOut
-  HiLink cCppOut2		cCppOut
-  HiLink cCppOut		Comment
-
-  delcommand HiLink
+hi def link hsModule			  hsStructure
+hi def link hsImport			  Include
+hi def link hsImportMod			  hsImport
+hi def link hsInfix			  PreProc
+hi def link hsStructure			  Structure
+hi def link hsStatement			  Statement
+hi def link hsConditional			  Conditional
+hi def link hsSpecialChar			  SpecialChar
+hi def link hsTypedef			  Typedef
+hi def link hsVarSym			  hsOperator
+hi def link hsConSym			  hsOperator
+hi def link hsOperator			  Operator
+if exists("hs_highlight_delimiters")
+" Some people find this highlighting distracting.
+hi def link hsDelimiter			  Delimiter
 endif
+hi def link hsSpecialCharError		  Error
+hi def link hsString			  String
+hi def link hsCharacter			  Character
+hi def link hsNumber			  Number
+hi def link hsFloat			  Float
+hi def link hsConditional			  Conditional
+hi def link hsLiterateComment		  hsComment
+hi def link hsBlockComment		  hsComment
+hi def link hsLineComment			  hsComment
+hi def link hsComment			  Comment
+hi def link hsPragma			  SpecialComment
+hi def link hsBoolean			  Boolean
+hi def link hsType			  Type
+hi def link hsMaybe			  hsEnumConst
+hi def link hsOrdering			  hsEnumConst
+hi def link hsEnumConst			  Constant
+hi def link hsDebug			  Debug
+
+hi def link cCppString		hsString
+hi def link cCommentStart		hsComment
+hi def link cCommentError		hsError
+hi def link cCommentStartError	hsError
+hi def link cInclude		Include
+hi def link cPreProc		PreProc
+hi def link cDefine		Macro
+hi def link cIncluded		hsString
+hi def link cError			Error
+hi def link cPreCondit		PreCondit
+hi def link cComment		Comment
+hi def link cCppSkip		cCppOut
+hi def link cCppOut2		cCppOut
+hi def link cCppOut		Comment
+
 
 let b:current_syntax = "haskell"
 

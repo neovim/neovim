@@ -87,7 +87,7 @@ function s:MainBlockIndent (prev_indent, prev_lnum, blockstart, stop_at)
       endwhile
    endwhile
    " Fallback - just move back one
-   return a:prev_indent - &sw
+   return a:prev_indent - shiftwidth()
 endfunction MainBlockIndent
 
 " Section: s:EndBlockIndent {{{1
@@ -131,7 +131,7 @@ function s:EndBlockIndent( prev_indent, prev_lnum, blockstart, blockend )
       endwhile
    endwhile
    " Fallback - just move back one
-   return a:prev_indent - &sw
+   return a:prev_indent - shiftwidth()
 endfunction EndBlockIndent
 
 " Section: s:StatementIndent {{{1
@@ -213,15 +213,15 @@ function GetAdaIndent()
       endif
       " Move indent in
       if ! false_match
-	 let ind = ind + &sw
+	 let ind = ind + shiftwidth()
       endif
    elseif line =~ '^\s*\(case\|exception\)\>'
       " Move indent in twice (next 'when' will move back)
-      let ind = ind + 2 * &sw
+      let ind = ind + 2 * shiftwidth()
    elseif line =~ '^\s*end\s*record\>'
-      " Move indent back to tallying 'type' preceding the 'record'.
+      " Move indent back to tallying 'type' preceeding the 'record'.
       " Allow indent to be equal to 'end record's.
-      let ind = s:MainBlockIndent( ind+&sw, lnum, 'type\>', '' )
+      let ind = s:MainBlockIndent( ind+shiftwidth(), lnum, 'type\>', '' )
    elseif line =~ '\(^\s*new\>.*\)\@<!)\s*[;,]\s*$'
       " Revert to indent of line that started this parenthesis pair
       exe lnum
@@ -235,10 +235,10 @@ function GetAdaIndent()
       exe v:lnum
    elseif line =~ '[.=(]\s*$'
       " A statement continuation - move in one
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
    elseif line =~ '^\s*new\>'
       " Multiple line generic instantiation ('package blah is\nnew thingy')
-      let ind = s:StatementIndent( ind - &sw, lnum )
+      let ind = s:StatementIndent( ind - shiftwidth(), lnum )
    elseif line =~ ';\s*$'
       " Statement end (but not 'end' ) - try to find current statement-start indent
       let ind = s:StatementIndent( ind, lnum )
@@ -256,17 +256,17 @@ function GetAdaIndent()
    elseif continuation && line =~ '^\s*('
       " Don't do this if we've already indented due to the previous line
       if ind == initind
-	 let ind = ind + &sw
+	 let ind = ind + shiftwidth()
       endif
    elseif line =~ '^\s*\(begin\|is\)\>'
       let ind = s:MainBlockIndent( ind, lnum, '\(procedure\|function\|declare\|package\|task\)\>', 'begin\>' )
    elseif line =~ '^\s*record\>'
-      let ind = s:MainBlockIndent( ind, lnum, 'type\>\|for\>.*\<use\>', '' ) + &sw
+      let ind = s:MainBlockIndent( ind, lnum, 'type\>\|for\>.*\<use\>', '' ) + shiftwidth()
    elseif line =~ '^\s*\(else\|elsif\)\>'
       let ind = s:MainBlockIndent( ind, lnum, 'if\>', '' )
    elseif line =~ '^\s*when\>'
       " Align 'when' one /in/ from matching block start
-      let ind = s:MainBlockIndent( ind, lnum, '\(case\|exception\)\>', '' ) + &sw
+      let ind = s:MainBlockIndent( ind, lnum, '\(case\|exception\)\>', '' ) + shiftwidth()
    elseif line =~ '^\s*end\>\s*\<if\>'
       " End of if statements
       let ind = s:EndBlockIndent( ind, lnum, 'if\>', 'end\>\s*\<if\>' )

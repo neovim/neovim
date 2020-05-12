@@ -1,9 +1,9 @@
 -- Test for regexp patterns with multi-byte support, using utf-8.
--- See test64 for the non-multi-byte tests.
+-- See test_regexp_latin.vim for the non-multi-byte tests.
 -- A pattern that gives the expected result produces OK, so that we know it was
 -- actually tried.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 

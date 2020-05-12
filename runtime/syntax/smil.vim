@@ -7,11 +7,8 @@
 " To learn more about SMIL, please refer to http://www.w3.org/AudioVideo/
 " and to http://www.helio.org/products/smil/tutorial/
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -115,38 +112,28 @@ endif
 syn region smilComment		      start=+<!DOCTYPE+ keepend end=+>+
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_smil_syntax_inits")
-  if version < 508
-    let did_smil_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink smilTag			Function
-  HiLink smilEndTag			Identifier
-  HiLink smilArg			Type
-  HiLink smilTagName			smilStatement
-  HiLink smilSpecialTagName		Exception
-  HiLink smilValue			Value
-  HiLink smilSpecialChar		Special
+hi def link smilTag			Function
+hi def link smilEndTag			Identifier
+hi def link smilArg			Type
+hi def link smilTagName			smilStatement
+hi def link smilSpecialTagName		Exception
+hi def link smilValue			Value
+hi def link smilSpecialChar		Special
 
-  HiLink smilSpecial			Special
-  HiLink smilSpecialChar		Special
-  HiLink smilString			String
-  HiLink smilStatement			Statement
-  HiLink smilComment			Comment
-  HiLink smilCommentPart		Comment
-  HiLink smilPreProc			PreProc
-  HiLink smilValue			String
-  HiLink smilCommentError		smilError
-  HiLink smilTagError			smilError
-  HiLink smilError			Error
+hi def link smilSpecial			Special
+hi def link smilSpecialChar		Special
+hi def link smilString			String
+hi def link smilStatement			Statement
+hi def link smilComment			Comment
+hi def link smilCommentPart		Comment
+hi def link smilPreProc			PreProc
+hi def link smilValue			String
+hi def link smilCommentError		smilError
+hi def link smilTagError			smilError
+hi def link smilError			Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "smil"
 

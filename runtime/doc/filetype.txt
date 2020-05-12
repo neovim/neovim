@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2013 Dec 15
+*filetype.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,11 +6,9 @@
 
 Filetypes						*filetype* *file-type*
 
-1. Filetypes					|filetypes|
-2. Filetype plugin				|filetype-plugins|
-3. Docs for the default filetype plugins.	|ftplugin-docs|
-
 Also see |autocmd.txt|.
+
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
@@ -26,15 +24,13 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-Detail: The ":filetype on" command will load one of these files:
-		Mac	    $VIMRUNTIME/filetype.vim
-		MS-DOS	    $VIMRUNTIME\filetype.vim
-		Unix	    $VIMRUNTIME/filetype.vim
+Detail: The ":filetype on" command will load this file:
+		$VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
 	contents of the file.
-	When the GUI is running or will start soon, the menu.vim script is
+	When the GUI is running or will start soon, the |menu.vim| script is
 	also sourced.  See |'go-M'| about avoiding that.
 
 To add your own file types, see |new-filetype| below.  To search for help on a
@@ -156,8 +152,8 @@ file.  It will be overwritten when installing a new version of Vim.
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
-   means there can be many files.  The advantage is that you can simply drop
-   this file in the right directory to make it work.
+   there can be many files.  The advantage is that you can simply drop this 
+   file in the right directory to make it work.
 							*ftdetect*
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Then create the directory "ftdetect"
@@ -277,6 +273,10 @@ then Vim will load all plugins in these directories and below:
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
 
+Note that when using a plugin manager or |packages| many directories will be
+added to 'runtimepath'.  These plugins each require their own directory, don't
+put them directly in ~/.config/nvim/plugin.
+
 What if it looks like your plugin is not being loaded?  You can find out what
 happens when Vim starts up by using the |-V| argument: >
 
@@ -311,12 +311,12 @@ define yourself.  There are a few ways to avoid this:
    You need to define your own mapping before the plugin is loaded (before
    editing a file of that type).  The plugin will then skip installing the
    default mapping.
-
+						*no_mail_maps*
 3. Disable defining mappings for a specific filetype by setting a variable,
    which contains the name of the filetype.  For the "mail" filetype this
    would be: >
 	:let no_mail_maps = 1
-
+<						*no_plugin_maps*
 4. Disable defining mappings for all filetypes by setting a variable: >
 	:let no_plugin_maps = 1
 <
@@ -500,7 +500,7 @@ Options:
 		avoid that a Subject line with "Vim:" in it will cause an
 		error message.
 'textwidth'	is set to 72.  This is often recommended for e-mail.
-'formatoptions'  is set to break text lines and to repeat the comment leader
+'formatoptions'	is set to break text lines and to repeat the comment leader
 		in new lines, so that a leading ">" for quotes is repeated.
 		You can also format quoted text with |gq|.
 
@@ -510,32 +510,63 @@ Local mappings:
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
 
-MAN							*ft-man-plugin* *:Man*
+MAN					*ft-man-plugin* *:Man* *man.vim*
 
-Displays a manual page in a nice way.  Also see the user manual
-|find-manpage|.
+View manpages in Nvim. Supports highlighting, completion, locales, and
+navigation. Also see |find-manpage|.
 
-To start using the ":Man" command before any manual page was loaded, source
-this script from your startup vimrc file: >
+man.vim will always attempt to reuse the closest man window (above/left) but
+otherwise create a split.
 
-	runtime ftplugin/man.vim
-
-Options:
-'iskeyword'	the '.' character is added to be able to use CTRL-] on the
-		manual page name.
+The case sensitivity of completion is controlled by 'fileignorecase'.
 
 Commands:
-Man {name}	Display the manual page for {name} in a window.
-Man {number} {name}
-		Display the manual page for {name} in a section {number}.
+Man {name}                Display the manpage for {name}.
+Man {sect} {name}         Display the manpage for {name} and section {sect}.
+Man {name}({sect})        Same as above.
+Man {sect} {name}({sect}) Used during completion to show the real section of
+                          when the provided section is a prefix, e.g. 1m vs 1.
+Man {path}                Open the manpage at {path}. Prepend "./" if {path}
+                          is relative to the current directory.
+Man                       Open the manpage for the <cWORD> (man buffers)
+                          or <cword> (non-man buffers) under the cursor.
+Man!                      Display the current buffer contents as a manpage.
 
-Global mapping:
-<Leader>K	Displays the manual page for the word under the cursor.
+|:Man| accepts command modifiers. For example, to use a vertical split: >
+     :vertical Man printf
 
 Local mappings:
-CTRL-]		Jump to the manual page for the word under the cursor.
-CTRL-T		Jump back to the previous manual page.
+K or CTRL-]               Jump to the manpage for the <cWORD> under the
+                          cursor. Takes a count for the section.
+CTRL-T                    Jump back to the location that the manpage was
+                          opened from.
+gO                        Show the manpage outline. |gO|
+q                         :quit if invoked as $MANPAGER, otherwise :close.
 
+Variables:
+*g:no_man_maps*             Do not create mappings in manpage buffers.
+*g:ft_man_folding_enable*   Fold manpages with foldmethod=indent foldnestmax=1.
+*b:man_default_sects*       Comma-separated, ordered list of preferred sections.
+                          For example in C one usually wants section 3 or 2: >
+                               :let b:man_default_sections = '3,2'
+*g:man_hardwrap*            Hard-wrap to $MANWIDTH or window width if $MANWIDTH is
+                          empty. Enabled by default. Set |FALSE| to enable soft
+                          wrapping.
+
+To use Nvim as a manpager: >
+     export MANPAGER='nvim +Man!'
+
+Note that when running `man` from the shell and with that `MANPAGER` in your
+environment, `man` will pre-format the manpage using `groff`. Thus, Neovim
+will inevitably display the manual page as it was passed to it from stdin. One
+of the caveats of this is that the width will _always_ be hard-wrapped and not
+soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >
+     export MANWIDTH=999
+
+So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i.e soft-wrapped.
+
+To disable bold highlighting: >
+     :highlight link manBold Normal
 
 PDF							*ft-pdf-plugin*
 
@@ -550,6 +581,56 @@ the PDF.  The following are treated as tags:
 These maps can be disabled with >
 	:let g:no_pdf_maps = 1
 <
+
+PYTHON						*ft-python-plugin* *PEP8*
+
+By default the following options are set, in accordance with PEP8: >
+
+	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:python_recommended_style = 0
+
+
+QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
+
+The "qf" filetype is used for the quickfix window, see |quickfix-window|.
+
+The quickfix filetype plugin includes configuration for displaying the command
+that produced the quickfix list in the |status-line|. To disable this setting,
+configure as follows: >
+	:let g:qf_disable_statusline = 1
+
+
+R MARKDOWN						*ft-rmd-plugin*
+
+By default ftplugin/html.vim is not sourced. If you want it sourced, add to
+your |vimrc|: >
+	let rmd_include_html = 1
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for Markdown code. If you prefer that 'formatexpr' is not set, add to your
+|vimrc|: >
+	let rmd_dynamic_comments = 0
+
+
+R RESTRUCTURED TEXT					*ft-rrst-plugin*
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for ReStructured text. If you prefer that 'formatexpr' is not set, add to
+your |vimrc|: >
+	let rrst_dynamic_comments = 0
+
+
+RESTRUCTUREDTEXT					*ft-rst-plugin*
+
+The following formatting setting are optionally available: >
+	setlocal expandtab shiftwidth=3 softtabstop=3 tabstop=8
+
+To enable this behavior, set the following variable in your vimrc: >
+	let g:rst_style = 1
+
 
 RPM SPEC						*ft-spec-plugin*
 
@@ -700,6 +781,12 @@ Format description:
       not recognized here as well.
 
 
+RUST							*ft-rust*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_rust.txt|.
+
+
 SQL							*ft-sql*
 
 Since the text for this plugin is rather long it has been put in a separate
@@ -721,4 +808,23 @@ You can change the default by defining the variable g:tex_flavor to the format
 Currently no other formats are recognized.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+VIM							*ft-vim-plugin*
+
+The Vim filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].  Move around comments with ]" and [".
+
+The mappings can be disabled with: >
+	let g:no_vim_maps = 1
+
+
+ZIMBU							*ft-zimbu-plugin*
+
+The Zimbu filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].
+
+The mappings can be disabled with: >
+	let g:no_zimbu_maps = 1
+<
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

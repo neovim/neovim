@@ -20,7 +20,7 @@ struct socket_watcher {
   union {
     struct {
       uv_tcp_t handle;
-      struct sockaddr_in addr;
+      struct addrinfo *addrinfo;
     } tcp;
     struct {
       uv_pipe_t handle;
@@ -30,7 +30,7 @@ struct socket_watcher {
   void *data;
   socket_cb cb;
   socket_close_cb close_cb;
-  Queue *events;
+  MultiQueue *events;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

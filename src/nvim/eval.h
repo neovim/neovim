@@ -1,53 +1,79 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
-#include <msgpack.h>
+#include "nvim/buffer_defs.h"
+#include "nvim/channel.h"
+#include "nvim/eval/funcs.h" // For FunPtr
+#include "nvim/event/time.h"  // For TimeWatcher
+#include "nvim/ex_cmds_defs.h"  // For exarg_T
+#include "nvim/os/fileio.h"  // For FileDescriptor
+#include "nvim/os/stdpaths_defs.h"  // For XDGVarType
 
-#include "nvim/profile.h"
+#define COPYID_INC 2
+#define COPYID_MASK (~0x1)
 
 // All user-defined functions are found in this hashtable.
-EXTERN hashtab_T func_hashtab;
-
-// Structure to hold info for a user function.
-typedef struct ufunc ufunc_T;
-
-struct ufunc {
-  int          uf_varargs;       ///< variable nr of arguments
-  int          uf_flags;
-  int          uf_calls;         ///< nr of active calls
-  garray_T     uf_args;          ///< arguments
-  garray_T     uf_lines;         ///< function lines
-  int          uf_profiling;     ///< true when func is being profiled
-  // Profiling the function as a whole.
-  int          uf_tm_count;      ///< nr of calls
-  proftime_T   uf_tm_total;      ///< time spent in function + children
-  proftime_T   uf_tm_self;       ///< time spent in function itself
-  proftime_T   uf_tm_children;   ///< time spent in children this call
-  // Profiling the function per line.
-  int         *uf_tml_count;     ///< nr of times line was executed
-  proftime_T  *uf_tml_total;     ///< time spent in a line + children
-  proftime_T  *uf_tml_self;      ///< time spent in a line itself
-  proftime_T   uf_tml_start;     ///< start time for current line
-  proftime_T   uf_tml_children;  ///< time spent in children for this line
-  proftime_T   uf_tml_wait;      ///< start wait time for current line
-  int          uf_tml_idx;       ///< index of line being timed; -1 if none
-  int          uf_tml_execed;    ///< line being timed was executed
-  scid_T       uf_script_ID;     ///< ID of script where function was defined,
-                                 //   used for s: variables
-  int          uf_refcount;      ///< for numbered function: reference count
-  char_u       uf_name[1];       ///< name of function (actually longer); can
-                                 //   start with <SNR>123_ (<SNR> is K_SPECIAL
-                                 //   KS_EXTRA KE_SNR)
-};
+extern hashtab_T func_hashtab;
 
 // From user function to hashitem and back.
 EXTERN ufunc_T dumuf;
 #define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - (dumuf.uf_name - (char_u *)&dumuf)))
+#define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
-/* Defines for Vim variables.  These must match vimvars[] in eval.c! */
-enum {
+/*
+ * Structure returned by get_lval() and used by set_var_lval().
+ * For a plain name:
+ *	"name"	    points to the variable name.
+ *	"exp_name"  is NULL.
+ *	"tv"	    is NULL
+ * For a magic braces name:
+ *	"name"	    points to the expanded variable name.
+ *	"exp_name"  is non-NULL, to be freed later.
+ *	"tv"	    is NULL
+ * For an index in a list:
+ *	"name"	    points to the (expanded) variable name.
+ *	"exp_name"  NULL or non-NULL, to be freed later.
+ *	"tv"	    points to the (first) list item value
+ *	"li"	    points to the (first) list item
+ *	"range", "n1", "n2" and "empty2" indicate what items are used.
+ * For an existing Dict item:
+ *	"name"	    points to the (expanded) variable name.
+ *	"exp_name"  NULL or non-NULL, to be freed later.
+ *	"tv"	    points to the dict item value
+ *	"newkey"    is NULL
+ * For a non-existing Dict item:
+ *	"name"	    points to the (expanded) variable name.
+ *	"exp_name"  NULL or non-NULL, to be freed later.
+ *	"tv"	    points to the Dictionary typval_T
+ *	"newkey"    is the key for the new item.
+ */
+typedef struct lval_S {
+    const char *ll_name;  ///< Start of variable name (can be NULL).
+    size_t ll_name_len;   ///< Length of the .ll_name.
+    char *ll_exp_name;    ///< NULL or expanded name in allocated memory.
+    typval_T *ll_tv;      ///< Typeval of item being used.  If "newkey"
+    ///< isn't NULL it's the Dict to which to add the item.
+    listitem_T *ll_li;  ///< The list item or NULL.
+    list_T *ll_list;    ///< The list or NULL.
+    int ll_range;       ///< TRUE when a [i:j] range was used.
+    long ll_n1;         ///< First index for list.
+    long ll_n2;         ///< Second index for list range.
+    int ll_empty2;      ///< Second index is empty: [i:].
+    dict_T *ll_dict;    ///< The Dictionary or NULL.
+    dictitem_T *ll_di;  ///< The dictitem or NULL.
+    char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
+} lval_T;
+
+/// enum used by var_flavour()
+typedef enum {
+  VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
+  VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
+  VAR_FLAVOUR_SHADA   = 4    // all uppercase
+} var_flavour_T;
+
+/// Defines for Vim variables
+typedef enum {
     VV_COUNT,
     VV_COUNT1,
     VV_PREVCOUNT,
@@ -79,6 +105,7 @@ enum {
     VV_DYING,
     VV_EXCEPTION,
     VV_THROWPOINT,
+    VV_STDERR,
     VV_REG,
     VV_CMDBANG,
     VV_INSERTMODE,
@@ -89,6 +116,7 @@ enum {
     VV_FCS_CHOICE,
     VV_BEVAL_BUFNR,
     VV_BEVAL_WINNR,
+    VV_BEVAL_WINID,
     VV_BEVAL_LNUM,
     VV_BEVAL_COL,
     VV_BEVAL_TEXT,
@@ -98,6 +126,7 @@ enum {
     VV_SWAPCOMMAND,
     VV_CHAR,
     VV_MOUSE_WIN,
+    VV_MOUSE_WINID,
     VV_MOUSE_LNUM,
     VV_MOUSE_COL,
     VV_OP,
@@ -106,7 +135,6 @@ enum {
     VV_OLDFILES,
     VV_WINDOWID,
     VV_PROGPATH,
-    VV_COMMAND_OUTPUT,
     VV_COMPLETED_ITEM,
     VV_OPTION_NEW,
     VV_OPTION_OLD,
@@ -114,14 +142,98 @@ enum {
     VV_ERRORS,
     VV_MSGPACK_TYPES,
     VV_EVENT,
-    VV_LEN,  // number of v: vars
-};
+    VV_FALSE,
+    VV_TRUE,
+    VV_NULL,
+    VV__NULL_LIST,  // List with NULL value. For test purposes only.
+    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV_VIM_DID_ENTER,
+    VV_TESTING,
+    VV_TYPE_NUMBER,
+    VV_TYPE_STRING,
+    VV_TYPE_FUNC,
+    VV_TYPE_LIST,
+    VV_TYPE_DICT,
+    VV_TYPE_FLOAT,
+    VV_TYPE_BOOL,
+    VV_ECHOSPACE,
+    VV_EXITING,
+    VV_LUA,
+} VimVarIndex;
 
-/// Maximum number of function arguments
-#define MAX_FUNC_ARGS   20
+/// All recognized msgpack types
+typedef enum {
+  kMPNil,
+  kMPBoolean,
+  kMPInteger,
+  kMPFloat,
+  kMPString,
+  kMPBinary,
+  kMPArray,
+  kMPMap,
+  kMPExt,
+#define LAST_MSGPACK_TYPE kMPExt
+} MessagePackType;
 
-int vim_to_msgpack(msgpack_packer *const, typval_T *const,
-                   const char *const objname);
+/// Array mapping values from MessagePackType to corresponding list pointers
+extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
+
+#undef LAST_MSGPACK_TYPE
+
+/// trans_function_name() flags
+typedef enum {
+  TFN_INT = 1,  ///< May use internal function name
+  TFN_QUIET = 2,  ///< Do not emit error messages.
+  TFN_NO_AUTOLOAD = 4,  ///< Do not use script autoloading.
+  TFN_NO_DEREF = 8,  ///< Do not dereference a Funcref.
+  TFN_READ_ONLY = 16,  ///< Will not change the variable.
+} TransFunctionNameFlags;
+
+/// get_lval() flags
+typedef enum {
+  GLV_QUIET = TFN_QUIET,  ///< Do not emit error messages.
+  GLV_NO_AUTOLOAD = TFN_NO_AUTOLOAD,  ///< Do not use script autoloading.
+  GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
+                                  ///< the value (prevents error message).
+} GetLvalFlags;
+
+/// flags for find_name_end()
+#define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
+#define FNE_CHECK_START 2       /* find_name_end(): check name starts with
+                                   valid character */
+
+typedef struct {
+  TimeWatcher tw;
+  int timer_id;
+  int repeat_count;
+  int refcount;
+  int emsg_count;  ///< Errors in a repeating timer.
+  long timeout;
+  bool stopped;
+  bool paused;
+  Callback callback;
+} timer_T;
+
+/// Type of assert_* check being performed
+typedef enum
+{
+  ASSERT_EQUAL,
+  ASSERT_NOTEQUAL,
+  ASSERT_MATCH,
+  ASSERT_NOTMATCH,
+  ASSERT_INRANGE,
+  ASSERT_OTHER,
+} assert_type_T;
+
+/// Type for dict_list function
+typedef enum {
+  kDictListKeys,  ///< List dictionary keys.
+  kDictListValues,  ///< List dictionary values.
+  kDictListItems,  ///< List dictionary contents: [keys, values].
+} DictListType;
+
+// Used for checking if local variables or arguments used in a lambda.
+extern bool *eval_lavars_used;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"

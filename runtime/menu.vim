@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 May 22
+" Last Change:	2019 Jan 27
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -56,6 +56,13 @@ if exists("v:lang") || &langmenu != ""
       let s:lang = substitute(s:lang, '\.[^.]*', "", "")
       exe "runtime! lang/menu_" . s:lang . "[^a-z]*vim"
 
+      if !exists("did_menu_trans") && s:lang =~ '_'
+	" If the language includes a region try matching without that region.
+	" (e.g. find menu_de.vim if s:lang == de_DE).
+	let langonly = substitute(s:lang, '_.*', "", "")
+	exe "runtime! lang/menu_" . langonly . "[^a-z]*vim"
+      endif
+
       if !exists("did_menu_trans") && strlen($LANG) > 1 && s:lang !~ '^en_us'
 	" On windows locale names are complicated, try using $LANG, it might
 	" have been set by set_init_1().  But don't do this for "en" or "en_us".
@@ -70,7 +77,7 @@ endif
 " Help menu
 an 9999.10 &Help.&Overview<Tab><F1>	:help<CR>
 an 9999.20 &Help.&User\ Manual		:help usr_toc<CR>
-an 9999.30 &Help.&How-to\ links		:help how-to<CR>
+an 9999.30 &Help.&How-To\ Links		:help how-to<CR>
 an <silent> 9999.40 &Help.&Find\.\.\.	:call <SID>Helpfind()<CR>
 an 9999.45 &Help.-sep1-			<Nop>
 an 9999.50 &Help.&Credits		:help credits<CR>
@@ -112,7 +119,7 @@ an 10.350 &File.Save\ &As\.\.\.<Tab>:sav	:browse confirm saveas<CR>
 
 if has("diff")
   an 10.400 &File.-SEP2-			<Nop>
-  an 10.410 &File.Split\ &Diff\ with\.\.\.	:browse vert diffsplit<CR>
+  an 10.410 &File.Split\ &Diff\ With\.\.\.	:browse vert diffsplit<CR>
   an 10.420 &File.Split\ Patched\ &By\.\.\.	:browse vert diffpatch<CR>
 endif
 
@@ -159,7 +166,7 @@ nnoremenu 20.370 &Edit.Put\ &Before<Tab>[p	[p
 inoremenu	 &Edit.Put\ &Before<Tab>[p	<C-O>[p
 nnoremenu 20.380 &Edit.Put\ &After<Tab>]p	]p
 inoremenu	 &Edit.Put\ &After<Tab>]p	<C-O>]p
-if has("win32") || has("win16")
+if has("win32")
   vnoremenu 20.390 &Edit.&Delete<Tab>x		x
 endif
 noremenu  <script> <silent> 20.400 &Edit.&Select\ All<Tab>ggVG	:<C-U>call <SID>SelectAll()<CR>
@@ -167,7 +174,7 @@ inoremenu <script> <silent> 20.400 &Edit.&Select\ All<Tab>ggVG	<C-O>:call <SID>S
 cnoremenu <script> <silent> 20.400 &Edit.&Select\ All<Tab>ggVG	<C-U>call <SID>SelectAll()<CR>
 
 an 20.405	 &Edit.-SEP2-				<Nop>
-if has("win32")  || has("win16") || has("gui_gtk") || has("gui_kde") || has("gui_motif")
+if has("win32") || has("gui_gtk") || has("gui_kde") || has("gui_motif")
   an 20.410	 &Edit.&Find\.\.\.			:promptfind<CR>
   vunmenu	 &Edit.&Find\.\.\.
   vnoremenu <silent>	 &Edit.&Find\.\.\.		y:promptfind <C-R>=<SID>FixFText()<CR><CR>
@@ -188,12 +195,14 @@ an 20.435	 &Edit.Startup\ &Settings		:call <SID>EditVimrc()<CR>
 fun! s:EditVimrc()
   if $MYVIMRC != ''
     let fname = $MYVIMRC
-  elseif has("win32") || has("dos32") || has("dos16")
+  elseif has("win32")
     if $HOME != ''
       let fname = $HOME . "/_vimrc"
     else
       let fname = $VIM . "/_vimrc"
     endif
+  elseif has("amiga")
+    let fname = "s:.vimrc"
   else
     let fname = $HOME . "/.vimrc"
   endif
@@ -212,25 +221,25 @@ endfun
 
 " Edit/Global Settings
 an 20.440.100 &Edit.&Global\ Settings.Toggle\ Pattern\ &Highlight<Tab>:set\ hls!	:set hls! hls?<CR>
-an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Ignore-case<Tab>:set\ ic!	:set ic! ic?<CR>
-an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Showmatch<Tab>:set\ sm!	:set sm! sm?<CR>
+an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Ignoring\ Case<Tab>:set\ ic!	:set ic! ic?<CR>
+an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Showing\ Matched\ Pairs<Tab>:set\ sm!	:set sm! sm?<CR>
 
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 1\  :set so=1<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 2\  :set so=2<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 3\  :set so=3<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 4\  :set so=4<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 5\  :set so=5<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 7\  :set so=7<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 10\  :set so=10<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 100\  :set so=100<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 1\  :set so=1<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 2\  :set so=2<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 3\  :set so=3<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 4\  :set so=4<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 5\  :set so=5<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 7\  :set so=7<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 10\  :set so=10<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 100\  :set so=100<CR>
 
 an 20.440.130.40 &Edit.&Global\ Settings.&Virtual\ Edit.Never :set ve=<CR>
 an 20.440.130.50 &Edit.&Global\ Settings.&Virtual\ Edit.Block\ Selection :set ve=block<CR>
-an 20.440.130.60 &Edit.&Global\ Settings.&Virtual\ Edit.Insert\ mode :set ve=insert<CR>
+an 20.440.130.60 &Edit.&Global\ Settings.&Virtual\ Edit.Insert\ Mode :set ve=insert<CR>
 an 20.440.130.70 &Edit.&Global\ Settings.&Virtual\ Edit.Block\ and\ Insert :set ve=block,insert<CR>
 an 20.440.130.80 &Edit.&Global\ Settings.&Virtual\ Edit.Always :set ve=all<CR>
 an 20.440.140 &Edit.&Global\ Settings.Toggle\ Insert\ &Mode<Tab>:set\ im!	:set im!<CR>
-an 20.440.145 &Edit.&Global\ Settings.Toggle\ Vi\ C&ompatible<Tab>:set\ cp!	:set cp!<CR>
+an 20.440.145 &Edit.&Global\ Settings.Toggle\ Vi\ C&ompatibility<Tab>:set\ cp!	:set cp!<CR>
 an <silent> 20.440.150 &Edit.&Global\ Settings.Search\ &Path\.\.\.  :call <SID>SearchP()<CR>
 an <silent> 20.440.160 &Edit.&Global\ Settings.Ta&g\ Files\.\.\.  :call <SID>TagFiles()<CR>
 "
@@ -274,13 +283,13 @@ endfun
 
 " Boolean options
 an 20.440.100 &Edit.F&ile\ Settings.Toggle\ Line\ &Numbering<Tab>:set\ nu!	:set nu! nu?<CR>
-an 20.440.105 &Edit.F&ile\ Settings.Toggle\ relati&ve\ Line\ Numbering<Tab>:set\ rnu!	:set rnu! rnu?<CR>
+an 20.440.105 &Edit.F&ile\ Settings.Toggle\ Relati&ve\ Line\ Numbering<Tab>:set\ rnu!	:set rnu! rnu?<CR>
 an 20.440.110 &Edit.F&ile\ Settings.Toggle\ &List\ Mode<Tab>:set\ list!	:set list! list?<CR>
-an 20.440.120 &Edit.F&ile\ Settings.Toggle\ Line\ &Wrap<Tab>:set\ wrap!	:set wrap! wrap?<CR>
-an 20.440.130 &Edit.F&ile\ Settings.Toggle\ W&rap\ at\ word<Tab>:set\ lbr!	:set lbr! lbr?<CR>
-an 20.440.160 &Edit.F&ile\ Settings.Toggle\ &expand-tab<Tab>:set\ et!	:set et! et?<CR>
-an 20.440.170 &Edit.F&ile\ Settings.Toggle\ &auto-indent<Tab>:set\ ai!	:set ai! ai?<CR>
-an 20.440.180 &Edit.F&ile\ Settings.Toggle\ &C-indenting<Tab>:set\ cin!	:set cin! cin?<CR>
+an 20.440.120 &Edit.F&ile\ Settings.Toggle\ Line\ &Wrapping<Tab>:set\ wrap!	:set wrap! wrap?<CR>
+an 20.440.130 &Edit.F&ile\ Settings.Toggle\ W&rapping\ at\ Word<Tab>:set\ lbr!	:set lbr! lbr?<CR>
+an 20.440.160 &Edit.F&ile\ Settings.Toggle\ Tab\ &Expanding<Tab>:set\ et!	:set et! et?<CR>
+an 20.440.170 &Edit.F&ile\ Settings.Toggle\ &Auto\ Indenting<Tab>:set\ ai!	:set ai! ai?<CR>
+an 20.440.180 &Edit.F&ile\ Settings.Toggle\ &C-Style\ Indenting<Tab>:set\ cin!	:set cin! cin?<CR>
 
 " other options
 an 20.440.600 &Edit.F&ile\ Settings.-SEP2-		<Nop>
@@ -309,7 +318,7 @@ fun! s:TextWidth()
     " Remove leading zeros to avoid it being used as an octal number.
     " But keep a zero by itself.
     let tw = substitute(n, "^0*", "", "")
-    let &tw = tw == '' ? 0 : tw 
+    let &tw = tw == '' ? 0 : tw
   endif
 endfun
 
@@ -337,63 +346,83 @@ fun! s:FileFormat()
   endif
 endfun
 
+let s:did_setup_color_schemes = 0
 
 " Setup the Edit.Color Scheme submenu
+func! s:SetupColorSchemes() abort
+  if s:did_setup_color_schemes
+    return
+  endif
+  let s:did_setup_color_schemes = 1
 
-" get NL separated string with file names
-let s:n = globpath(&runtimepath, "colors/*.vim")
+  let n = globpath(&runtimepath, "colors/*.vim", 1, 1)
+  let n += globpath(&runtimepath, "pack/*/start/*/colors/*.vim", 1, 1)
+  let n += globpath(&runtimepath, "pack/*/opt/*/colors/*.vim", 1, 1)
 
-" split at NL, ignore case for Windows, sort on name
-let s:names = sort(map(split(s:n, "\n"), 'substitute(v:val, "\\c.*[/\\\\:\\]]\\([^/\\\\:]*\\)\\.vim", "\\1", "")'), 1)
+  " Ignore case for VMS and windows, sort on name
+  let names = sort(map(n, 'substitute(v:val, "\\c.*[/\\\\:\\]]\\([^/\\\\:]*\\)\\.vim", "\\1", "")'), 1)
 
-" define all the submenu entries
-let s:idx = 100
-for s:name in s:names
-  exe "an 20.450." . s:idx . ' &Edit.C&olor\ Scheme.' . s:name . " :colors " . s:name . "<CR>"
-  let s:idx = s:idx + 10
-endfor
-unlet s:name s:names s:n s:idx
+  " define all the submenu entries
+  let idx = 100
+  for name in names
+    exe "an 20.450." . idx . ' &Edit.C&olor\ Scheme.' . name . " :colors " . name . "<CR>"
+    let idx = idx + 10
+  endfor
+  silent! aunmenu &Edit.Show\ C&olor\ Schemes\ in\ Menu
+endfun
+if exists("do_no_lazyload_menus")
+  call s:SetupColorSchemes()
+else
+  an <silent> 20.450 &Edit.Show\ C&olor\ Schemes\ in\ Menu :call <SID>SetupColorSchemes()<CR>
+endif
 
 
 " Setup the Edit.Keymap submenu
 if has("keymap")
-  let s:n = globpath(&runtimepath, "keymap/*.vim")
-  if s:n != ""
-    let s:idx = 100
-    an 20.460.90 &Edit.&Keymap.None :set keymap=<CR>
-    while strlen(s:n) > 0
-      let s:i = stridx(s:n, "\n")
-      if s:i < 0
-	let s:name = s:n
-	let s:n = ""
-      else
-	let s:name = strpart(s:n, 0, s:i)
-	let s:n = strpart(s:n, s:i + 1, 19999)
-      endif
-      " Ignore case for Windows
-      let s:name = substitute(s:name, '\c.*[/\\:\]]\([^/\\:_]*\)\(_[0-9a-zA-Z-]*\)\=\.vim', '\1', '')
-      exe "an 20.460." . s:idx . ' &Edit.&Keymap.' . s:name . " :set keymap=" . s:name . "<CR>"
-      unlet s:name
-      unlet s:i
-      let s:idx = s:idx + 10
-    endwhile
-    unlet s:idx
+  let s:did_setup_keymaps = 0
+
+  func! s:SetupKeymaps() abort
+    if s:did_setup_keymaps
+      return
+    endif
+    let s:did_setup_keymaps = 1
+
+    let n = globpath(&runtimepath, "keymap/*.vim", 1, 1)
+    if !empty(n)
+      let idx = 100
+      an 20.460.90 &Edit.&Keymap.None :set keymap=<CR>
+      for name in n
+	" Ignore case for VMS and windows
+	let name = substitute(name, '\c.*[/\\:\]]\([^/\\:_]*\)\(_[0-9a-zA-Z-]*\)\=\.vim', '\1', '')
+	exe "an 20.460." . idx . ' &Edit.&Keymap.' . name . " :set keymap=" . name . "<CR>"
+	let idx = idx + 10
+      endfor
+    endif
+    silent! aunmenu &Edit.Show\ &Keymaps\ in\ Menu
+  endfun
+  if exists("do_no_lazyload_menus")
+    call s:SetupKeymaps()
+  else
+    an <silent> 20.460 &Edit.Show\ &Keymaps\ in\ Menu :call <SID>SetupKeymaps()<CR>
   endif
-  unlet s:n
 endif
-if has("win32") || has("win16") || has("gui_motif") || has("gui_gtk") || has("gui_kde") || has("gui_mac")
+if has("win32") || has("gui_motif") || has("gui_gtk") || has("gui_kde") || has("gui_photon") || has("gui_mac")
   an 20.470 &Edit.Select\ Fo&nt\.\.\.	:set guifont=*<CR>
 endif
 
 " Programming menu
 if !exists("g:ctags_command")
-  let g:ctags_command = "ctags -R ."
+  if has("vms")
+    let g:ctags_command = "mc vim:ctags *.*"
+  else
+    let g:ctags_command = "ctags -R ."
+  endif
 endif
 
-an 40.300 &Tools.&Jump\ to\ this\ tag<Tab>g^]	g<C-]>
-vunmenu &Tools.&Jump\ to\ this\ tag<Tab>g^]
-vnoremenu &Tools.&Jump\ to\ this\ tag<Tab>g^]	g<C-]>
-an 40.310 &Tools.Jump\ &back<Tab>^T		<C-T>
+an 40.300 &Tools.&Jump\ to\ This\ Tag<Tab>g^]	g<C-]>
+vunmenu &Tools.&Jump\ to\ This\ Tag<Tab>g^]
+vnoremenu &Tools.&Jump\ to\ This\ Tag<Tab>g^]	g<C-]>
+an 40.310 &Tools.Jump\ &Back<Tab>^T		<C-T>
 an 40.320 &Tools.Build\ &Tags\ File		:exe "!" . g:ctags_command<CR>
 
 if has("folding") || has("spell")
@@ -404,17 +433,17 @@ endif
 if has("spell")
   an 40.335.110 &Tools.&Spelling.&Spell\ Check\ On		:set spell<CR>
   an 40.335.120 &Tools.&Spelling.Spell\ Check\ &Off		:set nospell<CR>
-  an 40.335.130 &Tools.&Spelling.To\ &Next\ error<Tab>]s	]s
-  an 40.335.130 &Tools.&Spelling.To\ &Previous\ error<Tab>[s	[s
+  an 40.335.130 &Tools.&Spelling.To\ &Next\ Error<Tab>]s	]s
+  an 40.335.130 &Tools.&Spelling.To\ &Previous\ Error<Tab>[s	[s
   an 40.335.140 &Tools.&Spelling.Suggest\ &Corrections<Tab>z=	z=
-  an 40.335.150 &Tools.&Spelling.&Repeat\ correction<Tab>:spellrepall	:spellrepall<CR>
+  an 40.335.150 &Tools.&Spelling.&Repeat\ Correction<Tab>:spellrepall	:spellrepall<CR>
   an 40.335.200 &Tools.&Spelling.-SEP1-				<Nop>
-  an 40.335.210 &Tools.&Spelling.Set\ language\ to\ "en"	:set spl=en spell<CR>
-  an 40.335.220 &Tools.&Spelling.Set\ language\ to\ "en_au"	:set spl=en_au spell<CR>
-  an 40.335.230 &Tools.&Spelling.Set\ language\ to\ "en_ca"	:set spl=en_ca spell<CR>
-  an 40.335.240 &Tools.&Spelling.Set\ language\ to\ "en_gb"	:set spl=en_gb spell<CR>
-  an 40.335.250 &Tools.&Spelling.Set\ language\ to\ "en_nz"	:set spl=en_nz spell<CR>
-  an 40.335.260 &Tools.&Spelling.Set\ language\ to\ "en_us"	:set spl=en_us spell<CR>
+  an 40.335.210 &Tools.&Spelling.Set\ Language\ to\ "en"	:set spl=en spell<CR>
+  an 40.335.220 &Tools.&Spelling.Set\ Language\ to\ "en_au"	:set spl=en_au spell<CR>
+  an 40.335.230 &Tools.&Spelling.Set\ Language\ to\ "en_ca"	:set spl=en_ca spell<CR>
+  an 40.335.240 &Tools.&Spelling.Set\ Language\ to\ "en_gb"	:set spl=en_gb spell<CR>
+  an 40.335.250 &Tools.&Spelling.Set\ Language\ to\ "en_nz"	:set spl=en_nz spell<CR>
+  an 40.335.260 &Tools.&Spelling.Set\ Language\ to\ "en_us"	:set spl=en_us spell<CR>
   an <silent> 40.335.270 &Tools.&Spelling.&Find\ More\ Languages	:call <SID>SpellLang()<CR>
 
   let s:undo_spellang = ['aun &Tools.&Spelling.&Find\ More\ Languages']
@@ -431,14 +460,14 @@ if has("spell")
     endif
 
     if !exists("g:menutrans_set_lang_to")
-      let g:menutrans_set_lang_to = 'Set language to'
+      let g:menutrans_set_lang_to = 'Set Language to'
     endif
 
     let found = 0
-    let s = globpath(&rtp, "spell/*." . enc . ".spl")
-    if s != ""
+    let s = globpath(&runtimepath, "spell/*." . enc . ".spl", 1, 1)
+    if !empty(s)
       let n = 300
-      for f in split(s, "\n")
+      for f in s
 	let nm = substitute(f, '.*spell[/\\]\(..\)\.[^/\\]*\.spl', '\1', "")
 	if nm != "en" && nm !~ '/'
           let _nm = nm
@@ -468,14 +497,14 @@ endif
 " Tools.Fold Menu
 if has("folding")
   " open close folds
-  an 40.340.110 &Tools.&Folding.&Enable/Disable\ folds<Tab>zi		zi
+  an 40.340.110 &Tools.&Folding.&Enable/Disable\ Folds<Tab>zi		zi
   an 40.340.120 &Tools.&Folding.&View\ Cursor\ Line<Tab>zv		zv
-  an 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ only<Tab>zMzx	zMzx
-  inoremenu 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ only<Tab>zMzx  <C-O>zM<C-O>zx
-  an 40.340.130 &Tools.&Folding.C&lose\ more\ folds<Tab>zm		zm
-  an 40.340.140 &Tools.&Folding.&Close\ all\ folds<Tab>zM		zM
-  an 40.340.150 &Tools.&Folding.O&pen\ more\ folds<Tab>zr		zr
-  an 40.340.160 &Tools.&Folding.&Open\ all\ folds<Tab>zR		zR
+  an 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ Only<Tab>zMzx	zMzx
+  inoremenu 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ Only<Tab>zMzx  <C-O>zM<C-O>zx
+  an 40.340.130 &Tools.&Folding.C&lose\ More\ Folds<Tab>zm		zm
+  an 40.340.140 &Tools.&Folding.&Close\ All\ Folds<Tab>zM		zM
+  an 40.340.150 &Tools.&Folding.O&pen\ More\ Folds<Tab>zr		zr
+  an 40.340.160 &Tools.&Folding.&Open\ All\ Folds<Tab>zR		zR
   " fold method
   an 40.340.200 &Tools.&Folding.-SEP1-			<Nop>
   an 40.340.210 &Tools.&Folding.Fold\ Met&hod.M&anual	:set fdm=manual<CR>
@@ -490,14 +519,14 @@ if has("folding")
   an 40.340.240 &Tools.&Folding.Delete\ &All\ Folds<Tab>zD	zD
   " moving around in folds
   an 40.340.300 &Tools.&Folding.-SEP2-				<Nop>
-  an 40.340.310.10 &Tools.&Folding.Fold\ col&umn\ width.\ &0\ 	:set fdc=0<CR>
-  an 40.340.310.20 &Tools.&Folding.Fold\ col&umn\ width.\ &2\ 	:set fdc=2<CR>
-  an 40.340.310.30 &Tools.&Folding.Fold\ col&umn\ width.\ &3\ 	:set fdc=3<CR>
-  an 40.340.310.40 &Tools.&Folding.Fold\ col&umn\ width.\ &4\ 	:set fdc=4<CR>
-  an 40.340.310.50 &Tools.&Folding.Fold\ col&umn\ width.\ &5\ 	:set fdc=5<CR>
-  an 40.340.310.60 &Tools.&Folding.Fold\ col&umn\ width.\ &6\ 	:set fdc=6<CR>
-  an 40.340.310.70 &Tools.&Folding.Fold\ col&umn\ width.\ &7\ 	:set fdc=7<CR>
-  an 40.340.310.80 &Tools.&Folding.Fold\ col&umn\ width.\ &8\ 	:set fdc=8<CR>
+  an 40.340.310.10 &Tools.&Folding.Fold\ Col&umn\ Width.\ &0\ 	:set fdc=0<CR>
+  an 40.340.310.20 &Tools.&Folding.Fold\ Col&umn\ Width.\ &2\ 	:set fdc=2<CR>
+  an 40.340.310.30 &Tools.&Folding.Fold\ Col&umn\ Width.\ &3\ 	:set fdc=3<CR>
+  an 40.340.310.40 &Tools.&Folding.Fold\ Col&umn\ Width.\ &4\ 	:set fdc=4<CR>
+  an 40.340.310.50 &Tools.&Folding.Fold\ Col&umn\ Width.\ &5\ 	:set fdc=5<CR>
+  an 40.340.310.60 &Tools.&Folding.Fold\ Col&umn\ Width.\ &6\ 	:set fdc=6<CR>
+  an 40.340.310.70 &Tools.&Folding.Fold\ Col&umn\ Width.\ &7\ 	:set fdc=7<CR>
+  an 40.340.310.80 &Tools.&Folding.Fold\ Col&umn\ Width.\ &8\ 	:set fdc=8<CR>
 endif  " has folding
 
 if has("diff")
@@ -525,15 +554,19 @@ an 40.430.70 &Tools.Error\ &Window.&Close<Tab>:cclose	:cclose<CR>
 an 40.520 &Tools.-SEP3-					<Nop>
 an <silent> 40.530 &Tools.&Convert\ to\ HEX<Tab>:%!xxd
 	\ :call <SID>XxdConv()<CR>
-an <silent> 40.540 &Tools.Conve&rt\ back<Tab>:%!xxd\ -r
+an <silent> 40.540 &Tools.Conve&rt\ Back<Tab>:%!xxd\ -r
 	\ :call <SID>XxdBack()<CR>
 
 " Use a function to do the conversion, so that it also works with 'insertmode'
 " set.
 func! s:XxdConv()
   let mod = &mod
-  call s:XxdFind()
-  exe '%!"' . g:xxdprogram . '"'
+  if has("vms")
+    %!mc vim:xxd
+  else
+    call s:XxdFind()
+    exe '%!"' . g:xxdprogram . '"'
+  endif
   if getline(1) =~ "^0000000:"		" only if it worked
     set ft=xxd
   endif
@@ -542,8 +575,12 @@ endfun
 
 func! s:XxdBack()
   let mod = &mod
-  call s:XxdFind()
-  exe '%!"' . g:xxdprogram . '" -r'
+  if has("vms")
+    %!mc vim:xxd -r
+  else
+    call s:XxdFind()
+    exe '%!"' . g:xxdprogram . '" -r'
+  endif
   set ft=
   doautocmd filetypedetect BufReadPost
   let &mod = mod
@@ -552,7 +589,7 @@ endfun
 func! s:XxdFind()
   if !exists("g:xxdprogram")
     " On the PC xxd may not be in the path but in the install directory
-    if (has("win32") || has("dos32")) && !executable("xxd")
+    if has("win32") && !executable("xxd")
       let g:xxdprogram = $VIMRUNTIME . (&shellslash ? '/' : '\') . "xxd.exe"
     else
       let g:xxdprogram = "xxd"
@@ -560,27 +597,46 @@ func! s:XxdFind()
   endif
 endfun
 
+let s:did_setup_compilers = 0
+
 " Setup the Tools.Compiler submenu
-let s:n = globpath(&runtimepath, "compiler/*.vim")
-let s:idx = 100
-while strlen(s:n) > 0
-  let s:i = stridx(s:n, "\n")
-  if s:i < 0
-    let s:name = s:n
-    let s:n = ""
-  else
-    let s:name = strpart(s:n, 0, s:i)
-    let s:n = strpart(s:n, s:i + 1, 19999)
+func! s:SetupCompilers() abort
+  if s:did_setup_compilers
+    return
   endif
-  " Ignore case for Windows
-  let s:name = substitute(s:name, '\c.*[/\\:\]]\([^/\\:]*\)\.vim', '\1', '')
-  exe "an 30.440." . s:idx . ' &Tools.Se&T\ Compiler.' . s:name . " :compiler " . s:name . "<CR>"
-  unlet s:name
-  unlet s:i
-  let s:idx = s:idx + 10
-endwhile
-unlet s:n
-unlet s:idx
+  let s:did_setup_compilers = 1
+
+  let n = globpath(&runtimepath, "compiler/*.vim", 1, 1)
+  let idx = 100
+  for name in n
+    " Ignore case for VMS and windows
+    let name = substitute(name, '\c.*[/\\:\]]\([^/\\:]*\)\.vim', '\1', '')
+    exe "an 30.440." . idx . ' &Tools.Se&t\ Compiler.' . name . " :compiler " . name . "<CR>"
+    let idx = idx + 10
+  endfor
+  silent! aunmenu &Tools.Show\ Compiler\ Se&ttings\ in\ Menu
+endfun
+if exists("do_no_lazyload_menus")
+  call s:SetupCompilers()
+else
+  an <silent> 30.440 &Tools.Show\ Compiler\ Se&ttings\ in\ Menu :call <SID>SetupCompilers()<CR>
+endif
+
+" Load ColorScheme, Compiler Setting and Keymap menus when idle.
+if !exists("do_no_lazyload_menus")
+  func! s:SetupLazyloadMenus()
+    call s:SetupColorSchemes()
+    call s:SetupCompilers()
+    if has("keymap")
+      call s:SetupKeymaps()
+    endif
+  endfunc
+  augroup SetupLazyloadMenus
+    au!
+    au CursorHold,CursorHoldI * call <SID>SetupLazyloadMenus() | au! SetupLazyloadMenus
+  augroup END
+endif
+
 
 if !exists("no_buffers_menu")
 
@@ -683,13 +739,21 @@ endfunc
 func! s:BMHash(name)
   " Make name all upper case, so that chars are between 32 and 96
   let nm = substitute(a:name, ".*", '\U\0', "")
-  let sp = char2nr(' ')
+  if has("ebcdic")
+    " HACK: Replace all non alphabetics with 'Z'
+    "       Just to make it work for now.
+    let nm = substitute(nm, "[^A-Z]", 'Z', "g")
+    let sp = char2nr('A') - 1
+  else
+    let sp = char2nr(' ')
+  endif
   " convert first six chars into a number for sorting:
   return (char2nr(nm[0]) - sp) * 0x800000 + (char2nr(nm[1]) - sp) * 0x20000 + (char2nr(nm[2]) - sp) * 0x1000 + (char2nr(nm[3]) - sp) * 0x80 + (char2nr(nm[4]) - sp) * 0x20 + (char2nr(nm[5]) - sp)
 endfunc
 
 func! s:BMHash2(name)
   let nm = substitute(a:name, ".", '\L\0', "")
+  " Not exactly right for EBCDIC...
   if nm[0] < 'a' || nm[0] > 'z'
     return '&others.'
   elseif nm[0] <= 'd'
@@ -754,7 +818,7 @@ func! s:BMMunge(fname, bnum)
   let name = a:fname
   if name == ''
     if !exists("g:menutrans_no_file")
-      let g:menutrans_no_file = "[No file]"
+      let g:menutrans_no_file = "[No Name]"
     endif
     let name = g:menutrans_no_file
   else
@@ -789,17 +853,15 @@ an 70.300 &Window.&New<Tab>^Wn			<C-W>n
 an 70.310 &Window.S&plit<Tab>^Ws		<C-W>s
 an 70.320 &Window.Sp&lit\ To\ #<Tab>^W^^	<C-W><C-^>
 an 70.330 &Window.Split\ &Vertically<Tab>^Wv	<C-W>v
-if has("vertsplit")
-  an <silent> 70.332 &Window.Split\ File\ E&xplorer	:call MenuExplOpen()<CR>
-  if !exists("*MenuExplOpen")
-    fun MenuExplOpen()
-      if @% == ""
-	20vsp .
-      else
-	exe "20vsp " . s:FnameEscape(expand("%:p:h"))
-      endif
-    endfun
-  endif
+an <silent> 70.332 &Window.Split\ File\ E&xplorer	:call MenuExplOpen()<CR>
+if !exists("*MenuExplOpen")
+  fun MenuExplOpen()
+    if @% == ""
+      20vsp .
+    else
+      exe "20vsp " . s:FnameEscape(expand("%:p:h"))
+    endif
+  endfun
 endif
 an 70.335 &Window.-SEP1-				<Nop>
 an 70.340 &Window.&Close<Tab>^Wc			:confirm close<CR>
@@ -807,8 +869,8 @@ an 70.345 &Window.Close\ &Other(s)<Tab>^Wo		:confirm only<CR>
 an 70.350 &Window.-SEP2-				<Nop>
 an 70.355 &Window.Move\ &To.&Top<Tab>^WK		<C-W>K
 an 70.355 &Window.Move\ &To.&Bottom<Tab>^WJ		<C-W>J
-an 70.355 &Window.Move\ &To.&Left\ side<Tab>^WH		<C-W>H
-an 70.355 &Window.Move\ &To.&Right\ side<Tab>^WL	<C-W>L
+an 70.355 &Window.Move\ &To.&Left\ Side<Tab>^WH		<C-W>H
+an 70.355 &Window.Move\ &To.&Right\ Side<Tab>^WL	<C-W>L
 an 70.360 &Window.Rotate\ &Up<Tab>^WR			<C-W>R
 an 70.362 &Window.Rotate\ &Down<Tab>^Wr			<C-W>r
 an 70.365 &Window.-SEP3-				<Nop>
@@ -891,7 +953,10 @@ if has("spell")
 	let s:suglist = spellsuggest(w, 10)
       endif
       if len(s:suglist) > 0
-	let s:changeitem = 'change\ "' . escape(w, ' .'). '"\ to'
+	if !exists("g:menutrans_spell_change_ARG_to")
+	  let g:menutrans_spell_change_ARG_to = 'Change\ "%s"\ to'
+	endif
+	let s:changeitem = printf(g:menutrans_spell_change_ARG_to, escape(w, ' .'))
 	let s:fromword = w
 	let pri = 1
 	" set 'cpo' to include the <CR>
@@ -903,10 +968,16 @@ if has("spell")
 	  let pri += 1
 	endfor
 
-	let s:additem = 'add\ "' . escape(w, ' .') . '"\ to\ word\ list'
+	if !exists("g:menutrans_spell_add_ARG_to_word_list")
+	  let g:menutrans_spell_add_ARG_to_word_list = 'Add\ "%s"\ to\ Word\ List'
+	endif
+	let s:additem = printf(g:menutrans_spell_add_ARG_to_word_list, escape(w, ' .'))
 	exe 'anoremenu 1.6 PopUp.' . s:additem . ' :spellgood ' . w . '<CR>'
 
-	let s:ignoreitem = 'ignore\ "' . escape(w, ' .') . '"'
+	if !exists("g:menutrans_spell_ignore_ARG")
+	  let g:menutrans_spell_ignore_ARG = 'Ignore\ "%s"'
+	endif
+	let s:ignoreitem = printf(g:menutrans_spell_ignore_ARG, escape(w, ' .'))
 	exe 'anoremenu 1.7 PopUp.' . s:ignoreitem . ' :spellgood! ' . w . '<CR>'
 
 	anoremenu 1.8 PopUp.-SpellSep- :
@@ -1045,7 +1116,7 @@ endif " !exists("did_install_default_menus")
 if !exists("did_install_syntax_menu")
   an 50.212 &Syntax.&Manual		:syn manual<CR>
   an 50.214 &Syntax.A&utomatic		:syn on<CR>
-  an <silent> 50.216 &Syntax.on/off\ for\ &This\ file :call <SID>SynOnOff()<CR>
+  an <silent> 50.216 &Syntax.On/Off\ for\ &This\ File :call <SID>SynOnOff()<CR>
   if !exists("*s:SynOnOff")
     fun s:SynOnOff()
       if has("syntax_items")
@@ -1073,14 +1144,14 @@ if (exists("did_load_filetypes") || exists("syntax_on"))
 if exists("do_syntax_sel_menu")
   runtime! synmenu.vim
 else
-  an 50.10 &Syntax.&Show\ filetypes\ in\ menu	:let do_syntax_sel_menu = 1<Bar>runtime! synmenu.vim<Bar>aunmenu &Syntax.&Show\ filetypes\ in\ menu<CR>
+  an <silent> 50.10 &Syntax.&Show\ File\ Types\ in\ Menu	:let do_syntax_sel_menu = 1<Bar>runtime! synmenu.vim<Bar>aunmenu &Syntax.&Show\ File\ Types\ in\ Menu<CR>
   an 50.195 &Syntax.-SEP1-		<Nop>
 endif
 
 an 50.210 &Syntax.&Off			:syn off<CR>
 an 50.700 &Syntax.-SEP3-		<Nop>
-an 50.710 &Syntax.Co&lor\ test		:sp $VIMRUNTIME/syntax/colortest.vim<Bar>so %<CR>
-an 50.720 &Syntax.&Highlight\ test	:runtime syntax/hitest.vim<CR>
+an 50.710 &Syntax.Co&lor\ Test		:sp $VIMRUNTIME/syntax/colortest.vim<Bar>so %<CR>
+an 50.720 &Syntax.&Highlight\ Test	:runtime syntax/hitest.vim<CR>
 an 50.730 &Syntax.&Convert\ to\ HTML	:runtime syntax/2html.vim<CR>
 
 endif " !exists("did_install_syntax_menu")

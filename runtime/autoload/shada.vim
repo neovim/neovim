@@ -45,7 +45,7 @@ call map(copy(s:SHADA_ENTRY_NAMES),
 let s:SHADA_MAP_ENTRIES = {
   \'search_pattern': ['sp', 'sh', 'ss', 'sb', 'sm', 'sc', 'sl', 'se', 'so',
   \                   'su'],
-  \'register': ['n', 'rc', 'rw', 'rt'],
+  \'register': ['n', 'rc', 'rw', 'rt', 'ru'],
   \'global_mark': ['n', 'f', 'l', 'c'],
   \'local_mark': ['f', 'n', 'l', 'c'],
   \'jump': ['f', 'l', 'c'],
@@ -139,6 +139,7 @@ let s:SHADA_STANDARD_KEYS = {
   \'rt': ['type', 'regtype', s:SHADA_ENUMS.regtype.CHARACTERWISE],
   \'rw': ['block width', 'uint', 0],
   \'rc': ['contents', 'binarray', s:SHADA_REQUIRED],
+  \'ru': ['is_unnamed', 'boolean', g:msgpack#false],
   \'n':  ['name', 'intchar', char2nr('"')],
   \'l':  ['line number', 'uint', 1],
   \'c':  ['column', 'uint', 0],
@@ -240,8 +241,6 @@ function s:shada_check_type(type, val) abort
     let msg = s:shada_check_type('uint', a:val)
     if msg isnot# 0
       return msg
-    endif
-    if a:val > 0 || a:val < 1
     endif
     return 0
   elseif a:type is# 'binarray'
@@ -359,9 +358,14 @@ function s:shada_string(type, v) abort
   if (has_key(s:SHADA_ENUMS, a:type) && type(a:v) == type(0)
      \&& has_key(s:SHADA_REV_ENUMS[a:type], a:v))
     return s:SHADA_REV_ENUMS[a:type][a:v]
-  elseif (a:type is# 'intchar' && type(a:v) == type(0)
-         \&& strtrans(nr2char(a:v)) is# nr2char(a:v))
-    return "'" . nr2char(a:v) . "'"
+  " Restricting a:v to be <= 127 is not necessary, but intchar constants are
+  " normally expected to be either ASCII printable characters or NUL.
+  elseif a:type is# 'intchar' && type(a:v) == type(0) && a:v >= 0 && a:v <= 127
+    if a:v > 0 && strtrans(nr2char(a:v)) is# nr2char(a:v)
+      return "'" . nr2char(a:v) . "'"
+    else
+      return "'\\" . a:v . "'"
+    endif
   else
     return msgpack#string(a:v)
   endif

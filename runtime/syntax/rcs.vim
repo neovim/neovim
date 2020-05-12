@@ -9,11 +9,8 @@
 " Options:
 "   rcs_folding = 1   For folding strings
 
-" For version 5.x: Clear all syntax items.
-" For version 6.x: Quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded.
+if exists("b:current_syntax")
   finish
 endif
 
@@ -52,25 +49,15 @@ else
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already.
-" For version 5.8 and later: only when an item doesn't have highlighting yet.
-if version >= 508 || !exists("did_rcs_syn_inits")
-  if version <= 508
-    let did_rcs_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet.
 
-  HiLink rcsKeyword     Keyword
-  HiLink rcsNumber      Identifier
-  HiLink rcsString      String
-  HiLink rcsTextStr     String
-  HiLink rcsSpecial     Special
-  HiLink rcsDiffLines   Special
-  HiLink rcsEOFError    Error
+hi def link rcsKeyword     Keyword
+hi def link rcsNumber      Identifier
+hi def link rcsString      String
+hi def link rcsTextStr     String
+hi def link rcsSpecial     Special
+hi def link rcsDiffLines   Special
+hi def link rcsEOFError    Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "rcs"

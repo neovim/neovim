@@ -1,8 +1,12 @@
 " Vim filetype plugin file
 " Language:	Verilog HDL
-" Maintainer:	Chih-Tsun Huang <cthuang@larc.ee.nthu.edu.tw>
-" Last Change:	Wed Sep  3 15:24:49 CST 2008
-" URL:		http://larc.ee.nthu.edu.tw/~cthuang/vim/ftplugin/verilog.vim
+" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
+" Last Change:	2017 Aug 25 by Chih-Tsun Huang
+" URL:	    	http://www.cs.nthu.edu.tw/~cthuang/vim/ftplugin/verilog.vim
+"
+" Credits:
+"   Suggestions for improvement, bug reports by
+"     Shao <shaominghai2005@163.com>
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -45,11 +49,16 @@ if exists("loaded_matchit")
     \ '\<begin\>:\<end\>,' .
     \ '\<case\>\|\<casex\>\|\<casez\>:\<endcase\>,' .
     \ '\<module\>:\<endmodule\>,' .
-    \ '\<if\>:\<else\>,' .
+    \ '\<if\>:`\@<!\<else\>,' .
     \ '\<function\>:\<endfunction\>,' .
-    \ '`ifdef\>:`else\>:`endif\>,' .
+    \ '`ifn\?def\>:`elsif\>:`else\>:`endif\>,' .
     \ '\<task\>:\<endtask\>,' .
-    \ '\<specify\>:\<endspecify\>'
+    \ '\<specify\>:\<endspecify\>,' .
+    \ '\<config\>:\<endconfig\>,' .
+    \ '\<generate\>:\<endgenerate\>,' .
+    \ '\<fork\>:\<join\>,' .
+    \ '\<primitive\>:\<endprimitive\>,' .
+    \ '\<table\>:\<endtable\>'
 endif
 
 " Reset 'cpoptions' back to the user's setting

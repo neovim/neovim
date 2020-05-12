@@ -3,6 +3,7 @@
 
 /// List of possible XDG variables
 typedef enum {
+  kXDGNone = -1,
   kXDGConfigHome,  ///< XDG_CONFIG_HOME
   kXDGDataHome,    ///< XDG_DATA_HOME
   kXDGCacheHome,   ///< XDG_CACHE_HOME

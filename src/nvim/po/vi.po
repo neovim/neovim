@@ -2500,7 +2500,7 @@ msgstr "E216: Nhóm hoặc sự kiện không có thật: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Câu lệnh tự động ---"
@@ -2524,7 +2524,7 @@ msgstr "E218: câu lệnh tự động xếp lồng vào nhau quá xâu"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s câu lệnh tự động cho \"%s\""
 
 #: ../fileio.c:7149
@@ -2718,11 +2718,6 @@ msgstr "E49: Kích thước thanh cuộn không cho phép"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3424,7 +3419,7 @@ msgstr "-q [tập tin lỗi] soạn thảo tập tin với lỗi đầu tiên"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4310,11 +4305,6 @@ msgstr "dòng %4ld:"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr ""
-"Bản dịch các thông báo sang tiếng Việt: Phan Vĩnh Thịnh <teppi@vnlinux.org>"
 
 #: ../message.c:986
 msgid "Interrupt: "

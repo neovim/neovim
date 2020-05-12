@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         modules.conf(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-10-25
+" Language:             modules.conf(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-10-25
 
 if exists("b:current_syntax")
   finish

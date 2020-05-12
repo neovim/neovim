@@ -1,4 +1,4 @@
-*pi_msgpack.txt*	For NeoVim version 0.1.
+*pi_msgpack.txt*   msgpack utilities
 
 Author:  Nikolay Pavlov <kp-pav@yandex.ru>
 Copyright: (c) 2015 by Nikolay Pavlov
@@ -49,7 +49,7 @@ does not check whether argument matches its description.
 
 *{msgpack-value}*	Either |msgpack-special-dict| or a regular value, but 
 			not function reference.
-*{msgpack-integer}*	Any value for which |msgpack#type| will return 
+*{msgpack-integer}*	Any value for which |msgpack#type()| will return 
 			"integer".
 *{msgpack-special-int}*	|msgpack-special-dict| representing integer.
 
@@ -127,6 +127,11 @@ msgpack#eval({string}, {dict})				*msgpack#eval()*
 	"NIL", "nan" and "inf" and they cannot be overridden.  Map values are 
 	always evaluated to |msgpack-special-dict| values, as well as 
 	hexadecimal digits.  When evaluating maps order of keys is preserved.
+
+	Note that in addition to regular integer representations that may be 
+	obtained using |msgpack#string()| msgpack#eval() also supports C-style 
+	“character” integer constants like `'/'` (equivalent to 
+	`char2nr('/')`: `47`). This also allows `'\0'` (number is decimal).
 
 							*msgpack#equal*
 msgpack#equal({msgpack-value}, {msgpack-value})		*msgpack#equal()*

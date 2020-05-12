@@ -1,4 +1,4 @@
-*hebrew.txt*    For Vim version 7.4.  Last change: 2007 Jun 14
+*hebrew.txt*    Nvim
 
 
 	   VIM REFERENCE MANUAL    by Ron Aaron (and Avner Lottem)
@@ -134,4 +134,4 @@ The result is that all Hebrew characters are displayed as ~x.  To solve this
 problem, set isprint=@,128-255.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

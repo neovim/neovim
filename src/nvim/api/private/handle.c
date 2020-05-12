@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdint.h>
 
@@ -5,29 +8,25 @@
 #include "nvim/map.h"
 #include "nvim/api/private/handle.h"
 
-#define HANDLE_INIT(name) name##_handles = pmap_new(uint64_t)()
+#define HANDLE_INIT(name) name##_handles = pmap_new(handle_T)()
 
-#define HANDLE_IMPL(type, name)                                               \
-  static PMap(uint64_t) *name##_handles = NULL;                               \
-                                                                              \
-  type *handle_get_##name(uint64_t handle)                                    \
-  {                                                                           \
-    return pmap_get(uint64_t)(name##_handles, handle);                        \
-  }                                                                           \
-                                                                              \
-  void handle_register_##name(type *name)                                     \
-  {                                                                           \
-    assert(!name->handle);                                                    \
-    name->handle = next_handle++;                                             \
-    pmap_put(uint64_t)(name##_handles, name->handle, name);                   \
-  }                                                                           \
-                                                                              \
-  void handle_unregister_##name(type *name)                                   \
-  {                                                                           \
-    pmap_del(uint64_t)(name##_handles, name->handle);                         \
+#define HANDLE_IMPL(type, name) \
+  static PMap(handle_T) *name##_handles = NULL; /* NOLINT */ \
+  \
+  type *handle_get_##name(handle_T handle) \
+  { \
+    return pmap_get(handle_T)(name##_handles, handle); \
+  } \
+  \
+  void handle_register_##name(type *name) \
+  { \
+    pmap_put(handle_T)(name##_handles, name->handle, name); \
+  } \
+  \
+  void handle_unregister_##name(type *name) \
+  { \
+    pmap_del(handle_T)(name##_handles, name->handle); \
   }
-
-static uint64_t next_handle = 1;
 
 HANDLE_IMPL(buf_T, buffer)
 HANDLE_IMPL(win_T, window)

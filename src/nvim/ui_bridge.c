@@ -1,15 +1,22 @@
-// FIXME(tarruda): This module is very repetitive. It might be a good idea to
-// automatically generate it with a lua script during build
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
+// UI wrapper that sends requests to the UI thread.
+// Used by the built-in TUI and libnvim-based UIs.
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <limits.h>
 
+#include "nvim/log.h"
+#include "nvim/main.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/memory.h"
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -17,13 +24,17 @@
 
 #define UI(b) (((UIBridgeData *)b)->ui)
 
-// Call a function in the UI thread
-#define UI_CALL(ui, name, argc, ...)                                      \
-  ((UIBridgeData *)ui)->scheduler(                                        \
-    event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
+// Schedule a function call on the UI bridge thread.
+#define UI_BRIDGE_CALL(ui, name, argc, ...) \
+  ((UIBridgeData *)ui)->scheduler( \
+      event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
 
-#define INT2PTR(i) ((void *)(uintptr_t)i)
-#define PTR2INT(p) ((int)(uintptr_t)p)
+#define INT2PTR(i) ((void *)(intptr_t)i)
+#define PTR2INT(p) ((Integer)(intptr_t)p)
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ui_events_bridge.generated.h"
+#endif
 
 UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
 {
@@ -31,29 +42,33 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
   rv->bridge.stop = ui_bridge_stop;
-  rv->bridge.resize = ui_bridge_resize;
-  rv->bridge.clear = ui_bridge_clear;
-  rv->bridge.eol_clear = ui_bridge_eol_clear;
-  rv->bridge.cursor_goto = ui_bridge_cursor_goto;
+  rv->bridge.grid_resize = ui_bridge_grid_resize;
+  rv->bridge.grid_clear = ui_bridge_grid_clear;
+  rv->bridge.grid_cursor_goto = ui_bridge_grid_cursor_goto;
+  rv->bridge.mode_info_set = ui_bridge_mode_info_set;
   rv->bridge.update_menu = ui_bridge_update_menu;
   rv->bridge.busy_start = ui_bridge_busy_start;
   rv->bridge.busy_stop = ui_bridge_busy_stop;
   rv->bridge.mouse_on = ui_bridge_mouse_on;
   rv->bridge.mouse_off = ui_bridge_mouse_off;
   rv->bridge.mode_change = ui_bridge_mode_change;
-  rv->bridge.set_scroll_region = ui_bridge_set_scroll_region;
-  rv->bridge.scroll = ui_bridge_scroll;
-  rv->bridge.highlight_set = ui_bridge_highlight_set;
-  rv->bridge.put = ui_bridge_put;
+  rv->bridge.grid_scroll = ui_bridge_grid_scroll;
+  rv->bridge.hl_attr_define = ui_bridge_hl_attr_define;
   rv->bridge.bell = ui_bridge_bell;
   rv->bridge.visual_bell = ui_bridge_visual_bell;
-  rv->bridge.update_fg = ui_bridge_update_fg;
-  rv->bridge.update_bg = ui_bridge_update_bg;
+  rv->bridge.default_colors_set = ui_bridge_default_colors_set;
   rv->bridge.flush = ui_bridge_flush;
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
+  rv->bridge.option_set = ui_bridge_option_set;
+  rv->bridge.raw_line = ui_bridge_raw_line;
+  rv->bridge.inspect = ui_bridge_inspect;
   rv->scheduler = scheduler;
+
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+    rv->bridge.ui_ext[i] = ui->ui_ext[i];
+  }
 
   rv->ui_main = ui_main;
   uv_mutex_init(&rv->mutex);
@@ -65,12 +80,14 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
     abort();
   }
 
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!rv->ready) {
     uv_cond_wait(&rv->cond, &rv->mutex);
   }
   uv_mutex_unlock(&rv->mutex);
 
-  ui_attach(&rv->bridge);
+  ui_attach_impl(&rv->bridge, 0);
+
   return &rv->bridge;
 }
 
@@ -89,22 +106,27 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
+  // Detach bridge first, so that "stop" is the last event the TUI loop
+  // receives from the main thread. #8041
+  ui_detach_impl(b, 0);
+
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
-  UI_CALL(b, stop, 1, b);
+  UI_BRIDGE_CALL(b, stop, 1, b);
   for (;;) {
     uv_mutex_lock(&bridge->mutex);
     stopped = bridge->stopped;
     uv_mutex_unlock(&bridge->mutex);
-    if (stopped) {
+    if (stopped) {  // -V547
       break;
     }
-    loop_poll_events(&loop, 10);
+    // TODO(justinmk): Remove this. Use a cond-wait above. #9274
+    loop_poll_events(&main_loop, 10);  // Process one event.
   }
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
-  ui_detach(b);
+  xfree(bridge->ui);  // Threads joined, now safe to free UI container. #7922
   xfree(b);
 }
 static void ui_bridge_stop_event(void **argv)
@@ -113,215 +135,52 @@ static void ui_bridge_stop_event(void **argv)
   ui->stop(ui);
 }
 
-static void ui_bridge_resize(UI *b, int width, int height)
-{
-  UI_CALL(b, resize, 3, b, INT2PTR(width), INT2PTR(height));
-}
-static void ui_bridge_resize_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->resize(ui, PTR2INT(argv[1]), PTR2INT(argv[2]));
-}
-
-static void ui_bridge_clear(UI *b)
-{
-  UI_CALL(b, clear, 1, b);
-}
-static void ui_bridge_clear_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->clear(ui);
-}
-
-static void ui_bridge_eol_clear(UI *b)
-{
-  UI_CALL(b, eol_clear, 1, b);
-}
-static void ui_bridge_eol_clear_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->eol_clear(ui);
-}
-
-static void ui_bridge_cursor_goto(UI *b, int row, int col)
-{
-  UI_CALL(b, cursor_goto, 3, b, INT2PTR(row), INT2PTR(col));
-}
-static void ui_bridge_cursor_goto_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->cursor_goto(ui, PTR2INT(argv[1]), PTR2INT(argv[2]));
-}
-
-static void ui_bridge_update_menu(UI *b)
-{
-  UI_CALL(b, update_menu, 1, b);
-}
-static void ui_bridge_update_menu_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->update_menu(ui);
-}
-
-static void ui_bridge_busy_start(UI *b)
-{
-  UI_CALL(b, busy_start, 1, b);
-}
-static void ui_bridge_busy_start_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->busy_start(ui);
-}
-
-static void ui_bridge_busy_stop(UI *b)
-{
-  UI_CALL(b, busy_stop, 1, b);
-}
-static void ui_bridge_busy_stop_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->busy_stop(ui);
-}
-
-static void ui_bridge_mouse_on(UI *b)
-{
-  UI_CALL(b, mouse_on, 1, b);
-}
-static void ui_bridge_mouse_on_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->mouse_on(ui);
-}
-
-static void ui_bridge_mouse_off(UI *b)
-{
-  UI_CALL(b, mouse_off, 1, b);
-}
-static void ui_bridge_mouse_off_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->mouse_off(ui);
-}
-
-static void ui_bridge_mode_change(UI *b, int mode)
-{
-  UI_CALL(b, mode_change, 2, b, INT2PTR(mode));
-}
-static void ui_bridge_mode_change_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->mode_change(ui, PTR2INT(argv[1]));
-}
-
-static void ui_bridge_set_scroll_region(UI *b, int top, int bot, int left,
-    int right)
-{
-  UI_CALL(b, set_scroll_region, 5, b, INT2PTR(top), INT2PTR(bot),
-      INT2PTR(left), INT2PTR(right));
-}
-static void ui_bridge_set_scroll_region_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->set_scroll_region(ui, PTR2INT(argv[1]), PTR2INT(argv[2]),
-      PTR2INT(argv[3]), PTR2INT(argv[4]));
-}
-
-static void ui_bridge_scroll(UI *b, int count)
-{
-  UI_CALL(b, scroll, 2, b, INT2PTR(count));
-}
-static void ui_bridge_scroll_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->scroll(ui, PTR2INT(argv[1]));
-}
-
-static void ui_bridge_highlight_set(UI *b, HlAttrs attrs)
+static void ui_bridge_hl_attr_define(UI *ui, Integer id, HlAttrs attrs,
+                                     HlAttrs cterm_attrs, Array info)
 {
   HlAttrs *a = xmalloc(sizeof(HlAttrs));
   *a = attrs;
-  UI_CALL(b, highlight_set, 2, b, a);
+  UI_BRIDGE_CALL(ui, hl_attr_define, 3, ui, INT2PTR(id), a);
 }
-static void ui_bridge_highlight_set_event(void **argv)
+static void ui_bridge_hl_attr_define_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  ui->highlight_set(ui, *((HlAttrs *)argv[1]));
-  xfree(argv[1]);
+  Array info = ARRAY_DICT_INIT;
+  ui->hl_attr_define(ui, PTR2INT(argv[1]), *((HlAttrs *)argv[2]),
+                     *((HlAttrs *)argv[2]), info);
+  xfree(argv[2]);
 }
 
-static void ui_bridge_put(UI *b, uint8_t *text, size_t size)
-{
-  uint8_t *t = NULL;
-  if (text) {
-    t = xmalloc(sizeof(((UCell *)0)->data));
-    memcpy(t, text, size);
-  }
-  UI_CALL(b, put, 3, b, t, INT2PTR(size));
-}
-static void ui_bridge_put_event(void **argv)
+static void ui_bridge_raw_line_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  ui->put(ui, (uint8_t *)argv[1], (size_t)(uintptr_t)argv[2]);
-  xfree(argv[1]);
+  ui->raw_line(ui, PTR2INT(argv[1]), PTR2INT(argv[2]), PTR2INT(argv[3]),
+               PTR2INT(argv[4]), PTR2INT(argv[5]), PTR2INT(argv[6]),
+               (LineFlags)PTR2INT(argv[7]), argv[8], argv[9]);
+  xfree(argv[8]);
+  xfree(argv[9]);
 }
-
-static void ui_bridge_bell(UI *b)
+static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row,
+                               Integer startcol, Integer endcol,
+                               Integer clearcol, Integer clearattr,
+                               LineFlags flags, const schar_T *chunk,
+                               const sattr_T *attrs)
 {
-  UI_CALL(b, bell, 1, b);
-}
-static void ui_bridge_bell_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->bell(ui);
-}
-
-static void ui_bridge_visual_bell(UI *b)
-{
-  UI_CALL(b, visual_bell, 1, b);
-}
-static void ui_bridge_visual_bell_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->visual_bell(ui);
-}
-
-static void ui_bridge_update_fg(UI *b, int fg)
-{
-  UI_CALL(b, update_fg, 2, b, INT2PTR(fg));
-}
-static void ui_bridge_update_fg_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->update_fg(ui, PTR2INT(argv[1]));
-}
-
-static void ui_bridge_update_bg(UI *b, int bg)
-{
-  UI_CALL(b, update_bg, 2, b, INT2PTR(bg));
-}
-static void ui_bridge_update_bg_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->update_bg(ui, PTR2INT(argv[1]));
-}
-
-static void ui_bridge_flush(UI *b)
-{
-  UI_CALL(b, flush, 1, b);
-}
-static void ui_bridge_flush_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->flush(ui);
+  size_t ncol = (size_t)(endcol-startcol);
+  schar_T *c = xmemdup(chunk, ncol * sizeof(schar_T));
+  sattr_T *hl = xmemdup(attrs, ncol * sizeof(sattr_T));
+  UI_BRIDGE_CALL(ui, raw_line, 10, ui, INT2PTR(grid), INT2PTR(row),
+                 INT2PTR(startcol), INT2PTR(endcol), INT2PTR(clearcol),
+                 INT2PTR(clearattr), INT2PTR(flags), c, hl);
 }
 
 static void ui_bridge_suspend(UI *b)
 {
   UIBridgeData *data = (UIBridgeData *)b;
   uv_mutex_lock(&data->mutex);
-  UI_CALL(b, suspend, 1, b);
+  UI_BRIDGE_CALL(b, suspend, 1, b);
   data->ready = false;
-  // suspend the main thread until CONTINUE is called by the UI thread
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!data->ready) {
     uv_cond_wait(&data->cond, &data->mutex);
   }
@@ -333,24 +192,32 @@ static void ui_bridge_suspend_event(void **argv)
   ui->suspend(ui);
 }
 
-static void ui_bridge_set_title(UI *b, char *title)
+static void ui_bridge_option_set(UI *ui, String name, Object value)
 {
-  UI_CALL(b, set_title, 2, b, title ? xstrdup(title) : NULL);
+  String copy_name = copy_string(name);
+  Object *copy_value = xmalloc(sizeof(Object));
+  *copy_value = copy_object(value);
+  UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data,
+                 INT2PTR(copy_name.size), copy_value);
+  // TODO(bfredl): when/if TUI/bridge teardown is refactored to use events, the
+  // commit that introduced this special case can be reverted.
+  // For now this is needed for nvim_list_uis().
+  if (strequal(name.data, "termguicolors")) {
+    ui->rgb = value.data.boolean;
+  }
 }
-static void ui_bridge_set_title_event(void **argv)
+static void ui_bridge_option_set_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  ui->set_title(ui, argv[1]);
-  xfree(argv[1]);
+  String name = (String){ .data = argv[1], .size = (size_t)argv[2] };
+  Object value = *(Object *)argv[3];
+  ui->option_set(ui, name, value);
+  api_free_string(name);
+  api_free_object(value);
+  xfree(argv[3]);
 }
 
-static void ui_bridge_set_icon(UI *b, char *icon)
+static void ui_bridge_inspect(UI *ui, Dictionary *info)
 {
-  UI_CALL(b, set_icon, 2, b, icon ? xstrdup(icon) : NULL);
-}
-static void ui_bridge_set_icon_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  ui->set_icon(ui, argv[1]);
-  xfree(argv[1]);
+  PUT(*info, "chan", INTEGER_OBJ(0));
 }

@@ -2,9 +2,10 @@
 " Language:	Eiffel
 " Maintainer:	Jocelyn Fiat <jfiat@eiffel.com>
 " Previous-Maintainer:	David Clarke <gadicath@dishevelled.net>
+" Contributions from: Takuya Fujiwara
 " Contributions from: Thilo Six
-" $Date: 2004/12/09 21:33:52 $
-" $Revision: 1.3 $
+" $Date: 2017/03/08 06:00:00 $
+" $Revision: 1.4 $
 " URL: https://github.com/eiffelhub/vim-eiffel
 
 " Only load this indent file when no other was loaded.
@@ -28,7 +29,7 @@ let b:undo_indent = "setl smartindent< indentkeys< indentexpr< autoindent< comme
 " Define some stuff
 " keywords grouped by indenting
 let s:trust_user_indent = '\(+\)\(\s*\(--\).*\)\=$'
-let s:relative_indent = '^\s*\(deferred\|class\|feature\|creation\|inherit\|loop\|from\|until\|if\|else\|elseif\|ensure\|require\|check\|do\|local\|invariant\|variant\|rename\|redefine\|do\|export\)\>'
+let s:relative_indent = '^\s*\(deferred\|class\|feature\|creation\|inherit\|loop\|from\|across\|until\|if\|else\|elseif\|ensure\|require\|check\|do\|local\|invariant\|variant\|rename\|redefine\|do\|export\)\>'
 let s:outdent = '^\s*\(else\|invariant\|variant\|do\|require\|until\|loop\|local\)\>'
 let s:no_indent = '^\s*\(class\|feature\|creation\|inherit\)\>'
 let s:single_dent = '^[^-]\+[[:alnum:]]\+ is\(\s*\(--\).*\)\=$'
@@ -63,23 +64,23 @@ function GetEiffelIndent()
   " Add a 'shiftwidth' after lines that start with an indent word
   let ind = indent(lnum)
   if getline(lnum) =~ s:relative_indent
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   " Indent to single indent
   if getline(v:lnum) =~ s:single_dent && getline(v:lnum) !~ s:relative_indent
 	   \ && getline(v:lnum) !~ '\s*\<\(and\|or\|implies\)\>'
-     let ind = &sw
+     let ind = shiftwidth()
   endif
 
   " Indent to double indent
   if getline(v:lnum) =~ s:inheritance_dent
-     let ind = 2 * &sw
+     let ind = 2 * shiftwidth()
   endif
 
   " Indent line after the first line of the function definition
   if getline(lnum) =~ s:single_dent
-     let ind = ind + &sw
+     let ind = ind + shiftwidth()
   endif
 
   " The following should always be at the start of a line, no indenting
@@ -91,17 +92,17 @@ function GetEiffelIndent()
   " or first thing after the 'do'
   if getline(v:lnum) =~ s:outdent && getline(v:lnum - 1) !~ s:single_dent
 	\ && getline(v:lnum - 1) !~ '^\s*do\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   " Subtract a shiftwidth for end statements
   if getline(v:lnum) =~ '^\s*end\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   " set indent of zero end statements that are at an indent of 3, this should
   " only ever be the class's end.
-  if getline(v:lnum) =~ '^\s*end\>' && ind == &sw
+  if getline(v:lnum) =~ '^\s*end\>' && ind == shiftwidth()
     let ind = 0
   endif
 

@@ -1,92 +1,90 @@
-/* Copyright (c) 2013, Ben Noordhuis <info@bnoordhuis.nl>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
+// Queue implemented by circularly-linked list.
+//
+// Adapted from libuv. Simpler and more efficient than klist.h for implementing
+// queues that support arbitrary insertion/removal.
+//
+// Copyright (c) 2013, Ben Noordhuis <info@bnoordhuis.nl>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef QUEUE_H_
-#define QUEUE_H_
+#ifndef NVIM_LIB_QUEUE_H
+#define NVIM_LIB_QUEUE_H
 
-typedef void *QUEUE[2];
+#include <stddef.h>
 
-/* Private macros. */
-#define QUEUE_NEXT(q)       (*(QUEUE **) &((*(q))[0]))
-#define QUEUE_PREV(q)       (*(QUEUE **) &((*(q))[1]))
-#define QUEUE_PREV_NEXT(q)  (QUEUE_NEXT(QUEUE_PREV(q)))
-#define QUEUE_NEXT_PREV(q)  (QUEUE_PREV(QUEUE_NEXT(q)))
+#include "nvim/func_attr.h"
 
-/* Public macros. */
-#define QUEUE_DATA(ptr, type, field)                                          \
-  ((type *) ((char *) (ptr) - ((char *) &((type *) 0)->field)))
+typedef struct _queue {
+  struct _queue *next;
+  struct _queue *prev;
+} QUEUE;
 
-#define QUEUE_FOREACH(q, h)                                                   \
-  for ((q) = QUEUE_NEXT(h); (q) != (h); (q) = QUEUE_NEXT(q))
+// Public macros.
+#define QUEUE_DATA(ptr, type, field) \
+  ((type *)((char *)(ptr) - offsetof(type, field)))
 
-#define QUEUE_EMPTY(q)                                                        \
-  ((const QUEUE *) (q) == (const QUEUE *) QUEUE_NEXT(q))
+// Important note: mutating the list while QUEUE_FOREACH is
+// iterating over its elements results in undefined behavior.
+#define QUEUE_FOREACH(q, h) \
+  for (  /* NOLINT(readability/braces) */ \
+      (q) = (h)->next; (q) != (h); (q) = (q)->next)
 
-#define QUEUE_HEAD(q)                                                         \
-  (QUEUE_NEXT(q))
+// ffi.cdef is unable to swallow `bool` in place of `int` here.
+static inline int QUEUE_EMPTY(const QUEUE *const q)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return q == q->next;
+}
 
-#define QUEUE_INIT(q)                                                         \
-  do {                                                                        \
-    QUEUE_NEXT(q) = (q);                                                      \
-    QUEUE_PREV(q) = (q);                                                      \
-  }                                                                           \
-  while (0)
+#define QUEUE_HEAD(q) (q)->next
 
-#define QUEUE_ADD(h, n)                                                       \
-  do {                                                                        \
-    QUEUE_PREV_NEXT(h) = QUEUE_NEXT(n);                                       \
-    QUEUE_NEXT_PREV(n) = QUEUE_PREV(h);                                       \
-    QUEUE_PREV(h) = QUEUE_PREV(n);                                            \
-    QUEUE_PREV_NEXT(h) = (h);                                                 \
-  }                                                                           \
-  while (0)
+static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
+{
+  q->next = q;
+  q->prev = q;
+}
 
-#define QUEUE_SPLIT(h, q, n)                                                  \
-  do {                                                                        \
-    QUEUE_PREV(n) = QUEUE_PREV(h);                                            \
-    QUEUE_PREV_NEXT(n) = (n);                                                 \
-    QUEUE_NEXT(n) = (q);                                                      \
-    QUEUE_PREV(h) = QUEUE_PREV(q);                                            \
-    QUEUE_PREV_NEXT(h) = (h);                                                 \
-    QUEUE_PREV(q) = (n);                                                      \
-  }                                                                           \
-  while (0)
+static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  h->prev->next = n->next;
+  n->next->prev = h->prev;
+  h->prev = n->prev;
+  h->prev->next = h;
+}
 
-#define QUEUE_INSERT_HEAD(h, q)                                               \
-  do {                                                                        \
-    QUEUE_NEXT(q) = QUEUE_NEXT(h);                                            \
-    QUEUE_PREV(q) = (h);                                                      \
-    QUEUE_NEXT_PREV(q) = (q);                                                 \
-    QUEUE_NEXT(h) = (q);                                                      \
-  }                                                                           \
-  while (0)
+static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  q->next = h->next;
+  q->prev = h;
+  q->next->prev = q;
+  h->next = q;
+}
 
-#define QUEUE_INSERT_TAIL(h, q)                                               \
-  do {                                                                        \
-    QUEUE_NEXT(q) = (h);                                                      \
-    QUEUE_PREV(q) = QUEUE_PREV(h);                                            \
-    QUEUE_PREV_NEXT(q) = (q);                                                 \
-    QUEUE_PREV(h) = (q);                                                      \
-  }                                                                           \
-  while (0)
+static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  q->next = h;
+  q->prev = h->prev;
+  q->prev->next = q;
+  h->prev = q;
+}
 
-#define QUEUE_REMOVE(q)                                                       \
-  do {                                                                        \
-    QUEUE_PREV_NEXT(q) = QUEUE_NEXT(q);                                       \
-    QUEUE_NEXT_PREV(q) = QUEUE_PREV(q);                                       \
-  }                                                                           \
-  while (0)
+static inline void QUEUE_REMOVE(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
+{
+  q->prev->next = q->next;
+  q->next->prev = q->prev;
+}
 
-#endif /* QUEUE_H_ */
+#endif  // NVIM_LIB_QUEUE_H

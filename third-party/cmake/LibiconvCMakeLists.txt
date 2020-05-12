@@ -1,0 +1,97 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(libiconv C)
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/srclib
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/srclib
+  ${CMAKE_CURRENT_SOURCE_DIR}/build-aux/snippet)
+
+configure_file(config.h.in config.h)
+file(READ "${CMAKE_CURRENT_BINARY_DIR}/config.h" CONFIG_CONTENT)
+string(REPLACE "#undef EILSEQ" "" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_MBRTOWC" "#define HAVE_MBRTOWC 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_MBSINIT" "#define HAVE_MBSINIT 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_WCRTOMB" "#define HAVE_WCRTOMB 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_DECL___ARGV" "#define HAVE_DECL___ARGV 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_WORKING_O_NOFOLLOW" "#define HAVE_WORKING_O_NOFOLLOW 0" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef ICONV_CONST" "#define ICONV_CONST const" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef WORDS_LITTLEENDIAN" "#define WORDS_LITTLEENDIAN 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_DECL_STRERROR_R" "#define HAVE_DECL_STRERROR_R 0" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef mode_t" "#define mode_t int" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef ssize_t" "#include <BaseTsd.h>\n#define ssize_t SSIZE_T" CONFIG_CONTENT "${CONFIG_CONTENT}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/config.h" "${CONFIG_CONTENT}")
+
+set(BROKEN_WCHAR_H 0)
+set(HAVE_VISIBILITY 0)
+set(HAVE_WCHAR_T 1)
+set(ICONV_CONST "const")
+set(USE_MBSTATE_T 0)
+configure_file(libcharset/include/localcharset.h.build.in localcharset.h)
+configure_file(include/iconv.h.build.in iconv.h)
+
+add_definitions(-DLIBDIR -D_CRT_SECURE_NO_WARNINGS)
+
+add_library(libcharset libcharset/lib/localcharset.c)
+
+add_library(libiconv lib/iconv.c)
+target_link_libraries(libiconv libcharset)
+
+add_executable(iconv src/iconv.c srclib/progname.c srclib/getprogname.c
+  srclib/safe-read.c srclib/uniwidth/width.c srclib/error.c srclib/xmalloc.c
+  srclib/basename-lgpl.c)
+target_link_libraries(iconv libiconv)
+
+set(HEADER_TEMPLATES_PATH "srclib")
+set(HEADER_TEMPLATES_ABS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER_TEMPLATES_PATH}")
+file(GLOB_RECURSE HEADER_TEMPLATES "${HEADER_TEMPLATES_ABS_PATH}/*.in.h")
+list(REMOVE_ITEM HEADER_TEMPLATES  "${HEADER_TEMPLATES_ABS_PATH}/stdint.in.h")
+list(REMOVE_ITEM HEADER_TEMPLATES  "${HEADER_TEMPLATES_ABS_PATH}/wchar.in.h")
+foreach(HEADER_TEMPLATE ${HEADER_TEMPLATES})
+  file(READ ${HEADER_TEMPLATE} HEADER_CONTENT)
+  string(REPLACE "/* The definition of _GL_ARG_NONNULL is copied here.  */" "#include \"arg-nonnull.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "/* The definition of _GL_WARN_ON_USE is copied here.  */" "#include \"warn-on-use.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */" "#include \"c++defs.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_LSTAT@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_SIGACTION@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_SIGPROCMASK@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@HAVE_ISWCNTRL@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@HAVE_WCTYPE_T@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@PRAGMA_COLUMNS@" "" HEADER_CONTENT "${HEADER_CONTENT}")
+
+  string(REGEX REPLACE "^${HEADER_TEMPLATES_ABS_PATH}/" "" HEADER_PATH "${HEADER_TEMPLATE}")
+  string(REPLACE ".in" "" HEADER_PATH ${HEADER_PATH})
+  string(REPLACE "_" "/" HEADER_PATH ${HEADER_PATH})
+  # find_file will create a cache entry for the variable
+  # SYSTEM_HEADER, so reset it before each call
+  set(SYSTEM_HEADER "SYSTEM_HEADER-NOTFOUND")
+  find_file(SYSTEM_HEADER ${HEADER_PATH} PATHS "${LIBICONV_INCLUDE_DIRS}")
+  if(SYSTEM_HEADER)
+    # Gnulib uses #include_next to extend system header files,
+    # but MSVC doesn't support it, so a regular include directive
+    # with a relative path is used instead
+    string(REGEX REPLACE ".*/(.*/${HEADER_PATH})" "../\\1"
+      INCLUDE_PATH "${SYSTEM_HEADER}")
+    string(REGEX REPLACE "@INCLUDE_NEXT[^@]*@ @NEXT_[^@\n]+@"
+      "include <${INCLUDE_PATH}>" HEADER_CONTENT "${HEADER_CONTENT}")
+  endif()
+
+  # Default any remaining template variables to 0
+  string(REGEX REPLACE "@[^@\n]+@" "0" HEADER_CONTENT "${HEADER_CONTENT}")
+
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${HEADER_TEMPLATES_PATH}/${HEADER_PATH}" "${HEADER_CONTENT}")
+endforeach()
+
+include(GNUInstallDirs)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/iconv.h
+  ${CMAKE_CURRENT_BINARY_DIR}/localcharset.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(TARGETS libcharset libiconv iconv
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

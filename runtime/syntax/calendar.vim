@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         calendar(1) input file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             calendar(1) input file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish

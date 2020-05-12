@@ -4,11 +4,8 @@
 " Last Change:	2002 Feb 24
 " Remark:	Huge improvement in folding performance--see filetype plugin
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -25,24 +22,14 @@ syn match abaqusValue	"=\s*[^,]*"lc=1 contained display
 syn match abaqusBadLine	"^\s\+\*.*" display
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_abaqus_syn_inits")
-	if version < 508
-		let did_abaqus_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	" The default methods for highlighting.  Can be overridden later
-	HiLink abaqusComment	Comment
-	HiLink abaqusKeyword	Statement
-	HiLink abaqusParameter	Identifier
-	HiLink abaqusValue	Constant
-	HiLink abaqusBadLine    Error
+" The default methods for highlighting.  Can be overridden later
+hi def link abaqusComment	Comment
+hi def link abaqusKeyword	Statement
+hi def link abaqusParameter	Identifier
+hi def link abaqusValue	Constant
+hi def link abaqusBadLine    Error
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "abaqus"

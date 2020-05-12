@@ -12,10 +12,14 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
+if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-Microsoft")
+  # Windows Subsystem for Linux
+  set(HAVE_WSL 1)
+endif()
+
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
-check_include_files(iconv.h HAVE_ICONV_H)
 check_include_files(langinfo.h HAVE_LANGINFO_H)
 check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(pwd.h HAVE_PWD_H)
@@ -26,45 +30,40 @@ if(NOT HAVE_SYS_WAIT_H AND UNIX)
   message(SEND_ERROR "header sys/wait.h is required for Unix")
 endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
-check_include_files(utime.h HAVE_UTIME_H)
+check_include_files(termios.h HAVE_TERMIOS_H)
+check_include_files(sys/uio.h HAVE_SYS_UIO_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)
 check_function_exists(getpwent HAVE_GETPWENT)
 check_function_exists(getpwnam HAVE_GETPWNAM)
 check_function_exists(getpwuid HAVE_GETPWUID)
+check_function_exists(readv HAVE_READV)
 
 if(Iconv_FOUND)
   set(HAVE_ICONV 1)
 endif()
 
-if(JEMALLOC_FOUND)
-  set(HAVE_JEMALLOC 1)
-endif()
-
-check_function_exists(_putenv_s HAVE_PUTENV_S)
-if(WIN32 AND NOT HAVE_PUTENV_S)
-  message(SEND_ERROR "_putenv_s() function not found on your system.")
-endif()
 check_function_exists(opendir HAVE_OPENDIR)
 check_function_exists(readlink HAVE_READLINK)
-check_function_exists(setenv HAVE_SETENV)
-if(UNIX AND NOT HAVE_SETENV)
-  message(SEND_ERROR "setenv() function not found on your system.")
-endif()
-check_function_exists(unsetenv HAVE_UNSETENV)
 check_function_exists(setpgid HAVE_SETPGID)
 check_function_exists(setsid HAVE_SETSID)
 check_function_exists(sigaction HAVE_SIGACTION)
 check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
-check_function_exists(utime HAVE_UTIME)
-check_function_exists(utimes HAVE_UTIMES)
 
 # Symbols
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)
 if(HAVE_LANGINFO_H)
   check_symbol_exists(CODESET "langinfo.h" HAVE_NL_LANGINFO_CODESET)
+endif()
+
+check_include_files("endian.h" HAVE_ENDIAN_H)
+check_include_files("sys/endian.h" HAVE_SYS_ENDIAN_H)
+
+set(ENDIAN_INCLUDE_FILE "endian.h")
+if(HAVE_SYS_ENDIAN_H AND NOT HAVE_ENDIAN_H)
+  set(ENDIAN_INCLUDE_FILE "sys/endian.h")
 endif()
 
 set(SI "#include <stdint.h>\n")
@@ -74,7 +73,7 @@ check_c_source_compiles("
   #define _BSD_SOURCE 1
   #define _DEFAULT_SOURCE 1
   ${SI}
-  #include <endian.h>
+  #include <${ENDIAN_INCLUDE_FILE}>
   #ifndef be64toh
   # error No be64toh macros
   #endif
@@ -131,12 +130,16 @@ configure_file (
 find_program(WHOAMI_PROG whoami)
 find_program(HOSTNAME_PROG hostname)
 
-if (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PROG})
+if (DEFINED ENV{USERNAME})
+  set(USERNAME $ENV{USERNAME})
+elseif (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PROG})
   execute_process(COMMAND ${WHOAMI_PROG}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE USERNAME)
 endif()
-if (EXISTS ${HOSTNAME_PROG})
+if (DEFINED ENV{HOSTNAME})
+  set(HOSTNAME $ENV{HOSTNAME})
+elseif (EXISTS ${HOSTNAME_PROG})
   execute_process(COMMAND ${HOSTNAME_PROG}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE HOSTNAME)

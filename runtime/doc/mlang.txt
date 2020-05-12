@@ -1,4 +1,4 @@
-*mlang.txt*     For Vim version 7.4.  Last change: 2012 Jan 15
+*mlang.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -11,11 +11,7 @@ multi-byte text see |multibyte|.
 
 The basics are explained in the user manual: |usr_45.txt|.
 
-1. Messages			|multilang-messages|
-2. Menus			|multilang-menus|
-3. Scripts			|multilang-scripts|
-
-Also see |help-translated| for multi-language help.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Messages						*multilang-messages*
@@ -94,13 +90,17 @@ If you used the self-installing .exe file, message translations should work
 already.  Otherwise get the libintl.dll file if you don't have it yet:
 
 	http://sourceforge.net/projects/gettext
+Or:
+	https://mlocati.github.io/gettext-iconv-windows/
 
 This also contains tools xgettext, msgformat and others.
 
-libintl.dll should be placed in same directory with (g)vim.exe, or some
-place where PATH environment value describe.  Message files (vim.mo)
-have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES", where "xx" is the
-abbreviation of the language (mostly two letters).
+libintl.dll should be placed in same directory as (g)vim.exe, or one of the
+directories listed in the PATH environment value.  Vim also looks for the
+alternate names "libintl-8.dll" and "intl.dll".
+
+Message files (vim.mo) have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES",
+where "xx" is the abbreviation of the language (mostly two letters).
 
 If you write your own translations you need to generate the .po file and
 convert it to a .mo file.  You need to get the source distribution and read
@@ -174,6 +174,7 @@ Send an e-mail to the Vim maintainer <maintainer@vim.org>.
 			special characters like "&" and "<Tab>" need to be
 			included.  Spaces and dots need to be escaped with a
 			backslash, just like in other |:menu| commands.
+			Case in {english} is ignored.
 
 See the $VIMRUNTIME/lang directory for examples.
 
@@ -184,8 +185,8 @@ you can do it without restarting Vim: >
 	:source $VIMRUNTIME/menu.vim
 
 Each part of a menu path is translated separately.  The result is that when
-"Help" is translated to "Hilfe" and "Overview" to "Überblick" then
-"Help.Overview" will be translated to "Hilfe.Überblick".
+"Help" is translated to "Hilfe" and "Overview" to "Ãœberblick" then
+"Help.Overview" will be translated to "Hilfe.Ãœberblick".
 
 ==============================================================================
 3. Scripts						*multilang-scripts*
@@ -204,4 +205,4 @@ a message adapt to language preferences of the user, >
 	:endif
 <
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

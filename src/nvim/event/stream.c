@@ -1,14 +1,24 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
 
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/rbuffer.h"
+#include "nvim/macros.h"
 #include "nvim/event/stream.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/stream.c.generated.h"
+#endif
+
+// For compatbility with libuv < 1.19.0 (tested on 1.18.0)
+#if UV_VERSION_MINOR < 19
+#define uv_stream_get_write_queue_size(stream) stream->write_queue_size
 #endif
 
 /// Sets the stream associated with `fd` to "blocking" mode.
@@ -23,15 +33,15 @@ int stream_set_blocking(int fd, bool blocking)
   uv_loop_init(&loop);
   uv_pipe_init(&loop, &stream, 0);
   uv_pipe_open(&stream, fd);
-  int retval = uv_stream_set_blocking((uv_stream_t *)&stream, blocking);
-  uv_close((uv_handle_t *)&stream, NULL);
+  int retval = uv_stream_set_blocking(STRUCT_CAST(uv_stream_t, &stream),
+                                      blocking);
+  uv_close(STRUCT_CAST(uv_handle_t, &stream), NULL);
   uv_run(&loop, UV_RUN_NOWAIT);  // not necessary, but couldn't hurt.
   uv_loop_close(&loop);
   return retval;
 }
 
-void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
-    void *data)
+void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   stream->uvstream = uvstream;
@@ -48,9 +58,19 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
       stream->uv.idle.data = stream;
     } else {
       assert(type == UV_NAMED_PIPE || type == UV_TTY);
+#ifdef WIN32
+      if (type == UV_TTY) {
+        uv_tty_init(&loop->uv, &stream->uv.tty, fd, 0);
+        uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_RAW);
+        stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.tty);
+      } else {
+#endif
       uv_pipe_init(&loop->uv, &stream->uv.pipe, 0);
       uv_pipe_open(&stream->uv.pipe, fd);
-      stream->uvstream = (uv_stream_t *)&stream->uv.pipe;
+      stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
+#ifdef WIN32
+      }
+#endif
     }
   }
 
@@ -58,7 +78,6 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
     stream->uvstream->data = stream;
   }
 
-  stream->data = data;
   stream->internal_data = NULL;
   stream->fpos = 0;
   stream->curmem = 0;
@@ -71,17 +90,34 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream,
   stream->closed = false;
   stream->buffer = NULL;
   stream->events = NULL;
+  stream->num_bytes = 0;
 }
 
-void stream_close(Stream *stream, stream_close_cb on_stream_close)
+void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(!stream->closed);
+  DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
   stream->close_cb = on_stream_close;
+  stream->close_cb_data = data;
+
+#ifdef WIN32
+  if (UV_TTY == uv_guess_handle(stream->fd)) {
+    // Undo UV_TTY_MODE_RAW from stream_init(). #10801
+    uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_NORMAL);
+  }
+#endif
 
   if (!stream->pending_reqs) {
     stream_close_handle(stream);
+  }
+}
+
+void stream_may_close(Stream *stream)
+{
+  if (!stream->closed) {
+    stream_close(stream, NULL, NULL);
   }
 }
 
@@ -89,6 +125,11 @@ void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
+    if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
+      WLOG("closed Stream (%p) with %zu unwritten bytes",
+           (void *)stream,
+           uv_stream_get_write_queue_size(stream->uvstream));
+    }
     uv_close((uv_handle_t *)stream->uvstream, close_cb);
   } else {
     uv_close((uv_handle_t *)&stream->uv.idle, close_cb);
@@ -102,7 +143,7 @@ static void close_cb(uv_handle_t *handle)
     rbuffer_free(stream->buffer);
   }
   if (stream->close_cb) {
-    stream->close_cb(stream, stream->data);
+    stream->close_cb(stream, stream->close_cb_data);
   }
   if (stream->internal_close_cb) {
     stream->internal_close_cb(stream, stream->internal_data);

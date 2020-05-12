@@ -1,7 +1,7 @@
 " Vim Compiler File
 " Compiler:     Perl syntax checks (perl -Wc)
 " Maintainer:   Christian J. Robinson <heptite@gmail.com>
-" Last Change:  2006 Aug 13
+" Last Change:  2019 Jul 22
 
 if exists("current_compiler")
   finish
@@ -27,7 +27,7 @@ else
 	let s:taintopt = ''
 endif
 
-exe 'CompilerSet makeprg=perl\ -' . s:warnopt . s:taintopt . 'c\ %'
+exe 'CompilerSet makeprg=perl\ -' . s:warnopt . s:taintopt . 'c\ %:S'
 
 CompilerSet errorformat=
 	\%-G%.%#had\ compilation\ errors.,

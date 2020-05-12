@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	R Documentation (Help), *.Rd
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Thu Oct 16, 2014  07:07AM
+" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Tue Apr 07, 2015  04:38PM
 
 
 " Only load this indent file when no other was loaded.
@@ -81,7 +82,7 @@ function GetRHelpIndent()
   let closeb = strlen(line2) - strlen(line3)
   let bb = openb - closeb
 
-  let ind = indent(lnum) + (bb * &sw)
+  let ind = indent(lnum) + (bb * shiftwidth())
 
   if line =~ '^\s*}\s*$'
     let ind = indent(lnum)

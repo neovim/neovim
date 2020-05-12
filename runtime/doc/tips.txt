@@ -1,4 +1,4 @@
-*tips.txt*      For Vim version 7.4.  Last change: 2009 Nov 07
+*tips.txt*      Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -13,22 +13,7 @@ http://www.vim.org
 Don't forget to browse the user manual, it also contains lots of useful tips
 |usr_toc.txt|.
 
-Editing C programs				|C-editing|
-Finding where identifiers are used		|ident-search|
-Switching screens in an xterm			|xterm-screens|
-Scrolling in Insert mode			|scroll-insert|
-Smooth scrolling				|scroll-smooth|
-Correcting common typing mistakes		|type-mistakes|
-Counting words, lines, etc.			|count-items|
-Restoring the cursor position			|restore-position|
-Renaming files					|rename-files|
-Change a name in multiple files			|change-name|
-Speeding up external commands			|speed-up|
-Useful mappings					|useful-mappings|
-Compressing the help files			|gzip-helpfile|
-Hex editing					|hex-editing|
-Using <> notation in autocommands		|autocmd-<>|
-Highlighting matching parens			|match-parens|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Editing C programs					*C-editing*
@@ -119,48 +104,6 @@ archive file on your closest gnu-ftp-mirror).
 [the idea for this comes from Andreas Kutschera]
 
 ==============================================================================
-Switching screens in an xterm		*xterm-screens* *xterm-save-screen*
-
-(From comp.editors, by Juergen Weigert, in reply to a question)
-
-:> Another question is that after exiting vim, the screen is left as it
-:> was, i.e. the contents of the file I was viewing (editing) was left on
-:> the screen. The output from my previous like "ls" were lost,
-:> ie. no longer in the scrolling buffer. I know that there is a way to
-:> restore the screen after exiting vim or other vi like editors,
-:> I just don't know how. Helps are appreciated. Thanks.
-:
-:I imagine someone else can answer this.  I assume though that vim and vi do
-:the same thing as each other for a given xterm setup.
-
-They not necessarily do the same thing, as this may be a termcap vs.
-terminfo problem.  You should be aware that there are two databases for
-describing attributes of a particular type of terminal: termcap and
-terminfo.  This can cause differences when the entries differ AND when of
-the programs in question one uses terminfo and the other uses termcap
-(also see |+terminfo|).
-
-In your particular problem, you are looking for the control sequences
-^[[?47h and ^[[?47l.  These switch between xterms alternate and main screen
-buffer.  As a quick workaround a command sequence like >
-	echo -n "^[[?47h"; vim ... ; echo -n "^[[?47l"
-may do what you want.  (My notation ^[ means the ESC character, further down
-you'll see that the databases use \E instead).
-
-On startup, vim echoes the value of the termcap variable ti (terminfo:
-smcup) to the terminal.  When exiting, it echoes te (terminfo: rmcup).  Thus
-these two variables are the correct place where the above mentioned control
-sequences should go.
-
-Compare your xterm termcap entry (found in /etc/termcap) with your xterm
-terminfo entry (retrieved with "infocmp -C xterm").  Both should contain
-entries similar to: >
-	:te=\E[2J\E[?47l\E8:ti=\E7\E[?47h:
-
-PS: If you find any difference, someone (your sysadmin?) should better check
-    the complete termcap and terminfo database for consistency.
-
-==============================================================================
 Scrolling in Insert mode				*scroll-insert*
 
 If you are in insert mode and you want to see something that is just off the
@@ -170,7 +113,6 @@ screen, you can use CTRL-X CTRL-E and CTRL-X CTRL-Y to scroll the screen.
 To make this easier, you could use these mappings: >
 	:inoremap <C-E> <C-X><C-E>
 	:inoremap <C-Y> <C-X><C-Y>
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 You then lose the ability to copy text from the line above/below the cursor
 |i_CTRL-E|.
 
@@ -185,8 +127,6 @@ Smooth scrolling					*scroll-smooth*
 If you like the scrolling to go a bit smoother, you can use these mappings: >
 	:map <C-U> <C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y>
 	:map <C-D> <C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E>
-
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 
 ==============================================================================
 Correcting common typing mistakes			*type-mistakes*
@@ -339,9 +279,7 @@ For Emacs-style editing on the command-line: >
 	:cnoremap <Esc><C-B>	<S-Left>
 	" forward one word
 	:cnoremap <Esc><C-F>	<S-Right>
-
-NOTE: This requires that the '<' flag is excluded from 'cpoptions'. |<>|
-
+<
 							*format-bullet-list*
 This mapping will format any bullet list.  It requires that there is an empty
 line above and below each list entry.  The expression commands are used to
@@ -357,8 +295,7 @@ be able to give comments to the parts of the mapping. >
 	:execute m			      |" define the mapping
 
 (<> notation |<>|.  Note that this is all typed literally.  ^W is "^" "W", not
-CTRL-W.  You can copy/paste this into Vim if '<' is not included in
-'cpoptions'.)
+CTRL-W.)
 
 Note that the last comment starts with |", because the ":execute" command
 doesn't accept a comment directly.
@@ -400,7 +337,7 @@ when they are not in the same location as the compressed "doc" directory.  See
 ==============================================================================
 Hex editing					*hex-editing* *using-xxd*
 
-See section |23.4| of the user manual.
+See section |23.3| of the user manual.
 
 If one has a particular extension that one uses for binary files (such as exe,
 bin, etc), you may find it helpful to automate the process with the following
@@ -509,4 +446,4 @@ A slightly more advanced version is used in the |matchparen| plugin.
 	autocmd InsertEnter * match none
 <
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

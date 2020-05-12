@@ -1,6 +1,6 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
-" Date:		Nov 07, 2014
+" Date:		Feb 08, 2016
 " Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2013 Charles E. Campbell {{{1
@@ -20,19 +20,7 @@
 if &cp || exists("g:loaded_netrwPlugin")
  finish
 endif
-let g:loaded_netrwPlugin = "v153"
-if v:version < 702
- echohl WarningMsg
- echo "***warning*** you need vim version 7.2 for this version of netrw"
- echohl None
- finish
-endif
-if v:version < 703 || (v:version == 703 && !has("patch465"))
- echohl WarningMsg
- echo "***warning*** this version of netrw needs vim 7.3.465 or later"
- echohl Normal
- finish
-endif
+let g:loaded_netrwPlugin = "v165"
 let s:keepcpo = &cpo
 set cpo&vim
 "DechoRemOn
@@ -54,24 +42,24 @@ augroup END
 " Network Browsing Reading Writing: {{{2
 augroup Network
  au!
- au BufReadCmd   file://*											call netrw#FileUrlRead(expand("<amatch>"))
- au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
+ au BufReadCmd   file://*											call netrw#FileUrlEdit(expand("<amatch>"))
+ au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
  au FileReadCmd  ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
  au BufWriteCmd  ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
  au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
- try                                                       
+ try
   au SourceCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
- catch /^Vim\%((\a\+)\)\=:E216/                            
+ catch /^Vim\%((\a\+)\)\=:E216/
   au SourcePre   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
  endtry
 augroup END
 
 " Commands: :Nread, :Nwrite, :NetUserPass {{{2
-com! -count=1 -nargs=*	Nread		call netrw#SavePosn()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call netrw#RestorePosn()
-com! -range=% -nargs=*	Nwrite		call netrw#SavePosn()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call netrw#RestorePosn()
+com! -count=1 -nargs=*	Nread		let s:svpos= winsaveview()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call winrestview(s:svpos)
+com! -range=% -nargs=*	Nwrite		let s:svpos= winsaveview()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call winrestview(s:svpos)
 com! -nargs=*		NetUserPass	call NetUserPass(<f-args>)
-com! -nargs=*	        Nsource		call netrw#SavePosn()<bar>call netrw#NetSource(<f-args>)<bar>call netrw#RestorePosn()
-com! -nargs=?		Ntree		call netrw#SetTreetop(<q-args>)
+com! -nargs=*	        Nsource		let s:svpos= winsaveview()<bar>call netrw#NetSource(<f-args>)<bar>call winrestview(s:svpos)
+com! -nargs=?		Ntree		call netrw#SetTreetop(1,<q-args>)
 
 " Commands: :Explore, :Sexplore, Hexplore, Vexplore, Lexplore {{{2
 com! -nargs=* -bar -bang -count=0 -complete=dir	Explore		call netrw#Explore(<count>,0,0+<bang>0,<q-args>)
@@ -102,6 +90,12 @@ if !exists("g:netrw_nogx")
   vno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
  endif
 endif
+if exists("g:netrw_usetab") && g:netrw_usetab
+ if maparg('<c-tab>','n') == ""
+  nmap <unique> <c-tab> <Plug>NetrwShrink
+ endif
+ nno <silent> <Plug>NetrwShrink :call netrw#Shrink()<cr>
+endif
 
 " ---------------------------------------------------------------------
 " LocalBrowse: invokes netrw#LocalBrowseCheck() on directory buffers {{{2
@@ -109,7 +103,7 @@ fun! s:LocalBrowse(dirname)
   " Unfortunate interaction -- only DechoMsg debugging calls can be safely used here.
   " Otherwise, the BufEnter event gets triggered when attempts to write to
   " the DBG buffer are made.
-  
+
   if !exists("s:vimentered")
    " If s:vimentered doesn't exist, then the VimEnter event hasn't fired.  It will,
    " and so s:VimEnter() will then be calling this routine, but this time with s:vimentered defined.

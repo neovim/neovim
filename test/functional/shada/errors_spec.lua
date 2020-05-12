@@ -1,5 +1,5 @@
 -- ShaDa errors handling support
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, eq, exc_exec, redir_exec =
   helpers.command, helpers.eq, helpers.exc_exec, helpers.redir_exec
 
@@ -17,9 +17,9 @@ describe('ShaDa error handling', function()
     clean()
   end)
 
-  -- Note: most of tests have additional items like sX, mX, rX. These are for 
-  -- valgrind tests, to check for memory leaks (i.e. whether error handling code 
-  -- does (not) forget to call ga_clear). Not needed for array-based items like 
+  -- Note: most of tests have additional items like sX, mX, rX. These are for
+  -- valgrind tests, to check for memory leaks (i.e. whether error handling code
+  -- does (not) forget to call ga_clear). Not needed for array-based items like
   -- history because they are not using ad_ga.
 
   it('does not fail on empty file', function()
@@ -69,15 +69,15 @@ describe('ShaDa error handling', function()
   end)
 
   it('fails on search pattern item with invalid byte', function()
-    -- 195 (== 0xC1) cannot start any valid messagepack entry (the only byte 
+    -- 195 (== 0xC1) cannot start any valid messagepack entry (the only byte
     -- that cannot do this). Specifically unpack_template.h contains
     --
     --     //case 0xc1:  // string
     --     //  again_terminal_trail(NEXT_CS(p), p+1);
     --
-    -- (literally: commented out code) which means that in place of this code 
-    -- `goto _failed` is used from default: case. I do not know any other way to 
-    -- get MSGPACK_UNPACK_PARSE_ERROR and not MSGPACK_UNPACK_CONTINUE or 
+    -- (literally: commented out code) which means that in place of this code
+    -- `goto _failed` is used from default: case. I do not know any other way to
+    -- get MSGPACK_UNPACK_PARSE_ERROR and not MSGPACK_UNPACK_CONTINUE or
     -- MSGPACK_UNPACK_EXTRA_BYTES.
     wshada('\002\000\001\193')
     eq('Vim(rshada):E576: Failed to parse ShaDa file due to a msgpack parser error at position 3', exc_exec(sdrcmd()))
@@ -497,7 +497,7 @@ $
   it('errors when a funcref is stored in a variable', function()
     nvim_command('let F = function("tr")')
     nvim_command('set shada+=!')
-    eq('\nE951: Error while dumping variable g:F, itself: attempt to dump function reference'
+    eq('\nE5004: Error while dumping variable g:F, itself: attempt to dump function reference'
        .. '\nE574: Failed to write variable F',
        redir_exec('wshada'))
   end)
@@ -506,8 +506,26 @@ $
     nvim_command('let L = []')
     nvim_command('call add(L, L)')
     nvim_command('set shada+=!')
-    eq('\nE952: Unable to dump variable g:L: container references itself in index 0'
+    eq('\nE5005: Unable to dump variable g:L: container references itself in index 0'
        .. '\nE574: Failed to write variable L',
        redir_exec('wshada'))
+  end)
+
+  it('errors with too large items', function()
+    wshada({
+        1, 206,  70,  90,  31, 179,  86, 133, 169, 103, 101, 110, 101, 114,  97,
+      116, 111, 114, 196,   4, 145, 145, 145, 145, 145, 145,  96,  96,  96,  96,
+       96,  96,  96,  96,  96,  96,  96,  96,  96,  96,  96,  96,  96,  96,  96,
+       96,  96, 145, 145, 145, 145, 111, 110, 196,  25,  78,  86,  73,  77,  32,
+      118,   1,  46,  50,  46,  48,  45,  51,  48,  51,  45, 103,  98,  54,  55,
+       52, 102, 100,  50,  99, 169, 109,  97, 120,  95, 107,  98, 121, 116, 101,
+       10, 207, 207, 207, 207, 207, 207, 207, 207, 207, 207, 207, 207, 207, 207,
+      207, 207, 207, 207, 207, 207, 207, 207,  16,   8, 206,  89,  90,  30, 253,
+       35, 129, 161, 102, 196,  30,  47, 100, 101, 118,  47, 115, 104, 109,  47,
+      102, 117, 122, 122, 105, 110, 103,  45, 110, 118, 105, 109,  45, 115, 104,
+       97, 100,  97,  47, 108, 115,   2, 206,  89,  90,  30, 251,  13, 130, 162,
+      115, 112, 196,   3, 102, 111, 111, 162, 115,  99, 195,   3, 146,  10,   0,
+    })
+    eq('Vim(rshada):E576: Error while reading ShaDa file: there is an item at position 93 that is stated to be too long', exc_exec(sdrcmd()))
   end)
 end)

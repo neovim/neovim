@@ -8,7 +8,7 @@
 include(LibFindMacros)
 
 find_path(ICONV_INCLUDE_DIR NAMES iconv.h)
-find_library(ICONV_LIBRARY NAMES iconv)
+find_library(ICONV_LIBRARY NAMES iconv libiconv)
 
 set(Iconv_PROCESS_INCLUDES ICONV_INCLUDE_DIR)
 if(ICONV_LIBRARY)

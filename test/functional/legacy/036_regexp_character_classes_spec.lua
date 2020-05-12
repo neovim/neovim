@@ -1,9 +1,8 @@
 -- Test character classes in regexp using regexpengine 0, 1, 2.
 
-local helpers = require('test.functional.helpers')
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local helpers = require('test.functional.helpers')(after_each)
+local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local source, write_file = helpers.source, helpers.write_file
-local os_name = helpers.os_name
 
 local function sixlines(text)
     local result = ''
@@ -14,19 +13,16 @@ local function sixlines(text)
 end
 
 local function diff(text, nodedent)
-  local tmpname = os.tmpname()
-  if os_name() == 'osx' and string.match(tmpname, '^/tmp') then
-   tmpname = '/private'..tmpname
-  end
-  execute('w! '..tmpname)
+  local fname = helpers.tmpname()
+  command('w! '..fname)
   helpers.wait()
-  local data = io.open(tmpname):read('*all')
+  local data = io.open(fname):read('*all')
   if nodedent then
     helpers.eq(text, data)
   else
     helpers.eq(helpers.dedent(text), data)
   end
-  os.remove(tmpname)
+  os.remove(fname)
 end
 
 describe('character classes in regexp', function()
@@ -49,7 +45,7 @@ describe('character classes in regexp', function()
   end)
   before_each(function()
     clear()
-    execute('e test36.in')
+    command('e test36.in')
   end)
   teardown(function()
     os.remove('test36.in')
@@ -267,5 +263,28 @@ describe('character classes in regexp', function()
       ABCDEFGHIXYZ
       ABCDEFGHIXYZ
       ABCDEFGHIXYZ]])
+  end)
+  it([["\%1l^#.*" does not match on a line starting with "#". (vim-patch:7.4.1305)]], function()
+    source([[
+      1 s/\%#=0\%1l^\t...//g
+      2 s/\%#=1\%2l^\t...//g
+      3 s/\%#=2\%3l^\t...//g
+      4 s/\%#=0\%4l^\t...//g
+      5 s/\%#=1\%5l^\t...//g
+      6 s/\%#=2\%6l^\t...//g]])
+    diff(sixlines(string.sub(punct1, 1)..digits..punct2..upper..punct3..
+      lower..punct4..ctrl2..iso_text))
+  end)
+  it('does not convert character class ranges to an incorrect class', function()
+    source([[
+      1 s/\%#=0[0-z]//g
+      2 s/\%#=1[0-z]//g
+      3 s/\%#=2[0-z]//g
+      4 s/\%#=0[^0-z]//g
+      5 s/\%#=1[^0-z]//g
+      6 s/\%#=2[^0-z]//g
+    ]])
+    diff(string.rep(ctrl1..punct1..punct4..ctrl2..iso_text..'\n', 3)
+      ..string.rep(digits..punct2..upper..punct3..lower..'\n', 3))
   end)
 end)

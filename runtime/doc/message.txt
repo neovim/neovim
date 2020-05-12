@@ -1,4 +1,4 @@
-*message.txt*   For Vim version 7.4.  Last change: 2013 Feb 23
+*message.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,9 +8,7 @@ This file contains an alphabetical list of messages and error messages that
 Vim produces.  You can use this if you don't understand what the message
 means.  It is not complete though.
 
-1. Old messages		|:messages|
-2. Error messages	|error-messages|
-3. Messages		|messages|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Old messages			*:messages* *:mes* *message-history*
@@ -18,6 +16,15 @@ means.  It is not complete though.
 The ":messages" command can be used to view previously given messages.  This
 is especially useful when messages have been overwritten or truncated.  This
 depends on the 'shortmess' option.
+
+	:messages		Show all messages.
+
+	:{count}messages	Show the {count} most recent messages.
+
+	:messages clear		Clear all messages.
+
+	:{count}messages clear	Clear messages, keeping only the {count} most
+				recent ones.
 
 The number of remembered messages is fixed at 20 for the tiny version and 200
 for other versions.
@@ -30,10 +37,7 @@ back.
 Note: If the output has been stopped with "q" at the more prompt, it will only
 be displayed up to this point.
 The previous command output is cleared when another command produces output.
-
-If you are using translated messages, the first printed line tells who
-maintains the messages or the translations.  You can use this to contact the
-maintainer when you spot a mistake.
+The "g<" output is not redirected.
 
 If you want to find help on a specific (error) message, use the ID at the
 start of the message.  For example, to get help on the message: >
@@ -58,14 +62,14 @@ If you are lazy, it also works without the shift key: >
 When an error message is displayed, but it is removed before you could read
 it, you can see it again with: >
   :echo errmsg
-or view a list of recent messages with: >
+Or view a list of recent messages with: >
   :messages
-
+See `:messages` above.
 
 LIST OF MESSAGES
 			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
-			*E323* *E341* *E473* *E570* *E685*  >
+			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
   makemap: Illegal mode
   Cannot create BalloonEval with both message and callback
@@ -86,6 +90,7 @@ LIST OF MESSAGES
   Internal error
   Internal error: {function}
   fatal error in cs_manage_matches
+  Invalid count for del_bytes(): {N}
 
 This is an internal error.  If you can reproduce it, please send in a bug
 report. |bugs|
@@ -118,8 +123,9 @@ closed properly.  Mostly harmless.
   Command too recursive
 
 This happens when an Ex command executes an Ex command that executes an Ex
-command, etc.  This is only allowed 200 times.  When it's more there probably
-is an endless loop.  Probably a |:execute| or |:source| command is involved.
+command, etc.  The limit is 200 or the value of 'maxfuncdepth', whatever is
+larger.  When it's more there probably is an endless loop.  Probably a
+|:execute| or |:source| command is involved.
 
 							*E254*  >
   Cannot allocate color {name}
@@ -234,6 +240,9 @@ format of the file.  The file will not be marked unmodified.  If you care
 about the loss of information, set the 'fileencoding' option to another value
 that can handle the characters in the buffer and write again.  If you don't
 care, you can abandon the buffer or reset the 'modified' option.
+If there is a backup file, when 'writebackup' or 'backup' is set, it will not
+be deleted, so you can move it back into place if you want to discard the
+changes.
 
 							*E302*  >
   Could not rename swap file
@@ -444,12 +453,6 @@ changed.  To avoid the message reset the 'warn' option.
 Something inside Vim went wrong and resulted in a NULL pointer.  If you know
 how to reproduce this problem, please report it. |bugs|
 
-							*E172*  >
-  Only one file name allowed
-
-The ":edit" command only accepts one file name.  When you want to specify
-several files for editing use ":next" |:next|.
-
 						*E41* *E82* *E83* *E342*  >
   Out of memory!
   Out of memory!  (allocating {number} bytes)
@@ -514,15 +517,6 @@ command.  The script can then again read another script.  This can continue
 for about 14 levels.  When more nesting is done, Vim assumes that there is a
 recursive loop somewhere and stops with this error message.
 
-							*E319*  >
-  The command is not available in this version
-
-You have used a command that is not present in the version of Vim you are
-using.  When compiling Vim, many different features can be enabled or
-disabled.  This depends on how big Vim has chosen to be and the operating
-system.  See |+feature-list| for when which feature is available.  The
-|:version| command shows which feature Vim was compiled with.
-
 							*E300*  >
   Swap file already exists (symlink attack?)
 
@@ -543,14 +537,6 @@ This message is only given when Vim detects a problem when searching for a
 tag.  Sometimes this message is not given, even though the tags file is not
 properly sorted.
 
-							*E460*  >
-  The resource fork would be lost (add ! to override)
-
-On the Macintosh (classic), when writing a file, Vim attempts to preserve all
-info about a file, including its resource fork.  If this is not possible you
-get this error message.  Append "!" to the command name to write anyway (and
-lose the info).
-
 							*E424*  >
   Too many different highlighting attributes in use
 
@@ -570,7 +556,8 @@ allowed for the command that was used.
 Vim was not able to create a swap file.  You can still edit the file, but if
 Vim unexpectedly exits the changes will be lost.  And Vim may consume a lot of
 memory when editing a big file.  You may want to change the 'directory' option
-to avoid this error.  See |swap-file|.
+to avoid this error.  This error is not given when 'directory' is empty.  See
+|swap-file|.
 
 							*E140*  >
   Use ! to write partial buffer
@@ -626,6 +613,9 @@ starts.  It can be fixed in one of these ways:
 - Just write the file again the next day.  Or set your clock to the next day,
   write the file twice and set the clock back.
 
+If you get W11 all the time, you may need to disable "Acronis Active
+Protection" or register Vim as a trusted service/application.
+
 							*W12*  >
   Warning: File "{filename}" has changed and the buffer was changed in Vim as well
 
@@ -656,6 +646,12 @@ You must be using an awful lot of buffers.  It's now possible that two buffers
 have the same number, which causes various problems.  You might want to exit
 Vim and restart it.
 
+							*E931*  >
+  Buffer cannot be registered
+
+Out of memory or a duplicate buffer number.  May happen after W14.  Looking up
+a buffer will not always work, better restart Vim.
+
 							*E296* *E297*  >
   Seek error in swap file write
   Write error in swap file
@@ -675,19 +671,20 @@ being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
 							*E471*  >
   Argument required
 
-This happens when an Ex command with mandatory argument(s) was executed, but
-no argument has been specified.
+Ex command was executed without a mandatory argument(s).
 
-							*E474* *E475*  >
+							*E474* *E475* *E983*  >
   Invalid argument
   Invalid argument: {arg}
+  Duplicate argument: {arg}
 
-An Ex command has been executed, but an invalid argument has been specified.
+Ex command or function was given an invalid argument. Or |jobstart()| or
+|system()| was given a non-executable command.
 
 							*E488*  >
   Trailing characters
 
-An argument has been added to an Ex command that does not permit one.
+An argument was given to an Ex command that does not permit one.
 
 							*E477* *E478*  >
   No ! allowed
@@ -739,6 +736,12 @@ a user-defined command.
 You tried to set an option after startup that only allows changes during
 startup.
 
+							*E943*  >
+  Command table needs to be updated, run 'make'
+
+This can only happen when changing the source code, after adding a command in
+src/ex_cmds.lua.  Update the lookup table by re-running the build. >
+
 ==============================================================================
 3. Messages						*messages*
 
@@ -777,6 +780,7 @@ To reduce the number of hit-enter prompts:
 - Set 'cmdheight' to 2 or higher.
 - Add flags to 'shortmess'.
 - Reset 'showcmd' and/or 'ruler'.
+- Make sure `:echo` text is within |v:echospace| screen cells.
 
 If your script causes the hit-enter prompt and you don't know why, you may
 find the |v:scrollstart| variable useful.
@@ -828,4 +832,4 @@ The |g<| command can be used to see the last page of previous command output.
 This is especially useful if you accidentally typed <Space> at the hit-enter
 prompt.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

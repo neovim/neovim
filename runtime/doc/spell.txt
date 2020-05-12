@@ -1,4 +1,4 @@
-*spell.txt*	For Vim version 7.4.  Last change: 2014 Sep 19
+*spell.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -6,14 +6,7 @@
 
 Spell checking						*spell*
 
-1. Quick start			|spell-quickstart|
-2. Remarks on spell checking	|spell-remarks|
-3. Generating a spell file	|spell-mkspell|
-4. Spell file format		|spell-file-format|
-
-Note: There also is a vimspell plugin.  If you have it you can do ":help
-vimspell" to find about it.  But you will probably want to get rid of the
-plugin and use the 'spell' option instead, it works better.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Quick start					*spell-quickstart* *E756*
@@ -305,25 +298,25 @@ Exceptions:
   spell file is used.
 
 For example, with these values:
-	'runtimepath' is "~/.config/nvim,/usr/share/vim70,~/.config/nvim/after"
+	'runtimepath' is "~/.config/nvim,/usr/share/nvim/runtime/,~/.config/nvim/after"
 	'encoding'    is "iso-8859-2"
 	'spelllang'   is "pl"
 
 Vim will look for:
 1. ~/.config/nvim/spell/pl.iso-8859-2.spl
-2. /usr/share/vim70/spell/pl.iso-8859-2.spl
+2. /usr/share/nvim/runtime/spell/pl.iso-8859-2.spl
 3. ~/.config/nvim/spell/pl.iso-8859-2.add.spl
-4. /usr/share/vim70/spell/pl.iso-8859-2.add.spl
+4. /usr/share/nvim/runtime/spell/pl.iso-8859-2.add.spl
 5. ~/.config/nvim/after/spell/pl.iso-8859-2.add.spl
 
 This assumes 1. is not found and 2. is found.
 
 If 'encoding' is "latin1" Vim will look for:
 1. ~/.config/nvim/spell/pl.latin1.spl
-2. /usr/share/vim70/spell/pl.latin1.spl
+2. /usr/share/nvim/runtime/spell/pl.latin1.spl
 3. ~/.config/nvim/after/spell/pl.latin1.spl
 4. ~/.config/nvim/spell/pl.ascii.spl
-5. /usr/share/vim70/spell/pl.ascii.spl
+5. /usr/share/nvim/runtime/spell/pl.ascii.spl
 6. ~/.config/nvim/after/spell/pl.ascii.spl
 
 This assumes none of them are found (Polish doesn't make sense when leaving
@@ -466,7 +459,7 @@ Vim uses a binary file format for spelling.  This greatly speeds up loading
 the word list and keeps it small.
 						    *.aff* *.dic* *Myspell*
 You can create a Vim spell file from the .aff and .dic files that Myspell
-uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt 
+uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt
 files are zip files which contain the .aff and .dic files. You should be able
 to find them here:
 	http://extensions.services.openoffice.org/dictionary
@@ -511,7 +504,7 @@ then Vim will try to guess.
 
 			Multiple {inname} arguments can be given to combine
 			regions into one Vim spell file.  Example: >
-		:mkspell ~/.vim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
+		:mkspell ~/.config/nvim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
 <			This combines the English word lists for US, CA and AU
 			into one en.spl file.
 			Up to eight regions can be combined. *E754* *E755*
@@ -565,7 +558,7 @@ When the Myspell files are updated you can merge the differences:
 	nvim -d xx_YY.orig.dic xx_YY.new.dic
 3. Take over the changes you like in xx_YY.dic.
    You may also need to change xx_YY.aff.
-4. Rename xx_YY.new.dic to xx_YY.orig.dic and xx_YY.new.aff to xx_YY.new.aff.
+4. Rename xx_YY.new.dic to xx_YY.orig.dic and xx_YY.new.aff to xx_YY.orig.aff.
 
 
 SPELL FILE VERSIONS					*E770* *E771* *E772*
@@ -711,7 +704,7 @@ Additionally the following items are recognized:
     =		Case must match exactly.
     ?		Rare word.
     !		Bad (wrong) word.
-    digit	A region in which the word is valid.  If no regions are
+    1 to 9	A region in which the word is valid.  If no regions are
 		specified the word is valid in all regions.
 
 Example:
@@ -895,9 +888,9 @@ when using "cp1250" on Unix.
 						*spell-LOW* *spell-UPP*
 Three lines in the affix file are needed.  Simplistic example:
 
-	FOL  áëñ ~
-	LOW  áëñ ~
-	UPP  ÁËÑ ~
+	FOL  Ã¡Ã«Ã± ~
+	LOW  Ã¡Ã«Ã± ~
+	UPP  ÃÃ‹Ã‘ ~
 
 All three lines must have exactly the same number of characters.
 
@@ -912,9 +905,9 @@ The "UPP" line specifies the characters with upper-case.  That is, a character
 is upper-case where it's different from the character at the same position in
 "FOL".
 
-An exception is made for the German sharp s ß.  The upper-case version is
+An exception is made for the German sharp s ÃŸ.  The upper-case version is
 "SS".  In the FOL/LOW/UPP lines it should be included, so that it's recognized
-as a word character, but use the ß character in all three.
+as a word character, but use the ÃŸ character in all three.
 
 ASCII characters should be omitted, Vim always handles these in the same way.
 When the encoding is UTF-8 no word characters need to be specified.
@@ -1373,10 +1366,18 @@ the item name.  Case is always ignored.
 
 The Hunspell feature to use three arguments and flags is not supported.
 
+							*spell-NOCOMPOUNDSUGS*
+This item indicates that using compounding to make suggestions is not a good
+idea.  Use this when compounding is used with very short or one-character
+words.  E.g. to make numbers out of digits.  Without this flag creating
+suggestions would spend most time trying all kind of weird compound words.
+
+	NOCOMPOUNDSUGS ~
+
 							*spell-SYLLABLE*
 The SYLLABLE item defines characters or character sequences that are used to
 count the number of syllables in a word.  Example:
-	SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
+	SYLLABLE aÃ¡eÃ©iÃ­oÃ³Ã¶ÃµuÃºÃ¼Ã»y/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
 
 Before the first slash is the set of characters that are counted for one
 syllable, also when repeated and mixed, until the next character that is not
@@ -1457,8 +1458,8 @@ alike.  This is mostly used for a letter with different accents.  This is used
 to prefer suggestions with these letters substituted.  Example:
 
 	MAP 2 ~
-	MAP eéëêè ~
-	MAP uüùúû ~
+	MAP eÃ©Ã«ÃªÃ¨ ~
+	MAP uÃ¼Ã¹ÃºÃ» ~
 
 The first line specifies the number of MAP lines following.  Vim ignores the
 number, but the line must be there.
@@ -1561,6 +1562,10 @@ CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		Forbid three identical characters when compounding.  Not
 		supported.
 
+CHECKSHARPS  (Hunspell))			*spell-CHECKSHARPS*
+		SS letter pair in uppercased (German) words may be upper case
+		sharp s (ÃŸ). Not supported.
+
 COMPLEXPREFIXES  (Hunspell)				*spell-COMPLEXPREFIXES*
 		Enables using two prefixes.  Not supported.
 
@@ -1574,12 +1579,21 @@ COMPOUNDFIRST	(Hunspell)				*spell-COMPOUNDFIRST*
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDBEGIN	(Hunspell)				*spell-COMPOUNDBEGIN*
+		Words signed with COMPOUNDBEGIN may be first elements in
+		compound words.
+		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
+
+COMPOUNDLAST	(Hunspell)				*spell-COMPOUNDLAST*
+		Words signed with COMPOUNDLAST may be last elements in
+		compound words.
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDEND	(Hunspell)				*spell-COMPOUNDEND*
-		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
+		Probably the same as COMPOUNDLAST
 
 COMPOUNDMIDDLE	(Hunspell)				*spell-COMPOUNDMIDDLE*
+		Words signed with COMPOUNDMIDDLE may be middle elements in
+		compound words.
 		Use COMPOUNDRULE instead. |spell-COMPOUNDRULE|
 
 COMPOUNDRULES	(Hunspell)				*spell-COMPOUNDRULES*
@@ -1593,7 +1607,7 @@ COMPOUNDSYLLABLE  (Hunspell)			*spell-COMPOUNDSYLLABLE*
 KEY		(Hunspell)				*spell-KEY*
 		Define characters that are close together on the keyboard.
 		Used to give better suggestions.  Not supported.
-		
+
 LANG		(Hunspell)				*spell-LANG*
 		This specifies language-specific behavior.  This actually
 		moves part of the language knowledge into the program,
@@ -1625,4 +1639,111 @@ WORDCHARS	(Hunspell)				*spell-WORDCHARS*
 		is no need to separate words before checking them (using a
 		trie instead of a hashtable).
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+==============================================================================
+5. Spell checker design					*develop-spell*
+
+When spell checking was going to be added to Vim a survey was done over the
+available spell checking libraries and programs.  Unfortunately, the result
+was that none of them provided sufficient capabilities to be used as the spell
+checking engine in Vim, for various reasons:
+
+- Missing support for multi-byte encodings.  At least UTF-8 must be supported,
+  so that more than one language can be used in the same file.
+  Doing on-the-fly conversion is not always possible (would require iconv
+  support).
+- For the programs and libraries: Using them as-is would require installing
+  them separately from Vim.  That's mostly not impossible, but a drawback.
+- Performance: A few tests showed that it's possible to check spelling on the
+  fly (while redrawing), just like syntax highlighting.  But the mechanisms
+  used by other code are much slower.  Myspell uses a hashtable, for example.
+  The affix compression that most spell checkers use makes it slower too.
+- For using an external program like aspell a communication mechanism would
+  have to be setup.  That's complicated to do in a portable way (Unix-only
+  would be relatively simple, but that's not good enough).  And performance
+  will become a problem (lots of process switching involved).
+- Missing support for words with non-word characters, such as "Etten-Leur" and
+  "et al.", would require marking the pieces of them OK, lowering the
+  reliability.
+- Missing support for regions or dialects.  Makes it difficult to accept
+  all English words and highlight non-Canadian words differently.
+- Missing support for rare words.  Many words are correct but hardly ever used
+  and could be a misspelled often-used word.
+- For making suggestions the speed is less important and requiring to install
+  another program or library would be acceptable.  But the word lists probably
+  differ, the suggestions may be wrong words.
+
+
+Spelling suggestions				*develop-spell-suggestions*
+
+For making suggestions there are two basic mechanisms:
+1. Try changing the bad word a little bit and check for a match with a good
+   word.  Or go through the list of good words, change them a little bit and
+   check for a match with the bad word.  The changes are deleting a character,
+   inserting a character, swapping two characters, etc.
+2. Perform soundfolding on both the bad word and the good words and then find
+   matches, possibly with a few changes like with the first mechanism.
+
+The first is good for finding typing mistakes.  After experimenting with
+hashtables and looking at solutions from other spell checkers the conclusion
+was that a trie (a kind of tree structure) is ideal for this.  Both for
+reducing memory use and being able to try sensible changes.  For example, when
+inserting a character only characters that lead to good words need to be
+tried.  Other mechanisms (with hashtables) need to try all possible letters at
+every position in the word.  Also, a hashtable has the requirement that word
+boundaries are identified separately, while a trie does not require this.
+That makes the mechanism a lot simpler.
+
+Soundfolding is useful when someone knows how the words sounds but doesn't
+know how it is spelled.  For example, the word "dictionary" might be written
+as "daktonerie".  The number of changes that the first method would need to
+try is very big, it's hard to find the good word that way.  After soundfolding
+the words become "tktnr" and "tkxnry", these differ by only two letters.
+
+To find words by their soundfolded equivalent (soundalike word) we need a list
+of all soundfolded words.  A few experiments have been done to find out what
+the best method is.  Alternatives:
+1. Do the sound folding on the fly when looking for suggestions.  This means
+   walking through the trie of good words, soundfolding each word and
+   checking how different it is from the bad word.  This is very efficient for
+   memory use, but takes a long time.  On a fast PC it takes a couple of
+   seconds for English, which can be acceptable for interactive use.  But for
+   some languages it takes more than ten seconds (e.g., German, Catalan),
+   which is unacceptable slow.  For batch processing (automatic corrections)
+   it's too slow for all languages.
+2. Use a trie for the soundfolded words, so that searching can be done just
+   like how it works without soundfolding.  This requires remembering a list
+   of good words for each soundfolded word.  This makes finding matches very
+   fast but requires quite a lot of memory, in the order of 1 to 10 Mbyte.
+   For some languages more than the original word list.
+3. Like the second alternative, but reduce the amount of memory by using affix
+   compression and store only the soundfolded basic word.  This is what Aspell
+   does.  Disadvantage is that affixes need to be stripped from the bad word
+   before soundfolding it, which means that mistakes at the start and/or end
+   of the word will cause the mechanism to fail.  Also, this becomes slow when
+   the bad word is quite different from the good word.
+
+The choice made is to use the second mechanism and use a separate file.  This
+way a user with sufficient memory can get very good suggestions while a user
+who is short of memory or just wants the spell checking and no suggestions
+doesn't use so much memory.
+
+
+Word frequency
+
+For sorting suggestions it helps to know which words are common.  In theory we
+could store a word frequency with the word in the dictionary.  However, this
+requires storing a count per word.  That degrades word tree compression a lot.
+And maintaining the word frequency for all languages will be a heavy task.
+Also, it would be nice to prefer words that are already in the text.  This way
+the words that appear in the specific text are preferred for suggestions.
+
+What has been implemented is to count words that have been seen during
+displaying.  A hashtable is used to quickly find the word count.  The count is
+initialized from words listed in COMMON items in the affix file, so that it
+also works when starting a new file.
+
+This isn't ideal, because the longer Vim is running the higher the counts
+become.  But in practice it is a noticeable improvement over not using the word
+count.
+
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

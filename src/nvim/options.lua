@@ -7,7 +7,8 @@
 --    enable_if=nil,
 --    defaults={condition=nil, if_true={vi=224, vim=0}, if_false=nil},
 --    secure=nil, gettext=nil, noglob=nil, normal_fname_chars=nil,
---    pri_mkrc=nil, deny_in_modelines=nil,
+--    pri_mkrc=nil, deny_in_modelines=nil, normal_dname_chars=nil,
+--    modelineexpr=nil,
 --    expand=nil, nodefault=nil, no_mkrc=nil, vi_def=true, vim=true,
 --    alloced=nil,
 --    save_pv_indir=nil,
@@ -17,8 +18,8 @@
 -- types: bool, number, string
 -- lists: (nil), comma, onecomma, flags, flagscomma
 -- scopes: global, buffer, window
--- redraw options: statuslines, current_window, current_buffer, all_windows, 
---                 everything, curswant
+-- redraw options: statuslines, current_window, curent_window_only,
+--                 current_buffer, all_windows, everything, curswant
 -- default: {vi=…[, vim=…]}
 -- defaults: {condition=#if condition, if_true=default, if_false=default}
 -- #if condition:
@@ -34,11 +35,18 @@ local macros=function(s)
     return s
   end
 end
-local N_=function(s)
+local imacros=function(s)
+  return function()
+    return '(intptr_t)' .. s
+  end
+end
+local N_=function(s) -- luacheck: ignore 211 (currently unused)
   return function()
     return 'N_(' .. cstr(s) .. ')'
   end
 end
+-- used for 'cinkeys' and 'indentkeys'
+local indentkeys_default = '0{,0},0),0],:,0#,!^F,o,O,e';
 return {
   cstr=cstr,
   options={
@@ -63,7 +71,8 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything'},
+      redraw={'all_windows', 'ui_option'},
+
       varname='p_arshape',
       defaults={if_true={vi=true}}
     },
@@ -76,17 +85,10 @@ return {
       defaults={if_true={vi=false}}
     },
     {
-      full_name='altkeymap', abbreviation='akm',
-      type='bool', scope={'global'},
-      vi_def=true,
-      varname='p_altkeymap',
-      defaults={if_true={vi=false}}
-    },
-    {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -126,10 +128,10 @@ return {
     {
       full_name='background', abbreviation='bg',
       type='string', scope={'global'},
-      vi_def=true,
-      redraw={'everything'},
+      vim=true,
+      redraw={'all_windows'},
       varname='p_bg',
-      defaults={if_true={vi="light"}}
+      defaults={if_true={vi="light",vim="dark"}}
     },
     {
       full_name='backspace', abbreviation='bs',
@@ -165,7 +167,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_bdir',
       defaults={if_true={vi=''}}
     },
@@ -180,17 +182,18 @@ return {
     {
       full_name='backupskip', abbreviation='bsk',
       type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
       vi_def=true,
       varname='p_bsk',
       defaults={if_true={vi=""}}
     },
     {
       full_name='belloff', abbreviation='bo',
-      deny_duplicates=true,
       type='string', list='comma', scope={'global'},
+      deny_duplicates=true,
       vi_def=true,
       varname='p_bo',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi="all"}}
     },
     {
       full_name='binary', abbreviation='bin',
@@ -280,6 +283,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       expand=true,
+      secure=true,
       varname='p_cdpath',
       defaults={if_true={vi=",,"}}
     },
@@ -288,6 +292,14 @@ return {
       type='string', scope={'global'},
       varname='p_cedit',
       defaults={if_true={vi="", vim=macros('CTRL_F_STR')}}
+    },
+    {
+      full_name='channel',
+      type='number', scope={'buffer'},
+      no_mkrc=true,
+      nodefault=true,
+      varname='p_channel',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='charconvert', abbreviation='ccv',
@@ -312,7 +324,7 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_cink',
-      defaults={if_true={vi="0{,0},0),:,0#,!^F,o,O,e"}}
+      defaults={if_true={vi=indentkeys_default}}
     },
     {
       full_name='cinoptions', abbreviation='cino',
@@ -367,10 +379,9 @@ return {
       full_name='columns', abbreviation='co',
       type='number', scope={'global'},
       no_mkrc=true,
-      nodefault=true,
       vi_def=true,
       redraw={'everything'},
-      varname='Columns',
+      varname='p_columns',
       defaults={if_true={vi=macros('DFLT_COLS')}}
     },
     {
@@ -519,7 +530,7 @@ return {
       vi_def=true,
       vim=true,
       varname='p_csverbose',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='cursorbind', abbreviation='crb',
@@ -532,14 +543,14 @@ return {
       full_name='cursorcolumn', abbreviation='cuc',
       type='bool', scope={'window'},
       vi_def=true,
-      redraw={'current_window'},
+      redraw={'current_window_only'},
       defaults={if_true={vi=false}}
     },
     {
       full_name='cursorline', abbreviation='cul',
       type='bool', scope={'window'},
       vi_def=true,
-      redraw={'current_window'},
+      redraw={'current_window_only'},
       defaults={if_true={vi=false}}
     },
     {
@@ -570,6 +581,7 @@ return {
       full_name='dictionary', abbreviation='dict',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_dname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_dict',
@@ -600,7 +612,7 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true={vi="filler"}}
+      defaults={if_true={vi="internal,filler,closeoff"}}
     },
     {
       full_name='digraph', abbreviation='dg',
@@ -616,7 +628,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_dir',
       defaults={if_true={vi=''}}
     },
@@ -627,7 +639,7 @@ return {
       vim=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true={vi="", vim="lastline"}}
+      defaults={if_true={vi="", vim="lastline,msgsep"}}
     },
     {
       full_name='eadirection', abbreviation='ead',
@@ -644,11 +656,18 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='emoji', abbreviation='emo',
+      type='bool', scope={'global'},
+      vi_def=true,
+      redraw={'all_windows', 'ui_option'},
+      varname='p_emoji',
+      defaults={if_true={vi=true}}
+    },
+    {
       full_name='encoding', abbreviation='enc',
       type='string', scope={'global'},
       deny_in_modelines=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_enc',
       defaults={if_true={vi=macros('ENC_DFLT')}}
     },
@@ -703,13 +722,6 @@ return {
       defaults={if_true={vi=macros('DFLT_EFM')}}
     },
     {
-      full_name='esckeys', abbreviation='ek',
-      type='bool', scope={'global'},
-      vim=true,
-      varname='p_ek',
-      defaults={if_true={vi=false, vim=true}}
-    },
-    {
       full_name='eventignore', abbreviation='ei',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
@@ -746,6 +758,7 @@ return {
     {
       full_name='fileencodings', abbreviation='fencs',
       type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
       vi_def=true,
       varname='p_fencs',
       defaults={if_true={vi="ucs-bom,utf-8,default,latin1"}}
@@ -791,12 +804,13 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'all_windows'},
+      alloced=true,
+      redraw={'current_window'},
       varname='p_fcs',
-      defaults={if_true={vi="vert:|,fold:-"}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='fixendofline', abbreviation='fixeol',
@@ -805,13 +819,6 @@ return {
       redraw={'statuslines'},
       varname='p_fixeol',
       defaults={if_true={vi=true}}
-    },
-    {
-      full_name='fkmap', abbreviation='fk',
-      type='bool', scope={'global'},
-      vi_def=true,
-      varname='p_fkmap',
-      defaults={if_true={vi=false}}
     },
     {
       full_name='foldclose', abbreviation='fcl',
@@ -824,10 +831,11 @@ return {
     },
     {
       full_name='foldcolumn', abbreviation='fdc',
-      type='number', scope={'window'},
+      type='string', scope={'window'},
       vi_def=true,
+      alloced=true,
       redraw={'current_window'},
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi="0"}}
     },
     {
       full_name='foldenable', abbreviation='fen',
@@ -841,6 +849,7 @@ return {
       type='string', scope={'window'},
       vi_def=true,
       vim=true,
+      modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi="0"}}
@@ -916,6 +925,7 @@ return {
       type='string', scope={'window'},
       vi_def=true,
       vim=true,
+      modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi="foldtext()"}}
@@ -925,6 +935,7 @@ return {
       type='string', scope={'buffer'},
       vi_def=true,
       vim=true,
+      modelineexpr=true,
       alloced=true,
       varname='p_fex',
       defaults={if_true={vi=""}}
@@ -947,7 +958,7 @@ return {
     },
     {
       full_name='formatprg', abbreviation='fp',
-      type='string', scope={'global'},
+      type='string', scope={'global', 'buffer'},
       secure=true,
       vi_def=true,
       expand=true,
@@ -960,7 +971,7 @@ return {
       secure=true,
       vi_def=true,
       varname='p_fs',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='gdefault', abbreviation='gd',
@@ -986,11 +997,11 @@ return {
       expand=true,
       varname='p_gp',
       defaults={
-        condition='UNIX',
+        condition='WIN32',
         -- Add an extra file name so that grep will always
         -- insert a file name in the match line. */
-        if_true={vi="grep -n $* /dev/null"},
-        if_false={vi="grep -n "},
+        if_true={vi="findstr /n $* nul"},
+        if_false={vi="grep -n $* /dev/null"}
       }
     },
     {
@@ -999,37 +1010,34 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guicursor',
-      defaults={if_true={vi="n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block"}}
+      defaults={if_true={vi="n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"}}
     },
     {
       full_name='guifont', abbreviation='gfn',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifont',
+      redraw={'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontset', abbreviation='gfs',
       type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifontset',
+      redraw={'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontwide', abbreviation='gfw',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
-    },
-    {
-      full_name='guiheadroom', abbreviation='ghr',
-      type='number', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=50}}
+      redraw={'ui_option'},
+      varname='p_guifontwide',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -1042,6 +1050,7 @@ return {
       full_name='guitablabel', abbreviation='gtl',
       type='string', scope={'global'},
       vi_def=true,
+      modelineexpr=true,
       redraw={'current_window'},
       enable_if=false,
     },
@@ -1071,6 +1080,7 @@ return {
     {
       full_name='helplang', abbreviation='hlg',
       type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
       vi_def=true,
       varname='p_hlg',
       defaults={if_true={vi=""}}
@@ -1087,7 +1097,6 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_hl',
       defaults={if_true={vi=macros('HIGHLIGHT_INIT')}}
     },
@@ -1133,6 +1142,7 @@ return {
       full_name='iconstring',
       type='string', scope={'global'},
       vi_def=true,
+      modelineexpr=true,
       varname='p_iconstring',
       defaults={if_true={vi=""}}
     },
@@ -1163,9 +1173,7 @@ return {
       vi_def=true,
       varname='p_iminsert', pv_name='p_imi',
       defaults={
-        condition='B_IMODE_IM',
-        if_true={vi=macros('B_IMODE_IM')},
-        if_false={vi=macros('B_IMODE_NONE')},
+        if_true={vi=macros('B_IMODE_NONE')},
       }
     },
     {
@@ -1174,10 +1182,16 @@ return {
       vi_def=true,
       varname='p_imsearch', pv_name='p_ims',
       defaults={
-        condition='B_IMODE_IM',
-        if_true={vi=macros('B_IMODE_IM')},
-        if_false={vi=macros('B_IMODE_NONE')},
+        if_true={vi=macros('B_IMODE_USE_INSERT')},
       }
+    },
+    {
+      full_name='inccommand', abbreviation='icm',
+      type='string', scope={'global'},
+      vi_def=true,
+      redraw={'all_windows'},
+      varname='p_icm',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='include', abbreviation='inc',
@@ -1191,6 +1205,7 @@ return {
       full_name='includeexpr', abbreviation='inex',
       type='string', scope={'buffer'},
       vi_def=true,
+      modelineexpr=true,
       alloced=true,
       varname='p_inex',
       defaults={if_true={vi=""}}
@@ -1207,6 +1222,7 @@ return {
       type='string', scope={'buffer'},
       vi_def=true,
       vim=true,
+      modelineexpr=true,
       alloced=true,
       varname='p_inde',
       defaults={if_true={vi=""}}
@@ -1218,7 +1234,7 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_indk',
-      defaults={if_true={vi="0{,0},:,0#,!^F,o,O,e"}}
+      defaults={if_true={vi=indentkeys_default}}
     },
     {
       full_name='infercase', abbreviation='inf',
@@ -1285,6 +1301,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='jumpoptions', abbreviation='jop',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      varname='p_jop',
+      vim=true,
+      defaults={if_true={vim=''}}
+    },
+    {
       full_name='keymap', abbreviation='kmp',
       type='string', scope={'buffer'},
       normal_fname_chars=true,
@@ -1338,6 +1362,12 @@ return {
       defaults={if_true={vi=false, vim=true}}
     },
     {
+      full_name='langremap', abbreviation='lrm',
+      type='bool', scope={'global'},
+      varname='p_lrm',
+      defaults={if_true={vi=true, vim=false}}
+    },
+    {
       full_name='laststatus', abbreviation='ls',
       type='number', scope={'global'},
       vim=true,
@@ -1363,18 +1393,18 @@ return {
       full_name='lines',
       type='number', scope={'global'},
       no_mkrc=true,
-      nodefault=true,
       vi_def=true,
       redraw={'everything'},
-      varname='Rows',
+      varname='p_lines',
       defaults={if_true={vi=macros('DFLT_ROWS')}}
     },
     {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'ui_option'},
+      varname='p_linespace',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='lisp',
@@ -1400,10 +1430,11 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vim=true,
-      redraw={'all_windows'},
+      alloced=true,
+      redraw={'current_window'},
       varname='p_lcs',
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
@@ -1428,6 +1459,13 @@ return {
       vi_def=true,
       expand=true,
       varname='p_mef',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='makeencoding', abbreviation='menc',
+      type='string', scope={'global', 'buffer'},
+      vi_def=true,
+      varname='p_menc',
       defaults={if_true={vi=""}}
     },
     {
@@ -1459,9 +1497,8 @@ return {
       full_name='maxcombine', abbreviation='mco',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'curswant'},
       varname='p_mco',
-      defaults={if_true={vi=2}}
+      defaults={if_true={vi=6}}
     },
     {
       full_name='maxfuncdepth', abbreviation='mfd',
@@ -1478,25 +1515,11 @@ return {
       defaults={if_true={vi=1000}}
     },
     {
-      full_name='maxmem', abbreviation='mm',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mm',
-      defaults={if_true={vi=macros('DFLT_MAXMEM')}}
-    },
-    {
       full_name='maxmempattern', abbreviation='mmp',
       type='number', scope={'global'},
       vi_def=true,
       varname='p_mmp',
       defaults={if_true={vi=1000}}
-    },
-    {
-      full_name='maxmemtot', abbreviation='mmt',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mmt',
-      defaults={if_true={vi=macros('DFLT_MAXMEMTOT')}}
     },
     {
       full_name='menuitems', abbreviation='mis',
@@ -1520,6 +1543,14 @@ return {
       vim=true,
       varname='p_ml',
       defaults={if_true={vi=false, vim=true}}
+    },
+    {
+      full_name='modelineexpr', abbreviation='mle',
+      type='bool', scope={'global'},
+      vi_def=true,
+      secure=true,
+      varname='p_mle',
+      defaults={if_true={vi=false}}
     },
     {
       full_name='modelines', abbreviation='mls',
@@ -1556,7 +1587,7 @@ return {
       full_name='mouse',
       type='string', list='flags', scope={'global'},
       varname='p_mouse',
-      defaults={if_true={vi="", vim="a"}}
+      defaults={if_true={vi="", vim=""}}
     },
     {
       full_name='mousefocus', abbreviation='mousef',
@@ -1638,6 +1669,16 @@ return {
       vi_def=true,
       varname='p_opfunc',
       defaults={if_true={vi=""}}
+    },
+    {
+      full_name='packpath', abbreviation='pp',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      secure=true,
+      vi_def=true,
+      expand=true,
+      varname='p_pp',
+      defaults={if_true={vi=''}}
     },
     {
       full_name='paragraphs', abbreviation='para',
@@ -1727,6 +1768,7 @@ return {
     {
       full_name='printexpr', abbreviation='pexpr',
       type='string', scope={'global'},
+      secure=true,
       vi_def=true,
       varname='p_pexpr',
       defaults={if_true={vi=""}}
@@ -1741,10 +1783,9 @@ return {
     {
       full_name='printheader', abbreviation='pheader',
       type='string', scope={'global'},
-      gettext=true,
       vi_def=true,
       varname='p_header',
-      defaults={if_true={vi=N_("%<%f%h%m%=Page %N")}}
+      defaults={if_true={vi="%<%f%h%m%=Page %N"}}
     },
     {
       full_name='printmbcharset', abbreviation='pmbcs',
@@ -1776,10 +1817,33 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='pumblend', abbreviation='pb',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'ui_option'},
+      varname='p_pb',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pumheight', abbreviation='ph',
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ph',
+      defaults={if_true={vi=0}}
+    },
+    {
+      full_name='pumwidth', abbreviation='pw',
+      type='number', scope={'global'},
+      vi_def=true,
+      varname='p_pw',
+      defaults={if_true={vi=15}}
+    },
+    {
+      full_name='pyxversion', abbreviation='pyx',
+      type='number', scope={'global'},
+      secure=true,
+      vi_def=true,
+      varname='p_pyx',
       defaults={if_true={vi=0}}
     },
     {
@@ -1798,6 +1862,13 @@ return {
       redraw={'statuslines'},
       varname='p_ro',
       defaults={if_true={vi=false}}
+    },
+    {
+      full_name='redrawdebug', abbreviation='rdb',
+      type='string', list='onecomma', scope={'global'},
+      vi_def=true,
+      varname='p_rdb',
+      defaults={if_true={vi=''}}
     },
     {
       full_name='redrawtime', abbreviation='rdt',
@@ -1864,13 +1935,14 @@ return {
       vim=true,
       redraw={'statuslines'},
       varname='p_ru',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='rulerformat', abbreviation='ruf',
       type='string', scope={'global'},
       vi_def=true,
       alloced=true,
+      modelineexpr=true,
       redraw={'statuslines'},
       varname='p_ruf',
       defaults={if_true={vi=""}}
@@ -1881,7 +1953,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_rtp',
       defaults={if_true={vi=''}}
     },
@@ -1891,7 +1963,15 @@ return {
       no_mkrc=true,
       vi_def=true,
       pv_name='p_scroll',
-      defaults={if_true={vi=12}}
+      defaults={if_true={vi=0}}
+    },
+    {
+      full_name='scrollback', abbreviation='scbk',
+      type='number', scope={'buffer'},
+      vi_def=true,
+      varname='p_scbk',
+      redraw={'current_buffer'},
+      defaults={if_true={vi=-1}}
     },
     {
       full_name='scrollbind', abbreviation='scb',
@@ -1910,7 +1990,7 @@ return {
     },
     {
       full_name='scrolloff', abbreviation='so',
-      type='number', scope={'global'},
+      type='number', scope={'global', 'window'},
       vi_def=true,
       vim=true,
       redraw={'all_windows'},
@@ -1975,6 +2055,15 @@ return {
       defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
     },
     {
+      full_name='shadafile', abbreviation='sdf',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vi_def=true,
+      secure=true,
+      varname='p_shadafile',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='shell', abbreviation='sh',
       type='string', scope={'global'},
       secure=true,
@@ -1995,7 +2084,7 @@ return {
       varname='p_shcf',
       defaults={
         condition='WIN32',
-        if_true={vi="/c"},
+        if_true={vi="/s /c"},
         if_false={vi="-c"}
       }
     },
@@ -2006,9 +2095,9 @@ return {
       vi_def=true,
       varname='p_sp',
       defaults={
-        condition='UNIX',
-        if_true={vi="| tee"},
-        if_false={vi=">"},
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi="| tee"},
       }
     },
     {
@@ -2025,7 +2114,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_srr',
-      defaults={if_true={vi=">"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi=">"}
+      }
     },
     {
       full_name='shellslash', abbreviation='ssl',
@@ -2047,7 +2140,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxq',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="\""},
+        if_false={vi=""},
+      }
     },
     {
       full_name='shellxescape', abbreviation='sxe',
@@ -2077,7 +2174,7 @@ return {
       type='string', list='flags', scope={'global'},
       vim=true,
       varname='p_shm',
-      defaults={if_true={vi="", vim="filnxtToO"}}
+      defaults={if_true={vi="S", vim="filnxtToOF"}}
     },
     {
       full_name='showbreak', abbreviation='sbr',
@@ -2092,11 +2189,7 @@ return {
       type='bool', scope={'global'},
       vim=true,
       varname='p_sc',
-      defaults={
-        condition='UNIX',
-        if_true={vi=false, vim=false},
-        if_false={vi=false, vim=true},
-      }
+      defaults={if_true={vi=false, vim=true}}
     },
     {
       full_name='showfulltag', abbreviation='sft',
@@ -2123,7 +2216,7 @@ return {
       full_name='showtabline', abbreviation='stal',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'all_windows'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_stal',
       defaults={if_true={vi=1}}
     },
@@ -2132,16 +2225,24 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ss',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='sidescrolloff', abbreviation='siso',
-      type='number', scope={'global'},
+      type='number', scope={'global', 'window'},
       vi_def=true,
       vim=true,
-      redraw={'current_buffer'},
+      redraw={'all_windows'},
       varname='p_siso',
       defaults={if_true={vi=0}}
+    },
+    {
+      full_name='signcolumn', abbreviation='scl',
+      type='string', scope={'window'},
+      vi_def=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi="auto"}}
     },
     {
       full_name='smartcase', abbreviation='scs',
@@ -2193,6 +2294,7 @@ return {
     {
       full_name='spellfile', abbreviation='spf',
       type='string', list='onecomma', scope={'buffer'},
+      deny_duplicates=true,
       secure=true,
       vi_def=true,
       alloced=true,
@@ -2203,6 +2305,7 @@ return {
     {
       full_name='spelllang', abbreviation='spl',
       type='string', list='onecomma', scope={'buffer'},
+      deny_duplicates=true,
       vi_def=true,
       alloced=true,
       expand=true,
@@ -2213,6 +2316,7 @@ return {
     {
       full_name='spellsuggest', abbreviation='sps',
       type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
       secure=true,
       vi_def=true,
       expand=true,
@@ -2237,15 +2341,16 @@ return {
       full_name='startofline', abbreviation='sol',
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
+      vim=false,
       varname='p_sol',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='statusline', abbreviation='stl',
       type='string', scope={'global', 'window'},
       vi_def=true,
       alloced=true,
+      modelineexpr=true,
       redraw={'statuslines'},
       varname='p_stl',
       defaults={if_true={vi=""}}
@@ -2302,9 +2407,18 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='tagfunc', abbreviation='tfu',
+      type='string', scope={'buffer'},
+      vim=true,
+      vi_def=true,
+      varname='p_tfu',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='tabline', abbreviation='tal',
       type='string', scope={'global'},
       vi_def=true,
+      modelineexpr=true,
       redraw={'all_windows'},
       varname='p_tal',
       defaults={if_true={vi=""}}
@@ -2330,6 +2444,13 @@ return {
       vi_def=true,
       varname='p_tbs',
       defaults={if_true={vi=true}}
+    },
+    {
+      full_name='tagcase', abbreviation='tc',
+      type='string', scope={'global', 'buffer'},
+      vim=true,
+      varname='p_tc',
+      defaults={if_true={vi="followic", vim="followic"}}
     },
     {
       full_name='taglength', abbreviation='tl',
@@ -2372,8 +2493,15 @@ return {
       full_name='termencoding', abbreviation='tenc',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
       defaults={if_true={vi=""}}
+    },
+    {
+      full_name='termguicolors', abbreviation='tgc',
+      type='bool', scope={'global'},
+      vi_def=false,
+      redraw={'ui_option'},
+      varname='p_tgc',
+      defaults={if_true={vi=false}}
     },
     {
       full_name='terse',
@@ -2395,6 +2523,7 @@ return {
       full_name='thesaurus', abbreviation='tsr',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_dname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_tsr',
@@ -2440,16 +2569,16 @@ return {
       full_name='titleold',
       type='string', scope={'global'},
       secure=true,
-      gettext=true,
       no_mkrc=true,
       vi_def=true,
       varname='p_titleold',
-      defaults={if_true={vi=N_("Thanks for flying Vim")}}
+      defaults={if_true={vi=""}}
     },
     {
       full_name='titlestring',
       type='string', scope={'global'},
       vi_def=true,
+      modelineexpr=true,
       varname='p_titlestring',
       defaults={if_true={vi=""}}
     },
@@ -2458,15 +2587,17 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
+      redraw={'ui_option'},
       varname='p_ttimeout',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='ttimeoutlen', abbreviation='ttm',
       type='number', scope={'global'},
       vi_def=true,
+      redraw={'ui_option'},
       varname='p_ttm',
-      defaults={if_true={vi=-1}}
+      defaults={if_true={vi=50}}
     },
     {
       full_name='ttyfast', abbreviation='tf',
@@ -2482,7 +2613,7 @@ return {
       deny_duplicates=true,
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_udir',
       defaults={if_true={vi=''}}
     },
@@ -2543,7 +2674,7 @@ return {
       type='string', scope={'global'},
       secure=true,
       vi_def=true,
-      expand=true,
+      expand='nodefault',
       varname='p_vdir',
       defaults={if_true={vi=''}}
     },
@@ -2553,15 +2684,17 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_vop',
-      defaults={if_true={vi="folds,options,cursor"}}
+      defaults={if_true={vi="folds,options,cursor,curdir"}}
     },
     {
+      -- Alias for "shada".
       full_name='viminfo', abbreviation='vi',
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      secure=true,
-      varname='p_shada',
-      defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
+      type='string', scope={'global'}, nodefault=true,
+    },
+    {
+      -- Alias for "shadafile".
+      full_name='viminfofile', abbreviation='vif',
+      type='string', scope={'global'}, nodefault=true,
     },
     {
       full_name='virtualedit', abbreviation='ve',
@@ -2599,7 +2732,7 @@ return {
       type='number', scope={'global'},
       vim=true,
       varname='p_wc',
-      defaults={if_true={vi=macros('Ctrl_E'), vim=macros('TAB')}}
+      defaults={if_true={vi=imacros('Ctrl_E'), vim=imacros('TAB')}}
     },
     {
       full_name='wildcharm', abbreviation='wcm',
@@ -2640,10 +2773,11 @@ return {
     },
     {
       full_name='wildoptions', abbreviation='wop',
-      type='string', scope={'global'},
-      vi_def=true,
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vim=true,
       varname='p_wop',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi='', vim='pum,tagfile'}}
     },
     {
       full_name='winaltkeys', abbreviation='wak',
@@ -2651,6 +2785,21 @@ return {
       vi_def=true,
       varname='p_wak',
       defaults={if_true={vi="menu"}}
+    },
+    {
+      full_name='winblend', abbreviation='winbl',
+      type='number', scope={'window'},
+      vi_def=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=0}}
+    },
+    {
+      full_name='winhighlight', abbreviation='winhl',
+      type='string', scope={'window'},
+      vi_def=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='window', abbreviation='wi',

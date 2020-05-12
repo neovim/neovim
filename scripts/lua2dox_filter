@@ -1,0 +1,87 @@
+#!/bin/bash
+
+###########################################################################
+#   Copyright (C) 2012 by Simon Dales   #
+#   simon@purrsoft.co.uk   #
+#                                                                         #
+#   This program is free software; you can redistribute it and/or modify  #
+#   it under the terms of the GNU General Public License as published by  #
+#   the Free Software Foundation; either version 2 of the License, or     #
+#   (at your option) any later version.                                   #
+#                                                                         #
+#   This program is distributed in the hope that it will be useful,       #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#   GNU General Public License for more details.                          #
+#                                                                         #
+#   You should have received a copy of the GNU General Public License     #
+#   along with this program; if not, write to the                         #
+#   Free Software Foundation, Inc.,                                       #
+#   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
+###########################################################################
+LANG=""
+
+##! \brief test executable to see if it exists
+test_executable(){
+	P_EXE="$1"
+	#########
+	WHICH=`which ${P_EXE}`
+	if test -z "${WHICH}"
+	then
+		echo "not found \"${P_EXE}\""
+	else
+		EXE="${P_EXE}"
+	fi
+	}
+
+##! \brief sets the lua interpreter
+set_lua(){
+	test_executable 'texlua'
+	if test -z "${EXE}"
+	then
+		test_executable 'lua'
+	fi
+	#echo "final EXE=\"${EXE}\""
+	}
+
+##! \brief makes canonical name of file
+##! 
+##! Note that "readlink -f" doesn't work in MacOSX
+##! 
+do_readlink(){
+	pushd . > /dev/null
+	TARGET_FILE=$1
+	
+	cd `dirname $TARGET_FILE`
+	TARGET_FILE=`basename $TARGET_FILE`
+	
+	# Iterate down a (possible) chain of symlinks
+	while [ -L "$TARGET_FILE" ]
+	do
+		TARGET_FILE=`readlink $TARGET_FILE`
+		cd `dirname $TARGET_FILE`
+		TARGET_FILE=`basename $TARGET_FILE`
+	done
+	
+	PHYS_DIR=`pwd -P`
+	RESULT=$PHYS_DIR
+	popd > /dev/null
+	}
+
+##main
+set_lua
+if test -z "${EXE}"
+then
+	echo "no lua interpreter available"
+else
+	BASENAME=`basename "$0"`
+	do_readlink "$0"
+	DIRNAME="${RESULT}"
+		
+	LUASCRIPT="${DIRNAME}/lua2dox.lua ${BASENAME}"
+	#echo "lua[${LUASCRIPT}]"
+
+	${EXE} ${LUASCRIPT} $@
+fi
+# 
+##eof

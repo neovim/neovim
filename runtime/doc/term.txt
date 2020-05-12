@@ -1,461 +1,182 @@
-*term.txt*      For Vim version 7.4.  Last change: 2015 Feb 23
+*term.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+                            NVIM REFERENCE MANUAL
 
 
-Terminal information					*terminal-info*
+Terminal UI						*TUI* *tui*
 
-Vim uses information about the terminal you are using to fill the screen and
-recognize what keys you hit.  If this information is not correct, the screen
-may be messed up or keys may not be recognized.  The actions which have to be
-performed on the screen are accomplished by outputting a string of
-characters.  Special keys produce a string of characters.  These strings are
-stored in the terminal options, see |terminal-options|.
+Nvim uses a list of terminal capabilities to display its user interface
+(except in |--embed| and |--headless| modes). If that information is wrong,
+the screen may be messed up or keys may not be recognized.
 
-NOTE: Most of this is not used when running the |GUI|.
-
-1. Startup			|startup-terminal|
-2. Terminal options		|terminal-options|
-3. Window size			|window-size|
-4. Slow and fast terminals	|slow-fast-terminal|
-5. Using the mouse		|mouse-using|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Startup						*startup-terminal*
+Startup						*startup-terminal*
 
-When Vim is started a default terminal type is assumed.  for MS-DOS this is
-the pc terminal, for Unix an ansi terminal.
+Nvim guesses the terminal type when it starts (except in |--embed| and
+|--headless| modes). The |$TERM| environment variable is the primary hint that
+determines the terminal type.
 
-				*termcap* *terminfo* *E557* *E558* *E559*
-On Unix the terminfo database or termcap file is used.  This is referred to as
-"termcap" in all the documentation.  At compile time, when running configure,
-the choice whether to use terminfo or termcap is done automatically.  When
-running Vim the output of ":version" will show |+terminfo| if terminfo is
-used.  Also see |xterm-screens|.
+					*terminfo* *E557* *E558* *E559*
+The terminfo database is used if available.
+
+The Unibilium library (used by Nvim to read terminfo) allows you to override
+the system terminfo with one in $HOME/.terminfo/ directory, in part or in
+whole.
+
+Building your own terminfo is usually as simple as running this as
+a non-superuser:
+>
+  curl -LO http://invisible-island.net/datafiles/current/terminfo.src.gz
+  gunzip terminfo.src.gz
+  tic terminfo.src
+<
+								*$TERM*
+The $TERM environment variable must match the terminal you are using!
+Otherwise Nvim cannot know what sequences your terminal expects, and weird
+or sub-optimal behavior will result (scrolling quirks, wrong colors, etc.).
+
+$TERM is also important because it is forwarded by SSH to the remote session,
+unlike most other environment variables.
+
+  For this terminal           Set $TERM to                  |builtin-terms|
+  -------------------------------------------------------------------------
+  anything libvte-based       vte, vte-256color                   Y
+   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
+  iTerm (original)            iterm, iTerm.app                    N
+  iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
+  Konsole                     konsole-256color                    N
+  Linux virtual terminal      linux, linux-256color               Y
+  PuTTY                       putty, putty-256color               Y
+  rxvt                        rxvt, rxvt-256color                 Y
+  screen                      screen, screen-256color             Y
+  simple terminal (st)        st, st-256color                     Y
+  Terminal.app                nsterm                              N
+  tmux                        tmux, tmux-256color                 Y
+  Windows/ConEmu              conemu                              Y
+  Windows/Cygwin-built Nvim   cygwin                              Y
+  Windows/Interix             interix                             Y
+  Windows/VTP console         vtpcon                              Y
+  Windows/legacy console      win32con                            Y
+  xterm or compatible         xterm, xterm-256color               Y
+
+					*builtin-terms* *builtin_terms*
+If a |terminfo| database is not available or there is no entry for the current
+terminal, Nvim will map |$TERM| to a builtin entry according to the above
+table, or "ansi" if there is no match. For example "TERM=putty-256color" will
+be mapped to the builtin "putty" entry. See also |tui-colors|.
+
+The builtin terminfo is not combined with any external terminfo database, nor
+can it be used in preference to one.  You can thus entirely override any
+omissions or out-of-date information in the builtin terminfo database by
+supplying an external one with entries for the terminal type.
 
 Settings depending on terminal			*term-dependent-settings*
 
-If you want to set options or mappings, depending on the terminal name, you
-can do this best in your vimrc.  Example: >
+If you want to set terminal-dependent options or mappings, you can do this in
+your init.vim.  Example: >
 
-   if &term == "xterm"
-     ... xterm maps and settings ...
-   elseif &term =~ "vt10."
-     ... vt100, vt102 maps and settings ...
-   endif
+    if $TERM =~ '^\(rxvt\|screen\|interix\|putty\)\(-.*\)\?$'
+        set notermguicolors
+    elseif $TERM =~ '^\(tmux\|iterm\|vte\|gnome\)\(-.*\)\?$'
+        set termguicolors
+    elseif $TERM =~ '^\(xterm\)\(-.*\)\?$'
+        if $XTERM_VERSION != ''
+            set termguicolors
+        elseif $KONSOLE_PROFILE_NAME != ''
+            set termguicolors
+        elseif $VTE_VERSION != ''
+            set termguicolors
+        else
+            set notermguicolors
+        endif
+    elseif $TERM =~ ...
+        ... and so forth ...
+    endif
 <
-						*raw-terminal-mode*
-For normal editing the terminal will be put into "raw" mode.  The strings
-defined with 't_ti' and 't_ks' will be sent to the terminal.  Normally this
-puts the terminal in a state where the termcap codes are valid and activates
-the cursor and function keys.  When Vim exits the terminal will be put back
-into the mode it was before Vim started.  The strings defined with 't_te' and
-'t_ke' will be sent to the terminal.
+					*scroll-region* *xterm-scroll-region*
+Where possible, Nvim will use the terminal's ability to set a scroll region in
+order to redraw faster when a window is scrolled.  If the terminal's terminfo
+description describes an ability to set top and bottom scroll margins, that is
+used.
 
-							*cs7-problem*
-Note: If the terminal settings are changed after running Vim, you might have
-an illegal combination of settings.  This has been reported on Solaris 2.5
-with "stty cs8 parenb", which is restored as "stty cs7 parenb".  Use
-"stty cs8 -parenb -istrip" instead, this is restored correctly.
+This will not speed up scrolling in a window that is not the full width of the
+terminal.  Xterm has an extra ability, not described by terminfo, to set left
+and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
+it will make use of this ability to speed up scrolling that is not the full
+width of the terminal.
 
-Some termcap entries are wrong in the sense that after sending 't_ks' the
-cursor keys send codes different from the codes defined in the termcap.  To
-avoid this you can set 't_ks' (and 't_ke') to empty strings.  This must be
-done during initialization (see |initialization|), otherwise it's too late.
+							*tui-colors*
+Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
+including "linux" (whose virtual terminals have had 256-colour support since
+4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
+contain the string "256".
 
-Many cursor key codes start with an <Esc>.  Vim must find out if this is a
-single hit of the <Esc> key or the start of a cursor key sequence.  It waits
-for a next character to arrive.  If it does not arrive within one second a
-single <Esc> is assumed.  On very slow systems this may fail, causing cursor
-keys not to work sometimes.  If you discover this problem reset the 'timeout'
-option.  Vim will wait for the next character to arrive after an <Esc>.  If
-you want to enter a single <Esc> you must type it twice.  Resetting the
-'esckeys' option avoids this problem in Insert mode, but you lose the
-possibility to use cursor and function keys in Insert mode.
+Nvim similarly assumes that any terminal emulator that sets $COLORTERM to any
+value, is capable of at least 16-colour operation.
 
-Some terminals have confusing codes for the cursor keys.  The televideo 925 is
-such a terminal.  It sends a CTRL-H for cursor-left.  This would make it
-impossible to distinguish a backspace and cursor-left.  To avoid this problem
-CTRL-H is never recognized as cursor-left.
+						*true-color* *xterm-true-color*
+Nvim emits true (24-bit) colours in the terminal, if 'termguicolors' is set.
 
-					*vt100-cursor-keys* *xterm-cursor-keys*
-Other terminals (e.g., vt100 and xterm) have cursor keys that send <Esc>OA,
-<Esc>OB, etc.  Unfortunately these are valid commands in insert mode: Stop
-insert, Open a new line above the new one, start inserting 'A', 'B', etc.
-Instead of performing these commands Vim will erroneously recognize this typed
-key sequence as a cursor key movement.  To avoid this and make Vim do what you
-want in either case you could use these settings: >
-	:set notimeout		" don't timeout on mappings
-	:set ttimeout		" do timeout on terminal key codes
-	:set timeoutlen=100	" timeout after 100 msec
-This requires the key-codes to be sent within 100 msec in order to recognize
-them as a cursor key.  When you type you normally are not that fast, so they
-are recognized as individual typed commands, even though Vim receives the same
-sequence of bytes.
+It uses the "setrgbf" and "setrgbb" |terminfo| extensions (proposed by Rüdiger
+Sonderfeld in 2013). If your terminfo definition is missing them, then Nvim
+will decide whether to add them to your terminfo definition, using the ISO
+8613-6:1994/ITU T.416:1993 control sequences for setting RGB colours (but
+modified to use semicolons instead of colons unless the terminal is known to
+follow the standard).
 
-				*vt100-function-keys* *xterm-function-keys*
-An xterm can send function keys F1 to F4 in two modes: vt100 compatible or
-not.  Because Vim may not know what the xterm is sending, both types of keys
-are recognized.  The same happens for the <Home> and <End> keys.
-			normal			vt100 ~
-	<F1>	t_k1	<Esc>[11~	<xF1>	<Esc>OP	    *<xF1>-xterm*
-	<F2>	t_k2	<Esc>[12~	<xF2>	<Esc>OQ	    *<xF2>-xterm*
-	<F3>	t_k3	<Esc>[13~	<xF3>	<Esc>OR	    *<xF3>-xterm*
-	<F4>	t_k4	<Esc>[14~	<xF4>	<Esc>OS	    *<xF4>-xterm*
-	<Home>	t_kh	<Esc>[7~	<xHome>	<Esc>OH	    *<xHome>-xterm*
-	<End>	t_@7	<Esc>[4~	<xEnd>	<Esc>OF	    *<xEnd>-xterm*
+Another convention, pioneered in 2016 by tmux, is the "Tc" terminfo extension.
+If terminfo has this flag, Nvim will add constructed "setrgbf" and "setrgbb"
+capabilities as if they had been in the terminfo definition.
 
-When Vim starts, <xF1> is mapped to <F1>, <xF2> to <F2> etc.  This means that
-by default both codes do the same thing.  If you make a mapping for <xF2>,
-because your terminal does have two keys, the default mapping is overwritten,
-thus you can use the <F2> and <xF2> keys for something different.
-
-							*xterm-shifted-keys*
-Newer versions of xterm support shifted function keys and special keys.  Vim
-recognizes most of them.  Use ":set termcap" to check which are supported and
-what the codes are.  Mostly these are not in a termcap, they are only
-supported by the builtin_xterm termcap.
-
-							*xterm-modifier-keys*
-Newer versions of xterm support Alt and Ctrl for most function keys.  To avoid
-having to add all combinations of Alt, Ctrl and Shift for every key a special
-sequence is recognized at the end of a termcap entry: ";*X".  The "X" can be
-any character, often '~' is used.  The ";*" stands for an optional modifier
-argument.  ";2" is Shift, ";3" is Alt, ";5" is Ctrl and ";9" is Meta (when
-it's different from Alt).  They can be combined.  Examples: >
-	:set <F8>=^[[19;*~
-	:set <Home>=^[[1;*H
-Another speciality about these codes is that they are not overwritten by
-another code.  That is to avoid that the codes obtained from xterm directly
-|t_RV| overwrite them.
-							*xterm-scroll-region*
-The default termcap entry for xterm on Sun and other platforms does not
-contain the entry for scroll regions.  Add ":cs=\E[%i%d;%dr:" to the xterm
-entry in /etc/termcap and everything should work.
-
-							*xterm-end-home-keys*
-On some systems (at least on FreeBSD with XFree86 3.1.2) the codes that the
-<End> and <Home> keys send contain a <Nul> character.  To make these keys send
-the proper key code, add these lines to your ~/.Xdefaults file:
-
-*VT100.Translations:		#override \n\
-		<Key>Home: string("0x1b") string("[7~") \n\
-		<Key>End: string("0x1b") string("[8~")
-
-						*xterm-8bit* *xterm-8-bit*
-Xterm can be run in a mode where it uses 8-bit escape sequences.  The CSI code
-is used instead of <Esc>[.  The advantage is that an <Esc> can quickly be
-recognized in Insert mode, because it can't be confused with the start of a
-special key.
-For the builtin termcap entries, Vim checks if the 'term' option contains
-"8bit" anywhere.  It then uses 8-bit characters for the termcap entries, the
-mouse and a few other things.  You would normally set $TERM in your shell to
-"xterm-8bit" and Vim picks this up and adjusts to the 8-bit setting
-automatically.
-When Vim receives a response to the |t_RV| (request version) sequence and it
-starts with CSI, it assumes that the terminal is in 8-bit mode and will
-convert all key sequences to their 8-bit variants.
-
-==============================================================================
-2. Terminal options		*terminal-options* *termcap-options* *E436*
-
-The terminal options can be set just like normal options.  But they are not
-shown with the ":set all" command.  Instead use ":set termcap".
-
-It is always possible to change individual strings by setting the
-appropriate option.  For example: >
-	:set t_ce=^V^[[K	(CTRL-V, <Esc>, [, K)
-
-The options are listed below.  The associated termcap code is always equal to
-the last two characters of the option name.  Only one termcap code is
-required: Cursor motion, 't_cm'.
-
-The options 't_da', 't_db', 't_ms', 't_xs' represent flags in the termcap.
-When the termcap flag is present, the option will be set to "y".  But any
-non-empty string means that the flag is set.  An empty string means that the
-flag is not set.  't_CS' works like this too, but it isn't a termcap flag.
-
-OUTPUT CODES
-	option	meaning	~
-
-	t_AB	set background color (ANSI)			*t_AB* *'t_AB'*
-	t_AF	set foreground color (ANSI)			*t_AF* *'t_AF'*
-	t_AL	add number of blank lines			*t_AL* *'t_AL'*
-	t_al	add new blank line				*t_al* *'t_al'*
-	t_bc	backspace character				*t_bc* *'t_bc'*
-	t_cd	clear to end of screen				*t_cd* *'t_cd'*
-	t_ce	clear to end of line				*t_ce* *'t_ce'*
-	t_cl	clear screen					*t_cl* *'t_cl'*
-	t_cm	cursor motion (required!)		  *E437* *t_cm* *'t_cm'*
-	t_Co	number of colors				*t_Co* *'t_Co'*
-	t_CS	if non-empty, cursor relative to scroll region	*t_CS* *'t_CS'*
-	t_cs	define scrolling region				*t_cs* *'t_cs'*
-	t_CV	define vertical scrolling region		*t_CV* *'t_CV'*
-	t_da	if non-empty, lines from above scroll down	*t_da* *'t_da'*
-	t_db	if non-empty, lines from below scroll up	*t_db* *'t_db'*
-	t_DL	delete number of lines				*t_DL* *'t_DL'*
-	t_dl	delete line					*t_dl* *'t_dl'*
-	t_fs	set window title end (from status line)		*t_fs* *'t_fs'*
-	t_ke	exit "keypad transmit" mode			*t_ke* *'t_ke'*
-	t_ks	start "keypad transmit" mode			*t_ks* *'t_ks'*
-	t_le	move cursor one char left			*t_le* *'t_le'*
-	t_mb	blinking mode					*t_mb* *'t_mb'*
-	t_md	bold mode					*t_md* *'t_md'*
-	t_me	Normal mode (undoes t_mr, t_mb, t_md and color)	*t_me* *'t_me'*
-	t_mr	reverse (invert) mode				*t_mr* *'t_mr'*
-								*t_ms* *'t_ms'*
-	t_ms	if non-empty, cursor can be moved in standout/inverse mode
-	t_nd	non destructive space character			*t_nd* *'t_nd'*
-	t_op	reset to original color pair			*t_op* *'t_op'*
-	t_RI	cursor number of chars right			*t_RI* *'t_RI'*
-	t_Sb	set background color				*t_Sb* *'t_Sb'*
-	t_Sf	set foreground color				*t_Sf* *'t_Sf'*
-	t_se	standout end					*t_se* *'t_se'*
-	t_so	standout mode					*t_so* *'t_so'*
-	t_sr	scroll reverse (backward)			*t_sr* *'t_sr'*
-	t_te	out of "termcap" mode				*t_te* *'t_te'*
-	t_ti	put terminal in "termcap" mode			*t_ti* *'t_ti'*
-	t_ts	set window title start (to status line)		*t_ts* *'t_ts'*
-	t_ue	underline end					*t_ue* *'t_ue'*
-	t_us	underline mode					*t_us* *'t_us'*
-	t_Ce	undercurl end					*t_Ce* *'t_Ce'*
-	t_Cs	undercurl mode					*t_Cs* *'t_Cs'*
-	t_ut	clearing uses the current background color	*t_ut* *'t_ut'*
-	t_vb	visual bell					*t_vb* *'t_vb'*
-	t_ve	cursor visible					*t_ve* *'t_ve'*
-	t_vi	cursor invisible				*t_vi* *'t_vi'*
-	t_vs	cursor very visible				*t_vs* *'t_vs'*
-								*t_xs* *'t_xs'*
-	t_xs	if non-empty, standout not erased by overwriting (hpterm)
-	t_ZH	italics mode					*t_ZH* *'t_ZH'*
-	t_ZR	italics end					*t_ZR* *'t_ZR'*
-
-Added by Vim (there are no standard codes for these):
-	t_IS	set icon text start				*t_IS* *'t_IS'*
-	t_IE	set icon text end				*t_IE* *'t_IE'*
-	t_WP	set window position (Y, X) in pixels		*t_WP* *'t_WP'*
-	t_WS	set window size (height, width) in characters	*t_WS* *'t_WS'*
-	t_SI	start insert mode (bar cursor shape)		*t_SI* *'t_SI'*
-	t_EI	end insert mode (block cursor shape)		*t_EI* *'t_EI'*
-		|termcap-cursor-shape|
-	t_RV	request terminal version string (for xterm)	*t_RV* *'t_RV'*
-		|xterm-8bit| |v:termresponse| |xterm-codes|
-	t_u7	request cursor position (for xterm)		*t_u7* *'t_u7'*
-		see |'ambiwidth'|
-
-KEY CODES
-Note: Use the <> form if possible
-
-	option	name		meaning	~
-
-	t_ku	<Up>		arrow up			*t_ku* *'t_ku'*
-	t_kd	<Down>		arrow down			*t_kd* *'t_kd'*
-	t_kr	<Right>		arrow right			*t_kr* *'t_kr'*
-	t_kl	<Left>		arrow left			*t_kl* *'t_kl'*
-		<xUp>		alternate arrow up		*<xUp>*
-		<xDown>		alternate arrow down		*<xDown>*
-		<xRight>	alternate arrow right		*<xRight>*
-		<xLeft>		alternate arrow left		*<xLeft>*
-		<S-Up>		shift arrow up
-		<S-Down>	shift arrow down
-	t_%i	<S-Right>	shift arrow right		*t_%i* *'t_%i'*
-	t_#4	<S-Left>	shift arrow left		*t_#4* *'t_#4'*
-	t_k1	<F1>		function key 1			*t_k1* *'t_k1'*
-		<xF1>		alternate F1			*<xF1>*
-	t_k2	<F2>		function key 2		*<F2>*	*t_k2* *'t_k2'*
-		<xF2>		alternate F2			*<xF2>*
-	t_k3	<F3>		function key 3		*<F3>*	*t_k3* *'t_k3'*
-		<xF3>		alternate F3			*<xF3>*
-	t_k4	<F4>		function key 4		*<F4>*	*t_k4* *'t_k4'*
-		<xF4>		alternate F4			*<xF4>*
-	t_k5	<F5>		function key 5		*<F5>*	*t_k5* *'t_k5'*
-	t_k6	<F6>		function key 6		*<F6>*	*t_k6* *'t_k6'*
-	t_k7	<F7>		function key 7		*<F7>*	*t_k7* *'t_k7'*
-	t_k8	<F8>		function key 8		*<F8>*	*t_k8* *'t_k8'*
-	t_k9	<F9>		function key 9		*<F9>*	*t_k9* *'t_k9'*
-	t_k;	<F10>		function key 10		*<F10>*	*t_k;* *'t_k;'*
-	t_F1	<F11>		function key 11		*<F11>*	*t_F1* *'t_F1'*
-	t_F2	<F12>		function key 12		*<F12>*	*t_F2* *'t_F2'*
-	t_F3	<F13>		function key 13		*<F13>*	*t_F3* *'t_F3'*
-	t_F4	<F14>		function key 14		*<F14>*	*t_F4* *'t_F4'*
-	t_F5	<F15>		function key 15		*<F15>*	*t_F5* *'t_F5'*
-	t_F6	<F16>		function key 16		*<F16>*	*t_F6* *'t_F6'*
-	t_F7	<F17>		function key 17		*<F17>*	*t_F7* *'t_F7'*
-	t_F8	<F18>		function key 18		*<F18>*	*t_F8* *'t_F8'*
-	t_F9	<F19>		function key 19		*<F19>*	*t_F9* *'t_F9'*
-		<S-F1>		shifted function key 1
-		<S-xF1>		alternate <S-F1>		*<S-xF1>*
-		<S-F2>		shifted function key 2		*<S-F2>*
-		<S-xF2>		alternate <S-F2>		*<S-xF2>*
-		<S-F3>		shifted function key 3		*<S-F3>*
-		<S-xF3>		alternate <S-F3>		*<S-xF3>*
-		<S-F4>		shifted function key 4		*<S-F4>*
-		<S-xF4>		alternate <S-F4>		*<S-xF4>*
-		<S-F5>		shifted function key 5		*<S-F5>*
-		<S-F6>		shifted function key 6		*<S-F6>*
-		<S-F7>		shifted function key 7		*<S-F7>*
-		<S-F8>		shifted function key 8		*<S-F8>*
-		<S-F9>		shifted function key 9		*<S-F9>*
-		<S-F10>		shifted function key 10		*<S-F10>*
-		<S-F11>		shifted function key 11		*<S-F11>*
-		<S-F12>		shifted function key 12		*<S-F12>*
-	t_%1	<Help>		help key			*t_%1* *'t_%1'*
-	t_&8	<Undo>		undo key			*t_&8* *'t_&8'*
-	t_kI	<Insert>	insert key			*t_kI* *'t_kI'*
-	t_kD	<Del>		delete key			*t_kD* *'t_kD'*
-	t_kb	<BS>		backspace key			*t_kb* *'t_kb'*
-	t_kB	<S-Tab>		back-tab (shift-tab)  *<S-Tab>*	*t_kB* *'t_kB'*
-	t_kh	<Home>		home key			*t_kh* *'t_kh'*
-	t_#2	<S-Home>	shifted home key     *<S-Home>*	*t_#2* *'t_#2'*
-		<xHome>		alternate home key		*<xHome>*
-	t_@7	<End>		end key				*t_@7* *'t_@7'*
-	t_*7	<S-End>		shifted end key	*<S-End>* *t_star7* *'t_star7'*
-		<xEnd>		alternate end key		*<xEnd>*
-	t_kP	<PageUp>	page-up key			*t_kP* *'t_kP'*
-	t_kN	<PageDown>	page-down key			*t_kN* *'t_kN'*
-	t_K1	<kHome>		keypad home key			*t_K1* *'t_K1'*
-	t_K4	<kEnd>		keypad end key			*t_K4* *'t_K4'*
-	t_K3	<kPageUp>	keypad page-up key		*t_K3* *'t_K3'*
-	t_K5	<kPageDown>	keypad page-down key		*t_K5* *'t_K5'*
-	t_K6	<kPlus>		keypad plus key	      *<kPlus>*	*t_K6* *'t_K6'*
-	t_K7	<kMinus>	keypad minus key     *<kMinus>*	*t_K7* *'t_K7'*
-	t_K8	<kDivide>	keypad divide	    *<kDivide>*	*t_K8* *'t_K8'*
-	t_K9	<kMultiply>	keypad multiply   *<kMultiply>*	*t_K9* *'t_K9'*
-	t_KA	<kEnter>	keypad enter key     *<kEnter>*	*t_KA* *'t_KA'*
-	t_KB	<kPoint>	keypad decimal point *<kPoint>*	*t_KB* *'t_KB'*
-	t_KC	<k0>		keypad 0		 *<k0>*	*t_KC* *'t_KC'*
-	t_KD	<k1>		keypad 1		 *<k1>*	*t_KD* *'t_KD'*
-	t_KE	<k2>		keypad 2		 *<k2>*	*t_KE* *'t_KE'*
-	t_KF	<k3>		keypad 3		 *<k3>*	*t_KF* *'t_KF'*
-	t_KG	<k4>		keypad 4		 *<k4>*	*t_KG* *'t_KG'*
-	t_KH	<k5>		keypad 5		 *<k5>*	*t_KH* *'t_KH'*
-	t_KI	<k6>		keypad 6		 *<k6>*	*t_KI* *'t_KI'*
-	t_KJ	<k7>		keypad 7		 *<k7>*	*t_KJ* *'t_KJ'*
-	t_KK	<k8>		keypad 8		 *<k8>*	*t_KK* *'t_KK'*
-	t_KL	<k9>		keypad 9		 *<k9>*	*t_KL* *'t_KL'*
-		<Mouse>		leader of mouse code		*<Mouse>*
-
-Note about t_so and t_mr: When the termcap entry "so" is not present the
-entry for "mr" is used.  And vice versa.  The same is done for "se" and "me".
-If your terminal supports both inversion and standout mode, you can see two
-different modes.  If your terminal supports only one of the modes, both will
-look the same.
-
-							*keypad-comma*
-The keypad keys, when they are not mapped, behave like the equivalent normal
-key.  There is one exception: if you have a comma on the keypad instead of a
-decimal point, Vim will use a dot anyway.  Use these mappings to fix that: >
-	:noremap <kPoint> ,
-	:noremap! <kPoint> ,
-<							*xterm-codes*
-There is a special trick to obtain the key codes which currently only works
-for xterm.  When |t_RV| is defined and a response is received which indicates
-an xterm with patchlevel 141 or higher, Vim uses special escape sequences to
-request the key codes directly from the xterm.  The responses are used to
-adjust the various t_ codes.  This avoids the problem that the xterm can
-produce different codes, depending on the mode it is in (8-bit, VT102,
-VT220, etc.).  The result is that codes like <xF1> are no longer needed.
-Note: This is only done on startup.  If the xterm options are changed after
-Vim has started, the escape sequences may not be recognized anymore.
+If terminfo does not (yet) have this flag, Nvim will fall back to $TERM and
+other environment variables.  It will add constructed "setrgbf" and "setrgbb"
+capabilities in the case of the the "rxvt", "linux", "st", "tmux", and "iterm"
+terminal types, or when Konsole, genuine Xterm, a libvte terminal emulator
+version 0.36 or later, or a terminal emulator that sets the COLORTERM
+environment variable to "truecolor" is detected.
 
 							*xterm-resize*
-Window resizing with xterm only works if the allowWindowOps resource is
-enabled.  On some systems and versions of xterm it's disabled by default
-because someone thought it would be a security issue.  It's not clear if this
-is actually the case.
+Nvim can resize the terminal display on some terminals that implement an
+extension pioneered by dtterm.  |terminfo| does not have a flag for this
+extension.  So Nvim simply assumes that (all) "dtterm", "xterm", "teraterm",
+"rxvt" terminal types, and Konsole, are capable of this.
 
-To overrule the default, put this line in your ~/.Xdefaults or
-~/.Xresources:
->
-	XTerm*allowWindowOps: 		true
+							*tui-cursor-shape*
+Nvim will adjust the shape of the cursor from a block to a line when in insert
+mode (or as specified by the 'guicursor' option), on terminals that support
+it.  It uses the same |terminfo| extensions that were pioneered by tmux for
+this: "Ss" and "Se".
+Similarly, if you set the cursor highlight group with blend=100, Nvim hides
+the cursor through the "cvvis" and "civis" extensions.
 
-And run "xrdb -merge .Xresources" to make it effective.  You can check the
-value with the context menu (right mouse button while CTRL key is pressed),
-there should be a tick at allow-window-ops.
+If your terminfo definition is missing them, then Nvim will decide whether to
+add them to your terminfo definition, by looking at $TERM and other
+environment variables.  For the "rxvt", "putty", "linux", "screen",
+"teraterm", and "iterm" terminal types, or when Konsole, a libvte-based
+terminal emulator, or genuine Xterm are detected, it will add constructed
+"Ss" and "Se" capabilities.
 
-							*termcap-colors*
-Note about colors: The 't_Co' option tells Vim the number of colors available.
-When it is non-zero, the 't_AB' and 't_AF' options are used to set the color.
-If one of these is not available, 't_Sb' and 't_Sf' are used.  't_me' is used
-to reset to the default colors.
+							*tui-cursor-tmux*
+Within tmux it may appear that Nvim is not changing the cursor, but in fact it
+is tmux receiving instructions from Nvim to change the cursor and not knowing
+what to do in turn.  tmux must translate what it receives from Nvim into
+whatever control sequence is appropriate for the host terminal.  It shares
+a common mechanism with Nvim, of using the "Ss" and "Se" capabilities from
+terminfo (for the output terminal) if they are present. Unlike Nvim, if they
+are not in terminfo you must add them by setting "terminal-overrides" in
+~/.tmux.conf .
 
-				*termcap-cursor-shape* *termcap-cursor-color*
-When Vim enters Insert mode the 't_SI' escape sequence is sent.  When leaving
-Insert mode 't_EI' is used.  But only if both are defined.  This can be used
-to change the shape or color of the cursor in Insert mode.  These are not
-standard termcap/terminfo entries, you need to set them yourself.
-Example for an xterm, this changes the color of the cursor: >
-    if &term =~ "xterm"
-	let &t_SI = "\<Esc>]12;purple\x7"
-	let &t_EI = "\<Esc>]12;blue\x7"
-    endif
-NOTE: When Vim exits the shape for Normal mode will remain.  The shape from
-before Vim started will not be restored.
-
-							*termcap-title*
-The 't_ts' and 't_fs' options are used to set the window title if the terminal
-allows title setting via sending strings.  They are sent before and after the
-title string, respectively.  Similar 't_IS' and 't_IE'  are used to set the
-icon text.  These are Vim-internal extensions of the Unix termcap, so they
-cannot be obtained from an external termcap.  However, the builtin termcap
-contains suitable entries for xterm, so you don't need to set them here.
-							*hpterm*
-If inversion or other highlighting does not work correctly, try setting the
-'t_xs' option to a non-empty string.  This makes the 't_ce' code be used to
-remove highlighting from a line.  This is required for "hpterm".  Setting the
-'weirdinvert' option has the same effect as making 't_xs' non-empty, and vice
-versa.
-
-							*scroll-region*
-Some termcaps do not include an entry for 'cs' (scroll region), although the
-terminal does support it.  For example: xterm on a Sun.  You can use the
-builtin_xterm or define t_cs yourself.  For example: >
-	:set t_cs=^V^[[%i%d;%dr
-Where ^V is CTRL-V and ^[ is <Esc>.
-
-The vertical scroll region t_CV is not a standard termcap code.  Vim uses it
-internally in the GUI.  But it can also be defined for a terminal, if you can
-find one that supports it.  The two arguments are the left and right column of
-the region which to restrict the scrolling to.  Just like t_cs defines the top
-and bottom lines.  Defining t_CV will make scrolling in vertically split
-windows a lot faster.  Don't set t_CV when t_da or t_db is set (text isn't
-cleared when scrolling).
-
-Unfortunately it is not possible to deduce from the termcap how cursor
-positioning should be done when using a scrolling region: Relative to the
-beginning of the screen or relative to the beginning of the scrolling region.
-Most terminals use the first method.  The 't_CS' option should be set to any
-string when cursor positioning is relative to the start of the scrolling
-region.  It should be set to an empty string otherwise.
-
-Note for xterm users: The shifted cursor keys normally don't work.  You can
-	make them work with the xmodmap command and some mappings in Vim.
-
-	Give these commands in the xterm:
-		xmodmap -e "keysym Up = Up F13"
-		xmodmap -e "keysym Down = Down F16"
-		xmodmap -e "keysym Left = Left F18"
-		xmodmap -e "keysym Right = Right F19"
-
-	And use these mappings in Vim:
-		:map <t_F3> <S-Up>
-		:map! <t_F3> <S-Up>
-		:map <t_F6> <S-Down>
-		:map! <t_F6> <S-Down>
-		:map <t_F8> <S-Left>
-		:map! <t_F8> <S-Left>
-		:map <t_F9> <S-Right>
-		:map! <t_F9> <S-Right>
-
-Instead of, say, <S-Up> you can use any other command that you want to use the
-shift-cursor-up key for.  (Note: To help people that have a Sun keyboard with
-left side keys F14 is not used because it is confused with the undo key; F15
-is not used, because it does a window-to-front; F17 is not used, because it
-closes the window.  On other systems you can probably use them.)
-
+See the tmux(1) manual page for the details of how and what to do in the tmux
+configuration file.  It will look something like: >
+	set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
+<or (alas!) for Konsole 18.07.70 or older, something more complex like: >
+	set -ga terminal-overrides 'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
+<
 ==============================================================================
-3. Window size						*window-size*
+Window size						*window-size*
 
 [This is about the size of the whole window Vim is using, not a window that is
 created with the ":split" command.]
@@ -464,146 +185,44 @@ On Unix systems, three methods are tried to get the window size:
 
 - an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
 - the environment variables "LINES" and "COLUMNS"
-- from the termcap entries "li" and "co"
+- from the |terminfo| entries "lines" and "columns"
 
 If everything fails a default size of 24 lines and 80 columns is assumed.  If
 a window-resize signal is received the size will be set again.  If the window
 size is wrong you can use the 'lines' and 'columns' options to set the
-correct values.
-
-One command can be used to set the screen size:
-
-						*:mod* *:mode* *E359* *E362*
-:mod[e]
-
-Detects the screen size and redraws the screen.
+correct values. See |:mode|.
 
 ==============================================================================
-4. Slow and fast terminals			*slow-fast-terminal*
+Slow and fast terminals				*slow-fast-terminal*
 						*slow-terminal*
 
-If you have a fast terminal you may like to set the 'ruler' option.  The
-cursor position is shown in the status line.  If you are using horizontal
-scrolling ('wrap' option off) consider setting 'sidescroll' to a small
-number.
-
-If you have a slow terminal you may want to reset the 'showcmd' option.
-The command characters will not be shown in the status line.  If the terminal
-scrolls very slowly, set the 'scrolljump' to 5 or so.  If the cursor is moved
-off the screen (e.g., with "j") Vim will scroll 5 lines at a time.  Another
-possibility is to reduce the number of lines that Vim uses with the command
-"z{height}<CR>".
+If you have a slow terminal you may want to reset the 'showcmd' and 'ruler'
+options.  The command characters and cursor positions will not be shown in the
+status line (which involves a lot of cursor motions and attribute changes for
+every keypress or movement).  If the terminal scrolls very slowly, set the
+'scrolljump' to 5 or so.  If the cursor is moved off the screen (e.g., with
+"j") Vim will scroll 5 lines at a time.  Another possibility is to reduce the
+number of lines that Vim uses with the command "z{height}<CR>".
 
 If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If you are using a color terminal that is slow, use this command: >
+If you are using a color terminal that is slow when displaying lines beyond
+the end of a buffer, this is because Nvim is drawing the whitespace twice, in
+two sets of colours and attributes.  To prevent this, use this command: >
 	hi NonText cterm=NONE ctermfg=NONE
-This avoids that spaces are sent when they have different attributes.  On most
-terminals you can't see this anyway.
-
-If you are using Vim over a slow serial line, you might want to try running
-Vim inside the "screen" program.  Screen will optimize the terminal I/O quite
-a bit.
-
-If you are testing termcap options, but you cannot see what is happening,
-you might want to set the 'writedelay' option.  When non-zero, one character
-is sent to the terminal at a time (does not work for MS-DOS).  This makes the
-screen updating a lot slower, making it possible to see what is happening.
+This draws the spaces with the default colours and attributes, which allows the
+second pass of drawing to be optimized away.  Note: Although in theory the
+colours of whitespace are immaterial, in practice they change the colours of
+cursors and selections that cross them.  This may have a visible, but minor,
+effect on some UIs.
 
 ==============================================================================
-5. Using the mouse					*mouse-using*
-
-This section is about using the mouse on a terminal or a terminal window.  How
-to use the mouse in a GUI window is explained in |gui-mouse|.  For scrolling
-with a mouse wheel see |scroll-mouse-wheel|.
-
-These characters in the 'mouse' option tell in which situations the mouse will
-be used by Vim:
-		n	Normal mode
-		v	Visual mode
-		i	Insert mode
-		c	Command-line mode
-		h	all previous modes when in a help file
-		a	all previous modes
-		r	for |hit-enter| prompt
-
-If you only want to use the mouse in a few modes or also want to use it for
-the two questions you will have to concatenate the letters for those modes.
-For example: >
-	:set mouse=nv
-Will make the mouse work in Normal mode and Visual mode. >
-	:set mouse=h
-Will make the mouse work in help files only (so you can use "g<LeftMouse>" to
-jump to tags).
-
-Whether the selection that is started with the mouse is in Visual mode or
-Select mode depends on whether "mouse" is included in the 'selectmode'
-option.
-
-In an xterm, with the currently active mode included in the 'mouse' option,
-normal mouse clicks are used by Vim, mouse clicks with the shift or ctrl key
-pressed go to the xterm.  With the currently active mode not included in
-'mouse' all mouse clicks go to the xterm.
-
-							*xterm-clipboard*
-The middle mouse button will insert the unnamed register.  In that case, here
-is how you copy and paste a piece of text:
-
-Copy/paste with the mouse and Visual mode ('mouse' option must be set, see
-above):
-1. Press left mouse button on first letter of text, move mouse pointer to last
-   letter of the text and release the button.  This will start Visual mode and
-   highlight the selected area.
-2. Press "y" to yank the Visual text in the unnamed register.
-3. Click the left mouse button at the insert position.
-4. Click the middle mouse button.
-
-Shortcut: If the insert position is on the screen at the same time as the
-Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
-at the insert position.
-
-							*xterm-copy-paste*
-NOTE: In some (older) xterms, it's not possible to move the cursor past column
-95 or 223.  This is an xterm problem, not Vim's.  Get a newer xterm
-|color-xterm|.
-
-Copy/paste in xterm with (current mode NOT included in 'mouse'):
-1. Press left mouse button on first letter of text, move mouse pointer to last
-   letter of the text and release the button.
-2. Use normal Vim commands to put the cursor at the insert position.
-3. Press "a" to start Insert mode.
-4. Click the middle mouse button.
-5. Press ESC to end Insert mode.
-(The same can be done with anything in 'mouse' if you keep the shift key
-pressed while using the mouse.)
-
-Note: if you lose the 8th bit when pasting (special characters are translated
-into other characters), you may have to do "stty cs8 -istrip -parenb" in your
-shell before starting Vim.
-
-Thus in an xterm the shift and ctrl keys cannot be used with the mouse.  Mouse
-commands requiring the CTRL modifier can be simulated by typing the "g" key
-before using the mouse:
-	"g<LeftMouse>"	is "<C-LeftMouse>	(jump to tag under mouse click)
-	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
-
-							*bracketed-paste-mode*
-Bracketed paste mode allows terminal emulators to distinguish between typed
-text and pasted text.
-
-For terminal emulators that support it, this mode is enabled by default. Thus
-you can paste text without Neovim giving any special meaning to it. Most
-notably it won't try reindenting those lines.
-
-If your terminal emulator doesn't support it yet, you can get the old Vim
-behaviour by enabling |'paste'| temporarily.
-
-NOTE: See https://cirw.in/blog/bracketed-paste for technical details.
+Using the mouse						*mouse-using*
 
 					*mouse-mode-table* *mouse-overview*
-A short overview of what the mouse buttons do, when 'mousemodel' is "extend":
+Overview of what the mouse buttons do, when 'mousemodel' is "extend":
 
 Normal Mode:
 event	      position	   selection	  change  action	~
@@ -714,14 +333,6 @@ In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.
 This is like using CTRL-O in Insert mode.  Select mode is used when the
 'selectmode' option contains "mouse".
-							*drag-status-line*
-When working with several windows, the size of the windows can be changed by
-dragging the status line with the mouse.  Point the mouse at a status line,
-press the left button, move the mouse to the new position of the status line,
-release the button.  Just clicking the mouse in a status line makes that window
-the current window, without moving the cursor.  If by selecting a window it
-will change position or size, the dragging of the status line will look
-confusing, but it will work (just try it).
 
 					*<MiddleRelease>* *<MiddleDrag>*
 Mouse clicks can be mapped.  The codes for mouse clicks are:
@@ -744,7 +355,7 @@ Mouse clicks can be mapped.  The codes for mouse clicks are:
 
 The X1 and X2 buttons refer to the extra buttons found on some mice.  The
 'Microsoft Explorer' mouse has these buttons available to the right thumb.
-Currently X1 and X2 only work on Win32 environments.
+Currently X1 and X2 only work on Win32 and X11 environments.
 
 Examples: >
 	:noremap <MiddleMouse> <LeftMouse><MiddleMouse>

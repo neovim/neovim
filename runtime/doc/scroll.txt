@@ -1,4 +1,4 @@
-*scroll.txt*    For Vim version 7.4.  Last change: 2006 Aug 27
+*scroll.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -16,12 +16,7 @@ upwards in the buffer, the text in the window moves downwards on your screen.
 
 See section |03.7| of the user manual for an introduction.
 
-1. Scrolling downwards		|scroll-down|
-2. Scrolling upwards		|scroll-up|
-3. Scrolling relative to cursor	|scroll-cursor|
-4. Scrolling horizontally	|scroll-horizontal|
-5. Scrolling synchronously	|scroll-binding|
-6. Scrolling with a mouse wheel |scroll-mouse-wheel|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Scrolling downwards					*scroll-down*
@@ -32,6 +27,7 @@ seen):
 
 							*CTRL-E*
 CTRL-E			Scroll window [count] lines downwards in the buffer.
+			The text moves upwards on the screen.
 			Mnemonic: Extra lines.
 
 							*CTRL-D*
@@ -70,6 +66,7 @@ seen):
 
 							*CTRL-Y*
 CTRL-Y			Scroll window [count] lines upwards in the buffer.
+			The text moves downwards on the screen.
 			Note: When using the MS-Windows key bindings CTRL-Y is
 			remapped to redo.
 
@@ -83,9 +80,6 @@ CTRL-U			Scroll window Upwards in the buffer.  The number of
 			may be a difference).  When the cursor is on the first
 			line of the buffer nothing happens and a beep is
 			produced.  See also 'startofline' option.
-			{difference from vi: Vim scrolls 'scroll' screen
-			lines, instead of file lines; makes a difference when
-			lines wrap}
 
 <S-Up>		or					*<S-Up>* *<kPageUp>*
 <PageUp>	or					*<PageUp>* *CTRL-B*
@@ -108,7 +102,8 @@ z^			Without [count]: Redraw with the line just above the
 3. Scrolling relative to cursor				*scroll-cursor*
 
 The following commands reposition the edit window (the part of the buffer that
-you see) while keeping the cursor on the same line:
+you see) while keeping the cursor on the same line.  Note that the 'scrolloff'
+option may cause context lines to show above and below the cursor.
 
 							*z<CR>*
 z<CR>			Redraw, line [count] at top of window (default
@@ -215,7 +210,7 @@ past its buffer's limits.
 However, if a 'scrollbind' window that has a relative offset that is past its
 buffer's limits is given the cursor focus, the other 'scrollbind' windows must
 jump to a location where the current window's relative offset is valid.  This
-behavior can be changed by clearing the 'jump' flag from the 'scrollopt'
+behavior can be changed by clearing the "jump" flag from the 'scrollopt'
 option.
 
 						*syncbind* *:syncbind* *:sync*
@@ -235,15 +230,9 @@ This allows quick adjustment of the relative offset of 'scrollbind' windows.
 ==============================================================================
 6. Scrolling with a mouse wheel				*scroll-mouse-wheel*
 
-When your mouse has a scroll wheel, it should work with Vim in the GUI.  How
-it works depends on your system.  It might also work in an xterm
-|xterm-mouse-wheel|.  By default only vertical scroll wheels are supported,
-but some GUIs also support horizontal scroll wheels.
-
-For the Win32 GUI the scroll action is hard coded.  It works just like
-dragging the scrollbar of the current window.  How many lines are scrolled
-depends on your mouse driver.  If the scroll action causes input focus
-problems, see |intellimouse-wheel-problems|.
+When your mouse has a scroll wheel, it should work with Nvim in the GUI and
+any terminal that has mouse support.  By default only vertical scroll wheels
+are supported, but some GUIs also support horizontal scroll wheels.
 
 Note that horizontal scrolling only works if 'nowrap' is set.  Also, unless
 the "h" flag in 'guioptions' is set, the cursor moves to the longest visible
@@ -258,43 +247,4 @@ the scroll wheel move one line or half a page in Normal mode: >
    :map <S-ScrollWheelDown> <C-D>
 You can also use Alt and Ctrl modifiers.
 
-This only works when Vim gets the scroll wheel events, of course.  You can
-check if this works with the "xev" program.
-
-						*<MouseDown>* *<MouseUp>*
-The keys <MouseDown> and <MouseUp> have been deprecated.  Use <ScrollWheelUp>
-instead of <MouseDown> and use <ScrollWheelDown> instead of <MouseUp>.
-
-							*xterm-mouse-wheel*
-To use the mouse wheel in a new xterm you only have to make the scroll wheel
-work in your Xserver, as mentioned above.
-
-To use the mouse wheel in an older xterm you must do this:
-1. Make it work in your Xserver, as mentioned above.
-2. Add translations for the xterm, so that the xterm will pass a scroll event
-   to Vim as an escape sequence.
-3. Add mappings in Vim, to interpret the escape sequences as <ScrollWheelDown>
-   or <ScrollWheelUp> keys.
-
-You can do the translations by adding this to your ~.Xdefaults file (or other
-file where your X resources are kept): >
-
-  XTerm*VT100.Translations:		#override \n\
-		s<Btn4Down>: string("0x9b") string("[64~") \n\
-		s<Btn5Down>: string("0x9b") string("[65~") \n\
-		<Btn4Down>: string("0x9b") string("[62~") \n\
-		<Btn5Down>: string("0x9b") string("[63~") \n\
-		<Btn4Up>: \n\
-		<Btn5Up>:
-
-Add these mappings to your vimrc file: >
-	:map <M-Esc>[62~ <ScrollWheelUp>
-	:map! <M-Esc>[62~ <ScrollWheelUp>
-	:map <M-Esc>[63~ <ScrollWheelDown>
-	:map! <M-Esc>[63~ <ScrollWheelDown>
-	:map <M-Esc>[64~ <S-ScrollWheelUp>
-	:map! <M-Esc>[64~ <S-ScrollWheelUp>
-	:map <M-Esc>[65~ <S-ScrollWheelDown>
-	:map! <M-Esc>[65~ <S-ScrollWheelDown>
-<
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

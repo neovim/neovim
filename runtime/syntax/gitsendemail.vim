@@ -1,14 +1,18 @@
 " Vim syntax file
 " Language:	git send-email message
 " Maintainer:	Tim Pope
-" Filenames:	*.msg.[0-9]* (first line is "From ... # This line is ignored.")
-" Last Change:	2010 May 21
+" Filenames:	.gitsendemail.*
+" Last Change:	2016 Aug 29
 
 if exists("b:current_syntax")
   finish
 endif
 
 runtime! syntax/mail.vim
+unlet! b:current_syntax
+syn include @gitsendemailDiff syntax/diff.vim
+syn region gitsendemailDiff start=/\%(^diff --\%(git\|cc\|combined\) \)\@=/ end=/^-- %/ fold contains=@gitsendemailDiff
+
 syn case match
 
 syn match   gitsendemailComment "\%^From.*#.*"

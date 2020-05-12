@@ -1,3 +1,0 @@
-# libuv queue.h pointer arithmetic is not accepted by asan
-fun:queue_node_data
-fun:dictwatcher_node_data

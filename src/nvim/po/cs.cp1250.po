@@ -2535,7 +2535,7 @@ msgstr "E216: Událost %s neexistuje"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Automatické pøíkazy ---"
@@ -2559,7 +2559,7 @@ msgstr "E218: vnoøení automatického pøíkazu pøíliš hluboká"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s automatické pøíkazy pro \"%s\""
 
 #: ../fileio.c:7149
@@ -2761,11 +2761,6 @@ msgstr "E49: Chybná hodnota volby 'scroll'"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3491,7 +3486,7 @@ msgstr "-q [chybový soubor]  editovat soubor na místì výskytu první chyby"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4377,10 +4372,6 @@ msgstr "øádek %4ld:"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: '%s' není pøípustné jméno registru"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Správce zpráv: Bram Moolenaar <Bram@vim.org>"
 
 #: ../message.c:986
 msgid "Interrupt: "

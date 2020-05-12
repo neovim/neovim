@@ -669,7 +669,7 @@ function! s:BeginningOfClauseFound(stack, token, stored_vcol)
     call s:Pop(a:stack)
     if empty(a:stack)
       call s:Log('    Stack is ["when"], so LTI is in a guard -> return')
-      return [1, a:stored_vcol + &sw + 2]
+      return [1, a:stored_vcol + shiftwidth() + 2]
     else
       return [1, s:UnexpectedToken(a:token, a:stack)]
     endif
@@ -678,7 +678,7 @@ function! s:BeginningOfClauseFound(stack, token, stored_vcol)
     call s:Pop(a:stack)
     if empty(a:stack)
       call s:Log('    Stack is ["->"], so LTI is in function body -> return')
-      return [1, a:stored_vcol + &sw]
+      return [1, a:stored_vcol + shiftwidth()]
     elseif a:stack[0] ==# ';'
       call s:Pop(a:stack)
       if empty(a:stack)
@@ -797,7 +797,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
 
       elseif token ==# 'begin'
         let [ret, res] = s:BeginElementFound(stack, token, curr_vcol,
-                                            \stored_vcol, 'end', &sw)
+                                            \stored_vcol, 'end', shiftwidth())
         if ret | return res | endif
 
       " case EXPR of BRANCHES end
@@ -848,11 +848,11 @@ function! s:ErlangCalcIndent2(lnum, stack)
         elseif stack == ['->']
           call s:Log('    LTI is in a branch after ' .
                     \'"of/receive/after/if/catch" -> return')
-          return stored_vcol + &sw
+          return stored_vcol + shiftwidth()
         elseif stack == ['when']
           call s:Log('    LTI is in a guard after ' .
                     \'"of/receive/after/if/catch" -> return')
-          return stored_vcol + &sw
+          return stored_vcol + shiftwidth()
         else
           return s:UnexpectedToken(token, stack)
         endif
@@ -888,7 +888,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
           if empty(stack)
             call s:Log('    LTI is in a condition; matching ' .
                       \'"case/if/try/receive" found')
-            let stored_vcol = curr_vcol + &sw
+            let stored_vcol = curr_vcol + shiftwidth()
           elseif stack[0] ==# 'align_to_begin_element'
             call s:Pop(stack)
             let stored_vcol = curr_vcol
@@ -897,23 +897,23 @@ function! s:ErlangCalcIndent2(lnum, stack)
                       \'"case/if/try/receive" found')
             call s:Pop(stack)
             call s:Pop(stack)
-            let stored_vcol = curr_vcol + &sw
+            let stored_vcol = curr_vcol + shiftwidth()
           elseif stack[0] ==# '->'
             call s:Log('    LTI is in a branch; matching ' .
                       \'"case/if/try/receive" found')
             call s:Pop(stack)
-            let stored_vcol = curr_vcol + 2 * &sw
+            let stored_vcol = curr_vcol + 2 * shiftwidth()
           elseif stack[0] ==# 'when'
             call s:Log('    LTI is in a guard; matching ' .
                       \'"case/if/try/receive" found')
             call s:Pop(stack)
-            let stored_vcol = curr_vcol + 2 * &sw + 2
+            let stored_vcol = curr_vcol + 2 * shiftwidth() + 2
           endif
 
         endif
 
         let [ret, res] = s:BeginElementFound(stack, token, curr_vcol,
-                                            \stored_vcol, 'end', &sw)
+                                            \stored_vcol, 'end', shiftwidth())
         if ret | return res | endif
 
       elseif token ==# 'fun'
@@ -930,7 +930,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
           " stack = ['when']  =>  LTI is in a guard
           if empty(stack)
             call s:Log('    LTI is in a condition; matching "fun" found')
-            let stored_vcol = curr_vcol + &sw
+            let stored_vcol = curr_vcol + shiftwidth()
           elseif len(stack) > 1 && stack[0] ==# '->' && stack[1] ==# ';'
             call s:Log('    LTI is in a condition; matching "fun" found')
             call s:Pop(stack)
@@ -938,15 +938,15 @@ function! s:ErlangCalcIndent2(lnum, stack)
           elseif stack[0] ==# '->'
             call s:Log('    LTI is in a branch; matching "fun" found')
             call s:Pop(stack)
-            let stored_vcol = curr_vcol + 2 * &sw
+            let stored_vcol = curr_vcol + 2 * shiftwidth()
           elseif stack[0] ==# 'when'
             call s:Log('    LTI is in a guard; matching "fun" found')
             call s:Pop(stack)
-            let stored_vcol = curr_vcol + 2 * &sw + 2
+            let stored_vcol = curr_vcol + 2 * shiftwidth() + 2
           endif
 
           let [ret, res] = s:BeginElementFound(stack, token, curr_vcol,
-                                              \stored_vcol, 'end', &sw)
+                                              \stored_vcol, 'end', shiftwidth())
           if ret | return res | endif
         else
           " Pass: we have a function reference (e.g. "fun f/0")
@@ -1220,7 +1220,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
             "   when A,
             "        LTI
             let [ret, res] = s:BeginElementFoundIfEmpty(stack, token, curr_vcol,
-                                                       \stored_vcol, &sw)
+                                                       \stored_vcol, shiftwidth())
             if ret | return res | endif
           else
             " Example:
@@ -1252,7 +1252,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
           " If LTI is between an 'after' and the corresponding
           " 'end', then let's return
           let [ret, res] = s:BeginElementFoundIfEmpty(stack, token, curr_vcol,
-                                                     \stored_vcol, &sw)
+                                                     \stored_vcol, shiftwidth())
           if ret | return res | endif
         endif
 

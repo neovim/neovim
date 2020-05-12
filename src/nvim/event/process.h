@@ -19,15 +19,18 @@ struct process {
   Loop *loop;
   void *data;
   int pid, status, refcount;
-  // set to the hrtime of when process_stop was called for the process.
-  uint64_t stopped_time;
+  uint8_t exit_signal;  // Signal used when killing (on Windows).
+  uint64_t stopped_time;  // process_stop() timestamp
+  const char *cwd;
   char **argv;
-  Stream *in, *out, *err;
+  char **env;
+  Stream in, out, err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, term_sent, detach;
-  Queue *events;
+  bool closed, detach;
+  MultiQueue *events;
 };
+
 
 static inline Process process_init(Loop *loop, ProcessType type, void *data)
 {
@@ -37,20 +40,26 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .loop = loop,
     .events = NULL,
     .pid = 0,
-    .status = 0,
+    .status = -1,
     .refcount = 0,
     .stopped_time = 0,
+    .cwd = NULL,
     .argv = NULL,
-    .in = NULL,
-    .out = NULL,
-    .err = NULL,
+    .in = { .closed = false },
+    .out = { .closed = false },
+    .err = { .closed = false },
     .cb = NULL,
     .closed = false,
-    .term_sent = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
     .detach = false
   };
+}
+
+static inline bool process_is_stopped(Process *proc)
+{
+  bool exited = (proc->status >= 0);
+  return exited || (proc->stopped_time != 0);
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

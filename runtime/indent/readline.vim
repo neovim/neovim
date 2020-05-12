@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         readline configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
+" Language:             readline configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
 
 if exists("b:did_indent")
   finish
@@ -25,11 +25,11 @@ function GetReadlineIndent()
   let ind = indent(lnum)
 
   if getline(lnum) =~ '^\s*$\(if\|else\)\>'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   if getline(v:lnum) =~ '^\s*$\(else\|endif\)\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

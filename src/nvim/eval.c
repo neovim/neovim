@@ -1,181 +1,78 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * eval.c: Expression evaluation.
  */
 
-#include <assert.h>
-#include <inttypes.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
-#include <limits.h>
-#include <msgpack.h>
 
-#include "nvim/assert.h"
-#include "nvim/vim.h"
-#include "nvim/ascii.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/eval.h"
+
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
+#include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
-#include "nvim/diff.h"
 #include "nvim/edit.h"
-#include "nvim/ex_cmds.h"
+#include "nvim/eval/userfunc.h"
+#include "nvim/eval.h"
+#include "nvim/eval/encode.h"
+#include "nvim/eval/executor.h"
+#include "nvim/eval/gc.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
+#include "nvim/ex_session.h"
 #include "nvim/fileio.h"
-#include "nvim/func_attr.h"
-#include "nvim/fold.h"
 #include "nvim/getchar.h"
-#include "nvim/hashtab.h"
-#include "nvim/iconv.h"
-#include "nvim/if_cscope.h"
-#include "nvim/indent_c.h"
-#include "nvim/indent.h"
+#include "nvim/lua/executor.h"
 #include "nvim/mark.h"
-#include "nvim/mbyte.h"
 #include "nvim/memline.h"
-#include "nvim/memory.h"
-#include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/misc2.h"
-#include "nvim/keymap.h"
-#include "nvim/map.h"
-#include "nvim/file_search.h"
-#include "nvim/garray.h"
 #include "nvim/move.h"
-#include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/shell.h"
 #include "nvim/path.h"
-#include "nvim/popupmnu.h"
-#include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
-#include "nvim/sha256.h"
-#include "nvim/spell.h"
-#include "nvim/strings.h"
+#include "nvim/sign.h"
 #include "nvim/syntax.h"
-#include "nvim/tag.h"
-#include "nvim/tempfile.h"
 #include "nvim/ui.h"
-#include "nvim/mouse.h"
-#include "nvim/terminal.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
-#include "nvim/os/os.h"
-#include "nvim/event/libuv_process.h"
-#include "nvim/event/pty_process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
-#include "nvim/os/time.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/server.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
-#include "nvim/os/dl.h"
-#include "nvim/os/input.h"
-#include "nvim/event/loop.h"
-#include "nvim/lib/kvec.h"
-#include "nvim/lib/queue.h"
 
-#define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
-#define DO_NOT_FREE_CNT 99999   /* refcount for dict or list that should not
-                                   be freed. */
+// TODO(ZyX-I): Remove DICT_MAXNEST, make users be non-recursive instead
 
-#define AUTOLOAD_CHAR '#'       /* Character used as separator in autoload 
-                                   function/variable names. */
-
-/*
- * Structure returned by get_lval() and used by set_var_lval().
- * For a plain name:
- *	"name"	    points to the variable name.
- *	"exp_name"  is NULL.
- *	"tv"	    is NULL
- * For a magic braces name:
- *	"name"	    points to the expanded variable name.
- *	"exp_name"  is non-NULL, to be freed later.
- *	"tv"	    is NULL
- * For an index in a list:
- *	"name"	    points to the (expanded) variable name.
- *	"exp_name"  NULL or non-NULL, to be freed later.
- *	"tv"	    points to the (first) list item value
- *	"li"	    points to the (first) list item
- *	"range", "n1", "n2" and "empty2" indicate what items are used.
- * For an existing Dict item:
- *	"name"	    points to the (expanded) variable name.
- *	"exp_name"  NULL or non-NULL, to be freed later.
- *	"tv"	    points to the dict item value
- *	"newkey"    is NULL
- * For a non-existing Dict item:
- *	"name"	    points to the (expanded) variable name.
- *	"exp_name"  NULL or non-NULL, to be freed later.
- *	"tv"	    points to the Dictionary typval_T
- *	"newkey"    is the key for the new item.
- */
-typedef struct lval_S {
-  char_u      *ll_name;         /* start of variable name (can be NULL) */
-  char_u      *ll_exp_name;     /* NULL or expanded name in allocated memory. */
-  typval_T    *ll_tv;           /* Typeval of item being used.  If "newkey"
-                                   isn't NULL it's the Dict to which to add
-                                   the item. */
-  listitem_T  *ll_li;           /* The list item or NULL. */
-  list_T      *ll_list;         /* The list or NULL. */
-  int ll_range;                 /* TRUE when a [i:j] range was used */
-  long ll_n1;                   /* First index for list */
-  long ll_n2;                   /* Second index for list range */
-  int ll_empty2;                /* Second index is empty: [i:] */
-  dict_T      *ll_dict;         /* The Dictionary or NULL */
-  dictitem_T  *ll_di;           /* The dictitem or NULL */
-  char_u      *ll_newkey;       /* New key for Dict in alloc. mem or NULL. */
-} lval_T;
-
-/// Structure defining state for read_from_list()
-typedef struct {
-  const listitem_T *li;  ///< Item currently read.
-  size_t offset;         ///< Byte offset inside the read item.
-  size_t li_length;      ///< Length of the string inside the read item.
-} ListReaderState;
+#define DICT_MAXNEST 100        // maximum nesting of lists and dicts
 
 
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
-static char *e_listidx = N_("E684: list index out of range: %" PRId64);
-static char *e_undefvar = N_("E121: Undefined variable: %s");
 static char *e_missbrac = N_("E111: Missing ']'");
-static char *e_listarg = N_("E686: Argument of %s must be a List");
-static char *e_listdictarg = N_(
-    "E712: Argument of %s must be a List or Dictionary");
-static char *e_emptykey = N_("E713: Cannot use empty key for Dictionary");
-static char *e_listreq = N_("E714: List required");
-static char *e_dictreq = N_("E715: Dictionary required");
-static char *e_strreq = N_("E114: String required");
-static char *e_toomanyarg = N_("E118: Too many arguments for function: %s");
-static char *e_dictkey = N_("E716: Key not present in Dictionary: %s");
-static char *e_funcexts = N_(
-    "E122: Function %s already exists, add ! to replace it");
-static char *e_funcdict = N_("E717: Dictionary entry already exists");
-static char *e_funcref = N_("E718: Funcref required");
 static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
-static char *e_letwrong = N_("E734: Wrong variable type for %s=");
-static char *e_nofunc = N_("E130: Unknown function: %s");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
-static char *e_float_as_string = N_("E806: using Float as a String");
+static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
 
-static char_u * const empty_string = (char_u *)"";
+// TODO(ZyX-I): move to eval/executor
+static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 
-static dictitem_T globvars_var;                 /* variable used for g: */
+static char_u * const namespace_char = (char_u *)"abglstvw";
+
+/// Variable used for g:
+static ScopeDictDictItem globvars_var;
+
+/// g: value
 #define globvarht globvardict.dv_hashtab
 
 /*
@@ -184,24 +81,15 @@ static dictitem_T globvars_var;                 /* variable used for g: */
  */
 static hashtab_T compat_hashtab;
 
-/*
- * When recursively copying lists and dicts we need to remember which ones we
- * have done to avoid endless recursiveness.  This unique ID is used for that.
- * The last bit is used for previous_funccal, ignored when comparing.
- */
-static int current_copyID = 0;
-#define COPYID_INC 2
-#define COPYID_MASK (~0x1)
-
-/// Abort conversion to string after a recursion error.
-static bool did_echo_string_emsg = false;
+/// Used for checking if local variables or arguments used in a lambda.
+bool *eval_lavars_used = NULL;
 
 /*
  * Array to hold the hashtab with variables local to each sourced script.
  * Each item holds a variable (nameless) that points to the dict_T.
  */
 typedef struct {
-  dictitem_T sv_var;
+  ScopeDictDictItem sv_var;
   dict_T sv_dict;
 } scriptvar_T;
 
@@ -209,267 +97,167 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 #define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
 #define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
 
-static int echo_attr = 0;   /* attributes used for ":echo" */
+static int echo_attr = 0;   // attributes used for ":echo"
 
-/* Values for trans_function_name() argument: */
-#define TFN_INT         1       /* internal function name OK */
-#define TFN_QUIET       2       /* no error messages */
-#define TFN_NO_AUTOLOAD 4       /* do not use script autoloading */
-
-/* Values for get_lval() flags argument: */
-#define GLV_QUIET       TFN_QUIET       /* no error messages */
-#define GLV_NO_AUTOLOAD TFN_NO_AUTOLOAD /* do not use script autoloading */
-
-/* function flags */
-#define FC_ABORT    1           /* abort function on error */
-#define FC_RANGE    2           /* function accepts range */
-#define FC_DICT     4           /* Dict function, uses "self" */
-
-/* The names of packages that once were loaded are remembered. */
-static garray_T ga_loaded = {0, 0, sizeof(char_u *), 4, NULL};
-
-/* list heads for garbage collection */
-static dict_T           *first_dict = NULL;     /* list of all dicts */
-static list_T           *first_list = NULL;     /* list of all lists */
-
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
-#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
-
-#define VAR_SHORT_LEN   20      /* short variable name length */
-#define FIXVAR_CNT      12      /* number of fixed variables */
-
-/* structure to hold info for a function that is currently being executed. */
-typedef struct funccall_S funccall_T;
-
-struct funccall_S {
-  ufunc_T     *func;            /* function being called */
-  int linenr;                   /* next line to be executed */
-  int returned;                 /* ":return" used */
-  struct                        /* fixed variables for arguments */
-  {
-    dictitem_T var;                     /* variable (without room for name) */
-    char_u room[VAR_SHORT_LEN];         /* room for the name */
-  } fixvar[FIXVAR_CNT];
-  dict_T l_vars;                /* l: local function variables */
-  dictitem_T l_vars_var;        /* variable for l: scope */
-  dict_T l_avars;               /* a: argument variables */
-  dictitem_T l_avars_var;       /* variable for a: scope */
-  list_T l_varlist;             /* list for a:000 */
-  listitem_T l_listitems[MAX_FUNC_ARGS];        /* listitems for a:000 */
-  typval_T    *rettv;           /* return value */
-  linenr_T breakpoint;          /* next line with breakpoint or zero */
-  int dbg_tick;                 /* debug_tick when breakpoint was set */
-  int level;                    /* top nesting level of executed function */
-  proftime_T prof_child;        /* time spent in a child */
-  funccall_T  *caller;          /* calling function or NULL */
-};
+// The names of packages that once were loaded are remembered.
+static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
 
 /*
  * Info used by a ":for" loop.
  */
 typedef struct {
-  int fi_semicolon;             /* TRUE if ending in '; var]' */
-  int fi_varcount;              /* nr of variables in the list */
-  listwatch_T fi_lw;            /* keep an eye on the item used. */
-  list_T      *fi_list;         /* list being used */
+  int fi_semicolon;             // TRUE if ending in '; var]'
+  int fi_varcount;              // nr of variables in the list
+  listwatch_T fi_lw;            // keep an eye on the item used.
+  list_T      *fi_list;         // list being used
 } forinfo_T;
 
-/*
- * Struct used by trans_function_name()
- */
-typedef struct {
-  dict_T      *fd_dict;         /* Dictionary used */
-  char_u      *fd_newkey;       /* new key in "dict" in allocated memory */
-  dictitem_T  *fd_di;           /* Dictionary item used */
-} funcdict_T;
+// values for vv_flags:
+#define VV_COMPAT       1       // compatible, also used without "v:"
+#define VV_RO           2       // read-only
+#define VV_RO_SBX       4       // read-only in the sandbox
 
-/*
- * enum used by var_flavour()
- */
-typedef enum {
-  VAR_FLAVOUR_DEFAULT,          /* doesn't start with uppercase */
-  VAR_FLAVOUR_SESSION,          /* starts with uppercase, some lower */
-  VAR_FLAVOUR_SHADA             /* all uppercase */
-} var_flavour_T;
-
-/* values for vv_flags: */
-#define VV_COMPAT       1       /* compatible, also used without "v:" */
-#define VV_RO           2       /* read-only */
-#define VV_RO_SBX       4       /* read-only in the sandbox */
-
-#define VV_NAME(s, t)   s, {{t, 0, {0}}, 0, {0}}, {0}
+#define VV(idx, name, type, flags) \
+  [idx] = { \
+    .vv_name = name, \
+    .vv_di = { \
+      .di_tv = { .v_type = type }, \
+      .di_flags = 0, \
+      .di_key = { 0 }, \
+    }, \
+    .vv_flags = flags, \
+  }
 
 // Array to hold the value of v: variables.
 // The value is in a dictitem, so that it can also be used in the v: scope.
 // The reason to use this table anyway is for very quick access to the
 // variables with the VV_ defines.
 static struct vimvar {
-  char        *vv_name;         /* name of variable, without v: */
-  dictitem_T vv_di;             /* value and name for key */
-  char vv_filler[16];           /* space for LONGEST name below!!! */
-  char vv_flags;                /* VV_COMPAT, VV_RO, VV_RO_SBX */
-} vimvars[VV_LEN] =
+  char        *vv_name;  ///< Name of the variable, without v:.
+  TV_DICTITEM_STRUCT(17) vv_di;  ///< Value and name for key (max 16 chars).
+  char vv_flags;  ///< Flags: #VV_COMPAT, #VV_RO, #VV_RO_SBX.
+} vimvars[] =
 {
-  /*
-   * The order here must match the VV_ defines in eval.h!
-   * Initializing a union does not work, leave tv.vval empty to get zero's.
-   */
-  { VV_NAME("count",            VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("count1",           VAR_NUMBER), VV_RO },
-  { VV_NAME("prevcount",        VAR_NUMBER), VV_RO },
-  { VV_NAME("errmsg",           VAR_STRING), VV_COMPAT },
-  { VV_NAME("warningmsg",       VAR_STRING), 0 },
-  { VV_NAME("statusmsg",        VAR_STRING), 0 },
-  { VV_NAME("shell_error",      VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("this_session",     VAR_STRING), VV_COMPAT },
-  { VV_NAME("version",          VAR_NUMBER), VV_COMPAT+VV_RO },
-  { VV_NAME("lnum",             VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("termresponse",     VAR_STRING), VV_RO },
-  { VV_NAME("fname",            VAR_STRING), VV_RO },
-  { VV_NAME("lang",             VAR_STRING), VV_RO },
-  { VV_NAME("lc_time",          VAR_STRING), VV_RO },
-  { VV_NAME("ctype",            VAR_STRING), VV_RO },
-  { VV_NAME("charconvert_from", VAR_STRING), VV_RO },
-  { VV_NAME("charconvert_to",   VAR_STRING), VV_RO },
-  { VV_NAME("fname_in",         VAR_STRING), VV_RO },
-  { VV_NAME("fname_out",        VAR_STRING), VV_RO },
-  { VV_NAME("fname_new",        VAR_STRING), VV_RO },
-  { VV_NAME("fname_diff",       VAR_STRING), VV_RO },
-  { VV_NAME("cmdarg",           VAR_STRING), VV_RO },
-  { VV_NAME("foldstart",        VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("foldend",          VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("folddashes",       VAR_STRING), VV_RO_SBX },
-  { VV_NAME("foldlevel",        VAR_NUMBER), VV_RO_SBX },
-  { VV_NAME("progname",         VAR_STRING), VV_RO },
-  { VV_NAME("servername",       VAR_STRING), VV_RO },
-  { VV_NAME("dying",            VAR_NUMBER), VV_RO },
-  { VV_NAME("exception",        VAR_STRING), VV_RO },
-  { VV_NAME("throwpoint",       VAR_STRING), VV_RO },
-  { VV_NAME("register",         VAR_STRING), VV_RO },
-  { VV_NAME("cmdbang",          VAR_NUMBER), VV_RO },
-  { VV_NAME("insertmode",       VAR_STRING), VV_RO },
-  { VV_NAME("val",              VAR_UNKNOWN), VV_RO },
-  { VV_NAME("key",              VAR_UNKNOWN), VV_RO },
-  { VV_NAME("profiling",        VAR_NUMBER), VV_RO },
-  { VV_NAME("fcs_reason",       VAR_STRING), VV_RO },
-  { VV_NAME("fcs_choice",       VAR_STRING), 0 },
-  { VV_NAME("beval_bufnr",      VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_winnr",      VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_lnum",       VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_col",        VAR_NUMBER), VV_RO },
-  { VV_NAME("beval_text",       VAR_STRING), VV_RO },
-  { VV_NAME("scrollstart",      VAR_STRING), 0 },
-  { VV_NAME("swapname",         VAR_STRING), VV_RO },
-  { VV_NAME("swapchoice",       VAR_STRING), 0 },
-  { VV_NAME("swapcommand",      VAR_STRING), VV_RO },
-  { VV_NAME("char",             VAR_STRING), 0 },
-  { VV_NAME("mouse_win",        VAR_NUMBER), 0 },
-  { VV_NAME("mouse_lnum",       VAR_NUMBER), 0 },
-  { VV_NAME("mouse_col",        VAR_NUMBER), 0 },
-  { VV_NAME("operator",         VAR_STRING), VV_RO },
-  { VV_NAME("searchforward",    VAR_NUMBER), 0 },
-  { VV_NAME("hlsearch",         VAR_NUMBER), 0 },
-  { VV_NAME("oldfiles",         VAR_LIST), 0 },
-  { VV_NAME("windowid",         VAR_NUMBER), VV_RO },
-  { VV_NAME("progpath",         VAR_STRING), VV_RO },
-  { VV_NAME("command_output",   VAR_STRING), 0 },
-  { VV_NAME("completed_item",   VAR_DICT), VV_RO },
-  { VV_NAME("option_new",       VAR_STRING), VV_RO },
-  { VV_NAME("option_old",       VAR_STRING), VV_RO },
-  { VV_NAME("option_type",      VAR_STRING), VV_RO },
-  { VV_NAME("errors",           VAR_LIST), 0 },
-  { VV_NAME("msgpack_types",    VAR_DICT), VV_RO },
-  { VV_NAME("event",            VAR_DICT), VV_RO },
+  // VV_ tails differing from upcased string literals:
+  // VV_CC_FROM "charconvert_from"
+  // VV_CC_TO "charconvert_to"
+  // VV_SEND_SERVER "servername"
+  // VV_REG "register"
+  // VV_OP "operator"
+  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_RO),
+  VV(VV_COUNT1,         "count1",           VAR_NUMBER, VV_RO),
+  VV(VV_PREVCOUNT,      "prevcount",        VAR_NUMBER, VV_RO),
+  VV(VV_ERRMSG,         "errmsg",           VAR_STRING, 0),
+  VV(VV_WARNINGMSG,     "warningmsg",       VAR_STRING, 0),
+  VV(VV_STATUSMSG,      "statusmsg",        VAR_STRING, 0),
+  VV(VV_SHELL_ERROR,    "shell_error",      VAR_NUMBER, VV_RO),
+  VV(VV_THIS_SESSION,   "this_session",     VAR_STRING, 0),
+  VV(VV_VERSION,        "version",          VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_LNUM,           "lnum",             VAR_NUMBER, VV_RO_SBX),
+  VV(VV_TERMRESPONSE,   "termresponse",     VAR_STRING, VV_RO),
+  VV(VV_FNAME,          "fname",            VAR_STRING, VV_RO),
+  VV(VV_LANG,           "lang",             VAR_STRING, VV_RO),
+  VV(VV_LC_TIME,        "lc_time",          VAR_STRING, VV_RO),
+  VV(VV_CTYPE,          "ctype",            VAR_STRING, VV_RO),
+  VV(VV_CC_FROM,        "charconvert_from", VAR_STRING, VV_RO),
+  VV(VV_CC_TO,          "charconvert_to",   VAR_STRING, VV_RO),
+  VV(VV_FNAME_IN,       "fname_in",         VAR_STRING, VV_RO),
+  VV(VV_FNAME_OUT,      "fname_out",        VAR_STRING, VV_RO),
+  VV(VV_FNAME_NEW,      "fname_new",        VAR_STRING, VV_RO),
+  VV(VV_FNAME_DIFF,     "fname_diff",       VAR_STRING, VV_RO),
+  VV(VV_CMDARG,         "cmdarg",           VAR_STRING, VV_RO),
+  VV(VV_FOLDSTART,      "foldstart",        VAR_NUMBER, VV_RO_SBX),
+  VV(VV_FOLDEND,        "foldend",          VAR_NUMBER, VV_RO_SBX),
+  VV(VV_FOLDDASHES,     "folddashes",       VAR_STRING, VV_RO_SBX),
+  VV(VV_FOLDLEVEL,      "foldlevel",        VAR_NUMBER, VV_RO_SBX),
+  VV(VV_PROGNAME,       "progname",         VAR_STRING, VV_RO),
+  VV(VV_SEND_SERVER,    "servername",       VAR_STRING, VV_RO),
+  VV(VV_DYING,          "dying",            VAR_NUMBER, VV_RO),
+  VV(VV_EXCEPTION,      "exception",        VAR_STRING, VV_RO),
+  VV(VV_THROWPOINT,     "throwpoint",       VAR_STRING, VV_RO),
+  VV(VV_STDERR,         "stderr",           VAR_NUMBER, VV_RO),
+  VV(VV_REG,            "register",         VAR_STRING, VV_RO),
+  VV(VV_CMDBANG,        "cmdbang",          VAR_NUMBER, VV_RO),
+  VV(VV_INSERTMODE,     "insertmode",       VAR_STRING, VV_RO),
+  VV(VV_VAL,            "val",              VAR_UNKNOWN, VV_RO),
+  VV(VV_KEY,            "key",              VAR_UNKNOWN, VV_RO),
+  VV(VV_PROFILING,      "profiling",        VAR_NUMBER, VV_RO),
+  VV(VV_FCS_REASON,     "fcs_reason",       VAR_STRING, VV_RO),
+  VV(VV_FCS_CHOICE,     "fcs_choice",       VAR_STRING, 0),
+  VV(VV_BEVAL_BUFNR,    "beval_bufnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_WINNR,    "beval_winnr",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_WINID,    "beval_winid",      VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_LNUM,     "beval_lnum",       VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_COL,      "beval_col",        VAR_NUMBER, VV_RO),
+  VV(VV_BEVAL_TEXT,     "beval_text",       VAR_STRING, VV_RO),
+  VV(VV_SCROLLSTART,    "scrollstart",      VAR_STRING, 0),
+  VV(VV_SWAPNAME,       "swapname",         VAR_STRING, VV_RO),
+  VV(VV_SWAPCHOICE,     "swapchoice",       VAR_STRING, 0),
+  VV(VV_SWAPCOMMAND,    "swapcommand",      VAR_STRING, VV_RO),
+  VV(VV_CHAR,           "char",             VAR_STRING, 0),
+  VV(VV_MOUSE_WIN,      "mouse_win",        VAR_NUMBER, 0),
+  VV(VV_MOUSE_WINID,    "mouse_winid",      VAR_NUMBER, 0),
+  VV(VV_MOUSE_LNUM,     "mouse_lnum",       VAR_NUMBER, 0),
+  VV(VV_MOUSE_COL,      "mouse_col",        VAR_NUMBER, 0),
+  VV(VV_OP,             "operator",         VAR_STRING, VV_RO),
+  VV(VV_SEARCHFORWARD,  "searchforward",    VAR_NUMBER, 0),
+  VV(VV_HLSEARCH,       "hlsearch",         VAR_NUMBER, 0),
+  VV(VV_OLDFILES,       "oldfiles",         VAR_LIST, 0),
+  VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO_SBX),
+  VV(VV_PROGPATH,       "progpath",         VAR_STRING, VV_RO),
+  VV(VV_COMPLETED_ITEM, "completed_item",   VAR_DICT, VV_RO),
+  VV(VV_OPTION_NEW,     "option_new",       VAR_STRING, VV_RO),
+  VV(VV_OPTION_OLD,     "option_old",       VAR_STRING, VV_RO),
+  VV(VV_OPTION_TYPE,    "option_type",      VAR_STRING, VV_RO),
+  VV(VV_ERRORS,         "errors",           VAR_LIST, 0),
+  VV(VV_MSGPACK_TYPES,  "msgpack_types",    VAR_DICT, VV_RO),
+  VV(VV_EVENT,          "event",            VAR_DICT, VV_RO),
+  VV(VV_FALSE,          "false",            VAR_SPECIAL, VV_RO),
+  VV(VV_TRUE,           "true",             VAR_SPECIAL, VV_RO),
+  VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
+  VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
+  VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
+  VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
+  VV(VV_TESTING,        "testing",          VAR_NUMBER, 0),
+  VV(VV_TYPE_NUMBER,    "t_number",         VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_STRING,    "t_string",         VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_FUNC,      "t_func",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_LIST,      "t_list",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_DICT,      "t_dict",           VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_FLOAT,     "t_float",          VAR_NUMBER, VV_RO),
+  VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
+  VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
+  VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
+  VV(VV_LUA,            "lua",              VAR_PARTIAL, VV_RO),
 };
+#undef VV
 
-/* shorthand */
+// shorthand
 #define vv_type         vv_di.di_tv.v_type
 #define vv_nr           vv_di.di_tv.vval.v_number
+#define vv_special      vv_di.di_tv.vval.v_special
 #define vv_float        vv_di.di_tv.vval.v_float
 #define vv_str          vv_di.di_tv.vval.v_string
 #define vv_list         vv_di.di_tv.vval.v_list
 #define vv_dict         vv_di.di_tv.vval.v_dict
+#define vv_partial      vv_di.di_tv.vval.v_partial
 #define vv_tv           vv_di.di_tv
 
-static dictitem_T vimvars_var;                  /* variable used for v: */
+/// Variable used for v:
+static ScopeDictDictItem vimvars_var;
+
+static partial_T *vvlua_partial;
+
+/// v: hashtab
 #define vimvarht  vimvardict.dv_hashtab
-
-typedef struct {
-  union {
-    LibuvProcess uv;
-    PtyProcess pty;
-  } proc;
-  Stream in, out, err;
-  Terminal *term;
-  bool stopped;
-  bool exited;
-  int refcount;
-  ufunc_T *on_stdout, *on_stderr, *on_exit;
-  dict_T *self;
-  int *status_ptr;
-  uint64_t id;
-  Queue *events;
-} TerminalJobData;
-
-typedef struct dict_watcher {
-  ufunc_T *callback;
-  char *key_pattern;
-  QUEUE node;
-  bool busy;  // prevent recursion if the dict is changed in the callback
-} DictWatcher;
-
-/// Structure representing current VimL to messagepack conversion state
-typedef struct {
-  enum {
-    kMPConvDict,   ///< Convert dict_T *dictionary.
-    kMPConvList,   ///< Convert list_T *list.
-    kMPConvPairs,  ///< Convert mapping represented as a list_T* of pairs.
-  } type;
-  union {
-    struct {
-      dict_T *dict;    ///< Currently converted dictionary.
-      hashitem_T *hi;  ///< Currently converted dictionary item.
-      size_t todo;     ///< Amount of items left to process.
-    } d;  ///< State of dictionary conversion.
-    struct {
-      list_T *list;    ///< Currently converted list.
-      listitem_T *li;  ///< Currently converted list item.
-    } l;  ///< State of list or generic mapping conversion.
-  } data;  ///< Data to convert.
-} MPConvStackVal;
-
-/// Stack used to convert VimL values to messagepack.
-typedef kvec_t(MPConvStackVal) MPConvStack;
-
-typedef struct {
-  TerminalJobData *data;
-  ufunc_T *callback;
-  const char *type;
-  list_T *received;
-  int status;
-} JobEvent;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.c.generated.h"
 #endif
 
-#define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
-#define FNE_CHECK_START 2       /* find_name_end(): check name starts with
-                                   valid character */
-static uint64_t current_job_id = 1;
-static PMap(uint64_t) *jobs = NULL; 
+static uint64_t last_timer_id = 1;
+static PMap(uint64_t) *timers = NULL;
 
-typedef enum {
-  kMPNil,
-  kMPBoolean,
-  kMPInteger,
-  kMPFloat,
-  kMPString,
-  kMPBinary,
-  kMPArray,
-  kMPMap,
-  kMPExt,
-} MessagePackType;
 static const char *const msgpack_type_names[] = {
   [kMPNil] = "nil",
   [kMPBoolean] = "boolean",
@@ -481,7 +269,7 @@ static const char *const msgpack_type_names[] = {
   [kMPMap] = "map",
   [kMPExt] = "ext",
 };
-static const list_T *msgpack_type_lists[] = {
+const list_T *eval_msgpack_type_lists[] = {
   [kMPNil] = NULL,
   [kMPBoolean] = NULL,
   [kMPInteger] = NULL,
@@ -493,23 +281,54 @@ static const list_T *msgpack_type_lists[] = {
   [kMPExt] = NULL,
 };
 
+// Return "n1" divided by "n2", taking care of dividing by zero.
+varnumber_T num_divide(varnumber_T n1, varnumber_T n2)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  varnumber_T result;
+
+  if (n2 == 0) {  // give an error message?
+    if (n1 == 0) {
+      result = VARNUMBER_MIN;  // similar to NaN
+    } else if (n1 < 0) {
+      result = -VARNUMBER_MAX;
+    } else {
+      result = VARNUMBER_MAX;
+    }
+  } else {
+    result = n1 / n2;
+  }
+
+  return result;
+}
+
+// Return "n1" modulus "n2", taking care of dividing by zero.
+varnumber_T num_modulus(varnumber_T n1, varnumber_T n2)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Give an error when n2 is 0?
+  return (n2 == 0) ? 0 : (n1 % n2);
+}
+
 /*
  * Initialize the global and v: variables.
  */
 void eval_init(void)
 {
-  jobs = pmap_new(uint64_t)();
-  int i;
+  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
+
+  timers = pmap_new(uint64_t)();
   struct vimvar   *p;
 
   init_var_dict(&globvardict, &globvars_var, VAR_DEF_SCOPE);
   init_var_dict(&vimvardict, &vimvars_var, VAR_SCOPE);
   vimvardict.dv_lock = VAR_FIXED;
   hash_init(&compat_hashtab);
-  hash_init(&func_hashtab);
+  func_init();
 
-  for (i = 0; i < VV_LEN; ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
+    assert(STRLEN(p->vv_name) <= 16);
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO)
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
@@ -518,27 +337,30 @@ void eval_init(void)
     else
       p->vv_di.di_flags = DI_FLAGS_FIX;
 
-    /* add to v: scope dict, unless the value is not always available */
-    if (p->vv_type != VAR_UNKNOWN)
+    // add to v: scope dict, unless the value is not always available
+    if (p->vv_type != VAR_UNKNOWN) {
       hash_add(&vimvarht, p->vv_di.di_key);
-    if (p->vv_flags & VV_COMPAT)
-      /* add to compat scope dict */
+    }
+    if (p->vv_flags & VV_COMPAT) {
+      // add to compat scope dict
       hash_add(&compat_hashtab, p->vv_di.di_key);
+    }
   }
+  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
 
-  dict_T *const msgpack_types_dict = dict_alloc();
+  dict_T *const msgpack_types_dict = tv_dict_alloc();
   for (size_t i = 0; i < ARRAY_SIZE(msgpack_type_names); i++) {
-    list_T *const type_list = list_alloc();
-    type_list->lv_lock = VAR_FIXED;
-    type_list->lv_refcount = 1;
-    dictitem_T *const di = dictitem_alloc((char_u *) msgpack_type_names[i]);
-    di->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+    list_T *const type_list = tv_list_alloc(0);
+    tv_list_set_lock(type_list, VAR_FIXED);
+    tv_list_ref(type_list);
+    dictitem_T *const di = tv_dict_item_alloc(msgpack_type_names[i]);
+    di->di_flags |= DI_FLAGS_RO|DI_FLAGS_FIX;
     di->di_tv = (typval_T) {
       .v_type = VAR_LIST,
       .vval = { .v_list = type_list, },
     };
-    msgpack_type_lists[i] = type_list;
-    if (dict_add(msgpack_types_dict, di) == FAIL) {
+    eval_msgpack_type_lists[i] = type_list;
+    if (tv_dict_add(msgpack_types_dict, di) == FAIL) {
       // There must not be duplicate items in this dictionary by definition.
       assert(false);
     }
@@ -546,15 +368,39 @@ void eval_init(void)
   msgpack_types_dict->dv_lock = VAR_FIXED;
 
   set_vim_var_dict(VV_MSGPACK_TYPES, msgpack_types_dict);
-  set_vim_var_dict(VV_COMPLETED_ITEM, dict_alloc());
+  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
 
-  dict_T *v_event = dict_alloc();
+  dict_T *v_event = tv_dict_alloc();
   v_event->dv_lock = VAR_FIXED;
   set_vim_var_dict(VV_EVENT, v_event);
-  set_vim_var_list(VV_ERRORS, list_alloc());
+  set_vim_var_list(VV_ERRORS, tv_list_alloc(kListLenUnknown));
+  set_vim_var_nr(VV_STDERR,   CHAN_STDERR);
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
-  set_reg_var(0);    /* default for v:register is not 0 but '"' */
+  set_vim_var_nr(VV_COUNT1, 1);
+  set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
+  set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);
+  set_vim_var_nr(VV_TYPE_FUNC,   VAR_TYPE_FUNC);
+  set_vim_var_nr(VV_TYPE_LIST,   VAR_TYPE_LIST);
+  set_vim_var_nr(VV_TYPE_DICT,   VAR_TYPE_DICT);
+  set_vim_var_nr(VV_TYPE_FLOAT,  VAR_TYPE_FLOAT);
+  set_vim_var_nr(VV_TYPE_BOOL,   VAR_TYPE_BOOL);
+
+  set_vim_var_special(VV_FALSE, kSpecialVarFalse);
+  set_vim_var_special(VV_TRUE, kSpecialVarTrue);
+  set_vim_var_special(VV_NULL, kSpecialVarNull);
+  set_vim_var_special(VV_EXITING, kSpecialVarNull);
+
+  set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
+
+  vimvars[VV_LUA].vv_type = VAR_PARTIAL;
+  vvlua_partial = xcalloc(1, sizeof(partial_T));
+  vimvars[VV_LUA].vv_partial = vvlua_partial;
+  // this value shouldn't be printed, but if it is, do not crash
+  vvlua_partial->pt_name = xmallocz(0);
+  vvlua_partial->pt_refcount++;
+
+  set_reg_var(0);  // default for v:register is not 0 but '"'
 }
 
 #if defined(EXITFREE)
@@ -562,27 +408,26 @@ void eval_clear(void)
 {
   struct vimvar   *p;
 
-  for (int i = 0; i < VV_LEN; ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
     if (p->vv_di.di_tv.v_type == VAR_STRING) {
-      xfree(p->vv_str);
-      p->vv_str = NULL;
+      XFREE_CLEAR(p->vv_str);
     } else if (p->vv_di.di_tv.v_type == VAR_LIST) {
-      list_unref(p->vv_list);
+      tv_list_unref(p->vv_list);
       p->vv_list = NULL;
     }
   }
   hash_clear(&vimvarht);
-  hash_init(&vimvarht);    /* garbage_collect() will access it */
+  hash_init(&vimvarht);    // garbage_collect() will access it
   hash_clear(&compat_hashtab);
 
   free_scriptnames();
   free_locales();
 
-  /* global variables */
+  // global variables
   vars_clear(&globvarht);
 
-  /* autoloaded script names */
+  // autoloaded script names
   ga_clear_strings(&ga_loaded);
 
   /* Script-local variables. First clear all the variables and in a second
@@ -594,62 +439,14 @@ void eval_clear(void)
     xfree(SCRIPT_SV(i));
   ga_clear(&ga_scripts);
 
-  /* unreferenced lists and dicts */
-  (void)garbage_collect();
+  // unreferenced lists and dicts
+  (void)garbage_collect(false);
 
-  /* functions */
+  // functions
   free_all_functions();
-  hash_clear(&func_hashtab);
 }
 
 #endif
-
-/*
- * Return the name of the executed function.
- */
-char_u *func_name(void *cookie)
-{
-  return ((funccall_T *)cookie)->func->uf_name;
-}
-
-/*
- * Return the address holding the next breakpoint line for a funccall cookie.
- */
-linenr_T *func_breakpoint(void *cookie)
-{
-  return &((funccall_T *)cookie)->breakpoint;
-}
-
-/*
- * Return the address holding the debug tick for a funccall cookie.
- */
-int *func_dbg_tick(void *cookie)
-{
-  return &((funccall_T *)cookie)->dbg_tick;
-}
-
-/*
- * Return the nesting level for a funccall cookie.
- */
-int func_level(void *cookie)
-{
-  return ((funccall_T *)cookie)->level;
-}
-
-/* pointer to funccal for currently active function */
-funccall_T *current_funccal = NULL;
-
-/* pointer to list of previously used funccal, still around because some
- * item in it is still being used. */
-funccall_T *previous_funccal = NULL;
-
-/*
- * Return TRUE when a function was ended by a ":return" command.
- */
-int current_func_returned(void)
-{
-  return current_funccal->returned;
-}
 
 /*
  * Set an internal variable to a string value. Creates the variable if it does
@@ -657,60 +454,60 @@ int current_func_returned(void)
  */
 void set_internal_string_var(char_u *name, char_u *value)
 {
-  char_u *val = vim_strsave(value);
-  typval_T *tvp = xcalloc(1, sizeof(typval_T));
+  const typval_T tv = {
+    .v_type = VAR_STRING,
+    .vval.v_string = value,
+  };
 
-  tvp->v_type = VAR_STRING;
-  tvp->vval.v_string = val;
-  set_var(name, tvp, FALSE);
-  free_tv(tvp);
+  set_var((const char *)name, STRLEN(name), (typval_T *)&tv, true);
 }
 
 static lval_T   *redir_lval = NULL;
-static garray_T redir_ga;       /* only valid when redir_lval is not NULL */
-static char_u   *redir_endp = NULL;
+static garray_T redir_ga;  // Only valid when redir_lval is not NULL.
+static char_u *redir_endp = NULL;
 static char_u   *redir_varname = NULL;
 
 /*
  * Start recording command output to a variable
  * Returns OK if successfully completed the setup.  FAIL otherwise.
  */
-int 
-var_redir_start (
+int
+var_redir_start(
     char_u *name,
-    int append                     /* append to an existing variable */
+    int append                     // append to an existing variable
 )
 {
   int save_emsg;
   int err;
   typval_T tv;
 
-  /* Catch a bad name early. */
+  // Catch a bad name early.
   if (!eval_isnamec1(*name)) {
     EMSG(_(e_invarg));
     return FAIL;
   }
 
-  /* Make a copy of the name, it is used in redir_lval until redir ends. */
+  // Make a copy of the name, it is used in redir_lval until redir ends.
   redir_varname = vim_strsave(name);
 
   redir_lval = xcalloc(1, sizeof(lval_T));
 
-  /* The output is stored in growarray "redir_ga" until redirection ends. */
+  // The output is stored in growarray "redir_ga" until redirection ends.
   ga_init(&redir_ga, (int)sizeof(char), 500);
 
-  /* Parse the variable name (can be a dict or list entry). */
-  redir_endp = get_lval(redir_varname, NULL, redir_lval, FALSE, FALSE, 0,
-      FNE_CHECK_START);
-  if (redir_endp == NULL || redir_lval->ll_name == NULL || *redir_endp !=
-      NUL) {
+  // Parse the variable name (can be a dict or list entry).
+  redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval, false, false,
+                                  0, FNE_CHECK_START);
+  if (redir_endp == NULL || redir_lval->ll_name == NULL
+      || *redir_endp != NUL) {
     clear_lval(redir_lval);
-    if (redir_endp != NULL && *redir_endp != NUL)
-      /* Trailing characters are present after the variable name */
+    if (redir_endp != NULL && *redir_endp != NUL) {
+      // Trailing characters are present after the variable name
       EMSG(_(e_trailing));
-    else
+    } else {
       EMSG(_(e_invarg));
-    redir_endp = NULL;      /* don't store a value, only cleanup */
+    }
+    redir_endp = NULL;      // don't store a value, only cleanup
     var_redir_stop();
     return FAIL;
   }
@@ -721,15 +518,16 @@ var_redir_start (
   did_emsg = FALSE;
   tv.v_type = VAR_STRING;
   tv.vval.v_string = (char_u *)"";
-  if (append)
-    set_var_lval(redir_lval, redir_endp, &tv, TRUE, (char_u *)".");
-  else
-    set_var_lval(redir_lval, redir_endp, &tv, TRUE, (char_u *)"=");
+  if (append) {
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, (char_u *)".");
+  } else {
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, (char_u *)"=");
+  }
   clear_lval(redir_lval);
   err = did_emsg;
   did_emsg |= save_emsg;
   if (err) {
-    redir_endp = NULL;      /* don't store a value, only cleanup */
+    redir_endp = NULL;      // don't store a value, only cleanup
     var_redir_stop();
     return FAIL;
   }
@@ -753,10 +551,11 @@ void var_redir_str(char_u *value, int value_len)
   if (redir_lval == NULL)
     return;
 
-  if (value_len == -1)
-    len = (int)STRLEN(value);           /* Append the entire string */
-  else
-    len = value_len;                    /* Append only "value_len" characters */
+  if (value_len == -1) {
+    len = (int)STRLEN(value);           // Append the entire string
+  } else {
+    len = value_len;                    // Append only "value_len" characters
+  }
 
   ga_grow(&redir_ga, len);
   memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, len);
@@ -772,72 +571,75 @@ void var_redir_stop(void)
   typval_T tv;
 
   if (redir_lval != NULL) {
-    /* If there was no error: assign the text to the variable. */
+    // If there was no error: assign the text to the variable.
     if (redir_endp != NULL) {
-      ga_append(&redir_ga, NUL);        /* Append the trailing NUL. */
+      ga_append(&redir_ga, NUL);        // Append the trailing NUL.
       tv.v_type = VAR_STRING;
       tv.vval.v_string = redir_ga.ga_data;
-      /* Call get_lval() again, if it's inside a Dict or List it may
-       * have changed. */
-      redir_endp = get_lval(redir_varname, NULL, redir_lval,
-          FALSE, FALSE, 0, FNE_CHECK_START);
-      if (redir_endp != NULL && redir_lval->ll_name != NULL)
-        set_var_lval(redir_lval, redir_endp, &tv, FALSE, (char_u *)".");
+      // Call get_lval() again, if it's inside a Dict or List it may
+      // have changed.
+      redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval,
+                                      false, false, 0, FNE_CHECK_START);
+      if (redir_endp != NULL && redir_lval->ll_name != NULL) {
+        set_var_lval(redir_lval, redir_endp, &tv, false, false, (char_u *)".");
+      }
       clear_lval(redir_lval);
     }
 
-    /* free the collected output */
-    xfree(redir_ga.ga_data);
-    redir_ga.ga_data = NULL;
+    // free the collected output
+    XFREE_CLEAR(redir_ga.ga_data);
 
-    xfree(redir_lval);
-    redir_lval = NULL;
+    XFREE_CLEAR(redir_lval);
   }
-  xfree(redir_varname);
-  redir_varname = NULL;
+  XFREE_CLEAR(redir_varname);
 }
 
-int eval_charconvert(char_u *enc_from, char_u *enc_to, char_u *fname_from, char_u *fname_to)
+int eval_charconvert(const char *const enc_from, const char *const enc_to,
+                     const char *const fname_from, const char *const fname_to)
 {
-  int err = FALSE;
+  bool err = false;
 
   set_vim_var_string(VV_CC_FROM, enc_from, -1);
   set_vim_var_string(VV_CC_TO, enc_to, -1);
   set_vim_var_string(VV_FNAME_IN, fname_from, -1);
   set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
-  if (eval_to_bool(p_ccv, &err, NULL, FALSE))
-    err = TRUE;
+  if (eval_to_bool(p_ccv, &err, NULL, false)) {
+    err = true;
+  }
   set_vim_var_string(VV_CC_FROM, NULL, -1);
   set_vim_var_string(VV_CC_TO, NULL, -1);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 
-  if (err)
-    return FAIL;
-  return OK;
-}
-
-int eval_printexpr(char_u *fname, char_u *args)
-{
-  int err = FALSE;
-
-  set_vim_var_string(VV_FNAME_IN, fname, -1);
-  set_vim_var_string(VV_CMDARG, args, -1);
-  if (eval_to_bool(p_pexpr, &err, NULL, FALSE))
-    err = TRUE;
-  set_vim_var_string(VV_FNAME_IN, NULL, -1);
-  set_vim_var_string(VV_CMDARG, NULL, -1);
-
   if (err) {
-    os_remove((char *)fname);
     return FAIL;
   }
   return OK;
 }
 
-void eval_diff(char_u *origfile, char_u *newfile, char_u *outfile)
+int eval_printexpr(const char *const fname, const char *const args)
 {
-  int err = FALSE;
+  bool err = false;
+
+  set_vim_var_string(VV_FNAME_IN, fname, -1);
+  set_vim_var_string(VV_CMDARG, args, -1);
+  if (eval_to_bool(p_pexpr, &err, NULL, false)) {
+    err = true;
+  }
+  set_vim_var_string(VV_FNAME_IN, NULL, -1);
+  set_vim_var_string(VV_CMDARG, NULL, -1);
+
+  if (err) {
+    os_remove(fname);
+    return FAIL;
+  }
+  return OK;
+}
+
+void eval_diff(const char *const origfile, const char *const newfile,
+               const char *const outfile)
+{
+  bool err = false;
 
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_NEW, newfile, -1);
@@ -848,9 +650,10 @@ void eval_diff(char_u *origfile, char_u *newfile, char_u *outfile)
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
-void eval_patch(char_u *origfile, char_u *difffile, char_u *outfile)
+void eval_patch(const char *const origfile, const char *const difffile,
+                const char *const outfile)
 {
-  int err;
+  bool err = false;
 
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
@@ -866,59 +669,147 @@ void eval_patch(char_u *origfile, char_u *difffile, char_u *outfile)
  * Sets "error" to TRUE if there was an error.
  * Return TRUE or FALSE.
  */
-int 
-eval_to_bool (
+int
+eval_to_bool(
     char_u *arg,
-    int *error,
+    bool *error,
     char_u **nextcmd,
-    int skip                   /* only parse, don't execute */
+    int skip                   // only parse, don't execute
 )
 {
   typval_T tv;
-  int retval = FALSE;
+  bool retval = false;
 
-  if (skip)
-    ++emsg_skip;
-  if (eval0(arg, &tv, nextcmd, !skip) == FAIL)
-    *error = TRUE;
-  else {
-    *error = FALSE;
+  if (skip) {
+    emsg_skip++;
+  }
+  if (eval0(arg, &tv, nextcmd, !skip) == FAIL) {
+    *error = true;
+  } else {
+    *error = false;
     if (!skip) {
-      retval = (get_tv_number_chk(&tv, error) != 0);
-      clear_tv(&tv);
+      retval = (tv_get_number_chk(&tv, error) != 0);
+      tv_clear(&tv);
     }
   }
-  if (skip)
-    --emsg_skip;
+  if (skip) {
+    emsg_skip--;
+  }
 
   return retval;
 }
 
-/*
- * Top level evaluation function, returning a string.  If "skip" is TRUE,
- * only parsing to "nextcmd" is done, without reporting errors.  Return
- * pointer to allocated memory, or NULL for failure or when "skip" is TRUE.
- */
-char_u *
-eval_to_string_skip (
-    char_u *arg,
-    char_u **nextcmd,
-    int skip                   /* only parse, don't execute */
-)
+// Call eval1() and give an error message if not done at a lower level.
+static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  const char_u *const start = *arg;
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
+
+  const int ret = eval1(arg, rettv, evaluate);
+  if (ret == FAIL) {
+    // Report the invalid expression unless the expression evaluation has
+    // been cancelled due to an aborting error, an interrupt, or an
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting()
+        && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
+      emsgf(_(e_invexpr2), start);
+    }
+  }
+  return ret;
+}
+
+int eval_expr_typval(const typval_T *expr, typval_T *argv,
+                     int argc, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  int dummy;
+
+  if (expr->v_type == VAR_FUNC) {
+    const char_u *const s = expr->vval.v_string;
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else if (expr->v_type == VAR_PARTIAL) {
+    partial_T *const partial = expr->vval.v_partial;
+    const char_u *const s = partial_name(partial);
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else {
+    char buf[NUMBUFLEN];
+    char_u *s = (char_u *)tv_get_string_buf_chk(expr, buf);
+    if (s == NULL) {
+      return FAIL;
+    }
+    s = skipwhite(s);
+    if (eval1_emsg(&s, rettv, true) == FAIL) {
+      return FAIL;
+    }
+    if (*s != NUL) {  // check for trailing chars after expr
+      tv_clear(rettv);
+      emsgf(_(e_invexpr2), s);
+      return FAIL;
+    }
+  }
+  return OK;
+}
+
+/// Like eval_to_bool() but using a typval_T instead of a string.
+/// Works for string, funcref and partial.
+bool eval_expr_to_bool(const typval_T *expr, bool *error)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  typval_T argv, rettv;
+
+  if (eval_expr_typval(expr, &argv, 0, &rettv) == FAIL) {
+    *error = true;
+    return false;
+  }
+  const bool res = (tv_get_number_chk(&rettv, error) != 0);
+  tv_clear(&rettv);
+  return res;
+}
+
+/// Top level evaluation function, returning a string
+///
+/// @param[in]  arg  String to evaluate.
+/// @param  nextcmd  Pointer to the start of the next Ex command.
+/// @param[in]  skip  If true, only do parsing to nextcmd without reporting
+///                   errors or actually evaluating anything.
+///
+/// @return [allocated] string result of evaluation or NULL in case of error or
+///                     when skipping.
+char *eval_to_string_skip(const char *arg, const char **nextcmd,
+                          const bool skip)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   typval_T tv;
-  char_u      *retval;
+  char *retval;
 
-  if (skip)
-    ++emsg_skip;
-  if (eval0(arg, &tv, nextcmd, !skip) == FAIL || skip)
-    retval = NULL;
-  else {
-    retval = vim_strsave(get_tv_string(&tv));
-    clear_tv(&tv);
+  if (skip) {
+    emsg_skip++;
   }
-  if (skip)
-    --emsg_skip;
+  if (eval0((char_u *)arg, &tv, (char_u **)nextcmd, !skip) == FAIL || skip) {
+    retval = NULL;
+  } else {
+    retval = xstrdup(tv_get_string(&tv));
+    tv_clear(&tv);
+  }
+  if (skip) {
+    emsg_skip--;
+  }
 
   return retval;
 }
@@ -944,31 +835,33 @@ int skip_expr(char_u **pp)
 char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
 {
   typval_T tv;
-  char_u      *retval;
+  char *retval;
   garray_T ga;
-  char_u numbuf[NUMBUFLEN];
 
-  if (eval0(arg, &tv, nextcmd, TRUE) == FAIL)
+  if (eval0(arg, &tv, nextcmd, true) == FAIL) {
     retval = NULL;
-  else {
+  } else {
     if (convert && tv.v_type == VAR_LIST) {
       ga_init(&ga, (int)sizeof(char), 80);
       if (tv.vval.v_list != NULL) {
-        list_join(&ga, tv.vval.v_list, "\n");
-        if (tv.vval.v_list->lv_len > 0)
+        tv_list_join(&ga, tv.vval.v_list, "\n");
+        if (tv_list_len(tv.vval.v_list) > 0) {
           ga_append(&ga, NL);
+        }
       }
       ga_append(&ga, NUL);
-      retval = (char_u *)ga.ga_data;
+      retval = (char *)ga.ga_data;
     } else if (convert && tv.v_type == VAR_FLOAT) {
-      vim_snprintf((char *)numbuf, NUMBUFLEN, "%g", tv.vval.v_float);
-      retval = vim_strsave(numbuf);
-    } else
-      retval = vim_strsave(get_tv_string(&tv));
-    clear_tv(&tv);
+      char numbuf[NUMBUFLEN];
+      vim_snprintf(numbuf, NUMBUFLEN, "%g", tv.vval.v_float);
+      retval = xstrdup(numbuf);
+    } else {
+      retval = xstrdup(tv_get_string(&tv));
+    }
+    tv_clear(&tv);
   }
 
-  return retval;
+  return (char_u *)retval;
 }
 
 /*
@@ -997,19 +890,19 @@ char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, int use_sandbox)
  * Evaluates "expr" silently.
  * Returns -1 for an error.
  */
-int eval_to_number(char_u *expr)
+varnumber_T eval_to_number(char_u *expr)
 {
   typval_T rettv;
-  int retval;
+  varnumber_T retval;
   char_u      *p = skipwhite(expr);
 
   ++emsg_off;
 
-  if (eval1(&p, &rettv, TRUE) == FAIL)
+  if (eval1(&p, &rettv, true) == FAIL) {
     retval = -1;
-  else {
-    retval = get_tv_number_chk(&rettv, NULL);
-    clear_tv(&rettv);
+  } else {
+    retval = tv_get_number_chk(&rettv, NULL);
+    tv_clear(&rettv);
   }
   --emsg_off;
 
@@ -1022,7 +915,7 @@ int eval_to_number(char_u *expr)
  * Save the current typeval in "save_tv".
  * When not used yet add the variable to the v: hashtable.
  */
-static void prepare_vimvar(int idx, typval_T *save_tv)
+void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
   if (vimvars[idx].vv_type == VAR_UNKNOWN)
@@ -1033,17 +926,29 @@ static void prepare_vimvar(int idx, typval_T *save_tv)
  * Restore v: variable "idx" to typeval "save_tv".
  * When no longer defined, remove the variable from the v: hashtable.
  */
-static void restore_vimvar(int idx, typval_T *save_tv)
+void restore_vimvar(int idx, typval_T *save_tv)
 {
   hashitem_T  *hi;
 
   vimvars[idx].vv_tv = *save_tv;
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
     hi = hash_find(&vimvarht, vimvars[idx].vv_di.di_key);
-    if (HASHITEM_EMPTY(hi))
-      EMSG2(_(e_intern2), "restore_vimvar()");
-    else
+    if (HASHITEM_EMPTY(hi)) {
+      internal_error("restore_vimvar()");
+    } else {
       hash_remove(&vimvarht, hi);
+    }
+  }
+}
+
+/// If there is a window for "curbuf", make it the current window.
+void find_win_for_curbuf(void)
+{
+  for (wininfo_T *wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+    if (wip->wi_win != NULL) {
+      curwin = wip->wi_win;
+      break;
+    }
   }
 }
 
@@ -1059,18 +964,19 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   list_T      *list = NULL;
   char_u      *p = skipwhite(expr);
 
-  /* Set "v:val" to the bad word. */
+  // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
   vimvars[VV_VAL].vv_type = VAR_STRING;
   vimvars[VV_VAL].vv_str = badword;
   if (p_verbose == 0)
     ++emsg_off;
 
-  if (eval1(&p, &rettv, TRUE) == OK) {
-    if (rettv.v_type != VAR_LIST)
-      clear_tv(&rettv);
-    else
+  if (eval1(&p, &rettv, true) == OK) {
+    if (rettv.v_type != VAR_LIST) {
+      tv_clear(&rettv);
+    } else {
       list = rettv.vval.v_list;
+    }
   }
 
   if (p_verbose == 0)
@@ -1080,183 +986,138 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   return list;
 }
 
-/*
- * "list" is supposed to contain two items: a word and a number.  Return the
- * word in "pp" and the number as the return value.
- * Return -1 if anything isn't right.
- * Used to get the good word and score from the eval_spell_expr() result.
- */
-int get_spellword(list_T *list, char_u **pp)
+/// Get spell word from an entry from spellsuggest=expr:
+///
+/// Entry in question is supposed to be a list (to be checked by the caller)
+/// with two items: a word and a score represented as an unsigned number
+/// (whether it actually is unsigned is not checked).
+///
+/// Used to get the good word and score from the eval_spell_expr() result.
+///
+/// @param[in]  list  List to get values from.
+/// @param[out]  ret_word  Suggested word. Not initialized if return value is
+///                        -1.
+///
+/// @return -1 in case of error, score otherwise.
+int get_spellword(list_T *const list, const char **ret_word)
 {
-  listitem_T  *li;
-
-  li = list->lv_first;
-  if (li == NULL)
+  if (tv_list_len(list) != 2) {
+    EMSG(_("E5700: Expression from 'spellsuggest' must yield lists with "
+           "exactly two values"));
     return -1;
-  *pp = get_tv_string(&li->li_tv);
-
-  li = li->li_next;
-  if (li == NULL)
-    return -1;
-  return get_tv_number(&li->li_tv);
-}
-
-/*
- * Top level evaluation function.
- * Returns an allocated typval_T with the result.
- * Returns NULL when there is an error.
- */
-typval_T *eval_expr(char_u *arg, char_u **nextcmd)
-{
-  typval_T *tv = xmalloc(sizeof(typval_T));
-
-  if (eval0(arg, tv, nextcmd, TRUE) == FAIL) {
-    xfree(tv);
-    return NULL;
   }
-
-  return tv;
+  *ret_word = tv_list_find_str(list, 0);
+  if (*ret_word == NULL) {
+    return -1;
+  }
+  return tv_list_find_nr(list, -1, NULL);
 }
 
 
-// Call some vimL function and return the result in "*rettv".
-// Uses argv[argc] for the function arguments.  Only Number and String
-// arguments are currently supported.
+// Call some vim script function and return the result in "*rettv".
+// Uses argv[0] to argv[argc-1] for the function arguments. argv[argc]
+// should have type VAR_UNKNOWN.
 //
 // Return OK or FAIL.
 int call_vim_function(
-    char_u *func,
+    const char_u *func,
     int argc,
-    char_u **argv,
-    int safe,                       // use the sandbox
-    int str_arg_only,               // all arguments are strings
+    typval_T *argv,
     typval_T *rettv
 )
+  FUNC_ATTR_NONNULL_ALL
 {
-  long n;
-  int len;
   int doesrange;
-  void        *save_funccalp = NULL;
   int ret;
+  int len = (int)STRLEN(func);
+  partial_T *pt = NULL;
 
-  typval_T *argvars = xmalloc((argc + 1) * sizeof(typval_T));
-
-  for (int i = 0; i < argc; i++) {
-    // Pass a NULL or empty argument as an empty string
-    if (argv[i] == NULL || *argv[i] == NUL) {
-      argvars[i].v_type = VAR_STRING;
-      argvars[i].vval.v_string = (char_u *)"";
-      continue;
+  if (len >= 6 && !memcmp(func, "v:lua.", 6)) {
+    func += 6;
+    len = check_luafunc_name((const char *)func, false);
+    if (len == 0) {
+      ret = FAIL;
+      goto fail;
     }
-
-    if (str_arg_only) {
-      len = 0;
-    } else {
-      // Recognize a number argument, the others must be strings.
-      vim_str2nr(argv[i], NULL, &len, STR2NR_ALL, &n, NULL, 0);
-    }
-    if (len != 0 && len == (int)STRLEN(argv[i])) {
-      argvars[i].v_type = VAR_NUMBER;
-      argvars[i].vval.v_number = n;
-    } else {
-      argvars[i].v_type = VAR_STRING;
-      argvars[i].vval.v_string = argv[i];
-    }
+    pt = vvlua_partial;
   }
 
-  if (safe) {
-    save_funccalp = save_funccal();
-    ++sandbox;
-  }
-
-  rettv->v_type = VAR_UNKNOWN;                  /* clear_tv() uses this */
-  ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars,
+  rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
+  ret = call_func(func, len, rettv, argc, argv, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &doesrange, true, NULL);
-  if (safe) {
-    --sandbox;
-    restore_funccal(save_funccalp);
-  }
-  xfree(argvars);
+                  &doesrange, true, pt, NULL);
 
+fail:
   if (ret == FAIL) {
-    clear_tv(rettv);
+    tv_clear(rettv);
   }
 
   return ret;
 }
-
-/*
- * Call vimL function "func" and return the result as a number.
- * Returns -1 when calling the function fails.
- * Uses argv[argc] for the function arguments.
- */
-long 
-call_func_retnr (
-    char_u *func,
-    int argc,
-    char_u **argv,
-    int safe                       /* use the sandbox */
-)
+/// Call Vim script function and return the result as a number
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with typval_T arguments.
+///
+/// @return -1 when calling function fails, result of function otherwise.
+varnumber_T call_func_retnr(const char_u *func, int argc,
+                            typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL
 {
   typval_T rettv;
-  long retval;
+  varnumber_T retval;
 
-  /* All arguments are passed as strings, no conversion to number. */
-  if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
+  if (call_vim_function(func, argc, argv, &rettv) == FAIL) {
     return -1;
-
-  retval = get_tv_number_chk(&rettv, NULL);
-  clear_tv(&rettv);
+  }
+  retval = tv_get_number_chk(&rettv, NULL);
+  tv_clear(&rettv);
   return retval;
 }
-
-/*
- * Call vimL function "func" and return the result as a string.
- * Returns NULL when calling the function fails.
- * Uses argv[argc] for the function arguments.
- */
-void *
-call_func_retstr (
-    char_u *func,
-    int argc,
-    char_u **argv,
-    int safe                       /* use the sandbox */
-)
+/// Call Vim script function and return the result as a string
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with typval_T arguments.
+///
+/// @return [allocated] NULL when calling function fails, allocated string
+///                     otherwise.
+char *call_func_retstr(const char *const func, int argc,
+                       typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
-  char_u      *retval;
-
-  /* All arguments are passed as strings, no conversion to number. */
-  if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
+  // All arguments are passed as strings, no conversion to number.
+  if (call_vim_function((const char_u *)func, argc, argv, &rettv)
+      == FAIL) {
     return NULL;
+  }
 
-  retval = vim_strsave(get_tv_string(&rettv));
-  clear_tv(&rettv);
+  char *const retval = xstrdup(tv_get_string(&rettv));
+  tv_clear(&rettv);
   return retval;
 }
-
-/*
- * Call vimL function "func" and return the result as a List.
- * Uses argv[argc] for the function arguments.
- * Returns NULL when there is something wrong.
- */
-void *
-call_func_retlist (
-    char_u *func,
-    int argc,
-    char_u **argv,
-    int safe                       /* use the sandbox */
-)
+/// Call Vim script function and return the result as a List
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with typval_T arguments.
+///
+/// @return [allocated] NULL when calling function fails or return tv is not a
+///                     List, allocated List otherwise.
+void *call_func_retlist(const char_u *func, int argc, typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL
 {
   typval_T rettv;
 
-  /* All arguments are passed as strings, no conversion to number. */
-  if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
+  // All arguments are passed as strings, no conversion to number.
+  if (call_vim_function(func, argc, argv, &rettv) == FAIL) {
     return NULL;
+  }
 
   if (rettv.v_type != VAR_LIST) {
-    clear_tv(&rettv);
+    tv_clear(&rettv);
     return NULL;
   }
 
@@ -1264,33 +1125,15 @@ call_func_retlist (
 }
 
 /*
- * Save the current function call pointer, and set it to NULL.
- * Used when executing autocommands and for ":source".
- */
-void *save_funccal(void)
-{
-  funccall_T *fc = current_funccal;
-
-  current_funccal = NULL;
-  return (void *)fc;
-}
-
-void restore_funccal(void *vfc)
-{
-  funccall_T *fc = (funccall_T *)vfc;
-
-  current_funccal = fc;
-}
-
-/*
  * Prepare profiling for entering a child or something else that is not
  * counted for the script/function itself.
  * Should always be called in pair with prof_child_exit().
  */
-void prof_child_enter(proftime_T *tm /* place to store waittime */
-                      )
+void prof_child_enter(
+    proftime_T *tm  // place to store waittime
+)
 {
-  funccall_T *fc = current_funccal;
+  funccall_T *fc = get_current_funccal();
 
   if (fc != NULL && fc->func->uf_profiling) {
     fc->prof_child = profile_start();
@@ -1303,10 +1146,11 @@ void prof_child_enter(proftime_T *tm /* place to store waittime */
  * Take care of time spent in a child.
  * Should always be called after prof_child_enter().
  */
-void prof_child_exit(proftime_T *tm /* where waittime was stored */
-                     )
+void prof_child_exit(
+    proftime_T *tm  // where waittime was stored
+)
 {
-  funccall_T *fc = current_funccal;
+  funccall_T *fc = get_current_funccal();
 
   if (fc != NULL && fc->func->uf_profiling) {
     fc->prof_child = profile_end(fc->prof_child);
@@ -1328,8 +1172,7 @@ void prof_child_exit(proftime_T *tm /* where waittime was stored */
 int eval_foldexpr(char_u *arg, int *cp)
 {
   typval_T tv;
-  int retval;
-  char_u      *s;
+  varnumber_T retval;
   int use_sandbox = was_set_insecurely((char_u *)"foldexpr",
       OPT_LOCAL);
 
@@ -1338,42 +1181,169 @@ int eval_foldexpr(char_u *arg, int *cp)
     ++sandbox;
   ++textlock;
   *cp = NUL;
-  if (eval0(arg, &tv, NULL, TRUE) == FAIL)
+  if (eval0(arg, &tv, NULL, true) == FAIL) {
     retval = 0;
-  else {
-    /* If the result is a number, just return the number. */
-    if (tv.v_type == VAR_NUMBER)
+  } else {
+    // If the result is a number, just return the number.
+    if (tv.v_type == VAR_NUMBER) {
       retval = tv.vval.v_number;
-    else if (tv.v_type != VAR_STRING || tv.vval.v_string == NULL)
+    } else if (tv.v_type != VAR_STRING || tv.vval.v_string == NULL) {
       retval = 0;
-    else {
-      /* If the result is a string, check if there is a non-digit before
-       * the number. */
-      s = tv.vval.v_string;
-      if (!ascii_isdigit(*s) && *s != '-')
+    } else {
+      // If the result is a string, check if there is a non-digit before
+      // the number.
+      char_u *s = tv.vval.v_string;
+      if (!ascii_isdigit(*s) && *s != '-') {
         *cp = *s++;
+      }
       retval = atol((char *)s);
     }
-    clear_tv(&tv);
+    tv_clear(&tv);
   }
   --emsg_off;
   if (use_sandbox)
     --sandbox;
   --textlock;
 
-  return retval;
+  return (int)retval;
 }
 
-/*
- * ":let"			list all variable values
- * ":let var1 var2"		list variable values
- * ":let var = expr"		assignment command.
- * ":let var += expr"		assignment command.
- * ":let var -= expr"		assignment command.
- * ":let var .= expr"		assignment command.
- * ":let [var1, var2] = expr"	unpack list.
- */
+// ":cons[t] var = expr1" define constant
+// ":cons[t] [name1, name2, ...] = expr1" define constants unpacking list
+// ":cons[t] [name, ..., ; lastname] = expr" define constants unpacking list
+void ex_const(exarg_T *eap)
+{
+  ex_let_const(eap, true);
+}
+
+// Get a list of lines from a HERE document. The here document is a list of
+// lines surrounded by a marker.
+//     cmd << {marker}
+//       {line1}
+//       {line2}
+//       ....
+//     {marker}
+//
+// The {marker} is a string. If the optional 'trim' word is supplied before the
+// marker, then the leading indentation before the lines (matching the
+// indentation in the 'cmd' line) is stripped.
+// Returns a List with {lines} or NULL.
+static list_T *
+heredoc_get(exarg_T *eap, char_u *cmd)
+{
+  char_u *marker;
+  char_u *p;
+  int marker_indent_len = 0;
+  int text_indent_len = 0;
+  char_u *text_indent = NULL;
+
+  if (eap->getline == NULL) {
+    EMSG(_("E991: cannot use =<< here"));
+    return NULL;
+  }
+
+  // Check for the optional 'trim' word before the marker
+  cmd = skipwhite(cmd);
+  if (STRNCMP(cmd, "trim", 4) == 0
+      && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+    cmd = skipwhite(cmd + 4);
+
+    // Trim the indentation from all the lines in the here document.
+    // The amount of indentation trimmed is the same as the indentation of
+    // the first line after the :let command line.  To find the end marker
+    // the indent of the :let command line is trimmed.
+    p = *eap->cmdlinep;
+    while (ascii_iswhite(*p)) {
+      p++;
+      marker_indent_len++;
+    }
+    text_indent_len = -1;
+  }
+
+  // The marker is the next word.
+  if (*cmd != NUL && *cmd != '"') {
+    marker = skipwhite(cmd);
+    p = skiptowhite(marker);
+    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
+      EMSG(_(e_trailing));
+      return NULL;
+    }
+    *p = NUL;
+    if (islower(*marker)) {
+      EMSG(_("E221: Marker cannot start with lower case letter"));
+      return NULL;
+    }
+  } else {
+    EMSG(_("E172: Missing marker"));
+    return NULL;
+  }
+
+  list_T *l = tv_list_alloc(0);
+  for (;;) {
+    int mi = 0;
+    int ti = 0;
+
+    char_u *theline = eap->getline(NUL, eap->cookie, 0, false);
+    if (theline == NULL) {
+      EMSG2(_("E990: Missing end marker '%s'"), marker);
+      break;
+    }
+
+    // with "trim": skip the indent matching the :let line to find the
+    // marker
+    if (marker_indent_len > 0
+        && STRNCMP(theline, *eap->cmdlinep, marker_indent_len) == 0) {
+        mi = marker_indent_len;
+    }
+    if (STRCMP(marker, theline + mi) == 0) {
+      xfree(theline);
+      break;
+    }
+    if (text_indent_len == -1 && *theline != NUL) {
+        // set the text indent from the first line.
+        p = theline;
+        text_indent_len = 0;
+        while (ascii_iswhite(*p)) {
+            p++;
+            text_indent_len++;
+        }
+        text_indent = vim_strnsave(theline, text_indent_len);
+    }
+    // with "trim": skip the indent matching the first line
+    if (text_indent != NULL) {
+        for (ti = 0; ti < text_indent_len; ti++) {
+            if (theline[ti] != text_indent[ti]) {
+                break;
+            }
+        }
+    }
+
+    tv_list_append_string(l, (char *)(theline + ti), -1);
+    xfree(theline);
+  }
+  xfree(text_indent);
+
+  return l;
+}
+
+// ":let" list all variable values
+// ":let var1 var2" list variable values
+// ":let var = expr" assignment command.
+// ":let var += expr" assignment command.
+// ":let var -= expr" assignment command.
+// ":let var *= expr" assignment command.
+// ":let var /= expr" assignment command.
+// ":let var %= expr" assignment command.
+// ":let var .= expr" assignment command.
+// ":let var ..= expr" assignment command.
+// ":let [var1, var2] = expr" unpack list.
+// ":let [name, ..., ; lastname] = expr" unpack list.
 void ex_let(exarg_T *eap)
+{
+  ex_let_const(eap, false);
+}
+
+static void ex_let_const(exarg_T *eap, const bool is_const)
 {
   char_u      *arg = eap->arg;
   char_u      *expr = NULL;
@@ -1385,22 +1355,24 @@ void ex_let(exarg_T *eap)
   char_u      *argend;
   int first = TRUE;
 
-  argend = skip_var_list(arg, &var_count, &semicolon);
-  if (argend == NULL)
+  argend = (char_u *)skip_var_list(arg, &var_count, &semicolon);
+  if (argend == NULL) {
     return;
-  if (argend > arg && argend[-1] == '.')    /* for var.='str' */
-    --argend;
+  }
+  if (argend > arg && argend[-1] == '.') {  // For var.='str'.
+    argend--;
+  }
   expr = skipwhite(argend);
-  if (*expr != '=' && !(vim_strchr((char_u *)"+-.", *expr) != NULL
-                        && expr[1] == '=')) {
+  if (*expr != '=' && !((vim_strchr((char_u *)"+-*/%.", *expr) != NULL
+                         && expr[1] == '=') || STRNCMP(expr, "..=", 3) == 0)) {
     // ":let" without "=": list variables
-    if (*arg == '[')
+    if (*arg == '[') {
       EMSG(_(e_invarg));
-    else if (!ends_excmd(*arg))
-      /* ":let var1 var2" */
-      arg = list_arg_vars(eap, arg, &first);
-    else if (!eap->skip) {
-      /* ":let" */
+    } else if (!ends_excmd(*arg)) {
+      // ":let var1 var2"
+      arg = (char_u *)list_arg_vars(eap, (const char *)arg, &first);
+    } else if (!eap->skip) {
+      // ":let"
       list_glob_vars(&first);
       list_buf_vars(&first);
       list_win_vars(&first);
@@ -1410,12 +1382,28 @@ void ex_let(exarg_T *eap)
       list_vim_vars(&first);
     }
     eap->nextcmd = check_nextcmd(arg);
+  } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
+    // HERE document
+    list_T *l = heredoc_get(eap, expr + 3);
+    if (l != NULL) {
+      tv_list_set_ret(&rettv, l);
+      if (!eap->skip) {
+        op[0] = '=';
+        op[1] = NUL;
+        (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
+                          is_const, op);
+      }
+      tv_clear(&rettv);
+    }
   } else {
     op[0] = '=';
     op[1] = NUL;
     if (*expr != '=') {
-      if (vim_strchr((char_u *)"+-.", *expr) != NULL) {
-        op[0] = *expr;  // +=, -=, .=
+      if (vim_strchr((char_u *)"+-*/%.", *expr) != NULL) {
+        op[0] = *expr;  // +=, -=, *=, /=, %= or .=
+        if (expr[0] == '.' && expr[1] == '.') {  // ..=
+          expr++;
+        }
       }
       expr = skipwhite(expr + 2);
     } else {
@@ -1426,13 +1414,14 @@ void ex_let(exarg_T *eap)
       ++emsg_skip;
     i = eval0(expr, &rettv, &eap->nextcmd, !eap->skip);
     if (eap->skip) {
-      if (i != FAIL)
-        clear_tv(&rettv);
-      --emsg_skip;
+      if (i != FAIL) {
+        tv_clear(&rettv);
+      }
+      emsg_skip--;
     } else if (i != FAIL) {
-      (void)ex_let_vars(eap->arg, &rettv, FALSE, semicolon, var_count,
-          op);
-      clear_tv(&rettv);
+      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
+                        is_const, op);
+      tv_clear(&rettv);
     }
   }
 }
@@ -1445,80 +1434,86 @@ void ex_let(exarg_T *eap)
  * or concatenate.
  * Returns OK or FAIL;
  */
-static int 
-ex_let_vars (
+static int
+ex_let_vars(
     char_u *arg_start,
     typval_T *tv,
-    int copy,                       /* copy values from "tv", don't move */
-    int semicolon,                  /* from skip_var_list() */
-    int var_count,                  /* from skip_var_list() */
+    int copy,                       // copy values from "tv", don't move
+    int semicolon,                  // from skip_var_list()
+    int var_count,                  // from skip_var_list()
+    int is_const,                   // lock variables for :const
     char_u *nextchars
 )
 {
-  char_u      *arg = arg_start;
-  list_T      *l;
-  int i;
-  listitem_T  *item;
+  char_u *arg = arg_start;
   typval_T ltv;
 
   if (*arg != '[') {
     /*
      * ":let var = expr" or ":for var in list"
      */
-    if (ex_let_one(arg, tv, copy, nextchars, nextchars) == NULL)
+    if (ex_let_one(arg, tv, copy, is_const, nextchars, nextchars) == NULL) {
       return FAIL;
+    }
     return OK;
   }
 
-  /*
-   * ":let [v1, v2] = list" or ":for [v1, v2] in listlist"
-   */
-  if (tv->v_type != VAR_LIST || (l = tv->vval.v_list) == NULL) {
+  // ":let [v1, v2] = list" or ":for [v1, v2] in listlist"
+  if (tv->v_type != VAR_LIST) {
     EMSG(_(e_listreq));
     return FAIL;
   }
+  list_T *const l = tv->vval.v_list;
 
-  i = list_len(l);
-  if (semicolon == 0 && var_count < i) {
+  const int len = tv_list_len(l);
+  if (semicolon == 0 && var_count < len) {
     EMSG(_("E687: Less targets than List items"));
     return FAIL;
   }
-  if (var_count - semicolon > i) {
+  if (var_count - semicolon > len) {
     EMSG(_("E688: More targets than List items"));
     return FAIL;
   }
+  // List l may actually be NULL, but it should fail with E688 or even earlier
+  // if you try to do ":let [] = v:_null_list".
+  assert(l != NULL);
 
-  item = l->lv_first;
+  listitem_T *item = tv_list_first(l);
+  size_t rest_len = tv_list_len(l);
   while (*arg != ']') {
     arg = skipwhite(arg + 1);
-    arg = ex_let_one(arg, &item->li_tv, TRUE, (char_u *)",;]", nextchars);
-    item = item->li_next;
-    if (arg == NULL)
+    arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, is_const,
+                     (const char_u *)",;]", nextchars);
+    if (arg == NULL) {
       return FAIL;
+    }
+    rest_len--;
 
+    item = TV_LIST_ITEM_NEXT(l, item);
     arg = skipwhite(arg);
     if (*arg == ';') {
       /* Put the rest of the list (may be empty) in the var after ';'.
        * Create a new list for this. */
-      l = list_alloc();
+      list_T *const rest_list = tv_list_alloc(rest_len);
       while (item != NULL) {
-        list_append_tv(l, &item->li_tv);
-        item = item->li_next;
+        tv_list_append_tv(rest_list, TV_LIST_ITEM_TV(item));
+        item = TV_LIST_ITEM_NEXT(l, item);
       }
 
       ltv.v_type = VAR_LIST;
-      ltv.v_lock = 0;
-      ltv.vval.v_list = l;
-      l->lv_refcount = 1;
+      ltv.v_lock = VAR_UNLOCKED;
+      ltv.vval.v_list = rest_list;
+      tv_list_ref(rest_list);
 
-      arg = ex_let_one(skipwhite(arg + 1), &ltv, FALSE,
-          (char_u *)"]", nextchars);
-      clear_tv(&ltv);
-      if (arg == NULL)
+      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const,
+                       (char_u *)"]", nextchars);
+      tv_clear(&ltv);
+      if (arg == NULL) {
         return FAIL;
+      }
       break;
     } else if (*arg != ',' && *arg != ']') {
-      EMSG2(_(e_intern2), "ex_let_vars()");
+      internal_error("ex_let_vars()");
       return FAIL;
     }
   }
@@ -1533,15 +1528,17 @@ ex_let_vars (
  * for "[var, var; var]" set "semicolon".
  * Return NULL for an error.
  */
-static char_u *skip_var_list(char_u *arg, int *var_count, int *semicolon)
+static const char_u *skip_var_list(const char_u *arg, int *var_count,
+                                   int *semicolon)
 {
-  char_u      *p, *s;
+  const char_u *p;
+  const char_u *s;
 
   if (*arg == '[') {
-    /* "[var, var]": find the matching ']'. */
+    // "[var, var]": find the matching ']'.
     p = arg;
     for (;; ) {
-      p = skipwhite(p + 1);             /* skip whites after '[', ';' or ',' */
+      p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one(p);
       if (s == p) {
         EMSG2(_(e_invarg2), p);
@@ -1572,7 +1569,7 @@ static char_u *skip_var_list(char_u *arg, int *var_count, int *semicolon)
  * Skip one (assignable) variable name, including @r, $VAR, &option, d.key,
  * l[idx].
  */
-static char_u *skip_var_one(char_u *arg)
+static const char_u *skip_var_one(const char_u *arg)
 {
   if (*arg == '@' && arg[1] != NUL)
     return arg + 2;
@@ -1584,7 +1581,8 @@ static char_u *skip_var_one(char_u *arg)
  * List variables for hashtab "ht" with prefix "prefix".
  * If "empty" is TRUE also list NULL strings as empty strings.
  */
-static void list_hashtable_vars(hashtab_T *ht, char_u *prefix, int empty, int *first)
+void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
+                         int *first)
 {
   hashitem_T  *hi;
   dictitem_T  *di;
@@ -1593,11 +1591,21 @@ static void list_hashtable_vars(hashtab_T *ht, char_u *prefix, int empty, int *f
   todo = (int)ht->ht_used;
   for (hi = ht->ht_array; todo > 0 && !got_int; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      di = HI2DI(hi);
+      todo--;
+      di = TV_DICT_HI2DI(hi);
+      char buf[IOSIZE];
+
+      // apply :filter /pat/ to variable name
+      xstrlcpy(buf, prefix, IOSIZE - 1);
+      xstrlcat(buf, (char *)di->di_key, IOSIZE);
+      if (message_filtered((char_u *)buf)) {
+        continue;
+      }
+
       if (empty || di->di_tv.v_type != VAR_STRING
-          || di->di_tv.vval.v_string != NULL)
+          || di->di_tv.vval.v_string != NULL) {
         list_one_var(di, prefix, first);
+      }
     }
   }
 }
@@ -1607,7 +1615,7 @@ static void list_hashtable_vars(hashtab_T *ht, char_u *prefix, int empty, int *f
  */
 static void list_glob_vars(int *first)
 {
-  list_hashtable_vars(&globvarht, (char_u *)"", TRUE, first);
+  list_hashtable_vars(&globvarht, "", true, first);
 }
 
 /*
@@ -1615,14 +1623,7 @@ static void list_glob_vars(int *first)
  */
 static void list_buf_vars(int *first)
 {
-  char_u numbuf[NUMBUFLEN];
-
-  list_hashtable_vars(&curbuf->b_vars->dv_hashtab, (char_u *)"b:",
-      TRUE, first);
-
-  sprintf((char *)numbuf, "%" PRId64, (int64_t)curbuf->b_changedtick);
-  list_one_var_a((char_u *)"b:", (char_u *)"changedtick", VAR_NUMBER,
-      numbuf, first);
+  list_hashtable_vars(&curbuf->b_vars->dv_hashtab, "b:", true, first);
 }
 
 /*
@@ -1630,8 +1631,7 @@ static void list_buf_vars(int *first)
  */
 static void list_win_vars(int *first)
 {
-  list_hashtable_vars(&curwin->w_vars->dv_hashtab,
-      (char_u *)"w:", TRUE, first);
+  list_hashtable_vars(&curwin->w_vars->dv_hashtab, "w:", true, first);
 }
 
 /*
@@ -1639,8 +1639,7 @@ static void list_win_vars(int *first)
  */
 static void list_tab_vars(int *first)
 {
-  list_hashtable_vars(&curtab->tp_vars->dv_hashtab,
-      (char_u *)"t:", TRUE, first);
+  list_hashtable_vars(&curtab->tp_vars->dv_hashtab, "t:", true, first);
 }
 
 /*
@@ -1648,54 +1647,42 @@ static void list_tab_vars(int *first)
  */
 static void list_vim_vars(int *first)
 {
-  list_hashtable_vars(&vimvarht, (char_u *)"v:", FALSE, first);
+  list_hashtable_vars(&vimvarht, "v:", false, first);
 }
 
-/*
- * List script-local variables, if there is a script.
- */
+// List script-local variables, if there is a script.
 static void list_script_vars(int *first)
 {
-  if (current_SID > 0 && current_SID <= ga_scripts.ga_len)
-    list_hashtable_vars(&SCRIPT_VARS(current_SID),
-        (char_u *)"s:", FALSE, first);
-}
-
-/*
- * List function variables, if there is a function.
- */
-static void list_func_vars(int *first)
-{
-  if (current_funccal != NULL)
-    list_hashtable_vars(&current_funccal->l_vars.dv_hashtab,
-        (char_u *)"l:", FALSE, first);
+  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= ga_scripts.ga_len) {
+    list_hashtable_vars(&SCRIPT_VARS(current_sctx.sc_sid), "s:", false, first);
+  }
 }
 
 /*
  * List variables in "arg".
  */
-static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
+static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
 {
   int error = FALSE;
   int len;
-  char_u      *name;
-  char_u      *name_start;
-  char_u      *arg_subsc;
-  char_u      *tofree;
+  const char *name;
+  const char *name_start;
   typval_T tv;
 
   while (!ends_excmd(*arg) && !got_int) {
     if (error || eap->skip) {
-      arg = find_name_end(arg, NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
+      arg = (const char *)find_name_end((char_u *)arg, NULL, NULL,
+                                        FNE_INCL_BR | FNE_CHECK_START);
       if (!ascii_iswhite(*arg) && !ends_excmd(*arg)) {
         emsg_severe = TRUE;
         EMSG(_(e_trailing));
         break;
       }
     } else {
-      /* get_name_len() takes care of expanding curly braces */
+      // get_name_len() takes care of expanding curly braces
       name_start = name = arg;
-      len = get_name_len(&arg, &tofree, TRUE, TRUE);
+      char *tofree;
+      len = get_name_len(&arg, &tofree, true, true);
       if (len <= 0) {
         /* This is mainly to keep test 49 working: when expanding
          * curly braces fails overrule the exception error message. */
@@ -1709,14 +1696,15 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
         if (tofree != NULL) {
           name = tofree;
         }
-        if (get_var_tv(name, len, &tv, NULL, true, false) == FAIL) {
+        if (get_var_tv((const char *)name, len, &tv, NULL, true, false)
+            == FAIL) {
           error = true;
         } else {
           // handle d.key, l[idx], f(expr)
-          arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, TRUE, TRUE) == FAIL)
-            error = TRUE;
-          else {
+          const char *const arg_subsc = arg;
+          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
+            error = true;
+          } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
               switch (*name) {
               case 'g': list_glob_vars(first); break;
@@ -1730,20 +1718,18 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
                 EMSG2(_("E738: Can't list variables for %s"), name);
               }
             } else {
-              int c;
-
-              char_u *s = (char_u *) echo_string(&tv, NULL);
-              c = *arg;
-              *arg = NUL;
-              list_one_var_a((char_u *)"",
-                  arg == arg_subsc ? name : name_start,
-                  tv.v_type,
-                  s == NULL ? (char_u *)"" : s,
-                  first);
-              *arg = c;
+              char *const s = encode_tv2echo(&tv, NULL);
+              const char *const used_name = (arg == arg_subsc
+                                             ? name
+                                             : name_start);
+              const ptrdiff_t name_size = (used_name == tofree
+                                           ? (ptrdiff_t)strlen(used_name)
+                                           : (arg - used_name));
+              list_one_var_a("", used_name, name_size,
+                             tv.v_type, s == NULL ? "" : s, first);
               xfree(s);
             }
-            clear_tv(&tv);
+            tv_clear(&tv);
           }
         }
       }
@@ -1751,152 +1737,168 @@ static char_u *list_arg_vars(exarg_T *eap, char_u *arg, int *first)
       xfree(tofree);
     }
 
-    arg = skipwhite(arg);
+    arg = (const char *)skipwhite((const char_u *)arg);
   }
 
   return arg;
 }
 
-/*
- * Set one item of ":let var = expr" or ":let [v1, v2] = list" to its value.
- * Returns a pointer to the char just after the var name.
- * Returns NULL if there is an error.
- */
-static char_u *
-ex_let_one (
-    char_u *arg,               /* points to variable name */
-    typval_T *tv,                /* value to assign to variable */
-    int copy,                       /* copy value from "tv" */
-    char_u *endchars,          /* valid chars after variable name  or NULL */
-    char_u *op                /* "+", "-", "."  or NULL*/
-)
+// TODO(ZyX-I): move to eval/ex_cmds
+
+/// Set one item of `:let var = expr` or `:let [v1, v2] = list` to its value
+///
+/// @param[in]  arg  Start of the variable name.
+/// @param[in]  tv  Value to assign to the variable.
+/// @param[in]  copy  If true, copy value from `tv`.
+/// @param[in]  endchars  Valid characters after variable name or NULL.
+/// @param[in]  op  Operation performed: *op is `+`, `-`, `.` for `+=`, etc.
+///                 NULL for `=`.
+///
+/// @return a pointer to the char just after the var name or NULL in case of
+///         error.
+static char_u *ex_let_one(char_u *arg, typval_T *const tv,
+                          const bool copy, const bool is_const,
+                          const char_u *const endchars, const char_u *const op)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int c1;
-  char_u      *name;
-  char_u      *p;
-  char_u      *arg_end = NULL;
+  char_u *arg_end = NULL;
   int len;
   int opt_flags;
-  char_u      *tofree = NULL;
+  char_u *tofree = NULL;
 
   /*
    * ":let $VAR = expr": Set environment variable.
    */
   if (*arg == '$') {
-    /* Find the end of the name. */
-    ++arg;
-    name = arg;
-    len = get_env_len(&arg);
-    if (len == 0)
+    if (is_const) {
+      EMSG(_("E996: Cannot lock an environment variable"));
+      return NULL;
+    }
+    // Find the end of the name.
+    arg++;
+    char *name = (char *)arg;
+    len = get_env_len((const char_u **)&arg);
+    if (len == 0) {
       EMSG2(_(e_invarg2), name - 1);
-    else {
-      if (op != NULL && (*op == '+' || *op == '-'))
+    } else {
+      if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
         EMSG2(_(e_letwrong), op);
-      else if (endchars != NULL
-               && vim_strchr(endchars, *skipwhite(arg)) == NULL)
+      } else if (endchars != NULL
+                 && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
         EMSG(_(e_letunexp));
-      else if (!check_secure()) {
-        c1 = name[len];
+      } else if (!check_secure()) {
+        const char c1 = name[len];
         name[len] = NUL;
-        p = get_tv_string_chk(tv);
+        const char *p = tv_get_string_chk(tv);
         if (p != NULL && op != NULL && *op == '.') {
-          char *s = vim_getenv((char *)name);
+          char *s = vim_getenv(name);
 
           if (s != NULL) {
-            p = tofree = concat_str((char_u *)s, p);
+            tofree = concat_str((const char_u *)s, (const char_u *)p);
+            p = (const char *)tofree;
             xfree(s);
           }
         }
         if (p != NULL) {
-          vim_setenv((char *)name, (char *)p);
-          if (STRICMP(name, "HOME") == 0)
+          os_setenv(name, p, 1);
+          if (STRICMP(name, "HOME") == 0) {
             init_homedir();
-          else if (didset_vim && STRICMP(name, "VIM") == 0)
-            didset_vim = FALSE;
-          else if (didset_vimruntime
-                   && STRICMP(name, "VIMRUNTIME") == 0)
-            didset_vimruntime = FALSE;
+          } else if (didset_vim && STRICMP(name, "VIM") == 0) {
+            didset_vim = false;
+          } else if (didset_vimruntime
+                     && STRICMP(name, "VIMRUNTIME") == 0) {
+            didset_vimruntime = false;
+          }
           arg_end = arg;
         }
         name[len] = c1;
         xfree(tofree);
       }
     }
-  }
-  /*
-   * ":let &option = expr": Set option value.
-   * ":let &l:option = expr": Set local option value.
-   * ":let &g:option = expr": Set global option value.
-   */
-  else if (*arg == '&') {
-    /* Find the end of the name. */
-    p = find_option_end(&arg, &opt_flags);
-    if (p == NULL || (endchars != NULL
-                      && vim_strchr(endchars, *skipwhite(p)) == NULL))
+  // ":let &option = expr": Set option value.
+  // ":let &l:option = expr": Set local option value.
+  // ":let &g:option = expr": Set global option value.
+  } else if (*arg == '&') {
+    if (is_const) {
+      EMSG(_("E996: Cannot lock an option"));
+      return NULL;
+    }
+    // Find the end of the name.
+    char *const p = (char *)find_option_end((const char **)&arg, &opt_flags);
+    if (p == NULL
+        || (endchars != NULL
+            && vim_strchr(endchars, *skipwhite((const char_u *)p)) == NULL)) {
       EMSG(_(e_letunexp));
-    else {
-      long n;
+    } else {
       int opt_type;
       long numval;
-      char_u      *stringval = NULL;
-      char_u      *s;
+      char *stringval = NULL;
 
-      c1 = *p;
+      const char c1 = *p;
       *p = NUL;
 
-      n = get_tv_number(tv);
-      s = get_tv_string_chk(tv);            /* != NULL if number or string */
+      varnumber_T n = tv_get_number(tv);
+      const char *s = tv_get_string_chk(tv);  // != NULL if number or string.
       if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval,
-            &stringval, opt_flags);
+        opt_type = get_option_value(arg, &numval, (char_u **)&stringval,
+                                    opt_flags);
         if ((opt_type == 1 && *op == '.')
-            || (opt_type == 0 && *op != '.'))
+            || (opt_type == 0 && *op != '.')) {
           EMSG2(_(e_letwrong), op);
-        else {
-          if (opt_type == 1) {          /* number */
-            if (*op == '+')
-              n = numval + n;
-            else
-              n = numval - n;
-          } else if (opt_type == 0 && stringval != NULL) {     /* string */
-            s = concat_str(stringval, s);
-            xfree(stringval);
-            stringval = s;
+          s = NULL;  // don't set the value
+        } else {
+          if (opt_type == 1) {  // number
+            switch (*op) {
+              case '+': n = numval + n; break;
+              case '-': n = numval - n; break;
+              case '*': n = numval * n; break;
+              case '/': n = num_divide(numval, n); break;
+              case '%': n = num_modulus(numval, n); break;
+            }
+          } else if (opt_type == 0 && stringval != NULL) {  // string
+            char *const oldstringval = stringval;
+            stringval = (char *)concat_str((const char_u *)stringval,
+                                           (const char_u *)s);
+            xfree(oldstringval);
+            s = stringval;
           }
         }
       }
       if (s != NULL) {
-        set_option_value(arg, n, s, opt_flags);
-        arg_end = p;
+        set_option_value((const char *)arg, n, s, opt_flags);
+        arg_end = (char_u *)p;
       }
       *p = c1;
       xfree(stringval);
     }
-  }
-  /*
-   * ":let @r = expr": Set register contents.
-   */
-  else if (*arg == '@') {
-    ++arg;
-    if (op != NULL && (*op == '+' || *op == '-'))
-      EMSG2(_(e_letwrong), op);
-    else if (endchars != NULL
-             && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL)
+  // ":let @r = expr": Set register contents.
+  } else if (*arg == '@') {
+    if (is_const) {
+      EMSG(_("E996: Cannot lock a register"));
+      return NULL;
+    }
+    arg++;
+    if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
+      emsgf(_(e_letwrong), op);
+    } else if (endchars != NULL
+               && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL) {
       EMSG(_(e_letunexp));
-    else {
-      char_u      *ptofree = NULL;
+    } else {
       char_u      *s;
 
-      p = get_tv_string_chk(tv);
+      char_u *ptofree = NULL;
+      const char *p = tv_get_string_chk(tv);
       if (p != NULL && op != NULL && *op == '.') {
         s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
-          p = ptofree = concat_str(s, p);
+          ptofree = concat_str(s, (const char_u *)p);
+          p = (const char *)ptofree;
           xfree(s);
         }
       }
       if (p != NULL) {
-        write_reg_contents(*arg == '@' ? '"' : *arg, p, -1, FALSE);
+        write_reg_contents(*arg == '@' ? '"' : *arg,
+                           (const char_u *)p, STRLEN(p), false);
         arg_end = arg + 1;
       }
       xfree(ptofree);
@@ -1909,12 +1911,12 @@ ex_let_one (
   else if (eval_isnamec1(*arg) || *arg == '{') {
     lval_T lv;
 
-    p = get_lval(arg, tv, &lv, FALSE, FALSE, 0, FNE_CHECK_START);
+    char_u *const p = get_lval(arg, tv, &lv, false, false, 0, FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
-      if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL)
+      if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL) {
         EMSG(_(e_letunexp));
-      else {
-        set_var_lval(&lv, p, tv, copy, op);
+      } else {
+        set_var_lval(&lv, p, tv, copy, is_const, op);
         arg_end = p;
       }
     }
@@ -1925,80 +1927,72 @@ ex_let_one (
   return arg_end;
 }
 
-/*
- * If "arg" is equal to "b:changedtick" give an error and return TRUE.
- */
-static int check_changedtick(char_u *arg)
-{
-  if (STRNCMP(arg, "b:changedtick", 13) == 0 && !eval_isnamec(arg[13])) {
-    EMSG2(_(e_readonlyvar), arg);
-    return TRUE;
-  }
-  return FALSE;
-}
+// TODO(ZyX-I): move to eval/executor
 
-/*
- * Get an lval: variable, Dict item or List item that can be assigned a value
- * to: "name", "na{me}", "name[expr]", "name[expr:expr]", "name[expr][expr]",
- * "name.key", "name.key[expr]" etc.
- * Indexing only works if "name" is an existing List or Dictionary.
- * "name" points to the start of the name.
- * If "rettv" is not NULL it points to the value to be assigned.
- * "unlet" is TRUE for ":unlet": slightly different behavior when something is
- * wrong; must end in space or cmd separator.
- *
- * flags:
- *  GLV_QUIET:       do not give error messages
- *  GLV_NO_AUTOLOAD: do not use script autoloading
- *
- * Returns a pointer to just after the name, including indexes.
- * When an evaluation error occurs "lp->ll_name" is NULL;
- * Returns NULL for a parsing error.  Still need to free items in "lp"!
- */
-static char_u *
-get_lval (
-    char_u *name,
-    typval_T *rettv,
-    lval_T *lp,
-    int unlet,
-    int skip,
-    int flags,                  /* GLV_ values */
-    int fne_flags              /* flags for find_name_end() */
-)
+/// Get an lvalue
+///
+/// Lvalue may be
+/// - variable: "name", "na{me}"
+/// - dictionary item: "dict.key", "dict['key']"
+/// - list item: "list[expr]"
+/// - list slice: "list[expr:expr]"
+///
+/// Indexing only works if trying to use it with an existing List or Dictionary.
+///
+/// @param[in]  name  Name to parse.
+/// @param  rettv  Pointer to the value to be assigned or NULL.
+/// @param[out]  lp  Lvalue definition. When evaluation errors occur `->ll_name`
+///                  is NULL.
+/// @param[in]  unlet  True if using `:unlet`. This results in slightly
+///                    different behaviour when something is wrong; must end in
+///                    space or cmd separator.
+/// @param[in]  skip  True when skipping.
+/// @param[in]  flags  @see GetLvalFlags.
+/// @param[in]  fne_flags  Flags for find_name_end().
+///
+/// @return A pointer to just after the name, including indexes. Returns NULL
+///         for a parsing error, but it is still needed to free items in lp.
+char_u *get_lval(char_u *const name, typval_T *const rettv,
+                 lval_T *const lp, const bool unlet, const bool skip,
+                 const int flags, const int fne_flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
-  char_u      *p;
-  char_u      *expr_start, *expr_end;
-  int cc;
   dictitem_T  *v;
   typval_T var1;
   typval_T var2;
   int empty1 = FALSE;
   listitem_T  *ni;
-  char_u      *key = NULL;
-  int len;
   hashtab_T   *ht;
   int quiet = flags & GLV_QUIET;
 
-  /* Clear everything in "lp". */
+  // Clear everything in "lp".
   memset(lp, 0, sizeof(lval_T));
 
   if (skip) {
-    /* When skipping just find the end of the name. */
-    lp->ll_name = name;
-    return find_name_end(name, NULL, NULL, FNE_INCL_BR | fne_flags);
+    // When skipping just find the end of the name.
+    lp->ll_name = (const char *)name;
+    return (char_u *)find_name_end((const char_u *)name, NULL, NULL,
+                                   FNE_INCL_BR | fne_flags);
   }
 
-  /* Find the end of the name. */
-  p = find_name_end(name, &expr_start, &expr_end, fne_flags);
+  // Find the end of the name.
+  char_u *expr_start;
+  char_u *expr_end;
+  char_u *p = (char_u *)find_name_end(name,
+                                      (const char_u **)&expr_start,
+                                      (const char_u **)&expr_end,
+                                      fne_flags);
   if (expr_start != NULL) {
-    /* Don't expand the name when we already know there is an error. */
+    // Don't expand the name when we already know there is an error.
     if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
         && *p != '[' && *p != '.') {
       EMSG(_(e_trailing));
       return NULL;
     }
 
-    lp->ll_exp_name = make_expanded_name(name, expr_start, expr_end, p);
+    lp->ll_exp_name = (char *)make_expanded_name(name, expr_start, expr_end,
+                                                 (char_u *)p);
+    lp->ll_name = lp->ll_exp_name;
     if (lp->ll_exp_name == NULL) {
       /* Report an invalid expression in braces, unless the
        * expression evaluation has been cancelled due to an
@@ -2008,28 +2002,39 @@ get_lval (
         EMSG2(_(e_invarg2), name);
         return NULL;
       }
+      lp->ll_name_len = 0;
+    } else {
+      lp->ll_name_len = strlen(lp->ll_name);
     }
-    lp->ll_name = lp->ll_exp_name;
-  } else
-    lp->ll_name = name;
+  } else {
+    lp->ll_name = (const char *)name;
+    lp->ll_name_len = (size_t)((const char *)p - lp->ll_name);
+  }
 
-  /* Without [idx] or .key we are done. */
-  if ((*p != '[' && *p != '.') || lp->ll_name == NULL)
+  // Without [idx] or .key we are done.
+  if ((*p != '[' && *p != '.') || lp->ll_name == NULL) {
     return p;
+  }
 
-  cc = *p;
-  *p = NUL;
-  v = find_var(lp->ll_name, &ht, flags & GLV_NO_AUTOLOAD);
-  if (v == NULL && !quiet)
-    EMSG2(_(e_undefvar), lp->ll_name);
-  *p = cc;
-  if (v == NULL)
+  // Only pass &ht when we would write to the variable, it prevents autoload
+  // as well.
+  v = find_var(lp->ll_name, lp->ll_name_len,
+               (flags & GLV_READ_ONLY) ? NULL : &ht,
+               flags & GLV_NO_AUTOLOAD);
+  if (v == NULL && !quiet) {
+    emsgf(_("E121: Undefined variable: %.*s"),
+          (int)lp->ll_name_len, lp->ll_name);
+  }
+  if (v == NULL) {
     return NULL;
+  }
 
   /*
    * Loop until no more [idx] or .key is following.
    */
   lp->ll_tv = &v->di_tv;
+  var1.v_type = VAR_UNKNOWN;
+  var2.v_type = VAR_UNKNOWN;
   while (*p == '[' || (*p == '.' && lp->ll_tv->v_type == VAR_DICT)) {
     if (!(lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list != NULL)
         && !(lp->ll_tv->v_type == VAR_DICT
@@ -2044,65 +2049,66 @@ get_lval (
       return NULL;
     }
 
-    len = -1;
+    int len = -1;
+    char_u *key = NULL;
     if (*p == '.') {
       key = p + 1;
-      for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; ++len)
-        ;
+      for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {
+      }
       if (len == 0) {
-        if (!quiet)
-          EMSG(_(e_emptykey));
+        if (!quiet) {
+          EMSG(_("E713: Cannot use empty key after ."));
+        }
         return NULL;
       }
       p = key + len;
     } else {
-      /* Get the index [expr] or the first index [expr: ]. */
+      // Get the index [expr] or the first index [expr: ].
       p = skipwhite(p + 1);
-      if (*p == ':')
-        empty1 = TRUE;
-      else {
-        empty1 = FALSE;
-        if (eval1(&p, &var1, TRUE) == FAIL)             /* recursive! */
+      if (*p == ':') {
+        empty1 = true;
+      } else {
+        empty1 = false;
+        if (eval1(&p, &var1, true) == FAIL) {  // Recursive!
           return NULL;
-        if (get_tv_string_chk(&var1) == NULL) {
-          /* not a number or string */
-          clear_tv(&var1);
+        }
+        if (!tv_check_str(&var1)) {
+          // Not a number or string.
+          tv_clear(&var1);
           return NULL;
         }
       }
 
-      /* Optionally get the second index [ :expr]. */
+      // Optionally get the second index [ :expr].
       if (*p == ':') {
         if (lp->ll_tv->v_type == VAR_DICT) {
-          if (!quiet)
+          if (!quiet) {
             EMSG(_(e_dictrange));
-          if (!empty1)
-            clear_tv(&var1);
+          }
+          tv_clear(&var1);
           return NULL;
         }
         if (rettv != NULL && (rettv->v_type != VAR_LIST
                               || rettv->vval.v_list == NULL)) {
-          if (!quiet)
+          if (!quiet) {
             EMSG(_("E709: [:] requires a List value"));
-          if (!empty1)
-            clear_tv(&var1);
+          }
+          tv_clear(&var1);
           return NULL;
         }
         p = skipwhite(p + 1);
-        if (*p == ']')
-          lp->ll_empty2 = TRUE;
-        else {
-          lp->ll_empty2 = FALSE;
-          if (eval1(&p, &var2, TRUE) == FAIL) {         /* recursive! */
-            if (!empty1)
-              clear_tv(&var1);
+        if (*p == ']') {
+          lp->ll_empty2 = true;
+        } else {
+          lp->ll_empty2 = false;
+          if (eval1(&p, &var2, true) == FAIL) {  // Recursive!
+            tv_clear(&var1);
             return NULL;
           }
-          if (get_tv_string_chk(&var2) == NULL) {
-            /* not a number or string */
-            if (!empty1)
-              clear_tv(&var1);
-            clear_tv(&var2);
+          if (!tv_check_str(&var2)) {
+            // Not a number or string.
+            tv_clear(&var1);
+            tv_clear(&var2);
             return NULL;
           }
         }
@@ -2111,33 +2117,26 @@ get_lval (
         lp->ll_range = FALSE;
 
       if (*p != ']') {
-        if (!quiet)
+        if (!quiet) {
           EMSG(_(e_missbrac));
-        if (!empty1)
-          clear_tv(&var1);
-        if (lp->ll_range && !lp->ll_empty2)
-          clear_tv(&var2);
+        }
+        tv_clear(&var1);
+        tv_clear(&var2);
         return NULL;
       }
 
-      /* Skip to past ']'. */
-      ++p;
+      // Skip to past ']'.
+      p++;
     }
 
     if (lp->ll_tv->v_type == VAR_DICT) {
       if (len == -1) {
-        /* "[key]": get key from "var1" */
-        key = get_tv_string(&var1);             /* is number or string */
-        if (*key == NUL) {
-          if (!quiet)
-            EMSG(_(e_emptykey));
-          clear_tv(&var1);
-          return NULL;
-        }
+        // "[key]": get key from "var1"
+        key = (char_u *)tv_get_string(&var1);  // is number or string
       }
       lp->ll_list = NULL;
       lp->ll_dict = lp->ll_tv->vval.v_dict;
-      lp->ll_di = dict_find(lp->ll_dict, key, len);
+      lp->ll_di = tv_dict_find(lp->ll_dict, (const char *)key, len);
 
       /* When assigning to a scope dictionary check that a function and
        * variable name is valid (only variable name unless it is l: or
@@ -2149,72 +2148,86 @@ get_lval (
         if (len != -1) {
           prevval = key[len];
           key[len] = NUL;
-        } else
-          prevval = 0;           /* avoid compiler warning */
-        wrong = (lp->ll_dict->dv_scope == VAR_DEF_SCOPE
-                 && rettv->v_type == VAR_FUNC
-                 && var_check_func_name(key, lp->ll_di == NULL))
-                || !valid_varname(key);
-        if (len != -1)
+        } else {
+          prevval = 0;  // Avoid compiler warning.
+        }
+        wrong = ((lp->ll_dict->dv_scope == VAR_DEF_SCOPE
+                  && tv_is_func(*rettv)
+                  && !var_check_func_name((const char *)key, lp->ll_di == NULL))
+                 || !valid_varname((const char *)key));
+        if (len != -1) {
           key[len] = prevval;
-        if (wrong)
+        }
+        if (wrong) {
           return NULL;
+        }
       }
 
-      if (lp->ll_di == NULL) {
-        /* Can't add "v:" variable. */
-        if (lp->ll_dict == &vimvardict) {
-          EMSG2(_(e_illvar), name);
-          return NULL;
-        }
-
-        /* Key does not exist in dict: may need to add it. */
-        if (*p == '[' || *p == '.' || unlet) {
-          if (!quiet)
-            EMSG2(_(e_dictkey), key);
-          if (len == -1)
-            clear_tv(&var1);
-          return NULL;
-        }
-        if (len == -1)
-          lp->ll_newkey = vim_strsave(key);
-        else
-          lp->ll_newkey = vim_strnsave(key, len);
-        if (len == -1)
-          clear_tv(&var1);
-        break;
-      } else if (var_check_ro(lp->ll_di->di_flags, name, false)) {
-        // existing variable, need to check if it can be changed
+      if (lp->ll_di != NULL && tv_is_luafunc(&lp->ll_di->di_tv)
+          && len == -1 && rettv == NULL) {
+        tv_clear(&var1);
+        EMSG2(e_illvar, "v:['lua']");
         return NULL;
       }
 
-      if (len == -1)
-        clear_tv(&var1);
+      if (lp->ll_di == NULL) {
+        // Can't add "v:" or "a:" variable.
+        if (lp->ll_dict == &vimvardict
+            || &lp->ll_dict->dv_hashtab == get_funccal_args_ht()) {
+          EMSG2(_(e_illvar), name);
+          tv_clear(&var1);
+          return NULL;
+        }
+
+        // Key does not exist in dict: may need to add it.
+        if (*p == '[' || *p == '.' || unlet) {
+          if (!quiet) {
+            emsgf(_(e_dictkey), key);
+          }
+          tv_clear(&var1);
+          return NULL;
+        }
+        if (len == -1) {
+          lp->ll_newkey = vim_strsave(key);
+        } else {
+          lp->ll_newkey = vim_strnsave(key, len);
+        }
+        tv_clear(&var1);
+        break;
+      // existing variable, need to check if it can be changed
+      } else if (!(flags & GLV_READ_ONLY) && var_check_ro(lp->ll_di->di_flags,
+                                                          (const char *)name,
+                                                          (size_t)(p - name))) {
+        tv_clear(&var1);
+        return NULL;
+      }
+
+      tv_clear(&var1);
       lp->ll_tv = &lp->ll_di->di_tv;
     } else {
-      /*
-       * Get the number and item for the only or first index of the List.
-       */
-      if (empty1)
+      // Get the number and item for the only or first index of the List.
+      if (empty1) {
         lp->ll_n1 = 0;
-      else {
-        lp->ll_n1 = get_tv_number(&var1);           /* is number or string */
-        clear_tv(&var1);
+      } else {
+        // Is number or string.
+        lp->ll_n1 = (long)tv_get_number(&var1);
       }
+      tv_clear(&var1);
+
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
-      lp->ll_li = list_find(lp->ll_list, lp->ll_n1);
+      lp->ll_li = tv_list_find(lp->ll_list, lp->ll_n1);
       if (lp->ll_li == NULL) {
         if (lp->ll_n1 < 0) {
           lp->ll_n1 = 0;
-          lp->ll_li = list_find(lp->ll_list, lp->ll_n1);
+          lp->ll_li = tv_list_find(lp->ll_list, lp->ll_n1);
         }
       }
       if (lp->ll_li == NULL) {
-        if (lp->ll_range && !lp->ll_empty2)
-          clear_tv(&var2);
-        if (!quiet)
+        tv_clear(&var2);
+        if (!quiet) {
           EMSGN(_(e_listidx), lp->ll_n1);
+        }
         return NULL;
       }
 
@@ -2225,315 +2238,219 @@ get_lval (
        * Otherwise "lp->ll_n2" is set to the second index.
        */
       if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = get_tv_number(&var2);           /* is number or string */
-        clear_tv(&var2);
+        lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
+        tv_clear(&var2);
         if (lp->ll_n2 < 0) {
-          ni = list_find(lp->ll_list, lp->ll_n2);
+          ni = tv_list_find(lp->ll_list, lp->ll_n2);
           if (ni == NULL) {
             if (!quiet)
               EMSGN(_(e_listidx), lp->ll_n2);
             return NULL;
           }
-          lp->ll_n2 = list_idx_of_item(lp->ll_list, ni);
+          lp->ll_n2 = tv_list_idx_of_item(lp->ll_list, ni);
         }
 
-        /* Check that lp->ll_n2 isn't before lp->ll_n1. */
-        if (lp->ll_n1 < 0)
-          lp->ll_n1 = list_idx_of_item(lp->ll_list, lp->ll_li);
+        // Check that lp->ll_n2 isn't before lp->ll_n1.
+        if (lp->ll_n1 < 0) {
+          lp->ll_n1 = tv_list_idx_of_item(lp->ll_list, lp->ll_li);
+        }
         if (lp->ll_n2 < lp->ll_n1) {
-          if (!quiet)
+          if (!quiet) {
             EMSGN(_(e_listidx), lp->ll_n2);
+          }
           return NULL;
         }
       }
 
-      lp->ll_tv = &lp->ll_li->li_tv;
+      lp->ll_tv = TV_LIST_ITEM_TV(lp->ll_li);
     }
   }
 
+  tv_clear(&var1);
   return p;
 }
+
+// TODO(ZyX-I): move to eval/executor
 
 /*
  * Clear lval "lp" that was filled by get_lval().
  */
-static void clear_lval(lval_T *lp)
+void clear_lval(lval_T *lp)
 {
   xfree(lp->ll_exp_name);
   xfree(lp->ll_newkey);
 }
 
+// TODO(ZyX-I): move to eval/executor
+
 /*
  * Set a variable that was parsed by get_lval() to "rettv".
  * "endp" points to just after the parsed name.
- * "op" is NULL, "+" for "+=", "-" for "-=", "." for ".=" or "=" for "=".
+ * "op" is NULL, "+" for "+=", "-" for "-=", "*" for "*=", "/" for "/=",
+ * "%" for "%=", "." for ".=" or "=" for "=".
  */
-static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, char_u *op)
+static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
+                         int copy, const bool is_const, const char_u *op)
 {
   int cc;
   listitem_T  *ri;
   dictitem_T  *di;
 
   if (lp->ll_tv == NULL) {
-    if (!check_changedtick(lp->ll_name)) {
-      cc = *endp;
-      *endp = NUL;
-      if (op != NULL && *op != '=') {
-        typval_T tv;
+    cc = *endp;
+    *endp = NUL;
+    if (op != NULL && *op != '=') {
+      typval_T tv;
 
-        // handle +=, -= and .=
-        di = NULL;
-        if (get_var_tv(lp->ll_name, (int)STRLEN(lp->ll_name),
-                       &tv, &di, true, false) == OK) {
-          if ((di == NULL
-               || (!var_check_ro(di->di_flags, lp->ll_name, false) &&
-                   !tv_check_lock(di->di_tv.v_lock, lp->ll_name, false)))
-              && tv_op(&tv, rettv, op) == OK) {
-            set_var(lp->ll_name, &tv, false);
-          }
-          clear_tv(&tv);
+      if (is_const) {
+        EMSG(_(e_cannot_mod));
+        *endp = cc;
+        return;
+      }
+
+      // handle +=, -=, *=, /=, %= and .=
+      di = NULL;
+      if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
+                     &tv, &di, true, false) == OK) {
+        if ((di == NULL
+             || (!var_check_ro(di->di_flags, (const char *)lp->ll_name,
+                               TV_CSTRING)
+                 && !tv_check_lock(di->di_tv.v_lock, (const char *)lp->ll_name,
+                                   TV_CSTRING)))
+            && eexe_mod_op(&tv, rettv, (const char *)op) == OK) {
+          set_var(lp->ll_name, lp->ll_name_len, &tv, false);
         }
-      } else
-        set_var(lp->ll_name, rettv, copy);
-      *endp = cc;
+        tv_clear(&tv);
+      }
+    } else {
+      set_var_const(lp->ll_name, lp->ll_name_len, rettv, copy, is_const);
     }
+    *endp = cc;
   } else if (tv_check_lock(lp->ll_newkey == NULL
                            ? lp->ll_tv->v_lock
                            : lp->ll_tv->vval.v_dict->dv_lock,
-                           lp->ll_name, false)) {
+                           (const char *)lp->ll_name, TV_CSTRING)) {
   } else if (lp->ll_range) {
     listitem_T *ll_li = lp->ll_li;
     int ll_n1 = lp->ll_n1;
 
+    if (is_const) {
+      EMSG(_("E996: Cannot lock a range"));
+      return;
+    }
+
     // Check whether any of the list items is locked
-    for (listitem_T *ri = rettv->vval.v_list->lv_first;
+    for (ri = tv_list_first(rettv->vval.v_list);
          ri != NULL && ll_li != NULL; ) {
-      if (tv_check_lock(ll_li->li_tv.v_lock, lp->ll_name, false)) {
+      if (tv_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock,
+                        (const char *)lp->ll_name,
+                        TV_CSTRING)) {
         return;
       }
-      ri = ri->li_next;
+      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
       if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == ll_n1)) {
         break;
       }
-      ll_li = ll_li->li_next;
+      ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, ll_li);
       ll_n1++;
     }
 
     /*
      * Assign the List values to the list items.
      */
-    for (ri = rettv->vval.v_list->lv_first; ri != NULL; ) {
-      if (op != NULL && *op != '=')
-        tv_op(&lp->ll_li->li_tv, &ri->li_tv, op);
-      else {
-        clear_tv(&lp->ll_li->li_tv);
-        copy_tv(&ri->li_tv, &lp->ll_li->li_tv);
+    for (ri = tv_list_first(rettv->vval.v_list); ri != NULL; ) {
+      if (op != NULL && *op != '=') {
+        eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri),
+                    (const char *)op);
+      } else {
+        tv_clear(TV_LIST_ITEM_TV(lp->ll_li));
+        tv_copy(TV_LIST_ITEM_TV(ri), TV_LIST_ITEM_TV(lp->ll_li));
       }
-      ri = ri->li_next;
-      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1))
+      ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
+      if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
         break;
-      if (lp->ll_li->li_next == NULL) {
-        /* Need to add an empty item. */
-        list_append_number(lp->ll_list, 0);
-        assert(lp->ll_li->li_next);
       }
-      lp->ll_li = lp->ll_li->li_next;
-      ++lp->ll_n1;
+      assert(lp->ll_li != NULL);
+      if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
+        // Need to add an empty item.
+        tv_list_append_number(lp->ll_list, 0);
+        // ll_li may have become invalid after append, don’t use it.
+        lp->ll_li = tv_list_last(lp->ll_list);  // Valid again.
+      } else {
+        lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
+      }
+      lp->ll_n1++;
     }
-    if (ri != NULL)
+    if (ri != NULL) {
       EMSG(_("E710: List value has more items than target"));
-    else if (lp->ll_empty2
-             ? (lp->ll_li != NULL && lp->ll_li->li_next != NULL)
-             : lp->ll_n1 != lp->ll_n2)
+    } else if (lp->ll_empty2
+               ? (lp->ll_li != NULL
+                  && TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) != NULL)
+               : lp->ll_n1 != lp->ll_n2) {
       EMSG(_("E711: List value has not enough items"));
+    }
   } else {
-    typval_T oldtv;
+    typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;
-    bool watched = is_watched(dict);
+    bool watched = tv_dict_is_watched(dict);
 
-    if (watched) {
-      init_tv(&oldtv);
+    if (is_const) {
+      EMSG(_("E996: Cannot lock a list or dict"));
+      return;
     }
 
-    /*
-     * Assign to a List or Dictionary item.
-     */
+    // Assign to a List or Dictionary item.
     if (lp->ll_newkey != NULL) {
       if (op != NULL && *op != '=') {
         EMSG2(_(e_letwrong), op);
         return;
       }
 
-      /* Need to add an item to the Dictionary. */
-      di = dictitem_alloc(lp->ll_newkey);
-      if (dict_add(lp->ll_tv->vval.v_dict, di) == FAIL) {
+      // Need to add an item to the Dictionary.
+      di = tv_dict_item_alloc((const char *)lp->ll_newkey);
+      if (tv_dict_add(lp->ll_tv->vval.v_dict, di) == FAIL) {
         xfree(di);
         return;
       }
       lp->ll_tv = &di->di_tv;
     } else {
       if (watched) {
-        copy_tv(lp->ll_tv, &oldtv);
+        tv_copy(lp->ll_tv, &oldtv);
       }
 
       if (op != NULL && *op != '=') {
-        tv_op(lp->ll_tv, rettv, op);
+        eexe_mod_op(lp->ll_tv, rettv, (const char *)op);
         goto notify;
       } else {
-        clear_tv(lp->ll_tv);
+        tv_clear(lp->ll_tv);
       }
     }
 
     // Assign the value to the variable or list item.
     if (copy) {
-      copy_tv(rettv, lp->ll_tv);
+      tv_copy(rettv, lp->ll_tv);
     } else {
       *lp->ll_tv = *rettv;
       lp->ll_tv->v_lock = 0;
-      init_tv(rettv);
+      tv_init(rettv);
     }
 
 notify:
     if (watched) {
       if (oldtv.v_type == VAR_UNKNOWN) {
-        dictwatcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
+        assert(lp->ll_newkey != NULL);
+        tv_dict_watcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
       } else {
-        dictitem_T *di = lp->ll_di;
-        dictwatcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
-        clear_tv(&oldtv);
+        dictitem_T *di_ = lp->ll_di;
+        assert(di_->di_key != NULL);
+        tv_dict_watcher_notify(dict, (char *)di_->di_key, lp->ll_tv, &oldtv);
+        tv_clear(&oldtv);
       }
     }
   }
 }
 
-/*
- * Handle "tv1 += tv2", "tv1 -= tv2" and "tv1 .= tv2"
- * Returns OK or FAIL.
- */
-static int tv_op(typval_T *tv1, typval_T *tv2, char_u *op)
-{
-  long n;
-  char_u numbuf[NUMBUFLEN];
-  char_u      *s;
-
-  /* Can't do anything with a Funcref or a Dict on the right. */
-  if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT) {
-    switch (tv1->v_type) {
-    case VAR_DICT:
-    case VAR_FUNC:
-      break;
-
-    case VAR_LIST:
-      if (*op != '+' || tv2->v_type != VAR_LIST)
-        break;
-      /* List += List */
-      if (tv1->vval.v_list != NULL && tv2->vval.v_list != NULL)
-        list_extend(tv1->vval.v_list, tv2->vval.v_list, NULL);
-      return OK;
-
-    case VAR_NUMBER:
-    case VAR_STRING:
-      if (tv2->v_type == VAR_LIST)
-        break;
-      if (*op == '+' || *op == '-') {
-        /* nr += nr  or  nr -= nr*/
-        n = get_tv_number(tv1);
-        if (tv2->v_type == VAR_FLOAT) {
-          float_T f = n;
-
-          if (*op == '+')
-            f += tv2->vval.v_float;
-          else
-            f -= tv2->vval.v_float;
-          clear_tv(tv1);
-          tv1->v_type = VAR_FLOAT;
-          tv1->vval.v_float = f;
-        } else {
-          if (*op == '+')
-            n += get_tv_number(tv2);
-          else
-            n -= get_tv_number(tv2);
-          clear_tv(tv1);
-          tv1->v_type = VAR_NUMBER;
-          tv1->vval.v_number = n;
-        }
-      } else {
-        if (tv2->v_type == VAR_FLOAT)
-          break;
-
-        /* str .= str */
-        s = get_tv_string(tv1);
-        s = concat_str(s, get_tv_string_buf(tv2, numbuf));
-        clear_tv(tv1);
-        tv1->v_type = VAR_STRING;
-        tv1->vval.v_string = s;
-      }
-      return OK;
-
-    case VAR_FLOAT:
-    {
-      float_T f;
-
-      if (*op == '.' || (tv2->v_type != VAR_FLOAT
-                         && tv2->v_type != VAR_NUMBER
-                         && tv2->v_type != VAR_STRING))
-        break;
-      if (tv2->v_type == VAR_FLOAT)
-        f = tv2->vval.v_float;
-      else
-        f = get_tv_number(tv2);
-      if (*op == '+')
-        tv1->vval.v_float += f;
-      else
-        tv1->vval.v_float -= f;
-    }
-      return OK;
-    }
-  }
-
-  EMSG2(_(e_letwrong), op);
-  return FAIL;
-}
-
-/*
- * Add a watcher to a list.
- */
-void list_add_watch(list_T *l, listwatch_T *lw)
-{
-  lw->lw_next = l->lv_watch;
-  l->lv_watch = lw;
-}
-
-/*
- * Remove a watcher from a list.
- * No warning when it isn't found...
- */
-void list_rem_watch(list_T *l, listwatch_T *lwrem)
-{
-  listwatch_T *lw, **lwp;
-
-  lwp = &l->lv_watch;
-  for (lw = l->lv_watch; lw != NULL; lw = lw->lw_next) {
-    if (lw == lwrem) {
-      *lwp = lw->lw_next;
-      break;
-    }
-    lwp = &lw->lw_next;
-  }
-}
-
-/*
- * Just before removing an item from a list: advance watchers to the next
- * item.
- */
-static void list_fix_watch(list_T *l, listitem_T *item)
-{
-  listwatch_T *lw;
-
-  for (lw = l->lv_watch; lw != NULL; lw = lw->lw_next)
-    if (lw->lw_item == item)
-      lw->lw_item = item->li_next;
-}
+// TODO(ZyX-I): move to eval/ex_cmds
 
 /*
  * Evaluate the expression used in a ":for var in expr" command.
@@ -2541,14 +2458,14 @@ static void list_fix_watch(list_T *l, listitem_T *item)
  * Set "*errp" to TRUE for an error, FALSE otherwise;
  * Return a pointer that holds the info.  Null when there is an error.
  */
-void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
+void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
 {
   forinfo_T   *fi = xcalloc(1, sizeof(forinfo_T));
-  char_u      *expr;
+  const char_u *expr;
   typval_T tv;
   list_T      *l;
 
-  *errp = TRUE;         /* default: there is an error */
+  *errp = true;  // Default: there is an error.
 
   expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
   if (expr == NULL)
@@ -2563,18 +2480,21 @@ void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
   if (skip)
     ++emsg_skip;
   if (eval0(skipwhite(expr + 2), &tv, nextcmdp, !skip) == OK) {
-    *errp = FALSE;
+    *errp = false;
     if (!skip) {
       l = tv.vval.v_list;
-      if (tv.v_type != VAR_LIST || l == NULL) {
+      if (tv.v_type != VAR_LIST) {
         EMSG(_(e_listreq));
-        clear_tv(&tv);
+        tv_clear(&tv);
+      } else if (l == NULL) {
+        // a null list is like an empty list: do nothing
+        tv_clear(&tv);
       } else {
         /* No need to increment the refcount, it's already set for the
          * list being used in "tv". */
         fi->fi_list = l;
-        list_add_watch(l, &fi->fi_lw);
-        fi->fi_lw.lw_item = l->lv_first;
+        tv_list_watch_add(l, &fi->fi_lw);
+        fi->fi_lw.lw_item = tv_list_first(l);
       }
     }
   }
@@ -2584,28 +2504,29 @@ void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
   return fi;
 }
 
+// TODO(ZyX-I): move to eval/ex_cmds
+
 /*
  * Use the first item in a ":for" list.  Advance to the next.
  * Assign the values to the variable (list).  "arg" points to the first one.
  * Return TRUE when a valid item was found, FALSE when at end of list or
  * something wrong.
  */
-int next_for_item(void *fi_void, char_u *arg)
+bool next_for_item(void *fi_void, char_u *arg)
 {
-  forinfo_T   *fi = (forinfo_T *)fi_void;
-  int result;
-  listitem_T  *item;
+  forinfo_T *fi = (forinfo_T *)fi_void;
 
-  item = fi->fi_lw.lw_item;
-  if (item == NULL)
-    result = FALSE;
-  else {
-    fi->fi_lw.lw_item = item->li_next;
-    result = (ex_let_vars(arg, &item->li_tv, TRUE,
-                  fi->fi_semicolon, fi->fi_varcount, NULL) == OK);
+  listitem_T *item = fi->fi_lw.lw_item;
+  if (item == NULL) {
+    return false;
+  } else {
+    fi->fi_lw.lw_item = TV_LIST_ITEM_NEXT(fi->fi_list, item);
+    return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
+                        fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK);
   }
-  return result;
 }
+
+// TODO(ZyX-I): move to eval/ex_cmds
 
 /*
  * Free the structure used to store info used by ":for".
@@ -2615,8 +2536,8 @@ void free_for_info(void *fi_void)
   forinfo_T    *fi = (forinfo_T *)fi_void;
 
   if (fi != NULL && fi->fi_list != NULL) {
-    list_rem_watch(fi->fi_list, &fi->fi_lw);
-    list_unref(fi->fi_list);
+    tv_list_watch_remove(fi->fi_list, &fi->fi_lw);
+    tv_list_unref(fi->fi_list);
   }
   xfree(fi);
 }
@@ -2628,15 +2549,16 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
   int c;
   char_u      *p;
 
-  if (cmdidx == CMD_let) {
+  if (cmdidx == CMD_let || cmdidx == CMD_const) {
     xp->xp_context = EXPAND_USER_VARS;
     if (vim_strpbrk(arg, (char_u *)"\"'+-*/%.=!?~|&$([<>,#") == NULL) {
-      /* ":let var1 var2 ...": find last space. */
+      // ":let var1 var2 ...": find last space.
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
-        mb_ptr_back(arg, p);
-        if (ascii_iswhite(*p))
+        MB_PTR_BACK(arg, p);
+        if (ascii_iswhite(*p)) {
           break;
+        }
       }
       return;
     }
@@ -2659,26 +2581,32 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
 
       }
     } else if (c == '$') {
-      /* environment variable */
+      // environment variable
       xp->xp_context = EXPAND_ENV_VARS;
     } else if (c == '=') {
       got_eq = TRUE;
       xp->xp_context = EXPAND_EXPRESSION;
+    } else if (c == '#'
+               && xp->xp_context == EXPAND_EXPRESSION) {
+      // Autoload function/variable contains '#'
+      break;
     } else if ((c == '<' || c == '#')
                && xp->xp_context == EXPAND_FUNCTIONS
                && vim_strchr(xp->xp_pattern, '(') == NULL) {
-      /* Function name can start with "<SNR>" and contain '#'. */
+      // Function name can start with "<SNR>" and contain '#'.
       break;
     } else if (cmdidx != CMD_let || got_eq) {
-      if (c == '"') {               /* string */
-        while ((c = *++xp->xp_pattern) != NUL && c != '"')
-          if (c == '\\' && xp->xp_pattern[1] != NUL)
-            ++xp->xp_pattern;
+      if (c == '"') {               // string
+        while ((c = *++xp->xp_pattern) != NUL && c != '"') {
+          if (c == '\\' && xp->xp_pattern[1] != NUL) {
+            xp->xp_pattern++;
+          }
+        }
         xp->xp_context = EXPAND_NOTHING;
-      } else if (c == '\'') {     /* literal string */
-        /* Trick: '' is like stopping and starting a literal string. */
-        while ((c = *++xp->xp_pattern) != NUL && c != '\'')
-          /* skip */;
+      } else if (c == '\'') {     // literal string
+        // Trick: '' is like stopping and starting a literal string.
+        while ((c = *++xp->xp_pattern) != NUL && c != '\'') {
+        }
         xp->xp_context = EXPAND_NOTHING;
       } else if (c == '|') {
         if (xp->xp_pattern[1] == '|') {
@@ -2693,126 +2621,12 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
        * anyway. */
       xp->xp_context = EXPAND_EXPRESSION;
     arg = xp->xp_pattern;
-    if (*arg != NUL)
-      while ((c = *++arg) != NUL && (c == ' ' || c == '\t'))
-        /* skip */;
+    if (*arg != NUL) {
+      while ((c = *++arg) != NUL && (c == ' ' || c == '\t')) {
+      }
+    }
   }
   xp->xp_pattern = arg;
-}
-
-
-/*
- * ":1,25call func(arg1, arg2)"	function call.
- */
-void ex_call(exarg_T *eap)
-{
-  char_u      *arg = eap->arg;
-  char_u      *startarg;
-  char_u      *name;
-  char_u      *tofree;
-  int len;
-  typval_T rettv;
-  linenr_T lnum;
-  int doesrange;
-  int failed = FALSE;
-  funcdict_T fudi;
-
-  if (eap->skip) {
-    /* trans_function_name() doesn't work well when skipping, use eval0()
-     * instead to skip to any following command, e.g. for:
-     *   :if 0 | call dict.foo().bar() | endif  */
-    ++emsg_skip;
-    if (eval0(eap->arg, &rettv, &eap->nextcmd, FALSE) != FAIL)
-      clear_tv(&rettv);
-    --emsg_skip;
-    return;
-  }
-
-  tofree = trans_function_name(&arg, eap->skip, TFN_INT, &fudi);
-  if (fudi.fd_newkey != NULL) {
-    /* Still need to give an error message for missing key. */
-    EMSG2(_(e_dictkey), fudi.fd_newkey);
-    xfree(fudi.fd_newkey);
-  }
-  if (tofree == NULL)
-    return;
-
-  /* Increase refcount on dictionary, it could get deleted when evaluating
-   * the arguments. */
-  if (fudi.fd_dict != NULL)
-    ++fudi.fd_dict->dv_refcount;
-
-  /* If it is the name of a variable of type VAR_FUNC use its contents. */
-  len = (int)STRLEN(tofree);
-  name = deref_func_name(tofree, &len, FALSE);
-
-  /* Skip white space to allow ":call func ()".  Not good, but required for
-   * backward compatibility. */
-  startarg = skipwhite(arg);
-  rettv.v_type = VAR_UNKNOWN;   /* clear_tv() uses this */
-
-  if (*startarg != '(') {
-    EMSG2(_("E107: Missing parentheses: %s"), eap->arg);
-    goto end;
-  }
-
-  /*
-   * When skipping, evaluate the function once, to find the end of the
-   * arguments.
-   * When the function takes a range, this is discovered after the first
-   * call, and the loop is broken.
-   */
-  if (eap->skip) {
-    ++emsg_skip;
-    lnum = eap->line2;          /* do it once, also with an invalid range */
-  } else
-    lnum = eap->line1;
-  for (; lnum <= eap->line2; ++lnum) {
-    if (!eap->skip && eap->addr_count > 0) {
-      curwin->w_cursor.lnum = lnum;
-      curwin->w_cursor.col = 0;
-      curwin->w_cursor.coladd = 0;
-    }
-    arg = startarg;
-    if (get_func_tv(name, (int)STRLEN(name), &rettv, &arg,
-            eap->line1, eap->line2, &doesrange,
-            !eap->skip, fudi.fd_dict) == FAIL) {
-      failed = TRUE;
-      break;
-    }
-
-    /* Handle a function returning a Funcref, Dictionary or List. */
-    if (handle_subscript(&arg, &rettv, !eap->skip, TRUE) == FAIL) {
-      failed = TRUE;
-      break;
-    }
-
-    clear_tv(&rettv);
-    if (doesrange || eap->skip)
-      break;
-
-    /* Stop when immediately aborting on error, or when an interrupt
-     * occurred or an exception was thrown but not caught.
-     * get_func_tv() returned OK, so that the check for trailing
-     * characters below is executed. */
-    if (aborting())
-      break;
-  }
-  if (eap->skip)
-    --emsg_skip;
-
-  if (!failed) {
-    /* Check for trailing illegal characters and a following command. */
-    if (!ends_excmd(*arg)) {
-      emsg_severe = TRUE;
-      EMSG(_(e_trailing));
-    } else
-      eap->nextcmd = check_nextcmd(arg);
-  }
-
-end:
-  dict_unref(fudi.fd_dict);
-  xfree(tofree);
 }
 
 /*
@@ -2823,6 +2637,8 @@ void ex_unlet(exarg_T *eap)
   ex_unletlock(eap, eap->arg, 0);
 }
 
+// TODO(ZyX-I): move to eval/ex_cmds
+
 /*
  * ":lockvar" and ":unlockvar" commands
  */
@@ -2831,15 +2647,17 @@ void ex_lockvar(exarg_T *eap)
   char_u      *arg = eap->arg;
   int deep = 2;
 
-  if (eap->forceit)
+  if (eap->forceit) {
     deep = -1;
-  else if (ascii_isdigit(*arg)) {
-    deep = getdigits_int(&arg);
+  } else if (ascii_isdigit(*arg)) {
+    deep = getdigits_int(&arg, false, -1);
     arg = skipwhite(arg);
   }
 
   ex_unletlock(eap, arg, deep);
 }
+
+// TODO(ZyX-I): move to eval/ex_cmds
 
 /*
  * ":unlet", ":lockvar" and ":unlockvar" are quite similar.
@@ -2847,16 +2665,29 @@ void ex_lockvar(exarg_T *eap)
 static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
 {
   char_u      *arg = argstart;
-  char_u      *name_end;
-  int error = FALSE;
+  bool error = false;
   lval_T lv;
 
   do {
-    /* Parse the name and find the end. */
-    name_end = get_lval(arg, NULL, &lv, TRUE, eap->skip || error, 0,
-        FNE_CHECK_START);
-    if (lv.ll_name == NULL)
-      error = TRUE;                 /* error but continue parsing */
+    if (*arg == '$') {
+      const char *name = (char *)++arg;
+
+      if (get_env_len((const char_u **)&arg) == 0) {
+        EMSG2(_(e_invarg2), name - 1);
+        return;
+      }
+      os_unsetenv(name);
+      arg = skipwhite(arg);
+      continue;
+    }
+
+    // Parse the name and find the end.
+    char_u *const name_end = (char_u *)get_lval(arg, NULL, &lv, true,
+                                                eap->skip || error,
+                                                0, FNE_CHECK_START);
+    if (lv.ll_name == NULL) {
+      error = true;  // error, but continue parsing.
+    }
     if (name_end == NULL || (!ascii_iswhite(*name_end)
                              && !ends_excmd(*name_end))) {
       if (name_end != NULL) {
@@ -2874,8 +2705,9 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
           error = TRUE;
       } else {
         if (do_lock_var(&lv, name_end, deep,
-                eap->cmdidx == CMD_lockvar) == FAIL)
-          error = TRUE;
+                        eap->cmdidx == CMD_lockvar) == FAIL) {
+          error = true;
+        }
       }
     }
 
@@ -2888,7 +2720,9 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
   eap->nextcmd = check_nextcmd(arg);
 }
 
-static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
+// TODO(ZyX-I): move to eval/ex_cmds
+
+static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
 {
   int ret = OK;
   int cc;
@@ -2897,61 +2731,67 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
     cc = *name_end;
     *name_end = NUL;
 
-    /* Normal name or expanded name. */
-    if (check_changedtick(lp->ll_name))
+    // Normal name or expanded name.
+    if (do_unlet(lp->ll_name, lp->ll_name_len, forceit) == FAIL) {
       ret = FAIL;
-    else if (do_unlet(lp->ll_name, forceit) == FAIL)
-      ret = FAIL;
+    }
     *name_end = cc;
   } else if ((lp->ll_list != NULL
-              && tv_check_lock(lp->ll_list->lv_lock, lp->ll_name, false))
+              // ll_list is not NULL when lvalue is not in a list, NULL lists
+              // yield E689.
+              && tv_check_lock(tv_list_locked(lp->ll_list),
+                               (const char *)lp->ll_name,
+                               lp->ll_name_len))
              || (lp->ll_dict != NULL
-                 && tv_check_lock(lp->ll_dict->dv_lock, lp->ll_name, false))) {
+                 && tv_check_lock(lp->ll_dict->dv_lock,
+                                  (const char *)lp->ll_name,
+                                  lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
-    listitem_T    *li;
-    listitem_T *ll_li = lp->ll_li;
-    int ll_n1 = lp->ll_n1;
-
-    while (ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= ll_n1)) {
-      li = ll_li->li_next;
-      if (tv_check_lock(ll_li->li_tv.v_lock, lp->ll_name, false)) {
+    assert(lp->ll_list != NULL);
+    // Delete a range of List items.
+    listitem_T *const first_li = lp->ll_li;
+    listitem_T *last_li = first_li;
+    for (;;) {
+      listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
+      if (tv_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
+                        (const char *)lp->ll_name,
+                        lp->ll_name_len)) {
         return false;
       }
-      ll_li = li;
-      ll_n1++;
-    }
-
-    /* Delete a range of List items. */
-    while (lp->ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      li = lp->ll_li->li_next;
-      listitem_remove(lp->ll_list, lp->ll_li);
       lp->ll_li = li;
-      ++lp->ll_n1;
+      lp->ll_n1++;
+      if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
+        break;
+      } else {
+        last_li = lp->ll_li;
+      }
     }
+    tv_list_remove_items(lp->ll_list, first_li, last_li);
   } else {
     if (lp->ll_list != NULL) {
       // unlet a List item.
-      listitem_remove(lp->ll_list, lp->ll_li);
+      tv_list_item_remove(lp->ll_list, lp->ll_li);
     } else {
       // unlet a Dictionary item.
       dict_T *d = lp->ll_dict;
+      assert(d != NULL);
       dictitem_T *di = lp->ll_di;
-      bool watched = is_watched(d);
+      bool watched = tv_dict_is_watched(d);
       char *key = NULL;
       typval_T oldtv;
 
       if (watched) {
-        copy_tv(&di->di_tv, &oldtv);
+        tv_copy(&di->di_tv, &oldtv);
         // need to save key because dictitem_remove will free it
         key = xstrdup((char *)di->di_key);
       }
 
-      dictitem_remove(d, di);
+      tv_dict_item_remove(d, di);
 
       if (watched) {
-        dictwatcher_notify(d, key, NULL, &oldtv);
-        clear_tv(&oldtv);
+        tv_dict_watcher_notify(d, key, NULL, &oldtv);
+        tv_clear(&oldtv);
         xfree(key);
       }
     }
@@ -2960,51 +2800,67 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, int forceit)
   return ret;
 }
 
-/*
- * "unlet" a variable.  Return OK if it existed, FAIL if not.
- * When "forceit" is TRUE don't complain if the variable doesn't exist.
- */
-int do_unlet(char_u *name, int forceit)
+// TODO(ZyX-I): move to eval/ex_cmds
+
+/// unlet a variable
+///
+/// @param[in]  name  Variable name to unlet.
+/// @param[in]  name_len  Variable name length.
+/// @param[in]  fonceit  If true, do not complain if variable doesn’t exist.
+///
+/// @return OK if it existed, FAIL otherwise.
+int do_unlet(const char *const name, const size_t name_len, const int forceit)
+  FUNC_ATTR_NONNULL_ALL
 {
-  hashtab_T   *ht;
-  hashitem_T  *hi;
-  char_u      *varname;
-  dict_T      *d;
-  dictitem_T  *di;
+  const char *varname;
   dict_T *dict;
-  ht = find_var_ht_dict(name, &varname, &dict);
+  hashtab_T *ht = find_var_ht_dict(name, name_len, &varname, &dict);
 
   if (ht != NULL && *varname != NUL) {
-    if (ht == &globvarht) {
-      d = &globvardict;
-    } else if (current_funccal != NULL
-               && ht == &current_funccal->l_vars.dv_hashtab) {
-      d = &current_funccal->l_vars;
-    } else {
-      di = find_var_in_ht(ht, *name, (char_u *)"", false);
-      d = di->di_tv.vval.v_dict;
-    }
-
-    hi = hash_find(ht, varname);
-    if (!HASHITEM_EMPTY(hi)) {
-      di = HI2DI(hi);
-      if (var_check_fixed(di->di_flags, name, false)
-          || var_check_ro(di->di_flags, name, false)
-          || tv_check_lock(d->dv_lock, name, false)) {
+    dict_T *d = get_current_funccal_dict(ht);
+    if (d == NULL) {
+      if (ht == &globvarht) {
+        d = &globvardict;
+      } else if (ht == &compat_hashtab) {
+          d = &vimvardict;
+      } else {
+        dictitem_T *const di = find_var_in_ht(ht, *name, "", 0, false);
+        d = di->di_tv.vval.v_dict;
+      }
+      if (d == NULL) {
+        internal_error("do_unlet()");
         return FAIL;
       }
+    }
+
+    hashitem_T *hi = hash_find(ht, (const char_u *)varname);
+    if (HASHITEM_EMPTY(hi)) {
+      hi = find_hi_in_scoped_ht((const char *)name, &ht);
+    }
+    if (hi != NULL && !HASHITEM_EMPTY(hi)) {
+      dictitem_T *const di = TV_DICT_HI2DI(hi);
+      if (var_check_fixed(di->di_flags, (const char *)name, TV_CSTRING)
+          || var_check_ro(di->di_flags, (const char *)name, TV_CSTRING)
+          || tv_check_lock(d->dv_lock, (const char *)name, TV_CSTRING)) {
+        return FAIL;
+      }
+
+      if (tv_check_lock(d->dv_lock, (const char *)name, TV_CSTRING)) {
+        return FAIL;
+      }
+
       typval_T oldtv;
-      bool watched = is_watched(dict);
+      bool watched = tv_dict_is_watched(dict);
 
       if (watched) {
-        copy_tv(&di->di_tv, &oldtv);
+        tv_copy(&di->di_tv, &oldtv);
       }
 
       delete_var(ht, hi);
 
       if (watched) {
-        dictwatcher_notify(dict, (char *)varname, NULL, &oldtv);
-        clear_tv(&oldtv);
+        tv_dict_watcher_notify(dict, varname, NULL, &oldtv);
+        tv_clear(&oldtv);
       }
       return OK;
     }
@@ -3015,133 +2871,61 @@ int do_unlet(char_u *name, int forceit)
   return FAIL;
 }
 
+// TODO(ZyX-I): move to eval/ex_cmds
+
 /*
  * Lock or unlock variable indicated by "lp".
  * "deep" is the levels to go (-1 for unlimited);
  * "lock" is TRUE for ":lockvar", FALSE for ":unlockvar".
  */
-static int do_lock_var(lval_T *lp, char_u *name_end, int deep, int lock)
+static int do_lock_var(lval_T *lp, char_u *const name_end, const int deep,
+                       const bool lock)
 {
   int ret = OK;
-  int cc;
-  dictitem_T  *di;
 
-  if (deep == 0)        /* nothing to do */
+  if (deep == 0) {  // Nothing to do.
     return OK;
+  }
 
   if (lp->ll_tv == NULL) {
-    cc = *name_end;
-    *name_end = NUL;
-
-    /* Normal name or expanded name. */
-    if (check_changedtick(lp->ll_name))
+    // Normal name or expanded name.
+    dictitem_T *const di = find_var(
+        (const char *)lp->ll_name, lp->ll_name_len, NULL,
+        true);
+    if (di == NULL) {
       ret = FAIL;
-    else {
-      di = find_var(lp->ll_name, NULL, TRUE);
-      if (di == NULL)
-        ret = FAIL;
-      else {
-        if (lock)
-          di->di_flags |= DI_FLAGS_LOCK;
-        else
-          di->di_flags &= ~DI_FLAGS_LOCK;
-        item_lock(&di->di_tv, deep, lock);
+    } else if ((di->di_flags & DI_FLAGS_FIX)
+               && di->di_tv.v_type != VAR_DICT
+               && di->di_tv.v_type != VAR_LIST) {
+      // For historical reasons this error is not given for Lists and
+      // Dictionaries. E.g. b: dictionary may be locked/unlocked.
+      emsgf(_("E940: Cannot lock or unlock variable %s"), lp->ll_name);
+    } else {
+      if (lock) {
+        di->di_flags |= DI_FLAGS_LOCK;
+      } else {
+        di->di_flags &= ~DI_FLAGS_LOCK;
       }
+      tv_item_lock(&di->di_tv, deep, lock);
     }
-    *name_end = cc;
   } else if (lp->ll_range) {
     listitem_T    *li = lp->ll_li;
 
-    /* (un)lock a range of List items. */
+    // (un)lock a range of List items.
     while (li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      item_lock(&li->li_tv, deep, lock);
-      li = li->li_next;
-      ++lp->ll_n1;
+      tv_item_lock(TV_LIST_ITEM_TV(li), deep, lock);
+      li = TV_LIST_ITEM_NEXT(lp->ll_list, li);
+      lp->ll_n1++;
     }
   } else if (lp->ll_list != NULL) {
     // (un)lock a List item.
-    item_lock(&lp->ll_li->li_tv, deep, lock);
+    tv_item_lock(TV_LIST_ITEM_TV(lp->ll_li), deep, lock);
   } else {
     // (un)lock a Dictionary item.
-    item_lock(&lp->ll_di->di_tv, deep, lock);
+    tv_item_lock(&lp->ll_di->di_tv, deep, lock);
   }
 
   return ret;
-}
-
-/*
- * Lock or unlock an item.  "deep" is nr of levels to go.
- */
-static void item_lock(typval_T *tv, int deep, int lock)
-{
-  static int recurse = 0;
-  list_T      *l;
-  listitem_T  *li;
-  dict_T      *d;
-  hashitem_T  *hi;
-  int todo;
-
-  if (recurse >= DICT_MAXNEST) {
-    EMSG(_("E743: variable nested too deep for (un)lock"));
-    return;
-  }
-  if (deep == 0)
-    return;
-  ++recurse;
-
-  /* lock/unlock the item itself */
-  if (lock)
-    tv->v_lock |= VAR_LOCKED;
-  else
-    tv->v_lock &= ~VAR_LOCKED;
-
-  switch (tv->v_type) {
-  case VAR_LIST:
-    if ((l = tv->vval.v_list) != NULL) {
-      if (lock)
-        l->lv_lock |= VAR_LOCKED;
-      else
-        l->lv_lock &= ~VAR_LOCKED;
-      if (deep < 0 || deep > 1)
-        /* recursive: lock/unlock the items the List contains */
-        for (li = l->lv_first; li != NULL; li = li->li_next)
-          item_lock(&li->li_tv, deep - 1, lock);
-    }
-    break;
-  case VAR_DICT:
-    if ((d = tv->vval.v_dict) != NULL) {
-      if (lock)
-        d->dv_lock |= VAR_LOCKED;
-      else
-        d->dv_lock &= ~VAR_LOCKED;
-      if (deep < 0 || deep > 1) {
-        /* recursive: lock/unlock the items the List contains */
-        todo = (int)d->dv_hashtab.ht_used;
-        for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-          if (!HASHITEM_EMPTY(hi)) {
-            --todo;
-            item_lock(&HI2DI(hi)->di_tv, deep - 1, lock);
-          }
-        }
-      }
-    }
-  }
-  --recurse;
-}
-
-/*
- * Return TRUE if typeval "tv" is locked: Either that value is locked itself
- * or it refers to a List or Dictionary that is locked.
- */
-static int tv_islocked(typval_T *tv)
-{
-  return (tv->v_lock & VAR_LOCKED)
-         || (tv->v_type == VAR_LIST
-             && tv->vval.v_list != NULL
-             && (tv->vval.v_list->lv_lock & VAR_LOCKED))
-         || (tv->v_type == VAR_DICT
-             && tv->vval.v_dict != NULL
-             && (tv->vval.v_dict->dv_lock & VAR_LOCKED));
 }
 
 /*
@@ -3149,18 +2933,12 @@ static int tv_islocked(typval_T *tv)
  */
 void del_menutrans_vars(void)
 {
-  hashitem_T  *hi;
-  int todo;
-
   hash_lock(&globvarht);
-  todo = (int)globvarht.ht_used;
-  for (hi = globvarht.ht_array; todo > 0 && !got_int; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      if (STRNCMP(HI2DI(hi)->di_key, "menutrans_", 10) == 0)
-        delete_var(&globvarht, hi);
+  HASHTAB_ITER(&globvarht, hi, {
+    if (STRNCMP(hi->hi_key, "menutrans_", 10) == 0) {
+      delete_var(&globvarht, hi);
     }
-  }
+  });
   hash_unlock(&globvarht);
 }
 
@@ -3183,7 +2961,7 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
 
   if (len > varnamebuflen) {
     xfree(varnamebuf);
-    len += 10;                          /* some additional space */
+    len += 10;                          // some additional space
     varnamebuf = xmalloc(len);
     varnamebuflen = len;
   }
@@ -3203,7 +2981,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   static size_t bdone;
   static size_t wdone;
   static size_t tdone;
-  static int vidx;
+  static size_t vidx;
   static hashitem_T   *hi;
   hashtab_T           *ht;
 
@@ -3212,7 +2990,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     tdone = 0;
   }
 
-  /* Global variables */
+  // Global variables
   if (gdone < globvarht.ht_used) {
     if (gdone++ == 0)
       hi = globvarht.ht_array;
@@ -3225,7 +3003,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     return hi->hi_key;
   }
 
-  /* b: variables */
+  // b: variables
   ht = &curbuf->b_vars->dv_hashtab;
   if (bdone < ht->ht_used) {
     if (bdone++ == 0)
@@ -3236,12 +3014,8 @@ char_u *get_user_var_name(expand_T *xp, int idx)
       ++hi;
     return cat_prefix_varname('b', hi->hi_key);
   }
-  if (bdone == ht->ht_used) {
-    ++bdone;
-    return (char_u *)"b:changedtick";
-  }
 
-  /* w: variables */
+  // w: variables
   ht = &curwin->w_vars->dv_hashtab;
   if (wdone < ht->ht_used) {
     if (wdone++ == 0)
@@ -3253,7 +3027,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     return cat_prefix_varname('w', hi->hi_key);
   }
 
-  /* t: variables */
+  // t: variables
   ht = &curtab->tp_vars->dv_hashtab;
   if (tdone < ht->ht_used) {
     if (tdone++ == 0)
@@ -3265,31 +3039,54 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     return cat_prefix_varname('t', hi->hi_key);
   }
 
-  /* v: variables */
-  if (vidx < VV_LEN)
+  // v: variables
+  if (vidx < ARRAY_SIZE(vimvars)) {
     return cat_prefix_varname('v', (char_u *)vimvars[vidx++].vv_name);
+  }
 
-  xfree(varnamebuf);
-  varnamebuf = NULL;
+  XFREE_CLEAR(varnamebuf);
   varnamebuflen = 0;
   return NULL;
 }
 
+// TODO(ZyX-I): move to eval/expressions
+
+/// Return TRUE if "pat" matches "text".
+/// Does not use 'cpo' and always uses 'magic'.
+static int pattern_match(char_u *pat, char_u *text, bool ic)
+{
+  int matches = 0;
+  regmatch_T regmatch;
+
+  // avoid 'l' flag in 'cpoptions'
+  char_u *save_cpo = p_cpo;
+  p_cpo = (char_u *)"";
+  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+  if (regmatch.regprog != NULL) {
+    regmatch.rm_ic = ic;
+    matches = vim_regexec_nl(&regmatch, text, (colnr_T)0);
+    vim_regfree(regmatch.regprog);
+  }
+  p_cpo = save_cpo;
+  return matches;
+}
 
 /*
  * types for expressions.
  */
 typedef enum {
-  TYPE_UNKNOWN = 0
-  , TYPE_EQUAL          /* == */
-  , TYPE_NEQUAL         /* != */
-  , TYPE_GREATER        /* >  */
-  , TYPE_GEQUAL         /* >= */
-  , TYPE_SMALLER        /* <  */
-  , TYPE_SEQUAL         /* <= */
-  , TYPE_MATCH          /* =~ */
-  , TYPE_NOMATCH        /* !~ */
+  TYPE_UNKNOWN = 0,
+  TYPE_EQUAL,         // ==
+  TYPE_NEQUAL,        // !=
+  TYPE_GREATER,       // >
+  TYPE_GEQUAL,        // >=
+  TYPE_SMALLER,       // <
+  TYPE_SEQUAL,        // <=
+  TYPE_MATCH,         // =~
+  TYPE_NOMATCH,       // !~
 } exptype_T;
+
+// TODO(ZyX-I): move to eval/expressions
 
 /*
  * The "evaluate" argument: When FALSE, the argument is only parsed but not
@@ -3304,7 +3101,7 @@ typedef enum {
  * Note: "rettv.v_lock" is not set.
  * Return OK or FAIL.
  */
-static int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
+int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 {
   int ret;
   char_u      *p;
@@ -3312,15 +3109,15 @@ static int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
   if (ret == FAIL || !ends_excmd(*p)) {
-    if (ret != FAIL)
-      clear_tv(rettv);
-    /*
-     * Report the invalid expression unless the expression evaluation has
-     * been cancelled due to an aborting error, an interrupt, or an
-     * exception.
-     */
-    if (!aborting())
-      EMSG2(_(e_invexpr2), arg);
+    if (ret != FAIL) {
+      tv_clear(rettv);
+    }
+    // Report the invalid expression unless the expression evaluation has
+    // been cancelled due to an aborting error, an interrupt, or an
+    // exception.
+    if (!aborting()) {
+      emsgf(_(e_invexpr2), arg);
+    }
     ret = FAIL;
   }
   if (nextcmd != NULL)
@@ -3328,6 +3125,8 @@ static int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 
   return ret;
 }
+
+// TODO(ZyX-I): move to eval/expressions
 
 /*
  * Handle top level expression:
@@ -3340,7 +3139,7 @@ static int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
  *
  * Return OK or FAIL.
  */
-static int eval1(char_u **arg, typval_T *rettv, int evaluate)
+int eval1(char_u **arg, typval_T *rettv, int evaluate)
 {
   int result;
   typval_T var2;
@@ -3354,29 +3153,33 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
   if ((*arg)[0] == '?') {
     result = FALSE;
     if (evaluate) {
-      int error = FALSE;
+      bool error = false;
 
-      if (get_tv_number_chk(rettv, &error) != 0)
-        result = TRUE;
-      clear_tv(rettv);
-      if (error)
+      if (tv_get_number_chk(rettv, &error) != 0) {
+        result = true;
+      }
+      tv_clear(rettv);
+      if (error) {
         return FAIL;
+      }
     }
 
     /*
      * Get the second variable.
      */
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, rettv, evaluate && result) == FAIL)     /* recursive! */
+    if (eval1(arg, rettv, evaluate && result) == FAIL) {  // recursive!
       return FAIL;
+    }
 
     /*
      * Check for the ":".
      */
     if ((*arg)[0] != ':') {
       EMSG(_("E109: Missing ':' after '?'"));
-      if (evaluate && result)
-        clear_tv(rettv);
+      if (evaluate && result) {
+        tv_clear(rettv);
+      }
       return FAIL;
     }
 
@@ -3384,9 +3187,10 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
      * Get the third variable.
      */
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &var2, evaluate && !result) == FAIL) {   /* recursive! */
-      if (evaluate && result)
-        clear_tv(rettv);
+    if (eval1(arg, &var2, evaluate && !result) == FAIL) {  // Recursive!
+      if (evaluate && result) {
+        tv_clear(rettv);
+      }
       return FAIL;
     }
     if (evaluate && !result)
@@ -3395,6 +3199,8 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
 
   return OK;
 }
+
+// TODO(ZyX-I): move to eval/expressions
 
 /*
  * Handle first level expression:
@@ -3410,7 +3216,7 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
   typval_T var2;
   long result;
   int first;
-  int error = FALSE;
+  bool error = false;
 
   /*
    * Get the first variable.
@@ -3425,12 +3231,14 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
   result = FALSE;
   while ((*arg)[0] == '|' && (*arg)[1] == '|') {
     if (evaluate && first) {
-      if (get_tv_number_chk(rettv, &error) != 0)
-        result = TRUE;
-      clear_tv(rettv);
-      if (error)
+      if (tv_get_number_chk(rettv, &error) != 0) {
+        result = true;
+      }
+      tv_clear(rettv);
+      if (error) {
         return FAIL;
-      first = FALSE;
+      }
+      first = false;
     }
 
     /*
@@ -3444,11 +3252,13 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
      * Compute the result.
      */
     if (evaluate && !result) {
-      if (get_tv_number_chk(&var2, &error) != 0)
-        result = TRUE;
-      clear_tv(&var2);
-      if (error)
+      if (tv_get_number_chk(&var2, &error) != 0) {
+        result = true;
+      }
+      tv_clear(&var2);
+      if (error) {
         return FAIL;
+      }
     }
     if (evaluate) {
       rettv->v_type = VAR_NUMBER;
@@ -3458,6 +3268,8 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
 
   return OK;
 }
+
+// TODO(ZyX-I): move to eval/expressions
 
 /*
  * Handle second level expression:
@@ -3473,7 +3285,7 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
   typval_T var2;
   long result;
   int first;
-  int error = FALSE;
+  bool error = false;
 
   /*
    * Get the first variable.
@@ -3488,12 +3300,14 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
   result = TRUE;
   while ((*arg)[0] == '&' && (*arg)[1] == '&') {
     if (evaluate && first) {
-      if (get_tv_number_chk(rettv, &error) == 0)
-        result = FALSE;
-      clear_tv(rettv);
-      if (error)
+      if (tv_get_number_chk(rettv, &error) == 0) {
+        result = false;
+      }
+      tv_clear(rettv);
+      if (error) {
         return FAIL;
-      first = FALSE;
+      }
+      first = false;
     }
 
     /*
@@ -3507,11 +3321,13 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
      * Compute the result.
      */
     if (evaluate && result) {
-      if (get_tv_number_chk(&var2, &error) == 0)
-        result = FALSE;
-      clear_tv(&var2);
-      if (error)
+      if (tv_get_number_chk(&var2, &error) == 0) {
+        result = false;
+      }
+      tv_clear(&var2);
+      if (error) {
         return FAIL;
+      }
     }
     if (evaluate) {
       rettv->v_type = VAR_NUMBER;
@@ -3521,6 +3337,8 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
 
   return OK;
 }
+
+// TODO(ZyX-I): move to eval/expressions
 
 /*
  * Handle third level expression:
@@ -3546,14 +3364,10 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
   char_u      *p;
   int i;
   exptype_T type = TYPE_UNKNOWN;
-  int type_is = FALSE;              /* TRUE for "is" and "isnot" */
+  bool type_is = false;             // true for "is" and "isnot"
   int len = 2;
-  long n1, n2;
-  char_u      *s1, *s2;
-  char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
-  regmatch_T regmatch;
-  int ic;
-  char_u      *save_cpo;
+  varnumber_T n1, n2;
+  bool ic;
 
   /*
    * Get the first variable.
@@ -3591,7 +3405,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
       }
       if (!isalnum(p[len]) && p[len] != '_') {
         type = len == 2 ? TYPE_EQUAL : TYPE_NEQUAL;
-        type_is = TRUE;
+        type_is = true;
       }
   }
     break;
@@ -3601,26 +3415,21 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
    * If there is a comparative operator, use it.
    */
   if (type != TYPE_UNKNOWN) {
-    /* extra question mark appended: ignore case */
+    // extra question mark appended: ignore case
     if (p[len] == '?') {
-      ic = TRUE;
-      ++len;
-    }
-    /* extra '#' appended: match case */
-    else if (p[len] == '#') {
-      ic = FALSE;
-      ++len;
-    }
-    /* nothing appended: use 'ignorecase' */
-    else
+      ic = true;
+      len++;
+    } else if (p[len] == '#') {  // extra '#' appended: match case
+      ic = false;
+      len++;
+    } else {  // nothing appended: use 'ignorecase'
       ic = p_ic;
+    }
 
-    /*
-     * Get the second variable.
-     */
+    // Get the second variable.
     *arg = skipwhite(p + len);
     if (eval5(arg, &var2, evaluate) == FAIL) {
-      clear_tv(rettv);
+      tv_clear(rettv);
       return FAIL;
     }
 
@@ -3642,15 +3451,15 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
           } else {
             EMSG(_("E692: Invalid operation for List"));
           }
-          clear_tv(rettv);
-          clear_tv(&var2);
+          tv_clear(rettv);
+          tv_clear(&var2);
           return FAIL;
         } else {
-          /* Compare two Lists for being equal or unequal. */
-          n1 = list_equal(rettv->vval.v_list, var2.vval.v_list,
-              ic, FALSE);
-          if (type == TYPE_NEQUAL)
+          // Compare two Lists for being equal or unequal.
+          n1 = tv_list_equal(rettv->vval.v_list, var2.vval.v_list, ic, false);
+          if (type == TYPE_NEQUAL) {
             n1 = !n1;
+          }
         }
       } else if (rettv->v_type == VAR_DICT || var2.v_type == VAR_DICT) {
         if (type_is) {
@@ -3664,36 +3473,46 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
             EMSG(_("E735: Can only compare Dictionary with Dictionary"));
           else
             EMSG(_("E736: Invalid operation for Dictionary"));
-          clear_tv(rettv);
-          clear_tv(&var2);
+          tv_clear(rettv);
+          tv_clear(&var2);
           return FAIL;
         } else {
-          /* Compare two Dictionaries for being equal or unequal. */
-          n1 = dict_equal(rettv->vval.v_dict, var2.vval.v_dict,
-              ic, FALSE);
-          if (type == TYPE_NEQUAL)
+          // Compare two Dictionaries for being equal or unequal.
+          n1 = tv_dict_equal(rettv->vval.v_dict, var2.vval.v_dict,
+                             ic, false);
+          if (type == TYPE_NEQUAL) {
             n1 = !n1;
+          }
         }
-      } else if (rettv->v_type == VAR_FUNC || var2.v_type == VAR_FUNC) {
-        if (rettv->v_type != var2.v_type
-            || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
-          if (rettv->v_type != var2.v_type)
-            EMSG(_("E693: Can only compare Funcref with Funcref"));
-          else
-            EMSG(_("E694: Invalid operation for Funcrefs"));
-          clear_tv(rettv);
-          clear_tv(&var2);
+      } else if (tv_is_func(*rettv) || tv_is_func(var2)) {
+        if (type != TYPE_EQUAL && type != TYPE_NEQUAL) {
+          EMSG(_("E694: Invalid operation for Funcrefs"));
+          tv_clear(rettv);
+          tv_clear(&var2);
           return FAIL;
+        }
+        if ((rettv->v_type == VAR_PARTIAL
+             && rettv->vval.v_partial == NULL)
+            || (var2.v_type == VAR_PARTIAL
+                && var2.vval.v_partial == NULL)) {
+            // when a partial is NULL assume not equal
+            n1 = false;
+        } else if (type_is) {
+          if (rettv->v_type == VAR_FUNC && var2.v_type == VAR_FUNC) {
+            // strings are considered the same if their value is
+            // the same
+            n1 = tv_equal(rettv, &var2, ic, false);
+          } else if (rettv->v_type == VAR_PARTIAL
+                     && var2.v_type == VAR_PARTIAL) {
+            n1 = (rettv->vval.v_partial == var2.vval.v_partial);
+          } else {
+            n1 = false;
+          }
         } else {
-          /* Compare two Funcrefs for being equal or unequal. */
-          if (rettv->vval.v_string == NULL
-              || var2.vval.v_string == NULL)
-            n1 = FALSE;
-          else
-            n1 = STRCMP(rettv->vval.v_string,
-                var2.vval.v_string) == 0;
-          if (type == TYPE_NEQUAL)
-            n1 = !n1;
+          n1 = tv_equal(rettv, &var2, ic, false);
+        }
+        if (type == TYPE_NEQUAL) {
+          n1 = !n1;
         }
       }
       /*
@@ -3704,25 +3523,27 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
                && type != TYPE_MATCH && type != TYPE_NOMATCH) {
         float_T f1, f2;
 
-        if (rettv->v_type == VAR_FLOAT)
+        if (rettv->v_type == VAR_FLOAT) {
           f1 = rettv->vval.v_float;
-        else
-          f1 = get_tv_number(rettv);
-        if (var2.v_type == VAR_FLOAT)
+        } else {
+          f1 = tv_get_number(rettv);
+        }
+        if (var2.v_type == VAR_FLOAT) {
           f2 = var2.vval.v_float;
-        else
-          f2 = get_tv_number(&var2);
-        n1 = FALSE;
+        } else {
+          f2 = tv_get_number(&var2);
+        }
+        n1 = false;
         switch (type) {
-        case TYPE_EQUAL:    n1 = (f1 == f2); break;
-        case TYPE_NEQUAL:   n1 = (f1 != f2); break;
-        case TYPE_GREATER:  n1 = (f1 > f2); break;
-        case TYPE_GEQUAL:   n1 = (f1 >= f2); break;
-        case TYPE_SMALLER:  n1 = (f1 < f2); break;
-        case TYPE_SEQUAL:   n1 = (f1 <= f2); break;
-        case TYPE_UNKNOWN:
-        case TYPE_MATCH:
-        case TYPE_NOMATCH:  break;              /* avoid gcc warning */
+          case TYPE_EQUAL:    n1 = (f1 == f2); break;
+          case TYPE_NEQUAL:   n1 = (f1 != f2); break;
+          case TYPE_GREATER:  n1 = (f1 > f2); break;
+          case TYPE_GEQUAL:   n1 = (f1 >= f2); break;
+          case TYPE_SMALLER:  n1 = (f1 < f2); break;
+          case TYPE_SEQUAL:   n1 = (f1 <= f2); break;
+          case TYPE_UNKNOWN:
+          case TYPE_MATCH:
+          case TYPE_NOMATCH:  break;
         }
       }
       /*
@@ -3731,57 +3552,51 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
        */
       else if ((rettv->v_type == VAR_NUMBER || var2.v_type == VAR_NUMBER)
                && type != TYPE_MATCH && type != TYPE_NOMATCH) {
-        n1 = get_tv_number(rettv);
-        n2 = get_tv_number(&var2);
+        n1 = tv_get_number(rettv);
+        n2 = tv_get_number(&var2);
         switch (type) {
-        case TYPE_EQUAL:    n1 = (n1 == n2); break;
-        case TYPE_NEQUAL:   n1 = (n1 != n2); break;
-        case TYPE_GREATER:  n1 = (n1 > n2); break;
-        case TYPE_GEQUAL:   n1 = (n1 >= n2); break;
-        case TYPE_SMALLER:  n1 = (n1 < n2); break;
-        case TYPE_SEQUAL:   n1 = (n1 <= n2); break;
-        case TYPE_UNKNOWN:
-        case TYPE_MATCH:
-        case TYPE_NOMATCH:  break;              /* avoid gcc warning */
+          case TYPE_EQUAL:    n1 = (n1 == n2); break;
+          case TYPE_NEQUAL:   n1 = (n1 != n2); break;
+          case TYPE_GREATER:  n1 = (n1 > n2); break;
+          case TYPE_GEQUAL:   n1 = (n1 >= n2); break;
+          case TYPE_SMALLER:  n1 = (n1 < n2); break;
+          case TYPE_SEQUAL:   n1 = (n1 <= n2); break;
+          case TYPE_UNKNOWN:
+          case TYPE_MATCH:
+          case TYPE_NOMATCH:  break;
         }
       } else {
-        s1 = get_tv_string_buf(rettv, buf1);
-        s2 = get_tv_string_buf(&var2, buf2);
-        if (type != TYPE_MATCH && type != TYPE_NOMATCH)
-          i = ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2);
-        else
+        char buf1[NUMBUFLEN];
+        char buf2[NUMBUFLEN];
+        const char *const s1 = tv_get_string_buf(rettv, buf1);
+        const char *const s2 = tv_get_string_buf(&var2, buf2);
+        if (type != TYPE_MATCH && type != TYPE_NOMATCH) {
+          i = mb_strcmp_ic(ic, s1, s2);
+        } else {
           i = 0;
-        n1 = FALSE;
+        }
+        n1 = false;
         switch (type) {
-        case TYPE_EQUAL:    n1 = (i == 0); break;
-        case TYPE_NEQUAL:   n1 = (i != 0); break;
-        case TYPE_GREATER:  n1 = (i > 0); break;
-        case TYPE_GEQUAL:   n1 = (i >= 0); break;
-        case TYPE_SMALLER:  n1 = (i < 0); break;
-        case TYPE_SEQUAL:   n1 = (i <= 0); break;
+          case TYPE_EQUAL:    n1 = (i == 0); break;
+          case TYPE_NEQUAL:   n1 = (i != 0); break;
+          case TYPE_GREATER:  n1 = (i > 0); break;
+          case TYPE_GEQUAL:   n1 = (i >= 0); break;
+          case TYPE_SMALLER:  n1 = (i < 0); break;
+          case TYPE_SEQUAL:   n1 = (i <= 0); break;
 
-        case TYPE_MATCH:
-        case TYPE_NOMATCH:
-          /* avoid 'l' flag in 'cpoptions' */
-          save_cpo = p_cpo;
-          p_cpo = (char_u *)"";
-          regmatch.regprog = vim_regcomp(s2,
-              RE_MAGIC + RE_STRING);
-          regmatch.rm_ic = ic;
-          if (regmatch.regprog != NULL) {
-            n1 = vim_regexec_nl(&regmatch, s1, (colnr_T)0);
-            vim_regfree(regmatch.regprog);
-            if (type == TYPE_NOMATCH)
+          case TYPE_MATCH:
+          case TYPE_NOMATCH: {
+            n1 = pattern_match((char_u *)s2, (char_u *)s1, ic);
+            if (type == TYPE_NOMATCH) {
               n1 = !n1;
+            }
+            break;
           }
-          p_cpo = save_cpo;
-          break;
-
-        case TYPE_UNKNOWN:  break;              /* avoid gcc warning */
+          case TYPE_UNKNOWN: break;  // Avoid gcc warning.
         }
       }
-      clear_tv(rettv);
-      clear_tv(&var2);
+      tv_clear(rettv);
+      tv_clear(&var2);
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = n1;
     }
@@ -3790,11 +3605,14 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
+// TODO(ZyX-I): move to eval/expressions
+
 /*
  * Handle fourth level expression:
  *	+	number addition
  *	-	number subtraction
  *	.	string concatenation
+ *	..	string concatenation
  *
  * "arg" must point to the first non-white of the expression.
  * "arg" is advanced to the next non-white after the recognized expression.
@@ -3806,10 +3624,8 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
   typval_T var2;
   typval_T var3;
   int op;
-  long n1, n2;
+  varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
-  char_u      *s1, *s2;
-  char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
   char_u      *p;
 
   /*
@@ -3827,17 +3643,16 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
       break;
 
     if ((op != '+' || rettv->v_type != VAR_LIST)
-        && (op == '.' || rettv->v_type != VAR_FLOAT)
-        ) {
-      /* For "list + ...", an illegal use of the first operand as
-       * a number cannot be determined before evaluating the 2nd
-       * operand: if this is also a list, all is ok.
-       * For "something . ...", "something - ..." or "non-list + ...",
-       * we know that the first operand needs to be a string or number
-       * without evaluating the 2nd operand.  So check before to avoid
-       * side effects after an error. */
-      if (evaluate && get_tv_string_chk(rettv) == NULL) {
-        clear_tv(rettv);
+        && (op == '.' || rettv->v_type != VAR_FLOAT)) {
+      // For "list + ...", an illegal use of the first operand as
+      // a number cannot be determined before evaluating the 2nd
+      // operand: if this is also a list, all is ok.
+      // For "something . ...", "something - ..." or "non-list + ...",
+      // we know that the first operand needs to be a string or number
+      // without evaluating the 2nd operand.  So check before to avoid
+      // side effects after an error.
+      if (evaluate && !tv_check_str(rettv)) {
+        tv_clear(rettv);
         return FAIL;
       }
     }
@@ -3845,9 +3660,12 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
     /*
      * Get the second variable.
      */
+    if (op == '.' && *(*arg + 1) == '.') {  // ..string concatenation
+      (*arg)++;
+    }
     *arg = skipwhite(*arg + 1);
     if (eval6(arg, &var2, evaluate, op == '.') == FAIL) {
-      clear_tv(rettv);
+      tv_clear(rettv);
       return FAIL;
     }
 
@@ -3856,41 +3674,44 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
        * Compute the result.
        */
       if (op == '.') {
-        s1 = get_tv_string_buf(rettv, buf1);            /* already checked */
-        s2 = get_tv_string_buf_chk(&var2, buf2);
-        if (s2 == NULL) {               /* type error ? */
-          clear_tv(rettv);
-          clear_tv(&var2);
+        char buf1[NUMBUFLEN];
+        char buf2[NUMBUFLEN];
+        // s1 already checked
+        const char *const s1 = tv_get_string_buf(rettv, buf1);
+        const char *const s2 = tv_get_string_buf_chk(&var2, buf2);
+        if (s2 == NULL) {  // Type error?
+          tv_clear(rettv);
+          tv_clear(&var2);
           return FAIL;
         }
-        p = concat_str(s1, s2);
-        clear_tv(rettv);
+        p = concat_str((const char_u *)s1, (const char_u *)s2);
+        tv_clear(rettv);
         rettv->v_type = VAR_STRING;
         rettv->vval.v_string = p;
       } else if (op == '+' && rettv->v_type == VAR_LIST
                  && var2.v_type == VAR_LIST) {
-        /* concatenate Lists */
-        if (list_concat(rettv->vval.v_list, var2.vval.v_list,
-                &var3) == FAIL) {
-          clear_tv(rettv);
-          clear_tv(&var2);
+        // Concatenate Lists.
+        if (tv_list_concat(rettv->vval.v_list, var2.vval.v_list, &var3)
+            == FAIL) {
+          tv_clear(rettv);
+          tv_clear(&var2);
           return FAIL;
         }
-        clear_tv(rettv);
+        tv_clear(rettv);
         *rettv = var3;
       } else {
-        int error = FALSE;
+        bool error = false;
 
         if (rettv->v_type == VAR_FLOAT) {
           f1 = rettv->vval.v_float;
           n1 = 0;
         } else {
-          n1 = get_tv_number_chk(rettv, &error);
+          n1 = tv_get_number_chk(rettv, &error);
           if (error) {
             /* This can only happen for "list + non-list".  For
              * "non-list + ..." or "something - ...", we returned
              * before evaluating the 2nd operand. */
-            clear_tv(rettv);
+            tv_clear(rettv);
             return FAIL;
           }
           if (var2.v_type == VAR_FLOAT)
@@ -3900,18 +3721,18 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
           f2 = var2.vval.v_float;
           n2 = 0;
         } else {
-          n2 = get_tv_number_chk(&var2, &error);
+          n2 = tv_get_number_chk(&var2, &error);
           if (error) {
-            clear_tv(rettv);
-            clear_tv(&var2);
+            tv_clear(rettv);
+            tv_clear(&var2);
             return FAIL;
           }
           if (rettv->v_type == VAR_FLOAT)
             f2 = n2;
         }
-        clear_tv(rettv);
+        tv_clear(rettv);
 
-        /* If there is a float on either side the result is a float. */
+        // If there is a float on either side the result is a float.
         if (rettv->v_type == VAR_FLOAT || var2.v_type == VAR_FLOAT) {
           if (op == '+')
             f1 = f1 + f2;
@@ -3928,37 +3749,36 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
           rettv->vval.v_number = n1;
         }
       }
-      clear_tv(&var2);
+      tv_clear(&var2);
     }
   }
   return OK;
 }
 
-/*
- * Handle fifth level expression:
- *	*	number multiplication
- *	/	number division
- *	%	number modulo
- *
- * "arg" must point to the first non-white of the expression.
- * "arg" is advanced to the next non-white after the recognized expression.
- *
- * Return OK or FAIL.
- */
-static int 
-eval6 (
-    char_u **arg,
-    typval_T *rettv,
-    int evaluate,
-    int want_string              /* after "." operator */
-)
+// TODO(ZyX-I): move to eval/expressions
+
+/// Handle fifth level expression:
+///  - *  number multiplication
+///  - /  number division
+///  - %  number modulo
+///
+/// @param[in,out]  arg  Points to the first non-whitespace character of the
+///                      expression.  Is advanced to the next non-whitespace
+///                      character after the recognized expression.
+/// @param[out]  rettv  Location where result is saved.
+/// @param[in]  evaluate  If not true, rettv is not populated.
+/// @param[in]  want_string  True if "." is string_concatenation, otherwise
+///                          float
+/// @return  OK or FAIL.
+static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
+  FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
   int op;
-  long n1, n2;
-  int use_float = FALSE;
-  float_T f1 = 0, f2;
-  int error = FALSE;
+  varnumber_T n1, n2;
+  bool use_float = false;
+  float_T f1 = 0, f2 = 0;
+  bool error = false;
 
   /*
    * Get the first variable.
@@ -3977,15 +3797,18 @@ eval6 (
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
-        use_float = TRUE;
+        use_float = true;
         n1 = 0;
-      } else
-        n1 = get_tv_number_chk(rettv, &error);
-      clear_tv(rettv);
-      if (error)
+      } else {
+        n1 = tv_get_number_chk(rettv, &error);
+      }
+      tv_clear(rettv);
+      if (error) {
         return FAIL;
-    } else
+      }
+    } else {
       n1 = 0;
+    }
 
     /*
      * Get the second variable.
@@ -3998,17 +3821,19 @@ eval6 (
       if (var2.v_type == VAR_FLOAT) {
         if (!use_float) {
           f1 = n1;
-          use_float = TRUE;
+          use_float = true;
         }
         f2 = var2.vval.v_float;
         n2 = 0;
       } else {
-        n2 = get_tv_number_chk(&var2, &error);
-        clear_tv(&var2);
-        if (error)
+        n2 = tv_get_number_chk(&var2, &error);
+        tv_clear(&var2);
+        if (error) {
           return FAIL;
-        if (use_float)
+        }
+        if (use_float) {
           f2 = n2;
+        }
       }
 
       /*
@@ -4039,23 +3864,12 @@ eval6 (
         rettv->v_type = VAR_FLOAT;
         rettv->vval.v_float = f1;
       } else {
-        if (op == '*')
+        if (op == '*') {
           n1 = n1 * n2;
-        else if (op == '/') {
-          if (n2 == 0) {                /* give an error message? */
-            if (n1 == 0)
-              n1 = -0x7fffffffL - 1L;                   /* similar to NaN */
-            else if (n1 < 0)
-              n1 = -0x7fffffffL;
-            else
-              n1 = 0x7fffffffL;
-          } else
-            n1 = n1 / n2;
+        } else if (op == '/') {
+          n1 = num_divide(n1, n2);
         } else {
-          if (n2 == 0)                  /* give an error message? */
-            n1 = 0;
-          else
-            n1 = n1 % n2;
+          n1 = num_modulus(n1, n2);
         }
         rettv->v_type = VAR_NUMBER;
         rettv->vval.v_number = n1;
@@ -4065,6 +3879,8 @@ eval6 (
 
   return OK;
 }
+
+// TODO(ZyX-I): move to eval/expressions
 
 // Handle sixth level expression:
 //  number  number constant
@@ -4097,18 +3913,18 @@ static int eval7(
     int want_string                 // after "." operator
 )
 {
-  long n;
+  varnumber_T n;
   int len;
   char_u      *s;
   char_u      *start_leader, *end_leader;
   int ret = OK;
   char_u      *alias;
 
-  // Initialise variable so that clear_tv() can't mistake this for a
+  // Initialise variable so that tv_clear() can't mistake this for a
   // string and free a string that isn't there.
   rettv->v_type = VAR_UNKNOWN;
 
-  // Skip '!' and '-' characters.  They are handled later.
+  // Skip '!', '-' and '+' characters.  They are handled later.
   start_leader = *arg;
   while (**arg == '!' || **arg == '-' || **arg == '+') {
     *arg = skipwhite(*arg + 1);
@@ -4157,7 +3973,7 @@ static int eval7(
     if (get_float) {
       float_T f;
 
-      *arg += string2float(*arg, &f);
+      *arg += string2float((char *) *arg, &f);
       if (evaluate) {
         rettv->v_type = VAR_FLOAT;
         rettv->vval.v_float = f;
@@ -4185,14 +4001,19 @@ static int eval7(
   case '[':   ret = get_list_tv(arg, rettv, evaluate);
     break;
 
+  // Lambda: {arg, arg -> expr}
   // Dictionary: {key: val, key: val}
-  case '{':   ret = get_dict_tv(arg, rettv, evaluate);
+  case '{':   ret = get_lambda_tv(arg, rettv, evaluate);
+              if (ret == NOTDONE) {
+                ret = dict_get_tv(arg, rettv, evaluate);
+              }
     break;
 
   // Option value: &name
-  case '&':   ret = get_option_tv(arg, rettv, evaluate);
+  case '&': {
+    ret = get_option_tv((const char **)arg, rettv, evaluate);
     break;
-
+  }
   // Environment variable: $VAR.
   case '$':   ret = get_env_tv(arg, rettv, evaluate);
     break;
@@ -4215,7 +4036,7 @@ static int eval7(
       ++*arg;
     } else if (ret == OK) {
       EMSG(_("E110: Missing ')'"));
-      clear_tv(rettv);
+      tv_clear(rettv);
       ret = FAIL;
     }
     break;
@@ -4228,7 +4049,7 @@ static int eval7(
     // Must be a variable or function name.
     // Can also be a curly-braces kind of name: {expr}.
     s = *arg;
-    len = get_name_len(arg, &alias, evaluate, true);
+    len = get_name_len((const char **)arg, (char **)&alias, evaluate, true);
     if (alias != NULL) {
       s = alias;
     }
@@ -4237,35 +4058,48 @@ static int eval7(
       ret = FAIL;
     } else {
       if (**arg == '(') {               // recursive!
+        partial_T *partial;
+
+        if (!evaluate) {
+          check_vars((const char *)s, len);
+        }
+
         // If "s" is the name of a variable of type VAR_FUNC
         // use its contents.
-        s = deref_func_name(s, &len, !evaluate);
+        s = deref_func_name((const char *)s, &len, &partial, !evaluate);
+
+        // Need to make a copy, in case evaluating the arguments makes
+        // the name invalid.
+        s = xmemdupz(s, len);
 
         // Invoke the function.
         ret = get_func_tv(s, len, rettv, arg,
-            curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-            &len, evaluate, NULL);
+                          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                          &len, evaluate, partial, NULL);
+
+        xfree(s);
 
         // If evaluate is false rettv->v_type was not set in
         // get_func_tv, but it's needed in handle_subscript() to parse
         // what follows. So set it here.
         if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
-          rettv->vval.v_string = empty_string;
+          rettv->vval.v_string = (char_u *)tv_empty_string;
           rettv->v_type = VAR_FUNC;
         }
 
         // Stop the expression evaluation when immediately
         // aborting on error, or when an interrupt occurred or
         // an exception was thrown but not caught.
-        if (aborting()) {
+        if (evaluate && aborting()) {
           if (ret == OK) {
-            clear_tv(rettv);
+            tv_clear(rettv);
           }
           ret = FAIL;
         }
       } else if (evaluate) {
-        ret = get_var_tv(s, len, rettv, NULL, true, false);
+        ret = get_var_tv((const char *)s, len, rettv, NULL, true, false);
       } else {
+        check_vars((const char *)s, len);
         ret = OK;
       }
     }
@@ -4277,22 +4111,22 @@ static int eval7(
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr).
   if (ret == OK) {
-    ret = handle_subscript(arg, rettv, evaluate, true);
+    ret = handle_subscript((const char **)arg, rettv, evaluate, true);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
-    int error = false;
-    int val = 0;
+    bool error = false;
+    varnumber_T val = 0;
     float_T f = 0.0;
 
     if (rettv->v_type == VAR_FLOAT) {
       f = rettv->vval.v_float;
     } else {
-      val = get_tv_number_chk(rettv, &error);
+      val = tv_get_number_chk(rettv, &error);
     }
     if (error) {
-      clear_tv(rettv);
+      tv_clear(rettv);
       ret = FAIL;
     } else {
       while (end_leader > start_leader) {
@@ -4312,10 +4146,10 @@ static int eval7(
         }
       }
       if (rettv->v_type == VAR_FLOAT) {
-        clear_tv(rettv);
+        tv_clear(rettv);
         rettv->vval.v_float = f;
       } else {
-        clear_tv(rettv);
+        tv_clear(rettv);
         rettv->v_type = VAR_NUMBER;
         rettv->vval.v_number = val;
       }
@@ -4325,39 +4159,64 @@ static int eval7(
   return ret;
 }
 
+// TODO(ZyX-I): move to eval/expressions
+
 /*
  * Evaluate an "[expr]" or "[expr:expr]" index.  Also "dict.key".
  * "*arg" points to the '[' or '.'.
  * Returns FAIL or OK. "*arg" is advanced to after the ']'.
  */
-static int 
-eval_index (
+static int
+eval_index(
     char_u **arg,
     typval_T *rettv,
     int evaluate,
-    int verbose                    /* give error messages */
+    int verbose                    // give error messages
 )
 {
-  int empty1 = FALSE, empty2 = FALSE;
-  typval_T var1, var2;
+  bool empty1 = false;
+  bool empty2 = false;
   long n1, n2 = 0;
-  long len = -1;
-  int range = FALSE;
-  char_u      *s;
+  ptrdiff_t len = -1;
+  int range = false;
   char_u      *key = NULL;
 
-  if (rettv->v_type == VAR_FUNC) {
-    if (verbose)
-      EMSG(_("E695: Cannot index a Funcref"));
-    return FAIL;
-  } else if (rettv->v_type == VAR_FLOAT) {
-    if (verbose)
-      EMSG(_(e_float_as_string));
-    return FAIL;
+  switch (rettv->v_type) {
+    case VAR_FUNC:
+    case VAR_PARTIAL: {
+      if (verbose) {
+        EMSG(_("E695: Cannot index a Funcref"));
+      }
+      return FAIL;
+    }
+    case VAR_FLOAT: {
+      if (verbose) {
+        EMSG(_(e_float_as_string));
+      }
+      return FAIL;
+    }
+    case VAR_SPECIAL: {
+      if (verbose) {
+        EMSG(_("E909: Cannot index a special variable"));
+      }
+      return FAIL;
+    }
+    case VAR_UNKNOWN: {
+      if (evaluate) {
+        return FAIL;
+      }
+      FALLTHROUGH;
+    }
+    case VAR_STRING:
+    case VAR_NUMBER:
+    case VAR_LIST:
+    case VAR_DICT: {
+      break;
+    }
   }
 
-  init_tv(&var1);
-  init_tv(&var2);
+  typval_T var1 = TV_INITIAL_VALUE;
+  typval_T var2 = TV_INITIAL_VALUE;
   if (**arg == '.') {
     /*
      * dict.name
@@ -4375,13 +4234,13 @@ eval_index (
      * Get the (first) variable from inside the [].
      */
     *arg = skipwhite(*arg + 1);
-    if (**arg == ':')
-      empty1 = TRUE;
-    else if (eval1(arg, &var1, evaluate) == FAIL)       /* recursive! */
+    if (**arg == ':') {
+      empty1 = true;
+    } else if (eval1(arg, &var1, evaluate) == FAIL) {  // Recursive!
       return FAIL;
-    else if (evaluate && get_tv_string_chk(&var1) == NULL) {
-      /* not a number or string */
-      clear_tv(&var1);
+    } else if (evaluate && !tv_check_str(&var1)) {
+      // Not a number or string.
+      tv_clear(&var1);
       return FAIL;
     }
 
@@ -4391,194 +4250,213 @@ eval_index (
     if (**arg == ':') {
       range = TRUE;
       *arg = skipwhite(*arg + 1);
-      if (**arg == ']')
-        empty2 = TRUE;
-      else if (eval1(arg, &var2, evaluate) == FAIL) {           /* recursive! */
-        if (!empty1)
-          clear_tv(&var1);
+      if (**arg == ']') {
+        empty2 = true;
+      } else if (eval1(arg, &var2, evaluate) == FAIL) {  // Recursive!
+        if (!empty1) {
+          tv_clear(&var1);
+        }
         return FAIL;
-      } else if (evaluate && get_tv_string_chk(&var2) == NULL) {
-        /* not a number or string */
-        if (!empty1)
-          clear_tv(&var1);
-        clear_tv(&var2);
+      } else if (evaluate && !tv_check_str(&var2)) {
+        // Not a number or string.
+        if (!empty1) {
+          tv_clear(&var1);
+        }
+        tv_clear(&var2);
         return FAIL;
       }
     }
 
-    /* Check for the ']'. */
+    // Check for the ']'.
     if (**arg != ']') {
-      if (verbose)
+      if (verbose) {
         EMSG(_(e_missbrac));
-      clear_tv(&var1);
-      if (range)
-        clear_tv(&var2);
+      }
+      tv_clear(&var1);
+      if (range) {
+        tv_clear(&var2);
+      }
       return FAIL;
     }
-    *arg = skipwhite(*arg + 1);         /* skip the ']' */
+    *arg = skipwhite(*arg + 1);         // skip the ']'
   }
 
   if (evaluate) {
     n1 = 0;
-    if (!empty1 && rettv->v_type != VAR_DICT) {
-      n1 = get_tv_number(&var1);
-      clear_tv(&var1);
+    if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
+      n1 = tv_get_number(&var1);
+      tv_clear(&var1);
     }
     if (range) {
-      if (empty2)
+      if (empty2) {
         n2 = -1;
-      else {
-        n2 = get_tv_number(&var2);
-        clear_tv(&var2);
+      } else {
+        n2 = tv_get_number(&var2);
+        tv_clear(&var2);
       }
     }
 
     switch (rettv->v_type) {
-    case VAR_NUMBER:
-    case VAR_STRING:
-      s = get_tv_string(rettv);
-      len = (long)STRLEN(s);
-      if (range) {
-        /* The resulting variable is a substring.  If the indexes
-         * are out of range the result is empty. */
+      case VAR_NUMBER:
+      case VAR_STRING: {
+        const char *const s = tv_get_string(rettv);
+        char *v;
+        len = (ptrdiff_t)strlen(s);
+        if (range) {
+          // The resulting variable is a substring.  If the indexes
+          // are out of range the result is empty.
+          if (n1 < 0) {
+            n1 = len + n1;
+            if (n1 < 0) {
+              n1 = 0;
+            }
+          }
+          if (n2 < 0) {
+            n2 = len + n2;
+          } else if (n2 >= len) {
+            n2 = len;
+          }
+          if (n1 >= len || n2 < 0 || n1 > n2) {
+            v = NULL;
+          } else {
+            v = xmemdupz(s + n1, (size_t)(n2 - n1 + 1));
+          }
+        } else {
+          // The resulting variable is a string of a single
+          // character.  If the index is too big or negative the
+          // result is empty.
+          if (n1 >= len || n1 < 0) {
+            v = NULL;
+          } else {
+            v = xmemdupz(s + n1, 1);
+          }
+        }
+        tv_clear(rettv);
+        rettv->v_type = VAR_STRING;
+        rettv->vval.v_string = (char_u *)v;
+        break;
+      }
+      case VAR_LIST: {
+        len = tv_list_len(rettv->vval.v_list);
         if (n1 < 0) {
           n1 = len + n1;
-          if (n1 < 0)
-            n1 = 0;
         }
-        if (n2 < 0)
-          n2 = len + n2;
-        else if (n2 >= len)
-          n2 = len;
-        if (n1 >= len || n2 < 0 || n1 > n2)
-          s = NULL;
-        else
-          s = vim_strnsave(s + n1, (int)(n2 - n1 + 1));
-      } else {
-        /* The resulting variable is a string of a single
-         * character.  If the index is too big or negative the
-         * result is empty. */
-        if (n1 >= len || n1 < 0)
-          s = NULL;
-        else
-          s = vim_strnsave(s + n1, 1);
-      }
-      clear_tv(rettv);
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = s;
-      break;
+        if (!empty1 && (n1 < 0 || n1 >= len)) {
+          // For a range we allow invalid values and return an empty
+          // list.  A list index out of range is an error.
+          if (!range) {
+            if (verbose) {
+              EMSGN(_(e_listidx), n1);
+            }
+            return FAIL;
+          }
+          n1 = len;
+        }
+        if (range) {
+          list_T      *l;
+          listitem_T  *item;
 
-    case VAR_LIST:
-      len = list_len(rettv->vval.v_list);
-      if (n1 < 0)
-        n1 = len + n1;
-      if (!empty1 && (n1 < 0 || n1 >= len)) {
-        /* For a range we allow invalid values and return an empty
-         * list.  A list index out of range is an error. */
-        if (!range) {
-          if (verbose)
-            EMSGN(_(e_listidx), n1);
+          if (n2 < 0) {
+            n2 = len + n2;
+          } else if (n2 >= len) {
+            n2 = len - 1;
+          }
+          if (!empty2 && (n2 < 0 || n2 + 1 < n1)) {
+            n2 = -1;
+          }
+          l = tv_list_alloc(n2 - n1 + 1);
+          item = tv_list_find(rettv->vval.v_list, n1);
+          while (n1++ <= n2) {
+            tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
+            item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
+          }
+          tv_clear(rettv);
+          tv_list_set_ret(rettv, l);
+        } else {
+          tv_copy(TV_LIST_ITEM_TV(tv_list_find(rettv->vval.v_list, n1)), &var1);
+          tv_clear(rettv);
+          *rettv = var1;
+        }
+        break;
+      }
+      case VAR_DICT: {
+        if (range) {
+          if (verbose) {
+            EMSG(_(e_dictrange));
+          }
+          if (len == -1) {
+            tv_clear(&var1);
+          }
           return FAIL;
         }
-        n1 = len;
-      }
-      if (range) {
-        list_T      *l;
-        listitem_T  *item;
-
-        if (n2 < 0)
-          n2 = len + n2;
-        else if (n2 >= len)
-          n2 = len - 1;
-        if (!empty2 && (n2 < 0 || n2 + 1 < n1))
-          n2 = -1;
-        l = list_alloc();
-        item = list_find(rettv->vval.v_list, n1);
-        while (n1++ <= n2) {
-          list_append_tv(l, &item->li_tv);
-          item = item->li_next;
-        }
-        clear_tv(rettv);
-        rettv->v_type = VAR_LIST;
-        rettv->vval.v_list = l;
-        ++l->lv_refcount;
-      } else {
-        copy_tv(&list_find(rettv->vval.v_list, n1)->li_tv, &var1);
-        clear_tv(rettv);
-        *rettv = var1;
-      }
-      break;
-
-    case VAR_DICT:
-      if (range) {
-        if (verbose)
-          EMSG(_(e_dictrange));
-        if (len == -1)
-          clear_tv(&var1);
-        return FAIL;
-      }
-      {
-        dictitem_T  *item;
 
         if (len == -1) {
-          key = get_tv_string(&var1);
-          if (*key == NUL) {
-            if (verbose)
-              EMSG(_(e_emptykey));
-            clear_tv(&var1);
+          key = (char_u *)tv_get_string_chk(&var1);
+          if (key == NULL) {
+            tv_clear(&var1);
             return FAIL;
           }
         }
 
-        item = dict_find(rettv->vval.v_dict, key, (int)len);
+        dictitem_T *const item = tv_dict_find(rettv->vval.v_dict,
+                                              (const char *)key, len);
 
-        if (item == NULL && verbose)
-          EMSG2(_(e_dictkey), key);
-        if (len == -1)
-          clear_tv(&var1);
-        if (item == NULL)
+        if (item == NULL && verbose) {
+          emsgf(_(e_dictkey), key);
+        }
+        if (len == -1) {
+          tv_clear(&var1);
+        }
+        if (item == NULL || tv_is_luafunc(&item->di_tv)) {
           return FAIL;
+        }
 
-        copy_tv(&item->di_tv, &var1);
-        clear_tv(rettv);
+        tv_copy(&item->di_tv, &var1);
+        tv_clear(rettv);
         *rettv = var1;
+        break;
       }
-      break;
+      case VAR_SPECIAL:
+      case VAR_FUNC:
+      case VAR_FLOAT:
+      case VAR_PARTIAL:
+      case VAR_UNKNOWN: {
+        break;  // Not evaluating, skipping over subscript
+      }
     }
   }
 
   return OK;
 }
 
-/*
- * Get an option value.
- * "arg" points to the '&' or '+' before the option name.
- * "arg" is advanced to character after the option name.
- * Return OK or FAIL.
- */
-static int 
-get_option_tv (
-    char_u **arg,
-    typval_T *rettv,     /* when NULL, only check if option exists */
-    int evaluate
-)
+// TODO(ZyX-I): move to eval/executor
+
+/// Get an option value
+///
+/// @param[in,out]  arg  Points to the '&' or '+' before the option name. Is
+///                      advanced to the character after the option name.
+/// @param[out]  rettv  Location where result is saved.
+/// @param[in]  evaluate  If not true, rettv is not populated.
+///
+/// @return OK or FAIL.
+int get_option_tv(const char **const arg, typval_T *const rettv,
+                  const bool evaluate)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u      *option_end;
   long numval;
   char_u      *stringval;
   int opt_type;
   int c;
-  int working = (**arg == '+');              /* has("+option") */
+  bool working = (**arg == '+');  // has("+option")
   int ret = OK;
   int opt_flags;
 
-  /*
-   * Isolate the option name and find its value.
-   */
-  option_end = find_option_end(arg, &opt_flags);
+  // Isolate the option name and find its value.
+  char *option_end = (char *)find_option_end(arg, &opt_flags);
   if (option_end == NULL) {
-    if (rettv != NULL)
+    if (rettv != NULL) {
       EMSG2(_("E112: Option name missing: %s"), *arg);
+    }
     return FAIL;
   }
 
@@ -4589,31 +4467,32 @@ get_option_tv (
 
   c = *option_end;
   *option_end = NUL;
-  opt_type = get_option_value(*arg, &numval,
-      rettv == NULL ? NULL : &stringval, opt_flags);
+  opt_type = get_option_value((char_u *)(*arg), &numval,
+                              rettv == NULL ? NULL : &stringval, opt_flags);
 
-  if (opt_type == -3) {                 /* invalid name */
-    if (rettv != NULL)
+  if (opt_type == -3) {                 // invalid name
+    if (rettv != NULL) {
       EMSG2(_("E113: Unknown option: %s"), *arg);
+    }
     ret = FAIL;
   } else if (rettv != NULL)   {
-    if (opt_type == -2) {               /* hidden string option */
+    if (opt_type == -2) {               // hidden string option
       rettv->v_type = VAR_STRING;
       rettv->vval.v_string = NULL;
-    } else if (opt_type == -1) {      /* hidden number option */
+    } else if (opt_type == -1) {      // hidden number option
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = 0;
-    } else if (opt_type == 1) {       /* number option */
+    } else if (opt_type == 1) {       // number option
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = numval;
-    } else {                          /* string option */
+    } else {                          // string option
       rettv->v_type = VAR_STRING;
       rettv->vval.v_string = stringval;
     }
   } else if (working && (opt_type == -2 || opt_type == -1))
     ret = FAIL;
 
-  *option_end = c;                  /* put back for error messages */
+  *option_end = c;                  // put back for error messages
   *arg = option_end;
 
   return ret;
@@ -4632,7 +4511,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Find the end of the string, skipping backslashed characters.
    */
-  for (p = *arg + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+  for (p = *arg + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       ++p;
       /* A "\<x>" form occupies at least 4 characters, and produces up
@@ -4647,7 +4526,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
     return FAIL;
   }
 
-  /* If only parsing, set *arg and return here */
+  // If only parsing, set *arg and return here
   if (!evaluate) {
     *arg = p + 1;
     return OK;
@@ -4671,9 +4550,9 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
       case 'r': *name++ = CAR; ++p; break;
       case 't': *name++ = TAB; ++p; break;
 
-      case 'X':           /* hex: "\x1", "\x12" */
+      case 'X':           // hex: "\x1", "\x12"
       case 'x':
-      case 'u':           /* Unicode: "\u0023" */
+      case 'u':           // Unicode: "\u0023"
       case 'U':
         if (ascii_isxdigit(p[1])) {
           int n, nr;
@@ -4694,14 +4573,15 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           ++p;
           /* For "\u" store the number according to
            * 'encoding'. */
-          if (c != 'X')
-            name += (*mb_char2bytes)(nr, name);
-          else
+          if (c != 'X') {
+            name += utf_char2bytes(nr, name);
+          } else {
             *name++ = nr;
+          }
         }
         break;
 
-      /* octal: "\1", "\12", "\123" */
+      // octal: "\1", "\12", "\123"
       case '0':
       case '1':
       case '2':
@@ -4718,13 +4598,14 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         ++name;
         break;
 
-      /* Special key, e.g.: "\<C-W>" */
-      case '<': extra = trans_special(&p, name, TRUE);
+      // Special key, e.g.: "\<C-W>"
+      case '<':
+        extra = trans_special((const char_u **)&p, STRLEN(p), name, true, true);
         if (extra != 0) {
           name += extra;
           break;
         }
-      /* FALLTHROUGH */
+        FALLTHROUGH;
 
       default:  MB_COPY_CHAR(p, name);
         break;
@@ -4734,7 +4615,10 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   }
   *name = NUL;
-  *arg = p + 1;
+  if (*p != NUL) {  // just in case
+    p++;
+  }
+  *arg = p;
 
   return OK;
 }
@@ -4752,7 +4636,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Find the end of the string, skipping ''.
    */
-  for (p = *arg + 1; *p != NUL; mb_ptr_adv(p)) {
+  for (p = *arg + 1; *p != NUL; MB_PTR_ADV(p)) {
     if (*p == '\'') {
       if (p[1] != '\'')
         break;
@@ -4766,7 +4650,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
     return FAIL;
   }
 
-  /* If only parsing return after setting "*arg" */
+  // If only parsing return after setting "*arg"
   if (!evaluate) {
     *arg = p + 1;
     return OK;
@@ -4793,767 +4677,160 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-/*
- * Allocate a variable for a List and fill it from "*arg".
- * Return OK or FAIL.
- */
+/// @return the function name of the partial.
+char_u *partial_name(partial_T *pt)
+{
+  if (pt->pt_name != NULL) {
+    return pt->pt_name;
+  }
+  return pt->pt_func->uf_name;
+}
+
+// TODO(ZyX-I): Move to eval/typval.h
+
+static void partial_free(partial_T *pt)
+{
+  for (int i = 0; i < pt->pt_argc; i++) {
+    tv_clear(&pt->pt_argv[i]);
+  }
+  xfree(pt->pt_argv);
+  tv_dict_unref(pt->pt_dict);
+  if (pt->pt_name != NULL) {
+    func_unref(pt->pt_name);
+    xfree(pt->pt_name);
+  } else {
+    func_ptr_unref(pt->pt_func);
+  }
+  xfree(pt);
+}
+
+// TODO(ZyX-I): Move to eval/typval.h
+
+/// Unreference a closure: decrement the reference count and free it when it
+/// becomes zero.
+void partial_unref(partial_T *pt)
+{
+  if (pt != NULL && --pt->pt_refcount <= 0) {
+    partial_free(pt);
+  }
+}
+
+/// Allocate a variable for a List and fill it from "*arg".
+/// Return OK or FAIL.
 static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   list_T      *l = NULL;
-  typval_T tv;
-  listitem_T  *item;
 
   if (evaluate) {
-    l = list_alloc();
+    l = tv_list_alloc(kListLenShouldKnow);
   }
 
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
-    if (eval1(arg, &tv, evaluate) == FAIL)      /* recursive! */
+    typval_T tv;
+    if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
       goto failret;
+    }
     if (evaluate) {
-      item = listitem_alloc();
-      item->li_tv = tv;
-      item->li_tv.v_lock = 0;
-      list_append(l, item);
+      tv.v_lock = VAR_UNLOCKED;
+      tv_list_append_owned_tv(l, tv);
     }
 
-    if (**arg == ']')
+    if (**arg == ']') {
       break;
+    }
     if (**arg != ',') {
-      EMSG2(_("E696: Missing comma in List: %s"), *arg);
+      emsgf(_("E696: Missing comma in List: %s"), *arg);
       goto failret;
     }
     *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != ']') {
-    EMSG2(_("E697: Missing end of List ']': %s"), *arg);
+    emsgf(_("E697: Missing end of List ']': %s"), *arg);
 failret:
-    if (evaluate)
-      list_free(l, TRUE);
+    if (evaluate) {
+      tv_list_free(l);
+    }
     return FAIL;
   }
 
   *arg = skipwhite(*arg + 1);
   if (evaluate) {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = l;
-    ++l->lv_refcount;
+    tv_list_set_ret(rettv, l);
   }
 
   return OK;
 }
 
-/*
- * Allocate an empty header for a list.
- * Caller should take care of the reference count.
- */
-list_T *list_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  list_T *list = xcalloc(1, sizeof(list_T));
-
-  /* Prepend the list to the list of lists for garbage collection. */
-  if (first_list != NULL)
-    first_list->lv_used_prev = list;
-  list->lv_used_prev = NULL;
-  list->lv_used_next = first_list;
-  first_list = list;
-  return list;
-}
-
-/*
- * Allocate an empty list for a return value.
- */
-static list_T *rettv_list_alloc(typval_T *rettv)
-{
-  list_T *l = list_alloc();
-  rettv->vval.v_list = l;
-  rettv->v_type = VAR_LIST;
-  ++l->lv_refcount;
-  return l;
-}
-
-/*
- * Unreference a list: decrement the reference count and free it when it
- * becomes zero.
- */
-void list_unref(list_T *l)
-{
-  if (l != NULL && --l->lv_refcount <= 0)
-    list_free(l, TRUE);
-}
-
-/*
- * Free a list, including all items it points to.
- * Ignores the reference count.
- */
-void 
-list_free (
-    list_T *l,
-    int recurse            /* Free Lists and Dictionaries recursively. */
-)
-{
-  listitem_T *item;
-
-  /* Remove the list from the list of lists for garbage collection. */
-  if (l->lv_used_prev == NULL)
-    first_list = l->lv_used_next;
-  else
-    l->lv_used_prev->lv_used_next = l->lv_used_next;
-  if (l->lv_used_next != NULL)
-    l->lv_used_next->lv_used_prev = l->lv_used_prev;
-
-  for (item = l->lv_first; item != NULL; item = l->lv_first) {
-    /* Remove the item before deleting it. */
-    l->lv_first = item->li_next;
-    if (recurse || (item->li_tv.v_type != VAR_LIST
-                    && item->li_tv.v_type != VAR_DICT))
-      clear_tv(&item->li_tv);
-    xfree(item);
-  }
-  xfree(l);
-}
-
-/*
- * Allocate a list item.
- * It is not initialized, don't forget to set v_lock.
- */
-listitem_T *listitem_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  return xmalloc(sizeof(listitem_T));
-}
-
-/*
- * Free a list item.  Also clears the value.  Does not notify watchers.
- */
-void listitem_free(listitem_T *item)
-{
-  clear_tv(&item->li_tv);
-  xfree(item);
-}
-
-/*
- * Remove a list item from a List and free it.  Also clears the value.
- */
-void listitem_remove(list_T *l, listitem_T *item)
-{
-  vim_list_remove(l, item, item);
-  listitem_free(item);
-}
-
-/*
- * Get the number of items in a list.
- */
-static long list_len(list_T *l)
-{
-  if (l == NULL)
-    return 0L;
-  return l->lv_len;
-}
-
-/*
- * Return TRUE when two lists have exactly the same values.
- */
-static int 
-list_equal (
-    list_T *l1,
-    list_T *l2,
-    int ic,                 /* ignore case for strings */
-    int recursive              /* TRUE when used recursively */
-)
-{
-  listitem_T  *item1, *item2;
-
-  if (l1 == NULL || l2 == NULL)
-    return FALSE;
-  if (l1 == l2)
-    return TRUE;
-  if (list_len(l1) != list_len(l2))
-    return FALSE;
-
-  for (item1 = l1->lv_first, item2 = l2->lv_first;
-       item1 != NULL && item2 != NULL;
-       item1 = item1->li_next, item2 = item2->li_next)
-    if (!tv_equal(&item1->li_tv, &item2->li_tv, ic, recursive))
-      return FALSE;
-  return item1 == NULL && item2 == NULL;
-}
-
-/*
- * Return the dictitem that an entry in a hashtable points to.
- */
-dictitem_T *dict_lookup(hashitem_T *hi)
-{
-  return HI2DI(hi);
-}
-
-/*
- * Return TRUE when two dictionaries have exactly the same key/values.
- */
-static int 
-dict_equal (
-    dict_T *d1,
-    dict_T *d2,
-    int ic,                 /* ignore case for strings */
-    int recursive             /* TRUE when used recursively */
-)
-{
-  hashitem_T  *hi;
-  dictitem_T  *item2;
-  int todo;
-
-  if (d1 == NULL || d2 == NULL)
-    return FALSE;
-  if (d1 == d2)
-    return TRUE;
-  if (dict_len(d1) != dict_len(d2))
-    return FALSE;
-
-  todo = (int)d1->dv_hashtab.ht_used;
-  for (hi = d1->dv_hashtab.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      item2 = dict_find(d2, hi->hi_key, -1);
-      if (item2 == NULL)
-        return FALSE;
-      if (!tv_equal(&HI2DI(hi)->di_tv, &item2->di_tv, ic, recursive))
-        return FALSE;
-      --todo;
-    }
-  }
-  return TRUE;
-}
-
-static int tv_equal_recurse_limit;
-
-/*
- * Return TRUE if "tv1" and "tv2" have the same value.
- * Compares the items just like "==" would compare them, but strings and
- * numbers are different.  Floats and numbers are also different.
- */
-static int 
-tv_equal (
+bool func_equal(
     typval_T *tv1,
     typval_T *tv2,
-    int ic,                     /* ignore case */
-    int recursive              /* TRUE when used recursively */
-)
-{
-  char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
-  char_u      *s1, *s2;
-  static int recursive_cnt = 0;             /* catch recursive loops */
-  int r;
+    bool ic         // ignore case
+) {
+  char_u *s1, *s2;
+  dict_T *d1, *d2;
+  int a1, a2;
 
-  if (tv1->v_type != tv2->v_type)
-    return FALSE;
-
-  /* Catch lists and dicts that have an endless loop by limiting
-   * recursiveness to a limit.  We guess they are equal then.
-   * A fixed limit has the problem of still taking an awful long time.
-   * Reduce the limit every time running into it. That should work fine for
-   * deeply linked structures that are not recursively linked and catch
-   * recursiveness quickly. */
-  if (!recursive)
-    tv_equal_recurse_limit = 1000;
-  if (recursive_cnt >= tv_equal_recurse_limit) {
-    --tv_equal_recurse_limit;
-    return TRUE;
+  // empty and NULL function name considered the same
+  s1 = tv1->v_type == VAR_FUNC ? tv1->vval.v_string
+                     : partial_name(tv1->vval.v_partial);
+  if (s1 != NULL && *s1 == NUL) {
+    s1 = NULL;
   }
-
-  switch (tv1->v_type) {
-  case VAR_LIST:
-    ++recursive_cnt;
-    r = list_equal(tv1->vval.v_list, tv2->vval.v_list, ic, TRUE);
-    --recursive_cnt;
-    return r;
-
-  case VAR_DICT:
-    ++recursive_cnt;
-    r = dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic, TRUE);
-    --recursive_cnt;
-    return r;
-
-  case VAR_FUNC:
-    return tv1->vval.v_string != NULL
-           && tv2->vval.v_string != NULL
-           && STRCMP(tv1->vval.v_string, tv2->vval.v_string) == 0;
-
-  case VAR_NUMBER:
-    return tv1->vval.v_number == tv2->vval.v_number;
-
-  case VAR_FLOAT:
-    return tv1->vval.v_float == tv2->vval.v_float;
-
-  case VAR_STRING:
-    s1 = get_tv_string_buf(tv1, buf1);
-    s2 = get_tv_string_buf(tv2, buf2);
-    return (ic ? mb_stricmp(s1, s2) : STRCMP(s1, s2)) == 0;
+  s2 = tv2->v_type == VAR_FUNC ? tv2->vval.v_string
+                     : partial_name(tv2->vval.v_partial);
+  if (s2 != NULL && *s2 == NUL) {
+    s2 = NULL;
   }
-
-  EMSG2(_(e_intern2), "tv_equal()");
-  return TRUE;
-}
-
-/*
- * Locate item with index "n" in list "l" and return it.
- * A negative index is counted from the end; -1 is the last item.
- * Returns NULL when "n" is out of range.
- */
-listitem_T *list_find(list_T *l, long n)
-{
-  listitem_T  *item;
-  long idx;
-
-  if (l == NULL)
-    return NULL;
-
-  /* Negative index is relative to the end. */
-  if (n < 0)
-    n = l->lv_len + n;
-
-  /* Check for index out of range. */
-  if (n < 0 || n >= l->lv_len)
-    return NULL;
-
-  /* When there is a cached index may start search from there. */
-  if (l->lv_idx_item != NULL) {
-    if (n < l->lv_idx / 2) {
-      /* closest to the start of the list */
-      item = l->lv_first;
-      idx = 0;
-    } else if (n > (l->lv_idx + l->lv_len) / 2) {
-      /* closest to the end of the list */
-      item = l->lv_last;
-      idx = l->lv_len - 1;
-    } else {
-      /* closest to the cached index */
-      item = l->lv_idx_item;
-      idx = l->lv_idx;
+  if (s1 == NULL || s2 == NULL) {
+    if (s1 != s2) {
+      return false;
     }
-  } else {
-    if (n < l->lv_len / 2) {
-      /* closest to the start of the list */
-      item = l->lv_first;
-      idx = 0;
-    } else {
-      /* closest to the end of the list */
-      item = l->lv_last;
-      idx = l->lv_len - 1;
+  } else if (STRCMP(s1, s2) != 0) {
+    return false;
+  }
+
+  // empty dict and NULL dict is different
+  d1 = tv1->v_type == VAR_FUNC ? NULL : tv1->vval.v_partial->pt_dict;
+  d2 = tv2->v_type == VAR_FUNC ? NULL : tv2->vval.v_partial->pt_dict;
+  if (d1 == NULL || d2 == NULL) {
+    if (d1 != d2) {
+      return false;
+    }
+  } else if (!tv_dict_equal(d1, d2, ic, true)) {
+    return false;
+  }
+
+  // empty list and no list considered the same
+  a1 = tv1->v_type == VAR_FUNC ? 0 : tv1->vval.v_partial->pt_argc;
+  a2 = tv2->v_type == VAR_FUNC ? 0 : tv2->vval.v_partial->pt_argc;
+  if (a1 != a2) {
+    return false;
+  }
+  for (int i = 0; i < a1; i++) {
+    if (!tv_equal(tv1->vval.v_partial->pt_argv + i,
+                  tv2->vval.v_partial->pt_argv + i, ic, true)) {
+      return false;
     }
   }
-
-  while (n > idx) {
-    /* search forward */
-    item = item->li_next;
-    ++idx;
-  }
-  while (n < idx) {
-    /* search backward */
-    item = item->li_prev;
-    --idx;
-  }
-
-  /* cache the used index */
-  l->lv_idx = idx;
-  l->lv_idx_item = item;
-
-  return item;
+  return true;
 }
 
-/*
- * Get list item "l[idx]" as a number.
- */
-static long 
-list_find_nr (
-    list_T *l,
-    long idx,
-    int *errorp            /* set to TRUE when something wrong */
-)
-{
-  listitem_T  *li;
-
-  li = list_find(l, idx);
-  if (li == NULL) {
-    if (errorp != NULL)
-      *errorp = TRUE;
-    return -1L;
-  }
-  return get_tv_number_chk(&li->li_tv, errorp);
-}
-
-/*
- * Get list item "l[idx - 1]" as a string.  Returns NULL for failure.
- */
-char_u *list_find_str(list_T *l, long idx)
-{
-  listitem_T  *li;
-
-  li = list_find(l, idx - 1);
-  if (li == NULL) {
-    EMSGN(_(e_listidx), idx);
-    return NULL;
-  }
-  return get_tv_string(&li->li_tv);
-}
-
-/*
- * Locate "item" list "l" and return its index.
- * Returns -1 when "item" is not in the list.
- */
-static long list_idx_of_item(list_T *l, listitem_T *item)
-{
-  long idx = 0;
-  listitem_T  *li;
-
-  if (l == NULL)
-    return -1;
-  idx = 0;
-  for (li = l->lv_first; li != NULL && li != item; li = li->li_next)
-    ++idx;
-  if (li == NULL)
-    return -1;
-  return idx;
-}
-
-/*
- * Append item "item" to the end of list "l".
- */
-void list_append(list_T *l, listitem_T *item)
-{
-  if (l->lv_last == NULL) {
-    /* empty list */
-    l->lv_first = item;
-    l->lv_last = item;
-    item->li_prev = NULL;
-  } else {
-    l->lv_last->li_next = item;
-    item->li_prev = l->lv_last;
-    l->lv_last = item;
-  }
-  ++l->lv_len;
-  item->li_next = NULL;
-}
-
-/*
- * Append typval_T "tv" to the end of list "l".
- */
-void list_append_tv(list_T *l, typval_T *tv)
-{
-  listitem_T  *li = listitem_alloc();
-  copy_tv(tv, &li->li_tv);
-  list_append(l, li);
-}
-
-/*
- * Add a list to a list.
- */
-void list_append_list(list_T *list, list_T *itemlist)
-{
-  listitem_T  *li = listitem_alloc();
-
-  li->li_tv.v_type = VAR_LIST;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_list = itemlist;
-  list_append(list, li);
-  ++itemlist->lv_refcount;
-}
-
-/*
- * Add a dictionary to a list.  Used by getqflist().
- */
-void list_append_dict(list_T *list, dict_T *dict)
-{
-  listitem_T  *li = listitem_alloc();
-
-  li->li_tv.v_type = VAR_DICT;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_dict = dict;
-  list_append(list, li);
-  ++dict->dv_refcount;
-}
-
-/// Make a copy of "str" and append it as an item to list "l"
+/// Get next (unique) copy ID
 ///
-/// @param[out]  l    List to append to.
-/// @param[in]   str  String to append.
-/// @param[in]   len  Length of the appended string. May be negative, in this
-///                   case string is considered to be usual zero-terminated
-///                   string.
-void list_append_string(list_T *l, const char_u *str, int len)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  if (str == NULL) {
-    list_append_allocated_string(l, NULL);
-  } else {
-    list_append_allocated_string(l, (len >= 0
-                                     ? xmemdupz((char *) str, len)
-                                     : xstrdup((char *) str)));
-  }
-}
-
-/// Append given string to the list
-///
-/// Unlike list_append_string this function does not copy the string.
-///
-/// @param[out]  l    List to append to.
-/// @param[in]   str  String to append.
-void list_append_allocated_string(list_T *l, char *const str)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  listitem_T *li = listitem_alloc();
-
-  list_append(l, li);
-  li->li_tv.v_type = VAR_STRING;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_string = (char_u *) str;
-}
-
-/*
- * Append "n" to list "l".
- */
-void list_append_number(list_T *l, varnumber_T n)
-{
-  listitem_T *li = listitem_alloc();
-  li->li_tv.v_type = VAR_NUMBER;
-  li->li_tv.v_lock = 0;
-  li->li_tv.vval.v_number = n;
-  list_append(l, li);
-}
-
-/*
- * Insert typval_T "tv" in list "l" before "item".
- * If "item" is NULL append at the end.
- */
-void list_insert_tv(list_T *l, typval_T *tv, listitem_T *item)
-{
-  listitem_T  *ni = listitem_alloc();
-
-  copy_tv(tv, &ni->li_tv);
-  list_insert(l, ni, item);
-}
-
-void list_insert(list_T *l, listitem_T *ni, listitem_T *item)
-{
-  if (item == NULL)
-    /* Append new item at end of list. */
-    list_append(l, ni);
-  else {
-    /* Insert new item before existing item. */
-    ni->li_prev = item->li_prev;
-    ni->li_next = item;
-    if (item->li_prev == NULL) {
-      l->lv_first = ni;
-      ++l->lv_idx;
-    } else {
-      item->li_prev->li_next = ni;
-      l->lv_idx_item = NULL;
-    }
-    item->li_prev = ni;
-    ++l->lv_len;
-  }
-}
-
-/*
- * Extend "l1" with "l2".
- * If "bef" is NULL append at the end, otherwise insert before this item.
- */
-static void list_extend(list_T *l1, list_T *l2, listitem_T *bef)
-{
-  listitem_T  *item;
-  int todo = l2->lv_len;
-
-  /* We also quit the loop when we have inserted the original item count of
-   * the list, avoid a hang when we extend a list with itself. */
-  for (item = l2->lv_first; item != NULL && --todo >= 0; item = item->li_next) {
-    list_insert_tv(l1, &item->li_tv, bef);
-  }
-}
-
-/*
- * Concatenate lists "l1" and "l2" into a new list, stored in "tv".
- * Return FAIL on failure to copy.
- */
-static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
-{
-  list_T      *l;
-
-  if (l1 == NULL || l2 == NULL)
-    return FAIL;
-
-  /* make a copy of the first list. */
-  l = list_copy(NULL, l1, false, 0);
-  if (l == NULL)
-    return FAIL;
-  tv->v_type = VAR_LIST;
-  tv->vval.v_list = l;
-
-  /* append all items from the second list */
-  list_extend(l, l2, NULL);
-  return OK;
-}
-
-/// Make a copy of list
-///
-/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
-/// @param[in]  orig  Original list to copy.
-/// @param[in]  deep  If false, then shallow copy will be done.
-/// @param[in]  copyID  See var_item_copy().
-///
-/// @return Copied list. May be NULL in case original list is NULL or some
-///         failure happens. The refcount of the new list is set to 1.
-static list_T *list_copy(const vimconv_T *const conv,
-                         list_T *const orig,
-                         const bool deep,
-                         const int copyID)
+/// Used for traversing nested structures e.g. when serializing them or garbage
+/// collecting.
+int get_copyID(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  listitem_T  *item;
-  listitem_T  *ni;
-
-  if (orig == NULL)
-    return NULL;
-
-  list_T *copy = list_alloc();
-  if (copyID != 0) {
-    /* Do this before adding the items, because one of the items may
-     * refer back to this list. */
-    orig->lv_copyID = copyID;
-    orig->lv_copylist = copy;
-  }
-  for (item = orig->lv_first; item != NULL && !got_int;
-       item = item->li_next) {
-    ni = listitem_alloc();
-    if (deep) {
-      if (var_item_copy(conv, &item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
-        xfree(ni);
-        break;
-      }
-    } else
-      copy_tv(&item->li_tv, &ni->li_tv);
-    list_append(copy, ni);
-  }
-  ++copy->lv_refcount;
-  if (item != NULL) {
-    list_unref(copy);
-    copy = NULL;
-  }
-
-  return copy;
-}
-
-/// Remove items "item" to "item2" from list "l".
-/// @warning Does not free the listitem or the value!
-void vim_list_remove(list_T *l, listitem_T *item, listitem_T *item2)
-{
-  // notify watchers
-  for (listitem_T *ip = item; ip != NULL; ip = ip->li_next) {
-    --l->lv_len;
-    list_fix_watch(l, ip);
-    if (ip == item2) {
-      break;
-    }
-  }
-
-  if (item2->li_next == NULL) {
-    l->lv_last = item->li_prev;
-  } else {
-    item2->li_next->li_prev = item->li_prev;
-  }
-  if (item->li_prev == NULL) {
-    l->lv_first = item2->li_next;
-  } else {
-    item->li_prev->li_next = item2->li_next;
-  }
-  l->lv_idx_item = NULL;
-}
-
-typedef struct join_S {
-  char_u      *s;
-  char_u      *tofree;
-} join_T;
-
-/// Join list into a string, helper function
-///
-/// @param[out]  gap  Garray where result will be saved.
-/// @param[in]  l  List to join.
-/// @param[in]  sep  Used separator.
-/// @param[in]  join_gap  Garray to keep each list item string.
-///
-/// @return OK in case of success, FAIL otherwise.
-static int list_join_inner(garray_T *const gap, list_T *const l,
-                           const char *const sep, garray_T *const join_gap)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int sumlen = 0;
-  bool first = true;
-  listitem_T  *item;
-
-  /* Stringify each item in the list. */
-  for (item = l->lv_first; item != NULL && !got_int; item = item->li_next) {
-    char *s;
-    size_t len;
-    s = echo_string(&item->li_tv, &len);
-    if (s == NULL)
-      return FAIL;
-
-    sumlen += (int) len;
-
-    join_T *const p = GA_APPEND_VIA_PTR(join_T, join_gap);
-    p->tofree = p->s = (char_u *) s;
-
-    line_breakcheck();
-    if (did_echo_string_emsg) {  // recursion error, bail out
-      break;
-    }
-  }
-
-  /* Allocate result buffer with its total size, avoid re-allocation and
-   * multiple copy operations.  Add 2 for a tailing ']' and NUL. */
-  if (join_gap->ga_len >= 2)
-    sumlen += (int)STRLEN(sep) * (join_gap->ga_len - 1);
-  ga_grow(gap, sumlen + 2);
-
-  for (int i = 0; i < join_gap->ga_len && !got_int; ++i) {
-    if (first) {
-      first = false;
-    } else {
-      ga_concat(gap, (const char_u *) sep);
-    }
-    const join_T *const p = ((const join_T *)join_gap->ga_data) + i;
-
-    if (p->s != NULL)
-      ga_concat(gap, p->s);
-    line_breakcheck();
-  }
-
-  return OK;
-}
-
-/// Join list into a string using given separator
-///
-/// @param[out]  gap  Garray where result will be saved.
-/// @param[in]  l  Joined list.
-/// @param[in]  sep  Separator.
-///
-/// @return OK in case of success, FAIL otherwise.
-static int list_join(garray_T *const gap, list_T *const l,
-                     const char *const sep)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (l->lv_len < 1) {
-    return OK;
-  }
-
-  garray_T join_ga;
-  int retval;
-
-  ga_init(&join_ga, (int)sizeof(join_T), l->lv_len);
-  retval = list_join_inner(gap, l, sep, &join_ga);
-
-# define FREE_JOIN_TOFREE(join) xfree((join)->tofree)
-  GA_DEEP_CLEAR(&join_ga, join_T, FREE_JOIN_TOFREE);
-
-  return retval;
+  // CopyID for recursively traversing lists and dicts
+  //
+  // This value is needed to avoid endless recursiveness. Last bit is used for
+  // previous_funccal and normally ignored when comparing.
+  static int current_copyID = 0;
+  current_copyID += COPYID_INC;
+  return current_copyID;
 }
 
 /*
@@ -5578,21 +4855,23 @@ static int list_join(garray_T *const gap, list_T *const l,
 
 /// Do garbage collection for lists and dicts.
 ///
+/// @param testing  true if called from test_garbagecollect_now().
 /// @returns        true if some memory was freed.
-bool garbage_collect(void)
+bool garbage_collect(bool testing)
 {
   bool abort = false;
 #define ABORTING(func) abort = abort || func
 
-  // Only do this once.
-  want_garbage_collect = false;
-  may_garbage_collect = false;
-  garbage_collect_at_exit = false;
+  if (!testing) {
+    // Only do this once.
+    want_garbage_collect = false;
+    may_garbage_collect = false;
+    garbage_collect_at_exit = false;
+  }
 
-  // We advance by two because we add one for items referenced through
-  // previous_funccal.
-  current_copyID += COPYID_INC;
-  int copyID = current_copyID;
+  // We advance by two (COPYID_INC) because we add one for items referenced
+  // through previous_funccal.
+  const int copyID = get_copyID();
 
   // 1. Go through all accessible variables and mark all lists and dicts
   // with copyID.
@@ -5600,10 +4879,7 @@ bool garbage_collect(void)
   // Don't free variables in the previous_funccal list unless they are only
   // referenced through previous_funccal.  This must be first, because if
   // the item is referenced elsewhere the funccal must not be freed.
-  for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
-    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
-  }
+  ABORTING(set_ref_in_previous_funccal)(copyID);
 
   // script-local variables
   for (int i = 1; i <= ga_scripts.ga_len; ++i) {
@@ -5626,6 +4902,10 @@ bool garbage_collect(void)
     }
     // buffer ShaDa additional data
     ABORTING(set_ref_dict)(buf->additional_data, copyID);
+
+    // buffer callback functions
+    set_ref_in_callback(&buf->b_prompt_callback, copyID, NULL, NULL);
+    set_ref_in_callback(&buf->b_prompt_interrupt, copyID, NULL, NULL);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -5646,7 +4926,8 @@ bool garbage_collect(void)
     do {
       yankreg_T reg;
       char name = NUL;
-      reg_iter = op_register_iter(reg_iter, &name, &reg);
+      bool is_unnamed = false;
+      reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
       if (name != NUL) {
         ABORTING(set_ref_dict)(reg.additional_data, copyID);
       }
@@ -5675,18 +4956,31 @@ bool garbage_collect(void)
   ABORTING(set_ref_in_ht)(&globvarht, copyID, NULL);
 
   // function-local variables
-  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
-    ABORTING(set_ref_in_ht)(&fc->l_vars.dv_hashtab, copyID, NULL);
-    ABORTING(set_ref_in_ht)(&fc->l_avars.dv_hashtab, copyID, NULL);
-  }
+  ABORTING(set_ref_in_call_stack)(copyID);
 
-  // Jobs
+  // named functions (matters for closures)
+  ABORTING(set_ref_in_functions)(copyID);
+
+  // Channels
   {
-    TerminalJobData *data;
-    map_foreach_value(jobs, data, {
-      ABORTING(set_ref_dict)(data->self, copyID);
+    Channel *data;
+    map_foreach_value(channels, data, {
+      set_ref_in_callback_reader(&data->on_data, copyID, NULL, NULL);
+      set_ref_in_callback_reader(&data->on_stderr, copyID, NULL, NULL);
+      set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
     })
   }
+
+  // Timers
+  {
+    timer_T *timer;
+    map_foreach_value(timers, timer, {
+      set_ref_in_callback(&timer->callback, copyID, NULL, NULL);
+    })
+  }
+
+  // function call arguments, if v:testing is set.
+  ABORTING(set_ref_in_func_args)(copyID);
 
   // v: vars
   ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
@@ -5721,31 +5015,18 @@ bool garbage_collect(void)
     ABORTING(set_ref_list)(sub.additional_elements, copyID);
   }
 
+  ABORTING(set_ref_in_quickfix)(copyID);
+
   bool did_free = false;
   if (!abort) {
     // 2. Free lists and dictionaries that are not referenced.
     did_free = free_unref_items(copyID);
 
     // 3. Check if any funccal can be freed now.
-    bool did_free_funccal = false;
-    for (funccall_T **pfc = &previous_funccal; *pfc != NULL;) {
-      if (can_free_funccal(*pfc, copyID)) {
-        funccall_T *fc = *pfc;
-        *pfc = fc->caller;
-        free_funccal(fc, true);
-        did_free = true;
-        did_free_funccal = true;
-      } else {
-        pfc = &(*pfc)->caller;
-      }
-    }
-    if (did_free_funccal) {
-      // When a funccal was freed some more items might be garbage
-      // collected, so run again.
-      (void)garbage_collect();
-    }
+    //    This may call us back recursively.
+    did_free = did_free || free_unref_funccal(copyID, testing);
   } else if (p_verbose > 0) {
-    verb_msg((char_u *)_(
+    verb_msg(_(
         "Not enough memory to set references, garbage collection aborted!"));
   }
 #undef ABORTING
@@ -5754,7 +5035,7 @@ bool garbage_collect(void)
 
 /// Free lists and dictionaries that are no longer referenced.
 ///
-/// Note: This function may only be called from garbage_collect().
+/// @note This function may only be called from garbage_collect().
 ///
 /// @param copyID Free lists/dictionaries that don't have this ID.
 /// @return true, if something was freed.
@@ -5762,40 +5043,61 @@ static int free_unref_items(int copyID)
 {
   bool did_free = false;
 
+  // Let all "free" functions know that we are here. This means no
+  // dictionaries, lists, or jobs are to be freed, because we will
+  // do that here.
+  tv_in_free_unref_items = true;
+
+  // PASS 1: free the contents of the items. We don't free the items
+  // themselves yet, so that it is possible to decrement refcount counters.
+
   // Go through the list of dicts and free items without the copyID.
   // Don't free dicts that are referenced internally.
-  for (dict_T *dd = first_dict; dd != NULL; ) {
+  for (dict_T *dd = gc_first_dict; dd != NULL; dd = dd->dv_used_next) {
     if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
       // Free the Dictionary and ordinary items it contains, but don't
       // recurse into Lists and Dictionaries, they will be in the list
-      // of dicts or list of lists. */
-      dict_T *dd_next = dd->dv_used_next;
-      dict_free(dd, FALSE);
+      // of dicts or list of lists.
+      tv_dict_free_contents(dd);
       did_free = true;
-      dd = dd_next;
-    } else {
-      dd = dd->dv_used_next;
     }
   }
 
   // Go through the list of lists and free items without the copyID.
   // But don't free a list that has a watcher (used in a for loop), these
   // are not referenced anywhere.
-  for (list_T *ll = first_list; ll != NULL;) {
-    if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
-        && ll->lv_watch == NULL) {
+  for (list_T *ll = gc_first_list; ll != NULL; ll = ll->lv_used_next) {
+    if ((tv_list_copyid(ll) & COPYID_MASK) != (copyID & COPYID_MASK)
+        && !tv_list_has_watchers(ll)) {
       // Free the List and ordinary items it contains, but don't recurse
       // into Lists and Dictionaries, they will be in the list of dicts
       // or list of lists.
-      list_T* ll_next = ll->lv_used_next;
-      list_free(ll, FALSE);
+      tv_list_free_contents(ll);
       did_free = true;
-      ll = ll_next;
-    } else {
-      ll = ll->lv_used_next;
     }
   }
 
+  // PASS 2: free the items themselves.
+  dict_T *dd_next;
+  for (dict_T *dd = gc_first_dict; dd != NULL; dd = dd_next) {
+    dd_next = dd->dv_used_next;
+    if ((dd->dv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)) {
+      tv_dict_free_dict(dd);
+    }
+  }
+
+  list_T *ll_next;
+  for (list_T *ll = gc_first_list; ll != NULL; ll = ll_next) {
+    ll_next = ll->lv_used_next;
+    if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
+        && !tv_list_has_watchers(ll)) {
+      // Free the List and ordinary items it contains, but don't recurse
+      // into Lists and Dictionaries, they will be in the list of dicts
+      // or list of lists.
+      tv_list_free_list(ll);
+    }
+  }
+  tv_in_free_unref_items = false;
   return did_free;
 }
 
@@ -5818,14 +5120,10 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
       // Mark each item in the hashtab.  If the item contains a hashtab
       // it is added to ht_stack, if it contains a list it is added to
       // list_stack.
-      int todo = (int)cur_ht->ht_used;
-      for (hashitem_T *hi = cur_ht->ht_array; todo > 0; ++hi) {
-        if (!HASHITEM_EMPTY(hi)) {
-          --todo;
-          abort = abort || set_ref_in_item(&HI2DI(hi)->di_tv, copyID, &ht_stack,
-                                           list_stack);
-        }
-      }
+      HASHTAB_ITER(cur_ht, hi, {
+        abort = abort || set_ref_in_item(
+            &TV_DICT_HI2DI(hi)->di_tv, copyID, &ht_stack, list_stack);
+      });
     }
 
     if (ht_stack == NULL) {
@@ -5857,15 +5155,16 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
 
   list_T *cur_l = l;
   for (;;) {
-    if (!abort) {
-      // Mark each item in the list.  If the item contains a hashtab
-      // it is added to ht_stack, if it contains a list it is added to
-      // list_stack.
-      for (listitem_T *li = cur_l->lv_first; !abort && li != NULL;
-           li = li->li_next) {
-        abort = set_ref_in_item(&li->li_tv, copyID, ht_stack, &list_stack);
+    // Mark each item in the list.  If the item contains a hashtab
+    // it is added to ht_stack, if it contains a list it is added to
+    // list_stack.
+    TV_LIST_ITER(cur_l, li, {
+      if (abort) {
+        break;
       }
-    }
+      abort = set_ref_in_item(TV_LIST_ITEM_TV(li), copyID, ht_stack,
+                              &list_stack);
+    });
 
     if (list_stack == NULL) {
       break;
@@ -5913,6 +5212,13 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
             *ht_stack = newitem;
           }
         }
+
+        QUEUE *w = NULL;
+        DictWatcher *watcher = NULL;
+        QUEUE_FOREACH(w, &dd->watchers) {
+          watcher = tv_dict_watcher_node_data(w);
+          set_ref_in_callback(&watcher->callback, copyID, ht_stack, list_stack);
+        }
       }
       break;
     }
@@ -5937,9 +5243,43 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
       }
       break;
     }
+
+    case VAR_PARTIAL: {
+      partial_T *pt = tv->vval.v_partial;
+
+      // A partial does not have a copyID, because it cannot contain itself.
+      if (pt != NULL) {
+        abort = set_ref_in_func(pt->pt_name, pt->pt_func, copyID);
+        if (pt->pt_dict != NULL) {
+          typval_T dtv;
+
+          dtv.v_type = VAR_DICT;
+          dtv.vval.v_dict = pt->pt_dict;
+          abort = abort || set_ref_in_item(&dtv, copyID, ht_stack, list_stack);
+        }
+
+        for (int i = 0; i < pt->pt_argc; i++) {
+          abort = abort || set_ref_in_item(&pt->pt_argv[i], copyID,
+                                           ht_stack, list_stack);
+        }
+      }
+      break;
+    }
+    case VAR_FUNC:
+      abort = set_ref_in_func(tv->vval.v_string, NULL, copyID);
+      break;
+    case VAR_UNKNOWN:
+    case VAR_SPECIAL:
+    case VAR_FLOAT:
+    case VAR_NUMBER:
+    case VAR_STRING: {
+      break;
+    }
   }
   return abort;
 }
+
+
 
 /// Mark all lists and dicts referenced in given mark
 ///
@@ -5988,447 +5328,10 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
 }
 
 /*
- * Allocate an empty header for a dictionary.
- */
-dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
-{
-  dict_T *d = xmalloc(sizeof(dict_T));
-
-  /* Add the dict to the list of dicts for garbage collection. */
-  if (first_dict != NULL)
-    first_dict->dv_used_prev = d;
-  d->dv_used_next = first_dict;
-  d->dv_used_prev = NULL;
-  first_dict = d;
-
-  hash_init(&d->dv_hashtab);
-  d->dv_lock = 0;
-  d->dv_scope = 0;
-  d->dv_refcount = 0;
-  d->dv_copyID = 0;
-  QUEUE_INIT(&d->watchers);
-
-  return d;
-}
-
-/*
- * Allocate an empty dict for a return value.
- */
-static void rettv_dict_alloc(typval_T *rettv)
-{
-  dict_T *d = dict_alloc();
-
-  rettv->vval.v_dict = d;
-  rettv->v_type = VAR_DICT;
-  ++d->dv_refcount;
-}
-
-/// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
-///
-/// @param d The Dictionary to clear
-void dict_clear(dict_T *d)
-  FUNC_ATTR_NONNULL_ALL
-{
-  hash_lock(&d->dv_hashtab);
-  assert(d->dv_hashtab.ht_locked > 0);
-
-  size_t todo = d->dv_hashtab.ht_used;
-  for (hashitem_T *hi = d->dv_hashtab.ht_array; todo > 0; hi++) {
-    if (!HASHITEM_EMPTY(hi)) {
-      dictitem_free(HI2DI(hi));
-      hash_remove(&d->dv_hashtab, hi);
-      todo--;
-    }
-  }
-
-  hash_unlock(&d->dv_hashtab);
-}
-
-
-/*
- * Unreference a Dictionary: decrement the reference count and free it when it
- * becomes zero.
- */
-void dict_unref(dict_T *d)
-{
-  if (d != NULL && --d->dv_refcount <= 0)
-    dict_free(d, TRUE);
-}
-
-/*
- * Free a Dictionary, including all items it contains.
- * Ignores the reference count.
- */
-void 
-dict_free (
-    dict_T *d,
-    int recurse            /* Free Lists and Dictionaries recursively. */
-)
-{
-  int todo;
-  hashitem_T  *hi;
-  dictitem_T  *di;
-
-  /* Remove the dict from the list of dicts for garbage collection. */
-  if (d->dv_used_prev == NULL)
-    first_dict = d->dv_used_next;
-  else
-    d->dv_used_prev->dv_used_next = d->dv_used_next;
-  if (d->dv_used_next != NULL)
-    d->dv_used_next->dv_used_prev = d->dv_used_prev;
-
-  /* Lock the hashtab, we don't want it to resize while freeing items. */
-  hash_lock(&d->dv_hashtab);
-  assert(d->dv_hashtab.ht_locked > 0);
-  todo = (int)d->dv_hashtab.ht_used;
-  for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      /* Remove the item before deleting it, just in case there is
-       * something recursive causing trouble. */
-      di = HI2DI(hi);
-      hash_remove(&d->dv_hashtab, hi);
-      if (recurse || (di->di_tv.v_type != VAR_LIST
-                      && di->di_tv.v_type != VAR_DICT))
-        clear_tv(&di->di_tv);
-      xfree(di);
-      --todo;
-    }
-  }
-
-  while (!QUEUE_EMPTY(&d->watchers)) {
-    QUEUE *w = QUEUE_HEAD(&d->watchers);
-    DictWatcher *watcher = dictwatcher_node_data(w);
-    dictwatcher_free(watcher);
-    QUEUE_REMOVE(w);
-  }
-
-  hash_clear(&d->dv_hashtab);
-  xfree(d);
-}
-
-/*
- * Allocate a Dictionary item.
- * The "key" is copied to the new item.
- * Note that the value of the item "di_tv" still needs to be initialized!
- */
-dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
-{
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
-#ifndef __clang_analyzer__
-  STRCPY(di->di_key, key);
-#endif
-  di->di_flags = DI_FLAGS_ALLOC;
-  return di;
-}
-
-/*
- * Make a copy of a Dictionary item.
- */
-static dictitem_T *dictitem_copy(dictitem_T *org) FUNC_ATTR_NONNULL_RET
-{
-  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(org->di_key));
-
-  STRCPY(di->di_key, org->di_key);
-  di->di_flags = DI_FLAGS_ALLOC;
-  copy_tv(&org->di_tv, &di->di_tv);
-
-  return di;
-}
-
-/*
- * Remove item "item" from Dictionary "dict" and free it.
- */
-static void dictitem_remove(dict_T *dict, dictitem_T *item)
-{
-  hashitem_T  *hi;
-
-  hi = hash_find(&dict->dv_hashtab, item->di_key);
-  if (HASHITEM_EMPTY(hi)) {
-    EMSG2(_(e_intern2), "dictitem_remove()");
-  } else {
-    hash_remove(&dict->dv_hashtab, hi);
-  }
-  dictitem_free(item);
-}
-
-/*
- * Free a dict item.  Also clears the value.
- */
-void dictitem_free(dictitem_T *item)
-{
-  clear_tv(&item->di_tv);
-  if (item->di_flags & DI_FLAGS_ALLOC) {
-    xfree(item);
-  }
-}
-
-/// Make a copy of dictionary
-///
-/// @param[in]  conv  If non-NULL, then all internal strings will be converted.
-/// @param[in]  orig  Original dictionary to copy.
-/// @param[in]  deep  If false, then shallow copy will be done.
-/// @param[in]  copyID  See var_item_copy().
-///
-/// @return Copied dictionary. May be NULL in case original dictionary is NULL
-///         or some failure happens. The refcount of the new dictionary is set
-///         to 1.
-static dict_T *dict_copy(const vimconv_T *const conv,
-                         dict_T *const orig,
-                         const bool deep,
-                         const int copyID)
-{
-  dictitem_T  *di;
-  int todo;
-  hashitem_T  *hi;
-
-  if (orig == NULL)
-    return NULL;
-
-  dict_T *copy = dict_alloc();
-  {
-    if (copyID != 0) {
-      orig->dv_copyID = copyID;
-      orig->dv_copydict = copy;
-    }
-    todo = (int)orig->dv_hashtab.ht_used;
-    for (hi = orig->dv_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-      if (!HASHITEM_EMPTY(hi)) {
-        --todo;
-
-        if (conv == NULL || conv->vc_type == CONV_NONE) {
-          di = dictitem_alloc(hi->hi_key);
-        } else {
-          char *const key = (char *) string_convert((vimconv_T *) conv,
-                                                    hi->hi_key, NULL);
-          if (key == NULL) {
-            di = dictitem_alloc(hi->hi_key);
-          } else {
-            di = dictitem_alloc((char_u *) key);
-            xfree(key);
-          }
-        }
-        if (deep) {
-          if (var_item_copy(conv, &HI2DI(hi)->di_tv, &di->di_tv, deep,
-                            copyID) == FAIL) {
-            xfree(di);
-            break;
-          }
-        } else
-          copy_tv(&HI2DI(hi)->di_tv, &di->di_tv);
-        if (dict_add(copy, di) == FAIL) {
-          dictitem_free(di);
-          break;
-        }
-      }
-    }
-
-    ++copy->dv_refcount;
-    if (todo > 0) {
-      dict_unref(copy);
-      copy = NULL;
-    }
-  }
-
-  return copy;
-}
-
-/*
- * Add item "item" to Dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add(dict_T *d, dictitem_T *item)
-{
-  return hash_add(&d->dv_hashtab, item->di_key);
-}
-
-/*
- * Add a number or string entry to dictionary "d".
- * When "str" is NULL use number "nr", otherwise use "str".
- * Returns FAIL when key already exists.
- */
-int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
-{
-  dictitem_T  *item;
-
-  item = dictitem_alloc((char_u *)key);
-  item->di_tv.v_lock = 0;
-  if (str == NULL) {
-    item->di_tv.v_type = VAR_NUMBER;
-    item->di_tv.vval.v_number = nr;
-  } else {
-    item->di_tv.v_type = VAR_STRING;
-    item->di_tv.vval.v_string = vim_strsave(str);
-  }
-  if (dict_add(d, item) == FAIL) {
-    dictitem_free(item);
-    return FAIL;
-  }
-  return OK;
-}
-
-/*
- * Add a list entry to dictionary "d".
- * Returns FAIL when key already exists.
- */
-int dict_add_list(dict_T *d, char *key, list_T *list)
-{
-  dictitem_T *item = dictitem_alloc((char_u *)key);
-
-  item->di_tv.v_lock = 0;
-  item->di_tv.v_type = VAR_LIST;
-  item->di_tv.vval.v_list = list;
-  if (dict_add(d, item) == FAIL) {
-    dictitem_free(item);
-    return FAIL;
-  }
-  ++list->lv_refcount;
-  return OK;
-}
-
-/// Set all existing keys in "dict" as read-only.
-///
-/// This does not protect against adding new keys to the Dictionary.
-///
-/// @param dict The dict whose keys should be frozen
-void dict_set_keys_readonly(dict_T *dict)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t todo = dict->dv_hashtab.ht_used;
-  for (hashitem_T *hi = dict->dv_hashtab.ht_array; todo > 0 ; hi++) {
-    if (HASHITEM_EMPTY(hi)) {
-      continue;
-    }
-    todo--;
-    HI2DI(hi)->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
-  }
-}
-
-/*
- * Get the number of items in a Dictionary.
- */
-static long dict_len(dict_T *d)
-{
-  if (d == NULL)
-    return 0L;
-  return (long)d->dv_hashtab.ht_used;
-}
-
-/*
- * Find item "key[len]" in Dictionary "d".
- * If "len" is negative use strlen(key).
- * Returns NULL when not found.
- */
-dictitem_T *dict_find(dict_T *d, char_u *key, int len)
-{
-#define AKEYLEN 200
-  char_u buf[AKEYLEN];
-  char_u      *akey;
-  char_u      *tofree = NULL;
-  hashitem_T  *hi;
-
-  if (len < 0)
-    akey = key;
-  else if (len >= AKEYLEN) {
-    tofree = akey = vim_strnsave(key, len);
-  } else {
-    /* Avoid a malloc/free by using buf[]. */
-    STRLCPY(buf, key, len + 1);
-    akey = buf;
-  }
-
-  hi = hash_find(&d->dv_hashtab, akey);
-  xfree(tofree);
-  if (HASHITEM_EMPTY(hi))
-    return NULL;
-  return HI2DI(hi);
-}
-
-/// Get a function from a dictionary
-/// @param[out] result The address where a pointer to the wanted callback
-///                    will be left.
-/// @return true/false on success/failure.
-static bool get_dict_callback(dict_T *d, char *key, ufunc_T **result)
-{
-  dictitem_T *di = dict_find(d, (uint8_t *)key, -1);
-
-  if (di == NULL) {
-    *result = NULL;
-    return true;
-  }
-  
-  if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING) {
-    EMSG(_("Argument is not a function or function name"));
-    *result = NULL;
-    return false;
-  }
-
-  if ((*result = find_ufunc(di->di_tv.vval.v_string)) == NULL) {
-    return false;
-  }
-
-  (*result)->uf_refcount++;
-  return true;
-}
-
-static ufunc_T *find_ufunc(uint8_t *name)
-{
-  uint8_t *n = name;
-  ufunc_T *rv = NULL;
-  if (*n > '9' || *n < '0') {
-    if ((n = trans_function_name(&n, false, TFN_INT|TFN_QUIET, NULL))) {
-      rv = find_func(n);
-      xfree(n);
-    }
-  } else {
-    // dict function, name is already translated
-    rv = find_func(n);
-  }
-
-  if (!rv) {
-    EMSG2(_("Function %s doesn't exist"), name);
-    return NULL;
-  }
-
-  return rv;
-}
-
-/*
- * Get a string item from a dictionary.
- * When "save" is TRUE allocate memory for it.
- * Returns NULL if the entry doesn't exist.
- */
-char_u *get_dict_string(dict_T *d, char_u *key, int save)
-{
-  dictitem_T  *di;
-  char_u      *s;
-
-  di = dict_find(d, key, -1);
-  if (di == NULL)
-    return NULL;
-  s = get_tv_string(&di->di_tv);
-  if (save) {
-    s = vim_strsave(s);
-  }
-  return s;
-}
-
-/*
- * Get a number item from a dictionary.
- * Returns 0 if the entry doesn't exist.
- */
-long get_dict_number(dict_T *d, char_u *key)
-{
-  dictitem_T *di = dict_find(d, key, -1);
-  if (di == NULL)
-    return 0;
-  return get_tv_number(&di->di_tv);
-}
-
-/*
  * Allocate a variable for a Dictionary and fill it from "*arg".
  * Return OK or FAIL.  Returns NOTDONE for {expr}.
  */
-static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
+static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   dict_T      *d = NULL;
   typval_T tvkey;
@@ -6436,7 +5339,7 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
   char_u      *key = NULL;
   dictitem_T  *item;
   char_u      *start = skipwhite(*arg + 1);
-  char_u buf[NUMBUFLEN];
+  char buf[NUMBUFLEN];
 
   /*
    * First check if it's not a curly-braces thing: {expr}.
@@ -6446,60 +5349,62 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
    * But {} is an empty Dictionary.
    */
   if (*start != '}') {
-    if (eval1(&start, &tv, FALSE) == FAIL)      /* recursive! */
+    if (eval1(&start, &tv, false) == FAIL) {    // recursive!
       return FAIL;
-    if (*start == '}')
+    }
+    if (*start == '}') {
       return NOTDONE;
+    }
   }
 
   if (evaluate) {
-    d = dict_alloc();
+    d = tv_dict_alloc();
   }
   tvkey.v_type = VAR_UNKNOWN;
   tv.v_type = VAR_UNKNOWN;
 
   *arg = skipwhite(*arg + 1);
   while (**arg != '}' && **arg != NUL) {
-    if (eval1(arg, &tvkey, evaluate) == FAIL)           /* recursive! */
+    if (eval1(arg, &tvkey, evaluate) == FAIL) {         // recursive!
       goto failret;
+    }
     if (**arg != ':') {
       EMSG2(_("E720: Missing colon in Dictionary: %s"), *arg);
-      clear_tv(&tvkey);
+      tv_clear(&tvkey);
       goto failret;
     }
     if (evaluate) {
-      key = get_tv_string_buf_chk(&tvkey, buf);
-      if (key == NULL || *key == NUL) {
-        /* "key" is NULL when get_tv_string_buf_chk() gave an errmsg */
-        if (key != NULL)
-          EMSG(_(e_emptykey));
-        clear_tv(&tvkey);
+      key = (char_u *)tv_get_string_buf_chk(&tvkey, buf);
+      if (key == NULL) {
+        // "key" is NULL when tv_get_string_buf_chk() gave an errmsg
+        tv_clear(&tvkey);
         goto failret;
       }
     }
 
     *arg = skipwhite(*arg + 1);
-    if (eval1(arg, &tv, evaluate) == FAIL) {    /* recursive! */
-      if (evaluate)
-        clear_tv(&tvkey);
+    if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
+      if (evaluate) {
+        tv_clear(&tvkey);
+      }
       goto failret;
     }
     if (evaluate) {
-      item = dict_find(d, key, -1);
+      item = tv_dict_find(d, (const char *)key, -1);
       if (item != NULL) {
         EMSG2(_("E721: Duplicate key in Dictionary: \"%s\""), key);
-        clear_tv(&tvkey);
-        clear_tv(&tv);
+        tv_clear(&tvkey);
+        tv_clear(&tv);
         goto failret;
       }
-      item = dictitem_alloc(key);
-      clear_tv(&tvkey);
+      item = tv_dict_item_alloc((const char *)key);
       item->di_tv = tv;
       item->di_tv.v_lock = 0;
-      if (dict_add(d, item) == FAIL) {
-        dictitem_free(item);
+      if (tv_dict_add(d, item) == FAIL) {
+        tv_dict_item_free(item);
       }
     }
+    tv_clear(&tvkey);
 
     if (**arg == '}')
       break;
@@ -6513,611 +5418,49 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
   if (**arg != '}') {
     EMSG2(_("E723: Missing end of Dictionary '}': %s"), *arg);
 failret:
-    if (evaluate)
-      dict_free(d, TRUE);
+    if (d != NULL) {
+      tv_dict_free(d);
+    }
     return FAIL;
   }
 
   *arg = skipwhite(*arg + 1);
   if (evaluate) {
-    rettv->v_type = VAR_DICT;
-    rettv->vval.v_dict = d;
-    ++d->dv_refcount;
+    tv_dict_set_ret(rettv, d);
   }
 
   return OK;
 }
 
-#define CHECK_SELF_REFERENCE(val, copyID_attr, conv_type) \
-    do { \
-      if ((val)->copyID_attr == copyID) { \
-        CONV_RECURSE((val), conv_type); \
-      } \
-      (val)->copyID_attr = copyID; \
-    } while (0)
-
-/// Define functions which convert VimL value to something else
+/// Convert the string to a floating point number
 ///
-/// Creates function `vim_to_{name}(firstargtype firstargname, typval_T *const
-/// tv)` which returns OK or FAIL and helper functions.
+/// This uses strtod().  setlocale(LC_NUMERIC, "C") has been used earlier to
+/// make sure this always uses a decimal point.
 ///
-/// @param  firstargtype  Type of the first argument. It will be used to return
-///                       the results.
-/// @param  firstargname  Name of the first argument.
-/// @param  name  Name of the target converter.
-#define DEFINE_VIML_CONV_FUNCTIONS(scope, name, firstargtype, firstargname) \
-static int name##_convert_one_value(firstargtype firstargname, \
-                                    MPConvStack *const mpstack, \
-                                    typval_T *const tv, \
-                                    const int copyID, \
-                                    const char *const objname) \
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
-{ \
-  switch (tv->v_type) { \
-    case VAR_STRING: { \
-      CONV_STRING(tv->vval.v_string, STRLEN(tv->vval.v_string)); \
-      break; \
-    } \
-    case VAR_NUMBER: { \
-      CONV_NUMBER(tv->vval.v_number); \
-      break; \
-    } \
-    case VAR_FLOAT: { \
-      CONV_FLOAT(tv->vval.v_float); \
-      break; \
-    } \
-    case VAR_FUNC: { \
-      CONV_FUNC(tv->vval.v_string); \
-      break; \
-    } \
-    case VAR_LIST: { \
-      if (tv->vval.v_list == NULL || tv->vval.v_list->lv_len == 0) { \
-        CONV_EMPTY_LIST(); \
-        break; \
-      } \
-      CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, kMPConvList); \
-      CONV_LIST_START(tv->vval.v_list); \
-      kv_push( \
-          MPConvStackVal, \
-          *mpstack, \
-          ((MPConvStackVal) { \
-            .type = kMPConvList, \
-            .data = { \
-              .l = { \
-                .list = tv->vval.v_list, \
-                .li = tv->vval.v_list->lv_first, \
-              }, \
-            }, \
-          })); \
-      break; \
-    } \
-    case VAR_DICT: { \
-      if (tv->vval.v_dict == NULL \
-          || tv->vval.v_dict->dv_hashtab.ht_used == 0) { \
-        CONV_EMPTY_DICT(); \
-        break; \
-      } \
-      const dictitem_T *type_di; \
-      const dictitem_T *val_di; \
-      if (CONV_ALLOW_SPECIAL \
-          && tv->vval.v_dict->dv_hashtab.ht_used == 2 \
-          && (type_di = dict_find((dict_T *) tv->vval.v_dict, \
-                                  (char_u *) "_TYPE", -1)) != NULL \
-          && type_di->di_tv.v_type == VAR_LIST \
-          && (val_di = dict_find((dict_T *) tv->vval.v_dict, \
-                                 (char_u *) "_VAL", -1)) != NULL) { \
-        size_t i; \
-        for (i = 0; i < ARRAY_SIZE(msgpack_type_lists); i++) { \
-          if (type_di->di_tv.vval.v_list == msgpack_type_lists[i]) { \
-            break; \
-          } \
-        } \
-        if (i == ARRAY_SIZE(msgpack_type_lists)) { \
-          goto name##_convert_one_value_regular_dict; \
-        } \
-        switch ((MessagePackType) i) { \
-          case kMPNil: { \
-            CONV_SPECIAL_NIL(); \
-            break; \
-          } \
-          case kMPBoolean: { \
-            if (val_di->di_tv.v_type != VAR_NUMBER) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            CONV_SPECIAL_BOOL(val_di->di_tv.vval.v_number); \
-            break; \
-          } \
-          case kMPInteger: { \
-            const list_T *val_list; \
-            varnumber_T sign; \
-            varnumber_T highest_bits; \
-            varnumber_T high_bits; \
-            varnumber_T low_bits; \
-            /* List of 4 integers; first is signed (should be 1 or -1, but */ \
-            /* this is not checked), second is unsigned and have at most */ \
-            /* one (sign is -1) or two (sign is 1) non-zero bits (number of */ \
-            /* bits is not checked), other unsigned and have at most 31 */ \
-            /* non-zero bits (number of bits is not checked).*/ \
-            if (val_di->di_tv.v_type != VAR_LIST \
-                || (val_list = val_di->di_tv.vval.v_list) == NULL \
-                || val_list->lv_len != 4 \
-                || val_list->lv_first->li_tv.v_type != VAR_NUMBER \
-                || (sign = val_list->lv_first->li_tv.vval.v_number) == 0 \
-                || val_list->lv_first->li_next->li_tv.v_type != VAR_NUMBER \
-                || (highest_bits = \
-                    val_list->lv_first->li_next->li_tv.vval.v_number) < 0 \
-                || val_list->lv_last->li_prev->li_tv.v_type != VAR_NUMBER \
-                || (high_bits = \
-                    val_list->lv_last->li_prev->li_tv.vval.v_number) < 0 \
-                || val_list->lv_last->li_tv.v_type != VAR_NUMBER \
-                || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            uint64_t number = ((uint64_t) (((uint64_t) highest_bits) << 62) \
-                               | (uint64_t) (((uint64_t) high_bits) << 31) \
-                               | (uint64_t) low_bits); \
-            if (sign > 0) { \
-              CONV_UNSIGNED_NUMBER(number); \
-            } else { \
-              CONV_NUMBER(-number); \
-            } \
-            break; \
-          } \
-          case kMPFloat: { \
-            if (val_di->di_tv.v_type != VAR_FLOAT) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            CONV_FLOAT(val_di->di_tv.vval.v_float); \
-            break; \
-          } \
-          case kMPString: \
-          case kMPBinary: { \
-            const bool is_string = ((MessagePackType) i == kMPString); \
-            if (val_di->di_tv.v_type != VAR_LIST) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            size_t len; \
-            char *buf; \
-            if (!vim_list_to_buf(val_di->di_tv.vval.v_list, &len, &buf)) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            if (is_string) { \
-              CONV_STR_STRING(buf, len); \
-            } else { \
-              CONV_STRING(buf, len); \
-            } \
-            xfree(buf); \
-            break; \
-          } \
-          case kMPArray: { \
-            if (val_di->di_tv.v_type != VAR_LIST) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list, lv_copyID, \
-                                 kMPConvList); \
-            CONV_LIST_START(val_di->di_tv.vval.v_list); \
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                      .type = kMPConvList, \
-                      .data = { \
-                        .l = { \
-                          .list = val_di->di_tv.vval.v_list, \
-                          .li = val_di->di_tv.vval.v_list->lv_first, \
-                        }, \
-                      }, \
-                    })); \
-            break; \
-          } \
-          case kMPMap: { \
-            if (val_di->di_tv.v_type != VAR_LIST) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            if (val_di->di_tv.vval.v_list == NULL) { \
-              CONV_EMPTY_DICT(); \
-              break; \
-            } \
-            list_T *const val_list = val_di->di_tv.vval.v_list; \
-            for (const listitem_T *li = val_list->lv_first; li != NULL; \
-                 li = li->li_next) { \
-              if (li->li_tv.v_type != VAR_LIST \
-                  || li->li_tv.vval.v_list->lv_len != 2) { \
-                goto name##_convert_one_value_regular_dict; \
-              } \
-            } \
-            CHECK_SELF_REFERENCE(val_list, lv_copyID, kMPConvPairs); \
-            CONV_SPECIAL_MAP_START(val_list); \
-            kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                      .type = kMPConvPairs, \
-                      .data = { \
-                        .l = { \
-                          .list = val_list, \
-                          .li = val_list->lv_first, \
-                        }, \
-                      }, \
-                    })); \
-            break; \
-          } \
-          case kMPExt: { \
-            const list_T *val_list; \
-            varnumber_T type; \
-            if (val_di->di_tv.v_type != VAR_LIST \
-                || (val_list = val_di->di_tv.vval.v_list) == NULL \
-                || val_list->lv_len != 2 \
-                || (val_list->lv_first->li_tv.v_type != VAR_NUMBER) \
-                || (type = val_list->lv_first->li_tv.vval.v_number) > INT8_MAX \
-                || type < INT8_MIN \
-                || (val_list->lv_last->li_tv.v_type != VAR_LIST)) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            size_t len; \
-            char *buf; \
-            if (!vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list, \
-                                 &len, &buf)) { \
-              goto name##_convert_one_value_regular_dict; \
-            } \
-            CONV_EXT_STRING(buf, len, type); \
-            xfree(buf); \
-            break; \
-          } \
-        } \
-        break; \
-      } \
-name##_convert_one_value_regular_dict: \
-      CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, kMPConvDict); \
-      CONV_DICT_START(tv->vval.v_dict); \
-      kv_push(MPConvStackVal, *mpstack, ((MPConvStackVal) { \
-                .type = kMPConvDict, \
-                .data = { \
-                  .d = { \
-                    .dict = tv->vval.v_dict, \
-                    .hi = tv->vval.v_dict->dv_hashtab.ht_array, \
-                    .todo = tv->vval.v_dict->dv_hashtab.ht_used, \
-                  }, \
-                }, \
-              })); \
-      break; \
-    } \
-    default: { \
-      EMSG2(_(e_intern2), #name "_convert_one_value()"); \
-      return FAIL; \
-    } \
-  } \
-  return OK; \
-} \
-\
-scope int vim_to_##name(firstargtype firstargname, typval_T *const tv, \
-                        const char *const objname) \
-  FUNC_ATTR_WARN_UNUSED_RESULT \
-{ \
-  current_copyID += COPYID_INC; \
-  const int copyID = current_copyID; \
-  MPConvStack mpstack; \
-  kv_init(mpstack); \
-  if (name##_convert_one_value(firstargname, &mpstack, tv, copyID, objname) \
-      == FAIL) { \
-    goto vim_to_msgpack_error_ret; \
-  } \
-  while (kv_size(mpstack)) { \
-    MPConvStackVal *cur_mpsv = &kv_A(mpstack, kv_size(mpstack) - 1); \
-    typval_T *cur_tv = NULL; \
-    switch (cur_mpsv->type) { \
-      case kMPConvDict: { \
-        if (!cur_mpsv->data.d.todo) { \
-          (void) kv_pop(mpstack); \
-          cur_mpsv->data.d.dict->dv_copyID = copyID - 1; \
-          CONV_DICT_END(cur_mpsv->data.d.dict); \
-          continue; \
-        } else if (cur_mpsv->data.d.todo \
-                   != cur_mpsv->data.d.dict->dv_hashtab.ht_used) { \
-          CONV_DICT_BETWEEN_ITEMS(cur_mpsv->data.d.dict); \
-        } \
-        while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) { \
-          cur_mpsv->data.d.hi++; \
-        } \
-        dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi); \
-        cur_mpsv->data.d.todo--; \
-        cur_mpsv->data.d.hi++; \
-        CONV_STR_STRING(&di->di_key[0], STRLEN(&di->di_key[0])); \
-        CONV_DICT_AFTER_KEY(cur_mpsv->data.d.dict); \
-        cur_tv = &di->di_tv; \
-        break; \
-      } \
-      case kMPConvList: { \
-        if (cur_mpsv->data.l.li == NULL) { \
-          (void) kv_pop(mpstack); \
-          cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
-          CONV_LIST_END(cur_mpsv->data.l.list); \
-          continue; \
-        } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) { \
-          CONV_LIST_BETWEEN_ITEMS(cur_mpsv->data.l.list); \
-        } \
-        cur_tv = &cur_mpsv->data.l.li->li_tv; \
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
-        break; \
-      } \
-      case kMPConvPairs: { \
-        if (cur_mpsv->data.l.li == NULL) { \
-          (void) kv_pop(mpstack); \
-          cur_mpsv->data.l.list->lv_copyID = copyID - 1; \
-          continue; \
-        } \
-        const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list; \
-        if (name##_convert_one_value(firstargname, &mpstack, \
-                                     &kv_pair->lv_first->li_tv, copyID, \
-                                     objname) == FAIL) { \
-          goto vim_to_msgpack_error_ret; \
-        } \
-        cur_tv = &kv_pair->lv_last->li_tv; \
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next; \
-        break; \
-      } \
-    } \
-    if (name##_convert_one_value(firstargname, &mpstack, cur_tv, copyID, \
-                                 objname) == FAIL) { \
-      goto vim_to_msgpack_error_ret; \
-    } \
-  } \
-  kv_destroy(mpstack); \
-  return OK; \
-vim_to_msgpack_error_ret: \
-  kv_destroy(mpstack); \
-  return FAIL; \
-}
-
-#define CONV_STRING(buf, len) \
-    do { \
-      const char *const buf_ = (const char *) buf; \
-      if (buf == NULL) { \
-        ga_concat(gap, (char_u *) "''"); \
-      } else { \
-        const size_t len_ = (len); \
-        size_t num_quotes = 0; \
-        for (size_t i = 0; i < len_; i++) { \
-          if (buf_[i] == '\'') { \
-            num_quotes++; \
-          } \
-        } \
-        ga_grow(gap, 2 + len_ + num_quotes); \
-        ga_append(gap, '\''); \
-        for (size_t i = 0; i < len_; i++) { \
-          if (buf_[i] == '\'') { \
-            num_quotes++; \
-            ga_append(gap, '\''); \
-          } \
-          ga_append(gap, buf_[i]); \
-        } \
-        ga_append(gap, '\''); \
-      } \
-    } while (0)
-
-#define CONV_STR_STRING(buf, len) \
-    CONV_STRING(buf, len)
-
-#define CONV_EXT_STRING(buf, len, type)
-
-#define CONV_NUMBER(num) \
-    do { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, NUMBUFLEN - 1, "%" PRId64, (int64_t) (num)); \
-      ga_concat(gap, (char_u *) numbuf); \
-    } while (0)
-
-#define CONV_FLOAT(flt) \
-    do { \
-      const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
-        case FP_NAN: { \
-          ga_concat(gap, (char_u *) "str2float('nan')"); \
-          break; \
-        } \
-        case FP_INFINITE: { \
-          if (flt_ < 0) { \
-            ga_append(gap, '-'); \
-          } \
-          ga_concat(gap, (char_u *) "str2float('inf')"); \
-          break; \
-        } \
-        default: { \
-          char numbuf[NUMBUFLEN]; \
-          vim_snprintf(numbuf, NUMBUFLEN - 1, "%g", flt_); \
-          ga_concat(gap, (char_u *) numbuf); \
-        } \
-      } \
-    } while (0)
-
-#define CONV_FUNC(fun) \
-    do { \
-      ga_concat(gap, (char_u *) "function("); \
-      CONV_STRING(fun, STRLEN(fun)); \
-      ga_append(gap, ')'); \
-    } while (0)
-
-#define CONV_EMPTY_LIST() \
-    ga_concat(gap, (char_u *) "[]")
-
-#define CONV_LIST_START(lst) \
-    ga_append(gap, '[')
-
-#define CONV_EMPTY_DICT() \
-    ga_concat(gap, (char_u *) "{}")
-
-#define CONV_SPECIAL_NIL()
-
-#define CONV_SPECIAL_BOOL(num)
-
-#define CONV_UNSIGNED_NUMBER(num)
-
-#define CONV_SPECIAL_MAP_START(lst)
-
-#define CONV_DICT_START(dct) \
-    ga_append(gap, '{')
-
-#define CONV_DICT_END(dct) \
-    ga_append(gap, '}')
-
-#define CONV_DICT_AFTER_KEY(dct) \
-    ga_concat(gap, (char_u *) ": ")
-
-#define CONV_DICT_BETWEEN_ITEMS(dct) \
-    ga_concat(gap, (char_u *) ", ")
-
-#define CONV_LIST_END(lst) \
-    ga_append(gap, ']')
-
-#define CONV_LIST_BETWEEN_ITEMS(lst) \
-    CONV_DICT_BETWEEN_ITEMS(NULL)
-
-#define CONV_RECURSE(val, conv_type) \
-    do { \
-      if (!did_echo_string_emsg) { \
-        /* Only give this message once for a recursive call to avoid */ \
-        /* flooding the user with errors. */ \
-        did_echo_string_emsg = true; \
-        EMSG(_("E724: unable to correctly dump variable " \
-               "with self-referencing container")); \
-      } \
-      char ebuf[NUMBUFLEN + 7]; \
-      size_t backref = 0; \
-      for (; backref < kv_size(*mpstack); backref++) { \
-        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
-        if (mpval.type == conv_type) { \
-          if (conv_type == kMPConvDict) { \
-            if ((void *) mpval.data.d.dict == (void *) (val)) { \
-              break; \
-            } \
-          } else if (conv_type == kMPConvList) { \
-            if ((void *) mpval.data.l.list == (void *) (val)) { \
-              break; \
-            } \
-          } \
-        } \
-      } \
-      vim_snprintf(ebuf, NUMBUFLEN + 6, "{E724@%zu}", backref); \
-      ga_concat(gap, (char_u *) &ebuf[0]); \
-      return OK; \
-    } while (0)
-
-#define CONV_ALLOW_SPECIAL false
-
-DEFINE_VIML_CONV_FUNCTIONS(static, string, garray_T *const, gap)
-
-#undef CONV_RECURSE
-#define CONV_RECURSE(val, conv_type) \
-    do { \
-      char ebuf[NUMBUFLEN + 7]; \
-      size_t backref = 0; \
-      for (; backref < kv_size(*mpstack); backref++) { \
-        const MPConvStackVal mpval = kv_a(MPConvStackVal, *mpstack, backref); \
-        if (mpval.type == conv_type) { \
-          if (conv_type == kMPConvDict) { \
-            if ((void *) mpval.data.d.dict == (void *) val) { \
-              break; \
-            } \
-          } else if (conv_type == kMPConvList) { \
-            if ((void *) mpval.data.l.list == (void *) val) { \
-              break; \
-            } \
-          } \
-        } \
-      } \
-      if (conv_type == kMPConvDict) { \
-        vim_snprintf(ebuf, NUMBUFLEN + 6, "{...@%zu}", backref); \
-      } else { \
-        vim_snprintf(ebuf, NUMBUFLEN + 6, "[...@%zu]", backref); \
-      } \
-      ga_concat(gap, (char_u *) &ebuf[0]); \
-      return OK; \
-    } while (0)
-
-DEFINE_VIML_CONV_FUNCTIONS(static, echo, garray_T *const, gap)
-
-#undef CONV_STRING
-#undef CONV_STR_STRING
-#undef CONV_EXT_STRING
-#undef CONV_NUMBER
-#undef CONV_FLOAT
-#undef CONV_FUNC
-#undef CONV_EMPTY_LIST
-#undef CONV_LIST_START
-#undef CONV_EMPTY_DICT
-#undef CONV_SPECIAL_NIL
-#undef CONV_SPECIAL_BOOL
-#undef CONV_UNSIGNED_NUMBER
-#undef CONV_SPECIAL_MAP_START
-#undef CONV_DICT_START
-#undef CONV_DICT_END
-#undef CONV_DICT_AFTER_KEY
-#undef CONV_DICT_BETWEEN_ITEMS
-#undef CONV_LIST_END
-#undef CONV_LIST_BETWEEN_ITEMS
-#undef CONV_RECURSE
-#undef CONV_ALLOW_SPECIAL
-
-/// Return a string with the string representation of a variable.
-/// Puts quotes around strings, so that they can be parsed back by eval().
+/// @param[in]  text  String to convert.
+/// @param[out]  ret_value  Location where conversion result is saved.
 ///
-/// @param[in]  tv  typval_T to convert.
-/// @param[out]  len  Location where length of the result will be saved.
-///
-/// @return String representation of the variable or NULL.
-static char *tv2string(typval_T *tv, size_t *len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
+/// @return Length of the text that was consumed.
+size_t string2float(const char *const text, float_T *const ret_value)
+  FUNC_ATTR_NONNULL_ALL
 {
-  garray_T ga;
-  ga_init(&ga, (int)sizeof(char), 80);
-  vim_to_string(&ga, tv, "tv2string() argument");
-  did_echo_string_emsg = false;
-  if (len != NULL) {
-    *len = (size_t) ga.ga_len;
-  }
-  ga_append(&ga, '\0');
-  return (char *) ga.ga_data;
-}
+  char *s = NULL;
 
-/// Return a string with the string representation of a variable.
-/// Does not put quotes around strings, as ":echo" displays values.
-///
-/// @param[in]  tv  typval_T to convert.
-/// @param[out]  len  Location where length of the result will be saved.
-///
-/// @return String representation of the variable or NULL.
-static char *echo_string(typval_T *tv, size_t *len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_MALLOC
-{
-  garray_T ga;
-  ga_init(&ga, (int)sizeof(char), 80);
-  if (tv->v_type == VAR_STRING || tv->v_type == VAR_FUNC) {
-    if (tv->vval.v_string != NULL) {
-      ga_concat(&ga, tv->vval.v_string);
-    }
-  } else {
-    vim_to_echo(&ga, tv, ":echo argument");
-    did_echo_string_emsg = false;
+  // MS-Windows does not deal with "inf" and "nan" properly
+  if (STRNICMP(text, "inf", 3) == 0) {
+    *ret_value = INFINITY;
+    return 3;
   }
-  if (len != NULL) {
-    *len = (size_t) ga.ga_len;
+  if (STRNICMP(text, "-inf", 3) == 0) {
+    *ret_value = -INFINITY;
+    return 4;
   }
-  ga_append(&ga, '\0');
-  return (char *) ga.ga_data;
-}
-
-/*
- * Convert the string "text" to a floating point number.
- * This uses strtod().  setlocale(LC_NUMERIC, "C") has been used to make sure
- * this always uses a decimal point.
- * Returns the length of the text that was consumed.
- */
-static int 
-string2float (
-    char_u *text,
-    float_T *value         /* result stored here */
-)
-{
-  char        *s = (char *)text;
-  float_T f;
-
-  f = strtod(s, &s);
-  *value = f;
-  return (int)((char_u *)s - text);
+  if (STRNICMP(text, "nan", 3) == 0) {
+    *ret_value = NAN;
+    return 3;
+  }
+  *ret_value = strtod(text, &s);
+  return (size_t) (s - text);
 }
 
 /// Get the value of an environment variable.
@@ -7136,7 +5479,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   ++*arg;
   name = *arg;
-  len = get_env_len(arg);
+  len = get_env_len((const char_u **)arg);
 
   if (evaluate) {
     if (len == 0) {
@@ -7152,8 +5495,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
       // Next try expanding things like $VIM and ${HOME}.
       string = expand_env_save(name - 1);
       if (string != NULL && *string == '$') {
-        xfree(string);
-        string = NULL;
+        XFREE_CLEAR(string);
       }
     }
     name[len] = cc;
@@ -7164,916 +5506,21 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-/*
- * Array with names and number of arguments of all internal functions
- * MUST BE KEPT SORTED IN strcmp() ORDER FOR BINARY SEARCH!
- */
-static struct fst {
-  char        *f_name;          /* function name */
-  char f_min_argc;              /* minimal number of arguments */
-  char f_max_argc;              /* maximal number of arguments */
-  void        (*f_func)(typval_T *args, typval_T *rvar);
-  /* implementation of function */
-} functions[] =
+/// Get the argument list for a given window
+void get_arglist_as_rettv(aentry_T *arglist, int argcount,
+                          typval_T *rettv)
 {
-  { "abs",               1, 1, f_abs },
-  { "acos",              1, 1, f_acos },    // WJMc
-  { "add",               2, 2, f_add },
-  { "and",               2, 2, f_and },
-  { "append",            2, 2, f_append },
-  { "argc",              0, 0, f_argc },
-  { "argidx",            0, 0, f_argidx },
-  { "arglistid",         0, 2, f_arglistid },
-  { "argv",              0, 1, f_argv },
-  { "asin",              1, 1, f_asin },    // WJMc
-  { "assert_equal",      2, 3, f_assert_equal },
-  { "assert_false",      1, 2, f_assert_false },
-  { "assert_true",       1, 2, f_assert_true },
-  { "atan",              1, 1, f_atan },
-  { "atan2",             2, 2, f_atan2 },
-  { "browse",            4, 4, f_browse },
-  { "browsedir",         2, 2, f_browsedir },
-  { "bufexists",         1, 1, f_bufexists },
-  { "buffer_exists",     1, 1, f_bufexists },       // obsolete
-  { "buffer_name",       1, 1, f_bufname },         // obsolete
-  { "buffer_number",     1, 1, f_bufnr },           // obsolete
-  { "buflisted",         1, 1, f_buflisted },
-  { "bufloaded",         1, 1, f_bufloaded },
-  { "bufname",           1, 1, f_bufname },
-  { "bufnr",             1, 2, f_bufnr },
-  { "bufwinnr",          1, 1, f_bufwinnr },
-  { "byte2line",         1, 1, f_byte2line },
-  { "byteidx",           2, 2, f_byteidx },
-  { "byteidxcomp",       2, 2, f_byteidxcomp },
-  { "call",              2, 3, f_call },
-  { "ceil",              1, 1, f_ceil },
-  { "changenr",          0, 0, f_changenr },
-  { "char2nr",           1, 2, f_char2nr },
-  { "cindent",           1, 1, f_cindent },
-  { "clearmatches",      0, 0, f_clearmatches },
-  { "col",               1, 1, f_col },
-  { "complete",          2, 2, f_complete },
-  { "complete_add",      1, 1, f_complete_add },
-  { "complete_check",    0, 0, f_complete_check },
-  { "confirm",           1, 4, f_confirm },
-  { "copy",              1, 1, f_copy },
-  { "cos",               1, 1, f_cos },
-  { "cosh",              1, 1, f_cosh },
-  { "count",             2, 4, f_count },
-  { "cscope_connection", 0, 3, f_cscope_connection },
-  { "cursor",            1, 3, f_cursor },
-  { "deepcopy",          1, 2, f_deepcopy },
-  { "delete",            1, 1, f_delete },
-  { "dictwatcheradd",    3, 3, f_dictwatcheradd },
-  { "dictwatcherdel",    3, 3, f_dictwatcherdel },
-  { "did_filetype",      0, 0, f_did_filetype },
-  { "diff_filler",       1, 1, f_diff_filler },
-  { "diff_hlID",         2, 2, f_diff_hlID },
-  { "empty",             1, 1, f_empty },
-  { "escape",            2, 2, f_escape },
-  { "eval",              1, 1, f_eval },
-  { "eventhandler",      0, 0, f_eventhandler },
-  { "executable",        1, 1, f_executable },
-  { "exepath",           1, 1, f_exepath },
-  { "exists",            1, 1, f_exists },
-  { "exp",               1, 1, f_exp },
-  { "expand",            1, 3, f_expand },
-  { "extend",            2, 3, f_extend },
-  { "feedkeys",          1, 2, f_feedkeys },
-  { "file_readable",     1, 1, f_filereadable },    // obsolete
-  { "filereadable",      1, 1, f_filereadable },
-  { "filewritable",      1, 1, f_filewritable },
-  { "filter",            2, 2, f_filter },
-  { "finddir",           1, 3, f_finddir },
-  { "findfile",          1, 3, f_findfile },
-  { "float2nr",          1, 1, f_float2nr },
-  { "floor",             1, 1, f_floor },
-  { "fmod",              2, 2, f_fmod },
-  { "fnameescape",       1, 1, f_fnameescape },
-  { "fnamemodify",       2, 2, f_fnamemodify },
-  { "foldclosed",        1, 1, f_foldclosed },
-  { "foldclosedend",     1, 1, f_foldclosedend },
-  { "foldlevel",         1, 1, f_foldlevel },
-  { "foldtext",          0, 0, f_foldtext },
-  { "foldtextresult",    1, 1, f_foldtextresult },
-  { "foreground",        0, 0, f_foreground },
-  { "function",          1, 1, f_function },
-  { "garbagecollect",    0, 1, f_garbagecollect },
-  { "get",               2, 3, f_get },
-  { "getbufline",        2, 3, f_getbufline },
-  { "getbufvar",         2, 3, f_getbufvar },
-  { "getchar",           0, 1, f_getchar },
-  { "getcharmod",        0, 0, f_getcharmod },
-  { "getcharsearch",     0, 0, f_getcharsearch },
-  { "getcmdline",        0, 0, f_getcmdline },
-  { "getcmdpos",         0, 0, f_getcmdpos },
-  { "getcmdtype",        0, 0, f_getcmdtype },
-  { "getcmdwintype",     0, 0, f_getcmdwintype },
-  { "getcurpos",         0, 0, f_getcurpos },
-  { "getcwd",            0, 0, f_getcwd },
-  { "getfontname",       0, 1, f_getfontname },
-  { "getfperm",          1, 1, f_getfperm },
-  { "getfsize",          1, 1, f_getfsize },
-  { "getftime",          1, 1, f_getftime },
-  { "getftype",          1, 1, f_getftype },
-  { "getline",           1, 2, f_getline },
-  { "getloclist",        1, 1, f_getqflist },
-  { "getmatches",        0, 0, f_getmatches },
-  { "getpid",            0, 0, f_getpid },
-  { "getpos",            1, 1, f_getpos },
-  { "getqflist",         0, 0, f_getqflist },
-  { "getreg",            0, 3, f_getreg },
-  { "getregtype",        0, 1, f_getregtype },
-  { "gettabvar",         2, 3, f_gettabvar },
-  { "gettabwinvar",      3, 4, f_gettabwinvar },
-  { "getwinposx",        0, 0, f_getwinposx },
-  { "getwinposy",        0, 0, f_getwinposy },
-  { "getwinvar",         2, 3, f_getwinvar },
-  { "glob",              1, 4, f_glob },
-  { "glob2regpat",       1, 1, f_glob2regpat },
-  { "globpath",          2, 5, f_globpath },
-  { "has",               1, 1, f_has },
-  { "has_key",           2, 2, f_has_key },
-  { "haslocaldir",       0, 0, f_haslocaldir },
-  { "hasmapto",          1, 3, f_hasmapto },
-  { "highlightID",       1, 1, f_hlID },            // obsolete
-  { "highlight_exists",  1, 1, f_hlexists },        // obsolete
-  { "histadd",           2, 2, f_histadd },
-  { "histdel",           1, 2, f_histdel },
-  { "histget",           1, 2, f_histget },
-  { "histnr",            1, 1, f_histnr },
-  { "hlID",              1, 1, f_hlID },
-  { "hlexists",          1, 1, f_hlexists },
-  { "hostname",          0, 0, f_hostname },
-  { "iconv",             3, 3, f_iconv },
-  { "indent",            1, 1, f_indent },
-  { "index",             2, 4, f_index },
-  { "input",             1, 3, f_input },
-  { "inputdialog",       1, 3, f_inputdialog },
-  { "inputlist",         1, 1, f_inputlist },
-  { "inputrestore",      0, 0, f_inputrestore },
-  { "inputsave",         0, 0, f_inputsave },
-  { "inputsecret",       1, 2, f_inputsecret },
-  { "insert",            2, 3, f_insert },
-  { "invert",            1, 1, f_invert },
-  { "isdirectory",       1, 1, f_isdirectory },
-  { "islocked",          1, 1, f_islocked },
-  { "items",             1, 1, f_items },
-  { "jobclose",          1, 2, f_jobclose },
-  { "jobpid",            1, 1, f_jobpid },
-  { "jobresize",         3, 3, f_jobresize },
-  { "jobsend",           2, 2, f_jobsend },
-  { "jobstart",          1, 2, f_jobstart },
-  { "jobstop",           1, 1, f_jobstop },
-  { "jobwait",           1, 2, f_jobwait },
-  { "join",              1, 2, f_join },
-  { "keys",              1, 1, f_keys },
-  { "last_buffer_nr",    0, 0, f_last_buffer_nr },  // obsolete
-  { "len",               1, 1, f_len },
-  { "libcall",           3, 3, f_libcall },
-  { "libcallnr",         3, 3, f_libcallnr },
-  { "line",              1, 1, f_line },
-  { "line2byte",         1, 1, f_line2byte },
-  { "lispindent",        1, 1, f_lispindent },
-  { "localtime",         0, 0, f_localtime },
-  { "log",               1, 1, f_log },
-  { "log10",             1, 1, f_log10 },
-  { "map",               2, 2, f_map },
-  { "maparg",            1, 4, f_maparg },
-  { "mapcheck",          1, 3, f_mapcheck },
-  { "match",             2, 4, f_match },
-  { "matchadd",          2, 5, f_matchadd },
-  { "matchaddpos",       2, 5, f_matchaddpos },
-  { "matcharg",          1, 1, f_matcharg },
-  { "matchdelete",       1, 1, f_matchdelete },
-  { "matchend",          2, 4, f_matchend },
-  { "matchlist",         2, 4, f_matchlist },
-  { "matchstr",          2, 4, f_matchstr },
-  { "max",               1, 1, f_max },
-  { "min",               1, 1, f_min },
-  { "mkdir",             1, 3, f_mkdir },
-  { "mode",              0, 1, f_mode },
-  { "msgpackdump",       1, 1, f_msgpackdump },
-  { "msgpackparse",      1, 1, f_msgpackparse },
-  { "nextnonblank",      1, 1, f_nextnonblank },
-  { "nr2char",           1, 2, f_nr2char },
-  { "or",                2, 2, f_or },
-  { "pathshorten",       1, 1, f_pathshorten },
-  { "pow",               2, 2, f_pow },
-  { "prevnonblank",      1, 1, f_prevnonblank },
-  { "printf",            2, MAX_FUNC_ARGS, f_printf },
-  { "pumvisible",        0, 0, f_pumvisible },
-  { "py3eval",           1, 1, f_py3eval },
-  { "pyeval",            1, 1, f_pyeval },
-  { "range",             1, 3, f_range },
-  { "readfile",          1, 3, f_readfile },
-  { "reltime",           0, 2, f_reltime },
-  { "reltimestr",        1, 1, f_reltimestr },
-  { "remove",            2, 3, f_remove },
-  { "rename",            2, 2, f_rename },
-  { "repeat",            2, 2, f_repeat },
-  { "resolve",           1, 1, f_resolve },
-  { "reverse",           1, 1, f_reverse },
-  { "round",             1, 1, f_round },
-  { "rpcnotify",         2, MAX_FUNC_ARGS, f_rpcnotify },
-  { "rpcrequest",        2, MAX_FUNC_ARGS, f_rpcrequest },
-  { "rpcstart",          1, 2, f_rpcstart },
-  { "rpcstop",           1, 1, f_rpcstop },
-  { "screenattr",        2, 2, f_screenattr },
-  { "screenchar",        2, 2, f_screenchar },
-  { "screencol",         0, 0, f_screencol },
-  { "screenrow",         0, 0, f_screenrow },
-  { "search",            1, 4, f_search },
-  { "searchdecl",        1, 3, f_searchdecl },
-  { "searchpair",        3, 7, f_searchpair },
-  { "searchpairpos",     3, 7, f_searchpairpos },
-  { "searchpos",         1, 4, f_searchpos },
-  { "serverlist",        0, 0, f_serverlist },
-  { "serverstart",       0, 1, f_serverstart },
-  { "serverstop",        1, 1, f_serverstop },
-  { "setbufvar",         3, 3, f_setbufvar },
-  { "setcharsearch",     1, 1, f_setcharsearch },
-  { "setcmdpos",         1, 1, f_setcmdpos },
-  { "setline",           2, 2, f_setline },
-  { "setloclist",        2, 4, f_setloclist },
-  { "setmatches",        1, 1, f_setmatches },
-  { "setpos",            2, 2, f_setpos },
-  { "setqflist",         1, 3, f_setqflist },
-  { "setreg",            2, 3, f_setreg },
-  { "settabvar",         3, 3, f_settabvar },
-  { "settabwinvar",      4, 4, f_settabwinvar },
-  { "setwinvar",         3, 3, f_setwinvar },
-  { "sha256",            1, 1, f_sha256 },
-  { "shellescape",       1, 2, f_shellescape },
-  { "shiftwidth",        0, 0, f_shiftwidth },
-  { "simplify",          1, 1, f_simplify },
-  { "sin",               1, 1, f_sin },
-  { "sinh",              1, 1, f_sinh },
-  { "sort",              1, 3, f_sort },
-  { "soundfold",         1, 1, f_soundfold },
-  { "spellbadword",      0, 1, f_spellbadword },
-  { "spellsuggest",      1, 3, f_spellsuggest },
-  { "split",             1, 3, f_split },
-  { "sqrt",              1, 1, f_sqrt },
-  { "str2float",         1, 1, f_str2float },
-  { "str2nr",            1, 2, f_str2nr },
-  { "strchars",          1, 2, f_strchars },
-  { "strdisplaywidth",   1, 2, f_strdisplaywidth },
-  { "strftime",          1, 2, f_strftime },
-  { "stridx",            2, 3, f_stridx },
-  { "string",            1, 1, f_string },
-  { "strlen",            1, 1, f_strlen },
-  { "strpart",           2, 3, f_strpart },
-  { "strridx",           2, 3, f_strridx },
-  { "strtrans",          1, 1, f_strtrans },
-  { "strwidth",          1, 1, f_strwidth },
-  { "submatch",          1, 2, f_submatch },
-  { "substitute",        4, 4, f_substitute },
-  { "synID",             3, 3, f_synID },
-  { "synIDattr",         2, 3, f_synIDattr },
-  { "synIDtrans",        1, 1, f_synIDtrans },
-  { "synconcealed",      2, 2, f_synconcealed },
-  { "synstack",          2, 2, f_synstack },
-  { "system",            1, 2, f_system },
-  { "systemlist",        1, 3, f_systemlist },
-  { "tabpagebuflist",    0, 1, f_tabpagebuflist },
-  { "tabpagenr",         0, 1, f_tabpagenr },
-  { "tabpagewinnr",      1, 2, f_tabpagewinnr },
-  { "tagfiles",          0, 0, f_tagfiles },
-  { "taglist",           1, 1, f_taglist },
-  { "tan",               1, 1, f_tan },
-  { "tanh",              1, 1, f_tanh },
-  { "tempname",          0, 0, f_tempname },
-  { "termopen",          1, 2, f_termopen },
-  { "test",              1, 1, f_test },
-  { "tolower",           1, 1, f_tolower },
-  { "toupper",           1, 1, f_toupper },
-  { "tr",                3, 3, f_tr },
-  { "trunc",             1, 1, f_trunc },
-  { "type",              1, 1, f_type },
-  { "undofile",          1, 1, f_undofile },
-  { "undotree",          0, 0, f_undotree },
-  { "uniq",              1, 3, f_uniq },
-  { "values",            1, 1, f_values },
-  { "virtcol",           1, 1, f_virtcol },
-  { "visualmode",        0, 1, f_visualmode },
-  { "wildmenumode",      0, 0, f_wildmenumode },
-  { "winbufnr",          1, 1, f_winbufnr },
-  { "wincol",            0, 0, f_wincol },
-  { "winheight",         1, 1, f_winheight },
-  { "winline",           0, 0, f_winline },
-  { "winnr",             0, 1, f_winnr },
-  { "winrestcmd",        0, 0, f_winrestcmd },
-  { "winrestview",       1, 1, f_winrestview },
-  { "winsaveview",       0, 0, f_winsaveview },
-  { "winwidth",          1, 1, f_winwidth },
-  { "writefile",         2, 3, f_writefile },
-  { "xor",               2, 2, f_xor },
-};
-
-
-/*
- * Function given to ExpandGeneric() to obtain the list of internal
- * or user defined function names.
- */
-char_u *get_function_name(expand_T *xp, int idx)
-{
-  static int intidx = -1;
-  char_u      *name;
-
-  if (idx == 0)
-    intidx = -1;
-  if (intidx < 0) {
-    name = get_user_func_name(xp, idx);
-    if (name != NULL)
-      return name;
-  }
-  if (++intidx < (int)ARRAY_SIZE(functions)) {
-    STRCPY(IObuff, functions[intidx].f_name);
-    STRCAT(IObuff, "(");
-    if (functions[intidx].f_max_argc == 0)
-      STRCAT(IObuff, ")");
-    return IObuff;
-  }
-
-  return NULL;
-}
-
-/*
- * Function given to ExpandGeneric() to obtain the list of internal or
- * user defined variable or function names.
- */
-char_u *get_expr_name(expand_T *xp, int idx)
-{
-  static int intidx = -1;
-  char_u      *name;
-
-  if (idx == 0)
-    intidx = -1;
-  if (intidx < 0) {
-    name = get_function_name(xp, idx);
-    if (name != NULL)
-      return name;
-  }
-  return get_user_var_name(xp, ++intidx);
-}
-
-
-
-
-/*
- * Find internal function in table above.
- * Return index, or -1 if not found
- */
-static int 
-find_internal_func (
-    char_u *name              /* name of the function */
-)
-{
-  int first = 0;
-  int last = (int)ARRAY_SIZE(functions) - 1;
-
-  /*
-   * Find the function name in the table. Binary search.
-   */
-  while (first <= last) {
-    int x = first + ((unsigned)(last - first)) / 2;
-    int cmp = STRCMP(name, functions[x].f_name);
-    if (cmp < 0)
-      last = x - 1;
-    else if (cmp > 0)
-      first = x + 1;
-    else
-      return x;
-  }
-  return -1;
-}
-
-/*
- * Check if "name" is a variable of type VAR_FUNC.  If so, return the function
- * name it contains, otherwise return "name".
- */
-static char_u *deref_func_name(char_u *name, int *lenp, int no_autoload)
-{
-  dictitem_T  *v;
-  int cc;
-
-  cc = name[*lenp];
-  name[*lenp] = NUL;
-  v = find_var(name, NULL, no_autoload);
-  name[*lenp] = cc;
-  if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
-    if (v->di_tv.vval.v_string == NULL) {
-      *lenp = 0;
-      return (char_u *)"";              /* just in case */
-    }
-    *lenp = (int)STRLEN(v->di_tv.vval.v_string);
-    return v->di_tv.vval.v_string;
-  }
-
-  return name;
-}
-
-/*
- * Allocate a variable for the result of a function.
- * Return OK or FAIL.
- */
-static int 
-get_func_tv (
-    char_u *name,              /* name of the function */
-    int len,                        /* length of "name" */
-    typval_T *rettv,
-    char_u **arg,              /* argument, pointing to the '(' */
-    linenr_T firstline,             /* first line of range */
-    linenr_T lastline,              /* last line of range */
-    int *doesrange,         /* return: function handled range */
-    int evaluate,
-    dict_T *selfdict          /* Dictionary for "self" */
-)
-{
-  char_u      *argp;
-  int ret = OK;
-  typval_T argvars[MAX_FUNC_ARGS + 1];          /* vars for arguments */
-  int argcount = 0;                     /* number of arguments found */
-
-  /*
-   * Get the arguments.
-   */
-  argp = *arg;
-  while (argcount < MAX_FUNC_ARGS) {
-    argp = skipwhite(argp + 1);             /* skip the '(' or ',' */
-    if (*argp == ')' || *argp == ',' || *argp == NUL)
-      break;
-    if (eval1(&argp, &argvars[argcount], evaluate) == FAIL) {
-      ret = FAIL;
-      break;
-    }
-    ++argcount;
-    if (*argp != ',')
-      break;
-  }
-  if (*argp == ')')
-    ++argp;
-  else
-    ret = FAIL;
-
-  if (ret == OK)
-    ret = call_func(name, len, rettv, argcount, argvars,
-        firstline, lastline, doesrange, evaluate, selfdict);
-  else if (!aborting()) {
-    if (argcount == MAX_FUNC_ARGS)
-      emsg_funcname(N_("E740: Too many arguments for function %s"), name);
-    else
-      emsg_funcname(N_("E116: Invalid arguments for function %s"), name);
-  }
-
-  while (--argcount >= 0)
-    clear_tv(&argvars[argcount]);
-
-  *arg = skipwhite(argp);
-  return ret;
-}
-
-
-/*
- * Call a function with its resolved parameters
- * Return FAIL when the function can't be called,  OK otherwise.
- * Also returns OK when an error was encountered while executing the function.
- */
-int
-call_func (
-    char_u *funcname,          /* name of the function */
-    int len,                        /* length of "name" */
-    typval_T *rettv,             /* return value goes here */
-    int argcount,                   /* number of "argvars" */
-    typval_T *argvars,           /* vars for arguments, must have "argcount"
-                                   PLUS ONE elements! */
-    linenr_T firstline,             /* first line of range */
-    linenr_T lastline,              /* last line of range */
-    int *doesrange,         /* return: function handled range */
-    int evaluate,
-    dict_T *selfdict          /* Dictionary for "self" */
-)
-{
-  int ret = FAIL;
-#define ERROR_UNKNOWN   0
-#define ERROR_TOOMANY   1
-#define ERROR_TOOFEW    2
-#define ERROR_SCRIPT    3
-#define ERROR_DICT      4
-#define ERROR_NONE      5
-#define ERROR_OTHER     6
-  int error = ERROR_NONE;
-  int i;
-  int llen;
-  ufunc_T     *fp;
-#define FLEN_FIXED 40
-  char_u fname_buf[FLEN_FIXED + 1];
-  char_u      *fname;
-  char_u      *name;
-
-  /* Make a copy of the name, if it comes from a funcref variable it could
-   * be changed or deleted in the called function. */
-  name = vim_strnsave(funcname, len);
-
-  /*
-   * In a script change <SID>name() and s:name() to K_SNR 123_name().
-   * Change <SNR>123_name() to K_SNR 123_name().
-   * Use fname_buf[] when it fits, otherwise allocate memory (slow).
-   */
-  llen = eval_fname_script(name);
-  if (llen > 0) {
-    fname_buf[0] = K_SPECIAL;
-    fname_buf[1] = KS_EXTRA;
-    fname_buf[2] = (int)KE_SNR;
-    i = 3;
-    if (eval_fname_sid(name)) {         /* "<SID>" or "s:" */
-      if (current_SID <= 0)
-        error = ERROR_SCRIPT;
-      else {
-        sprintf((char *)fname_buf + 3, "%" PRId64 "_", (int64_t)current_SID);
-        i = (int)STRLEN(fname_buf);
-      }
-    }
-    if (i + STRLEN(name + llen) < FLEN_FIXED) {
-      STRCPY(fname_buf + i, name + llen);
-      fname = fname_buf;
-    } else {
-      fname = xmalloc(i + STRLEN(name + llen) + 1);
-      memmove(fname, fname_buf, (size_t)i);
-      STRCPY(fname + i, name + llen);
-    }
-  } else
-    fname = name;
-
-  *doesrange = FALSE;
-
-
-  /* execute the function if no errors detected and executing */
-  if (evaluate && error == ERROR_NONE) {
-    char_u *rfname = fname;
-
-    /* Ignore "g:" before a function name. */
-    if (fname[0] == 'g' && fname[1] == ':') {
-      rfname = fname + 2;
-    }
-
-    rettv->v_type = VAR_NUMBER;         /* default rettv is number zero */
-    rettv->vval.v_number = 0;
-    error = ERROR_UNKNOWN;
-
-    if (!builtin_function(rfname, -1)) {
-      /*
-       * User defined function.
-       */
-      fp = find_func(rfname);
-
-      /* Trigger FuncUndefined event, may load the function. */
-      if (fp == NULL
-          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, TRUE, NULL)
-          && !aborting()) {
-        /* executed an autocommand, search for the function again */
-        fp = find_func(rfname);
-      }
-      /* Try loading a package. */
-      if (fp == NULL && script_autoload(rfname, TRUE) && !aborting()) {
-        /* loaded a package, search for the function again */
-        fp = find_func(rfname);
-      }
-
-      if (fp != NULL) {
-        if (fp->uf_flags & FC_RANGE)
-          *doesrange = TRUE;
-        if (argcount < fp->uf_args.ga_len)
-          error = ERROR_TOOFEW;
-        else if (!fp->uf_varargs && argcount > fp->uf_args.ga_len)
-          error = ERROR_TOOMANY;
-        else if ((fp->uf_flags & FC_DICT) && selfdict == NULL)
-          error = ERROR_DICT;
-        else {
-          // Call the user function.
-          call_user_func(fp, argcount, argvars, rettv, firstline, lastline,
-              (fp->uf_flags & FC_DICT) ? selfdict : NULL);
-          error = ERROR_NONE;
-        }
-      }
-    } else {
-      /*
-       * Find the function name in the table, call its implementation.
-       */
-      i = find_internal_func(fname);
-      if (i >= 0) {
-        if (argcount < functions[i].f_min_argc)
-          error = ERROR_TOOFEW;
-        else if (argcount > functions[i].f_max_argc)
-          error = ERROR_TOOMANY;
-        else {
-          argvars[argcount].v_type = VAR_UNKNOWN;
-          functions[i].f_func(argvars, rettv);
-          error = ERROR_NONE;
-        }
-      }
-    }
-    /*
-     * The function call (or "FuncUndefined" autocommand sequence) might
-     * have been aborted by an error, an interrupt, or an explicitly thrown
-     * exception that has not been caught so far.  This situation can be
-     * tested for by calling aborting().  For an error in an internal
-     * function or for the "E132" error in call_user_func(), however, the
-     * throw point at which the "force_abort" flag (temporarily reset by
-     * emsg()) is normally updated has not been reached yet. We need to
-     * update that flag first to make aborting() reliable.
-     */
-    update_force_abort();
-  }
-  if (error == ERROR_NONE)
-    ret = OK;
-
-  /*
-   * Report an error unless the argument evaluation or function call has been
-   * cancelled due to an aborting error, an interrupt, or an exception.
-   */
-  if (!aborting()) {
-    switch (error) {
-    case ERROR_UNKNOWN:
-      emsg_funcname(N_("E117: Unknown function: %s"), name);
-      break;
-    case ERROR_TOOMANY:
-      emsg_funcname(e_toomanyarg, name);
-      break;
-    case ERROR_TOOFEW:
-      emsg_funcname(N_("E119: Not enough arguments for function: %s"),
-          name);
-      break;
-    case ERROR_SCRIPT:
-      emsg_funcname(N_("E120: Using <SID> not in a script context: %s"),
-          name);
-      break;
-    case ERROR_DICT:
-      emsg_funcname(N_("E725: Calling dict function without Dictionary: %s"),
-          name);
-      break;
-    }
-  }
-
-  if (fname != name && fname != fname_buf)
-    xfree(fname);
-  xfree(name);
-
-  return ret;
-}
-
-/*
- * Give an error message with a function name.  Handle <SNR> things.
- * "ermsg" is to be passed without translation, use N_() instead of _().
- */
-static void emsg_funcname(char *ermsg, char_u *name)
-{
-  char_u      *p;
-
-  if (*name == K_SPECIAL)
-    p = concat_str((char_u *)"<SNR>", name + 3);
-  else
-    p = name;
-  EMSG2(_(ermsg), p);
-  if (p != name)
-    xfree(p);
-}
-
-/*
- * Return TRUE for a non-zero Number and a non-empty String.
- */
-static int non_zero_arg(typval_T *argvars)
-{
-  return (argvars[0].v_type == VAR_NUMBER
-          && argvars[0].vval.v_number != 0)
-         || (argvars[0].v_type == VAR_STRING
-             && argvars[0].vval.v_string != NULL
-             && *argvars[0].vval.v_string != NUL);
-}
-
-/*********************************************
- * Implementation of the built-in functions
- */
-
-
-/*
- * Get the float value of "argvars[0]" into "f".
- * Returns FAIL when the argument is not a Number or Float.
- */
-static inline int get_float_arg(typval_T *argvars, float_T *f)
-{
-  if (argvars[0].v_type == VAR_FLOAT) {
-    *f = argvars[0].vval.v_float;
-    return OK;
-  }
-  if (argvars[0].v_type == VAR_NUMBER) {
-    *f = (float_T)argvars[0].vval.v_number;
-    return OK;
-  }
-  EMSG(_("E808: Number or Float required"));
-  return FAIL;
-}
-
-// Apply a floating point C function on a typval with one float_T.
-//
-// Some versions of glibc on i386 have an optimization that makes it harder to
-// call math functions indirectly from inside an inlined function, causing
-// compile-time errors. Avoid `inline` in that case. #3072
-#ifndef ARCH_32
-inline
-#endif
-static void float_op_wrapper(typval_T *argvars, typval_T *rettv,
-                             float_T (*function)(float_T))
-{
-  float_T f;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &f) == OK) {
-    rettv->vval.v_float = function(f);
-  } else {
-    rettv->vval.v_float = 0.0;
-  }
-}
-
-/*
- * "abs(expr)" function
- */
-static void f_abs(typval_T *argvars, typval_T *rettv)
-{
-  if (argvars[0].v_type == VAR_FLOAT) {
-    float_op_wrapper(argvars, rettv, &fabs);
-  } else {
-    varnumber_T n;
-    int error = FALSE;
-
-    n = get_tv_number_chk(&argvars[0], &error);
-    if (error)
-      rettv->vval.v_number = -1;
-    else if (n > 0)
-      rettv->vval.v_number = n;
-    else
-      rettv->vval.v_number = -n;
-  }
-}
-
-/*
- * "acos()" function
- */
-static void f_acos(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &acos);
-}
-
-/*
- * "add(list, item)" function
- */
-static void f_add(typval_T *argvars, typval_T *rettv)
-{
-  list_T      *l;
-
-  rettv->vval.v_number = 1;   /* Default: Failed */
-  if (argvars[0].v_type == VAR_LIST) {
-    if ((l = argvars[0].vval.v_list) != NULL
-        && !tv_check_lock(l->lv_lock,
-                          (char_u *)N_("add() argument"), true)) {
-      list_append_tv(l, &argvars[1]);
-      copy_tv(&argvars[0], rettv);
-    }
-  } else
-    EMSG(_(e_listreq));
-}
-
-/*
- * "and(expr, expr)" function
- */
-static void f_and(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
-                         & get_tv_number_chk(&argvars[1], NULL);
-}
-
-/*
- * "append(lnum, string/list)" function
- */
-static void f_append(typval_T *argvars, typval_T *rettv)
-{
-  long lnum;
-  char_u      *line;
-  list_T      *l = NULL;
-  listitem_T  *li = NULL;
-  typval_T    *tv;
-  long added = 0;
-
-  /* When coming here from Insert mode, sync undo, so that this can be
-   * undone separately from what was previously inserted. */
-  if (u_sync_once == 2) {
-    u_sync_once = 1;     /* notify that u_sync() was called */
-    u_sync(TRUE);
-  }
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 0
-      && lnum <= curbuf->b_ml.ml_line_count
-      && u_save(lnum, lnum + 1) == OK) {
-    if (argvars[1].v_type == VAR_LIST) {
-      l = argvars[1].vval.v_list;
-      if (l == NULL)
-        return;
-      li = l->lv_first;
-    }
-    for (;; ) {
-      if (l == NULL)
-        tv = &argvars[1];               /* append a string */
-      else if (li == NULL)
-        break;                          /* end of list */
-      else
-        tv = &li->li_tv;                /* append item from list */
-      line = get_tv_string_chk(tv);
-      if (line == NULL) {               /* type error */
-        rettv->vval.v_number = 1;               /* Failed */
-        break;
-      }
-      ml_append(lnum + added, line, (colnr_T)0, FALSE);
-      ++added;
-      if (l == NULL)
-        break;
-      li = li->li_next;
-    }
-
-    appended_lines_mark(lnum, added);
-    if (curwin->w_cursor.lnum > lnum)
-      curwin->w_cursor.lnum += added;
-  } else
-    rettv->vval.v_number = 1;           /* Failed */
-}
-
-/*
- * "argc()" function
- */
-static void f_argc(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = ARGCOUNT;
-}
-
-/*
- * "argidx()" function
- */
-static void f_argidx(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = curwin->w_arg_idx;
-}
-
-/// "arglistid" function
-static void f_arglistid(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    tabpage_T *tp = NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      long n = get_tv_number(&argvars[1]);
-      if (n >= 0) {
-        tp = find_tabpage(n);
-      }
-    } else {
-      tp = curtab;
-    }
-
-    if (tp != NULL) {
-      win_T *wp = find_win_by_nr(&argvars[0], tp);
-      if (wp != NULL) {
-        rettv->vval.v_number = wp->w_alist->id;
-      }
-    }
-  } else {
-    rettv->vval.v_number = curwin->w_alist->id;
-  }
-}
-
-/*
- * "argv(nr)" function
- */
-static void f_argv(typval_T *argvars, typval_T *rettv)
-{
-  int idx;
-
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    idx = get_tv_number_chk(&argvars[0], NULL);
-    if (idx >= 0 && idx < ARGCOUNT)
-      rettv->vval.v_string = vim_strsave(alist_name(&ARGLIST[idx]));
-    else
-      rettv->vval.v_string = NULL;
-    rettv->v_type = VAR_STRING;
-  } else {
-    rettv_list_alloc(rettv);
-    for (idx = 0; idx < ARGCOUNT; ++idx) {
-      list_append_string(rettv->vval.v_list, alist_name(&ARGLIST[idx]), -1);
+  tv_list_alloc_ret(rettv, argcount);
+  if (arglist != NULL) {
+    for (int idx = 0; idx < argcount; idx++) {
+      tv_list_append_string(rettv->vval.v_list,
+                            (const char *)alist_name(&arglist[idx]), -1);
     }
   }
 }
 
 // Prepare "gap" for an assert error and add the sourcing position.
-static void prepare_assert_error(garray_T *gap)
+void prepare_assert_error(garray_T *gap)
 {
   char buf[NUMBUFLEN];
 
@@ -8093,1462 +5540,339 @@ static void prepare_assert_error(garray_T *gap)
   }
 }
 
+// Append "str" to "gap", escaping unprintable characters.
+// Changes NL to \n, CR to \r, etc.
+static void ga_concat_esc(garray_T *gap, char_u *str)
+{
+  char_u *p;
+  char_u buf[NUMBUFLEN];
+
+  if (str == NULL) {
+    ga_concat(gap, (char_u *)"NULL");
+    return;
+  }
+
+  for (p = str; *p != NUL; p++) {
+    switch (*p) {
+      case BS: ga_concat(gap, (char_u *)"\\b"); break;
+      case ESC: ga_concat(gap, (char_u *)"\\e"); break;
+      case FF: ga_concat(gap, (char_u *)"\\f"); break;
+      case NL: ga_concat(gap, (char_u *)"\\n"); break;
+      case TAB: ga_concat(gap, (char_u *)"\\t"); break;
+      case CAR: ga_concat(gap, (char_u *)"\\r"); break;
+      case '\\': ga_concat(gap, (char_u *)"\\\\"); break;
+      default:
+        if (*p < ' ') {
+          vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
+          ga_concat(gap, buf);
+        } else {
+          ga_append(gap, *p);
+        }
+        break;
+    }
+  }
+}
+
 // Fill "gap" with information about an assert error.
-static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
-                              char_u *exp_str, typval_T *exp_tv,
-                              typval_T *got_tv)
+void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
+                       char_u *exp_str, typval_T *exp_tv,
+                       typval_T *got_tv, assert_type_T atype)
 {
   char_u *tofree;
 
   if (opt_msg_tv->v_type != VAR_UNKNOWN) {
-    tofree = (char_u *) tv2string(opt_msg_tv, NULL);
+    tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
     ga_concat(gap, tofree);
     xfree(tofree);
+    ga_concat(gap, (char_u *)": ");
+  }
+
+  if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
+    ga_concat(gap, (char_u *)"Pattern ");
+  } else if (atype == ASSERT_NOTEQUAL) {
+    ga_concat(gap, (char_u *)"Expected not equal to ");
   } else {
     ga_concat(gap, (char_u *)"Expected ");
-    if (exp_str == NULL) {
-      tofree = (char_u *) tv2string(exp_tv, NULL);
-      ga_concat(gap, tofree);
-      xfree(tofree);
+  }
+
+  if (exp_str == NULL) {
+    tofree = (char_u *)encode_tv2string(exp_tv, NULL);
+    ga_concat_esc(gap, tofree);
+    xfree(tofree);
+  } else {
+    ga_concat_esc(gap, exp_str);
+  }
+
+  if (atype != ASSERT_NOTEQUAL) {
+    if (atype == ASSERT_MATCH) {
+      ga_concat(gap, (char_u *)" does not match ");
+    } else if (atype == ASSERT_NOTMATCH) {
+      ga_concat(gap, (char_u *)" does match ");
     } else {
-      ga_concat(gap, exp_str);
+      ga_concat(gap, (char_u *)" but got ");
     }
-    tofree = (char_u *) tv2string(got_tv, NULL);
-    ga_concat(gap, (char_u *)" but got ");
-    ga_concat(gap, tofree);
+    tofree = (char_u *)encode_tv2string(got_tv, NULL);
+    ga_concat_esc(gap, tofree);
     xfree(tofree);
   }
 }
 
 // Add an assert error to v:errors.
-static void assert_error(garray_T *gap)
+void assert_error(garray_T *gap)
 {
   struct vimvar *vp = &vimvars[VV_ERRORS];
 
   if (vp->vv_type != VAR_LIST || vimvars[VV_ERRORS].vv_list == NULL) {
     // Make sure v:errors is a list.
-    set_vim_var_list(VV_ERRORS, list_alloc());
+    set_vim_var_list(VV_ERRORS, tv_list_alloc(1));
   }
-  list_append_string(vimvars[VV_ERRORS].vv_list,
-                     gap->ga_data, gap->ga_len);
+  tv_list_append_string(vimvars[VV_ERRORS].vv_list,
+                        (const char *)gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
-// "assert_equal(expected, actual[, msg])" function
-static void f_assert_equal(typval_T *argvars, typval_T *rettv)
+int assert_equal_common(typval_T *argvars, assert_type_T atype)
+  FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
 
-  if (!tv_equal(&argvars[0], &argvars[1], false, false)) {
+  if (tv_equal(&argvars[0], &argvars[1], false, false)
+      != (atype == ASSERT_EQUAL)) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL,
-                      &argvars[0], &argvars[1]);
+                      &argvars[0], &argvars[1], atype);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
+}
+
+int assert_equalfile(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf1[NUMBUFLEN];
+  char buf2[NUMBUFLEN];
+  const char *const fname1 = tv_get_string_buf_chk(&argvars[0], buf1);
+  const char *const fname2 = tv_get_string_buf_chk(&argvars[1], buf2);
+  garray_T ga;
+
+  if (fname1 == NULL || fname2 == NULL) {
+    return 0;
+  }
+
+  IObuff[0] = NUL;
+  FILE *const fd1 = os_fopen(fname1, READBIN);
+  if (fd1 == NULL) {
+    snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname1);
+  } else {
+    FILE *const fd2 = os_fopen(fname2, READBIN);
+    if (fd2 == NULL) {
+      fclose(fd1);
+      snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
+    } else {
+      for (int64_t count = 0; ; count++) {
+        const int c1 = fgetc(fd1);
+        const int c2 = fgetc(fd2);
+        if (c1 == EOF) {
+          if (c2 != EOF) {
+            STRCPY(IObuff, "first file is shorter");
+          }
+          break;
+        } else if (c2 == EOF) {
+          STRCPY(IObuff, "second file is shorter");
+          break;
+        } else if (c1 != c2) {
+          snprintf((char *)IObuff, IOSIZE,
+                   "difference at byte %" PRId64, count);
+          break;
+        }
+      }
+      fclose(fd1);
+      fclose(fd2);
+    }
+  }
+  if (IObuff[0] != NUL) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, IObuff);
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  }
+  return 0;
+}
+
+int assert_inrange(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool error = false;
+  const varnumber_T lower = tv_get_number_chk(&argvars[0], &error);
+  const varnumber_T upper = tv_get_number_chk(&argvars[1], &error);
+  const varnumber_T actual = tv_get_number_chk(&argvars[2], &error);
+
+  if (error) {
+    return 0;
+  }
+  if (actual < lower || actual > upper) {
+    garray_T ga;
+    prepare_assert_error(&ga);
+
+    char msg[55];
+    vim_snprintf(msg, sizeof(msg),
+                 "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
+                 lower, upper);
+    fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
+                      ASSERT_INRANGE);
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  }
+  return 0;
 }
 
 // Common for assert_true() and assert_false().
-static void assert_bool(typval_T *argvars, bool isTrue)
+int assert_bool(typval_T *argvars, bool is_true)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int error = (int)false;
+  bool error = false;
   garray_T ga;
 
-  if (argvars[0].v_type != VAR_NUMBER ||
-      (get_tv_number_chk(&argvars[0], &error) == 0) == isTrue || error) {
+  if ((argvars[0].v_type != VAR_NUMBER
+       || (tv_get_number_chk(&argvars[0], &error) == 0) == is_true
+       || error)
+      && (argvars[0].v_type != VAR_SPECIAL
+          || (argvars[0].vval.v_special
+              != (SpecialVarValue) (is_true
+                                    ? kSpecialVarTrue
+                                    : kSpecialVarFalse)))) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1],
-                      (char_u *)(isTrue ? "True" : "False"),
-                      NULL, &argvars[0]);
+                      (char_u *)(is_true ? "True" : "False"),
+                      NULL, &argvars[0], ASSERT_OTHER);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
 }
 
-// "assert_false(actual[, msg])" function
-static void f_assert_false(typval_T *argvars, typval_T *rettv)
+int assert_exception(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
 {
-  assert_bool(argvars, false);
-}
+  garray_T ga;
 
-// "assert_true(actual[, msg])" function
-static void f_assert_true(typval_T *argvars, typval_T *rettv)
-{
-  assert_bool(argvars, true);
-}
-
-/*
- * "asin()" function
- */
-static void f_asin(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &asin);
-}
-
-/*
- * "atan()" function
- */
-static void f_atan(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &atan);
-}
-
-/*
- * "atan2()" function
- */
-static void f_atan2(typval_T *argvars, typval_T *rettv)
-{
-  float_T fx, fy;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
-    rettv->vval.v_float = atan2(fx, fy);
-  else
-    rettv->vval.v_float = 0.0;
-}
-
-/*
- * "browse(save, title, initdir, default)" function
- */
-static void f_browse(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_string = NULL;
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "browsedir(title, initdir)" function
- */
-static void f_browsedir(typval_T *argvars, typval_T *rettv)
-{
-  f_browse(argvars, rettv);
-}
-
-
-/*
- * Find a buffer by number or exact name.
- */
-static buf_T *find_buffer(typval_T *avar)
-{
-  buf_T       *buf = NULL;
-
-  if (avar->v_type == VAR_NUMBER)
-    buf = buflist_findnr((int)avar->vval.v_number);
-  else if (avar->v_type == VAR_STRING && avar->vval.v_string != NULL) {
-    buf = buflist_findname_exp(avar->vval.v_string);
-    if (buf == NULL) {
-      /* No full path name match, try a match with a URL or a "nofile"
-       * buffer, these don't use the full path. */
-      FOR_ALL_BUFFERS(bp) {
-        if (bp->b_fname != NULL
-            && (path_with_url((char *)bp->b_fname)
-                || bt_nofile(bp)
-                )
-            && STRCMP(bp->b_fname, avar->vval.v_string) == 0) {
-          buf = bp;
-          break;
-        }
-      }
-    }
+  const char *const error = tv_get_string_chk(&argvars[0]);
+  if (vimvars[VV_EXCEPTION].vv_str == NULL) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (char_u *)"v:exception is not set");
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  } else if (error != NULL
+             && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
+                      &vimvars[VV_EXCEPTION].vv_tv, ASSERT_OTHER);
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
   }
-  return buf;
+  return 0;
 }
 
-/*
- * "bufexists(expr)" function
- */
-static void f_bufexists(typval_T *argvars, typval_T *rettv)
+int assert_fails(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
 {
-  rettv->vval.v_number = (find_buffer(&argvars[0]) != NULL);
-}
-
-/*
- * "buflisted(expr)" function
- */
-static void f_buflisted(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-
-  buf = find_buffer(&argvars[0]);
-  rettv->vval.v_number = (buf != NULL && buf->b_p_bl);
-}
-
-/*
- * "bufloaded(expr)" function
- */
-static void f_bufloaded(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-
-  buf = find_buffer(&argvars[0]);
-  rettv->vval.v_number = (buf != NULL && buf->b_ml.ml_mfp != NULL);
-}
-
-
-/*
- * Get buffer by number or pattern.
- */
-static buf_T *get_buf_tv(typval_T *tv, int curtab_only)
-{
-  char_u      *name = tv->vval.v_string;
-  int save_magic;
-  char_u      *save_cpo;
-  buf_T       *buf;
-
-  if (tv->v_type == VAR_NUMBER)
-    return buflist_findnr((int)tv->vval.v_number);
-  if (tv->v_type != VAR_STRING)
-    return NULL;
-  if (name == NULL || *name == NUL)
-    return curbuf;
-  if (name[0] == '$' && name[1] == NUL)
-    return lastbuf;
-
-  /* Ignore 'magic' and 'cpoptions' here to make scripts portable */
-  save_magic = p_magic;
-  p_magic = TRUE;
-  save_cpo = p_cpo;
-  p_cpo = (char_u *)"";
-
-  buf = buflist_findnr(buflist_findpat(name, name + STRLEN(name),
-          TRUE, FALSE, curtab_only));
-
-  p_magic = save_magic;
-  p_cpo = save_cpo;
-
-  /* If not found, try expanding the name, like done for bufexists(). */
-  if (buf == NULL)
-    buf = find_buffer(tv);
-
-  return buf;
-}
-
-/*
- * "bufname(expr)" function
- */
-static void f_bufname(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  ++emsg_off;
-  buf = get_buf_tv(&argvars[0], FALSE);
-  rettv->v_type = VAR_STRING;
-  if (buf != NULL && buf->b_fname != NULL)
-    rettv->vval.v_string = vim_strsave(buf->b_fname);
-  else
-    rettv->vval.v_string = NULL;
-  --emsg_off;
-}
-
-/*
- * "bufnr(expr)" function
- */
-static void f_bufnr(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-  int error = FALSE;
-  char_u      *name;
-
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  ++emsg_off;
-  buf = get_buf_tv(&argvars[0], FALSE);
-  --emsg_off;
-
-  /* If the buffer isn't found and the second argument is not zero create a
-   * new buffer. */
-  if (buf == NULL
-      && argvars[1].v_type != VAR_UNKNOWN
-      && get_tv_number_chk(&argvars[1], &error) != 0
-      && !error
-      && (name = get_tv_string_chk(&argvars[0])) != NULL
-      && !error)
-    buf = buflist_new(name, NULL, (linenr_T)1, 0);
-
-  if (buf != NULL)
-    rettv->vval.v_number = buf->b_fnum;
-  else
-    rettv->vval.v_number = -1;
-}
-
-/*
- * "bufwinnr(nr)" function
- */
-static void f_bufwinnr(typval_T *argvars, typval_T *rettv)
-{
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  ++emsg_off;
-
-  buf_T *buf = get_buf_tv(&argvars[0], TRUE);
-  int winnr = 0;
-  bool found_buf = false;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    ++winnr;
-    if (wp->w_buffer == buf) {
-      found_buf = true;
-      break;
-    }
-  }
-  rettv->vval.v_number = (found_buf ? winnr : -1);
-  --emsg_off;
-}
-
-/*
- * "byte2line(byte)" function
- */
-static void f_byte2line(typval_T *argvars, typval_T *rettv)
-{
-  long boff = 0;
-
-  boff = get_tv_number(&argvars[0]) - 1;    /* boff gets -1 on type error */
-  if (boff < 0)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = ml_find_line_or_offset(curbuf,
-        (linenr_T)0, &boff);
-}
-
-static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
-{
-  char_u      *t;
-  char_u      *str;
-  long idx;
-
-  str = get_tv_string_chk(&argvars[0]);
-  idx = get_tv_number_chk(&argvars[1], NULL);
-  rettv->vval.v_number = -1;
-  if (str == NULL || idx < 0)
-    return;
-
-  t = str;
-  for (; idx > 0; idx--) {
-    if (*t == NUL)              /* EOL reached */
-      return;
-    if (enc_utf8 && comp)
-      t += utf_ptr2len(t);
-    else
-      t += (*mb_ptr2len)(t);
-  }
-  rettv->vval.v_number = (varnumber_T)(t - str);
-}
-
-/*
- * "byteidx()" function
- */
-static void f_byteidx(typval_T *argvars, typval_T *rettv)
-{
-  byteidx(argvars, rettv, FALSE);
-}
-
-/*
- * "byteidxcomp()" function
- */
-static void f_byteidxcomp(typval_T *argvars, typval_T *rettv)
-{
-  byteidx(argvars, rettv, TRUE);
-}
-
-int func_call(char_u *name, typval_T *args, dict_T *selfdict, typval_T *rettv)
-{
-  listitem_T  *item;
-  typval_T argv[MAX_FUNC_ARGS + 1];
-  int argc = 0;
-  int dummy;
-  int r = 0;
-
-  for (item = args->vval.v_list->lv_first; item != NULL;
-       item = item->li_next) {
-    if (argc == MAX_FUNC_ARGS) {
-      EMSG(_("E699: Too many arguments"));
-      break;
-    }
-    /* Make a copy of each argument.  This is needed to be able to set
-     * v_lock to VAR_FIXED in the copy without changing the original list.
-     */
-    copy_tv(&item->li_tv, &argv[argc++]);
-  }
-
-  if (item == NULL)
-    r = call_func(name, (int)STRLEN(name), rettv, argc, argv,
-        curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-        &dummy, TRUE, selfdict);
-
-  /* Free the arguments. */
-  while (argc > 0)
-    clear_tv(&argv[--argc]);
-
-  return r;
-}
-
-/*
- * "call(func, arglist)" function
- */
-static void f_call(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *func;
-  dict_T      *selfdict = NULL;
-
-  if (argvars[1].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
-    return;
-  }
-  if (argvars[1].vval.v_list == NULL)
-    return;
-
-  if (argvars[0].v_type == VAR_FUNC)
-    func = argvars[0].vval.v_string;
-  else
-    func = get_tv_string(&argvars[0]);
-  if (*func == NUL)
-    return;             /* type error or empty name */
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (argvars[2].v_type != VAR_DICT) {
-      EMSG(_(e_dictreq));
-      return;
-    }
-    selfdict = argvars[2].vval.v_dict;
-  }
-
-  (void)func_call(func, &argvars[1], selfdict, rettv);
-}
-
-/*
- * "ceil({float})" function
- */
-static void f_ceil(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &ceil);
-}
-
-/*
- * "changenr()" function
- */
-static void f_changenr(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = curbuf->b_u_seq_cur;
-}
-
-/*
- * "char2nr(string)" function
- */
-static void f_char2nr(typval_T *argvars, typval_T *rettv)
-{
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN)
-      utf8 = get_tv_number_chk(&argvars[1], NULL);
-
-    if (utf8)
-      rettv->vval.v_number = (*utf_ptr2char)(get_tv_string(&argvars[0]));
-    else
-      rettv->vval.v_number = (*mb_ptr2char)(get_tv_string(&argvars[0]));
-  } else
-    rettv->vval.v_number = get_tv_string(&argvars[0])[0];
-}
-
-/*
- * "cindent(lnum)" function
- */
-static void f_cindent(typval_T *argvars, typval_T *rettv)
-{
-  pos_T pos;
-  linenr_T lnum;
-
-  pos = curwin->w_cursor;
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
-    curwin->w_cursor.lnum = lnum;
-    rettv->vval.v_number = get_c_indent();
-    curwin->w_cursor = pos;
-  } else
-    rettv->vval.v_number = -1;
-}
-
-/*
- * "clearmatches()" function
- */
-static void f_clearmatches(typval_T *argvars, typval_T *rettv)
-{
-  clear_matches(curwin);
-}
-
-/*
- * "col(string)" function
- */
-static void f_col(typval_T *argvars, typval_T *rettv)
-{
-  colnr_T col = 0;
-  pos_T       *fp;
-  int fnum = curbuf->b_fnum;
-
-  fp = var2fpos(&argvars[0], FALSE, &fnum);
-  if (fp != NULL && fnum == curbuf->b_fnum) {
-    if (fp->col == MAXCOL) {
-      /* '> can be MAXCOL, get the length of the line then */
-      if (fp->lnum <= curbuf->b_ml.ml_line_count)
-        col = (colnr_T)STRLEN(ml_get(fp->lnum)) + 1;
-      else
-        col = MAXCOL;
-    } else {
-      col = fp->col + 1;
-      /* col(".") when the cursor is on the NUL at the end of the line
-       * because of "coladd" can be seen as an extra column. */
-      if (virtual_active() && fp == &curwin->w_cursor) {
-        char_u  *p = get_cursor_pos_ptr();
-
-        if (curwin->w_cursor.coladd >= (colnr_T)chartabsize(p,
-                curwin->w_virtcol - curwin->w_cursor.coladd)) {
-          int l;
-
-          if (*p != NUL && p[(l = (*mb_ptr2len)(p))] == NUL)
-            col += l;
-        }
-      }
-    }
-  }
-  rettv->vval.v_number = col;
-}
-
-/*
- * "complete()" function
- */
-static void f_complete(typval_T *argvars, typval_T *rettv)
-{
-  int startcol;
-
-  if ((State & INSERT) == 0) {
-    EMSG(_("E785: complete() can only be used in Insert mode"));
-    return;
-  }
-
-  /* Check for undo allowed here, because if something was already inserted
-   * the line was already saved for undo and this check isn't done. */
-  if (!undo_allowed())
-    return;
-
-  if (argvars[1].v_type != VAR_LIST || argvars[1].vval.v_list == NULL) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  startcol = get_tv_number_chk(&argvars[0], NULL);
-  if (startcol <= 0)
-    return;
-
-  set_completion(startcol - 1, argvars[1].vval.v_list);
-}
-
-/*
- * "complete_add()" function
- */
-static void f_complete_add(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0);
-}
-
-/*
- * "complete_check()" function
- */
-static void f_complete_check(typval_T *argvars, typval_T *rettv)
-{
-  int saved = RedrawingDisabled;
-
-  RedrawingDisabled = 0;
-  ins_compl_check_keys(0);
-  rettv->vval.v_number = compl_interrupted;
-  RedrawingDisabled = saved;
-}
-
-/*
- * "confirm(message, buttons[, default [, type]])" function
- */
-static void f_confirm(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *message;
-  char_u      *buttons = NULL;
-  char_u buf[NUMBUFLEN];
-  char_u buf2[NUMBUFLEN];
-  int def = 1;
-  int type = VIM_GENERIC;
-  char_u      *typestr;
-  int error = FALSE;
-
-  message = get_tv_string_chk(&argvars[0]);
-  if (message == NULL)
-    error = TRUE;
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    buttons = get_tv_string_buf_chk(&argvars[1], buf);
-    if (buttons == NULL)
-      error = TRUE;
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      def = get_tv_number_chk(&argvars[2], &error);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        typestr = get_tv_string_buf_chk(&argvars[3], buf2);
-        if (typestr == NULL)
-          error = TRUE;
-        else {
-          switch (TOUPPER_ASC(*typestr)) {
-          case 'E': type = VIM_ERROR; break;
-          case 'Q': type = VIM_QUESTION; break;
-          case 'I': type = VIM_INFO; break;
-          case 'W': type = VIM_WARNING; break;
-          case 'G': type = VIM_GENERIC; break;
-          }
-        }
-      }
-    }
-  }
-
-  if (buttons == NULL || *buttons == NUL)
-    buttons = (char_u *)_("&Ok");
-
-  if (!error)
-    rettv->vval.v_number = do_dialog(type, NULL, message, buttons,
-        def, NULL, FALSE);
-}
-
-/*
- * "copy()" function
- */
-static void f_copy(typval_T *argvars, typval_T *rettv)
-{
-  var_item_copy(NULL, &argvars[0], rettv, false, 0);
-}
-
-/*
- * "cos()" function
- */
-static void f_cos(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &cos);
-}
-
-/*
- * "cosh()" function
- */
-static void f_cosh(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &cosh);
-}
-
-/*
- * "count()" function
- */
-static void f_count(typval_T *argvars, typval_T *rettv)
-{
-  long n = 0;
-  int ic = FALSE;
-
-  if (argvars[0].v_type == VAR_LIST) {
-    listitem_T      *li;
-    list_T          *l;
-    long idx;
-
-    if ((l = argvars[0].vval.v_list) != NULL) {
-      li = l->lv_first;
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        int error = FALSE;
-
-        ic = get_tv_number_chk(&argvars[2], &error);
-        if (argvars[3].v_type != VAR_UNKNOWN) {
-          idx = get_tv_number_chk(&argvars[3], &error);
-          if (!error) {
-            li = list_find(l, idx);
-            if (li == NULL)
-              EMSGN(_(e_listidx), idx);
-          }
-        }
-        if (error)
-          li = NULL;
-      }
-
-      for (; li != NULL; li = li->li_next)
-        if (tv_equal(&li->li_tv, &argvars[1], ic, FALSE))
-          ++n;
-    }
-  } else if (argvars[0].v_type == VAR_DICT) {
-    int todo;
-    dict_T          *d;
-    hashitem_T      *hi;
-
-    if ((d = argvars[0].vval.v_dict) != NULL) {
-      int error = FALSE;
-
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        ic = get_tv_number_chk(&argvars[2], &error);
-        if (argvars[3].v_type != VAR_UNKNOWN)
-          EMSG(_(e_invarg));
-      }
-
-      todo = error ? 0 : (int)d->dv_hashtab.ht_used;
-      for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-        if (!HASHITEM_EMPTY(hi)) {
-          --todo;
-          if (tv_equal(&HI2DI(hi)->di_tv, &argvars[1], ic, FALSE))
-            ++n;
-        }
-      }
-    }
-  } else
-    EMSG2(_(e_listdictarg), "count()");
-  rettv->vval.v_number = n;
-}
-
-/*
- * "cscope_connection([{num} , {dbpath} [, {prepend}]])" function
- *
- * Checks the existence of a cscope connection.
- */
-static void f_cscope_connection(typval_T *argvars, typval_T *rettv)
-{
-  int num = 0;
-  char_u      *dbpath = NULL;
-  char_u      *prepend = NULL;
-  char_u buf[NUMBUFLEN];
-
-  if (argvars[0].v_type != VAR_UNKNOWN
-      && argvars[1].v_type != VAR_UNKNOWN) {
-    num = (int)get_tv_number(&argvars[0]);
-    dbpath = get_tv_string(&argvars[1]);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      prepend = get_tv_string_buf(&argvars[2], buf);
-  }
-
-  rettv->vval.v_number = cs_connection(num, dbpath, prepend);
-}
-
-/*
- * "cursor(lnum, col)" function
- *
- * Moves the cursor to the specified line and column.
- * Returns 0 when the position could be set, -1 otherwise.
- */
-static void f_cursor(typval_T *argvars, typval_T *rettv)
-{
-  long line, col;
-  long coladd = 0;
-
-  rettv->vval.v_number = -1;
-  if (argvars[1].v_type == VAR_UNKNOWN) {
-    pos_T pos;
-    colnr_T curswant = -1;
-
-    if (list2fpos(argvars, &pos, NULL, &curswant) == FAIL) {
-      return;
-    }
-    line = pos.lnum;
-    col = pos.col;
-    coladd = pos.coladd;
-    if (curswant >= 0) {
-      curwin->w_curswant = curswant - 1;
-    }
-  } else {
-    line = get_tv_lnum(argvars);
-    col = get_tv_number_chk(&argvars[1], NULL);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      coladd = get_tv_number_chk(&argvars[2], NULL);
-  }
-  if (line < 0 || col < 0
-      || coladd < 0
-      )
-    return;             /* type error; errmsg already given */
-  if (line > 0)
-    curwin->w_cursor.lnum = line;
-  if (col > 0)
-    curwin->w_cursor.col = col - 1;
-  curwin->w_cursor.coladd = coladd;
-
-  /* Make sure the cursor is in a valid position. */
-  check_cursor();
-  /* Correct cursor for multi-byte character. */
-  if (has_mbyte)
-    mb_adjust_cursor();
-
-  curwin->w_set_curswant = TRUE;
-  rettv->vval.v_number = 0;
-}
-
-/*
- * "deepcopy()" function
- */
-static void f_deepcopy(typval_T *argvars, typval_T *rettv)
-{
-  int noref = 0;
-
-  if (argvars[1].v_type != VAR_UNKNOWN)
-    noref = get_tv_number_chk(&argvars[1], NULL);
-  if (noref < 0 || noref > 1)
-    EMSG(_(e_invarg));
-  else {
-    current_copyID += COPYID_INC;
-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
-                                                   ? current_copyID
-                                                   : 0));
-  }
-}
-
-/*
- * "delete()" function
- */
-static void f_delete(typval_T *argvars, typval_T *rettv)
-{
-  if (check_restricted() || check_secure())
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = os_remove((char *)get_tv_string(&argvars[0]));
-}
-
-// dictwatcheradd(dict, key, funcref) function
-static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv)
-{
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(e_invarg2, "dict");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
-    EMSG2(e_invarg2, "key");
-    return;
-  }
-
-  if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
-    EMSG2(e_invarg2, "funcref");
-    return;
-  }
-
-  char *key_pattern = (char *)get_tv_string_chk(argvars + 1);
-  assert(key_pattern);
-  const size_t key_len = STRLEN(argvars[1].vval.v_string);
-
-  if (key_len == 0) {
-    EMSG(_(e_emptykey));
-    return;
-  }
-
-  ufunc_T *func = find_ufunc(argvars[2].vval.v_string);
-  if (!func) {
-    // Invalid function name. Error already reported by `find_ufunc`.
-    return;
-  }
-
-  func->uf_refcount++;
-  DictWatcher *watcher = xmalloc(sizeof(DictWatcher));
-  watcher->key_pattern = xmemdupz(key_pattern, key_len);
-  watcher->callback = func;
-  watcher->busy = false;
-  QUEUE_INSERT_TAIL(&argvars[0].vval.v_dict->watchers, &watcher->node);
-}
-
-// dictwatcherdel(dict, key, funcref) function
-static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv)
-{
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(e_invarg2, "dict");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
-    EMSG2(e_invarg2, "key");
-    return;
-  }
-
-  if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
-    EMSG2(e_invarg2, "funcref");
-    return;
-  }
-
-  char *key_pattern = (char *)get_tv_string_chk(argvars + 1);
-  assert(key_pattern);
-  const size_t key_len = STRLEN(argvars[1].vval.v_string);
-
-  if (key_len == 0) {
-    EMSG(_(e_emptykey));
-    return;
-  }
-
-  ufunc_T *func = find_ufunc(argvars[2].vval.v_string);
-  if (!func) {
-    // Invalid function name. Error already reported by `find_ufunc`.
-    return;
-  }
-
-  dict_T *dict = argvars[0].vval.v_dict;
-  QUEUE *w = NULL;
-  DictWatcher *watcher = NULL;
-  bool matched = false;
-  QUEUE_FOREACH(w, &dict->watchers) {
-    watcher = dictwatcher_node_data(w);
-    if (func == watcher->callback
-        && !strcmp(watcher->key_pattern, key_pattern)) {
-      matched = true;
-      break;
-    }
-  }
-
-  if (!matched) {
-    EMSG("Couldn't find a watcher matching key and callback");
-    return;
-  }
-
-  QUEUE_REMOVE(w);
-  dictwatcher_free(watcher);
-}
-
-/*
- * "did_filetype()" function
- */
-static void f_did_filetype(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = did_filetype;
-}
-
-/*
- * "diff_filler()" function
- */
-static void f_diff_filler(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = diff_check_fill(curwin, get_tv_lnum(argvars));
-}
-
-/*
- * "diff_hlID()" function
- */
-static void f_diff_hlID(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum = get_tv_lnum(argvars);
-  static linenr_T prev_lnum = 0;
-  static int changedtick = 0;
-  static int fnum = 0;
-  static int change_start = 0;
-  static int change_end = 0;
-  static hlf_T hlID = (hlf_T)0;
-  int filler_lines;
-  int col;
-
-  if (lnum < 0)         /* ignore type error in {lnum} arg */
-    lnum = 0;
-  if (lnum != prev_lnum
-      || changedtick != curbuf->b_changedtick
-      || fnum != curbuf->b_fnum) {
-    /* New line, buffer, change: need to get the values. */
-    filler_lines = diff_check(curwin, lnum);
-    if (filler_lines < 0) {
-      if (filler_lines == -1) {
-        change_start = MAXCOL;
-        change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end))
-          hlID = HLF_ADD;               /* added line */
-        else
-          hlID = HLF_CHD;               /* changed line */
-      } else
-        hlID = HLF_ADD;         /* added line */
-    } else
-      hlID = (hlf_T)0;
-    prev_lnum = lnum;
-    changedtick = curbuf->b_changedtick;
-    fnum = curbuf->b_fnum;
-  }
-
-  if (hlID == HLF_CHD || hlID == HLF_TXD) {
-    col = get_tv_number(&argvars[1]) - 1;     /* ignore type error in {col} */
-    if (col >= change_start && col <= change_end)
-      hlID = HLF_TXD;                           /* changed text */
-    else
-      hlID = HLF_CHD;                           /* changed line */
-  }
-  rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (int)hlID;
-}
-
-/*
- * "empty({expr})" function
- */
-static void f_empty(typval_T *argvars, typval_T *rettv)
-{
-  int n;
-
-  switch (argvars[0].v_type) {
-  case VAR_STRING:
-  case VAR_FUNC:
-    n = argvars[0].vval.v_string == NULL
-        || *argvars[0].vval.v_string == NUL;
-    break;
-  case VAR_NUMBER:
-    n = argvars[0].vval.v_number == 0;
-    break;
-  case VAR_FLOAT:
-    n = argvars[0].vval.v_float == 0.0;
-    break;
-  case VAR_LIST:
-    n = argvars[0].vval.v_list == NULL
-        || argvars[0].vval.v_list->lv_first == NULL;
-    break;
-  case VAR_DICT:
-    n = argvars[0].vval.v_dict == NULL
-        || argvars[0].vval.v_dict->dv_hashtab.ht_used == 0;
-    break;
-  default:
-    EMSG2(_(e_intern2), "f_empty()");
-    n = 0;
-  }
-
-  rettv->vval.v_number = n;
-}
-
-/*
- * "escape({string}, {chars})" function
- */
-static void f_escape(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-
-  rettv->vval.v_string = vim_strsave_escaped(get_tv_string(&argvars[0]),
-      get_tv_string_buf(&argvars[1], buf));
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "eval()" function
- */
-static void f_eval(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *s;
-
-  s = get_tv_string_chk(&argvars[0]);
-  if (s != NULL)
-    s = skipwhite(s);
-
-  char_u *p = s;
-  if (s == NULL || eval1(&s, rettv, TRUE) == FAIL) {
-    if (p != NULL && !aborting()) {
-      EMSG2(_(e_invexpr2), p);
-    }
-    need_clr_eos = FALSE;
-    rettv->v_type = VAR_NUMBER;
-    rettv->vval.v_number = 0;
-  } else if (*s != NUL) {
-    EMSG(_(e_trailing));
-  }
-}
-
-/*
- * "eventhandler()" function
- */
-static void f_eventhandler(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = vgetc_busy;
-}
-
-/*
- * "executable()" function
- */
-static void f_executable(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]), NULL);
-}
-
-/// "exepath()" function
-static void f_exepath(typval_T *argvars, typval_T *rettv)
-{
-  char_u *arg = get_tv_string(&argvars[0]);
-  char_u *path = NULL;
-
-  (void)os_can_exe(arg, &path);
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = path;
-}
-
-/*
- * "exists()" function
- */
-static void f_exists(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-  char_u      *name;
-  int n = FALSE;
-  int len = 0;
-
-  p = get_tv_string(&argvars[0]);
-  if (*p == '$') {                      /* environment variable */
-    /* first try "normal" environment variables (fast) */
-    if (os_getenv((char *)(p + 1)) != NULL)
-      n = TRUE;
-    else {
-      /* try expanding things like $VIM and ${HOME} */
-      p = expand_env_save(p);
-      if (p != NULL && *p != '$')
-        n = TRUE;
-      xfree(p);
-    }
-  } else if (*p == '&' || *p == '+') {                /* option */
-    n = (get_option_tv(&p, NULL, TRUE) == OK);
-    if (*skipwhite(p) != NUL)
-      n = FALSE;                        /* trailing garbage */
-  } else if (*p == '*') {             /* internal or user defined function */
-    n = function_exists(p + 1);
-  } else if (*p == ':') {
-    n = cmd_exists(p + 1);
-  } else if (*p == '#') {
-    if (p[1] == '#')
-      n = autocmd_supported(p + 2);
-    else
-      n = au_exists(p + 1);
-  } else {                            /* internal variable */
-    char_u      *tofree;
-    typval_T tv;
-
-    /* get_name_len() takes care of expanding curly braces */
-    name = p;
-    len = get_name_len(&p, &tofree, TRUE, FALSE);
-    if (len > 0) {
-      if (tofree != NULL) {
-        name = tofree;
-      }
-      n = (get_var_tv(name, len, &tv, NULL, false, true) == OK);
-      if (n) {
-        /* handle d.key, l[idx], f(expr) */
-        n = (handle_subscript(&p, &tv, TRUE, FALSE) == OK);
-        if (n)
-          clear_tv(&tv);
-      }
-    }
-    if (*p != NUL)
-      n = FALSE;
-
-    xfree(tofree);
-  }
-
-  rettv->vval.v_number = n;
-}
-
-/*
- * "exp()" function
- */
-static void f_exp(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &exp);
-}
-
-/*
- * "expand()" function
- */
-static void f_expand(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *s;
-  size_t len;
-  char_u      *errormsg;
-  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
-  expand_T xpc;
-  int error = FALSE;
-  char_u      *result;
-
-  rettv->v_type = VAR_STRING;
-  if (argvars[1].v_type != VAR_UNKNOWN
-      && argvars[2].v_type != VAR_UNKNOWN
-      && get_tv_number_chk(&argvars[2], &error)
-      && !error) {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = NULL;
-  }
-
-  s = get_tv_string(&argvars[0]);
-  if (*s == '%' || *s == '#' || *s == '<') {
-    ++emsg_off;
-    result = eval_vars(s, s, &len, NULL, &errormsg, NULL);
-    --emsg_off;
-    if (rettv->v_type == VAR_LIST) {
-      rettv_list_alloc(rettv);
-      if (result != NULL) {
-        list_append_string(rettv->vval.v_list, result, -1);
-      }
-    } else
-      rettv->vval.v_string = result;
-  } else {
-    /* When the optional second argument is non-zero, don't remove matches
-    * for 'wildignore' and don't put matches for 'suffixes' at the end. */
+  const char *const cmd = tv_get_string_chk(&argvars[0]);
+  garray_T    ga;
+  int ret = 0;
+  int         save_trylevel = trylevel;
+
+  // trylevel must be zero for a ":throw" command to be considered failed
+  trylevel = 0;
+  called_emsg = false;
+  suppress_errthrow = true;
+  emsg_silent = true;
+
+  do_cmdline_cmd(cmd);
+  if (!called_emsg) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (const char_u *)"command did not fail: ");
     if (argvars[1].v_type != VAR_UNKNOWN
-        && get_tv_number_chk(&argvars[1], &error))
-      options |= WILD_KEEP_ALL;
-    if (!error) {
-      ExpandInit(&xpc);
-      xpc.xp_context = EXPAND_FILES;
-      if (p_wic)
-        options += WILD_ICASE;
-      if (rettv->v_type == VAR_STRING)
-        rettv->vval.v_string = ExpandOne(&xpc, s, NULL,
-            options, WILD_ALL);
-      else {
-        rettv_list_alloc(rettv);
-        ExpandOne(&xpc, s, NULL, options, WILD_ALL_KEEP);
-        for (int i = 0; i < xpc.xp_numfiles; i++) {
-          list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
-        }
-        ExpandCleanup(&xpc);
-      }
-    } else
-      rettv->vval.v_string = NULL;
-  }
-}
-
-/*
- * Go over all entries in "d2" and add them to "d1".
- * When "action" is "error" then a duplicate key is an error.
- * When "action" is "force" then a duplicate key is overwritten.
- * Otherwise duplicate keys are ignored ("action" is "keep").
- */
-void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
-{
-  dictitem_T  *di1;
-  hashitem_T  *hi2;
-  int todo;
-  bool watched = is_watched(d1);
-  char_u *arg_errmsg = (char_u *)N_("extend() argument");
-
-  todo = (int)d2->dv_hashtab.ht_used;
-  for (hi2 = d2->dv_hashtab.ht_array; todo > 0; ++hi2) {
-    if (!HASHITEM_EMPTY(hi2)) {
-      --todo;
-      di1 = dict_find(d1, hi2->hi_key, -1);
-      if (d1->dv_scope != 0) {
-        /* Disallow replacing a builtin function in l: and g:.
-         * Check the key to be valid when adding to any
-         * scope. */
-        if (d1->dv_scope == VAR_DEF_SCOPE
-            && HI2DI(hi2)->di_tv.v_type == VAR_FUNC
-            && var_check_func_name(hi2->hi_key,
-                di1 == NULL))
-          break;
-        if (!valid_varname(hi2->hi_key))
-          break;
-      }
-      if (di1 == NULL) {
-        di1 = dictitem_copy(HI2DI(hi2));
-        if (dict_add(d1, di1) == FAIL) {
-          dictitem_free(di1);
-        }
-
-        if (watched) {
-          dictwatcher_notify(d1, (char *)di1->di_key, &di1->di_tv, NULL);
-        }
-      } else if (*action == 'e') {
-        EMSG2(_("E737: Key already exists: %s"), hi2->hi_key);
-        break;
-      } else if (*action == 'f' && HI2DI(hi2) != di1) {
-        typval_T oldtv;
-
-        if (tv_check_lock(di1->di_tv.v_lock, arg_errmsg, true)
-            || var_check_ro(di1->di_flags, arg_errmsg, true)) {
-          break;
-        }
-
-        if (watched) {
-          copy_tv(&di1->di_tv, &oldtv);
-        }
-
-        clear_tv(&di1->di_tv);
-        copy_tv(&HI2DI(hi2)->di_tv, &di1->di_tv);
-
-        if (watched) {
-          dictwatcher_notify(d1, (char *)di1->di_key, &di1->di_tv, &oldtv);
-          clear_tv(&oldtv);
-        }
-      }
+        && argvars[2].v_type != VAR_UNKNOWN) {
+      char *const tofree = encode_tv2echo(&argvars[2], NULL);
+      ga_concat(&ga, (char_u *)tofree);
+      xfree(tofree);
+    } else {
+      ga_concat(&ga, (const char_u *)cmd);
     }
-  }
-}
+    assert_error(&ga);
+    ga_clear(&ga);
+    ret = 1;
+  } else if (argvars[1].v_type != VAR_UNKNOWN) {
+    char buf[NUMBUFLEN];
+    const char *const error = tv_get_string_buf_chk(&argvars[1], buf);
 
-/*
- * "extend(list, list [, idx])" function
- * "extend(dict, dict [, action])" function
- */
-static void f_extend(typval_T *argvars, typval_T *rettv)
-{
-  char_u *arg_errmsg = (char_u *)N_("extend() argument");
-
-  if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
-    list_T          *l1, *l2;
-    listitem_T      *item;
-    long before;
-    int error = FALSE;
-
-    l1 = argvars[0].vval.v_list;
-    l2 = argvars[1].vval.v_list;
-    if (l1 != NULL && !tv_check_lock(l1->lv_lock, arg_errmsg, true)
-        && l2 != NULL) {
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        before = get_tv_number_chk(&argvars[2], &error);
-        if (error)
-          return;                       /* type error; errmsg already given */
-
-        if (before == l1->lv_len)
-          item = NULL;
-        else {
-          item = list_find(l1, before);
-          if (item == NULL) {
-            EMSGN(_(e_listidx), before);
-            return;
-          }
-        }
-      } else
-        item = NULL;
-      list_extend(l1, l2, item);
-
-      copy_tv(&argvars[0], rettv);
-    }
-  } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type ==
-             VAR_DICT) {
-    dict_T  *d1, *d2;
-    char_u  *action;
-    int i;
-
-    d1 = argvars[0].vval.v_dict;
-    d2 = argvars[1].vval.v_dict;
-    if (d1 != NULL && !tv_check_lock(d1->dv_lock, arg_errmsg, true)
-        && d2 != NULL) {
-      /* Check the third argument. */
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        static char *(av[]) = {"keep", "force", "error"};
-
-        action = get_tv_string_chk(&argvars[2]);
-        if (action == NULL)
-          return;                       /* type error; errmsg already given */
-        for (i = 0; i < 3; ++i)
-          if (STRCMP(action, av[i]) == 0)
-            break;
-        if (i == 3) {
-          EMSG2(_(e_invarg2), action);
-          return;
-        }
-      } else
-        action = (char_u *)"force";
-
-      dict_extend(d1, d2, action);
-
-      copy_tv(&argvars[0], rettv);
-    }
-  } else
-    EMSG2(_(e_listdictarg), "extend()");
-}
-
-/*
- * "feedkeys()" function
- */
-static void f_feedkeys(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *keys, *flags = NULL;
-  char_u nbuf[NUMBUFLEN];
-
-  /* This is not allowed in the sandbox.  If the commands would still be
-   * executed in the sandbox it would be OK, but it probably happens later,
-   * when "sandbox" is no longer set. */
-  if (check_secure())
-    return;
-
-  keys = get_tv_string(&argvars[0]);
-  if (*keys != NUL) {
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      flags = get_tv_string_buf(&argvars[1], nbuf);
-    }
-
-    vim_feedkeys(cstr_as_string((char *)keys),
-		    cstr_as_string((char *)flags), true);
-  }
-}
-
-/// "filereadable()" function
-static void f_filereadable(typval_T *argvars, typval_T *rettv)
-{
-  char_u *p = get_tv_string(&argvars[0]);
-  rettv->vval.v_number =
-    (*p && !os_isdir(p) && os_file_is_readable((char*)p));
-}
-
-/*
- * Return 0 for not writable, 1 for writable file, 2 for a dir which we have
- * rights to write into.
- */
-static void f_filewritable(typval_T *argvars, typval_T *rettv)
-{
-  char *filename = (char *)get_tv_string(&argvars[0]);
-  rettv->vval.v_number = os_file_is_writable(filename);
-}
-
-
-static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
-{
-  char_u      *fname;
-  char_u      *fresult = NULL;
-  char_u      *path = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
-  char_u      *p;
-  char_u pathbuf[NUMBUFLEN];
-  int count = 1;
-  int first = TRUE;
-  int error = FALSE;
-
-  rettv->vval.v_string = NULL;
-  rettv->v_type = VAR_STRING;
-
-  fname = get_tv_string(&argvars[0]);
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    p = get_tv_string_buf_chk(&argvars[1], pathbuf);
-    if (p == NULL)
-      error = TRUE;
-    else {
-      if (*p != NUL)
-        path = p;
-
-      if (argvars[2].v_type != VAR_UNKNOWN)
-        count = get_tv_number_chk(&argvars[2], &error);
+    if (error == NULL
+        || strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
+      prepare_assert_error(&ga);
+      fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
+                        &vimvars[VV_ERRMSG].vv_tv, ASSERT_OTHER);
+      assert_error(&ga);
+      ga_clear(&ga);
+      ret = 1;
     }
   }
 
-  if (count < 0) {
-    rettv_list_alloc(rettv);
-  }
-
-  if (*fname != NUL && !error) {
-    do {
-      if (rettv->v_type == VAR_STRING || rettv->v_type == VAR_LIST)
-        xfree(fresult);
-      fresult = find_file_in_path_option(first ? fname : NULL,
-                                         first ? STRLEN(fname) : 0,
-                                         0, first, path,
-                                         find_what, curbuf->b_ffname,
-                                         (find_what == FINDFILE_DIR
-                                          ? (char_u *)""
-                                          : curbuf->b_p_sua));
-      first = FALSE;
-
-      if (fresult != NULL && rettv->v_type == VAR_LIST)
-        list_append_string(rettv->vval.v_list, fresult, -1);
-
-    } while ((rettv->v_type == VAR_LIST || --count > 0) && fresult != NULL);
-  }
-
-  if (rettv->v_type == VAR_STRING)
-    rettv->vval.v_string = fresult;
+  trylevel = save_trylevel;
+  called_emsg = false;
+  suppress_errthrow = false;
+  emsg_silent = false;
+  emsg_on_display = false;
+  set_vim_var_string(VV_ERRMSG, NULL, 0);
+  return ret;
 }
 
+int assert_match_common(typval_T *argvars, assert_type_T atype)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf1[NUMBUFLEN];
+  char buf2[NUMBUFLEN];
+  const char *const pat = tv_get_string_buf_chk(&argvars[0], buf1);
+  const char *const text = tv_get_string_buf_chk(&argvars[1], buf2);
+
+  if (pat == NULL || text == NULL) {
+    EMSG(_(e_invarg));
+  } else if (pattern_match((char_u *)pat, (char_u *)text, false)
+             != (atype == ASSERT_MATCH)) {
+    garray_T ga;
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], atype);
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  }
+  return 0;
+}
+
+/// Find a window: When using a Window ID in any tab page, when using a number
+/// in the current tab page.
+win_T * find_win_by_nr_or_id(typval_T *vp)
+{
+  int nr = (int)tv_get_number_chk(vp, NULL);
+
+  if (nr >= LOWEST_WIN_ID) {
+    return win_id2wp(vp);
+  }
+
+  return find_win_by_nr(vp, NULL);
+}
 
 /*
  * Implementation of map() and filter().
  */
-static void filter_map(typval_T *argvars, typval_T *rettv, int map)
+void filter_map(typval_T *argvars, typval_T *rettv, int map)
 {
-  char_u buf[NUMBUFLEN];
-  char_u      *expr;
-  listitem_T  *li, *nli;
+  typval_T    *expr;
   list_T      *l = NULL;
   dictitem_T  *di;
   hashtab_T   *ht;
@@ -9556,22 +5880,26 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   dict_T      *d = NULL;
   typval_T save_val;
   typval_T save_key;
-  int rem;
+  int rem = false;
   int todo;
-  char_u      *ermsg = (char_u *)(map ? "map()" : "filter()");
-  char_u      *arg_errmsg = (char_u *)(map ? N_("map() argument")
-                                       : N_("filter() argument"));
+  char_u *ermsg = (char_u *)(map ? "map()" : "filter()");
+  const char *const arg_errmsg = (map
+                                  ? N_("map() argument")
+                                  : N_("filter() argument"));
   int save_did_emsg;
   int idx = 0;
 
   if (argvars[0].v_type == VAR_LIST) {
+    tv_copy(&argvars[0], rettv);
     if ((l = argvars[0].vval.v_list) == NULL
-        || (!map && tv_check_lock(l->lv_lock, arg_errmsg, true))) {
+        || (!map && tv_check_lock(tv_list_locked(l), arg_errmsg,
+                                  TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
+    tv_copy(&argvars[0], rettv);
     if ((d = argvars[0].vval.v_dict) == NULL
-        || (!map && tv_check_lock(d->dv_lock, arg_errmsg, true))) {
+        || (!map && tv_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else {
@@ -9579,16 +5907,15 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     return;
   }
 
-  expr = get_tv_string_buf_chk(&argvars[1], buf);
-  /* On type errors, the preceding call has already displayed an error
-   * message.  Avoid a misleading error message for an empty string that
-   * was not passed as argument. */
-  if (expr != NULL) {
+  expr = &argvars[1];
+  // On type errors, the preceding call has already displayed an error
+  // message.  Avoid a misleading error message for an empty string that
+  // was not passed as argument.
+  if (expr->v_type != VAR_UNKNOWN) {
     prepare_vimvar(VV_VAL, &save_val);
-    expr = skipwhite(expr);
 
-    /* We reset "did_emsg" to be able to detect whether an error
-     * occurred during evaluation of the expression. */
+    // We reset "did_emsg" to be able to detect whether an error
+    // occurred during evaluation of the expression.
     save_did_emsg = did_emsg;
     did_emsg = FALSE;
 
@@ -9603,43 +5930,50 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
         if (!HASHITEM_EMPTY(hi)) {
           --todo;
 
-          di = HI2DI(hi);
+          di = TV_DICT_HI2DI(hi);
           if (map
-              && (tv_check_lock(di->di_tv.v_lock, arg_errmsg, true)
-                  || var_check_ro(di->di_flags, arg_errmsg, true))) {
+              && (tv_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
+                  || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
             break;
           }
 
           vimvars[VV_KEY].vv_str = vim_strsave(di->di_key);
           int r = filter_map_one(&di->di_tv, expr, map, &rem);
-          clear_tv(&vimvars[VV_KEY].vv_tv);
-          if (r == FAIL || did_emsg)
+          tv_clear(&vimvars[VV_KEY].vv_tv);
+          if (r == FAIL || did_emsg) {
             break;
+          }
           if (!map && rem) {
-            if (var_check_fixed(di->di_flags, arg_errmsg, true)
-                || var_check_ro(di->di_flags, arg_errmsg, true)) {
+            if (var_check_fixed(di->di_flags, arg_errmsg, TV_TRANSLATE)
+                || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE)) {
               break;
             }
-            dictitem_remove(d, di);
+            tv_dict_item_remove(d, di);
           }
         }
       }
       hash_unlock(ht);
     } else {
+      assert(argvars[0].v_type == VAR_LIST);
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-      for (li = l->lv_first; li != NULL; li = nli) {
-        if (map && tv_check_lock(li->li_tv.v_lock, arg_errmsg, true)) {
+      for (listitem_T *li = tv_list_first(l); li != NULL;) {
+        if (map
+            && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
+                             TV_TRANSLATE)) {
           break;
         }
-        nli = li->li_next;
         vimvars[VV_KEY].vv_nr = idx;
-        if (filter_map_one(&li->li_tv, expr, map, &rem) == FAIL
-            || did_emsg)
+        if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
+            || did_emsg) {
           break;
-        if (!map && rem)
-          listitem_remove(l, li);
-        ++idx;
+        }
+        if (!map && rem) {
+          li = tv_list_item_remove(l, li);
+        } else {
+          li = TV_LIST_ITEM_NEXT(l, li);
+        }
+        idx++;
       }
     }
 
@@ -9648,1080 +5982,353 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
     did_emsg |= save_did_emsg;
   }
-
-  copy_tv(&argvars[0], rettv);
 }
 
-static int filter_map_one(typval_T *tv, char_u *expr, int map, int *remp)
+static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T rettv;
-  char_u      *s;
+  typval_T argv[3];
   int retval = FAIL;
 
-  copy_tv(tv, &vimvars[VV_VAL].vv_tv);
-  s = expr;
-  if (eval1(&s, &rettv, TRUE) == FAIL)
-    goto theend;
-  if (*s != NUL) {  /* check for trailing chars after expr */
-    EMSG2(_(e_invexpr2), s);
-    clear_tv(&rettv);
+  tv_copy(tv, &vimvars[VV_VAL].vv_tv);
+  argv[0] = vimvars[VV_KEY].vv_tv;
+  argv[1] = vimvars[VV_VAL].vv_tv;
+  if (eval_expr_typval(expr, argv, 2, &rettv) == FAIL) {
     goto theend;
   }
   if (map) {
-    /* map(): replace the list item value */
-    clear_tv(tv);
+    // map(): replace the list item value.
+    tv_clear(tv);
     rettv.v_lock = 0;
     *tv = rettv;
   } else {
-    int error = FALSE;
+    bool error = false;
 
-    /* filter(): when expr is zero remove the item */
-    *remp = (get_tv_number_chk(&rettv, &error) == 0);
-    clear_tv(&rettv);
-    /* On type error, nothing has been removed; return FAIL to stop the
-     * loop.  The error message was given by get_tv_number_chk(). */
-    if (error)
+    // filter(): when expr is zero remove the item
+    *remp = (tv_get_number_chk(&rettv, &error) == 0);
+    tv_clear(&rettv);
+    // On type error, nothing has been removed; return FAIL to stop the
+    // loop.  The error message was given by tv_get_number_chk().
+    if (error) {
       goto theend;
+    }
   }
   retval = OK;
 theend:
-  clear_tv(&vimvars[VV_VAL].vv_tv);
+  tv_clear(&vimvars[VV_VAL].vv_tv);
   return retval;
 }
 
-/*
- * "filter()" function
- */
-static void f_filter(typval_T *argvars, typval_T *rettv)
-{
-  filter_map(argvars, rettv, FALSE);
-}
-
-/*
- * "finddir({fname}[, {path}[, {count}]])" function
- */
-static void f_finddir(typval_T *argvars, typval_T *rettv)
-{
-  findfilendir(argvars, rettv, FINDFILE_DIR);
-}
-
-/*
- * "findfile({fname}[, {path}[, {count}]])" function
- */
-static void f_findfile(typval_T *argvars, typval_T *rettv)
-{
-  findfilendir(argvars, rettv, FINDFILE_FILE);
-}
-
-/*
- * "float2nr({float})" function
- */
-static void f_float2nr(typval_T *argvars, typval_T *rettv)
-{
-  float_T f;
-
-  if (get_float_arg(argvars, &f) == OK) {
-    if (f < -0x7fffffff)
-      rettv->vval.v_number = -0x7fffffff;
-    else if (f > 0x7fffffff)
-      rettv->vval.v_number = 0x7fffffff;
-    else
-      rettv->vval.v_number = (varnumber_T)f;
-  }
-}
-
-/*
- * "floor({float})" function
- */
-static void f_floor(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &floor);
-}
-
-/*
- * "fmod()" function
- */
-static void f_fmod(typval_T *argvars, typval_T *rettv)
-{
-  float_T fx, fy;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
-    rettv->vval.v_float = fmod(fx, fy);
-  else
-    rettv->vval.v_float = 0.0;
-}
-
-/*
- * "fnameescape({string})" function
- */
-static void f_fnameescape(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_string = vim_strsave_fnameescape(
-      get_tv_string(&argvars[0]), FALSE);
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "fnamemodify({fname}, {mods})" function
- */
-static void f_fnamemodify(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *fname;
-  char_u      *mods;
-  size_t usedlen = 0;
-  size_t len;
-  char_u      *fbuf = NULL;
-  char_u buf[NUMBUFLEN];
-
-  fname = get_tv_string_chk(&argvars[0]);
-  mods = get_tv_string_buf_chk(&argvars[1], buf);
-  if (fname == NULL || mods == NULL)
-    fname = NULL;
-  else {
-    len = STRLEN(fname);
-    (void)modify_fname(mods, &usedlen, &fname, &fbuf, &len);
-  }
-
-  rettv->v_type = VAR_STRING;
-  if (fname == NULL)
-    rettv->vval.v_string = NULL;
-  else
-    rettv->vval.v_string = vim_strnsave(fname, len);
-  xfree(fbuf);
-}
-
-
-/*
- * "foldclosed()" function
- */
-static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
-{
-  linenr_T lnum;
-  linenr_T first, last;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
-    if (hasFoldingWin(curwin, lnum, &first, &last, FALSE, NULL)) {
-      if (end)
-        rettv->vval.v_number = (varnumber_T)last;
-      else
-        rettv->vval.v_number = (varnumber_T)first;
-      return;
-    }
-  }
-  rettv->vval.v_number = -1;
-}
-
-/*
- * "foldclosed()" function
- */
-static void f_foldclosed(typval_T *argvars, typval_T *rettv)
-{
-  foldclosed_both(argvars, rettv, FALSE);
-}
-
-/*
- * "foldclosedend()" function
- */
-static void f_foldclosedend(typval_T *argvars, typval_T *rettv)
-{
-  foldclosed_both(argvars, rettv, TRUE);
-}
-
-/*
- * "foldlevel()" function
- */
-static void f_foldlevel(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count)
-    rettv->vval.v_number = foldLevel(lnum);
-}
-
-/*
- * "foldtext()" function
- */
-static void f_foldtext(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-  char_u      *s;
-  char_u      *r;
-  int len;
-  char        *txt;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  if ((linenr_T)vimvars[VV_FOLDSTART].vv_nr > 0
-      && (linenr_T)vimvars[VV_FOLDEND].vv_nr
-      <= curbuf->b_ml.ml_line_count
-      && vimvars[VV_FOLDDASHES].vv_str != NULL) {
-    /* Find first non-empty line in the fold. */
-    lnum = (linenr_T)vimvars[VV_FOLDSTART].vv_nr;
-    while (lnum < (linenr_T)vimvars[VV_FOLDEND].vv_nr) {
-      if (!linewhite(lnum))
-        break;
-      ++lnum;
-    }
-
-    /* Find interesting text in this line. */
-    s = skipwhite(ml_get(lnum));
-    /* skip C comment-start */
-    if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
-      s = skipwhite(s + 2);
-      if (*skipwhite(s) == NUL
-          && lnum + 1 < (linenr_T)vimvars[VV_FOLDEND].vv_nr) {
-        s = skipwhite(ml_get(lnum + 1));
-        if (*s == '*')
-          s = skipwhite(s + 1);
-      }
-    }
-    txt = _("+-%s%3ld lines: ");
-    r = xmalloc(STRLEN(txt)
-                + STRLEN(vimvars[VV_FOLDDASHES].vv_str) // for %s
-                + 20                                    // for %3ld
-                + STRLEN(s));                           // concatenated
-    sprintf((char *)r, txt, vimvars[VV_FOLDDASHES].vv_str,
-        (long)((linenr_T)vimvars[VV_FOLDEND].vv_nr
-               - (linenr_T)vimvars[VV_FOLDSTART].vv_nr + 1));
-    len = (int)STRLEN(r);
-    STRCAT(r, s);
-    /* remove 'foldmarker' and 'commentstring' */
-    foldtext_cleanup(r + len);
-    rettv->vval.v_string = r;
-  }
-}
-
-/*
- * "foldtextresult(lnum)" function
- */
-static void f_foldtextresult(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-  char_u      *text;
-  char_u buf[51];
-  foldinfo_T foldinfo;
-  int fold_count;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  lnum = get_tv_lnum(argvars);
-  /* treat illegal types and illegal string values for {lnum} the same */
-  if (lnum < 0)
-    lnum = 0;
-  fold_count = foldedCount(curwin, lnum, &foldinfo);
-  if (fold_count > 0) {
-    text = get_foldtext(curwin, lnum, lnum + fold_count - 1,
-        &foldinfo, buf);
-    if (text == buf)
-      text = vim_strsave(text);
-    rettv->vval.v_string = text;
-  }
-}
-
-/*
- * "foreground()" function
- */
-static void f_foreground(typval_T *argvars, typval_T *rettv)
-{
-}
-
-/*
- * "function()" function
- */
-static void f_function(typval_T *argvars, typval_T *rettv)
+void common_function(typval_T *argvars, typval_T *rettv,
+                     bool is_funcref, FunPtr fptr)
 {
   char_u      *s;
+  char_u      *name;
+  bool use_string = false;
+  partial_T *arg_pt = NULL;
+  char_u *trans_name = NULL;
 
-  s = get_tv_string(&argvars[0]);
-  if (s == NULL || *s == NUL || ascii_isdigit(*s))
-    EMSG2(_(e_invarg2), s);
-  /* Don't check an autoload name for existence here. */
-  else if (vim_strchr(s, AUTOLOAD_CHAR) == NULL && !function_exists(s))
-    EMSG2(_("E700: Unknown function: %s"), s);
-  else {
+  if (argvars[0].v_type == VAR_FUNC) {
+    // function(MyFunc, [arg], dict)
+    s = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL
+             && argvars[0].vval.v_partial != NULL) {
+    // function(dict.MyFunc, [arg])
+    arg_pt = argvars[0].vval.v_partial;
+    s = partial_name(arg_pt);
+  } else {
+    // function('MyFunc', [arg], dict)
+    s = (char_u *)tv_get_string(&argvars[0]);
+    use_string = true;
+  }
+
+  if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
+    name = s;
+    trans_name = trans_function_name(&name, false,
+                                     TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD
+                                     | TFN_NO_DEREF, NULL, NULL);
+    if (*name != NUL) {
+      s = NULL;
+    }
+  }
+  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))
+      || (is_funcref && trans_name == NULL)) {
+    emsgf(_(e_invarg2), (use_string
+                         ? tv_get_string(&argvars[0])
+                         : (const char *)s));
+    // Don't check an autoload name for existence here.
+  } else if (trans_name != NULL
+             && (is_funcref ? find_func(trans_name) == NULL
+                 : !translated_function_exists((const char *)trans_name))) {
+    emsgf(_("E700: Unknown function: %s"), s);
+  } else {
+    int dict_idx = 0;
+    int arg_idx = 0;
+    list_T *list = NULL;
     if (STRNCMP(s, "s:", 2) == 0 || STRNCMP(s, "<SID>", 5) == 0) {
       char sid_buf[25];
       int off = *s == 's' ? 2 : 5;
 
-      /* Expand s: and <SID> into <SNR>nr_, so that the function can
-       * also be called from another script. Using trans_function_name()
-       * would also work, but some plugins depend on the name being
-       * printable text. */
-      sprintf(sid_buf, "<SNR>%" PRId64 "_", (int64_t)current_SID);
-      rettv->vval.v_string = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
-      STRCPY(rettv->vval.v_string, sid_buf);
-      STRCAT(rettv->vval.v_string, s + off);
-    } else
-      rettv->vval.v_string = vim_strsave(s);
-    rettv->v_type = VAR_FUNC;
-  }
-}
-
-/*
- * "garbagecollect()" function
- */
-static void f_garbagecollect(typval_T *argvars, typval_T *rettv)
-{
-  /* This is postponed until we are back at the toplevel, because we may be
-  * using Lists and Dicts internally.  E.g.: ":echo [garbagecollect()]". */
-  want_garbage_collect = TRUE;
-
-  if (argvars[0].v_type != VAR_UNKNOWN && get_tv_number(&argvars[0]) == 1)
-    garbage_collect_at_exit = TRUE;
-}
-
-/*
- * "get()" function
- */
-static void f_get(typval_T *argvars, typval_T *rettv)
-{
-  listitem_T  *li;
-  list_T      *l;
-  dictitem_T  *di;
-  dict_T      *d;
-  typval_T    *tv = NULL;
-
-  if (argvars[0].v_type == VAR_LIST) {
-    if ((l = argvars[0].vval.v_list) != NULL) {
-      int error = FALSE;
-
-      li = list_find(l, get_tv_number_chk(&argvars[1], &error));
-      if (!error && li != NULL)
-        tv = &li->li_tv;
-    }
-  } else if (argvars[0].v_type == VAR_DICT) {
-    if ((d = argvars[0].vval.v_dict) != NULL) {
-      di = dict_find(d, get_tv_string(&argvars[1]), -1);
-      if (di != NULL)
-        tv = &di->di_tv;
-    }
-  } else
-    EMSG2(_(e_listdictarg), "get()");
-
-  if (tv == NULL) {
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      copy_tv(&argvars[2], rettv);
-  } else
-    copy_tv(tv, rettv);
-}
-
-
-/*
- * Get line or list of lines from buffer "buf" into "rettv".
- * Return a range (from start to end) of lines in rettv from the specified
- * buffer.
- * If 'retlist' is TRUE, then the lines are returned as a Vim List.
- */
-static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retlist, typval_T *rettv)
-{
-  char_u      *p;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  if (retlist) {
-    rettv_list_alloc(rettv);
-  }
-
-  if (buf == NULL || buf->b_ml.ml_mfp == NULL || start < 0)
-    return;
-
-  if (!retlist) {
-    if (start >= 1 && start <= buf->b_ml.ml_line_count)
-      p = ml_get_buf(buf, start, FALSE);
-    else
-      p = (char_u *)"";
-    rettv->vval.v_string = vim_strsave(p);
-  } else {
-    if (end < start)
-      return;
-
-    if (start < 1)
-      start = 1;
-    if (end > buf->b_ml.ml_line_count)
-      end = buf->b_ml.ml_line_count;
-    while (start <= end) {
-      list_append_string(
-        rettv->vval.v_list, ml_get_buf(buf, start++, FALSE), -1);
-    }
-  }
-}
-
-/*
- * "getbufline()" function
- */
-static void f_getbufline(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-  linenr_T end;
-  buf_T       *buf;
-
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  ++emsg_off;
-  buf = get_buf_tv(&argvars[0], FALSE);
-  --emsg_off;
-
-  lnum = get_tv_lnum_buf(&argvars[1], buf);
-  if (argvars[2].v_type == VAR_UNKNOWN)
-    end = lnum;
-  else
-    end = get_tv_lnum_buf(&argvars[2], buf);
-
-  get_buffer_lines(buf, lnum, end, TRUE, rettv);
-}
-
-/*
- * "getbufvar()" function
- */
-static void f_getbufvar(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-  buf_T       *save_curbuf;
-  char_u      *varname;
-  dictitem_T  *v;
-  int done = FALSE;
-
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  varname = get_tv_string_chk(&argvars[1]);
-  ++emsg_off;
-  buf = get_buf_tv(&argvars[0], FALSE);
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  if (buf != NULL && varname != NULL) {
-    /* set curbuf to be our buf, temporarily */
-    save_curbuf = curbuf;
-    curbuf = buf;
-
-    if (*varname == '&') {      /* buffer-local-option */
-      if (get_option_tv(&varname, rettv, TRUE) == OK)
-        done = TRUE;
-    } else if (STRCMP(varname, "changedtick") == 0) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = curbuf->b_changedtick;
-      done = TRUE;
+      // Expand s: and <SID> into <SNR>nr_, so that the function can
+      // also be called from another script. Using trans_function_name()
+      // would also work, but some plugins depend on the name being
+      // printable text.
+      snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
+               (int64_t)current_sctx.sc_sid);
+      name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
+      STRCPY(name, sid_buf);
+      STRCAT(name, s + off);
     } else {
-      /* Look up the variable. */
-      /* Let getbufvar({nr}, "") return the "b:" dictionary. */
-      v = find_var_in_ht(&curbuf->b_vars->dv_hashtab,
-          'b', varname, FALSE);
-      if (v != NULL) {
-        copy_tv(&v->di_tv, rettv);
-        done = TRUE;
-      }
+      name = vim_strsave(s);
     }
 
-    /* restore previous notion of curbuf */
-    curbuf = save_curbuf;
-  }
-
-  if (!done && argvars[2].v_type != VAR_UNKNOWN)
-    /* use the default value */
-    copy_tv(&argvars[2], rettv);
-
-  --emsg_off;
-}
-
-/*
- * "getchar()" function
- */
-static void f_getchar(typval_T *argvars, typval_T *rettv)
-{
-  varnumber_T n;
-  int error = FALSE;
-
-  /* Position the cursor.  Needed after a message that ends in a space. */
-  ui_cursor_goto(msg_row, msg_col);
-
-  ++no_mapping;
-  ++allow_keys;
-  for (;; ) {
-    if (argvars[0].v_type == VAR_UNKNOWN)
-      /* getchar(): blocking wait. */
-      n = safe_vgetc();
-    else if (get_tv_number_chk(&argvars[0], &error) == 1)
-      /* getchar(1): only check if char avail */
-      n = vpeekc_any();
-    else if (error || vpeekc_any() == NUL)
-      /* illegal argument or getchar(0) and no char avail: return zero */
-      n = 0;
-    else
-      /* getchar(0) and char avail: return char */
-      n = safe_vgetc();
-
-    if (n == K_IGNORE)
-      continue;
-    break;
-  }
-  --no_mapping;
-  --allow_keys;
-
-  vimvars[VV_MOUSE_WIN].vv_nr = 0;
-  vimvars[VV_MOUSE_LNUM].vv_nr = 0;
-  vimvars[VV_MOUSE_COL].vv_nr = 0;
-
-  rettv->vval.v_number = n;
-  if (IS_SPECIAL(n) || mod_mask != 0) {
-    char_u temp[10];                /* modifier: 3, mbyte-char: 6, NUL: 1 */
-    int i = 0;
-
-    /* Turn a special key into three bytes, plus modifier. */
-    if (mod_mask != 0) {
-      temp[i++] = K_SPECIAL;
-      temp[i++] = KS_MODIFIER;
-      temp[i++] = mod_mask;
-    }
-    if (IS_SPECIAL(n)) {
-      temp[i++] = K_SPECIAL;
-      temp[i++] = K_SECOND(n);
-      temp[i++] = K_THIRD(n);
-    } else if (has_mbyte)
-      i += (*mb_char2bytes)(n, temp + i);
-    else
-      temp[i++] = n;
-    temp[i++] = NUL;
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = vim_strsave(temp);
-
-    if (is_mouse_key(n)) {
-      int row = mouse_row;
-      int col = mouse_col;
-      win_T       *win;
-      linenr_T lnum;
-      win_T       *wp;
-      int winnr = 1;
-
-      if (row >= 0 && col >= 0) {
-        /* Find the window at the mouse coordinates and compute the
-         * text position. */
-        win = mouse_find_win(&row, &col);
-        (void)mouse_comp_pos(win, &row, &col, &lnum);
-        for (wp = firstwin; wp != win; wp = wp->w_next)
-          ++winnr;
-        vimvars[VV_MOUSE_WIN].vv_nr = winnr;
-        vimvars[VV_MOUSE_LNUM].vv_nr = lnum;
-        vimvars[VV_MOUSE_COL].vv_nr = col + 1;
-      }
-    }
-  }
-}
-
-/*
- * "getcharmod()" function
- */
-static void f_getcharmod(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = mod_mask;
-}
-
-/*
- * "getcharsearch()" function
- */
-static void f_getcharsearch(typval_T *argvars, typval_T *rettv)
-{
-  rettv_dict_alloc(rettv);
-
-  dict_T *dict = rettv->vval.v_dict;
-
-  dict_add_nr_str(dict, "char", 0L, last_csearch());
-  dict_add_nr_str(dict, "forward", last_csearch_forward(), NULL);
-  dict_add_nr_str(dict, "until", last_csearch_until(), NULL);
-}
-
-/*
- * "getcmdline()" function
- */
-static void f_getcmdline(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = get_cmdline_str();
-}
-
-/*
- * "getcmdpos()" function
- */
-static void f_getcmdpos(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = get_cmdline_pos() + 1;
-}
-
-/*
- * "getcmdtype()" function
- */
-static void f_getcmdtype(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xmallocz(1);
-  rettv->vval.v_string[0] = get_cmdline_type();
-}
-
-/*
- * "getcmdwintype()" function
- */
-static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  rettv->vval.v_string = xmallocz(1);
-  rettv->vval.v_string[0] = cmdwin_type;
-}
-
-/*
- * "getcwd()" function
- */
-static void f_getcwd(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *cwd;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  cwd = xmalloc(MAXPATHL);
-  if (os_dirname(cwd, MAXPATHL) != FAIL) {
-    rettv->vval.v_string = vim_strsave(cwd);
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(rettv->vval.v_string);
-#endif
-  }
-  xfree(cwd);
-}
-
-/*
- * "getfontname()" function
- */
-static void f_getfontname(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-}
-
-/*
- * "getfperm({fname})" function
- */
-static void f_getfperm(typval_T *argvars, typval_T *rettv)
-{
-  char_u *perm = NULL;
-  char_u flags[] = "rwx";
-
-  char_u *filename = get_tv_string(&argvars[0]);
-  int32_t file_perm = os_getperm(filename);
-  if (file_perm >= 0) {
-    perm = vim_strsave((char_u *)"---------");
-    for (int i = 0; i < 9; i++) {
-      if (file_perm & (1 << (8 - i)))
-        perm[i] = flags[i % 3];
-    }
-  }
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = perm;
-}
-
-/*
- * "getfsize({fname})" function
- */
-static void f_getfsize(typval_T *argvars, typval_T *rettv)
-{
-  char *fname = (char *)get_tv_string(&argvars[0]);
-
-  rettv->v_type = VAR_NUMBER;
-
-  FileInfo file_info;
-  if (os_fileinfo(fname, &file_info)) {
-    uint64_t filesize = os_fileinfo_size(&file_info);
-    if (os_isdir((char_u *)fname))
-      rettv->vval.v_number = 0;
-    else {
-      rettv->vval.v_number = (varnumber_T)filesize;
-
-      /* non-perfect check for overflow */
-      if ((uint64_t)rettv->vval.v_number != filesize) {
-        rettv->vval.v_number = -2;
-      }
-    }
-  } else {
-    rettv->vval.v_number = -1;
-  }
-}
-
-/*
- * "getftime({fname})" function
- */
-static void f_getftime(typval_T *argvars, typval_T *rettv)
-{
-  char *fname = (char *)get_tv_string(&argvars[0]);
-
-  FileInfo file_info;
-  if (os_fileinfo(fname, &file_info)) {
-    rettv->vval.v_number = (varnumber_T)file_info.stat.st_mtim.tv_sec;
-  } else {
-    rettv->vval.v_number = -1;
-  }
-}
-
-/*
- * "getftype({fname})" function
- */
-static void f_getftype(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *fname;
-  char_u      *type = NULL;
-  char        *t;
-
-  fname = get_tv_string(&argvars[0]);
-
-  rettv->v_type = VAR_STRING;
-  FileInfo file_info;
-  if (os_fileinfo_link((char *)fname, &file_info)) {
-    uint64_t mode = file_info.stat.st_mode;
-#ifdef S_ISREG
-    if (S_ISREG(mode))
-      t = "file";
-    else if (S_ISDIR(mode))
-      t = "dir";
-# ifdef S_ISLNK
-    else if (S_ISLNK(mode))
-      t = "link";
-# endif
-# ifdef S_ISBLK
-    else if (S_ISBLK(mode))
-      t = "bdev";
-# endif
-# ifdef S_ISCHR
-    else if (S_ISCHR(mode))
-      t = "cdev";
-# endif
-# ifdef S_ISFIFO
-    else if (S_ISFIFO(mode))
-      t = "fifo";
-# endif
-# ifdef S_ISSOCK
-    else if (S_ISSOCK(mode))
-      t = "fifo";
-# endif
-    else
-      t = "other";
-#else
-# ifdef S_IFMT
-    switch (mode & S_IFMT) {
-    case S_IFREG: t = "file"; break;
-    case S_IFDIR: t = "dir"; break;
-#  ifdef S_IFLNK
-    case S_IFLNK: t = "link"; break;
-#  endif
-#  ifdef S_IFBLK
-    case S_IFBLK: t = "bdev"; break;
-#  endif
-#  ifdef S_IFCHR
-    case S_IFCHR: t = "cdev"; break;
-#  endif
-#  ifdef S_IFIFO
-    case S_IFIFO: t = "fifo"; break;
-#  endif
-#  ifdef S_IFSOCK
-    case S_IFSOCK: t = "socket"; break;
-#  endif
-    default: t = "other";
-    }
-# else
-    if (os_isdir(fname))
-      t = "dir";
-    else
-      t = "file";
-# endif
-#endif
-    type = vim_strsave((char_u *)t);
-  }
-  rettv->vval.v_string = type;
-}
-
-/*
- * "getline(lnum, [end])" function
- */
-static void f_getline(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-  linenr_T end;
-  int retlist;
-
-  lnum = get_tv_lnum(argvars);
-  if (argvars[1].v_type == VAR_UNKNOWN) {
-    end = 0;
-    retlist = FALSE;
-  } else {
-    end = get_tv_lnum(&argvars[1]);
-    retlist = TRUE;
-  }
-
-  get_buffer_lines(curbuf, lnum, end, retlist, rettv);
-}
-
-/*
- * "getmatches()" function
- */
-static void f_getmatches(typval_T *argvars, typval_T *rettv)
-{
-  matchitem_T *cur = curwin->w_match_head;
-  int i;
-
-  rettv_list_alloc(rettv);
-  while (cur != NULL) {
-    dict_T *dict = dict_alloc();
-    if (cur->match.regprog == NULL) {
-      // match added with matchaddpos() 
-      for (i = 0; i < MAXPOSMATCH; ++i) {
-        llpos_T   *llpos;
-        char      buf[6];
-
-        llpos = &cur->pos.pos[i];
-        if (llpos->lnum == 0) {
-          break;
-        }
-        list_T *l = list_alloc();
-        list_append_number(l, (varnumber_T)llpos->lnum);
-        if (llpos->col > 0) {
-          list_append_number(l, (varnumber_T)llpos->col);
-          list_append_number(l, (varnumber_T)llpos->len);
-        }
-        sprintf(buf, "pos%d", i + 1);
-        dict_add_list(dict, buf, l);
-      }
-    } else {
-      dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
-    }
-    dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
-    dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
-    dict_add_nr_str(dict, "id", (long)cur->id, NULL);
-
-    if (cur->conceal_char) {
-      char_u buf[MB_MAXBYTES + 1];
-
-      buf[(*mb_char2bytes)((int)cur->conceal_char, buf)] = NUL;
-      dict_add_nr_str(dict, "conceal", 0L, (char_u *)&buf);
-    }
-
-    list_append_dict(rettv->vval.v_list, dict);
-    cur = cur->next;
-  }
-}
-
-/*
- * "getpid()" function
- */
-static void f_getpid(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = os_get_pid();
-}
-
-static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
-{
-  pos_T *fp;
-  int fnum = -1;
-
-  if (getcurpos) {
-    fp = &curwin->w_cursor;
-  } else {
-    fp = var2fpos(&argvars[0], true, &fnum);
-  }
-
-  list_T *l = rettv_list_alloc(rettv);
-  list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
-  list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0);
-  list_append_number(l,
-                     (fp != NULL)
-                       ? (varnumber_T)(fp->col == MAXCOL ? MAXCOL : fp->col + 1)
-                       : (varnumber_T)0);
-  list_append_number(l,
-                     (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
-  if (getcurpos) {
-    list_append_number(l, curwin->w_curswant == MAXCOL
-                              ? (varnumber_T)MAXCOL
-                              : (varnumber_T)curwin->w_curswant + 1);
-  }
-}
-
-/*
- * "getcurpos(string)" function
- */
-static void f_getcurpos(typval_T *argvars, typval_T *rettv)
-{
-  getpos_both(argvars, rettv, true);
-}
-
-/*
- * "getpos(string)" function
- */
-static void f_getpos(typval_T *argvars, typval_T *rettv)
-{
-  getpos_both(argvars, rettv, false);
-}
-
-/*
- * "getqflist()" and "getloclist()" functions
- */
-static void f_getqflist(typval_T *argvars, typval_T *rettv)
-{
-  rettv_list_alloc(rettv);
-  win_T *wp = NULL;
-  if (argvars[0].v_type != VAR_UNKNOWN) { /* getloclist() */
-    wp = find_win_by_nr(&argvars[0], NULL);
-    if (wp == NULL) {
-      return;
-    }
-  }
-  (void)get_errorlist(wp, rettv->vval.v_list);
-}
-
-/// "getreg()" function
-static void f_getreg(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *strregname;
-  int regname;
-  int arg2 = false;
-  bool return_list = false;
-  int error = false;
-
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = get_tv_string_chk(&argvars[0]);
-    error = strregname == NULL;
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      arg2 = get_tv_number_chk(&argvars[1], &error);
-      if (!error && argvars[2].v_type != VAR_UNKNOWN) {
-        return_list = get_tv_number_chk(&argvars[2], &error);
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        // function(name, [args], dict)
+        arg_idx = 1;
+        dict_idx = 2;
+      } else if (argvars[1].v_type == VAR_DICT) {
+        // function(name, dict)
+        dict_idx = 1;
+      } else {
+        // function(name, [args])
+        arg_idx = 1;
+      }
+      if (dict_idx > 0) {
+        if (argvars[dict_idx].v_type != VAR_DICT) {
+          EMSG(_("E922: expected a dict"));
+          xfree(name);
+          goto theend;
+        }
+        if (argvars[dict_idx].vval.v_dict == NULL) {
+          dict_idx = 0;
+        }
+      }
+      if (arg_idx > 0) {
+        if (argvars[arg_idx].v_type != VAR_LIST) {
+          EMSG(_("E923: Second argument of function() must be "
+                 "a list or a dict"));
+          xfree(name);
+          goto theend;
+        }
+        list = argvars[arg_idx].vval.v_list;
+        if (tv_list_len(list) == 0) {
+          arg_idx = 0;
+        } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
+          emsg_funcname((char *)e_toomanyarg, name);
+          xfree(name);
+          goto theend;
+        }
       }
     }
-  } else {
-    strregname = vimvars[VV_REG].vv_str;
-  }
+    if (dict_idx > 0 || arg_idx > 0 || arg_pt != NULL || is_funcref) {
+      partial_T *const pt = xcalloc(1, sizeof(*pt));
 
-  if (error) {
-    return;
-  }
+      // result is a VAR_PARTIAL
+      if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
+        const int arg_len = (arg_pt == NULL ? 0 : arg_pt->pt_argc);
+        const int lv_len = tv_list_len(list);
 
-  regname = (strregname == NULL ? '"' : *strregname);
-  if (regname == 0)
-    regname = '"';
+        pt->pt_argc = arg_len + lv_len;
+        pt->pt_argv = xmalloc(sizeof(pt->pt_argv[0]) * pt->pt_argc);
+        int i = 0;
+        for (; i < arg_len; i++) {
+          tv_copy(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
+        }
+        if (lv_len > 0) {
+          TV_LIST_ITER(list, li, {
+            tv_copy(TV_LIST_ITEM_TV(li), &pt->pt_argv[i++]);
+          });
+        }
+      }
 
-  if (return_list) {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = 
-      get_reg_contents(regname, (arg2 ? kGRegExprSrc : 0) | kGRegList);
-    if (rettv->vval.v_list != NULL) {
-      rettv->vval.v_list->lv_refcount++;
+      // For "function(dict.func, [], dict)" and "func" is a partial
+      // use "dict". That is backwards compatible.
+      if (dict_idx > 0) {
+        // The dict is bound explicitly, pt_auto is false
+        pt->pt_dict = argvars[dict_idx].vval.v_dict;
+        (pt->pt_dict->dv_refcount)++;
+      } else if (arg_pt != NULL) {
+        // If the dict was bound automatically the result is also
+        // bound automatically.
+        pt->pt_dict = arg_pt->pt_dict;
+        pt->pt_auto = arg_pt->pt_auto;
+        if (pt->pt_dict != NULL) {
+          (pt->pt_dict->dv_refcount)++;
+        }
+      }
+
+      pt->pt_refcount = 1;
+      if (arg_pt != NULL && arg_pt->pt_func != NULL) {
+        pt->pt_func = arg_pt->pt_func;
+        func_ptr_ref(pt->pt_func);
+        xfree(name);
+      } else if (is_funcref) {
+        pt->pt_func = find_func(trans_name);
+        func_ptr_ref(pt->pt_func);
+        xfree(name);
+      } else {
+        pt->pt_name = name;
+        func_ref(name);
+      }
+
+      rettv->v_type = VAR_PARTIAL;
+      rettv->vval.v_partial = pt;
+    } else {
+      // result is a VAR_FUNC
+      rettv->v_type = VAR_FUNC;
+      rettv->vval.v_string = name;
+      func_ref(name);
     }
-  } else {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
   }
+theend:
+  xfree(trans_name);
 }
 
-/*
- * "getregtype()" function
- */
-static void f_getregtype(typval_T *argvars, typval_T *rettv)
+/// Returns buffer options, variables and other attributes in a dictionary.
+dict_T *get_buffer_info(buf_T *buf)
 {
-  char_u      *strregname;
-  int regname;
+  dict_T *const dict = tv_dict_alloc();
 
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = get_tv_string_chk(&argvars[0]);
-    if (strregname == NULL) {       /* type error; errmsg already given */
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-      return;
+  tv_dict_add_nr(dict, S_LEN("bufnr"), buf->b_fnum);
+  tv_dict_add_str(dict, S_LEN("name"),
+                  buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
+  tv_dict_add_nr(dict, S_LEN("lnum"),
+                 buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
+  tv_dict_add_nr(dict, S_LEN("linecount"), buf->b_ml.ml_line_count);
+  tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
+  tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
+  tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
+  tv_dict_add_nr(dict, S_LEN("changedtick"), buf_get_changedtick(buf));
+  tv_dict_add_nr(dict, S_LEN("hidden"),
+                 buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0);
+
+  // Get a reference to buffer variables
+  tv_dict_add_dict(dict, S_LEN("variables"), buf->b_vars);
+
+  // List of windows displaying this buffer
+  list_T *const windows = tv_list_alloc(kListLenMayKnow);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      tv_list_append_number(windows, (varnumber_T)wp->handle);
     }
-  } else
-    /* Default to v:register */
-    strregname = vimvars[VV_REG].vv_str;
+  }
+  tv_dict_add_list(dict, S_LEN("windows"), windows);
 
-  regname = (strregname == NULL ? '"' : *strregname);
-  if (regname == 0)
-    regname = '"';
+  if (buf->b_signlist != NULL) {
+    // List of signs placed in this buffer
+    tv_dict_add_list(dict, S_LEN("signs"), get_buffer_signs(buf));
+  }
 
-  colnr_T reglen = 0;
-  char buf[NUMBUFLEN + 2];
-  char_u reg_type = get_reg_type(regname, &reglen);
-  format_reg_type(reg_type, reglen, buf, ARRAY_SIZE(buf));
+  tv_dict_add_nr(dict, S_LEN("lastused"), buf->b_last_used);
 
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)xstrdup(buf);
+  return dict;
 }
 
-/*
- * "gettabvar()" function
- */
-static void f_gettabvar(typval_T *argvars, typval_T *rettv)
+/// Get the line number from VimL object
+///
+/// @note Unlike tv_get_lnum(), this one supports only "$" special string.
+///
+/// @param[in]  tv  Object to get value from. Is expected to be a number or
+///                 a special string "$".
+/// @param[in]  buf  Buffer to take last line number from in case tv is "$". May
+///                  be NULL, in this case "$" results in zero return.
+///
+/// @return Line number or 0 in case of error.
+linenr_T tv_get_lnum_buf(const typval_T *const tv,
+                         const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  win_T *oldcurwin;
-  tabpage_T *tp, *oldtabpage;
-  dictitem_T  *v;
-  char_u      *varname;
-  bool done = false;
+  if (tv->v_type == VAR_STRING
+      && tv->vval.v_string != NULL
+      && tv->vval.v_string[0] == '$'
+      && buf != NULL) {
+    return buf->b_ml.ml_line_count;
+  }
+  return tv_get_number_chk(tv, NULL);
+}
 
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
+void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
+                     typval_T *rettv)
+{
+  if (what_arg->v_type == VAR_UNKNOWN) {
+    tv_list_alloc_ret(rettv, kListLenMayKnow);
+    if (is_qf || wp != NULL) {
+      (void)get_errorlist(NULL, wp, -1, rettv->vval.v_list);
+    }
+  } else {
+    tv_dict_alloc_ret(rettv);
+    if (is_qf || wp != NULL) {
+      if (what_arg->v_type == VAR_DICT) {
+        dict_T *d = what_arg->vval.v_dict;
 
-  varname = get_tv_string_chk(&argvars[1]);
-  tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
-  if (tp != NULL && varname != NULL) {
-    // Set tp to be our tabpage, temporarily.  Also set the window to the
-    // first window in the tabpage, otherwise the window is not valid.
-    win_T *window = tp->tp_firstwin == NULL ? firstwin : tp->tp_firstwin;
-    if (switch_win(&oldcurwin, &oldtabpage, window, tp, true) == OK) {
-      // look up the variable
-      // Let gettabvar({nr}, "") return the "t:" dictionary.
-      v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't', varname, FALSE);
-      if (v != NULL) {
-        copy_tv(&v->di_tv, rettv);
-        done = true;
+        if (d != NULL) {
+          qf_get_properties(wp, d, rettv->vval.v_dict);
+        }
+      } else {
+        EMSG(_(e_dictreq));
       }
     }
-
-    /* restore previous notion of curwin */
-    restore_win(oldcurwin, oldtabpage, TRUE);
-  }
-
-  if (!done && argvars[2].v_type != VAR_UNKNOWN) {
-    copy_tv(&argvars[2], rettv);
   }
 }
 
-/*
- * "gettabwinvar()" function
- */
-static void f_gettabwinvar(typval_T *argvars, typval_T *rettv)
+/// Returns information (variables, options, etc.) about a tab page
+/// as a dictionary.
+dict_T *get_tabpage_info(tabpage_T *tp, int tp_idx)
 {
-  getwinvar(argvars, rettv, 1);
+  dict_T *const dict = tv_dict_alloc();
+
+  tv_dict_add_nr(dict, S_LEN("tabnr"), tp_idx);
+
+  list_T *const l = tv_list_alloc(kListLenMayKnow);
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    tv_list_append_number(l, (varnumber_T)wp->handle);
+  }
+  tv_dict_add_list(dict, S_LEN("windows"), l);
+
+  // Make a reference to tabpage variables
+  tv_dict_add_dict(dict, S_LEN("variables"), tp->tp_vars);
+
+  return dict;
 }
 
-/*
- * "getwinposx()" function
- */
-static void f_getwinposx(typval_T *argvars, typval_T *rettv)
+/// Returns information about a window as a dictionary.
+dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
 {
-  rettv->vval.v_number = -1;
+  dict_T *const dict = tv_dict_alloc();
+
+  tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
+  tv_dict_add_nr(dict, S_LEN("winnr"), winnr);
+  tv_dict_add_nr(dict, S_LEN("winid"), wp->handle);
+  tv_dict_add_nr(dict, S_LEN("height"), wp->w_height);
+  tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
+  tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
+  tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
+  tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
+  tv_dict_add_nr(dict, S_LEN("width"), wp->w_width);
+  tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
+  tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
+
+  tv_dict_add_nr(dict, S_LEN("terminal"), bt_terminal(wp->w_buffer));
+  tv_dict_add_nr(dict, S_LEN("quickfix"), bt_quickfix(wp->w_buffer));
+  tv_dict_add_nr(dict, S_LEN("loclist"),
+                 (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL));
+
+  // Add a reference to window variables
+  tv_dict_add_dict(dict, S_LEN("variables"), wp->w_vars);
+
+  return dict;
 }
 
-/*
- * "getwinposy()" function
- */
-static void f_getwinposy(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = -1;
-}
-
-/*
- * Find window specified by "vp" in tabpage "tp".
- */
-static win_T *
-find_win_by_nr (
+// Find window specified by "vp" in tabpage "tp".
+win_T *
+find_win_by_nr(
     typval_T *vp,
-    tabpage_T *tp         /* NULL for current tab page */
+    tabpage_T *tp         // NULL for current tab page
 )
 {
-  int nr = get_tv_number_chk(vp, NULL);
+  int nr = (int)tv_get_number_chk(vp, NULL);
 
   if (nr < 0) {
     return NULL;
@@ -10737,49 +6344,71 @@ find_win_by_nr (
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    if (--nr <= 0) {
+    if (nr >= LOWEST_WIN_ID) {
+      if (wp->handle == nr) {
+        return wp;
+      }
+    } else if (--nr <= 0) {
       return wp;
     }
   }
   return NULL;
 }
 
-/*
- * "getwinvar()" function
- */
-static void f_getwinvar(typval_T *argvars, typval_T *rettv)
+/// Find window specified by "wvp" in tabpage "tvp".
+win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 {
-  getwinvar(argvars, rettv, 0);
+  win_T *wp = NULL;
+  tabpage_T *tp = NULL;
+
+  if (wvp->v_type != VAR_UNKNOWN) {
+    if (tvp->v_type != VAR_UNKNOWN) {
+      long n = tv_get_number(tvp);
+      if (n >= 0) {
+        tp = find_tabpage(n);
+      }
+    } else {
+      tp = curtab;
+    }
+
+    if (tp != NULL) {
+      wp = find_win_by_nr(wvp, tp);
+    }
+  } else {
+    wp = curwin;
+  }
+
+  return wp;
 }
 
 /*
  * getwinvar() and gettabwinvar()
  */
-static void 
-getwinvar (
+void
+getwinvar(
     typval_T *argvars,
     typval_T *rettv,
-    int off                    /* 1 for gettabwinvar() */
+    int off                    // 1 for gettabwinvar()
 )
 {
   win_T *win, *oldcurwin;
-  char_u *varname;
   dictitem_T *v;
   tabpage_T *tp = NULL;
   tabpage_T *oldtabpage = NULL;
   bool done = false;
 
-  if (off == 1)
-    tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
-  else
+  if (off == 1) {
+    tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
+  } else {
     tp = curtab;
+  }
   win = find_win_by_nr(&argvars[off], tp);
-  varname = get_tv_string_chk(&argvars[off + 1]);
-  ++emsg_off;
+  const char *varname = tv_get_string_chk(&argvars[off + 1]);
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
+  emsg_off++;
   if (win != NULL && varname != NULL) {
     // Set curwin to be our win, temporarily.  Also set the tabpage,
     // otherwise the window is not valid. Only do this when needed,
@@ -10787,16 +6416,26 @@ getwinvar (
     bool need_switch_win = tp != curtab || win != curwin;
     if (!need_switch_win
         || switch_win(&oldcurwin, &oldtabpage, win, tp, true) == OK) {
-      if (*varname == '&') {  // window-local-option
-        if (get_option_tv(&varname, rettv, 1) == OK) {
+      if (*varname == '&') {
+        if (varname[1] == NUL) {
+          // get all window-local options in a dict
+          dict_T *opts = get_winbuf_options(false);
+
+          if (opts != NULL) {
+            tv_dict_set_ret(rettv, opts);
+            done = true;
+          }
+        } else if (get_option_tv(&varname, rettv, 1) == OK) {
+          // window-local-option
           done = true;
         }
       } else {
         // Look up the variable.
         // Let getwinvar({nr}, "") return the "w:" dictionary.
-        v = find_var_in_ht(&win->w_vars->dv_hashtab, 'w', varname, FALSE);
+        v = find_var_in_ht(&win->w_vars->dv_hashtab, 'w', varname,
+                           strlen(varname), false);
         if (v != NULL) {
-          copy_tv(&v->di_tv, rettv);
+          tv_copy(&v->di_tv, rettv);
           done = true;
         }
       }
@@ -10807,541 +6446,13 @@ getwinvar (
       restore_win(oldcurwin, oldtabpage, true);
     }
   }
+  emsg_off--;
 
-  if (!done && argvars[off + 2].v_type != VAR_UNKNOWN)
-    /* use the default return value */
-    copy_tv(&argvars[off + 2], rettv);
-
-  --emsg_off;
-}
-
-/*
- * "glob()" function
- */
-static void f_glob(typval_T *argvars, typval_T *rettv)
-{
-  int options = WILD_SILENT|WILD_USE_NL;
-  expand_T xpc;
-  int error = FALSE;
-
-  /* When the optional second argument is non-zero, don't remove matches
-  * for 'wildignore' and don't put matches for 'suffixes' at the end. */
-  rettv->v_type = VAR_STRING;
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (get_tv_number_chk(&argvars[1], &error))
-      options |= WILD_KEEP_ALL;
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      if (get_tv_number_chk(&argvars[2], &error)) {
-        rettv->v_type = VAR_LIST;
-        rettv->vval.v_list = NULL;
-      }
-      if (argvars[3].v_type != VAR_UNKNOWN
-          && get_tv_number_chk(&argvars[3], &error)) {
-        options |= WILD_ALLLINKS;
-      }
-    }
-  }
-  if (!error) {
-    ExpandInit(&xpc);
-    xpc.xp_context = EXPAND_FILES;
-    if (p_wic)
-      options += WILD_ICASE;
-    if (rettv->v_type == VAR_STRING)
-      rettv->vval.v_string = ExpandOne(&xpc, get_tv_string(&argvars[0]),
-          NULL, options, WILD_ALL);
-    else {
-      rettv_list_alloc(rettv);
-      ExpandOne(&xpc, get_tv_string(&argvars[0]), NULL, options, WILD_ALL_KEEP);
-      for (int i = 0; i < xpc.xp_numfiles; i++) {
-        list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
-      }
-      ExpandCleanup(&xpc);
-    }
-  } else
-    rettv->vval.v_string = NULL;
-}
-
-/// "globpath()" function
-static void f_globpath(typval_T *argvars, typval_T *rettv)
-{
-  int flags = 0;  // Flags for globpath.
-  int error = false;
-
-  // Return a string, or a list if the optional third argument is non-zero.
-  rettv->v_type = VAR_STRING;
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    // When the optional second argument is non-zero, don't remove matches
-    // for 'wildignore' and don't put matches for 'suffixes' at the end.
-    if (get_tv_number_chk(&argvars[2], &error)) {
-      flags |= WILD_KEEP_ALL;
-    }
-
-    if (argvars[3].v_type != VAR_UNKNOWN) {
-      if (get_tv_number_chk(&argvars[3], &error)) {
-        rettv->v_type = VAR_LIST;
-        rettv->vval.v_list = NULL;
-      }
-      if (argvars[4].v_type != VAR_UNKNOWN
-          && get_tv_number_chk(&argvars[4], &error)) {
-        flags |= WILD_ALLLINKS;
-      }
-    }
-  }
-
-  char_u buf1[NUMBUFLEN];
-  char_u *file = get_tv_string_buf_chk(&argvars[1], buf1);
-  if (file != NULL && !error) {
-    garray_T ga;
-    ga_init(&ga, (int)sizeof(char_u *), 10);
-    globpath(get_tv_string(&argvars[0]), file, &ga, flags);
-
-    if (rettv->v_type == VAR_STRING) {
-      rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
-    } else {
-      rettv_list_alloc(rettv);
-      for (int i = 0; i < ga.ga_len; i++) {
-        list_append_string(rettv->vval.v_list,
-                           ((char_u **)(ga.ga_data))[i], -1);
-      }
-    }
-
-    ga_clear_strings(&ga);
-  } else {
-    rettv->vval.v_string = NULL;
+  if (!done && argvars[off + 2].v_type != VAR_UNKNOWN) {
+    // use the default return value
+    tv_copy(&argvars[off + 2], rettv);
   }
 }
-
-// "glob2regpat()" function
-static void f_glob2regpat(typval_T *argvars, typval_T *rettv)
-{
-  char_u *pat = get_tv_string_chk(&argvars[0]);  // NULL on type error
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (pat == NULL)
-    ? NULL
-    : file_pat_to_reg_pat(pat, NULL, NULL, false);
-}
-
-/*
- * "has()" function
- */
-static void f_has(typval_T *argvars, typval_T *rettv)
-{
-  int i;
-  char_u      *name;
-  int n = FALSE;
-  static char *(has_list[]) =
-  {
-#ifdef UNIX
-    "unix",
-#endif
-#if defined(WIN32)
-    "win32",
-#endif
-#if defined(WIN64) || defined(_WIN64)
-    "win64",
-#endif
-    "fname_case",
-#ifdef HAVE_ACL
-    "acl",
-#endif
-    "arabic",
-    "autocmd",
-    "browsefilter",
-    "byte_offset",
-    "cindent",
-    "cmdline_compl",
-    "cmdline_hist",
-    "comments",
-    "conceal",
-    "cscope",
-    "cursorbind",
-    "cursorshape",
-#ifdef DEBUG
-    "debug",
-#endif
-    "dialog_con",
-    "diff",
-    "digraphs",
-    "eval",         /* always present, of course! */
-    "ex_extra",
-    "extra_search",
-    "farsi",
-    "file_in_path",
-    "filterpipe",
-    "find_in_path",
-    "float",
-    "folding",
-#if defined(UNIX)
-    "fork",
-#endif
-    "gettext",
-#if defined(HAVE_ICONV_H) && defined(USE_ICONV)
-    "iconv",
-#endif
-    "insert_expand",
-    "jumplist",
-    "keymap",
-    "langmap",
-    "libcall",
-    "linebreak",
-    "lispindent",
-    "listcmds",
-    "localmap",
-#ifdef __APPLE__
-    "mac",
-    "macunix",
-#endif
-    "menu",
-    "mksession",
-    "modify_fname",
-    "mouse",
-    "multi_byte",
-    "multi_lang",
-    "path_extra",
-    "persistent_undo",
-    "postscript",
-    "printer",
-    "profile",
-    "reltime",
-    "quickfix",
-    "rightleft",
-    "scrollbind",
-    "showcmd",
-    "cmdline_info",
-    "shada",
-    "signs",
-    "smartindent",
-    "startuptime",
-    "statusline",
-    "spell",
-    "syntax",
-#if !defined(UNIX)
-    "system",  // TODO(SplinterOfChaos): This IS defined for UNIX!
-#endif
-    "tablineat",
-    "tag_binary",
-    "tag_old_static",
-    "termresponse",
-    "textobjects",
-    "title",
-    "user-commands",        /* was accidentally included in 5.4 */
-    "user_commands",
-    "vertsplit",
-    "virtualedit",
-    "visual",
-    "visualextra",
-    "vreplace",
-    "wildignore",
-    "wildmenu",
-    "windows",
-    "winaltkeys",
-    "writebackup",
-    "nvim",
-    NULL
-  };
-
-  name = get_tv_string(&argvars[0]);
-  for (i = 0; has_list[i] != NULL; ++i)
-    if (STRICMP(name, has_list[i]) == 0) {
-      n = TRUE;
-      break;
-    }
-
-  if (n == FALSE) {
-    if (STRNICMP(name, "patch", 5) == 0) {
-      if (name[5] == '-'
-          && STRLEN(name) > 11
-          && ascii_isdigit(name[6])
-          && ascii_isdigit(name[8])
-          && ascii_isdigit(name[10])) {
-        int major = atoi((char *)name + 6);
-        int minor = atoi((char *)name + 8);
-
-        // Expect "patch-9.9.01234".
-        n = (major < VIM_VERSION_MAJOR
-             || (major == VIM_VERSION_MAJOR
-                 && (minor < VIM_VERSION_MINOR
-                     || (minor == VIM_VERSION_MINOR
-                         && has_patch(atoi((char *)name + 10))))));
-      } else {
-        n = has_patch(atoi((char *)name + 5));
-      }
-    } else if (STRICMP(name, "vim_starting") == 0) {
-      n = (starting != 0);
-    } else if (STRICMP(name, "multi_byte_encoding") == 0) {
-      n = has_mbyte;
-#if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-    } else if (STRICMP(name, "iconv") == 0) {
-      n = iconv_enabled(false);
-#endif
-    } else if (STRICMP(name, "syntax_items") == 0) {
-      n = syntax_present(curwin);
-    }
-  }
-
-  if (n == FALSE && eval_has_provider((char *)name)) {
-    n = TRUE;
-  }
-
-  rettv->vval.v_number = n;
-}
-
-/*
- * "has_key()" function
- */
-static void f_has_key(typval_T *argvars, typval_T *rettv)
-{
-  if (argvars[0].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
-    return;
-  }
-  if (argvars[0].vval.v_dict == NULL)
-    return;
-
-  rettv->vval.v_number = dict_find(argvars[0].vval.v_dict,
-      get_tv_string(&argvars[1]), -1) != NULL;
-}
-
-/*
- * "haslocaldir()" function
- */
-static void f_haslocaldir(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = (curwin->w_localdir != NULL);
-}
-
-/*
- * "hasmapto()" function
- */
-static void f_hasmapto(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *name;
-  char_u      *mode;
-  char_u buf[NUMBUFLEN];
-  int abbr = FALSE;
-
-  name = get_tv_string(&argvars[0]);
-  if (argvars[1].v_type == VAR_UNKNOWN)
-    mode = (char_u *)"nvo";
-  else {
-    mode = get_tv_string_buf(&argvars[1], buf);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      abbr = get_tv_number(&argvars[2]);
-  }
-
-  if (map_to_exists(name, mode, abbr))
-    rettv->vval.v_number = TRUE;
-  else
-    rettv->vval.v_number = FALSE;
-}
-
-/*
- * "histadd()" function
- */
-static void f_histadd(typval_T *argvars, typval_T *rettv)
-{
-  int histype;
-  char_u      *str;
-  char_u buf[NUMBUFLEN];
-
-  rettv->vval.v_number = FALSE;
-  if (check_restricted() || check_secure())
-    return;
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
-  histype = str != NULL ? get_histtype(str) : -1;
-  if (histype >= 0) {
-    str = get_tv_string_buf(&argvars[1], buf);
-    if (*str != NUL) {
-      init_history();
-      add_to_history(histype, str, FALSE, NUL);
-      rettv->vval.v_number = TRUE;
-      return;
-    }
-  }
-}
-
-/*
- * "histdel()" function
- */
-static void f_histdel(typval_T *argvars, typval_T *rettv)
-{
-  int n;
-  char_u buf[NUMBUFLEN];
-  char_u      *str;
-
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
-  if (str == NULL)
-    n = 0;
-  else if (argvars[1].v_type == VAR_UNKNOWN)
-    /* only one argument: clear entire history */
-    n = clr_history(get_histtype(str));
-  else if (argvars[1].v_type == VAR_NUMBER)
-    /* index given: remove that entry */
-    n = del_history_idx(get_histtype(str),
-        (int)get_tv_number(&argvars[1]));
-  else
-    /* string given: remove all matching entries */
-    n = del_history_entry(get_histtype(str),
-        get_tv_string_buf(&argvars[1], buf));
-  rettv->vval.v_number = n;
-}
-
-/*
- * "histget()" function
- */
-static void f_histget(typval_T *argvars, typval_T *rettv)
-{
-  int type;
-  int idx;
-  char_u      *str;
-
-  str = get_tv_string_chk(&argvars[0]);         /* NULL on type error */
-  if (str == NULL)
-    rettv->vval.v_string = NULL;
-  else {
-    type = get_histtype(str);
-    if (argvars[1].v_type == VAR_UNKNOWN)
-      idx = get_history_idx(type);
-    else
-      idx = (int)get_tv_number_chk(&argvars[1], NULL);
-    /* -1 on type error */
-    rettv->vval.v_string = vim_strsave(get_history_entry(type, idx));
-  }
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "histnr()" function
- */
-static void f_histnr(typval_T *argvars, typval_T *rettv)
-{
-  int i;
-
-  char_u      *history = get_tv_string_chk(&argvars[0]);
-
-  i = history == NULL ? HIST_CMD - 1 : get_histtype(history);
-  if (i >= HIST_CMD && i < HIST_COUNT)
-    i = get_history_idx(i);
-  else
-    i = -1;
-  rettv->vval.v_number = i;
-}
-
-/*
- * "highlightID(name)" function
- */
-static void f_hlID(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = syn_name2id(get_tv_string(&argvars[0]));
-}
-
-/*
- * "highlight_exists()" function
- */
-static void f_hlexists(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = highlight_exists(get_tv_string(&argvars[0]));
-}
-
-/*
- * "hostname()" function
- */
-static void f_hostname(typval_T *argvars, typval_T *rettv)
-{
-  char hostname[256];
-
-  os_get_hostname(hostname, 256);
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave((char_u *)hostname);
-}
-
-/*
- * iconv() function
- */
-static void f_iconv(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf1[NUMBUFLEN];
-  char_u buf2[NUMBUFLEN];
-  char_u      *from, *to, *str;
-  vimconv_T vimconv;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  str = get_tv_string(&argvars[0]);
-  from = enc_canonize(enc_skip(get_tv_string_buf(&argvars[1], buf1)));
-  to = enc_canonize(enc_skip(get_tv_string_buf(&argvars[2], buf2)));
-  vimconv.vc_type = CONV_NONE;
-  convert_setup(&vimconv, from, to);
-
-  /* If the encodings are equal, no conversion needed. */
-  if (vimconv.vc_type == CONV_NONE)
-    rettv->vval.v_string = vim_strsave(str);
-  else
-    rettv->vval.v_string = string_convert(&vimconv, str, NULL);
-
-  convert_setup(&vimconv, NULL, NULL);
-  xfree(from);
-  xfree(to);
-}
-
-/*
- * "indent()" function
- */
-static void f_indent(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count)
-    rettv->vval.v_number = get_indent_lnum(lnum);
-  else
-    rettv->vval.v_number = -1;
-}
-
-/*
- * "index()" function
- */
-static void f_index(typval_T *argvars, typval_T *rettv)
-{
-  list_T      *l;
-  listitem_T  *item;
-  long idx = 0;
-  int ic = FALSE;
-
-  rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
-    return;
-  }
-  l = argvars[0].vval.v_list;
-  if (l != NULL) {
-    item = l->lv_first;
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      int error = FALSE;
-
-      /* Start at specified item.  Use the cached index that list_find()
-       * sets, so that a negative number also works. */
-      item = list_find(l, get_tv_number_chk(&argvars[2], &error));
-      idx = l->lv_idx;
-      if (argvars[3].v_type != VAR_UNKNOWN)
-        ic = get_tv_number_chk(&argvars[3], &error);
-      if (error)
-        item = NULL;
-    }
-
-    for (; item != NULL; item = item->li_next, ++idx)
-      if (tv_equal(&item->li_tv, &argvars[1], ic, FALSE)) {
-        rettv->vval.v_number = idx;
-        break;
-      }
-  }
-}
-
-static int inputsecret_flag = 0;
-
 
 /*
  * This function is used by f_input() and f_inputdialog() functions. The third
@@ -11349,497 +6460,205 @@ static int inputsecret_flag = 0;
  * prompt. The third argument to f_inputdialog() specifies the value to return
  * when the user cancels the prompt.
  */
-static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
+void get_user_input(const typval_T *const argvars,
+                    typval_T *const rettv,
+                    const bool inputdialog,
+                    const bool secret)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *prompt = get_tv_string_chk(&argvars[0]);
-  char_u      *p = NULL;
-  int c;
-  char_u buf[NUMBUFLEN];
-  int cmd_silent_save = cmd_silent;
-  char_u      *defstr = (char_u *)"";
-  int xp_type = EXPAND_NOTHING;
-  char_u      *xp_arg = NULL;
-
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  cmd_silent = FALSE;           /* Want to see the prompt. */
-  if (prompt != NULL) {
-    /* Only the part of the message after the last NL is considered as
-     * prompt for the command line */
-    p = vim_strrchr(prompt, '\n');
-    if (p == NULL)
-      p = prompt;
-    else {
-      ++p;
-      c = *p;
-      *p = NUL;
-      msg_start();
-      msg_clr_eos();
-      msg_puts_attr(prompt, echo_attr);
-      msg_didout = FALSE;
-      msg_starthere();
-      *p = c;
-    }
-    cmdline_row = msg_row;
-
+  const char *prompt = "";
+  const char *defstr = "";
+  const char *cancelreturn = NULL;
+  const char *xp_name = NULL;
+  Callback input_callback = { .type = kCallbackNone };
+  char prompt_buf[NUMBUFLEN];
+  char defstr_buf[NUMBUFLEN];
+  char cancelreturn_buf[NUMBUFLEN];
+  char xp_name_buf[NUMBUFLEN];
+  char def[1] = { 0 };
+  if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      defstr = get_tv_string_buf_chk(&argvars[1], buf);
-      if (defstr != NULL)
-        stuffReadbuffSpec(defstr);
-
-      if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
-        char_u  *xp_name;
-        int xp_namelen;
-        uint32_t argt;
-
-        /* input() with a third argument: completion */
-        rettv->vval.v_string = NULL;
-
-        xp_name = get_tv_string_buf_chk(&argvars[2], buf);
-        if (xp_name == NULL)
+      EMSG(_("E5050: {opts} must be the only argument"));
+      return;
+    }
+    dict_T *const dict = argvars[0].vval.v_dict;
+    prompt = tv_dict_get_string_buf_chk(dict, S_LEN("prompt"), prompt_buf, "");
+    if (prompt == NULL) {
+      return;
+    }
+    defstr = tv_dict_get_string_buf_chk(dict, S_LEN("default"), defstr_buf, "");
+    if (defstr == NULL) {
+      return;
+    }
+    cancelreturn = tv_dict_get_string_buf_chk(dict, S_LEN("cancelreturn"),
+                                              cancelreturn_buf, def);
+    if (cancelreturn == NULL) {  // error
+      return;
+    }
+    if (*cancelreturn == NUL) {
+      cancelreturn = NULL;
+    }
+    xp_name = tv_dict_get_string_buf_chk(dict, S_LEN("completion"),
+                                         xp_name_buf, def);
+    if (xp_name == NULL) {  // error
+      return;
+    }
+    if (xp_name == def) {  // default to NULL
+      xp_name = NULL;
+    }
+    if (!tv_dict_get_callback(dict, S_LEN("highlight"), &input_callback)) {
+      return;
+    }
+  } else {
+    prompt = tv_get_string_buf_chk(&argvars[0], prompt_buf);
+    if (prompt == NULL) {
+      return;
+    }
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      defstr = tv_get_string_buf_chk(&argvars[1], defstr_buf);
+      if (defstr == NULL) {
+        return;
+      }
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        const char *const arg2 = tv_get_string_buf_chk(&argvars[2],
+                                                       cancelreturn_buf);
+        if (arg2 == NULL) {
           return;
-
-        xp_namelen = (int)STRLEN(xp_name);
-
-        if (parse_compl_arg(xp_name, xp_namelen, &xp_type, &argt,
-                &xp_arg) == FAIL)
-          return;
+        }
+        if (inputdialog) {
+          cancelreturn = arg2;
+        } else {
+          xp_name = arg2;
+        }
       }
     }
-
-    if (defstr != NULL) {
-      int save_ex_normal_busy = ex_normal_busy;
-      ex_normal_busy = 0;
-      rettv->vval.v_string =
-        getcmdline_prompt(inputsecret_flag ? NUL : '@', p, echo_attr,
-            xp_type, xp_arg);
-      ex_normal_busy = save_ex_normal_busy;
-    }
-    if (inputdialog && rettv->vval.v_string == NULL
-        && argvars[1].v_type != VAR_UNKNOWN
-        && argvars[2].v_type != VAR_UNKNOWN)
-      rettv->vval.v_string = vim_strsave(get_tv_string_buf(
-              &argvars[2], buf));
-
-    xfree(xp_arg);
-
-    /* since the user typed this, no need to wait for return */
-    need_wait_return = FALSE;
-    msg_didout = FALSE;
   }
+
+  int xp_type = EXPAND_NOTHING;
+  char *xp_arg = NULL;
+  if (xp_name != NULL) {
+    // input() with a third argument: completion
+    const int xp_namelen = (int)strlen(xp_name);
+
+    uint32_t argt;
+    if (parse_compl_arg((char_u *)xp_name, xp_namelen, &xp_type,
+                        &argt, (char_u **)&xp_arg) == FAIL) {
+      return;
+    }
+  }
+
+  const bool cmd_silent_save = cmd_silent;
+
+  cmd_silent = false;  // Want to see the prompt.
+  // Only the part of the message after the last NL is considered as
+  // prompt for the command line, unlsess cmdline is externalized
+  const char *p = prompt;
+  if (!ui_has(kUICmdline)) {
+    const char *lastnl = strrchr(prompt, '\n');
+    if (lastnl != NULL) {
+      p = lastnl+1;
+      msg_start();
+      msg_clr_eos();
+      msg_puts_attr_len(prompt, p - prompt, echo_attr);
+      msg_didout = false;
+      msg_starthere();
+    }
+  }
+  cmdline_row = msg_row;
+
+  stuffReadbuffSpec(defstr);
+
+  const int save_ex_normal_busy = ex_normal_busy;
+  ex_normal_busy = 0;
+  rettv->vval.v_string =
+    (char_u *)getcmdline_prompt(secret ? NUL : '@', p, echo_attr,
+                                xp_type, xp_arg, input_callback);
+  ex_normal_busy = save_ex_normal_busy;
+  callback_free(&input_callback);
+
+  if (rettv->vval.v_string == NULL && cancelreturn != NULL) {
+    rettv->vval.v_string = (char_u *)xstrdup(cancelreturn);
+  }
+
+  xfree(xp_arg);
+
+  // Since the user typed this, no need to wait for return.
+  need_wait_return = false;
+  msg_didout = false;
   cmd_silent = cmd_silent_save;
 }
 
-/*
- * "input()" function
- *     Also handles inputsecret() when inputsecret is set.
- */
-static void f_input(typval_T *argvars, typval_T *rettv)
+/// Turn a dictionary into a list
+///
+/// @param[in]  tv  Dictionary to convert. Is checked for actually being
+///                 a dictionary, will give an error if not.
+/// @param[out]  rettv  Location where result will be saved.
+/// @param[in]  what  What to save in rettv.
+void dict_list(typval_T *const tv, typval_T *const rettv,
+               const DictListType what)
 {
-  get_user_input(argvars, rettv, FALSE);
-}
-
-/*
- * "inputdialog()" function
- */
-static void f_inputdialog(typval_T *argvars, typval_T *rettv)
-{
-  get_user_input(argvars, rettv, TRUE);
-}
-
-/*
- * "inputlist()" function
- */
-static void f_inputlist(typval_T *argvars, typval_T *rettv)
-{
-  listitem_T  *li;
-  int selected;
-  int mouse_used;
-
-  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
-    EMSG2(_(e_listarg), "inputlist()");
-    return;
-  }
-
-  msg_start();
-  msg_row = Rows - 1;   /* for when 'cmdheight' > 1 */
-  lines_left = Rows;    /* avoid more prompt */
-  msg_scroll = TRUE;
-  msg_clr_eos();
-
-  for (li = argvars[0].vval.v_list->lv_first; li != NULL; li = li->li_next) {
-    msg_puts(get_tv_string(&li->li_tv));
-    msg_putchar('\n');
-  }
-
-  /* Ask for choice. */
-  selected = prompt_for_number(&mouse_used);
-  if (mouse_used)
-    selected -= lines_left;
-
-  rettv->vval.v_number = selected;
-}
-
-
-static garray_T ga_userinput = {0, 0, sizeof(tasave_T), 4, NULL};
-
-/*
- * "inputrestore()" function
- */
-static void f_inputrestore(typval_T *argvars, typval_T *rettv)
-{
-  if (!GA_EMPTY(&ga_userinput)) {
-    --ga_userinput.ga_len;
-    restore_typeahead((tasave_T *)(ga_userinput.ga_data)
-        + ga_userinput.ga_len);
-    /* default return is zero == OK */
-  } else if (p_verbose > 1) {
-    verb_msg((char_u *)_("called inputrestore() more often than inputsave()"));
-    rettv->vval.v_number = 1;     /* Failed */
-  }
-}
-
-/*
- * "inputsave()" function
- */
-static void f_inputsave(typval_T *argvars, typval_T *rettv)
-{
-  // Add an entry to the stack of typeahead storage.
-  tasave_T *p = GA_APPEND_VIA_PTR(tasave_T, &ga_userinput);
-  save_typeahead(p);
-}
-
-/*
- * "inputsecret()" function
- */
-static void f_inputsecret(typval_T *argvars, typval_T *rettv)
-{
-  ++cmdline_star;
-  ++inputsecret_flag;
-  f_input(argvars, rettv);
-  --cmdline_star;
-  --inputsecret_flag;
-}
-
-/*
- * "insert()" function
- */
-static void f_insert(typval_T *argvars, typval_T *rettv)
-{
-  long before = 0;
-  listitem_T  *item;
-  list_T      *l;
-  int error = FALSE;
-
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "insert()");
-  } else if ((l = argvars[0].vval.v_list) != NULL
-             && !tv_check_lock(l->lv_lock,
-                               (char_u *)N_("insert() argument"), true)) {
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      before = get_tv_number_chk(&argvars[2], &error);
-    }
-    if (error) {
-      // type error; errmsg already given
-      return;
-    }
-
-    if (before == l->lv_len)
-      item = NULL;
-    else {
-      item = list_find(l, before);
-      if (item == NULL) {
-        EMSGN(_(e_listidx), before);
-        l = NULL;
-      }
-    }
-    if (l != NULL) {
-      list_insert_tv(l, &argvars[1], item);
-      copy_tv(&argvars[0], rettv);
-    }
-  }
-}
-
-/*
- * "invert(expr)" function
- */
-static void f_invert(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = ~get_tv_number_chk(&argvars[0], NULL);
-}
-
-/*
- * "isdirectory()" function
- */
-static void f_isdirectory(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = os_isdir(get_tv_string(&argvars[0]));
-}
-
-/*
- * "islocked()" function
- */
-static void f_islocked(typval_T *argvars, typval_T *rettv)
-{
-  lval_T lv;
-  char_u      *end;
-  dictitem_T  *di;
-
-  rettv->vval.v_number = -1;
-  end = get_lval(get_tv_string(&argvars[0]), NULL, &lv, FALSE, FALSE,
-      GLV_NO_AUTOLOAD, FNE_CHECK_START);
-  if (end != NULL && lv.ll_name != NULL) {
-    if (*end != NUL)
-      EMSG(_(e_trailing));
-    else {
-      if (lv.ll_tv == NULL) {
-        if (check_changedtick(lv.ll_name))
-          rettv->vval.v_number = 1;                 /* always locked */
-        else {
-          di = find_var(lv.ll_name, NULL, TRUE);
-          if (di != NULL) {
-            /* Consider a variable locked when:
-             * 1. the variable itself is locked
-             * 2. the value of the variable is locked.
-             * 3. the List or Dict value is locked.
-             */
-            rettv->vval.v_number = ((di->di_flags & DI_FLAGS_LOCK)
-                                    || tv_islocked(&di->di_tv));
-          }
-        }
-      } else if (lv.ll_range)
-        EMSG(_("E786: Range not allowed"));
-      else if (lv.ll_newkey != NULL)
-        EMSG2(_(e_dictkey), lv.ll_newkey);
-      else if (lv.ll_list != NULL)
-        /* List item. */
-        rettv->vval.v_number = tv_islocked(&lv.ll_li->li_tv);
-      else
-        /* Dictionary item. */
-        rettv->vval.v_number = tv_islocked(&lv.ll_di->di_tv);
-    }
-  }
-
-  clear_lval(&lv);
-}
-
-
-/*
- * Turn a dict into a list:
- * "what" == 0: list of keys
- * "what" == 1: list of values
- * "what" == 2: list of items
- */
-static void dict_list(typval_T *argvars, typval_T *rettv, int what)
-{
-  list_T      *l2;
-  dictitem_T  *di;
-  hashitem_T  *hi;
-  listitem_T  *li;
-  listitem_T  *li2;
-  dict_T      *d;
-  int todo;
-
-  if (argvars[0].v_type != VAR_DICT) {
+  if (tv->v_type != VAR_DICT) {
     EMSG(_(e_dictreq));
     return;
   }
-  if ((d = argvars[0].vval.v_dict) == NULL)
+  if (tv->vval.v_dict == NULL) {
     return;
+  }
 
-  rettv_list_alloc(rettv);
+  tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
 
-  todo = (int)d->dv_hashtab.ht_used;
-  for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      di = HI2DI(hi);
+  TV_DICT_ITER(tv->vval.v_dict, di, {
+    typval_T tv_item = { .v_lock = VAR_UNLOCKED };
 
-      li = listitem_alloc();
-      list_append(rettv->vval.v_list, li);
+    switch (what) {
+      case kDictListKeys: {
+        tv_item.v_type = VAR_STRING;
+        tv_item.vval.v_string = vim_strsave(di->di_key);
+        break;
+      }
+      case kDictListValues: {
+        tv_copy(&di->di_tv, &tv_item);
+        break;
+      }
+      case kDictListItems: {
+        // items()
+        list_T *const sub_l = tv_list_alloc(2);
+        tv_item.v_type = VAR_LIST;
+        tv_item.vval.v_list = sub_l;
+        tv_list_ref(sub_l);
 
-      if (what == 0) {
-        /* keys() */
-        li->li_tv.v_type = VAR_STRING;
-        li->li_tv.v_lock = 0;
-        li->li_tv.vval.v_string = vim_strsave(di->di_key);
-      } else if (what == 1) {
-        /* values() */
-        copy_tv(&di->di_tv, &li->li_tv);
-      } else {
-        /* items() */
-        l2 = list_alloc();
-        li->li_tv.v_type = VAR_LIST;
-        li->li_tv.v_lock = 0;
-        li->li_tv.vval.v_list = l2;
-        ++l2->lv_refcount;
+        tv_list_append_owned_tv(sub_l, (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = (char_u *)xstrdup((const char *)di->di_key),
+        });
 
-        li2 = listitem_alloc();
-        list_append(l2, li2);
-        li2->li_tv.v_type = VAR_STRING;
-        li2->li_tv.v_lock = 0;
-        li2->li_tv.vval.v_string = vim_strsave(di->di_key);
+        tv_list_append_tv(sub_l, &di->di_tv);
 
-        li2 = listitem_alloc();
-        list_append(l2, li2);
-        copy_tv(&di->di_tv, &li2->li_tv);
+        break;
       }
     }
-  }
+
+    tv_list_append_owned_tv(rettv->vval.v_list, tv_item);
+  });
 }
 
-/*
- * "items(dict)" function
- */
-static void f_items(typval_T *argvars, typval_T *rettv)
+/// Builds a process argument vector from a VimL object (typval_T).
+///
+/// @param[in]  cmd_tv      VimL object
+/// @param[out] cmd         Returns the command or executable name.
+/// @param[out] executable  Returns `false` if argv[0] is not executable.
+///
+/// @returns Result of `shell_build_argv()` if `cmd_tv` is a String.
+///          Else, string values of `cmd_tv` copied to a (char **) list with
+///          argv[0] resolved to full path ($PATHEXT-resolved on Windows).
+char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
 {
-  dict_list(argvars, rettv, 2);
-}
-
-// "jobclose(id[, stream])" function
-static void f_jobclose(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
-        && argvars[1].v_type != VAR_UNKNOWN)) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  Process *proc = (Process *)&data->proc;
-
-  if (argvars[1].v_type == VAR_STRING) {
-    char *stream = (char *)argvars[1].vval.v_string;
-    if (!strcmp(stream, "stdin")) {
-      process_close_in(proc);
-    } else if (!strcmp(stream, "stdout")) {
-      process_close_out(proc);
-    } else if (!strcmp(stream, "stderr")) {
-      process_close_err(proc);
-    } else {
-      EMSG2(_("Invalid job stream \"%s\""), stream);
-    }
-  } else {
-    process_close_streams(proc);
-  }
-}
-
-// "jobpid(id)" function
-static void f_jobpid(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  Process *proc = (Process *)&data->proc;
-  rettv->vval.v_number = proc->pid;
-}
-
-// "jobsend()" function
-static void f_jobsend(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
-    // First argument is the job id and second is the string or list to write
-    // to the job's stdin
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  if (((Process *)&data->proc)->in->closed) {
-    EMSG(_("Can't send data to the job: stdin is closed"));
-    return;
-  }
-
-  ssize_t input_len;
-  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
-  if (!input) {
-    // Either the error has been handled by save_tv_as_string(), or there is no
-    // input to send.
-    return;
-  }
-
-  WBuffer *buf = wstream_new_buffer(input, input_len, 1, xfree);
-  rettv->vval.v_number = wstream_write(data->proc.uv.process.in, buf);
-}
-
-// "jobresize(job, width, height)" function
-static void f_jobresize(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_NUMBER
-      || argvars[2].v_type != VAR_NUMBER) {
-    // job id, width, height
-    EMSG(_(e_invarg));
-    return;
-  }
-
-
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  if (data->proc.uv.process.type != kProcessTypePty) {
-    EMSG(_(e_jobnotpty));
-    return;
-  }
-
-  pty_process_resize(&data->proc.pty, argvars[1].vval.v_number,
-      argvars[2].vval.v_number);
-  rettv->vval.v_number = 1;
-}
-
-static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
-{
-  if (cmd_tv->v_type == VAR_STRING) {
-    char *cmd_str = (char *)get_tv_string(cmd_tv);
+  if (cmd_tv->v_type == VAR_STRING) {  // String => "shell semantics".
+    const char *cmd_str = tv_get_string(cmd_tv);
     if (cmd) {
       *cmd = cmd_str;
     }
@@ -11852,3836 +6671,301 @@ static char **tv_to_argv(typval_T *cmd_tv, char **cmd)
   }
 
   list_T *argl = cmd_tv->vval.v_list;
-  int argc = argl->lv_len;
+  int argc = tv_list_len(argl);
   if (!argc) {
-    EMSG(_("Argument vector must have at least one item"));
+    EMSG(_(e_invarg));  // List must have at least one item.
     return NULL;
   }
 
-  assert(argl->lv_first);
-
-  const char_u *exe = get_tv_string_chk(&argl->lv_first->li_tv);
-  if (!exe || !os_can_exe(exe, NULL)) {
-    // String is not executable
-    if (exe) {
-      EMSG2(e_jobexe, exe);
+  const char *arg0 = tv_get_string_chk(TV_LIST_ITEM_TV(tv_list_first(argl)));
+  char *exe_resolved = NULL;
+  if (!arg0 || !os_can_exe(arg0, &exe_resolved, true)) {
+    if (arg0 && executable) {
+      char buf[IOSIZE];
+      snprintf(buf, sizeof(buf), "'%s' is not executable", arg0);
+      EMSG3(_(e_invargNval), "cmd", buf);
+      *executable = false;
     }
     return NULL;
   }
 
   if (cmd) {
-    *cmd = (char *)exe;
+    *cmd = exe_resolved;
   }
-  
+
   // Build the argument vector
   int i = 0;
   char **argv = xcalloc(argc + 1, sizeof(char *));
-  for (listitem_T *arg = argl->lv_first; arg != NULL; arg = arg->li_next) {
-    char *a = (char *)get_tv_string_chk(&arg->li_tv);
+  TV_LIST_ITER_CONST(argl, arg, {
+    const char *a = tv_get_string_chk(TV_LIST_ITEM_TV(arg));
     if (!a) {
-      // Did emsg in get_tv_string; just deallocate argv.
+      // Did emsg in tv_get_string_chk; just deallocate argv.
       shell_free_argv(argv);
+      xfree(exe_resolved);
       return NULL;
     }
     argv[i++] = xstrdup(a);
-  }
+  });
+  // Replace argv[0] with absolute path. The only reason for this is to make
+  // $PATHEXT work on Windows with jobstart([…]). #9569
+  xfree(argv[0]);
+  argv[0] = exe_resolved;
 
   return argv;
 }
 
-// "jobstart()" function
-static void f_jobstart(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  char **argv = tv_to_argv(&argvars[0], NULL);
-  if (!argv) {
-    return;  // Did error message in tv_to_argv.
-  }
-
-  if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
-    // Wrong argument types
-    EMSG2(_(e_invarg2), "expected dictionary");
-    shell_free_argv(argv);
-    return;
-  }
-
-  dict_T *job_opts = NULL;
-  ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
-  if (argvars[1].v_type == VAR_DICT) {
-    job_opts = argvars[1].vval.v_dict;
-    if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
-      shell_free_argv(argv);
-      return;
-    }
-  }
-
-  bool pty = job_opts && get_dict_number(job_opts, (uint8_t *)"pty") != 0;
-  bool detach = job_opts && get_dict_number(job_opts, (uint8_t *)"detach") != 0;
-  TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, pty, detach);
-  Process *proc = (Process *)&data->proc;
-
-  if (pty) {
-    uint16_t width = get_dict_number(job_opts, (uint8_t *)"width");
-    if (width > 0) {
-      data->proc.pty.width = width;
-    }
-    uint16_t height = get_dict_number(job_opts, (uint8_t *)"height");
-    if (height > 0) {
-      data->proc.pty.height = height;
-    }
-    char *term = (char *)get_dict_string(job_opts, (uint8_t *)"TERM", true);
-    if (term) {
-      data->proc.pty.term_name = term;
-    }
-  }
-
-  if (!on_stdout) {
-    proc->out = NULL;
-  }
-  if (!on_stderr) {
-    proc->err = NULL;
-  }
-  common_job_start(data, rettv);
-}
-
-// "jobstop()" function
-static void f_jobstop(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER) {
-    // Only argument is the job id
-    EMSG(_(e_invarg));
-    return;
-  }
-
-
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  process_stop((Process *)&data->proc);
-  data->stopped = true;
-  rettv->vval.v_number = 1;
-}
-
-// "jobwait(ids[, timeout])" function
-static void f_jobwait(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
-        && argvars[1].v_type != VAR_UNKNOWN)) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  list_T *args = argvars[0].vval.v_list;
-  list_T *rv = list_alloc();
-
-  ui_busy_start();
-  Queue *waiting_jobs = queue_new_parent(loop_on_put, &loop);
-  // For each item in the input list append an integer to the output list. -3
-  // is used to represent an invalid job id, -2 is for a interrupted job and
-  // -1 for jobs that were skipped or timed out.
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
-      list_append_number(rv, -3);
-    } else {
-      // append the list item and set the status pointer so we'll collect the
-      // status code when the job exits
-      list_append_number(rv, -1);
-      data->status_ptr = &rv->lv_last->li_tv.vval.v_number;
-      // Process any pending events for the job because we'll temporarily
-      // replace the parent queue
-      queue_process_events(data->events);
-      queue_replace_parent(data->events, waiting_jobs);
-    }
-  }
-
-  int remaining = -1;
-  uint64_t before = 0;
-  if (argvars[1].v_type == VAR_NUMBER && argvars[1].vval.v_number >= 0) {
-    remaining = argvars[1].vval.v_number;
-    before = os_hrtime();
-  }
-
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
-    if (remaining == 0) {
-      // timed out
-      break;
-    }
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
-      continue;
-    }
-    int status = process_wait((Process *)&data->proc, remaining, waiting_jobs);
-    if (status < 0) {
-      // interrupted or timed out, skip remaining jobs.
-      if (status == -2) {
-        // set the status so the user can distinguish between interrupted and
-        // skipped/timeout jobs.
-        *data->status_ptr = -2;
-      }
-      break;
-    }
-    if (remaining > 0) {
-      uint64_t now = os_hrtime();
-      remaining -= (int) ((now - before) / 1000000);
-      before = now;
-      if (remaining <= 0) {
-        break;
-      }
-    }
-  }
-
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
-      continue;
-    }
-    // remove the status pointer because the list may be freed before the
-    // job exits
-    data->status_ptr = NULL;
-  }
-
-  // restore the parent queue for any jobs still alive
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
-      continue;
-    }
-    // restore the parent queue for the job
-    queue_process_events(data->events);
-    queue_replace_parent(data->events, loop.events);
-  }
-
-  queue_free(waiting_jobs);
-  ui_busy_stop();
-  rv->lv_refcount++;
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = rv;
-}
-
-/*
- * "join()" function
- */
-static void f_join(typval_T *argvars, typval_T *rettv)
-{
-  garray_T ga;
-  char_u      *sep;
-
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
-    return;
-  }
-  if (argvars[0].vval.v_list == NULL)
-    return;
-  if (argvars[1].v_type == VAR_UNKNOWN)
-    sep = (char_u *)" ";
-  else
-    sep = get_tv_string_chk(&argvars[1]);
-
-  rettv->v_type = VAR_STRING;
-
-  if (sep != NULL) {
-    ga_init(&ga, (int)sizeof(char), 80);
-    list_join(&ga, argvars[0].vval.v_list, (char *) sep);
-    ga_append(&ga, NUL);
-    rettv->vval.v_string = (char_u *)ga.ga_data;
-  } else
-    rettv->vval.v_string = NULL;
-}
-
-/*
- * "keys()" function
- */
-static void f_keys(typval_T *argvars, typval_T *rettv)
-{
-  dict_list(argvars, rettv, 0);
-}
-
-/*
- * "last_buffer_nr()" function.
- */
-static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv)
-{
-  int n = 0;
-
-  FOR_ALL_BUFFERS(buf) {
-    if (n < buf->b_fnum) {
-      n = buf->b_fnum;
-    }
-  }
-
-  rettv->vval.v_number = n;
-}
-
-/*
- * "len()" function
- */
-static void f_len(typval_T *argvars, typval_T *rettv)
-{
-  switch (argvars[0].v_type) {
-  case VAR_STRING:
-  case VAR_NUMBER:
-    rettv->vval.v_number = (varnumber_T)STRLEN(
-        get_tv_string(&argvars[0]));
-    break;
-  case VAR_LIST:
-    rettv->vval.v_number = list_len(argvars[0].vval.v_list);
-    break;
-  case VAR_DICT:
-    rettv->vval.v_number = dict_len(argvars[0].vval.v_dict);
-    break;
-  default:
-    EMSG(_("E701: Invalid type for len()"));
-    break;
-  }
-}
-
-static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
-{
-  rettv->v_type = out_type;
-  if (out_type != VAR_NUMBER) {
-    rettv->vval.v_string = NULL;
-  }
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  // The first two args (libname and funcname) must be strings
-  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
-    return;
-  }
-
-  const char *libname = (char *) argvars[0].vval.v_string;
-  const char *funcname = (char *) argvars[1].vval.v_string;
-
-  int in_type = argvars[2].v_type;
-
-  // input variables
-  char *str_in = (in_type == VAR_STRING)
-      ? (char *) argvars[2].vval.v_string : NULL;
-  int64_t int_in = argvars[2].vval.v_number;
-
-  // output variables
-  char **str_out = (out_type == VAR_STRING)
-      ? (char **) &rettv->vval.v_string : NULL;
-  int64_t int_out = 0;
-
-  bool success = os_libcall(libname, funcname,
-                            str_in, int_in,
-                            str_out, &int_out);
-
-  if (!success) {
-    EMSG2(_(e_libcall), funcname);
-    return;
-  }
-
-  if (out_type == VAR_NUMBER) {
-     rettv->vval.v_number = (int) int_out;
-  }
-}
-
-/*
- * "libcall()" function
- */
-static void f_libcall(typval_T *argvars, typval_T *rettv)
-{
-  libcall_common(argvars, rettv, VAR_STRING);
-}
-
-/*
- * "libcallnr()" function
- */
-static void f_libcallnr(typval_T *argvars, typval_T *rettv)
-{
-  libcall_common(argvars, rettv, VAR_NUMBER);
-}
-
-/*
- * "line(string)" function
- */
-static void f_line(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum = 0;
-  pos_T       *fp;
-  int fnum;
-
-  fp = var2fpos(&argvars[0], TRUE, &fnum);
-  if (fp != NULL)
-    lnum = fp->lnum;
-  rettv->vval.v_number = lnum;
-}
-
-/*
- * "line2byte(lnum)" function
- */
-static void f_line2byte(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = ml_find_line_or_offset(curbuf, lnum, NULL);
-  if (rettv->vval.v_number >= 0)
-    ++rettv->vval.v_number;
-}
-
-/*
- * "lispindent(lnum)" function
- */
-static void f_lispindent(typval_T *argvars, typval_T *rettv)
-{
-  pos_T pos;
-  linenr_T lnum;
-
-  pos = curwin->w_cursor;
-  lnum = get_tv_lnum(argvars);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
-    curwin->w_cursor.lnum = lnum;
-    rettv->vval.v_number = get_lisp_indent();
-    curwin->w_cursor = pos;
-  } else
-    rettv->vval.v_number = -1;
-}
-
-/*
- * "localtime()" function
- */
-static void f_localtime(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = (varnumber_T)time(NULL);
-}
-
-
-static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
-{
-  char_u      *keys;
-  char_u      *which;
-  char_u buf[NUMBUFLEN];
-  char_u      *keys_buf = NULL;
-  char_u      *rhs;
-  int mode;
-  int abbr = FALSE;
-  int get_dict = FALSE;
-  mapblock_T  *mp;
-  int buffer_local;
-
-  /* return empty string for failure */
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  keys = get_tv_string(&argvars[0]);
-  if (*keys == NUL)
-    return;
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    which = get_tv_string_buf_chk(&argvars[1], buf);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      abbr = get_tv_number(&argvars[2]);
-      if (argvars[3].v_type != VAR_UNKNOWN)
-        get_dict = get_tv_number(&argvars[3]);
-    }
-  } else
-    which = (char_u *)"";
-  if (which == NULL)
-    return;
-
-  mode = get_map_mode(&which, 0);
-
-  keys = replace_termcodes(keys, &keys_buf, TRUE, TRUE, FALSE);
-  rhs = check_map(keys, mode, exact, FALSE, abbr, &mp, &buffer_local);
-  xfree(keys_buf);
-
-  if (!get_dict) {
-    /* Return a string. */
-    if (rhs != NULL)
-      rettv->vval.v_string = str2special_save(rhs, FALSE);
-
-  } else {
-    rettv_dict_alloc(rettv);
-    if (rhs != NULL) {
-      // Return a dictionary.
-      char_u      *lhs = str2special_save(mp->m_keys, TRUE);
-      char_u      *mapmode = map_mode_to_chars(mp->m_mode);
-      dict_T      *dict = rettv->vval.v_dict;
-
-      dict_add_nr_str(dict, "lhs",     0L, lhs);
-      dict_add_nr_str(dict, "rhs",     0L, mp->m_orig_str);
-      dict_add_nr_str(dict, "noremap", mp->m_noremap ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "expr",    mp->m_expr    ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "silent",  mp->m_silent  ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "sid",     (long)mp->m_script_ID, NULL);
-      dict_add_nr_str(dict, "buffer",  (long)buffer_local, NULL);
-      dict_add_nr_str(dict, "nowait",  mp->m_nowait  ? 1L : 0L, NULL);
-      dict_add_nr_str(dict, "mode",    0L, mapmode);
-
-      xfree(lhs);
-      xfree(mapmode);
-    }
-  }
-}
-
-/*
- * "log()" function
- */
-static void f_log(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &log);
-}
-
-/*
- * "log10()" function
- */
-static void f_log10(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &log10);
-}
-
-
-/*
- * "map()" function
- */
-static void f_map(typval_T *argvars, typval_T *rettv)
-{
-  filter_map(argvars, rettv, TRUE);
-}
-
-/*
- * "maparg()" function
- */
-static void f_maparg(typval_T *argvars, typval_T *rettv)
-{
-  get_maparg(argvars, rettv, TRUE);
-}
-
-/*
- * "mapcheck()" function
- */
-static void f_mapcheck(typval_T *argvars, typval_T *rettv)
-{
-  get_maparg(argvars, rettv, FALSE);
-}
-
-
-static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
-{
-  char_u      *str = NULL;
-  long        len = 0;
-  char_u      *expr = NULL;
-  char_u      *pat;
-  regmatch_T regmatch;
-  char_u patbuf[NUMBUFLEN];
-  char_u      *save_cpo;
-  long start = 0;
-  long nth = 1;
-  colnr_T startcol = 0;
-  int match = 0;
-  list_T      *l = NULL;
-  listitem_T  *li = NULL;
-  long idx = 0;
-  char_u      *tofree = NULL;
-
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
-  save_cpo = p_cpo;
-  p_cpo = (char_u *)"";
-
-  rettv->vval.v_number = -1;
-  if (type == 3) {
-    /* return empty list when there are no matches */
-    rettv_list_alloc(rettv);
-  } else if (type == 2) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
-  }
-
-  if (argvars[0].v_type == VAR_LIST) {
-    if ((l = argvars[0].vval.v_list) == NULL)
-      goto theend;
-    li = l->lv_first;
-  } else {
-    expr = str = get_tv_string(&argvars[0]);
-    len = (long)STRLEN(str);
-  }
-
-  pat = get_tv_string_buf_chk(&argvars[1], patbuf);
-  if (pat == NULL)
-    goto theend;
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    int error = FALSE;
-
-    start = get_tv_number_chk(&argvars[2], &error);
-    if (error)
-      goto theend;
-    if (l != NULL) {
-      li = list_find(l, start);
-      if (li == NULL)
-        goto theend;
-      idx = l->lv_idx;          /* use the cached index */
-    } else {
-      if (start < 0)
-        start = 0;
-      if (start > len)
-        goto theend;
-      /* When "count" argument is there ignore matches before "start",
-       * otherwise skip part of the string.  Differs when pattern is "^"
-       * or "\<". */
-      if (argvars[3].v_type != VAR_UNKNOWN)
-        startcol = start;
-      else {
-        str += start;
-        len -= start;
-      }
-    }
-
-    if (argvars[3].v_type != VAR_UNKNOWN)
-      nth = get_tv_number_chk(&argvars[3], &error);
-    if (error)
-      goto theend;
-  }
-
-  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-  if (regmatch.regprog != NULL) {
-    regmatch.rm_ic = p_ic;
-
-    for (;; ) {
-      if (l != NULL) {
-        if (li == NULL) {
-          match = FALSE;
-          break;
-        }
-        xfree(tofree);
-        tofree = str = (char_u *) echo_string(&li->li_tv, NULL);
-        if (str == NULL)
-          break;
-      }
-
-      match = vim_regexec_nl(&regmatch, str, (colnr_T)startcol);
-
-      if (match && --nth <= 0)
-        break;
-      if (l == NULL && !match)
-        break;
-
-      /* Advance to just after the match. */
-      if (l != NULL) {
-        li = li->li_next;
-        ++idx;
-      } else {
-        startcol = (colnr_T)(regmatch.startp[0]
-                             + (*mb_ptr2len)(regmatch.startp[0]) - str);
-        if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
-            match = FALSE;
-            break;
-        }
-      }
-    }
-
-    if (match) {
-      if (type == 3) {
-        int i;
-
-        /* return list with matched string and submatches */
-        for (i = 0; i < NSUBEXP; ++i) {
-          if (regmatch.endp[i] == NULL) {
-            list_append_string(rettv->vval.v_list, (char_u *)"", 0);
-          } else {
-            list_append_string(rettv->vval.v_list,
-                               regmatch.startp[i],
-                               (int)(regmatch.endp[i] - regmatch.startp[i]));
-          }
-        }
-      } else if (type == 2) {
-        /* return matched string */
-        if (l != NULL)
-          copy_tv(&li->li_tv, rettv);
-        else
-          rettv->vval.v_string = vim_strnsave(regmatch.startp[0],
-              (int)(regmatch.endp[0] - regmatch.startp[0]));
-      } else if (l != NULL)
-        rettv->vval.v_number = idx;
-      else {
-        if (type != 0)
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.startp[0] - str);
-        else
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.endp[0] - str);
-        rettv->vval.v_number += (varnumber_T)(str - expr);
-      }
-    }
-    vim_regfree(regmatch.regprog);
-  }
-
-theend:
-  xfree(tofree);
-  p_cpo = save_cpo;
-}
-
-/*
- * "match()" function
- */
-static void f_match(typval_T *argvars, typval_T *rettv)
-{
-  find_some_match(argvars, rettv, 1);
-}
-
-/*
- * "matchadd()" function
- */
-static void f_matchadd(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-  char_u      *grp = get_tv_string_buf_chk(&argvars[0], buf);   /* group */
-  char_u      *pat = get_tv_string_buf_chk(&argvars[1], buf);   /* pattern */
-  int prio = 10;                /* default priority */
-  int id = -1;
-  int error = false;
-  char_u *conceal_char = NULL;
-
-  rettv->vval.v_number = -1;
-
-  if (grp == NULL || pat == NULL)
-    return;
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    prio = get_tv_number_chk(&argvars[2], &error);
-    if (argvars[3].v_type != VAR_UNKNOWN) {
-      id = get_tv_number_chk(&argvars[3], &error);
-      if (argvars[4].v_type != VAR_UNKNOWN) {
-        if (argvars[4].v_type != VAR_DICT) {
-          EMSG(_(e_dictreq));
-          return;
-        }
-        if (dict_find(argvars[4].vval.v_dict,
-                      (char_u *)"conceal", -1) != NULL) {
-          conceal_char = get_dict_string(argvars[4].vval.v_dict,
-                                         (char_u *)"conceal", false);
-        }
-      }
-    }
-  }
-  if (error == true) {
-    return;
-  }
-  if (id >= 1 && id <= 3) {
-    EMSGN("E798: ID is reserved for \":match\": %" PRId64, id);
-    return;
-  }
-
-  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id, NULL,
-                                   conceal_char);
-}
-
-static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
-{
-    rettv->vval.v_number = -1;
-    
-    char_u buf[NUMBUFLEN];
-    char_u *group;
-    group = get_tv_string_buf_chk(&argvars[0], buf);
-    if (group == NULL) {
-        return;
-    }
-
-    if (argvars[1].v_type != VAR_LIST) {
-        EMSG2(_(e_listarg), "matchaddpos()");
-        return;
-    }
-
-    list_T *l;
-    l = argvars[1].vval.v_list;
-    if (l == NULL) {
-        return;
-    }
-
-    int error = false;
-    int prio = 10;
-    int id = -1;
-    char_u *conceal_char = NULL;
-
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      prio = get_tv_number_chk(&argvars[2], &error);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        id = get_tv_number_chk(&argvars[3], &error);
-        if (argvars[4].v_type != VAR_UNKNOWN) {
-          if (argvars[4].v_type != VAR_DICT) {
-            EMSG(_(e_dictreq));
-            return;
-          }
-          if (dict_find(argvars[4].vval.v_dict,
-                        (char_u *)"conceal", -1) != NULL) {
-            conceal_char = get_dict_string(argvars[4].vval.v_dict,
-                                           (char_u *)"conceal", false);
-          }
-        }
-      }
-    }
-    if (error == true) {
-        return;
-    }
-
-    // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
-    if (id == 1 || id == 2) {
-        EMSGN("E798: ID is reserved for \"match\": %" PRId64, id);
-        return;
-    }
-
-  rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l,
-                                   conceal_char);
-}
-
-/*
- * "matcharg()" function
- */
-static void f_matcharg(typval_T *argvars, typval_T *rettv)
-{
-  rettv_list_alloc(rettv);
-
-  int id = get_tv_number(&argvars[0]);
-
-  if (id >= 1 && id <= 3) {
-    matchitem_T *m;
-
-    if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
-      list_append_string(rettv->vval.v_list, syn_id2name(m->hlg_id), -1);
-      list_append_string(rettv->vval.v_list, m->pattern, -1);
-    } else {
-      list_append_string(rettv->vval.v_list, NULL, -1);
-      list_append_string(rettv->vval.v_list, NULL, -1);
-    }
-  }
-}
-
-/*
- * "matchdelete()" function
- */
-static void f_matchdelete(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = match_delete(curwin,
-      (int)get_tv_number(&argvars[0]), TRUE);
-}
-
-/*
- * "matchend()" function
- */
-static void f_matchend(typval_T *argvars, typval_T *rettv)
-{
-  find_some_match(argvars, rettv, 0);
-}
-
-/*
- * "matchlist()" function
- */
-static void f_matchlist(typval_T *argvars, typval_T *rettv)
-{
-  find_some_match(argvars, rettv, 3);
-}
-
-/*
- * "matchstr()" function
- */
-static void f_matchstr(typval_T *argvars, typval_T *rettv)
-{
-  find_some_match(argvars, rettv, 2);
-}
-
-
-static void max_min(typval_T *argvars, typval_T *rettv, int domax)
-{
-  long n = 0;
-  long i;
-  int error = FALSE;
-
-  if (argvars[0].v_type == VAR_LIST) {
-    list_T          *l;
-    listitem_T      *li;
-
-    l = argvars[0].vval.v_list;
-    if (l != NULL) {
-      li = l->lv_first;
-      if (li != NULL) {
-        n = get_tv_number_chk(&li->li_tv, &error);
-        for (;; ) {
-          li = li->li_next;
-          if (li == NULL)
-            break;
-          i = get_tv_number_chk(&li->li_tv, &error);
-          if (domax ? i > n : i < n)
-            n = i;
-        }
-      }
-    }
-  } else if (argvars[0].v_type == VAR_DICT) {
-    dict_T          *d;
-    int first = TRUE;
-    hashitem_T      *hi;
-    int todo;
-
-    d = argvars[0].vval.v_dict;
-    if (d != NULL) {
-      todo = (int)d->dv_hashtab.ht_used;
-      for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
-        if (!HASHITEM_EMPTY(hi)) {
-          --todo;
-          i = get_tv_number_chk(&HI2DI(hi)->di_tv, &error);
-          if (first) {
-            n = i;
-            first = FALSE;
-          } else if (domax ? i > n : i < n)
-            n = i;
-        }
-      }
-    }
-  } else
-    EMSG(_(e_listdictarg));
-  rettv->vval.v_number = error ? 0 : n;
-}
-
-/*
- * "max()" function
- */
-static void f_max(typval_T *argvars, typval_T *rettv)
-{
-  max_min(argvars, rettv, TRUE);
-}
-
-/*
- * "min()" function
- */
-static void f_min(typval_T *argvars, typval_T *rettv)
-{
-  max_min(argvars, rettv, FALSE);
-}
-
-/*
- * "mkdir()" function
- */
-static void f_mkdir(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *dir;
-  char_u buf[NUMBUFLEN];
-  int prot = 0755;
-
-  rettv->vval.v_number = FAIL;
-  if (check_restricted() || check_secure())
-    return;
-
-  dir = get_tv_string_buf(&argvars[0], buf);
-  if (*dir == NUL)
-    rettv->vval.v_number = FAIL;
-  else {
-    if (*path_tail(dir) == NUL)
-      /* remove trailing slashes */
-      *path_tail_with_sep(dir) = NUL;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      if (argvars[2].v_type != VAR_UNKNOWN)
-        prot = get_tv_number_chk(&argvars[2], NULL);
-      if (prot != -1 && STRCMP(get_tv_string(&argvars[1]), "p") == 0) {
-        char *failed_dir;
-        int ret = os_mkdir_recurse((char *) dir, prot, &failed_dir);
-        if (ret != 0) {
-          EMSG3(_(e_mkdir), failed_dir, os_strerror(ret));
-          xfree(failed_dir);
-          rettv->vval.v_number = FAIL;
-          return;
-        } else {
-          rettv->vval.v_number = OK;
-          return;
-        }
-      }
-    }
-    rettv->vval.v_number = prot == -1 ? FAIL : vim_mkdir_emsg(dir, prot);
-  }
-}
-
-/*
- * "mode()" function
- */
-static void f_mode(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[3];
-
-  buf[1] = NUL;
-  buf[2] = NUL;
-
-  if (VIsual_active) {
-    if (VIsual_select)
-      buf[0] = VIsual_mode + 's' - 'v';
-    else
-      buf[0] = VIsual_mode;
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
-             || State == CONFIRM) {
-    buf[0] = 'r';
-    if (State == ASKMORE)
-      buf[1] = 'm';
-    else if (State == CONFIRM)
-      buf[1] = '?';
-  } else if (State == EXTERNCMD)
-    buf[0] = '!';
-  else if (State & INSERT) {
-    if (State & VREPLACE_FLAG) {
-      buf[0] = 'R';
-      buf[1] = 'v';
-    } else if (State & REPLACE_FLAG)
-      buf[0] = 'R';
-    else
-      buf[0] = 'i';
-  } else if (State & CMDLINE) {
-    buf[0] = 'c';
-    if (exmode_active)
-      buf[1] = 'v';
-  } else if (exmode_active) {
-    buf[0] = 'c';
-    buf[1] = 'e';
-  } else if (State & TERM_FOCUS) {
-    buf[0] = 't';
-  } else {
-    buf[0] = 'n';
-    if (finish_op)
-      buf[1] = 'o';
-  }
-
-  /* Clear out the minor mode when the argument is not a non-zero number or
-   * non-empty string.  */
-  if (!non_zero_arg(&argvars[0]))
-    buf[1] = NUL;
-
-  rettv->vval.v_string = vim_strsave(buf);
-  rettv->v_type = VAR_STRING;
-}
-
-/// Msgpack callback for writing to readfile()-style list
-static int msgpack_list_write(void *data, const char *buf, size_t len)
-{
-  if (len == 0) {
-    return 0;
-  }
-  list_T *const list = (list_T *) data;
-  const char *const end = buf + len;
-  const char *line_end = buf;
-  if (list->lv_last == NULL) {
-    list_append_string(list, NULL, 0);
-  }
-  listitem_T *li = list->lv_last;
-  do {
-    const char *line_start = line_end;
-    line_end = xmemscan(line_start, NL, end - line_start);
-    if (line_end == line_start) {
-      list_append_allocated_string(list, NULL);
-    } else {
-      const size_t line_length = line_end - line_start;
-      char *str;
-      if (li == NULL) {
-        str = xmemdupz(line_start, line_length);
-      } else {
-        const size_t li_len = (li->li_tv.vval.v_string == NULL
-                               ? 0
-                               : STRLEN(li->li_tv.vval.v_string));
-        li->li_tv.vval.v_string = xrealloc(li->li_tv.vval.v_string,
-                                           li_len + line_length + 1);
-        str = (char *) li->li_tv.vval.v_string + li_len;
-        memmove(str, line_start, line_length);
-        str[line_length] = 0;
-      }
-      for (size_t i = 0; i < line_length; i++) {
-        if (str[i] == NUL) {
-          str[i] = NL;
-        }
-      }
-      if (li == NULL) {
-        list_append_allocated_string(list, str);
-      } else {
-        li = NULL;
-      }
-      if (line_end == end - 1) {
-        list_append_allocated_string(list, NULL);
-      }
-    }
-    line_end++;
-  } while (line_end < end);
-  return 0;
-}
-
-/// Convert readfile()-style list to a char * buffer with length
+/// Fill a dictionary with all applicable maparg() like dictionaries
 ///
-/// @param[in]  list  Converted list.
-/// @param[out]  ret_len  Resulting buffer length.
-/// @param[out]  ret_buf  Allocated buffer with the result or NULL if ret_len is 
-///                       zero.
-///
-/// @return true in case of success, false in case of failure.
-static inline bool vim_list_to_buf(const list_T *const list,
-                                   size_t *const ret_len, char **const ret_buf)
-  FUNC_ATTR_NONNULL_ARG(2,3) FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  size_t len = 0;
-  if (list != NULL) {
-    for (const listitem_T *li = list->lv_first;
-         li != NULL;
-         li = li->li_next) {
-      if (li->li_tv.v_type != VAR_STRING) {
-        return false;
-      }
-      len++;
-      if (li->li_tv.vval.v_string != 0) {
-        len += STRLEN(li->li_tv.vval.v_string);
-      }
-    }
-    if (len) {
-      len--;
-    }
-  }
-  *ret_len = len;
-  if (len == 0) {
-    *ret_buf = NULL;
-    return true;
-  }
-  ListReaderState lrstate = init_lrstate(list);
-  char *const buf = xmalloc(len);
-  size_t read_bytes;
-  if (read_from_list(&lrstate, buf, len, &read_bytes) != OK) {
-    assert(false);
-  }
-  assert(len == read_bytes);
-  *ret_buf = buf;
-  return true;
-}
-
-/// Show a error message when converting to msgpack value
-///
-/// @param[in]  msg  Error message to dump. Must contain exactly two %s that
-///                  will be replaced with what was being dumped: first with
-///                  something like “F” or “function argument”, second with path
-///                  to the failed value.
-/// @param[in]  mpstack  Path to the failed value.
-/// @param[in]  objname  Dumped object name.
-///
-/// @return FAIL.
-static int conv_error(const char *const msg, const MPConvStack *const mpstack,
-                      const char *const objname)
+/// @param  dict  The dictionary to be filled
+/// @param  mp  The maphash that contains the mapping information
+/// @param  buffer_value  The "buffer" value
+/// @param  compatible  True for compatible with old maparg() dict
+void mapblock_fill_dict(dict_T *const dict,
+                        const mapblock_T *const mp,
+                        long buffer_value,
+                        bool compatible)
   FUNC_ATTR_NONNULL_ALL
 {
-  garray_T msg_ga;
-  ga_init(&msg_ga, (int)sizeof(char), 80);
-  char *const key_msg = _("key %s");
-  char *const key_pair_msg = _("key %s at index %i from special map");
-  char *const idx_msg = _("index %i");
-  for (size_t i = 0; i < kv_size(*mpstack); i++) {
-    if (i != 0) {
-      ga_concat(&msg_ga, (char_u *) ", ");
-    }
-    MPConvStackVal v = kv_A(*mpstack, i);
-    switch (v.type) {
-      case kMPConvDict: {
-        typval_T key_tv = {
-            .v_type = VAR_STRING,
-            .vval = { .v_string = (v.data.d.hi == NULL
-                                   ? v.data.d.dict->dv_hashtab.ht_array
-                                   : (v.data.d.hi - 1))->hi_key },
-        };
-        char *const key = tv2string(&key_tv, NULL);
-        vim_snprintf((char *) IObuff, IOSIZE, key_msg, key);
-        xfree(key);
-        ga_concat(&msg_ga, IObuff);
-        break;
-      }
-      case kMPConvPairs:
-      case kMPConvList: {
-        int idx = 0;
-        const listitem_T *li;
-        for (li = v.data.l.list->lv_first;
-             li != NULL && li->li_next != v.data.l.li;
-             li = li->li_next) {
-          idx++;
-        }
-        if (v.type == kMPConvList
-            || li == NULL
-            || (li->li_tv.v_type != VAR_LIST
-                && li->li_tv.vval.v_list->lv_len <= 0)) {
-          vim_snprintf((char *) IObuff, IOSIZE, idx_msg, idx);
-          ga_concat(&msg_ga, IObuff);
-        } else {
-          typval_T key_tv = li->li_tv.vval.v_list->lv_first->li_tv;
-          char *const key = echo_string(&key_tv, NULL);
-          vim_snprintf((char *) IObuff, IOSIZE, key_pair_msg, key, idx);
-          xfree(key);
-          ga_concat(&msg_ga, IObuff);
-        }
-        break;
-      }
-    }
-  }
-  EMSG3(msg, objname, (kv_size(*mpstack) == 0
-                       ? _("itself")
-                       : (char *) msg_ga.ga_data));
-  ga_clear(&msg_ga);
-  return FAIL;
-}
+  char *const lhs = str2special_save((const char *)mp->m_keys,
+                                     compatible, !compatible);
+  char *const mapmode = map_mode_to_chars(mp->m_mode);
+  varnumber_T noremap_value;
 
-#define CONV_STRING(buf, len) \
-    do { \
-      if (buf == NULL) { \
-        msgpack_pack_bin(packer, 0); \
-      } else { \
-        const size_t len_ = (len); \
-        msgpack_pack_bin(packer, len_); \
-        msgpack_pack_bin_body(packer, buf, len_); \
-      } \
-    } while (0)
-
-#define CONV_STR_STRING(buf, len) \
-    do { \
-      if (buf == NULL) { \
-        msgpack_pack_str(packer, 0); \
-      } else { \
-        const size_t len_ = (len); \
-        msgpack_pack_str(packer, len_); \
-        msgpack_pack_str_body(packer, buf, len_); \
-      } \
-    } while (0)
-
-#define CONV_EXT_STRING(buf, len, type) \
-    do { \
-      if (buf == NULL) { \
-        msgpack_pack_ext(packer, 0, type); \
-      } else { \
-        const size_t len_ = (len); \
-        msgpack_pack_ext(packer, len_, (int8_t) type); \
-        msgpack_pack_ext_body(packer, buf, len_); \
-      } \
-    } while (0)
-
-#define CONV_NUMBER(num) \
-    msgpack_pack_int64(packer, (int64_t) (num))
-
-#define CONV_FLOAT(flt) \
-    msgpack_pack_double(packer, (double) (flt))
-
-#define CONV_FUNC(fun) \
-    return conv_error(_("E951: Error while dumping %s, %s: " \
-                        "attempt to dump function reference"), \
-                      mpstack, objname)
-
-#define CONV_EMPTY_LIST() \
-    msgpack_pack_array(packer, 0)
-
-#define CONV_LIST_START(lst) \
-    msgpack_pack_array(packer, (lst)->lv_len)
-
-#define CONV_EMPTY_DICT() \
-    msgpack_pack_map(packer, 0)
-
-#define CONV_SPECIAL_NIL() \
-    msgpack_pack_nil(packer)
-
-#define CONV_SPECIAL_BOOL(num) \
-    do { \
-      if ((num)) { \
-        msgpack_pack_true(packer); \
-      } else { \
-        msgpack_pack_false(packer); \
-      } \
-    } while (0)
-
-#define CONV_UNSIGNED_NUMBER(num) \
-    msgpack_pack_uint64(packer, (num))
-
-#define CONV_SPECIAL_MAP_START(lst) \
-    msgpack_pack_map(packer, (lst)->lv_len)
-
-#define CONV_DICT_START(dct) \
-    msgpack_pack_map(packer, (dct)->dv_hashtab.ht_used)
-
-#define CONV_DICT_END(dct)
-
-#define CONV_DICT_AFTER_KEY(dct)
-
-#define CONV_DICT_BETWEEN_ITEMS(dct)
-
-#define CONV_LIST_END(lst)
-
-#define CONV_LIST_BETWEEN_ITEMS(lst)
-
-#define CONV_RECURSE(val, conv_type) \
-    return conv_error(_("E952: Unable to dump %s: " \
-                        "container references itself in %s"), \
-                      mpstack, objname)
-
-#define CONV_ALLOW_SPECIAL true
-
-DEFINE_VIML_CONV_FUNCTIONS(, msgpack, msgpack_packer *const, packer)
-
-#undef CONV_STRING
-#undef CONV_STR_STRING
-#undef CONV_EXT_STRING
-#undef CONV_NUMBER
-#undef CONV_FLOAT
-#undef CONV_FUNC
-#undef CONV_EMPTY_LIST
-#undef CONV_LIST_START
-#undef CONV_EMPTY_DICT
-#undef CONV_SPECIAL_NIL
-#undef CONV_SPECIAL_BOOL
-#undef CONV_UNSIGNED_NUMBER
-#undef CONV_SPECIAL_MAP_START
-#undef CONV_DICT_START
-#undef CONV_DICT_END
-#undef CONV_DICT_AFTER_KEY
-#undef CONV_DICT_BETWEEN_ITEMS
-#undef CONV_LIST_END
-#undef CONV_LIST_BETWEEN_ITEMS
-#undef CONV_RECURSE
-#undef CONV_ALLOW_SPECIAL
-
-/// "msgpackdump()" function
-static void f_msgpackdump(typval_T *argvars, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "msgpackdump()");
-    return;
-  }
-  list_T *ret_list = rettv_list_alloc(rettv);
-  const list_T *list = argvars[0].vval.v_list;
-  if (list == NULL) {
-    return;
-  }
-  msgpack_packer *lpacker = msgpack_packer_new(ret_list, &msgpack_list_write);
-  const char *const msg = _("msgpackdump() argument, index %i");
-  // Assume that translation will not take more then 4 times more space
-  char msgbuf[sizeof("msgpackdump() argument, index ") * 4 + NUMBUFLEN];
-  int idx = 0;
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    vim_snprintf(msgbuf, sizeof(msgbuf), (char *) msg, idx);
-    idx++;
-    if (vim_to_msgpack(lpacker, &li->li_tv, msgbuf) == FAIL) {
-      break;
-    }
-  }
-  msgpack_packer_free(lpacker);
-}
-
-/// Read bytes from list
-///
-/// @param[in,out]  state  Structure describing position in list from which
-///                        reading should start. Is updated to reflect position
-///                        at which reading ended.
-/// @param[out]  buf  Buffer to write to.
-/// @param[in]  nbuf  Buffer length.
-/// @param[out]  read_bytes  Is set to amount of bytes read.
-///
-/// @return OK when reading was finished, FAIL in case of error (i.e. list item
-///         was not a string), NOTDONE if reading was successfull, but there are
-///         more bytes to read.
-static int read_from_list(ListReaderState *const state, char *const buf,
-                          const size_t nbuf, size_t *const read_bytes)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  char *const buf_end = buf + nbuf;
-  char *p = buf;
-  while (p < buf_end) {
-    for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
-      const char ch = state->li->li_tv.vval.v_string[state->offset++];
-      *p++ = (ch == NL ? NUL : ch);
-    }
-    if (p < buf_end) {
-      state->li = state->li->li_next;
-      if (state->li == NULL) {
-        *read_bytes = (size_t) (p - buf);
-        return OK;
-      }
-      *p++ = NL;
-      if (state->li->li_tv.v_type != VAR_STRING) {
-        *read_bytes = (size_t) (p - buf);
-        return FAIL;
-      }
-      state->offset = 0;
-      state->li_length = (state->li->li_tv.vval.v_string == NULL
-                          ? 0
-                          : STRLEN(state->li->li_tv.vval.v_string));
-    }
-  }
-  *read_bytes = nbuf;
-  return (state->offset < state->li_length || state->li->li_next != NULL
-          ? NOTDONE
-          : OK);
-}
-
-/// Initialize ListReaderState structure
-static inline ListReaderState init_lrstate(const list_T *const list)
-  FUNC_ATTR_NONNULL_ALL
-{
-  return (ListReaderState) {
-    .li = list->lv_first,
-    .offset = 0,
-    .li_length = (list->lv_first->li_tv.vval.v_string == NULL
-                  ? 0
-                  : STRLEN(list->lv_first->li_tv.vval.v_string)),
-  };
-}
-
-/// Convert msgpack object to a VimL one
-int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-#define INIT_SPECIAL_DICT(tv, type, val) \
-  do { \
-    dict_T *const dict = dict_alloc(); \
-    dictitem_T *const type_di = dictitem_alloc((char_u *) "_TYPE"); \
-    type_di->di_tv.v_type = VAR_LIST; \
-    type_di->di_tv.v_lock = 0; \
-    type_di->di_tv.vval.v_list = (list_T *) msgpack_type_lists[type]; \
-    type_di->di_tv.vval.v_list->lv_refcount++; \
-    dict_add(dict, type_di); \
-    dictitem_T *const val_di = dictitem_alloc((char_u *) "_VAL"); \
-    val_di->di_tv = val; \
-    dict_add(dict, val_di); \
-    tv->v_type = VAR_DICT; \
-    dict->dv_refcount++; \
-    tv->vval.v_dict = dict; \
-  } while (0)
-  switch (mobj.type) {
-    case MSGPACK_OBJECT_NIL: {
-      INIT_SPECIAL_DICT(rettv, kMPNil, ((typval_T) {
-                                          .v_type = VAR_NUMBER,
-                                          .v_lock = 0,
-                                          .vval = { .v_number = 0 },
-                                        }));
-      break;
-    }
-    case MSGPACK_OBJECT_BOOLEAN: {
-      INIT_SPECIAL_DICT(rettv, kMPBoolean,
-                        ((typval_T) {
-                           .v_type = VAR_NUMBER,
-                           .v_lock = 0,
-                           .vval = {
-                             .v_number = (varnumber_T) mobj.via.boolean,
-                           },
-                         }));
-      break;
-    }
-    case MSGPACK_OBJECT_POSITIVE_INTEGER: {
-      if (mobj.via.u64 <= VARNUMBER_MAX) {
-        *rettv = (typval_T) {
-          .v_type = VAR_NUMBER,
-          .v_lock = 0,
-          .vval = { .v_number = (varnumber_T) mobj.via.u64 },
-        };
-      } else {
-        list_T *const list = list_alloc();
-        list->lv_refcount++;
-        INIT_SPECIAL_DICT(rettv, kMPInteger,
-                          ((typval_T) {
-                             .v_type = VAR_LIST,
-                             .v_lock = 0,
-                             .vval = { .v_list = list },
-                           }));
-        uint64_t n = mobj.via.u64;
-        list_append_number(list, 1);
-        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_NEGATIVE_INTEGER: {
-      if (mobj.via.i64 >= VARNUMBER_MIN) {
-        *rettv = (typval_T) {
-          .v_type = VAR_NUMBER,
-          .v_lock = 0,
-          .vval = { .v_number = (varnumber_T) mobj.via.i64 },
-        };
-      } else {
-        list_T *const list = list_alloc();
-        list->lv_refcount++;
-        INIT_SPECIAL_DICT(rettv, kMPInteger,
-                          ((typval_T) {
-                             .v_type = VAR_LIST,
-                             .v_lock = 0,
-                             .vval = { .v_list = list },
-                           }));
-        uint64_t n = -((uint64_t) mobj.via.i64);
-        list_append_number(list, -1);
-        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_FLOAT: {
-      *rettv = (typval_T) {
-        .v_type = VAR_FLOAT,
-        .v_lock = 0,
-        .vval = { .v_float = mobj.via.f64 },
-      };
-      break;
-    }
-    case MSGPACK_OBJECT_STR: {
-      list_T *const list = list_alloc();
-      list->lv_refcount++;
-      INIT_SPECIAL_DICT(rettv, kMPString,
-                        ((typval_T) {
-                           .v_type = VAR_LIST,
-                           .v_lock = 0,
-                           .vval = { .v_list = list },
-                         }));
-      if (msgpack_list_write((void *) list, mobj.via.str.ptr, mobj.via.str.size)
-          == -1) {
-        return FAIL;
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_BIN: {
-      if (memchr(mobj.via.bin.ptr, NUL, mobj.via.bin.size) == NULL) {
-        *rettv = (typval_T) {
-          .v_type = VAR_STRING,
-          .v_lock = 0,
-          .vval = { .v_string = xmemdupz(mobj.via.bin.ptr, mobj.via.bin.size) },
-        };
-        break;
-      }
-      list_T *const list = list_alloc();
-      list->lv_refcount++;
-      INIT_SPECIAL_DICT(rettv, kMPBinary,
-                        ((typval_T) {
-                           .v_type = VAR_LIST,
-                           .v_lock = 0,
-                           .vval = { .v_list = list },
-                         }));
-      if (msgpack_list_write((void *) list, mobj.via.bin.ptr, mobj.via.bin.size)
-          == -1) {
-        return FAIL;
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_ARRAY: {
-      list_T *const list = list_alloc();
-      list->lv_refcount++;
-      *rettv = (typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = 0,
-        .vval = { .v_list = list },
-      };
-      for (size_t i = 0; i < mobj.via.array.size; i++) {
-        listitem_T *const li = listitem_alloc();
-        li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(list, li);
-        if (msgpack_to_vim(mobj.via.array.ptr[i], &li->li_tv) == FAIL) {
-          return FAIL;
-        }
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_MAP: {
-      for (size_t i = 0; i < mobj.via.map.size; i++) {
-        if (mobj.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR
-            || mobj.via.map.ptr[i].key.via.str.size == 0
-            || memchr(mobj.via.map.ptr[i].key.via.str.ptr, NUL,
-                      mobj.via.map.ptr[i].key.via.str.size) != NULL) {
-          goto msgpack_to_vim_generic_map;
-        }
-      }
-      dict_T *const dict = dict_alloc();
-      dict->dv_refcount++;
-      *rettv = (typval_T) {
-        .v_type = VAR_DICT,
-        .v_lock = 0,
-        .vval = { .v_dict = dict },
-      };
-      for (size_t i = 0; i < mobj.via.map.size; i++) {
-        dictitem_T *const di = xmallocz(offsetof(dictitem_T, di_key)
-                                        + mobj.via.map.ptr[i].key.via.str.size);
-        memcpy(&di->di_key[0], mobj.via.map.ptr[i].key.via.str.ptr,
-               mobj.via.map.ptr[i].key.via.str.size);
-        di->di_tv.v_type = VAR_UNKNOWN;
-        if (dict_add(dict, di) == FAIL) {
-          // Duplicate key: fallback to generic map
-          clear_tv(rettv);
-          xfree(di);
-          goto msgpack_to_vim_generic_map;
-        }
-        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &di->di_tv) == FAIL) {
-          return FAIL;
-        }
-      }
-      break;
-msgpack_to_vim_generic_map: {}
-      list_T *const list = list_alloc();
-      list->lv_refcount++;
-      INIT_SPECIAL_DICT(rettv, kMPMap,
-                        ((typval_T) {
-                           .v_type = VAR_LIST,
-                           .v_lock = 0,
-                           .vval = { .v_list = list },
-                         }));
-      for (size_t i = 0; i < mobj.via.map.size; i++) {
-        list_T *const kv_pair = list_alloc();
-        list_append_list(list, kv_pair);
-        listitem_T *const key_li = listitem_alloc();
-        key_li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(kv_pair, key_li);
-        listitem_T *const val_li = listitem_alloc();
-        val_li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(kv_pair, val_li);
-        if (msgpack_to_vim(mobj.via.map.ptr[i].key, &key_li->li_tv) == FAIL) {
-          return FAIL;
-        }
-        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &val_li->li_tv) == FAIL) {
-          return FAIL;
-        }
-      }
-      break;
-    }
-    case MSGPACK_OBJECT_EXT: {
-      list_T *const list = list_alloc();
-      list->lv_refcount++;
-      list_append_number(list, mobj.via.ext.type);
-      list_T *const ext_val_list = list_alloc();
-      list_append_list(list, ext_val_list);
-      INIT_SPECIAL_DICT(rettv, kMPExt,
-                        ((typval_T) {
-                           .v_type = VAR_LIST,
-                           .v_lock = 0,
-                           .vval = { .v_list = list },
-                         }));
-      if (msgpack_list_write((void *) ext_val_list, mobj.via.ext.ptr,
-                             mobj.via.ext.size) == -1) {
-        return FAIL;
-      }
-      break;
-    }
-  }
-#undef INIT_SPECIAL_DICT
-  return OK;
-}
-
-/// "msgpackparse" function
-static void f_msgpackparse(typval_T *argvars, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "msgpackparse()");
-    return;
-  }
-  list_T *ret_list = rettv_list_alloc(rettv);
-  const list_T *list = argvars[0].vval.v_list;
-  if (list == NULL || list->lv_first == NULL) {
-    return;
-  }
-  if (list->lv_first->li_tv.v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "List item is not a string");
-    return;
-  }
-  ListReaderState lrstate = init_lrstate(list);
-  msgpack_unpacker *const unpacker = msgpack_unpacker_new(IOSIZE);
-  if (unpacker == NULL) {
-    EMSG(_(e_outofmem));
-    return;
-  }
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  do {
-    if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
-      EMSG(_(e_outofmem));
-      goto f_msgpackparse_exit;
-    }
-    size_t read_bytes;
-    const int rlret = read_from_list(
-        &lrstate, msgpack_unpacker_buffer(unpacker), IOSIZE, &read_bytes);
-    if (rlret == FAIL) {
-      EMSG2(_(e_invarg2), "List item is not a string");
-      goto f_msgpackparse_exit;
-    }
-    msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
-    if (read_bytes == 0) {
-      break;
-    }
-    while (unpacker->off < unpacker->used) {
-      const msgpack_unpack_return result = msgpack_unpacker_next(unpacker,
-                                                                 &unpacked);
-      if (result == MSGPACK_UNPACK_PARSE_ERROR) {
-        EMSG2(_(e_invarg2), "Failed to parse msgpack string");
-        goto f_msgpackparse_exit;
-      }
-      if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
-        EMSG(_(e_outofmem));
-        goto f_msgpackparse_exit;
-      }
-      if (result == MSGPACK_UNPACK_SUCCESS) {
-        listitem_T *li = listitem_alloc();
-        li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(ret_list, li);
-        if (msgpack_to_vim(unpacked.data, &li->li_tv) == FAIL) {
-          EMSG2(_(e_invarg2), "Failed to convert msgpack string");
-          goto f_msgpackparse_exit;
-        }
-      }
-      if (result == MSGPACK_UNPACK_CONTINUE) {
-        if (rlret == OK) {
-          EMSG2(_(e_invarg2), "Incomplete msgpack string");
-        }
-        break;
-      }
-    }
-    if (rlret == OK) {
-      break;
-    }
-  } while (true);
-
-f_msgpackparse_exit:
-  msgpack_unpacked_destroy(&unpacked);
-  msgpack_unpacker_free(unpacker);
-  return;
-}
-
-/*
- * "nextnonblank()" function
- */
-static void f_nextnonblank(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-
-  for (lnum = get_tv_lnum(argvars);; ++lnum) {
-    if (lnum < 0 || lnum > curbuf->b_ml.ml_line_count) {
-      lnum = 0;
-      break;
-    }
-    if (*skipwhite(ml_get(lnum)) != NUL)
-      break;
-  }
-  rettv->vval.v_number = lnum;
-}
-
-/*
- * "nr2char()" function
- */
-static void f_nr2char(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN)
-      utf8 = get_tv_number_chk(&argvars[1], NULL);
-    if (utf8)
-      buf[(*utf_char2bytes)((int)get_tv_number(&argvars[0]), buf)] = NUL;
-    else
-      buf[(*mb_char2bytes)((int)get_tv_number(&argvars[0]), buf)] = NUL;
+  if (compatible) {
+    // Keep old compatible behavior
+    // This is unable to determine whether a mapping is a <script> mapping
+    noremap_value = !!mp->m_noremap;
   } else {
-    buf[0] = (char_u)get_tv_number(&argvars[0]);
-    buf[1] = NUL;
+    // Distinguish between <script> mapping
+    // If it's not a <script> mapping, check if it's a noremap
+    noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(buf);
-}
 
-/*
- * "or(expr, expr)" function
- */
-static void f_or(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
-                         | get_tv_number_chk(&argvars[1], NULL);
-}
-
-/*
- * "pathshorten()" function
- */
-static void f_pathshorten(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = get_tv_string_chk(&argvars[0]);
-  if (!rettv->vval.v_string) {
-    return;
-  }
-  rettv->vval.v_string = shorten_dir(vim_strsave(rettv->vval.v_string));
-}
-
-/*
- * "pow()" function
- */
-static void f_pow(typval_T *argvars, typval_T *rettv)
-{
-  float_T fx, fy;
-
-  rettv->v_type = VAR_FLOAT;
-  if (get_float_arg(argvars, &fx) == OK
-      && get_float_arg(&argvars[1], &fy) == OK)
-    rettv->vval.v_float = pow(fx, fy);
-  else
-    rettv->vval.v_float = 0.0;
-}
-
-/*
- * "prevnonblank()" function
- */
-static void f_prevnonblank(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-
-  lnum = get_tv_lnum(argvars);
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count)
-    lnum = 0;
-  else
-    while (lnum >= 1 && *skipwhite(ml_get(lnum)) == NUL)
-      --lnum;
-  rettv->vval.v_number = lnum;
-}
-
-/* This dummy va_list is here because:
- * - passing a NULL pointer doesn't work when va_list isn't a pointer
- * - locally in the function results in a "used before set" warning
- * - using va_start() to initialize it gives "function with fixed args" error */
-static va_list ap;
-
-/*
- * "printf()" function
- */
-static void f_printf(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  {
-    char_u buf[NUMBUFLEN];
-    int len;
-    int saved_did_emsg = did_emsg;
-    char    *fmt;
-
-    /* Get the required length, allocate the buffer and do it for real. */
-    did_emsg = FALSE;
-    fmt = (char *)get_tv_string_buf(&argvars[0], buf);
-    len = vim_vsnprintf(NULL, 0, fmt, ap, argvars + 1);
-    if (!did_emsg) {
-      char *s = xmalloc(len + 1);
-      rettv->vval.v_string = (char_u *)s;
-      (void)vim_vsnprintf(s, len + 1, fmt, ap, argvars + 1);
-    }
-    did_emsg |= saved_did_emsg;
-  }
-}
-
-/*
- * "pumvisible()" function
- */
-static void f_pumvisible(typval_T *argvars, typval_T *rettv)
-{
-  if (pum_visible())
-    rettv->vval.v_number = 1;
-}
-
-/*
- * "pyeval()" function
- */
-static void f_pyeval(typval_T *argvars, typval_T *rettv)
-{
-  script_host_eval("python", argvars, rettv);
-}
-
-/*
- * "py3eval()" function
- */
-static void f_py3eval(typval_T *argvars, typval_T *rettv)
-{
-  script_host_eval("python3", argvars, rettv);
-}
-
-/*
- * "range()" function
- */
-static void f_range(typval_T *argvars, typval_T *rettv)
-{
-  long start;
-  long end;
-  long stride = 1;
-  long i;
-  int error = FALSE;
-
-  start = get_tv_number_chk(&argvars[0], &error);
-  if (argvars[1].v_type == VAR_UNKNOWN) {
-    end = start - 1;
-    start = 0;
+  if (compatible) {
+    tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
   } else {
-    end = get_tv_number_chk(&argvars[1], &error);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      stride = get_tv_number_chk(&argvars[2], &error);
+    tv_dict_add_allocated_str(dict, S_LEN("rhs"),
+                              str2special_save((const char *)mp->m_str, false,
+                                               true));
   }
-
-  if (error)
-    return;             /* type error; errmsg already given */
-  if (stride == 0)
-    EMSG(_("E726: Stride is zero"));
-  else if (stride > 0 ? end + 1 < start : end - 1 > start)
-    EMSG(_("E727: Start past end"));
-  else {
-    rettv_list_alloc(rettv);
-    for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
-      list_append_number(rettv->vval.v_list, (varnumber_T)i);
-    }
-  }
+  tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
+  tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
+  tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
+  tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
+  tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ctx.sc_sid);
+  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)mp->m_script_ctx.sc_lnum);
+  tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
+  tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
+  tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
-/*
- * "readfile()" function
- */
-static void f_readfile(typval_T *argvars, typval_T *rettv)
+int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
+                      win_T **win)
 {
-  int binary = FALSE;
-  char_u      *fname;
-  FILE        *fd;
-  char_u buf[(IOSIZE/256)*256];         /* rounded to avoid odd + 1 */
-  int io_size = sizeof(buf);
-  int readlen;                          /* size of last fread() */
-  char_u      *prev    = NULL;          /* previously read bytes, if any */
-  long prevlen  = 0;                    /* length of data in prev */
-  long prevsize = 0;                    /* size of prev buffer */
-  long maxline  = MAXLNUM;
-  long cnt      = 0;
-  char_u      *p;                       /* position in buf */
-  char_u      *start;                   /* start of current line */
+  dictitem_T *di;
 
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (STRCMP(get_tv_string(&argvars[1]), "b") == 0)
-      binary = TRUE;
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      maxline = get_tv_number(&argvars[2]);
-  }
-
-  rettv_list_alloc(rettv);
-
-  /* Always open the file in binary mode, library functions have a mind of
-   * their own about CR-LF conversion. */
-  fname = get_tv_string(&argvars[0]);
-  if (*fname == NUL || (fd = mch_fopen((char *)fname, READBIN)) == NULL) {
-    EMSG2(_(e_notopen), *fname == NUL ? (char_u *)_("<empty>") : fname);
-    return;
-  }
-
-  while (cnt < maxline || maxline < 0) {
-    readlen = (int)fread(buf, 1, io_size, fd);
-
-    /* This for loop processes what was read, but is also entered at end
-     * of file so that either:
-     * - an incomplete line gets written
-     * - a "binary" file gets an empty line at the end if it ends in a
-     *   newline.  */
-    for (p = buf, start = buf;
-         p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
-         ++p) {
-      if (*p == '\n' || readlen <= 0) {
-        listitem_T  *li;
-        char_u      *s  = NULL;
-        size_t len = p - start;
-
-        /* Finished a line.  Remove CRs before NL. */
-        if (readlen > 0 && !binary) {
-          while (len > 0 && start[len - 1] == '\r')
-            --len;
-          /* removal may cross back to the "prev" string */
-          if (len == 0)
-            while (prevlen > 0 && prev[prevlen - 1] == '\r')
-              --prevlen;
-        }
-        if (prevlen == 0) {
-          assert(len < INT_MAX);
-          s = vim_strnsave(start, (int)len);
-        } else {
-          /* Change "prev" buffer to be the right size.  This way
-           * the bytes are only copied once, and very long lines are
-           * allocated only once.  */
-          s = xrealloc(prev, prevlen + len + 1);
-          memcpy(s + prevlen, start, len);
-          s[prevlen + len] = NUL;
-          prev = NULL;             /* the list will own the string */
-          prevlen = prevsize = 0;
-        }
-
-        li = listitem_alloc();
-        li->li_tv.v_type = VAR_STRING;
-        li->li_tv.v_lock = 0;
-        li->li_tv.vval.v_string = s;
-        list_append(rettv->vval.v_list, li);
-
-        start = p + 1;         /* step over newline */
-        if ((++cnt >= maxline && maxline >= 0) || readlen <= 0)
-          break;
-      } else if (*p == NUL)
-        *p = '\n';
-      /* Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
-       * when finding the BF and check the previous two bytes. */
-      else if (*p == 0xbf && enc_utf8 && !binary) {
-        /* Find the two bytes before the 0xbf.	If p is at buf, or buf
-         * + 1, these may be in the "prev" string. */
-        char_u back1 = p >= buf + 1 ? p[-1]
-                       : prevlen >= 1 ? prev[prevlen - 1] : NUL;
-        char_u back2 = p >= buf + 2 ? p[-2]
-                       : p == buf + 1 && prevlen >= 1 ? prev[prevlen - 1]
-                       : prevlen >= 2 ? prev[prevlen - 2] : NUL;
-
-        if (back2 == 0xef && back1 == 0xbb) {
-          char_u *dest = p - 2;
-
-          /* Usually a BOM is at the beginning of a file, and so at
-           * the beginning of a line; then we can just step over it.
-           */
-          if (start == dest)
-            start = p + 1;
-          else {
-            /* have to shuffle buf to close gap */
-            int adjust_prevlen = 0;
-
-            if (dest < buf) {
-              adjust_prevlen = (int)(buf - dest);               /* must be 1 or 2 */
-              dest = buf;
-            }
-            if (readlen > p - buf + 1)
-              memmove(dest, p + 1, readlen - (p - buf) - 1);
-            readlen -= 3 - adjust_prevlen;
-            prevlen -= adjust_prevlen;
-            p = dest - 1;
-          }
-        }
-      }
-    }     /* for */
-
-    if ((cnt >= maxline && maxline >= 0) || readlen <= 0)
-      break;
-    if (start < p) {
-      /* There's part of a line in buf, store it in "prev". */
-      if (p - start + prevlen >= prevsize) {
-
-        /* A common use case is ordinary text files and "prev" gets a
-         * fragment of a line, so the first allocation is made
-         * small, to avoid repeatedly 'allocing' large and
-         * 'reallocing' small. */
-        if (prevsize == 0)
-          prevsize = (long)(p - start);
-        else {
-          long grow50pc = (prevsize * 3) / 2;
-          long growmin  = (long)((p - start) * 2 + prevlen);
-          prevsize = grow50pc > growmin ? grow50pc : growmin;
-        }
-        prev = xrealloc(prev, prevsize);
-      }
-      /* Add the line part to end of "prev". */
-      memmove(prev + prevlen, start, p - start);
-      prevlen += (long)(p - start);
-    }
-  }   /* while */
-
-  /*
-   * For a negative line count use only the lines at the end of the file,
-   * free the rest.
-   */
-  if (maxline < 0)
-    while (cnt > -maxline) {
-      listitem_remove(rettv->vval.v_list, rettv->vval.v_list->lv_first);
-      --cnt;
-    }
-
-  xfree(prev);
-  fclose(fd);
-}
-
-
-/// list2proftime - convert a List to proftime_T
-///
-/// @param arg The input list, must be of type VAR_LIST and have
-///            exactly 2 items
-/// @param[out] tm The proftime_T representation of `arg`
-/// @return OK In case of success, FAIL in case of error
-static int list2proftime(typval_T *arg, proftime_T *tm) FUNC_ATTR_NONNULL_ALL
-{
-  if (arg->v_type != VAR_LIST
-      || arg->vval.v_list == NULL
-      || arg->vval.v_list->lv_len != 2) {
-    return FAIL;
-  }
-
-  int error = false;
-  varnumber_T n1 = list_find_nr(arg->vval.v_list, 0L, &error);
-  varnumber_T n2 = list_find_nr(arg->vval.v_list, 1L, &error);
-  if (error) {
-    return FAIL;
-  }
-
-  // in f_reltime() we split up the 64-bit proftime_T into two 32-bit
-  // values, now we combine them again.
-  union {
-    struct { varnumber_T low, high; } split;
-    proftime_T prof;
-  } u = { .split.high = n1, .split.low = n2 };
-
-  *tm = u.prof;
-
-  return OK;
-}
-
-/// f_reltime - return an item that represents a time value
-///
-/// @param[out] rettv Without an argument it returns the current time. With
-///             one argument it returns the time passed since the argument.
-///             With two arguments it returns the time passed between
-///             the two arguments.
-static void f_reltime(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
-{
-  proftime_T res;
-  proftime_T start;
-
-  if (argvars[0].v_type == VAR_UNKNOWN) {
-    // no arguments: get current time.
-    res = profile_start();
-  } else if (argvars[1].v_type == VAR_UNKNOWN) {
-    if (list2proftime(&argvars[0], &res) == FAIL) {
-      return;
-    }
-    res = profile_end(res);
-  } else {
-    // two arguments: compute the difference.
-    if (list2proftime(&argvars[0], &start) == FAIL
-        || list2proftime(&argvars[1], &res) == FAIL) {
-      return;
-    }
-    res = profile_sub(res, start);
-  }
-
-  // we have to store the 64-bit proftime_T inside of a list of int's
-  // (varnumber_T is defined as int). For all our supported platforms, int's
-  // are at least 32-bits wide. So we'll use two 32-bit values to store it.
-  union {
-    struct { varnumber_T low, high; } split;
-    proftime_T prof;
-  } u = { .prof = res };
-
-  // statically assert that the union type conv will provide the correct
-  // results, if varnumber_T or proftime_T change, the union cast will need
-  // to be revised.
-  STATIC_ASSERT(sizeof(u.prof) == sizeof(u) && sizeof(u.split) == sizeof(u),
-      "type punning will produce incorrect results on this platform");
-
-  rettv_list_alloc(rettv);
-  list_append_number(rettv->vval.v_list, u.split.high);
-  list_append_number(rettv->vval.v_list, u.split.low);
-}
-
-/// f_reltimestr - return a string that represents the value of {time}
-///
-/// @return The string representation of the argument, the format is the
-///         number of seconds followed by a dot, followed by the number
-///         of microseconds.
-static void f_reltimestr(typval_T *argvars, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  proftime_T tm;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  if (list2proftime(&argvars[0], &tm) == OK) {
-    rettv->vval.v_string = (char_u *) xstrdup(profile_msg(tm));
-  }
-}
-
-/*
- * "remove()" function
- */
-static void f_remove(typval_T *argvars, typval_T *rettv)
-{
-  list_T      *l;
-  listitem_T  *item, *item2;
-  listitem_T  *li;
-  long idx;
-  long end;
-  char_u      *key;
-  dict_T      *d;
-  dictitem_T  *di;
-  char_u      *arg_errmsg = (char_u *)N_("remove() argument");
-
-  if (argvars[0].v_type == VAR_DICT) {
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      EMSG2(_(e_toomanyarg), "remove()");
-    } else if ((d = argvars[0].vval.v_dict) != NULL
-               && !tv_check_lock(d->dv_lock, arg_errmsg, true)) {
-      key = get_tv_string_chk(&argvars[1]);
-      if (key != NULL) {
-        di = dict_find(d, key, -1);
-        if (di == NULL) {
-          EMSG2(_(e_dictkey), key);
-        } else if (!var_check_fixed(di->di_flags, arg_errmsg, true)
-                   && !var_check_ro(di->di_flags, arg_errmsg, true)) {
-          *rettv = di->di_tv;
-          init_tv(&di->di_tv);
-          dictitem_remove(d, di);
-          if (is_watched(d)) {
-            dictwatcher_notify(d, (char *)key, NULL, rettv);
-          }
-        }
-      }
-    }
-  } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listdictarg), "remove()");
-  } else if ((l = argvars[0].vval.v_list) != NULL
-             && !tv_check_lock(l->lv_lock, arg_errmsg, true)) {
-    int error = (int)false;
-
-    idx = get_tv_number_chk(&argvars[1], &error);
-    if (error)
-      ;                 /* type error: do nothing, errmsg already given */
-    else if ((item = list_find(l, idx)) == NULL)
-      EMSGN(_(e_listidx), idx);
-    else {
-      if (argvars[2].v_type == VAR_UNKNOWN) {
-        // Remove one item, return its value.
-        vim_list_remove(l, item, item);
-        *rettv = item->li_tv;
-        xfree(item);
-      } else {
-        /* Remove range of items, return list with values. */
-        end = get_tv_number_chk(&argvars[2], &error);
-        if (error)
-          ;                     /* type error: do nothing */
-        else if ((item2 = list_find(l, end)) == NULL)
-          EMSGN(_(e_listidx), end);
-        else {
-          int cnt = 0;
-
-          for (li = item; li != NULL; li = li->li_next) {
-            ++cnt;
-            if (li == item2)
-              break;
-          }
-          if (li == NULL)            /* didn't find "item2" after "item" */
-            EMSG(_(e_invrange));
-          else {
-            vim_list_remove(l, item, item2);
-            l = rettv_list_alloc(rettv);
-            l->lv_first = item;
-            l->lv_last = item2;
-            item->li_prev = NULL;
-            item2->li_next = NULL;
-            l->lv_len = cnt;
-          }
-        }
-      }
-    }
-  }
-}
-
-/*
- * "rename({from}, {to})" function
- */
-static void f_rename(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-
-  if (check_restricted() || check_secure())
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = vim_rename(get_tv_string(&argvars[0]),
-        get_tv_string_buf(&argvars[1], buf));
-}
-
-/*
- * "repeat()" function
- */
-static void f_repeat(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-  int n;
-
-  n = get_tv_number(&argvars[1]);
-  if (argvars[0].v_type == VAR_LIST) {
-    rettv_list_alloc(rettv);
-    if (argvars[0].vval.v_list != NULL) {
-      while (n-- > 0) {
-        list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL);
-      }
-    }
-  } else {
-    p = get_tv_string(&argvars[0]);
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
-
-    int slen = (int)STRLEN(p);
-    int len = slen * n;
-    if (len <= 0)
-      return;
-
-    char_u *r = xmallocz(len);
-    for (int i = 0; i < n; i++)
-      memmove(r + i * slen, p, (size_t)slen);
-
-    rettv->vval.v_string = r;
-  }
-}
-
-/*
- * "resolve()" function
- */
-static void f_resolve(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-#ifdef HAVE_READLINK
-  char_u      *buf = NULL;
-#endif
-
-  p = get_tv_string(&argvars[0]);
-#ifdef WIN32
-  {
-    char_u  *v = NULL;
-
-    v = mch_resolve_shortcut(p);
-    if (v != NULL)
-      rettv->vval.v_string = v;
-    else
-      rettv->vval.v_string = vim_strsave(p);
-  }
-#else
-# ifdef HAVE_READLINK
-  {
-    char_u  *cpy;
-    int len;
-    char_u  *remain = NULL;
-    char_u  *q;
-    int is_relative_to_current = FALSE;
-    int has_trailing_pathsep = FALSE;
-    int limit = 100;
-
-    p = vim_strsave(p);
-
-    if (p[0] == '.' && (vim_ispathsep(p[1])
-                        || (p[1] == '.' && (vim_ispathsep(p[2])))))
-      is_relative_to_current = TRUE;
-
-    len = STRLEN(p);
-    if (len > 0 && after_pathsep((char *)p, (char *)p + len)) {
-      has_trailing_pathsep = TRUE;
-      p[len - 1] = NUL;       /* the trailing slash breaks readlink() */
-    }
-
-    q = path_next_component(p);
-    if (*q != NUL) {
-      /* Separate the first path component in "p", and keep the
-       * remainder (beginning with the path separator). */
-      remain = vim_strsave(q - 1);
-      q[-1] = NUL;
-    }
-
-    buf = xmallocz(MAXPATHL);
-
-    for (;; ) {
-      for (;; ) {
-        len = readlink((char *)p, (char *)buf, MAXPATHL);
-        if (len <= 0)
-          break;
-        buf[len] = NUL;
-
-        if (limit-- == 0) {
-          xfree(p);
-          xfree(remain);
-          EMSG(_("E655: Too many symbolic links (cycle?)"));
-          rettv->vval.v_string = NULL;
-          goto fail;
-        }
-
-        /* Ensure that the result will have a trailing path separator
-         * if the argument has one. */
-        if (remain == NULL && has_trailing_pathsep)
-          add_pathsep((char *)buf);
-
-        /* Separate the first path component in the link value and
-         * concatenate the remainders. */
-        q = path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
-        if (*q != NUL) {
-          cpy = remain;
-          remain = remain ?
-            concat_str(q - 1, remain) : (char_u *) xstrdup((char *)q - 1);
-          xfree(cpy);
-          q[-1] = NUL;
-        }
-
-        q = path_tail(p);
-        if (q > p && *q == NUL) {
-          /* Ignore trailing path separator. */
-          q[-1] = NUL;
-          q = path_tail(p);
-        }
-        if (q > p && !path_is_absolute_path(buf)) {
-          /* symlink is relative to directory of argument */
-          cpy = xmalloc(STRLEN(p) + STRLEN(buf) + 1);
-          STRCPY(cpy, p);
-          STRCPY(path_tail(cpy), buf);
-          xfree(p);
-          p = cpy;
-        } else {
-          xfree(p);
-          p = vim_strsave(buf);
-        }
-      }
-
-      if (remain == NULL)
-        break;
-
-      /* Append the first path component of "remain" to "p". */
-      q = path_next_component(remain + 1);
-      len = q - remain - (*q != NUL);
-      cpy = vim_strnsave(p, STRLEN(p) + len);
-      STRNCAT(cpy, remain, len);
-      xfree(p);
-      p = cpy;
-
-      /* Shorten "remain". */
-      if (*q != NUL)
-        STRMOVE(remain, q - 1);
-      else {
-        xfree(remain);
-        remain = NULL;
-      }
-    }
-
-    /* If the result is a relative path name, make it explicitly relative to
-     * the current directory if and only if the argument had this form. */
-    if (!vim_ispathsep(*p)) {
-      if (is_relative_to_current
-          && *p != NUL
-          && !(p[0] == '.'
-               && (p[1] == NUL
-                   || vim_ispathsep(p[1])
-                   || (p[1] == '.'
-                       && (p[2] == NUL
-                           || vim_ispathsep(p[2])))))) {
-        /* Prepend "./". */
-        cpy = concat_str((char_u *)"./", p);
-        xfree(p);
-        p = cpy;
-      } else if (!is_relative_to_current) {
-        /* Strip leading "./". */
-        q = p;
-        while (q[0] == '.' && vim_ispathsep(q[1]))
-          q += 2;
-        if (q > p)
-          STRMOVE(p, p + 2);
-      }
-    }
-
-    /* Ensure that the result will have no trailing path separator
-     * if the argument had none.  But keep "/" or "//". */
-    if (!has_trailing_pathsep) {
-      q = p + STRLEN(p);
-      if (after_pathsep((char *)p, (char *)q))
-        *path_tail_with_sep(p) = NUL;
-    }
-
-    rettv->vval.v_string = p;
-  }
-# else
-  rettv->vval.v_string = vim_strsave(p);
-# endif
-#endif
-
-  simplify_filename(rettv->vval.v_string);
-
-#ifdef HAVE_READLINK
-fail:
-  xfree(buf);
-#endif
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "reverse({list})" function
- */
-static void f_reverse(typval_T *argvars, typval_T *rettv)
-{
-  list_T      *l;
-  listitem_T  *li, *ni;
-
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "reverse()");
-  } else if ((l = argvars[0].vval.v_list) != NULL
-             && !tv_check_lock(l->lv_lock,
-                               (char_u *)N_("reverse() argument"), true)) {
-    li = l->lv_last;
-    l->lv_first = l->lv_last = NULL;
-    l->lv_len = 0;
-    while (li != NULL) {
-      ni = li->li_prev;
-      list_append(l, li);
-      li = ni;
-    }
-    rettv->vval.v_list = l;
-    rettv->v_type = VAR_LIST;
-    ++l->lv_refcount;
-    l->lv_idx = l->lv_len - l->lv_idx - 1;
-  }
-}
-
-#define SP_NOMOVE       0x01        /* don't move cursor */
-#define SP_REPEAT       0x02        /* repeat to find outer pair */
-#define SP_RETCOUNT     0x04        /* return matchcount */
-#define SP_SETPCMARK    0x08        /* set previous context mark */
-#define SP_START        0x10        /* accept match at start position */
-#define SP_SUBPAT       0x20        /* return nr of matching sub-pattern */
-#define SP_END          0x40        /* leave cursor at end of match */
-
-
-/*
- * Get flags for a search function.
- * Possibly sets "p_ws".
- * Returns BACKWARD, FORWARD or zero (for an error).
- */
-static int get_search_arg(typval_T *varp, int *flagsp)
-{
-  int dir = FORWARD;
-  char_u      *flags;
-  char_u nbuf[NUMBUFLEN];
-  int mask;
-
-  if (varp->v_type != VAR_UNKNOWN) {
-    flags = get_tv_string_buf_chk(varp, nbuf);
-    if (flags == NULL)
-      return 0;                 /* type error; errmsg already given */
-    while (*flags != NUL) {
-      switch (*flags) {
-      case 'b': dir = BACKWARD; break;
-      case 'w': p_ws = true; break;
-      case 'W': p_ws = false; break;
-      default:  mask = 0;
-        if (flagsp != NULL)
-          switch (*flags) {
-          case 'c': mask = SP_START; break;
-          case 'e': mask = SP_END; break;
-          case 'm': mask = SP_RETCOUNT; break;
-          case 'n': mask = SP_NOMOVE; break;
-          case 'p': mask = SP_SUBPAT; break;
-          case 'r': mask = SP_REPEAT; break;
-          case 's': mask = SP_SETPCMARK; break;
-          }
-        if (mask == 0) {
-          EMSG2(_(e_invarg2), flags);
-          dir = 0;
-        } else
-          *flagsp |= mask;
-      }
-      if (dir == 0)
-        break;
-      ++flags;
-    }
-  }
-  return dir;
-}
-
-/*
- * Shared by search() and searchpos() functions
- */
-static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
-{
-  int flags;
-  char_u      *pat;
-  pos_T pos;
-  pos_T save_cursor;
-  bool save_p_ws = p_ws;
-  int dir;
-  int retval = 0;               /* default: FAIL */
-  long lnum_stop = 0;
-  proftime_T tm;
-  long time_limit = 0;
-  int options = SEARCH_KEEP;
-  int subpatnum;
-
-  pat = get_tv_string(&argvars[0]);
-  dir = get_search_arg(&argvars[1], flagsp);    /* may set p_ws */
-  if (dir == 0)
-    goto theend;
-  flags = *flagsp;
-  if (flags & SP_START)
-    options |= SEARCH_START;
-  if (flags & SP_END)
-    options |= SEARCH_END;
-
-  /* Optional arguments: line number to stop searching and timeout. */
-  if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
-    lnum_stop = get_tv_number_chk(&argvars[2], NULL);
-    if (lnum_stop < 0)
-      goto theend;
-    if (argvars[3].v_type != VAR_UNKNOWN) {
-      time_limit = get_tv_number_chk(&argvars[3], NULL);
-      if (time_limit < 0)
-        goto theend;
-    }
-  }
-
-  /* Set the time limit, if there is one. */
-  tm = profile_setlimit(time_limit);
-
-  /*
-   * This function does not accept SP_REPEAT and SP_RETCOUNT flags.
-   * Check to make sure only those flags are set.
-   * Also, Only the SP_NOMOVE or the SP_SETPCMARK flag can be set. Both
-   * flags cannot be set. Check for that condition also.
-   */
-  if (((flags & (SP_REPEAT | SP_RETCOUNT)) != 0)
-      || ((flags & SP_NOMOVE) && (flags & SP_SETPCMARK))) {
-    EMSG2(_(e_invarg2), get_tv_string(&argvars[1]));
-    goto theend;
-  }
-
-  pos = save_cursor = curwin->w_cursor;
-  subpatnum = searchit(curwin, curbuf, &pos, dir, pat, 1L,
-      options, RE_SEARCH, (linenr_T)lnum_stop, &tm);
-  if (subpatnum != FAIL) {
-    if (flags & SP_SUBPAT)
-      retval = subpatnum;
-    else
-      retval = pos.lnum;
-    if (flags & SP_SETPCMARK)
-      setpcmark();
-    curwin->w_cursor = pos;
-    if (match_pos != NULL) {
-      /* Store the match cursor position */
-      match_pos->lnum = pos.lnum;
-      match_pos->col = pos.col + 1;
-    }
-    /* "/$" will put the cursor after the end of the line, may need to
-     * correct that here */
-    check_cursor();
-  }
-
-  /* If 'n' flag is used: restore cursor position. */
-  if (flags & SP_NOMOVE)
-    curwin->w_cursor = save_cursor;
-  else
-    curwin->w_set_curswant = TRUE;
-theend:
-  p_ws = save_p_ws;
-
-  return retval;
-}
-
-/*
- * "round({float})" function
- */
-static void f_round(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &round);
-}
-
-// "rpcnotify()" function
-static void f_rpcnotify(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number < 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Event type must be a string");
-    return;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-
-  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
-  }
-
-  if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
-                          (char *)get_tv_string(&argvars[1]),
-                          args)) {
-    EMSG2(_(e_invarg2), "Channel doesn't exist");
-    return;
-  }
-
-  rettv->vval.v_number = 1;
-}
-
-// "rpcrequest()" function
-static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-  const int l_provider_call_nesting = provider_call_nesting;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Method name must be a string");
-    return;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-
-  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
-  }
-
-  scid_T save_current_SID;
-  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
-  linenr_T save_sourcing_lnum;
-  int save_autocmd_fname_full, save_autocmd_bufnr;
-  void *save_funccalp;
-
-  if (l_provider_call_nesting) {
-    // If this is called from a provider function, restore the scope
-    // information of the caller.
-    save_current_SID = current_SID;
-    save_sourcing_name = sourcing_name;
-    save_sourcing_lnum = sourcing_lnum;
-    save_autocmd_fname = autocmd_fname;
-    save_autocmd_match = autocmd_match;
-    save_autocmd_fname_full = autocmd_fname_full;
-    save_autocmd_bufnr = autocmd_bufnr;
-    save_funccalp = save_funccal();
-    //
-    current_SID = provider_caller_scope.SID;
-    sourcing_name = provider_caller_scope.sourcing_name;
-    sourcing_lnum = provider_caller_scope.sourcing_lnum;
-    autocmd_fname = provider_caller_scope.autocmd_fname;
-    autocmd_match = provider_caller_scope.autocmd_match;
-    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
-    autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
-    restore_funccal(provider_caller_scope.funccalp);
-  }
-
-
-  Error err = ERROR_INIT;
-  Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
-                                    (char *)get_tv_string(&argvars[1]),
-                                    args,
-                                    &err);
-
-  if (l_provider_call_nesting) {
-    current_SID = save_current_SID;
-    sourcing_name = save_sourcing_name;
-    sourcing_lnum = save_sourcing_lnum;
-    autocmd_fname = save_autocmd_fname;
-    autocmd_match = save_autocmd_match;
-    autocmd_fname_full = save_autocmd_fname_full;
-    autocmd_bufnr = save_autocmd_bufnr;
-    restore_funccal(save_funccalp);
-  }
-
-  if (err.set) {
-    vim_report_error(cstr_as_string(err.msg));
-    goto end;
-  }
-
-  if (!object_to_vim(result, rettv, &err)) {
-    EMSG2(_("Error converting the call result: %s"), err.msg);
-  }
-
-end:
-  api_free_object(result);
-}
-
-// "rpcstart()" function
-static void f_rpcstart(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_STRING
-      || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  list_T *args = NULL;
-  int argsl = 0;
-  if (argvars[1].v_type == VAR_LIST) {
-    args = argvars[1].vval.v_list;
-    argsl = args->lv_len;
-    // Assert that all list items are strings
-    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      if (arg->li_tv.v_type != VAR_STRING) {
-        EMSG(_(e_invarg));
-        return;
-      }
-    }
-  }
-
-  if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
-    EMSG(_(e_api_spawn_failed));
-    return;
-  }
-
-  // Allocate extra memory for the argument vector and the NULL pointer
-  int argvl = argsl + 2;
-  char **argv = xmalloc(sizeof(char_u *) * argvl);
-
-  // Copy program name
-  argv[0] = xstrdup((char *)argvars[0].vval.v_string);
-
-  int i = 1;
-  // Copy arguments to the vector
-  if (argsl > 0) {
-    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      argv[i++] = xstrdup((char *) get_tv_string(&arg->li_tv));
-    }
-  }
-
-  // The last item of argv must be NULL
-  argv[i] = NULL;
-  uint64_t channel_id = channel_from_process(argv);
-
-  if (!channel_id) {
-    EMSG(_(e_api_spawn_failed));
-  }
-
-  rettv->vval.v_number = (varnumber_T)channel_id;
-}
-
-// "rpcstop()" function
-static void f_rpcstop(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
-}
-
-/*
- * "screenattr()" function
- */
-static void f_screenattr(typval_T *argvars, typval_T *rettv)
-{
-  int row;
-  int col;
-  int c;
-
-  row = get_tv_number_chk(&argvars[0], NULL) - 1;
-  col = get_tv_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= screen_Rows
-      || col < 0 || col >= screen_Columns)
-    c = -1;
-  else
-    c = ScreenAttrs[LineOffset[row] + col];
-  rettv->vval.v_number = c;
-}
-
-/*
- * "screenchar()" function
- */
-static void f_screenchar(typval_T *argvars, typval_T *rettv)
-{
-  int row;
-  int col;
-  int off;
-  int c;
-
-  row = get_tv_number_chk(&argvars[0], NULL) - 1;
-  col = get_tv_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= screen_Rows
-      || col < 0 || col >= screen_Columns)
-    c = -1;
-  else {
-    off = LineOffset[row] + col;
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
-      c = ScreenLinesUC[off];
-    else
-      c = ScreenLines[off];
-  }
-  rettv->vval.v_number = c;
-}
-
-/*
- * "screencol()" function
- *
- * First column is 1 to be consistent with virtcol().
- */
-static void f_screencol(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = ui_current_col() + 1;
-}
-
-/*
- * "screenrow()" function
- */
-static void f_screenrow(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = ui_current_row() + 1;
-}
-
-/*
- * "search()" function
- */
-static void f_search(typval_T *argvars, typval_T *rettv)
-{
-  int flags = 0;
-
-  rettv->vval.v_number = search_cmn(argvars, NULL, &flags);
-}
-
-/*
- * "searchdecl()" function
- */
-static void f_searchdecl(typval_T *argvars, typval_T *rettv)
-{
-  int locally = 1;
-  int thisblock = 0;
-  int error = FALSE;
-
-  rettv->vval.v_number = 1;     /* default: FAIL */
-
-  char_u *name = get_tv_string_chk(&argvars[0]);
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    locally = get_tv_number_chk(&argvars[1], &error) == 0;
-    if (!error && argvars[2].v_type != VAR_UNKNOWN)
-      thisblock = get_tv_number_chk(&argvars[2], &error) != 0;
-  }
-  if (!error && name != NULL)
-    rettv->vval.v_number = find_decl(name, STRLEN(name), locally,
-                                     thisblock, SEARCH_KEEP) == FAIL;
-}
-
-/*
- * Used by searchpair() and searchpairpos()
- */
-static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
-{
-  char_u      *spat, *mpat, *epat;
-  char_u      *skip;
-  bool save_p_ws = p_ws;
-  int dir;
-  int flags = 0;
-  char_u nbuf1[NUMBUFLEN];
-  char_u nbuf2[NUMBUFLEN];
-  char_u nbuf3[NUMBUFLEN];
-  int retval = 0;                       /* default: FAIL */
-  long lnum_stop = 0;
-  long time_limit = 0;
-
-  /* Get the three pattern arguments: start, middle, end. */
-  spat = get_tv_string_chk(&argvars[0]);
-  mpat = get_tv_string_buf_chk(&argvars[1], nbuf1);
-  epat = get_tv_string_buf_chk(&argvars[2], nbuf2);
-  if (spat == NULL || mpat == NULL || epat == NULL)
-    goto theend;            /* type error */
-
-  /* Handle the optional fourth argument: flags */
-  dir = get_search_arg(&argvars[3], &flags);   /* may set p_ws */
-  if (dir == 0)
-    goto theend;
-
-  /* Don't accept SP_END or SP_SUBPAT.
-   * Only one of the SP_NOMOVE or SP_SETPCMARK flags can be set.
-   */
-  if ((flags & (SP_END | SP_SUBPAT)) != 0
-      || ((flags & SP_NOMOVE) && (flags & SP_SETPCMARK))) {
-    EMSG2(_(e_invarg2), get_tv_string(&argvars[3]));
-    goto theend;
-  }
-
-  /* Using 'r' implies 'W', otherwise it doesn't work. */
-  if (flags & SP_REPEAT)
-    p_ws = false;
-
-  /* Optional fifth argument: skip expression */
-  if (argvars[3].v_type == VAR_UNKNOWN
-      || argvars[4].v_type == VAR_UNKNOWN)
-    skip = (char_u *)"";
-  else {
-    skip = get_tv_string_buf_chk(&argvars[4], nbuf3);
-    if (argvars[5].v_type != VAR_UNKNOWN) {
-      lnum_stop = get_tv_number_chk(&argvars[5], NULL);
-      if (lnum_stop < 0)
-        goto theend;
-      if (argvars[6].v_type != VAR_UNKNOWN) {
-        time_limit = get_tv_number_chk(&argvars[6], NULL);
-        if (time_limit < 0)
-          goto theend;
-      }
-    }
-  }
-  if (skip == NULL)
-    goto theend;            /* type error */
-
-  retval = do_searchpair(spat, mpat, epat, dir, skip, flags,
-      match_pos, lnum_stop, time_limit);
-
-theend:
-  p_ws = save_p_ws;
-
-  return retval;
-}
-
-/*
- * "searchpair()" function
- */
-static void f_searchpair(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = searchpair_cmn(argvars, NULL);
-}
-
-/*
- * "searchpairpos()" function
- */
-static void f_searchpairpos(typval_T *argvars, typval_T *rettv)
-{
-  pos_T match_pos;
-  int lnum = 0;
-  int col = 0;
-
-  rettv_list_alloc(rettv);
-
-  if (searchpair_cmn(argvars, &match_pos) > 0) {
-    lnum = match_pos.lnum;
-    col = match_pos.col;
-  }
-
-  list_append_number(rettv->vval.v_list, (varnumber_T)lnum);
-  list_append_number(rettv->vval.v_list, (varnumber_T)col);
-}
-
-/*
- * Search for a start/middle/end thing.
- * Used by searchpair(), see its documentation for the details.
- * Returns 0 or -1 for no match,
- */
-long 
-do_searchpair (
-    char_u *spat,          /* start pattern */
-    char_u *mpat,          /* middle pattern */
-    char_u *epat,          /* end pattern */
-    int dir,                    /* BACKWARD or FORWARD */
-    char_u *skip,          /* skip expression */
-    int flags,                  /* SP_SETPCMARK and other SP_ values */
-    pos_T *match_pos,
-    linenr_T lnum_stop,         /* stop at this line if not zero */
-    long time_limit            /* stop after this many msec */
-)
-{
-  char_u      *save_cpo;
-  char_u      *pat, *pat2 = NULL, *pat3 = NULL;
-  long retval = 0;
-  pos_T pos;
-  pos_T firstpos;
-  pos_T foundpos;
-  pos_T save_cursor;
-  pos_T save_pos;
-  int n;
-  int r;
-  int nest = 1;
-  int err;
-  int options = SEARCH_KEEP;
-  proftime_T tm;
-
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
-  save_cpo = p_cpo;
-  p_cpo = empty_option;
-
-  /* Set the time limit, if there is one. */
-  tm = profile_setlimit(time_limit);
-
-  /* Make two search patterns: start/end (pat2, for in nested pairs) and
-   * start/middle/end (pat3, for the top pair). */
-  pat2 = xmalloc(STRLEN(spat) + STRLEN(epat) + 15);
-  pat3 = xmalloc(STRLEN(spat) + STRLEN(mpat) + STRLEN(epat) + 23);
-  sprintf((char *)pat2, "\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
-  if (*mpat == NUL)
-    STRCPY(pat3, pat2);
-  else
-    sprintf((char *)pat3, "\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)",
-        spat, epat, mpat);
-  if (flags & SP_START)
-    options |= SEARCH_START;
-
-  save_cursor = curwin->w_cursor;
-  pos = curwin->w_cursor;
-  clearpos(&firstpos);
-  clearpos(&foundpos);
-  pat = pat3;
-  for (;; ) {
-    n = searchit(curwin, curbuf, &pos, dir, pat, 1L,
-        options, RE_SEARCH, lnum_stop, &tm);
-    if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos)))
-      /* didn't find it or found the first match again: FAIL */
-      break;
-
-    if (firstpos.lnum == 0)
-      firstpos = pos;
-    if (equalpos(pos, foundpos)) {
-      /* Found the same position again.  Can happen with a pattern that
-       * has "\zs" at the end and searching backwards.  Advance one
-       * character and try again. */
-      if (dir == BACKWARD)
-        decl(&pos);
-      else
-        incl(&pos);
-    }
-    foundpos = pos;
-
-    /* clear the start flag to avoid getting stuck here */
-    options &= ~SEARCH_START;
-
-    /* If the skip pattern matches, ignore this match. */
-    if (*skip != NUL) {
-      save_pos = curwin->w_cursor;
-      curwin->w_cursor = pos;
-      r = eval_to_bool(skip, &err, NULL, FALSE);
-      curwin->w_cursor = save_pos;
-      if (err) {
-        /* Evaluating {skip} caused an error, break here. */
-        curwin->w_cursor = save_cursor;
-        retval = -1;
-        break;
-      }
-      if (r)
-        continue;
-    }
-
-    if ((dir == BACKWARD && n == 3) || (dir == FORWARD && n == 2)) {
-      /* Found end when searching backwards or start when searching
-       * forward: nested pair. */
-      ++nest;
-      pat = pat2;               /* nested, don't search for middle */
-    } else {
-      /* Found end when searching forward or start when searching
-       * backward: end of (nested) pair; or found middle in outer pair. */
-      if (--nest == 1)
-        pat = pat3;             /* outer level, search for middle */
-    }
-
-    if (nest == 0) {
-      /* Found the match: return matchcount or line number. */
-      if (flags & SP_RETCOUNT)
-        ++retval;
-      else
-        retval = pos.lnum;
-      if (flags & SP_SETPCMARK)
-        setpcmark();
-      curwin->w_cursor = pos;
-      if (!(flags & SP_REPEAT))
-        break;
-      nest = 1;             /* search for next unmatched */
-    }
-  }
-
-  if (match_pos != NULL) {
-    /* Store the match cursor position */
-    match_pos->lnum = curwin->w_cursor.lnum;
-    match_pos->col = curwin->w_cursor.col + 1;
-  }
-
-  /* If 'n' flag is used or search failed: restore cursor position. */
-  if ((flags & SP_NOMOVE) || retval == 0)
-    curwin->w_cursor = save_cursor;
-
-  xfree(pat2);
-  xfree(pat3);
-  if (p_cpo == empty_option)
-    p_cpo = save_cpo;
-  else
-    /* Darn, evaluating the {skip} expression changed the value. */
-    free_string_option(save_cpo);
-
-  return retval;
-}
-
-/*
- * "searchpos()" function
- */
-static void f_searchpos(typval_T *argvars, typval_T *rettv)
-{
-  pos_T match_pos;
-  int lnum = 0;
-  int col = 0;
-  int n;
-  int flags = 0;
-
-  rettv_list_alloc(rettv);
-
-  n = search_cmn(argvars, &match_pos, &flags);
-  if (n > 0) {
-    lnum = match_pos.lnum;
-    col = match_pos.col;
-  }
-
-  list_append_number(rettv->vval.v_list, (varnumber_T)lnum);
-  list_append_number(rettv->vval.v_list, (varnumber_T)col);
-  if (flags & SP_SUBPAT)
-    list_append_number(rettv->vval.v_list, (varnumber_T)n);
-}
-
-/// "serverlist()" function
-static void f_serverlist(typval_T *argvars, typval_T *rettv)
-{
-  size_t n;
-  char **addrs = server_address_list(&n);
-
-  // Copy addrs into a linked list.
-  list_T *l = rettv_list_alloc(rettv);
-  for (size_t i = 0; i < n; i++) {
-    listitem_T *li = listitem_alloc();
-    li->li_tv.v_type = VAR_STRING;
-    li->li_tv.v_lock = 0;
-    li->li_tv.vval.v_string = (char_u *) addrs[i];
-    list_append(l, li);
-  }
-  xfree(addrs);
-}
-
-/// "serverstart()" function
-static void f_serverstart(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;  // Address of the new server
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  // If the user supplied an address, use it, otherwise use a temp.
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    if (argvars[0].v_type != VAR_STRING) {
-      EMSG(_(e_invarg));
-      return;
-    } else {
-      rettv->vval.v_string = vim_strsave(get_tv_string(argvars));
-    }
-  } else {
-    rettv->vval.v_string = (char_u *)server_address_new();
-  }
-
-  int result = server_start((char *) rettv->vval.v_string);
-  if (result != 0) {
-    EMSG2("Failed to start server: %s", uv_strerror(result));
-  }
-}
-
-/// "serverstop()" function
-static void f_serverstop(typval_T *argvars, typval_T *rettv)
-{
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type == VAR_UNKNOWN || argvars[0].v_type != VAR_STRING) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  if (argvars[0].vval.v_string) {
-    server_stop((char *) argvars[0].vval.v_string);
-  }
-}
-
-/*
- * "setbufvar()" function
- */
-static void f_setbufvar(typval_T *argvars, typval_T *rettv)
-{
-  buf_T       *buf;
-  aco_save_T aco;
-  char_u      *varname, *bufvarname;
-  typval_T    *varp;
-  char_u nbuf[NUMBUFLEN];
-
-  if (check_restricted() || check_secure())
-    return;
-  (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
-  varname = get_tv_string_chk(&argvars[1]);
-  buf = get_buf_tv(&argvars[0], FALSE);
-  varp = &argvars[2];
-
-  if (buf != NULL && varname != NULL && varp != NULL) {
-    /* set curbuf to be our buf, temporarily */
-    aucmd_prepbuf(&aco, buf);
-
-    if (*varname == '&') {
-      long numval;
-      char_u      *strval;
-      int error = FALSE;
-
-      ++varname;
-      numval = get_tv_number_chk(varp, &error);
-      strval = get_tv_string_buf_chk(varp, nbuf);
-      if (!error && strval != NULL)
-        set_option_value(varname, numval, strval, OPT_LOCAL);
-    } else {
-      bufvarname = xmalloc(STRLEN(varname) + 3);
-      STRCPY(bufvarname, "b:");
-      STRCPY(bufvarname + 2, varname);
-      set_var(bufvarname, varp, TRUE);
-      xfree(bufvarname);
-    }
-
-    /* reset notion of buffer */
-    aucmd_restbuf(&aco);
-  }
-}
-
-static void f_setcharsearch(typval_T *argvars, typval_T *rettv)
-{
-  dict_T        *d;
-  dictitem_T        *di;
-  char_u        *csearch;
-
-  if (argvars[0].v_type != VAR_DICT) {
+  if (tv->v_type != VAR_DICT) {
     EMSG(_(e_dictreq));
+    return FAIL;
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("conceal"))) != NULL) {
+    *conceal_char = tv_get_string(&di->di_tv);
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
+    *win = find_win_by_nr_or_id(&di->di_tv);
+    if (*win == NULL) {
+      EMSG(_("E957: Invalid window number"));
+      return FAIL;
+    }
+  }
+
+  return OK;
+}
+
+void return_register(int regname, typval_T *rettv)
+{
+  char_u buf[2] = { regname, 0 };
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = vim_strsave(buf);
+}
+
+void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
+{
+  // TODO(bfredl): this is a hack for legacy tests which use screenchar()
+  // to check printed messages on the screen (but not floats etc
+  // as these are not legacy features). If the compositor is refactored to
+  // have its own buffer, this should just read from it instead.
+  msg_scroll_flush();
+  if (msg_grid.chars && msg_grid.comp_index > 0 && *row >= msg_grid.comp_row
+      && *row < (msg_grid.Rows + msg_grid.comp_row)
+      && *col < msg_grid.Columns) {
+    *grid = &msg_grid;
+    *row -= msg_grid.comp_row;
+  }
+}
+
+/// Set line or list of lines in buffer "buf".
+void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
+                      const typval_T *lines, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(4, 5)
+{
+  linenr_T lnum = lnum_arg + (append ? 1 : 0);
+  const char *line = NULL;
+  list_T      *l = NULL;
+  listitem_T  *li = NULL;
+  long        added = 0;
+  linenr_T append_lnum;
+  buf_T       *curbuf_save = NULL;
+  win_T       *curwin_save = NULL;
+  const bool is_curbuf = buf == curbuf;
+
+  // When using the current buffer ml_mfp will be set if needed.  Useful when
+  // setline() is used on startup.  For other buffers the buffer must be
+  // loaded.
+  if (buf == NULL || (!is_curbuf && buf->b_ml.ml_mfp == NULL) || lnum < 1) {
+    rettv->vval.v_number = 1;  // FAIL
     return;
   }
 
-  if ((d = argvars[0].vval.v_dict) != NULL) {
-    csearch = get_dict_string(d, (char_u *)"char", FALSE);
-    if (csearch != NULL) {
-      if (enc_utf8) {
-        int pcc[MAX_MCO];
-        int c = utfc_ptr2char(csearch, pcc);
-        set_last_csearch(c, csearch, utfc_ptr2len(csearch));
-      }
-      else
-        set_last_csearch(PTR2CHAR(csearch),
-                         csearch, MB_PTR2LEN(csearch));
-    }
-
-    di = dict_find(d, (char_u *)"forward", -1);
-    if (di != NULL)
-      set_csearch_direction(get_tv_number(&di->di_tv) ? FORWARD : BACKWARD);
-
-    di = dict_find(d, (char_u *)"until", -1);
-    if (di != NULL)
-      set_csearch_until(!!get_tv_number(&di->di_tv));
+  if (!is_curbuf) {
+    curbuf_save = curbuf;
+    curwin_save = curwin;
+    curbuf = buf;
+    find_win_for_curbuf();
   }
-}
 
-/*
- * "setcmdpos()" function
- */
-static void f_setcmdpos(typval_T *argvars, typval_T *rettv)
-{
-  int pos = (int)get_tv_number(&argvars[0]) - 1;
+  if (append) {
+    // appendbufline() uses the line number below which we insert
+    append_lnum = lnum - 1;
+  } else {
+    // setbufline() uses the line number above which we insert, we only
+    // append if it's below the last line
+    append_lnum = curbuf->b_ml.ml_line_count;
+  }
 
-  if (pos >= 0)
-    rettv->vval.v_number = set_cmdline_pos(pos);
-}
+  if (lines->v_type == VAR_LIST) {
+    l = lines->vval.v_list;
+    li = tv_list_first(l);
+  } else {
+    line = tv_get_string_chk(lines);
+  }
 
-/*
- * "setline()" function
- */
-static void f_setline(typval_T *argvars, typval_T *rettv)
-{
-  linenr_T lnum;
-  char_u      *line = NULL;
-  list_T      *l = NULL;
-  listitem_T  *li = NULL;
-  long added = 0;
-  linenr_T lcount = curbuf->b_ml.ml_line_count;
-
-  lnum = get_tv_lnum(&argvars[0]);
-  if (argvars[1].v_type == VAR_LIST) {
-    l = argvars[1].vval.v_list;
-    li = l->lv_first;
-  } else
-    line = get_tv_string_chk(&argvars[1]);
-
-  /* default result is zero == OK */
+  // Default result is zero == OK.
   for (;; ) {
-    if (l != NULL) {
-      /* list argument, get next string */
-      if (li == NULL)
+    if (lines->v_type == VAR_LIST) {
+      // List argument, get next string.
+      if (li == NULL) {
         break;
-      line = get_tv_string_chk(&li->li_tv);
-      li = li->li_next;
+      }
+      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+      li = TV_LIST_ITEM_NEXT(l, li);
     }
 
-    rettv->vval.v_number = 1;           /* FAIL */
-    if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1)
+    rettv->vval.v_number = 1;  // FAIL
+    if (line == NULL || lnum > curbuf->b_ml.ml_line_count + 1) {
       break;
-
-    /* When coming here from Insert mode, sync undo, so that this can be
-     * undone separately from what was previously inserted. */
-    if (u_sync_once == 2) {
-      u_sync_once = 1;       /* notify that u_sync() was called */
-      u_sync(TRUE);
     }
 
-    if (lnum <= curbuf->b_ml.ml_line_count) {
-      /* existing line, replace it */
-      if (u_savesub(lnum) == OK && ml_replace(lnum, line, TRUE) == OK) {
+    // When coming here from Insert mode, sync undo, so that this can be
+    // undone separately from what was previously inserted.
+    if (u_sync_once == 2) {
+      u_sync_once = 1;  // notify that u_sync() was called
+      u_sync(true);
+    }
+
+    if (!append && lnum <= curbuf->b_ml.ml_line_count) {
+      // Existing line, replace it.
+      if (u_savesub(lnum) == OK
+          && ml_replace(lnum, (char_u *)line, true) == OK) {
         changed_bytes(lnum, 0);
-        if (lnum == curwin->w_cursor.lnum)
+        if (is_curbuf && lnum == curwin->w_cursor.lnum) {
           check_cursor_col();
-        rettv->vval.v_number = 0;               /* OK */
+        }
+        rettv->vval.v_number = 0;  // OK
       }
     } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
-      /* lnum is one past the last line, append the line */
-      ++added;
-      if (ml_append(lnum - 1, line, (colnr_T)0, FALSE) == OK)
-        rettv->vval.v_number = 0;               /* OK */
+      // append the line.
+      added++;
+      if (ml_append(lnum - 1, (char_u *)line, 0, false) == OK) {
+        rettv->vval.v_number = 0;  // OK
+      }
     }
 
-    if (l == NULL)                      /* only one string argument */
+    if (l == NULL) {  // only one string argument
       break;
-    ++lnum;
-  }
-
-  if (added > 0)
-    appended_lines_mark(lcount, added);
-}
-
-/// Create quickfix/location list from VimL values
-///
-/// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
-/// list_arg, action_arg and title_arg arguments in which case errors out,
-/// including VAR_UNKNOWN parameters.
-///
-/// @param[in,out]  wp  Window to create location list for. May be NULL in
-///                     which case quickfix list will be created.
-/// @param[in]  list_arg  Quickfix list contents.
-/// @param[in]  action_arg  Action to perform: append to an existing list,
-///                         replace its content or create a new one.
-/// @param[in]  title_arg  New list title. Defaults to caller function name.
-/// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
-static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(2, 3)
-{
-  char_u *title = NULL;
-  int action = ' ';
-  rettv->vval.v_number = -1;
-
-  typval_T *list_arg = &args[0];
-  if (list_arg->v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
-    return;
-  }
-
-  typval_T *action_arg = &args[1];
-  if (action_arg->v_type == VAR_UNKNOWN) {
-    // Option argument was not given.
-    goto skip_args;
-  } else if (action_arg->v_type != VAR_STRING) {
-    EMSG(_(e_strreq));
-    return;
-  }
-  char_u *act = get_tv_string_chk(action_arg);
-  if (*act == 'a' || *act == 'r') {
-    action = *act;
-  }
-
-  typval_T *title_arg = &args[2];
-  if (title_arg->v_type == VAR_UNKNOWN) {
-    // Option argument was not given.
-    goto skip_args;
-  }
-  title = get_tv_string_chk(title_arg);
-  if (!title) {
-    // Type error. Error already printed by get_tv_string_chk().
-    return;
-  }
-
-skip_args:
-  if (!title) {
-    title = (char_u*)(wp ? "setloclist()" : "setqflist()");
-  }
-
-  list_T *l = list_arg->vval.v_list;
-  if (l && set_errorlist(wp, l, action, title) == OK) {
-    rettv->vval.v_number = 0;
-  }
-}
-
-/*
- * "setloclist()" function
- */
-static void f_setloclist(typval_T *argvars, typval_T *rettv)
-{
-  win_T       *win;
-
-  rettv->vval.v_number = -1;
-
-  win = find_win_by_nr(&argvars[0], NULL);
-  if (win != NULL) {
-    set_qf_ll_list(win, &argvars[1], rettv);
-  }
-}
-
-/*
- * "setmatches()" function
- */
-static void f_setmatches(typval_T *argvars, typval_T *rettv)
-{
-  list_T      *l;
-  listitem_T  *li;
-  dict_T      *d;
-  list_T      *s = NULL;
-
-  rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
-    return;
-  }
-  if ((l = argvars[0].vval.v_list) != NULL) {
-
-    /* To some extent make sure that we are dealing with a list from
-     * "getmatches()". */
-    li = l->lv_first;
-    while (li != NULL) {
-      if (li->li_tv.v_type != VAR_DICT
-          || (d = li->li_tv.vval.v_dict) == NULL) {
-        EMSG(_(e_invarg));
-        return;
-      }
-      if (!(dict_find(d, (char_u *)"group", -1) != NULL
-            && (dict_find(d, (char_u *)"pattern", -1) != NULL
-                || dict_find(d, (char_u *)"pos1", -1) != NULL)
-            && dict_find(d, (char_u *)"priority", -1) != NULL
-            && dict_find(d, (char_u *)"id", -1) != NULL)) {
-        EMSG(_(e_invarg));
-        return;
-      }
-      li = li->li_next;
     }
+    lnum++;
+  }
 
-    clear_matches(curwin);
-    li = l->lv_first;
-    while (li != NULL) {
-      int i = 0;
-      char_u buf[5];
-      dictitem_T *di;
+  if (added > 0) {
+    appended_lines_mark(append_lnum, added);
 
-      d = li->li_tv.vval.v_dict;
-      if (dict_find(d, (char_u *)"pattern", -1) == NULL) {
-        if (s == NULL) {
-          s = list_alloc();
-          if (s == NULL) {
-            return;
-          }
-        }
-
-        // match from matchaddpos()
-        for (i = 1; i < 9; ++i) {
-          snprintf((char *)buf, sizeof(buf), (char *)"pos%d", i);
-          if ((di = dict_find(d, (char_u *)buf, -1)) != NULL) {
-            if (di->di_tv.v_type != VAR_LIST) {
-              return;
-            }
-
-            list_append_tv(s, &di->di_tv);
-            s->lv_refcount++;
-          } else {
-            break;
-          }
-        }
+    // Only adjust the cursor for buffers other than the current, unless it
+    // is the current window. For curbuf and other windows it has been done
+    // in mark_adjust_internal().
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf
+          && (wp->w_buffer != curbuf || wp == curwin)
+          && wp->w_cursor.lnum > append_lnum) {
+        wp->w_cursor.lnum += added;
       }
-
-      char_u *group = get_dict_string(d, (char_u *)"group", false);
-      int priority = get_dict_number(d, (char_u *)"priority");
-      int id = get_dict_number(d, (char_u *)"id");
-      char_u *conceal = dict_find(d, (char_u *)"conceal", -1) != NULL
-                                  ? get_dict_string(d, (char_u *)"conceal",
-                                                    false)
-                                  : NULL;
-      if (i == 0) {
-        match_add(curwin, group,
-                  get_dict_string(d, (char_u *)"pattern", false),
-                  priority, id, NULL, conceal);
-      } else {
-        match_add(curwin, group, NULL, priority, id, s, conceal);
-        list_unref(s);
-        s = NULL;
-      }
-      li = li->li_next;
     }
-    rettv->vval.v_number = 0;
-  }
-}
-
-/*
- * "setpos()" function
- */
-static void f_setpos(typval_T *argvars, typval_T *rettv)
-{
-  pos_T pos;
-  int fnum;
-  char_u      *name;
-  colnr_T     curswant = -1;
-
-  rettv->vval.v_number = -1;
-  name = get_tv_string_chk(argvars);
-  if (name != NULL) {
-    if (list2fpos(&argvars[1], &pos, &fnum, &curswant) == OK) {
-      if (--pos.col < 0)
-        pos.col = 0;
-      if (name[0] == '.' && name[1] == NUL) {
-        /* set cursor */
-        if (fnum == curbuf->b_fnum) {
-          curwin->w_cursor = pos;
-          if (curswant >= 0) {
-            curwin->w_curswant = curswant - 1;
-          }
-          check_cursor();
-          rettv->vval.v_number = 0;
-        } else
-          EMSG(_(e_invarg));
-      } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL)   {
-        /* set mark */
-        if (setmark_pos(name[1], &pos, fnum) == OK)
-          rettv->vval.v_number = 0;
-      } else
-        EMSG(_(e_invarg));
-    }
-  }
-}
-
-/*
- * "setqflist()" function
- */
-static void f_setqflist(typval_T *argvars, typval_T *rettv)
-{
-  set_qf_ll_list(NULL, argvars, rettv);
-}
-
-/*
- * "setreg()" function
- */
-static void f_setreg(typval_T *argvars, typval_T *rettv)
-{
-  int regname;
-  char_u      *strregname;
-  char_u      *stropt;
-  bool append = false;
-  char_u yank_type;
-  long block_len;
-
-  block_len = -1;
-  yank_type = MAUTO;
-
-  strregname = get_tv_string_chk(argvars);
-  rettv->vval.v_number = 1;             /* FAIL is default */
-
-  if (strregname == NULL)
-    return;             /* type error; errmsg already given */
-  regname = *strregname;
-  if (regname == 0 || regname == '@')
-    regname = '"';
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    stropt = get_tv_string_chk(&argvars[2]);
-    if (stropt == NULL)
-      return;                   /* type error */
-    for (; *stropt != NUL; ++stropt)
-      switch (*stropt) {
-      case 'a': case 'A':               /* append */
-        append = true;
-        break;
-      case 'v': case 'c':               /* character-wise selection */
-        yank_type = MCHAR;
-        break;
-      case 'V': case 'l':               /* line-wise selection */
-        yank_type = MLINE;
-        break;
-      case 'b': case Ctrl_V:            /* block-wise selection */
-        yank_type = MBLOCK;
-        if (ascii_isdigit(stropt[1])) {
-          ++stropt;
-          block_len = getdigits_long(&stropt) - 1;
-          --stropt;
-        }
-        break;
-      }
+    check_cursor_col();
+    update_topline();
   }
 
-  if (argvars[1].v_type == VAR_LIST) {
-    int len = argvars[1].vval.v_list->lv_len;
-    // First half: use for pointers to result lines; second half: use for
-    // pointers to allocated copies.
-    char_u **lstval = xmalloc(sizeof(char_u *) * ((len + 1) * 2));
-    char_u **curval = lstval;
-    char_u **allocval = lstval + len + 2;
-    char_u **curallocval = allocval;
-
-    char_u buf[NUMBUFLEN];
-    for (listitem_T *li = argvars[1].vval.v_list->lv_first;
-         li != NULL;
-         li = li->li_next) {
-      char_u *strval = get_tv_string_buf_chk(&li->li_tv, buf);
-      if (strval == NULL) {
-        goto free_lstval;
-      }
-      if (strval == buf) {
-        // Need to make a copy,
-        // next get_tv_string_buf_chk() will overwrite the string.
-        strval = vim_strsave(buf);
-        *curallocval++ = strval;
-      }
-      *curval++ = strval;
-    }
-    *curval++ = NULL;
-
-    write_reg_contents_lst(regname, lstval, -1, append, yank_type, block_len);
-
-free_lstval:
-    while (curallocval > allocval)
-        xfree(*--curallocval);
-    xfree(lstval);
-  } else {
-    char_u *strval = get_tv_string_chk(&argvars[1]);
-    if (strval == NULL) {
-      return;
-    }
-    write_reg_contents_ex(regname, strval, -1, append, yank_type, block_len);
+  if (!is_curbuf) {
+     curbuf = curbuf_save;
+     curwin = curwin_save;
   }
-  rettv->vval.v_number = 0;
-}
-
-/*
- * "settabvar()" function
- */
-static void f_settabvar(typval_T *argvars, typval_T *rettv)
-{
-  tabpage_T   *save_curtab;
-  tabpage_T   *tp;
-  char_u      *varname, *tabvarname;
-  typval_T    *varp;
-
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure())
-    return;
-
-  tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
-  varname = get_tv_string_chk(&argvars[1]);
-  varp = &argvars[2];
-
-  if (varname != NULL && varp != NULL
-      && tp != NULL
-      ) {
-    save_curtab = curtab;
-    goto_tabpage_tp(tp, FALSE, FALSE);
-
-    tabvarname = xmalloc(STRLEN(varname) + 3);
-    STRCPY(tabvarname, "t:");
-    STRCPY(tabvarname + 2, varname);
-    set_var(tabvarname, varp, TRUE);
-    xfree(tabvarname);
-
-    /* Restore current tabpage */
-    if (valid_tabpage(save_curtab))
-      goto_tabpage_tp(save_curtab, FALSE, FALSE);
-  }
-}
-
-/*
- * "settabwinvar()" function
- */
-static void f_settabwinvar(typval_T *argvars, typval_T *rettv)
-{
-  setwinvar(argvars, rettv, 1);
-}
-
-/*
- * "setwinvar()" function
- */
-static void f_setwinvar(typval_T *argvars, typval_T *rettv)
-{
-  setwinvar(argvars, rettv, 0);
 }
 
 /*
  * "setwinvar()" and "settabwinvar()" functions
  */
 
-static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
+void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
-  win_T       *win;
-  win_T       *save_curwin;
-  tabpage_T   *save_curtab;
-  char_u      *varname, *winvarname;
-  typval_T    *varp;
-  char_u nbuf[NUMBUFLEN];
-  tabpage_T   *tp = NULL;
-
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return;
+  }
 
-  if (off == 1)
-    tp = find_tabpage((int)get_tv_number_chk(&argvars[0], NULL));
-  else
+  tabpage_T *tp = NULL;
+  if (off == 1) {
+    tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
+  } else {
     tp = curtab;
-  win = find_win_by_nr(&argvars[off], tp);
-  varname = get_tv_string_chk(&argvars[off + 1]);
-  varp = &argvars[off + 2];
+  }
+  win_T *const win = find_win_by_nr(&argvars[off], tp);
+  const char *varname = tv_get_string_chk(&argvars[off + 1]);
+  typval_T *varp = &argvars[off + 2];
 
   if (win != NULL && varname != NULL && varp != NULL) {
+    win_T       *save_curwin;
+    tabpage_T   *save_curtab;
     bool need_switch_win = tp != curtab || win != curwin;
     if (!need_switch_win
         || switch_win(&save_curwin, &save_curtab, win, tp, true) == OK) {
       if (*varname == '&') {
         long numval;
-        char_u *strval;
-        int error = false;
+        bool error = false;
 
-        ++varname;
-        numval = get_tv_number_chk(varp, &error);
-        strval = get_tv_string_buf_chk(varp, nbuf);
+        varname++;
+        numval = tv_get_number_chk(varp, &error);
+        char nbuf[NUMBUFLEN];
+        const char *const strval = tv_get_string_buf_chk(varp, nbuf);
         if (!error && strval != NULL) {
           set_option_value(varname, numval, strval, OPT_LOCAL);
         }
       } else {
-        winvarname = xmalloc(STRLEN(varname) + 3);
-        STRCPY(winvarname, "w:");
-        STRCPY(winvarname + 2, varname);
-        set_var(winvarname, varp, true);
+        const size_t varname_len = strlen(varname);
+        char *const winvarname = xmalloc(varname_len + 3);
+        memcpy(winvarname, "w:", 2);
+        memcpy(winvarname + 2, varname, varname_len + 1);
+        set_var(winvarname, varname_len + 2, varp, true);
         xfree(winvarname);
       }
     }
@@ -15691,1108 +6975,50 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
   }
 }
 
-/// f_sha256 - sha256({string}) function
-static void f_sha256(typval_T *argvars, typval_T *rettv)
+/// "stdpath()" helper for list results
+void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u *p = get_tv_string(&argvars[0]);
-  const char_u *hash = sha256_bytes(p, (int) STRLEN(p) , NULL, 0);
-
-  // make a copy of the hash (sha256_bytes returns a static buffer)
-  rettv->vval.v_string = (char_u *) xstrdup((char *) hash);
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "shellescape({string})" function
- */
-static void f_shellescape(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_string = vim_strsave_shellescape(
-    get_tv_string(&argvars[0]), non_zero_arg(&argvars[1]), true);
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * shiftwidth() function
- */
-static void f_shiftwidth(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = get_sw_value(curbuf);
-}
-
-/*
- * "simplify()" function
- */
-static void f_simplify(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-
-  p = get_tv_string(&argvars[0]);
-  rettv->vval.v_string = vim_strsave(p);
-  simplify_filename(rettv->vval.v_string);      /* simplify in place */
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "sin()" function
- */
-static void f_sin(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &sin);
-}
-
-/*
- * "sinh()" function
- */
-static void f_sinh(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &sinh);
-}
-
-/// struct used in the array that's given to qsort()
-typedef struct {
-  listitem_T *item;
-  int idx;
-} sortItem_T;
-
-static int item_compare_ic;
-static bool item_compare_numeric;
-static char_u   *item_compare_func;
-static dict_T   *item_compare_selfdict;
-static int item_compare_func_err;
-#define ITEM_COMPARE_FAIL 999
-
-/*
- * Compare functions for f_sort() and f_uniq() below.
- */
-static int item_compare(const void *s1, const void *s2, bool keep_zero)
-{
-  sortItem_T  *si1, *si2;
-  char_u *p1;
-  char_u *p2;
-  char_u *tofree1 = NULL;
-  char_u *tofree2 = NULL;
-  int res;
-
-  si1 = (sortItem_T *)s1;
-  si2 = (sortItem_T *)s2;
-  typval_T *tv1 = &si1->item->li_tv;
-  typval_T *tv2 = &si2->item->li_tv;
-  // tv2string() puts quotes around a string and allocates memory.  Don't do
-  // that for string variables. Use a single quote when comparing with a
-  // non-string to do what the docs promise.
-  if (tv1->v_type == VAR_STRING) {
-    if (tv2->v_type != VAR_STRING || item_compare_numeric) {
-      p1 = (char_u *)"'";
-    } else {
-      p1 = tv1->vval.v_string;
-    }
-  } else {
-    tofree1 = p1 = (char_u *) tv2string(tv1, NULL);
-  }
-  if (tv2->v_type == VAR_STRING) {
-    if (tv1->v_type != VAR_STRING || item_compare_numeric) {
-      p2 = (char_u *)"'";
-    } else {
-      p2 = tv2->vval.v_string;
-    }
-  } else {
-    tofree2 = p2 = (char_u *) tv2string(tv2, NULL);
-  }
-  if (p1 == NULL)
-    p1 = (char_u *)"";
-  if (p2 == NULL)
-    p2 = (char_u *)"";
-  if (!item_compare_numeric) {
-    if (item_compare_ic) {
-      res = STRICMP(p1, p2);
-    } else {
-      res = STRCMP(p1, p2);
-    }
-  } else {
-    double n1, n2;
-    n1 = strtod((char *)p1, (char **)&p1);
-    n2 = strtod((char *)p2, (char **)&p2);
-    res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
-  }
-
-  // When the result would be zero, compare the item indexes.  Makes the
-  // sort stable.
-  if (res == 0 && !keep_zero) {
-    res = si1->idx > si2->idx ? 1 : -1;
-  }
-
-  xfree(tofree1);
-  xfree(tofree2);
-  return res;
-}
-
-static int item_compare_keeping_zero(const void *s1, const void *s2)
-{
-  return item_compare(s1, s2, true);
-}
-
-static int item_compare_not_keeping_zero(const void *s1, const void *s2)
-{
-  return item_compare(s1, s2, false);
-}
-
-static int item_compare2(const void *s1, const void *s2, bool keep_zero)
-{
-  sortItem_T  *si1, *si2;
-  int res;
-  typval_T rettv;
-  typval_T argv[3];
-  int dummy;
-
-  /* shortcut after failure in previous call; compare all items equal */
-  if (item_compare_func_err)
-    return 0;
-
-  si1 = (sortItem_T *)s1;
-  si2 = (sortItem_T *)s2;
-
-  // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
-  // in the copy without changing the original list items.
-  copy_tv(&si1->item->li_tv, &argv[0]);
-  copy_tv(&si2->item->li_tv, &argv[1]);
-
-  rettv.v_type = VAR_UNKNOWN;           /* clear_tv() uses this */
-  res = call_func(item_compare_func, (int)STRLEN(item_compare_func),
-      &rettv, 2, argv, 0L, 0L, &dummy, TRUE,
-      item_compare_selfdict);
-  clear_tv(&argv[0]);
-  clear_tv(&argv[1]);
-
-  if (res == FAIL)
-    res = ITEM_COMPARE_FAIL;
-  else
-    res = get_tv_number_chk(&rettv, &item_compare_func_err);
-  if (item_compare_func_err)
-    res = ITEM_COMPARE_FAIL;      /* return value has wrong type */
-  clear_tv(&rettv);
-
-  // When the result would be zero, compare the pointers themselves.  Makes
-  // the sort stable.
-  if (res == 0 && !keep_zero) {
-    res = si1->idx > si2->idx ? 1 : -1;
-  }
-
-  return res;
-}
-
-static int item_compare2_keeping_zero(const void *s1, const void *s2)
-{
-  return item_compare2(s1, s2, true);
-}
-
-static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
-{
-  return item_compare2(s1, s2, false);
-}
-
-/*
- * "sort({list})" function
- */
-static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
-{
-  list_T      *l;
-  listitem_T  *li;
-  sortItem_T  *ptrs;
-  long len;
-  long i;
-
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
-  } else {
-    l = argvars[0].vval.v_list;
-    if (l == NULL ||
-        tv_check_lock(l->lv_lock,
-                      (char_u *)(sort
-                                 ? N_("sort() argument")
-                                 : N_("uniq() argument")),
-                      true)) {
-      return;
-    }
-    rettv->vval.v_list = l;
-    rettv->v_type = VAR_LIST;
-    ++l->lv_refcount;
-
-    len = list_len(l);
-    if (len <= 1)
-      return;           /* short list sorts pretty quickly */
-
-    item_compare_ic = FALSE;
-    item_compare_numeric = false;
-    item_compare_func = NULL;
-    item_compare_selfdict = NULL;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      /* optional second argument: {func} */
-      if (argvars[1].v_type == VAR_FUNC) {
-        item_compare_func = argvars[1].vval.v_string;
-      } else {
-        int error = FALSE;
-
-        i = get_tv_number_chk(&argvars[1], &error);
-        if (error)
-          return;                       /* type error; errmsg already given */
-        if (i == 1)
-          item_compare_ic = TRUE;
-        else
-          item_compare_func = get_tv_string(&argvars[1]);
-        if (item_compare_func != NULL) {
-          if (STRCMP(item_compare_func, "n") == 0) {
-            item_compare_func = NULL;
-            item_compare_numeric = true;
-          } else if (STRCMP(item_compare_func, "i") == 0) {
-            item_compare_func = NULL;
-            item_compare_ic = TRUE;
-          }
-        }
-      }
-
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        /* optional third argument: {dict} */
-        if (argvars[2].v_type != VAR_DICT) {
-          EMSG(_(e_dictreq));
-          return;
-        }
-        item_compare_selfdict = argvars[2].vval.v_dict;
-      }
-    }
-
-    /* Make an array with each entry pointing to an item in the List. */
-    ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
-
-    i = 0;
-    if (sort) {
-      // sort(): ptrs will be the list to sort.
-      for (li = l->lv_first; li != NULL; li = li->li_next) {
-        ptrs[i].item = li;
-        ptrs[i].idx = i;
-        i++;
-      }
-
-      item_compare_func_err = FALSE;
-      // Test the compare function.
-      if (item_compare_func != NULL
-          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
-             == ITEM_COMPARE_FAIL) {
-        EMSG(_("E702: Sort compare function failed"));
-      } else {
-        // Sort the array with item pointers.
-        qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              item_compare_func == NULL ? item_compare_not_keeping_zero :
-                                          item_compare2_not_keeping_zero);
-
-        if (!item_compare_func_err) {
-          // Clear the list and append the items in the sorted order.
-          l->lv_first    = NULL;
-          l->lv_last     = NULL;
-          l->lv_idx_item = NULL;
-          l->lv_len      = 0;
-
-          for (i = 0; i < len; i++) {
-            list_append(l, ptrs[i].item);
-          }
-        }
-      }
-    } else {
-      int (*item_compare_func_ptr)(const void *, const void *);
-
-      // f_uniq(): ptrs will be a stack of items to remove.
-      item_compare_func_err = FALSE;
-      item_compare_func_ptr = item_compare_func ? item_compare2_keeping_zero :
-                                                  item_compare_keeping_zero;
-
-      for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
-        if (item_compare_func_ptr(&li, &li->li_next) == 0) {
-          ptrs[i++].item = li;
-        }
-        if (item_compare_func_err) {
-          EMSG(_("E882: Uniq compare function failed"));
-          break;
-        }
-      }
-
-      if (!item_compare_func_err) {
-        while (--i >= 0) {
-          assert(ptrs[i].item->li_next);
-          li = ptrs[i].item->li_next;
-          ptrs[i].item->li_next = li->li_next;
-          if (li->li_next != NULL) {
-            li->li_next->li_prev = ptrs[i].item;
-          } else {
-            l->lv_last = ptrs[i].item;
-          }
-          list_fix_watch(l, li);
-          listitem_free(li);
-          l->lv_len--;
-        }
-      }
-    }
-
-    xfree(ptrs);
-  }
-}
-
-/// "sort"({list})" function
-static void f_sort(typval_T *argvars, typval_T *rettv)
-{
-  do_sort_uniq(argvars, rettv, true);
-}
-
-/// "uniq({list})" function
-static void f_uniq(typval_T *argvars, typval_T *rettv)
-{
-  do_sort_uniq(argvars, rettv, false);
-}
-
-/*
- * "soundfold({word})" function
- */
-static void f_soundfold(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *s;
-
-  rettv->v_type = VAR_STRING;
-  s = get_tv_string(&argvars[0]);
-  rettv->vval.v_string = eval_soundfold(s);
-}
-
-/*
- * "spellbadword()" function
- */
-static void f_spellbadword(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *word = (char_u *)"";
-  hlf_T attr = HLF_COUNT;
-  size_t len = 0;
-
-  rettv_list_alloc(rettv);
-
-  if (argvars[0].v_type == VAR_UNKNOWN) {
-    /* Find the start and length of the badly spelled word. */
-    len = spell_move_to(curwin, FORWARD, TRUE, TRUE, &attr);
-    if (len != 0)
-      word = get_cursor_pos_ptr();
-  } else if (curwin->w_p_spell && *curbuf->b_s.b_p_spl != NUL) {
-    char_u  *str = get_tv_string_chk(&argvars[0]);
-    int capcol = -1;
-
-    if (str != NULL) {
-      /* Check the argument for spelling. */
-      while (*str != NUL) {
-        len = spell_check(curwin, str, &attr, &capcol, false);
-        if (attr != HLF_COUNT) {
-          word = str;
-          break;
-        }
-        str += len;
-      }
-    }
-  }
-
-  assert(len <= INT_MAX);
-  list_append_string(rettv->vval.v_list, word, (int)len);
-  list_append_string(rettv->vval.v_list,
-                     (char_u *)(attr == HLF_SPB ? "bad" :
-                                attr == HLF_SPR ? "rare" :
-                                attr == HLF_SPL ? "local" :
-                                attr == HLF_SPC ? "caps" :
-                                ""),
-                     -1);
-}
-
-/*
- * "spellsuggest()" function
- */
-static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *str;
-  int typeerr = FALSE;
-  int maxcount;
-  garray_T ga;
-  listitem_T  *li;
-  bool need_capital = false;
-
-  rettv_list_alloc(rettv);
-
-  if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
-    str = get_tv_string(&argvars[0]);
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      maxcount = get_tv_number_chk(&argvars[1], &typeerr);
-      if (maxcount <= 0)
-        return;
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        need_capital = get_tv_number_chk(&argvars[2], &typeerr);
-        if (typeerr)
-          return;
-      }
-    } else
-      maxcount = 25;
-
-    spell_suggest_list(&ga, str, maxcount, need_capital, false);
-
-    for (int i = 0; i < ga.ga_len; ++i) {
-      str = ((char_u **)ga.ga_data)[i];
-
-      li = listitem_alloc();
-      li->li_tv.v_type = VAR_STRING;
-      li->li_tv.v_lock = 0;
-      li->li_tv.vval.v_string = str;
-      list_append(rettv->vval.v_list, li);
-    }
-    ga_clear(&ga);
-  }
-}
-
-static void f_split(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *str;
-  char_u      *end;
-  char_u      *pat = NULL;
-  regmatch_T regmatch;
-  char_u patbuf[NUMBUFLEN];
-  char_u      *save_cpo;
-  int match;
-  colnr_T col = 0;
-  int keepempty = FALSE;
-  int typeerr = FALSE;
-
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
-  save_cpo = p_cpo;
-  p_cpo = (char_u *)"";
-
-  str = get_tv_string(&argvars[0]);
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    pat = get_tv_string_buf_chk(&argvars[1], patbuf);
-    if (pat == NULL)
-      typeerr = TRUE;
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      keepempty = get_tv_number_chk(&argvars[2], &typeerr);
-  }
-  if (pat == NULL || *pat == NUL)
-    pat = (char_u *)"[\\x01- ]\\+";
-
-  rettv_list_alloc(rettv);
-
-  if (typeerr)
-    return;
-
-  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-  if (regmatch.regprog != NULL) {
-    regmatch.rm_ic = FALSE;
-    while (*str != NUL || keepempty) {
-      if (*str == NUL)
-        match = FALSE;          /* empty item at the end */
-      else
-        match = vim_regexec_nl(&regmatch, str, col);
-      if (match)
-        end = regmatch.startp[0];
-      else
-        end = str + STRLEN(str);
-      if (keepempty || end > str || (rettv->vval.v_list->lv_len > 0
-                                     && *str != NUL && match && end <
-                                     regmatch.endp[0])) {
-        list_append_string(rettv->vval.v_list, str, (int)(end - str));
-      }
-      if (!match)
-        break;
-      /* Advance to just after the match. */
-      if (regmatch.endp[0] > str)
-        col = 0;
-      else {
-        /* Don't get stuck at the same match. */
-        col = (*mb_ptr2len)(regmatch.endp[0]);
-      }
-      str = regmatch.endp[0];
-    }
-
-    vim_regfree(regmatch.regprog);
-  }
-
-  p_cpo = save_cpo;
-}
-
-/*
- * "sqrt()" function
- */
-static void f_sqrt(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &sqrt);
-}
-
-/*
- * "str2float()" function
- */
-static void f_str2float(typval_T *argvars, typval_T *rettv)
-{
-  char_u *p = skipwhite(get_tv_string(&argvars[0]));
-
-  if (*p == '+')
-    p = skipwhite(p + 1);
-  (void)string2float(p, &rettv->vval.v_float);
-  rettv->v_type = VAR_FLOAT;
-}
-
-// "str2nr()" function
-static void f_str2nr(typval_T *argvars, typval_T *rettv)
-{
-  int base = 10;
-  char_u      *p;
-  long n;
-  int what;
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    base = get_tv_number(&argvars[1]);
-    if (base != 2 && base != 8 && base != 10 && base != 16) {
-      EMSG(_(e_invarg));
-      return;
-    }
-  }
-
-  p = skipwhite(get_tv_string(&argvars[0]));
-  if (*p == '+') {
-    p = skipwhite(p + 1);
-  }
-  switch (base) {
-    case 2:
-      what = STR2NR_BIN + STR2NR_FORCE;
-      break;
-    case 8:
-      what = STR2NR_OCT + STR2NR_FORCE;
-      break;
-    case 16:
-      what = STR2NR_HEX + STR2NR_FORCE;
-      break;
-    default:
-      what = 0;
-  }
-  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0);
-  rettv->vval.v_number = n;
-}
-
-/*
- * "strftime({format}[, {time}])" function
- */
-static void f_strftime(typval_T *argvars, typval_T *rettv)
-{
-  char_u result_buf[256];
-  time_t seconds;
-  char_u      *p;
-
-  rettv->v_type = VAR_STRING;
-
-  p = get_tv_string(&argvars[0]);
-  if (argvars[1].v_type == VAR_UNKNOWN)
-    seconds = time(NULL);
-  else
-    seconds = (time_t)get_tv_number(&argvars[1]);
-
-  struct tm curtime;
-  struct tm *curtime_ptr = os_localtime_r(&seconds, &curtime);
-  /* MSVC returns NULL for an invalid value of seconds. */
-  if (curtime_ptr == NULL)
-    rettv->vval.v_string = vim_strsave((char_u *)_("(Invalid)"));
-  else {
-    vimconv_T conv;
-    char_u      *enc;
-
-    conv.vc_type = CONV_NONE;
-    enc = enc_locale();
-    convert_setup(&conv, p_enc, enc);
-    if (conv.vc_type != CONV_NONE)
-      p = string_convert(&conv, p, NULL);
-    if (p != NULL)
-      (void)strftime((char *)result_buf, sizeof(result_buf),
-          (char *)p, curtime_ptr);
-    else
-      result_buf[0] = NUL;
-
-    if (conv.vc_type != CONV_NONE)
-      xfree(p);
-    convert_setup(&conv, enc, p_enc);
-    if (conv.vc_type != CONV_NONE)
-      rettv->vval.v_string = string_convert(&conv, result_buf, NULL);
-    else
-      rettv->vval.v_string = vim_strsave(result_buf);
-
-    /* Release conversion descriptors */
-    convert_setup(&conv, NULL, NULL);
-    xfree(enc);
-  }
-}
-
-/*
- * "stridx()" function
- */
-static void f_stridx(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-  char_u      *needle;
-  char_u      *haystack;
-  char_u      *save_haystack;
-  char_u      *pos;
-  int start_idx;
-
-  needle = get_tv_string_chk(&argvars[1]);
-  save_haystack = haystack = get_tv_string_buf_chk(&argvars[0], buf);
-  rettv->vval.v_number = -1;
-  if (needle == NULL || haystack == NULL)
-    return;             /* type error; errmsg already given */
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    int error = FALSE;
-
-    start_idx = get_tv_number_chk(&argvars[2], &error);
-    if (error || start_idx >= (int)STRLEN(haystack))
-      return;
-    if (start_idx >= 0)
-      haystack += start_idx;
-  }
-
-  pos = (char_u *)strstr((char *)haystack, (char *)needle);
-  if (pos != NULL)
-    rettv->vval.v_number = (varnumber_T)(pos - save_haystack);
-}
-
-/*
- * "string()" function
- */
-static void f_string(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *) tv2string(&argvars[0], NULL);
-}
-
-/*
- * "strlen()" function
- */
-static void f_strlen(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = (varnumber_T)(STRLEN(
-                                           get_tv_string(&argvars[0])));
-}
-
-/*
- * "strchars()" function
- */
-static void f_strchars(typval_T *argvars, typval_T *rettv)
-{
-  char_u              *s = get_tv_string(&argvars[0]);
-  int skipcc = 0;
-  varnumber_T len = 0;
-  int (*func_mb_ptr2char_adv)(char_u **pp);
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    skipcc = get_tv_number_chk(&argvars[1], NULL);
-  }
-  if (skipcc < 0 || skipcc > 1) {
-    EMSG(_(e_invarg));
-  } else {
-    func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
-    while (*s != NUL) {
-      func_mb_ptr2char_adv(&s);
-      ++len;
-    }
-    rettv->vval.v_number = len;
-  }
-}
-
-/*
- * "strdisplaywidth()" function
- */
-static void f_strdisplaywidth(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *s = get_tv_string(&argvars[0]);
-  int col = 0;
-
-  if (argvars[1].v_type != VAR_UNKNOWN)
-    col = get_tv_number(&argvars[1]);
-
-  rettv->vval.v_number = (varnumber_T)(linetabsize_col(col, s) - col);
-}
-
-/*
- * "strwidth()" function
- */
-static void f_strwidth(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *s = get_tv_string(&argvars[0]);
-
-  rettv->vval.v_number = (varnumber_T) mb_string2cells(s);
-}
-
-/*
- * "strpart()" function
- */
-static void f_strpart(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-  int n;
-  int len;
-  int slen;
-  int error = FALSE;
-
-  p = get_tv_string(&argvars[0]);
-  slen = (int)STRLEN(p);
-
-  n = get_tv_number_chk(&argvars[1], &error);
-  if (error)
-    len = 0;
-  else if (argvars[2].v_type != VAR_UNKNOWN)
-    len = get_tv_number(&argvars[2]);
-  else
-    len = slen - n;         /* default len: all bytes that are available. */
-
-  /*
-   * Only return the overlap between the specified part and the actual
-   * string.
-   */
-  if (n < 0) {
-    len += n;
-    n = 0;
-  } else if (n > slen)
-    n = slen;
-  if (len < 0)
-    len = 0;
-  else if (n + len > slen)
-    len = slen - n;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strnsave(p + n, len);
-}
-
-/*
- * "strridx()" function
- */
-static void f_strridx(typval_T *argvars, typval_T *rettv)
-{
-  char_u buf[NUMBUFLEN];
-  char_u      *needle;
-  char_u      *haystack;
-  char_u      *rest;
-  char_u      *lastmatch = NULL;
-  int haystack_len, end_idx;
-
-  needle = get_tv_string_chk(&argvars[1]);
-  haystack = get_tv_string_buf_chk(&argvars[0], buf);
-
-  rettv->vval.v_number = -1;
-  if (needle == NULL || haystack == NULL)
-    return;             /* type error; errmsg already given */
-
-  haystack_len = (int)STRLEN(haystack);
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    /* Third argument: upper limit for index */
-    end_idx = get_tv_number_chk(&argvars[2], NULL);
-    if (end_idx < 0)
-      return;           /* can never find a match */
-  } else
-    end_idx = haystack_len;
-
-  if (*needle == NUL) {
-    /* Empty string matches past the end. */
-    lastmatch = haystack + end_idx;
-  } else {
-    for (rest = haystack; *rest != NUL; ++rest) {
-      rest = (char_u *)strstr((char *)rest, (char *)needle);
-      if (rest == NULL || rest > haystack + end_idx)
-        break;
-      lastmatch = rest;
-    }
-  }
-
-  if (lastmatch == NULL)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = (varnumber_T)(lastmatch - haystack);
-}
-
-/*
- * "strtrans()" function
- */
-static void f_strtrans(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = transstr(get_tv_string(&argvars[0]));
-}
-
-/*
- * "submatch()" function
- */
-static void f_submatch(typval_T *argvars, typval_T *rettv)
-{
-  int error = FALSE;
-  int no = (int)get_tv_number_chk(&argvars[0], &error);
-  if (error) {
-    return;
-  }
-
-  int retList = 0;
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    retList = get_tv_number_chk(&argvars[1], &error);
-    if (error) {
-    return;
-    }
-  }
-
-  if (retList == 0) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = reg_submatch(no);
-  } else {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = reg_submatch_list(no);
-  }
-}
-
-/*
- * "substitute()" function
- */
-static void f_substitute(typval_T *argvars, typval_T *rettv)
-{
-  char_u patbuf[NUMBUFLEN];
-  char_u subbuf[NUMBUFLEN];
-  char_u flagsbuf[NUMBUFLEN];
-
-  char_u      *str = get_tv_string_chk(&argvars[0]);
-  char_u      *pat = get_tv_string_buf_chk(&argvars[1], patbuf);
-  char_u      *sub = get_tv_string_buf_chk(&argvars[2], subbuf);
-  char_u      *flg = get_tv_string_buf_chk(&argvars[3], flagsbuf);
-
-  rettv->v_type = VAR_STRING;
-  if (str == NULL || pat == NULL || sub == NULL || flg == NULL)
-    rettv->vval.v_string = NULL;
-  else
-    rettv->vval.v_string = do_string_sub(str, pat, sub, flg);
-}
-
-/*
- * "synID(lnum, col, trans)" function
- */
-static void f_synID(typval_T *argvars, typval_T *rettv)
-{
-  int id = 0;
-  long lnum;
-  long col;
-  int trans;
-  int transerr = FALSE;
-
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
-  trans = get_tv_number_chk(&argvars[2], &transerr);
-
-  if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && col < (long)STRLEN(ml_get(lnum)))
-    id = syn_get_id(curwin, lnum, (colnr_T)col, trans, NULL, FALSE);
-
-  rettv->vval.v_number = id;
-}
-
-/*
- * "synIDattr(id, what [, mode])" function
- */
-static void f_synIDattr(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p = NULL;
-  int id;
-  char_u      *what;
-  char_u      *mode;
-  char_u modebuf[NUMBUFLEN];
-  int modec;
-
-  id = get_tv_number(&argvars[0]);
-  what = get_tv_string(&argvars[1]);
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    mode = get_tv_string_buf(&argvars[2], modebuf);
-    modec = TOLOWER_ASC(mode[0]);
-    if (modec != 'c' && modec != 'g')
-      modec = 0;        /* replace invalid with current */
-  } else if (ui_rgb_attached()) {
-    modec = 'g';
-  } else {
-    modec = 'c';
-  }
-
-
-  switch (TOLOWER_ASC(what[0])) {
-  case 'b':
-    if (TOLOWER_ASC(what[1]) == 'g')                    /* bg[#] */
-      p = highlight_color(id, what, modec);
-    else                                                /* bold */
-      p = highlight_has_attr(id, HL_BOLD, modec);
-    break;
-
-  case 'f':                                             /* fg[#] or font */
-    p = highlight_color(id, what, modec);
-    break;
-
-  case 'i':
-    if (TOLOWER_ASC(what[1]) == 'n')                    /* inverse */
-      p = highlight_has_attr(id, HL_INVERSE, modec);
-    else                                                /* italic */
-      p = highlight_has_attr(id, HL_ITALIC, modec);
-    break;
-
-  case 'n':                                             /* name */
-    p = get_highlight_name(NULL, id - 1);
-    break;
-
-  case 'r':                                             /* reverse */
-    p = highlight_has_attr(id, HL_INVERSE, modec);
-    break;
-
-  case 's':
-    if (TOLOWER_ASC(what[1]) == 'p')                    /* sp[#] */
-      p = highlight_color(id, what, modec);
-    else                                                /* standout */
-      p = highlight_has_attr(id, HL_STANDOUT, modec);
-    break;
-
-  case 'u':
-    if (STRLEN(what) <= 5 || TOLOWER_ASC(what[5]) != 'c')
-      /* underline */
-      p = highlight_has_attr(id, HL_UNDERLINE, modec);
-    else
-      /* undercurl */
-      p = highlight_has_attr(id, HL_UNDERCURL, modec);
-    break;
-  }
-
-  if (p != NULL)
-    p = vim_strsave(p);
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = p;
-}
-
-/*
- * "synIDtrans(id)" function
- */
-static void f_synIDtrans(typval_T *argvars, typval_T *rettv)
-{
-  int id;
-
-  id = get_tv_number(&argvars[0]);
-
-  if (id > 0)
-    id = syn_get_final_id(id);
-  else
-    id = 0;
-
-  rettv->vval.v_number = id;
-}
-
-/*
- * "synconcealed(lnum, col)" function
- */
-static void f_synconcealed(typval_T *argvars, typval_T *rettv)
-{
-  long lnum;
-  long col;
-  int syntax_flags = 0;
-  int cchar;
-  int matchid = 0;
-  char_u str[NUMBUFLEN];
-
+  const void *iter = NULL;
+  list_T *const list = tv_list_alloc(kListLenShouldKnow);
   rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = NULL;
-
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
-
-  memset(str, NUL, sizeof(str));
-
-  rettv_list_alloc(rettv);
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
-    (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
-    syntax_flags = get_syntax_info(&matchid);
-
-    // get the conceal character
-    if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
-      cchar = syn_get_sub_char();
-      if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL) {
-        cchar = lcs_conceal;
-      }
-      if (cchar != NUL) {
-        if (has_mbyte)
-          (*mb_char2bytes)(cchar, str);
-        else
-          str[0] = cchar;
-      }
-    }
+  rettv->vval.v_list = list;
+  tv_list_ref(list);
+  char *const dirs = stdpaths_get_xdg_var(xdg);
+  if (dirs == NULL) {
+    return;
   }
-
-  list_append_number(rettv->vval.v_list, (syntax_flags & HL_CONCEAL) != 0);
-  // -1 to auto-determine strlen
-  list_append_string(rettv->vval.v_list, str, -1);
-  list_append_number(rettv->vval.v_list, matchid);
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = vim_env_iter(':', dirs, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      char *dir_with_nvim = xmemdupz(dir, dir_len);
+      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, "nvim", true);
+      tv_list_append_string(list, dir_with_nvim, strlen(dir_with_nvim));
+      xfree(dir_with_nvim);
+    }
+  } while (iter != NULL);
+  xfree(dirs);
 }
 
-/*
- * "synstack(lnum, col)" function
- */
-static void f_synstack(typval_T *argvars, typval_T *rettv)
+static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
 {
-  long lnum;
-  long col;
-
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = NULL;
-
-  lnum = get_tv_lnum(argvars);                  /* -1 on type error */
-  col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
-
-  if (lnum >= 1
-      && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum))) {
-    rettv_list_alloc(rettv);
-    (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
-
-    int id;
-    int i = 0;
-    while ((id = syn_get_stack_item(i++)) >= 0) {
-      list_append_number(rettv->vval.v_list, id);
-    }
+  if (!keepempty && str[len - 1] == NL) {
+    len--;
   }
-}
-
-static list_T* string_to_list(char_u *str, size_t len, bool keepempty)
-{
-  list_T *list = list_alloc();
-
-  // Copy each line to a list element using NL as the delimiter.
-  for (size_t i = 0; i < len; i++) {
-    char_u *start = str + i;
-    size_t line_len = (char_u *) xmemscan(start, NL, len - i) - start;
-    i += line_len;
-
-    // Don't use a str function to copy res as it may contains NULs.
-    char_u *s = xmemdupz(start, line_len);
-    memchrsub(s, NUL, NL, line_len);  // Replace NUL with NL to avoid truncation
-
-    listitem_T  *li = listitem_alloc();
-    li->li_tv.v_type = VAR_STRING;
-    li->li_tv.v_lock = 0;
-    li->li_tv.vval.v_string = s;
-    list_append(list, li);
-  }
-
-  // Optionally retain final newline, if present
-  if (keepempty && str[len-1] == NL) {
-      list_append_string(list, (char_u*)"", 0);
-  }
-
+  list_T *const list = tv_list_alloc(kListLenMayKnow);
+  encode_list_write(list, str, len);
   return list;
 }
 
-static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
-                                       bool retlist)
+// os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
+void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
+                                bool retlist)
 {
+  proftime_T wait_time;
+  bool profiling = do_profiling == PROF_YES;
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
@@ -16801,24 +7027,45 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   // get input to the shell command (if any), and its length
-  ssize_t input_len;
-  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
+  ptrdiff_t input_len;
+  char *input = save_tv_as_string(&argvars[1], &input_len, false);
   if (input_len < 0) {
     assert(input == NULL);
     return;
   }
 
   // get shell command to execute
-  char **argv = tv_to_argv(&argvars[0], NULL);
+  bool executable = true;
+  char **argv = tv_to_argv(&argvars[0], NULL, &executable);
   if (!argv) {
+    if (!executable) {
+      set_vim_var_nr(VV_SHELL_ERROR, (long)-1);
+    }
     xfree(input);
     return;  // Already did emsg.
+  }
+
+  if (p_verbose > 3) {
+    char *cmdstr = shell_argv_to_str(argv);
+    verbose_enter_scroll();
+    smsg(_("Executing command: \"%s\""), cmdstr);
+    msg_puts("\n\n");
+    verbose_leave_scroll();
+    xfree(cmdstr);
+  }
+
+  if (profiling) {
+    prof_child_enter(&wait_time);
   }
 
   // execute the command
   size_t nread = 0;
   char *res = NULL;
   int status = os_system(argv, input, input_len, &res, &nread);
+
+  if (profiling) {
+    prof_child_exit(&wait_time);
+  }
 
   xfree(input);
 
@@ -16827,7 +7074,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   if (res == NULL) {
     if (retlist) {
       // return an empty list when there's no output
-      rettv_list_alloc(rettv);
+      tv_list_alloc_ret(rettv, 0);
     } else {
       rettv->vval.v_string = (char_u *) xstrdup("");
     }
@@ -16837,10 +7084,10 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   if (retlist) {
     int keepempty = 0;
     if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
-      keepempty = get_tv_number(&argvars[2]);
+      keepempty = tv_get_number(&argvars[2]);
     }
-    rettv->vval.v_list = string_to_list((char_u *) res, nread, keepempty != 0);
-    rettv->vval.v_list->lv_refcount++;
+    rettv->vval.v_list = string_to_list(res, nread, (bool)keepempty);
+    tv_list_ref(rettv->vval.v_list);
     rettv->v_type = VAR_LIST;
 
     xfree(res);
@@ -16865,911 +7112,502 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 }
 
-/// f_system - the VimL system() function
-static void f_system(typval_T *argvars, typval_T *rettv)
+bool callback_from_typval(Callback *const callback, typval_T *const arg)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  get_system_output_as_rettv(argvars, rettv, false);
-}
+  int r = OK;
 
-static void f_systemlist(typval_T *argvars, typval_T *rettv)
-{
-  get_system_output_as_rettv(argvars, rettv, true);
-}
-
-
-/*
- * "tabpagebuflist()" function
- */
-static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv)
-{
-  tabpage_T   *tp;
-  win_T       *wp = NULL;
-
-  if (argvars[0].v_type == VAR_UNKNOWN)
-    wp = firstwin;
-  else {
-    tp = find_tabpage((int)get_tv_number(&argvars[0]));
-    if (tp != NULL)
-      wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
-  }
-  if (wp != NULL) {
-    rettv_list_alloc(rettv);
-    while (wp != NULL) {
-      list_append_number(rettv->vval.v_list, wp->w_buffer->b_fnum);
-      wp = wp->w_next;
-    }
-  }
-}
-
-
-/*
- * "tabpagenr()" function
- */
-static void f_tabpagenr(typval_T *argvars, typval_T *rettv)
-{
-  int nr = 1;
-  char_u      *arg;
-
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    arg = get_tv_string_chk(&argvars[0]);
-    nr = 0;
-    if (arg != NULL) {
-      if (STRCMP(arg, "$") == 0)
-        nr = tabpage_index(NULL) - 1;
-      else
-        EMSG2(_(e_invexpr2), arg);
-    }
-  } else
-    nr = tabpage_index(curtab);
-  rettv->vval.v_number = nr;
-}
-
-
-
-/*
- * Common code for tabpagewinnr() and winnr().
- */
-static int get_winnr(tabpage_T *tp, typval_T *argvar)
-{
-  win_T       *twin;
-  int nr = 1;
-  win_T       *wp;
-  char_u      *arg;
-
-  twin = (tp == curtab) ? curwin : tp->tp_curwin;
-  if (argvar->v_type != VAR_UNKNOWN) {
-    arg = get_tv_string_chk(argvar);
-    if (arg == NULL)
-      nr = 0;                   /* type error; errmsg already given */
-    else if (STRCMP(arg, "$") == 0)
-      twin = (tp == curtab) ? lastwin : tp->tp_lastwin;
-    else if (STRCMP(arg, "#") == 0) {
-      twin = (tp == curtab) ? prevwin : tp->tp_prevwin;
-      if (twin == NULL)
-        nr = 0;
-    } else {
-      EMSG2(_(e_invexpr2), arg);
-      nr = 0;
-    }
+  if (arg->v_type == VAR_PARTIAL && arg->vval.v_partial != NULL) {
+    callback->data.partial = arg->vval.v_partial;
+    callback->data.partial->pt_refcount++;
+    callback->type = kCallbackPartial;
+  } else if (arg->v_type == VAR_STRING
+             && arg->vval.v_string != NULL
+             && ascii_isdigit(*arg->vval.v_string)) {
+    r = FAIL;
+  } else if (arg->v_type == VAR_FUNC || arg->v_type == VAR_STRING) {
+    char_u *name = arg->vval.v_string;
+    func_ref(name);
+    callback->data.funcref = vim_strsave(name);
+    callback->type = kCallbackFuncref;
+  } else if (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0) {
+    callback->type = kCallbackNone;
+  } else {
+    r = FAIL;
   }
 
-  if (nr > 0)
-    for (wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
-         wp != twin; wp = wp->w_next) {
-      if (wp == NULL) {
-        /* didn't find it in this tabpage */
-        nr = 0;
-        break;
-      }
-      ++nr;
-    }
-  return nr;
-}
-
-/*
- * "tabpagewinnr()" function
- */
-static void f_tabpagewinnr(typval_T *argvars, typval_T *rettv)
-{
-  int nr = 1;
-  tabpage_T   *tp;
-
-  tp = find_tabpage((int)get_tv_number(&argvars[0]));
-  if (tp == NULL)
-    nr = 0;
-  else
-    nr = get_winnr(tp, &argvars[1]);
-  rettv->vval.v_number = nr;
-}
-
-
-/*
- * "tagfiles()" function
- */
-static void f_tagfiles(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *fname;
-  tagname_T tn;
-
-  rettv_list_alloc(rettv);
-  fname = xmalloc(MAXPATHL);
-
-  int first = TRUE;
-  while (get_tagfname(&tn, first, fname) == OK) {
-    list_append_string(rettv->vval.v_list, fname, -1);
-    first = FALSE;
+  if (r == FAIL) {
+    EMSG(_("E921: Invalid callback argument"));
+    return false;
   }
-
-  tagname_free(&tn);
-  xfree(fname);
+  return true;
 }
 
-/*
- * "taglist()" function
- */
-static void f_taglist(typval_T *argvars, typval_T *rettv)
+bool callback_call(Callback *const callback, const int argcount_in,
+                   typval_T *const argvars_in, typval_T *const rettv)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u  *tag_pattern;
-
-  tag_pattern = get_tv_string(&argvars[0]);
-
-  rettv->vval.v_number = FALSE;
-  if (*tag_pattern == NUL)
-    return;
-
-  (void)get_tags(rettv_list_alloc(rettv), tag_pattern);
-}
-
-/*
- * "tempname()" function
- */
-static void f_tempname(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_tempname();
-}
-
-// "termopen(cmd[, cwd])" function
-static void f_termopen(typval_T *argvars, typval_T *rettv)
-{
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (curbuf->b_changed) {
-    EMSG(_("Can only call this function in an unmodified buffer"));
-    return;
-  }
-
-  char *cmd;
-  char **argv = tv_to_argv(&argvars[0], &cmd);
-  if (!argv) {
-    return;  // Did error message in tv_to_argv.
-  }
-
-  if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
-    // Wrong argument type
-    EMSG2(_(e_invarg2), "expected dictionary");
-    shell_free_argv(argv);
-    return;
-  }
-
-  ufunc_T *on_stdout = NULL, *on_stderr = NULL, *on_exit = NULL;
-  dict_T *job_opts = NULL;
-  if (argvars[1].v_type == VAR_DICT) {
-    job_opts = argvars[1].vval.v_dict;
-    if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
-      shell_free_argv(argv);
-      return;
-    }
-  }
-
-  TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          job_opts, true, false);
-  data->proc.pty.width = curwin->w_width;
-  data->proc.pty.height = curwin->w_height;
-  data->proc.pty.term_name = xstrdup("xterm-256color");
-  if (!common_job_start(data, rettv)) {
-    return;
-  }
-  TerminalOptions topts;
-  topts.data = data;
-  topts.width = curwin->w_width;
-  topts.height = curwin->w_height;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
-
-  char *cwd = ".";
-  if (argvars[1].v_type == VAR_STRING
-      && os_isdir(argvars[1].vval.v_string)) {
-    cwd = (char *)argvars[1].vval.v_string;
-  }
-  int pid = data->proc.pty.process.pid;
-
-  char buf[1024];
-  // format the title with the pid to conform with the term:// URI
-  snprintf(buf, sizeof(buf), "term://%s//%d:%s", cwd, pid, cmd);
-  // at this point the buffer has no terminal instance associated yet, so unset
-  // the 'swapfile' option to ensure no swap file will be created
-  curbuf->b_p_swf = false;
-  (void)setfname(curbuf, (uint8_t *)buf, NULL, true);
-  // Save the job id and pid in b:terminal_job_{id,pid}
-  Error err;
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-      INTEGER_OBJ(rettv->vval.v_number), &err);
-  dict_set_value(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-      INTEGER_OBJ(pid), &err);
-
-  Terminal *term = terminal_open(topts);
-  data->term = term;
-  data->refcount++;
-
-  return;
-}
-
-/*
- * "test(list)" function: Just checking the walls...
- */
-static void f_test(typval_T *argvars, typval_T *rettv)
-{
-  /* Used for unit testing.  Change the code below to your liking. */
-}
-
-/*
- * "tan()" function
- */
-static void f_tan(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &tan);
-}
-
-/*
- * "tanh()" function
- */
-static void f_tanh(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &tanh);
-}
-
-/*
- * "tolower(string)" function
- */
-static void f_tolower(typval_T *argvars, typval_T *rettv)
-{
-  char_u *p = vim_strsave(get_tv_string(&argvars[0]));
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = p;
-
-  while (*p != NUL) {
-    int l;
-
-    if (enc_utf8) {
-      int c, lc;
-
-      c = utf_ptr2char(p);
-      lc = utf_tolower(c);
-      l = utf_ptr2len(p);
-      /* TODO: reallocate string when byte count changes. */
-      if (utf_char2len(lc) == l)
-        utf_char2bytes(lc, p);
-      p += l;
-    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-      p += l;                 /* skip multi-byte character */
-    else {
-      *p = TOLOWER_LOC(*p);         /* note that tolower() can be a macro */
-      ++p;
-    }
-  }
-}
-
-/*
- * "toupper(string)" function
- */
-static void f_toupper(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = strup_save(get_tv_string(&argvars[0]));
-}
-
-/*
- * "tr(string, fromstr, tostr)" function
- */
-static void f_tr(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *in_str;
-  char_u      *fromstr;
-  char_u      *tostr;
-  char_u      *p;
-  int inlen;
-  int fromlen;
-  int tolen;
-  int idx;
-  char_u      *cpstr;
-  int cplen;
-  int first = TRUE;
-  char_u buf[NUMBUFLEN];
-  char_u buf2[NUMBUFLEN];
-  garray_T ga;
-
-  in_str = get_tv_string(&argvars[0]);
-  fromstr = get_tv_string_buf_chk(&argvars[1], buf);
-  tostr = get_tv_string_buf_chk(&argvars[2], buf2);
-
-  /* Default return value: empty string. */
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-  if (fromstr == NULL || tostr == NULL)
-    return;                     /* type error; errmsg already given */
-  ga_init(&ga, (int)sizeof(char), 80);
-
-  if (!has_mbyte)
-    /* not multi-byte: fromstr and tostr must be the same length */
-    if (STRLEN(fromstr) != STRLEN(tostr)) {
-error:
-      EMSG2(_(e_invarg2), fromstr);
-      ga_clear(&ga);
-      return;
-    }
-
-  /* fromstr and tostr have to contain the same number of chars */
-  while (*in_str != NUL) {
-    if (has_mbyte) {
-      inlen = (*mb_ptr2len)(in_str);
-      cpstr = in_str;
-      cplen = inlen;
-      idx = 0;
-      for (p = fromstr; *p != NUL; p += fromlen) {
-        fromlen = (*mb_ptr2len)(p);
-        if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
-          for (p = tostr; *p != NUL; p += tolen) {
-            tolen = (*mb_ptr2len)(p);
-            if (idx-- == 0) {
-              cplen = tolen;
-              cpstr = p;
-              break;
-            }
-          }
-          if (*p == NUL)                /* tostr is shorter than fromstr */
-            goto error;
-          break;
-        }
-        ++idx;
-      }
-
-      if (first && cpstr == in_str) {
-        /* Check that fromstr and tostr have the same number of
-         * (multi-byte) characters.  Done only once when a character
-         * of in_str doesn't appear in fromstr. */
-        first = FALSE;
-        for (p = tostr; *p != NUL; p += tolen) {
-          tolen = (*mb_ptr2len)(p);
-          --idx;
-        }
-        if (idx != 0)
-          goto error;
-      }
-
-      ga_grow(&ga, cplen);
-      memmove((char *)ga.ga_data + ga.ga_len, cpstr, (size_t)cplen);
-      ga.ga_len += cplen;
-
-      in_str += inlen;
-    } else {
-      /* When not using multi-byte chars we can do it faster. */
-      p = vim_strchr(fromstr, *in_str);
-      if (p != NULL)
-        ga_append(&ga, tostr[p - fromstr]);
-      else
-        ga_append(&ga, *in_str);
-      ++in_str;
-    }
-  }
-
-  // add a terminating NUL
-  ga_append(&ga, NUL);
-
-  rettv->vval.v_string = ga.ga_data;
-}
-
-/*
- * "trunc({float})" function
- */
-static void f_trunc(typval_T *argvars, typval_T *rettv)
-{
-  float_op_wrapper(argvars, rettv, &trunc);
-}
-
-/*
- * "type(expr)" function
- */
-static void f_type(typval_T *argvars, typval_T *rettv)
-{
-  int n;
-
-  switch (argvars[0].v_type) {
-  case VAR_NUMBER: n = 0; break;
-  case VAR_STRING: n = 1; break;
-  case VAR_FUNC:   n = 2; break;
-  case VAR_LIST:   n = 3; break;
-  case VAR_DICT:   n = 4; break;
-  case VAR_FLOAT:  n = 5; break;
-  default: EMSG2(_(e_intern2), "f_type()"); n = 0; break;
-  }
-  rettv->vval.v_number = n;
-}
-
-/*
- * "undofile(name)" function
- */
-static void f_undofile(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  {
-    char_u *fname = get_tv_string(&argvars[0]);
-
-    if (*fname == NUL) {
-      /* If there is no file name there will be no undo file. */
-      rettv->vval.v_string = NULL;
-    } else {
-      char *ffname = FullName_save((char *)fname, false);
-
-      if (ffname != NULL) {
-        rettv->vval.v_string = (char_u *)u_get_undo_file_name(ffname, false);
-      }
-      xfree(ffname);
-    }
-  }
-}
-
-/*
- * "undotree()" function
- */
-static void f_undotree(typval_T *argvars, typval_T *rettv)
-{
-  rettv_dict_alloc(rettv);
-
-  dict_T *dict = rettv->vval.v_dict;
-  list_T *list;
-
-  dict_add_nr_str(dict, "synced", (long)curbuf->b_u_synced, NULL);
-  dict_add_nr_str(dict, "seq_last", curbuf->b_u_seq_last, NULL);
-  dict_add_nr_str(dict, "save_last",
-      (long)curbuf->b_u_save_nr_last, NULL);
-  dict_add_nr_str(dict, "seq_cur", curbuf->b_u_seq_cur, NULL);
-  dict_add_nr_str(dict, "time_cur", (long)curbuf->b_u_time_cur, NULL);
-  dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
-
-  list = list_alloc();
-  u_eval_tree(curbuf->b_u_oldhead, list);
-  dict_add_list(dict, "entries", list);
-}
-
-/*
- * "values(dict)" function
- */
-static void f_values(typval_T *argvars, typval_T *rettv)
-{
-  dict_list(argvars, rettv, 1);
-}
-
-/*
- * "virtcol(string)" function
- */
-static void f_virtcol(typval_T *argvars, typval_T *rettv)
-{
-  colnr_T vcol = 0;
-  pos_T       *fp;
-  int fnum = curbuf->b_fnum;
-
-  fp = var2fpos(&argvars[0], FALSE, &fnum);
-  if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
-      && fnum == curbuf->b_fnum) {
-    getvvcol(curwin, fp, NULL, NULL, &vcol);
-    ++vcol;
-  }
-
-  rettv->vval.v_number = vcol;
-}
-
-/*
- * "visualmode()" function
- */
-static void f_visualmode(typval_T *argvars, typval_T *rettv)
-{
-  char_u str[2];
-
-  rettv->v_type = VAR_STRING;
-  str[0] = curbuf->b_visual_mode_eval;
-  str[1] = NUL;
-  rettv->vval.v_string = vim_strsave(str);
-
-  /* A non-zero number or non-empty string argument: reset mode. */
-  if (non_zero_arg(&argvars[0]))
-    curbuf->b_visual_mode_eval = NUL;
-}
-
-/*
- * "wildmenumode()" function
- */
-static void f_wildmenumode(typval_T *argvars, typval_T *rettv)
-{
-  if (wild_menu_showing)
-    rettv->vval.v_number = 1;
-}
-
-/*
- * "winbufnr(nr)" function
- */
-static void f_winbufnr(typval_T *argvars, typval_T *rettv)
-{
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = wp->w_buffer->b_fnum;
-}
-
-/*
- * "wincol()" function
- */
-static void f_wincol(typval_T *argvars, typval_T *rettv)
-{
-  validate_cursor();
-  rettv->vval.v_number = curwin->w_wcol + 1;
-}
-
-/*
- * "winheight(nr)" function
- */
-static void f_winheight(typval_T *argvars, typval_T *rettv)
-{
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = wp->w_height;
-}
-
-/*
- * "winline()" function
- */
-static void f_winline(typval_T *argvars, typval_T *rettv)
-{
-  validate_cursor();
-  rettv->vval.v_number = curwin->w_wrow + 1;
-}
-
-/*
- * "winnr()" function
- */
-static void f_winnr(typval_T *argvars, typval_T *rettv)
-{
-  int nr = 1;
-
-  nr = get_winnr(curtab, &argvars[0]);
-  rettv->vval.v_number = nr;
-}
-
-/*
- * "winrestcmd()" function
- */
-static void f_winrestcmd(typval_T *argvars, typval_T *rettv)
-{
-  int winnr = 1;
-  garray_T ga;
-  char_u buf[50];
-
-  ga_init(&ga, (int)sizeof(char), 70);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    sprintf((char *)buf, "%dresize %d|", winnr, wp->w_height);
-    ga_concat(&ga, buf);
-    sprintf((char *)buf, "vert %dresize %d|", winnr, wp->w_width);
-    ga_concat(&ga, buf);
-    ++winnr;
-  }
-  ga_append(&ga, NUL);
-
-  rettv->vval.v_string = ga.ga_data;
-  rettv->v_type = VAR_STRING;
-}
-
-/*
- * "winrestview()" function
- */
-static void f_winrestview(typval_T *argvars, typval_T *rettv)
-{
-  dict_T      *dict;
-
-  if (argvars[0].v_type != VAR_DICT
-      || (dict = argvars[0].vval.v_dict) == NULL)
-    EMSG(_(e_invarg));
-  else {
-    if (dict_find(dict, (char_u *)"lnum", -1) != NULL) {
-      curwin->w_cursor.lnum = get_dict_number(dict, (char_u *)"lnum");
-    }
-    if (dict_find(dict, (char_u *)"col", -1) != NULL) {
-      curwin->w_cursor.col = get_dict_number(dict, (char_u *)"col");
-    }
-    if (dict_find(dict, (char_u *)"coladd", -1) != NULL) {
-      curwin->w_cursor.coladd = get_dict_number(dict, (char_u *)"coladd");
-    }
-    if (dict_find(dict, (char_u *)"curswant", -1) != NULL) {
-      curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
-      curwin->w_set_curswant = FALSE;
-    }
-    if (dict_find(dict, (char_u *)"topline", -1) != NULL) {
-      set_topline(curwin, get_dict_number(dict, (char_u *)"topline"));
-    }
-    if (dict_find(dict, (char_u *)"topfill", -1) != NULL) {
-      curwin->w_topfill = get_dict_number(dict, (char_u *)"topfill");
-    }
-    if (dict_find(dict, (char_u *)"leftcol", -1) != NULL) {
-      curwin->w_leftcol = get_dict_number(dict, (char_u *)"leftcol");
-    }
-    if (dict_find(dict, (char_u *)"skipcol", -1) != NULL) {
-      curwin->w_skipcol = get_dict_number(dict, (char_u *)"skipcol");
-    }
-
-    check_cursor();
-    win_new_height(curwin, curwin->w_height);
-    win_new_width(curwin, curwin->w_width);
-    changed_window_setting();
-
-    if (curwin->w_topline <= 0)
-      curwin->w_topline = 1;
-    if (curwin->w_topline > curbuf->b_ml.ml_line_count)
-      curwin->w_topline = curbuf->b_ml.ml_line_count;
-    check_topfill(curwin, true);
-  }
-}
-
-/*
- * "winsaveview()" function
- */
-static void f_winsaveview(typval_T *argvars, typval_T *rettv)
-{
-  dict_T      *dict;
-
-  rettv_dict_alloc(rettv);
-  dict = rettv->vval.v_dict;
-
-  dict_add_nr_str(dict, "lnum", (long)curwin->w_cursor.lnum, NULL);
-  dict_add_nr_str(dict, "col", (long)curwin->w_cursor.col, NULL);
-  dict_add_nr_str(dict, "coladd", (long)curwin->w_cursor.coladd, NULL);
-  update_curswant();
-  dict_add_nr_str(dict, "curswant", (long)curwin->w_curswant, NULL);
-
-  dict_add_nr_str(dict, "topline", (long)curwin->w_topline, NULL);
-  dict_add_nr_str(dict, "topfill", (long)curwin->w_topfill, NULL);
-  dict_add_nr_str(dict, "leftcol", (long)curwin->w_leftcol, NULL);
-  dict_add_nr_str(dict, "skipcol", (long)curwin->w_skipcol, NULL);
-}
-
-/// Writes list of strings to file
-static bool write_list(FILE *fd, list_T *list, bool binary)
-{
-  int ret = true;
-
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
-      if (putc(*s == '\n' ? NUL : *s, fd) == EOF) {
-        ret = false;
-        break;
-      }
-    }
-    if (!binary || li->li_next != NULL) {
-      if (putc('\n', fd) == EOF) {
-        ret = false;
-        break;
-      }
-    }
-    if (ret == false) {
-      EMSG(_(e_write));
+  partial_T *partial;
+  char_u *name;
+  switch (callback->type) {
+    case kCallbackFuncref:
+      name = callback->data.funcref;
+      partial = NULL;
       break;
+
+    case kCallbackPartial:
+      partial = callback->data.partial;
+      name = partial_name(partial);
+      break;
+
+    case kCallbackNone:
+      return false;
+      break;
+
+    default:
+      abort();
+  }
+
+  int dummy;
+  return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
+                   NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
+                   true, partial, NULL);
+}
+
+static bool set_ref_in_callback(Callback *callback, int copyID,
+                                ht_stack_T **ht_stack,
+                                list_stack_T **list_stack)
+{
+  typval_T tv;
+  switch (callback->type) {
+    case kCallbackFuncref:
+    case kCallbackNone:
+      break;
+
+    case kCallbackPartial:
+      tv.v_type = VAR_PARTIAL;
+      tv.vval.v_partial = callback->data.partial;
+      return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
+      break;
+
+
+    default:
+      abort();
+  }
+  return false;
+}
+
+static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID,
+                                       ht_stack_T **ht_stack,
+                                       list_stack_T **list_stack)
+{
+  if (set_ref_in_callback(&reader->cb, copyID, ht_stack, list_stack)) {
+    return true;
+  }
+
+  if (reader->self) {
+    typval_T tv;
+    tv.v_type = VAR_DICT;
+    tv.vval.v_dict = reader->self;
+    return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
+  }
+  return false;
+}
+
+timer_T *find_timer_by_nr(varnumber_T xx)
+{
+    return pmap_get(uint64_t)(timers, xx);
+}
+
+void add_timer_info(typval_T *rettv, timer_T *timer)
+{
+  list_T *list = rettv->vval.v_list;
+  dict_T *dict = tv_dict_alloc();
+
+  tv_list_append_dict(list, dict);
+  tv_dict_add_nr(dict, S_LEN("id"), timer->timer_id);
+  tv_dict_add_nr(dict, S_LEN("time"), timer->timeout);
+  tv_dict_add_nr(dict, S_LEN("paused"), timer->paused);
+
+  tv_dict_add_nr(dict, S_LEN("repeat"),
+                 (timer->repeat_count < 0 ? -1 : timer->repeat_count));
+
+  dictitem_T *di = tv_dict_item_alloc("callback");
+  if (tv_dict_add(dict, di) == FAIL) {
+    xfree(di);
+    return;
+  }
+
+  if (timer->callback.type == kCallbackPartial) {
+    di->di_tv.v_type = VAR_PARTIAL;
+    di->di_tv.vval.v_partial = timer->callback.data.partial;
+    timer->callback.data.partial->pt_refcount++;
+  } else if (timer->callback.type == kCallbackFuncref) {
+    di->di_tv.v_type = VAR_FUNC;
+    di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
+  }
+}
+
+void add_timer_info_all(typval_T *rettv)
+{
+  tv_list_alloc_ret(rettv, timers->table->n_occupied);
+  timer_T *timer;
+  map_foreach_value(timers, timer, {
+    if (!timer->stopped) {
+      add_timer_info(rettv, timer);
+    }
+  })
+}
+
+// invoked on the main loop
+void timer_due_cb(TimeWatcher *tw, void *data)
+{
+  timer_T *timer = (timer_T *)data;
+  int save_did_emsg = did_emsg;
+  int save_called_emsg = called_emsg;
+  const bool save_ex_pressedreturn = get_pressedreturn();
+
+  if (timer->stopped || timer->paused) {
+    return;
+  }
+
+  timer->refcount++;
+  // if repeat was negative repeat forever
+  if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
+    timer_stop(timer);
+  }
+
+  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
+  argv[0].v_type = VAR_NUMBER;
+  argv[0].vval.v_number = timer->timer_id;
+  typval_T rettv = TV_INITIAL_VALUE;
+  called_emsg = false;
+
+  callback_call(&timer->callback, 1, argv, &rettv);
+
+  // Handle error message
+  if (called_emsg && did_emsg) {
+    timer->emsg_count++;
+    if (current_exception != NULL) {
+      discard_current_exception();
     }
   }
-  return ret;
+  did_emsg = save_did_emsg;
+  called_emsg = save_called_emsg;
+  set_pressedreturn(save_ex_pressedreturn);
+
+  if (timer->emsg_count >= 3) {
+    timer_stop(timer);
+  }
+
+  tv_clear(&rettv);
+
+  if (!timer->stopped && timer->timeout == 0) {
+    // special case: timeout=0 means the callback will be
+    // invoked again on the next event loop tick.
+    // we don't use uv_idle_t to not spin the event loop
+    // when the main loop is blocked.
+    time_watcher_start(&timer->tw, timer_due_cb, 0, 0);
+  }
+  timer_decref(timer);
+}
+
+uint64_t timer_start(const long timeout,
+                     const int repeat_count,
+                     const Callback *const callback)
+{
+  timer_T *timer = xmalloc(sizeof *timer);
+  timer->refcount = 1;
+  timer->stopped = false;
+  timer->paused = false;
+  timer->emsg_count = 0;
+  timer->repeat_count = repeat_count;
+  timer->timeout = timeout;
+  timer->timer_id = last_timer_id++;
+  timer->callback = *callback;
+
+  time_watcher_init(&main_loop, &timer->tw, timer);
+  timer->tw.events = multiqueue_new_child(main_loop.events);
+  // if main loop is blocked, don't queue up multiple events
+  timer->tw.blockable = true;
+  time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
+
+  pmap_put(uint64_t)(timers, timer->timer_id, timer);
+  return timer->timer_id;
+}
+
+void timer_stop(timer_T *timer)
+{
+  if (timer->stopped) {
+    // avoid double free
+    return;
+  }
+  timer->stopped = true;
+  time_watcher_stop(&timer->tw);
+  time_watcher_close(&timer->tw, timer_close_cb);
+}
+
+// This will be run on the main loop after the last timer_due_cb, so at this
+// point it is safe to free the callback.
+static void timer_close_cb(TimeWatcher *tw, void *data)
+{
+  timer_T *timer = (timer_T *)data;
+  multiqueue_free(timer->tw.events);
+  callback_free(&timer->callback);
+  pmap_del(uint64_t)(timers, timer->timer_id);
+  timer_decref(timer);
+}
+
+static void timer_decref(timer_T *timer)
+{
+  if (--timer->refcount == 0) {
+    xfree(timer);
+  }
+}
+
+void timer_stop_all(void)
+{
+  timer_T *timer;
+  map_foreach_value(timers, timer, {
+    timer_stop(timer);
+  })
+}
+
+void timer_teardown(void)
+{
+  timer_stop_all();
+}
+
+/// Write "list" of strings to file "fd".
+///
+/// @param  fp  File to write to.
+/// @param[in]  list  List to write.
+/// @param[in]  binary  Whether to write in binary mode.
+///
+/// @return true in case of success, false otherwise.
+bool write_list(FileDescriptor *const fp, const list_T *const list,
+                const bool binary)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  int error = 0;
+  TV_LIST_ITER_CONST(list, li, {
+    const char *const s = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+    if (s == NULL) {
+      return false;
+    }
+    const char *hunk_start = s;
+    for (const char *p = hunk_start;; p++) {
+      if (*p == NUL || *p == NL) {
+        if (p != hunk_start) {
+          const ptrdiff_t written = file_write(fp, hunk_start,
+                                               (size_t)(p - hunk_start));
+          if (written < 0) {
+            error = (int)written;
+            goto write_list_error;
+          }
+        }
+        if (*p == NUL) {
+          break;
+        } else {
+          hunk_start = p + 1;
+          const ptrdiff_t written = file_write(fp, (char[]){ NUL }, 1);
+          if (written < 0) {
+            error = (int)written;
+            break;
+          }
+        }
+      }
+    }
+    if (!binary || TV_LIST_ITEM_NEXT(list, li) != NULL) {
+      const ptrdiff_t written = file_write(fp, "\n", 1);
+      if (written < 0) {
+        error = (int)written;
+        goto write_list_error;
+      }
+    }
+  });
+  if ((error = file_flush(fp)) != 0) {
+    goto write_list_error;
+  }
+  return true;
+write_list_error:
+  emsgf(_("E80: Error while writing: %s"), os_strerror(error));
+  return false;
 }
 
 /// Saves a typval_T as a string.
 ///
-/// For lists, replaces NLs with NUL and separates items with NLs.
+/// For lists or buffers, replaces NLs with NUL and separates items with NLs.
 ///
-/// @param[in]  tv   A value to store as a string.
-/// @param[out] len  The length of the resulting string or -1 on error.
+/// @param[in]  tv   Value to store as a string.
+/// @param[out] len  Length of the resulting string or -1 on error.
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
-static char_u *save_tv_as_string(typval_T *tv, ssize_t *len, bool endnl)
+char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
+  *len = 0;
   if (tv->v_type == VAR_UNKNOWN) {
-    *len = 0;
     return NULL;
   }
 
-  // For types other than list, let get_tv_string_buf_chk() get the value or
+  // For other types, let tv_get_string_buf_chk() get the value or
   // print an error.
-  if (tv->v_type != VAR_LIST) {
-    char_u *ret = get_tv_string_chk(tv);
-    if (ret && (*len = STRLEN(ret))) {
-      ret = vim_strsave(ret);
+  if (tv->v_type != VAR_LIST && tv->v_type != VAR_NUMBER) {
+    const char *ret = tv_get_string_chk(tv);
+    if (ret) {
+      *len = strlen(ret);
+      return xmemdupz(ret, (size_t)(*len));
     } else {
-      ret = NULL;
       *len = -1;
+      return NULL;
     }
+  }
+
+  if (tv->v_type == VAR_NUMBER) {  // Treat number as a buffer-id.
+    buf_T *buf = buflist_findnr(tv->vval.v_number);
+    if (buf) {
+      for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+        for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+          *len += 1;
+        }
+        *len += 1;
+      }
+    } else {
+      EMSGN(_(e_nobufnr), tv->vval.v_number);
+      *len = -1;
+      return NULL;
+    }
+
+    if (*len == 0) {
+      return NULL;
+    }
+
+    char *ret = xmalloc(*len + 1);
+    char *end = ret;
+    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+      for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+        *end++ = (*p == '\n') ? NUL : *p;
+      }
+      *end++ = '\n';
+    }
+    *end = NUL;
+    *len = end - ret;
     return ret;
   }
 
+  assert(tv->v_type == VAR_LIST);
   // Pre-calculate the resulting length.
-  *len = 0;
   list_T *list = tv->vval.v_list;
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    *len += STRLEN(get_tv_string(&li->li_tv)) + 1;
-  }
+  TV_LIST_ITER_CONST(list, li, {
+    *len += strlen(tv_get_string(TV_LIST_ITEM_TV(li))) + 1;
+  });
 
   if (*len == 0) {
     return NULL;
   }
 
-  char_u *ret = xmalloc(*len + endnl);
-  char_u *end = ret;
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; s++) {
+  char *ret = xmalloc(*len + endnl);
+  char *end = ret;
+  TV_LIST_ITER_CONST(list, li, {
+    for (const char *s = tv_get_string(TV_LIST_ITEM_TV(li)); *s != NUL; s++) {
       *end++ = (*s == '\n') ? NUL : *s;
     }
-    if (endnl || li->li_next != NULL) {
+    if (endnl || TV_LIST_ITEM_NEXT(list, li) != NULL) {
       *end++ = '\n';
     }
-  }
+  });
   *end = NUL;
   *len = end - ret;
   return ret;
 }
 
-/*
- * "winwidth(nr)" function
- */
-static void f_winwidth(typval_T *argvars, typval_T *rettv)
+/// Translate a VimL object into a position
+///
+/// Accepts VAR_LIST and VAR_STRING objects. Does not give an error for invalid
+/// type.
+///
+/// @param[in]  tv  Object to translate.
+/// @param[in]  dollar_lnum  True when "$" is last line.
+/// @param[out]  ret_fnum  Set to fnum for marks.
+///
+/// @return Pointer to position or NULL in case of error (e.g. invalid type).
+pos_T *var2fpos(const typval_T *const tv, const int dollar_lnum,
+                int *const ret_fnum)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
-    rettv->vval.v_number = -1;
-  else
-    rettv->vval.v_number = wp->w_width;
-}
-
-/// "writefile()" function
-static void f_writefile(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = 0;  // Assuming success.
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "writefile()");
-    return;
-  }
-  if (argvars[0].vval.v_list == NULL) {
-    return;
-  }
-
-  bool binary = false;
-  bool append = false;
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    if (vim_strchr(get_tv_string(&argvars[2]), 'b')) {
-      binary = true;
-    }
-    if (vim_strchr(get_tv_string(&argvars[2]), 'a')) {
-      append = true;
-    }
-  }
-
-  // Always open the file in binary mode, library functions have a mind of
-  // their own about CR-LF conversion.
-  char_u *fname = get_tv_string(&argvars[1]);
-  FILE *fd;
-  if (*fname == NUL || (fd = mch_fopen((char *)fname,
-       append ? APPENDBIN : WRITEBIN)) == NULL) {
-    EMSG2(_(e_notcreate), *fname == NUL ? (char_u *)_("<empty>") : fname);
-    rettv->vval.v_number = -1;
-  } else {
-    if (write_list(fd, argvars[0].vval.v_list, binary) == false) {
-      rettv->vval.v_number = -1;
-    }
-    fclose(fd);
-  }
-}
-/*
- * "xor(expr, expr)" function
- */
-static void f_xor(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
-                         ^ get_tv_number_chk(&argvars[1], NULL);
-}
-
-
-/*
- * Translate a String variable into a position.
- * Returns NULL when there is an error.
- */
-static pos_T *
-var2fpos (
-    typval_T *varp,
-    int dollar_lnum,                /* TRUE when $ is last line */
-    int *fnum              /* set to fnum for '0, 'A, etc. */
-)
-{
-  char_u              *name;
   static pos_T pos;
   pos_T               *pp;
 
-  /* Argument can be [lnum, col, coladd]. */
-  if (varp->v_type == VAR_LIST) {
+  // Argument can be [lnum, col, coladd].
+  if (tv->v_type == VAR_LIST) {
     list_T          *l;
     int len;
-    int error = FALSE;
-    listitem_T      *li;
+    bool error = false;
+    listitem_T *li;
 
-    l = varp->vval.v_list;
-    if (l == NULL)
+    l = tv->vval.v_list;
+    if (l == NULL) {
       return NULL;
+    }
 
-    /* Get the line number */
-    pos.lnum = list_find_nr(l, 0L, &error);
-    if (error || pos.lnum <= 0 || pos.lnum > curbuf->b_ml.ml_line_count)
-      return NULL;              /* invalid line number */
-
-    /* Get the column number */
-    pos.col = list_find_nr(l, 1L, &error);
-    if (error)
+    // Get the line number.
+    pos.lnum = tv_list_find_nr(l, 0L, &error);
+    if (error || pos.lnum <= 0 || pos.lnum > curbuf->b_ml.ml_line_count) {
+      // Invalid line number.
       return NULL;
+    }
+
+    // Get the column number.
+    pos.col = tv_list_find_nr(l, 1L, &error);
+    if (error) {
+      return NULL;
+    }
     len = (long)STRLEN(ml_get(pos.lnum));
 
-    /* We accept "$" for the column number: last column. */
-    li = list_find(l, 1L);
-    if (li != NULL && li->li_tv.v_type == VAR_STRING
-        && li->li_tv.vval.v_string != NULL
-        && STRCMP(li->li_tv.vval.v_string, "$") == 0)
+    // We accept "$" for the column number: last column.
+    li = tv_list_find(l, 1L);
+    if (li != NULL && TV_LIST_ITEM_TV(li)->v_type == VAR_STRING
+        && TV_LIST_ITEM_TV(li)->vval.v_string != NULL
+        && STRCMP(TV_LIST_ITEM_TV(li)->vval.v_string, "$") == 0) {
       pos.col = len + 1;
+    }
 
-    /* Accept a position up to the NUL after the line. */
-    if (pos.col == 0 || (int)pos.col > len + 1)
-      return NULL;              /* invalid column number */
-    --pos.col;
+    // Accept a position up to the NUL after the line.
+    if (pos.col == 0 || (int)pos.col > len + 1) {
+      // Invalid column number.
+      return NULL;
+    }
+    pos.col--;
 
-    /* Get the virtual offset.  Defaults to zero. */
-    pos.coladd = list_find_nr(l, 2L, &error);
-    if (error)
+    // Get the virtual offset.  Defaults to zero.
+    pos.coladd = tv_list_find_nr(l, 2L, &error);
+    if (error) {
       pos.coladd = 0;
+    }
 
     return &pos;
   }
 
-  name = get_tv_string_chk(varp);
-  if (name == NULL)
+  const char *const name = tv_get_string_chk(tv);
+  if (name == NULL) {
     return NULL;
-  if (name[0] == '.')                           /* cursor */
-    return &curwin->w_cursor;
-  if (name[0] == 'v' && name[1] == NUL) {       /* Visual start */
-    if (VIsual_active)
-      return &VIsual;
+  }
+  if (name[0] == '.') {  // Cursor.
     return &curwin->w_cursor;
   }
-  if (name[0] == '\'') {                        /* mark */
-    pp = getmark_buf_fnum(curbuf, name[1], FALSE, fnum);
-    if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0)
+  if (name[0] == 'v' && name[1] == NUL) {  // Visual start.
+    if (VIsual_active) {
+      return &VIsual;
+    }
+    return &curwin->w_cursor;
+  }
+  if (name[0] == '\'') {  // Mark.
+    pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
+    if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0) {
       return NULL;
+    }
     return pp;
   }
 
@@ -17777,16 +7615,19 @@ var2fpos (
 
   if (name[0] == 'w' && dollar_lnum) {
     pos.col = 0;
-    if (name[1] == '0') {               /* "w0": first visible line */
+    if (name[1] == '0') {               // "w0": first visible line
       update_topline();
-      pos.lnum = curwin->w_topline;
+      // In silent Ex mode topline is zero, but that's not a valid line
+      // number; use one instead.
+      pos.lnum = curwin->w_topline > 0 ? curwin->w_topline : 1;
       return &pos;
-    } else if (name[1] == '$') {      /* "w$": last visible line */
+    } else if (name[1] == '$') {      // "w$": last visible line
       validate_botline();
-      pos.lnum = curwin->w_botline - 1;
+      // In silent Ex mode botline is zero, return zero then.
+      pos.lnum = curwin->w_botline > 0 ? curwin->w_botline - 1 : 0;
       return &pos;
     }
-  } else if (name[0] == '$') {        /* last column or line */
+  } else if (name[0] == '$') {        // last column or line
     if (dollar_lnum) {
       pos.lnum = curbuf->b_ml.ml_line_count;
       pos.col = 0;
@@ -17807,47 +7648,53 @@ var2fpos (
  * Return FAIL when conversion is not possible, doesn't check the position for
  * validity.
  */
-static int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
+int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
 {
-  list_T      *l = arg->vval.v_list;
+  list_T *l;
   long i = 0;
   long n;
 
-  /* List must be: [fnum, lnum, col, coladd, curswant], where "fnum" is only
-   * there when "fnump" isn't NULL; "coladd" and "curswant" are optional. */
+  // List must be: [fnum, lnum, col, coladd, curswant], where "fnum" is only
+  // there when "fnump" isn't NULL; "coladd" and "curswant" are optional.
   if (arg->v_type != VAR_LIST
-      || l == NULL
-      || l->lv_len < (fnump == NULL ? 2 : 3)
-      || l->lv_len > (fnump == NULL ? 4 : 5))
+      || (l = arg->vval.v_list) == NULL
+      || tv_list_len(l) < (fnump == NULL ? 2 : 3)
+      || tv_list_len(l) > (fnump == NULL ? 4 : 5)) {
     return FAIL;
+  }
 
   if (fnump != NULL) {
-    n = list_find_nr(l, i++, NULL);     /* fnum */
-    if (n < 0)
+    n = tv_list_find_nr(l, i++, NULL);  // fnum
+    if (n < 0) {
       return FAIL;
-    if (n == 0)
-      n = curbuf->b_fnum;               /* current buffer */
+    }
+    if (n == 0) {
+      n = curbuf->b_fnum;  // Current buffer.
+    }
     *fnump = n;
   }
 
-  n = list_find_nr(l, i++, NULL);       /* lnum */
-  if (n < 0)
+  n = tv_list_find_nr(l, i++, NULL);  // lnum
+  if (n < 0) {
     return FAIL;
+  }
   posp->lnum = n;
 
-  n = list_find_nr(l, i++, NULL);       /* col */
-  if (n < 0)
+  n = tv_list_find_nr(l, i++, NULL);  // col
+  if (n < 0) {
     return FAIL;
+  }
   posp->col = n;
 
-  n = list_find_nr(l, i, NULL);         // off
-  if (n < 0)
+  n = tv_list_find_nr(l, i, NULL);  // off
+  if (n < 0) {
     posp->coladd = 0;
-  else
+  } else {
     posp->coladd = n;
+  }
 
   if (curswantp != NULL) {
-    *curswantp = list_find_nr(l, i + 1, NULL);  // curswant
+    *curswantp = tv_list_find_nr(l, i + 1, NULL);  // curswant
   }
 
   return OK;
@@ -17858,39 +7705,48 @@ static int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
  * Advance "arg" to the first character after the name.
  * Return 0 for error.
  */
-static int get_env_len(char_u **arg)
+static int get_env_len(const char_u **arg)
 {
-  char_u      *p;
   int len;
 
-  for (p = *arg; vim_isIDc(*p); ++p)
-    ;
-  if (p == *arg)            /* no name found */
+  const char_u *p;
+  for (p = *arg; vim_isIDc(*p); p++) {
+  }
+  if (p == *arg) {  // No name found.
     return 0;
+  }
 
   len = (int)(p - *arg);
   *arg = p;
   return len;
 }
 
-/*
- * Get the length of the name of a function or internal variable.
- * "arg" is advanced to the first non-white character after the name.
- * Return 0 if something is wrong.
- */
-static int get_id_len(char_u **arg)
+// Get the length of the name of a function or internal variable.
+// "arg" is advanced to the first non-white character after the name.
+// Return 0 if something is wrong.
+int get_id_len(const char **const arg)
 {
-  char_u      *p;
   int len;
 
-  /* Find the end of the name. */
-  for (p = *arg; eval_isnamec(*p); ++p)
-    ;
-  if (p == *arg)            /* no name found */
+  // Find the end of the name.
+  const char *p;
+  for (p = *arg; eval_isnamec(*p); p++) {
+    if (*p == ':') {
+      // "s:" is start of "s:var", but "n:" is not and can be used in
+      // slice "[n:]". Also "xx:" is not a namespace.
+      len = (int)(p - *arg);
+      if (len > 1
+          || (len == 1 && vim_strchr(namespace_char, **arg) == NULL)) {
+        break;
+      }
+    }
+  }
+  if (p == *arg) {  // no name found
     return 0;
+  }
 
   len = (int)(p - *arg);
-  *arg = skipwhite(p);
+  *arg = (const char *)skipwhite((const char_u *)p);
 
   return len;
 }
@@ -17904,38 +7760,38 @@ static int get_id_len(char_u **arg)
  * If the name contains 'magic' {}'s, expand them and return the
  * expanded name in an allocated string via 'alias' - caller must free.
  */
-static int get_name_len(char_u **arg, char_u **alias, int evaluate, int verbose)
+int get_name_len(const char **const arg,
+                 char **alias,
+                 int evaluate,
+                 int verbose)
 {
   int len;
-  char_u      *p;
-  char_u      *expr_start;
-  char_u      *expr_end;
 
-  *alias = NULL;    /* default to no alias */
+  *alias = NULL;    // default to no alias
 
-  if ((*arg)[0] == K_SPECIAL && (*arg)[1] == KS_EXTRA
-      && (*arg)[2] == (int)KE_SNR) {
-    /* hard coded <SNR>, already translated */
+  if ((*arg)[0] == (char)K_SPECIAL && (*arg)[1] == (char)KS_EXTRA
+      && (*arg)[2] == (char)KE_SNR) {
+    // Hard coded <SNR>, already translated.
     *arg += 3;
     return get_id_len(arg) + 3;
   }
   len = eval_fname_script(*arg);
   if (len > 0) {
-    /* literal "<SID>", "s:" or "<SNR>" */
+    // literal "<SID>", "s:" or "<SNR>"
     *arg += len;
   }
 
-  /*
-   * Find the end of the name; check for {} construction.
-   */
-  p = find_name_end(*arg, &expr_start, &expr_end,
-      len > 0 ? 0 : FNE_CHECK_START);
+  // Find the end of the name; check for {} construction.
+  char_u      *expr_start;
+  char_u      *expr_end;
+  const char *p = (const char *)find_name_end((char_u *)(*arg),
+                                              (const char_u **)&expr_start,
+                                              (const char_u **)&expr_end,
+                                              len > 0 ? 0 : FNE_CHECK_START);
   if (expr_start != NULL) {
-    char_u  *temp_string;
-
     if (!evaluate) {
       len += (int)(p - *arg);
-      *arg = skipwhite(p);
+      *arg = (const char *)skipwhite((const char_u *)p);
       return len;
     }
 
@@ -17943,81 +7799,102 @@ static int get_name_len(char_u **arg, char_u **alias, int evaluate, int verbose)
      * Include any <SID> etc in the expanded string:
      * Thus the -len here.
      */
-    temp_string = make_expanded_name(*arg - len, expr_start, expr_end, p);
-    if (temp_string == NULL)
+    char_u *temp_string = make_expanded_name((char_u *)(*arg) - len, expr_start,
+                                             expr_end, (char_u *)p);
+    if (temp_string == NULL) {
       return -1;
-    *alias = temp_string;
-    *arg = skipwhite(p);
+    }
+    *alias = (char *)temp_string;
+    *arg = (const char *)skipwhite((const char_u *)p);
     return (int)STRLEN(temp_string);
   }
 
   len += get_id_len(arg);
-  if (len == 0 && verbose)
+  // Only give an error when there is something, otherwise it will be
+  // reported at a higher level.
+  if (len == 0 && verbose && **arg != NUL) {
     EMSG2(_(e_invexpr2), *arg);
+  }
 
   return len;
 }
 
-/*
- * Find the end of a variable or function name, taking care of magic braces.
- * If "expr_start" is not NULL then "expr_start" and "expr_end" are set to the
- * start and end of the first magic braces item.
- * "flags" can have FNE_INCL_BR and FNE_CHECK_START.
- * Return a pointer to just after the name.  Equal to "arg" if there is no
- * valid name.
- */
-static char_u *find_name_end(char_u *arg, char_u **expr_start, char_u **expr_end, int flags)
+// Find the end of a variable or function name, taking care of magic braces.
+// If "expr_start" is not NULL then "expr_start" and "expr_end" are set to the
+// start and end of the first magic braces item.
+// "flags" can have FNE_INCL_BR and FNE_CHECK_START.
+// Return a pointer to just after the name.  Equal to "arg" if there is no
+// valid name.
+const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
+                            const char_u **expr_end, int flags)
 {
   int mb_nest = 0;
   int br_nest = 0;
-  char_u      *p;
+  int len;
 
   if (expr_start != NULL) {
     *expr_start = NULL;
     *expr_end = NULL;
   }
 
-  /* Quick check for valid starting character. */
-  if ((flags & FNE_CHECK_START) && !eval_isnamec1(*arg) && *arg != '{')
+  // Quick check for valid starting character.
+  if ((flags & FNE_CHECK_START) && !eval_isnamec1(*arg) && *arg != '{') {
     return arg;
+  }
 
+  const char_u *p;
   for (p = arg; *p != NUL
        && (eval_isnamec(*p)
            || *p == '{'
            || ((flags & FNE_INCL_BR) && (*p == '[' || *p == '.'))
            || mb_nest != 0
-           || br_nest != 0); mb_ptr_adv(p)) {
+           || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {
-      /* skip over 'string' to avoid counting [ and ] inside it. */
-      for (p = p + 1; *p != NUL && *p != '\''; mb_ptr_adv(p))
-        ;
-      if (*p == NUL)
+      // skip over 'string' to avoid counting [ and ] inside it.
+      for (p = p + 1; *p != NUL && *p != '\''; MB_PTR_ADV(p)) {
+      }
+      if (*p == NUL) {
         break;
+      }
     } else if (*p == '"') {
-      /* skip over "str\"ing" to avoid counting [ and ] inside it. */
-      for (p = p + 1; *p != NUL && *p != '"'; mb_ptr_adv(p))
-        if (*p == '\\' && p[1] != NUL)
+      // skip over "str\"ing" to avoid counting [ and ] inside it.
+      for (p = p + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
+        if (*p == '\\' && p[1] != NUL) {
           ++p;
-      if (*p == NUL)
+        }
+      }
+      if (*p == NUL) {
         break;
+      }
+    } else if (br_nest == 0 && mb_nest == 0 && *p == ':') {
+      // "s:" is start of "s:var", but "n:" is not and can be used in
+      // slice "[n:]".  Also "xx:" is not a namespace. But {ns}: is. */
+      len = (int)(p - arg);
+      if ((len > 1 && p[-1] != '}')
+          || (len == 1 && vim_strchr(namespace_char, *arg) == NULL)) {
+        break;
+      }
     }
 
     if (mb_nest == 0) {
-      if (*p == '[')
+      if (*p == '[') {
         ++br_nest;
-      else if (*p == ']')
+      } else if (*p == ']') {
         --br_nest;
+      }
     }
 
     if (br_nest == 0) {
       if (*p == '{') {
         mb_nest++;
-        if (expr_start != NULL && *expr_start == NULL)
+        if (expr_start != NULL && *expr_start == NULL) {
           *expr_start = p;
+        }
       } else if (*p == '}') {
         mb_nest--;
-        if (expr_start != NULL && mb_nest == 0 && *expr_end == NULL)
+        if (expr_start != NULL && mb_nest == 0 && *expr_end == NULL) {
           *expr_end = p;
+        }
       }
     }
   }
@@ -18038,7 +7915,8 @@ static char_u *find_name_end(char_u *arg, char_u **expr_start, char_u **expr_end
  * Returns a new allocated string, which the caller must free.
  * Returns NULL for failure.
  */
-static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *expr_end, char_u *in_end)
+static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
+                                  char_u *expr_end, char_u *in_end)
 {
   char_u c1;
   char_u      *retval = NULL;
@@ -18062,14 +7940,16 @@ static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *
   }
   xfree(temp_result);
 
-  *in_end = c1;                 /* put char back for error messages */
+  *in_end = c1;                 // put char back for error messages
   *expr_start = '{';
   *expr_end = '}';
 
   if (retval != NULL) {
-    temp_result = find_name_end(retval, &expr_start, &expr_end, 0);
+    temp_result = (char_u *)find_name_end(retval,
+                                          (const char_u **)&expr_start,
+                                          (const char_u **)&expr_end, 0);
     if (expr_start != NULL) {
-      /* Further expansion! */
+      // Further expansion!
       temp_result = make_expanded_name(retval, expr_start,
           expr_end, temp_result);
       xfree(retval);
@@ -18084,7 +7964,7 @@ static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *
  * Return TRUE if character "c" can be used in a variable or function name.
  * Does not include '{' or '}' for magic braces.
  */
-static int eval_isnamec(int c)
+int eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
@@ -18093,33 +7973,25 @@ static int eval_isnamec(int c)
  * Return TRUE if character "c" can be used as the first character in a
  * variable or function name (excluding '{' and '}').
  */
-static int eval_isnamec1(int c)
+int eval_isnamec1(int c)
 {
   return ASCII_ISALPHA(c) || c == '_';
 }
 
 /*
- * Set number v: variable to "val".
- */
-void set_vim_var_nr(int idx, long val)
-{
-  vimvars[idx].vv_nr = val;
-}
-
-/*
  * Get number v: variable value.
  */
-long get_vim_var_nr(int idx) FUNC_ATTR_PURE
+varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_nr;
 }
 
-/*
- * Get string v: variable value.  Uses a static buffer, can only be used once.
- */
+// Get string v: variable value.  Uses a static buffer, can only be used once.
+// If the String variable has never been set, return an empty string.
+// Never returns NULL;
 char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
-  return get_tv_string(&vimvars[idx].vv_tv);
+  return (char_u *)tv_get_string(&vimvars[idx].vv_tv);
 }
 
 /*
@@ -18143,14 +8015,9 @@ dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
  */
 void set_vim_var_char(int c)
 {
-  char_u buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXBYTES + 1];
 
-  if (has_mbyte)
-    buf[(*mb_char2bytes)(c, buf)] = NUL;
-  else {
-    buf[0] = c;
-    buf[1] = NUL;
-  }
+  buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
   set_vim_var_string(VV_CHAR, buf, -1);
 }
 
@@ -18166,49 +8033,77 @@ void set_vcount(long count, long count1, int set_prevcount)
   vimvars[VV_COUNT1].vv_nr = count1;
 }
 
-/*
- * Set string v: variable to a copy of "val".
- */
-void set_vim_var_string (
-    int idx,
-    char_u *val,
-    int len                    /* length of "val" to use or -1 (whole string) */
-)
+/// Set number v: variable to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_nr(const VimVarIndex idx, const varnumber_T val)
 {
-  /* Need to do this (at least) once, since we can't initialize a union.
-   * Will always be invoked when "v:progname" is set. */
-  vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
+  tv_clear(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_NUMBER;
+  vimvars[idx].vv_nr = val;
+}
 
-  xfree(vimvars[idx].vv_str);
-  if (val == NULL)
+/// Set special v: variable to the given value
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to.
+void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
+{
+  tv_clear(&vimvars[idx].vv_tv);
+  vimvars[idx].vv_type = VAR_SPECIAL;
+  vimvars[idx].vv_special = val;
+}
+
+/// Set string v: variable to the given string
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in]  val  Value to set to. Will be copied.
+/// @param[in]  len  Legth of that value or -1 in which case strlen() will be
+///                  used.
+void set_vim_var_string(const VimVarIndex idx, const char *const val,
+                        const ptrdiff_t len)
+{
+  tv_clear(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_STRING;
+  if (val == NULL) {
     vimvars[idx].vv_str = NULL;
-  else if (len == -1)
-    vimvars[idx].vv_str = vim_strsave(val);
-  else
-    vimvars[idx].vv_str = vim_strnsave(val, len);
+  } else if (len == -1) {
+    vimvars[idx].vv_str = (char_u *) xstrdup(val);
+  } else {
+    vimvars[idx].vv_str = (char_u *) xstrndup(val, (size_t) len);
+  }
 }
 
-/*
- * Set List v: variable to "val".
- */
-void set_vim_var_list(int idx, list_T *val)
+/// Set list v: variable to the given list
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+void set_vim_var_list(const VimVarIndex idx, list_T *const val)
 {
-  list_unref(vimvars[idx].vv_list);
+  tv_clear(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_LIST;
   vimvars[idx].vv_list = val;
-  if (val != NULL)
-    ++val->lv_refcount;
+  if (val != NULL) {
+    tv_list_ref(val);
+  }
 }
 
-/// Set Dictionary v: variable to "val".
-void set_vim_var_dict(int idx, dict_T *val)
+/// Set Dictionary v: variable to the given dictionary
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+///                      Also keys of the dictionary will be made read-only.
+void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
 {
-  dict_unref(vimvars[idx].vv_dict);
+  tv_clear(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_type = VAR_DICT;
   vimvars[idx].vv_dict = val;
 
   if (val != NULL) {
-    ++val->dv_refcount;
+    val->dv_refcount++;
     // Set readonly
-    dict_set_keys_readonly(val);
+    tv_dict_set_keys_readonly(val);
   }
 }
 
@@ -18217,15 +8112,17 @@ void set_vim_var_dict(int idx, dict_T *val)
  */
 void set_reg_var(int c)
 {
-  char_u regname;
+  char regname;
 
-  if (c == 0 || c == ' ')
+  if (c == 0 || c == ' ') {
     regname = '"';
-  else
+  } else {
     regname = c;
-  /* Avoid free/alloc when the value is already right. */
-  if (vimvars[VV_REG].vv_str == NULL || vimvars[VV_REG].vv_str[0] != c)
+  }
+  // Avoid free/alloc when the value is already right.
+  if (vimvars[VV_REG].vv_str == NULL || vimvars[VV_REG].vv_str[0] != c) {
     set_vim_var_string(VV_REG, &regname, 1);
+  }
 }
 
 /*
@@ -18266,10 +8163,7 @@ char_u *v_throwpoint(char_u *oldval)
  */
 char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
 {
-  char_u      *oldval;
-  char_u      *newval;
-
-  oldval = vimvars[VV_CMDARG].vv_str;
+  char_u *oldval = vimvars[VV_CMDARG].vv_str;
   if (eap == NULL) {
     xfree(oldval);
     vimvars[VV_CMDARG].vv_str = oldarg;
@@ -18285,14 +8179,18 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     len += 7;
 
-  if (eap->force_ff != 0)
-    len += STRLEN(eap->cmd + eap->force_ff) + 6;
-  if (eap->force_enc != 0)
+  if (eap->force_ff != 0) {
+    len += 10;  // " ++ff=unix"
+  }
+  if (eap->force_enc != 0) {
     len += STRLEN(eap->cmd + eap->force_enc) + 7;
-  if (eap->bad_char != 0)
-    len += 7 + 4;      /* " ++bad=" + "keep" or "drop" */
+  }
+  if (eap->bad_char != 0) {
+    len += 7 + 4;  // " ++bad=" + "keep" or "drop"
+  }
 
-  newval = xmalloc(len + 1);
+  const size_t newval_len = len + 1;
+  char_u *newval = xmalloc(newval_len);
 
   if (eap->force_bin == FORCE_BIN)
     sprintf((char *)newval, " ++bin");
@@ -18304,18 +8202,23 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   if (eap->read_edit)
     STRCAT(newval, " ++edit");
 
-  if (eap->force_ff != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++ff=%s",
-        eap->cmd + eap->force_ff);
-  if (eap->force_enc != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++enc=%s",
-        eap->cmd + eap->force_enc);
-  if (eap->bad_char == BAD_KEEP)
+  if (eap->force_ff != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++ff=%s",
+             eap->force_ff == 'u' ? "unix" :
+             eap->force_ff == 'd' ? "dos" : "mac");
+  }
+  if (eap->force_enc != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++enc=%s",
+             eap->cmd + eap->force_enc);
+  }
+  if (eap->bad_char == BAD_KEEP) {
     STRCPY(newval + STRLEN(newval), " ++bad=keep");
-  else if (eap->bad_char == BAD_DROP)
+  } else if (eap->bad_char == BAD_DROP) {
     STRCPY(newval + STRLEN(newval), " ++bad=drop");
-  else if (eap->bad_char != 0)
-    sprintf((char *)newval + STRLEN(newval), " ++bad=%c", eap->bad_char);
+  } else if (eap->bad_char != 0) {
+    snprintf((char *)newval + STRLEN(newval), newval_len, " ++bad=%c",
+             eap->bad_char);
+  }
   vimvars[VV_CMDARG].vv_str = newval;
   return oldval;
 }
@@ -18324,9 +8227,8 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
  * Get the value of internal variable "name".
  * Return OK or FAIL.
  */
-static int 
-get_var_tv (
-    char_u *name,
+int get_var_tv(
+    const char *name,
     int len,           // length of "name"
     typval_T *rettv,   // NULL when only checking existence
     dictitem_T **dip,  // non-NULL when typval's dict item is needed
@@ -18336,427 +8238,316 @@ get_var_tv (
 {
   int ret = OK;
   typval_T    *tv = NULL;
-  typval_T atv;
   dictitem_T  *v;
-  int cc;
 
-  /* truncate the name, so that we can use strcmp() */
-  cc = name[len];
-  name[len] = NUL;
-
-  /*
-   * Check for "b:changedtick".
-   */
-  if (STRCMP(name, "b:changedtick") == 0) {
-    atv.v_type = VAR_NUMBER;
-    atv.vval.v_number = curbuf->b_changedtick;
-    tv = &atv;
-  }
-  /*
-   * Check for user-defined variables.
-   */
-  else {
-    v = find_var(name, NULL, no_autoload);
-    if (v != NULL) {
-      tv = &v->di_tv;
-      if (dip != NULL) {
-        *dip = v;
-      }
+  v = find_var(name, (size_t)len, NULL, no_autoload);
+  if (v != NULL) {
+    tv = &v->di_tv;
+    if (dip != NULL) {
+      *dip = v;
     }
   }
 
   if (tv == NULL) {
-    if (rettv != NULL && verbose)
-      EMSG2(_(e_undefvar), name);
+    if (rettv != NULL && verbose) {
+      emsgf(_("E121: Undefined variable: %.*s"), len, name);
+    }
     ret = FAIL;
-  } else if (rettv != NULL)
-    copy_tv(tv, rettv);
-
-  name[len] = cc;
+  } else if (rettv != NULL) {
+    tv_copy(tv, rettv);
+  }
 
   return ret;
 }
 
-/*
- * Handle expr[expr], expr[expr:expr] subscript and .name lookup.
- * Also handle function call with Funcref variable: func(expr)
- * Can all be combined: dict.func(expr)[idx]['func'](expr)
- */
-static int 
-handle_subscript (
-    char_u **arg,
+/// Check if variable "name[len]" is a local variable or an argument.
+/// If so, "*eval_lavars_used" is set to true.
+static void check_vars(const char *name, size_t len)
+{
+  if (eval_lavars_used == NULL) {
+    return;
+  }
+
+  const char *varname;
+  hashtab_T *ht = find_var_ht(name, len, &varname);
+
+  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
+    if (find_var(name, len, NULL, true) != NULL) {
+      *eval_lavars_used = true;
+    }
+  }
+}
+
+/// check if special v:lua value for calling lua functions
+bool is_luafunc(partial_T *partial)
+{
+  return partial == vvlua_partial;
+}
+
+/// check if special v:lua value for calling lua functions
+static bool tv_is_luafunc(typval_T *tv)
+{
+  return tv->v_type == VAR_PARTIAL && is_luafunc(tv->vval.v_partial);
+}
+
+/// check the function name after "v:lua."
+int check_luafunc_name(const char *str, bool paren)
+{
+  const char *p = str;
+  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.') {
+    p++;
+  }
+  if (*p != (paren ? '(' : NUL)) {
+    return 0;
+  } else {
+    return (int)(p-str);
+  }
+}
+
+/// Handle expr[expr], expr[expr:expr] subscript and .name lookup.
+/// Also handle function call with Funcref variable: func(expr)
+/// Can all be combined: dict.func(expr)[idx]['func'](expr)
+int
+handle_subscript(
+    const char **const arg,
     typval_T *rettv,
-    int evaluate,                   /* do more than finding the end */
-    int verbose                    /* give error messages */
+    int evaluate,                   // do more than finding the end
+    int verbose                    // give error messages
 )
 {
   int ret = OK;
   dict_T      *selfdict = NULL;
-  char_u      *s;
+  const char_u *s;
   int len;
   typval_T functv;
+  int slen = 0;
+  bool lua = false;
+
+  if (tv_is_luafunc(rettv)) {
+    if (**arg != '.') {
+      tv_clear(rettv);
+      ret = FAIL;
+    } else {
+      (*arg)++;
+
+      lua = true;
+      s = (char_u *)(*arg);
+      slen = check_luafunc_name(*arg, true);
+      if (slen == 0) {
+        tv_clear(rettv);
+        ret = FAIL;
+      }
+      (*arg) += slen;
+    }
+  }
+
 
   while (ret == OK
          && (**arg == '['
              || (**arg == '.' && rettv->v_type == VAR_DICT)
-             || (**arg == '(' && (!evaluate || rettv->v_type == VAR_FUNC)))
+             || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
          && !ascii_iswhite(*(*arg - 1))) {
     if (**arg == '(') {
-      /* need to copy the funcref so that we can clear rettv */
+      partial_T *pt = NULL;
+      // need to copy the funcref so that we can clear rettv
       if (evaluate) {
         functv = *rettv;
         rettv->v_type = VAR_UNKNOWN;
 
-        /* Invoke the function.  Recursive! */
-        s = functv.vval.v_string;
-      } else
+        // Invoke the function.  Recursive!
+        if (functv.v_type == VAR_PARTIAL) {
+          pt = functv.vval.v_partial;
+          if (!lua) {
+            s = partial_name(pt);
+          }
+        } else {
+          s = functv.vval.v_string;
+        }
+      } else {
         s = (char_u *)"";
-      ret = get_func_tv(s, (int)STRLEN(s), rettv, arg,
-          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-          &len, evaluate, selfdict);
+      }
+      ret = get_func_tv(s, lua ? slen : (int)STRLEN(s), rettv, (char_u **)arg,
+                        curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                        &len, evaluate, pt, selfdict);
 
-      /* Clear the funcref afterwards, so that deleting it while
-       * evaluating the arguments is possible (see test55). */
-      if (evaluate)
-        clear_tv(&functv);
+      // Clear the funcref afterwards, so that deleting it while
+      // evaluating the arguments is possible (see test55).
+      if (evaluate) {
+        tv_clear(&functv);
+      }
 
       /* Stop the expression evaluation when immediately aborting on
        * error, or when an interrupt occurred or an exception was thrown
        * but not caught. */
       if (aborting()) {
-        if (ret == OK)
-          clear_tv(rettv);
+        if (ret == OK) {
+          tv_clear(rettv);
+        }
         ret = FAIL;
       }
-      dict_unref(selfdict);
+      tv_dict_unref(selfdict);
       selfdict = NULL;
-    } else { /* **arg == '[' || **arg == '.' */
-      dict_unref(selfdict);
+    } else {  // **arg == '[' || **arg == '.'
+      tv_dict_unref(selfdict);
       if (rettv->v_type == VAR_DICT) {
         selfdict = rettv->vval.v_dict;
         if (selfdict != NULL)
           ++selfdict->dv_refcount;
       } else
         selfdict = NULL;
-      if (eval_index(arg, rettv, evaluate, verbose) == FAIL) {
-        clear_tv(rettv);
+      if (eval_index((char_u **)arg, rettv, evaluate, verbose) == FAIL) {
+        tv_clear(rettv);
         ret = FAIL;
       }
     }
   }
-  dict_unref(selfdict);
+
+  // Turn "dict.Func" into a partial for "Func" bound to "dict".
+  if (selfdict != NULL && tv_is_func(*rettv)) {
+    set_selfdict(rettv, selfdict);
+  }
+
+  tv_dict_unref(selfdict);
   return ret;
 }
 
-/*
- * Free the memory for a variable type-value.
- */
-void free_tv(typval_T *varp)
+void set_selfdict(typval_T *const rettv, dict_T *const selfdict)
 {
-  if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-    /*FALLTHROUGH*/
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      break;
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_UNKNOWN:
-      break;
-    default:
-      EMSG2(_(e_intern2), "free_tv()");
-      break;
-    }
-    xfree(varp);
+  // Don't do this when "dict.Func" is already a partial that was bound
+  // explicitly (pt_auto is false).
+  if (rettv->v_type == VAR_PARTIAL && !rettv->vval.v_partial->pt_auto
+      && rettv->vval.v_partial->pt_dict != NULL) {
+    return;
   }
+  make_partial(selfdict, rettv);
 }
 
-/*
- * Free the memory for a variable value and set the value to NULL or 0.
- */
-void clear_tv(typval_T *varp)
-{
-  if (varp != NULL) {
-    switch (varp->v_type) {
-    case VAR_FUNC:
-      func_unref(varp->vval.v_string);
-      if (varp->vval.v_string != empty_string) {
-        xfree(varp->vval.v_string);
-      }
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_STRING:
-      xfree(varp->vval.v_string);
-      varp->vval.v_string = NULL;
-      break;
-    case VAR_LIST:
-      list_unref(varp->vval.v_list);
-      varp->vval.v_list = NULL;
-      break;
-    case VAR_DICT:
-      dict_unref(varp->vval.v_dict);
-      varp->vval.v_dict = NULL;
-      break;
-    case VAR_NUMBER:
-      varp->vval.v_number = 0;
-      break;
-    case VAR_FLOAT:
-      varp->vval.v_float = 0.0;
-      break;
-    case VAR_UNKNOWN:
-      break;
-    default:
-      EMSG2(_(e_intern2), "clear_tv()");
-    }
-    varp->v_lock = 0;
-  }
-}
-
-/*
- * Set the value of a variable to NULL without freeing items.
- */
-static void init_tv(typval_T *varp)
-{
-  if (varp != NULL)
-    memset(varp, 0, sizeof(typval_T));
-}
-
-/*
- * Get the number value of a variable.
- * If it is a String variable, uses vim_str2nr().
- * For incompatible types, return 0.
- * get_tv_number_chk() is similar to get_tv_number(), but informs the
- * caller of incompatible types: it sets *denote to TRUE if "denote"
- * is not NULL or returns -1 otherwise.
- */
-static long get_tv_number(typval_T *varp)
-{
-  int error = FALSE;
-
-  return get_tv_number_chk(varp, &error);       /* return 0L on error */
-}
-
-long get_tv_number_chk(typval_T *varp, int *denote)
-{
-  long n = 0L;
-
-  switch (varp->v_type) {
-  case VAR_NUMBER:
-    return (long)(varp->vval.v_number);
-  case VAR_FLOAT:
-    EMSG(_("E805: Using a Float as a Number"));
-    break;
-  case VAR_FUNC:
-    EMSG(_("E703: Using a Funcref as a Number"));
-    break;
-  case VAR_STRING:
-    if (varp->vval.v_string != NULL) {
-      vim_str2nr(varp->vval.v_string, NULL, NULL,
-                 STR2NR_ALL, &n, NULL, 0);
-    }
-    return n;
-  case VAR_LIST:
-    EMSG(_("E745: Using a List as a Number"));
-    break;
-  case VAR_DICT:
-    EMSG(_("E728: Using a Dictionary as a Number"));
-    break;
-  default:
-    EMSG2(_(e_intern2), "get_tv_number()");
-    break;
-  }
-  if (denote == NULL) {
-    // useful for values that must be unsigned
-    n = -1;
-  } else {
-    *denote = true;
-  }
-  return n;
-}
-
-/*
- * Get the lnum from the first argument.
- * Also accepts ".", "$", etc., but that only works for the current buffer.
- * Returns -1 on error.
- */
-static linenr_T get_tv_lnum(typval_T *argvars)
-{
-  typval_T rettv;
-  linenr_T lnum;
-
-  lnum = get_tv_number_chk(&argvars[0], NULL);
-  if (lnum == 0) {  /* no valid number, try using line() */
-    rettv.v_type = VAR_NUMBER;
-    f_line(argvars, &rettv);
-    lnum = rettv.vval.v_number;
-    clear_tv(&rettv);
-  }
-  return lnum;
-}
-
-/*
- * Get the lnum from the first argument.
- * Also accepts "$", then "buf" is used.
- * Returns 0 on error.
- */
-static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf)
-{
-  if (argvars[0].v_type == VAR_STRING
-      && argvars[0].vval.v_string != NULL
-      && argvars[0].vval.v_string[0] == '$'
-      && buf != NULL)
-    return buf->b_ml.ml_line_count;
-  return get_tv_number_chk(&argvars[0], NULL);
-}
-
-/*
- * Get the string value of a variable.
- * If it is a Number variable, the number is converted into a string.
- * get_tv_string() uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
- * get_tv_string_buf() uses a given buffer.
- * If the String variable has never been set, return an empty string.
- * Never returns NULL;
- * get_tv_string_chk() and get_tv_string_buf_chk() are similar, but return
- * NULL on error.
- */
-static char_u *get_tv_string(const typval_T *varp)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  static char_u mybuf[NUMBUFLEN];
-
-  return get_tv_string_buf(varp, mybuf);
-}
-
-static char_u *get_tv_string_buf(const typval_T *varp, char_u *buf)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  char_u      *res =  get_tv_string_buf_chk(varp, buf);
-
-  return res != NULL ? res : (char_u *)"";
-}
-
-/// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
-char_u *get_tv_string_chk(const typval_T *varp)
+// Turn a typeval into a string.  Similar to tv_get_string_buf() but uses
+// string() on Dict, List, etc.
+static const char *tv_stringify(typval_T *varp, char *buf)
   FUNC_ATTR_NONNULL_ALL
 {
-  static char_u mybuf[NUMBUFLEN];
+  if (varp->v_type == VAR_LIST
+      || varp->v_type == VAR_DICT
+      || varp->v_type == VAR_FUNC
+      || varp->v_type == VAR_PARTIAL
+      || varp->v_type == VAR_FLOAT) {
+    typval_T tmp;
 
-  return get_tv_string_buf_chk(varp, mybuf);
-}
-
-static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (varp->v_type) {
-  case VAR_NUMBER:
-    sprintf((char *)buf, "%" PRId64, (int64_t)varp->vval.v_number);
-    return buf;
-  case VAR_FUNC:
-    EMSG(_("E729: using Funcref as a String"));
-    break;
-  case VAR_LIST:
-    EMSG(_("E730: using List as a String"));
-    break;
-  case VAR_DICT:
-    EMSG(_("E731: using Dictionary as a String"));
-    break;
-  case VAR_FLOAT:
-    EMSG(_(e_float_as_string));
-    break;
-  case VAR_STRING:
-    if (varp->vval.v_string != NULL)
-      return varp->vval.v_string;
-    return (char_u *)"";
-  default:
-    EMSG2(_(e_intern2), "get_tv_string_buf()");
-    break;
+    f_string(varp, &tmp, NULL);
+    const char *const res = tv_get_string_buf(&tmp, buf);
+    tv_clear(varp);
+    *varp = tmp;
+    return res;
   }
-  return NULL;
+  return tv_get_string_buf(varp, buf);
 }
 
-/*
- * Find variable "name" in the list of variables.
- * Return a pointer to it if found, NULL if not found.
- * Careful: "a:0" variables don't have a name.
- * When "htp" is not NULL we are writing to the variable, set "htp" to the
- * hashtab_T used.
- */
-static dictitem_T *find_var(char_u *name, hashtab_T **htp, int no_autoload)
+// Find variable "name" in the list of variables.
+// Return a pointer to it if found, NULL if not found.
+// Careful: "a:0" variables don't have a name.
+// When "htp" is not NULL we are writing to the variable, set "htp" to the
+// hashtab_T used.
+dictitem_T *find_var(const char *const name, const size_t name_len,
+                     hashtab_T **htp, int no_autoload)
 {
-  char_u      *varname;
-  hashtab_T   *ht;
-
-  ht = find_var_ht(name, &varname);
-  if (htp != NULL)
+  const char *varname;
+  hashtab_T *const ht = find_var_ht(name, name_len, &varname);
+  if (htp != NULL) {
     *htp = ht;
-  if (ht == NULL)
+  }
+  if (ht == NULL) {
     return NULL;
-  return find_var_in_ht(ht, *name, varname, no_autoload || htp != NULL);
+  }
+  dictitem_T *const ret = find_var_in_ht(ht, *name,
+                                         varname,
+                                         name_len - (size_t)(varname - name),
+                                         no_autoload || htp != NULL);
+  if (ret != NULL) {
+    return ret;
+  }
+
+  // Search in parent scope for lambda
+  return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
 }
 
-/*
- * Find variable "varname" in hashtab "ht" with name "htname".
- * Returns NULL if not found.
- */
-static dictitem_T *find_var_in_ht(hashtab_T *ht, int htname, char_u *varname, int no_autoload)
+/// Find variable in hashtab.
+/// When "varname" is empty returns curwin/curtab/etc vars dictionary.
+///
+/// @param[in]  ht  Hashtab to find variable in.
+/// @param[in]  htname  Hashtab name (first character).
+/// @param[in]  varname  Variable name.
+/// @param[in]  varname_len  Variable name length.
+/// @param[in]  no_autoload  If true then autoload scripts will not be sourced
+///                          if autoload variable was not found.
+///
+/// @return pointer to the dictionary item with the found variable or NULL if it
+///         was not found.
+dictitem_T *find_var_in_ht(hashtab_T *const ht,
+                           int htname,
+                           const char *const varname,
+                           const size_t varname_len,
+                           int no_autoload)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   hashitem_T  *hi;
 
-  if (*varname == NUL) {
-    /* Must be something like "s:", otherwise "ht" would be NULL. */
+  if (varname_len == 0) {
+    // Must be something like "s:", otherwise "ht" would be NULL.
     switch (htname) {
-    case 's': return &SCRIPT_SV(current_SID)->sv_var;
-    case 'g': return &globvars_var;
-    case 'v': return &vimvars_var;
-    case 'b': return &curbuf->b_bufvar;
-    case 'w': return &curwin->w_winvar;
-    case 't': return &curtab->tp_winvar;
-    case 'l': return current_funccal == NULL
-             ? NULL : &current_funccal->l_vars_var;
-    case 'a': return current_funccal == NULL
-             ? NULL : &current_funccal->l_avars_var;
+      case 's': return (dictitem_T *)&SCRIPT_SV(current_sctx.sc_sid)->sv_var;
+      case 'g': return (dictitem_T *)&globvars_var;
+      case 'v': return (dictitem_T *)&vimvars_var;
+      case 'b': return (dictitem_T *)&curbuf->b_bufvar;
+      case 'w': return (dictitem_T *)&curwin->w_winvar;
+      case 't': return (dictitem_T *)&curtab->tp_winvar;
+      case 'l': return get_funccal_local_var();
+      case 'a': return get_funccal_args_var();
     }
     return NULL;
   }
 
-  hi = hash_find(ht, varname);
+  hi = hash_find_len(ht, varname, varname_len);
   if (HASHITEM_EMPTY(hi)) {
-    /* For global variables we may try auto-loading the script.  If it
-     * worked find the variable again.  Don't auto-load a script if it was
-     * loaded already, otherwise it would be loaded every time when
-     * checking if a function name is a Funcref variable. */
+    // For global variables we may try auto-loading the script.  If it
+    // worked find the variable again.  Don't auto-load a script if it was
+    // loaded already, otherwise it would be loaded every time when
+    // checking if a function name is a Funcref variable.
     if (ht == &globvarht && !no_autoload) {
-      /* Note: script_autoload() may make "hi" invalid. It must either
-       * be obtained again or not used. */
-      if (!script_autoload(varname, FALSE) || aborting())
+      // Note: script_autoload() may make "hi" invalid. It must either
+      // be obtained again or not used.
+      if (!script_autoload(varname, varname_len, false) || aborting()) {
         return NULL;
-      hi = hash_find(ht, varname);
+      }
+      hi = hash_find_len(ht, varname, varname_len);
     }
-    if (HASHITEM_EMPTY(hi))
+    if (HASHITEM_EMPTY(hi)) {
       return NULL;
+    }
   }
-  return HI2DI(hi);
+  return TV_DICT_HI2DI(hi);
 }
 
-// Find the dict and hashtable used for a variable name.  Set "varname" to the
-// start of name without ':'.
-static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
+/// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
+///
+/// @param[in]  name  Variable name, possibly with scope prefix.
+/// @param[in]  name_len  Variable name length.
+/// @param[out]  varname  Will be set to the start of the name without scope
+///                       prefix.
+/// @param[out]  d  Scope dictionary.
+///
+/// @return Scope hashtab, NULL if name is not valid.
+static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
+                                   const char **varname, dict_T **d)
 {
-  hashitem_T  *hi;
+  hashitem_T *hi;
+  funccall_T *funccal = get_funccal();
   *d = NULL;
 
-  if (name[0] == NUL) {
+  if (name_len == 0) {
     return NULL;
   }
-  if (name[1] != ':') {
+  if (name_len == 1 || name[1] != ':') {
     // name has implicit scope
     if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
       // The name must not start with a colon or #.
@@ -18765,67 +8556,80 @@ static hashtab_T *find_var_ht_dict(char_u *name, uint8_t **varname, dict_T **d)
     *varname = name;
 
     // "version" is "v:version" in all scopes
-    hi = hash_find(&compat_hashtab, name);
+    hi = hash_find_len(&compat_hashtab, name, name_len);
     if (!HASHITEM_EMPTY(hi)) {
       return &compat_hashtab;
     }
 
-    *d = current_funccal ? &current_funccal->l_vars : &globvardict;
+    if (funccal == NULL) {  // global variable
+      *d = &globvardict;
+    } else {  // l: variable
+      *d = &funccal->l_vars;
+    }
     goto end;
   }
 
   *varname = name + 2;
-  if (*name == 'g') {                           // global variable
+  if (*name == 'g') {  // global variable
     *d = &globvardict;
-  } else if (vim_strchr(name + 2, ':') != NULL
-      || vim_strchr(name + 2, AUTOLOAD_CHAR) != NULL) {
+  } else if (name_len > 2
+             && (memchr(name + 2, ':', name_len - 2) != NULL
+                 || memchr(name + 2, AUTOLOAD_CHAR, name_len - 2) != NULL)) {
     // There must be no ':' or '#' in the rest of the name if g: was not used
     return NULL;
   }
 
-  if (*name == 'b') {                    // buffer variable
+  if (*name == 'b') {  // buffer variable
     *d = curbuf->b_vars;
-  } else if (*name == 'w') {                    // window variable
+  } else if (*name == 'w') {  // window variable
     *d = curwin->w_vars;
-  } else if (*name == 't') {                    // tab page variable
+  } else if (*name == 't') {  // tab page variable
     *d = curtab->tp_vars;
-  } else if (*name == 'v') {                    // v: variable
+  } else if (*name == 'v') {  // v: variable
     *d = &vimvardict;
-  } else if (*name == 'a' && current_funccal != NULL) {  // function argument
-    *d = &current_funccal->l_avars;
-  } else if (*name == 'l' && current_funccal != NULL) {  // local variable
-    *d = &current_funccal->l_vars;
-  } else if (*name == 's'                       // script variable
-      && current_SID > 0 && current_SID <= ga_scripts.ga_len) {
-    *d = &SCRIPT_SV(current_SID)->sv_dict;
+  } else if (*name == 'a' && funccal != NULL) {  // function argument
+    *d = &funccal->l_avars;
+  } else if (*name == 'l' && funccal != NULL) {  // local variable
+    *d = &funccal->l_vars;
+  } else if (*name == 's'  // script variable
+             && current_sctx.sc_sid > 0
+             && current_sctx.sc_sid <= ga_scripts.ga_len) {
+    *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;
   }
 
 end:
   return *d ? &(*d)->dv_hashtab : NULL;
 }
 
-// Find the hashtab used for a variable name.
-// Return NULL if the name is not valid.
-// Set "varname" to the start of name without ':'.
-static hashtab_T *find_var_ht(uint8_t *name, uint8_t **varname)
+/// Find the hashtable used for a variable
+///
+/// @param[in]  name  Variable name, possibly with scope prefix.
+/// @param[in]  name_len  Variable name length.
+/// @param[out]  varname  Will be set to the start of the name without scope
+///                       prefix.
+///
+/// @return Scope hashtab, NULL if name is not valid.
+hashtab_T *find_var_ht(const char *name, const size_t name_len,
+                       const char **varname)
 {
   dict_T *d;
-  return find_var_ht_dict(name, varname, &d);
+  return find_var_ht_dict(name, name_len, varname, &d);
 }
 
 /*
  * Get the string value of a (global/local) variable.
- * Note: see get_tv_string() for how long the pointer remains valid.
+ * Note: see tv_get_string() for how long the pointer remains valid.
  * Returns NULL when it doesn't exist.
  */
-char_u *get_var_value(char_u *name)
+char_u *get_var_value(const char *const name)
 {
   dictitem_T  *v;
 
-  v = find_var(name, NULL, FALSE);
-  if (v == NULL)
+  v = find_var(name, strlen(name), NULL, false);
+  if (v == NULL) {
     return NULL;
-  return get_tv_string(&v->di_tv);
+  }
+  return (char_u *)tv_get_string(&v->di_tv);
 }
 
 /*
@@ -18862,10 +8666,10 @@ void new_script_vars(scid_T id)
  * Initialize dictionary "dict" as a scope and set variable "dict_var" to
  * point to it.
  */
-void init_var_dict(dict_T *dict, dictitem_T *dict_var, int scope)
+void init_var_dict(dict_T *dict, ScopeDictDictItem *dict_var, int scope)
 {
   hash_init(&dict->dv_hashtab);
-  dict->dv_lock = 0;
+  dict->dv_lock = VAR_UNLOCKED;
   dict->dv_scope = scope;
   dict->dv_refcount = DO_NOT_FREE_CNT;
   dict->dv_copyID = 0;
@@ -18885,7 +8689,7 @@ void unref_var_dict(dict_T *dict)
   /* Now the dict needs to be freed if no one else is using it, go back to
    * normal reference counting. */
   dict->dv_refcount -= DO_NOT_FREE_CNT - 1;
-  dict_unref(dict);
+  tv_dict_unref(dict);
 }
 
 /*
@@ -18901,7 +8705,7 @@ void vars_clear(hashtab_T *ht)
 /*
  * Like vars_clear(), but only free the value if "free_val" is TRUE.
  */
-static void vars_clear_ext(hashtab_T *ht, int free_val)
+void vars_clear_ext(hashtab_T *ht, int free_val)
 {
   int todo;
   hashitem_T  *hi;
@@ -18916,9 +8720,9 @@ static void vars_clear_ext(hashtab_T *ht, int free_val)
       // Free the variable.  Don't remove it from the hashtab,
       // ht_array might change then.  hash_clear() takes care of it
       // later.
-      v = HI2DI(hi);
+      v = TV_DICT_HI2DI(hi);
       if (free_val) {
-        clear_tv(&v->di_tv);
+        tv_clear(&v->di_tv);
       }
       if (v->di_flags & DI_FLAGS_ALLOC) {
         xfree(v);
@@ -18935,45 +8739,44 @@ static void vars_clear_ext(hashtab_T *ht, int free_val)
  */
 static void delete_var(hashtab_T *ht, hashitem_T *hi)
 {
-  dictitem_T  *di = HI2DI(hi);
+  dictitem_T  *di = TV_DICT_HI2DI(hi);
 
   hash_remove(ht, hi);
-  clear_tv(&di->di_tv);
+  tv_clear(&di->di_tv);
   xfree(di);
 }
 
 /*
  * List the value of one internal variable.
  */
-static void list_one_var(dictitem_T *v, char_u *prefix, int *first)
+static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 {
-  char_u *s = (char_u *) echo_string(&v->di_tv, NULL);
-  list_one_var_a(prefix, v->di_key, v->di_tv.v_type,
-      s == NULL ? (char_u *)"" : s, first);
+  char *const s = encode_tv2echo(&v->di_tv, NULL);
+  list_one_var_a(prefix, (const char *)v->di_key, STRLEN(v->di_key),
+                 v->di_tv.v_type, (s == NULL ? "" : s), first);
   xfree(s);
 }
 
-static void 
-list_one_var_a (
-    char_u *prefix,
-    char_u *name,
-    int type,
-    char_u *string,
-    int *first      /* when TRUE clear rest of screen and set to FALSE */
-)
+/// @param[in]  name_len  Length of the name. May be -1, in this case strlen()
+///                       will be used.
+/// @param[in,out]  first  When true clear rest of screen and set to false.
+static void list_one_var_a(const char *prefix, const char *name,
+                           const ptrdiff_t name_len, const int type,
+                           const char *string, int *first)
 {
-  /* don't use msg() or msg_attr() to avoid overwriting "v:statusmsg" */
+  // don't use msg() or msg_attr() to avoid overwriting "v:statusmsg"
   msg_start();
   msg_puts(prefix);
-  if (name != NULL)     /* "a:" vars don't have a name stored */
-    msg_puts(name);
+  if (name != NULL) {  // "a:" vars don't have a name stored
+    msg_puts_attr_len(name, name_len, 0);
+  }
   msg_putchar(' ');
   msg_advance(22);
-  if (type == VAR_NUMBER)
+  if (type == VAR_NUMBER) {
     msg_putchar('#');
-  else if (type == VAR_FUNC)
+  } else if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_putchar('*');
-  else if (type == VAR_LIST) {
+  } else if (type == VAR_LIST) {
     msg_putchar('[');
     if (*string == '[')
       ++string;
@@ -18984,67 +8787,81 @@ list_one_var_a (
   } else
     msg_putchar(' ');
 
-  msg_outtrans(string);
+  msg_outtrans((char_u *)string);
 
-  if (type == VAR_FUNC)
-    msg_puts((char_u *)"()");
+  if (type == VAR_FUNC || type == VAR_PARTIAL) {
+    msg_puts("()");
+  }
   if (*first) {
     msg_clr_eos();
     *first = FALSE;
   }
 }
 
-/*
- * Set variable "name" to value in "tv".
- * If the variable already exists, the value is updated.
- * Otherwise the variable is created.
- */
-static void 
-set_var (
-    char_u *name,
-    typval_T *tv,
-    int copy                   /* make copy of value in "tv" */
-)
+/// Set variable to the given value
+///
+/// If the variable already exists, the value is updated. Otherwise the variable
+/// is created.
+///
+/// @param[in]  name  Variable name to set.
+/// @param[in]  name_len  Length of the variable name.
+/// @param  tv  Variable value.
+/// @param[in]  copy  True if value in tv is to be copied.
+void set_var(const char *name, const size_t name_len, typval_T *const tv,
+             const bool copy)
+  FUNC_ATTR_NONNULL_ALL
+{
+  set_var_const(name, name_len, tv, copy, false);
+}
+
+/// Set variable to the given value
+///
+/// If the variable already exists, the value is updated. Otherwise the variable
+/// is created.
+///
+/// @param[in]  name  Variable name to set.
+/// @param[in]  name_len  Length of the variable name.
+/// @param  tv  Variable value.
+/// @param[in]  copy  True if value in tv is to be copied.
+/// @param[in]  is_const  True if value in tv is to be locked.
+static void set_var_const(const char *name, const size_t name_len,
+                          typval_T *const tv, const bool copy,
+                          const bool is_const)
+  FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T  *v;
-  char_u      *varname;
   hashtab_T   *ht;
-  typval_T oldtv;
   dict_T *dict;
 
-  ht = find_var_ht_dict(name, &varname, &dict);
-  bool watched = is_watched(dict);
-
-  if (watched) {
-    init_tv(&oldtv);
-  }
+  const char *varname;
+  ht = find_var_ht_dict(name, name_len, &varname, &dict);
+  const bool watched = tv_dict_is_watched(dict);
 
   if (ht == NULL || *varname == NUL) {
     EMSG2(_(e_illvar), name);
     return;
   }
-  v = find_var_in_ht(ht, 0, varname, TRUE);
+  v = find_var_in_ht(ht, 0, varname, name_len - (size_t)(varname - name), true);
 
-  if (tv->v_type == VAR_FUNC && var_check_func_name(name, v == NULL))
+  // Search in parent scope which is possible to reference from lambda
+  if (v == NULL) {
+    v = find_var_in_scoped_ht((const char *)name, name_len, true);
+  }
+
+  if (tv_is_func(*tv) && !var_check_func_name(name, v == NULL)) {
     return;
+  }
 
+  typval_T oldtv = TV_INITIAL_VALUE;
   if (v != NULL) {
-    // existing variable, need to clear the value
-    if (var_check_ro(v->di_flags, name, false)
-        || tv_check_lock(v->di_tv.v_lock, name, false)) {
+    if (is_const) {
+      EMSG(_(e_cannot_mod));
       return;
     }
-    if (v->di_tv.v_type != tv->v_type
-        && !((v->di_tv.v_type == VAR_STRING
-              || v->di_tv.v_type == VAR_NUMBER)
-             && (tv->v_type == VAR_STRING
-                 || tv->v_type == VAR_NUMBER))
-        && !((v->di_tv.v_type == VAR_NUMBER
-              || v->di_tv.v_type == VAR_FLOAT)
-             && (tv->v_type == VAR_NUMBER
-                 || tv->v_type == VAR_FLOAT))
-        ) {
-      EMSG2(_("E706: Variable type mismatch for: %s"), name);
+
+    // existing variable, need to clear the value
+    if (var_check_ro(v->di_flags, name, name_len)
+        || tv_check_lock(v->di_tv.v_lock, name, name_len)) {
       return;
     }
 
@@ -19052,215 +8869,219 @@ set_var (
     // prevent changing the type.
     if (ht == &vimvarht) {
       if (v->di_tv.v_type == VAR_STRING) {
-        xfree(v->di_tv.vval.v_string);
-        if (copy || tv->v_type != VAR_STRING)
-          v->di_tv.vval.v_string = vim_strsave(get_tv_string(tv));
-        else {
-          /* Take over the string to avoid an extra alloc/free. */
+        XFREE_CLEAR(v->di_tv.vval.v_string);
+        if (copy || tv->v_type != VAR_STRING) {
+          const char *const val = tv_get_string(tv);
+
+          // Careful: when assigning to v:errmsg and tv_get_string()
+          // causes an error message the variable will alrady be set.
+          if (v->di_tv.vval.v_string == NULL) {
+            v->di_tv.vval.v_string = (char_u *)xstrdup(val);
+          }
+        } else {
+          // Take over the string to avoid an extra alloc/free.
           v->di_tv.vval.v_string = tv->vval.v_string;
           tv->vval.v_string = NULL;
         }
         return;
       } else if (v->di_tv.v_type == VAR_NUMBER) {
-        v->di_tv.vval.v_number = get_tv_number(tv);
-        if (STRCMP(varname, "searchforward") == 0)
+        v->di_tv.vval.v_number = tv_get_number(tv);
+        if (strcmp(varname, "searchforward") == 0) {
           set_search_direction(v->di_tv.vval.v_number ? '/' : '?');
-        else if (STRCMP(varname, "hlsearch") == 0) {
+        } else if (strcmp(varname, "hlsearch") == 0) {
           no_hlsearch = !v->di_tv.vval.v_number;
           redraw_all_later(SOME_VALID);
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
-        EMSG2(_(e_intern2), "set_var()");
+        EMSG2(_("E963: setting %s to value with wrong type"), name);
+        return;
       }
     }
 
     if (watched) {
-      copy_tv(&v->di_tv, &oldtv);
+      tv_copy(&v->di_tv, &oldtv);
     }
-    clear_tv(&v->di_tv);
-  } else {                /* add a new variable */
-    /* Can't add "v:" variable. */
-    if (ht == &vimvarht) {
-      EMSG2(_(e_illvar), name);
+    tv_clear(&v->di_tv);
+  } else {  // Add a new variable.
+    // Can't add "v:" or "a:" variable.
+    if (ht == &vimvarht || ht == get_funccal_args_ht()) {
+      emsgf(_(e_illvar), name);
       return;
     }
 
-    /* Make sure the variable name is valid. */
-    if (!valid_varname(varname))
+    // Make sure the variable name is valid.
+    if (!valid_varname(varname)) {
       return;
+    }
 
-    v = xmalloc(sizeof(dictitem_T) + STRLEN(varname));
+    // Make sure dict is valid
+    assert(dict != NULL);
+
+    v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
-    if (hash_add(ht, DI2HIKEY(v)) == FAIL) {
+    if (tv_dict_add(dict, v) == FAIL) {
       xfree(v);
       return;
     }
     v->di_flags = DI_FLAGS_ALLOC;
+    if (is_const) {
+      v->di_flags |= DI_FLAGS_LOCK;
+    }
   }
 
   if (copy || tv->v_type == VAR_NUMBER || tv->v_type == VAR_FLOAT) {
-    copy_tv(tv, &v->di_tv);
+    tv_copy(tv, &v->di_tv);
   } else {
     v->di_tv = *tv;
     v->di_tv.v_lock = 0;
-    init_tv(tv);
+    tv_init(tv);
   }
 
   if (watched) {
     if (oldtv.v_type == VAR_UNKNOWN) {
-      dictwatcher_notify(dict, (char *)v->di_key, &v->di_tv, NULL);
+      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, NULL);
     } else {
-      dictwatcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
-      clear_tv(&oldtv);
+      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
+      tv_clear(&oldtv);
     }
   }
+
+  if (is_const) {
+    v->di_tv.v_lock |= VAR_LOCKED;
+  }
 }
 
-// Return true if di_flags "flags" indicates variable "name" is read-only.
-// Also give an error message.
-static bool var_check_ro(int flags, char_u *name, bool use_gettext)
+/// Check whether variable is read-only (DI_FLAGS_RO, DI_FLAGS_RO_SBX)
+///
+/// Also gives an error message.
+///
+/// @param[in]  flags  di_flags attribute value.
+/// @param[in]  name  Variable name, for use in error message.
+/// @param[in]  name_len  Variable name length. Use #TV_TRANSLATE to translate
+///                       variable name and compute the length. Use #TV_CSTRING
+///                       to compute the length with strlen() without
+///                       translating.
+///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
+///
+/// @return True if variable is read-only: either always or in sandbox when
+///         sandbox is enabled, false otherwise.
+bool var_check_ro(const int flags, const char *name,
+                  size_t name_len)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
+  const char *error_message = NULL;
   if (flags & DI_FLAGS_RO) {
-    EMSG2(_(e_readonlyvar), use_gettext ? (char_u *)_(name) : name);
-    return true;
+    error_message = _(e_readonlyvar);
+  } else if ((flags & DI_FLAGS_RO_SBX) && sandbox) {
+    error_message = N_("E794: Cannot set variable in the sandbox: \"%.*s\"");
   }
-  if ((flags & DI_FLAGS_RO_SBX) && sandbox) {
-    EMSG2(_(e_readonlysbx), use_gettext ? (char_u *)_(name) : name);
-    return true;
+
+  if (error_message == NULL) {
+    return false;
   }
-  return false;
+  if (name_len == TV_TRANSLATE) {
+    name = _(name);
+    name_len = strlen(name);
+  } else if (name_len == TV_CSTRING) {
+    name_len = strlen(name);
+  }
+
+  emsgf(_(error_message), (int)name_len, name);
+
+  return true;
 }
 
-// Return true if di_flags "flags" indicates variable "name" is fixed.
-// Also give an error message.
-static bool var_check_fixed(int flags, char_u *name, bool use_gettext)
+/// Check whether variable is fixed (DI_FLAGS_FIX)
+///
+/// Also gives an error message.
+///
+/// @param[in]  flags  di_flags attribute value.
+/// @param[in]  name  Variable name, for use in error message.
+/// @param[in]  name_len  Variable name length. Use #TV_TRANSLATE to translate
+///                       variable name and compute the length. Use #TV_CSTRING
+///                       to compute the length with strlen() without
+///                       translating.
+///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
+///
+/// @return True if variable is fixed, false otherwise.
+bool var_check_fixed(const int flags, const char *name,
+                     size_t name_len)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (flags & DI_FLAGS_FIX) {
-    EMSG2(_("E795: Cannot delete variable %s"),
-          use_gettext ? (char_u *)_(name) : name);
+    if (name_len == TV_TRANSLATE) {
+      name = _(name);
+      name_len = strlen(name);
+    } else if (name_len == TV_CSTRING) {
+      name_len = strlen(name);
+    }
+    EMSG3(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
     return true;
   }
   return false;
 }
 
-/*
- * Check if a funcref is assigned to a valid variable name.
- * Return TRUE and give an error if not.
- */
-static int 
-var_check_func_name (
-    char_u *name,        /* points to start of variable name */
-    int new_var         /* TRUE when creating the variable */
-)
+// TODO(ZyX-I): move to eval/expressions
+
+/// Check if name is a valid name to assign funcref to
+///
+/// @param[in]  name  Possible function/funcref name.
+/// @param[in]  new_var  True if it is a name for a variable.
+///
+/// @return false in case of error, true in case of success. Also gives an
+///         error message if appropriate.
+bool var_check_func_name(const char *const name, const bool new_var)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Allow for w: b: s: and t:.
   if (!(vim_strchr((char_u *)"wbst", name[0]) != NULL && name[1] == ':')
       && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2]
                                                            : name[0])) {
     EMSG2(_("E704: Funcref variable name must start with a capital: %s"), name);
-    return TRUE;
+    return false;
   }
-  /* Don't allow hiding a function.  When "v" is not NULL we might be
-   * assigning another function to the same var, the type is checked
-   * below. */
-  if (new_var && function_exists(name)) {
+  // Don't allow hiding a function.  When "v" is not NULL we might be
+  // assigning another function to the same var, the type is checked
+  // below.
+  if (new_var && function_exists((const char *)name, false)) {
     EMSG2(_("E705: Variable name conflicts with existing function: %s"),
-        name);
-    return TRUE;
+          name);
+    return false;
   }
-  return FALSE;
+  return true;
 }
 
-/*
- * Check if a variable name is valid.
- * Return FALSE and give an error if not.
- */
-static int valid_varname(char_u *varname)
-{
-  char_u *p;
+// TODO(ZyX-I): move to eval/expressions
 
-  for (p = varname; *p != NUL; ++p)
-    if (!eval_isnamec1(*p) && (p == varname || !ascii_isdigit(*p))
+/// Check if a variable name is valid
+///
+/// @param[in]  varname  Variable name to check.
+///
+/// @return false when variable name is not valid, true when it is. Also gives
+///         an error message if appropriate.
+bool valid_varname(const char *varname)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  for (const char *p = varname; *p != NUL; p++) {
+    if (!eval_isnamec1((int)(uint8_t)(*p))
+        && (p == varname || !ascii_isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
-      EMSG2(_(e_illvar), varname);
-      return FALSE;
+      emsgf(_(e_illvar), varname);
+      return false;
     }
-  return TRUE;
-}
-
-// Return true if typeval "tv" is set to be locked (immutable).
-// Also give an error message, using "name" or _("name") when use_gettext is
-// true.
-static bool tv_check_lock(int lock, char_u *name, bool use_gettext)
-{
-  if (lock & VAR_LOCKED) {
-    EMSG2(_("E741: Value is locked: %s"),
-          name == NULL
-          ? (char_u *)_("Unknown")
-          : use_gettext ? (char_u *)_(name)
-          : name);
-    return true;
   }
-  if (lock & VAR_FIXED) {
-    EMSG2(_("E742: Cannot change value of %s"),
-          name == NULL
-          ? (char_u *)_("Unknown")
-          : use_gettext ? (char_u *)_(name)
-          : name);
-    return true;
-  }
-  return false;
-}
-
-/*
- * Copy the values from typval_T "from" to typval_T "to".
- * When needed allocates string or increases reference count.
- * Does not make a copy of a list or dict but copies the reference!
- * It is OK for "from" and "to" to point to the same item.  This is used to
- * make a copy later.
- */
-void copy_tv(typval_T *from, typval_T *to)
-{
-  to->v_type = from->v_type;
-  to->v_lock = 0;
-  switch (from->v_type) {
-  case VAR_NUMBER:
-    to->vval.v_number = from->vval.v_number;
-    break;
-  case VAR_FLOAT:
-    to->vval.v_float = from->vval.v_float;
-    break;
-  case VAR_STRING:
-  case VAR_FUNC:
-    if (from->vval.v_string == NULL)
-      to->vval.v_string = NULL;
-    else {
-      to->vval.v_string = vim_strsave(from->vval.v_string);
-      if (from->v_type == VAR_FUNC)
-        func_ref(to->vval.v_string);
-    }
-    break;
-  case VAR_LIST:
-    if (from->vval.v_list == NULL)
-      to->vval.v_list = NULL;
-    else {
-      to->vval.v_list = from->vval.v_list;
-      ++to->vval.v_list->lv_refcount;
-    }
-    break;
-  case VAR_DICT:
-    if (from->vval.v_dict == NULL)
-      to->vval.v_dict = NULL;
-    else {
-      to->vval.v_dict = from->vval.v_dict;
-      ++to->vval.v_dict->dv_refcount;
-    }
-    break;
-  default:
-    EMSG2(_(e_intern2), "copy_tv()");
-    break;
-  }
+  return true;
 }
 
 /// Make a copy of an item
@@ -19278,7 +9099,7 @@ void copy_tv(typval_T *from, typval_T *to)
 ///                     list[1]`) var_item_copy with zero copyID will emit
 ///                     a copy with (`copy[0] isnot copy[1]`), with non-zero it
 ///                     will emit a copy with (`copy[0] is copy[1]`) like in the
-///                     original list. Not use when deep is false.
+///                     original list. Not used when deep is false.
 int var_item_copy(const vimconv_T *const conv,
                   typval_T *const from,
                   typval_T *const to,
@@ -19299,11 +9120,14 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_NUMBER:
   case VAR_FLOAT:
   case VAR_FUNC:
-    copy_tv(from, to);
+  case VAR_PARTIAL:
+  case VAR_SPECIAL:
+    tv_copy(from, to);
     break;
   case VAR_STRING:
-    if (conv == NULL || conv->vc_type == CONV_NONE) {
-      copy_tv(from, to);
+    if (conv == NULL || conv->vc_type == CONV_NONE
+        || from->vval.v_string == NULL) {
+      tv_copy(from, to);
     } else {
       to->v_type = VAR_STRING;
       to->v_lock = 0;
@@ -19318,35 +9142,37 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_LIST:
     to->v_type = VAR_LIST;
     to->v_lock = 0;
-    if (from->vval.v_list == NULL)
+    if (from->vval.v_list == NULL) {
       to->vval.v_list = NULL;
-    else if (copyID != 0 && from->vval.v_list->lv_copyID == copyID) {
-      /* use the copy made earlier */
-      to->vval.v_list = from->vval.v_list->lv_copylist;
-      ++to->vval.v_list->lv_refcount;
+    } else if (copyID != 0 && tv_list_copyid(from->vval.v_list) == copyID) {
+      // Use the copy made earlier.
+      to->vval.v_list = tv_list_latest_copy(from->vval.v_list);
+      tv_list_ref(to->vval.v_list);
     } else {
-      to->vval.v_list = list_copy(conv, from->vval.v_list, deep, copyID);
+      to->vval.v_list = tv_list_copy(conv, from->vval.v_list, deep, copyID);
     }
-    if (to->vval.v_list == NULL)
+    if (to->vval.v_list == NULL && from->vval.v_list != NULL) {
       ret = FAIL;
+    }
     break;
   case VAR_DICT:
     to->v_type = VAR_DICT;
     to->v_lock = 0;
-    if (from->vval.v_dict == NULL)
+    if (from->vval.v_dict == NULL) {
       to->vval.v_dict = NULL;
-    else if (copyID != 0 && from->vval.v_dict->dv_copyID == copyID) {
-      /* use the copy made earlier */
+    } else if (copyID != 0 && from->vval.v_dict->dv_copyID == copyID) {
+      // use the copy made earlier
       to->vval.v_dict = from->vval.v_dict->dv_copydict;
       ++to->vval.v_dict->dv_refcount;
     } else {
-      to->vval.v_dict = dict_copy(conv, from->vval.v_dict, deep, copyID);
+      to->vval.v_dict = tv_dict_copy(conv, from->vval.v_dict, deep, copyID);
     }
-    if (to->vval.v_dict == NULL)
+    if (to->vval.v_dict == NULL && from->vval.v_dict != NULL) {
       ret = FAIL;
+    }
     break;
-  default:
-    EMSG2(_(e_intern2), "var_item_copy()");
+  case VAR_UNKNOWN:
+    internal_error("var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   --recurse;
@@ -19362,30 +9188,31 @@ void ex_echo(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   typval_T rettv;
-  char_u      *p;
-  bool needclr = true;
   bool atstart = true;
+  bool need_clear = true;
+  const int did_emsg_before = did_emsg;
 
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n' && !got_int) {
-    /* If eval1() causes an error message the text from the command may
-     * still need to be cleared. E.g., "echo 22,44". */
-    need_clr_eos = needclr;
+    // If eval1() causes an error message the text from the command may
+    // still need to be cleared. E.g., "echo 22,44".
+    need_clr_eos = true;
 
-    p = arg;
-    if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
-      /*
-       * Report the invalid expression unless the expression evaluation
-       * has been cancelled due to an aborting error, an interrupt, or an
-       * exception.
-       */
-      if (!aborting())
-        EMSG2(_(e_invexpr2), p);
-      need_clr_eos = FALSE;
-      break;
+    {
+      char_u *p = arg;
+      if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
+        // Report the invalid expression unless the expression evaluation
+        // has been cancelled due to an aborting error, an interrupt, or an
+        // exception.
+        if (!aborting() && did_emsg == did_emsg_before) {
+          EMSG2(_(e_invexpr2), p);
+        }
+        need_clr_eos = false;
+        break;
+      }
+      need_clr_eos = false;
     }
-    need_clr_eos = FALSE;
 
     if (!eap->skip) {
       if (atstart) {
@@ -19399,44 +9226,31 @@ void ex_echo(exarg_T *eap)
           msg_sb_eol();
           msg_start();
         }
-      } else if (eap->cmdidx == CMD_echo)
-        msg_puts_attr((char_u *)" ", echo_attr);
-      char_u *tofree = p = (char_u *) echo_string(&rettv, NULL);
-      if (p != NULL) {
-        for (; *p != NUL && !got_int; ++p) {
-          if (*p == '\n' || *p == '\r' || *p == TAB) {
-            if (*p != TAB && needclr) {
-              /* remove any text still there from the command */
-              msg_clr_eos();
-              needclr = false;
-            }
-            msg_putchar_attr(*p, echo_attr);
-          } else {
-            if (has_mbyte) {
-              int i = (*mb_ptr2len)(p);
-
-              (void)msg_outtrans_len_attr(p, i, echo_attr);
-              p += i - 1;
-            } else
-              (void)msg_outtrans_len_attr(p, 1, echo_attr);
-          }
-        }
+      } else if (eap->cmdidx == CMD_echo) {
+        msg_puts_attr(" ", echo_attr);
+      }
+      char *tofree = encode_tv2echo(&rettv, NULL);
+      if (*tofree != NUL) {
+        msg_ext_set_kind("echo");
+        msg_multiline_attr(tofree, echo_attr, true, &need_clear);
       }
       xfree(tofree);
     }
-    clear_tv(&rettv);
+    tv_clear(&rettv);
     arg = skipwhite(arg);
   }
   eap->nextcmd = check_nextcmd(arg);
 
-  if (eap->skip)
-    --emsg_skip;
-  else {
-    /* remove text that may still be there from the command */
-    if (needclr)
+  if (eap->skip) {
+    emsg_skip--;
+  } else {
+    // remove text that may still be there from the command
+    if (need_clear) {
       msg_clr_eos();
-    if (eap->cmdidx == CMD_echo)
+    }
+    if (eap->cmdidx == CMD_echo) {
       msg_end();
+    }
   }
 }
 
@@ -19445,13 +9259,7 @@ void ex_echo(exarg_T *eap)
  */
 void ex_echohl(exarg_T *eap)
 {
-  int id;
-
-  id = syn_name2id(eap->arg);
-  if (id == 0)
-    echo_attr = 0;
-  else
-    echo_attr = syn_id2attr(id);
+  echo_attr = syn_name2attr(eap->arg);
 }
 
 /*
@@ -19463,12 +9271,10 @@ void ex_echohl(exarg_T *eap)
  */
 void ex_execute(exarg_T *eap)
 {
-  char_u      *arg = eap->arg;
+  char_u *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
-  char_u      *p;
   garray_T ga;
-  int len;
   int save_did_emsg;
 
   ga_init(&ga, 1, 80);
@@ -19476,40 +9282,45 @@ void ex_execute(exarg_T *eap)
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    p = arg;
-    if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
-      /*
-       * Report the invalid expression unless the expression evaluation
-       * has been cancelled due to an aborting error, an interrupt, or an
-       * exception.
-       */
-      if (!aborting())
-        EMSG2(_(e_invexpr2), p);
-      ret = FAIL;
+    ret = eval1_emsg(&arg, &rettv, !eap->skip);
+    if (ret == FAIL) {
       break;
     }
 
     if (!eap->skip) {
-      p = get_tv_string(&rettv);
-      len = (int)STRLEN(p);
+      char buf[NUMBUFLEN];
+      const char *const argstr = eap->cmdidx == CMD_execute
+        ? tv_get_string_buf(&rettv, buf)
+        : tv_stringify(&rettv, buf);
+      const size_t len = strlen(argstr);
       ga_grow(&ga, len + 2);
-      if (!GA_EMPTY(&ga))
+      if (!GA_EMPTY(&ga)) {
         ((char_u *)(ga.ga_data))[ga.ga_len++] = ' ';
-      STRCPY((char_u *)(ga.ga_data) + ga.ga_len, p);
+      }
+      memcpy((char_u *)(ga.ga_data) + ga.ga_len, argstr, len + 1);
       ga.ga_len += len;
     }
 
-    clear_tv(&rettv);
+    tv_clear(&rettv);
     arg = skipwhite(arg);
   }
 
   if (ret != FAIL && ga.ga_data != NULL) {
+    if (eap->cmdidx == CMD_echomsg || eap->cmdidx == CMD_echoerr) {
+      // Mark the already saved text as finishing the line, so that what
+      // follows is displayed on a new line when scrolling back at the
+      // more prompt.
+      msg_sb_eol();
+    }
+
     if (eap->cmdidx == CMD_echomsg) {
+      msg_ext_set_kind("echomsg");
       MSG_ATTR(ga.ga_data, echo_attr);
       ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
-      /* We don't want to abort following commands, restore did_emsg. */
+      // We don't want to abort following commands, restore did_emsg.
       save_did_emsg = did_emsg;
+      msg_ext_set_kind("echoerr");
       EMSG((char_u *)ga.ga_data);
       if (!force_abort)
         did_emsg = save_did_emsg;
@@ -19532,9 +9343,9 @@ void ex_execute(exarg_T *eap)
  * Returns NULL when no option name found.  Otherwise pointer to the char
  * after the option name.
  */
-static char_u *find_option_end(char_u **arg, int *opt_flags)
+static const char *find_option_end(const char **const arg, int *const opt_flags)
 {
-  char_u      *p = *arg;
+  const char *p = *arg;
 
   ++p;
   if (*p == 'g' && p[1] == ':') {
@@ -19543,941 +9354,53 @@ static char_u *find_option_end(char_u **arg, int *opt_flags)
   } else if (*p == 'l' && p[1] == ':') {
     *opt_flags = OPT_LOCAL;
     p += 2;
-  } else
+  } else {
     *opt_flags = 0;
+  }
 
-  if (!ASCII_ISALPHA(*p))
+  if (!ASCII_ISALPHA(*p)) {
     return NULL;
+  }
   *arg = p;
 
-  if (p[0] == 't' && p[1] == '_' && p[2] != NUL && p[3] != NUL)
-    p += 4;         /* termcap option */
-  else
-    while (ASCII_ISALPHA(*p))
-      ++p;
+  if (p[0] == 't' && p[1] == '_' && p[2] != NUL && p[3] != NUL) {
+    p += 4;  // t_xx/termcap option
+  } else {
+    while (ASCII_ISALPHA(*p)) {
+      p++;
+    }
+  }
   return p;
 }
 
-/*
- * ":function"
- */
-void ex_function(exarg_T *eap)
-{
-  char_u      *theline;
-  int c;
-  int saved_did_emsg;
-  int saved_wait_return = need_wait_return;
-  char_u      *name = NULL;
-  char_u      *p;
-  char_u      *arg;
-  char_u      *line_arg = NULL;
-  garray_T newargs;
-  garray_T newlines;
-  int varargs = FALSE;
-  int mustend = FALSE;
-  int flags = 0;
-  ufunc_T     *fp;
-  int indent;
-  int nesting;
-  char_u      *skip_until = NULL;
-  dictitem_T  *v;
-  funcdict_T fudi;
-  static int func_nr = 0;           /* number for nameless function */
-  int paren;
-  hashtab_T   *ht;
-  int todo;
-  hashitem_T  *hi;
-  int sourcing_lnum_off;
-
-  /*
-   * ":function" without argument: list functions.
-   */
-  if (ends_excmd(*eap->arg)) {
-    if (!eap->skip) {
-      todo = (int)func_hashtab.ht_used;
-      for (hi = func_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-        if (!HASHITEM_EMPTY(hi)) {
-          --todo;
-          fp = HI2UF(hi);
-          if (!isdigit(*fp->uf_name))
-            list_func_head(fp, FALSE);
-        }
-      }
-    }
-    eap->nextcmd = check_nextcmd(eap->arg);
-    return;
-  }
-
-  /*
-   * ":function /pat": list functions matching pattern.
-   */
-  if (*eap->arg == '/') {
-    p = skip_regexp(eap->arg + 1, '/', TRUE, NULL);
-    if (!eap->skip) {
-      regmatch_T regmatch;
-
-      c = *p;
-      *p = NUL;
-      regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
-      *p = c;
-      if (regmatch.regprog != NULL) {
-        regmatch.rm_ic = p_ic;
-
-        todo = (int)func_hashtab.ht_used;
-        for (hi = func_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
-          if (!HASHITEM_EMPTY(hi)) {
-            --todo;
-            fp = HI2UF(hi);
-            if (!isdigit(*fp->uf_name)
-                && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, FALSE);
-          }
-        }
-        vim_regfree(regmatch.regprog);
-      }
-    }
-    if (*p == '/')
-      ++p;
-    eap->nextcmd = check_nextcmd(p);
-    return;
-  }
-
-  // Get the function name.  There are these situations:
-  // func        function name
-  //             "name" == func, "fudi.fd_dict" == NULL
-  // dict.func   new dictionary entry
-  //             "name" == NULL, "fudi.fd_dict" set,
-  //             "fudi.fd_di" == NULL, "fudi.fd_newkey" == func
-  // dict.func   existing dict entry with a Funcref
-  //             "name" == func, "fudi.fd_dict" set,
-  //             "fudi.fd_di" set, "fudi.fd_newkey" == NULL
-  // dict.func   existing dict entry that's not a Funcref
-  //             "name" == NULL, "fudi.fd_dict" set,
-  //             "fudi.fd_di" set, "fudi.fd_newkey" == NULL
-  // s:func      script-local function name
-  // g:func      global function name, same as "func"
-  p = eap->arg;
-  name = trans_function_name(&p, eap->skip, 0, &fudi);
-  paren = (vim_strchr(p, '(') != NULL);
-  if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
-    /*
-     * Return on an invalid expression in braces, unless the expression
-     * evaluation has been cancelled due to an aborting error, an
-     * interrupt, or an exception.
-     */
-    if (!aborting()) {
-      if (!eap->skip && fudi.fd_newkey != NULL)
-        EMSG2(_(e_dictkey), fudi.fd_newkey);
-      xfree(fudi.fd_newkey);
-      return;
-    } else
-      eap->skip = TRUE;
-  }
-
-  /* An error in a function call during evaluation of an expression in magic
-   * braces should not cause the function not to be defined. */
-  saved_did_emsg = did_emsg;
-  did_emsg = FALSE;
-
-  /*
-   * ":function func" with only function name: list function.
-   */
-  if (!paren) {
-    if (!ends_excmd(*skipwhite(p))) {
-      EMSG(_(e_trailing));
-      goto ret_free;
-    }
-    eap->nextcmd = check_nextcmd(p);
-    if (eap->nextcmd != NULL)
-      *p = NUL;
-    if (!eap->skip && !got_int) {
-      fp = find_func(name);
-      if (fp != NULL) {
-        list_func_head(fp, TRUE);
-        for (int j = 0; j < fp->uf_lines.ga_len && !got_int; ++j) {
-          if (FUNCLINE(fp, j) == NULL)
-            continue;
-          msg_putchar('\n');
-          msg_outnum((long)(j + 1));
-          if (j < 9)
-            msg_putchar(' ');
-          if (j < 99)
-            msg_putchar(' ');
-          msg_prt_line(FUNCLINE(fp, j), FALSE);
-          ui_flush();                  /* show a line at a time */
-          os_breakcheck();
-        }
-        if (!got_int) {
-          msg_putchar('\n');
-          msg_puts((char_u *)"   endfunction");
-        }
-      } else
-        emsg_funcname(N_("E123: Undefined function: %s"), name);
-    }
-    goto ret_free;
-  }
-
-  /*
-   * ":function name(arg1, arg2)" Define function.
-   */
-  p = skipwhite(p);
-  if (*p != '(') {
-    if (!eap->skip) {
-      EMSG2(_("E124: Missing '(': %s"), eap->arg);
-      goto ret_free;
-    }
-    /* attempt to continue by skipping some text */
-    if (vim_strchr(p, '(') != NULL)
-      p = vim_strchr(p, '(');
-  }
-  p = skipwhite(p + 1);
-
-  ga_init(&newargs, (int)sizeof(char_u *), 3);
-  ga_init(&newlines, (int)sizeof(char_u *), 3);
-
-  if (!eap->skip) {
-    /* Check the name of the function.  Unless it's a dictionary function
-     * (that we are overwriting). */
-    if (name != NULL)
-      arg = name;
-    else
-      arg = fudi.fd_newkey;
-    if (arg != NULL && (fudi.fd_di == NULL
-                        || fudi.fd_di->di_tv.v_type != VAR_FUNC)) {
-      int j = (*arg == K_SPECIAL) ? 3 : 0;
-      while (arg[j] != NUL && (j == 0 ? eval_isnamec1(arg[j])
-                               : eval_isnamec(arg[j])))
-        ++j;
-      if (arg[j] != NUL)
-        emsg_funcname((char *)e_invarg2, arg);
-    }
-    /* Disallow using the g: dict. */
-    if (fudi.fd_dict != NULL && fudi.fd_dict->dv_scope == VAR_DEF_SCOPE)
-      EMSG(_("E862: Cannot use g: here"));
-  }
-
-  /*
-   * Isolate the arguments: "arg1, arg2, ...)"
-   */
-  while (*p != ')') {
-    if (p[0] == '.' && p[1] == '.' && p[2] == '.') {
-      varargs = TRUE;
-      p += 3;
-      mustend = TRUE;
-    } else {
-      arg = p;
-      while (ASCII_ISALNUM(*p) || *p == '_')
-        ++p;
-      if (arg == p || isdigit(*arg)
-          || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
-          || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
-        if (!eap->skip)
-          EMSG2(_("E125: Illegal argument: %s"), arg);
-        break;
-      }
-      ga_grow(&newargs, 1);
-      c = *p;
-      *p = NUL;
-      arg = vim_strsave(arg);
-
-      /* Check for duplicate argument name. */
-      for (int i = 0; i < newargs.ga_len; ++i)
-        if (STRCMP(((char_u **)(newargs.ga_data))[i], arg) == 0) {
-          EMSG2(_("E853: Duplicate argument name: %s"), arg);
-          xfree(arg);
-          goto erret;
-        }
-
-      ((char_u **)(newargs.ga_data))[newargs.ga_len] = arg;
-      *p = c;
-      newargs.ga_len++;
-      if (*p == ',')
-        ++p;
-      else
-        mustend = TRUE;
-    }
-    p = skipwhite(p);
-    if (mustend && *p != ')') {
-      if (!eap->skip)
-        EMSG2(_(e_invarg2), eap->arg);
-      break;
-    }
-  }
-  if (*p != ')') {
-    goto erret;
-  }
-  ++p;  // skip the ')'
-
-  /* find extra arguments "range", "dict" and "abort" */
-  for (;; ) {
-    p = skipwhite(p);
-    if (STRNCMP(p, "range", 5) == 0) {
-      flags |= FC_RANGE;
-      p += 5;
-    } else if (STRNCMP(p, "dict", 4) == 0) {
-      flags |= FC_DICT;
-      p += 4;
-    } else if (STRNCMP(p, "abort", 5) == 0) {
-      flags |= FC_ABORT;
-      p += 5;
-    } else
-      break;
-  }
-
-  /* When there is a line break use what follows for the function body.
-   * Makes 'exe "func Test()\n...\nendfunc"' work. */
-  if (*p == '\n')
-    line_arg = p + 1;
-  else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg)
-    EMSG(_(e_trailing));
-
-  /*
-   * Read the body of the function, until ":endfunction" is found.
-   */
-  if (KeyTyped) {
-    /* Check if the function already exists, don't let the user type the
-     * whole function before telling him it doesn't work!  For a script we
-     * need to skip the body to be able to find what follows. */
-    if (!eap->skip && !eap->forceit) {
-      if (fudi.fd_dict != NULL && fudi.fd_newkey == NULL)
-        EMSG(_(e_funcdict));
-      else if (name != NULL && find_func(name) != NULL)
-        emsg_funcname(e_funcexts, name);
-    }
-
-    if (!eap->skip && did_emsg)
-      goto erret;
-
-    msg_putchar('\n');              /* don't overwrite the function name */
-    cmdline_row = msg_row;
-  }
-
-  indent = 2;
-  nesting = 0;
-  for (;; ) {
-    if (KeyTyped) {
-      msg_scroll = TRUE;
-      saved_wait_return = FALSE;
-    }
-    need_wait_return = FALSE;
-    sourcing_lnum_off = sourcing_lnum;
-
-    if (line_arg != NULL) {
-      /* Use eap->arg, split up in parts by line breaks. */
-      theline = line_arg;
-      p = vim_strchr(theline, '\n');
-      if (p == NULL)
-        line_arg += STRLEN(line_arg);
-      else {
-        *p = NUL;
-        line_arg = p + 1;
-      }
-    } else if (eap->getline == NULL)
-      theline = getcmdline(':', 0L, indent);
-    else
-      theline = eap->getline(':', eap->cookie, indent);
-    if (KeyTyped)
-      lines_left = Rows - 1;
-    if (theline == NULL) {
-      EMSG(_("E126: Missing :endfunction"));
-      goto erret;
-    }
-
-    /* Detect line continuation: sourcing_lnum increased more than one. */
-    if (sourcing_lnum > sourcing_lnum_off + 1)
-      sourcing_lnum_off = sourcing_lnum - sourcing_lnum_off - 1;
-    else
-      sourcing_lnum_off = 0;
-
-    if (skip_until != NULL) {
-      /* between ":append" and "." and between ":python <<EOF" and "EOF"
-       * don't check for ":endfunc". */
-      if (STRCMP(theline, skip_until) == 0) {
-        xfree(skip_until);
-        skip_until = NULL;
-      }
-    } else {
-      /* skip ':' and blanks*/
-      for (p = theline; ascii_iswhite(*p) || *p == ':'; ++p)
-        ;
-
-      /* Check for "endfunction". */
-      if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {
-        if (line_arg == NULL)
-          xfree(theline);
-        break;
-      }
-
-      /* Increase indent inside "if", "while", "for" and "try", decrease
-       * at "end". */
-      if (indent > 2 && STRNCMP(p, "end", 3) == 0)
-        indent -= 2;
-      else if (STRNCMP(p, "if", 2) == 0
-               || STRNCMP(p, "wh", 2) == 0
-               || STRNCMP(p, "for", 3) == 0
-               || STRNCMP(p, "try", 3) == 0)
-        indent += 2;
-
-      /* Check for defining a function inside this function. */
-      if (checkforcmd(&p, "function", 2)) {
-        if (*p == '!') {
-          p = skipwhite(p + 1);
-        }
-        p += eval_fname_script(p);
-        xfree(trans_function_name(&p, TRUE, 0, NULL));
-        if (*skipwhite(p) == '(') {
-          nesting++;
-          indent += 2;
-        }
-      }
-
-      /* Check for ":append" or ":insert". */
-      p = skip_range(p, NULL);
-      if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
-          || (p[0] == 'i'
-              && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
-                                           && (!ASCII_ISALPHA(p[2]) ||
-                                               (p[2] == 's'))))))
-        skip_until = vim_strsave((char_u *)".");
-
-      // Check for ":python <<EOF", ":lua <<EOF", etc.
-      arg = skipwhite(skiptowhite(p));
-      if (arg[0] == '<' && arg[1] =='<'
-          && ((p[0] == 'p' && p[1] == 'y'
-               && (!ASCII_ISALPHA(p[2]) || p[2] == 't'))
-              || (p[0] == 'p' && p[1] == 'e'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'r'))
-              || (p[0] == 't' && p[1] == 'c'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'l'))
-              || (p[0] == 'l' && p[1] == 'u' && p[2] == 'a'
-                  && !ASCII_ISALPHA(p[3]))
-              || (p[0] == 'r' && p[1] == 'u' && p[2] == 'b'
-                  && (!ASCII_ISALPHA(p[3]) || p[3] == 'y'))
-              || (p[0] == 'm' && p[1] == 'z'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 's'))
-              )) {
-        /* ":python <<" continues until a dot, like ":append" */
-        p = skipwhite(arg + 2);
-        if (*p == NUL)
-          skip_until = vim_strsave((char_u *)".");
-        else
-          skip_until = vim_strsave(p);
-      }
-    }
-
-    /* Add the line to the function. */
-    ga_grow(&newlines, 1 + sourcing_lnum_off);
-
-    /* Copy the line to newly allocated memory.  get_one_sourceline()
-     * allocates 250 bytes per line, this saves 80% on average.  The cost
-     * is an extra alloc/free. */
-    p = vim_strsave(theline);
-    if (line_arg == NULL)
-      xfree(theline);
-    theline = p;
-
-    ((char_u **)(newlines.ga_data))[newlines.ga_len++] = theline;
-
-    /* Add NULL lines for continuation lines, so that the line count is
-     * equal to the index in the growarray.   */
-    while (sourcing_lnum_off-- > 0)
-      ((char_u **)(newlines.ga_data))[newlines.ga_len++] = NULL;
-
-    /* Check for end of eap->arg. */
-    if (line_arg != NULL && *line_arg == NUL)
-      line_arg = NULL;
-  }
-
-  /* Don't define the function when skipping commands or when an error was
-   * detected. */
-  if (eap->skip || did_emsg)
-    goto erret;
-
-  /*
-   * If there are no errors, add the function
-   */
-  if (fudi.fd_dict == NULL) {
-    v = find_var(name, &ht, FALSE);
-    if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
-      emsg_funcname(N_("E707: Function name conflicts with variable: %s"),
-          name);
-      goto erret;
-    }
-
-    fp = find_func(name);
-    if (fp != NULL) {
-      if (!eap->forceit) {
-        emsg_funcname(e_funcexts, name);
-        goto erret;
-      }
-      if (fp->uf_refcount > 1 || fp->uf_calls > 0) {
-        emsg_funcname(N_("E127: Cannot redefine function %s: It is in use"),
-            name);
-        goto erret;
-      }
-      /* redefine existing function */
-      ga_clear_strings(&(fp->uf_args));
-      ga_clear_strings(&(fp->uf_lines));
-      xfree(name);
-      name = NULL;
-    }
-  } else {
-    char numbuf[20];
-
-    fp = NULL;
-    if (fudi.fd_newkey == NULL && !eap->forceit) {
-      EMSG(_(e_funcdict));
-      goto erret;
-    }
-    if (fudi.fd_di == NULL) {
-      if (tv_check_lock(fudi.fd_dict->dv_lock, eap->arg, false)) {
-        // Can't add a function to a locked dictionary
-        goto erret;
-      }
-    } else if (tv_check_lock(fudi.fd_di->di_tv.v_lock, eap->arg, false)) {
-      // Can't change an existing function if it is locked
-      goto erret;
-    }
-
-    /* Give the function a sequential number.  Can only be used with a
-     * Funcref! */
-    xfree(name);
-    sprintf(numbuf, "%d", ++func_nr);
-    name = vim_strsave((char_u *)numbuf);
-  }
-
-  if (fp == NULL) {
-    if (fudi.fd_dict == NULL && vim_strchr(name, AUTOLOAD_CHAR) != NULL) {
-      int slen, plen;
-      char_u  *scriptname;
-
-      /* Check that the autoload name matches the script name. */
-      int j = FAIL;
-      if (sourcing_name != NULL) {
-        scriptname = autoload_name(name);
-        p = vim_strchr(scriptname, '/');
-        plen = (int)STRLEN(p);
-        slen = (int)STRLEN(sourcing_name);
-        if (slen > plen && fnamecmp(p,
-                sourcing_name + slen - plen) == 0)
-          j = OK;
-        xfree(scriptname);
-      }
-      if (j == FAIL) {
-        EMSG2(_(
-                "E746: Function name does not match script file name: %s"),
-            name);
-        goto erret;
-      }
-    }
-
-    fp = xmalloc(sizeof(ufunc_T) + STRLEN(name));
-
-    if (fudi.fd_dict != NULL) {
-      if (fudi.fd_di == NULL) {
-        /* add new dict entry */
-        fudi.fd_di = dictitem_alloc(fudi.fd_newkey);
-        if (dict_add(fudi.fd_dict, fudi.fd_di) == FAIL) {
-          xfree(fudi.fd_di);
-          xfree(fp);
-          goto erret;
-        }
-      } else
-        /* overwrite existing dict entry */
-        clear_tv(&fudi.fd_di->di_tv);
-      fudi.fd_di->di_tv.v_type = VAR_FUNC;
-      fudi.fd_di->di_tv.v_lock = 0;
-      fudi.fd_di->di_tv.vval.v_string = vim_strsave(name);
-
-      /* behave like "dict" was used */
-      flags |= FC_DICT;
-    }
-
-    /* insert the new function in the function list */
-    STRCPY(fp->uf_name, name);
-    if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
-        xfree(fp);
-        goto erret;
-    }
-  }
-  fp->uf_refcount = 1;
-  fp->uf_args = newargs;
-  fp->uf_lines = newlines;
-  fp->uf_tml_count = NULL;
-  fp->uf_tml_total = NULL;
-  fp->uf_tml_self = NULL;
-  fp->uf_profiling = FALSE;
-  if (prof_def_func())
-    func_do_profile(fp);
-  fp->uf_varargs = varargs;
-  fp->uf_flags = flags;
-  fp->uf_calls = 0;
-  fp->uf_script_ID = current_SID;
-  goto ret_free;
-
-erret:
-  ga_clear_strings(&newargs);
-  ga_clear_strings(&newlines);
-ret_free:
-  xfree(skip_until);
-  xfree(fudi.fd_newkey);
-  xfree(name);
-  did_emsg |= saved_did_emsg;
-  need_wait_return |= saved_wait_return;
-}
-
-/*
- * Get a function name, translating "<SID>" and "<SNR>".
- * Also handles a Funcref in a List or Dictionary.
- * Returns the function name in allocated memory, or NULL for failure.
- * flags:
- * TFN_INT:         internal function name OK
- * TFN_QUIET:       be quiet
- * TFN_NO_AUTOLOAD: do not use script autoloading
- * Advances "pp" to just after the function name (if no error).
- */
-static char_u *
-trans_function_name (
-    char_u **pp,
-    int skip,                       /* only find the end, don't evaluate */
-    int flags,
-    funcdict_T *fdp               /* return: info about dictionary used */
-)
-{
-  char_u      *name = NULL;
-  char_u      *start;
-  char_u      *end;
-  int lead;
-  char_u sid_buf[20];
-  int len;
-  lval_T lv;
-
-  if (fdp != NULL)
-    memset(fdp, 0, sizeof(funcdict_T));
-  start = *pp;
-
-  /* Check for hard coded <SNR>: already translated function ID (from a user
-   * command). */
-  if ((*pp)[0] == K_SPECIAL && (*pp)[1] == KS_EXTRA
-      && (*pp)[2] == (int)KE_SNR) {
-    *pp += 3;
-    len = get_id_len(pp) + 3;
-    return vim_strnsave(start, len);
-  }
-
-  /* A name starting with "<SID>" or "<SNR>" is local to a script.  But
-   * don't skip over "s:", get_lval() needs it for "s:dict.func". */
-  lead = eval_fname_script(start);
-  if (lead > 2)
-    start += lead;
-
-  /* Note that TFN_ flags use the same values as GLV_ flags. */
-  end = get_lval(start, NULL, &lv, FALSE, skip, flags,
-      lead > 2 ? 0 : FNE_CHECK_START);
-  if (end == start) {
-    if (!skip)
-      EMSG(_("E129: Function name required"));
-    goto theend;
-  }
-  if (end == NULL || (lv.ll_tv != NULL && (lead > 2 || lv.ll_range))) {
-    /*
-     * Report an invalid expression in braces, unless the expression
-     * evaluation has been cancelled due to an aborting error, an
-     * interrupt, or an exception.
-     */
-    if (!aborting()) {
-      if (end != NULL)
-        EMSG2(_(e_invarg2), start);
-    } else
-      *pp = find_name_end(start, NULL, NULL, FNE_INCL_BR);
-    goto theend;
-  }
-
-  if (lv.ll_tv != NULL) {
-    if (fdp != NULL) {
-      fdp->fd_dict = lv.ll_dict;
-      fdp->fd_newkey = lv.ll_newkey;
-      lv.ll_newkey = NULL;
-      fdp->fd_di = lv.ll_di;
-    }
-    if (lv.ll_tv->v_type == VAR_FUNC && lv.ll_tv->vval.v_string != NULL) {
-      name = vim_strsave(lv.ll_tv->vval.v_string);
-      *pp = end;
-    } else {
-      if (!skip && !(flags & TFN_QUIET) && (fdp == NULL
-                                            || lv.ll_dict == NULL ||
-                                            fdp->fd_newkey == NULL))
-        EMSG(_(e_funcref));
-      else
-        *pp = end;
-      name = NULL;
-    }
-    goto theend;
-  }
-
-  if (lv.ll_name == NULL) {
-    /* Error found, but continue after the function name. */
-    *pp = end;
-    goto theend;
-  }
-
-  /* Check if the name is a Funcref.  If so, use the value. */
-  if (lv.ll_exp_name != NULL) {
-    len = (int)STRLEN(lv.ll_exp_name);
-    name = deref_func_name(lv.ll_exp_name, &len, flags & TFN_NO_AUTOLOAD);
-    if (name == lv.ll_exp_name)
-      name = NULL;
-  } else {
-    len = (int)(end - *pp);
-    name = deref_func_name(*pp, &len, flags & TFN_NO_AUTOLOAD);
-    if (name == *pp)
-      name = NULL;
-  }
-  if (name != NULL) {
-    name = vim_strsave(name);
-    *pp = end;
-    if (strncmp((char *)name, "<SNR>", 5) == 0) {
-      // Change "<SNR>" to the byte sequence.
-      name[0] = K_SPECIAL;
-      name[1] = KS_EXTRA;
-      name[2] = (int)KE_SNR;
-      memmove(name + 3, name + 5, strlen((char *)name + 5) + 1);
-    }
-    goto theend;
-  }
-
-  if (lv.ll_exp_name != NULL) {
-    len = (int)STRLEN(lv.ll_exp_name);
-    if (lead <= 2 && lv.ll_name == lv.ll_exp_name
-        && STRNCMP(lv.ll_name, "s:", 2) == 0) {
-      /* When there was "s:" already or the name expanded to get a
-       * leading "s:" then remove it. */
-      lv.ll_name += 2;
-      len -= 2;
-      lead = 2;
-    }
-  } else {
-    // Skip over "s:" and "g:".
-    if (lead == 2 || (lv.ll_name[0] == 'g' && lv.ll_name[1] == ':')) {
-      lv.ll_name += 2;
-    }
-    len = (int)(end - lv.ll_name);
-  }
-
-  /*
-   * Copy the function name to allocated memory.
-   * Accept <SID>name() inside a script, translate into <SNR>123_name().
-   * Accept <SNR>123_name() outside a script.
-   */
-  if (skip)
-    lead = 0;           /* do nothing */
-  else if (lead > 0) {
-    lead = 3;
-    if ((lv.ll_exp_name != NULL && eval_fname_sid(lv.ll_exp_name))
-        || eval_fname_sid(*pp)) {
-      /* It's "s:" or "<SID>" */
-      if (current_SID <= 0) {
-        EMSG(_(e_usingsid));
-        goto theend;
-      }
-      sprintf((char *)sid_buf, "%" PRId64 "_", (int64_t)current_SID);
-      lead += (int)STRLEN(sid_buf);
-    }
-  } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name, len)) {
-    EMSG2(_("E128: Function name must start with a capital or \"s:\": %s"),
-          start);
-    goto theend;
-  }
-
-  if (!skip && !(flags & TFN_QUIET)) {
-    char_u *cp = vim_strchr(lv.ll_name, ':');
-
-    if (cp != NULL && cp < end) {
-      EMSG2(_("E884: Function name cannot contain a colon: %s"), start);
-      goto theend;
-    }
-  }
-
-  name = xmalloc(len + lead + 1);
-  if (lead > 0){
-    name[0] = K_SPECIAL;
-    name[1] = KS_EXTRA;
-    name[2] = (int)KE_SNR;
-    if (lead > 3)             /* If it's "<SID>" */
-      STRCPY(name + 3, sid_buf);
-  }
-  memmove(name + lead, lv.ll_name, (size_t)len);
-  name[lead + len] = NUL;
-  *pp = end;
-
-theend:
-  clear_lval(&lv);
-  return name;
-}
-
-/*
- * Return 5 if "p" starts with "<SID>" or "<SNR>" (ignoring case).
- * Return 2 if "p" starts with "s:".
- * Return 0 otherwise.
- */
-static int eval_fname_script(char_u *p)
-{
-  if (p[0] == '<' && (STRNICMP(p + 1, "SID>", 4) == 0
-                      || STRNICMP(p + 1, "SNR>", 4) == 0))
-    return 5;
-  if (p[0] == 's' && p[1] == ':')
-    return 2;
-  return 0;
-}
-
-/*
- * Return TRUE if "p" starts with "<SID>" or "s:".
- * Only works if eval_fname_script() returned non-zero for "p"!
- */
-static int eval_fname_sid(char_u *p)
-{
-  return *p == 's' || TOUPPER_ASC(p[2]) == 'I';
-}
-
-/*
- * List the head of the function: "name(arg1, arg2)".
- */
-static void list_func_head(ufunc_T *fp, int indent)
-{
-  msg_start();
-  if (indent)
-    MSG_PUTS("   ");
-  MSG_PUTS("function ");
-  if (fp->uf_name[0] == K_SPECIAL) {
-    MSG_PUTS_ATTR("<SNR>", hl_attr(HLF_8));
-    msg_puts(fp->uf_name + 3);
-  } else
-    msg_puts(fp->uf_name);
-  msg_putchar('(');
-  int j;
-  for (j = 0; j < fp->uf_args.ga_len; ++j) {
-    if (j)
-      MSG_PUTS(", ");
-    msg_puts(FUNCARG(fp, j));
-  }
-  if (fp->uf_varargs) {
-    if (j)
-      MSG_PUTS(", ");
-    MSG_PUTS("...");
-  }
-  msg_putchar(')');
-  if (fp->uf_flags & FC_ABORT)
-    MSG_PUTS(" abort");
-  if (fp->uf_flags & FC_RANGE)
-    MSG_PUTS(" range");
-  if (fp->uf_flags & FC_DICT)
-    MSG_PUTS(" dict");
-  msg_clr_eos();
-  if (p_verbose > 0)
-    last_set_msg(fp->uf_script_ID);
-}
-
-/*
- * Find a function by name, return pointer to it in ufuncs.
- * Return NULL for unknown function.
- */
-static ufunc_T *find_func(char_u *name)
-{
-  hashitem_T  *hi;
-
-  hi = hash_find(&func_hashtab, name);
-  if (!HASHITEM_EMPTY(hi))
-    return HI2UF(hi);
-  return NULL;
-}
-
-#if defined(EXITFREE)
-void free_all_functions(void)
-{
-  hashitem_T  *hi;
-
-  /* Need to start all over every time, because func_free() may change the
-   * hash table. */
-  while (func_hashtab.ht_used > 0)
-    for (hi = func_hashtab.ht_array;; ++hi)
-      if (!HASHITEM_EMPTY(hi)) {
-        func_free(HI2UF(hi));
-        break;
-      }
-}
-
-#endif
-
-int translated_function_exists(char_u *name)
-{
-  if (builtin_function(name, -1)) {
-    return find_internal_func(name) >= 0;
-  }
-  return find_func(name) != NULL;
-}
-
-/*
- * Return TRUE if a function "name" exists.
- */
-static int function_exists(char_u *name)
-{
-  char_u  *nm = name;
-  char_u  *p;
-  int n = FALSE;
-
-  p = trans_function_name(&nm, FALSE, TFN_INT|TFN_QUIET|TFN_NO_AUTOLOAD,
-      NULL);
-  nm = skipwhite(nm);
-
-  /* Only accept "funcname", "funcname ", "funcname (..." and
-   * "funcname(...", not "funcname!...". */
-  if (p != NULL && (*nm == NUL || *nm == '('))
-    n = translated_function_exists(p);
-  xfree(p);
-  return n;
-}
-
-/// Return TRUE if "name" looks like a builtin function name: starts with a
-/// lower case letter and doesn't contain AUTOLOAD_CHAR.
-/// "len" is the length of "name", or -1 for NUL terminated.
-static bool builtin_function(char_u *name, int len)
-{
-  if (!ASCII_ISLOWER(name[0])) {
-    return FALSE;
-  }
-
-  char_u *p = vim_strchr(name, AUTOLOAD_CHAR);
-
-  return p == NULL
-         || (len > 0 && p > name + len);
-}
-
-/*
- * Start profiling function "fp".
- */
-static void func_do_profile(ufunc_T *fp)
+/// Start profiling function "fp".
+void func_do_profile(ufunc_T *fp)
 {
   int len = fp->uf_lines.ga_len;
 
-  if (len == 0)
-    len = 1;      /* avoid getting error for allocating zero bytes */
-  fp->uf_tm_count = 0;
-  fp->uf_tm_self = profile_zero();
-  fp->uf_tm_total = profile_zero();
+  if (!fp->uf_prof_initialized) {
+    if (len == 0) {
+      len = 1;  // avoid getting error for allocating zero bytes
+    }
+    fp->uf_tm_count = 0;
+    fp->uf_tm_self = profile_zero();
+    fp->uf_tm_total = profile_zero();
 
-  if (fp->uf_tml_count == NULL) {
-    fp->uf_tml_count = xcalloc(len, sizeof(int));
+    if (fp->uf_tml_count == NULL) {
+      fp->uf_tml_count = xcalloc(len, sizeof(int));
+    }
+
+    if (fp->uf_tml_total == NULL) {
+      fp->uf_tml_total = xcalloc(len, sizeof(proftime_T));
+    }
+
+    if (fp->uf_tml_self == NULL) {
+      fp->uf_tml_self = xcalloc(len, sizeof(proftime_T));
+    }
+
+    fp->uf_tml_idx = -1;
+    fp->uf_prof_initialized = true;
   }
-
-  if (fp->uf_tml_total == NULL) {
-    fp->uf_tml_total = xcalloc(len, sizeof(proftime_T));
-  }
-
-  if (fp->uf_tml_self == NULL) {
-    fp->uf_tml_self = xcalloc(len, sizeof(proftime_T));
-  }
-
-  fp->uf_tml_idx = -1;
 
   fp->uf_profiling = TRUE;
 }
@@ -20494,8 +9417,9 @@ void func_dump_profile(FILE *fd)
   int st_len = 0;
 
   todo = (int)func_hashtab.ht_used;
-  if (todo == 0)
-    return;         /* nothing to dump */
+  if (todo == 0) {
+    return;         // nothing to dump
+  }
 
   sorttab = xmalloc(sizeof(ufunc_T *) * todo);
 
@@ -20503,17 +9427,32 @@ void func_dump_profile(FILE *fd)
     if (!HASHITEM_EMPTY(hi)) {
       --todo;
       fp = HI2UF(hi);
-      if (fp->uf_profiling) {
+      if (fp->uf_prof_initialized) {
         sorttab[st_len++] = fp;
 
-        if (fp->uf_name[0] == K_SPECIAL)
+        if (fp->uf_name[0] == K_SPECIAL) {
           fprintf(fd, "FUNCTION  <SNR>%s()\n", fp->uf_name + 3);
-        else
+        } else {
           fprintf(fd, "FUNCTION  %s()\n", fp->uf_name);
-        if (fp->uf_tm_count == 1)
+        }
+        if (fp->uf_script_ctx.sc_sid != 0) {
+          bool should_free;
+          const LastSet last_set = (LastSet){
+            .script_ctx = fp->uf_script_ctx,
+              .channel_id = 0,
+          };
+          char_u *p = get_scriptname(last_set, &should_free);
+          fprintf(fd, "    Defined: %s:%" PRIdLINENR "\n",
+                  p, fp->uf_script_ctx.sc_lnum);
+          if (should_free) {
+            xfree(p);
+          }
+        }
+        if (fp->uf_tm_count == 1) {
           fprintf(fd, "Called 1 time\n");
-        else
+        } else {
           fprintf(fd, "Called %d times\n", fp->uf_tm_count);
+        }
         fprintf(fd, "Total time: %s\n", profile_msg(fp->uf_tm_total));
         fprintf(fd, " Self time: %s\n", profile_msg(fp->uf_tm_self));
         fprintf(fd, "\n");
@@ -20543,13 +9482,13 @@ void func_dump_profile(FILE *fd)
   xfree(sorttab);
 }
 
-static void 
-prof_sort_list (
+static void
+prof_sort_list(
     FILE *fd,
     ufunc_T **sorttab,
     int st_len,
     char *title,
-    int prefer_self                /* when equal print only self time */
+    int prefer_self                // when equal print only self time
 )
 {
   int i;
@@ -20577,8 +9516,8 @@ static void prof_func_line(
     int count,
     proftime_T  *total,
     proftime_T  *self,
-    int prefer_self                 /* when equal print only self time */
-    )
+    int prefer_self                 // when equal print only self time
+)
 {
   if (count > 0) {
     fprintf(fd, "%5d ", count);
@@ -20614,870 +9553,79 @@ static int prof_self_cmp(const void *s1, const void *s2)
   return profile_cmp(p1->uf_tm_self, p2->uf_tm_self);
 }
 
-
-/*
- * If "name" has a package name try autoloading the script for it.
- * Return TRUE if a package was loaded.
- */
-static int 
-script_autoload (
-    char_u *name,
-    int reload                 /* load script again when already loaded */
-)
+/// Return the autoload script name for a function or variable name
+/// Caller must make sure that "name" contains AUTOLOAD_CHAR.
+///
+/// @param[in]  name  Variable/function name.
+/// @param[in]  name_len  Name length.
+///
+/// @return [allocated] autoload script name.
+char *autoload_name(const char *const name, const size_t name_len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u      *p;
-  char_u      *scriptname, *tofree;
-  int ret = FALSE;
-  int i;
-
-  /* If there is no '#' after name[0] there is no package name. */
-  p = vim_strchr(name, AUTOLOAD_CHAR);
-  if (p == NULL || p == name)
-    return FALSE;
-
-  tofree = scriptname = autoload_name(name);
-
-  /* Find the name in the list of previously loaded package names.  Skip
-   * "autoload/", it's always the same. */
-  for (i = 0; i < ga_loaded.ga_len; ++i)
-    if (STRCMP(((char_u **)ga_loaded.ga_data)[i] + 9, scriptname + 9) == 0)
-      break;
-  if (!reload && i < ga_loaded.ga_len)
-    ret = FALSE;            /* was loaded already */
-  else {
-    /* Remember the name if it wasn't loaded already. */
-    if (i == ga_loaded.ga_len) {
-      GA_APPEND(char_u *, &ga_loaded, scriptname);
-      tofree = NULL;
+  // Get the script file name: replace '#' with '/', append ".vim".
+  char *const scriptname = xmalloc(name_len + sizeof("autoload/.vim"));
+  memcpy(scriptname, "autoload/", sizeof("autoload/") - 1);
+  memcpy(scriptname + sizeof("autoload/") - 1, name, name_len);
+  size_t auchar_idx = 0;
+  for (size_t i = sizeof("autoload/") - 1;
+       i - sizeof("autoload/") + 1 < name_len;
+       i++) {
+    if (scriptname[i] == AUTOLOAD_CHAR) {
+      scriptname[i] = '/';
+      auchar_idx = i;
     }
-
-    /* Try loading the package from $VIMRUNTIME/autoload/<name>.vim */
-    if (source_runtime(scriptname, FALSE) == OK)
-      ret = TRUE;
   }
-
-  xfree(tofree);
-  return ret;
-}
-
-/*
- * Return the autoload script name for a function or variable name.
- */
-static char_u *autoload_name(char_u *name)
-{
-  /* Get the script file name: replace '#' with '/', append ".vim". */
-  char_u *scriptname = xmalloc(STRLEN(name) + 14);
-  STRCPY(scriptname, "autoload/");
-  STRCAT(scriptname, name);
-  *vim_strrchr(scriptname, AUTOLOAD_CHAR) = NUL;
-  STRCAT(scriptname, ".vim");
-
-  char_u *p;
-  while ((p = vim_strchr(scriptname, AUTOLOAD_CHAR)) != NULL)
-    *p = '/';
+  memcpy(scriptname + auchar_idx, ".vim", sizeof(".vim"));
 
   return scriptname;
 }
 
-
-/*
- * Function given to ExpandGeneric() to obtain the list of user defined
- * function names.
- */
-char_u *get_user_func_name(expand_T *xp, int idx)
+/// If name has a package name try autoloading the script for it
+///
+/// @param[in]  name  Variable/function name.
+/// @param[in]  name_len  Name length.
+/// @param[in]  reload  If true, load script again when already loaded.
+///
+/// @return true if a package was loaded.
+bool script_autoload(const char *const name, const size_t name_len,
+                     const bool reload)
 {
-  static size_t done;
-  static hashitem_T   *hi;
-  ufunc_T             *fp;
-
-  if (idx == 0) {
-    done = 0;
-    hi = func_hashtab.ht_array;
+  // If there is no '#' after name[0] there is no package name.
+  const char *p = memchr(name, AUTOLOAD_CHAR, name_len);
+  if (p == NULL || p == name) {
+    return false;
   }
-  assert(hi);
-  if (done < func_hashtab.ht_used) {
-    if (done++ > 0)
-      ++hi;
-    while (HASHITEM_EMPTY(hi))
-      ++hi;
-    fp = HI2UF(hi);
 
-    if (fp->uf_flags & FC_DICT)
-      return (char_u *)"";       /* don't show dict functions */
+  bool ret = false;
+  char *tofree = autoload_name(name, name_len);
+  char *scriptname = tofree;
 
-    if (STRLEN(fp->uf_name) + 4 >= IOSIZE)
-      return fp->uf_name;       /* prevents overflow */
-
-    cat_func_name(IObuff, fp);
-    if (xp->xp_context != EXPAND_USER_FUNC) {
-      STRCAT(IObuff, "(");
-      if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args))
-        STRCAT(IObuff, ")");
-    }
-    return IObuff;
-  }
-  return NULL;
-}
-
-
-/*
- * Copy the function name of "fp" to buffer "buf".
- * "buf" must be able to hold the function name plus three bytes.
- * Takes care of script-local function names.
- */
-static void cat_func_name(char_u *buf, ufunc_T *fp)
-{
-  if (fp->uf_name[0] == K_SPECIAL) {
-    STRCPY(buf, "<SNR>");
-    STRCAT(buf, fp->uf_name + 3);
-  } else
-    STRCPY(buf, fp->uf_name);
-}
-
-/*
- * ":delfunction {name}"
- */
-void ex_delfunction(exarg_T *eap)
-{
-  ufunc_T     *fp = NULL;
-  char_u      *p;
-  char_u      *name;
-  funcdict_T fudi;
-
-  p = eap->arg;
-  name = trans_function_name(&p, eap->skip, 0, &fudi);
-  xfree(fudi.fd_newkey);
-  if (name == NULL) {
-    if (fudi.fd_dict != NULL && !eap->skip)
-      EMSG(_(e_funcref));
-    return;
-  }
-  if (!ends_excmd(*skipwhite(p))) {
-    xfree(name);
-    EMSG(_(e_trailing));
-    return;
-  }
-  eap->nextcmd = check_nextcmd(p);
-  if (eap->nextcmd != NULL)
-    *p = NUL;
-
-  if (!eap->skip)
-    fp = find_func(name);
-  xfree(name);
-
-  if (!eap->skip) {
-    if (fp == NULL) {
-      EMSG2(_(e_nofunc), eap->arg);
-      return;
-    }
-    if (fp->uf_calls > 0) {
-      EMSG2(_("E131: Cannot delete function %s: It is in use"), eap->arg);
-      return;
-    }
-    // check `uf_refcount > 2` because deleting a function should also reduce
-    // the reference count, and 1 is the initial refcount.
-    if (fp->uf_refcount > 2) {
-      EMSG2(_("Cannot delete function %s: It is being used internally"),
-          eap->arg);
-      return;
-    }
-
-    if (fudi.fd_dict != NULL) {
-      /* Delete the dict item that refers to the function, it will
-       * invoke func_unref() and possibly delete the function. */
-      dictitem_remove(fudi.fd_dict, fudi.fd_di);
-    } else
-      func_free(fp);
-  }
-}
-
-/*
- * Free a function and remove it from the list of functions.
- */
-static void func_free(ufunc_T *fp)
-{
-  hashitem_T  *hi;
-
-  /* clear this function */
-  ga_clear_strings(&(fp->uf_args));
-  ga_clear_strings(&(fp->uf_lines));
-  xfree(fp->uf_tml_count);
-  xfree(fp->uf_tml_total);
-  xfree(fp->uf_tml_self);
-
-  /* remove the function from the function hashtable */
-  hi = hash_find(&func_hashtab, UF2HIKEY(fp));
-  if (HASHITEM_EMPTY(hi))
-    EMSG2(_(e_intern2), "func_free()");
-  else
-    hash_remove(&func_hashtab, hi);
-
-  xfree(fp);
-}
-
-/*
- * Unreference a Function: decrement the reference count and free it when it
- * becomes zero.  Only for numbered functions.
- */
-void func_unref(char_u *name)
-{
-  ufunc_T *fp;
-
-  if (name != NULL && isdigit(*name)) {
-    fp = find_func(name);
-    if (fp == NULL) {
-      EMSG2(_(e_intern2), "func_unref()");
-    } else {
-      user_func_unref(fp);
+  // Find the name in the list of previously loaded package names.  Skip
+  // "autoload/", it's always the same.
+  int i = 0;
+  for (; i < ga_loaded.ga_len; i++) {
+    if (STRCMP(((char **)ga_loaded.ga_data)[i] + 9, scriptname + 9) == 0) {
+      break;
     }
   }
-}
-
-static void user_func_unref(ufunc_T *fp)
-{
-  if (--fp->uf_refcount <= 0) {
-    // Only delete it when it's not being used.  Otherwise it's done
-    // when "uf_calls" becomes zero.
-    if (fp->uf_calls == 0) {
-      func_free(fp);
-    }
-  }
-}
-
-/*
- * Count a reference to a Function.
- */
-void func_ref(char_u *name)
-{
-  ufunc_T *fp;
-
-  if (name != NULL && isdigit(*name)) {
-    fp = find_func(name);
-    if (fp == NULL)
-      EMSG2(_(e_intern2), "func_ref()");
-    else
-      ++fp->uf_refcount;
-  }
-}
-
-/*
- * Call a user function.
- */
-static void 
-call_user_func (
-    ufunc_T *fp,                /* pointer to function */
-    int argcount,                   /* nr of args */
-    typval_T *argvars,           /* arguments */
-    typval_T *rettv,             /* return value */
-    linenr_T firstline,             /* first line of range */
-    linenr_T lastline,              /* last line of range */
-    dict_T *selfdict          /* Dictionary for "self" */
-)
-{
-  char_u      *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
-  scid_T save_current_SID;
-  funccall_T  *fc;
-  int save_did_emsg;
-  static int depth = 0;
-  dictitem_T  *v;
-  int fixvar_idx = 0;           /* index in fixvar[] */
-  int ai;
-  char_u numbuf[NUMBUFLEN];
-  char_u      *name;
-  proftime_T wait_start;
-  proftime_T call_start;
-  bool did_save_redo = false;
-
-  /* If depth of calling is getting too high, don't execute the function */
-  if (depth >= p_mfd) {
-    EMSG(_("E132: Function call depth is higher than 'maxfuncdepth'"));
-    rettv->v_type = VAR_NUMBER;
-    rettv->vval.v_number = -1;
-    return;
-  }
-  ++depth;
-  // Save search patterns and redo buffer.
-  save_search_patterns();
-  if (!ins_compl_active()) {
-    saveRedobuff();
-    did_save_redo = true;
-  }
-  ++fp->uf_calls;
-  // check for CTRL-C hit
-  line_breakcheck();
-  // prepare the funccall_T structure
-  fc = xmalloc(sizeof(funccall_T));
-  fc->caller = current_funccal;
-  current_funccal = fc;
-  fc->func = fp;
-  fc->rettv = rettv;
-  rettv->vval.v_number = 0;
-  fc->linenr = 0;
-  fc->returned = FALSE;
-  fc->level = ex_nesting_level;
-  /* Check if this function has a breakpoint. */
-  fc->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name, (linenr_T)0);
-  fc->dbg_tick = debug_tick;
-
-  /*
-   * Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
-   * with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
-   * each argument variable and saves a lot of time.
-   */
-  /*
-   * Init l: variables.
-   */
-  init_var_dict(&fc->l_vars, &fc->l_vars_var, VAR_DEF_SCOPE);
-  if (selfdict != NULL) {
-    /* Set l:self to "selfdict".  Use "name" to avoid a warning from
-     * some compiler that checks the destination size. */
-    v = &fc->fixvar[fixvar_idx++].var;
-#ifndef __clang_analyzer__
-    name = v->di_key;
-    STRCPY(name, "self");
-#endif
-    v->di_flags = DI_FLAGS_RO + DI_FLAGS_FIX;
-    hash_add(&fc->l_vars.dv_hashtab, DI2HIKEY(v));
-    v->di_tv.v_type = VAR_DICT;
-    v->di_tv.v_lock = 0;
-    v->di_tv.vval.v_dict = selfdict;
-    ++selfdict->dv_refcount;
-  }
-
-  /*
-   * Init a: variables.
-   * Set a:0 to "argcount".
-   * Set a:000 to a list with room for the "..." arguments.
-   */
-  init_var_dict(&fc->l_avars, &fc->l_avars_var, VAR_SCOPE);
-  add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "0",
-      (varnumber_T)(argcount - fp->uf_args.ga_len));
-  /* Use "name" to avoid a warning from some compiler that checks the
-   * destination size. */
-  v = &fc->fixvar[fixvar_idx++].var;
-#ifndef __clang_analyzer__
-  name = v->di_key;
-  STRCPY(name, "000");
-#endif
-  v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  hash_add(&fc->l_avars.dv_hashtab, DI2HIKEY(v));
-  v->di_tv.v_type = VAR_LIST;
-  v->di_tv.v_lock = VAR_FIXED;
-  v->di_tv.vval.v_list = &fc->l_varlist;
-  memset(&fc->l_varlist, 0, sizeof(list_T));
-  fc->l_varlist.lv_refcount = DO_NOT_FREE_CNT;
-  fc->l_varlist.lv_lock = VAR_FIXED;
-
-  /*
-   * Set a:firstline to "firstline" and a:lastline to "lastline".
-   * Set a:name to named arguments.
-   * Set a:N to the "..." arguments.
-   */
-  add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "firstline",
-      (varnumber_T)firstline);
-  add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "lastline",
-      (varnumber_T)lastline);
-  for (int i = 0; i < argcount; ++i) {
-    ai = i - fp->uf_args.ga_len;
-    if (ai < 0)
-      /* named argument a:name */
-      name = FUNCARG(fp, i);
-    else {
-      /* "..." argument a:1, a:2, etc. */
-      sprintf((char *)numbuf, "%d", ai + 1);
-      name = numbuf;
-    }
-    if (fixvar_idx < FIXVAR_CNT && STRLEN(name) <= VAR_SHORT_LEN) {
-      v = &fc->fixvar[fixvar_idx++].var;
-      v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-    } else {
-      v = xmalloc(sizeof(dictitem_T) + STRLEN(name));
-      v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
-    }
-    STRCPY(v->di_key, name);
-    hash_add(&fc->l_avars.dv_hashtab, DI2HIKEY(v));
-
-    /* Note: the values are copied directly to avoid alloc/free.
-     * "argvars" must have VAR_FIXED for v_lock. */
-    v->di_tv = argvars[i];
-    v->di_tv.v_lock = VAR_FIXED;
-
-    if (ai >= 0 && ai < MAX_FUNC_ARGS) {
-      list_append(&fc->l_varlist, &fc->l_listitems[ai]);
-      fc->l_listitems[ai].li_tv = argvars[i];
-      fc->l_listitems[ai].li_tv.v_lock = VAR_FIXED;
-    }
-  }
-
-  /* Don't redraw while executing the function. */
-  ++RedrawingDisabled;
-  save_sourcing_name = sourcing_name;
-  save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 1;
-  // need space for function name + ("function " + 3) or "[number]"
-  size_t len = (save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
-               + STRLEN(fp->uf_name) + 20;
-  sourcing_name = xmalloc(len);
-  {
-    if (save_sourcing_name != NULL
-        && STRNCMP(save_sourcing_name, "function ", 9) == 0) {
-      vim_snprintf((char *)sourcing_name, len, "%s[%zu]..",
-                   save_sourcing_name, save_sourcing_lnum);
-    } else {
-      STRCPY(sourcing_name, "function ");
-    }
-    cat_func_name(sourcing_name + STRLEN(sourcing_name), fp);
-
-    if (p_verbose >= 12) {
-      ++no_wait_return;
-      verbose_enter_scroll();
-
-      smsg(_("calling %s"), sourcing_name);
-      if (p_verbose >= 14) {
-        char_u buf[MSG_BUF_LEN];
-
-        msg_puts((char_u *)"(");
-        for (int i = 0; i < argcount; ++i) {
-          if (i > 0) {
-            msg_puts((char_u *)", ");
-          }
-          if (argvars[i].v_type == VAR_NUMBER) {
-            msg_outnum((long)argvars[i].vval.v_number);
-          } else {
-            // Do not want errors such as E724 here.
-            ++emsg_off;
-            char_u *s = (char_u *) tv2string(&argvars[i], NULL);
-            char_u *tofree = s;
-            --emsg_off;
-            if (s != NULL) {
-              if (vim_strsize(s) > MSG_BUF_CLEN) {
-                trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
-                s = buf;
-              }
-              msg_puts(s);
-              xfree(tofree);
-            }
-          }
-        }
-        msg_puts((char_u *)")");
-      }
-      msg_puts((char_u *)"\n");         /* don't overwrite this either */
-
-      verbose_leave_scroll();
-      --no_wait_return;
-    }
-  }
-
-  bool func_not_yet_profiling_but_should =
-    do_profiling == PROF_YES
-    && !fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL);
-
-  if (func_not_yet_profiling_but_should)
-    func_do_profile(fp);
-
-  bool func_or_func_caller_profiling =
-    do_profiling == PROF_YES
-    && (fp->uf_profiling
-        || (fc->caller != NULL && fc->caller->func->uf_profiling));
-
-  if (func_or_func_caller_profiling) {
-    ++fp->uf_tm_count;
-    call_start = profile_start();
-    fp->uf_tm_children = profile_zero();
-  }
-
-  if (do_profiling == PROF_YES) {
-    script_prof_save(&wait_start);
-  }
-
-  save_current_SID = current_SID;
-  current_SID = fp->uf_script_ID;
-  save_did_emsg = did_emsg;
-  did_emsg = FALSE;
-
-  /* call do_cmdline() to execute the lines */
-  do_cmdline(NULL, get_func_line, (void *)fc,
-      DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
-
-  --RedrawingDisabled;
-
-  /* when the function was aborted because of an error, return -1 */
-  if ((did_emsg &&
-       (fp->uf_flags & FC_ABORT)) || rettv->v_type == VAR_UNKNOWN) {
-    clear_tv(rettv);
-    rettv->v_type = VAR_NUMBER;
-    rettv->vval.v_number = -1;
-  }
-
-  if (func_or_func_caller_profiling) {
-    call_start = profile_end(call_start);
-    call_start = profile_sub_wait(wait_start, call_start);
-    fp->uf_tm_total = profile_add(fp->uf_tm_total, call_start);
-    fp->uf_tm_self = profile_self(fp->uf_tm_self, call_start,
-        fp->uf_tm_children);
-    if (fc->caller != NULL && fc->caller->func->uf_profiling) {
-      fc->caller->func->uf_tm_children =
-        profile_add(fc->caller->func->uf_tm_children, call_start);
-      fc->caller->func->uf_tml_children =
-        profile_add(fc->caller->func->uf_tml_children, call_start);
-    }
-  }
-
-  /* when being verbose, mention the return value */
-  if (p_verbose >= 12) {
-    ++no_wait_return;
-    verbose_enter_scroll();
-
-    if (aborting())
-      smsg(_("%s aborted"), sourcing_name);
-    else if (fc->rettv->v_type == VAR_NUMBER)
-      smsg(_("%s returning #%" PRId64 ""),
-           sourcing_name, (int64_t)fc->rettv->vval.v_number);
-    else {
-      char_u buf[MSG_BUF_LEN];
-
-      // The value may be very long.  Skip the middle part, so that we
-      // have some idea how it starts and ends. smsg() would always
-      // truncate it at the end. Don't want errors such as E724 here.
-      ++emsg_off;
-      char_u *s = (char_u *) tv2string(fc->rettv, NULL);
-      char_u *tofree = s;
-      --emsg_off;
-      if (s != NULL) {
-        if (vim_strsize(s) > MSG_BUF_CLEN) {
-          trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
-          s = buf;
-        }
-        smsg(_("%s returning %s"), sourcing_name, s);
-        xfree(tofree);
-      }
-    }
-    msg_puts((char_u *)"\n");       /* don't overwrite this either */
-
-    verbose_leave_scroll();
-    --no_wait_return;
-  }
-
-  xfree(sourcing_name);
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
-  current_SID = save_current_SID;
-  if (do_profiling == PROF_YES)
-    script_prof_restore(&wait_start);
-
-  if (p_verbose >= 12 && sourcing_name != NULL) {
-    ++no_wait_return;
-    verbose_enter_scroll();
-
-    smsg(_("continuing in %s"), sourcing_name);
-    msg_puts((char_u *)"\n");       /* don't overwrite this either */
-
-    verbose_leave_scroll();
-    --no_wait_return;
-  }
-
-  did_emsg |= save_did_emsg;
-  current_funccal = fc->caller;
-  --depth;
-
-  /* If the a:000 list and the l: and a: dicts are not referenced we can
-   * free the funccall_T and what's in it. */
-  if (fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
-      && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
-      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT) {
-    free_funccal(fc, FALSE);
+  if (!reload && i < ga_loaded.ga_len) {
+    ret = false;  // Was loaded already.
   } else {
-    hashitem_T      *hi;
-    listitem_T      *li;
-    int todo;
-
-    /* "fc" is still in use.  This can happen when returning "a:000" or
-     * assigning "l:" to a global variable.
-     * Link "fc" in the list for garbage collection later. */
-    fc->caller = previous_funccal;
-    previous_funccal = fc;
-
-    /* Make a copy of the a: variables, since we didn't do that above. */
-    todo = (int)fc->l_avars.dv_hashtab.ht_used;
-    for (hi = fc->l_avars.dv_hashtab.ht_array; todo > 0; ++hi) {
-      if (!HASHITEM_EMPTY(hi)) {
-        --todo;
-        v = HI2DI(hi);
-        copy_tv(&v->di_tv, &v->di_tv);
-      }
+    // Remember the name if it wasn't loaded already.
+    if (i == ga_loaded.ga_len) {
+      GA_APPEND(char *, &ga_loaded, scriptname);
+      tofree = NULL;
     }
 
-    /* Make a copy of the a:000 items, since we didn't do that above. */
-    for (li = fc->l_varlist.lv_first; li != NULL; li = li->li_next)
-      copy_tv(&li->li_tv, &li->li_tv);
-  }
-
-  if (--fp->uf_calls <= 0 && isdigit(*fp->uf_name) && fp->uf_refcount <= 0) {
-    // Function was unreferenced while being used, free it now.
-    func_free(fp);
-  }
-  // restore search patterns and redo buffer
-  if (did_save_redo) {
-    restoreRedobuff();
-  }
-  restore_search_patterns();
-}
-
-/*
- * Return TRUE if items in "fc" do not have "copyID".  That means they are not
- * referenced from anywhere that is in use.
- */
-static int can_free_funccal(funccall_T *fc, int copyID)
-{
-  return fc->l_varlist.lv_copyID != copyID
-         && fc->l_vars.dv_copyID != copyID
-         && fc->l_avars.dv_copyID != copyID;
-}
-
-/*
- * Free "fc" and what it contains.
- */
-static void 
-free_funccal (
-    funccall_T *fc,
-    int free_val              /* a: vars were allocated */
-)
-{
-  listitem_T  *li;
-
-  /* The a: variables typevals may not have been allocated, only free the
-   * allocated variables. */
-  vars_clear_ext(&fc->l_avars.dv_hashtab, free_val);
-
-  /* free all l: variables */
-  vars_clear(&fc->l_vars.dv_hashtab);
-
-  /* Free the a:000 variables if they were allocated. */
-  if (free_val)
-    for (li = fc->l_varlist.lv_first; li != NULL; li = li->li_next)
-      clear_tv(&li->li_tv);
-
-  xfree(fc);
-}
-
-/*
- * Add a number variable "name" to dict "dp" with value "nr".
- */
-static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
-{
-#ifndef __clang_analyzer__
-  STRCPY(v->di_key, name);
-#endif
-  v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  hash_add(&dp->dv_hashtab, DI2HIKEY(v));
-  v->di_tv.v_type = VAR_NUMBER;
-  v->di_tv.v_lock = VAR_FIXED;
-  v->di_tv.vval.v_number = nr;
-}
-
-/*
- * ":return [expr]"
- */
-void ex_return(exarg_T *eap)
-{
-  char_u      *arg = eap->arg;
-  typval_T rettv;
-  int returning = FALSE;
-
-  if (current_funccal == NULL) {
-    EMSG(_("E133: :return not inside a function"));
-    return;
-  }
-
-  if (eap->skip)
-    ++emsg_skip;
-
-  eap->nextcmd = NULL;
-  if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0(arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
-    if (!eap->skip)
-      returning = do_return(eap, FALSE, TRUE, &rettv);
-    else
-      clear_tv(&rettv);
-  }
-  /* It's safer to return also on error. */
-  else if (!eap->skip) {
-    /*
-     * Return unless the expression evaluation has been cancelled due to an
-     * aborting error, an interrupt, or an exception.
-     */
-    if (!aborting())
-      returning = do_return(eap, FALSE, TRUE, NULL);
-  }
-
-  /* When skipping or the return gets pending, advance to the next command
-   * in this line (!returning).  Otherwise, ignore the rest of the line.
-   * Following lines will be ignored by get_func_line(). */
-  if (returning)
-    eap->nextcmd = NULL;
-  else if (eap->nextcmd == NULL)            /* no argument */
-    eap->nextcmd = check_nextcmd(arg);
-
-  if (eap->skip)
-    --emsg_skip;
-}
-
-/*
- * Return from a function.  Possibly makes the return pending.  Also called
- * for a pending return at the ":endtry" or after returning from an extra
- * do_cmdline().  "reanimate" is used in the latter case.  "is_cmd" is set
- * when called due to a ":return" command.  "rettv" may point to a typval_T
- * with the return rettv.  Returns TRUE when the return can be carried out,
- * FALSE when the return gets pending.
- */
-int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
-{
-  int idx;
-  struct condstack *cstack = eap->cstack;
-
-  if (reanimate)
-    /* Undo the return. */
-    current_funccal->returned = FALSE;
-
-  /*
-   * Cleanup (and inactivate) conditionals, but stop when a try conditional
-   * not in its finally clause (which then is to be executed next) is found.
-   * In this case, make the ":return" pending for execution at the ":endtry".
-   * Otherwise, return normally.
-   */
-  idx = cleanup_conditionals(eap->cstack, 0, TRUE);
-  if (idx >= 0) {
-    cstack->cs_pending[idx] = CSTP_RETURN;
-
-    if (!is_cmd && !reanimate)
-      /* A pending return again gets pending.  "rettv" points to an
-       * allocated variable with the rettv of the original ":return"'s
-       * argument if present or is NULL else. */
-      cstack->cs_rettv[idx] = rettv;
-    else {
-      /* When undoing a return in order to make it pending, get the stored
-       * return rettv. */
-      if (reanimate) {
-        assert(current_funccal->rettv);
-        rettv = current_funccal->rettv;
-      }
-
-      if (rettv != NULL) {
-        /* Store the value of the pending return. */
-        cstack->cs_rettv[idx] = xcalloc(1, sizeof(typval_T));
-        *(typval_T *)cstack->cs_rettv[idx] = *(typval_T *)rettv;
-      } else
-        cstack->cs_rettv[idx] = NULL;
-
-      if (reanimate) {
-        /* The pending return value could be overwritten by a ":return"
-         * without argument in a finally clause; reset the default
-         * return value. */
-        current_funccal->rettv->v_type = VAR_NUMBER;
-        current_funccal->rettv->vval.v_number = 0;
-      }
-    }
-    report_make_pending(CSTP_RETURN, rettv);
-  } else {
-    current_funccal->returned = TRUE;
-
-    /* If the return is carried out now, store the return value.  For
-     * a return immediately after reanimation, the value is already
-     * there. */
-    if (!reanimate && rettv != NULL) {
-      clear_tv(current_funccal->rettv);
-      *current_funccal->rettv = *(typval_T *)rettv;
-      if (!is_cmd)
-        xfree(rettv);
+    // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
+    if (source_runtime((char_u *)scriptname, 0) == OK) {
+      ret = true;
     }
   }
 
-  return idx < 0;
-}
-
-/*
- * Free the variable with a pending return value.
- */
-void discard_pending_return(void *rettv)
-{
-  free_tv((typval_T *)rettv);
-}
-
-/*
- * Generate a return command for producing the value of "rettv".  The result
- * is an allocated string.  Used by report_pending() for verbose messages.
- */
-char_u *get_return_cmd(void *rettv)
-{
-  char_u *s = NULL;
-  char_u *tofree = NULL;
-
-  if (rettv != NULL) {
-    tofree = s = (char_u *) echo_string((typval_T *) rettv, NULL);
-  }
-  if (s == NULL) {
-    s = (char_u *)"";
-  }
-
-  STRCPY(IObuff, ":return ");
-  STRNCPY(IObuff + 8, s, IOSIZE - 8);
-  if (STRLEN(s) + 8 >= IOSIZE)
-    STRCPY(IObuff + IOSIZE - 4, "...");
   xfree(tofree);
-  return vim_strsave(IObuff);
-}
-
-/*
- * Get next function line.
- * Called by do_cmdline() to get the next line.
- * Returns allocated string, or NULL for end of function.
- */
-char_u *get_func_line(int c, void *cookie, int indent)
-{
-  funccall_T  *fcp = (funccall_T *)cookie;
-  ufunc_T     *fp = fcp->func;
-  char_u      *retval;
-  garray_T    *gap;    /* growarray with function lines */
-
-  /* If breakpoints have been added/deleted need to check for it. */
-  if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name,
-        sourcing_lnum);
-    fcp->dbg_tick = debug_tick;
-  }
-  if (do_profiling == PROF_YES)
-    func_line_end(cookie);
-
-  gap = &fp->uf_lines;
-  if (((fp->uf_flags & FC_ABORT) && did_emsg && !aborted_in_try())
-      || fcp->returned)
-    retval = NULL;
-  else {
-    /* Skip NULL lines (continuation lines). */
-    while (fcp->linenr < gap->ga_len
-           && ((char_u **)(gap->ga_data))[fcp->linenr] == NULL)
-      ++fcp->linenr;
-    if (fcp->linenr >= gap->ga_len)
-      retval = NULL;
-    else {
-      retval = vim_strsave(((char_u **)(gap->ga_data))[fcp->linenr++]);
-      sourcing_lnum = fcp->linenr;
-      if (do_profiling == PROF_YES)
-        func_line_start(cookie);
-    }
-  }
-
-  /* Did we encounter a breakpoint? */
-  if (fcp->breakpoint != 0 && fcp->breakpoint <= sourcing_lnum) {
-    dbg_breakpoint(fp->uf_name, sourcing_lnum);
-    /* Find next breakpoint. */
-    fcp->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name,
-        sourcing_lnum);
-    fcp->dbg_tick = debug_tick;
-  }
-
-  return retval;
+  return ret;
 }
 
 /*
@@ -21494,10 +9642,11 @@ void func_line_start(void *cookie)
   if (fp->uf_profiling && sourcing_lnum >= 1
       && sourcing_lnum <= fp->uf_lines.ga_len) {
     fp->uf_tml_idx = sourcing_lnum - 1;
-    /* Skip continuation lines. */
-    while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL)
-      --fp->uf_tml_idx;
-    fp->uf_tml_execed = FALSE;
+    // Skip continuation lines.
+    while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL) {
+      fp->uf_tml_idx--;
+    }
+    fp->uf_tml_execed = false;
     fp->uf_tml_start = profile_start();
     fp->uf_tml_children = profile_zero();
     fp->uf_tml_wait = profile_get_wait();
@@ -21539,28 +9688,6 @@ void func_line_end(void *cookie)
   }
 }
 
-/*
- * Return TRUE if the currently active function should be ended, because a
- * return was encountered or an error occurred.  Used inside a ":while".
- */
-int func_has_ended(void *cookie)
-{
-  funccall_T  *fcp = (funccall_T *)cookie;
-
-  /* Ignore the "abort" flag if the abortion behavior has been changed due to
-   * an error inside a try conditional. */
-  return ((fcp->func->uf_flags & FC_ABORT) && did_emsg && !aborted_in_try())
-         || fcp->returned;
-}
-
-/*
- * return TRUE if cookie indicates a function which "abort"s on errors.
- */
-int func_has_abort(void *cookie)
-{
-  return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
-}
-
 static var_flavour_T var_flavour(char_u *varname)
 {
   char_u *p = varname;
@@ -21588,7 +9715,7 @@ static var_flavour_T var_flavour(char_u *varname)
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv)
+                           typval_T *rettv, var_flavour_T flavour)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
@@ -21599,7 +9726,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
     hi = globvarht.ht_array;
     while ((size_t) (hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || var_flavour(HI2DI(hi)->di_key) != VAR_FLAVOUR_SHADA)) {
+               || !(var_flavour(hi->hi_key) & flavour))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -21608,11 +9735,10 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   } else {
     hi = (const hashitem_T *) iter;
   }
-  *name = (char *) HI2DI(hi)->di_key;
-  copy_tv(&(HI2DI(hi)->di_tv), rettv);
-  while ((size_t) (++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi)
-        && var_flavour(HI2DI(hi)->di_key) == VAR_FLAVOUR_SHADA) {
+  *name = (char *)TV_DICT_HI2DI(hi)->di_key;
+  tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
+  while ((size_t)(++hi - hifirst) < hinum) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
       return hi;
     }
   }
@@ -21621,64 +9747,56 @@ const void *var_shada_iter(const void *const iter, const char **const name,
 
 void var_set_global(const char *const name, typval_T vartv)
 {
-  funccall_T *const saved_current_funccal = current_funccal;
-  current_funccal = NULL;
-  set_var((char_u *) name, &vartv, false);
-  current_funccal = saved_current_funccal;
+  funccall_T *const saved_funccal = (funccall_T *)save_funccal();
+  set_var(name, strlen(name), &vartv, false);
+  restore_funccal(saved_funccal);
 }
 
 int store_session_globals(FILE *fd)
 {
-  hashitem_T  *hi;
-  dictitem_T  *this_var;
-  int todo;
-  char_u      *p, *t;
-
-  todo = (int)globvarht.ht_used;
-  for (hi = globvarht.ht_array; todo > 0; ++hi) {
-    if (!HASHITEM_EMPTY(hi)) {
-      --todo;
-      this_var = HI2DI(hi);
-      if ((this_var->di_tv.v_type == VAR_NUMBER
-           || this_var->di_tv.v_type == VAR_STRING)
-          && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-        /* Escape special characters with a backslash.  Turn a LF and
-         * CR into \n and \r. */
-        p = vim_strsave_escaped(get_tv_string(&this_var->di_tv),
-            (char_u *)"\\\"\n\r");
-        for (t = p; *t != NUL; ++t)
-          if (*t == '\n')
-            *t = 'n';
-          else if (*t == '\r')
-            *t = 'r';
-        if ((fprintf(fd, "let %s = %c%s%c",
-                 this_var->di_key,
-                 (this_var->di_tv.v_type == VAR_STRING) ? '"'
-                 : ' ',
-                 p,
-                 (this_var->di_tv.v_type == VAR_STRING) ? '"'
-                 : ' ') < 0)
-            || put_eol(fd) == FAIL) {
-          xfree(p);
-          return FAIL;
+  TV_DICT_ITER(&globvardict, this_var, {
+    if ((this_var->di_tv.v_type == VAR_NUMBER
+         || this_var->di_tv.v_type == VAR_STRING)
+        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      // Escape special characters with a backslash.  Turn a LF and
+      // CR into \n and \r.
+      char_u *const p = vim_strsave_escaped(
+          (const char_u *)tv_get_string(&this_var->di_tv),
+          (const char_u *)"\\\"\n\r");
+      for (char_u *t = p; *t != NUL; t++) {
+        if (*t == '\n') {
+          *t = 'n';
+        } else if (*t == '\r') {
+          *t = 'r';
         }
+      }
+      if ((fprintf(fd, "let %s = %c%s%c",
+                   this_var->di_key,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"'
+                    : ' '),
+                   p,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"'
+                    : ' ')) < 0)
+          || put_eol(fd) == FAIL) {
         xfree(p);
-      } else if (this_var->di_tv.v_type == VAR_FLOAT
-                 && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-        float_T f = this_var->di_tv.vval.v_float;
-        int sign = ' ';
+        return FAIL;
+      }
+      xfree(p);
+    } else if (this_var->di_tv.v_type == VAR_FLOAT
+               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      float_T f = this_var->di_tv.vval.v_float;
+      int sign = ' ';
 
-        if (f < 0) {
-          f = -f;
-          sign = '-';
-        }
-        if ((fprintf(fd, "let %s = %c%f",
-                 this_var->di_key, sign, f) < 0)
-            || put_eol(fd) == FAIL)
-          return FAIL;
+      if (f < 0) {
+        f = -f;
+        sign = '-';
+      }
+      if ((fprintf(fd, "let %s = %c%f", this_var->di_key, sign, f) < 0)
+          || put_eol(fd) == FAIL) {
+        return FAIL;
       }
     }
-  }
+  });
   return OK;
 }
 
@@ -21686,60 +9804,34 @@ int store_session_globals(FILE *fd)
  * Display script name where an item was last set.
  * Should only be invoked when 'verbose' is non-zero.
  */
-void last_set_msg(scid_T scriptID)
+void last_set_msg(sctx_T script_ctx)
 {
-  if (scriptID != 0) {
-    char_u *p = home_replace_save(NULL, get_scriptname(scriptID));
+  const LastSet last_set = (LastSet){
+    .script_ctx = script_ctx,
+    .channel_id = 0,
+  };
+  option_last_set_msg(last_set);
+}
+
+/// Displays where an option was last set.
+///
+/// Should only be invoked when 'verbose' is non-zero.
+void option_last_set_msg(LastSet last_set)
+{
+  if (last_set.script_ctx.sc_sid != 0) {
+    bool should_free;
+    char_u *p = get_scriptname(last_set, &should_free);
     verbose_enter();
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
-    xfree(p);
+    if (last_set.script_ctx.sc_lnum > 0) {
+      MSG_PUTS(_(line_msg));
+      msg_outnum((long)last_set.script_ctx.sc_lnum);
+    }
+    if (should_free) {
+      xfree(p);
+    }
     verbose_leave();
-  }
-}
-
-/*
- * List v:oldfiles in a nice way.
- */
-void ex_oldfiles(exarg_T *eap)
-{
-  list_T      *l = get_vim_var_list(VV_OLDFILES);
-  listitem_T  *li;
-  long nr = 0;
-
-  if (l == NULL)
-    msg((char_u *)_("No old files"));
-  else {
-    msg_start();
-    msg_scroll = TRUE;
-    for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
-      msg_outnum(++nr);
-      MSG_PUTS(": ");
-      msg_outtrans(get_tv_string(&li->li_tv));
-      msg_putchar('\n');
-      ui_flush();                  /* output one line at a time */
-      os_breakcheck();
-    }
-    /* Assume "got_int" was set to truncate the listing. */
-    got_int = FALSE;
-
-    // File selection prompt on ":oldfiles!"
-    if (eap->forceit) {
-      quit_more = false;
-      nr = prompt_for_number(false);
-      msg_starthere();
-      if (nr > 0 && nr <= l->lv_len) {
-        char_u *p = list_find_str(l, nr);
-        if (p == NULL) {
-          return;
-        }
-        p = expand_env_save(p);
-        eap->arg = p;
-        eap->cmdidx = CMD_edit;
-        do_exedit(eap, NULL);
-        xfree(p);
-      }
-    }
   }
 }
 
@@ -21758,13 +9850,14 @@ void reset_v_option_vars(void)
  * Returns VALID_ flags or -1 for failure.
  * When there is an error, *fnamep is set to NULL.
  */
-int 
-modify_fname (
-    char_u *src,               /* string with modifiers */
-    size_t *usedlen,           /* characters after src that are used */
-    char_u **fnamep,           /* file name so far */
-    char_u **bufp,             /* buffer for allocated file name or NULL */
-    size_t *fnamelen           /* length of fnamep */
+int
+modify_fname(
+    char_u *src,              // string with modifiers
+    bool tilde_file,          // "~" is a file name, not $HOME
+    size_t *usedlen,          // characters after src that are used
+    char_u **fnamep,          // file name so far
+    char_u **bufp,            // buffer for allocated file name or NULL
+    size_t *fnamelen          // length of fnamep
 )
 {
   int valid = 0;
@@ -21775,14 +9868,14 @@ modify_fname (
   int has_fullname = 0;
 
 repeat:
-  /* ":p" - full path/file_name */
+  // ":p" - full path/file_name
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 'p') {
     has_fullname = 1;
 
     valid |= VALID_PATH;
     *usedlen += 2;
 
-    /* Expand "~/path" for all systems and "~user/path" for Unix */
+    // Expand "~/path" for all systems and "~user/path" for Unix
     if ((*fnamep)[0] == '~'
 #if !defined(UNIX)
         && ((*fnamep)[1] == '/'
@@ -21790,41 +9883,42 @@ repeat:
             || (*fnamep)[1] == '\\'
 # endif
             || (*fnamep)[1] == NUL)
-
 #endif
+        && !(tilde_file && (*fnamep)[1] == NUL)
         ) {
       *fnamep = expand_env_save(*fnamep);
-      xfree(*bufp);          /* free any allocated file name */
+      xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
     }
 
-    /* When "/." or "/.." is used: force expansion to get rid of it. */
-    for (p = *fnamep; *p != NUL; mb_ptr_adv(p)) {
+    // When "/." or "/.." is used: force expansion to get rid of it.
+    for (p = *fnamep; *p != NUL; MB_PTR_ADV(p)) {
       if (vim_ispathsep(*p)
           && p[1] == '.'
           && (p[2] == NUL
               || vim_ispathsep(p[2])
               || (p[2] == '.'
-                  && (p[3] == NUL || vim_ispathsep(p[3])))))
+                  && (p[3] == NUL || vim_ispathsep(p[3]))))) {
         break;
+      }
     }
 
-    /* FullName_save() is slow, don't use it when not needed. */
+    // FullName_save() is slow, don't use it when not needed.
     if (*p != NUL || !vim_isAbsName(*fnamep)) {
-      *fnamep = (char_u *)FullName_save((char *)*fnamep, *p != NUL);
-      xfree(*bufp);          /* free any allocated file name */
+      *fnamep = (char_u *)FullName_save((char *)(*fnamep), *p != NUL);
+      xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
     }
 
-    /* Append a path separator to a directory. */
+    // Append a path separator to a directory.
     if (os_isdir(*fnamep)) {
-      /* Make room for one or two extra characters. */
+      // Make room for one or two extra characters.
       *fnamep = vim_strnsave(*fnamep, STRLEN(*fnamep) + 2);
-      xfree(*bufp);          /* free any allocated file name */
+      xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
@@ -21832,9 +9926,9 @@ repeat:
     }
   }
 
-  /* ":." - path relative to the current directory */
-  /* ":~" - path relative to the home directory */
-  /* ":8" - shortname path - postponed till after */
+  // ":." - path relative to the current directory
+  // ":~" - path relative to the home directory
+  // ":8" - shortname path - postponed till after
   while (src[*usedlen] == ':'
          && ((c = src[*usedlen + 1]) == '.' || c == '~' || c == '8')) {
     *usedlen += 2;
@@ -21842,7 +9936,7 @@ repeat:
       continue;
     }
     pbuf = NULL;
-    /* Need full path first (use expand_env() to remove a "~/") */
+    // Need full path first (use expand_env() to remove a "~/")
     if (!has_fullname) {
       if (c == '.' && **fnamep == '~')
         p = pbuf = expand_env_save(*fnamep);
@@ -21860,14 +9954,14 @@ repeat:
         if (s != NULL) {
           *fnamep = s;
           if (pbuf != NULL) {
-            xfree(*bufp);               /* free any allocated file name */
+            xfree(*bufp);               // free any allocated file name
             *bufp = pbuf;
             pbuf = NULL;
           }
         }
       } else {
-        home_replace(NULL, p, dirname, MAXPATHL, TRUE);
-        /* Only replace it when it starts with '~' */
+        home_replace(NULL, p, dirname, MAXPATHL, true);
+        // Only replace it when it starts with '~'
         if (*dirname == '~') {
           s = vim_strsave(dirname);
           *fnamep = s;
@@ -21882,69 +9976,96 @@ repeat:
   tail = path_tail(*fnamep);
   *fnamelen = STRLEN(*fnamep);
 
-  /* ":h" - head, remove "/file_name", can be repeated  */
-  /* Don't remove the first "/" or "c:\" */
+  // ":h" - head, remove "/file_name", can be repeated
+  // Don't remove the first "/" or "c:\"
   while (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
     valid |= VALID_HEAD;
     *usedlen += 2;
     s = get_past_head(*fnamep);
-    while (tail > s && after_pathsep((char *)s, (char *)tail))
-      mb_ptr_back(*fnamep, tail);
+    while (tail > s && after_pathsep((char *)s, (char *)tail)) {
+      MB_PTR_BACK(*fnamep, tail);
+    }
     *fnamelen = (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
-      /* Result is empty.  Turn it into "." to make ":cd %:h" work. */
+      // Result is empty.  Turn it into "." to make ":cd %:h" work.
       xfree(*bufp);
       *bufp = *fnamep = tail = vim_strsave((char_u *)".");
       *fnamelen = 1;
     } else {
-      while (tail > s && !after_pathsep((char *)s, (char *)tail))
-        mb_ptr_back(*fnamep, tail);
+      while (tail > s && !after_pathsep((char *)s, (char *)tail)) {
+        MB_PTR_BACK(*fnamep, tail);
+      }
     }
   }
 
-  /* ":8" - shortname  */
+  // ":8" - shortname
   if (src[*usedlen] == ':' && src[*usedlen + 1] == '8') {
     *usedlen += 2;
   }
 
 
-  /* ":t" - tail, just the basename */
+  // ":t" - tail, just the basename
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 't') {
     *usedlen += 2;
     *fnamelen -= (size_t)(tail - *fnamep);
     *fnamep = tail;
   }
 
-  /* ":e" - extension, can be repeated */
-  /* ":r" - root, without extension, can be repeated */
+  // ":e" - extension, can be repeated
+  // ":r" - root, without extension, can be repeated
   while (src[*usedlen] == ':'
          && (src[*usedlen + 1] == 'e' || src[*usedlen + 1] == 'r')) {
     /* find a '.' in the tail:
      * - for second :e: before the current fname
      * - otherwise: The last '.'
      */
-    if (src[*usedlen + 1] == 'e' && *fnamep > tail)
+    const bool is_second_e = *fnamep > tail;
+    if (src[*usedlen + 1] == 'e' && is_second_e) {
       s = *fnamep - 2;
-    else
+    } else {
       s = *fnamep + *fnamelen - 1;
-    for (; s > tail; --s)
-      if (s[0] == '.')
+    }
+
+    for (; s > tail; s--) {
+      if (s[0] == '.') {
         break;
-    if (src[*usedlen + 1] == 'e') {             /* :e */
-      if (s > tail) {
-        *fnamelen += (size_t)(*fnamep - (s + 1));
-        *fnamep = s + 1;
-      } else if (*fnamep <= tail)
+      }
+    }
+    if (src[*usedlen + 1] == 'e') {
+      if (s > tail || (0 && is_second_e && s == tail)) {
+        // we stopped at a '.' (so anchor to &'.' + 1)
+        char_u *newstart = s + 1;
+        size_t distance_stepped_back = *fnamep - newstart;
+        *fnamelen += distance_stepped_back;
+        *fnamep = newstart;
+      } else if (*fnamep <= tail) {
         *fnamelen = 0;
-    } else {                          /* :r */
-      if (s > tail)             /* remove one extension */
+      }
+    } else {
+      // :r - Remove one extension
+      //
+      // Ensure that `s` doesn't go before `*fnamep`,
+      // since then we're taking too many roots:
+      //
+      // "path/to/this.file.ext" :e:e:r:r
+      //          ^    ^-------- *fnamep
+      //          +------------- tail
+      //
+      // Also ensure `s` doesn't go before `tail`,
+      // since then we're taking too many roots again:
+      //
+      // "path/to/this.file.ext" :r:r:r
+      //  ^       ^------------- tail
+      //  +--------------------- *fnamep
+      if (s > MAX(tail, *fnamep)) {
         *fnamelen = (size_t)(s - *fnamep);
+      }
     }
     *usedlen += 2;
   }
 
-  /* ":s?pat?foo?" - substitute */
-  /* ":gs?pat?foo?" - global substitute */
+  // ":s?pat?foo?" - substitute
+  // ":gs?pat?foo?" - global substitute
   if (src[*usedlen] == ':'
       && (src[*usedlen + 1] == 's'
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
@@ -21964,18 +10085,18 @@ repeat:
 
     sep = *s++;
     if (sep) {
-      /* find end of pattern */
+      // find end of pattern
       p = vim_strchr(s, sep);
       if (p != NULL) {
         pat = vim_strnsave(s, (int)(p - s));
         s = p + 1;
-        /* find end of substitution */
+        // find end of substitution
         p = vim_strchr(s, sep);
         if (p != NULL) {
           sub = vim_strnsave(s, (int)(p - s));
           str = vim_strnsave(*fnamep, *fnamelen);
           *usedlen = (size_t)(p + 1 - src);
-          s = do_string_sub(str, pat, sub, flags);
+          s = do_string_sub(str, pat, sub, NULL, flags);
           *fnamep = s;
           *fnamelen = STRLEN(s);
           xfree(*bufp);
@@ -21986,14 +10107,23 @@ repeat:
         }
         xfree(pat);
       }
-      /* after using ":s", repeat all the modifiers */
-      if (didit)
+      // after using ":s", repeat all the modifiers
+      if (didit) {
         goto repeat;
+      }
     }
   }
 
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 'S') {
+    // vim_strsave_shellescape() needs a NUL terminated string.
+    c = (*fnamep)[*fnamelen];
+    if (c != NUL) {
+      (*fnamep)[*fnamelen] = NUL;
+    }
     p = vim_strsave_shellescape(*fnamep, false, false);
+    if (c != NUL) {
+      (*fnamep)[*fnamelen] = c;
+    }
     xfree(*bufp);
     *bufp = *fnamep = p;
     *fnamelen = STRLEN(p);
@@ -22003,12 +10133,12 @@ repeat:
   return valid;
 }
 
-/*
- * Perform a substitution on "str" with pattern "pat" and substitute "sub".
- * "flags" can be "g" to do a global substitute.
- * Returns an allocated string, NULL for error.
- */
-char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
+/// Perform a substitution on "str" with pattern "pat" and substitute "sub".
+/// When "sub" is NULL "expr" is used, must be a VAR_FUNC or VAR_PARTIAL.
+/// "flags" can be "g" to do a global substitute.
+/// Returns an allocated string, NULL for error.
+char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
+                      typval_T *expr, char_u *flags)
 {
   int sublen;
   regmatch_T regmatch;
@@ -22019,7 +10149,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   char_u      *save_cpo;
   char_u      *zero_width = NULL;
 
-  /* Make 'cpoptions' empty, so that the 'l' flag doesn't work here */
+  // Make 'cpoptions' empty, so that the 'l' flag doesn't work here
   save_cpo = p_cpo;
   p_cpo = empty_option;
 
@@ -22033,11 +10163,11 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
     tail = str;
     end = str + STRLEN(str);
     while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {
-      /* Skip empty match except for first match. */
+      // Skip empty match except for first match.
       if (regmatch.startp[0] == regmatch.endp[0]) {
         if (zero_width == regmatch.startp[0]) {
-          /* avoid getting stuck on a match with an empty string */
-          int i = MB_PTR2LEN(tail);
+          // avoid getting stuck on a match with an empty string
+          int i = utfc_ptr2len(tail);
           memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
           ga.ga_len += i;
           tail += i;
@@ -22046,23 +10176,21 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
         zero_width = regmatch.startp[0];
       }
 
-      /*
-       * Get some space for a temporary buffer to do the substitution
-       * into.  It will contain:
-       * - The text up to where the match is.
-       * - The substituted text.
-       * - The text after the match.
-       */
-      sublen = vim_regsub(&regmatch, sub, tail, FALSE, TRUE, FALSE);
+      // Get some space for a temporary buffer to do the substitution
+      // into.  It will contain:
+      // - The text up to where the match is.
+      // - The substituted text.
+      // - The text after the match.
+      sublen = vim_regsub(&regmatch, sub, expr, tail, false, true, false);
       ga_grow(&ga, (int)((end - tail) + sublen -
                      (regmatch.endp[0] - regmatch.startp[0])));
 
-      /* copy the text up to where the match is */
+      // copy the text up to where the match is
       int i = (int)(regmatch.startp[0] - tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
-      /* add the substituted text */
-      (void)vim_regsub(&regmatch, sub, (char_u *)ga.ga_data
-          + ga.ga_len + i, TRUE, TRUE, FALSE);
+      // add the substituted text
+      (void)vim_regsub(&regmatch, sub, expr, (char_u *)ga.ga_data
+                       + ga.ga_len + i, true, true, false);
       ga.ga_len += i + sublen - 1;
       tail = regmatch.endp[0];
       if (*tail == NUL)
@@ -22079,317 +10207,65 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
   char_u *ret = vim_strsave(ga.ga_data == NULL ? str : (char_u *)ga.ga_data);
   ga_clear(&ga);
-  if (p_cpo == empty_option)
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
-  else
-    /* Darn, evaluating {sub} expression changed the value. */
+  } else {
+    // Darn, evaluating {sub} expression or {expr} changed the value.
     free_string_option(save_cpo);
+  }
 
   return ret;
 }
 
-static inline TerminalJobData *common_job_init(char **argv,
-                                               ufunc_T *on_stdout,
-                                               ufunc_T *on_stderr,
-                                               ufunc_T *on_exit,
-                                               dict_T *self,
-                                               bool pty,
-                                               bool detach)
+/// common code for getting job callbacks for jobstart, termopen and rpcstart
+///
+/// @return true/false on success/failure.
+bool common_job_callbacks(dict_T *vopts,
+                          CallbackReader *on_stdout,
+                          CallbackReader *on_stderr,
+                          Callback *on_exit)
 {
-  TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
-  data->stopped = false;
-  data->on_stdout = on_stdout;
-  data->on_stderr = on_stderr;
-  data->on_exit = on_exit;
-  data->self = self;
-  data->events = queue_new_child(loop.events);
-  if (pty) {
-    data->proc.pty = pty_process_init(&loop, data);
-  } else {
-    data->proc.uv = libuv_process_init(&loop, data);
-  }
-  Process *proc = (Process *)&data->proc;
-  proc->argv = argv;
-  proc->in = &data->in;
-  proc->out = &data->out;
-  if (!pty) {
-    proc->err = &data->err;
-  }
-  proc->cb = on_process_exit;
-  proc->events = data->events;
-  proc->detach = detach;
-  return data;
-}
-
-/// Return true/false on success/failure.
-static inline bool common_job_callbacks(dict_T *vopts, ufunc_T **on_stdout,
-                                        ufunc_T **on_stderr, ufunc_T **on_exit)
-{
-  if (get_dict_callback(vopts, "on_stdout", on_stdout)
-      && get_dict_callback(vopts, "on_stderr", on_stderr)
-      && get_dict_callback(vopts, "on_exit", on_exit)) {
+  if (tv_dict_get_callback(vopts, S_LEN("on_stdout"), &on_stdout->cb)
+      &&tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
+      && tv_dict_get_callback(vopts, S_LEN("on_exit"), on_exit)) {
+    on_stdout->buffered = tv_dict_get_number(vopts, "stdout_buffered");
+    on_stderr->buffered = tv_dict_get_number(vopts, "stderr_buffered");
+    if (on_stdout->buffered && on_stdout->cb.type == kCallbackNone) {
+      on_stdout->self = vopts;
+    }
+    if (on_stderr->buffered && on_stderr->cb.type == kCallbackNone) {
+      on_stderr->self = vopts;
+    }
     vopts->dv_refcount++;
     return true;
   }
-  if (*on_stdout) {
-    user_func_unref(*on_stdout);
-  }
-  if (*on_stderr) {
-    user_func_unref(*on_stderr);
-  }
-  if (*on_exit) {
-    user_func_unref(*on_exit);
-  }
+
+  callback_reader_free(on_stdout);
+  callback_reader_free(on_stderr);
+  callback_free(on_exit);
   return false;
 }
 
-static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
+
+Channel *find_job(uint64_t id, bool show_error)
 {
-  Process *proc = (Process *)&data->proc;
-  if (proc->type == kProcessTypePty && proc->detach) {
-    EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
-    return false;
-  }
-
-  data->refcount++;
-  char *cmd = xstrdup(proc->argv[0]);
-  if (!process_spawn(proc)) {
-    EMSG2(_(e_jobspawn), cmd);
-    xfree(cmd);
-    if (proc->type == kProcessTypePty) {
-      xfree(data->proc.pty.term_name);
-    }
-    rettv->vval.v_number = proc->status;
-    term_job_data_decref(data);
-    return false;
-  }
-  xfree(cmd);
-
-  data->id = current_job_id++;
-  wstream_init(proc->in, 0);
-  if (proc->out) {
-    rstream_init(proc->out, 0);
-    rstream_start(proc->out, on_job_stdout);
-  }
-  if (proc->err) {
-    rstream_init(proc->err, 0);
-    rstream_start(proc->err, on_job_stderr);
-  }
-  pmap_put(uint64_t)(jobs, data->id, data);
-  rettv->vval.v_number = data->id;
-  return true;
-}
-
-static inline void free_term_job_data_event(void **argv)
-{
-  TerminalJobData *data = argv[0];
-  if (data->on_stdout) {
-    user_func_unref(data->on_stdout);
-  }
-  if (data->on_stderr) {
-    user_func_unref(data->on_stderr);
-  }
-  if (data->on_exit) {
-    user_func_unref(data->on_exit);
-  }
-
-  if (data->self) {
-    dict_unref(data->self);
-  }
-  queue_free(data->events);
-  xfree(data);
-}
-
-static inline void free_term_job_data(TerminalJobData *data)
-{
-  // data->queue may still be used after this function returns(process_wait), so
-  // only free in the next event loop iteration
-  queue_put(loop.fast_events, free_term_job_data_event, 1, data);
-}
-
-// vimscript job callbacks must be executed on Nvim main loop
-static inline void process_job_event(TerminalJobData *data, ufunc_T *callback,
-    const char *type, char *buf, size_t count, int status)
-{
-  JobEvent event_data;
-  event_data.received = NULL;
-  if (buf) {
-    event_data.received = list_alloc();
-    char *ptr = buf;
-    size_t remaining = count;
-    size_t off = 0;
-
-    while (off < remaining) {
-      // append the line
-      if (ptr[off] == NL) {
-        list_append_string(event_data.received, (uint8_t *)ptr, off);
-        size_t skip = off + 1;
-        ptr += skip;
-        remaining -= skip;
-        off = 0;
-        continue;
+  Channel *data = find_channel(id);
+  if (!data || data->streamtype != kChannelStreamProc
+      || process_is_stopped(&data->stream.proc)) {
+    if (show_error) {
+      if (data && data->streamtype != kChannelStreamProc) {
+        EMSG(_(e_invchanjob));
+      } else {
+        EMSG(_(e_invchan));
       }
-      if (ptr[off] == NUL) {
-        // Translate NUL to NL
-        ptr[off] = NL;
-      }
-      off++;
     }
-    list_append_string(event_data.received, (uint8_t *)ptr, off);
-  } else {
-    event_data.status = status;
-  }
-  event_data.data = data;
-  event_data.callback = callback;
-  event_data.type = type;
-  on_job_event(&event_data);
-}
-
-static void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
-    void *job, bool eof)
-{
-  TerminalJobData *data = job;
-  on_job_output(stream, job, buf, count, eof, data->on_stdout, "stdout");
-}
-
-static void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
-    void *job, bool eof)
-{
-  TerminalJobData *data = job;
-  on_job_output(stream, job, buf, count, eof, data->on_stderr, "stderr");
-}
-
-static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
-    size_t count, bool eof, ufunc_T *callback, const char *type)
-{
-  if (eof) {
-    return;
-  }
-
-  // stub variable, to keep reading consistent with the order of events, only
-  // consider the count parameter.
-  size_t r;
-  char *ptr = rbuffer_read_ptr(buf, &r);
-
-  // The order here matters, the terminal must receive the data first because
-  // process_job_event will modify the read buffer(convert NULs into NLs)
-  if (data->term) {
-    terminal_receive(data->term, ptr, count);
-  }
-
-  if (callback) {
-    process_job_event(data, callback, type, ptr, count, 0);
-  }
-
-  rbuffer_consumed(buf, count);
-}
-
-static void on_process_exit(Process *proc, int status, void *d)
-{
-  TerminalJobData *data = d;
-  if (data->term && !data->exited) {
-    data->exited = true;
-    char msg[22];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
-    terminal_close(data->term, msg);
-  }
-
-  if (data->status_ptr) {
-    *data->status_ptr = status;
-  }
-
-  process_job_event(data, data->on_exit, "exit", NULL, 0, status);
-}
-
-static void term_write(char *buf, size_t size, void *d)
-{
-  TerminalJobData *data = d;
-  WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&data->in, wbuf);
-}
-
-static void term_resize(uint16_t width, uint16_t height, void *d)
-{
-  TerminalJobData *data = d;
-  pty_process_resize(&data->proc.pty, width, height);
-}
-
-static void term_close(void *d)
-{
-  TerminalJobData *data = d;
-  if (!data->exited) {
-    data->exited = true;
-    process_stop((Process *)&data->proc);
-  }
-  terminal_destroy(data->term);
-  term_job_data_decref(d);
-}
-
-static void term_job_data_decref(TerminalJobData *data)
-{
-  if (!(--data->refcount)) {
-    free_term_job_data(data);
-  }
-}
-
-static void on_job_event(JobEvent *ev)
-{
-  if (!ev->callback) {
-    goto end;
-  }
-
-  typval_T argv[3];
-  int argc = ev->callback->uf_args.ga_len;
-
-  if (argc > 0) {
-    argv[0].v_type = VAR_NUMBER;
-    argv[0].v_lock = 0;
-    argv[0].vval.v_number = ev->data->id;
-  }
-
-  if (argc > 1) {
-    if (ev->received) {
-      argv[1].v_type = VAR_LIST;
-      argv[1].v_lock = 0;
-      argv[1].vval.v_list = ev->received;
-      argv[1].vval.v_list->lv_refcount++;
-    } else {
-      argv[1].v_type = VAR_NUMBER;
-      argv[1].v_lock = 0;
-      argv[1].vval.v_number = ev->status;
-    }
-  }
-
-  if (argc > 2) {
-    argv[2].v_type = VAR_STRING;
-    argv[2].v_lock = 0;
-    argv[2].vval.v_string = (uint8_t *)ev->type;
-  }
-
-  typval_T rettv;
-  init_tv(&rettv);
-  call_user_func(ev->callback, argc, argv, &rettv, curwin->w_cursor.lnum,
-      curwin->w_cursor.lnum, ev->data->self);
-  clear_tv(&rettv);
-
-end:
-  if (!ev->received) {
-    // exit event, safe to free job data now
-    pmap_del(uint64_t)(jobs, ev->data->id);
-    term_job_data_decref(ev->data);
-  }
-}
-
-static TerminalJobData *find_job(uint64_t id)
-{
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, id);
-  if (!data || data->stopped) {
     return NULL;
   }
   return data;
 }
 
-static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
+
+void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {
   if (check_restricted() || check_secure()) {
     return;
@@ -22397,27 +10273,37 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
   if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
+    return;
   }
 
-  list_T *args = list_alloc();
-  list_append_string(args, argvars[0].vval.v_string, -1);
+  list_T *args = tv_list_alloc(1);
+  tv_list_append_string(args, (const char *)argvars[0].vval.v_string, -1);
   *rettv = eval_call_provider(name, "eval", args);
 }
 
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 {
+  if (!eval_has_provider(provider)) {
+    emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+          provider);
+    return (typval_T){
+      .v_type = VAR_NUMBER,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_number = (varnumber_T)0
+    };
+  }
+
   char func[256];
   int name_len = snprintf(func, sizeof(func), "provider#%s#Call", provider);
 
   // Save caller scope information
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
-    .SID = current_SID,
+    .script_ctx = current_sctx,
     .sourcing_name = sourcing_name,
     .sourcing_lnum = sourcing_lnum,
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
-    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = save_funccal()
   };
@@ -22428,145 +10314,179 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
     {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
     {.v_type = VAR_UNKNOWN}
   };
-  typval_T rettv = {.v_type = VAR_UNKNOWN, .v_lock = 0};
-  arguments->lv_refcount++;
+  typval_T rettv = { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
+  tv_list_ref(arguments);
 
   int dummy;
-  (void)call_func((uint8_t *)func,
+  (void)call_func((const char_u *)func,
                   name_len,
                   &rettv,
                   2,
                   argvars,
+                  NULL,
                   curwin->w_cursor.lnum,
                   curwin->w_cursor.lnum,
                   &dummy,
                   true,
+                  NULL,
                   NULL);
 
-  list_unref(arguments);
+  tv_list_unref(arguments);
   // Restore caller scope information
   restore_funccal(provider_caller_scope.funccalp);
   provider_caller_scope = saved_provider_caller_scope;
   provider_call_nesting--;
-  
+  assert(provider_call_nesting >= 0);
+
   return rettv;
 }
 
-bool eval_has_provider(char *name)
+/// Checks if provider for feature `feat` is enabled.
+bool eval_has_provider(const char *feat)
 {
-
-#define check_provider(name)                                              \
-  if (has_##name == -1) {                                                 \
-    has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");       \
-    if (!has_##name) {                                                    \
-      script_autoload((uint8_t *)"provider#" #name "#Call", false);       \
-      has_##name = !!find_func((uint8_t *)"provider#" #name "#Call");     \
-    }                                                                     \
+  if (!strequal(feat, "clipboard")
+      && !strequal(feat, "python")
+      && !strequal(feat, "python3")
+      && !strequal(feat, "python_compiled")
+      && !strequal(feat, "python_dynamic")
+      && !strequal(feat, "python3_compiled")
+      && !strequal(feat, "python3_dynamic")
+      && !strequal(feat, "perl")
+      && !strequal(feat, "ruby")
+      && !strequal(feat, "node")) {
+    // Avoid autoload for non-provider has() features.
+    return false;
   }
 
-  static int has_clipboard = -1, has_python = -1, has_python3 = -1;
+  char name[32];  // Normalized: "python_compiled" => "python".
+  snprintf(name, sizeof(name), "%s", feat);
+  strchrsub(name, '_', '\0');  // Chop any "_xx" suffix.
 
-  if (!strcmp(name, "clipboard")) {
-    check_provider(clipboard);
-    return has_clipboard;
-  } else if (!strcmp(name, "python3")) {
-    check_provider(python3);
-    return has_python3;
-  } else if (!strcmp(name, "python")) {
-    check_provider(python);
-    return has_python;
-  }
+  char buf[256];
+  typval_T tv;
+  // Get the g:loaded_xx_provider variable.
+  int len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
+  if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+    // Trigger autoload once.
+    len = snprintf(buf, sizeof(buf), "provider#%s#bogus", name);
+    script_autoload(buf, len, false);
 
-  return false;
-}
-
-// Compute the `DictWatcher` address from a QUEUE node. This only exists because
-// ASAN doesn't handle `QUEUE_DATA` pointer arithmetic, and we blacklist this
-// function on .asan-blacklist.
-static DictWatcher *dictwatcher_node_data(QUEUE *q)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  return QUEUE_DATA(q, DictWatcher, node);
-}
-
-// Send a change notification to all `dict` watchers that match `key`.
-static void dictwatcher_notify(dict_T *dict, const char *key, typval_T *newtv,
-    typval_T *oldtv)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
-{
-  typval_T argv[3];
-  for (size_t i = 0; i < ARRAY_SIZE(argv); i++) {
-    init_tv(argv + i);
-  }
-
-  argv[0].v_type = VAR_DICT;
-  argv[0].vval.v_dict = dict;
-  argv[1].v_type = VAR_STRING;
-  argv[1].vval.v_string = (char_u *)xstrdup(key);
-  argv[2].v_type = VAR_DICT;
-  argv[2].vval.v_dict = dict_alloc();
-  argv[2].vval.v_dict->dv_refcount++;
-
-  if (newtv) {
-    dictitem_T *v = dictitem_alloc((char_u *)"new");
-    copy_tv(newtv, &v->di_tv);
-    dict_add(argv[2].vval.v_dict, v);
-  }
-
-  if (oldtv) {
-    dictitem_T *v = dictitem_alloc((char_u *)"old");
-    copy_tv(oldtv, &v->di_tv);
-    dict_add(argv[2].vval.v_dict, v);
-  }
-
-  typval_T rettv;
-
-  QUEUE *w;
-  QUEUE_FOREACH(w, &dict->watchers) {
-    DictWatcher *watcher = dictwatcher_node_data(w);
-    if (!watcher->busy && dictwatcher_matches(watcher, key)) {
-      init_tv(&rettv);
-      watcher->busy = true;
-      call_user_func(watcher->callback, ARRAY_SIZE(argv), argv, &rettv,
-          curwin->w_cursor.lnum, curwin->w_cursor.lnum, NULL);
-      watcher->busy = false;
-      clear_tv(&rettv);
+    // Retry the (non-autoload-style) variable.
+    len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
+    if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+      // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
+      snprintf(buf, sizeof(buf), "provider#%s#Call", name);
+      if (!!find_func((char_u *)buf) && p_lpl) {
+        emsgf("provider: %s: missing required variable g:loaded_%s_provider",
+              name, name);
+      }
+      return false;
     }
   }
 
-  for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
-    clear_tv(argv + i);
+  bool ok = (tv.v_type == VAR_NUMBER)
+    ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
+    : false;
+
+  if (ok) {
+    // Call() must be defined if provider claims to be working.
+    snprintf(buf, sizeof(buf), "provider#%s#Call", name);
+    if (!find_func((char_u *)buf)) {
+      emsgf("provider: %s: g:loaded_%s_provider=2 but %s is not defined",
+            name, name, buf);
+      ok = false;
+    }
   }
+
+  return ok;
 }
 
-// Test if `key` matches with with `watcher->key_pattern`
-static bool dictwatcher_matches(DictWatcher *watcher, const char *key)
-  FUNC_ATTR_NONNULL_ALL
+/// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
+void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  // For now only allow very simple globbing in key patterns: a '*' at the end
-  // of the string means it should match everything up to the '*' instead of the
-  // whole string.
-  char *nul = strchr(watcher->key_pattern, NUL);
-  size_t len = nul - watcher->key_pattern;
-  if (*(nul - 1) == '*') {
-    return !strncmp(key, watcher->key_pattern, len - 1);
+  if (sourcing_name) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
   } else {
-    return !strcmp(key, watcher->key_pattern);
+    snprintf(buf, bufsize, "?");
   }
 }
 
-// Perform all necessary cleanup for a `DictWatcher` instance.
-static void dictwatcher_free(DictWatcher *watcher)
-  FUNC_ATTR_NONNULL_ALL
+/// ":checkhealth [plugins]"
+void ex_checkhealth(exarg_T *eap)
 {
-  user_func_unref(watcher->callback);
-  xfree(watcher->key_pattern);
-  xfree(watcher);
+  bool found = !!find_func((char_u *)"health#check");
+  if (!found
+      && script_autoload("health#check", sizeof("health#check") - 1, false)) {
+    found = !!find_func((char_u *)"health#check");
+  }
+  if (!found) {
+    const char *vimruntime_env = os_getenv("VIMRUNTIME");
+    if (vimruntime_env == NULL) {
+      EMSG(_("E5009: $VIMRUNTIME is empty or unset"));
+    } else {
+      bool rtp_ok = NULL != strstr((char *)p_rtp, vimruntime_env);
+      if (rtp_ok) {
+        EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
+      } else {
+        EMSG(_("E5009: Invalid 'runtimepath'"));
+      }
+    }
+    return;
+  }
+
+  size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");
+  char *buf = xmalloc(bufsize);
+  snprintf(buf, bufsize, "call health#check('%s')", eap->arg);
+
+  do_cmdline_cmd(buf);
+
+  xfree(buf);
 }
 
-// Check if `d` has at least one watcher.
-static bool is_watched(dict_T *d)
+void invoke_prompt_callback(void)
 {
-  return d && !QUEUE_EMPTY(&d->watchers);
+    typval_T rettv;
+    typval_T argv[2];
+    char_u *text;
+    char_u *prompt;
+    linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+    // Add a new line for the prompt before invoking the callback, so that
+    // text can always be inserted above the last line.
+    ml_append(lnum, (char_u  *)"", 0, false);
+    curwin->w_cursor.lnum = lnum + 1;
+    curwin->w_cursor.col = 0;
+
+    if (curbuf->b_prompt_callback.type == kCallbackNone) {
+      return;
+    }
+    text = ml_get(lnum);
+    prompt = prompt_text();
+    if (STRLEN(text) >= STRLEN(prompt)) {
+      text += STRLEN(prompt);
+    }
+    argv[0].v_type = VAR_STRING;
+    argv[0].vval.v_string = vim_strsave(text);
+    argv[1].v_type = VAR_UNKNOWN;
+
+    callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
+    tv_clear(&argv[0]);
+    tv_clear(&rettv);
 }
 
+// Return true When the interrupt callback was invoked.
+bool invoke_prompt_interrupt(void)
+{
+    typval_T rettv;
+    typval_T argv[1];
+
+    if (curbuf->b_prompt_interrupt.type == kCallbackNone) {
+      return false;
+    }
+    argv[0].v_type = VAR_UNKNOWN;
+
+    got_int = false;  // don't skip executing commands
+    callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+    tv_clear(&rettv);
+    return true;
+}

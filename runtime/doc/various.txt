@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2014 Aug 06
+*various.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,29 +6,35 @@
 
 Various commands					*various*
 
-1. Various commands		|various-cmds|
-2. Using Vim like less or more	|less|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Various commands					*various-cmds*
 
 							*CTRL-L*
-CTRL-L			Clear and redraw the screen.  The redraw may happen
+CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
 
+							*:mod* *:mode*
+:mod[e]			Clears and redraws the screen.
+
 							*:redr* *:redraw*
-:redr[aw][!]		Redraw the screen right now.  When ! is included it is
-			cleared first.
-			Useful to update the screen halfway through executing
-			a script or function (or a mapping if 'lazyredraw'
-			set).
+:redr[aw][!]		Redraws pending screen updates now, or the entire
+			screen if "!" is included.  To CLEAR the screen use
+			|:mode| or |CTRL-L|.
+			Useful to update the screen during a script or
+			function (or a mapping if 'lazyredraw' set).
 
 						*:redraws* *:redrawstatus*
-:redraws[tatus][!]	Redraw the status line of the current window.  When !
-			is included all status lines are redrawn.
-			Useful to update the status line(s) when 'statusline'
-			includes an item that doesn't cause automatic
-			updating.
+:redraws[tatus][!]	Redraws the status line of the current window, or all
+			status lines if "!" is included.
+			Useful if 'statusline' includes an item that doesn't
+			cause automatic updating.
+
+						*:redrawt* *:redrawtabline*
+:redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
+			'tabline' includes an item that doesn't trigger
+			automatic updating.
 
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.
@@ -38,23 +44,34 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
 <
 :as[cii]	or					*ga* *:as* *:ascii*
 ga			Print the ascii value of the character under the
-			cursor in decimal, hexadecimal and octal.  For
-			example, when the cursor is on a 'R':
+			cursor in decimal, hexadecimal and octal.
+			Mnemonic: Get Ascii value.
+			
+			For example, when the cursor is on a 'R':
 				<R>  82,  Hex 52,  Octal 122 ~
 			When the character is a non-standard ASCII character,
 			but printable according to the 'isprint' option, the
-			non-printable version is also given.  When the
-			character is larger than 127, the <M-x> form is also
-			printed.  For example:
+			non-printable version is also given.
+			
+			When the character is larger than 127, the <M-x> form
+			is also printed.  For example:
 				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
 				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
 			(where <p> is a special character)
+			
 			The <Nul> character in a file is stored internally as
 			<NL>, but it will be shown as:
 				<^@>  0,  Hex 00,  Octal 000 ~
+				
 			If the character has composing characters these are
 			also shown.  The value of 'maxcombine' doesn't matter.
-			Mnemonic: Get ASCII value.
+			
+			If the character can be inserted as a digraph, also
+			output the two characters that can be used to create
+			the character:
+			    <ö> 246, Hex 00f6, Oct 366, Digr o: ~
+			This shows you can type CTRL-K o : to insert ö.
+
 
 							*g8*
 g8			Print the hex values of the bytes used in the
@@ -85,6 +102,8 @@ g8			Print the hex values of the bytes used in the
 			on paper see |:hardcopy|.  In the GUI you can use the
 			File.Print menu entry.
 			See |ex-flags| for [flags].
+			The |:filter| command can be used to only show lines
+			matching a pattern.
 
 :[range]p[rint] {count} [flags]
 			Print {count} lines, starting with [range] (default
@@ -101,8 +120,7 @@ g8			Print the hex values of the bytes used in the
 							*:nu* *:number*
 :[range]nu[mber] [count] [flags]
 			Same as :print, but precede each line with its line
-			number.  (See also 'highlight' and 'numberwidth'
-			option).
+			number.  (See also |hl-LineNr| and 'numberwidth').
 			See |ex-flags| for [flags].
 
 							*:#*
@@ -204,203 +222,70 @@ g8			Print the hex values of the bytes used in the
 			":normal" command without a range.
 
 						  *:sh* *:shell* *E371* *E360*
-:sh[ell]		Removed. |vim-differences| {Nvim}
+:sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
-			'shellcmdflag' in a new terminal buffer.  This is
-			equivalent to: >
+:te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
+			|terminal-emulator| buffer. Without {cmd}, start an
+			interactive 'shell'.
 
-			      :enew
-			      :call termopen('{cmd}')
-			      :startinsert
-<
-			If no {cmd} is given, 'shellcmdflag' will not be sent
-			to |termopen()|.
+			Type |i| to enter |Terminal-mode|, then keys are sent to
+			the job running in the terminal. Type <C-\><C-N> to
+			leave Terminal-mode. |CTRL-\_CTRL-N|
 
-			Like |:enew|, it will fail if the current buffer is
-			modified, but can be forced with "!".  See |termopen()|
-			and |nvim-terminal-emulator| for more information.
+			Fails if changes have been made to the current buffer,
+			unless 'hidden' is set.
 
-			To switch to terminal mode automatically:
->
-			      autocmd BufEnter term://* startinsert
+			To enter |Terminal-mode| automatically: >
+			      autocmd TermOpen * startinsert
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
-			Any '!' in {cmd} is replaced with the previous
-			external command (see also 'cpoptions').  But not when
-			there is a backslash before the '!', then that
-			backslash is removed.  Example: ":!ls" followed by
+			The command runs in a non-interactive shell connected
+			to a pipe (not a terminal). Use |:terminal| to run an
+			interactive shell connected to a terminal.
+
+			Backgrounded ("&") commands must not write to stdout
+			or stderr, the streams are closed immediately. |E5677|
+			Use |jobstart()| instead. >
+				:call jobstart('foo', {'detach':1})
+<
+			Any "!" in {cmd} is replaced with the previous
+			external command (see also 'cpoptions'), unless
+			escaped by a backslash.  Example: ":!ls" followed by
 			":!echo ! \! \\!" executes "echo ls ! \!".
 
-			A '|' in {cmd} is passed to the shell, you cannot use
-			it to append a Vim command.  See |:bar|.
+			Any "|" in {cmd} is passed to the shell, you cannot
+			use it to append a Vim command.  See |:bar|.
 
-			If {cmd} contains "%" it is expanded to the current
-			file name.  Special characters are not escaped, use
-			quotes to avoid their special meaning: >
+			Any "%" in {cmd} is expanded to the current file name.
+			Special characters are not escaped, use quotes or
+			|shellescape()|: >
 				:!ls "%"
-<			If the file name contains a "$" single quotes might
-			work better (but a single quote causes trouble): >
-				:!ls '%'
-<			This should always work, but it's more typing: >
 				:exe "!ls " . shellescape(expand("%"))
 <
-			A newline character ends {cmd}, what follows is
-			interpreted as a following ":" command.  However, if
-			there is a backslash before the newline it is removed
-			and {cmd} continues.  It doesn't matter how many
-			backslashes are before the newline, only one is
-			removed.
-
-			On Unix the command normally runs in a non-interactive
-			shell.  If you want an interactive shell to be used
-			(to use aliases) set 'shellcmdflag' to "-ic".
-			For Win32 also see |:!start|.
+			Newline character ends {cmd} unless a backslash
+			precedes the newline.  What follows is interpreted as
+			another |:| command.
 
 			After the command has been executed, the timestamp and
 			size of the current file is checked |timestamp|.
 
-			Vim redraws the screen after the command is finished,
-			because it may have printed any text.  This requires a
-			hit-enter prompt, so that you can read any messages.
-			To avoid this use: >
-				:silent !{cmd}
-<			The screen is not redrawn then, thus you have to use
-			CTRL-L or ":redraw!" if the command did display
-			something.
+			If the command produces too much output some lines may
+			be skipped so the command can execute quickly.  No
+			data is lost, this only affects the display.  The last
+			few lines are always displayed (never skipped).
 
+			To avoid the hit-enter prompt use: >
+				:silent !{cmd}
+<
 							*:!!*
 :!!			Repeat last ":!{cmd}".
 
-							*:ve* *:version*
-:ve[rsion]		Print the version number of the editor.  The following
-			lines contain information about which features were
-			enabled when Vim was compiled.  When there is a
-			preceding '+', the feature is included, when there is
-			a '-' it is excluded.  To change this, you have to
-			edit feature.h and recompile Vim.  To check for this
-			in an expression, see |has()|.  Here is an overview of
-			the features.  The first column shows the smallest
-			version in which they are included:
-			   T	tiny
-			   S	small
-			   N	normal
-			   B	big
-			   H	huge
-			   m	manually enabled or depends on other features
-			 (none) system dependent
-			Thus if a feature is marked with "N", it is included
-			in the normal, big and huge versions of Vim.
-
-							*+feature-list*
-   *+acl*		|ACL| support included
-B  *+arabic*		|Arabic| language support
-N  *+autocmd*		|:autocmd|, automatic commands
-N  *+browse*		|:browse| command
-N  *+byte_offset*	support for 'o' flag in 'statusline' option, "go"
-			and ":goto" commands.
-N  *+cindent*		|'cindent'|, C indenting
-N  *+clientserver*	Unix and Win32: Remote invocation |clientserver|
-   *+clipboard*		|clipboard| support
-N  *+cmdline_compl*	command line completion |cmdline-completion|
-N  *+cmdline_hist*	command line history |cmdline-history|
-N  *+cmdline_info*	|'showcmd'| and |'ruler'|
-N  *+comments*		|'comments'| support
-B  *+conceal*		"conceal" support, see |conceal| |:syn-conceal| etc.
-B  *+cscope*		|cscope| support
-m  *+cursorbind*	|'cursorbind'| support
-m  *+cursorshape*	|termcap-cursor-shape| support
-m  *+debug*		Compiled for debugging.
-N  *+dialog_gui*	Support for |:confirm| with GUI dialog.
-N  *+dialog_con*	Support for |:confirm| with console dialog.
-N  *+dialog_con_gui*	Support for |:confirm| with GUI and console dialog.
-N  *+digraphs*		|digraphs| *E196*
-N  *+eval*		expression evaluation |eval.txt|
-N  *+ex_extra*		Vim's extra Ex commands: |:center|, |:left|,
-			|:normal|, |:retab| and |:right|
-N  *+extra_search*	|'hlsearch'| and |'incsearch'| options.
-B  *+farsi*		|farsi| language
-N  *+file_in_path*	|gf|, |CTRL-W_f| and |<cfile>|
-N  *+find_in_path*	include file searches: |[I|, |:isearch|,
-			|CTRL-W_CTRL-I|, |:checkpath|, etc.
-N  *+folding*		|folding|
-N  *+gettext*		message translations |multi-lang|
-   *+iconv*		Compiled with the |iconv()| function
-   *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
-N  *+insert_expand*	|insert_expand| Insert mode completion
-N  *+jumplist*		|jumplist|
-B  *+keymap*		|'keymap'|
-B  *+langmap*		|'langmap'|
-N  *+libcall*		|libcall()|
-N  *+linebreak*		|'linebreak'|, |'breakat'| and |'showbreak'|
-N  *+lispindent*	|'lisp'|
-N  *+listcmds*		Vim commands for the list of buffers |buffer-hidden|
-			and argument list |:argdelete|
-N  *+localmap*		Support for mappings local to a buffer |:map-local|
-N  *+menu*		|:menu|
-N  *+mksession*		|:mksession|
-N  *+modify_fname*	|filename-modifiers|
-N  *+mouse*		Mouse handling |mouse-using|
-N  *+mouseshape*	|'mouseshape'|
-N  *+multi_byte*	16 and 32 bit characters |multibyte|
-   *+multi_byte_ime*	Win32 input method for multibyte chars |multibyte-ime|
-N  *+multi_lang*	non-English language support |multi-lang|
-N  *+path_extra*	Up/downwards search in 'path' and 'tags'
-N  *+persistent_undo*	Persistent undo |undo-persistence|
-   *+postscript*	|:hardcopy| writes a PostScript file
-N  *+printer*		|:hardcopy| command
-H  *+profile*		|:profile| command
-m  *+python*		Python 2 interface |python|
-m  *+python3*		Python 3 interface |python|
-N  *+quickfix*		|:make| and |quickfix| commands
-N  *+reltime*		|reltime()| function, 'hlsearch'/'incsearch' timeout,
-			'redrawtime' option
-B  *+rightleft*		Right to left typing |'rightleft'|
-N  *+scrollbind*	|'scrollbind'|
-N  *+shada*		|'shada'|
-B  *+signs*		|:sign|
-N  *+smartindent*	|'smartindent'|
-N  *+startuptime*	|--startuptime| argument
-N  *+statusline*	Options 'statusline', 'rulerformat' and special
-			formats of 'titlestring' and 'iconstring'
-N  *+syntax*		Syntax highlighting |syntax|
-N  *+tablineat*		'tabline' option recognizing %@Func@ items.
-N  *+tag_binary*	binary searching in tags file |tag-binary-search|
-N  *+tag_old_static*	old method for static tags |tag-old-static|
-m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
-   *+terminfo*		uses |terminfo| instead of termcap
-N  *+termresponse*	support for |t_RV| and |v:termresponse|
-N  *+textobjects*	|text-objects| selection
-   *+tgetent*		non-Unix only: able to use external termcap
-N  *+title*		Setting the window 'title' and 'icon'
-N  *+toolbar*		|gui-toolbar|
-N  *+user_commands*	User-defined commands. |user-commands|
-N  *+vertsplit*		Vertically split windows |:vsplit|
-N  *+virtualedit*	|'virtualedit'|
-S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.
-N  *+visualextra*	extra Visual mode commands |blockwise-operators|
-N  *+vreplace*		|gR| and |gr|
-N  *+wildignore*	|'wildignore'|
-N  *+wildmenu*		|'wildmenu'|
-S  *+windows*		more than one window
-m  *+writebackup*	|'writebackup'| is default on
-m  *+xim*		X input method |xim|
-   *+xfontset*		X fontset support |xfontset|
-   *+xpm*		pixmap support
-m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
-
-							*/dyn* *E370* *E448*
-			To some of the features "/dyn" is added when the
-			feature is only available when the related library can
-			be dynamically loaded.
-
-:ve[rsion] {nr}		Is now ignored.  This was previously used to check the
-			version number of a .vimrc file.  It was removed,
-			because you can now use the ":if" command for
-			version-dependent behavior.
+							*:ve* *:ver* *:version*
+:ve[rsion]		Print editor version and build information.
+			See also |feature-compile|.
 
 							*:redi* *:redir*
 :redi[r][!] > {file}	Redirect messages to file {file}.  The messages which
@@ -409,14 +294,18 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			shown on the screen.  When [!] is included, an
 			existing file is overwritten.  When [!] is omitted,
 			and {file} exists, this command fails.
+
 			Only one ":redir" can be active at a time.  Calls to
 			":redir" will close any active redirection before
-			starting redirection to the new target.
+			starting redirection to the new target.  For recursive
+			use check out |execute()|.
+
 			To stop the messages and commands from being echoed to
 			the screen, put the commands in a function and call it
 			with ":silent call Function()".
-			An alternative is to use the 'verbosefile' option,
-			this can be used in combination with ":redir".
+			Alternatives are the 'verbosefile' option or
+			|execute()| function, these can be used in combination
+			with ":redir".
 
 :redi[r] >> {file}	Redirect messages to file {file}.  Append if {file}
 			already exists.
@@ -448,13 +337,51 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
 			command output messages will cause errors.
+			To get the output of one command the |execute()|
+			function can be used.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.
 
 :redi[r] END		End redirecting messages.
 
-						*:sil* *:silent*
+							*:filt* *:filter*
+:filt[er][!] {pat} {command}
+:filt[er][!] /{pat}/ {command}
+			Restrict the output of {command} to lines matching
+			with {pat}.  For example, to list only xml files: >
+				:filter /\.xml$/ oldfiles
+<			If the [!] is given, restrict the output of {command}
+			to lines that do NOT match {pat}.
+
+			{pat} is a Vim search pattern.  Instead of enclosing
+			it in / any non-ID character (see |'isident'|) can be
+			used, so long as it does not appear in {pat}.  Without
+			the enclosing character the pattern cannot include the
+			bar character.
+
+			The pattern is matched against the relevant part of
+			the output, not necessarily the whole line. Only some
+			commands support filtering, try it out to check if it
+			works. Some of the commands that support filtering:
+			   |:#|          - filter whole line
+			   |:clist|      - filter by file name or module name
+			   |:command|    - filter by command name
+			   |:files|      - filter by file name
+			   |:highlight|  - filter by highlight group
+			   |:jumps|      - filter by file name
+			   |:let|        - filter by variable name
+			   |:list|       - filter whole line
+			   |:llist|      - filter by file name or module name
+			   |:marks|      - filter by text in the current file,
+					   or file name for other files
+			   |:oldfiles|   - filter by file name
+			   |:set|        - filter by variable name
+
+			Only normal messages are filtered, error messages are
+			not.
+
+						*:sil* *:silent* *:silent!*
 :sil[ent][!] {command}	Execute {command} silently.  Normal messages will not
 			be given or added to the message history.
 			When [!] is added, error messages will also be
@@ -479,14 +406,9 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			    :silent! /^begin
 			    :if v:errmsg != ""
 			    : ... pattern was not found
-<			":silent" will also avoid the hit-enter prompt.  When
-			using this for an external command, this may cause the
-			screen to be messed up.  Use |CTRL-L| to clean it up
-			then.
-			":silent menu ..." defines a menu that will not echo a
-			Command-line command.  The command will still produce
-			messages though.  Use ":silent" in the command itself
-			to avoid that: ":silent menu .... :silent command".
+<			":silent" also skips the hit-enter prompt.
+			Dialogs that prompt for user input (|confirm()|,
+			'swapfile', …) are never silent.
 
 						*:uns* *:unsilent*
 :uns[ilent] {command}	Execute {command} not silently.  Only makes a
@@ -529,7 +451,6 @@ or an autocommand will also display where it was last defined.  If it was
 defined manually then there will be no "Last set" message.  When it was
 defined while executing a function, user command or autocommand, the script in
 which it was defined is reported.
-{not available when compiled without the |+eval| feature}
 
 							*K*
 [count]K       		Run a program to lookup the keyword under the
@@ -560,18 +481,26 @@ which it was defined is reported.
 			the keyword.  Only works when the highlighted text is
 			not more than one line.
 
+							*gO*
+gO			Show a filetype-specific, navigable "outline" of the
+			current buffer. For example, in a |help| buffer this
+			shows the table of contents.
+
+			Currently works in |help| and |:Man| buffers.
+
 [N]gs							*gs* *:sl* *:sleep*
-:[N]sl[eep] [N]	[m]	Do nothing for [N] seconds.  When [m] is included,
-			sleep for [N] milliseconds.  The count for "gs" always
-			uses seconds.  The default is one second. >
+:[N]sl[eep] [N]	[m]	Do nothing for [N] seconds, or [N] milliseconds if [m]
+			was given.  "gs" always uses seconds.
+			Default is one second. >
 			     :sleep	     "sleep for one second
 			     :5sleep	     "sleep for five seconds
 			     :sleep 100m     "sleep for a hundred milliseconds
 			     10gs	     "sleep for ten seconds
-<			Can be interrupted with CTRL-C (CTRL-Break on Windows).
+<			Can be interrupted with CTRL-C.
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.
+			Queued messages are processed during the sleep.
 
 ==============================================================================
 2. Using Vim like less or more					*less*
@@ -590,4 +519,12 @@ highlighting.
 
 The "h" key will give you a short overview of the available commands.
 
- vim:tw=78:ts=8:ft=help:norl:
+If you want to set options differently when using less, define the
+LessInitFunc in your vimrc, for example: >
+
+	func LessInitFunc()
+	  set nocursorcolumn nocursorline
+	endfunc
+<
+
+ vim:noet:tw=78:ts=8:ft=help:norl:

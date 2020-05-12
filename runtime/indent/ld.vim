@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         ld(1) script
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
+" Language:             ld(1) script
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
 
 if exists("b:did_indent")
   finish
@@ -65,7 +65,7 @@ function GetLDIndent()
   if line =~ '^\s*\*'
     return cindent(v:lnum)
   elseif line =~ '^\s*}'
-    return indent(v:lnum) - &sw
+    return indent(v:lnum) - shiftwidth()
   endif
 
   let pnum = s:prevnonblanknoncomment(v:lnum - 1)
@@ -73,11 +73,11 @@ function GetLDIndent()
     return 0
   endif
 
-  let ind = indent(pnum) + s:count_braces(pnum, 1) * &sw
+  let ind = indent(pnum) + s:count_braces(pnum, 1) * shiftwidth()
 
   let pline = getline(pnum)
   if pline =~ '}\s*$'
-    let ind -= (s:count_braces(pnum, 0) - (pline =~ '^\s*}' ? 1 : 0)) * &sw
+    let ind -= (s:count_braces(pnum, 0) - (pline =~ '^\s*}' ? 1 : 0)) * shiftwidth()
   endif
 
   return ind

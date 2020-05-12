@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(libuv LANGUAGES C)
+
+file(GLOB UV_SOURCES_COMMON src/*.c)
+file(GLOB UV_SOURCES_WIN src/win/*.c)
+
+add_library(uv ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
+target_compile_definitions(uv PRIVATE WIN32_LEAN_AND_MEAN "_WIN32_WINNT=0x0600")
+target_link_libraries(uv iphlpapi psapi shell32 userenv ws2_32)
+target_include_directories(uv PUBLIC ./include PRIVATE ./src)
+if(BUILD_SHARED_LIBS)
+  set_target_properties(uv PROPERTIES DEFINE_SYMBOL BUILDING_UV_SHARED)
+endif()
+
+install(FILES
+  include/uv.h
+  DESTINATION include)
+
+install(FILES
+  include/uv/errno.h
+  include/uv/threadpool.h
+  include/uv/tree.h
+  include/uv/version.h
+  include/uv/win.h
+  DESTINATION include/uv)
+
+include(GNUInstallDirs)
+install(TARGETS uv
+  PUBLIC_HEADER
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

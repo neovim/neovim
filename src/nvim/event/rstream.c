@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -17,21 +20,17 @@
 # include "event/rstream.c.generated.h"
 #endif
 
-void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize,
-    void *data)
-  FUNC_ATTR_NONNULL_ARG(1)
-  FUNC_ATTR_NONNULL_ARG(2)
+void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(loop, stream, fd, NULL, data);
+  stream_init(loop, stream, fd, NULL);
   rstream_init(stream, bufsize);
 }
 
-void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize,
-    void *data)
-  FUNC_ATTR_NONNULL_ARG(1)
-  FUNC_ATTR_NONNULL_ARG(2)
+void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(NULL, stream, -1, uvstream, data);
+  stream_init(NULL, stream, -1, uvstream);
   rstream_init(stream, bufsize);
 }
 
@@ -48,10 +47,11 @@ void rstream_init(Stream *stream, size_t bufsize)
 /// Starts watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_start(Stream *stream, stream_read_cb cb)
+void rstream_start(Stream *stream, stream_read_cb cb, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
+  stream->cb_data = data;
   if (stream->uvstream) {
     uv_read_start(stream->uvstream, alloc_cb, read_cb);
   } else {
@@ -81,7 +81,7 @@ static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 {
   Stream *stream = data;
   assert(stream->read_cb);
-  rstream_start(stream, stream->read_cb);
+  rstream_start(stream, stream->read_cb, stream->cb_data);
 }
 
 // Callbacks used by libuv
@@ -90,7 +90,10 @@ static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   Stream *stream = handle->data;
-  buf->base = rbuffer_write_ptr(stream->buffer, &buf->len);
+  // `uv_buf_t.len` happens to have different size on Windows.
+  size_t write_count;
+  buf->base = rbuffer_write_ptr(stream->buffer, &write_count);
+  buf->len = UV_BUF_LEN(write_count);
 }
 
 // Callback invoked by libuv after it copies the data into the buffer provided
@@ -101,16 +104,20 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
   Stream *stream = uvstream->data;
 
   if (cnt <= 0) {
-    if (cnt != UV_ENOBUFS
-        // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
-        // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
-        //
-        // We don't need to do anything with the RBuffer because the next call
-        // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
-        // won't be called)
-        && cnt != 0) {
-      DLOG("Closing Stream(%p) because of %s(%zd)", stream,
-           uv_strerror((int)cnt), cnt);
+    // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
+    // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
+    //
+    // We don't need to do anything with the RBuffer because the next call
+    // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
+    // won't be called)
+    if (cnt == UV_ENOBUFS || cnt == 0) {
+      return;
+    } else if (cnt == UV_EOF && uvstream->type == UV_TTY) {
+      // The TTY driver might signal EOF without closing the stream
+      invoke_read_cb(stream, 0, true);
+    } else {
+      DLOG("closing Stream (%p): %s (%s)", (void *)stream,
+           uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(uvstream);
@@ -121,6 +128,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 
   // at this point we're sure that cnt is positive, no error occurred
   size_t nread = (size_t)cnt;
+  stream->num_bytes += nread;
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(stream->buffer, nread);
@@ -128,12 +136,19 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
+//
+// Idle callbacks are invoked once per event loop:
+//  - to perform some very low priority activity.
+//  - to keep the loop "alive" (so there is always an event to process)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
   Stream *stream = handle->data;
 
-  stream->uvbuf.base = rbuffer_write_ptr(stream->buffer, &stream->uvbuf.len);
+  // `uv_buf_t.len` happens to have different size on Windows.
+  size_t write_count;
+  stream->uvbuf.base = rbuffer_write_ptr(stream->buffer, &write_count);
+  stream->uvbuf.len = UV_BUF_LEN(write_count);
 
   // the offset argument to uv_fs_read is int64_t, could someone really try
   // to read more than 9 quintillion (9e18) bytes?
@@ -175,7 +190,8 @@ static void read_event(void **argv)
   if (stream->read_cb) {
     size_t count = (uintptr_t)argv[1];
     bool eof = (uintptr_t)argv[2];
-    stream->read_cb(stream, stream->buffer, count, stream->data, eof);
+    stream->did_eof = eof;
+    stream->read_cb(stream, stream->buffer, count, stream->cb_data, eof);
   }
   stream->pending_reqs--;
   if (stream->closed && !stream->pending_reqs) {
@@ -185,10 +201,6 @@ static void read_event(void **argv)
 
 static void invoke_read_cb(Stream *stream, size_t count, bool eof)
 {
-  if (stream->closed) {
-    return;
-  }
-
   // Don't let the stream be closed before the event is processed.
   stream->pending_reqs++;
 

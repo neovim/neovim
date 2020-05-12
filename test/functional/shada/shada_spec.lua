@@ -1,14 +1,15 @@
 -- Other ShaDa tests
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local meths, nvim_command, funcs, eq =
   helpers.meths, helpers.command, helpers.funcs, helpers.eq
 local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.write_file, helpers.spawn, helpers.set_session, helpers.nvim_prog,
   helpers.exc_exec
+
 local lfs = require('lfs')
 local paths = require('test.config.paths')
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
@@ -18,11 +19,15 @@ local read_shada_file = shada_helpers.read_shada_file
 local wshada, _, shada_fname, clean =
   get_shada_rw('Xtest-functional-shada-shada.shada')
 
+local dirname = 'Xtest-functional-shada-shada.d'
+local dirshada = dirname .. '/main.shada'
+
 describe('ShaDa support code', function()
   before_each(reset)
   after_each(function()
     clear()
     clean()
+    lfs.rmdir(dirname)
   end)
 
   it('preserves `s` item size limit with unknown entries', function()
@@ -107,7 +112,7 @@ describe('ShaDa support code', function()
   end)
 
   it('reads correctly various timestamps', function()
-    local mpack = {
+    local msgpack = {
       '\100',  -- Positive fixnum 100
       '\204\255',  -- uint 8 255
       '\205\010\003',  -- uint 16 2563
@@ -116,34 +121,34 @@ describe('ShaDa support code', function()
     }
     local s = '\100'
     local e = '\001\192'
-    wshada(s .. table.concat(mpack, e .. s) .. e)
+    wshada(s .. table.concat(msgpack, e .. s) .. e)
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
-    local typ = select(2, msgpack.unpacker(s)())
+    local typ = mpack.unpack(s)
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == typ then
         found = found + 1
-        eq(select(2, msgpack.unpacker(mpack[found])()), v.timestamp)
+        eq(mpack.unpack(msgpack[found]), v.timestamp)
       end
     end
-    eq(#mpack, found)
+    eq(#msgpack, found)
   end)
 
   it('does not write NONE file', function()
     local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '--cmd', 'qall'}, true)
-    session:exit(0)
+                           '--headless', '--cmd', 'qall'}, true)
+    session:close()
     eq(nil, lfs.attributes('NONE'))
     eq(nil, lfs.attributes('NONE.tmp.a'))
   end)
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
-                          true)
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--headless'}, true)
     set_session(session)
     eq('', funcs.getreg('a'))
-    session:exit(0)
+    session:close()
     os.remove('NONE')
   end)
 
@@ -165,6 +170,7 @@ describe('ShaDa support code', function()
   end
 
   it('correctly uses shada-r option', function()
+    nvim_command('set shellslash')
     meths.set_var('__home', paths.test_source_path)
     nvim_command('let $HOME = __home')
     nvim_command('unlet __home')
@@ -173,21 +179,22 @@ describe('ShaDa support code', function()
     nvim_command('undo')
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
-    local readme_fname = paths.test_source_path .. '/README.md'
-    readme_fname = helpers.eval( 'resolve("' .. readme_fname .. '")' )
-    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
+    local readme_fname = funcs.resolve(paths.test_source_path) .. '/README.md'
+    eq({[7]=2, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
     nvim_command('set shada+=r~')
     nvim_command('wshada! ' .. shada_fname)
     eq({}, find_file(readme_fname))
     nvim_command('set shada-=r~')
     nvim_command('wshada! ' .. shada_fname)
-    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
-    nvim_command('set shada+=r' .. paths.test_source_path)
+    eq({[7]=2, [8]=2, [9]=1, [10]=4, [11]=1}, find_file(readme_fname))
+    nvim_command('set shada+=r' .. funcs.escape(
+      funcs.escape(paths.test_source_path, '$~'), ' "\\,'))
     nvim_command('wshada! ' .. shada_fname)
     eq({}, find_file(readme_fname))
   end)
 
   it('correctly ignores case with shada-r option', function()
+    nvim_command('set shellslash')
     local pwd = funcs.getcwd()
     local relfname = 'абв/test'
     local fname = pwd .. '/' .. relfname
@@ -198,7 +205,7 @@ describe('ShaDa support code', function()
     nvim_command('undo')
     nvim_command('set shada+=%')
     nvim_command('wshada! ' .. shada_fname)
-    eq({[7]=1, [8]=2, [9]=1, [10]=4, [11]=2}, find_file(fname))
+    eq({[7]=2, [8]=2, [9]=1, [10]=4, [11]=2}, find_file(fname))
     nvim_command('set shada+=r' .. pwd .. '/АБВ')
     nvim_command('wshada! ' .. shada_fname)
     eq({}, find_file(fname))
@@ -229,5 +236,19 @@ describe('ShaDa support code', function()
     nvim_command('set shada=')
     eq('', meths.get_option('viminfo'))
     eq('', meths.get_option('shada'))
+  end)
+
+  it('does not crash when ShaDa file directory is not writable', function()
+    if helpers.pending_win32(pending) then return end
+
+    funcs.mkdir(dirname, '', 0)
+    eq(0, funcs.filewritable(dirname))
+    reset{shadafile=dirshada, args={'--cmd', 'set shada='}}
+    meths.set_option('shada', '\'10')
+    eq('Vim(wshada):E886: System error while opening ShaDa file '
+       .. 'Xtest-functional-shada-shada.d/main.shada for reading to merge '
+       .. 'before writing it: permission denied',
+       exc_exec('wshada'))
+    meths.set_option('shada', '')
   end)
 end)

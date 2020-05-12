@@ -16,11 +16,8 @@
 " See the discussion at http://thread.gmane.org/gmane.editors.vim.devel/32151
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -36,11 +33,7 @@ syn sync lines=1000
 
 " Characters allowed in keywords
 " I don't know if 128-255 are allowed in ANS-FORHT
-if version >= 600
-	setlocal iskeyword=@,48-57,.,@-@,_,192-255
-else
-	set iskeyword=@,48-57,.,@-@,_,192-255
-endif
+setlocal iskeyword=@,48-57,.,@-@,_,192-255
 
 " Some special keywords
 syn keyword loutTodo contained TODO lout Lout LOUT
@@ -106,44 +99,33 @@ syn region loutBoldItalic matchgroup=loutBIBraces start='@BI\s*{' matchgroup=lou
 syn region loutHeadings matchgroup=loutHeads start='@\(\(Title\)\|\(Caption\)\)\s*{' matchgroup=loutHeads end='}' contains=ALLBUT,loutBraceError
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lout_syn_inits")
-	if version < 508
-		let did_lout_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	" The default methods for highlighting. Can be overrriden later.
-	HiLink loutTodo Todo
-	HiLink loutDefine Define
-	HiLink loutEOmlDef Define
-	HiLink loutFunction Function
-	HiLink loutBraceError Error
-	HiLink loutNULL Special
-	HiLink loutComment Comment
-	HiLink loutSpecial Special
-	HiLink loutSymbols Character
-	HiLink loutInclude Include
-	HiLink loutKeyword Keyword
-	HiLink loutTag Tag
-	HiLink loutMath Number
+" The default methods for highlighting. Can be overrriden later.
+hi def link loutTodo Todo
+hi def link loutDefine Define
+hi def link loutEOmlDef Define
+hi def link loutFunction Function
+hi def link loutBraceError Error
+hi def link loutNULL Special
+hi def link loutComment Comment
+hi def link loutSpecial Special
+hi def link loutSymbols Character
+hi def link loutInclude Include
+hi def link loutKeyword Keyword
+hi def link loutTag Tag
+hi def link loutMath Number
 
-	" HiLink Not really needed here, but I think it is more consistent.
-	HiLink loutMBraces loutMath
-	hi loutItalic term=italic cterm=italic gui=italic
-	HiLink loutIBraces loutItalic
-	hi loutBold term=bold cterm=bold gui=bold
-	HiLink loutBBraces loutBold
-	hi loutBoldItalic term=bold,italic cterm=bold,italic gui=bold,italic
-	HiLink loutBIBraces loutBoldItalic
-	hi loutHeadings term=bold cterm=bold guifg=indianred
-	HiLink loutHeads loutHeadings
+hi def link loutMBraces loutMath
+hi loutItalic term=italic cterm=italic gui=italic
+hi def link loutIBraces loutItalic
+hi loutBold term=bold cterm=bold gui=bold
+hi def link loutBBraces loutBold
+hi loutBoldItalic term=bold,italic cterm=bold,italic gui=bold,italic
+hi def link loutBIBraces loutBoldItalic
+hi loutHeadings term=bold cterm=bold guifg=indianred
+hi def link loutHeads loutHeadings
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "lout"
 

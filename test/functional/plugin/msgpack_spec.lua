@@ -1,13 +1,15 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
+local clear = helpers.clear
+local meths = helpers.meths
 local eq, nvim_eval, nvim_command, exc_exec =
   helpers.eq, helpers.eval, helpers.command, helpers.exc_exec
 local ok = helpers.ok
+local NIL = helpers.NIL
 
-local plugin_helpers = require('test.functional.plugin.helpers')
-local reset = plugin_helpers.reset
-
-describe('In autoload/msgpack.vim', function()
-  before_each(reset)
+describe('autoload/msgpack.vim', function()
+  before_each(function()
+    clear{args={'-u', 'NORC'}}
+  end)
 
   local sp = function(typ, val)
     return ('{"_TYPE": v:msgpack_types.%s, "_VAL": %s}'):format(typ, val)
@@ -409,6 +411,12 @@ describe('In autoload/msgpack.vim', function()
       string_eq('nan', '(1.0/0.0-1.0/0.0)')
       string_eq('nan', '-(1.0/0.0-1.0/0.0)')
     end)
+
+    it('works for special v: values like v:true', function()
+      string_eq('TRUE', 'v:true')
+      string_eq('FALSE', 'v:false')
+      string_eq('NIL', 'v:null')
+    end)
   end)
 
   describe('function msgpack#deepcopy', function()
@@ -523,6 +531,20 @@ describe('In autoload/msgpack.vim', function()
       eq(2.0, nvim_eval('flt2'))
       eq('abc', nvim_eval('bin2'))
     end)
+
+    it('works for special v: values like v:true', function()
+      meths.set_var('true', true)
+      meths.set_var('false', false)
+      meths.set_var('nil', NIL)
+
+      nvim_command('let true2 = msgpack#deepcopy(true)')
+      nvim_command('let false2 = msgpack#deepcopy(false)')
+      nvim_command('let nil2 = msgpack#deepcopy(nil)')
+
+      eq(true, meths.get_var('true'))
+      eq(false, meths.get_var('false'))
+      eq(NIL, meths.get_var('nil'))
+    end)
   end)
 
   describe('function msgpack#eval', function()
@@ -559,6 +581,8 @@ describe('In autoload/msgpack.vim', function()
       eval_eq('binary', {'', 'abc', '', '', 'def'}, '"\\nabc\\n\\n\\ndef"')
       eval_eq('binary', {''}, '""')
       eval_eq('binary', {'"'}, '"\\""')
+      eval_eq('binary', {'py3 print(sys.version_info)'},
+              '"py3 print(sys.version_info)"')
     end)
 
     it('correctly loads strings', function()
@@ -573,6 +597,8 @@ describe('In autoload/msgpack.vim', function()
       eval_eq('string', {'', 'abc', '', '', 'def'}, '="\\nabc\\n\\n\\ndef"')
       eval_eq('string', {''}, '=""')
       eval_eq('string', {'"'}, '="\\""')
+      eval_eq('string', {'py3 print(sys.version_info)'},
+              '="py3 print(sys.version_info)"')
     end)
 
     it('correctly loads ext values', function()
@@ -603,6 +629,9 @@ describe('In autoload/msgpack.vim', function()
               '+(-1)"\\nabc\\n\\n\\ndef"')
       eval_eq('ext', {-1, {''}}, '+(-1)""')
       eval_eq('ext', {-1, {'"'}}, '+(-1)"\\""')
+
+      eval_eq('ext', {42, {'py3 print(sys.version_info)'}},
+              '+(42)"py3 print(sys.version_info)"')
     end)
 
     it('correctly loads floats', function()
@@ -630,6 +659,8 @@ describe('In autoload/msgpack.vim', function()
 
       eval_eq('integer', ('a'):byte(), '\'a\'')
       eval_eq('integer', 0xAB, '\'«\'')
+      eval_eq('integer', 0, '\'\\0\'')
+      eval_eq('integer', 10246567, '\'\\10246567\'')
     end)
 
     it('correctly loads constants', function()
@@ -652,6 +683,13 @@ describe('In autoload/msgpack.vim', function()
       eval_eq('map', {{{_TYPE={}, _VAL={{1, 2}}}, {_TYPE={}, _VAL={{3, 4}}}},
                       {1, 2}},
               '{{1: 2}: {3: 4}, 1: 2}')
+
+      eval_eq('map', {{{_TYPE={}, _VAL={
+                          {{_TYPE={}, _VAL={'py3 print(sys.version_info)'}},
+                           2}}},
+                       {_TYPE={}, _VAL={{3, 4}}}},
+                      {1, 2}},
+              '{{"py3 print(sys.version_info)": 2}: {3: 4}, 1: 2}')
     end)
 
     it('correctly loads arrays', function()
@@ -660,6 +698,9 @@ describe('In autoload/msgpack.vim', function()
       eval_eq('array', {{_TYPE={}, _VAL=1}}, '[TRUE]')
       eval_eq('array', {{{_TYPE={}, _VAL={{1, 2}}}}, {_TYPE={}, _VAL={{3, 4}}}},
               '[[{1: 2}], {3: 4}]')
+
+      eval_eq('array', {{_TYPE={}, _VAL={'py3 print(sys.version_info)'}}},
+              '["py3 print(sys.version_info)"]')
     end)
 
     it('errors out when needed', function()
@@ -687,6 +728,11 @@ describe('In autoload/msgpack.vim', function()
          exc_exec('call msgpack#eval("0x", {})'))
       eq('name-unknown:Unknown name FOO: FOO',
          exc_exec('call msgpack#eval("FOO", {})'))
+
+      eq('name-unknown:Unknown name py3: py3 print(sys.version_info)',
+         exc_exec('call msgpack#eval("py3 print(sys.version_info)", {})'))
+      eq('name-unknown:Unknown name o: o',
+         exc_exec('call msgpack#eval("-info", {})'))
     end)
   end)
 end)

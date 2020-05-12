@@ -41,8 +41,24 @@ this autocmd might be useful:
      autocmd SourcePre */colors/blue_sky.vim set background=dark
 Replace "blue_sky" with the name of the colorscheme.
 
-In case you want to tweak a colorscheme after it was loaded, check out that
-ColorScheme autocmd event.
+In case you want to tweak a colorscheme after it was loaded, check out the
+ColorScheme autocommand event.
+
+To clean up just before loading another colorscheme, use the ColorSchemePre
+autocommand event.  For example:
+	let g:term_ansi_colors = ...
+	augroup MyColorscheme
+	  au!
+	  au ColorSchemePre * unlet g:term_ansi_colors
+	  au ColorSchemePre * au! MyColorscheme
+	augroup END
+
+To customize a colorscheme use another name, e.g.  "~/.vim/colors/mine.vim",
+and use `:runtime` to load the original colorscheme:
+	" load the "evening" colorscheme
+	runtime colors/evening.vim
+	" change the color of statements
+	hi Statement ctermfg=Blue guifg=Blue
 
 To see which highlight group is used where, find the help for
 "highlight-groups" and "group-name".
@@ -57,6 +73,7 @@ Search for "highlight_init".
 If you think you have a color scheme that is good enough to be used by others,
 please check the following items:
 
+- Source the $VIMRUNTIME/tools/check_colors.vim script to check for common mistakes.
 - Does it work in a color terminal as well as in the GUI?
 - Is "g:colors_name" set to a meaningful value?  In case of doubt you can do
   it this way:

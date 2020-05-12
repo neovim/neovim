@@ -4,10 +4,8 @@
 " Last change:	2003 May 11
 " Available on:	http://www.schau.com/pilrcvim/pilrc.vim
 
-" Remove any old syntax
-if version < 600
-	syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -119,30 +117,20 @@ syn region pilrcInclude start="public class" end="}"
 
 syn sync ccomment pilrcComment
 
-if version >= 508 || !exists("did_pilrc_syntax_inits")
-	if version < 508
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	let did_pilrc_syntax_inits = 1
+" The default methods for highlighting
+hi def link pilrcKeyword		Statement
+hi def link pilrcType		Type
+hi def link pilrcError		Error
+hi def link pilrcCountry		SpecialChar
+hi def link pilrcLanguage		SpecialChar
+hi def link pilrcString		SpecialChar
+hi def link pilrcNumber		Number
+hi def link pilrcComment		Comment
+hi def link pilrcConstant		Constant
+hi def link pilrcFunction		Function
+hi def link pilrcInclude		SpecialChar
+hi def link pilrcIdentifier		Number
 
-	" The default methods for highlighting
-	HiLink pilrcKeyword		Statement
-	HiLink pilrcType		Type
-	HiLink pilrcError		Error
-	HiLink pilrcCountry		SpecialChar
-	HiLink pilrcLanguage		SpecialChar
-	HiLink pilrcString		SpecialChar
-	HiLink pilrcNumber		Number
-	HiLink pilrcComment		Comment
-	HiLink pilrcConstant		Constant
-	HiLink pilrcFunction		Function
-	HiLink pilrcInclude		SpecialChar
-	HiLink pilrcIdentifier		Number
-
-	delcommand HiLink
-endif
 
 let b:current_syntax = "pilrc"

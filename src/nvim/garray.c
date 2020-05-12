@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file garray.c
 ///
 /// Functions for handling growing arrays.
@@ -8,7 +11,6 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/log.h"
-#include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/garray.h"
@@ -87,10 +89,18 @@ void ga_grow(garray_T *gap, int n)
   if (n < gap->ga_growsize) {
     n = gap->ga_growsize;
   }
+
+  // A linear growth is very inefficient when the array grows big.  This
+  // is a compromise between allocating memory that won't be used and too
+  // many copy operations. A factor of 1.5 seems reasonable.
+  if (n < gap->ga_len / 2) {
+    n = gap->ga_len / 2;
+  }
+
   int new_maxlen = gap->ga_len + n;
 
-  size_t new_size = (size_t)(gap->ga_itemsize * new_maxlen);
-  size_t old_size = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
+  size_t new_size = (size_t)gap->ga_itemsize * (size_t)new_maxlen;
+  size_t old_size = (size_t)gap->ga_itemsize * (size_t)gap->ga_maxlen;
 
   // reallocate and clear the new memory
   char *pp = xrealloc(gap->ga_data, new_size);
@@ -188,12 +198,23 @@ void ga_concat(garray_T *gap, const char_u *restrict s)
     return;
   }
 
-  int len = (int)strlen((char *) s);
+  ga_concat_len(gap, (const char *restrict) s, strlen((char *) s));
+}
+
+/// Concatenate a string to a growarray which contains characters
+///
+/// @param[out]  gap  Growarray to modify.
+/// @param[in]  s  String to concatenate.
+/// @param[in]  len  String length.
+void ga_concat_len(garray_T *const gap, const char *restrict s,
+                   const size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
   if (len) {
-    ga_grow(gap, len);
+    ga_grow(gap, (int) len);
     char *data = gap->ga_data;
-    memcpy(data + gap->ga_len, s, (size_t)len);
-    gap->ga_len += len;
+    memcpy(data + gap->ga_len, s, len);
+    gap->ga_len += (int) len;
   }
 }
 

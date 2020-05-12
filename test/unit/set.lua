@@ -26,6 +26,22 @@ function Set:new(items)
   return obj
 end
 
+function Set:copy()
+  local obj = {}
+  obj.nelem = self.nelem
+  obj.tbl = {}
+  obj.items = {}
+  for k, v in pairs(self.tbl) do
+    obj.tbl[k] = v
+  end
+  for k, v in pairs(self.items) do
+    obj.items[k] = v
+  end
+  setmetatable(obj, Set)
+  obj.__index = Set
+  return obj
+end
+
 -- adds the argument Set to this Set
 function Set:union(other)
   for e in other:iterator() do

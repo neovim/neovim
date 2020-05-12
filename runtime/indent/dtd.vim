@@ -1,10 +1,7 @@
 " Vim indent file
-" Language:	    DTD (Document Type Definition for XML)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-07-08
-
-let s:cpo_save = &cpo
-set cpo&vim
+" Language:    	    DTD (Document Type Definition for XML)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-07-08
 
 setlocal indentexpr=GetDTDIndent()
 setlocal indentkeys=!^F,o,O,>
@@ -13,6 +10,9 @@ setlocal nosmartindent
 if exists("*GetDTDIndent")
   finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 " TODO: Needs to be adjusted to stop at [, <, and ].
 let s:token_pattern = '^[^[:space:]]\+'
@@ -84,7 +84,7 @@ function GetDTDIndent()
 
   let [declaration, end] = s:lex1(line, col)
   if declaration == ""
-    return indent + &sw
+    return indent + shiftwidth()
   elseif declaration == '--'
     " We’re looking at a comment.  Now, simply determine if the comment is
     " terminated or not.  If it isn’t, let Vim take care of that using
@@ -100,7 +100,7 @@ function GetDTDIndent()
     " Check for element name.  If none exists, indent one level.
     let [name, end] = s:lex(line, end)
     if name == ""
-      return indent + &sw
+      return indent + shiftwidth()
     endif
 
     " Check for token following element name.  This can be a specification of
@@ -113,7 +113,7 @@ function GetDTDIndent()
       let n += 1
     endwhile
     if token == ""
-      return indent + &sw
+      return indent + shiftwidth()
     endif
 
     " Next comes the content model.  If the token we’ve found isn’t a
@@ -148,7 +148,7 @@ function GetDTDIndent()
           return indent
         endif
         " TODO: Should use s:lex here on getline(v:lnum) and check for >.
-        return getline(v:lnum) =~ '^\s*>' || count(values(seen), 0) == 0 ? indent : (indent + &sw)
+        return getline(v:lnum) =~ '^\s*>' || count(values(seen), 0) == 0 ? indent : (indent + shiftwidth())
       endif
 
       " If we’ve seen an addition or exception already and this is of the same
@@ -167,7 +167,7 @@ function GetDTDIndent()
     " Check for element name.  If none exists, indent one level.
     let [name, end] = s:lex(line, end)
     if name == ""
-      return indent + &sw
+      return indent + shiftwidth()
     endif
 
     " Check for any number of attributes.
@@ -180,7 +180,7 @@ function GetDTDIndent()
       let [name, end] = s:lex(line, end)
       if name == ""
         " TODO: Should use s:lex here on getline(v:lnum) and check for >.
-        return getline(v:lnum) =~ '^\s*>' ? indent : (indent + &sw)
+        return getline(v:lnum) =~ '^\s*>' ? indent : (indent + shiftwidth())
       elseif name == ">"
         return indent
       endif
@@ -194,14 +194,14 @@ function GetDTDIndent()
       " (CDATA|NMTOKEN|NMTOKENS|ID|IDREF|IDREFS|ENTITY|ENTITIES)?
       let [value, end] = s:lex(line, end, '^\%((\|[^[:space:]]\+\)')
       if value == ""
-        return indent + &sw * 2
+        return indent + shiftwidth() * 2
       elseif value == 'NOTATION'
         " If this is a enumerated value based on notations, read another token
         " for the actual value.  If it doesn’t exist, indent three levels.
         " TODO: If validating according to above, value must be equal to '('.
         let [value, end] = s:lex(line, end, '^\%((\|[^[:space:]]\+\)')
         if value == ""
-          return indent + &sw * 3
+          return indent + shiftwidth() * 3
         endif
       endif
 
@@ -216,13 +216,13 @@ function GetDTDIndent()
       " two levels.
       let [default, end] = s:lex(line, end, '^\%("\_[^"]*"\|#\(REQUIRED\|IMPLIED\|FIXED\)\)')
       if default == ""
-        return indent + &sw * 2
+        return indent + shiftwidth() * 2
       elseif default == '#FIXED'
         " We need to look for the fixed value.  If non exists, indent three
         " levels.
         let [default, end] = s:lex(line, end, '^"\_[^"]*"')
         if default == ""
-          return indent + &sw * 3
+          return indent + shiftwidth() * 3
         endif
       endif
     endwhile
@@ -233,11 +233,11 @@ function GetDTDIndent()
     " again, if none exists, indent one level.
     let [name, end] = s:lex(line, end)
     if name == ""
-      return indent + &sw
+      return indent + shiftwidth()
     elseif name == '%'
       let [name, end] = s:lex(line, end)
       if name == ""
-        return indent + &sw
+        return indent + shiftwidth()
       endif
     endif
 
@@ -256,27 +256,27 @@ function GetDTDIndent()
     " we’re now done with this entity.
     let [value, end] = s:lex(line, end)
     if value == ""
-      return indent + &sw
+      return indent + shiftwidth()
     elseif value == 'SYSTEM' || value == 'PUBLIC'
       let [quoted_string, end] = s:lex(line, end, '\%("[^"]\+"\|''[^'']\+''\)')
       if quoted_string == ""
-        return indent + &sw * 2
+        return indent + shiftwidth() * 2
       endif
 
       if value == 'PUBLIC'
         let [quoted_string, end] = s:lex(line, end, '\%("[^"]\+"\|''[^'']\+''\)')
         if quoted_string == ""
-          return indent + &sw * 2
+          return indent + shiftwidth() * 2
         endif
       endif
 
       let [ndata, end] = s:lex(line, end)
       if ndata == ""
-        return indent + &sw
+        return indent + shiftwidth()
       endif
 
       let [name, end] = s:lex(line, end)
-      return name == "" ? (indent + &sw * 2) : indent
+      return name == "" ? (indent + shiftwidth() * 2) : indent
     else
       return indent
     endif
@@ -284,24 +284,24 @@ function GetDTDIndent()
     " Check for notation name.  If none exists, indent one level.
     let [name, end] = s:lex(line, end)
     if name == ""
-      return indent + &sw
+      return indent + shiftwidth()
     endif
 
     " Now check for the external ID.  If none exists, indent one level.
     let [id, end] = s:lex(line, end)
     if id == ""
-      return indent + &sw
+      return indent + shiftwidth()
     elseif id == 'SYSTEM' || id == 'PUBLIC'
       let [quoted_string, end] = s:lex(line, end, '\%("[^"]\+"\|''[^'']\+''\)')
       if quoted_string == ""
-        return indent + &sw * 2
+        return indent + shiftwidth() * 2
       endif
 
       if id == 'PUBLIC'
         let [quoted_string, end] = s:lex(line, end, '\%("[^"]\+"\|''[^'']\+''\|>\)')
         if quoted_string == ""
           " TODO: Should use s:lex here on getline(v:lnum) and check for >.
-          return getline(v:lnum) =~ '^\s*>' ? indent : (indent + &sw * 2)
+          return getline(v:lnum) =~ '^\s*>' ? indent : (indent + shiftwidth() * 2)
         elseif quoted_string == '>'
           return indent
         endif

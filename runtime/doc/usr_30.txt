@@ -1,4 +1,4 @@
-*usr_30.txt*	For Vim version 7.4.  Last change: 2007 Nov 10
+*usr_30.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -640,4 +640,4 @@ For more details see |format-comments|.
 
 Next chapter: |usr_31.txt|  Exploiting the GUI
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

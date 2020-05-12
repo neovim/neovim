@@ -1,0 +1,111 @@
+*pi_health.txt*   Healthcheck framework
+
+Author: TJ DeVries <devries.timothyj@gmail.com>
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Introduction				*health*
+
+health.vim is a minimal framework to help with troubleshooting user
+configuration. Nvim ships with healthchecks for configuration, performance,
+python support, ruby support, clipboard support, and more.
+
+To run the healthchecks, use this command: >
+
+        :checkhealth
+<
+Plugin authors are encouraged to write new healthchecks. |health-dev|
+
+==============================================================================
+Commands				*health-commands*
+
+					*:checkhealth* *:CheckHealth*
+:checkhealth          Run all healthchecks.
+					*E5009*
+                      Nvim depends on |$VIMRUNTIME| and 'runtimepath' to find
+                      the standard "runtime files" for syntax highlighting,
+                      filetype-specific behavior, and standard plugins
+                      (including :checkhealth).  If the runtime files cannot
+                      be found then those features will not work.
+
+:checkhealth {plugins}
+                      Run healthcheck(s) for one or more plugins. E.g. to run
+                      only the standard Nvim healthcheck: >
+                        :checkhealth nvim
+<                      To run the healthchecks for the "foo" and "bar" plugins
+                      (assuming these plugins are on your 'runtimepath' and
+                      they have implemented health#foo#check() and
+                      health#bar#check(), respectively): >
+                        :checkhealth foo bar
+<
+==============================================================================
+Functions				*health-functions*
+
+health.vim functions are for creating new healthchecks. They mostly just do
+some layout and formatting, to give users a consistent presentation.
+
+health#report_start({name})				*health#report_start*
+	Starts a new report. Most plugins should call this only once, but if
+        you want different sections to appear in your report, call this once
+        per section.
+
+health#report_info({msg})				*health#report_info*
+	Reports an informational message.
+
+health#report_ok({msg})					*health#report_ok*
+	Reports a "success" message.
+
+health#report_warn({msg}, [{advice}])			*health#report_warn*
+        Reports a warning. {advice} is an optional List of suggestions.
+
+health#report_error({msg}, [{advice}])			*health#report_error*
+        Reports an error. {advice} is an optional List of suggestions.
+
+health#{plugin}#check()					*health.user_checker*
+        Healthcheck function for {plugin}. Called by |:checkhealth|
+        automatically. Example: >
+
+                function! health#my_plug#check() abort
+                  silent call s:check_environment_vars()
+                  silent call s:check_python_configuration()
+                endfunction
+<
+	All output will be captured from the healthcheck. Use the
+        health#report_* functions so that your healthcheck has a format
+        consistent with the standard healthchecks.
+
+==============================================================================
+Create a healthcheck			*health-dev*
+
+Healthchecks are functions that check the user environment, configuration,
+etc. Nvim has built-in healthchecks in $VIMRUNTIME/autoload/health/.
+
+To add a new healthcheck for your own plugin, simply define a
+health#{plugin}#check() function in autoload/health/{plugin}.vim.
+|:checkhealth| automatically finds and invokes such functions.
+
+If your plugin is named "foo", then its healthcheck function must be >
+        health#foo#check()
+
+defined in this file on 'runtimepath': >
+        autoload/health/foo.vim
+
+Copy this sample code into autoload/health/foo.vim and replace "foo" with your
+plugin name: >
+        function! health#foo#check() abort
+          call health#report_start('sanity checks')
+          " perform arbitrary checks
+          " ...
+
+          if looks_good
+            call health#report_ok('found required dependencies')
+          else
+            call health#report_error('cannot find foo', 
+              \ ['npm install --save foo'])
+          endif
+        endfunction
+
+==============================================================================
+
+vim:tw=78:ts=8:ft=help:fdm=marker

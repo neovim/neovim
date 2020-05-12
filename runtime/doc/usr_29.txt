@@ -1,4 +1,4 @@
-*usr_29.txt*	For Vim version 7.4.  Last change: 2008 Jun 28
+*usr_29.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -255,7 +255,8 @@ function.
 
 RELATED ITEMS
 
-You can set 'ignorecase' to make case in tag names be ignored.
+To make case in tag names be ignored, you can set 'ignorecase' while leaving
+'tagcase' as "followic", or set 'tagcase' to "ignore".
 
 The 'tagbsearch' option tells if the tags file is sorted or not.  The default
 is to assume a sorted tags file, which makes a tags search a lot faster, but
@@ -607,4 +608,4 @@ for the identifier.  Example (cursor on "idx"):
 
 Next chapter: |usr_30.txt|  Editing programs
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

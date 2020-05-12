@@ -299,7 +299,7 @@ msgstr "E100: No hi ha cap altre buffer en mode diff"
 
 #: ../diff.c:2112
 msgid "E101: More than two buffers in diff mode, don't know which one to use"
-msgstr "E101: Hi ha més de 2 buffers en mode diff, no se sap quin usar"
+msgstr "E101: Hi ha més de 2 buffers en mode diff"
 
 #: ../diff.c:2141
 #, c-format
@@ -1095,7 +1095,7 @@ msgstr "%<PRId64> línies filtrades"
 
 #: ../ex_cmds.c:1194
 msgid "E135: *Filter* Autocommands must not change current buffer"
-msgstr "E135: Les auto-ordres *Filter* no poden canviar el buffer actual"
+msgstr "E135: Les ordres automàtiques *Filter* han de no modificar el buffer"
 
 #: ../ex_cmds.c:1244
 msgid "[No write since last change]\n"
@@ -1582,7 +1582,7 @@ msgstr "E605: No s'ha interceptat l'excepció: %s"
 
 #: ../ex_docmd.c:1085
 msgid "End of sourced file"
-msgstr "Final del fitxer interpretat"
+msgstr "Final de l'script"
 
 #: ../ex_docmd.c:1086
 msgid "End of function"
@@ -1881,7 +1881,7 @@ msgstr "%s s'ha descartat"
 
 #: ../ex_eval.c:708
 msgid "Exception"
-msgstr "Exepció"
+msgstr "Excepció"
 
 #: ../ex_eval.c:713
 msgid "Error and interrupt"
@@ -2162,7 +2162,7 @@ msgstr "[ERRORS DE LECTURA]"
 
 #: ../fileio.c:2104
 msgid "Can't find temp file for conversion"
-msgstr "No s'ha trobat el fitxer temporal per la conversió"
+msgstr "No s'ha trobat el fitxer temporal per a fer la conversió"
 
 #: ../fileio.c:2110
 msgid "Conversion with 'charconvert' failed"
@@ -2298,7 +2298,7 @@ msgstr "E205: patchmode: no s'ha pogut desar el fitxer original"
 
 #: ../fileio.c:3602
 msgid "E206: patchmode: can't touch empty original file"
-msgstr "E206: patchmode: no s'ha pogut tocar el fitxer original buit"
+msgstr "E206: patchmode: no s'ha pogut fer un toc al fitxer original buit"
 
 #: ../fileio.c:3616
 msgid "E207: Can't delete backup file"
@@ -2308,9 +2308,7 @@ msgstr "E207: No s'ha pogut eliminar la còpia de seguretat"
 msgid ""
 "\n"
 "WARNING: Original file may be lost or damaged\n"
-msgstr ""
-"\n"
-"ATENCIÓ: El fitxer original es pot haver fet malbé\n"
+msgstr "\nATENCIÓ: El fitxer original es pot haver perdut o fet malbé\n"
 
 #: ../fileio.c:3675
 msgid "don't quit the editor until the file is successfully written!"
@@ -2460,7 +2458,7 @@ msgstr ""
 #: ../fileio.c:5065
 #, c-format
 msgid "E462: Could not prepare for reloading \"%s\""
-msgstr "E462: No s'han pogut fer les preparacions per rellegir \"%s\""
+msgstr "E462: No s'han pogut fer les preparacions per a rellegir \"%s\""
 
 #: ../fileio.c:5078
 #, c-format
@@ -2536,7 +2534,7 @@ msgstr "Executant %s"
 #: ../fileio.c:7211
 #, c-format
 msgid "autocommand %s"
-msgstr "auto-ordre %s"
+msgstr "ordre automàtica %s"
 
 #: ../fileio.c:7795
 msgid "E219: Missing {."
@@ -2715,11 +2713,6 @@ msgstr "E49: La distància de desplaçament no és vàlida"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3048,7 +3041,7 @@ msgstr "No hi ha text per imprimir"
 #: ../hardcopy.c:668
 #, c-format
 msgid "Printing page %d (%d%%)"
-msgstr "S'està imprimint la pàgina %d (%d%%)"
+msgstr "Imprimint la pàgina %d (%d%%)"
 
 #: ../hardcopy.c:680
 #, c-format
@@ -3062,7 +3055,7 @@ msgstr "S'ha imprès: %s"
 
 #: ../hardcopy.c:740
 msgid "Printing aborted"
-msgstr "S'ha avortat l'impressió"
+msgstr "S'ha avortat la impressió"
 
 #: ../hardcopy.c:1365
 msgid "E455: Error writing to PostScript output file"
@@ -3319,7 +3312,7 @@ msgstr "E609: Error de cscope: %s"
 
 #: ../if_cscope.c:2053
 msgid "All cscope databases reset"
-msgstr "S'han reiniciat totes les bases de dades cscope"
+msgstr "S'han restablert totes les bases de dades cscope"
 
 #: ../if_cscope.c:2123
 msgid "no cscope connections\n"
@@ -3416,7 +3409,7 @@ msgstr "-q [ftxerrors]  edita el fitxer on hi ha el primer error"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -3522,7 +3515,7 @@ msgstr "-n\t\t\tNo usa fitxers d'intercanvi, només memòria"
 
 #: ../main.c:2218
 msgid "-r\t\t\tList swap files and exit"
-msgstr "-r\t\t\tLlista els fitxers d'intercanvi i surt"
+msgstr "-r\t\t\tLlistat dels fitxers d'intercanvi"
 
 #: ../main.c:2219
 msgid "-r (with file name)\tRecover crashed session"
@@ -3554,7 +3547,7 @@ msgstr "-u <vimrc>\t\tUsa <vimrc> en lloc de qualsevol altre .vimrc"
 
 #: ../main.c:2226
 msgid "--noplugin\t\tDon't load plugin scripts"
-msgstr "--noplugin\t\tNo carrega cap plugin"
+msgstr "--noplugin\t\tNo carrega plugins"
 
 #: ../main.c:2227
 msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
@@ -3566,7 +3559,7 @@ msgstr "-o[N]\t\tObre N finestres (per omissió: una per fitxer)"
 
 #: ../main.c:2229
 msgid "-O[N]\t\tLike -o but split vertically"
-msgstr "-O[N]\t\tCom -o però amb divisions verticals"
+msgstr "-O[N]\t\tCom -o però amb divisió vertical"
 
 #: ../main.c:2230
 msgid "+\t\t\tStart at end of file"
@@ -3744,7 +3737,7 @@ msgstr "E305: No s'ha trobat el fitxer d'intercanvi de %s"
 
 #: ../memline.c:839
 msgid "Enter number of swap file to use (0 to quit): "
-msgstr "Entreu el número del fitxer d'intercanvi a utilitzar (0 per sortir): "
+msgstr "Entreu el número del fitxer .swp a utilitzar (0 per a sortir): "
 
 #: ../memline.c:879
 #, c-format
@@ -3811,6 +3804,30 @@ msgid "E308: Warning: Original file may have been changed"
 msgstr "E308: Atenció: El fitxer original pot haver canviat"
 
 #: ../memline.c:1061
+#, c-format
+msgid "Swap file is encrypted: \"%s\""
+msgstr "El fitxer d'intercanvi està xifrat: \"%s\""
+
+msgid ""
+"\n"
+"If you entered a new crypt key but did not write the text file,"
+msgstr "\nSi vau entrar una nova clau de xifrat però no vau desar el fitxer,"
+
+msgid ""
+"\n"
+"enter the new crypt key."
+msgstr "\nentreu la nova clau."
+
+msgid ""
+"\n"
+"If you wrote the text file after changing the crypt key press enter"
+msgstr "\nSi vau desar el fitxer després de canviar la clau, premeu Entrar per a"
+
+msgid ""
+"\n"
+"to use the same key for text file and swap file"
+msgstr "\nusar la mateixa clau per al fitxer de text i per al fitxer d'intercanvi."
+
 #, c-format
 msgid "E309: Unable to read block 1 from %s"
 msgstr "E309: No s'ha pogut llegir el bloc 1 de %s"
@@ -3936,7 +3953,7 @@ msgstr "         [del Vim versió 3.0]"
 
 #: ../memline.c:1550
 msgid "         [does not look like a Vim swap file]"
-msgstr "         [no sembla un fitxer d'intercanvi de Vim]"
+msgstr "         [no sembla un fitxer .swp de Vim]"
 
 #: ../memline.c:1552
 msgid "         file name: "
@@ -4008,7 +4025,7 @@ msgstr "         [no es pot obrir]"
 
 #: ../memline.c:1698
 msgid "E313: Cannot preserve, there is no swap file"
-msgstr "E313: No s'ha pogut preservar, no hi ha fitxer d'intercanvi"
+msgstr "E313: No s'ha pogut preservar, no existeix cap fitxer d'intercanvi"
 
 #: ../memline.c:1747
 msgid "File preserved"
@@ -4030,7 +4047,7 @@ msgstr "E316: ml_get: no s'ha trobat la línia %<PRId64>"
 
 #: ../memline.c:2236
 msgid "E317: pointer block id wrong 3"
-msgstr "E317: Punter a la id d'un bloc incorrecte 3"
+msgstr "E317: punter a id de bloc incorrecte 3"
 
 #: ../memline.c:2311
 msgid "stack_idx should be 0"
@@ -4042,7 +4059,7 @@ msgstr "E318: S'han actualitzat massa blocs?"
 
 #: ../memline.c:2511
 msgid "E317: pointer block id wrong 4"
-msgstr "E317: Punter a la id d'un bloc incorrecte 4"
+msgstr "E317: Punter a id de bloc incorrecte 4"
 
 #: ../memline.c:2536
 msgid "deleted block 1?"
@@ -4092,9 +4109,7 @@ msgstr "E325: ATENCIÓ"
 msgid ""
 "\n"
 "Found a swap file by the name \""
-msgstr ""
-"\n"
-"S'ha trobat un fitxer d'intercanvi de nom \""
+msgstr "\nS'ha trobat un fitxer d'intercanvi amb nom \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4139,7 +4154,7 @@ msgid ""
 "    to recover the changes (see \":help recovery\").\n"
 msgstr ""
 "\"\n"
-"    per recuperar els canvis (vegeu \":help recovery\").\n"
+"    per a recuperar els canvis (vegeu \":help recovery\").\n"
 
 #: ../memline.c:3250
 msgid "    If you did this already, delete the swap file \""
@@ -4151,7 +4166,7 @@ msgid ""
 "    to avoid this message.\n"
 msgstr ""
 "\"\n"
-"    per evitar aquest missatge.\n"
+"    per a evitar aquest missatge.\n"
 
 #: ../memline.c:3450 ../memline.c:3452
 msgid "Swap file \""
@@ -4177,7 +4192,7 @@ msgid ""
 "&Quit\n"
 "&Abort"
 msgstr ""
-"&Obrir només-lectura\n"
+"&Obrir amb només lectura\n"
 "&Editar igualment\n"
 "&Recuperar\n"
 "&Sortir\n"
@@ -4292,10 +4307,6 @@ msgstr "línia %4ld:"
 #, c-format
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: El nom de registre no és vàlid: '%s'"
-
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Traducció dels missatges: Ernest Adrogué <eadrogue@gmx.net>"
 
 #: ../message.c:986
 msgid "Interrupt: "
@@ -4849,7 +4860,7 @@ msgstr "E377: %%%c no vàlid a la cadena de format"
 #. nothing found
 #: ../quickfix.c:477
 msgid "E378: 'errorformat' contains no pattern"
-msgstr "E378: L'opció 'errorformat' no conté cap patró"
+msgstr "E378: 'errorformat' no conté cap patró"
 
 #: ../quickfix.c:695
 msgid "E379: Missing or empty directory name"
@@ -5243,7 +5254,7 @@ msgstr "S'han trobat tots els fitxers inclosos"
 
 #: ../search.c:4519
 msgid "No included files"
-msgstr "No hi han fitxers inclosos"
+msgstr "No hi ha fitxers inclosos"
 
 #: ../search.c:4527
 msgid "E388: Couldn't find definition"
@@ -5338,8 +5349,8 @@ msgstr "Atenció: la regió %s no està suportada"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Llegint el fitxer d'afixos %s ..."
+msgid "Reading affix file %s..."
+msgstr "Llegint el fitxer d'afixos %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5537,8 +5548,8 @@ msgstr "%d paraula/es ignorada/es amb caràcters no-ASCII a %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Llegint el fitxer de paraules %s ..."
+msgid "Reading word file %s..."
+msgstr "Llegint el fitxer de paraules %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5608,13 +5619,13 @@ msgstr "Nombre total de paraules: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Escrivint el fitxer de suggeriments %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Escrivint el fitxer de suggeriments %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
-msgstr "Ús estimat de memòria en funcionament: %d octets"
+msgstr "Ús estimat de memòria durant l'execució: %d octets"
 
 #: ../spell.c:7820
 msgid "E751: Output file name must not have region name"
@@ -5631,12 +5642,12 @@ msgstr "E755: Regió no vàlida a %s"
 
 #: ../spell.c:7907
 msgid "Warning: both compounding and NOBREAK specified"
-msgstr "Atenció: heu especificat composició i NOBREAK alhora"
+msgstr "Atenció: s'ha especificat composició i NOBREAK alhora"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Escrivint el fitxer d'ortografia %s ..."
+msgid "Writing spell file %s..."
+msgstr "Escrivint el fitxer d'ortografia %s..."
 
 #: ../spell.c:7925
 msgid "Done!"
@@ -6382,7 +6393,7 @@ msgstr "      alternativa per a $VIM: \""
 # 29 caràcters fins el ":" (inclòs)
 #: ../version.c:705
 msgid " f-b for $VIMRUNTIME: \""
-msgstr "       alt per a $VIMRUNTIME: \""
+msgstr "   altern. per a $VIMRUNTIME: \""
 
 #: ../version.c:709
 msgid "Compilation: "
@@ -6410,7 +6421,7 @@ msgstr "per Bram Moolenaar et al."
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "Vim és un programa obert i lliure distribució"
+msgstr "Vim és un programa obert i de lliure distribució"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"

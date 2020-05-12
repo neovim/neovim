@@ -9,11 +9,8 @@
 "  - Pascal scripting syntax is not recognized.
 "  - Embedded double quotes confuse string matches. e.g. "asfd""asfa"
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -105,44 +102,34 @@ syn keyword issTasksFlags checkedonce dontinheritcheck exclusive restart uncheck
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_iss_syntax_inits")
-  if version < 508
-    let did_iss_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-   " The default methods for highlighting.  Can be overridden later
-   HiLink issSection	Special
-   HiLink issComment	Comment
-   HiLink issDirective	Type
-   HiLink issParam	Type
-   HiLink issFolder	Special
-   HiLink issString	String
-   HiLink issURL	Include
-   HiLink issPreProc	PreProc 
+" The default methods for highlighting.  Can be overridden later
+hi def link issSection	Special
+hi def link issComment	Comment
+hi def link issDirective	Type
+hi def link issParam	Type
+hi def link issFolder	Special
+hi def link issString	String
+hi def link issURL	Include
+hi def link issPreProc	PreProc 
 
-   HiLink issDirsFlags		Keyword
-   HiLink issFilesCopyMode	Keyword
-   HiLink issFilesAttribs	Keyword
-   HiLink issFilesPermissions	Keyword
-   HiLink issFilesFlags		Keyword
-   HiLink issIconsFlags		Keyword
-   HiLink issINIFlags		Keyword
-   HiLink issRegRootKey		Keyword
-   HiLink issRegValueType	Keyword
-   HiLink issRegFlags		Keyword
-   HiLink issRunFlags		Keyword
-   HiLink issTypesFlags		Keyword
-   HiLink issComponentsFlags	Keyword
-   HiLink issInstallDeleteType	Keyword
-   HiLink issTasksFlags		Keyword
+hi def link issDirsFlags		Keyword
+hi def link issFilesCopyMode	Keyword
+hi def link issFilesAttribs	Keyword
+hi def link issFilesPermissions	Keyword
+hi def link issFilesFlags		Keyword
+hi def link issIconsFlags		Keyword
+hi def link issINIFlags		Keyword
+hi def link issRegRootKey		Keyword
+hi def link issRegValueType	Keyword
+hi def link issRegFlags		Keyword
+hi def link issRunFlags		Keyword
+hi def link issTypesFlags		Keyword
+hi def link issComponentsFlags	Keyword
+hi def link issInstallDeleteType	Keyword
+hi def link issTasksFlags		Keyword
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "iss"
 

@@ -4,7 +4,7 @@
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" ----------------------------------------------------------------------------
+" Last Change:		2019 Jan 06
 
 if exists("current_compiler")
   finish
@@ -21,21 +21,21 @@ set cpo-=C
 " default settings runs script normally
 " add '-c' switch to run syntax check only:
 "
-"   CompilerSet makeprg=ruby\ -wc\ $*
+"   CompilerSet makeprg=ruby\ -c
 "
 " or add '-c' at :make command line:
 "
 "   :make -c %<CR>
 "
-CompilerSet makeprg=ruby\ -w\ $*
+CompilerSet makeprg=ruby
 
 CompilerSet errorformat=
     \%+E%f:%l:\ parse\ error,
     \%W%f:%l:\ warning:\ %m,
     \%E%f:%l:in\ %*[^:]:\ %m,
     \%E%f:%l:\ %m,
-    \%-C%\tfrom\ %f:%l:in\ %.%#,
-    \%-Z%\tfrom\ %f:%l,
+    \%-C%\t%\\d%#:%#\ %#from\ %f:%l:in\ %.%#,
+    \%-Z%\t%\\d%#:%#\ %#from\ %f:%l,
     \%-Z%p^,
     \%-G%.%#
 

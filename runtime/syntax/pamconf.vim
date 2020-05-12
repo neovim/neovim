@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         pam(8) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-08-03
+" Language:             pam(8) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-08-03
 
 
 if exists("b:current_syntax")

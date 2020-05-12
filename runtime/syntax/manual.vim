@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2008 Jan 26
+" Last Change:	2016 Feb 01
 
 " This file is used for ":syntax manual".
 " It installs the Syntax autocommands, but no the FileType autocommands.
@@ -16,10 +16,11 @@ endif
 
 let syntax_manual = 1
 
-" Remove the connection between FileType and Syntax autocommands.
-if exists('#syntaxset')
-  au! syntaxset FileType
-endif
+" Overrule the connection between FileType and Syntax autocommands.  This sets
+" the syntax when the file type is detected, without changing the value.
+augroup syntaxset
+  au! FileType *	exe "set syntax=" . &syntax
+augroup END
 
 " If the GUI is already running, may still need to install the FileType menu.
 " Don't do it when the 'M' flag is included in 'guioptions'.

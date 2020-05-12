@@ -1,9 +1,9 @@
 -- Test for jumping to a tag with 'hidden' set, with symbolic link in path of tag.
 -- This only works for Unix, because of the symbolic link.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('jump to a tag with hidden set', function()
   setup(clear)
@@ -19,30 +19,41 @@ describe('jump to a tag with hidden set', function()
 
       SECTION_OFF]])
 
-    execute('w! Xxx')
-    execute('set hidden')
+    feed_command('w! Xxx')
+    feed_command('set hidden')
 
     -- Create a link from test25.dir to the current directory.
-    execute('!rm -f test25.dir')
-    execute('!ln -s . test25.dir')
+    if helpers.iswin() then
+      feed_command('!rd /q/s test25.dir')
+      feed_command('!mklink /j test25.dir .')
+    else
+      feed_command('!rm -f test25.dir')
+      feed_command('!ln -s . test25.dir')
+    end
 
     -- Create tags.text, with the current directory name inserted.
-    execute('/tags line')
-    execute('r !pwd')
+    feed_command('/tags line')
+    feed_command('r !' .. (helpers.iswin() and 'cd' or 'pwd'))
     feed('d$/test<cr>')
     feed('hP:.w! tags.test<cr>')
 
     -- Try jumping to a tag in the current file, but with a path that contains a
     -- symbolic link.  When wrong, this will give the ATTENTION message.  The next
     -- space will then be eaten by hit-return, instead of moving the cursor to 'd'.
-    execute('set tags=tags.test')
+    feed_command('set tags=tags.test')
     feed('G<C-]> x:yank a<cr>')
-    execute('!rm -f Xxx test25.dir tags.test')
+    feed_command("call delete('tags.test')")
+    feed_command("call delete('Xxx')")
+    if helpers.iswin() then
+      feed_command('!rd /q test25.dir')
+    else
+      feed_command('!rm -f test25.dir')
+    end
 
     -- Put @a and remove empty line
-    execute('%d')
-    execute('0put a')
-    execute('$d')
+    feed_command('%d')
+    feed_command('0put a')
+    feed_command('$d')
 
     -- Assert buffer contents.
     expect("#efine  SECTION_OFF  3")

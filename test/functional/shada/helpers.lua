@@ -1,43 +1,39 @@
-local helpers = require('test.functional.helpers')
-local spawn, set_session, meths, nvim_prog =
-  helpers.spawn, helpers.set_session, helpers.meths, helpers.nvim_prog
-local write_file, merge_args = helpers.write_file, helpers.merge_args
+local helpers = require('test.functional.helpers')(nil)
+local meths = helpers.meths
+local write_file = helpers.write_file
+local concat_tables = helpers.concat_tables
 
-local msgpack = require('MessagePack')
+local mpack = require('mpack')
 
-local tmpname = os.tmpname()
-local additional_cmd = ''
+local tmpname = helpers.tmpname()
 
-local function nvim_argv()
-  local argv = {nvim_prog, '-u', 'NONE', '-i', tmpname, '-N',
-                '--cmd', 'set shortmess+=I background=light noswapfile',
-                '--cmd', additional_cmd,
-                '--embed'}
-  if helpers.prepend_argv then
-    return merge_args(helpers.prepend_argv, argv)
-  else
-    return argv
+--   o={
+--     args=…,
+--     args_rm=…,
+--     shadafile=…,
+--   }
+local function reset(o)
+  assert(o == nil or type(o) == 'table' or type(o) == 'string')
+  o = o and o or {}
+  local args_rm = o.args_rm or {}
+  table.insert(args_rm, '-i')
+  local args={
+    '-i', o.shadafile or tmpname,
+  }
+  if type(o) == 'string' then
+    args = concat_tables(args, {'--cmd', o})
+  elseif o.args then
+    args = concat_tables(args, o.args)
   end
-end
-
-local session = nil
-
-local reset = function()
-  if session then
-    session:exit(0)
-  end
-  session = spawn(nvim_argv())
-  set_session(session)
+  helpers.clear{
+    args_rm=args_rm,
+    args=args,
+  }
   meths.set_var('tmpname', tmpname)
-end
-
-local set_additional_cmd = function(s)
-  additional_cmd = s
 end
 
 local clear = function()
   os.remove(tmpname)
-  set_additional_cmd('')
 end
 
 local get_shada_rw = function(fname)
@@ -66,13 +62,13 @@ local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
   local mstring = fd:read('*a')
   fd:close()
-  local unpacker = msgpack.unpacker(mstring)
+  local unpack = mpack.Unpacker()
   local ret = {}
-  local cur
+  local cur, val
   local i = 0
-  while true do
-    local off, val = unpacker()
-    if not off then break end
+  local off = 1
+  while off <= #mstring do
+    val, off = unpack(mstring, off)
     if i % 4 == 0 then
       cur = {}
       ret[#ret + 1] = cur
@@ -85,7 +81,6 @@ end
 
 return {
   reset=reset,
-  set_additional_cmd=set_additional_cmd,
   clear=clear,
   get_shada_rw=get_shada_rw,
   read_shada_file=read_shada_file,

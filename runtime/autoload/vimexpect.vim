@@ -140,7 +140,7 @@ endfunction
 
 
 " Job handler that simply forwards lines to the parser.
-function! s:JobOutput(id, lines)
+function! s:JobOutput(_id, lines, _event) dict
   call self._parser.feed(a:lines)
 endfunction
 

@@ -3,10 +3,9 @@
 " Maintainer: Tilghman Lesher (Corydon76)
 " Last Change:	2006 Mar 21
 " version 0.2
-"
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -33,28 +32,18 @@ syn match       mailboxEmail            ",\zs[^@=,]*@[[:alnum:]\-\.]\+\.[[:alpha
 syn match       comma                   "[,|]" contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-:if version >= 508 || !exists("did_conf_syntax_inits")
-  if version < 508
-    let did_conf_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink        asteriskvmComment Comment
-  HiLink        asteriskvmContext         Identifier
-  HiLink        asteriskvmZone            Type
-  HiLink        zoneName                String
-  HiLink        zoneDef                 String
-  HiLink        asteriskvmSetting         Type
-  HiLink        asteriskvmSettingBool     Type
+hi def link        asteriskvmComment Comment
+hi def link        asteriskvmContext         Identifier
+hi def link        asteriskvmZone            Type
+hi def link        zoneName                String
+hi def link        zoneDef                 String
+hi def link        asteriskvmSetting         Type
+hi def link        asteriskvmSettingBool     Type
 
-  HiLink        asteriskvmMailbox         Statement
-  HiLink        mailboxEmail            String
- delcommand HiLink
-endif
+hi def link        asteriskvmMailbox         Statement
+hi def link        mailboxEmail            String
 
 let b:current_syntax = "asteriskvm"
 

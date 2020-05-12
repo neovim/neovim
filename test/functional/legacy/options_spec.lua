@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local command, clear = helpers.command, helpers.clear
 local source, expect = helpers.source, helpers.expect
 
@@ -21,7 +21,7 @@ describe('set', function()
       $put =&path]])
 
     expect([[
-      
+
       foo,,bar]])
   end)
 end)

@@ -8,21 +8,14 @@
 " syntax files.
 
 " Part 1:  Syntax definition
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 syn case ignore
 
-if version < 600
-  set lisp
-else
-  setlocal lisp
-endif
+setlocal lisp
 
 " Highlight special characters (those that have backslashes) differently
 syn match	dylanSpecial		display contained "\\\(x\x\+\|\o\{1,3}\|.\|$\)"
@@ -67,42 +60,32 @@ syn region	dylanPrecondit		start="^\s*#\s*\(if\>\|else\>\|endif\>\)" skip="\\$" 
 syn region	dylanHeader	start="^[Mm]odule:" end="^$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dylan_syntax_inits")
-  if version < 508
-    let did_dylan_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink dylanBlock		PreProc
-  HiLink dylanBoolean		Boolean
-  HiLink dylanCharacter		Character
-  HiLink dylanClass		Structure
-  HiLink dylanClassMods		StorageClass
-  HiLink dylanComment		Comment
-  HiLink dylanConditional	Conditional
-  HiLink dylanConstant		Constant
-  HiLink dylanException		Exception
-  HiLink dylanHeader		Macro
-  HiLink dylanImport		Include
-  HiLink dylanLabel		Label
-  HiLink dylanMiscMods		StorageClass
-  HiLink dylanNumber		Number
-  HiLink dylanOther		Keyword
-  HiLink dylanOperator		Operator
-  HiLink dylanParamDefs		Keyword
-  HiLink dylanPrecondit		PreCondit
-  HiLink dylanRepeat		Repeat
-  HiLink dylanSimpleDefs	Keyword
-  HiLink dylanStatement		Macro
-  HiLink dylanString		String
-  HiLink dylanVariable		Identifier
+hi def link dylanBlock		PreProc
+hi def link dylanBoolean		Boolean
+hi def link dylanCharacter		Character
+hi def link dylanClass		Structure
+hi def link dylanClassMods		StorageClass
+hi def link dylanComment		Comment
+hi def link dylanConditional	Conditional
+hi def link dylanConstant		Constant
+hi def link dylanException		Exception
+hi def link dylanHeader		Macro
+hi def link dylanImport		Include
+hi def link dylanLabel		Label
+hi def link dylanMiscMods		StorageClass
+hi def link dylanNumber		Number
+hi def link dylanOther		Keyword
+hi def link dylanOperator		Operator
+hi def link dylanParamDefs		Keyword
+hi def link dylanPrecondit		PreCondit
+hi def link dylanRepeat		Repeat
+hi def link dylanSimpleDefs	Keyword
+hi def link dylanStatement		Macro
+hi def link dylanString		String
+hi def link dylanVariable		Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "dylan"
 

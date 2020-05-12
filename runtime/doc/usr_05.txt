@@ -1,4 +1,4 @@
-*usr_05.txt*	For Vim version 7.4.  Last change: 2012 Nov 20
+*usr_05.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -11,11 +11,13 @@ Vim's capabilities.  Or define your own macros.
 
 |05.1|	The vimrc file
 |05.2|	The example vimrc file explained
-|05.3|	Simple mappings
-|05.4|	Adding a plugin
-|05.5|	Adding a help file
-|05.6|	The option window
-|05.7|	Often used options
+|05.3|	The defaults.vim file explained
+|05.4|	Simple mappings
+|05.5|	Adding a package
+|05.6|	Adding a plugin
+|05.7|	Adding a help file
+|05.8|	The option window
+|05.9|	Often used options
 
      Next chapter: |usr_06.txt|  Using syntax highlighting
  Previous chapter: |usr_04.txt|  Making small changes
@@ -57,10 +59,9 @@ to write a Vim script file: |usr_41.txt|.
 ==============================================================================
 *05.2*	The example vimrc file explained		*vimrc_example.vim*
 
-In the first chapter was explained how the example vimrc file can be used.
-The file can be found here:
+In the first chapter was explained how to create a vimrc file. >
 
-	$VIMRUNTIME/vimrc_example.vim ~
+	:exe 'edit' stdpath('config').'/init.vim'
 
 In this section we will explain the various commands used in this file.  This
 will give you hints about how to set up your own preferences.  Not everything
@@ -139,15 +140,13 @@ quite complicated things.  Still, it is just a sequence of commands that are
 executed like you typed them.
 
 >
-	if &t_Co > 2 || has("gui_running")
-	  syntax on
-	  set hlsearch
-	endif
+	syntax on
+	set hlsearch
 
-This switches on syntax highlighting, but only if colors are available.  And
-the 'hlsearch' option tells Vim to highlight matches with the last used search
-pattern.  The "if" command is very useful to set options only when some
-condition is met.  More about that in |usr_41.txt|.
+This switches on syntax highlighting.  And the 'hlsearch' option tells Vim to
+highlight matches with the last used search pattern.  The "if" command is very
+useful to set options only when some condition is met.  More about that in
+|usr_41.txt|.
 
 							*vimrc-filetype*  >
 	filetype plugin indent on
@@ -174,21 +173,12 @@ This switches on three very clever mechanisms:
    automatically.  Vim comes with these indent rules for a number of
    filetypes.  See |:filetype-indent-on| and 'indentexpr'.
 
->
-	autocmd FileType text setlocal textwidth=78
 
-This makes Vim break text to avoid lines getting longer than 78 characters.
-But only for files that have been detected to be plain text.  There are
-actually two parts here.  "autocmd FileType text" is an autocommand.  This
-defines that when the file type is set to "text" the following command is
-automatically executed.  "setlocal textwidth=78" sets the 'textwidth' option
-to 78, but only locally in one file.
-
-							*restore-cursor*  >
-	autocmd BufReadPost *
-	    \ if line("'\"") > 1 && line("'\"") <= line("$") |
-	    \   exe "normal! g`\"" |
-	    \ endif
+				*restore-cursor* *last-position-jump*  >
+    autocmd BufReadPost *
+      \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+      \ |   exe "normal! g`\""
+      \ | endif
 
 Another autocommand.  This time it is used after reading any file.  The
 complicated stuff after it checks if the '" mark is defined, and jumps to it
@@ -197,8 +187,22 @@ from the previous line.  That avoids a line getting very long.
 See |line-continuation|.  This only works in a Vim script file, not when
 typing commands at the command-line.
 
+>
+	command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
+		  \ | wincmd p | diffthis
+
+This adds the ":DiffOrig" command.  Use this in a modified buffer to see the
+differences with the file it was loaded from.  See |diff| and |:DiffOrig|.
+
+>
+	set nolangremap
+
+Prevent that the langmap option applies to characters that result from a
+mapping.  If set (default), this may break plugins (but it's backward
+compatible).  See 'langremap'.
+
 ==============================================================================
-*05.3*	Simple mappings
+*05.4*	Simple mappings
 
 A mapping enables you to bind a set of Vim commands to a single key.  Suppose,
 for example, that you need to surround certain words with curly braces.  In
@@ -245,12 +249,51 @@ The ":map" command (with no arguments) lists your current mappings.  At
 least the ones for Normal mode.  More about mappings in section |40.1|.
 
 ==============================================================================
-*05.4*	Adding a plugin					*add-plugin* *plugin*
+*05.5*	Adding a package			*add-package* *vimball-install*
+
+A package is a set of files that you can add to Vim.  There are two kinds of
+packages: optional and automatically loaded on startup.
+
+The Vim distribution comes with a few packages that you can optionally use.
+For example, the vimball plugin.  This plugin supports creating and using
+vimballs (self-installing Vim plugin archives).
+
+To start using the vimball plugin, add one line to your vimrc file: >
+	packadd vimball
+
+That's all!  You can also type the command to try it out.  Now you can find
+help about this plugin: >
+	:help vimball
+
+This works, because when `:packadd` loaded the plugin it also added the
+package directory in 'runtimepath', so that the help file can be found.  The
+tags for vimball's help are already created.  If you need to generate the help
+tags for a package, see the `:helptags` command.
+
+You can find packages on the Internet in various places.  It usually comes as
+an archive or as a repository.  For an archive you can follow these steps:
+	1. create the package directory: >
+		mkdir -p ~/.local/share/nvim/site/pack/fancy
+<	   "fancy" can be any name of your liking.  Use one that describes the
+	   package.
+	2. unpack the archive in that directory.  This assumes the top
+	   directory in the archive is "start": >
+	   	cd ~/.local/share/nvim/site/pack/fancy
+		unzip /tmp/fancy.zip
+<	   If the archive layout is different make sure that you end up with a
+	   path like this:
+		~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim ~
+	   Here "fancytext" is the name of the package, it can be anything
+	   else.
+
+More information about packages can be found here: |packages|.
+
+==============================================================================
+*05.6*	Adding a plugin					*add-plugin* *plugin*
 
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
 can add a plugin very easily by dropping it in your plugin directory.
-{not available when Vim was compiled without the |+eval| feature}
 
 There are two types of plugins:
 
@@ -279,13 +322,12 @@ when you use Vim.  There are only two steps for adding a global plugin:
 GETTING A GLOBAL PLUGIN
 
 Where can you find plugins?
+- Some are always loaded, you can see them in the directory $VIMRUNTIME/plugin.
 - Some come with Vim.  You can find them in the directory $VIMRUNTIME/macros
-  and its sub-directories.
+  and its sub-directories and under $VIM/vimfiles/pack/dist/opt/.
 - Download from the net.  There is a large collection on http://www.vim.org.
-- They are sometimes posted in a Vim |maillist|.
+- They are sometimes posted in a Vim maillist.
 - You could write one yourself, see |write-plugin|.
-
-Some plugins come as a vimball archive, see |vimball|.
 
 
 USING A GLOBAL PLUGIN
@@ -299,10 +341,9 @@ Then copy the file to your plugin directory:
 Example for Unix (assuming you didn't have a plugin directory yet): >
 
 	mkdir -p ~/.local/share/nvim/site/plugin
-	cp /usr/local/share/vim/vim60/macros/justify.vim ~/.local/share/nvim/site/plugin
+	cp /tmp/yourplugin.vim ~/.local/share/nvim/site/plugin
 
-That's all!  Now you can use the commands defined in this plugin to justify
-text.
+That's all!  Now you can use the commands defined in this plugin.
 
 Instead of putting plugins directly into the plugin/ directory, you may
 better organize them by putting them into subdirectories under plugin/.
@@ -384,7 +425,7 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.5*	Adding a help file		                   *add-local-help*
+*05.7*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
@@ -417,7 +458,7 @@ them through the tag.
 For writing a local help file, see |write-local-help|.
 
 ==============================================================================
-*05.6*	The option window
+*05.8*	The option window
 
 If you are looking for an option that does what you want, you can search in
 the help files here: |options|.  Another way is by using this command: >
@@ -456,7 +497,7 @@ border.  This is what the 'scrolloff' option does, it specifies an offset
 from the window border where scrolling starts.
 
 ==============================================================================
-*05.7*	Often used options
+*05.9*	Often used options
 
 There are an awful lot of options.  Most of them you will hardly ever use.
 Some of the more useful ones will be mentioned here.  Don't forget you can
@@ -574,4 +615,4 @@ This does mean there is less room to edit text, thus it's a compromise.
 
 Next chapter: |usr_06.txt|  Using syntax highlighting
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,4 +1,4 @@
-*usr_07.txt*	For Vim version 7.4.  Last change: 2006 Apr 24
+*usr_07.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -221,7 +221,7 @@ and write the file with ":w".  You edit several other files, and then use
 ":edit one.txt" to come back to "one.txt".  If you now use `" Vim jumps to the
 last line of the file.  Using `. takes you to the position where you deleted
 the character.  Even when you move around in the file `" and `. will take you
-to the remembered position, at least until you make another change or leave
+to the remembered position.  At least until you make another change or leave
 the file.
 
 
@@ -233,8 +233,8 @@ another file and place marks there, these are specific for that file.  Thus
 each file has its own set of marks, they are local to the file.
    So far we were using marks with a lowercase letter.  There are also marks
 with an uppercase letter.  These are global, they can be used from any file.
-For example suppose that we are editing the file "foo.txt".  Go to halfway of
-the file ("50%") and place the F mark there (F for foo): >
+For example suppose that we are editing the file "foo.txt".  Go to halfway
+down the file ("50%") and place the F mark there (F for foo): >
 
 	50%mF
 
@@ -355,7 +355,7 @@ a sentence to the f register (f for First): >
 	"fyas
 
 The "yas" command yanks a sentence like before.  It's the "f that tells Vim
-the text should be place in the f register.  This must come just before the
+the text should be placed in the f register.  This must come just before the
 yank command.
    Now yank three whole lines to the l register (l for line): >
 
@@ -476,4 +476,4 @@ This protects you from accidentally overwriting another file.
 
 Next chapter: |usr_08.txt|  Splitting windows
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

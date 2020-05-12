@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:    SQL
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Last Change: 2012 Dec 06
+" Last Change: 2017 Jun 13
 " Version:     3.0
 " Download:    http://vim.sourceforge.net/script.php?script_id=495
 
@@ -147,7 +147,7 @@ function! s:CheckToIgnoreRightParan( prev_lnum, num_levels )
     endwhile
 
     " Fallback - just move back one
-    " return a:prev_indent - &sw
+    " return a:prev_indent - shiftwidth()
     return ignore_paran
 endfunction
 
@@ -166,7 +166,7 @@ function! s:GetStmtStarterIndent( keyword, curr_lnum )
     let lnum  = a:curr_lnum
 
     " Default - reduce indent by 1
-    let ind = indent(a:curr_lnum) - &sw
+    let ind = indent(a:curr_lnum) - shiftwidth()
 
     if a:keyword =~? 'end'
         exec 'normal! ^'
@@ -230,7 +230,7 @@ function! s:ModuloIndent(ind)
     let ind = a:ind
 
     if ind > 0
-        let modulo = ind % &shiftwidth
+        let modulo = ind % shiftwidth()
 
         if modulo > 0
             let ind = ind - modulo
@@ -291,7 +291,7 @@ function! GetSQLIndent()
     " where END IF, END, should decrease the indent.
     if prevline =~? s:SQLBlockStart
         " Move indent in
-        let ind = ind + &sw
+        let ind = ind + shiftwidth()
         " echom 'prevl - SQLBlockStart - indent ' . ind . '  line: ' . prevline
     elseif prevline =~ '[()]'
         if prevline =~ '('
@@ -308,7 +308,7 @@ function! GetSQLIndent()
         if num_unmatched_left > 0
             " There is a open left paranethesis
             " increase indent
-            let ind = ind + ( &sw * num_unmatched_left )
+            let ind = ind + ( shiftwidth() * num_unmatched_left )
         elseif num_unmatched_right > 0
             " if it is an unbalanced paranethesis only unindent if
             " it was part of a command (ie create table(..)  )
@@ -323,7 +323,7 @@ function! GetSQLIndent()
             endif
 
             if (num_unmatched_right - ignore) > 0
-                let ind = ind - ( &sw * (num_unmatched_right - ignore) )
+                let ind = ind - ( shiftwidth() * (num_unmatched_right - ignore) )
             endif
 
         endif
@@ -339,12 +339,12 @@ function! GetSQLIndent()
     if line =~? '^\s*els'
         " Any line when you type else will automatically back up one
         " ident level  (ie else, elseif, elsif)
-        let ind = ind - &sw
+        let ind = ind - shiftwidth()
         " echom 'curr - else - indent ' . ind
     elseif line =~? '^\s*end\>'
         let ind = s:GetStmtStarterIndent('end', v:lnum)
         " General case for end
-        " let ind = ind - &sw
+        " let ind = ind - shiftwidth()
         " echom 'curr - end - indent ' . ind
     elseif line =~? '^\s*when\>'
         let ind = s:GetStmtStarterIndent('when', v:lnum)
@@ -352,7 +352,7 @@ function! GetSQLIndent()
         " clause, do not change the indent level, since these
         " statements do not have a corresponding END statement.
         " if stmt_starter =~? 'case'
-        "    let ind = ind - &sw
+        "    let ind = ind - shiftwidth()
         " endif
         " elseif line =~ '^\s*)\s*;\?\s*$'
         " elseif line =~ '^\s*)'
@@ -371,14 +371,14 @@ function! GetSQLIndent()
         " let num_unmatched_right  = s:CountUnbalancedParan( line, ')' )
         " if num_unmatched_right > 0
         " elseif strpart( line, strlen(line)-1, 1 ) =~ ')'
-        " let ind = ind - &sw
+        " let ind = ind - shiftwidth()
         if line =~ '^\s*)'
             " let ignore = ignore + 1
             " echom 'curr - begins ) unbalanced ignore: ' . ignore
         endif
 
         if (num_unmatched_right - ignore) > 0
-            let ind = ind - ( &sw * (num_unmatched_right - ignore) )
+            let ind = ind - ( shiftwidth() * (num_unmatched_right - ignore) )
         endif
         " endif
     endif

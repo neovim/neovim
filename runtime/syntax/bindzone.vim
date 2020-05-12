@@ -9,11 +9,8 @@
 " 
 " $Id: bindzone.vim 12 2011-07-16 21:09:57Z julian $
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -70,40 +67,30 @@ syn region      zoneParen       contained start="(" end=")" contains=zoneSerial,
 syn match       zoneComment     /;.*/
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_bind_zone_syn_inits")
-  if version < 508
-    let did_bind_zone_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink zoneDirective    Macro
-  
-  HiLink zoneUnknown      Error
-  
-  HiLink zoneOrigin       Statement
-  HiLink zoneOwnerName    Statement
-  HiLink zoneDomain       Identifier
-  
-  HiLink zoneSpecial      Special
-  HiLink zoneTTL          Constant
-  HiLink zoneClass        Include
-  HiLink zoneRRType       Type
-  
-  HiLink zoneIPAddr       Number
-  HiLink zoneIP6Addr      Number
-  HiLink zoneText         String
-  HiLink zoneNumber       Number
-  HiLink zoneSerial       Special
-  
-  HiLink zoneErrParen     Error
-  HiLink zoneComment      Comment
+hi def link zoneDirective    Macro
 
-  delcommand HiLink
-endif
+hi def link zoneUnknown      Error
+
+hi def link zoneOrigin       Statement
+hi def link zoneOwnerName    Statement
+hi def link zoneDomain       Identifier
+
+hi def link zoneSpecial      Special
+hi def link zoneTTL          Constant
+hi def link zoneClass        Include
+hi def link zoneRRType       Type
+
+hi def link zoneIPAddr       Number
+hi def link zoneIP6Addr      Number
+hi def link zoneText         String
+hi def link zoneNumber       Number
+hi def link zoneSerial       Special
+
+hi def link zoneErrParen     Error
+hi def link zoneComment      Comment
+
 
 let b:current_syntax = "bindzone"
 

@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	Rmd
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Thu Jul 10, 2014  07:11PM
+" Homepage:     https://github.com/jalvesaq/R-Vim-runtime
+" Last Change:	Sun Aug 19, 2018  09:14PM
 
 
 " Only load this indent file when no other was loaded.
@@ -19,7 +20,10 @@ if exists("*GetRmdIndent")
   finish
 endif
 
-function GetMdIndent()
+let s:cpo_save = &cpo
+set cpo&vim
+
+function s:GetMdIndent()
   let pline = getline(v:lnum - 1)
   let cline = getline(v:lnum)
   if prevnonblank(v:lnum - 1) < v:lnum - 1 || cline =~ '^\s*[-\+\*]\s' || cline =~ '^\s*\d\+\.\s\+'
@@ -32,15 +36,31 @@ function GetMdIndent()
   return indent(prevnonblank(v:lnum - 1))
 endfunction
 
+function s:GetYamlIndent()
+  let pline = getline(v:lnum - 1)
+  if pline =~ ':\s*$'
+    return indent(v:lnum) + shiftwidth()
+  elseif pline =~ '^\s*- '
+    return indent(v:lnum) + 2
+  endif
+  return indent(prevnonblank(v:lnum - 1))
+endfunction
+
 function GetRmdIndent()
   if getline(".") =~ '^[ \t]*```{r .*}$' || getline(".") =~ '^[ \t]*```$'
     return 0
   endif
   if search('^[ \t]*```{r', "bncW") > search('^[ \t]*```$', "bncW")
     return s:RIndent()
+  elseif v:lnum > 1 && search('^---$', "bnW") == 1 &&
+        \ (search('^---$', "nW") > v:lnum || search('^...$', "nW") > v:lnum)
+    return s:GetYamlIndent()
   else
-    return GetMdIndent()
+    return s:GetMdIndent()
   endif
 endfunction
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim: sw=2

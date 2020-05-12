@@ -1,4 +1,6 @@
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <sys/stat.h>
 
 static const mode_t kS_IFMT = S_IFMT;

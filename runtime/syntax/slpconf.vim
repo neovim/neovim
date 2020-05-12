@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         RFC 2614 - An API for Service Location configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             RFC 2614 - An API for Service Location configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish

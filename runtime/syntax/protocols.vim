@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         protocols(5) - Internet protocols definition file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             protocols(5) - Internet protocols definition file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish

@@ -1111,6 +1111,10 @@ msgstr "E137: Viminfo 파일의 쓰기 권한이 없습니다: %s"
 
 #: ../ex_cmds.c:1626
 #, c-format
+msgid "E929: Too many viminfo temp files, like %s!"
+msgstr "E929: 너무 많은 viminfo 임시 파일들, 가령 %s!"
+
+#, c-format
 msgid "E138: Can't write viminfo file %s!"
 msgstr "E138: Viminfo 파일 %s을(를) 쓸 수 없습니다!"
 
@@ -1118,6 +1122,10 @@ msgstr "E138: Viminfo 파일 %s을(를) 쓸 수 없습니다!"
 #, c-format
 msgid "Writing viminfo file \"%s\""
 msgstr "Viminfo 파일 \"%s\"을(를) 쓰는 중"
+
+#, c-format
+msgid "E886: Can't rename viminfo file to %s!"
+msgstr "E886: viminfo 파일명을 %s(으)로 변경할 수 없습니다!"
 
 #. Write the info:
 #: ../ex_cmds.c:1720
@@ -1300,8 +1308,8 @@ msgstr "미안합니다, 도움말 파일 \"%s\"을(를) 찾을 수 없습니다
 
 #: ../ex_cmds.c:5323
 #, c-format
-msgid "E150: Not a directory: %s"
-msgstr "E150: 디렉토리가 아님: %s"
+msgid "E151: No match: %s"
+msgstr "E151: 맞지 않음: %s"
 
 #: ../ex_cmds.c:5446
 #, c-format
@@ -1324,6 +1332,10 @@ msgid "E154: Duplicate tag \"%s\" in file %s/%s"
 msgstr "E154: \"%s\" 태그가 %s/%s 파일에서 중복되었습니다"
 
 #: ../ex_cmds.c:5687
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: 디렉토리가 아님: %s"
+
 #, c-format
 msgid "E160: Unknown sign command: %s"
 msgstr "E160: 모르는 sign 명령: %s"
@@ -1452,8 +1464,16 @@ msgstr "\"%s\"을(를) 찾는 중"
 
 #: ../ex_cmds2.c:2307
 #, c-format
-msgid "not found in 'runtimepath': \"%s\""
-msgstr "'runtimepath'에서 찾을 수 없음: \"%s\""
+msgid "not found in '%s': \"%s\""
+msgstr "'%s'에서 찾을 수 없음: \"%s\""
+
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: 요구되는 파이선 버젼 2.x는 지원되지 않음, 파일을 무시: %s"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: 요구되는 파이선 버젼 3.x는 지원되지 않음, 파일을 무시: %s"
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -1609,10 +1629,10 @@ msgstr "E174: 명령이 이미 존재합니다: 바꾸려면 !을 더하세요"
 #: ../ex_docmd.c:4432
 msgid ""
 "\n"
-"    Name        Args Range Complete  Definition"
+"    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    이름        인자 범위  완성      정의"
+"    이름        인자       주소      완성      정의"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
@@ -1661,6 +1681,10 @@ msgid "E184: No such user-defined command: %s"
 msgstr "E184: 그런 사용자 정의 명령 없음: %s"
 
 #: ../ex_docmd.c:5219
+#, c-format
+msgid "E180: Invalid address type value: %s"
+msgstr "E180: 잘못된 주소 형식 값: %s"
+
 #, c-format
 msgid "E180: Invalid complete value: %s"
 msgstr "E180: 잘못된 끝내기 값: %s"
@@ -1953,7 +1977,7 @@ msgstr ""
 
 #: ../ex_getln.c:5047
 msgid "Command Line"
-msgstr "명령 줄"
+msgstr "명령 행"
 
 #: ../ex_getln.c:5048
 msgid "Search String"
@@ -1965,7 +1989,10 @@ msgstr "표현"
 
 #: ../ex_getln.c:5050
 msgid "Input Line"
-msgstr "입력 줄"
+msgstr "입력 행"
+
+msgid "Debug Line"
+msgstr "디버그 행"
 
 #: ../ex_getln.c:5117
 msgid "E198: cmd_pchar beyond the command length"
@@ -2433,7 +2460,7 @@ msgstr "E216: 그런 그룹이나 이벤트 없음: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- 자동-명령 ---"
@@ -2646,11 +2673,6 @@ msgstr "E49: 스크롤 크기가 잘못되었습니다"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
-
-#: ../globals.h:1022
-#, c-format
-msgid "E902: \"%s\" is not an executable"
 msgstr ""
 
 #: ../globals.h:1024
@@ -3195,6 +3217,7 @@ msgstr "%-5s: %s%*s (사용법: %s)"
 #: ../if_cscope.c:1155
 msgid ""
 "\n"
+"       a: Find assignments to this symbol\n"
 "       c: Find functions calling this function\n"
 "       d: Find functions called by this function\n"
 "       e: Find this egrep pattern\n"
@@ -3205,13 +3228,14 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
+"       a: 이 기호에 대한 할당 찾기\n"
 "       c: 이 함수를 부르는 함수들 찾기\n"
 "       d: 이 함수에 의해 불려지는 함수들 찾기\n"
 "       e: 이 egrep 패턴 찾기\n"
 "       f: 이 파일 찾기\n"
 "       g: 이 정의 찾기\n"
-"       i: 이 파일을 포함하는 파일들 찾기\n"
-"       s: 이 C 심볼 찾기\n"
+"       i: 이 파일을 #include하는 파일들 찾기\n"
+"       s: 이 C 기호 찾기\n"
 "       t: 이 문자열 찾기\n"
 
 #: ../if_cscope.c:1226
@@ -3354,7 +3378,7 @@ msgstr "-q [에러파일]   첫 번째 에러가 난 파일 고치기"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4224,10 +4248,6 @@ msgstr "%4ld 줄:"
 msgid "E354: Invalid register name: '%s'"
 msgstr "E354: 잘못된 레지스터 이름: '%s'"
 
-#: ../message.c:745
-msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "메시지 관리자: Bram Moolenaar <Bram@vim.org>"
-
 #: ../message.c:986
 msgid "Interrupt: "
 msgstr "중단: "
@@ -4749,6 +4769,13 @@ msgstr "E447: path에서 \"%s\" 파일을 찾을 수 없습니다"
 
 #: ../quickfix.c:359
 #, c-format
+msgid "shell returned %d"
+msgstr "쉘이 %d을(를) 돌려주었습니다"
+
+msgid "E926: Current location list was changed"
+msgstr "E926: 현재의 location list가 바뀌었습니다"
+
+#, c-format
 msgid "E372: Too many %%%c in format string"
 msgstr "E372: 형식 문자열에 %%%c이(가) 너무 많습니다"
 
@@ -5256,14 +5283,9 @@ msgstr "E772: Spell 파일이 새 버젼의 Vim용입니다"
 msgid "E770: Unsupported section in spell file"
 msgstr "E770: spell 파일에 지원되지 않는 섹션"
 
-#: ../spell.c:3762
-#, c-format
-msgid "Warning: region %s not supported"
-msgstr "경고: %s 영역은 지원되지 않습니다"
-
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "affix 파일 %s 읽는 중"
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
@@ -5426,7 +5448,7 @@ msgstr "%s 값이 다른 .aff 파일에서 사용된 것과 다릅니다"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "사전 파일 %s 읽는 중 ..."
 
 #: ../spell.c:5611
@@ -5436,8 +5458,8 @@ msgstr "E760: %s에 단어 카운트가 없습니다"
 
 #: ../spell.c:5669
 #, c-format
-msgid "line %6d, word %6d - %s"
-msgstr "라인 %6d, 단어 %6d - %s"
+msgid "line %6d, word %6ld - %s"
+msgstr "라인 %6d, 단어 %6ld - %s"
 
 #: ../spell.c:5691
 #, c-format
@@ -5461,7 +5483,7 @@ msgstr "무시된 %d개의 아스키문자열이 아닌 단어가 %s에 있습�
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
+msgid "Reading word file %s..."
 msgstr "단어 파일 %s 읽는 중 ..."
 
 #: ../spell.c:6155
@@ -5531,7 +5553,7 @@ msgstr "총 단어 수: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "%s 제안 파일을 쓰는 중 ..."
 
 #: ../spell.c:7707 ../spell.c:7927
@@ -5558,7 +5580,7 @@ msgstr "경고: compound와 NOBREAK 둘 다 명시됨"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "spell 파일 %s 쓰는 중 ..."
 
 #: ../spell.c:7925
@@ -6321,7 +6343,7 @@ msgstr "by Bram Moolenaar et al."
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "빔은 소스가 열려 있고 공짜로 배포됩니다"
+msgstr "빔은 누구나 소스를 볼 수 있고 공짜로 배포됩니다"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"
@@ -7486,9 +7508,6 @@ msgstr "E446: 커서 밑에 파일 이름이 없습니다"
 
 #~ msgid "Could not fix up function pointers to the DLL!"
 #~ msgstr "함수 포인터를 DLL로 바꿀 수 없습니다!"
-
-#~ msgid "shell returned %d"
-#~ msgstr "쉘이 %d을(를) 돌려주었습니다"
 
 #~ msgid "Vim: Caught %s event\n"
 #~ msgstr "빔: %s 이벤트를 잡았습니다\n"

@@ -41,7 +41,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
   set(LUA_TARGET freebsd)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
   set(CMAKE_LUA_TARGET bsd)
-elseif(SYSTEM_NAME MATCHES "^MINGW")
+elseif(CMAKE_SYSTEM_NAME MATCHES "^MINGW")
   set(CMAKE_LUA_TARGET mingw)
 else()
   if(UNIX)
@@ -51,19 +51,33 @@ else()
   endif()
 endif()
 
+set(LUA_CFLAGS "-O0 -g3 -fPIC")
+set(LUA_LDFLAGS "")
+
+if(CLANG_ASAN_UBSAN)
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fsanitize=address")
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fno-omit-frame-pointer")
+  set(LUA_CFLAGS "${LUA_CFLAGS} -fno-optimize-sibling-calls")
+
+  set(LUA_LDFLAGS "${LUA_LDFLAGS} -fsanitize=address")
+endif()
+
 set(LUA_CONFIGURE_COMMAND
   sed -e "/^CC/s@gcc@${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}@"
-      -e "/^CFLAGS/s@-O2@-g3@"
+      -e "/^CFLAGS/s@-O2@${LUA_CFLAGS}@"
+      -e "/^MYLDFLAGS/s@$@${LUA_LDFLAGS}@"
       -e "s@-lreadline@@g"
       -e "s@-lhistory@@g"
       -e "s@-lncurses@@g"
       -i ${DEPS_BUILD_DIR}/src/lua/src/Makefile &&
   sed -e "/#define LUA_USE_READLINE/d"
+      -e "s@\\(#define LUA_ROOT[ 	]*\"\\)/usr/local@\\1${DEPS_INSTALL_DIR}@"
       -i ${DEPS_BUILD_DIR}/src/lua/src/luaconf.h)
+set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 set(LUA_BUILD_COMMAND
-  ${MAKE_PRG} ${LUA_TARGET})
+    ${MAKE_PRG} ${LUA_INSTALL_TOP_ARG} ${LUA_TARGET})
 set(LUA_INSTALL_COMMAND
-  ${MAKE_PRG} INSTALL_TOP=${DEPS_INSTALL_DIR} install)
+    ${MAKE_PRG} ${LUA_INSTALL_TOP_ARG} install)
 
 message(STATUS "Lua target is ${LUA_TARGET}")
 
@@ -71,14 +85,13 @@ BuildLua(CONFIGURE_COMMAND ${LUA_CONFIGURE_COMMAND}
   BUILD_COMMAND ${LUA_BUILD_COMMAND}
   INSTALL_COMMAND ${LUA_INSTALL_COMMAND})
 list(APPEND THIRD_PARTY_DEPS lua)
-add_dependencies(lua busted)
 
 set(BUSTED ${DEPS_INSTALL_DIR}/bin/busted)
 set(BUSTED_LUA ${BUSTED}-lua)
 
 add_custom_command(OUTPUT ${BUSTED_LUA}
-  COMMAND sed -e 's/jit//g' < ${BUSTED} > ${BUSTED_LUA} && chmod +x ${BUSTED_LUA}
-  DEPENDS lua)
+  COMMAND sed -e 's/^exec/exec $$LUA_DEBUGGER/' -e 's/jit//g' < ${BUSTED} > ${BUSTED_LUA} && chmod +x ${BUSTED_LUA}
+  DEPENDS lua busted ${BUSTED})
 add_custom_target(busted-lua
   DEPENDS ${DEPS_INSTALL_DIR}/bin/busted-lua)
 

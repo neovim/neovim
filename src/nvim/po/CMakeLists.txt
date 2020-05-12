@@ -1,15 +1,14 @@
-find_package(Gettext)
+find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
 
-if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
-  set(ENV{OLD_PO_FILE_INPUT} yes)
-  set(ENV{OLD_PO_FILE_OUTPUT} yes)
-
+option(LANGUAGES "Localizations to build")
+if(NOT LANGUAGES)
   set(LANGUAGES
     af
     ca
     cs
+    da
     de
     en_GB
     eo
@@ -22,22 +21,26 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     ko.UTF-8
     nl
     no
-    pl
+    pl.UTF-8
     pt_BR
     ru
     sk
     sv
     uk
     vi
-    zh_CN
     zh_CN.UTF-8
-    zh_TW
     zh_TW.UTF-8)
+endif()
 
-  set(NEOVIM_RELATIVE_SOURCES)
-  foreach(SRC ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
+  set(ENV{OLD_PO_FILE_INPUT} yes)
+  set(ENV{OLD_PO_FILE_OUTPUT} yes)
+
+
+  set(NVIM_RELATIVE_SOURCES)
+  foreach(SRC ${NVIM_SOURCES} ${NVIM_HEADERS})
     file(RELATIVE_PATH RELATIVE_SRC ${CMAKE_CURRENT_SOURCE_DIR} ${SRC})
-    list(APPEND NEOVIM_RELATIVE_SOURCES ${RELATIVE_SRC})
+    list(APPEND NVIM_RELATIVE_SOURCES ${RELATIVE_SRC})
   endforeach()
 
   set(NVIM_POT ${CMAKE_CURRENT_BINARY_DIR}/nvim.pot)
@@ -48,11 +51,12 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
         -DXGETTEXT_PRG=${XGETTEXT_PRG}
         -DPOT_FILE=${NVIM_POT}
         -DSEARCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        "'-DSOURCES=${NEOVIM_RELATIVE_SOURCES}'"
+        "\"-DSOURCES=${NVIM_RELATIVE_SOURCES}\""
         -P ${PROJECT_SOURCE_DIR}/cmake/RunXgettext.cmake
-    DEPENDS ${NEOVIM_SOURCES})
+    DEPENDS ${NVIM_SOURCES})
 
   add_custom_target(potfile DEPENDS ${NVIM_POT})
+  set_target_properties(potfile PROPERTIES FOLDER po)
 
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
@@ -89,6 +93,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       COMMENT "Checking ${name}.po"
       VERBATIM
       DEPENDS ${poFile})
+    set_target_properties(check-po-${name} PROPERTIES FOLDER po/check)
   endmacro()
 
   macro(BuildPoIconvGenericWithCharset
@@ -137,49 +142,30 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   endmacro()
 
   # Create some translations from others.
-  BuildPoIconv(ja utf-8 euc-jp)
-  BuildMo(ja.euc-jp)
+  if(";${LANGUAGES};" MATCHES ";ja;")
+    BuildPoIconv(ja utf-8 euc-jp)
+    BuildMo(ja.euc-jp)
+  endif()
 
-  BuildPoIconv(cs ISO-8859-2 cp1250)
-  BuildMo(cs.cp1250)
+  if(";${LANGUAGES};" MATCHES ";cs;")
+    BuildPoIconv(cs ISO-8859-2 cp1250)
+    BuildMo(cs.cp1250)
+  endif()
 
-  BuildPoIconv(pl ISO-8859-2 cp1250)
-  BuildMo(pl.cp1250)
-
-  BuildPoIconv(pl ISO-8859-2 UTF-8)
-  BuildMo(pl.UTF-8)
-
-  BuildPoIconv(sk ISO-8859-2 cp1250)
-  BuildMo(sk.cp1250)
-
-  BuildPoIconv(ru UTF-8 cp1251)
-  BuildMo(ru.cp1251)
-
-  BuildPoIconv(uk UTF-8 cp1251)
-  BuildMo(uk.cp1251)
-
-  BuildPoIconvGeneric(ko ko.UTF-8 ko UTF-8 euc-kr)
-  BuildMo(ko)
-
-  BuildPoIconvGenericWithCharset(zh_CN.cp936 zh_CN zh_CN.cp936 gb2312 cp936 gbk)
-  BuildMo(zh_CN.cp936)
+  if(";${LANGUAGES};" MATCHES ";sk;")
+    BuildPoIconv(sk ISO-8859-2 cp1250)
+    BuildMo(sk.cp1250)
+  endif()
 
   add_custom_target(update-po-nb
     COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/no.po ${CMAKE_CURRENT_SOURCE_DIR}/nb.po
     DEPENDS no.po)
   list(APPEND UPDATE_PO_TARGETS update-po-nb)
-  CheckPo(nb)
-  BuildMo(nb)
-
-  add_executable(sjiscorr sjiscorr.c)
-  add_custom_target(update-po-ja.sjis
-    COMMAND iconv -f utf-8 -t cp932 ${CMAKE_CURRENT_SOURCE_DIR}/ja.po |
-        $<TARGET_FILE:sjiscorr> > ${CMAKE_CURRENT_SOURCE_DIR}/ja.sjis.po
-    DEPENDS ja.po sjiscorr)
-  list(APPEND UPDATE_PO_TARGETS update-po-ja.sjis)
-  CheckPo(ja.sjis)
-  BuildMo(ja.sjis)
+  if(";${LANGUAGES};" MATCHES ";no;")
+    CheckPo(nb)
+    BuildMo(nb)
+  endif()
 
   foreach(LANGUAGE ${LANGUAGES})
     set(poFile "${CMAKE_CURRENT_SOURCE_DIR}/${LANGUAGE}.po")
@@ -199,7 +185,9 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     BuildMo(${LANGUAGE})
   endforeach()
+  set_target_properties(${UPDATE_PO_TARGETS} PROPERTIES FOLDER po/update)
 
   add_custom_target(translations ALL DEPENDS ${LANGUAGE_MO_FILES})
   add_custom_target(update-po DEPENDS ${UPDATE_PO_TARGETS})
+  set_target_properties(translations update-po PROPERTIES FOLDER po)
 endif()

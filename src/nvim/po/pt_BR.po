@@ -24,7 +24,7 @@ msgstr "[Ajuda]"
 
 #: ../screen.c:4815 ../buffer.c:3244
 msgid "[Preview]"
-msgstr "[VisualizaÁ„o]"
+msgstr "[Visualiza√ß√£o]"
 
 #: ../screen.c:4823 ../fileio.c:1855 ../buffer.c:2496 ../buffer.c:3207
 msgid "[RO]"
@@ -2478,11 +2478,6 @@ msgstr "E900: Id do job È inv·lido"
 msgid "E901: Job table is full"
 msgstr "E901: Tabela de jobs est√° cheia"
 
-#: ../globals.h:1021
-#, c-format
-msgid "E902: \"%s\" is not an executable"
-msgstr "E902: \"%s\" n√£o √© um execut√°vel"
-
 #: ../globals.h:1023
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
@@ -3217,7 +3212,7 @@ msgstr "E216: Grupo ou evento inexistente: %s"
 #: ../fileio.c:6002
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autocomandos ---"
@@ -4864,7 +4859,7 @@ msgstr " tipo arquivo\n"
 
 #: ../ex_getln.c:4762
 msgid "'history' option is zero"
-msgstr "opÁ„o 'history' vale zero"
+msgstr "op√ß√£o 'history' vale zero"
 
 #: ../ex_getln.c:5008
 #, c-format
@@ -5311,7 +5306,7 @@ msgstr "Aviso: regi„o %s n„o È suportada"
 
 #: ../spell.c:4366
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Lendo arquivo de afixos %s..."
 
 #: ../spell.c:4405 ../spell.c:5451 ../spell.c:5956
@@ -5511,8 +5506,8 @@ msgstr "Foram ignoradas %d palavra(s) com caracteres n„o-ASCII em %s"
 
 #: ../spell.c:5931
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lendo arquivo de palavras %s ..."
+msgid "Reading word file %s..."
+msgstr "Lendo arquivo de palavras %s..."
 
 #: ../spell.c:5971
 #, c-format
@@ -6174,7 +6169,7 @@ msgstr "-q [arq.erro]   editar arquivo e abrir no primeiro erro"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -6208,7 +6203,7 @@ msgstr "--\t\t\tApenas nomes de arquivo depois daqui"
 
 #: ../main.c:2177
 msgid "--literal\t\tDon't expand wildcards"
-msgstr "--literal\t\tN„o expandir caracteres-curinga"
+msgstr "--literal\t\tN√£o expandir caracteres-curinga"
 
 #: ../main.c:2179
 msgid "-v\t\t\tVi mode (like \"vi\")"
@@ -6232,7 +6227,7 @@ msgstr "-d\t\t\tModo diff (como \"vimdiff\")"
 
 #: ../main.c:2184
 msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
-msgstr "-y\t\t\tModo f·cil (como \"evim\", o Vim n„o modal)"
+msgstr "-y\t\t\tModo f√°cil (como \"evim\", o Vim n√£o modal)"
 
 #: ../main.c:2185
 msgid "-R\t\t\tReadonly mode (like \"view\")"
@@ -6346,8 +6341,8 @@ msgstr ""
 #: ../main.c:2213
 msgid "-S <session>\t\tSource file <session> after loading the first file"
 msgstr ""
-"-S <sess„o>\t\tExecutar o arquivo <sess„o> depois de carregar o\n"
-"\t\t\tprimeiro arquivo"
+"-S <sess„o>\t\tExecutar o arquivo <sess„o> depois de carregar o "
+"primeiro arquivo"
 
 #: ../main.c:2214
 msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"

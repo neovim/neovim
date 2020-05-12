@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         netrc(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2010-01-03
+" Language:             netrc(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2010-01-03
 
 if exists("b:current_syntax")
   finish

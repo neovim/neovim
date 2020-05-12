@@ -1,4 +1,4 @@
-*remote.txt*    For Vim version 7.4.  Last change: 2015 Mar 01
+*remote.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,9 +6,7 @@
 
 Vim client-server communication				*client-server*
 
-1. Common functionality		|clientserver|
-2. X11 specific items		|x11-clientserver|
-3. MS-Windows specific items	|w32-clientserver|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Common functionality					*clientserver*
@@ -89,7 +87,7 @@ Tell the remote server "BLA" to write all files and exit: >
     vim --servername BLA --remote-send '<C-\><C-N>:wqa<CR>'
 
 
-SERVER NAME
+SERVER NAME						*client-server-name*
 
 By default Vim will try to register the name under which it was invoked (gvim,
 egvim ...).  This can be overridden with the --servername argument.  If the
@@ -139,6 +137,7 @@ the description in |eval.txt| or use CTRL-] on the function name to jump to
 the full explanation.
 
     synopsis				     explanation ~
+    remote_startserver( name)		     run a server
     remote_expr( server, string, idvar)      send expression
     remote_send( server, string, idvar)      send key sequence
     serverlist()			     get a list of available servers
@@ -168,10 +167,6 @@ a client and send strings to other instances of Vim on the same X11 display.
 When an X11 GUI Vim (gvim) is started, it will try to register a send-server
 name on the 'VimRegistry' property on the root window.
 
-A non GUI Vim with access to the X11 display (|xterm-clipboard| enabled), can
-also act as a command server if a server name is explicitly given with the
---servername argument.
-
 An empty --servername argument will cause the command server to be disabled.
 
 To send commands to a Vim server from another application, read the source
@@ -191,4 +186,4 @@ When using gvim, the --remote-wait only works properly this way: >
 
 	start /w gvim --remote-wait file.txt
 <
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

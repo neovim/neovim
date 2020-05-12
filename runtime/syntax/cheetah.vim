@@ -8,11 +8,8 @@
 "  PSP-style tags: <% .. %> (obsoleted feature)
 "  doc-strings and header comments (rarely used feature)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -36,25 +33,15 @@ syn match   cheetahComment "##.*$" display
 syn region  cheetahMultiLineComment start="#\*" end="\*#"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cheetah_syn_inits")
-	if version < 508
-		let did_cheetah_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	HiLink cheetahPlaceHolder Identifier
-	HiLink cheetahDirective PreCondit
-	HiLink cheetahKeyword Define
-	HiLink cheetahContinuation Special
-	HiLink cheetahComment Comment
-	HiLink cheetahMultiLineComment Comment
+hi def link cheetahPlaceHolder Identifier
+hi def link cheetahDirective PreCondit
+hi def link cheetahKeyword Define
+hi def link cheetahContinuation Special
+hi def link cheetahComment Comment
+hi def link cheetahMultiLineComment Comment
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "cheetah"
 

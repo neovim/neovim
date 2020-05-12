@@ -1,8 +1,7 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local eval, command, nvim = helpers.eval, helpers.command, helpers.nvim
 local eq, run, stop = helpers.eq, helpers.run, helpers.stop
 local clear = helpers.clear
-
 
 local function get_prefix(sync)
   if sync then
@@ -11,11 +10,9 @@ local function get_prefix(sync)
   return 'async'
 end
 
-
 local function call(fn, arguments)
   command('call '..fn..'('..arguments..')')
 end
-
 
 local function clear_and_init(init)
   return function()
@@ -25,7 +22,6 @@ local function clear_and_init(init)
     end
   end
 end
-
 
 local function runx(sync, handler, on_setup)
   local function setup_cb(...)
@@ -64,153 +60,137 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
         args = args..', "RpcCommand"'
       end)
 
-      describe('without options', function()
-        it('ok', function()
-          call(fn, args..', {}')
-          local function on_setup()
-            command('RpcCommand')
-          end
+      it('without options', function()
+        call(fn, args..', {}')
+        local function on_setup()
+          command('RpcCommand')
+        end
 
-          local function handler(method)
-            eq('test-handler', method)
-            return ''
-          end
+        local function handler(method)
+          eq('test-handler', method)
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "*"}')
-          local function on_setup()
-            command('RpcCommand arg1 arg2 arg3')
-          end
+      it('with nargs', function()
+        call(fn, args..', {"nargs": "*"}')
+        local function on_setup()
+          command('RpcCommand arg1 arg2 arg3')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg1', 'arg2', 'arg3'}, arguments[1])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg1', 'arg2', 'arg3'}, arguments[1])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with range', function()
-        it('ok', function()
-          call(fn,args..', {"range": ""}')
-          local function on_setup()
-            command('1,1RpcCommand')
-          end
+      it('with range', function()
+        call(fn,args..', {"range": ""}')
+        local function on_setup()
+          command('1,1RpcCommand')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({1, 1}, arguments[1])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({1, 1}, arguments[1])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs/range', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "1", "range": ""}')
-          local function on_setup()
-            command('1,1RpcCommand arg')
-          end
+      it('with nargs/range', function()
+        call(fn, args..', {"nargs": "1", "range": ""}')
+        local function on_setup()
+          command('1,1RpcCommand arg')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg'}, arguments[1])
-            eq({1, 1}, arguments[2])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg'}, arguments[1])
+          eq({1, 1}, arguments[2])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs/count', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "1", "range": "5"}')
-          local function on_setup()
-            command('5RpcCommand arg')
-          end
+      it('with nargs/count', function()
+        call(fn, args..', {"nargs": "1", "range": "5"}')
+        local function on_setup()
+          command('5RpcCommand arg')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg'}, arguments[1])
-            eq(5, arguments[2])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg'}, arguments[1])
+          eq(5, arguments[2])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs/count/bang', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "1", "range": "5", "bang": ""}')
-          local function on_setup()
-            command('5RpcCommand! arg')
-          end
+      it('with nargs/count/bang', function()
+        call(fn, args..', {"nargs": "1", "range": "5", "bang": ""}')
+        local function on_setup()
+          command('5RpcCommand! arg')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg'}, arguments[1])
-            eq(5, arguments[2])
-            eq(1, arguments[3])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg'}, arguments[1])
+          eq(5, arguments[2])
+          eq(1, arguments[3])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs/count/bang/register', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
-                     ' "register": ""}')
-          local function on_setup()
-            command('5RpcCommand! b arg')
-          end
+      it('with nargs/count/bang/register', function()
+        call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
+        ' "register": ""}')
+        local function on_setup()
+          command('5RpcCommand! b arg')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg'}, arguments[1])
-            eq(5, arguments[2])
-            eq(1, arguments[3])
-            eq('b', arguments[4])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg'}, arguments[1])
+          eq(5, arguments[2])
+          eq(1, arguments[3])
+          eq('b', arguments[4])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with nargs/count/bang/register/eval', function()
-        it('ok', function()
-          call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
-                     ' "register": "", "eval": "@<reg>"}')
-          local function on_setup()
-            command('let @b = "regb"')
-            command('5RpcCommand! b arg')
-          end
+      it('with nargs/count/bang/register/eval', function()
+        call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
+        ' "register": "", "eval": "@<reg>"}')
+        local function on_setup()
+          command('let @b = "regb"')
+          command('5RpcCommand! b arg')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({'arg'}, arguments[1])
-            eq(5, arguments[2])
-            eq(1, arguments[3])
-            eq('b', arguments[4])
-            eq('regb', arguments[5])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'arg'}, arguments[1])
+          eq(5, arguments[2])
+          eq(1, arguments[3])
+          eq('b', arguments[4])
+          eq('regb', arguments[5])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
     end)
   end)
@@ -236,37 +216,33 @@ local function autocmd_specs_for(fn, sync, first_arg_factory, init)
         args = args..', "BufEnter"'
       end)
 
-      describe('without options', function()
-        it('ok', function()
-          call(fn, args..', {}')
-          local function on_setup()
-            command('doautocmd BufEnter x.c')
-          end
+      it('without options', function()
+        call(fn, args..', {}')
+        local function on_setup()
+          command('doautocmd BufEnter x.c')
+        end
 
-          local function handler(method)
-            eq('test-handler', method)
-            return ''
-          end
+        local function handler(method)
+          eq('test-handler', method)
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with eval', function()
-        it('ok', function()
-          call(fn, args..[[, {'eval': 'expand("<afile>")'}]])
-          local function on_setup()
-            command('doautocmd BufEnter x.c')
-          end
+      it('with eval', function()
+        call(fn, args..[[, {'eval': 'expand("<afile>")'}]])
+        local function on_setup()
+          command('doautocmd BufEnter x.c')
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq('x.c', arguments[1])
-            return ''
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq('x.c', arguments[1])
+          return ''
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
     end)
   end)
@@ -292,46 +268,77 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
         args = args..', "TestFunction"'
       end)
 
-      describe('without options', function()
-        it('ok', function()
-          call(fn, args..', {}')
-          local function on_setup()
-            if sync then
-              eq('rv', eval('TestFunction(1, "a", ["b", "c"])'))
-            else
-              eq(1, eval('TestFunction(1, "a", ["b", "c"])'))
-            end
+      it('without options', function()
+        call(fn, args..', {}')
+        local function on_setup()
+          if sync then
+            eq('rv', eval('TestFunction(1, "a", ["b", "c"])'))
+          else
+            eq(1, eval('TestFunction(1, "a", ["b", "c"])'))
           end
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({{1, 'a', {'b', 'c'}}}, arguments)
-            return 'rv'
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({{1, 'a', {'b', 'c'}}}, arguments)
+          return 'rv'
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
       end)
 
-      describe('with eval', function()
-        it('ok', function()
-          call(fn, args..[[, {'eval': '2 + 2'}]])
-          local function on_setup()
-            if sync then
-              eq('rv', eval('TestFunction(1, "a", ["b", "c"])'))
-            else
-              eq(1, eval('TestFunction(1, "a", ["b", "c"])'))
-            end
+      it('with eval', function()
+        call(fn, args..[[, {'eval': '2 + 2'}]])
+        local function on_setup()
+          if sync then
+            eq('rv', eval('TestFunction(1, "a", ["b", "c"])'))
+          else
+            eq(1, eval('TestFunction(1, "a", ["b", "c"])'))
           end
+        end
 
-          local function handler(method, arguments)
-            eq('test-handler', method)
-            eq({{1, 'a', {'b', 'c'}}, 4}, arguments)
-            return 'rv'
-          end
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({{1, 'a', {'b', 'c'}}, 4}, arguments)
+          return 'rv'
+        end
 
-          runx(sync, handler, on_setup)
-        end)
+        runx(sync, handler, on_setup)
+      end)
+
+      it('with range', function()
+        helpers.insert([[
+          foo
+          bar
+          baz
+          zub]])
+        call(fn, args..[[, {'range': ''}]])
+        local function on_setup()
+          command('2,3call TestFunction(1, "a", ["b", "c"])')
+        end
+
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({{1, 'a', {'b', 'c'}}, {2, 3}}, arguments)
+          return 'rv'
+        end
+
+        runx(sync, handler, on_setup)
+      end)
+
+      it('with eval/range', function()
+        call(fn, args..[[, {'eval': '4', 'range': ''}]])
+        local function on_setup()
+          command('%call TestFunction(1, "a", ["b", "c"])')
+        end
+
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({{1, 'a', {'b', 'c'}}, {1, 1}, 4}, arguments)
+          return 'rv'
+        end
+
+        runx(sync, handler, on_setup)
       end)
     end)
   end)

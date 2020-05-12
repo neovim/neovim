@@ -1,8 +1,6 @@
 let s:hosts = {}
 let s:plugin_patterns = {}
-let s:remote_plugins_manifest = fnamemodify(expand($MYVIMRC, 1), ':h')
-      \.'/.'.fnamemodify($MYVIMRC, ':t').'-rplugin~'
-
+let s:plugins_for_host = {}
 
 " Register a host by associating it with a factory(funcref)
 function! remote#host#Register(name, pattern, factory) abort
@@ -13,7 +11,6 @@ function! remote#host#Register(name, pattern, factory) abort
     let s:hosts[a:name].channel = a:factory
   endif
 endfunction
-
 
 " Register a clone to an existing host. The new host will use the same factory
 " as `source`, but it will run as a different process. This can be used by
@@ -32,7 +29,6 @@ function! remote#host#RegisterClone(name, orig_name) abort
         \ }
 endfunction
 
-
 " Get a host channel, bootstrapping it if necessary
 function! remote#host#Require(name) abort
   if !has_key(s:hosts, a:name)
@@ -50,14 +46,12 @@ function! remote#host#Require(name) abort
   return host.channel
 endfunction
 
-
 function! remote#host#IsRunning(name) abort
   if !has_key(s:hosts, a:name)
     throw 'No host named "'.a:name.'" is registered'
   endif
   return s:hosts[a:name].channel != 0
 endfunction
-
 
 " Example of registering a Python plugin with two commands (one async), one
 " autocmd (async) and one function (sync):
@@ -115,20 +109,14 @@ function! remote#host#RegisterPlugin(host, path, specs) abort
   call add(plugins, {'path': a:path, 'specs': a:specs})
 endfunction
 
-
-function! remote#host#LoadRemotePlugins() abort
-  if filereadable(s:remote_plugins_manifest)
-    exe 'source '.s:remote_plugins_manifest
-  endif
-endfunction
-
-
 function! s:RegistrationCommands(host) abort
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
   call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
-  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
+  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 1, 1)
+  let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
+  let paths = uniq(sort(paths))
   if empty(paths)
     return []
   endif
@@ -138,7 +126,9 @@ function! s:RegistrationCommands(host) abort
   endfor
   let channel = remote#host#Require(host_id)
   let lines = []
+  let registered = []
   for path in paths
+    unlet! specs
     let specs = rpcrequest(channel, 'specs', path)
     if type(specs) != type([])
       " host didn't return a spec list, indicates a failure while loading a
@@ -151,19 +141,19 @@ function! s:RegistrationCommands(host) abort
       call add(lines, "      \\ ".string(spec).",")
     endfor
     call add(lines, "     \\ ])")
+    call add(registered, path)
   endfor
   echomsg printf("remote/host: %s host registered plugins %s",
-        \ a:host, string(map(copy(paths), "fnamemodify(v:val, ':t')")))
+        \ a:host, string(map(registered, "fnamemodify(v:val, ':t')")))
 
   " Delete the temporary host clone
-  call rpcstop(s:hosts[host_id].channel)
+  call jobstop(s:hosts[host_id].channel)
   call remove(s:hosts, host_id)
   call remove(s:plugins_for_host, host_id)
   return lines
 endfunction
 
-
-function! s:UpdateRemotePlugins() abort
+function! remote#host#UpdateRemotePlugins() abort
   let commands = []
   let hosts = keys(s:hosts)
   for host in hosts
@@ -179,16 +169,11 @@ function! s:UpdateRemotePlugins() abort
       endtry
     endif
   endfor
-  call writefile(commands, s:remote_plugins_manifest)
-  echomsg printf('remote/host: generated the manifest file in "%s"',
-        \ s:remote_plugins_manifest)
+  call writefile(commands, g:loaded_remote_plugins)
+  echomsg printf('remote/host: generated rplugin manifest: %s',
+        \ g:loaded_remote_plugins)
 endfunction
 
-
-command! UpdateRemotePlugins call s:UpdateRemotePlugins()
-
-
-let s:plugins_for_host = {}
 function! remote#host#PluginsForHost(host) abort
   if !has_key(s:plugins_for_host, a:host)
     let s:plugins_for_host[a:host] = []
@@ -196,41 +181,29 @@ function! remote#host#PluginsForHost(host) abort
   return s:plugins_for_host[a:host]
 endfunction
 
+function! remote#host#LoadErrorForHost(host, log) abort
+  return 'Failed to load '. a:host . ' host. '.
+        \ 'You can try to see what happened by starting nvim with '.
+        \ a:log . ' set and opening the generated log file.'.
+        \ ' Also, the host stderr is available in messages.'
+endfunction
 
 " Registration of standard hosts
 
-" Python/Python3 {{{
-function! s:RequirePythonHost(host) abort
-  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
+" Python/Python3
+call remote#host#Register('python', '*',
+      \ function('provider#pythonx#Require'))
+call remote#host#Register('python3', '*',
+      \ function('provider#pythonx#Require'))
 
-  " Python host arguments
-  let args = ['-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
+" Ruby
+call remote#host#Register('ruby', '*.rb',
+      \ function('provider#ruby#Require'))
 
-  " Collect registered Python plugins into args
-  let python_plugins = remote#host#PluginsForHost(a:host.name)
-  for plugin in python_plugins
-    call add(args, plugin.path)
-  endfor
+" nodejs
+call remote#host#Register('node', '*',
+      \ function('provider#node#Require'))
 
-  try
-    let channel_id = rpcstart((ver == '2' ?
-          \ provider#python#Prog() : provider#python3#Prog()), args)
-    if rpcrequest(channel_id, 'poll') == 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-  endtry
-  throw 'Failed to load '. a:host.orig_name . ' host. '.
-    \ 'You can try to see what happened '.
-    \ 'by starting Neovim with the environment variable '.
-    \ '$NVIM_PYTHON_LOG_FILE set to a file and opening '.
-    \ 'the generated log file. Also, the host stderr will be available '.
-    \ 'in Neovim log, so it may contain useful information. '.
-    \ 'See also ~/.nvimlog.'
-endfunction
-
-call remote#host#Register('python', '*.py', function('s:RequirePythonHost'))
-call remote#host#Register('python3', '*.py', function('s:RequirePythonHost'))
-" }}}
+" perl
+call remote#host#Register('perl', '*',
+      \ function('provider#perl#Require'))

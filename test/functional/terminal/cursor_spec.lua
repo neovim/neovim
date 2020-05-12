@@ -1,13 +1,13 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, execute = helpers.nvim_dir, helpers.execute
+local nvim_dir, command = helpers.nvim_dir, helpers.command
+local feed_command = helpers.feed_command
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 
-
-describe('terminal cursor', function()
+describe(':terminal cursor', function()
   local screen
 
   before_each(function()
@@ -25,7 +25,7 @@ describe('terminal cursor', function()
                                                         |
                                                         |
                                                         |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -33,11 +33,11 @@ describe('terminal cursor', function()
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)
@@ -49,26 +49,36 @@ describe('terminal cursor', function()
 
     it('is positioned correctly when unfocused', function()
       screen:expect([[
-          1 tty ready                                     |
-          2 {2: }                                             |
-          3                                               |
-          4                                               |
-          5                                               |
-          6 ^                                              |
+        {7:  1 }tty ready                                     |
+        {7:  2 }^rows: 6, cols: 46                             |
+        {7:  3 }{2: }                                             |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
         :set number                                       |
       ]])
     end)
 
     it('is positioned correctly when focused', function()
-      feed('i')
       screen:expect([[
-          1 tty ready                                     |
-          2 {1: }                                             |
-          3                                               |
-          4                                               |
-          5                                               |
-          6                                               |
-        -- TERMINAL --                                    |
+        {7:  1 }tty ready                                     |
+        {7:  2 }^rows: 6, cols: 46                             |
+        {7:  3 }{2: }                                             |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        :set number                                       |
+      ]])
+      feed('i')
+      helpers.wait()
+      screen:expect([[
+        {7:  1 }tty ready                                     |
+        {7:  2 }rows: 6, cols: 46                             |
+        {7:  3 }{1: }                                             |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -83,7 +93,7 @@ describe('terminal cursor', function()
                                                           |
                                                           |
                                                           |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       show_cursor()
       screen:expect([[
@@ -93,28 +103,28 @@ describe('terminal cursor', function()
                                                           |
                                                           |
                                                           |
-        -- TERMINAL --                                    |
+        {3:-- TERMINAL --}                                    |
       ]])
       -- same for when the terminal is unfocused
       feed('<c-\\><c-n>')
       hide_cursor()
       screen:expect([[
         tty ready                                         |
-                                                          |
-                                                          |
-                                                          |
-                                                          |
         ^                                                  |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
                                                           |
       ]])
       show_cursor()
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
@@ -132,17 +142,12 @@ describe('cursor with customized highlighting', function()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
       [1] = {foreground = 45, background = 46},
-      [2] = {foreground = 55, background = 56}
+      [2] = {foreground = 55, background = 56},
+      [3] = {bold = true},
     })
-    screen:set_default_attr_ignore({
-      [1] = {bold = true},
-      [2] = {foreground = 12},
-      [3] = {bold = true, reverse = true},
-      [5] = {background = 11},
-      [6] = {foreground = 130},
-    })
-    screen:attach(false)
-    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    screen:attach({rgb=false})
+    command('call termopen(["'..nvim_dir..'/tty-test"])')
+    feed_command('startinsert')
   end)
 
   it('overrides the default highlighting', function()
@@ -153,16 +158,16 @@ describe('cursor with customized highlighting', function()
                                                         |
                                                         |
                                                         |
-      -- TERMINAL --                                    |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)
