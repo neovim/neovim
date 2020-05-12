@@ -57,6 +57,9 @@ tags
 # local make targets
 local.mk
 
+# Qt Creator
+CMakeLists.txt.user
+
 # runtime/doc
 /runtime/doc/*.html
 /runtime/doc/tags.ref
