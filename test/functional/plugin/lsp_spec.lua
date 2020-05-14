@@ -835,33 +835,30 @@ describe('LSP', function()
 
   describe('apply_text_document_edit', function()
     local target_bufnr
+    local text_document_edit = function(editVersion)
+      return {
+        edits = {
+          make_edit(0, 0, 0, 3, "First ↥ 🤦 🦄")
+      },
+        textDocument = {
+          uri = "file://fake/uri";
+          version = editVersion
+        }
+      }
+    end
     before_each(function()
       target_bufnr = exec_lua [[
-        local bufnr = vim.fn.bufadd("fake/uri")
-        local lines = {"1st line of text", "2nd line of text"}
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {"1st line of text", "2nd line of 语text"}
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         return bufnr
       ]]
     end)
     it('correctly goes ahead with the edit if all is normal', function()
-      local text_document_edit = {
-        edits = {
-          make_edit(0, 0, 0, 3, "First")
-        },
-        textDocument = {
-          uri = "file://fake/uri";
-          version = 5
-        }
-      }
-      exec_lua([[
-        local args = {...}
-        local target_bufnr = args[2]
-        vim.lsp.util.buf_versions[target_bufnr] = 4
-        vim.lsp.util.apply_text_document_edit(...)
-      ]], text_document_edit, target_bufnr)
+      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit(5))
       eq({
-        'First line of text';
-        '2nd line of text';
+        'First ↥ 🤦 🦄 line of text';
+        '2nd line of 语text';
       }, buf_lines(target_bufnr))
     end)
     it('correctly goes ahead with the edit if the version is vim.NIL', function()
@@ -871,45 +868,38 @@ describe('LSP', function()
       ]]
       eq(json.b, exec_lua("return vim.NIL"))
 
-      local text_document_edit = {
-        edits = {
-          make_edit(0, 0, 0, 3, "First")
-        },
-        textDocument = {
-          uri = "file://fake/uri";
-          version = exec_lua("return vim.NIL")
-        }
-      }
-      exec_lua([[
-        local args = {...}
-        local target_bufnr = args[2]
-        vim.lsp.util.buf_versions[target_bufnr] = vim.NIL
-        vim.lsp.util.apply_text_document_edit(...)
-      ]], text_document_edit, target_bufnr)
+      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit(exec_lua("return vim.NIL")))
       eq({
-        'First line of text';
-        '2nd line of text';
+        'First ↥ 🤦 🦄 line of text';
+        '2nd line of 语text';
       }, buf_lines(target_bufnr))
     end)
     it('skips the edit if the version of the edit is behind the local buffer ', function()
-      local text_document_edit = {
-        edits = {
-          make_edit(0, 0, 0, 3, "First")
-        },
-        textDocument = {
-          uri = "file://fake/uri";
-          version = 1
-        }
-      }
-      exec_lua([[
-        local args = {...}
-        local target_bufnr = args[2]
-        vim.lsp.util.buf_versions[target_bufnr] = 2
-        vim.lsp.util.apply_text_document_edit(...)
-      ]], text_document_edit, target_bufnr)
-      eq({
+      local apply_edit_mocking_current_version = function(edit, versionedBuf)
+        exec_lua([[
+          local args = {...}
+          local versionedBuf = args[2]
+          vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
+          vim.lsp.util.apply_text_document_edit(...)
+        ]], edit, versionedBuf)
+      end
+
+      local baseText = {
         '1st line of text';
-        '2nd line of text';
+        '2nd line of 语text';
+      }
+
+      eq(baseText, buf_lines(target_bufnr))
+
+      -- Apply an edit for an old version, should skip
+      apply_edit_mocking_current_version(text_document_edit(2), {currentVersion=7; bufnr=target_bufnr})
+      eq(baseText, buf_lines(target_bufnr)) -- no change
+
+      -- Sanity check that next version to current does apply change
+      apply_edit_mocking_current_version(text_document_edit(8), {currentVersion=7; bufnr=target_bufnr})
+      eq({
+        'First ↥ 🤦 🦄 line of text';
+        '2nd line of 语text';
       }, buf_lines(target_bufnr))
     end)
   end)
