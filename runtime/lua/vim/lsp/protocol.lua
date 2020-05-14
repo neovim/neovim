@@ -703,6 +703,7 @@ function protocol.make_client_capabilities()
         };
         hierarchicalWorkspaceSymbolSupport = true;
       };
+      applyEdit = true;
     };
     experimental = nil;
   }
