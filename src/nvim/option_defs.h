@@ -304,7 +304,7 @@ EXTERN char_u   *p_bkc;         // 'backupcopy'
 EXTERN unsigned int bkc_flags;  ///< flags from 'backupcopy'
 #ifdef IN_OPTION_C
 static char *(p_bkc_values[]) =
-{"yes", "auto", "no", "breaksymlink", "breakhardlink", NULL};
+{ "yes", "auto", "no", "breaksymlink", "breakhardlink", "", NULL };
 #endif
 # define BKC_YES                0x001
 # define BKC_AUTO               0x002
@@ -317,11 +317,11 @@ EXTERN char_u *p_bo;              // 'belloff'
 EXTERN char breakat_flags[256];   // which characters are in 'breakat'
 EXTERN unsigned bo_flags;
 # ifdef IN_OPTION_C
-static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
+static char *(p_bo_values[]) = { "all", "backspace", "cursor", "complete",
   "copy", "ctrlg", "error", "esc", "ex",
   "hangul", "insertmode", "lang", "mess",
   "showmatch", "operator", "register", "shell",
-  "spell", "wildmode", NULL};
+  "spell", "wildmode", "", NULL };
 # endif
 
 // values for the 'belloff' option
@@ -350,7 +350,7 @@ EXTERN char_u   *p_breakat;     // 'breakat'
 EXTERN char_u   *p_cmp;         // 'casemap'
 EXTERN unsigned cmp_flags;
 # ifdef IN_OPTION_C
-static char *(p_cmp_values[]) = {"internal", "keepascii", NULL};
+static char *(p_cmp_values[]) = { "internal", "keepascii", "", NULL };
 # endif
 # define CMP_INTERNAL           0x001
 # define CMP_KEEPASCII          0x002
@@ -361,7 +361,7 @@ EXTERN char_u   *p_cedit;       // 'cedit'
 EXTERN char_u   *p_cb;          // 'clipboard'
 EXTERN unsigned cb_flags;
 #ifdef IN_OPTION_C
-static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
+static char *(p_cb_values[]) = { "unnamed", "unnamedplus", "", NULL };
 #endif
 # define CB_UNNAMED             0x001
 # define CB_UNNAMEDPLUS         0x002
@@ -397,7 +397,7 @@ EXTERN char_u   *p_dy;          // 'display'
 EXTERN unsigned dy_flags;
 #ifdef IN_OPTION_C
 static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep",
-                                  NULL };
+                                 "", NULL };
 #endif
 #define DY_LASTLINE             0x001
 #define DY_TRUNCATE             0x002
@@ -424,9 +424,9 @@ EXTERN long p_fdls;             // 'foldlevelstart'
 EXTERN char_u   *p_fdo;         // 'foldopen'
 EXTERN unsigned fdo_flags;
 # ifdef IN_OPTION_C
-static char *(p_fdo_values[]) = {"all", "block", "hor", "mark", "percent",
-                                 "quickfix", "search", "tag", "insert",
-                                 "undo", "jump", NULL};
+static char *(p_fdo_values[]) = { "all", "block", "hor", "mark", "percent",
+                                  "quickfix", "search", "tag", "insert",
+                                  "undo", "jump", "", NULL };
 # endif
 # define FDO_ALL                0x001
 # define FDO_BLOCK              0x002
@@ -478,7 +478,7 @@ EXTERN int p_js;                // 'joinspaces'
 EXTERN char_u *p_jop;           // 'jumpooptions'
 EXTERN unsigned jop_flags;
 #ifdef IN_OPTION_C
-static char *(p_jop_values[]) = { "stack", NULL };
+static char *(p_jop_values[]) = { "stack", "", NULL };
 #endif
 #define JOP_STACK               0x01
 EXTERN char_u   *p_kp;          // 'keywordprg'
@@ -532,6 +532,7 @@ static char *(p_rdb_values[]) = {
   "nothrottle",
   "invalid",
   "nodelta",
+  "",
   NULL
 };
 # endif
@@ -566,7 +567,7 @@ EXTERN unsigned ssop_flags;
 static char *(p_ssop_values[]) = {
   "buffers", "winpos", "resize", "winsize",
   "localoptions", "options", "help", "blank", "globals", "slash", "unix",
-  "sesdir", "curdir", "folds", "cursor", "tabpages", NULL
+  "sesdir", "curdir", "folds", "cursor", "tabpages", "", NULL
 };
 # endif
 # define SSOP_BUFFERS           0x001
@@ -620,7 +621,7 @@ EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) =
-  { "useopen", "usetab", "split", "newtab", "vsplit", "uselast", NULL };
+  { "useopen", "usetab", "split", "newtab", "vsplit", "uselast", "", NULL };
 #endif
 #define SWB_USEOPEN             0x001
 #define SWB_USETAB              0x002
@@ -672,7 +673,8 @@ EXTERN int p_vb;                ///< 'visualbell'
 EXTERN char_u *p_ve;            ///< 'virtualedit'
 EXTERN unsigned ve_flags;
 # ifdef IN_OPTION_C
-static char *(p_ve_values[]) = {"block", "insert", "all", "onemore", NULL};
+static char *(p_ve_values[]) = { "block", "insert", "all",
+                                 "onemore", "", NULL };
 # endif
 # define VE_BLOCK       5       // includes "all"
 # define VE_INSERT      6       // includes "all"
@@ -688,7 +690,7 @@ EXTERN int p_warn;              // 'warn'
 EXTERN char_u   *p_wop;         // 'wildoptions'
 EXTERN unsigned wop_flags;
 # ifdef IN_OPTION_C
-static char *(p_wop_values[]) =  { "tagfile", "pum", NULL };
+static char *(p_wop_values[]) =  { "tagfile", "pum", "", NULL };
 #endif
 #define WOP_TAGFILE             0x01
 #define WOP_PUM                 0x02

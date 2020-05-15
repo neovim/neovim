@@ -285,36 +285,39 @@ typedef struct vimoption {
 
 #define PARAM_COUNT ARRAY_SIZE(options)
 
-static char *(p_ambw_values[]) =      { "single", "double", NULL };
-static char *(p_bg_values[]) =        { "light", "dark", NULL };
-static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha", NULL };
-static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, NULL };
+static char *(p_ambw_values[]) =      { "single", "double", "", NULL };
+static char *(p_bg_values[]) =        { "light", "dark", "", NULL };
+static char *(p_nf_values[]) =        { "bin", "octal", "hex",
+                                        "alpha", "", NULL };
+static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, "", NULL };
 static char *(p_wak_values[]) =       { "yes", "menu", "no", NULL };
 static char *(p_mousem_values[]) =    { "extend", "popup", "popup_setpos",
-                                        "mac", NULL };
+                                        "mac", "", NULL };
 static char *(p_sel_values[]) =       { "inclusive", "exclusive", "old", NULL };
-static char *(p_slm_values[]) =       { "mouse", "key", "cmd", NULL };
-static char *(p_km_values[]) =        { "startsel", "stopsel", NULL };
-static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
-static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
-static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
+static char *(p_slm_values[]) =       { "mouse", "key", "cmd", "", NULL };
+static char *(p_km_values[]) =        { "startsel", "stopsel", "", NULL };
+static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", "", NULL };
+static char *(p_debug_values[]) =     { "msg", "throw", "beep", "", NULL };
+static char *(p_ead_values[]) =       { "both", "ver", "hor", "", NULL };
 static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
                                         "help", "acwrite", "terminal",
-                                        "prompt", NULL };
+                                        "prompt", "", NULL };
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
-                                        "wipe", NULL };
-static char *(p_bs_values[]) =        { "indent", "eol", "start", NULL };
+                                        "wipe", "", NULL };
+static char *(p_bs_values[]) =        { "indent", "eol", "start", "", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
-static char *(p_fcl_values[]) =       { "all", NULL };
-static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
-                                        "noinsert", "noselect", NULL };
-static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
-static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
-  "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
+static char *(p_fcl_values[]) =       { "all", "", NULL };
+static char *(p_cot_values[]) =       { "menu", "menuone", "longest",
+                                        "preview", "noinsert",
+                                        "noselect", "", NULL };
+static char *(p_icm_values[]) =       { "nosplit", "split", "", NULL };
+static char *(p_scl_values[]) =       {  "yes", "no",
+  "auto", "auto:1", "auto:2", "auto:3", "auto:4", "auto:5", "auto:6", "auto:7",
+  "auto:8", "auto:9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
-  "yes:9", NULL };
+  "yes:9", "", NULL };
 static char *(p_fdc_values[]) =       { "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL };
@@ -2744,8 +2747,7 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (varp == &p_wak) {  // 'winaltkeys'
-    if (*p_wak == NUL
-        || check_opt_strings(p_wak, p_wak_values, false) != OK) {
+    if (check_opt_strings(p_wak, p_wak_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_ei) {  // 'eventignore'
@@ -3022,8 +3024,7 @@ ambw_end:
     did_set_title();
 
   } else if (varp == &p_sel) {  // 'selection'
-    if (*p_sel == NUL
-        || check_opt_strings(p_sel, p_sel_values, false) != OK) {
+    if (check_opt_strings(p_sel, p_sel_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_slm) {  // 'selectmode'
@@ -3220,8 +3221,7 @@ ambw_end:
     if ((opt_flags & OPT_LOCAL) && *p == NUL) {
       // make the local value empty: use the global value
       *flags = 0;
-    } else if (*p == NUL
-               || opt_strings_flags(p, p_tc_values, flags, false) != OK) {
+    } else if (opt_strings_flags(p, p_tc_values, flags, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_cmp) {  // 'casemap'
@@ -3233,8 +3233,7 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
-    if (check_opt_strings(*varp, p_fdm_values, false) != OK
-        || *curwin->w_p_fdm == NUL) {
+    if (check_opt_strings(*varp, p_fdm_values, false) != OK) {
       errmsg = e_invarg;
     } else {
       foldUpdateAll(curwin);
@@ -6963,7 +6962,6 @@ static void fill_breakat_flags(void)
 /// Check an option that can be a range of string values.
 ///
 /// Return OK for correct value, FAIL otherwise.
-/// Empty is always OK.
 static int check_opt_strings(
     char_u *val,
     char **values,
@@ -6977,7 +6975,6 @@ static int check_opt_strings(
 /// Set a flag in "*flagp" for each string present.
 ///
 /// Return OK for correct value, FAIL otherwise.
-/// Empty is always OK.
 static int opt_strings_flags(
     char_u *val,             // new value
     char **values,           // array of valid string values
@@ -6987,22 +6984,37 @@ static int opt_strings_flags(
 {
   unsigned int new_flags = 0;
 
-  while (*val) {
+  if (*val == NUL) {
     for (unsigned int i = 0;; i++) {
-      if (values[i] == NULL) {          // val not found in values[]
+      if (values[i] == NULL) {
+        if (flagp != NULL) {
+          *flagp = new_flags;
+        }
         return FAIL;
       }
+      if (*values[i] == NUL) {
+        break;
+      }
+    }
+  } else {
+    while (*val) {
+      for (unsigned int i = 0;; i++) {
+        if (values[i] == NULL) {          // val not found in values[]
+          return FAIL;
+        }
 
-      size_t len = STRLEN(values[i]);
-      if (STRNCMP(values[i], val, len) == 0
-          && ((list && val[len] == ',') || val[len] == NUL)) {
-        val += len + (val[len] == ',');
-        assert(i < sizeof(1U) * 8);
-        new_flags |= (1U << i);
-        break;                  // check next item in val list
+        size_t len = STRLEN(values[i]);
+        if (STRNCMP(values[i], val, len) == 0
+            && ((list && val[len] == ',') || val[len] == NUL)) {
+          val += len + (val[len] == ',');
+          assert(i < sizeof(1U) * 8);
+          new_flags |= (1U << i);
+          break;                  // check next item in val list
+        }
       }
     }
   }
+
   if (flagp != NULL) {
     *flagp = new_flags;
   }
