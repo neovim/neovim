@@ -731,6 +731,9 @@ transform_schema_to_table()
 ==============================================================================
 Lua module: vim.lsp.buf                                              *lsp-buf*
 
+code_action({context})                             *vim.lsp.buf.code_action()*
+                TODO: Documentation
+
 completion({context})                               *vim.lsp.buf.completion()*
                 TODO: Documentation
 
