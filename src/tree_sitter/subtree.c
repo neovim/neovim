@@ -21,7 +21,7 @@ typedef struct {
 #define TS_MAX_INLINE_TREE_LENGTH UINT8_MAX
 #define TS_MAX_TREE_POOL_SIZE 32
 
-static const ExternalScannerState empty_state = {.length = 0, .short_data = {0}};
+static const ExternalScannerState empty_state = {{.short_data = {0}}, .length = 0};
 
 // ExternalScannerState
 
@@ -208,7 +208,7 @@ Subtree ts_subtree_new_leaf(
       .has_external_tokens = has_external_tokens,
       .is_missing = false,
       .is_keyword = is_keyword,
-      .first_leaf = {.symbol = 0, .parse_state = 0},
+      {{.first_leaf = {.symbol = 0, .parse_state = 0}}}
     };
     return (Subtree) {.ptr = data};
   }
@@ -464,15 +464,17 @@ MutableSubtree ts_subtree_new_node(SubtreePool *pool, TSSymbol symbol,
   *data = (SubtreeHeapData) {
     .ref_count = 1,
     .symbol = symbol,
-    .production_id = production_id,
     .visible = metadata.visible,
     .named = metadata.named,
     .has_changes = false,
     .fragile_left = fragile,
     .fragile_right = fragile,
     .is_keyword = false,
-    .node_count = 0,
-    .first_leaf = {.symbol = 0, .parse_state = 0},
+    {{
+      .node_count = 0,
+      .production_id = production_id,
+      .first_leaf = {.symbol = 0, .parse_state = 0},
+    }}
   };
   MutableSubtree result = {.ptr = data};
   ts_subtree_set_children(result, children->contents, children->size, language);
