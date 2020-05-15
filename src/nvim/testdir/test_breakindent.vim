@@ -361,5 +361,15 @@ func Test_breakindent19_sbr_nextpage()
 	\ "> aaaaaaaaaaaaaaaaaa",
 	\ ]
   call s:compare_lines(expect, lines)
+
+  setl breakindent briopt=min:18 sbr=>
+  norm! 5gj
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ ">aaaaaaaaaaaaaaaaaaa",
+	\ ">aaaaaaaaaaaaaaaaaaa",
+	\ ">aaaaaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
   call s:close_windows('set breakindent& briopt& sbr&')
 endfunc

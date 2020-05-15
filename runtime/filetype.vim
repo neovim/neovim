@@ -1129,6 +1129,9 @@ au BufNewFile,BufRead pf.conf			setf pf
 " Pam conf
 au BufNewFile,BufRead */etc/pam.conf		setf pamconf
 
+" Pam environment
+au BufNewFile,BufRead pam_env.conf,.pam_environment	setf pamenv
+
 " PApp
 au BufNewFile,BufRead *.papp,*.pxml,*.pxsl	setf papp
 

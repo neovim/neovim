@@ -6393,20 +6393,14 @@ static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     os_closedir(&dir);
   }
 
-  rettv->vval.v_list = tv_list_alloc(kListLenShouldKnow);
-  if (rettv->vval.v_list != NULL) {
-    tv_list_ref(rettv->vval.v_list);
+  if (rettv->vval.v_list != NULL && ga.ga_len > 0) {
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
     for (int i = 0; i < ga.ga_len; i++) {
       path = ((const char **)ga.ga_data)[i];
       tv_list_append_string(rettv->vval.v_list, path, -1);
     }
   }
-  for (int i = 0; i < ga.ga_len; i++) {
-    xfree(((uint8_t **)ga.ga_data)[i]);
-  }
-
-  ga_clear(&ga);
+  ga_clear_strings(&ga);
 }
 
 /*
