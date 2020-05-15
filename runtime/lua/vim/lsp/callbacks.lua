@@ -3,12 +3,52 @@ local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
+local buf = require 'vim.lsp.buf'
 
 local M = {}
 
 local function err_message(...)
   api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
   api.nvim_command("redraw")
+end
+
+M['workspace/executeCommand'] = function(err, _)
+  if err then
+    error("Could not execute code action: "..err.message)
+  end
+end
+
+M['textDocument/codeAction'] = function(_, _, actions)
+  if vim.tbl_isempty(actions) then
+    print("No code actions available")
+    return
+  end
+
+  local option_strings = {"Code Actions:"}
+  for i, action in ipairs(actions) do
+    local title = action.title:gsub('\r\n', '\\r\\n')
+    title = title:gsub('\n', '\\n')
+    table.insert(option_strings, string.format("%d. %s", i, title))
+  end
+
+  local choice = vim.fn.inputlist(option_strings)
+  if choice < 1 or choice > #actions then
+    return
+  end
+  local action_chosen = actions[choice]
+  -- textDocument/codeAction can return either Command[] or CodeAction[].
+  -- If it is a CodeAction, it can have either an edit, a command or both.
+  -- Edits should be executed first
+  if action_chosen.edit or type(action_chosen.command) == "table" then
+    if action_chosen.edit then
+      util.apply_workspace_edit(action_chosen.edit)
+    end
+    if type(action_chosen.command) == "table" then
+      buf.execute_command(action_chosen.command)
+    end
+  else
+    buf.execute_command(action_chosen)
+  end
 end
 
 M['workspace/applyEdit'] = function(_, _, workspace_edit)
