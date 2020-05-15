@@ -731,7 +731,7 @@ do
     end
 
     local diagnostics_by_line = M.diagnostics_group_by_line(buffer_diagnostics)
-    return diagnostics_by_line[linenr]
+    return diagnostics_by_line[linenr] or {}
   end
 
   function M.show_line_diagnostics()
