@@ -7583,8 +7583,18 @@ int csh_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
+  return win_signcol_configured(wp, NULL);
+}
+
+/// Return the number of requested sign columns, based on user / configuration.
+int win_signcol_configured(win_T *wp, int *is_fixed)
+{
   int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
+
+  if (is_fixed) {
+    *is_fixed = 1;
+  }
 
   // Note: It checks "no" or "number" in 'signcolumn' option
   if (*scl == 'n'
@@ -7603,7 +7613,11 @@ int win_signcol_count(win_T *wp)
     return 1;
   }
 
-  // auto or auto:<NUM>
+  if (is_fixed) {
+    // auto or auto:<NUM>
+    *is_fixed = 0;
+  }
+
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';
