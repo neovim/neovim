@@ -373,3 +373,52 @@ func Test_breakindent19_sbr_nextpage()
   call s:compare_lines(expect, lines)
   call s:close_windows('set breakindent& briopt& sbr&')
 endfunc
+
+func Test_breakindent20_cpo_n_nextpage()
+  let s:input = ""
+  call s:test_windows('setl breakindent briopt=min:14 cpo+=n number')
+  call setline(1, repeat('a', 200))
+  norm! 1gg
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "  1 aaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " Scroll down one screen line
+  setl scrolloff=5
+  norm! 5gj
+  redraw!
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "--1 aaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaaaaaaa",
+	\ "    aaaaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+
+  setl briopt+=shift:2
+  norm! 1gg
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "  1 aaaaaaaaaaaaaaaa",
+	\ "      aaaaaaaaaaaaaa",
+	\ "      aaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " Scroll down one screen line
+  norm! 5gj
+  let lines = s:screen_lines(1, 20)
+  let expect = [
+	\ "--1   aaaaaaaaaaaaaa",
+	\ "      aaaaaaaaaaaaaa",
+	\ "      aaaaaaaaaaaaaa",
+	\ ]
+  call s:compare_lines(expect, lines)
+
+  call s:close_windows('set breakindent& briopt& cpo& number&')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

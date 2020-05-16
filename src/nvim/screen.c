@@ -2994,6 +2994,12 @@ win_line (
           c_final = NUL;
           n_extra =
             get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
+          if (row == startrow) {
+            n_extra -= win_col_off2(wp);
+            if (n_extra < 0) {
+              n_extra = 0;
+            }
+          }
           if (wp->w_skipcol > 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
             need_showbreak = false;
           }
