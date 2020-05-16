@@ -19,7 +19,7 @@ M['workspace/executeCommand'] = function(err, _)
 end
 
 M['textDocument/codeAction'] = function(_, _, actions)
-  if vim.tbl_isempty(actions) then
+  if actions == nil or vim.tbl_isempty(actions) then
     print("No code actions available")
     return
   end
