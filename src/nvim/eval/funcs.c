@@ -93,6 +93,7 @@ PRAGMA_DIAG_POP
 
 static char *e_listarg = N_("E686: Argument of %s must be a List");
 static char *e_stringreq = N_("E928: String required");
+static char *e_invalwindow = N_("E957: Invalid window number");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -952,12 +953,30 @@ static void f_cindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = -1;
 }
 
+static win_T * get_optional_window(typval_T *argvars, int idx)
+{
+  win_T *win = curwin;
+
+  if (argvars[idx].v_type != VAR_UNKNOWN) {
+    win = find_win_by_nr_or_id(&argvars[idx]);
+    if (win == NULL) {
+      EMSG(_(e_invalwindow));
+      return NULL;
+    }
+  }
+  return win;
+}
+
 /*
  * "clearmatches()" function
  */
 static void f_clearmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  clear_matches(curwin);
+  win_T *win = get_optional_window(argvars, 0);
+
+  if (win != NULL) {
+    clear_matches(win);
+  }
 }
 
 /*
@@ -3452,10 +3471,16 @@ static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  matchitem_T *cur = curwin->w_match_head;
+  matchitem_T *cur;
   int i;
+  win_T *win = get_optional_window(argvars, 0);
+
+  if (win == NULL) {
+    return;
+  }
 
   tv_list_alloc_ret(rettv, kListLenMayKnow);
+  cur = win->w_match_head;
   while (cur != NULL) {
     dict_T *dict = tv_dict_alloc();
     if (cur->match.regprog == NULL) {
@@ -5771,8 +5796,13 @@ static void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = match_delete(curwin,
-                                      (int)tv_get_number(&argvars[0]), true);
+  win_T   *win = get_optional_window(argvars, 1);
+  if (win == NULL) {
+    rettv->vval.v_number = -1;
+  } else {
+    rettv->vval.v_number = match_delete(curwin,
+                                        (int)tv_get_number(&argvars[0]), true);
+  }
 }
 
 /*
@@ -8136,14 +8166,19 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  dict_T      *d;
-  list_T      *s = NULL;
+  dict_T *d;
+  list_T *s = NULL;
+  win_T *win = get_optional_window(argvars, 1);
 
   rettv->vval.v_number = -1;
   if (argvars[0].v_type != VAR_LIST) {
     EMSG(_(e_listreq));
     return;
   }
+  if (win == NULL) {
+    return;
+  }
+
   list_T *const l = argvars[0].vval.v_list;
   // To some extent make sure that we are dealing with a list from
   // "getmatches()".
@@ -8167,7 +8202,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     li_idx++;
   });
 
-  clear_matches(curwin);
+  clear_matches(win);
   bool match_add_failed = false;
   TV_LIST_ITER_CONST(l, li, {
     int i = 0;
@@ -8213,13 +8248,13 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                  ? tv_get_string(&conceal_di->di_tv)
                                  : NULL);
     if (i == 0) {
-      if (match_add(curwin, group,
+      if (match_add(win, group,
                     tv_dict_get_string(d, "pattern", false),
                     priority, id, NULL, conceal) != id) {
         match_add_failed = true;
       }
     } else {
-      if (match_add(curwin, group, NULL, priority, id, s, conceal) != id) {
+      if (match_add(win, group, NULL, priority, id, s, conceal) != id) {
         match_add_failed = true;
       }
       tv_list_unref(s);

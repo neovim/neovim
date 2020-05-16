@@ -217,6 +217,19 @@ func Test_matchaddpos_otherwin()
   call assert_equal(screenattr(1,2), screenattr(2,2))
   call assert_notequal(screenattr(1,2), screenattr(1,4))
 
+  let savematches = getmatches(winid)
+  let expect = [
+        \ {'group': 'Search', 'pattern': '4', 'priority': 10, 'id': 4},
+        \ {'group': 'Error', 'id': 5, 'priority': 10, 'pos1': [1, 2, 1], 'pos2': [2, 2, 1]},
+        \]
+  call assert_equal(expect, savematches)
+
+  call clearmatches(winid)
+  call assert_equal([], getmatches(winid))
+
+  call setmatches(savematches, winid)
+  call assert_equal(expect, savematches)
+
   wincmd w
   bwipe!
   call clearmatches()

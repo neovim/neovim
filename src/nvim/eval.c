@@ -63,6 +63,7 @@ static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
+static char *e_invalwindow = N_("E957: Invalid window number");
 
 // TODO(ZyX-I): move to eval/executor
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
@@ -6776,7 +6777,7 @@ int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
   if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
     *win = find_win_by_nr_or_id(&di->di_tv);
     if (*win == NULL) {
-      EMSG(_("E957: Invalid window number"));
+      EMSG(_(e_invalwindow));
       return FAIL;
     }
   }
