@@ -15,11 +15,42 @@ local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
-local function request(method, params, callback)
+local function request(method, default_params, overrides)
   validate {
-    method = {method, 's'};
-    callback = {callback, 'f', true};
+    method = {method, 's'},
+    default_params = {default_params, 't'},
+    overrides = {overrides, 't', true},
   }
+
+  overrides = overrides or {}
+  local override_params = overrides.params or {}
+  local callback_override = overrides.callbacks or nil
+
+  local params = vim.tbl_deep_extend('force', default_params, override_params)
+
+  local callback = nil
+  if callback_override then
+    if vim.is_callable(callback_override) then
+      callback = callback_override
+    elseif vim.tbl_islist(callback_override) then
+      callback = function(err, method, params, client_id, bufnr)
+        if err then
+          error(tostring(err))
+        end
+
+        for _, v in ipairs(callback_override) do
+          local result = v(err, method, params, client_id, bufnr)
+
+          if result then
+            return
+          end
+        end
+      end
+    else
+      error(string.format("Invalid parameter `callback_override`: %s", vim.inspect(callback_override)))
+    end
+  end
+
   return vim.lsp.buf_request(0, method, params, callback)
 end
 
@@ -29,6 +60,9 @@ end
 function M.server_ready()
   return not not vim.lsp.buf_notify(0, "window/progress", {})
 end
+
+M.config = {
+}
 
 function M.hover()
   local params = util.make_position_params()
@@ -40,24 +74,43 @@ function M.declaration()
   request('textDocument/declaration', params)
 end
 
-function M.definition()
-  local params = util.make_position_params()
-  request('textDocument/definition', params)
+--[[
+
+package.loaded['vim.lsp.actions'] = nil
+Location = require('vim.lsp.actions').Location
+
+vim.cmd "nnoremap <space>gd :lua vim.lsp.buf.definition {callbacks = { Location.jump_first, Location.highlight }}<CR>"
+vim.cmd "nnoremap <space>pd :lua vim.lsp.buf.definition {callbacks = Location.preview}<CR>"
+
+-- Builtin jump & highlight.
+vim.lsp.buf.definition { callbacks = { Location.jump, Location.highlight.with } } }
+
+-- Builtin jump. Highlight with override parameters
+vim.lsp.buf.definition { callbacks = { Location.jump, Location.highlight.with { timeout = 100, higroup = 'Error' } } }
+
+--]]
+
+--- Request textDocument/definition for current buffer.
+--
+-- <pre>
+-- nnoremap <space>gd <cmd>lua vim.lsp.buf.definition { callbacks = { Location.jump_first, Location.highlight } }<CR>
+-- nnoremap <space>pd <cmd>lua vim.lsp.buf.definition { callbacks = Location.preview }<CR>
+-- </pre>
+--
+function M.definition(args)
+  request('textDocument/definition', util.make_position_params(), args)
 end
 
-function M.type_definition()
-  local params = util.make_position_params()
-  request('textDocument/typeDefinition', params)
+function M.type_definition(args)
+  request('textDocument/typeDefinition', util.make_position_params(), args)
 end
 
-function M.implementation()
-  local params = util.make_position_params()
-  request('textDocument/implementation', params)
+function M.implementation(args)
+  request('textDocument/implementation', util.make_position_params(), args)
 end
 
-function M.signature_help()
-  local params = util.make_position_params()
-  request('textDocument/signatureHelp', params)
+function M.signature_help(args)
+  request('textDocument/signatureHelp', util.make_position_params(), args)
 end
 
 -- TODO(ashkan) ?

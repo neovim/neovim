@@ -947,7 +947,8 @@ describe('LSP', function()
         exec_lua([[
           local args = {...}
           local versionedBuf = args[2]
-          vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
+          -- vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
+          require("vim.lsp.structures").VersionedTextDocumentIdentifier.buf_set_version(versionedBuf.bufnr, versionedBuf.currentVersion)
           vim.lsp.util.apply_text_document_edit(...)
         ]], edit, versionedBuf)
       end
@@ -1029,22 +1030,24 @@ describe('LSP', function()
       eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
     end)
   end)
+
   describe('buf_diagnostics_save_positions', function()
-    it('stores the diagnostics in diagnostics_by_buf', function ()
-      local diagnostics = {
-        { range = {}; message = "diag1" },
-        { range = {}; message = "diag2" },
+    it('stores the diagnostics and can retrieve them.', function ()
+      local range = {
+        start = { line = 0; character = 1; };
+        ["end"] = { line = 0; character = 3; };
       }
-      exec_lua([[
-        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, diagnostics)
-      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf ]])
-      eq(diagnostics, exec_lua [[
-        for _, diagnostics in pairs(vim.lsp.util.diagnostics_by_buf) do
-          return diagnostics
-        end
-      ]])
+
+      local diagnostics = {
+        { range = range; message = "diag1", severity = 1 },
+        { range = range; message = "diag2", severity = 2 },
+      }
+
+      exec_lua([[vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, diagnostics)
+      eq(diagnostics, exec_lua [[return vim.lsp.util.buf_diagnostics_get_positions(0)]])
     end)
   end)
+
   describe('lsp.util.show_line_diagnostics', function()
     it('creates floating window and returns popup bufnr and winnr if current line contains diagnostics', function()
       eq(3, exec_lua [[
@@ -1465,6 +1468,69 @@ describe('LSP', function()
     end)
   end)
 
+  describe('lsp.util.generate_config', function()
+    it('should handle set defaults', function()
+      eq(true, exec_lua[[
+        local config = require('vim.lsp.util').generate_config({
+          test_value = { true, 'b' }
+        })
+
+        return config.test_value
+      ]])
+    end)
+
+    it('should handle simple values', function()
+      eq(false, exec_lua[[
+        local config = require('vim.lsp.util').generate_config({
+          test_value = { true, 'b' }
+        })
+
+        config.test_value = false
+        return config.test_value
+      ]])
+    end)
+
+    it('should do side effects', function()
+      eq(true, exec_lua[[
+        vim.g.side_effect = false
+
+        local config = require('vim.lsp.util').generate_config({
+          do_side_effect = { false, 'b', function(v) vim.g.side_effect = v end }
+        })
+
+        config.do_side_effect = true
+
+        return vim.g.side_effect
+      ]])
+    end)
+
+    it('should keep doing side effects', function()
+      eq(3, exec_lua[[
+        vim.g.called_count = 0
+
+        local config = require('vim.lsp.util').generate_config({
+          do_side_effect = { false, 'b', function(v) vim.g.called_count = vim.g.called_count + 1 end }
+        })
+
+        -- Calls it once during setup, and then two times below
+        config.do_side_effect = true
+        config.do_side_effect = true
+
+        return vim.g.called_count
+      ]])
+    end)
+
+    it('should error when setting invalid settings', function()
+      eq(false, exec_lua[[
+        local config = require('vim.lsp.util').generate_config({
+          test_value = { true, 'b' }
+        })
+
+        return pcall(function() config.unsupported_value = 7 end)
+      ]])
+    end)
+  end)
+
   describe('lsp.util._make_floating_popup_size', function()
     before_each(function()
       exec_lua [[ contents =
@@ -1496,5 +1562,205 @@ describe('LSP', function()
     it('with softtabstop = 1', function() test_tabstop(1, 1) end)
     it('with softtabstop = 0', function() test_tabstop(2, 0) end)
     it('with softtabstop = -1', function() test_tabstop(3, -1) end)
+  end)
+
+  describe('structures', function()
+    describe('diagnostic', function()
+      describe('handle_publish_diagnostics', function()
+        local target_bufnr, fake_uri
+
+        before_each(function()
+          clear()
+
+          exec_lua [[
+          require('vim.lsp')
+
+          make_range = function(x1, y1, x2, y2)
+            return { start = { line = x1, character = y1 }, ['end'] = { line = x2, character = y2 } }
+          end
+
+          make_error = function(msg, x1, y1, x2, y2)
+            return {
+              range = make_range(x1, y1, x2, y2),
+              message = msg,
+              severity = 1,
+            }
+          end
+
+          make_warning = function(msg, x1, y1, x2, y2)
+            return {
+              range = make_range(x1, y1, x2, y2),
+              message = msg,
+              severity = 2,
+            }
+          end
+
+          count_of_extmarks_for_client = function(bufnr, client_id)
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+            return #vim.api.nvim_buf_get_extmarks(bufnr, Diagnostic._get_diagnostic_namespace(client_id), 0, -1, {})
+          end
+          ]]
+
+          fake_uri = "file://fake/uri"
+
+          target_bufnr = exec_lua([[
+            fake_uri = ...
+            target_bufnr = vim.uri_to_bufnr(fake_uri)
+            local lines = {"1st line of text", "2nd line of text"}
+            vim.fn.bufload(target_bufnr)
+            vim.api.nvim_buf_set_lines(target_bufnr, 0, 1, false, lines)
+            return target_bufnr
+          ]], fake_uri)
+        end)
+
+        it('should be able to save and count a single client', function()
+          eq(1, exec_lua [[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_error('Diagnostic #1', 1, 1, 1, 1),
+              }, 0, 1
+            )
+
+            return Diagnostic.get_counts(0, "Error", 1)
+          ]])
+        end)
+
+        it('should be able to save and count a single client', function()
+          eq(2, exec_lua [[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_error('Diagnostic #1', 1, 1, 1, 1),
+                make_error('Diagnostic #2', 2, 1, 2, 1),
+              }, 0, 1
+            )
+
+            return Diagnostic.get_counts(0, "Error", 1)
+          ]])
+        end)
+
+        it('should be able to save and count from multiple clients', function()
+          eq({1, 1, 2}, exec_lua [[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_error('Diagnostic From Server 1', 1, 1, 1, 1),
+              }, 0, 1
+            )
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_error('Diagnostic From Server 2', 1, 1, 1, 1),
+              }, 0, 2
+            )
+
+            return {
+              -- Server 1
+              Diagnostic.get_counts(0, "Error", 1),
+              -- Server 2
+              Diagnostic.get_counts(0, "Error", 2),
+              -- All servers
+              Diagnostic.get_counts(0, "Error"),
+            }
+          ]])
+        end)
+
+        it('should be able to save and count from multiple clients with respect to severity', function()
+          eq({3, 0, 3}, exec_lua [[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_error('Diagnostic From Server 1:1', 1, 1, 1, 1),
+                make_error('Diagnostic From Server 1:2', 2, 2, 2, 2),
+                make_error('Diagnostic From Server 1:3', 2, 3, 3, 2),
+              }, 0, 1
+            )
+
+            Diagnostic.save_buf_diagnostics(
+              {
+                make_warning('Warning From Server 2', 3, 3, 3, 3),
+              }, 0, 2
+            )
+
+            return {
+              -- Server 1
+              Diagnostic.get_counts(0, "Error", 1),
+              -- Server 2
+              Diagnostic.get_counts(0, "Error", 2),
+              -- All servers
+              Diagnostic.get_counts(0, "Error"),
+            }
+          ]])
+        end)
+
+
+        it('should handle one server clearing highlights while the other still has highlights', function()
+          -- 1 Error (1)
+          -- 1 Warning (2)
+          -- 1 Warning (2) + 1 Warning (1)
+          -- 2 highlights and an underline (since error)
+          -- 1 highlight
+          eq({1, 1, 2, 3, 1}, exec_lua [[
+            local actions = require('vim.lsp.actions')
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            local server_1_diags = {
+              make_error("Error 1", 1, 1, 1, 5),
+              make_warning("Warning on Server 1", 2, 1, 2, 5),
+            }
+
+            local server_2_diags = {
+              make_warning("Warning 1", 2, 1, 2, 5),
+            }
+
+            actions.Diagnostic.handle_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
+            actions.Diagnostic.handle_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+
+            return {
+              Diagnostic.get_counts(target_bufnr, "Error", 1),
+              Diagnostic.get_counts(target_bufnr, "Warning", 2),
+              Diagnostic.get_counts(target_bufnr, "Warning"),
+              count_of_extmarks_for_client(target_bufnr, 1),
+              count_of_extmarks_for_client(target_bufnr, 2),
+            }
+          ]])
+
+          -- Clear diagnostics from server 1, and make sure we have the right amount of stuff for client 2
+          eq({1, 1, 2, 0, 1}, exec_lua [[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.buf_clear_displayed_diagnostics(target_bufnr, 1)
+
+            return {
+              Diagnostic.get_counts(target_bufnr, "Error", 1),
+              Diagnostic.get_counts(target_bufnr, "Warning", 2),
+              Diagnostic.get_counts(target_bufnr, "Warning"),
+              count_of_extmarks_for_client(target_bufnr, 1),
+              count_of_extmarks_for_client(target_bufnr, 2),
+            }
+          ]])
+
+          -- Show diagnostics from server 1 again
+          eq({1, 1, 2, 3, 1}, exec_lua([[
+            local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+            Diagnostic.display(nil, target_bufnr, 1)
+
+            return {
+              Diagnostic.get_counts(target_bufnr, "Error", 1),
+              Diagnostic.get_counts(target_bufnr, "Warning", 2),
+              Diagnostic.get_counts(target_bufnr, "Warning"),
+              count_of_extmarks_for_client(target_bufnr, 1),
+              count_of_extmarks_for_client(target_bufnr, 2),
+            }
+          ]]))
+        end)
+      end)
+    end)
   end)
 end)

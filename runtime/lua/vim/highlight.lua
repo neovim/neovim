@@ -2,6 +2,37 @@ local api = vim.api
 
 local highlight = {}
 
+--- Create a highlight link
+--
+--@param name (str): Highlight name
+--@param highlight_args (table): Table of key value pairs from |highlight-args|
+--@param default (boolean): Whether the highlight is a default or not.
+function highlight.create(name, highlight_args, default)
+  local keyword_strings = {}
+  for k, v in pairs(highlight_args) do
+    table.insert(keyword_strings, string.format("%s=%s", k, v))
+  end
+
+  local keyword_values = table.concat(keyword_strings, ' ')
+
+  api.nvim_command(
+    string.format(
+      "highlight %s %s %s",
+      default and "default" or '',
+      name,
+      keyword_values
+    )
+  )
+end
+
+--- Link two highlight groups.
+--
+--@param from_group (str): See |:hi-link|
+--@param to_group (str): See |:hi-link|
+function highlight.link(from_group, to_group)
+  api.nvim_command(string.format('highlight link %s %s', from_group, to_group))
+end
+
 --- Highlight range between two positions
 ---
 --@param bufnr number of buffer to apply highlighting to

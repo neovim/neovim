@@ -5,6 +5,12 @@ local vim = vim
 local api = vim.api
 local buf = require 'vim.lsp.buf'
 
+local Diagnostic = require('vim.lsp.actions').Diagnostic
+local Location = require('vim.lsp.actions').Location
+local TextEdit = require('vim.lsp.actions').TextEdit
+local Symbol = require('vim.lsp.actions').Symbol
+local WorkspaceEdit = require('vim.lsp.actions').WorkspaceEdit
+
 local M = {}
 
 local function err_message(...)
@@ -64,75 +70,17 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
   }
 end
 
-M['textDocument/publishDiagnostics'] = function(_, _, result)
-  if not result then return end
-  local uri = result.uri
-  local bufnr = vim.uri_to_bufnr(uri)
-  if not bufnr then
-    err_message("LSP.publishDiagnostics: Couldn't find buffer for ", uri)
-    return
-  end
+M['textDocument/publishDiagnostics'] = Diagnostic.handle_publish_diagnostics
 
-  -- Unloaded buffers should not handle diagnostics.
-  --    When the buffer is loaded, we'll call on_attach, which sends textDocument/didOpen.
-  --    This should trigger another publish of the diagnostics.
-  --
-  -- In particular, this stops a ton of spam when first starting a server for current
-  -- unloaded buffers.
-  if not api.nvim_buf_is_loaded(bufnr) then
-    return
-  end
+M['textDocument/references'] = Location.set_qflist
 
-  util.buf_clear_diagnostics(bufnr)
+M['textDocument/documentSymbol'] = Symbol.set_qflist
+M['workspace/symbol'] = Symbol.set_qflist
 
-  -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
-  -- The diagnostic's severity. Can be omitted. If omitted it is up to the
-  -- client to interpret diagnostics as error, warning, info or hint.
-  -- TODO: Replace this with server-specific heuristics to infer severity.
-  for _, diagnostic in ipairs(result.diagnostics) do
-    if diagnostic.severity == nil then
-      diagnostic.severity = protocol.DiagnosticSeverity.Error
-    end
-  end
+M['textDocument/rename'] = WorkspaceEdit.apply
 
-  util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
-  util.buf_diagnostics_underline(bufnr, result.diagnostics)
-  util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
-  util.buf_diagnostics_signs(bufnr, result.diagnostics)
-  vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
-end
-
-M['textDocument/references'] = function(_, _, result)
-  if not result then return end
-  util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
-end
-
-local symbol_callback = function(_, _, result, _, bufnr)
-  if not result or vim.tbl_isempty(result) then return end
-
-  util.set_qflist(util.symbols_to_items(result, bufnr))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
-end
-M['textDocument/documentSymbol'] = symbol_callback
-M['workspace/symbol'] = symbol_callback
-
-M['textDocument/rename'] = function(_, _, result)
-  if not result then return end
-  util.apply_workspace_edit(result)
-end
-
-M['textDocument/rangeFormatting'] = function(_, _, result)
-  if not result then return end
-  util.apply_text_edits(result)
-end
-
-M['textDocument/formatting'] = function(_, _, result)
-  if not result then return end
-  util.apply_text_edits(result)
-end
+M['textDocument/rangeFormatting'] = TextEdit.apply
+M['textDocument/formatting'] = TextEdit.apply
 
 M['textDocument/completion'] = function(_, _, result)
   if vim.tbl_isempty(result or {}) then return end
@@ -166,32 +114,10 @@ M['textDocument/hover'] = function(_, method, result)
   end)
 end
 
-local function location_callback(_, method, result)
-  if result == nil or vim.tbl_isempty(result) then
-    local _ = log.info() and log.info(method, 'No location found')
-    return nil
-  end
-
-  -- textDocument/definition can return Location or Location[]
-  -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-
-  if vim.tbl_islist(result) then
-    util.jump_to_location(result[1])
-
-    if #result > 1 then
-      util.set_qflist(util.locations_to_items(result))
-      api.nvim_command("copen")
-      api.nvim_command("wincmd p")
-    end
-  else
-    util.jump_to_location(result)
-  end
-end
-
-M['textDocument/declaration'] = location_callback
-M['textDocument/definition'] = location_callback
-M['textDocument/typeDefinition'] = location_callback
-M['textDocument/implementation'] = location_callback
+M['textDocument/declaration'] = Location.jump_and_quickfix
+M['textDocument/definition'] = Location.jump_and_quickfix
+M['textDocument/typeDefinition'] = Location.jump_and_quickfix
+M['textDocument/implementation'] = Location.jump_and_quickfix
 
 M['textDocument/signatureHelp'] = function(_, method, result)
   util.focusable_preview(method, function()

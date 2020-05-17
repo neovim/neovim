@@ -2,6 +2,7 @@ local default_callbacks = require 'vim.lsp.callbacks'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
+local structures = require 'vim.lsp.structures'
 local util = require 'vim.lsp.util'
 
 local vim = vim
@@ -173,7 +174,7 @@ local function text_document_did_open_handler(bufnr, client)
     }
   }
   client.notify('textDocument/didOpen', params)
-  util.buf_versions[bufnr] = params.textDocument.version
+  structures.VersionedTextDocumentIdentifier.buf_set_version(bufnr, params.textDocument.version)
 end
 
 --- LSP client object.
@@ -382,6 +383,7 @@ function lsp.start_client(config)
       client_ids[client_id] = nil
     end
     -- Buffer level cleanup
+    -- TODO(tjdevries): This needs to do the cleanup on a client basis now...
     vim.schedule(function()
       for _, bufnr in ipairs(active_buffers) do
         util.buf_clear_diagnostics(bufnr)
@@ -592,7 +594,7 @@ do
       return
     end
 
-    util.buf_versions[bufnr] = changedtick
+    structures.VersionedTextDocumentIdentifier.buf_set_version(bufnr, changedtick)
     -- Lazy initialize these because clients may not even need them.
     local incremental_changes = once(function(client)
       local size_index = encoding_index[client.offset_encoding]
@@ -699,7 +701,7 @@ function lsp.buf_attach_client(bufnr, client_id)
             client.notify('textDocument/didClose', params)
           end
         end)
-        util.buf_versions[bufnr] = nil
+        structures.VersionedTextDocumentIdentifier.buf_set_version(bufnr, nil)
         all_buffer_active_clients[bufnr] = nil
       end;
       -- TODO if we know all of the potential clients ahead of time, then we
@@ -814,7 +816,7 @@ function lsp.buf_request(bufnr, method, params, callback)
   validate {
     bufnr    = { bufnr, 'n', true };
     method   = { method, 's' };
-    callback = { callback, 'f', true };
+    callback = { callback, 'c', true };
   }
   local client_request_ids = {}
   for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
@@ -996,17 +998,7 @@ function lsp.get_log_path()
 end
 
 -- Define the LspDiagnostics signs if they're not defined already.
-do
-  local function define_default_sign(name, properties)
-    if vim.tbl_isempty(vim.fn.sign_getdefined(name)) then
-      vim.fn.sign_define(name, properties)
-    end
-  end
-  define_default_sign('LspDiagnosticsErrorSign', {text='E', texthl='LspDiagnosticsErrorSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsWarningSign', {text='W', texthl='LspDiagnosticsWarningSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsInformationSign', {text='I', texthl='LspDiagnosticsInformationSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsHintSign', {text='H', texthl='LspDiagnosticsHintSign', linehl='', numhl=''})
-end
+require("vim.lsp.structures").Diagnostic._define_default_signs_and_highlights()
 
 return lsp
 -- vim:sw=2 ts=2 et

@@ -1127,6 +1127,31 @@ get_line_diagnostics()                   *vim.lsp.util.get_line_diagnostics()*
 get_severity_highlight_name({severity})
                 TODO: Documentation
 
+                                              *vim.lsp.util.generate_config()*
+generate_config({input_config_options})
+               Generate a config helper for a module.
+
+               Useful to handle changes to configuration gracefully and easily.
+
+               Parameters:~
+                  {input_config_options} Table of the form:
+                      {
+                          k = {
+                            default_value,
+                            type_string,
+                            optional_on_set_function
+                          },
+                          ...
+                      }
+
+                      where:
+                          `default_value` is the default value for config.k
+                          `type_string` is the string passed to |vim.validate()|
+                          `optional_on_set_function` is a function to be called 
+                            when a value is set for the config.
+
+                            It is passed the new value.
+
 jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
                 TODO: Documentation
 

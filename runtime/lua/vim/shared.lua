@@ -497,7 +497,7 @@ vim.validate = (function()
     return tname
   end
   local function _is_type(val, t)
-    return t == 'callable' and vim.is_callable(val) or type(val) == t
+    return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
   return function(opt)
