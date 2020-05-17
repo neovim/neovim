@@ -645,7 +645,7 @@ func s:InstallCommands()
   command Gdb call win_gotoid(s:gdbwin)
   command Program call win_gotoid(s:ptywin)
   command Source call s:GotoSourcewinOrCreateIt()
-  " command Winbar call s:InstallWinbar()
+  command Winbar call s:InstallWinbar()
 
   " TODO: can the K mapping be restored?
   nnoremap K :Evaluate<CR>
@@ -654,6 +654,19 @@ func s:InstallCommands()
 endfunc
 
 " let s:winbar_winids = []
+
+" Install the window toolbar in the current window.
+func s:InstallWinbar()
+  " if has('menu') && &mouse != ''
+  "   nnoremenu WinBar.Step   :Step<CR>
+  "   nnoremenu WinBar.Next   :Over<CR>
+  "   nnoremenu WinBar.Finish :Finish<CR>
+  "   nnoremenu WinBar.Cont   :Continue<CR>
+  "   nnoremenu WinBar.Stop   :Stop<CR>
+  "   nnoremenu WinBar.Eval   :Evaluate<CR>
+  "   call add(s:winbar_winids, win_getid(winnr()))
+  " endif
+endfunc
 
 " Delete installed debugger commands in the current window.
 func s:DeleteCommands()
@@ -670,7 +683,7 @@ func s:DeleteCommands()
   delcommand Gdb
   delcommand Program
   delcommand Source
-  " delcommand Winbar
+  delcommand Winbar
 
   nunmap K
 
@@ -940,7 +953,7 @@ func s:GotoSourcewinOrCreateIt()
   if !win_gotoid(s:sourcewin)
     new
     let s:sourcewin = win_getid(winnr())
-    " call s:InstallWinbar()
+    call s:InstallWinbar()
   endif
 endfunc
 
@@ -971,7 +984,7 @@ func s:HandleCursor(msg)
           " TODO: find existing window
           exe 'split ' . fnameescape(fname)
           let s:sourcewin = win_getid(winnr())
-          " call s:InstallWinbar()
+          call s:InstallWinbar()
         else
           exe 'edit ' . fnameescape(fname)
         endif
