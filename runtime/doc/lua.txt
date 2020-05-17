@@ -703,7 +703,7 @@ https://github.com/machakann/vim-highlightedyank). To enable it, add
 to your `init.vim`. You can customize the highlight group and the duration of
 the highlight via
 >
- au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch, 500)
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch", 500)
 <
 
 vim.highlight.on_yank([{higroup}, {timeout}, {event}]) 
