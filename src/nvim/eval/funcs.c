@@ -5800,7 +5800,7 @@ static void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (win == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = match_delete(curwin,
+    rettv->vval.v_number = match_delete(win,
                                         (int)tv_get_number(&argvars[0]), true);
   }
 }
