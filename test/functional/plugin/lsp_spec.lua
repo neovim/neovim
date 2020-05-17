@@ -831,6 +831,30 @@ describe('LSP', function()
         'å ä ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
+
+    describe('with LSP end line after what Vim considers to be the end line', function()
+      it('applies edits when the last linebreak is considered a new line', function()
+        local edits = {
+          make_edit(0, 0, 5, 0, {"All replaced"});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({'All replaced'}, buf_lines(1))
+      end)
+      it('applies edits when the end line is 2 larger than vim\'s', function()
+        local edits = {
+          make_edit(0, 0, 6, 0, {"All replaced"});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({'All replaced'}, buf_lines(1))
+      end)
+      it('applies edits with a column offset', function()
+        local edits = {
+          make_edit(0, 0, 5, 2, {"All replaced"});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({'All replaced'}, buf_lines(1))
+      end)
+    end)
   end)
 
   describe('apply_text_document_edit', function()
