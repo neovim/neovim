@@ -478,6 +478,17 @@ describe('lua stdlib', function()
       return vim.tbl_islist(c) and vim.tbl_count(c) == 0
     ]]))
 
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 1 and c.x.b == 2 and c.x.c == nil and count == 1
+    ]]))
+
     eq('Error executing lua: .../shared.lua: invalid "behavior": nil',
       pcall_err(exec_lua, [[
         return vim.tbl_extend()
@@ -493,6 +504,94 @@ describe('lua stdlib', function()
     eq('Error executing lua: .../shared.lua: wrong number of arguments (given 2, expected at least 3)',
       pcall_err(exec_lua, [[
         return vim.tbl_extend("keep", {})
+      ]])
+    )
+  end)
+
+  it('vim.tbl_deep_extend', function()
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 1 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_deep_extend("force", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 2 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = {x = {c = 4, d = {y = 4}}}
+      local d = vim.tbl_deep_extend("keep", a, b, c)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return d.x.a == 1 and d.x.b == 2 and d.x.c.y == 3 and d.x.d.y == 4 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = {x = {c = 4, d = {y = 4}}}
+      local d = vim.tbl_deep_extend("force", a, b, c)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return d.x.a == 2 and d.x.b == 2 and d.x.c == 4 and d.x.d.y == 4 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = vim.empty_dict()
+      local b = {}
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return not vim.tbl_islist(c) and count == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {}
+      local b = vim.empty_dict()
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return vim.tbl_islist(c) and count == 0
+    ]]))
+
+    eq('Error executing lua: .../shared.lua: invalid "behavior": nil',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend()
+      ]])
+    )
+
+    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend("keep")
+      ]])
+    )
+
+    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend("keep", {})
       ]])
     )
   end)
