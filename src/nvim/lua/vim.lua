@@ -393,6 +393,7 @@ end
 --@param pos2 (line, column) tuple marking end of region
 --@param regtype type of selection (:help setreg)
 --@param inclusive boolean indicating whether the selection is end-inclusive
+--@return region lua table of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -434,6 +435,7 @@ end
 --- Use to do a one-shot timer that calls `fn`
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
+--@return timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate { fn = { fn, 'c', true}; }
   local timer = vim.loop.new_timer()
