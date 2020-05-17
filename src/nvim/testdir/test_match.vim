@@ -286,7 +286,7 @@ func Test_matchaddpos_error()
   call assert_fails("call matchaddpos('Error', [1], 1, 123, 1)", 'E715:')
   call assert_fails("call matchaddpos('Error', [1], 1, 5, {'window':12345})", 'E957:')
   " Why doesn't the following error have an error code E...?
-  call assert_fails("call matchaddpos('Error', [{}])", 'E290:')
+  call assert_fails("call matchaddpos('Error', [{}])", 'E5031:')
 endfunc
 
 func OtherWindowCommon()
