@@ -200,16 +200,7 @@ function vim.tbl_isempty(t)
   return next(t) == nil
 end
 
---- Merges two or more map-like tables.
----
---@see |extend()|
----
---@param behavior Decides what to do if a key is found in more than one map:
----      - "error": raise an error
----      - "keep":  use value from the leftmost map
----      - "force": use value from the rightmost map
---@param ... Two or more map-like tables.
-function vim.tbl_extend(behavior, ...)
+local function tbl_extend(behavior, deep_extend, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))
   end
@@ -228,7 +219,9 @@ function vim.tbl_extend(behavior, ...)
     vim.validate{["after the second argument"] = {tbl,'t'}}
     if tbl then
       for k, v in pairs(tbl) do
-        if behavior ~= 'force' and ret[k] ~= nil then
+        if type(v) == 'table' and deep_extend and not vim.tbl_islist(v) then
+          ret[k] = tbl_extend(behavior, true, ret[k] or vim.empty_dict(), v)
+        elseif behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
             error('key found in more than one map: '..k)
           end  -- Else behavior is "keep".
@@ -239,6 +232,32 @@ function vim.tbl_extend(behavior, ...)
     end
   end
   return ret
+end
+
+--- Merges two or more map-like tables.
+---
+--@see |extend()|
+---
+--@param behavior Decides what to do if a key is found in more than one map:
+---      - "error": raise an error
+---      - "keep":  use value from the leftmost map
+---      - "force": use value from the rightmost map
+--@param ... Two or more map-like tables.
+function vim.tbl_extend(behavior, ...)
+  return tbl_extend(behavior, false, ...)
+end
+
+--- Merges recursively two or more map-like tables.
+---
+--@see |tbl_extend()|
+---
+--@param behavior Decides what to do if a key is found in more than one map:
+---      - "error": raise an error
+---      - "keep":  use value from the leftmost map
+---      - "force": use value from the rightmost map
+--@param ... Two or more map-like tables.
+function vim.tbl_deep_extend(behavior, ...)
+  return tbl_extend(behavior, true, ...)
 end
 
 --- Deep compare values for equality
