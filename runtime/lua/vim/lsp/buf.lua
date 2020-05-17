@@ -3,6 +3,7 @@ local validate = vim.validate
 local api = vim.api
 local vfn = vim.fn
 local util = require 'vim.lsp.util'
+local log = require 'vim.lsp.log'
 local list_extend = vim.list_extend
 
 local M = {}
@@ -29,27 +30,84 @@ end
 
 function M.hover()
   local params = util.make_position_params()
+
   request('textDocument/hover', params)
 end
 
-function M.declaration()
-  local params = util.make_position_params()
-  request('textDocument/declaration', params)
+--[[ Location requests: Queries the server for locations related to current symbol
+  * The callbacks accepted from the user is a list of locations if there are any.
+    Errors or no locations won't call the user provided callback.
+--]]
+M.location_req_default_callback = function(locations)
+  if #locations == 1 then
+    util.jump_to_location(locations[1])
+  else
+    util.set_qflist(util.locations_to_items(locations))
+    api.nvim_command("copen")
+    api.nvim_command("wincmd p")
+  end
 end
 
-function M.definition()
+M.references_defaults = {
+  includeDeclaration = false;
+  on_locations = function(locations)
+    util.set_qflist(util.locations_to_items(locations))
+    api.nvim_command("copen")
+    api.nvim_command("wincmd p")
+  end
+}
+-- on_locations_callback: will be called with a list of locations if there are any returned
+function M.locations_request(method, on_locations_callback, context)
   local params = util.make_position_params()
-  request('textDocument/definition', params)
+
+  if context then
+    params['context'] = context
+  end
+  local process_locations_response_callback = function(err, _, response)
+    if response == nil or vim.tbl_isempty(response) then
+      local _ = log.info() and log.info(method, 'No location found')
+      return nil
+    end
+    if err then
+      local _ = log.error() and log.error(method, err)
+    end
+    -- textDocument/definition can return Location or Location[]
+    -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
+    if vim.tbl_islist(response) then
+      on_locations_callback(response)
+    else
+      on_locations_callback({response})
+    end
+  end
+  request(method, params, process_locations_response_callback)
 end
 
-function M.type_definition()
-  local params = util.make_position_params()
-  request('textDocument/typeDefinition', params)
+local function get_callback(args)
+  if args and args.on_locations then
+    return args.on_locations
+  else
+    return M.location_req_default_callback
+  end
 end
 
-function M.implementation()
-  local params = util.make_position_params()
-  request('textDocument/implementation', params)
+function M.declaration(args)     M.locations_request('textDocument/declaration',    get_callback(args)) end
+function M.definition(args)      M.locations_request('textDocument/definition',     get_callback(args)) end
+function M.implementation(args)  M.locations_request('textDocument/implementation', get_callback(args)) end
+function M.type_definition(args) M.locations_request('textDocument/typeDefinition', get_callback(args)) end
+
+function M.references(args)
+  local on_locations_callback
+  local references_context = { includeDeclaration = M.references_defaults.includeDeclaration }
+  if args and args.on_locations then
+    on_locations_callback = args.on_locations
+  else
+    on_locations_callback = M.references_defaults.on_locations
+  end
+
+  if args and args.includeDeclaration ~= nil then
+    references_context = { includeDeclaration = args.includeDeclaration }
+  end
+  M.locations_request('textDocument/references', on_locations_callback, references_context)
 end
 
 function M.signature_help()
@@ -120,16 +178,6 @@ function M.rename(new_name)
   if not (new_name and #new_name > 0) then return end
   params.newName = new_name
   request('textDocument/rename', params)
-end
-
-function M.references(context)
-  validate { context = { context, 't', true } }
-  local params = util.make_position_params()
-  params.context = context or {
-    includeDeclaration = true;
-  }
-  params[vim.type_idx] = vim.types.dictionary
-  request('textDocument/references', params)
 end
 
 function M.document_symbol()
