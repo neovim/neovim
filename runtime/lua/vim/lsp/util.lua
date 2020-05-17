@@ -403,6 +403,7 @@ function M.jump_to_location(location)
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   col = vim.str_byteindex(line, col)
   api.nvim_win_set_cursor(0, {row + 1, col})
+  api.nvim_command("silent! .foldopen")
   return true
 end
 
