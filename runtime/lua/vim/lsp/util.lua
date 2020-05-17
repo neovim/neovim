@@ -94,6 +94,19 @@ local edit_sort_key = sort_by_key(function(e)
   return {e.A[1], e.A[2], e.i}
 end)
 
+local function get_line_byte_from_line_character(bufnr, lnum, cnum)
+  -- Skip check when the byte and character position is the same
+  if cnum > 0 then
+    local lines = api.nvim_buf_get_lines(bufnr, lnum, lnum+1, false)
+
+    if #lines > 0 then
+      return vim.str_byteindex(lines[1], cnum)
+    end
+  end
+
+  return cnum
+end
+
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
@@ -104,13 +117,15 @@ function M.apply_text_edits(text_edits, bufnr)
   for i, e in ipairs(text_edits) do
     -- adjust start and end column for UTF-16 encoding of non-ASCII characters
     local start_row = e.range.start.line
-    local start_col = e.range.start.character
-    local start_bline = api.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
-    start_col = vim.str_byteindex(start_bline, start_col)
+    local start_col = get_line_byte_from_line_character(
+      bufnr,
+      start_row,
+      e.range.start.character)
     local end_row = e.range["end"].line
-    local end_col = e.range["end"].character
-    local end_bline = api.nvim_buf_get_lines(bufnr, end_row, end_row+1, true)[1]
-    end_col = vim.str_byteindex(end_bline, end_col)
+    local end_col = get_line_byte_from_line_character(
+      bufnr,
+      end_row,
+      e.range["end"].character)
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
     -- TODO(ashkan) sanity check ranges for overlap.
