@@ -693,6 +693,27 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
      (eq? @WarningMsg.left @WarningMsg.right))
 
 ------------------------------------------------------------------------------
+VIM.HIGHLIGHT                  				*lua-highlight*
+
+Nvim includes a function for highlighting a selection on yank (see for example
+https://github.com/machakann/vim-highlightedyank). To enable it, add
+>
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank()
+<
+to your `init.vim`. You can customize the highlight group and the duration of
+the highlight via
+>
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch", 500)
+<
+
+vim.highlight.on_yank([{higroup}, {timeout}, {event}]) 
+                                                    *vim.highlight.on_yank()*
+        Highlights the yanked text. Optional arguments are the highlight group
+        to use ({higroup}, default `"IncSearch"`), the duration of highlighting
+        in milliseconds ({timeout}, default `500`), and the event structure 
+        that is fired ({event}, default `vim.v.event`).
+
+------------------------------------------------------------------------------
 VIM.REGEX							*lua-regex*
 
 Vim regexes can be used directly from lua. Currently they only allow
@@ -757,6 +778,14 @@ vim.empty_dict()					    *vim.empty_dict()*
 
 	Note: if numeric keys are added to the table, the metatable will be
 	ignored and the dict converted to a list/array anyway.
+
+vim.region({bufnr}, {pos1}, {pos2}, {type}, {inclusive})       *vim.region()*
+        Converts a selection specified by the buffer ({bufnr}), starting
+        position ({pos1}, a zero-indexed pair `{line1,column1}`), ending
+        position ({pos2}, same format as {pos1}), the type of the register
+        for the selection ({type}, see |regtype|), and a boolean indicating
+        whether the selection is inclusive or not, into a zero-indexed table 
+        of linewise selections of the form `{linenr = {startcol, endcol}}` .
 
 vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
 	Sends {event} to {channel} via |RPC| and returns immediately.
