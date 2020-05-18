@@ -116,6 +116,10 @@ backwards-compatibility cost. Some examples:
 - Directories for 'directory' and 'undodir' are auto-created.
 - Terminal features such as 'guicursor' are enabled where possible.
 
+Some features are built in that otherwise required external plugins:
+
+- Highlighting the yanked region, see |lua-highlight|.
+
 ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
