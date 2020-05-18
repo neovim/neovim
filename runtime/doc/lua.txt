@@ -850,6 +850,66 @@ vim.types						*vim.types*
 	only contain values for these three types.
 
 ==============================================================================
+Vim Internal Variables                              *lua-vim-internal-variables*
+
+Built-in Vim dictionaries can be accessed and set idiomatically in Lua by each
+of the following tables.
+
+To set a value: >
+
+  vim.g.my_global_variable = 5
+<
+
+To read a value: >
+
+  print(vim.g.my_global_variable)
+<
+
+To delete a value: >
+
+  vim.g.my_global_variable = nil
+<
+
+vim.g                                                                 *vim.g*
+        Table with values from |g:|
+        Keys with no values set will result in `nil`.
+
+vim.b                                                                 *vim.b*
+        Gets a buffer-scoped (b:) variable for the current buffer.
+        Keys with no values set will result in `nil`.
+
+vim.w                                                                 *vim.w*
+        Gets a window-scoped (w:) variable for the current window.
+        Keys with no values set will result in `nil`.
+
+vim.t                                                                 *vim.t*
+        Gets a tabpage-scoped (t:) variable for the current table.
+        Keys with no values set will result in `nil`.
+
+vim.v                                                                 *vim.v*
+        Gets a v: variable.
+        Keys with no values set will result in `nil`.
+
+
+Vim Internal Options                                *lua-vim-internal-options*
+
+Read, set and clear vim |options| in Lua by each of the following tables.
+
+
+vim.o                                                                 *vim.o*
+        Table with values from |options|
+        Invalid keys will result in an error.
+
+vim.bo                                                                *vim.bo*
+        Gets a buffer-scoped option for the current buffer.
+        Invalid keys will result in an error.
+
+vim.wo                                                                *vim.wo*
+        Gets a window-scoped option for the current window.
+        Invalid keys will result in an error.
+
+
+==============================================================================
 Lua module: vim                                                      *lua-vim*
 
 inspect({object}, {options})                                   *vim.inspect()*
