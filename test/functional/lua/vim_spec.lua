@@ -1050,10 +1050,10 @@ describe('lua stdlib', function()
   it('vim.defer_fn', function()
     exec_lua [[
     vim.g.test = 0
-    vim.defer_fn(function() vim.g.test = 1 end, 10)
+    vim.defer_fn(function() vim.g.test = 1 end, 50)
     ]]
     eq(0, exec_lua[[return vim.g.test]])
-    exec_lua [[vim.cmd("sleep 10m")]]
+    exec_lua [[vim.cmd("sleep 1000m")]]
     eq(1, exec_lua[[return vim.g.test]])
   end)
 
