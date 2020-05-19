@@ -474,9 +474,7 @@ function M.jump_to_location(location)
   api.nvim_buf_set_option(0, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
-  local col = range.start.character
-  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
-  col = vim.str_byteindex(line, col)
+  local col = get_line_byte_from_position(0, range.start)
   api.nvim_win_set_cursor(0, {row + 1, col})
   return true
 end
