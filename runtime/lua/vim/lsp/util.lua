@@ -757,7 +757,7 @@ do
     local lines = {"Diagnostics:"}
     local highlights = {{0, "Bold"}}
     local line_diagnostics = M.get_line_diagnostics()
-    if not line_diagnostics then return end
+    if vim.tbl_isempty(line_diagnostics) then return end
 
     for i, diagnostic in ipairs(line_diagnostics) do
     -- for i, mark in ipairs(marks) do
