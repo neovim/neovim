@@ -107,6 +107,29 @@ func Test_mksession()
   let &wrap = wrap_save
 endfunc
 
+func Test_mksession_buffer_count()
+  set hidden
+
+  " Edit exactly three files in the current session.
+  %bwipe!
+  e Xfoo | tabe Xbar | tabe Xbaz
+  tabdo write
+  mksession! Xtest_mks.out
+
+  " Verify that loading the session does not create additional buffers.
+  %bwipe!
+  source Xtest_mks.out
+  call assert_equal(3, len(getbufinfo()))
+
+  " Clean up.
+  call delete('Xfoo')
+  call delete('Xbar')
+  call delete('Xbaz')
+  call delete('Xtest_mks.out')
+  %bwipe!
+  set hidden&
+endfunc
+
 func Test_mksession_winheight()
   new
   set winheight=10

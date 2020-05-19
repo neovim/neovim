@@ -558,22 +558,6 @@ static int makeopens(FILE *fd, char_u *dirnow)
     return FAIL;
   }
 
-  // Now put the other buffers into the buffer list.
-  FOR_ALL_BUFFERS(buf) {
-    if (!(only_save_windows && buf->b_nwindows == 0)
-        && !(buf->b_help && !(ssop_flags & SSOP_HELP))
-        && buf->b_fname != NULL
-        && buf->b_p_bl) {
-      if (fprintf(fd, "badd +%" PRId64 " ",
-                  buf->b_wininfo == NULL
-                  ? (int64_t)1L
-                  : (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
-          || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
-        return FAIL;
-      }
-    }
-  }
-
   // the global argument list
   if (ses_arglist(fd, "argglobal", &global_alist.al_ga,
                   !(ssop_flags & SSOP_CURDIR), &ssop_flags) == FAIL) {
@@ -767,6 +751,25 @@ static int makeopens(FILE *fd, char_u *dirnow)
   }
   if (restore_stal && put_line(fd, "set stal=1") == FAIL) {
     return FAIL;
+  }
+
+  // Now put the remaining buffers into the buffer list.
+  // This is near the end, so that when 'hidden' is set we don't create extra
+  // buffers.  If the buffer was already created with another command the
+  // ":badd" will have no effect.
+  FOR_ALL_BUFFERS(buf) {
+    if (!(only_save_windows && buf->b_nwindows == 0)
+        && !(buf->b_help && !(ssop_flags & SSOP_HELP))
+        && buf->b_fname != NULL
+        && buf->b_p_bl) {
+      if (fprintf(fd, "badd +%" PRId64 " ",
+                  buf->b_wininfo == NULL
+                  ? (int64_t)1L
+                  : (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
+          || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
+        return FAIL;
+      }
+    }
   }
 
   //
