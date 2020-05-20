@@ -289,7 +289,17 @@ static int nlua_wait(lua_State *lstate)
   if (timeout < 0) {
     return luaL_error(lstate, "timeout must be > 0");
   }
-  if (lua_type(lstate, 2) != LUA_TFUNCTION) {
+
+  // Check if condition can be called.
+  bool is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+
+  // Check if condition is callable table
+  if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
+    is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+    lua_pop(lstate, 1);
+  }
+
+  if (!is_function) {
     lua_pushliteral(lstate, "vim.wait: condition must be a function");
     return lua_error(lstate);
   }
@@ -314,23 +324,11 @@ static int nlua_wait(lua_State *lstate)
   int pcall_status = 0;
   bool callback_result = false;
 
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)timeout,
-                            nlua_wait_condition(lstate, &pcall_status,
-                                                &callback_result)
-                            || got_int);
-
-  if (pcall_status) {
-    // TODO: add prefix to error?
-    // handled after stopped time_watcher
-  } else if (got_int) {
-    got_int = false;
-    vgetc();
-    lua_pushinteger(lstate, -2);
-  } else if (callback_result) {
-    lua_pushinteger(lstate, 0);
-  } else {
-    lua_pushinteger(lstate, -1);
-  }
+  LOOP_PROCESS_EVENTS_UNTIL(
+      &main_loop,
+      main_loop.events,
+      (int)timeout,
+      nlua_wait_condition(lstate, &pcall_status, &callback_result) || got_int);
 
   // Stop dummy timer
   time_watcher_stop(tw);
@@ -338,8 +336,20 @@ static int nlua_wait(lua_State *lstate)
 
   if (pcall_status) {
     return lua_error(lstate);
+  } else if (callback_result) {
+    lua_pushboolean(lstate, 1);
+    lua_pushnil(lstate);
+  } else if (got_int) {
+    got_int = false;
+    vgetc();
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -2);
+  } else {
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -1);
   }
-  return 1;
+
+  return 2;
 }
 
 /// Initialize lua interpreter state
