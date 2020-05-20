@@ -29,7 +29,7 @@ endfunction
 function! s:get_python_candidates(major_version) abort
   return {
         \ 2: ['python2', 'python2.7', 'python2.6', 'python'],
-        \ 3: ['python3', 'python3.8', 'python3.7', 'python3.6', 'python3.5',
+        \ 3: ['python3', 'python3.9', 'python3.8', 'python3.7', 'python3.6', 'python3.5',
         \     'python3.4', 'python3.3', 'python']
         \ }[a:major_version]
 endfunction
