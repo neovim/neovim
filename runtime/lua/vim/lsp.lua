@@ -46,31 +46,6 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
--- TODO Use vim.wait when that is available, but provide an alternative for now.
-local wait = vim.wait or function(timeout_ms, condition, interval)
-  validate {
-    timeout_ms = { timeout_ms, 'n' };
-    condition = { condition, 'f' };
-    interval = { interval, 'n', true };
-  }
-  assert(timeout_ms > 0, "timeout_ms must be > 0")
-  local _ = log.debug() and log.debug("wait.fallback", timeout_ms)
-  interval = interval or 200
-  local interval_cmd = "sleep "..interval.."m"
-  local timeout = timeout_ms + uv.now()
-  -- TODO is there a better way to sync this?
-  while true do
-    uv.update_time()
-    if condition() then
-      return 0
-    end
-    if uv.now() >= timeout then
-      return -1
-    end
-    nvim_command(interval_cmd)
-    -- vim.loop.sleep(10)
-  end
-end
 local wait_result_reason = { [-1] = "timeout"; [-2] = "interrupted"; [-3] = "error" }
 
 local valid_encodings = {
@@ -810,8 +785,8 @@ function lsp._vim_exit_handler()
   for _, client in pairs(active_clients) do
     client.stop()
   end
-  local wait_result = wait(500, function() return tbl_isempty(active_clients) end, 50)
-  if wait_result ~= 0 then
+
+  if not vim.wait(500, function() return tbl_isempty(active_clients) end, 50) then
     for _, client in pairs(active_clients) do
       client.stop(true)
     end
@@ -889,12 +864,14 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   for _ in pairs(client_request_ids) do
     expected_result_count = expected_result_count + 1
   end
-  local wait_result = wait(timeout_ms or 100, function()
+
+  local wait_result, reason = vim.wait(timeout_ms or 100, function()
     return result_count >= expected_result_count
   end, 10)
-  if wait_result ~= 0 then
+
+  if not wait_result then
     cancel()
-    return nil, wait_result_reason[wait_result]
+    return nil, wait_result_reason[reason]
   end
   return request_results
 end

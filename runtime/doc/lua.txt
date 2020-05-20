@@ -827,6 +827,62 @@ vim.schedule({callback})				*vim.schedule()*
         Schedules {callback} to be invoked soon by the main event-loop. Useful
         to avoid |textlock| or other temporary restrictions.
 
+
+vim.defer_fn({fn}, {timeout})                                    *vim.defer_fn*
+    Defers calling {fn} until {timeout} ms passes.  Use to do a one-shot timer
+    that calls {fn}.
+
+    Parameters: ~
+        {fn}        Callback to call once {timeout} expires
+        {timeout}   Time in ms to wait before calling {fn}
+
+    Returns: ~
+        |vim.loop|.new_timer() object
+
+vim.wait({time}, {callback} [, {interval}])                         *vim.wait()*
+        Wait for {time} in milliseconds until {callback} returns `true`.
+
+        Executes {callback} immediately and at approximately {interval}
+        milliseconds (default 200). Nvim still processes other events during
+        this time.
+
+
+    Returns: ~
+        If {callback} returns `true` during the {time}:
+            `true, nil`
+
+        If {callback} never returns `true` during the {time}:
+            `false, -1`
+
+        If {callback} is interrupted during the {time}:
+            `false, -2`
+
+        If {callback} errors, the error is raised.
+
+        Examples: >
+
+    ---
+    -- Wait for 100 ms, allowing other events to process
+    vim.wait(100, function() end)
+
+    ---
+    -- Wait for 100 ms or until global variable set.
+    vim.wait(100, function() return vim.g.waiting_for_var end)
+
+    ---
+    -- Wait for 1 second or until global variable set, checking every ~500 ms
+    vim.wait(1000, function() return vim.g.waiting_for_var end, 500)
+
+    ---
+    -- Schedule a function to set a value in 100ms
+    vim.defer_fn(function() vim.g.timer_result = true end, 100)
+
+    -- Would wait ten seconds if results blocked. Actually only waits  100 ms
+    if vim.wait(10000, function() return vim.g.timer_result end) then
+      print('Only waiting a little bit of time!')
+    end
+<
+
 vim.fn.{func}({...})					*vim.fn*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
         To call autoload functions, use the syntax: >
