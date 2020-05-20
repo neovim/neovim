@@ -2574,10 +2574,15 @@ static int do_more_prompt(int typed_char)
   msgchunk_T  *mp;
   int i;
 
+  // If headless mode is enabled and no input is required, this variable
+  // will be true. However If server mode is enabled, the message "--more--"
+  // should be displayed.
+  bool no_need_more = headless_mode && !embedded_mode;
+
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt
   // and nothing was typed.
-  if (entered || (State == HITRETURN && typed_char == 0)) {
+  if (no_need_more || entered || (State == HITRETURN && typed_char == 0)) {
     return false;
   }
   entered = true;
