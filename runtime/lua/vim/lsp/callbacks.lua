@@ -242,12 +242,12 @@ end
 
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
-  M[k] = function(err, method, params, client_id)
-    local _ = log.debug() and log.debug('default_callback', method, { params = params, client_id = client_id, err = err })
+  M[k] = function(err, method, params, client_id, bufnr)
+    log.debug('default_callback', method, { params = params, client_id = client_id, err = err, bufnr = bufnr })
     if err then
       error(tostring(err))
     end
-    return fn(err, method, params, client_id)
+    return fn(err, method, params, client_id, bufnr)
   end
 end
 
