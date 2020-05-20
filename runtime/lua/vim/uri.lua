@@ -76,6 +76,10 @@ local function uri_from_bufnr(bufnr)
 end
 
 local function uri_to_fname(uri)
+  local scheme = assert(uri:match("^([a-z]+)://.*"), 'Uri must contain a scheme: ' .. uri)
+  if scheme ~= 'file' then
+    return uri
+  end
   uri = uri_decode(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
