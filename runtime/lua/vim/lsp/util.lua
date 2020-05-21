@@ -1089,21 +1089,25 @@ function M.locations_to_items(locations)
   for _, d in ipairs(locations) do
     -- locations may be Location or LocationLink
     local uri = d.uri or d.targetUri
-    local fname = assert(vim.uri_to_fname(uri))
     local range = d.range or d.targetSelectionRange
-    table.insert(grouped[fname], {start = range.start})
+    table.insert(grouped[uri], {start = range.start})
   end
 
 
   local keys = vim.tbl_keys(grouped)
   table.sort(keys)
   -- TODO(ashkan) I wish we could do this lazily.
-  for _, fname in ipairs(keys) do
-    local rows = grouped[fname]
+  for _, uri in ipairs(keys) do
+    local rows = grouped[uri]
 
     table.sort(rows, position_sort)
     local i = 0
-    for line in io.lines(fname) do
+    local bufnr = vim.uri_to_bufnr(uri)
+    if not api.nvim_buf_is_loaded(bufnr) then
+      vim.fn.bufload(bufnr)
+    end
+    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    for _, line in ipairs(lines) do
       for _, temp in ipairs(rows) do
         local pos = temp.start
         local row = pos.line
@@ -1115,7 +1119,7 @@ function M.locations_to_items(locations)
             col = vim.str_byteindex(line, pos.character)
           end
           table.insert(items, {
-            filename = fname,
+            filename = vim.uri_to_fname(uri),
             lnum = row + 1,
             col = col + 1;
             text = line;

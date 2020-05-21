@@ -1070,6 +1070,72 @@ describe('LSP', function()
       ]])
     end)
   end)
+  describe('lsp.util.locations_to_items', function()
+    it('Convert Location[] to items', function()
+      local expected = {
+        {
+          filename = '',
+          lnum = 1,
+          col = 3,
+          text = 'testing'
+        },
+      }
+      local actual = exec_lua [[
+        local buffer = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_name(buffer, 'dummy')
+        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
+          "testing";
+          "123";
+        })
+        local locations = {
+          {
+            uri = vim.uri_from_bufnr(buffer),
+            range = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            }
+          },
+        }
+        return vim.lsp.util.locations_to_items(locations)
+      ]]
+      actual[1].filename = ''
+      eq(expected, actual)
+    end)
+    it('Convert LocationLink[] to items', function()
+      local expected = {
+        {
+          filename = '',
+          lnum = 1,
+          col = 3,
+          text = 'testing'
+        },
+      }
+      local actual = exec_lua [[
+        local buffer = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_name(buffer, 'dummy')
+        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
+          "testing";
+          "123";
+        })
+        local locations = {
+          {
+            targetUri = vim.uri_from_bufnr(buffer),
+            targetRange = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            },
+            targetSelectionRange = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            }
+          },
+        }
+        return vim.lsp.util.locations_to_items(locations)
+      ]]
+      actual[1].filename = ''
+      eq(expected, actual)
+    end)
+  end)
   describe('lsp.util.symbols_to_items', function()
     describe('convert DocumentSymbol[] to items', function()
       it('DocumentSymbol has children', function()
