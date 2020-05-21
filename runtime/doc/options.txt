@@ -4210,6 +4210,26 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
+					*mousescroll*
+'mousescroll'		string	(default "ver:3,hor:6")
+			global
+	This option controls the number of lines / columns to scroll by when
+	scrolling with a mouse. The option is a comma separated list of parts.
+	Each part consists of a direction and a count as follows:
+		direction:count,direction:count
+	Direction is one of either "hor" or "ver", "hor" controls horizontal
+	scrolling and "ver" controls vertical scrolling. Count sets the amount
+	to scroll by for the given direction, it should be a non negative
+	integer. Each direction should be set at most once. If a direction
+	is omitted, a default value is used (6 for horizontal scrolling and 3
+	for vertical scrolling). You can disable mouse scrolling by using
+	a count of 0.
+
+	Example: >
+		:set mousescroll=ver:5,hor:2
+<	Will make Nvim scroll 5 lines at a time when scrolling vertically, and
+	scroll 2 columns at a time when scrolling horizontally.
+
 					*'mouseshape'* *'mouses'* *E547*
 'mouseshape' 'mouses'	string	(default "i:beam,r:beam,s:updown,sd:cross,
 					m:no,ml:up-arrow,v:rightup-arrow")

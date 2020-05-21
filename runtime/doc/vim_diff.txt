@@ -238,6 +238,7 @@ Options:
   'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
   'laststatus'  global statusline support
+  'mousescroll' amount to scroll by when scrolling with a mouse
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns

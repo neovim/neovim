@@ -2366,6 +2366,69 @@ static bool valid_spellfile(const char_u *val)
   return true;
 }
 
+/// Handle setting 'mousescroll'.
+/// @return error message, NULL if it's OK.
+static char *check_mousescroll(char *string)
+{
+  long vertical = -1;
+  long horizontal = -1;
+
+  for (;;) {
+    char *end = vim_strchr(string, ',');
+    size_t length = end ? (size_t)(end - string) : STRLEN(string);
+
+    // Both "ver:" and "hor:" are 4 bytes long.
+    // They should be followed by at least one digit.
+    if (length <= 4) {
+      return e_invarg;
+    }
+
+    long *direction;
+
+    if (memcmp(string, "ver:", 4) == 0) {
+      direction = &vertical;
+    } else if (memcmp(string, "hor:", 4) == 0) {
+      direction = &horizontal;
+    } else {
+      return e_invarg;
+    }
+
+    // If the direction has already been set, this is a duplicate.
+    if (*direction != -1) {
+      return e_invarg;
+    }
+
+    // Verify that only digits follow the colon.
+    for (size_t i = 4; i < length; i++) {
+      if (!ascii_isdigit(string[i])) {
+        return N_("E548: digit expected");
+      }
+    }
+
+    string += 4;
+    *direction = getdigits_int(&string, false, -1);
+
+    // Num options are generally kept within the signed int range.
+    // We know this number won't be negative because we've already checked for
+    // a minus sign. We'll allow 0 as a means of disabling mouse scrolling.
+    if (*direction == -1) {
+      return e_invarg;
+    }
+
+    if (!end) {
+      break;
+    }
+
+    string = end + 1;
+  }
+
+  // If a direction wasn't set, fallback to the default value.
+  p_mousescroll_vert = (vertical == -1) ? MOUSESCROLL_VERT_DFLT : vertical;
+  p_mousescroll_hor = (horizontal == -1) ? MOUSESCROLL_HOR_DFLT : horizontal;
+
+  return NULL;
+}
+
 /// Handle string options that need some action to perform when changed.
 /// Returns NULL for success, or an error message for an error.
 ///
@@ -2859,6 +2922,8 @@ ambw_end:
     if (check_opt_strings(p_mousem, p_mousem_values, false) != OK) {
       errmsg = e_invarg;
     }
+  } else if (varp == &p_mousescroll) {  // 'mousescroll'
+    errmsg = check_mousescroll((char *)p_mousescroll);
   } else if (varp == &p_swb) {  // 'switchbuf'
     if (opt_strings_flags(p_swb, p_swb_values, &swb_flags, true) != OK) {
       errmsg = e_invarg;
