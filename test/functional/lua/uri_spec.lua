@@ -113,16 +113,22 @@ describe('URI methods', function()
       end)
     end)
 
-    describe('decode non-file uri', function()
-      it('uri_to_fname returns non-file uri unchanged', function()
-        eq('jdt://content/%5C/', exec_lua [[
-          return vim.uri_to_fname('jdt://content/%5C/')
+    describe('decode non-file URI', function()
+      it('uri_to_fname returns non-file URI unchanged', function()
+        eq('jdt1.23+x-z://content/%5C/', exec_lua [[
+          return vim.uri_to_fname('jdt1.23+x-z://content/%5C/')
+        ]])
+      end)
+
+      it('uri_to_fname returns non-file upper-case scheme URI unchanged', function()
+        eq('JDT://content/%5C/', exec_lua [[
+          return vim.uri_to_fname('JDT://content/%5C/')
         ]])
       end)
     end)
 
-    describe('decode uri without scheme', function()
-      it('fails because uri must have a scheme', function()
+    describe('decode URI without scheme', function()
+      it('fails because URI must have a scheme', function()
         eq(false, exec_lua [[
           return pcall(vim.uri_to_fname, 'not_an_uri.txt')
         ]])
