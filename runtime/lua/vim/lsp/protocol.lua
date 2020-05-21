@@ -633,7 +633,6 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false;
         completionItem = {
 
-          -- TODO(tjdevries): Is it possible to implement this in plain lua?
           snippetSupport = true;
           commitCharactersSupport = false;
           preselectSupport = false;
