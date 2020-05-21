@@ -1099,34 +1099,22 @@ function M.locations_to_items(locations)
   -- TODO(ashkan) I wish we could do this lazily.
   for _, uri in ipairs(keys) do
     local rows = grouped[uri]
-
     table.sort(rows, position_sort)
-    local i = 0
     local bufnr = vim.uri_to_bufnr(uri)
     if not api.nvim_buf_is_loaded(bufnr) then
       vim.fn.bufload(bufnr)
     end
-    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
-    for _, line in ipairs(lines) do
-      for _, temp in ipairs(rows) do
-        local pos = temp.start
-        local row = pos.line
-        if i == row then
-          local col
-          if pos.character > #line then
-            col = #line
-          else
-            col = vim.str_byteindex(line, pos.character)
-          end
-          table.insert(items, {
-            filename = vim.uri_to_fname(uri),
-            lnum = row + 1,
-            col = col + 1;
-            text = line;
-          })
-        end
-      end
-      i = i + 1
+    for _, temp in ipairs(rows) do
+      local pos = temp.start
+      local row = pos.line
+      local line = (api.nvim_buf_get_lines(bufnr, row, row + 1, true) or {""})[1]
+      local col = M.character_offset(bufnr, row, pos.character)
+      table.insert(items, {
+        filename = vim.uri_to_fname(uri),
+        lnum = row + 1,
+        col = col + 1;
+        text = line;
+      })
     end
   end
   return items
