@@ -112,6 +112,7 @@ describe('URI methods', function()
         eq('C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt', exec_lua(test_case))
       end)
     end)
+
     describe('decode non-file uri', function()
       it('uri_to_fname returns non-file uri unchanged', function()
         eq('jdt://content/%5C/', exec_lua [[
@@ -119,6 +120,15 @@ describe('URI methods', function()
         ]])
       end)
     end)
+
+    describe('decode uri without scheme', function()
+      it('fails because uri must have a scheme', function()
+        eq(false, exec_lua [[
+          return pcall(vim.uri_to_fname, 'not_an_uri.txt')
+        ]])
+      end)
+    end)
+
   end)
 
   describe('uri to bufnr', function()
