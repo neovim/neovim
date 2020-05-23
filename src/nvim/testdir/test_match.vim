@@ -149,6 +149,21 @@ function Test_match()
   highlight MyGroup3 NONE
 endfunc
 
+func Test_match_error()
+  call assert_fails('match Error', 'E475:')
+  call assert_fails('match Error /', 'E475:')
+  call assert_fails('4match Error /x/', 'E476:')
+  call assert_fails('match Error /x/ x', 'E488:')
+endfunc
+
+func Test_matchadd_error()
+  call assert_fails("call matchadd('GroupDoesNotExist', 'X')", 'E28:')
+  call assert_fails("call matchadd('Search', '\\(')", 'E475:')
+  call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
+  call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')
+  call assert_fails("call matchadd('Error', 'XXX', 1, 0)", 'E799:')
+endfunc
+
 func Test_matchaddpos()
   syntax on
   set hlsearch
@@ -263,6 +278,17 @@ func Test_matchaddpos_using_negative_priority()
   set hlsearch&
 endfunc
 
+func Test_matchaddpos_error()
+  call assert_fails("call matchaddpos('Error', 1)", 'E686:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 1)", 'E798:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 2)", 'E798:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 0)", 'E799:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 123, 1)", 'E715:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 5, {'window':12345})", 'E957:')
+  " Why doesn't the following error have an error code E...?
+  call assert_fails("call matchaddpos('Error', [{}])", 'E5031:')
+endfunc
+
 func OtherWindowCommon()
   let lines =<< trim END
     call setline(1, 'Hello Vim world')
@@ -286,6 +312,11 @@ func Test_matchdelete_other_window()
 
   call StopVimInTerminal(buf)
   call delete('XscriptMatchCommon')
+endfunc
+
+func Test_matchdelete_error()
+  call assert_fails("call matchdelete(0)", 'E802:')
+  call assert_fails("call matchdelete(1, -1)", 'E957:')
 endfunc
 
 func Test_matchclear_other_window()

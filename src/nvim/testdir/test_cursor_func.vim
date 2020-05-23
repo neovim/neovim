@@ -93,3 +93,18 @@ func Test_screenpos()
   close
   bwipe!
 endfunc
+
+func Test_screenpos_number()
+  rightbelow new
+  rightbelow 73vsplit
+  call setline (1, repeat('x', 66))
+  setlocal number
+  redraw
+  let winid = win_getid()
+  let [winrow, wincol] = win_screenpos(winid)
+  let pos = screenpos(winid, 1, 66)
+  call assert_equal(winrow, pos.row)
+  call assert_equal(wincol + 66 + 3, pos.col)
+  close
+  bwipe!
+endfunc
