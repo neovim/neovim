@@ -295,6 +295,14 @@ describe('startup', function()
       })
     )
   end)
+
+  it("get command line arguments from v:argv", function()
+    local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+                               '--cmd', nvim_set,
+                               '-c', [[echo v:argv[-1:] len(v:argv) > 1]],
+                               '+q' })
+    eq('[\'+q\'] 1', out)
+  end)
 end)
 
 describe('sysinit', function()
