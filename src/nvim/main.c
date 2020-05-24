@@ -269,6 +269,8 @@ int main(int argc, char **argv)
 
   early_init();
 
+  set_argv_var(argv, argc);  // set v:argv
+
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 

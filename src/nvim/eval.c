@@ -230,6 +230,7 @@ static struct vimvar {
   VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
   VV(VV_LUA,            "lua",              VAR_PARTIAL, VV_RO),
+  VV(VV_ARGV,           "argv",             VAR_LIST, VV_RO),
 };
 #undef VV
 
@@ -8106,6 +8107,23 @@ void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
     // Set readonly
     tv_dict_set_keys_readonly(val);
   }
+}
+
+/// Set the v:argv list.
+void set_argv_var(char **argv, int argc)
+{
+  list_T *l = tv_list_alloc(argc);
+  int i;
+
+  if (l == NULL) {
+    getout(1);
+  }
+  tv_list_set_lock(l, VAR_FIXED);
+  for (i = 0; i < argc; i++) {
+    tv_list_append_string(l, (const char *const)argv[i], -1);
+    TV_LIST_ITEM_TV(tv_list_last(l))->v_lock = VAR_FIXED;
+  }
+  set_vim_var_list(VV_ARGV, l);
 }
 
 /*
