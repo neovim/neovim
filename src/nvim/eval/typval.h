@@ -105,6 +105,22 @@ typedef enum {
   VAR_FIXED = 2,     ///< Locked forever.
 } VarLockStatus;
 
+/*
+ * types for expressions.
+ */
+typedef enum
+{
+    TYPE_UNKNOWN = 0
+    , TYPE_EQUAL	/* == */
+    , TYPE_NEQUAL	/* != */
+    , TYPE_GREATER	/* >  */
+    , TYPE_GEQUAL	/* >= */
+    , TYPE_SMALLER	/* <  */
+    , TYPE_SEQUAL	/* <= */
+    , TYPE_MATCH	/* =~ */
+    , TYPE_NOMATCH	/* !~ */
+} exptype_T;
+
 /// VimL variable types, for use in typval_T.v_type
 typedef enum {
   VAR_UNKNOWN = 0,  ///< Unknown (unspecified) value.

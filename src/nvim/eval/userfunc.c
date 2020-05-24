@@ -2800,6 +2800,9 @@ void ex_call(exarg_T *eap)
       failed = true;
       break;
     }
+    if (has_watchexpr()) {
+      dbg_check_breakpoint(eap);
+    }
 
     // Handle a function returning a Funcref, Dictionary or List.
     if (handle_subscript((const char **)&arg, &rettv, true, true)

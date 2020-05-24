@@ -804,6 +804,19 @@ DEFINING BREAKPOINTS
 <		Note that this only works for commands that are executed when
 		sourcing the file, not for a function defined in that file.
 
+:breaka[dd] expr {expression}
+		Sets a breakpoint, that will break whenever the {expression}
+		evaluates to a different value. Example: >
+			:breakadd expr g:lnum
+
+<		Will break, whenever the global variable lnum changes.
+		Note if you watch a |script-variable| this will break
+		when switching scripts, since the script variable is only
+		valid in the script where it has been defined and if that
+		script is called from several other scripts, this will stop
+		whenever that particular variable will become visible or
+		unaccessible again.
+
 The [lnum] is the line number of the breakpoint.  Vim will stop at or after
 this line.  When omitted line 1 is used.
 
