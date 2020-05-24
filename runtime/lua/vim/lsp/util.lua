@@ -481,7 +481,15 @@ function M.jump_to_location(location)
   return true
 end
 
--- Show a LocationLink or Location in a floating windows
+--- Preview a location in a floating windows
+---
+--- behavior depends on type of location:
+---   - for Location, range is shown (e.g., function definition)
+---   - for LocationLink, targetRange is shown (e.g., body of function definition)
+---   - for an array of either, the first element is shown
+---
+--@param location Location, LocationLink, or array thereof
+--@return bufnr,winnr buffer and window number of floating window
 function M.preview_location(location)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
@@ -493,7 +501,7 @@ function M.preview_location(location)
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range["end"].line+1, false)
   local filetype = api.nvim_buf_get_option(bufnr, 'filetype')
-  M.open_floating_preview(contents, filetype)
+  return M.open_floating_preview(contents, filetype)
 end
 
 local function find_window_by_var(name, value)
