@@ -188,8 +188,15 @@ size_t input_enqueue(String keys)
   char *ptr = keys.data;
   char *end = ptr + keys.size;
 
-  while (rbuffer_space(input_buffer) >= 6 && ptr < end) {
-    uint8_t buf[6] = { 0 };
+  while (rbuffer_space(input_buffer) >= 19 && ptr < end) {
+    // A "\<x>" form occupies at least 1 characters, and produces up
+    // to 19 characters (1 + 5 * 3 for the char and 3 for a modifier).
+    // In the case of K_SPECIAL(0x80) or CSI(0x9B), 3 bytes are escaped and
+    // needed, but since the keys are UTF-8, so the first byte cannot be
+    // K_SPECIAL(0x80) or CSI(0x9B).
+    // In UTF-8, a 5-6 byte representation is now an invalid sequence, but we
+    // reserve a 19-byte buffer for maximum security.
+    uint8_t buf[19] = { 0 };
     unsigned int new_size
         = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
                         false);
