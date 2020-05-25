@@ -489,7 +489,7 @@ end
 ---   - for an array of either, the first element is shown
 ---
 --@param location Location, LocationLink, or array thereof
---@return bufnr,winnr buffer and window number of floating window
+--@return bufnr,winnr buffer and window number of floating window or nil
 function M.preview_location(location)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
