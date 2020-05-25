@@ -444,7 +444,7 @@ void eval_clear(void)
   // unreferenced lists and dicts
   (void)garbage_collect(false);
 
-  // functions
+  // functions not garbage collected
   free_all_functions();
 }
 
@@ -873,17 +873,19 @@ char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
 char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, int use_sandbox)
 {
   char_u      *retval;
-  void        *save_funccalp;
+  funccal_entry_T funccal_entry;
 
-  save_funccalp = save_funccal();
-  if (use_sandbox)
-    ++sandbox;
-  ++textlock;
-  retval = eval_to_string(arg, nextcmd, FALSE);
-  if (use_sandbox)
-    --sandbox;
-  --textlock;
-  restore_funccal(save_funccalp);
+  save_funccal(&funccal_entry);
+  if (use_sandbox) {
+    sandbox++;
+  }
+  textlock++;
+  retval = eval_to_string(arg, nextcmd, false);
+  if (use_sandbox) {
+    sandbox--;
+  }
+  textlock--;
+  restore_funccal();
   return retval;
 }
 
@@ -5026,7 +5028,7 @@ bool garbage_collect(bool testing)
 
     // 3. Check if any funccal can be freed now.
     //    This may call us back recursively.
-    did_free = did_free || free_unref_funccal(copyID, testing);
+    did_free = free_unref_funccal(copyID, testing) || did_free;
   } else if (p_verbose > 0) {
     verb_msg(_(
         "Not enough memory to set references, garbage collection aborted!"));
@@ -9766,9 +9768,11 @@ const void *var_shada_iter(const void *const iter, const char **const name,
 
 void var_set_global(const char *const name, typval_T vartv)
 {
-  funccall_T *const saved_funccal = (funccall_T *)save_funccal();
+  funccal_entry_T funccall_entry;
+
+  save_funccal(&funccall_entry);
   set_var(name, strlen(name), &vartv, false);
-  restore_funccal(saved_funccal);
+  restore_funccal();
 }
 
 int store_session_globals(FILE *fd)
@@ -10324,8 +10328,10 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
     .autocmd_bufnr = autocmd_bufnr,
-    .funccalp = save_funccal()
+    .funccalp = (void *)get_current_funccal()
   };
+  funccal_entry_T funccal_entry;
+  save_funccal(&funccal_entry);
   provider_call_nesting++;
 
   typval_T argvars[3] = {
@@ -10352,7 +10358,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
   tv_list_unref(arguments);
   // Restore caller scope information
-  restore_funccal(provider_caller_scope.funccalp);
+  restore_funccal();
   provider_caller_scope = saved_provider_caller_scope;
   provider_call_nesting--;
   assert(provider_call_nesting >= 0);

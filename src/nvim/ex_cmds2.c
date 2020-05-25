@@ -3107,7 +3107,6 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   int retval = FAIL;
   static scid_T last_current_SID = 0;
   static int last_current_SID_seq = 0;
-  void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
   proftime_T wait_start;
@@ -3228,7 +3227,8 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
 
   // Don't use local function variables, if called from a function.
   // Also starts profiling timer for nested script.
-  save_funccalp = save_funccal();
+  funccal_entry_T funccalp_entry;
+  save_funccal(&funccalp_entry);
 
   // Check if this script was sourced before to finds its SID.
   // If it's new, generate a new SID.
@@ -3353,7 +3353,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
 
   current_sctx = save_current_sctx;
-  restore_funccal(save_funccalp);
+  restore_funccal();
   if (l_do_profiling == PROF_YES) {
     prof_child_exit(&wait_start);    // leaving a child now
   }

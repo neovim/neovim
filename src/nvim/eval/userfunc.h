@@ -11,6 +11,12 @@ typedef struct {
   dictitem_T  *fd_di;  ///< Dictionary item used.
 } funcdict_T;
 
+typedef struct funccal_entry funccal_entry_T;
+struct funccal_entry {
+  void *top_funccal;
+  funccal_entry_T *next;
+};
+
 /// errors for when calling a function
 typedef enum {
   ERROR_UNKNOWN = 0,

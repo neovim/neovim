@@ -7243,7 +7243,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
   linenr_T save_sourcing_lnum;
   int save_autocmd_bufnr;
-  void *save_funccalp;
+  funccal_entry_T funccal_entry;
 
   if (l_provider_call_nesting) {
     // If this is called from a provider function, restore the scope
@@ -7254,7 +7254,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
     save_autocmd_bufnr = autocmd_bufnr;
-    save_funccalp = save_funccal();
+    save_funccal(&funccal_entry);
 
     current_sctx = provider_caller_scope.script_ctx;
     sourcing_name = provider_caller_scope.sourcing_name;
@@ -7262,7 +7262,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     autocmd_fname = provider_caller_scope.autocmd_fname;
     autocmd_match = provider_caller_scope.autocmd_match;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
-    restore_funccal(provider_caller_scope.funccalp);
+    set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
 
 
@@ -7280,7 +7280,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
     autocmd_bufnr = save_autocmd_bufnr;
-    restore_funccal(save_funccalp);
+    restore_funccal();
   }
 
   if (ERROR_SET(&err)) {

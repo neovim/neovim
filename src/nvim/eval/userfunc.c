@@ -43,11 +43,11 @@ hashtab_T func_hashtab;
 static garray_T funcargs = GA_EMPTY_INIT_VALUE;
 
 // pointer to funccal for currently active function
-funccall_T *current_funccal = NULL;
+static funccall_T *current_funccal = NULL;
 
 // Pointer to list of previously used funccal, still around because some
 // item in it is still being used.
-funccall_T *previous_funccal = NULL;
+static funccall_T *previous_funccal = NULL;
 
 static char *e_funcexts = N_(
     "E122: Function %s already exists, add ! to replace it");
@@ -541,14 +541,8 @@ static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
   v->di_tv.vval.v_number = nr;
 }
 
-/*
- * Free "fc" and what it contains.
- */
-static void
-free_funccal(
-    funccall_T *fc,
-    int free_val              // a: vars were allocated
-)
+// Free "fc"
+static void free_funccal(funccall_T *fc)
 {
   for (int i = 0; i < fc->fc_funcs.ga_len; i++) {
     ufunc_T *fp = ((ufunc_T **)(fc->fc_funcs.ga_data))[i];
@@ -563,34 +557,74 @@ free_funccal(
   }
   ga_clear(&fc->fc_funcs);
 
-  // The a: variables typevals may not have been allocated, only free the
-  // allocated variables.
-  vars_clear_ext(&fc->l_avars.dv_hashtab, free_val);
+  func_ptr_unref(fc->func);
+  xfree(fc);
+}
 
+// Free "fc" and what it contains.
+// Can be called only when "fc" is kept beyond the period of it called,
+// i.e. after cleanup_function_call(fc).
+static void free_funccal_contents(funccall_T *fc)
+{
   // Free all l: variables.
   vars_clear(&fc->l_vars.dv_hashtab);
 
-  // Free the a:000 variables if they were allocated.
-  if (free_val) {
-    TV_LIST_ITER(&fc->l_varlist, li, {
-      tv_clear(TV_LIST_ITEM_TV(li));
-    });
-  }
+  // Free all a: variables.
+  vars_clear(&fc->l_avars.dv_hashtab);
 
-  func_ptr_unref(fc->func);
-  xfree(fc);
+  // Free the a:000 variables.
+  TV_LIST_ITER(&fc->l_varlist, li, {
+    tv_clear(TV_LIST_ITEM_TV(li));
+  });
+
+  free_funccal(fc);
 }
 
 /// Handle the last part of returning from a function: free the local hashtable.
 /// Unless it is still in use by a closure.
 static void cleanup_function_call(funccall_T *fc)
 {
+  bool may_free_fc = fc->fc_refcount <= 0;
+  bool free_fc = true;
+
   current_funccal = fc->caller;
 
-  // If the a:000 list and the l: and a: dicts are not referenced and there
-  // is no closure using it, we can free the funccall_T and what's in it.
-  if (!fc_referenced(fc)) {
-    free_funccal(fc, false);
+  // Free all l: variables if not referred.
+  if (may_free_fc && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT) {
+    vars_clear(&fc->l_vars.dv_hashtab);
+  } else {
+    free_fc = false;
+  }
+
+  // If the a:000 list and the l: and a: dicts are not referenced and
+  // there is no closure using it, we can free the funccall_T and what's
+  // in it.
+  if (may_free_fc && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT) {
+    vars_clear_ext(&fc->l_avars.dv_hashtab, false);
+  } else {
+    free_fc = false;
+
+    // Make a copy of the a: variables, since we didn't do that above.
+    TV_DICT_ITER(&fc->l_avars, di, {
+      tv_copy(&di->di_tv, &di->di_tv);
+    });
+  }
+
+  if (may_free_fc && fc->l_varlist.lv_refcount   // NOLINT(runtime/deprecated)
+      == DO_NOT_FREE_CNT) {
+    fc->l_varlist.lv_first = NULL;  // NOLINT(runtime/deprecated)
+
+  } else {
+    free_fc = false;
+
+    // Make a copy of the a:000 items, since we didn't do that above.
+    TV_LIST_ITER(&fc->l_varlist, li, {
+      tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
+    });
+  }
+
+  if (free_fc) {
+    free_funccal(fc);
   } else {
     static int made_copy = 0;
 
@@ -600,19 +634,12 @@ static void cleanup_function_call(funccall_T *fc)
     fc->caller = previous_funccal;
     previous_funccal = fc;
 
-    // Make a copy of the a: variables, since we didn't do that above.
-    TV_DICT_ITER(&fc->l_avars, di, {
-      tv_copy(&di->di_tv, &di->di_tv);
-    });
-
-    // Make a copy of the a:000 items, since we didn't do that above.
-    TV_LIST_ITER(&fc->l_varlist, li, {
-      tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
-    });
-
-    if (++made_copy == 10000) {
-      // We have made a lot of copies.  This can happen when
-      // repetitively calling a function that creates a reference to
+    if (want_garbage_collect) {
+      // If garbage collector is ready, clear count.
+      made_copy = 0;
+    } else if (++made_copy >= (int)((4096 * 1024) / sizeof(*fc))) {
+      // We have made a lot of copies, worth 4 Mbyte.  This can happen
+      // when repetitively calling a function that creates a reference to
       // itself somehow.  Call the garbage collector soon to avoid using
       // too much memory.
       made_copy = 0;
@@ -639,7 +666,7 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
     for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
         *pfc = fc->caller;
-        free_funccal(fc, true);
+        free_funccal_contents(fc);
         return;
       }
     }
@@ -766,7 +793,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   // check for CTRL-C hit
   line_breakcheck();
   // prepare the funccall_T structure
-  fc = xmalloc(sizeof(funccall_T));
+  fc = xcalloc(1, sizeof(funccall_T));
   fc->caller = current_funccal;
   current_funccal = fc;
   fc->func = fp;
@@ -881,9 +908,11 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {
-      tv_list_append(&fc->l_varlist, &fc->l_listitems[ai]);
-      *TV_LIST_ITEM_TV(&fc->l_listitems[ai]) = argvars[i];
-      TV_LIST_ITEM_TV(&fc->l_listitems[ai])->v_lock = VAR_FIXED;
+      listitem_T *li = &fc->l_listitems[ai];
+
+      *TV_LIST_ITEM_TV(li) = argvars[i];
+      TV_LIST_ITEM_TV(li)->v_lock =  VAR_FIXED;
+      tv_list_append(&fc->l_varlist, li);
     }
   }
 
@@ -1106,26 +1135,36 @@ static bool func_name_refcount(char_u *name)
   return isdigit(*name) || *name == '<';
 }
 
-/*
- * Save the current function call pointer, and set it to NULL.
- * Used when executing autocommands and for ":source".
- */
-void *save_funccal(void)
-{
-  funccall_T *fc = current_funccal;
+static funccal_entry_T *funccal_stack = NULL;
 
+// Save the current function call pointer, and set it to NULL.
+// Used when executing autocommands and for ":source".
+void save_funccal(funccal_entry_T *entry)
+{
+  entry->top_funccal = current_funccal;
+  entry->next = funccal_stack;
+  funccal_stack = entry;
   current_funccal = NULL;
-  return (void *)fc;
 }
 
-void restore_funccal(void *vfc)
+void restore_funccal(void)
 {
-  current_funccal = (funccall_T *)vfc;
+  if (funccal_stack == NULL) {
+    IEMSG("INTERNAL: restore_funccal()");
+  } else {
+    current_funccal = funccal_stack->top_funccal;
+    funccal_stack = funccal_stack->next;
+  }
 }
 
 funccall_T *get_current_funccal(void)
 {
   return current_funccal;
+}
+
+void set_current_funccal(funccall_T *fc)
+{
+  current_funccal = fc;
 }
 
 #if defined(EXITFREE)
@@ -1137,10 +1176,13 @@ void free_all_functions(void)
   uint64_t todo = 1;
   uint64_t used;
 
-  // Clean up the call stack.
+  // Clean up the current_funccal chain and the funccal stack.
   while (current_funccal != NULL) {
     tv_clear(current_funccal->rettv);
     cleanup_function_call(current_funccal);
+    if (current_funccal == NULL && funccal_stack != NULL) {
+      restore_funccal();
+    }
   }
 
   // First clear what the functions contain. Since this may lower the
@@ -3121,7 +3163,7 @@ bool free_unref_funccal(int copyID, int testing)
     if (can_free_funccal(*pfc, copyID)) {
       funccall_T *fc = *pfc;
       *pfc = fc->caller;
-      free_funccal(fc, true);
+      free_funccal_contents(fc);
       did_free = true;
       did_free_funccal = true;
     } else {
@@ -3314,9 +3356,18 @@ bool set_ref_in_call_stack(int copyID)
   bool abort = false;
 
   for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
+    abort = abort || set_ref_in_funccal(fc, copyID);
   }
+
+  // Also go through the funccal_stack.
+  for (funccal_entry_T *entry = funccal_stack; entry != NULL;
+       entry = entry->next) {
+    for (funccall_T *fc = entry->top_funccal; !abort && fc != NULL;
+         fc = fc->caller) {
+      abort = abort || set_ref_in_funccal(fc, copyID);
+    }
+  }
+
   return abort;
 }
 
