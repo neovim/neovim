@@ -486,9 +486,8 @@ end
 --- behavior depends on type of location:
 ---   - for Location, range is shown (e.g., function definition)
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
----   - for an array of either, the first element is shown
 ---
---@param location Location, LocationLink, or array thereof
+--@param location a single Location or LocationLink
 --@return bufnr,winnr buffer and window number of floating window or nil
 function M.preview_location(location)
   -- location may be LocationLink or Location (more useful for the former)
