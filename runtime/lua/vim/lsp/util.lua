@@ -289,7 +289,7 @@ local function get_completion_word(item)
   return item.label
 end
 
--- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
+-- Some language servers return complementary candidates whose prefixes do not match are also returned.
 -- So we exclude completion candidates whose prefix does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
@@ -719,6 +719,14 @@ function M.close_preview_autocmd(events, winnr)
   api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
+--- Show contents in a floating window
+---
+--@param contents table of lines to show in window
+--@param filetype string of filetype to set for opened buffer
+--@param opts dictionary with optional fields
+--             - height  of floating window
+--             - width   of floating window
+--@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
     contents = { contents, 't' };
@@ -731,7 +739,6 @@ function M.open_floating_preview(contents, filetype, opts)
   contents = M.trim_empty_lines(contents)
 
   local width = opts.width
-  local height = opts.height or #contents
   if not width then
     width = 0
     for i, line in ipairs(contents) do
@@ -744,6 +751,15 @@ function M.open_floating_preview(contents, filetype, opts)
     end
     -- Add right padding of 1 each.
     width = width + 1
+  end
+  local winwidth = api.nvim_win_get_width(0)
+  local height = opts.height or #contents
+  if not opts.height and vim.wo["wrap"] and width > winwidth then
+    height = 0
+    for _, line in ipairs(contents) do
+      local line_width = vim.fn.strdisplaywidth(line)
+      height = height + math.ceil(line_width/winwidth)
+    end
   end
 
   local floating_bufnr = api.nvim_create_buf(false, true)
