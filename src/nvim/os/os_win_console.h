@@ -5,4 +5,8 @@
 # include "os/os_win_console.h.generated.h"
 #endif
 
+#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
+# define ENABLE_VIRTUAL_TERMINAL_INPUT 0x0200
+#endif
+
 #endif  // NVIM_OS_OS_WIN_CONSOLE_H

@@ -2,7 +2,13 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/vim.h"
+#include "nvim/os/input.h"
 #include "nvim/os/os_win_console.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/os_win_console.c.generated.h"
+#endif
+
 
 int os_get_conin_fd(void)
 {
@@ -39,4 +45,30 @@ void os_replace_stdout_and_stderr_to_conout(void)
   close(STDERR_FILENO);
   const int conerr_fd = _open_osfhandle((intptr_t)conout_handle, 0);
   assert(conerr_fd == STDERR_FILENO);
+}
+
+void os_set_vtp(bool enable)
+{
+  static TriState is_legacy = kNone;
+  if (is_legacy == kNone) {
+    uv_tty_vtermstate_t state;
+    uv_tty_get_vterm_state(&state);
+    is_legacy = (state == UV_TTY_UNSUPPORTED) ? kTrue : kFalse;
+  }
+  if (!is_legacy && !os_has_vti()) {
+    uv_tty_set_vterm_state(enable ? UV_TTY_SUPPORTED : UV_TTY_UNSUPPORTED);
+  }
+}
+
+static bool os_has_vti(void)
+{
+  static TriState has_vti = kNone;
+  if (has_vti == kNone) {
+    HANDLE handle = (HANDLE)_get_osfhandle(input_global_fd());
+    DWORD dwMode;
+    if (handle != INVALID_HANDLE_VALUE && GetConsoleMode(handle, &dwMode)) {
+      has_vti = !!(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) ? kTrue : kFalse;
+    }
+  }
+  return has_vti == kTrue;
 }
