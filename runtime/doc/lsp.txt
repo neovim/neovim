@@ -1053,6 +1053,9 @@ highlight_region({ft}, {start}, {finish})
 jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
                 TODO: Documentation
 
+preview_location({location})                 *vim.lsp.util.preview_location()*
+                TODO: Documentation
+
 locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
                 TODO: Documentation
 
