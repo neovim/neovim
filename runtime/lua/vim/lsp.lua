@@ -122,19 +122,19 @@ local function validate_encoding(encoding)
 end
 
 function lsp._cmd_parts(input)
-  local cmd, cmd_args
-  if vim.tbl_islist(input) then
-    cmd = input[1]
-    cmd_args = {}
-    -- Don't mutate our input.
-    for i, v in ipairs(input) do
-      assert(type(v) == 'string', "input arguments must be strings")
-      if i > 1 then
-        table.insert(cmd_args, v)
-      end
+  vim.validate{cmd={
+    input,
+    function() return vim.tbl_islist(input) end,
+    "list"}}
+
+  local cmd = input[1]
+  local cmd_args = {}
+  -- Don't mutate our input.
+  for i, v in ipairs(input) do
+    vim.validate{["cmd argument"]={v, "s"}}
+    if i > 1 then
+      table.insert(cmd_args, v)
     end
-  else
-    error("cmd type must be list.")
   end
   return cmd, cmd_args
 end
@@ -524,7 +524,7 @@ function lsp.start_client(config)
   function client.request(method, params, callback, bufnr)
     if not callback then
       callback = resolve_callback(method)
-        or error("not found: request callback for client "..client.name)
+        or error(string.format("not found: %q request callback for client %q.", method, client.name))
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
     -- TODO keep these checks or just let it go anyway?
