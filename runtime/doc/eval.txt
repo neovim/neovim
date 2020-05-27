@@ -1591,6 +1591,8 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 					operation.
 			regtype		Type of register as returned by
 					|getregtype()|.
+			visual		Selection is visual (as opposed to,
+					e.g., via motion).	
 			completed_item    Current selected complete item on
 					|CompleteChanged|, Is `{}` when no complete
 					item selected.
