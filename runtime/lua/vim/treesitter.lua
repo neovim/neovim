@@ -43,10 +43,11 @@ setmetatable(M, {
    end
  })
 
-function M.require_language(lang, path)
-  if vim._ts_has_language(lang) then
+function M.require_language(lang, path, force)
+  if vim._ts_has_language(lang) and (not force) then
     return true
   end
+
   if path == nil then
     local fname = 'parser/' .. lang .. '.*'
     local paths = a.nvim_get_runtime_file(fname, false)
@@ -162,20 +163,57 @@ function M.parse_query(lang, query)
   return self
 end
 
-local function get_node_text(node, bufnr)
+M.get_node_text_from_buf = function(node, bufnr)
   local start_row, start_col, end_row, end_col = node:range()
+
   if start_row ~= end_row then
     return nil
   end
+
   local line = a.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
   return string.sub(line, start_col+1, end_col)
 end
 
-function Query:match_preds(match, pattern, bufnr)
+
+local function get_text_from_lines(lines, start_row, start_col, end_row, end_col)
+  if start_row == end_row then
+    return string.sub(lines[start_row + 1], start_col + 1, end_col)
+  end
+
+  local text = {}
+  for i = start_row + 1, end_row + 1 do
+    if i == end_row + 1 then
+      table.insert(text, string.sub(lines[i], 1, end_col))
+    elseif i == start_row + 1 then
+      table.insert(text, string.sub(lines[i], start_col))
+    else
+      table.insert(text, lines[i])
+    end
+  end
+
+  return vim.trim(table.concat(text, "\n"))
+end
+
+--- Get text from lines
+--
+--@param lines: Array of strings, does not have to continuous (can start at 5)
+M.get_node_text_from_lines = function(node, lines)
+  local start_row, start_col, end_row, end_col = node:range()
+
+  return get_text_from_lines(lines, start_row, start_col, end_row, end_col)
+end
+
+
+--- Match predicate wrapper for strings and buffers
+--
+--@param node_text_getter (function): Function that takes one argument (node) and returns string
+--@param line_matcher (function): Function that takes (regex, start_row, start_col, end_row, end_col) and returns bool
+function Query:_match_predicates(match, pattern, node_text_getter, line_matcher)
   local preds = self.info.patterns[pattern]
   if not preds then
     return true
   end
+
   local regexes = self.regexes[pattern]
   for i, pred in pairs(preds) do
     -- Here we only want to return if a predicate DOES NOT match, and
@@ -183,7 +221,7 @@ function Query:match_preds(match, pattern, bufnr)
     -- which allows some testing and easier user extensibility (#12173).
     if pred[1] == "eq?" then
       local node = match[pred[2]]
-      local node_text = get_node_text(node, bufnr)
+      local node_text = node_text_getter(node)
 
       local str
       if type(pred[3]) == "string" then
@@ -191,7 +229,7 @@ function Query:match_preds(match, pattern, bufnr)
         str = pred[3]
       else
         -- (eq? @aa @bb)
-        str = get_node_text(match[pred[3]], bufnr)
+        str = M.get_node_text_from_buf(match[pred[3]], bufnr)
       end
 
       if node_text ~= str or str == nil then
@@ -203,16 +241,51 @@ function Query:match_preds(match, pattern, bufnr)
       end
       local node = match[pred[2]]
       local start_row, start_col, end_row, end_col = node:range()
-      if start_row ~= end_row then
-        return false
-      end
-      if not regexes[i]:match_line(bufnr, start_row, start_col, end_col) then
-        return false
-      end
+
+      return line_matcher(regexes[i], start_row, start_col, end_row, end_col)
     end
   end
   return true
 end
+
+function Query:match_buf_predicates(match, pattern, bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  return self:_match_predicates(
+    match,
+    pattern,
+    function(node)
+      return M.get_node_text_from_buf(node, bufnr)
+    end,
+    function(regex, start_row, start_col, end_row, end_col)
+      if start_row ~= end_row then
+        return false
+      end
+
+      if not regex:match_line(bufnr, start_row, start_col, end_col) then
+        return false
+      end
+
+      return true
+    end
+  )
+end
+
+function Query:match_str_predicates(match, pattern, lines)
+  return self:_match_predicates(
+    match,
+    pattern,
+    function(node)
+      return M.get_node_text_from_lines(node, lines)
+    end,
+    function(regex, start_row, start_col, end_row, end_col)
+      return regex:match_str(get_text_from_lines(start_row, start_col, end_row, end_col))
+    end
+  )
+end
+
 
 function Query:iter_captures(node, bufnr, start, stop)
   if bufnr == 0 then
@@ -222,7 +295,7 @@ function Query:iter_captures(node, bufnr, start, stop)
   local function iter()
     local capture, captured_node, match = raw_iter()
     if match ~= nil then
-      local active = self:match_preds(match, match.pattern, bufnr)
+      local active = self:match_buf_predicates(match, match.pattern, bufnr)
       match.active = active
       if not active then
         return iter() -- tail call: try next match
@@ -233,22 +306,50 @@ function Query:iter_captures(node, bufnr, start, stop)
   return iter
 end
 
-function Query:iter_matches(node, bufnr, start, stop)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-  local raw_iter = node:_rawquery(self.query,false,start,stop)
+function Query:_iter_matches(predicate_matcher, node, start, stop)
+  local raw_iter = node:_rawquery(self.query, false, start, stop)
+
   local function iter()
     local pattern, match = raw_iter()
     if match ~= nil then
-      local active = self:match_preds(match, pattern, bufnr)
+      local active = predicate_matcher(match, pattern)
       if not active then
         return iter() -- tail call: try next match
       end
     end
     return pattern, match
   end
+
   return iter
+end
+
+function Query:iter_matches(node, bufnr, start, stop)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  return self:_iter_matches(
+    function(match, pattern)
+      return self:match_buf_predicates(match, pattern, bufnr)
+    end,
+    node,
+    start,
+    stop
+  )
+end
+
+--- TODO: Decide if we should use lines or text here
+function Query:iter_str_matches(node, str, start, stop)
+  local lines = vim.split(str, "\n")
+
+  return self._iter_matches(
+    function(match, pattern)
+      return self:match_str_predicates(match, pattern, lines)
+    end,
+    node,
+    start,
+    stop
+  )
 end
 
 return M
