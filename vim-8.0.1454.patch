@@ -1,0 +1,46 @@
+commit 42b23fad1d9cdd6266f52d1ed7e0f3f17ce2d04b
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sat Feb 3 14:46:45 2018 +0100
+
+    patch 8.0.1454: when in silent mode too much output is buffered
+    
+    Problem:    When in silent mode too much output is buffered.
+    Solution:   Use line buffering instead of fully buffered. (Brian M. Carlson,
+                closes #2537)
+
+diff --git a/src/nvim/main.c b/src/nvim/main.c
+index 9cf10bd78..aea652b5d 100644
+--- a/src/nvim/main.c
++++ b/src/nvim/main.c
+@@ -357,10 +357,17 @@ main
+     /*
+      * Print a warning if stdout is not a terminal.
+      */
+     check_tty(&params);
+ 
++#ifdef _IOLBF
++    /* Ensure output works usefully without a tty: buffer lines instead of
++     * fully buffered. */
++    if (silent_mode)
++	setvbuf(stdout, NULL, _IOLBF, 0);
++#endif
++
+     /* This message comes before term inits, but after setting "silent_mode"
+      * when the input is not a tty. */
+     if (GARGCOUNT > 1 && !silent_mode)
+ 	printf(_("%d files to edit\n"), GARGCOUNT);
+ 
+@@ -2530,11 +2537,11 @@ scripterror:
+ #endif
+ }
+ 
+ /*
+  * Print a warning if stdout is not a terminal.
+- * When starting in Ex mode and commands come from a file, set Silent mode.
++ * When starting in Ex mode and commands come from a file, set silent_mode.
+  */
+     static void
+ check_tty(mparm_T *parmp)
+ {
+     int		input_isatty;		/* is active input a terminal? */
+/
