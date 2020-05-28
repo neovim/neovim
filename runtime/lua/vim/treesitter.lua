@@ -108,6 +108,25 @@ function M.get_parser(bufnr, ft, cb)
   return parsers[id]
 end
 
+local StrParser = {}
+StrParser.__index = StrParser
+
+function StrParser:parse_str(str)
+  self.tree = self._parser:parse_str(str)
+
+  return self.tree
+end
+
+function M.create_str_parser(lang)
+  M.require_language(lang)
+
+  return setmetatable({
+    lang = lang,
+    _parser = vim._create_ts_parser(lang)
+  }, StrParser)
+end
+
+
 -- query: pattern matching on trees
 -- predicate matching is implemented in lua
 local Query = {}

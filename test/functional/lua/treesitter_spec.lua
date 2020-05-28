@@ -404,4 +404,45 @@ static int nlua_schedule(lua_State *const lstate)
     end
     eq({true,true}, {has_named,has_anonymous})
   end)
+
+  describe('parse_str', function()
+    it('should work for empty string', function()
+      if not check_parser() then return end
+
+      local res = exec_lua([[
+        parser = vim.treesitter.create_str_parser('c')
+        return parser:parse_str(''):root():has_error()
+      ]])
+
+      eq(false, res)
+    end)
+
+    it('should work for simple case', function()
+      if not check_parser() then return end
+
+      local test_string = ([[
+int main() {
+  int x = 3;
+}]])
+
+      local res = exec_lua([[
+        parser = vim.treesitter.create_str_parser('c')
+        tree = parser:parse_str(...)
+        root = tree:root()
+        lang = vim.treesitter.inspect_language('c')
+
+        return root:has_error()
+      ]], test_string)
+
+      eq(false, res)
+
+      eq("<tree>", exec_lua("return tostring(tree)"))
+      eq("<node translation_unit>", exec_lua("return tostring(root)"))
+
+      eq(1, exec_lua("return root:child_count()"))
+      exec_lua("child = root:child(0)")
+      eq("<node function_definition>", exec_lua("return tostring(child)"))
+      eq({0,0,2,1}, exec_lua("return {child:range()}"))
+    end)
+  end)
 end)

@@ -39,6 +39,7 @@ static struct luaL_Reg parser_meta[] = {
   { "__gc", parser_gc },
   { "__tostring", parser_tostring },
   { "parse_buf", parser_parse_buf },
+  { "parse_str", parser_parse_str },
   { "edit", parser_edit },
   { "tree", parser_tree },
   { NULL, NULL }
@@ -290,6 +291,65 @@ static const char *input_cb(void *payload, uint32_t byte_index,
   }
   return buf;
 #undef BUFSIZE
+}
+
+static const char *str_cb(
+    void *payload,
+    uint32_t byte_index,
+    TSPoint position,
+    uint32_t *bytes_read)
+{
+  const char *buf = payload;
+
+  if (position.row > 0) {
+    *bytes_read = 0;
+    return "";
+  }
+
+  *bytes_read = strlen(buf);
+  return buf;
+}
+
+static int parser_parse_str(lua_State *L)
+{
+  TSLua_parser *p = parser_check(L);
+  if (!p) {
+    return 0;
+  }
+
+  size_t len;
+  void *payload = (void *)lua_tolstring(L, 2, &len);
+
+  TSInput input = { payload, str_cb, TSInputEncodingUTF8 };
+  TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
+
+  uint32_t n_ranges = 0;
+  TSRange *changed = p->tree ? ts_tree_get_changed_ranges(p->tree, new_tree,
+                                                          &n_ranges) : NULL;
+  if (p->tree) {
+    ts_tree_delete(p->tree);
+  }
+  p->tree = new_tree;
+
+  tslua_push_tree(L, p->tree);
+
+  lua_createtable(L, n_ranges, 0);
+  for (size_t i = 0; i < n_ranges; i++) {
+    lua_createtable(L, 4, 0);
+    lua_pushinteger(L, changed[i].start_point.row);
+    lua_rawseti(L, -2, 1);
+    lua_pushinteger(L, changed[i].start_point.column);
+    lua_rawseti(L, -2, 2);
+    lua_pushinteger(L, changed[i].end_point.row);
+    lua_rawseti(L, -2, 3);
+    lua_pushinteger(L, changed[i].end_point.column);
+    lua_rawseti(L, -2, 4);
+
+    lua_rawseti(L, -2, i+1);
+  }
+  xfree(changed);
+
+  return 2;
 }
 
 static int parser_parse_buf(lua_State *L)
