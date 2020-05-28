@@ -537,8 +537,8 @@ function! s:check_virtualenv() abort
     call add(errors, 'no Python executables found in the virtualenv '.bin_dir.' directory.')
   endif
 
+  let msg = '$VIRTUAL_ENV is set to: '.$VIRTUAL_ENV
   if len(errors)
-    let msg = '$VIRTUAL_ENV is set to: '.$VIRTUAL_ENV
     if len(venv_bins)
       let msg .= "\nAnd its ".bin_dir.' directory contains: '
         \.join(map(venv_bins, "fnamemodify(v:val, ':t')"), ', ')
@@ -551,7 +551,10 @@ function! s:check_virtualenv() abort
     let msg .= "\nSo invoking Python may lead to unexpected results."
     call health#report_warn(msg, keys(hints))
   else
-    call health#report_ok('$VIRTUAL_ENV provides :python, :python3, et al.')
+    call health#report_info(msg)
+    call health#report_info('Python version: '
+      \.system('python -c "import platform, sys; sys.stdout.write(platform.python_version())"'))
+    call health#report_ok('$VIRTUAL_ENV provides :!python.')
   endif
 endfunction
 
