@@ -198,6 +198,10 @@ end
 --
 --@param lines: Array of strings, does not have to continuous (can start at 5)
 M.get_node_text_from_lines = function(node, lines)
+  if node == nil or node.range == nil then
+    assert(false, vim.inspect(node) .. ' ' .. vim.inspect(lines))
+  end
+
   local start_row, start_col, end_row, end_col = node:range()
 
   return get_text_from_lines(lines, start_row, start_col, end_row, end_col)
@@ -219,23 +223,23 @@ function Query:_match_predicates(match, pattern, node_text_getter, line_matcher)
     -- Here we only want to return if a predicate DOES NOT match, and
     -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
-    if pred[1] == "eq?" then
+    if pred[1] == "#eq?" then
       local node = match[pred[2]]
       local node_text = node_text_getter(node)
 
       local str
       if type(pred[3]) == "string" then
-        -- (eq? @aa "foo")
+        -- (#eq? @aa "foo")
         str = pred[3]
       else
-        -- (eq? @aa @bb)
-        str = M.get_node_text_from_buf(match[pred[3]], bufnr)
+        -- (#eq? @aa @bb)
+        str = node_text_getter(match[pred[3]])
       end
 
       if node_text ~= str or str == nil then
         return false
       end
-    elseif pred[1] == "match?" then
+    elseif pred[1] == "#match?" then
       if not regexes or not regexes[i] then
         return false
       end
@@ -281,7 +285,7 @@ function Query:match_str_predicates(match, pattern, lines)
       return M.get_node_text_from_lines(node, lines)
     end,
     function(regex, start_row, start_col, end_row, end_col)
-      return regex:match_str(get_text_from_lines(start_row, start_col, end_row, end_col))
+      return regex:match_str(get_text_from_lines(lines, start_row, start_col, end_row, end_col))
     end
   )
 end
@@ -329,9 +333,7 @@ function Query:iter_matches(node, bufnr, start, stop)
   end
 
   return self:_iter_matches(
-    function(match, pattern)
-      return self:match_buf_predicates(match, pattern, bufnr)
-    end,
+    function(match, pattern) return self:match_buf_predicates(match, pattern, bufnr) end,
     node,
     start,
     stop
@@ -340,12 +342,15 @@ end
 
 --- TODO: Decide if we should use lines or text here
 function Query:iter_str_matches(node, str, start, stop)
-  local lines = vim.split(str, "\n")
+  local lines
+  if type(str) == 'table' then
+    lines = str
+  else
+    lines = vim.split(str, "\n")
+  end
 
-  return self._iter_matches(
-    function(match, pattern)
-      return self:match_str_predicates(match, pattern, lines)
-    end,
+  return self:_iter_matches(
+    function(match, pattern) return self:match_str_predicates(match, pattern, lines) end,
     node,
     start,
     stop
