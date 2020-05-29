@@ -752,14 +752,14 @@ function M._make_floating_popup_size(contents, opts)
     local wrap_at = opts.wrap_at
     if wrap_at and width > wrap_at then
       height = 0
-      if line_widths then
-        for i = 1, #contents do
-          height = height + math.ceil(line_widths[i]/wrap_at)
+      if vim.tbl_isempty(line_widths) then
+        for _, line in ipairs(contents) do
+          local line_width = vim.fn.strdisplaywidth(line)
+          height = height + math.ceil(line_width/wrap_at)
         end
       else
-        for i, line in ipairs(contents) do
-          line_width = vim.fn.strdisplaywidth(line)
-          height = height + math.ceil(line_width/wrap_at)
+        for i = 1, #contents do
+          height = height + math.ceil(line_widths[i]/wrap_at)
         end
       end
     end
@@ -795,7 +795,7 @@ function M.open_floating_preview(contents, filetype, opts)
   local width, height = M._make_floating_popup_size(contents, opts)
 
   -- Add right padding of 1
-  width = width + 1 
+  width = width + 1
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
