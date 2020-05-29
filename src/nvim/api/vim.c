@@ -1037,7 +1037,7 @@ void nvim_set_current_win(Window window, Error *err)
 ///
 /// @param listed Sets 'buflisted'
 /// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
-///                (always 'nomodified')
+///                (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 /// @param[out] err Error details, if any
 /// @return Buffer handle, or 0 on error
 ///
@@ -1067,9 +1067,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   if (scratch) {
     aco_save_T aco;
     aucmd_prepbuf(&aco, buf);
-    set_option_value("bh", 0L, "hide", OPT_LOCAL);
-    set_option_value("bt", 0L, "nofile", OPT_LOCAL);
-    set_option_value("swf", 0L, NULL, OPT_LOCAL);
+    set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
+    set_option_value("buftype", 0L, "nofile", OPT_LOCAL);
+    set_option_value("swapfile", 0L, NULL, OPT_LOCAL);
+    set_option_value("modeline", 0L, NULL, OPT_LOCAL);  // 'nomodeline'
     aucmd_restbuf(&aco);
   }
   return buf->b_fnum;
