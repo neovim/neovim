@@ -7,7 +7,7 @@ set -p
 
 # Ensure that the user has a bash that supports -A
 if [[ "${BASH_VERSINFO[0]}" -lt 4  ]]; then
-  echo "This script requires bash version 3 or later (you have ${BASH_VERSION})." >&2
+  echo "This script requires bash version 4 or later (you have ${BASH_VERSION})." >&2
   exit 1
 fi
 
