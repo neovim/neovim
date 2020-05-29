@@ -719,13 +719,62 @@ function M.close_preview_autocmd(events, winnr)
   api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
+--- Compute size of float needed to show contents (with optional wrapping)
+---
+--@param contents table of lines to show in window
+--@param opts dictionary with optional fields
+--             - height  of floating window
+--             - width   of floating window
+--             - wrap_at character to wrap at for computing height
+--@return width,height size of float
+function M._make_floating_popup_size(contents, opts)
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+
+  local width = opts.width
+  local height = opts.height
+  local line_widths = {}
+
+  if not width then
+    width = 0
+    for i, line in ipairs(contents) do
+      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+      line_widths[i] = vim.fn.strdisplaywidth(line)
+      width = math.max(line_widths[i], width)
+    end
+  end
+
+  if not height then
+    height = #contents
+    local wrap_at = opts.wrap_at
+    if wrap_at and width > wrap_at then
+      height = 0
+      if line_widths then
+        for i = 1, #contents do
+          height = height + math.ceil(line_widths[i]/wrap_at)
+        end
+      else
+        for i, line in ipairs(contents) do
+          line_width = vim.fn.strdisplaywidth(line)
+          height = height + math.ceil(line_width/wrap_at)
+        end
+      end
+    end
+  end
+
+  return width, height
+end
+
 --- Show contents in a floating window
 ---
 --@param contents table of lines to show in window
 --@param filetype string of filetype to set for opened buffer
 --@param opts dictionary with optional fields
---             - height  of floating window
---             - width   of floating window
+--             - height of floating window
+--             - width  of floating window
 --@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
@@ -735,32 +784,18 @@ function M.open_floating_preview(contents, filetype, opts)
   }
   opts = opts or {}
 
-  -- Trim empty lines from the end.
+  -- Clean up input: trim empty lines from the end
   contents = M.trim_empty_lines(contents)
+  for i, line in ipairs(contents) do
+    contents[i] = " "..line:gsub("\r", "") -- clean and left pad
+  end
 
-  local width = opts.width
-  if not width then
-    width = 0
-    for i, line in ipairs(contents) do
-      -- Clean up the input and add left pad.
-      line = " "..line:gsub("\r", "")
-      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-      local line_width = vim.fn.strdisplaywidth(line)
-      width = math.max(line_width, width)
-      contents[i] = line
-    end
-    -- Add right padding of 1 each.
-    width = width + 1
-  end
-  local winwidth = api.nvim_win_get_width(0)
-  local height = opts.height or #contents
-  if not opts.height and vim.wo["wrap"] and width > winwidth then
-    height = 0
-    for _, line in ipairs(contents) do
-      local line_width = vim.fn.strdisplaywidth(line)
-      height = height + math.ceil(line_width/winwidth)
-    end
-  end
+  -- Compute size of float needed to show (wrapped) lines
+  opts.wrap_at = (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  local width, height = M._make_floating_popup_size(contents, opts)
+
+  -- Add right padding of 1
+  width = width + 1 
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
