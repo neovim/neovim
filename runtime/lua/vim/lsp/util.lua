@@ -614,13 +614,33 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
--- Convert markdown into syntax highlighted regions by stripping the code
--- blocks and converting them into highlighted code.
--- This will by default insert a blank line separator after those code block
--- regions to improve readability.
+--- Convert markdown into syntax highlighted regions by stripping the code
+--- blocks and converting them into highlighted code.
+--- This will by default insert a blank line separator after those code block
+--- regions to improve readability.
+--- The result is shown in a floating preview
+--- TODO: refactor to separate stripping/converting and make use of open_floating_preview
+---
+--@param contents table of lines to show in window
+--@param opts dictionary with optional fields
+--             - height    of floating window
+--             - width     of floating window
+--             - wrap_at   character to wrap at for computing height
+--             - pad_left  amount of columns to pad contents at left
+--             - pad_right amount of columns to pad contents at right
+--             - separator insert separator after code block
+--@return width,height size of float
 function M.fancy_floating_markdown(contents, opts)
-  local pad_left = opts and opts.pad_left
-  local pad_right = opts and opts.pad_right
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+
+  -- Default padding of 1 for backwards compatibility
+  local pad_left = opts.pad_left or 1
+  local pad_right = opts.pad_right or 1
+
   local stripped = {}
   local highlights = {}
   do
@@ -654,31 +674,32 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  local width = 0
+  -- Clean input and add padding
   for i, v in ipairs(stripped) do
     v = v:gsub("\r", "")
     if pad_left then v = (" "):rep(pad_left)..v end
     if pad_right then v = v..(" "):rep(pad_right) end
     stripped[i] = v
-    width = math.max(width, #v)
   end
-  if opts and opts.max_width then
-    width = math.min(opts.max_width, width)
-  end
-  -- TODO(ashkan): decide how to make this customizable.
-  local insert_separator = true
+
+  -- Compute size of float needed to show (wrapped) lines
+  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  local width, height = M._make_floating_popup_size(stripped, opts)
+
+  -- Insert blank line separator after code block
+  local insert_separator = opts.separator or true
   if insert_separator then
     for i, h in ipairs(highlights) do
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
         table.insert(stripped, h.finish + 1, string.rep("─", width))
+        height = height + 1
       end
     end
   end
 
   -- Make the floating window.
-  local height = #stripped
   local bufnr = api.nvim_create_buf(false, true)
   local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
@@ -773,7 +794,7 @@ end
 --@param contents table of lines to show in window
 --@param filetype string of filetype to set for opened buffer
 --@param opts dictionary with optional fields
---             - height     of floating window
+--             - height    of floating window
 --             - width     of floating window
 --             - wrap_at   character to wrap at for computing height
 --             - pad_left  amount of columns to pad contents at left
@@ -787,7 +808,7 @@ function M.open_floating_preview(contents, filetype, opts)
   }
   opts = opts or {}
 
-  -- default padding of 1 for backwards compatibility
+  -- Default padding of 1 for backwards compatibility
   local pad_left = opts.pad_left or 1
   local pad_right = opts.pad_right or 1
 
