@@ -1048,13 +1048,13 @@ describe('lua stdlib', function()
   end)
 
   it('vim.defer_fn', function()
-    exec_lua [[
-    vim.g.test = 0
-    vim.defer_fn(function() vim.g.test = 1 end, 50)
-    ]]
-    eq(0, exec_lua[[return vim.g.test]])
-    exec_lua [[vim.cmd("sleep 1000m")]]
-    eq(1, exec_lua[[return vim.g.test]])
+    eq(false, exec_lua [[
+      vim.g.test = false
+      vim.defer_fn(function() vim.g.test = true end, 150)
+      return vim.g.test
+    ]])
+    exec_lua [[vim.wait(1000, function() return vim.g.test end)]]
+    eq(true, exec_lua[[return vim.g.test]])
   end)
 
   it('vim.region', function()
@@ -1066,4 +1066,176 @@ describe('lua stdlib', function()
     eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
   end)
 
+  describe('vim.wait', function()
+    before_each(function()
+      exec_lua[[
+        -- high precision timer
+        get_time = function()
+          return vim.fn.reltimefloat(vim.fn.reltime())
+        end
+      ]]
+    end)
+
+    it('should run from lua', function()
+      exec_lua[[vim.wait(100, function() return true end)]]
+    end)
+
+    it('should wait the expected time if false', function()
+      eq({time = true, wait_result = {false, -1}}, exec_lua[[
+        start_time = get_time()
+        wait_succeed, wait_fail_val = vim.wait(200, function() return false end)
+
+        return {
+          -- 150ms waiting or more results in true. Flaky tests are bad.
+          time = (start_time + 0.15) < get_time(),
+          wait_result = {wait_succeed, wait_fail_val}
+        }
+      ]])
+    end)
+
+
+    it('should not block other events', function()
+      eq({time = true, wait_result = true}, exec_lua[[
+        start_time = get_time()
+
+        vim.g.timer_result = false
+        timer = vim.loop.new_timer()
+        timer:start(100, 0, vim.schedule_wrap(function()
+          vim.g.timer_result = true
+        end))
+
+        -- Would wait ten seconds if results blocked.
+        wait_result = vim.wait(10000, function() return vim.g.timer_result end)
+
+        return {
+          time = (start_time + 5) > get_time(),
+          wait_result = wait_result,
+        }
+      ]])
+    end)
+
+    it('should work with vim.defer_fn', function()
+      eq({time = true, wait_result = true}, exec_lua[[
+        start_time = get_time()
+
+        vim.defer_fn(function() vim.g.timer_result = true end, 100)
+        wait_result = vim.wait(10000, function() return vim.g.timer_result end)
+
+        return {
+          time = (start_time + 5) > get_time(),
+          wait_result = wait_result,
+        }
+      ]])
+    end)
+
+    it('should require functions to be passed', function()
+      local pcall_result = exec_lua [[
+        return {pcall(function() vim.wait(1000, 13) end)}
+      ]]
+
+      eq(pcall_result[1], false)
+      matches('condition must be a function', pcall_result[2])
+    end)
+
+    it('should not crash when callback errors', function()
+      local pcall_result = exec_lua [[
+        return {pcall(function() vim.wait(1000, function() error("As Expected") end) end)}
+      ]]
+
+      eq(pcall_result[1], false)
+      matches('As Expected', pcall_result[2])
+    end)
+
+    it('should call callbacks exactly once if they return true immediately', function()
+      eq(true, exec_lua [[
+        vim.g.wait_count = 0
+        vim.wait(1000, function()
+          vim.g.wait_count = vim.g.wait_count + 1
+          return true
+        end, 20)
+        return vim.g.wait_count == 1
+      ]])
+    end)
+
+    it('should call callbacks few times with large `interval`', function()
+      eq(true, exec_lua [[
+        vim.g.wait_count = 0
+        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 200)
+        return vim.g.wait_count < 5
+      ]])
+    end)
+
+    it('should call callbacks more times with small `interval`', function()
+      eq(true, exec_lua [[
+        vim.g.wait_count = 0
+        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 5)
+        return vim.g.wait_count > 5
+      ]])
+    end)
+
+    it('should play nice with `not` when fails', function()
+      eq(true, exec_lua [[
+        if not vim.wait(50, function() end) then
+          return true
+        end
+
+        return false
+      ]])
+    end)
+
+    it('should play nice with `if` when success', function()
+      eq(true, exec_lua [[
+        if vim.wait(50, function() return true end) then
+          return true
+        end
+
+        return false
+      ]])
+    end)
+
+    it('should return immediately with false if timeout is 0', function()
+      eq({false, -1}, exec_lua [[
+        return {
+          vim.wait(0, function() return false end)
+        }
+      ]])
+    end)
+
+    it('should work with tables with __call', function()
+      eq(true, exec_lua [[
+        local t = setmetatable({}, {__call = function(...) return true end})
+        return vim.wait(100, t, 10)
+      ]])
+    end)
+
+    it('should work with tables with __call that change', function()
+      eq(true, exec_lua [[
+        local t = {count = 0}
+        setmetatable(t, {
+          __call = function()
+            t.count = t.count + 1
+            return t.count > 3
+          end
+        })
+
+        return vim.wait(1000, t, 10)
+      ]])
+    end)
+
+    it('should not work with negative intervals', function()
+      local pcall_result = exec_lua [[
+        return pcall(function() vim.wait(1000, function() return false end, -1) end)
+      ]]
+
+      eq(false, pcall_result)
+    end)
+
+    it('should not work with weird intervals', function()
+      local pcall_result = exec_lua [[
+        return pcall(function() vim.wait(1000, function() return false end, 'a string value') end)
+      ]]
+
+      eq(false, pcall_result)
+    end)
   end)
+end)

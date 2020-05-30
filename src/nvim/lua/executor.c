@@ -28,6 +28,8 @@
 #include "nvim/ascii.h"
 #include "nvim/change.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/event/time.h"
+#include "nvim/event/loop.h"
 
 #ifdef WIN32
 #include "nvim/os/os.h"
@@ -255,6 +257,101 @@ static struct luaL_Reg regex_meta[] = {
   { NULL, NULL }
 };
 
+// Dummy timer callback. Used by f_wait().
+static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
+{
+}
+
+// Dummy timer close callback. Used by f_wait().
+static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
+{
+  xfree(tw);
+}
+
+static bool nlua_wait_condition(lua_State *lstate, int *status,
+                                bool *callback_result)
+{
+  lua_pushvalue(lstate, 2);
+  *status = lua_pcall(lstate, 0, 1, 0);
+  if (*status) {
+    return true;  // break on error, but keep error on stack
+  }
+  *callback_result = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+  return *callback_result;  // break if true
+}
+
+/// "vim.wait(timeout, condition[, interval])" function
+static int nlua_wait(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  intptr_t timeout = luaL_checkinteger(lstate, 1);
+  if (timeout < 0) {
+    return luaL_error(lstate, "timeout must be > 0");
+  }
+
+  // Check if condition can be called.
+  bool is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+
+  // Check if condition is callable table
+  if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
+    is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+    lua_pop(lstate, 1);
+  }
+
+  if (!is_function) {
+    lua_pushliteral(lstate, "vim.wait: condition must be a function");
+    return lua_error(lstate);
+  }
+
+  intptr_t interval = 200;
+  if (lua_gettop(lstate) >= 3) {
+    interval = luaL_checkinteger(lstate, 3);
+    if (interval < 0) {
+      return luaL_error(lstate, "interval must be > 0");
+    }
+  }
+
+  TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
+
+  // Start dummy timer.
+  time_watcher_init(&main_loop, tw, NULL);
+  tw->events = main_loop.events;
+  tw->blockable = true;
+  time_watcher_start(tw, dummy_timer_due_cb,
+                     (uint64_t)interval, (uint64_t)interval);
+
+  int pcall_status = 0;
+  bool callback_result = false;
+
+  LOOP_PROCESS_EVENTS_UNTIL(
+      &main_loop,
+      main_loop.events,
+      (int)timeout,
+      nlua_wait_condition(lstate, &pcall_status, &callback_result) || got_int);
+
+  // Stop dummy timer
+  time_watcher_stop(tw);
+  time_watcher_close(tw, dummy_timer_close_cb);
+
+  if (pcall_status) {
+    return lua_error(lstate);
+  } else if (callback_result) {
+    lua_pushboolean(lstate, 1);
+    lua_pushnil(lstate);
+  } else if (got_int) {
+    got_int = false;
+    vgetc();
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -2);
+  } else {
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -1);
+  }
+
+  return 2;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -305,7 +402,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // regex
   lua_pushcfunction(lstate, &nlua_regex);
   lua_setfield(lstate, -2, "regex");
-
   luaL_newmetatable(lstate, "nvim_regex");
   luaL_register(lstate, NULL, regex_meta);
   lua_pushvalue(lstate, -1);  // [meta, meta]
@@ -319,6 +415,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // rpcnotify
   lua_pushcfunction(lstate, &nlua_rpcnotify);
   lua_setfield(lstate, -2, "rpcnotify");
+
+  // wait
+  lua_pushcfunction(lstate, &nlua_wait);
+  lua_setfield(lstate, -2, "wait");
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
