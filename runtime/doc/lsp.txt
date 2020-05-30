@@ -1042,14 +1042,6 @@ get_current_line_to_cursor()
 get_severity_highlight_name({severity})
                 TODO: Documentation
 
-                                              *vim.lsp.util.highlight_range()*
-highlight_range({bufnr}, {ns}, {hiname}, {start}, {finish})
-                TODO: Documentation
-
-                                             *vim.lsp.util.highlight_region()*
-highlight_region({ft}, {start}, {finish})
-                TODO: Documentation
-
 jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
                 TODO: Documentation
 
