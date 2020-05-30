@@ -773,8 +773,9 @@ end
 --@param contents table of lines to show in window
 --@param filetype string of filetype to set for opened buffer
 --@param opts dictionary with optional fields
---             - height of floating window
---             - width  of floating window
+--             - height  of floating window
+--             - width   of floating window
+--             - wrap_at character to wrap at for computing height
 --@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
@@ -791,7 +792,7 @@ function M.open_floating_preview(contents, filetype, opts)
   end
 
   -- Compute size of float needed to show (wrapped) lines
-  opts.wrap_at = (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(contents, opts)
 
   -- Add right padding of 1
