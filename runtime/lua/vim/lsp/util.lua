@@ -773,9 +773,11 @@ end
 --@param contents table of lines to show in window
 --@param filetype string of filetype to set for opened buffer
 --@param opts dictionary with optional fields
---             - height  of floating window
---             - width   of floating window
---             - wrap_at character to wrap at for computing height
+--             - height     of floating window
+--             - width     of floating window
+--             - wrap_at   character to wrap at for computing height
+--             - pad_left  amount of columns to pad contents at left
+--             - pad_right amount of columns to pad contents at right
 --@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
@@ -785,18 +787,22 @@ function M.open_floating_preview(contents, filetype, opts)
   }
   opts = opts or {}
 
-  -- Clean up input: trim empty lines from the end
+  -- default padding of 1 for backwards compatibility
+  local pad_left = opts.pad_left or 1
+  local pad_right = opts.pad_right or 1
+
+  -- Clean up input: trim empty lines from the end, pad
   contents = M.trim_empty_lines(contents)
   for i, line in ipairs(contents) do
-    contents[i] = " "..line:gsub("\r", "") -- clean and left pad
+    line = line:gsub("\r", "")
+    if pad_left then line = (" "):rep(pad_left)..line end
+    if pad_right then line = line..(" "):rep(pad_right) end
+    contents[i] = line
   end
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(contents, opts)
-
-  -- Add right padding of 1
-  width = width + 1
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
