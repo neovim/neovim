@@ -543,6 +543,9 @@ au BufNewFile,BufRead */etc/elinks.conf,*/.elinks/elinks.conf	setf elinks
 " ERicsson LANGuage; Yaws is erlang too
 au BufNewFile,BufRead *.erl,*.hrl,*.yaws	setf erlang
 
+" Elm
+au BufNewFile,BufRead *.elm			setf elm
+
 " Elm Filter Rules file
 au BufNewFile,BufRead filter-rules		setf elmfilt
 
