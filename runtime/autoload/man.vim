@@ -332,16 +332,19 @@ function! s:get_paths(sect, name, do_fallback) abort
   " callers must try-catch this, as some `man` implementations don't support `s:find_arg`
   try
     let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
-    return globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+    let paths = globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+    if !empty(paths)
+      return paths
+    endif
   catch
     if !a:do_fallback
       throw v:exception
     endif
-
-    " fallback to a single path, with the page we're trying to find
-    let [l:sect, l:name, l:path] = s:verify_exists(a:sect, a:name)
-    return [l:path]
   endtry
+
+  " Fallback to a single path, with the page we're trying to find.
+  let [l:sect, l:name, l:path] = s:verify_exists(a:sect, a:name)
+  return [l:path]
 endfunction
 
 function! s:complete(sect, psect, name) abort
