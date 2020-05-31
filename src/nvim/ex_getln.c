@@ -5361,12 +5361,12 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
 
         // Concatenate new results to previous ones.
         ga_grow(ga, num_p);
+        // take over the pointers and put them in "ga"
         for (int i = 0; i < num_p; i++) {
-          ((char_u **)ga->ga_data)[ga->ga_len] = vim_strsave(p[i]);
+          ((char_u **)ga->ga_data)[ga->ga_len] = p[i];
           ga->ga_len++;
         }
-
-        FreeWild(num_p, p);
+        xfree(p);
       }
     }
   }
