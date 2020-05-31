@@ -157,6 +157,7 @@ static void deadly_signal(int signum)
 {
   // Set the v:dying variable.
   set_vim_var_nr(VV_DYING, 1);
+  v_dying = 1;
 
   WLOG("got signal %d (%s)", signum, signal_name(signum));
 
