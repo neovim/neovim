@@ -24,7 +24,7 @@ function! remote#define#CommandOnHost(host, method, sync, name, opts)
   endif
 
   if has_key(a:opts, 'nargs')
-    call add(forward_args, ' <args>')
+    call add(forward_args, ' " . <q-args> . "')
   endif
 
   exe s:GetCommandPrefix(a:name, a:opts)
