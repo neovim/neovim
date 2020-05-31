@@ -713,6 +713,16 @@ vim.highlight.on_yank([{higroup}, {timeout}, {event}])
         in milliseconds ({timeout}, default `500`), and the event structure 
         that is fired ({event}, default `vim.v.event`).
 
+
+vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
+                                                       *vim.highlight.range()*
+        Highlights the range between {start} and {finish} (tuples of {line,col})
+        in buffer {bufnr} with the highlight group {higroup} using the namespace
+        {ns}. Optional arguments are the type of range (characterwise, linewise,
+        or blockwise, see |setreg|; default to characterwise) and whether the
+        range is inclusive (default false).
+
+
 ------------------------------------------------------------------------------
 VIM.REGEX							*lua-regex*
 

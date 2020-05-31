@@ -3,6 +3,7 @@ local vim = vim
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
+local highlight = require 'vim.highlight'
 
 local M = {}
 
@@ -691,7 +692,7 @@ function M.fancy_floating_markdown(contents, opts)
 
   vim.cmd("ownsyntax markdown")
   local idx = 1
-  local function highlight_region(ft, start, finish)
+  local function apply_syntax_to_region(ft, start, finish)
     if ft == '' then return end
     local name = ft..idx
     idx = idx + 1
@@ -707,8 +708,8 @@ function M.fancy_floating_markdown(contents, opts)
   -- make sure that regions between code blocks are definitely markdown.
   -- local ph = {start = 0; finish = 1;}
   for _, h in ipairs(highlights) do
-    -- highlight_region('markdown', ph.finish, h.start)
-    highlight_region(h.ft, h.start, h.finish)
+    -- apply_syntax_to_region('markdown', ph.finish, h.start)
+    apply_syntax_to_region(h.ft, h.start, h.finish)
     -- ph = h
   end
 
@@ -760,19 +761,6 @@ function M.open_floating_preview(contents, filetype, opts)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden"}, floating_winnr)
   return floating_bufnr, floating_winnr
-end
-
-local function highlight_range(bufnr, ns, hiname, start, finish)
-  if start[1] == finish[1] then
-    -- TODO care about encoding here since this is in byte index?
-    api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], finish[2])
-  else
-    api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], -1)
-    for line = start[1] + 1, finish[1] - 1 do
-      api.nvim_buf_add_highlight(bufnr, ns, hiname, line, 0, -1)
-    end
-    api.nvim_buf_add_highlight(bufnr, ns, hiname, finish[1], 0, finish[2])
-  end
 end
 
 do
@@ -908,8 +896,7 @@ do
         [protocol.DiagnosticSeverity.Hint]='Hint',
       }
 
-      -- TODO care about encoding here since this is in byte index?
-      highlight_range(bufnr, diagnostic_ns,
+      highlight.range(bufnr, diagnostic_ns,
         underline_highlight_name..hlmap[diagnostic.severity],
         {start.line, start.character},
         {finish.line, finish.character}
@@ -933,7 +920,7 @@ do
         [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
-      highlight_range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
+      highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
     end
   end
 
