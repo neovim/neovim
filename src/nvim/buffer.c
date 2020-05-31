@@ -186,14 +186,17 @@ int open_buffer(
       }
     }
 
-    /*
-     * if there is no memfile at all, exit
-     * This is OK, since there are no changes to lose.
-     */
+    // If there is no memfile at all, exit.
+    // This is OK, since there are no changes to lose.
     if (curbuf == NULL) {
       EMSG(_("E82: Cannot allocate any buffer, exiting..."));
+
+      // Don't try to do any saving, with "curbuf" NULL almost nothing
+      // will work.
+      v_dying = 2;
       getout(2);
     }
+
     EMSG(_("E83: Cannot allocate buffer, using other one..."));
     enter_buffer(curbuf);
     if (old_tw != curbuf->b_p_tw) {
