@@ -92,12 +92,12 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
       it('with nargs/double-quote', function()
         call(fn, args..', {"nargs": "*"}')
         local function on_setup()
-          command('RpcCommand "arg"')
+          command('RpcCommand "arg1" "arg2" "arg3"')
         end
 
         local function handler(method, arguments)
           eq('test-handler', method)
-          eq({'"arg"'}, arguments[1])
+          eq({'"arg1"', '"arg2"', '"arg3"'}, arguments[1])
           return ''
         end
 
