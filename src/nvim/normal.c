@@ -621,6 +621,8 @@ static void normal_redraw_mode_message(NormalState *s)
     update_screen(0);
     // now reset it, otherwise it's put in the history again
     keep_msg = kmsg;
+
+    kmsg = vim_strsave(keep_msg);
     msg_attr((const char *)kmsg, keep_msg_attr);
     xfree(kmsg);
   }
@@ -1265,10 +1267,15 @@ static void normal_redraw(NormalState *s)
   // Display message after redraw. If an external message is still visible,
   // it contains the kept message already.
   if (keep_msg != NULL && !msg_ext_is_visible()) {
-    // msg_attr_keep() will set keep_msg to NULL, must free the string here.
-    // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
-    char *p = (char *)keep_msg;
-    msg_attr(p, keep_msg_attr);
+    char_u *const p = vim_strsave(keep_msg);
+
+    // msg_start() will set keep_msg to NULL, make a copy
+    // first.  Don't reset keep_msg, msg_attr_keep() uses it to
+    // check for duplicates.  Never put this message in
+    // history.
+    msg_hist_off = true;
+    msg_attr((const char *)p, keep_msg_attr);
+    msg_hist_off = false;
     xfree(p);
   }
 

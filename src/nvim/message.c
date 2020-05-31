@@ -306,11 +306,6 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
     add_msg_hist((const char *)s, -1, attr, multiline);
   }
 
-  /* When displaying keep_msg, don't let msg_start() free it, caller must do
-   * that. */
-  if (s == keep_msg)
-    keep_msg = NULL;
-
   /* Truncate the message if needed. */
   msg_start();
   buf = msg_strtrunc(s, FALSE);
