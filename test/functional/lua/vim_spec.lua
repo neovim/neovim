@@ -1167,14 +1167,6 @@ describe('lua stdlib', function()
       ]])
     end)
 
-    it('should call callbacks more times with small `interval`', function()
-      eq(true, exec_lua [[
-        vim.g.wait_count = 0
-        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 5)
-        return vim.g.wait_count > 5
-      ]])
-    end)
-
     it('should play nice with `not` when fails', function()
       eq(true, exec_lua [[
         if not vim.wait(50, function() end) then
