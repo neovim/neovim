@@ -1727,6 +1727,11 @@ void nvim_set_client_info(uint64_t channel_id, String name,
                           Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
+  if (name.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "Invalid (empty) name");
+    return;
+  }
+
   Dictionary info = ARRAY_DICT_INIT;
   PUT(info, "name", copy_object(STRING_OBJ(name)));
 
@@ -1768,9 +1773,8 @@ void nvim_set_client_info(uint64_t channel_id, String name,
 ///                 still be present to indicate a pty is used. This is
 ///                 currently the case when using winpty on windows.
 ///    -  "buffer"  buffer with connected |terminal| instance (optional)
-///    -  "client"  information about the client on the other end of the
-///                 RPC channel, if it has added it using
-///                 |nvim_set_client_info()|. (optional)
+///    -  "client"  information describing the client, if it was provided
+///                 (by a call to |nvim_set_client_info()|).
 ///
 Dictionary nvim_get_chan_info(Integer chan, Error *err)
   FUNC_API_SINCE(4)

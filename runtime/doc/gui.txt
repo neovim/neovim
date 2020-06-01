@@ -12,11 +12,18 @@ Nvim Graphical User Interface				*gui* *GUI*
 Starting the GUI				*gui-start* *E229* *E233*
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
-For GUI-specific configuration Nvim provides the |UIEnter| event.  This
-happens after other |initialization|s, like reading your vimrc file.
+When a UI starts ("attaches") the |UIEnter| event is raised, so it can be used
+for UI-specific configuration.  This happens after other |initialization|s,
+like reading your vimrc file.
 
-Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
-	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
+Example: Configure the "firenvim" UI. >
+    func! SetupFirenvim() abort
+      set guifont=Monaco:h10
+    endf
+    autocmd UIEnter firenvim call SetupFirenvim()
+<
+Example: Get UI info from |nvim_list_uis()| by channel id. >
+    autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
 
 						*:winp* *:winpos* *E188*
