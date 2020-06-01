@@ -1168,7 +1168,7 @@ describe('lua stdlib', function()
     it('should call callbacks more times with small `interval`', function()
       eq(true, exec_lua [[
         vim.g.wait_count = 0
-        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 5)
+        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 1)
         return vim.g.wait_count > 5
       ]])
     end)
