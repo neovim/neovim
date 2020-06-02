@@ -924,23 +924,23 @@ function protocol.resolve_capabilities(server_capabilities)
   end
 
   if server_capabilities.declarationProvider == nil then
-    general_properties.declarationProvider = false
+    general_properties.declaration = false
   elseif type(server_capabilities.declarationProvider) == 'boolean' then
-    general_properties.declarationProvider = server_capabilities.declarationProvider
+    general_properties.declaration = server_capabilities.declarationProvider
   elseif type(server_capabilities.declarationProvider) == 'table' then
     -- TODO: support more detailed declarationProvider options.
-    general_properties.declarationProvider = false
+    general_properties.declaration = false
   else
     error("The server sent invalid declarationProvider")
   end
 
   if server_capabilities.typeDefinitionProvider == nil then
-    general_properties.typeDefinitionProvider = false
+    general_properties.type_definition = false
   elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
-    general_properties.typeDefinitionProvider = server_capabilities.typeDefinitionProvider
+    general_properties.type_definition = server_capabilities.typeDefinitionProvider
   elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
     -- TODO: support more detailed typeDefinitionProvider options.
-    general_properties.typeDefinitionProvider = false
+    general_properties.type_definition = false
   else
     error("The server sent invalid typeDefinitionProvider")
   end
