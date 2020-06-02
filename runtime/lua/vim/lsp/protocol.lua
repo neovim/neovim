@@ -923,6 +923,17 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid codeActionProvider")
   end
 
+  if server_capabilities.declarationProvider == nil then
+    general_properties.declarationProvider = false
+  elseif type(server_capabilities.declarationProvider) == 'boolean' then
+    general_properties.declarationProvider = server_capabilities.declarationProvider
+  elseif type(server_capabilities.declarationProvider) == 'table' then
+    -- TODO: support more detailed declarationProvider options.
+    general_properties.declarationProvider = false
+  else
+    error("The server sent invalid declarationProvider")
+  end
+
   if server_capabilities.typeDefinitionProvider == nil then
     general_properties.typeDefinitionProvider = false
   elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
