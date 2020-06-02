@@ -79,7 +79,7 @@ function vim.gsplit(s, sep, plain)
   end
 
   return function()
-    if done then
+    if done or s == '' then
       return
     end
     if sep == '' then
