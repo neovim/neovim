@@ -6754,6 +6754,7 @@ void mapblock_fill_dict(dict_T *const dict,
   }
   tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
+  tv_dict_add_nr(dict, S_LEN("script"), mp->m_noremap == REMAP_SCRIPT ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ctx.sc_sid);
