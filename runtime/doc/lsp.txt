@@ -164,21 +164,21 @@ name: >
 LSP HIGHLIGHT                                                    *lsp-highlight*
 
                                                         *hl-LspDiagnosticsError*
-LspDiagnosticsError          used for "Error" diagnostic virtual text
+LspDiagnosticsError           used for "Error" diagnostic virtual text
                                                     *hl-LspDiagnosticsErrorSign*
-LspDiagnosticsErrorSign      used for "Error" diagnostic signs in sign column
+LspDiagnosticsErrorSign       used for "Error" diagnostic signs in sign column
                                                       *hl-LspDiagnosticsWarning*
-LspDiagnosticsWarning        used for "Warning" diagnostic virtual text
+LspDiagnosticsWarning         used for "Warning" diagnostic virtual text
                                                   *hl-LspDiagnosticsWarningSign*
-LspDiagnosticsWarningSign    used for "Warning" diagnostic signs in sign column
+LspDiagnosticsWarningSign     used for "Warning" diagnostic signs in sign column
                                                   *hl-LspDiagnosticsInformation*
-LspDiagnosticInformation     used for "Information" diagnostic virtual text
+LspDiagnosticsInformation     used for "Information" diagnostic virtual text
                                               *hl-LspDiagnosticsInformationSign*
-LspDiagnosticInformationSign used for "Information" signs in sign column
+LspDiagnosticsInformationSign used for "Information" signs in sign column
                                                          *hl-LspDiagnosticsHint*
-LspDiagnosticHint            used for "Hint" diagnostic virtual text
+LspDiagnosticsHint            used for "Hint" diagnostic virtual text
                                                      *hl-LspDiagnosticsHintSign*
-LspDiagnosticHintSign        used for "Hint" diagnostic signs in sign column
+LspDiagnosticsHintSign        used for "Hint" diagnostic signs in sign column
                                                            *hl-LspReferenceText*
 LspReferenceText          used for highlighting "text" references
                                                            *hl-LspReferenceRead*
