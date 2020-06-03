@@ -637,10 +637,6 @@ function M.fancy_floating_markdown(contents, opts)
   }
   opts = opts or {}
 
-  -- Default padding of 1 for backwards compatibility
-  local pad_left = opts.pad_left or 1
-  local pad_right = opts.pad_right or 1
-
   local stripped = {}
   local highlights = {}
   do
@@ -674,12 +670,12 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean input and add padding
-  for i, v in ipairs(stripped) do
-    v = v:gsub("\r", "")
-    if pad_left then v = (" "):rep(pad_left)..v end
-    if pad_right then v = v..(" "):rep(pad_right) end
-    stripped[i] = v
+  -- Clean up and add padding (default to 1 for backward compatibility)
+  left_padding = (" "):rep(opts.pad_left or 1)
+  right_padding = (" "):rep(opts.pad_right or 1)
+  stripped = M.trim_empty_lines(stripped)
+  for i, line in ipairs(stripped) do
+    stripped[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
   end
 
   -- Compute size of float needed to show (wrapped) lines
@@ -808,17 +804,13 @@ function M.open_floating_preview(contents, filetype, opts)
   }
   opts = opts or {}
 
-  -- Default padding of 1 for backwards compatibility
-  local pad_left = opts.pad_left or 1
-  local pad_right = opts.pad_right or 1
-
   -- Clean up input: trim empty lines from the end, pad
+  -- Default padding of 1 for backwards compatibility
+  left_padding = (" "):rep(opts.pad_left or 1)
+  right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
   for i, line in ipairs(contents) do
-    line = line:gsub("\r", "")
-    if pad_left then line = (" "):rep(pad_left)..line end
-    if pad_right then line = line..(" "):rep(pad_right) end
-    contents[i] = line
+    contents[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
   end
 
   -- Compute size of float needed to show (wrapped) lines
