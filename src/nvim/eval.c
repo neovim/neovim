@@ -6120,7 +6120,7 @@ void common_function(typval_T *argvars, typval_T *rettv,
         if (tv_list_len(list) == 0) {
           arg_idx = 0;
         } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
-          emsg_funcname((char *)e_toomanyarg, name);
+          emsg_funcname((char *)e_toomanyarg, s);
           xfree(name);
           goto theend;
         }
