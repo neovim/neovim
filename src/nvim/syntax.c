@@ -121,6 +121,8 @@ static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
   HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
+static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
+
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.
 // A start/end item consists of n start patterns and m end patterns.
@@ -3045,7 +3047,7 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3) {
     curwin->w_s->b_syn_conceal = false;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
   }
 }
 
@@ -3073,7 +3075,7 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6) {
     curwin->w_s->b_syn_ic = true;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
   }
 }
 
@@ -3105,7 +3107,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7) {
     curwin->w_s->b_syn_spell = SYNSPL_DEFAULT;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
     return;
   }
 
