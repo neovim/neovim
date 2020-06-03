@@ -1267,7 +1267,7 @@ void ts_query_disable_pattern(
  * QueryCursor
  ***************/
 
-TSQueryCursor *ts_query_cursor_new() {
+TSQueryCursor *ts_query_cursor_new(void) {
   TSQueryCursor *self = ts_malloc(sizeof(TSQueryCursor));
   *self = (TSQueryCursor) {
     .ascending = false,

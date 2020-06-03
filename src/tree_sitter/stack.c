@@ -480,6 +480,7 @@ StackSliceArray ts_stack_pop_count(Stack *self, StackVersion version, uint32_t c
 }
 
 inline StackAction pop_pending_callback(void *payload, const StackIterator *iterator) {
+  (void)payload;
   if (iterator->subtree_count >= 1) {
     if (iterator->is_pending) {
       return StackActionPop | StackActionStop;
@@ -532,6 +533,7 @@ SubtreeArray ts_stack_pop_error(Stack *self, StackVersion version) {
 }
 
 inline StackAction pop_all_callback(void *payload, const StackIterator *iterator) {
+  (void)payload;
   return iterator->node->link_count == 0 ? StackActionPop : StackActionNone;
 }
 
