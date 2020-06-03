@@ -101,9 +101,10 @@ typedef struct {
 static const char *ts_string_input_read(
   void *_self,
   uint32_t byte,
-  TSPoint _,
+  TSPoint pt,
   uint32_t *length
 ) {
+  (void)pt;
   TSStringInput *self = (TSStringInput *)_self;
   if (byte >= self->length) {
     *length = 0;
@@ -210,6 +211,7 @@ static ErrorComparison ts_parser__compare_versions(
   ErrorStatus a,
   ErrorStatus b
 ) {
+  (void)self;
   if (!a.is_in_error && b.is_in_error) {
     if (a.cost < b.cost) {
       return ErrorComparisonTakeLeft;

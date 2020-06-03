@@ -51,6 +51,7 @@ static inline void ts_free(void *buffer) {
 #include <stdlib.h>
 
 static inline bool ts_toggle_allocation_recording(bool value) {
+  (void)value;
   return false;
 }
 

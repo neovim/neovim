@@ -19,6 +19,7 @@ if [ ! -d "$ts_source_dir" ]; then
   git clone "$ts_url" "$ts_source_dir"
 else
   echo "Found a non-empty $ts_source_dir directory..."
+  git -C "$ts_source_dir" fetch
 fi
 
 echo "Checking out $1..."
