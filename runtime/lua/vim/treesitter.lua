@@ -162,16 +162,17 @@ function Query:match_preds(match, pattern, bufnr)
     -- Here we only want to return if a predicate DOES NOT match, and
     -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
+    -- Also, tree-sitter strips the leading # from predicates for us.
     if pred[1] == "eq?" then
       local node = match[pred[2]]
       local node_text = get_node_text(node, bufnr)
 
       local str
       if type(pred[3]) == "string" then
-        -- (eq? @aa "foo")
+        -- (#eq? @aa "foo")
         str = pred[3]
       else
-        -- (eq? @aa @bb)
+        -- (#eq? @aa @bb)
         str = get_node_text(match[pred[3]], bufnr)
       end
 
