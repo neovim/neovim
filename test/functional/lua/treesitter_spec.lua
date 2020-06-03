@@ -250,7 +250,7 @@ static int nlua_schedule(lua_State *const lstate)
 ; still support \M etc prefixes
 ((identifier) @Constant (#match? @Constant "\M^\[A-Z_]\+$"))
 
-((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (eq? @WarningMsg.left @WarningMsg.right))
+((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
 
 (comment) @comment
 ]]
