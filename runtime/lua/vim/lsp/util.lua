@@ -614,6 +614,32 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
+--- Trim empty lines from input and pad left and right with spaces
+--- Defaults to left and right padding by 1 for backward compatibility
+--- 
+--@param contents table of lines to trim and pad
+--@param opts dictionary with optional fields
+--             - pad_left  amount of columns to pad contents at left
+--             - pad_right amount of columns to pad contents at right
+--@return contents table of trimmed and padded lines
+function M._trim_and_pad(contents,opts)
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+  -- Default padding of 1 for backwards compatibility
+  left_padding = (" "):rep(opts.pad_left or 1)
+  right_padding = (" "):rep(opts.pad_right or 1)
+  contents = M.trim_empty_lines(contents)
+  for i, line in ipairs(contents) do
+    contents[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
+  end
+  return contents
+end
+
+
+
 --- Convert markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
@@ -670,13 +696,8 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean up and add padding (default to 1 for backward compatibility)
-  left_padding = (" "):rep(opts.pad_left or 1)
-  right_padding = (" "):rep(opts.pad_right or 1)
-  stripped = M.trim_empty_lines(stripped)
-  for i, line in ipairs(stripped) do
-    stripped[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
-  end
+  -- Clean up and add padding 
+  stripped = M._trim_and_pad(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
@@ -805,13 +826,7 @@ function M.open_floating_preview(contents, filetype, opts)
   opts = opts or {}
 
   -- Clean up input: trim empty lines from the end, pad
-  -- Default padding of 1 for backwards compatibility
-  left_padding = (" "):rep(opts.pad_left or 1)
-  right_padding = (" "):rep(opts.pad_right or 1)
-  contents = M.trim_empty_lines(contents)
-  for i, line in ipairs(contents) do
-    contents[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
-  end
+  contents = M._trim_and_pad(contents, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
