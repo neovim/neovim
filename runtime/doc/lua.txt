@@ -705,6 +705,10 @@ the highlight via
 >
  au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch", 500)
 <
+If you want to exclude visual selections from highlighting on yank, use
+>
+au TextYankPost * silent! lua return (not vim.v.event.visual) and require'vim.highlight'.on_yank()
+<
 
 vim.highlight.on_yank([{higroup}, {timeout}, {event}]) 
                                                     *vim.highlight.on_yank()*
