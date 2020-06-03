@@ -592,6 +592,24 @@ function module.expect_any(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
 end
 
+-- Checks that foldclosed() on a range of lines matches the given array.
+function module.expect_foldclosed(expect,first,last)
+  local actual = {}
+  local last_line = module.funcs.line('$')
+  first = first or 1
+  last = last or 0
+  if first < 1 then
+    first = last_line + first
+  end
+  if last < 1 then
+    last = last_line + last
+  end
+  for i = first,last do
+    table.insert(actual, module.funcs.foldclosed(i))
+  end
+  eq(actual, expect)
+end
+
 -- Checks that the Nvim session did not terminate.
 function module.assert_alive()
   assert(2 == module.eval('1+1'), 'crash? request failed')
