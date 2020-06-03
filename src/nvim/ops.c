@@ -2748,6 +2748,10 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("operator"), buf);
 
+  // Selection type: visual or not.
+  tv_dict_add_special(dict, S_LEN("visual"),
+                      oap->is_VIsual ? kSpecialVarTrue : kSpecialVarFalse);
+
   tv_dict_set_keys_readonly(dict);
   textlock++;
   apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);

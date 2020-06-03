@@ -844,6 +844,7 @@ TextYankPost			Just after a |yank| or |deleting| command, but not
 				    regcontents
 				    regname
 				    regtype
+				    visual
 				The `inclusive` flag combined with the |'[|
 				and |']| marks can be used to calculate the
 				precise region of the operation.
