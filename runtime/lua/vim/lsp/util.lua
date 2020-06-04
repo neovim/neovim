@@ -615,12 +615,11 @@ function M.focusable_preview(unique_name, fn)
 end
 
 --- Trim empty lines from input and pad left and right with spaces
---- Defaults to left and right padding by 1 for backward compatibility
 --- 
 --@param contents table of lines to trim and pad
 --@param opts dictionary with optional fields
---             - pad_left  amount of columns to pad contents at left
---             - pad_right amount of columns to pad contents at right
+--             - pad_left  amount of columns to pad contents at left (default 1)
+--             - pad_right amount of columns to pad contents at right (default 1)
 --@return contents table of trimmed and padded lines
 function M._trim_and_pad(contents,opts)
   validate {
@@ -628,7 +627,6 @@ function M._trim_and_pad(contents,opts)
     opts = { opts, 't', true };
   }
   opts = opts or {}
-  -- Default padding of 1 for backwards compatibility
   left_padding = (" "):rep(opts.pad_left or 1)
   right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
