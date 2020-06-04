@@ -244,6 +244,7 @@ describe('lua stdlib', function()
       { "axaby", "ab?", false, { '', 'x', 'y' } },
       { "f v2v v3v w2w ", "([vw])2%1", false, { 'f ', ' v3v ', ' ' } },
       { "", "", false, {} },
+      { "", "a", false, { '' } },
       { "x*yz*oo*l", "*", true, { 'x', 'yz', 'oo', 'l' } },
     }
 

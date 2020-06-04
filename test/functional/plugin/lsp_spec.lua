@@ -800,13 +800,14 @@ describe('LSP', function()
         make_edit(0, 0, 0, 0, {"123"});
         make_edit(1, 0, 1, 1, {"2"});
         make_edit(2, 0, 2, 2, {"3"});
+        make_edit(3, 2, 3, 4, {""});
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
       eq({
         '123First line of text';
         '2econd line of text';
         '3ird line of text';
-        'Fourth line of text';
+        'Foth line of text';
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
