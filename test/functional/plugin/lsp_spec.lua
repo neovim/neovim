@@ -810,6 +810,22 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
+    it('applies empty edits', function()
+      local edits = {
+        make_edit(0, 0, 0, 2, {""});
+        make_edit(1, 1, 1, 3, {""});
+        make_edit(4, 3, 4, 5, {""});
+        make_edit(4, 8, 4, 10, {""});
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'rst line of text';
+        'Sond line of text';
+        'Third line of text';
+        'Fourth line of text';
+        'å ɧ 汉↥ 🤦 🦄';
+      }, buf_lines(1))
+    end)
     it('applies complex edits', function()
       local edits = {
         make_edit(0, 0, 0, 0, {"", "12"});

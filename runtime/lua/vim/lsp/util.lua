@@ -129,12 +129,18 @@ function M.apply_text_edits(text_edits, bufnr)
       e.range["end"].character)
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
+    local lines
+    if e.newText == '' then
+      lines = { '' }
+    else
+      lines = vim.split(e.newText, '\n', true)
+    end
     -- TODO(ashkan) sanity check ranges for overlap.
     table.insert(cleaned, {
       i = i;
       A = {start_row; start_col};
       B = {end_row; end_col};
-      lines = vim.split(e.newText, '\n', true);
+      lines = lines;
     })
   end
 
