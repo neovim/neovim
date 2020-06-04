@@ -10,17 +10,17 @@ local highlight = {}
 --@param rtype type of range (:help setreg, default charwise)
 --@param inclusive boolean indicating whether the range is end-inclusive (default false)
 function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive)
-  rtype = rtype or 'v'
-  inclusive = inclusive or false
-
   -- sanity check
   if start[2] < 0 or finish[2] < start[2] then return end
-
-  local region = vim.region(bufnr, start, finish, rtype, inclusive)
-  for linenr, cols in pairs(region) do
-    api.nvim_buf_add_highlight(bufnr, ns, higroup, linenr, cols[1], cols[2])
+  -- fast path: don't compute region (expensive) if range is on a single line
+  if start[1] == finish[1] then
+    api.nvim_buf_add_highlight(bufnr, ns, higroup, start[1], start[2], finish[2])
+  else
+    local region = vim.region(bufnr, start, finish, rtype or 'v', inclusive or false)
+    for linenr, cols in pairs(region) do
+      api.nvim_buf_add_highlight(bufnr, ns, higroup, linenr, cols[1], cols[2])
+    end
   end
-
 end
 
 --- Highlight the yanked region
