@@ -1317,4 +1317,65 @@ describe('LSP', function()
       eq("Unknown", exec_lua("return vim.lsp.util._get_symbol_kind_name(1000)"))
     end)
   end)
+
+  describe('lsp.util.jump_to_location', function()
+    local target_bufnr
+
+    before_each(function()
+      target_bufnr = exec_lua [[
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {"1st line of text", "å å ɧ 汉语 ↥ 🤦 🦄"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+        return bufnr
+      ]]
+    end)
+
+    local location = function(start_line, start_char, end_line, end_char)
+      return {
+        uri = "file://fake/uri",
+        range = {
+          start = { line = start_line, character = start_char },
+          ["end"] = { line = end_line, character = end_char },
+        },
+      }
+    end
+
+    local jump = function(msg)
+      eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg))
+      eq(target_bufnr, exec_lua[[return vim.fn.bufnr('%')]])
+      return {
+        line = exec_lua[[return vim.fn.line('.')]],
+        col = exec_lua[[return vim.fn.col('.')]],
+      }
+    end
+
+    it('jumps to a Location', function()
+      local pos = jump(location(0, 9, 0, 9))
+      eq(1, pos.line)
+      eq(10, pos.col)
+    end)
+
+    it('jumps to a LocationLink', function()
+      local pos = jump({
+          targetUri = "file://fake/uri",
+          targetSelectionRange = {
+            start = { line = 0, character = 4 },
+            ["end"] = { line = 0, character = 4 },
+          },
+          targetRange = {
+            start = { line = 1, character = 5 },
+            ["end"] = { line = 1, character = 5 },
+          },
+        })
+      eq(1, pos.line)
+      eq(5, pos.col)
+    end)
+
+    it('jumps to the correct multibyte column', function()
+      local pos = jump(location(1, 2, 1, 2))
+      eq(2, pos.line)
+      eq(4, pos.col)
+      eq('å', exec_lua[[return vim.fn.expand('<cword>')]])
+    end)
+  end)
 end)

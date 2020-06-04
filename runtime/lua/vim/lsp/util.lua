@@ -95,17 +95,23 @@ local edit_sort_key = sort_by_key(function(e)
   return {e.A[1], e.A[2], e.i}
 end)
 
-local function get_line_byte_from_line_character(bufnr, lnum, cnum)
-  -- Skip check when the byte and character position is the same
-  if cnum > 0 then
-    local lines = api.nvim_buf_get_lines(bufnr, lnum, lnum+1, false)
-
+--- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
+-- Returns a zero-indexed column, since set_lines() does the conversion to
+-- 1-indexed
+local function get_line_byte_from_position(bufnr, position)
+  -- LSP's line and characters are 0-indexed
+  -- Vim's line and columns are 1-indexed
+  local col = position.character
+  -- When on the first character, we can ignore the difference between byte and
+  -- character
+  if col > 0 then
+    local line = position.line
+    local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
     if #lines > 0 then
-      return vim.str_byteindex(lines[1], cnum)
+      return vim.str_byteindex(lines[1], col)
     end
   end
-
-  return cnum
+  return col
 end
 
 function M.apply_text_edits(text_edits, bufnr)
@@ -118,15 +124,9 @@ function M.apply_text_edits(text_edits, bufnr)
   for i, e in ipairs(text_edits) do
     -- adjust start and end column for UTF-16 encoding of non-ASCII characters
     local start_row = e.range.start.line
-    local start_col = get_line_byte_from_line_character(
-      bufnr,
-      start_row,
-      e.range.start.character)
+    local start_col = get_line_byte_from_position(bufnr, e.range.start)
     local end_row = e.range["end"].line
-    local end_col = get_line_byte_from_line_character(
-      bufnr,
-      end_row,
-      e.range["end"].character)
+    local end_col = get_line_byte_from_position(bufnr, e.range['end'])
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
     -- TODO(ashkan) sanity check ranges for overlap.
@@ -543,9 +543,7 @@ function M.jump_to_location(location)
   api.nvim_buf_set_option(0, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
-  local col = range.start.character
-  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
-  col = vim.str_byteindex(line, col)
+  local col = get_line_byte_from_position(0, range.start)
   api.nvim_win_set_cursor(0, {row + 1, col})
   return true
 end
