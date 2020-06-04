@@ -14,7 +14,7 @@ function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive)
   if start[2] < 0 or finish[2] < start[2] then return end
   -- fast path: don't compute region (expensive) if range is on a single line
   if start[1] == finish[1] then
-    api.nvim_buf_add_highlight(bufnr, ns, higroup, start[1], start[2], finish[2])
+    api.nvim_buf_add_highlight(bufnr, ns, higroup, start[1], start[2], finish[2] + (inclusive and 1 or 0))
   else
     local region = vim.region(bufnr, start, finish, rtype or 'v', inclusive or false)
     for linenr, cols in pairs(region) do
