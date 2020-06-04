@@ -249,6 +249,7 @@ static char_u e_nul_found[] = N_(
 static char_u e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
 static char_u e_ill_char_class[] = N_(
     "E877: (NFA regexp) Invalid character class: %" PRId64);
+static char_u e_value_too_large[] = N_("E951: \\% value too large");
 
 /* Since the out pointers in the list are always
  * uninitialized, we use the pointers themselves
@@ -1499,7 +1500,8 @@ static int nfa_regatom(void)
         c = getchr();
       while (ascii_isdigit(c)) {
         if (n > (INT32_MAX - (c - '0')) / 10) {
-          EMSG(_("E951: \\% value too large"));
+          // overflow.
+          EMSG(_(e_value_too_large));
           return FAIL;
         }
         n = n * 10 + (c - '0');
@@ -1526,7 +1528,7 @@ static int nfa_regatom(void)
           limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
-          EMSG(_("E951: \\% value too large"));
+          EMSG(_(e_value_too_large));
           return FAIL;
         }
         EMIT((int)n);
