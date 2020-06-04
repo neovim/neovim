@@ -507,6 +507,8 @@ function lsp.start_client(config)
       or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
+      or (not client.resolved_capabilities.declaration and method == 'textDocument/declaration')
+      or (not client.resolved_capabilities.type_definition and method == 'textDocument/typeDefinition')
       or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
       or (not client.resolved_capabilities.workspace_symbol and method == 'textDocument/workspaceSymbol')
     then
