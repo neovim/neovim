@@ -621,7 +621,7 @@ end
 --             - pad_left  amount of columns to pad contents at left (default 1)
 --             - pad_right amount of columns to pad contents at right (default 1)
 --@return contents table of trimmed and padded lines
-function M._trim_and_pad(contents,opts)
+function M._trim_and_pad(contents, opts)
   validate {
     contents = { contents, 't' };
     opts = { opts, 't', true };
