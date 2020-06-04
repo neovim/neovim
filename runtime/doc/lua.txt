@@ -1970,6 +1970,37 @@ validate({opt})                                               *vim.validate()*
                     returned value.
                   • msg: (optional) error string if validation fails
 
+version_cmp({ver1}, {ver2}, {strict})                      *vim.version_cmp()*
+    Compare two version strings.
+
+    Parameters: ~
+      • {ver1}    (string) Version string 1
+      • {ver2}    (string) Version string 2
+      • {strict}  (boolean|nil) If `true`, semver strings are expected;
+                  otherwise, just dotted numbers, possibly with junk at the
+                  end
+
+    Return: ~
+        (number) 1 if `ver1` is greater, -1 if it's smaller, 0 otherwise
+        (table) Parsed `ver1`
+        (table) Parsed `ver2`
+
+    See also: ~
+        |vim.version_parse()|
+
+version_parse({ver}, {strict})                           *vim.version_parse()*
+    Parse a version string into a table.
+
+    Parameters: ~
+      • {ver}     (string) Version string
+      • {strict}  (boolean|nil) If `true`, a semver string is expected;
+                  otherwise, just dotted numbers, possibly with junk at the
+                  end
+
+    Return: ~
+        (table) Table with keys `major`, `minor`, `patch`, `pre` and `build`
+        if `strict`, otherwise with numerical indices
+
 
 ==============================================================================
 Lua module: uri                                                      *lua-uri*

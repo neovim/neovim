@@ -753,5 +753,112 @@ function vim.defaulttable(create)
   })
 end
 
+--- Parse a version string into a table.
+---
+---@param ver string Version string
+---@param strict (boolean|nil) If `true`, a semver string is expected; otherwise, just dotted
+---       numbers, possibly with junk at the end
+---@return table Table with keys `major`, `minor`, `patch`, `pre` and `build` if `strict`, otherwise
+---        with numerical indices
+function vim.version_parse(ver, strict)
+  local err_msg = string.format('invalid version string: "%s"', ver)
+
+  local numbers = {}
+  local _, cursor, end_number, number
+  repeat
+    _, end_number, number = string.find(ver, '^(%d+)%.?', cursor)
+    if number then
+      cursor = end_number + 1
+      table.insert(numbers, tonumber(number))
+    end
+  until not number
+
+  if #numbers == 0 or (strict and #numbers > 3) then
+    error(err_msg)
+  elseif not strict then
+    return numbers
+  end
+
+  local _, end_pre, pre = string.find(ver, '^%-([0-9A-Za-z.-]+)', cursor)
+  if pre then
+    cursor = end_pre + 1
+  end
+
+  local _, end_build, build = string.find(ver, '^%+([0-9A-Za-z.-]+)', cursor)
+  if build then
+    cursor = end_build + 1
+  end
+
+  if cursor >= #ver then
+    local major, minor, patch = unpack(numbers)
+    return { major = major, minor = minor, patch = patch, pre = pre, build = build }
+  else
+    error(err_msg)
+  end
+end
+
+--- Compare two version strings.
+---
+---@param ver1 string Version string 1
+---@param ver2 string Version string 2
+---@param strict (boolean|nil) If `true`, semver strings are expected; otherwise, just dotted
+---       numbers, possibly with junk at the end
+---@return number 1 if `ver1` is greater, -1 if it's smaller, 0 otherwise
+---@return table Parsed `ver1`
+---@return table Parsed `ver2`
+---@see |vim.version_parse()|
+function vim.version_cmp(ver1, ver2, strict)
+  ver1 = vim.version_parse(ver1, strict)
+  ver2 = vim.version_parse(ver2, strict)
+
+  local keys
+  if strict then
+    keys = { 'major', 'minor', 'patch' }
+  else
+    -- use the longer of the two version tables as the source of integer
+    -- indices
+    keys = #ver1 > #ver2 and ver1 or ver2
+  end
+  for num_key, str_key in ipairs(keys) do
+    local key = strict and str_key or num_key
+    local val1 = ver1[key] or 0
+    local val2 = ver2[key] or 0
+    if val1 > val2 then
+      return 1, ver1, ver2
+    elseif val1 < val2 then
+      return -1, ver1, ver2
+    end
+  end
+
+  if not strict then
+    return 0, ver1, ver2
+  end
+
+  local pre1, pre2 = ver1.pre or '', ver2.pre or ''
+
+  -- try comparing pre-release strings as if they were dotted version numbers,
+  -- which they sometimes are; if this fails, back off to string comparison
+  local success, result = pcall(vim.version_cmp, pre1, pre2)
+  if success then
+    return result, ver1, ver2
+  end
+
+  -- a version with an empty pre-release field should come *after* any
+  -- non-empty one; however, empty strings sort *before* non-empty ones, so we
+  -- can't use inequality operators until we've made sure that both pre-release
+  -- fields are non-empty
+  if pre1 == pre2 then
+    return 0, ver1, ver2
+  elseif #pre1 == 0 then
+    return 1, ver1, ver2
+  elseif #pre2 == 0 then
+    return -1, ver1, ver2
+  elseif pre1 > pre2 then
+    return 1, ver1, ver2
+  else
+    return -1, ver1, ver2
+  end
+end
+
 return vim
 -- vim:sw=2 ts=2 et

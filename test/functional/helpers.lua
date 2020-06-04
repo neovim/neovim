@@ -873,7 +873,7 @@ function module.missing_provider(provider)
     return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    local e = table.concat(module.funcs['provider#pythonx#Detect'](py_major_version)[3], "\n")
     return e ~= '' and e or false
   else
     assert(false, 'Unknown provider: '..provider)

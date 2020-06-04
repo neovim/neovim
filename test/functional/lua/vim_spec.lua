@@ -2886,6 +2886,118 @@ describe('lua stdlib', function()
     end)
   end)
 
+  describe('vim.version_parse', function()
+    local function err(ver)
+      return string.format(' invalid version string: "%s"$', ver)
+    end
+
+    describe('in default mode', function()
+      it('should handle a single number', function()
+        eq({3}, funcs.luaeval('vim.version_parse("3")'))
+      end)
+
+      it('should handle arbitrarily many dotted numbers', function()
+        eq({1, 42, 747, 5000}, funcs.luaeval('vim.version_parse("1.42.747.5000")'))
+      end)
+
+      it('should ignore trailing junk', function()
+        eq({3}, funcs.luaeval('vim.version_parse("3,1415-beta3")'))
+      end)
+
+      it('should fail with leading junk', function()
+        matches(err('v3'), pcall_err(funcs.luaeval, 'vim.version_parse("v3")'))
+      end)
+
+      it('should fail if the version string is empty', function()
+        matches(err(''), pcall_err(funcs.luaeval, 'vim.version_parse("")'))
+      end)
+    end)
+
+    describe('in strict (semver) mode', function()
+      it('should handle a single number', function()
+        eq({major=3}, funcs.luaeval('vim.version_parse("3", true)'))
+      end)
+
+      it('should handle up to three dotted numbers', function()
+        eq({major=3, minor=2, patch=1}, funcs.luaeval('vim.version_parse("3.2.1", true)'))
+      end)
+
+      it('should fail with more than three dotted numbers', function()
+        matches(err('1.2.3.4'), pcall_err(funcs.luaeval, 'vim.version_parse("1.2.3.4", true)'))
+      end)
+
+      it('should allow a pre-release label', function()
+        eq({major=3, pre='alpha'}, funcs.luaeval('vim.version_parse("3-alpha", true)'))
+      end)
+
+      it('should allow a build label', function()
+        eq({major=3, build='build'}, funcs.luaeval('vim.version_parse("3+build", true)'))
+      end)
+
+      it('should allow both a pre-release and a build label', function()
+        eq({major=3, pre='alpha', build='build'}, funcs.luaeval('vim.version_parse("3-alpha+build", true)'))
+      end)
+
+      it('should not parse a pre-release label after a build label', function()
+        eq({major=3, build='build-alpha'}, funcs.luaeval('vim.version_parse("3+build-alpha", true)'))
+      end)
+
+      it('should fail if the pre-release label does not match [0-9A-Za-z.-]', function()
+        matches(err('3%-č'), pcall_err(funcs.luaeval, 'vim.version_parse("3-č", true)'))
+      end)
+
+      it('should fail if the build label does not match [0-9A-Za-z.-]', function()
+        matches(err('3%+č'), pcall_err(funcs.luaeval, 'vim.version_parse("3+č", true)'))
+      end)
+
+      it('should fail with trailing junk', function()
+        matches(err('3,1415%-beta3'), pcall_err(funcs.luaeval, 'vim.version_parse("3,1415-beta3", true)'))
+      end)
+    end)
+  end)
+
+  describe('vim.version_cmp', function()
+    describe('in default mode', function()
+      it('should compare version numbers numerically', function()
+        eq(-1, funcs.luaeval('vim.version_cmp("1.2", "1.10")'))
+      end)
+
+      it('should work fine even if one number is shorter than the other', function()
+        eq(1, funcs.luaeval('vim.version_cmp("1.1", "1")'))
+      end)
+
+      it('should consider alternative spellings of the same version as equal', function()
+        eq(0, funcs.luaeval('vim.version_cmp("1", "1.0")'))
+      end)
+    end)
+
+    describe('in strict (semver) mode', function()
+      it('should try to recursively parse and compare pre-release labels', function()
+        eq(-1, funcs.luaeval('vim.version_cmp("1-1.2.3.4", "1-1.10.3.4", true)'))
+      end)
+
+      it('should fall back to string comparison of pre-release labels', function()
+        -- NOTE: alpha10 is probably meant as coming after alpha2, but correct
+        -- numerical comparison is only attempted for pre-release labels
+        -- formatted as dotted versions
+        eq(1, funcs.luaeval('vim.version_cmp("1-alpha2", "1-alpha10", true)'))
+      end)
+
+      it('should work when both pre-release labels are empty', function()
+        eq(0, funcs.luaeval('vim.version_cmp("1", "1", true)'))
+      end)
+
+      it('should give precedence to versions without pre-release labels', function()
+        eq(1, funcs.luaeval('vim.version_cmp("1", "1-alpha", true)'))
+        eq(-1, funcs.luaeval('vim.version_cmp("1-alpha", "1", true)'))
+      end)
+
+      it('should ignore differences in build labels', function()
+        eq(0, funcs.luaeval('vim.version_cmp("1+build1", "1+build2", true)'))
+      end)
+    end)
+  end)
+
 end)
 
 describe('lua: builtin modules', function()

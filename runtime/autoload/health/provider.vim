@@ -19,22 +19,6 @@ function! s:cmd_ok(cmd) abort
   return v:shell_error == 0
 endfunction
 
-" Simple version comparison.
-function! s:version_cmp(a, b) abort
-  let a = split(a:a, '\.', 0)
-  let b = split(a:b, '\.', 0)
-
-  for i in range(len(a))
-    if str2nr(a[i]) > str2nr(b[i])
-      return 1
-    elseif str2nr(a[i]) < str2nr(b[i])
-      return -1
-    endif
-  endfor
-
-  return 0
-endfunction
-
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
   if a:event ==# 'stderr'
@@ -183,22 +167,12 @@ endfunction
 " Nvim's Python client was updated.
 "
 " Returns: [
-"     {python executable version},
 "     {current nvim version},
 "     {current pypi nvim status},
 "     {installed version status}
 " ]
 function! s:version_info(python) abort
   let pypi_version = s:latest_pypi_version()
-  let python_version = s:trim(s:system([
-        \ a:python,
-        \ '-c',
-        \ 'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
-        \ ]))
-
-  if empty(python_version)
-    let python_version = 'unable to parse '.a:python.' response'
-  endif
 
   let nvim_path = s:trim(s:system([
         \ a:python, '-c',
@@ -206,8 +180,7 @@ function! s:version_info(python) abort
         \ 'sys.path = [p for p in sys.path if p != ""]; ' .
         \ 'import neovim; print(neovim.__file__)']))
   if s:shell_error || empty(nvim_path)
-    return [python_version, 'unable to load neovim Python module', pypi_version,
-          \ nvim_path]
+    return ['unable to load neovim Python module', pypi_version, nvim_path]
   endif
 
   " Assuming that multiple versions of a package are installed, sort them
@@ -215,7 +188,7 @@ function! s:version_info(python) abort
   function! s:compare(metapath1, metapath2) abort
     let a = matchstr(fnamemodify(a:metapath1, ':p:h:t'), '[0-9.]\+')
     let b = matchstr(fnamemodify(a:metapath2, ':p:h:t'), '[0-9.]\+')
-    return a == b ? 0 : a > b ? 1 : -1
+    return luaeval('vim.version_cmp(_A[1], _A[2])', [a, b])
   endfunction
 
   " Try to get neovim.VERSION (added in 0.1.11dev).
@@ -244,39 +217,31 @@ function! s:version_info(python) abort
   let nvim_path_base = fnamemodify(nvim_path, ':~:h')
   let version_status = 'unknown; '.nvim_path_base
   if !s:is_bad_response(nvim_version) && !s:is_bad_response(pypi_version)
-    if s:version_cmp(nvim_version, pypi_version) == -1
+    if luaeval('vim.version_cmp(_A[1], _A[2])', [nvim_version, pypi_version]) == -1
       let version_status = 'outdated; from '.nvim_path_base
     else
       let version_status = 'up to date'
     endif
   endif
 
-  return [python_version, nvim_version, pypi_version, version_status]
-endfunction
-
-" Check the Python interpreter's usability.
-function! s:check_bin(bin) abort
-  if !filereadable(a:bin) && (!has('win32') || !filereadable(a:bin.'.exe'))
-    call health#report_error(printf('"%s" was not found.', a:bin))
-    return 0
-  elseif executable(a:bin) != 1
-    call health#report_error(printf('"%s" is not executable.', a:bin))
-    return 0
-  endif
-  return 1
+  return [nvim_version, pypi_version, version_status]
 endfunction
 
 " Check "loaded" var for given a:provider.
 " Returns 1 if the caller should return (skip checks).
 function! s:disabled_via_loaded_var(provider) abort
   let loaded_var = 'g:loaded_'.a:provider.'_provider'
-  if exists(loaded_var) && !exists('*provider#'.a:provider.'#Call')
+  let call_func = 'provider#'.a:provider.'#Call'
+  if exists(loaded_var) && !exists('*'.call_func)
     let v = eval(loaded_var)
     if 0 is v
       call health#report_info('Disabled ('.loaded_var.'='.v.').')
       return 1
     else
-      call health#report_info('Disabled ('.loaded_var.'='.v.').  This might be due to some previous error.')
+      call health#report_info(printf('%s set to %s but %s function does not exist.  '
+        \ . 'This might be due to some previous error.  If you are setting %s manually '
+        \ . 'to disable the %s provider, set it to 0 to avoid this message.',
+        \ loaded_var, v, call_func, loaded_var, a:provider))
     endif
   endif
   return 0
@@ -286,118 +251,53 @@ function! s:check_python() abort
   call health#report_start('Python 3 provider (optional)')
 
   let pyname = 'python3'
-  let python_exe = ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
-  let python_multiple = []
 
   if s:disabled_via_loaded_var(pyname)
     return
   endif
 
-  let [pyenv, pyenv_root] = s:check_for_pyenv()
-
   if exists('g:'.host_prog_var)
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
+  else
+    call health#report_info(printf('g:%s is not set.  Searching for %s in the environment.', host_prog_var, pyname))
   endif
 
-  let [pyname, pythonx_warnings] = provider#pythonx#Detect(3)
+  let [python_exe, pyversion, pythonx_warnings] = provider#pythonx#Detect(3)
 
-  if empty(pyname)
-    call health#report_warn('No Python executable found that can `import neovim`. '
-            \ . 'Using the first available executable for diagnostics.')
-  elseif exists('g:'.host_prog_var)
-    let python_exe = pyname
+  if empty(python_exe)
+    call health#report_error('No Python 3 executable found that can `import neovim`.')
   endif
 
-  " No Python executable could `import neovim`, or host_prog_var was used.
+  " No Python executable could `import neovim`, or host_prog_var was used and
+  " led to errors.
   if !empty(pythonx_warnings)
     call health#report_warn(pythonx_warnings, ['See :help provider-python for more information.',
           \ 'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim'])
-
-  elseif !empty(pyname) && empty(python_exe)
-    if !exists('g:'.host_prog_var)
-      call health#report_info(printf('`g:%s` is not set.  Searching for '
-            \ . '%s in the environment.', host_prog_var, pyname))
-    endif
-
-    if !empty(pyenv)
-      let python_exe = s:trim(s:system([pyenv, 'which', pyname], '', 1))
-
-      if empty(python_exe)
-        call health#report_warn(printf('pyenv could not find %s.', pyname))
-      endif
-    endif
-
-    if empty(python_exe)
-      let python_exe = exepath(pyname)
-
-      if exists('$PATH')
-        for path in split($PATH, has('win32') ? ';' : ':')
-          let path_bin = s:normalize_path(path.'/'.pyname)
-          if path_bin != s:normalize_path(python_exe)
-                \ && index(python_multiple, path_bin) == -1
-                \ && executable(path_bin)
-            call add(python_multiple, path_bin)
-          endif
-        endfor
-
-        if len(python_multiple)
-          " This is worth noting since the user may install something
-          " that changes $PATH, like homebrew.
-          call health#report_info(printf('Multiple %s executables found.  '
-                \ . 'Set `g:%s` to avoid surprises.', pyname, host_prog_var))
-        endif
-
-        if python_exe =~# '\<shims\>'
-          call health#report_warn(printf('`%s` appears to be a pyenv shim.', python_exe), [
-                      \ '`pyenv` is not in $PATH, your pyenv installation is broken. '
-                      \ .'Set `g:'.host_prog_var.'` to avoid surprises.',
-                      \ ])
-        endif
-      endif
-    endif
   endif
 
-  if !empty(python_exe) && !exists('g:'.host_prog_var)
-    if empty(venv) && !empty(pyenv)
-          \ && !empty(pyenv_root) && resolve(python_exe) !~# '^'.pyenv_root.'/'
-      call health#report_warn('pyenv is not set up optimally.', [
-            \ printf('Create a virtualenv specifically '
-            \ . 'for Nvim using pyenv, and set `g:%s`.  This will avoid '
-            \ . 'the need to install the pynvim module in each '
-            \ . 'version/virtualenv.', host_prog_var)
-            \ ])
-    elseif !empty(venv)
-      if !empty(pyenv_root)
-        let venv_root = pyenv_root
-      else
-        let venv_root = fnamemodify(venv, ':h')
-      endif
-
-      if resolve(python_exe) !~# '^'.venv_root.'/'
-        call health#report_warn('Your virtualenv is not set up optimally.', [
-              \ printf('Create a virtualenv specifically '
-              \ . 'for Nvim and use `g:%s`.  This will avoid '
-              \ . 'the need to install the pynvim module in each '
-              \ . 'virtualenv.', host_prog_var)
-              \ ])
-      endif
-    endif
-  endif
-
-  if empty(python_exe) && !empty(pyname)
-    " An error message should have already printed.
-    call health#report_error(printf('`%s` was not found.', pyname))
-  elseif !empty(python_exe) && !s:check_bin(python_exe)
-    let python_exe = ''
+  if !empty(python_exe) && !empty(venv)
+    \ && s:python_exepath(python_exe) =~# '^'.venv.'/'
+    \ && !exists('g:'.host_prog_var)
+    call health#report_warn('Your virtualenv is not set up optimally.', [
+          \ 'Set g:'.host_prog_var.' and install the pynvim module ONLY in that environment.',
+          \ 'You can use a global environment, or a virtualenv created specifically for Nvim.',
+          \ 'This will avoid the need to install the pynvim module in each virtualenv.'])
   endif
 
   " Diagnostic output
-  call health#report_info('Executable: ' . (empty(python_exe) ? 'Not found' : python_exe))
+  call health#report_info('Python provider executable: ' . (empty(python_exe) ? 'Not found' : python_exe))
+  let python_multiple = provider#pythonx#GetPythonCandidates(3, $PATH, v:true)
   if len(python_multiple)
+    " This is worth noting since the user may install something that changes
+    " $PATH, like Homebrew.
+    call health#report_info(printf('Multiple Python 3 candidates found.  '
+          \ . 'Set g:%s to avoid surprises.', host_prog_var))
     for path_bin in python_multiple
-      call health#report_info('Other python executable: ' . path_bin)
+      if path_bin !=# python_exe
+        call health#report_info(printf('Other Python 3 candidate: %s', path_bin))
+      endif
     endfor
   endif
 
@@ -406,25 +306,22 @@ function! s:check_python() abort
     " can import 'pynvim'. If so, that Python failed to import 'neovim' as
     " well, which is most probably due to a failed pip upgrade:
     " https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-    let [pynvim_exe, errors] = provider#pythonx#DetectByModule('pynvim', 3)
+    let [pynvim_exe, _, errors] = provider#pythonx#DetectByModule('pynvim', 3)
     if !empty(pynvim_exe)
+      let pip = pynvim_exe . ' -m pip'
       call health#report_error(
             \ 'Detected pip upgrade failure: Python executable can import "pynvim" but '
             \ . 'not "neovim": '. pynvim_exe,
             \ "Use that Python version to reinstall \"pynvim\" and optionally \"neovim\".\n"
-            \ . pynvim_exe ." -m pip uninstall pynvim neovim\n"
-            \ . pynvim_exe ." -m pip install pynvim\n"
-            \ . pynvim_exe ." -m pip install neovim  # only if needed by third-party software")
+            \ . pip ." uninstall pynvim neovim\n"
+            \ . pip ." install pynvim\n"
+            \ . pip ." install neovim  # only if needed by third-party software\n"
+            \ . 'Retry with the --user flag if you get a permission error.')
     endif
   else
-    let [majorpyversion, current, latest, status] = s:version_info(python_exe)
+    let [current, latest, status] = s:version_info(python_exe)
 
-    if 3 != str2nr(majorpyversion)
-      call health#report_warn('Unexpected Python version.' .
-                  \ ' This could lead to confusing error messages.')
-    endif
-
-    call health#report_info('Python version: ' . majorpyversion)
+    call health#report_info('Python version: ' . pyversion)
 
     if s:is_bad_response(status)
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
@@ -432,52 +329,15 @@ function! s:check_python() abort
       call health#report_info(printf('pynvim version: %s', current))
     endif
 
-    if s:is_bad_response(current)
-      call health#report_error(
-        \ "pynvim is not installed.\nError: ".current,
-        \ ['Run in shell: '. python_exe .' -m pip install pynvim'])
-    endif
-
     if s:is_bad_response(latest)
-      call health#report_warn('Could not contact PyPI to get latest version.')
+      call health#report_warn('Could not contact PyPI to check if pynvim is latest version.')
       call health#report_error('HTTP request failed: '.latest)
     elseif s:is_bad_response(status)
       call health#report_warn(printf('Latest pynvim is NOT installed: %s', latest))
-    elseif !s:is_bad_response(current)
+    else
       call health#report_ok(printf('Latest pynvim is installed.'))
     endif
   endif
-endfunction
-
-" Check if pyenv is available and a valid pyenv root can be found, then return
-" their respective paths. If either of those is invalid, return two empty
-" strings, effectivly ignoring pyenv.
-function! s:check_for_pyenv() abort
-  let pyenv_path = resolve(exepath('pyenv'))
-
-  if empty(pyenv_path)
-    return ['', '']
-  endif
-
-  call health#report_info('pyenv: Path: '. pyenv_path)
-
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
-
-  if empty(pyenv_root)
-    let pyenv_root = s:trim(s:system([pyenv_path, 'root']))
-    call health#report_info('pyenv: $PYENV_ROOT is not set. Infer from `pyenv root`.')
-  endif
-
-  if !isdirectory(pyenv_root)
-    call health#report_warn(
-          \ printf('pyenv: Root does not exist: %s. '
-          \ . 'Ignoring pyenv for all following checks.', pyenv_root))
-    return ['', '']
-  endif
-
-  call health#report_info('pyenv: Root: '.pyenv_root)
-
-  return [pyenv_path, pyenv_root]
 endfunction
 
 " Resolves Python executable path by invoking and checking `sys.executable`.
@@ -500,10 +360,10 @@ function! s:check_virtualenv() abort
   " The virtualenv should contain some Python executables, and those
   " executables should be first both on Nvim's $PATH and the $PATH of
   " subshells launched from Nvim.
-  let bin_dir = has('win32') ? '/Scripts' : '/bin'
-  let venv_bins = glob($VIRTUAL_ENV . bin_dir . '/python*', v:true, v:true)
-  " XXX: Remove irrelevant executables found in bin/.
-  let venv_bins = filter(venv_bins, 'v:val !~# "python-config"')
+  let bin_dir = has('win32') ? 'Scripts' : 'bin'
+  " safe = with commas escaped so that it can be passed to globpath()
+  let bin_dir_abspath_safe = substitute($VIRTUAL_ENV.'/'.bin_dir, ',', '\\,', 'g')
+  let venv_bins = provider#pythonx#GetPythonCandidates('.', bin_dir_abspath_safe, v:false)
   if len(venv_bins)
     for venv_bin in venv_bins
       let venv_bin = s:normalize_path(venv_bin)
@@ -598,7 +458,7 @@ function! s:check_ruby() abort
     return
   endif
 
-  if s:version_cmp(current_gem, latest_gem) == -1
+  if luaeval('vim.version_cmp(_A[1], _A[2])', [current_gem, latest_gem]) == -1
     call health#report_warn(
           \ printf('Gem "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_gem, latest_gem),
@@ -623,7 +483,7 @@ function! s:check_node() abort
   endif
   let node_v = get(split(s:system(['node', '-v']), "\n"), 0, '')
   call health#report_info('Node.js: '. node_v)
-  if s:shell_error || s:version_cmp(node_v[1:], '6.0.0') < 0
+  if s:shell_error || luaeval('vim.version_cmp(_A[1], _A[2])', [node_v[1:], '6.0.0']) < 0
     call health#report_warn('Nvim node.js host does not support '.node_v)
     " Skip further checks, they are nonsense if nodejs is too old.
     return
@@ -675,7 +535,7 @@ function! s:check_node() abort
     return
   endif
 
-  if s:version_cmp(current_npm, latest_npm) == -1
+  if luaeval('vim.version_cmp(_A[1], _A[2])', [current_npm, latest_npm]) == -1
     call health#report_warn(
           \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_npm, latest_npm),
@@ -751,7 +611,7 @@ function! s:check_perl() abort
     return
   endif
 
-  if s:version_cmp(current_cpan, latest_cpan) == -1
+  if luaeval('vim.version_cmp(_A[1], _A[2])', [current_cpan, latest_cpan]) == -1
     call health#report_warn(
           \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
           \ current_cpan, latest_cpan),
