@@ -72,6 +72,17 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
     err_message("LSP.publishDiagnostics: Couldn't find buffer for ", uri)
     return
   end
+
+  -- Unloaded buffers should not handle diagnostics.
+  --    When the buffer is loaded, we'll call on_attach, which sends textDocument/didOpen.
+  --    This should trigger another publish of the diagnostics.
+  --
+  -- In particular, this stops a ton of spam when first starting a server for current
+  -- unloaded buffers.
+  if not api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   util.buf_clear_diagnostics(bufnr)
 
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
