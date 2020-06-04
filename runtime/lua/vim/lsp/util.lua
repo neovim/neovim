@@ -615,7 +615,7 @@ function M.focusable_preview(unique_name, fn)
 end
 
 --- Trim empty lines from input and pad left and right with spaces
---- 
+---
 --@param contents table of lines to trim and pad
 --@param opts dictionary with optional fields
 --             - pad_left  amount of columns to pad contents at left (default 1)
@@ -627,11 +627,11 @@ function M._trim_and_pad(contents, opts)
     opts = { opts, 't', true };
   }
   opts = opts or {}
-  left_padding = (" "):rep(opts.pad_left or 1)
-  right_padding = (" "):rep(opts.pad_right or 1)
+  local left_padding = (" "):rep(opts.pad_left or 1)
+  local right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
   for i, line in ipairs(contents) do
-    contents[i] = string.format('%s%s%s', right_padding, line:gsub("\r", ""), right_padding)
+    contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
   end
   return contents
 end
@@ -694,7 +694,7 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean up and add padding 
+  -- Clean up and add padding
   stripped = M._trim_and_pad(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
