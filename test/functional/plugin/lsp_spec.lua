@@ -1379,4 +1379,14 @@ describe('LSP', function()
       eq('å', exec_lua[[return vim.fn.expand('<cword>')]])
     end)
   end)
+
+  describe('lsp.util._make_floating_popup_size', function()
+    exec_lua [[ contents =
+    {"text tαxt txtα tex",
+    "text tααt tααt text",
+    "text tαxt tαxt"}
+    ]]
+    eq({19,3}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
+    eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
+  end)
 end)

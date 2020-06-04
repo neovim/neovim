@@ -289,7 +289,7 @@ local function get_completion_word(item)
   return item.label
 end
 
--- Some lanuguage servers return complementary candidates whose prefixes do not match are also returned.
+-- Some language servers return complementary candidates whose prefixes do not match are also returned.
 -- So we exclude completion candidates whose prefix does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
@@ -614,13 +614,53 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
--- Convert markdown into syntax highlighted regions by stripping the code
--- blocks and converting them into highlighted code.
--- This will by default insert a blank line separator after those code block
--- regions to improve readability.
+--- Trim empty lines from input and pad left and right with spaces
+---
+--@param contents table of lines to trim and pad
+--@param opts dictionary with optional fields
+--             - pad_left  amount of columns to pad contents at left (default 1)
+--             - pad_right amount of columns to pad contents at right (default 1)
+--@return contents table of trimmed and padded lines
+function M._trim_and_pad(contents, opts)
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+  local left_padding = (" "):rep(opts.pad_left or 1)
+  local right_padding = (" "):rep(opts.pad_right or 1)
+  contents = M.trim_empty_lines(contents)
+  for i, line in ipairs(contents) do
+    contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
+  end
+  return contents
+end
+
+
+
+--- Convert markdown into syntax highlighted regions by stripping the code
+--- blocks and converting them into highlighted code.
+--- This will by default insert a blank line separator after those code block
+--- regions to improve readability.
+--- The result is shown in a floating preview
+--- TODO: refactor to separate stripping/converting and make use of open_floating_preview
+---
+--@param contents table of lines to show in window
+--@param opts dictionary with optional fields
+--             - height    of floating window
+--             - width     of floating window
+--             - wrap_at   character to wrap at for computing height
+--             - pad_left  amount of columns to pad contents at left
+--             - pad_right amount of columns to pad contents at right
+--             - separator insert separator after code block
+--@return width,height size of float
 function M.fancy_floating_markdown(contents, opts)
-  local pad_left = opts and opts.pad_left
-  local pad_right = opts and opts.pad_right
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+
   local stripped = {}
   local highlights = {}
   do
@@ -654,31 +694,27 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  local width = 0
-  for i, v in ipairs(stripped) do
-    v = v:gsub("\r", "")
-    if pad_left then v = (" "):rep(pad_left)..v end
-    if pad_right then v = v..(" "):rep(pad_right) end
-    stripped[i] = v
-    width = math.max(width, #v)
-  end
-  if opts and opts.max_width then
-    width = math.min(opts.max_width, width)
-  end
-  -- TODO(ashkan): decide how to make this customizable.
-  local insert_separator = true
+  -- Clean up and add padding
+  stripped = M._trim_and_pad(stripped, opts)
+
+  -- Compute size of float needed to show (wrapped) lines
+  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  local width, height = M._make_floating_popup_size(stripped, opts)
+
+  -- Insert blank line separator after code block
+  local insert_separator = opts.separator or true
   if insert_separator then
     for i, h in ipairs(highlights) do
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
         table.insert(stripped, h.finish + 1, string.rep("─", width))
+        height = height + 1
       end
     end
   end
 
   -- Make the floating window.
-  local height = #stripped
   local bufnr = api.nvim_create_buf(false, true)
   local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
@@ -719,6 +755,66 @@ function M.close_preview_autocmd(events, winnr)
   api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
 end
 
+--- Compute size of float needed to show contents (with optional wrapping)
+---
+--@param contents table of lines to show in window
+--@param opts dictionary with optional fields
+--             - height  of floating window
+--             - width   of floating window
+--             - wrap_at character to wrap at for computing height
+--@return width,height size of float
+function M._make_floating_popup_size(contents, opts)
+  validate {
+    contents = { contents, 't' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+
+  local width = opts.width
+  local height = opts.height
+  local line_widths = {}
+
+  if not width then
+    width = 0
+    for i, line in ipairs(contents) do
+      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+      line_widths[i] = vim.fn.strdisplaywidth(line)
+      width = math.max(line_widths[i], width)
+    end
+  end
+
+  if not height then
+    height = #contents
+    local wrap_at = opts.wrap_at
+    if wrap_at and width > wrap_at then
+      height = 0
+      if vim.tbl_isempty(line_widths) then
+        for _, line in ipairs(contents) do
+          local line_width = vim.fn.strdisplaywidth(line)
+          height = height + math.ceil(line_width/wrap_at)
+        end
+      else
+        for i = 1, #contents do
+          height = height + math.ceil(line_widths[i]/wrap_at)
+        end
+      end
+    end
+  end
+
+  return width, height
+end
+
+--- Show contents in a floating window
+---
+--@param contents table of lines to show in window
+--@param filetype string of filetype to set for opened buffer
+--@param opts dictionary with optional fields
+--             - height    of floating window
+--             - width     of floating window
+--             - wrap_at   character to wrap at for computing height
+--             - pad_left  amount of columns to pad contents at left
+--             - pad_right amount of columns to pad contents at right
+--@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
     contents = { contents, 't' };
@@ -727,24 +823,12 @@ function M.open_floating_preview(contents, filetype, opts)
   }
   opts = opts or {}
 
-  -- Trim empty lines from the end.
-  contents = M.trim_empty_lines(contents)
+  -- Clean up input: trim empty lines from the end, pad
+  contents = M._trim_and_pad(contents, opts)
 
-  local width = opts.width
-  local height = opts.height or #contents
-  if not width then
-    width = 0
-    for i, line in ipairs(contents) do
-      -- Clean up the input and add left pad.
-      line = " "..line:gsub("\r", "")
-      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-      local line_width = vim.fn.strdisplaywidth(line)
-      width = math.max(line_width, width)
-      contents[i] = line
-    end
-    -- Add right padding of 1 each.
-    width = width + 1
-  end
+  -- Compute size of float needed to show (wrapped) lines
+  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  local width, height = M._make_floating_popup_size(contents, opts)
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
