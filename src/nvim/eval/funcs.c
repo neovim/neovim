@@ -1993,7 +1993,6 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int n = false;
-  int len = 0;
 
   const char *p = tv_get_string(&argvars[0]);
   if (*p == '$') {  // Environment variable.

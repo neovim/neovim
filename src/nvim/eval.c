@@ -3348,7 +3348,6 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   char_u      *p;
-  int i;
   exptype_T type = TYPE_UNKNOWN;
   bool type_is = false;             // true for "is" and "isnot"
   int len = 2;
@@ -3418,7 +3417,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
       return FAIL;
     }
 
-    return typval_compare(rettv, &var2, type, type_is, ic, evaulate);
+    return typval_compare(rettv, &var2, type, type_is, ic, evaluate);
   }
 
   return OK;
@@ -5443,7 +5442,7 @@ int typval_compare(
   int		     type_is, /* TRUE for "is" and "isnot" */
   int		     ic,      /* ignore case */
   int		     evaluate) {
-  int   i;
+  int         i;
   varnumber_T n1, n2;
   if (evaluate) {
       if (type_is && typ1->v_type != typ2->v_type) {
@@ -5617,32 +5616,44 @@ int typval_compare(
 
 int typval_copy(typval_T *typ1, typval_T *typ2) {
   if (typ2 == NULL) {
-    tv_list_alloc(typ2);
+    tv_list_alloc_ret(typ2, 0);
   }
   if (typ1 != NULL && typ2 != NULL) {
-    return var_item_copy(typ1, typ2, TRUE, 0);
+    return var_item_copy(NULL, typ1, typ2, TRUE, 0);
   }
   return FAIL;
 }
 
 char_u *typval_tostring(typval_T *arg) {
-  char_u *tofree;
-  char_u numbuf[NUMBUFLEN];
   char_u *ret = NULL;
   if (arg == NULL) {
     return vim_strsave((char_u *)"(does not exist)");
   }
-  ret =  encode_tv2string(arg, &tofree);
+  ret =  (char_u *)encode_tv2string(arg, NULL);
   /* Make a copy if we have a value but it's not in allocated memory. */
-  if (ret != NULL && tofree == NULL) {
+  if (ret != NULL) {
     ret = vim_strsave(ret);
   }
   return ret;
 }
 
-int var_exists(char_u * var) {
-  char_u	*name;
-  char_u	*tofree;
+/*
+ * Top level evaluation function.
+ * Returns an allocated typval_T with the result.
+ * Returns NULL when there is an error.
+ */
+typval_T *eval_expr(char_u *arg, char_u **nextcmd) {
+    typval_T	*tv = xmalloc(sizeof(typval_T));
+    if (tv != NULL && eval0(arg, tv, nextcmd, true) == FAIL) {
+	    XFREE_CLEAR(tv);
+    }
+
+    return tv;
+}
+
+int var_exists(const char * var) {
+  const char	*name;
+  char	*tofree;
   typval_T    tv;
   int		len = 0;
   int		n = FALSE;

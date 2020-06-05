@@ -119,6 +119,10 @@ struct source_cookie {
 /// batch mode debugging: don't save and restore typeahead.
 static bool debug_greedy = false;
 
+static char_u *debug_oldval = NULL;	/* old and newval for debug expressions */
+static char_u *debug_newval = NULL;
+static int     debug_expr   = 0;        /* use debug_expr */
+
 /// Debug mode. Repeatedly get Ex commands, until told to continue normal
 /// execution.
 void do_debug(char_u *cmd)
@@ -165,12 +169,12 @@ void do_debug(char_u *cmd)
   if (!debug_did_msg) {
     MSG(_("Entering Debug mode.  Type \"cont\" to continue."));
     if (debug_oldval != NULL) {
-    	smsg((char_u *)_("Oldval = \"%s\""), debug_oldval);
+    	smsg(_("Oldval = \"%s\""), debug_oldval);
     	xfree(debug_oldval);
     	debug_oldval = NULL;
     }
     if (debug_newval != NULL) {
-    	smsg((char_u *)_("Newval = \"%s\""), debug_newval);
+    	smsg(_("Newval = \"%s\""), debug_newval);
     	xfree(debug_newval);
     	debug_newval = NULL;
     }
@@ -432,11 +436,7 @@ static void do_showbacktrace(char_u *cmd)
   }
 }
 
-static char_u *debug_oldval = NULL;	/* old and newval for debug expressions */
-static char_u *debug_newval = NULL;
-static int     debug_expr   = 0;        /* use debug_expr */
-
-static int has_watchexpr(void)
+int has_watchexpr(void)
 {
     return debug_expr;
 }
@@ -680,7 +680,7 @@ void ex_breakadd(exarg_T *eap)
       }
     } else {
       /// DBG_EXPR
-      DEBUGGY(gap, gap->gap_len++).dbg_nr == ++last_breakp;
+      DEBUGGY(gap, gap->ga_len++).dbg_nr = ++last_breakp;
       debug_tick++;
     }
   }
@@ -750,7 +750,7 @@ void ex_breakdel(exarg_T *eap)
     while (!GA_EMPTY(gap)) {
       xfree(DEBUGGY(gap, todel).dbg_name);
       if (DEBUGGY(gap, todel).dbg_type == DBG_EXPR
-          && DEBUGGY(gap, todel.dbg_val) != NULL) {
+          && DEBUGGY(gap, todel).dbg_val != NULL) {
         xfree(DEBUGGY(gap, todel).dbg_val);
       }
       vim_regfree(DEBUGGY(gap, todel).dbg_prog);
@@ -871,7 +871,7 @@ debuggy_find(
       }
       got_int |= prev_got_int;
     } else if (bp->dbg_type == DBG_EXPR) {
-      typeval_T *tv;
+      typval_T *tv;
       int line = FALSE;
       prev_got_int = got_int;
       got_int = FALSE;
