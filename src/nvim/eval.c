@@ -5442,8 +5442,7 @@ int typval_compare(
   exptype_T	 type,    /* operator */
   int		     type_is, /* TRUE for "is" and "isnot" */
   int		     ic,      /* ignore case */
-  int		     evaluate)
-) {
+  int		     evaluate) {
   int   i;
   varnumber_T n1, n2;
   if (evaluate) {
