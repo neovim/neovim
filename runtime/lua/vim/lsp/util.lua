@@ -662,6 +662,8 @@ end
 --             - height    of floating window
 --             - width     of floating window
 --             - wrap_at   character to wrap at for computing height
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
 --             - pad_left   number of columns to pad contents at left
 --             - pad_right  number of columns to pad contents at right
 --             - pad_top    number of lines to pad contents at top
@@ -776,6 +778,8 @@ end
 --             - height  of floating window
 --             - width   of floating window
 --             - wrap_at character to wrap at for computing height
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
 --@return width,height size of float
 function M._make_floating_popup_size(contents, opts)
   validate {
@@ -786,6 +790,9 @@ function M._make_floating_popup_size(contents, opts)
 
   local width = opts.width
   local height = opts.height
+  local wrap_at = opts.wrap_at
+  local max_width = opts.max_width
+  local max_height = opts.max_height
   local line_widths = {}
 
   if not width then
@@ -796,11 +803,14 @@ function M._make_floating_popup_size(contents, opts)
       width = math.max(line_widths[i], width)
     end
   end
+  if max_width then
+    width = math.min(width, max_width)
+    wrap_at = math.min(wrap_at, max_width)
+  end
 
   if not height then
     height = #contents
-    local wrap_at = opts.wrap_at
-    if wrap_at and width > wrap_at then
+    if wrap_at and width >= wrap_at then
       height = 0
       if vim.tbl_isempty(line_widths) then
         for _, line in ipairs(contents) do
@@ -814,6 +824,9 @@ function M._make_floating_popup_size(contents, opts)
       end
     end
   end
+  if max_height then
+    height = math.min(height, max_height)
+  end
 
   return width, height
 end
@@ -826,6 +839,8 @@ end
 --             - height    of floating window
 --             - width     of floating window
 --             - wrap_at   character to wrap at for computing height
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
 --             - pad_left   number of columns to pad contents at left
 --             - pad_right  number of columns to pad contents at right
 --             - pad_top    number of lines to pad contents at top
