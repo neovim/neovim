@@ -902,7 +902,7 @@ debuggy_find(
         debug_oldval = typval_tostring(bp->dbg_val);
         debug_newval = typval_tostring(NULL);
         xfree(bp->dbg_val);
-        bp->dbg_val = NUL;
+        bp->dbg_val = NULL;
         line = TRUE;
       }
 
