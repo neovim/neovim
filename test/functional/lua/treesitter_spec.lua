@@ -240,17 +240,17 @@ static int nlua_schedule(lua_State *const lstate)
 ; TODO(bfredl): overlapping matches are unreliable,
 ; we need a proper priority mechanism
 ;(type_identifier) @type
-((type_identifier) @Special (eq? @Special "LuaRef"))
+((type_identifier) @Special (#eq? @Special "LuaRef"))
 
 (primitive_type) @type
 (sized_type_specifier) @type
 
 ; defaults to very magic syntax, for best compatibility
-((identifier) @Identifier (match? @Identifier "^l(u)a_"))
+((identifier) @Identifier (#match? @Identifier "^l(u)a_"))
 ; still support \M etc prefixes
-((identifier) @Constant (match? @Constant "\M^\[A-Z_]\+$"))
+((identifier) @Constant (#match? @Constant "\M^\[A-Z_]\+$"))
 
-((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (eq? @WarningMsg.left @WarningMsg.right))
+((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
 
 (comment) @comment
 ]]

@@ -93,7 +93,7 @@ static inline TSStateId ts_language_next_state(const TSLanguage *self,
     if (count > 0) {
       TSParseAction action = actions[count - 1];
       if (action.type == TSParseActionTypeShift) {
-        return action.params.extra ? state : action.params.state;
+        return action.params.shift.extra ? state : action.params.shift.state;
       }
     }
     return 0;
