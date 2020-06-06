@@ -299,7 +299,7 @@ int main(int argc, char **argv)
   // Don't redraw until much later.
   RedrawingDisabled++;
 
-  setbuf(stdout, NULL);
+  setvbuf(stdout, NULL, _IONBF, 0);
 
   full_screen = !silent_mode;
 
