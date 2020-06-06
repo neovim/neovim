@@ -203,7 +203,7 @@ EXTERN int msg_nowait INIT(= false);        // don't wait for this msg
 EXTERN int emsg_off INIT(= 0);              // don't display errors for now,
                                             // unless 'debug' is set.
 EXTERN int info_message INIT(= false);      // printing informative message
-EXTERN int msg_hist_off INIT(= false);      // don't add messages to history
+EXTERN bool msg_hist_off INIT(= false);     // don't add messages to history
 EXTERN int need_clr_eos INIT(= false);      // need to clear text before
                                             // displaying a message.
 EXTERN int emsg_skip INIT(= 0);             // don't display errors for
@@ -478,6 +478,8 @@ EXTERN int sc_col;              // column for shown command
 EXTERN int starting INIT(= NO_SCREEN);
 // true when planning to exit. Might keep running if there is a changed buffer.
 EXTERN bool exiting INIT(= false);
+// internal value of v:dying
+EXTERN int v_dying INIT(= 0);
 // is stdin a terminal?
 EXTERN int stdin_isatty INIT(= true);
 // is stdout a terminal?

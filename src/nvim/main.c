@@ -621,7 +621,7 @@ void getout(int exitval)
   /* Optionally print hashtable efficiency. */
   hash_debug_results();
 
-  if (get_vim_var_nr(VV_DYING) <= 1) {
+  if (v_dying <= 1) {
     const tabpage_T *next_tp;
 
     // Trigger BufWinLeave for all windows, but only once per buffer.
@@ -670,8 +670,9 @@ void getout(int exitval)
     shada_write_file(NULL, false);
   }
 
-  if (get_vim_var_nr(VV_DYING) <= 1)
-    apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, FALSE, curbuf);
+  if (v_dying <= 1) {
+    apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, false, curbuf);
+  }
 
   profile_dump();
 

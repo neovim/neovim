@@ -170,6 +170,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   garray_T   newargs = GA_EMPTY_INIT_VALUE;
   garray_T   *pnewargs;
   ufunc_T    *fp = NULL;
+  partial_T *pt = NULL;
   int        varargs;
   int        ret;
   char_u     *start = skipwhite(*arg + 1);
@@ -219,7 +220,6 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     int len, flags = 0;
     char_u *p;
     char_u name[20];
-    partial_T *pt;
     garray_T newlines;
 
     lambda_no++;
@@ -274,6 +274,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
 errret:
   ga_clear_strings(&newargs);
   xfree(fp);
+  xfree(pt);
   eval_lavars_used = old_eval_lavars;
   return FAIL;
 }

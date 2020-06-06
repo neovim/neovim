@@ -252,7 +252,7 @@ let s:filename_checks = {
     \ 'lilo': ['lilo.conf'],
     \ 'limits': ['/etc/limits', '/etc/anylimits.conf', '/etc/anylimits.d/file.conf'],
     \ 'liquid': ['file.liquid'],
-    \ 'lisp': ['sbclrc', '.sbclrc'],
+    \ 'lisp': ['file.lsp', 'file.lisp', 'file.el', 'file.cl', '.emacs', '.sawfishrc', 'sbclrc', '.sbclrc'],
     \ 'lite': ['file.lite', 'file.lt'],
     \ 'litestep': ['/LiteStep/any/file.rc'],
     \ 'loginaccess': ['/etc/login.access'],
