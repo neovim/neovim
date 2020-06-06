@@ -2676,6 +2676,13 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (name == NULL) {
         break;
       }
+      switch (vartv.v_type) {
+        case VAR_FUNC:
+        case VAR_PARTIAL:
+          continue;
+        default:
+          break;
+      }
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
       ShaDaWriteResult spe_ret;

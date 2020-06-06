@@ -494,14 +494,6 @@ $
     eq(0, exc_exec('wshada! ' .. shada_fname))
   end)
 
-  it('errors when a funcref is stored in a variable', function()
-    nvim_command('let F = function("tr")')
-    nvim_command('set shada+=!')
-    eq('\nE5004: Error while dumping variable g:F, itself: attempt to dump function reference'
-       .. '\nE574: Failed to write variable F',
-       redir_exec('wshada'))
-  end)
-
   it('errors when a self-referencing list is stored in a variable', function()
     nvim_command('let L = []')
     nvim_command('call add(L, L)')

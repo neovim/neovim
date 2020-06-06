@@ -121,15 +121,27 @@ describe('ShaDa support code', function()
        meths.get_var('NESTEDVAR'))
   end)
 
-  it('errors and writes when a funcref is stored in a variable',
+  it('ignore when a funcref is stored in a variable',
   function()
     nvim_command('let F = function("tr")')
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
-    eq('Vim(wshada):E5004: Error while dumping variable g:F, itself: attempt to dump function reference',
-       exc_exec('wshada'))
-    meths.set_option('shada', '')
-    reset('set shada+=!')
+    nvim_command('wshada')
+    reset()
+    nvim_command('set shada+=!')
+    nvim_command('rshada')
+    eq('10', meths.get_var('U'))
+  end)
+
+  it('ignore when a partial is stored in a variable',
+  function()
+    nvim_command('let P = { -> 1 }')
+    meths.set_var('U', '10')
+    nvim_command('set shada+=!')
+    nvim_command('wshada')
+    reset()
+    nvim_command('set shada+=!')
+    nvim_command('rshada')
     eq('10', meths.get_var('U'))
   end)
 
