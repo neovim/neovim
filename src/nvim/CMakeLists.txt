@@ -16,8 +16,8 @@ if(WIN32)
   # tell MinGW compiler to enable wmain
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreFoundation")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework AppKit")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework AppKit")
 endif()
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
@@ -114,6 +114,10 @@ foreach(subdir
   list(APPEND NVIM_SOURCES ${sources})
   list(APPEND NVIM_HEADERS ${headers})
 endforeach()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  list(APPEND NVIM_SOURCES ${PROJECT_SOURCE_DIR}/src/nvim/os/clipboard_macos.m)
+endif()
 
 file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
