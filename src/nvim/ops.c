@@ -51,6 +51,7 @@
 #include "nvim/macros.h"
 #include "nvim/window.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/os/clipboard.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
@@ -5870,14 +5871,29 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)
 {
-  // show message on error
-  bool errmsg = true;
-
   yankreg_T *reg = adjust_clipboard_name(&name, quiet, false);
+
   if (reg == NULL) {
     return false;
   }
+
   free_register(reg);
+
+#ifdef CLIPBOARD_NATIVE
+  ClipboardData data;
+  
+  if (!clipboard_get(&data)) {
+    // TODO: Report this error
+    return false;
+  }
+
+  str_to_reg(reg, data.regtype, data.text, data.length, -1, false);
+  xfree(data.text);
+  *target = reg;
+  return true;
+#else
+  // show message on error
+  bool errmsg = true;
 
   list_T *const args = tv_list_alloc(1);
   const char regname = (char)name;
@@ -5990,6 +6006,7 @@ err:
   }
   *target = reg;
   return false;
+#endif // ifdef CLIPBOARD_NATIVE
 }
 
 static void set_clipboard(int name, yankreg_T *reg)
@@ -5998,6 +6015,9 @@ static void set_clipboard(int name, yankreg_T *reg)
     return;
   }
 
+#ifdef CLIPBOARD_NATIVE
+  clipboard_set((char)name, reg->y_type, reg->y_array, reg->y_size);
+#else
   list_T *const lines = tv_list_alloc(
       (ptrdiff_t)reg->y_size + (reg->y_type != kMTCharWise));
 
@@ -6032,6 +6052,7 @@ static void set_clipboard(int name, yankreg_T *reg)
   tv_list_append_string(args, ((char[]) { (char)name }), 1);
 
   (void)eval_call_provider("clipboard", "set", args);
+#endif // ifdef CLIPBOARD_NATIVE
 }
 
 /// Avoid slow things (clipboard) during batch operations (while/for-loops).
