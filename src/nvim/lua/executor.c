@@ -1128,21 +1128,11 @@ void ex_luafile(exarg_T *const eap)
   }
 }
 
-static int create_tslua_parser(lua_State *L)
-{
-  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
-    return luaL_error(L, "string expected");
-  }
-
-  const char *lang_name = lua_tostring(L, 1);
-  return tslua_push_parser(L, lang_name);
-}
-
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
 
-  lua_pushcfunction(lstate, create_tslua_parser);
+  lua_pushcfunction(lstate, tslua_push_parser);
   lua_setfield(lstate, -2, "_create_ts_parser");
 
   lua_pushcfunction(lstate, tslua_add_language);

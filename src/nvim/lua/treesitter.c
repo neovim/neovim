@@ -214,8 +214,14 @@ int tslua_inspect_lang(lua_State *L)
   return 1;
 }
 
-int tslua_push_parser(lua_State *L, const char *lang_name)
+int tslua_push_parser(lua_State *L)
 {
+
+  // Gather language
+  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
+    return luaL_error(L, "string expected");
+  }
+  const char *lang_name = lua_tostring(L, 1);
   TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
   if (!lang) {
     return luaL_error(L, "no such language: %s", lang_name);
