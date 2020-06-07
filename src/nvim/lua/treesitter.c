@@ -20,6 +20,7 @@
 #include "nvim/lua/treesitter.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/memline.h"
+#include "nvim/buffer.h"
 
 typedef struct {
   TSParser *parser;
@@ -41,6 +42,7 @@ static struct luaL_Reg parser_meta[] = {
   { "parse_buf", parser_parse_buf },
   { "edit", parser_edit },
   { "tree", parser_tree },
+  { "set_included_ranges", parser_set_ranges },
   { NULL, NULL }
 };
 
@@ -379,6 +381,92 @@ static int parser_edit(lua_State *L)
                        start_point, old_end_point, new_end_point };
 
   ts_tree_edit(p->tree, &edit);
+
+  return 0;
+}
+
+static int parser_set_ranges(lua_State *L) {
+  if (lua_gettop(L) < 3) {
+    lua_pushstring(L, "not enough args to parser:set_ranges()");
+    return lua_error(L);
+  }
+
+  TSLua_parser *p = parser_check(L);
+  if (!p || !p->tree) {
+    return 0;
+  }
+
+  int bufnr = lua_tointeger(L, 2);
+
+  if (! lua_istable(L, 3)) {
+    lua_pushstring(L, "argument for parser:set_ranges() should be a table.");
+    return lua_error(L);
+  }
+
+  size_t tbl_len = lua_objlen(L, 3);
+  TSRange *ranges = xmalloc(sizeof(TSRange) * tbl_len);
+
+
+  // [ parser, ranges ]
+  for (size_t index = 0; index < tbl_len; index++) {
+    lua_rawgeti(L, 3, index + 1); // [ parser, ranges, range ]
+
+    if (!lua_istable(L, -1)) {
+      xfree(ranges);
+      lua_pushstring(L, "argument for parser:set_ranges() should be a table of tables.");
+      return lua_error(L);
+    }
+
+    if (lua_objlen(L, -1) < 4 ) {
+      xfree(ranges);
+      lua_pushstring(L, "argument for parser:set_ranges() should be a table of ranges of 4 elements.");
+      return lua_error(L);
+    }
+
+    lua_rawgeti(L, -1, 1); // [ parser, ranges, range, num ]
+    unsigned int start_row = lua_tointeger(L, -1);
+    lua_pop(L, 1); // [ parser, ranges, range ]
+
+
+    lua_rawgeti(L, -1, 2); // [ parser, ranges, range, num ]
+    unsigned int start_col = lua_tointeger(L, -1);
+    lua_pop(L, 1); // [ parser, ranges, range ]
+
+    lua_rawgeti(L, -1, 3); // [ parser, ranges, range, num ]
+    unsigned int stop_row = lua_tointeger(L, -1);
+    lua_pop(L, 1); // [ parser, ranges, range ]
+
+    lua_rawgeti(L, -1, 4); // [ parser, ranges, range, num ]
+    unsigned int stop_col = lua_tointeger(L, -1);
+    lua_pop(L, 1); // [ parser, ranges, range ]
+
+    buf_T * buf = buflist_findnr(bufnr);
+
+    if (!buf) {
+      buf = curbuf;
+    }
+
+    // TODO: For sure that's wrong, try to find a way to get the byte offset directly
+    uint32_t start_byte =  ml_find_line_or_offset(buf, start_row, NULL, false) + start_col;
+    uint32_t stop_byte =  ml_find_line_or_offset(buf, stop_row, NULL, false) + stop_col;
+
+    ranges[index] = (TSRange) {
+      .start_point = (TSPoint) {
+        .row = start_row,
+        .column = start_col
+      },
+      .end_point = (TSPoint) {
+        .row = stop_row,
+        .column = stop_col
+      },
+      .start_byte = start_byte,
+      .end_byte = stop_byte
+    };
+  }
+
+  // This memcpies ranges, thus we can free it.
+  ts_parser_set_included_ranges(p->parser, ranges, tbl_len);
+  xfree(ranges);
 
   return 0;
 }
