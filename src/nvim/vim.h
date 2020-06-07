@@ -101,6 +101,7 @@ typedef enum {
 #define VAR_TYPE_DICT       4
 #define VAR_TYPE_FLOAT      5
 #define VAR_TYPE_BOOL       6
+#define VAR_TYPE_SPECIAL    7
 
 
 // values for xp_context when doing command line completion

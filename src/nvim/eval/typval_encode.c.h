@@ -379,15 +379,20 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, _mp_last(*mpstack));
       break;
     }
+    case VAR_BOOL: {
+      switch (tv->vval.v_bool) {
+        case kBoolVarTrue:
+        case kBoolVarFalse: {
+          TYPVAL_ENCODE_CONV_BOOL(tv, tv->vval.v_bool == kBoolVarTrue);
+          break;
+        }
+      }
+      break;
+    }
     case VAR_SPECIAL: {
       switch (tv->vval.v_special) {
         case kSpecialVarNull: {
           TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
-          break;
-        }
-        case kSpecialVarTrue:
-        case kSpecialVarFalse: {
-          TYPVAL_ENCODE_CONV_BOOL(tv, tv->vval.v_special == kSpecialVarTrue);
           break;
         }
       }

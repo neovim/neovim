@@ -795,9 +795,9 @@ json_decode_string_cycle_start:
         }
         p += 3;
         POP(((typval_T) {
-          .v_type = VAR_SPECIAL,
+          .v_type = VAR_BOOL,
           .v_lock = VAR_UNLOCKED,
-          .vval = { .v_special = kSpecialVarTrue },
+          .vval = { .v_bool = kBoolVarTrue },
         }), false);
         break;
       }
@@ -808,9 +808,9 @@ json_decode_string_cycle_start:
         }
         p += 4;
         POP(((typval_T) {
-          .v_type = VAR_SPECIAL,
+          .v_type = VAR_BOOL,
           .v_lock = VAR_UNLOCKED,
-          .vval = { .v_special = kSpecialVarFalse },
+          .vval = { .v_bool = kBoolVarFalse },
         }), false);
         break;
       }
@@ -954,10 +954,10 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
     }
     case MSGPACK_OBJECT_BOOLEAN: {
       *rettv = (typval_T) {
-        .v_type = VAR_SPECIAL,
+        .v_type = VAR_BOOL,
         .v_lock = VAR_UNLOCKED,
         .vval = {
-          .v_special = mobj.via.boolean ? kSpecialVarTrue : kSpecialVarFalse
+          .v_bool = mobj.via.boolean ? kBoolVarTrue : kBoolVarFalse
         },
       };
       break;
