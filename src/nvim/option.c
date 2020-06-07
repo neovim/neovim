@@ -524,11 +524,17 @@ char *get_lib_dir(void)
 ///
 /// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
 /// configuration and data files in the same path. #4403
-static void set_runtimepath_default(void)
+///
+/// If "clean_arg" is true, Nvim was started with --clean.
+static void set_runtimepath_default(bool clean_arg)
 {
   size_t rtp_size = 0;
-  char *const data_home = stdpaths_get_xdg_var(kXDGDataHome);
-  char *const config_home = stdpaths_get_xdg_var(kXDGConfigHome);
+  char *const data_home = clean_arg
+    ? NULL
+    : stdpaths_get_xdg_var(kXDGDataHome);
+  char *const config_home = clean_arg
+    ? NULL
+    : stdpaths_get_xdg_var(kXDGConfigHome);
   char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
@@ -622,7 +628,8 @@ static void set_runtimepath_default(void)
 /// Initialize the options, first part.
 ///
 /// Called only once from main(), just after creating the first buffer.
-void set_init_1(void)
+/// If "clean_arg" is true, Nvim was started with --clean.
+void set_init_1(bool clean_arg)
 {
   int opt_idx;
 
@@ -765,7 +772,7 @@ void set_init_1(void)
                      true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
-  set_runtimepath_default();
+  set_runtimepath_default(clean_arg);
 
   /*
    * Set all the options (except the terminal options) to their default

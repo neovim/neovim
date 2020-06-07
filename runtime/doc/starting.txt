@@ -90,6 +90,7 @@ argument.
 --clean		Equivalent to "-u NONE -i NONE":
 		- Skips initializations from files and environment variables.
 		- No 'shada' file is read or written.
+		- Excludes user directories from 'runtimepath'
 
 							*--noplugin*
 --noplugin	Skip loading plugins.  Resets the 'loadplugins' option.
