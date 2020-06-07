@@ -606,9 +606,19 @@ let s:script_checks = {
       \ 'yaml': [['%YAML 1.2']],
       \ }
 
-func Test_script_detection()
+" Various forms of "env" optional arguments.
+let s:script_env_checks = {
+      \ 'perl': [['#!/usr/bin/env VAR=val perl']],
+      \ 'scala': [['#!/usr/bin/env VAR=val VVAR=vval scala']],
+      \ 'awk': [['#!/usr/bin/env VAR=val -i awk']],
+      \ 'scheme': [['#!/usr/bin/env VAR=val --ignore-environment scheme']],
+      \ 'python': [['#!/usr/bin/env VAR=val -S python -w -T']],
+      \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
+      \ }
+
+func Run_script_detection(test_dict)
   filetype on
-  for [ft, files] in items(s:script_checks)
+  for [ft, files] in items(a:test_dict)
     for file in files
       call writefile(file, 'Xtest')
       split Xtest
@@ -618,6 +628,11 @@ func Test_script_detection()
   endfor
   call delete('Xtest')
   filetype off
+endfunc
+
+func Test_script_detection()
+  call Run_script_detection(s:script_checks)
+  call Run_script_detection(s:script_env_checks)
 endfunc
 
 func Test_setfiletype_completion()
