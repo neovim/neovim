@@ -2545,8 +2545,8 @@ static bool valid_filetype(const char_u *val)
   return valid_name(val, ".-_");
 }
 
-/// Return true if "val" is a valid 'spellang' value.
-bool valid_spellang(const char_u *val)
+/// Return true if "val" is a valid 'spelllang' value.
+bool valid_spelllang(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return valid_name(val, ".-_,@");
@@ -3078,7 +3078,7 @@ ambw_end:
     const bool is_spellfile = varp == &(curwin->w_s->b_p_spf);
 
     if ((is_spellfile && !valid_spellfile(*varp))
-        || (!is_spellfile && !valid_spellang(*varp))) {
+        || (!is_spellfile && !valid_spelllang(*varp))) {
       errmsg = e_invarg;
     } else {
       errmsg = did_set_spell_option(is_spellfile);
