@@ -559,7 +559,6 @@ else()
 endif()
 set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
-<<<<<<< HEAD
 file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
