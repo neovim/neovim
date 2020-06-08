@@ -517,8 +517,8 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[in,out]  srcp  Source from which <> are translated. Is advanced to
 ///                       after the <> name if there is a match.
 /// @param[in]  src_len  Length of the srcp.
-/// @param[out]  dst  Location where translation result will be kept. Must have
-///                   at least six bytes.
+/// @param[out]  dst  Location where translation result will be kept. It must
+//                    be at least 19 bytes per "<x>" form.
 /// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
 /// @param[in]  in_string  Inside a double quoted string
 ///

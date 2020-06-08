@@ -482,6 +482,11 @@ describe('API', function()
       eq(true, status)        -- nvim_input() did not fail.
       eq("E117:", v_errnum)   -- v:errmsg was updated.
     end)
+
+    it('does not crash even if trans_special result is largest #11788, #12287', function()
+      command("call nvim_input('<M-'.nr2char(0x40000000).'>')")
+      eq(1, eval('1'))
+    end)
   end)
 
   describe('nvim_paste', function()
