@@ -86,7 +86,7 @@ bool clipboard_get(ClipboardData *data)
     if ([available isEqual:NVimPasteboardType]) {
       // This should be an array with two objects:
       //   1. Motion type (NSNumber)
-	    //   2. Text (NSString)
+      //   2. Text (NSString)
       //
       // If this is not the case we fall back on using NSPasteboardTypeString.
       NSArray *plist = [pasteboard propertyListForType:NVimPasteboardType];
