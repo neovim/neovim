@@ -5476,9 +5476,6 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
 
       // replace home directory in the whole option value into "buf"
       buf = xmalloc(size);
-      if (buf == NULL) {
-        goto fail;
-      }
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
@@ -5486,10 +5483,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {
-          part = xmalloc(size);
-        if (part == NULL) {
-          goto fail;
-        }
+        part = xmalloc(size);
 
         // write line break to clear the option, e.g. ':set rtp='
         if (put_eol(fd) == FAIL) {
