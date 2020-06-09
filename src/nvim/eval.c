@@ -8137,9 +8137,6 @@ void set_argv_var(char **argv, int argc)
   list_T *l = tv_list_alloc(argc);
   int i;
 
-  if (l == NULL) {
-    getout(1);
-  }
   tv_list_set_lock(l, VAR_FIXED);
   for (i = 0; i < argc; i++) {
     tv_list_append_string(l, (const char *const)argv[i], -1);
