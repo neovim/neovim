@@ -224,6 +224,8 @@ do
         lines[1] = firstline
         lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
         vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
+      elseif phase > 1 and mode:find('^n') then
+        vim.api.nvim_put(lines, 'c', true, true)
       else
         vim.api.nvim_put(lines, 'c', false, true)
       end
