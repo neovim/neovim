@@ -247,10 +247,12 @@ func s:StartDebug_term(dict)
     endif
 
     let response = ''
-    for lnum in range(1,200)
-      if len(getbufline(s:gdbbuf, lnum)) > 0 && getbufline(s:gdbbuf, lnum)[0] =~ 'new-ui mi '
+    for lnum in range(1, 200)
+      let line1 = get(getbufline(s:gdbbuf, lnum), 0, '')
+      let line2 = get(getbufline(s:gdbbuf, lnum + 1), 0, '')
+      if line1 =~ 'new-ui mi '
         " response can be in the same line or the next line
-        let response = getbufline(s:gdbbuf, lnum)[0] . getbufline(s:gdbbuf, lnum + 1)[0]
+        let response = line1 . line2
         if response =~ 'Undefined command'
           echoerr 'Sorry, your gdb is too old, gdb 7.12 is required'
 	  call s:CloseBuffers()
@@ -260,10 +262,9 @@ func s:StartDebug_term(dict)
           " Success!
           break
         endif
-        if response =~ 'Reading symbols from' && response !~ 'new-ui'
-          " Reading symbols might take a while
-	  let try_count -= 1
-        endif
+      elseif line1 =~ 'Reading symbols from' && line2 !~ 'new-ui mi '
+        " Reading symbols might take a while, try more times
+        let try_count -= 1
       endif
     endfor
     if response =~ 'New UI allocated'
