@@ -2,9 +2,8 @@
 name: Language server client bug report
 about: Report a built-in lsp problem in Nvim
 title: ''
-labels:
-  - bug
-  - lsp
+labels: bug, lsp
+
 ---
 
 <!-- Before reporting: search existing issues and check the FAQ. -->
@@ -14,7 +13,7 @@ labels:
 - Operating system/version:
 
 <details>
-<summary>`nvim -c ":checkhealth nvim nvim_lsp"`</summary>
+<summary>nvim -c ":checkhealth nvim nvim_lsp"</summary>
 
 <!-- Paste the results from `nvim -c ":checkhealth nvim nvim_lsp"` here. -->
 
