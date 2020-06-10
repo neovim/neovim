@@ -4862,6 +4862,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool rpc = false;
   bool pty = false;
   bool clear_env = false;
+  bool overlapped = false;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -4873,11 +4874,22 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rpc = tv_dict_get_number(job_opts, "rpc") != 0;
     pty = tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
+    overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
+
     if (pty && rpc) {
       EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
       shell_free_argv(argv);
       return;
     }
+
+#ifdef WIN32
+    if (pty && overlapped) {
+      EMSG2(_(e_invarg2),
+            "job cannot have both 'pty' and 'overlapped' options set");
+      shell_free_argv(argv);
+      return;
+    }
+#endif
 
     char *new_cwd = tv_dict_get_string(job_opts, "cwd", false);
     if (new_cwd && strlen(new_cwd) > 0) {
@@ -4945,7 +4957,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, detach, cwd, width, height,
+                                    rpc, overlapped, detach, cwd, width, height,
                                     term_name, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
@@ -7372,8 +7384,8 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, NULL, 0, 0, NULL, NULL,
-                                    &rettv->vval.v_number);
+                                    false, true, false, false, NULL, 0, 0,
+                                    NULL, NULL, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -10461,7 +10473,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    true, false, false, cwd,
+                                    true, false, false, false, cwd,
                                     term_width, curwin->w_height_inner,
                                     xstrdup("xterm-256color"), NULL,
                                     &rettv->vval.v_number);
