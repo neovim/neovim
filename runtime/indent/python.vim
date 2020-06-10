@@ -53,7 +53,10 @@ function GetPythonIndent(lnum)
     return 0
   endif
 
-  call cursor(plnum, 1)
+  " Put the cursor at the last column of the previous non-empty line
+  " before searching for parenthesis. This way, a closed parenthesis
+  " at the end is recognized as such.
+  call cursor(plnum, $)
 
   " Identing inside parentheses can be very slow, regardless of the searchpair()
   " timeout, so let the user disable this feature if he doesn't need it
