@@ -897,7 +897,8 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_will_save = ifnil(textDocumentSync.willSave, false);
         text_document_will_save_wait_until = ifnil(textDocumentSync.willSaveWaitUntil, false);
         text_document_save = ifnil(textDocumentSync.save, false);
-        text_document_save_include_text = ifnil(textDocumentSync.save and textDocumentSync.save.includeText, false);
+        text_document_save_include_text = ifnil(type(textDocumentSync.save) == 'table'
+                                                and textDocumentSync.save.includeText, false);
       }
     else
       return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
