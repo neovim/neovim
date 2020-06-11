@@ -1232,7 +1232,7 @@ describe('LSP', function()
         ]])
       end)
     end)
-    describe('convert SymbolInformation[] to items', function()
+    it('convert SymbolInformation[] to items', function()
         local expected = {
           {
             col = 1,
@@ -1296,11 +1296,11 @@ describe('LSP', function()
   end)
 
   describe('lsp.util._get_completion_item_kind_name', function()
-    describe('returns the name specified by protocol', function()
+    it('returns the name specified by protocol', function()
       eq("Text", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1)"))
       eq("TypeParameter", exec_lua("return vim.lsp.util._get_completion_item_kind_name(25)"))
     end)
-    describe('returns the name not specified by protocol', function()
+    it('returns the name not specified by protocol', function()
       eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(nil)"))
       eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(vim.NIL)"))
       eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1000)"))
@@ -1308,11 +1308,11 @@ describe('LSP', function()
   end)
 
   describe('lsp.util._get_symbol_kind_name', function()
-    describe('returns the name specified by protocol', function()
+    it('returns the name specified by protocol', function()
       eq("File", exec_lua("return vim.lsp.util._get_symbol_kind_name(1)"))
       eq("TypeParameter", exec_lua("return vim.lsp.util._get_symbol_kind_name(26)"))
     end)
-    describe('returns the name not specified by protocol', function()
+    it('returns the name not specified by protocol', function()
       eq("Unknown", exec_lua("return vim.lsp.util._get_symbol_kind_name(nil)"))
       eq("Unknown", exec_lua("return vim.lsp.util._get_symbol_kind_name(vim.NIL)"))
       eq("Unknown", exec_lua("return vim.lsp.util._get_symbol_kind_name(1000)"))
@@ -1380,7 +1380,7 @@ describe('LSP', function()
     end)
   end)
 
-  describe('lsp.util._make_floating_popup_size', function()
+  it('lsp.util._make_floating_popup_size', function()
     exec_lua [[ contents =
     {"text tαxt txtα tex",
     "text tααt tααt text",
