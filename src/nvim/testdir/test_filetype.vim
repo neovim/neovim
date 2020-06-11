@@ -131,7 +131,7 @@ let s:filename_checks = {
     \ 'def': ['file.def'],
     \ 'denyhosts': ['denyhosts.conf'],
     \ 'desc': ['file.desc'],
-    \ 'desktop': ['file.desktop', '.directory'],
+    \ 'desktop': ['file.desktop', '.directory', 'file.directory'],
     \ 'dictconf': ['dict.conf', '.dictrc'],
     \ 'dictdconf': ['dictd.conf'],
     \ 'diff': ['file.diff', 'file.rej'],
