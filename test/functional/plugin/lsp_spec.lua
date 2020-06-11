@@ -1380,13 +1380,21 @@ describe('LSP', function()
     end)
   end)
 
-  it('lsp.util._make_floating_popup_size', function()
-    exec_lua [[ contents =
-    {"text tαxt txtα tex",
-    "text tααt tααt text",
-    "text tαxt tαxt"}
-    ]]
-    eq({19,3}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
-    eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
+  describe('lsp.util._make_floating_popup_size', function()
+    before_each(function()
+      exec_lua [[ contents =
+      {"text tαxt txtα tex",
+      "text tααt tααt text",
+      "text tαxt tαxt"}
+      ]]
+    end)
+
+    it('calculates size correctly', function()
+      eq({19,3}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
+    end)
+
+    it('calculates size correctly with wrapping', function()
+      eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
+    end)
   end)
 end)
