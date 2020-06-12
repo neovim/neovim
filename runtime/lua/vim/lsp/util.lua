@@ -859,6 +859,8 @@ do
 
   local severity_highlights = {}
 
+  local severity_floating_highlights = {}
+
   local default_severity_highlight = {
     [protocol.DiagnosticSeverity.Error] = { guifg = "Red" };
     [protocol.DiagnosticSeverity.Warning] = { guifg = "Orange" };
@@ -870,6 +872,7 @@ do
   for severity, hi_info in pairs(default_severity_highlight) do
     local severity_name = protocol.DiagnosticSeverity[severity]
     local highlight_name = "LspDiagnostics"..severity_name
+    local floating_highlight_name = highlight_name.."Floating"
     -- Try to fill in the foreground color with a sane default.
     local cmd_parts = {"highlight", "default", highlight_name}
     for k, v in pairs(hi_info) do
@@ -877,7 +880,9 @@ do
     end
     api.nvim_command(table.concat(cmd_parts, ' '))
     api.nvim_command('highlight link ' .. highlight_name .. 'Sign ' .. highlight_name)
+    api.nvim_command('highlight link ' .. highlight_name .. 'Floating ' .. highlight_name)
     severity_highlights[severity] = highlight_name
+    severity_floating_highlights[severity] = floating_highlight_name
   end
 
   function M.buf_clear_diagnostics(bufnr)
@@ -926,7 +931,7 @@ do
 
       -- TODO(ashkan) make format configurable?
       local prefix = string.format("%d. ", i)
-      local hiname = severity_highlights[diagnostic.severity]
+      local hiname = severity_floating_highlights[diagnostic.severity]
       assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
       local message_lines = split_lines(diagnostic.message)
       table.insert(lines, prefix..message_lines[1])
