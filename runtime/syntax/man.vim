@@ -27,7 +27,7 @@ if &filetype != 'man'
   finish
 endif
 
-if !exists('b:man_sect')
+if man#is_pager()
   call man#init_pager()
 endif
 

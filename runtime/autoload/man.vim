@@ -402,6 +402,13 @@ function! s:format_candidate(path, psect) abort
 endfunction
 
 function! man#init_pager() abort
+  if exists('b:man_pager')
+    " Already inited, occurs as init_pager is called in syntax/man.vim
+    " and ftplugin/man.vim
+    return
+  endif
+  let b:man_pager = 1
+
   " https://github.com/neovim/neovim/issues/6828
   let og_modifiable = &modifiable
   setlocal modifiable
@@ -425,6 +432,12 @@ function! man#init_pager() abort
   endif
 
   let &l:modifiable = og_modifiable
+endfunction
+
+" We're in pager mode if at some point init_pager was ran
+" or !exists('b:man_sect').
+function! man#is_pager() abort
+  return exists('b:man_pager') || !exists('b:man_sect')
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort
