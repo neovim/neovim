@@ -58,7 +58,8 @@ function! man#open_page(count, count1, mods, ...) abort
       " 1, also a valid section. If they are equal, count explicitly set.
       let sect = string(a:count)
     endif
-    let [sect, name, path] = s:verify_exists(sect, name)
+    let path = s:verify_exists(sect, name)
+    let [sect, name] = s:extract_sect_and_name_path(path)
   catch
     call s:error(v:exception)
     return
@@ -83,7 +84,8 @@ endfunction
 function! man#read_page(ref) abort
   try
     let [sect, name] = man#extract_sect_and_name_ref(a:ref)
-    let [sect, name, path] = s:verify_exists(sect, name)
+    let path = s:verify_exists(sect, name)
+    let [sect, name] = s:extract_sect_and_name_path(path)
     let page = s:get_page(path)
   catch
     call s:error(v:exception)
@@ -204,7 +206,7 @@ function! man#extract_sect_and_name_ref(ref) abort
     if empty(name)
       throw 'manpage reference cannot contain only parentheses'
     endif
-    return [get(b:, 'man_default_sects', ''), name]
+    return ['', name]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
@@ -227,24 +229,62 @@ function! s:get_path(sect, name) abort
   return substitute(get(split(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])), 0, ''), '\n\+$', '', '')
 endfunction
 
+" s:verify_exists attempts to find the path to a manpage
+" based on the passed section and name.
+"
+" 1. If the passed section is empty, b:man_default_sects is used.
+" 2. If manpage could not be found with the given sect and name,
+"    then another attempt is made with b:man_default_sects.
+" 3. If it still could not be found, then we try again without a section.
+" 4. If still not found but $MANSECT is set, then we try again with $MANSECT
+"    unset.
+"
+" This function is careful to avoid duplicating a search if a previous
+" step has already done it. i.e if we use b:man_default_sects in step 1,
+" then we don't do it again in step 2.
 function! s:verify_exists(sect, name) abort
+  let sect = a:sect
+  if empty(sect)
+    let sect = get(b:, 'man_default_sects', '')
+  endif
+
   try
-    let path = s:get_path(a:sect, a:name)
+    return s:get_path(sect, a:name)
   catch /^command error (/
-    try
-      let path = s:get_path(get(b:, 'man_default_sects', ''), a:name)
-    catch /^command error (/
-      let path = s:get_path('', a:name)
-    endtry
   endtry
-  " Extract the section from the path, because sometimes the actual section is
-  " more specific than what we provided to `man` (try `:Man 3 App::CLI`).
-  " Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
-  " still want the name of the buffer to be 'printf'.
-  return s:extract_sect_and_name_path(path) + [path]
+
+  if !empty(get(b:, 'man_default_sects', '')) && sect !=# b:man_default_sects
+    try
+      return s:get_path(b:man_default_sects, a:name)
+    catch /^command error (/
+    endtry
+  endif
+
+  if !empty(sect)
+    try
+      return s:get_path('', a:name)
+    catch /^command error (/
+    endtry
+  endif
+
+  if !empty($MANSECT)
+    try
+      let MANSECT = $MANSECT
+      unset $MANSECT
+      return s:get_path('', a:name)
+    catch /^command error (/
+    finally
+      let $MANSECT = MANSECT
+    endtry
+  endif
+
+  throw 'no manual entry for ' . a:name
 endfunction
 
-" extracts the name and sect out of 'path/name.sect'
+" Extracts the name/section from the 'path/name.sect', because sometimes the actual section is
+" more specific than what we provided to `man` (try `:Man 3 App::CLI`).
+" Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
+" still want the name of the buffer to be 'printf'.
 function! s:extract_sect_and_name_path(path) abort
   let tail = fnamemodify(a:path, ':t')
   if a:path =~# '\.\%([glx]z\|bz2\|lzma\|Z\)$' " valid extensions
@@ -339,8 +379,7 @@ function! s:get_paths(sect, name, do_fallback) abort
     endif
 
     " fallback to a single path, with the page we're trying to find
-    let [l:sect, l:name, l:path] = s:verify_exists(a:sect, a:name)
-    return [l:path]
+    return [s:verify_exists(a:sect, a:name)]
   endtry
 endfunction
 
