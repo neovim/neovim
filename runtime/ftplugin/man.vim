@@ -6,7 +6,7 @@ if exists('b:did_ftplugin') || &filetype !=# 'man'
 endif
 let b:did_ftplugin = 1
 
-let s:pager = get(s:, 'pager', 0) || !exists('b:man_sect')
+let s:pager = !exists('b:man_sect')
 
 if s:pager
   call man#init_pager()
@@ -26,7 +26,7 @@ if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> j          gj
   nnoremap <silent> <buffer> k          gk
   nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
-  if 1 == bufnr('%') || s:pager
+  if s:pager
     nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
   else
     nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c
