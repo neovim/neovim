@@ -299,10 +299,9 @@ end
 ---
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function sort_completion_items(items)
-  if items[1] and items[1].sortText then
-    table.sort(items, function(a, b) return a.sortText < b.sortText
-    end)
-  end
+  table.sort(items, function(a, b)
+    return (a.sortText or a.label) < (b.sortText or b.label)
+  end)
 end
 
 --@private
