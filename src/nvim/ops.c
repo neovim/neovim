@@ -4671,17 +4671,23 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   int maxlen = 0;
   pos_T startpos;
   pos_T endpos;
+  colnr_T save_coladd = 0;
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
   dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    // "Bin"
   doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    // "alPha"
 
+  if (virtual_active()) {
+    save_coladd = pos->coladd;
+    pos->coladd = 0;
+  }
+
   curwin->w_cursor = *pos;
   ptr = ml_get(pos->lnum);
   col = pos->col;
 
-  if (*ptr == NUL) {
+  if (*ptr == NUL || col + !!save_coladd >= (int)STRLEN(ptr)) {
     goto theend;
   }
 
@@ -4976,6 +4982,8 @@ theend:
     curwin->w_cursor = save_cursor;
   } else if (did_change) {
     curwin->w_set_curswant = true;
+  } else if (virtual_active()) {
+    curwin->w_cursor.coladd = save_coladd;
   }
 
   return did_change;
