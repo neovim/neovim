@@ -203,6 +203,16 @@ Integer nvim_get_hl_id_by_name(String name)
 /// flags. This is a blocking call, unlike |nvim_input()|.
 ///
 /// On execution error: does not fail, but updates v:errmsg.
+//
+//  If you need to input sequences like <C-o> use nvim_replace_termcodes
+//  to replace the termcodes and then pass the resulting string to
+//  nvim_feedkeys. You'll also want to enable escape_csi.
+///
+/// Example:
+/// <pre>
+///     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
+///     :call nvim_feedkeys(key, 'n', v:true)
+/// </pre>
 ///
 /// @param keys         to be typed
 /// @param mode         behavior flags, see |feedkeys()|
