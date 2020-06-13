@@ -3084,28 +3084,29 @@ fileinfo(
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
-      curbufIsChanged() ? (shortmess(SHM_MOD)
-                           ?  " [+]" : _(" [Modified]")) : " ",
-      (curbuf->b_flags & BF_NOTEDITED)
-      && !bt_dontwrite(curbuf)
-      ? _("[Not edited]") : "",
-      (curbuf->b_flags & BF_NEW)
-      && !bt_dontwrite(curbuf)
-      ? _("[New file]") : "",
-      (curbuf->b_flags & BF_READERR) ? _("[Read errors]") : "",
-      curbuf->b_p_ro ? (shortmess(SHM_RO) ? _("[RO]")
-                        : _("[readonly]")) : "",
-      (curbufIsChanged() || (curbuf->b_flags & BF_WRITE_MASK)
-       || curbuf->b_p_ro) ?
-      " " : "");
-  /* With 32 bit longs and more than 21,474,836 lines multiplying by 100
-   * causes an overflow, thus for large numbers divide instead. */
-  if (curwin->w_cursor.lnum > 1000000L)
+                   curbufIsChanged()
+                   ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
+                   (curbuf->b_flags & BF_NOTEDITED) && !bt_dontwrite(curbuf)
+                   ? _("[Not edited]") : "",
+                   (curbuf->b_flags & BF_NEW) && !bt_dontwrite(curbuf)
+                   ? new_file_message() : "",
+                   (curbuf->b_flags & BF_READERR)
+                   ? _("[Read errors]") : "",
+                   curbuf->b_p_ro
+                   ? (shortmess(SHM_RO) ? _("[RO]") : _("[readonly]")) : "",
+                   (curbufIsChanged()
+                    || (curbuf->b_flags & BF_WRITE_MASK)
+                    || curbuf->b_p_ro)
+                   ? " " : "");
+  // With 32 bit longs and more than 21,474,836 lines multiplying by 100
+  // causes an overflow, thus for large numbers divide instead.
+  if (curwin->w_cursor.lnum > 1000000L) {
     n = (int)(((long)curwin->w_cursor.lnum) /
               ((long)curbuf->b_ml.ml_line_count / 100L));
-  else
+  } else {
     n = (int)(((long)curwin->w_cursor.lnum * 100L) /
               (long)curbuf->b_ml.ml_line_count);
+  }
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
   } else if (p_ru) {

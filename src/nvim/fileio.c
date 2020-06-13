@@ -569,20 +569,21 @@ readfile(
           return FAIL;
         }
       }
-      if (dir_of_file_exists(fname))
-        filemess(curbuf, sfname, (char_u *)_("[New File]"), 0);
-      else
-        filemess(curbuf, sfname,
-            (char_u *)_("[New DIRECTORY]"), 0);
-      /* Even though this is a new file, it might have been
-       * edited before and deleted.  Get the old marks. */
+      if (dir_of_file_exists(fname)) {
+        filemess(curbuf, sfname, (char_u *)new_file_message(), 0);
+      } else {
+        filemess(curbuf, sfname, (char_u *)_("[New DIRECTORY]"), 0);
+      }
+      // Even though this is a new file, it might have been
+      // edited before and deleted.  Get the old marks.
       check_marks_read();
-      /* Set forced 'fileencoding'.  */
-      if (eap != NULL)
+      // Set forced 'fileencoding'.
+      if (eap != NULL) {
         set_forced_fenc(eap);
+      }
       apply_autocmds_exarg(EVENT_BUFNEWFILE, sfname, sfname,
-          FALSE, curbuf, eap);
-      /* remember the current fileformat */
+                           false, curbuf, eap);
+      // remember the current fileformat
       save_file_ff(curbuf);
 
       if (aborting())               /* autocmds may abort script processing */
@@ -2203,6 +2204,11 @@ static void check_marks_read(void)
   curbuf->b_marks_read = true;
 }
 
+char *new_file_message(void)
+{
+  return shortmess(SHM_NEW) ? _("[New]") : _("[New File]");
+}
+
 /*
  * buf_write() - write to file "fname" lines "start" through "end"
  *
@@ -3513,8 +3519,8 @@ restore_backup:
       STRCAT(IObuff, _("[Device]"));
       c = TRUE;
     } else if (newfile) {
-      STRCAT(IObuff, shortmess(SHM_NEW) ? _("[New]") : _("[New File]"));
-      c = TRUE;
+      STRCAT(IObuff, new_file_message());
+      c = true;
     }
     if (no_eol) {
       msg_add_eol();
