@@ -119,6 +119,7 @@ function M.apply_text_edits(text_edits, bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
   local start_line, finish_line = math.huge, -1
   local cleaned = {}
   for i, e in ipairs(text_edits) do
