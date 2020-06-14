@@ -218,7 +218,6 @@ int tslua_inspect_lang(lua_State *L)
 
 int tslua_push_parser(lua_State *L)
 {
-
   // Gather language
   if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
     return luaL_error(L, "string expected");
@@ -385,7 +384,8 @@ static int parser_edit(lua_State *L)
   return 0;
 }
 
-static int parser_set_ranges(lua_State *L) {
+static int parser_set_ranges(lua_State *L)
+{
   if (lua_gettop(L) < 3) {
     lua_pushstring(L, "not enough args to parser:set_ranges()");
     return lua_error(L);
@@ -398,8 +398,8 @@ static int parser_set_ranges(lua_State *L) {
 
   int bufnr = lua_tointeger(L, 2);
 
-  if (! lua_istable(L, 3)) {
-    lua_pushstring(L, "argument for parser:set_ranges() should be a table.");
+  if (!lua_istable(L, 3)) {
+    lua_pushstring(L, "argument for parser:set_included_ranges() should be a table.");
     return lua_error(L);
   }
 
@@ -409,36 +409,40 @@ static int parser_set_ranges(lua_State *L) {
 
   // [ parser, ranges ]
   for (size_t index = 0; index < tbl_len; index++) {
-    lua_rawgeti(L, 3, index + 1); // [ parser, ranges, range ]
+    lua_rawgeti(L, 3, index + 1);  // [ parser, ranges, range ]
 
     if (!lua_istable(L, -1)) {
       xfree(ranges);
-      lua_pushstring(L, "argument for parser:set_ranges() should be a table of tables.");
+      lua_pushstring(
+          L,
+          "argument for parser:set_included_ranges() should be a table of tables.");
       return lua_error(L);
     }
 
-    if (lua_objlen(L, -1) < 4 ) {
+    if (lua_objlen(L, -1) < 4) {
       xfree(ranges);
-      lua_pushstring(L, "argument for parser:set_ranges() should be a table of ranges of 4 elements.");
+      lua_pushstring(
+          L,
+          "argument for parser:set_included_ranges() should be a table of ranges of 4 elements.");
       return lua_error(L);
     }
 
-    lua_rawgeti(L, -1, 1); // [ parser, ranges, range, num ]
+    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, num ]
     unsigned int start_row = lua_tointeger(L, -1);
-    lua_pop(L, 1); // [ parser, ranges, range ]
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
 
-    lua_rawgeti(L, -1, 2); // [ parser, ranges, range, num ]
+    lua_rawgeti(L, -1, 2);  // [ parser, ranges, range, num ]
     unsigned int start_col = lua_tointeger(L, -1);
-    lua_pop(L, 1); // [ parser, ranges, range ]
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
-    lua_rawgeti(L, -1, 3); // [ parser, ranges, range, num ]
+    lua_rawgeti(L, -1, 3);  // [ parser, ranges, range, num ]
     unsigned int stop_row = lua_tointeger(L, -1);
-    lua_pop(L, 1); // [ parser, ranges, range ]
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
-    lua_rawgeti(L, -1, 4); // [ parser, ranges, range, num ]
+    lua_rawgeti(L, -1, 4);  // [ parser, ranges, range, num ]
     unsigned int stop_col = lua_tointeger(L, -1);
-    lua_pop(L, 1); // [ parser, ranges, range ]
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
     buf_T * buf = buflist_findnr(bufnr);
 
@@ -446,10 +450,13 @@ static int parser_set_ranges(lua_State *L) {
       buf = curbuf;
     }
 
-    // TODO: For sure that's wrong, try to find a way to get the byte offset directly
+    // TODO(vigoux): For sure that's wrong, try to find a way to get the
+    // byte offset directly
     // Lines are 0 based for consistency
-    uint32_t start_byte =  ml_find_line_or_offset(buf, start_row + 1, NULL, false) + start_col;
-    uint32_t stop_byte =  ml_find_line_or_offset(buf, stop_row + 1, NULL, false) + stop_col;
+    uint32_t start_byte =
+      ml_find_line_or_offset(buf, start_row + 1, NULL, false) + start_col;
+    uint32_t stop_byte =
+      ml_find_line_or_offset(buf, stop_row + 1, NULL, false) + stop_col;
 
     ranges[index] = (TSRange) {
       .start_point = (TSPoint) {
