@@ -1162,6 +1162,7 @@ else
 endif
 au BufNewFile,BufRead *.plx,*.al,*.psgi		setf perl
 au BufNewFile,BufRead *.p6,*.pm6,*.pl6		setf perl6
+au BufNewFile,BufRead *.raku,*.rakumod		setf perl6
 
 " Perl, XPM or XPM2
 au BufNewFile,BufRead *.pm

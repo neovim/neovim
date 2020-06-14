@@ -329,7 +329,7 @@ let s:filename_checks = {
     \ 'pccts': ['file.g'],
     \ 'pdf': ['file.pdf'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
-    \ 'perl6': ['file.p6', 'file.pm6', 'file.pl6'],
+    \ 'perl6': ['file.p6', 'file.pm6', 'file.pl6', 'file.raku', 'file.rakumod'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf'],
     \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp'],
