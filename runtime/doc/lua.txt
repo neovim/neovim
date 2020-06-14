@@ -512,6 +512,9 @@ retained for the lifetime of a buffer but this is subject to change. A plugin
 should keep a reference to the parser object as long as it wants incremental
 updates.
 
+Parser methods						*lua-treesitter-parser*
+
+tsparser:parse()					*tsparser:parse()*
 Whenever you need to access the current syntax tree, parse the buffer: >
 
     tstree = parser:parse()
@@ -527,6 +530,16 @@ call `get_parser()` before you register your callback. But preferably parsing
 shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
 a timer to throttle too frequent updates.
+
+tsparser:set_included_ranges(ranges)			*tsparser:set_included_ranges()*
+	Changes the ranges the parser should consider. This is used for
+	language injection.  `ranges` should be of the form (all zero-based): >
+	{
+		{start_node, end_node},
+		...
+	}
+<
+	NOTE: `start_node` and `end_node` are both inclusive.
 
 Tree methods						*lua-treesitter-tree*
 
