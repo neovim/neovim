@@ -447,8 +447,9 @@ static int parser_set_ranges(lua_State *L) {
     }
 
     // TODO: For sure that's wrong, try to find a way to get the byte offset directly
-    uint32_t start_byte =  ml_find_line_or_offset(buf, start_row, NULL, false) + start_col;
-    uint32_t stop_byte =  ml_find_line_or_offset(buf, stop_row, NULL, false) + stop_col;
+    // Lines are 0 based for consistency
+    uint32_t start_byte =  ml_find_line_or_offset(buf, start_row + 1, NULL, false) + start_col;
+    uint32_t stop_byte =  ml_find_line_or_offset(buf, stop_row + 1, NULL, false) + stop_col;
 
     ranges[index] = (TSRange) {
       .start_point = (TSPoint) {

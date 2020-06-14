@@ -404,4 +404,44 @@ static int nlua_schedule(lua_State *const lstate)
     end
     eq({true,true}, {has_named,has_anonymous})
   end)
+  it('allows to set ranges', function()
+    if not check_parser() then return end
+
+    insert(test_text)
+
+    local res = exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
+    return { parser:parse():root():range() }
+    ]])
+
+    eq({0, 0, 19, 0}, res)
+
+    local res = exec_lua([[
+    parser:set_included_ranges({{0, 0, 1, 0}})
+    parser.valid = false
+    return { parser:parse():root():range() }
+    ]])
+
+    eq({0, 0, 1, 0}, res)
+
+    -- Pick random samples
+    local res = exec_lua([[
+    parser:set_included_ranges({{8, 0, 9, 0}, {12, 0, 13 ,0}})
+    local root = parser:parse():root()
+    return {{root:child(0):range()}, {root:child(1):range()}}
+    ]])
+
+    eq({{
+      8,
+      2,
+      8,
+      33
+    },
+    {
+      12,
+      4,
+      12,
+      37
+    }}, res)
+  end)
 end)
