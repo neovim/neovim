@@ -39,6 +39,8 @@ parts:
         make-parameters:
             - CMAKE_BUILD_TYPE=RelWithDebInfo
             - CMAKE_INSTALL_PREFIX=/usr
+            - CMAKE_FLAGS=-DPREFER_LUA=ON
+            - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
         override-build: |
             snapcraftctl build
             # Fix Desktop file
