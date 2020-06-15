@@ -52,11 +52,13 @@ parts:
             - autoconf
             - automake
             - cmake
+            - gawk
             - g++
             - git
             - gettext
             - pkg-config
             - unzip
+            - wget
         prime:
             - -usr/share/man
 
