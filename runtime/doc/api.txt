@@ -1612,6 +1612,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                     {opts}         Optional parameters.
                                    • on_lines: Lua callback invoked on change.
                                      Return`true`to detach. Args:
+                                     • the string "lines"
                                      • buffer handle
                                      • b:changedtick
                                      • first line that changed (zero-indexed)
@@ -1626,11 +1627,13 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                    • on_changedtick: Lua callback invoked on
                                      changedtick increment without text
                                      change. Args:
+                                     • the string "changedtick"
                                      • buffer handle
                                      • b:changedtick
 
                                    • on_detach: Lua callback invoked on
                                      detach. Args:
+                                     • the string "detach"
                                      • buffer handle
 
                                    • utf_sizes: include UTF-32 and UTF-16 size

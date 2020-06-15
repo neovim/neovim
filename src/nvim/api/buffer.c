@@ -126,6 +126,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param  opts  Optional parameters.
 ///             - on_lines: Lua callback invoked on change.
 ///               Return `true` to detach. Args:
+///               - the string "lines"
 ///               - buffer handle
 ///               - b:changedtick
 ///               - first line that changed (zero-indexed)
@@ -136,9 +137,11 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///               - deleted_codeunits (if `utf_sizes` is true)
 ///             - on_changedtick: Lua callback invoked on changedtick
 ///               increment without text change. Args:
+///               - the string "changedtick"
 ///               - buffer handle
 ///               - b:changedtick
 ///             - on_detach: Lua callback invoked on detach. Args:
+///               - the string "detach"
 ///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
