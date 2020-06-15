@@ -1074,22 +1074,19 @@ describe('LSP', function()
     it('Convert Location[] to items', function()
       local expected = {
         {
-          filename = '',
+          filename = 'fake/uri',
           lnum = 1,
           col = 3,
           text = 'testing'
         },
       }
       local actual = exec_lua [[
-        local buffer = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_name(buffer, 'dummy')
-        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
-          "testing";
-          "123";
-        })
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {"testing", "123"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         local locations = {
           {
-            uri = vim.uri_from_bufnr(buffer),
+            uri = 'file://fake/uri',
             range = {
               start = { line = 0, character = 2 },
               ['end'] = { line = 0, character = 3 },
@@ -1098,28 +1095,24 @@ describe('LSP', function()
         }
         return vim.lsp.util.locations_to_items(locations)
       ]]
-      actual[1].filename = ''
       eq(expected, actual)
     end)
     it('Convert LocationLink[] to items', function()
       local expected = {
         {
-          filename = '',
+          filename = 'fake/uri',
           lnum = 1,
           col = 3,
           text = 'testing'
         },
       }
       local actual = exec_lua [[
-        local buffer = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_name(buffer, 'dummy')
-        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
-          "testing";
-          "123";
-        })
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {"testing", "123"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         local locations = {
           {
-            targetUri = vim.uri_from_bufnr(buffer),
+            targetUri = vim.uri_from_bufnr(bufnr),
             targetRange = {
               start = { line = 0, character = 2 },
               ['end'] = { line = 0, character = 3 },
@@ -1132,7 +1125,6 @@ describe('LSP', function()
         }
         return vim.lsp.util.locations_to_items(locations)
       ]]
-      actual[1].filename = ''
       eq(expected, actual)
     end)
   end)

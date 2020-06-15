@@ -1104,13 +1104,14 @@ function M.locations_to_items(locations)
     if not api.nvim_buf_is_loaded(bufnr) then
       vim.fn.bufload(bufnr)
     end
+    local filename = vim.uri_to_fname(uri)
     for _, temp in ipairs(rows) do
       local pos = temp.start
       local row = pos.line
-      local line = (api.nvim_buf_get_lines(bufnr, row, row + 1, true) or {""})[1]
+      local line = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or {""})[1]
       local col = M.character_offset(bufnr, row, pos.character)
       table.insert(items, {
-        filename = vim.uri_to_fname(uri),
+        filename = filename,
         lnum = row + 1,
         col = col + 1;
         text = line;
