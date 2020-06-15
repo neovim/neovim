@@ -37,7 +37,7 @@ parts:
           snapcraftctl set-version "${version_prefix}-${git_described}"
         plugin: make
         make-parameters:
-            - CMAKE_BUILD_TYPE=Release
+            - CMAKE_BUILD_TYPE=RelWithDebInfo
             - CMAKE_INSTALL_PREFIX=/usr
         override-build: |
             snapcraftctl build
