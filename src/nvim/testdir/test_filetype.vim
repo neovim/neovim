@@ -360,7 +360,7 @@ let s:filename_checks = {
     \ 'protocols': ['/etc/protocols'],
     \ 'psf': ['file.psf'],
     \ 'pyrex': ['file.pyx', 'file.pxd'],
-    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi'],
+    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi', 'SConstruct'],
     \ 'quake': ['anybaseq2/file.cfg', 'anyid1/file.cfg', 'quake3/file.cfg'],
     \ 'radiance': ['file.rad', 'file.mat'],
     \ 'ratpoison': ['.ratpoisonrc', 'ratpoisonrc'],
