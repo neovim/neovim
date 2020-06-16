@@ -5,7 +5,10 @@ local command = helpers.command
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
+local load_adjust = helpers.load_adjust
 local nvim_dir = helpers.nvim_dir
+local run = helpers.run
+local source = helpers.source
 
 describe('search highlighting', function()
   local screen
@@ -479,6 +482,92 @@ describe('search highlighting', function()
       :syntax keyword MyGroup special         |
     ]])
 
+  end)
+
+  describe('redraw in timer', function()
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 7)
+      screen:attach()
+      screen:set_default_attr_ids( {
+        [1] = {bold=true, foreground=Screen.colors.Blue},
+        [2] = {background = colors.Yellow}, -- Search
+        [3] = {reverse = true},
+        [4] = {foreground = colors.Red}, -- Message
+        [5] = {background = colors.LightMagenta}, -- Pmenu
+      })
+    end)
+
+    it('highlights are preserved when floating windows are changed', function()
+      source([[
+        let s:buf = nvim_create_buf(0, 1)
+        let s:win = nvim_open_win(s:buf, 0, {'relative': 'editor', 'height': 1,
+                \ 'width': 1, 'row': 0, 'col': &columns, 'style': 'minimal'})
+        let s:height = 1
+
+        function! Foo() abort
+          let s:height += 1
+          call nvim_win_set_config(s:win, {'height': s:height})
+          redraw
+        endfunction
+
+        autocmd CmdlineChanged * call timer_start(0, {-> Foo()})
+      ]])
+
+      insert([[
+        foo
+        bar
+        foo bar
+        baz
+      ]])
+
+      feed('gg/f')
+      -- highlighting of current incsearch is still wrong
+      -- highlight appears at the position just after the cursor
+      screen:expect{grid=[[
+          {2:f}oo                                  {5: }|
+          bar                                  {5: }|
+          {2:f}{3:o}o bar                               |
+          baz                                   |
+                                                |
+        {1:~                                       }|
+        /f^                                      |
+      ]], timeout=load_adjust(10)}
+
+      feed('o')
+      screen:expect{grid=[[
+          {2:fo}o                                  {5: }|
+          bar                                  {5: }|
+          {2:fo}{3:o} bar                              {5: }|
+          baz                                   |
+                                                |
+        {1:~                                       }|
+        /fo^                                     |
+      ]], timeout=load_adjust(10)}
+
+      feed('o')
+      screen:expect{grid=[[
+          {2:foo}                                  {5: }|
+          bar                                  {5: }|
+          {2:foo}{3: }bar                              {5: }|
+          baz                                  {5: }|
+                                                |
+        {1:~                                       }|
+        /foo^                                    |
+      ]], timeout=load_adjust(10)}
+
+      -- test expression register
+      feed('<C-R>=a')
+      screen:expect{grid=[[
+          {2:foo}                                  {5: }|
+          bar                                  {5: }|
+          {2:foo}{3: }bar                              {5: }|
+          baz                                  {5: }|
+                                               {5: }|
+        {1:~                                       }|
+        =a^                                      |
+      ]], timeout=load_adjust(10)}
+    end)
   end)
 end)
 

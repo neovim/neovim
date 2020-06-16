@@ -467,6 +467,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     redraw_all_later(SOME_VALID);
   }
 
+  // clear incsearch pattern when exiting the cmdline.
+  if (ccline.level == 1) {
+    clear_incsearch_pattern();
+  }
+
   if (ccline.cmdbuff != NULL) {
     // Put line in history buffer (":" and "=" only when it was typed).
     if (s->histype != HIST_INVALID
@@ -1887,8 +1892,10 @@ static int command_line_changed(CommandLineState *s)
 
     if (i != 0) {
       highlight_match = true;   // highlight position
+      save_incsearch_pattern();
     } else {
       highlight_match = false;  // remove highlight
+      clear_incsearch_pattern();
     }
 
     // first restore the old curwin values, so the screen is
@@ -5772,6 +5779,27 @@ int get_cmdline_type(void)
   if (p->cmdfirstc == NUL)
     return (p->input_fn) ? '@' : '-';
   return p->cmdfirstc;
+}
+
+/*
+ * Returns whether incsearch is active.
+ */
+bool is_incsearch_active(void) {
+  if (!p_is) {
+    return false;
+  }
+
+  if (ccline.cmdfirstc == '/' || ccline.cmdfirstc == '?') {
+    return true;
+  }
+
+  // handle if expression register is called from search
+  if (!ccline.prev_ccline) {
+    return false;
+  }
+
+  int prev_cmdline_type = ccline.prev_ccline->cmdfirstc;
+  return prev_cmdline_type == '/' || prev_cmdline_type == '?';
 }
 
 /*

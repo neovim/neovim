@@ -11,6 +11,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
+#include "nvim/ex_getln.h"
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
@@ -120,8 +121,11 @@ void changed(void)
   }
   buf_inc_changedtick(curbuf);
 
-  // If a pattern is highlighted, the position may now be invalid.
-  highlight_match = false;
+  // If a pattern is highlighted, the position may now be invalid. Clear
+  // highlighting except when in incsearch.
+  if (highlight_match) {
+    highlight_match = is_incsearch_active();
+  }
 }
 
 /// Internal part of changed(), no user interaction.
