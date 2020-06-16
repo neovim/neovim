@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
-" Last Change:	May 19, 2020
-" Version:	117
+" Last Change:	Jun 07, 2020
+" Version:	118
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -755,6 +755,8 @@ if has("conceal") && &enc == 'utf-8'
     \ ['lceil'		, '⌈'],
     \ ['ldots'		, '…'],
     \ ['le'		, '≤'],
+    \ ['left|'		, '|'],
+    \ ['left\|'		, '‖'],
     \ ['left('		, '('],
     \ ['left\['		, '['],
     \ ['left\\{'	, '{'],
@@ -805,6 +807,8 @@ if has("conceal") && &enc == 'utf-8'
     \ ['quad'		, ' '],
     \ ['qquad'		, ' '],
     \ ['rfloor'		, '⌋'],
+    \ ['right|'		, '|'],
+    \ ['right\\|'	, '‖'],
     \ ['right)'		, ')'],
     \ ['right]'		, ']'],
     \ ['right\\}'	, '}'],
