@@ -417,31 +417,44 @@ static int nlua_schedule(lua_State *const lstate)
     eq({0, 0, 19, 0}, res)
 
     local res = exec_lua([[
-    parser:set_included_ranges({{0, 0, 1, 0}})
+    local root = parser:parse():root()
+    parser:set_included_ranges({{root:child(0), root:child(0)}})
     parser.valid = false
     return { parser:parse():root():range() }
     ]])
 
-    eq({0, 0, 1, 0}, res)
+    eq({0, 0, 18, 1}, res)
 
     -- Pick random samples
     local res = exec_lua([[
-    parser:set_included_ranges({{8, 0, 9, 0}, {12, 0, 13 ,0}})
+    query = vim.treesitter.parse_query("c", "(declaration) @decl")
+
+    local nodes = {}
+    for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
+      table.insert(nodes, { node, node })
+    end
+
+    parser:set_included_ranges(nodes)
+
     local root = parser:parse():root()
-    return {{root:child(0):range()}, {root:child(1):range()}}
+
+    local res = {}
+    for i=0,(root:named_child_count() - 1) do
+      table.insert(res, { root:named_child(i):range() })
+    end
+    return res
     ]])
 
-    eq({{
-      8,
-      2,
-      8,
-      33
-    },
-    {
-      12,
-      4,
-      12,
-      37
-    }}, res)
+    eq({
+      { 2, 2, 2, 40 },
+      { 3, 3, 3, 32 },
+      { 4, 7, 4, 8 },
+      { 4, 8, 4, 25 },
+      { 8, 2, 8, 6 },
+      { 8, 7, 8, 33 },
+      { 9, 8, 9, 20 },
+      { 10, 4, 10, 5 },
+      { 10, 5, 10, 20 },
+      { 14, 9, 14, 27 } }, res)
   end)
 end)

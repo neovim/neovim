@@ -31,7 +31,7 @@ function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_
 end
 
 function Parser:set_included_ranges(ranges)
-  self._parser:set_included_ranges(self.bufnr, ranges)
+  self._parser:set_included_ranges(ranges)
   -- The buffer will need to be parsed again later
   self.valid = false
 end

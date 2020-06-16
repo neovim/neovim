@@ -386,8 +386,8 @@ static int parser_edit(lua_State *L)
 
 static int parser_set_ranges(lua_State *L)
 {
-  if (lua_gettop(L) < 3) {
-    lua_pushstring(L, "not enough args to parser:set_ranges()");
+  if (lua_gettop(L) < 2) {
+    lua_pushstring(L, "not enough args to parser:set_included_ranges()");
     return lua_error(L);
   }
 
@@ -396,20 +396,18 @@ static int parser_set_ranges(lua_State *L)
     return 0;
   }
 
-  int bufnr = lua_tointeger(L, 2);
-
-  if (!lua_istable(L, 3)) {
+  if (!lua_istable(L, 2)) {
     lua_pushstring(L, "argument for parser:set_included_ranges() should be a table.");
     return lua_error(L);
   }
 
-  size_t tbl_len = lua_objlen(L, 3);
+  size_t tbl_len = lua_objlen(L, 2);
   TSRange *ranges = xmalloc(sizeof(TSRange) * tbl_len);
 
 
   // [ parser, ranges ]
   for (size_t index = 0; index < tbl_len; index++) {
-    lua_rawgeti(L, 3, index + 1);  // [ parser, ranges, range ]
+    lua_rawgeti(L, 2, index + 1);  // [ parser, ranges, range ]
 
     if (!lua_istable(L, -1)) {
       xfree(ranges);
@@ -419,60 +417,47 @@ static int parser_set_ranges(lua_State *L)
       return lua_error(L);
     }
 
-    if (lua_objlen(L, -1) < 4) {
+    if (lua_objlen(L, -1) != 2) {
       xfree(ranges);
       lua_pushstring(
           L,
-          "argument for parser:set_included_ranges() should be a table of ranges of 4 elements.");
+          "argument for parser:set_included_ranges() should be a table of ranges of 2 elements.");
       return lua_error(L);
     }
 
-    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, num ]
-    unsigned int start_row = lua_tointeger(L, -1);
-    lua_pop(L, 1);  // [ parser, ranges, range ]
 
-
-    lua_rawgeti(L, -1, 2);  // [ parser, ranges, range, num ]
-    unsigned int start_col = lua_tointeger(L, -1);
-    lua_pop(L, 1);  // [ parser, ranges, range ]
-
-    lua_rawgeti(L, -1, 3);  // [ parser, ranges, range, num ]
-    unsigned int stop_row = lua_tointeger(L, -1);
-    lua_pop(L, 1);  // [ parser, ranges, range ]
-
-    lua_rawgeti(L, -1, 4);  // [ parser, ranges, range, num ]
-    unsigned int stop_col = lua_tointeger(L, -1);
-    lua_pop(L, 1);  // [ parser, ranges, range ]
-
-    buf_T * buf = buflist_findnr(bufnr);
-
-    if (!buf) {
-      buf = curbuf;
+    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, start_node ]
+    TSNode start_node;
+    if (!node_check(L, -1, &start_node)) {
+      xfree(ranges);
+      lua_pushstring(
+          L,
+          "ranges should be tables of nodes.");
+      return lua_error(L);
     }
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
-    // TODO(vigoux): For sure that's wrong, try to find a way to get the
-    // byte offset directly
-    // Lines are 0 based for consistency
-    uint32_t start_byte =
-      ml_find_line_or_offset(buf, start_row + 1, NULL, false) + start_col;
-    uint32_t stop_byte =
-      ml_find_line_or_offset(buf, stop_row + 1, NULL, false) + stop_col;
+    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, stop_node ]
+    TSNode stop_node;
+    if (!node_check(L, -1, &stop_node)) {
+      xfree(ranges);
+      lua_pushstring(
+          L,
+          "ranges should be tables of nodes.");
+      return lua_error(L);
+    }
+    lua_pop(L, 1);  // [ parser, ranges, range ]
 
     ranges[index] = (TSRange) {
-      .start_point = (TSPoint) {
-        .row = start_row,
-        .column = start_col
-      },
-      .end_point = (TSPoint) {
-        .row = stop_row,
-        .column = stop_col
-      },
-      .start_byte = start_byte,
-      .end_byte = stop_byte
+      .start_point = ts_node_start_point(start_node),
+      .end_point = ts_node_end_point(stop_node),
+      .start_byte = ts_node_start_byte(start_node),
+      .end_byte = ts_node_end_byte(stop_node)
     };
+    lua_pop(L, 1);  // [ parser, ranges ]
   }
 
-  // This memcpies ranges, thus we can free it.
+  // This memcpies ranges, thus we can free it afterwards
   ts_parser_set_included_ranges(p->parser, ranges, tbl_len);
   xfree(ranges);
 
@@ -561,9 +546,9 @@ static void push_node(lua_State *L, TSNode node, int uindex)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static bool node_check(lua_State *L, TSNode *res)
+static bool node_check(lua_State *L, int index, TSNode *res)
 {
-  TSNode *ud = luaL_checkudata(L, 1, "treesitter_node");
+  TSNode *ud = luaL_checkudata(L, index, "treesitter_node");
   if (ud) {
     *res = *ud;
     return true;
@@ -575,7 +560,7 @@ static bool node_check(lua_State *L, TSNode *res)
 static int node_tostring(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L,1, &node)) {
     return 0;
   }
   lua_pushstring(L, "<node ");
@@ -588,7 +573,7 @@ static int node_tostring(lua_State *L)
 static int node_eq(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   // This should only be called if both x and y in "x == y" has the
@@ -605,7 +590,7 @@ static int node_eq(lua_State *L)
 static int node_range(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSPoint start = ts_node_start_point(node);
@@ -620,7 +605,7 @@ static int node_range(lua_State *L)
 static int node_start(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSPoint start = ts_node_start_point(node);
@@ -634,7 +619,7 @@ static int node_start(lua_State *L)
 static int node_end(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L,1, &node)) {
     return 0;
   }
   TSPoint end = ts_node_end_point(node);
@@ -648,7 +633,7 @@ static int node_end(lua_State *L)
 static int node_child_count(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   uint32_t count = ts_node_child_count(node);
@@ -659,7 +644,7 @@ static int node_child_count(lua_State *L)
 static int node_named_child_count(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L,1, &node)) {
     return 0;
   }
   uint32_t count = ts_node_named_child_count(node);
@@ -670,7 +655,7 @@ static int node_named_child_count(lua_State *L)
 static int node_type(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   lua_pushstring(L, ts_node_type(node));
@@ -680,7 +665,7 @@ static int node_type(lua_State *L)
 static int node_symbol(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSSymbol symbol = ts_node_symbol(node);
@@ -691,7 +676,7 @@ static int node_symbol(lua_State *L)
 static int node_named(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   lua_pushboolean(L, ts_node_is_named(node));
@@ -701,7 +686,7 @@ static int node_named(lua_State *L)
 static int node_sexpr(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   char *allocated = ts_node_string(node);
@@ -713,7 +698,7 @@ static int node_sexpr(lua_State *L)
 static int node_missing(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   lua_pushboolean(L, ts_node_is_missing(node));
@@ -723,7 +708,7 @@ static int node_missing(lua_State *L)
 static int node_has_error(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   lua_pushboolean(L, ts_node_has_error(node));
@@ -733,7 +718,7 @@ static int node_has_error(lua_State *L)
 static int node_child(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   long num = lua_tointeger(L, 2);
@@ -746,7 +731,7 @@ static int node_child(lua_State *L)
 static int node_named_child(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   long num = lua_tointeger(L, 2);
@@ -759,7 +744,7 @@ static int node_named_child(lua_State *L)
 static int node_descendant_for_range(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSPoint start = { (uint32_t)lua_tointeger(L, 2),
@@ -775,7 +760,7 @@ static int node_descendant_for_range(lua_State *L)
 static int node_named_descendant_for_range(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSPoint start = { (uint32_t)lua_tointeger(L, 2),
@@ -791,7 +776,7 @@ static int node_named_descendant_for_range(lua_State *L)
 static int node_parent(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSNode parent = ts_node_parent(node);
@@ -873,7 +858,7 @@ static int query_next_capture(lua_State *L)
 static int node_rawquery(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSQuery *query = query_check(L, 2);
