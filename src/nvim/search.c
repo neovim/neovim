@@ -510,12 +510,12 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
 void last_pat_prog(regmmatch_T *regmatch)
 {
   char_u *pat;
-  bool incsearch_active = is_incsearch_active();
+  bool should_show_incsearch = cmdwin_type == 0 && is_incsearch_active();
 
-  if (incsearch_active &&
+  if (should_show_incsearch &&
       highlight_match && incsearch_pattern != NULL) {
     pat = incsearch_pattern;
-  } else if (incsearch_active || spats[last_idx].pat == NULL) {
+  } else if (should_show_incsearch || spats[last_idx].pat == NULL) {
     regmatch->regprog = NULL;
     return;
   } else {
