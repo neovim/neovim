@@ -255,8 +255,52 @@ func Test_tagjump_etags()
   ta foo
   call assert_equal('void foo() {}', getline('.'))
 
+  " Test for including another tags file
+  call writefile([
+        \ "\x0c",
+        \ "Xmain.c,64",
+        \ "void foo() {}\x7ffoo\x011,0",
+        \ "\x0c",
+        \ "Xnonexisting,include",
+        \ "\x0c",
+        \ "Xtags2,include"
+        \ ], 'Xtags')
+  call writefile([
+        \ "\x0c",
+        \ "Xmain.c,64",
+        \ "int main(int argc, char **argv)\x7fmain\x012,14",
+        \ ], 'Xtags2')
+  tag main
+  call assert_equal(2, line('.'))
+
+  " corrupted tag line
+  call writefile([
+        \ "\x0c",
+        \ "Xmain.c,8",
+        \ "int main"
+        \ ], 'Xtags', 'b')
+  call assert_fails('tag foo', 'E426:')
+
+  " invalid line number
+  call writefile([
+	\ "\x0c",
+        \ "Xmain.c,64",
+        \ "void foo() {}\x7ffoo\x0abc,0",
+	\ ], 'Xtags')
+  call assert_fails('tag foo', 'E426:')
+
+  " invalid tag name
+  call writefile([
+	\ "\x0c",
+        \ "Xmain.c,64",
+        \ ";;;;\x7f1,0",
+	\ ], 'Xtags')
+  call assert_fails('tag foo', 'E426:')
+
   call delete('Xtags')
+  call delete('Xtags2')
   call delete('Xmain.c')
+  set tags&
   bwipe!
 endfunc
 
@@ -529,6 +573,31 @@ func Test_tagline()
   call delete('Xtags')
   call delete('Xtest.py')
   set tags&
+endfunc
+
+" Test for the 'taglength' option
+func Test_tag_length()
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "tame\tXfile1\t1;",
+        \ "tape\tXfile2\t1;"], 'Xtags')
+  call writefile(['tame'], 'Xfile1')
+  call writefile(['tape'], 'Xfile2')
+
+  " Jumping to the tag 'tape', should instead jump to 'tame'
+  new
+  set taglength=2
+  tag tape
+  call assert_equal('Xfile1', @%)
+  " Tag search should jump to the right tag
+  enew
+  tag /^tape$
+  call assert_equal('Xfile2', @%)
+
+  call delete('Xtags')
+  call delete('Xfile1')
+  call delete('Xfile2')
+  set tags& taglength&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
