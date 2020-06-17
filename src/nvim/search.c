@@ -336,7 +336,8 @@ void restore_last_search_pattern(void)
 }
 
 // Sets the current search pattern to the incsearch pattern.
-void save_incsearch_pattern(void) {
+void save_incsearch_pattern(void)
+{
   if (incsearch_pattern != NULL) {
     xfree(incsearch_pattern);
   }
@@ -347,7 +348,8 @@ void save_incsearch_pattern(void) {
   }
 }
 
-void clear_incsearch_pattern(void) {
+void clear_incsearch_pattern(void)
+{
   if (incsearch_pattern != NULL) {
     xfree(incsearch_pattern);
     incsearch_pattern = NULL;
@@ -512,8 +514,8 @@ void last_pat_prog(regmmatch_T *regmatch)
   char_u *pat;
   bool should_show_incsearch = cmdwin_type == 0 && is_incsearch_active();
 
-  if (should_show_incsearch &&
-      highlight_match && incsearch_pattern != NULL) {
+  if (should_show_incsearch
+      && highlight_match && incsearch_pattern != NULL) {
     pat = incsearch_pattern;
   } else if (should_show_incsearch || spats[last_idx].pat == NULL) {
     regmatch->regprog = NULL;
@@ -521,9 +523,9 @@ void last_pat_prog(regmmatch_T *regmatch)
   } else {
     pat = NULL;
   }
-  ++emsg_off;           /* So it doesn't beep if bad expr */
+  emsg_off++;           // So it doesn't beep if bad expr
   (void)search_regcomp(pat, 0, last_idx, SEARCH_KEEP, regmatch);
-  --emsg_off;
+  emsg_off--;
 }
 
 /// lowest level search function.

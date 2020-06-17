@@ -5781,10 +5781,9 @@ int get_cmdline_type(void)
   return p->cmdfirstc;
 }
 
-/*
- * Returns whether incsearch is active.
- */
-bool is_incsearch_active(void) {
+// Returns whether incsearch is active.
+bool is_incsearch_active(void)
+{
   if (!p_is) {
     return false;
   }
