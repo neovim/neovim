@@ -132,16 +132,16 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   // calling filemess().
   msg_scroll_save = msg_scroll;
   if (shortmess(SHM_OVERALL) && !exiting && p_verbose <= 1) {
-    msg_scroll = FALSE;
+    msg_scroll = false;
   }
   if (!msg_scroll) {  // Wait a bit when overwriting an error msg.
-    check_for_delay(FALSE);
+    check_for_delay(false);
   }
   msg_start();
   msg_scroll = msg_scroll_save;
-  msg_scrolled_ign = TRUE;
+  msg_scrolled_ign = true;
   // May truncate the message to avoid a hit-return prompt.
-  msg_outtrans_attr(msg_may_trunc(FALSE, IObuff), attr);
+  msg_outtrans_attr(msg_may_trunc(false, IObuff), attr);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = FALSE;

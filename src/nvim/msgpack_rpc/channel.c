@@ -721,8 +721,8 @@ void rpc_chan_desc(uint64_t chan_id, char *desc, size_t desc_len)
           && v.data.string.data[0] != '\0') {
         type = v.data.string.data;
       } else if (strequal("type", k.data)
-          && v.data.string.data
-          && v.data.string.data[0] != '\0') {
+                 && v.data.string.data
+                 && v.data.string.data[0] != '\0') {
         ch_type = v.data.string.data;
       }
     }
@@ -735,7 +735,8 @@ void rpc_chan_desc(uint64_t chan_id, char *desc, size_t desc_len)
     }
     snprintf(desc, desc_len, "%s:%s", type, ch_type);
   } else if (chan && chan->term) {
-    snprintf(desc, desc_len, "term:%" PRId64, (int64_t)terminal_buf(chan->term));
+    snprintf(desc, desc_len, "term:%" PRId64,
+             (int64_t)terminal_buf(chan->term));
   } else if (chan) {
     snprintf(desc, desc_len, "chan:%" PRId64, chan_id);
   } else {

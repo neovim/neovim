@@ -12,7 +12,6 @@ local funcs = helpers.funcs
 local insert = helpers.insert
 local iswin = helpers.iswin
 local neq = helpers.neq
-local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
 local tbl_contains = helpers.tbl_contains

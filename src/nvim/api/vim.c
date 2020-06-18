@@ -1,4 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
@@ -115,11 +114,11 @@ void nvim_log(uint64_t channel_id, String level, String msg, Dictionary opt,
   Array args = ARRAY_DICT_INIT;
   ADD(args, DICTIONARY_OBJ(opt));
   rv = nvim_exec_lua(STATIC_CSTR_AS_STRING(
-    "local o = ...\n"
-    "vim.validate{trunc={o.trunc,'n',true},join={o.join,'b',true}}\n"
-    "return {(o.join and true or false), (o.trunc and o.trunc or 0),\n"
-    "  (o.type and o.type or '')}\n"),
-    args, err);
+      "local o = ...\n"
+      "vim.validate{trunc={o.trunc,'n',true},join={o.join,'b',true}}\n"
+      "return {(o.join and true or false), (o.trunc and o.trunc or 0),\n"
+      "  (o.type and o.type or '')}\n"),
+                     args, err);
   if (ERROR_SET(err)) {
     goto theend;
   }
@@ -133,7 +132,7 @@ void nvim_log(uint64_t channel_id, String level, String msg, Dictionary opt,
   if (prefix[0] == '\0') {
     // Generate a default category/group/prefix.
     rpc_chan_desc(channel_id, p, sizeof(p) - 2);
-    strcat(p, ": ");
+    xstrlcat(p, ": ", 32);
   } else {
     snprintf(p, sizeof(p), "%s: ", prefix);
   }
@@ -141,6 +140,7 @@ void nvim_log(uint64_t channel_id, String level, String msg, Dictionary opt,
 
 theend:
   api_free_object(rv);
+  api_free_array(args);
 }
 
 /// Executes Vimscript (multiline block of Ex-commands), like anonymous

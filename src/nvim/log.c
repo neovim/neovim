@@ -330,7 +330,8 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   if (prefixlen >= 0 && (size_t)prefixlen < sizeof(os_buf)) {
     len = vsnprintf(os_buf + prefixlen, sizeof(os_buf) - (size_t)prefixlen,
                     fmt, args);
-    len = len >= 0 && (size_t)len > sizeof(os_buf) ? sizeof(os_buf) : MAX(0, len);
+    len = len >= 0 && (size_t)len > sizeof(os_buf)
+      ? (int)sizeof(os_buf) : MAX(0, len);
     len += prefixlen;
   }
   // Scrub CRLF if requested.

@@ -974,7 +974,7 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   vimvars[VV_VAL].vv_type = VAR_STRING;
   vimvars[VV_VAL].vv_str = badword;
   if (p_verbose <= 1) {
-    ++emsg_off;
+    emsg_off++;
   }
 
   if (eval1(&p, &rettv, true) == OK) {
@@ -986,7 +986,7 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   }
 
   if (p_verbose <= 1) {
-    --emsg_off;
+    emsg_off--;
   }
   restore_vimvar(VV_VAL, &save_val);
 

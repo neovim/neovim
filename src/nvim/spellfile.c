@@ -3119,7 +3119,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
       } else if (duplicate == 0) {
         smsg(_("First duplicate word in %s line %d: %s"), fname, lnum, dw);
       }
-      ++duplicate;
+      duplicate++;
     } else {
       hash_add_item(&ht, hi, dw, hash);
     }
@@ -3700,12 +3700,13 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
   sblock_T    *bl = spin->si_blocks;
 
   assert(len <= SBLOCKSIZE);
-  
-  if (align && bl != NULL)
+
+  if (align && bl != NULL) {
     // Round size up for alignment.  On some systems structures need to be
     // aligned to the size of a pointer (e.g., SPARC).
     bl->sb_used = (bl->sb_used + sizeof(char *) - 1)
                   & ~(sizeof(char *) - 1);
+  }
 
   if (bl == NULL || bl->sb_used + len > SBLOCKSIZE) {
     // Allocate a block of memory. It is not freed until much later.
