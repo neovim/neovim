@@ -306,6 +306,7 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
         # return prefix + text
         return text
 
+
     # Whitespace used to indent all lines except the first line.
     indent = ' ' * len(prefix) if indent is None else indent
     indent_only = (prefix == '' and indent is not None)
@@ -374,6 +375,7 @@ def update_params_map(parent, ret_map, width=62):
 def render_node(n, text, prefix='', indent='', width=62):
     """Renders a node as Vim help text, recursively traversing all descendants."""
     global fmt_vimhelp
+    global has_seen_preformatted
 
     def ind(s):
         return s if fmt_vimhelp else ''
@@ -386,6 +388,7 @@ def render_node(n, text, prefix='', indent='', width=62):
         o = get_text(n, preformatted=True)
         ensure_nl = '' if o[-1] == '\n' else '\n'
         text += '>{}{}\n<'.format(ensure_nl, o)
+
     elif is_inline(n):
         text = doc_wrap(get_text(n), indent=indent, width=width)
     elif n.nodeName == 'verbatim':
@@ -394,11 +397,12 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ' [verbatim] {}'.format(get_text(n))
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
-            text += (
-                indent
-                + prefix
-                + render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
-            )
+            result = render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+
+            if is_blank(result):
+                continue
+
+            text += indent + prefix + result
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
             text += render_node(c, text, indent=indent, width=width)
@@ -433,6 +437,8 @@ def render_node(n, text, prefix='', indent='', width=62):
     else:
         raise RuntimeError('unhandled node type: {}\n{}'.format(
             n.nodeName, n.toprettyxml(indent='  ', newl='\n')))
+
+
     return text
 
 
@@ -496,6 +502,7 @@ def para_as_map(parent, indent='', width=62):
                         and '' != get_text(self_or_child(child)).strip()
                         and ' ' != text[-1]):
                     text += ' '
+                prev_text = prev
                 text += render_node(child, text, indent=indent, width=width)
                 prev = child
 
@@ -566,6 +573,7 @@ def fmt_node_as_vimhelp(parent, width=62, indent=''):
 
         rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
         rendered_blocks.append('')
+
     return clean_lines('\n'.join(rendered_blocks).strip())
 
 
@@ -678,6 +686,11 @@ def extract_from_xml(filename, target, width):
                 signature += vimtag.rjust(width - len(signature))
 
         paras = []
+        brief_desc = find_first(member, 'briefdescription')
+        if brief_desc:
+            for child in brief_desc.childNodes:
+                paras.append(para_as_map(child))
+
         desc = find_first(member, 'detaileddescription')
         if desc:
             for child in desc.childNodes:
@@ -763,7 +776,36 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
         func_doc = fn['signature'] + '\n'
         func_doc += textwrap.indent(clean_lines(doc), ' ' * 16)
+
+        # Verbatim handling.
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
+
+        split_lines = func_doc.split('\n')
+        start = 0
+        while True:
+            try:
+               start = split_lines.index('>', start)
+            except ValueError:
+                break
+
+            try:
+                end = split_lines.index('<', start)
+            except ValueError:
+                break
+
+
+            split_lines[start + 1:end] = [
+                ('    '  + x).rstrip()
+                for x in textwrap.dedent(
+                    "\n".join(
+                        split_lines[start+1:end]
+                    )
+                ).split("\n")
+            ]
+
+            start = end
+
+        func_doc = "\n".join(split_lines)
 
         if 'Deprecated' in xrefs:
             deprecated_fns_txt[name] = func_doc
@@ -847,11 +889,23 @@ def main(config):
             groupxml = os.path.join(base, '%s.xml' %
                                     compound.getAttribute('refid'))
 
-            desc = find_first(minidom.parse(groupxml), 'detaileddescription')
+            group_parsed = minidom.parse(groupxml)
+            doc_list = []
+            brief_desc = find_first(group_parsed, 'briefdescription')
+            if brief_desc:
+                for child in brief_desc.childNodes:
+                    doc_list.append(fmt_node_as_vimhelp(child))
+
+
+            desc = find_first(group_parsed, 'detaileddescription')
             if desc:
                 doc = fmt_node_as_vimhelp(desc)
+
                 if doc:
-                    intros[groupname] = doc
+                    doc_list.append(doc)
+
+            intros[groupname] = "\n".join(doc_list)
+
 
         for compound in dom.getElementsByTagName('compound'):
             if compound.getAttribute('kind') != 'file':
