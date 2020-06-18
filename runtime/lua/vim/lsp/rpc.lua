@@ -36,10 +36,12 @@ end
 --- Merges current process env with the given env and returns the result as
 --- a list of "k=v" strings.
 ---
+--- <pre>
 --- Example:
 ---
----      { PRODUCTION="false", PATH="/usr/bin/", PORT=123, HOST="0.0.0.0", }
----   => { "PRODUCTION=false", "PATH=/usr/bin/", "PORT=123", "HOST=0.0.0.0", }
+---  in:    { PRODUCTION="false", PATH="/usr/bin/", PORT=123, HOST="0.0.0.0", }
+---  out:   { "PRODUCTION=false", "PATH=/usr/bin/", "PORT=123", "HOST=0.0.0.0", }
+--- </pre>
 local function env_merge(env)
   if env == nil then
     return env

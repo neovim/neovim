@@ -877,11 +877,11 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
 end
 
 --- Send a notification to a server
--- @param bufnr [number] (optional): The number of the buffer
--- @param method [string]: Name of the request method
--- @param params [string]: Arguments to send to the server
---
--- @returns true if any client returns true; false otherwise
+--@param bufnr [number] (optional): The number of the buffer
+--@param method [string]: Name of the request method
+--@param params [string]: Arguments to send to the server
+---
+--@returns true if any client returns true; false otherwise
 function lsp.buf_notify(bufnr, method, params)
   validate {
     bufnr    = { bufnr, 'n', true };

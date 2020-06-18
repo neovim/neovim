@@ -42,6 +42,8 @@
 
 /// \defgroup api-buffer
 ///
+/// \brief For more information on buffers, see |buffers|
+///
 /// Unloaded Buffers:~
 ///
 /// Buffers may be unloaded by the |:bunload| command or the buffer's

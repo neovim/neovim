@@ -475,6 +475,9 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
+nvim__get_lib_dir()                                      *nvim__get_lib_dir()*
+                TODO: Documentation
+
 nvim__id({obj})                                                   *nvim__id()*
                 Returns object given as argument.
 
@@ -526,7 +529,8 @@ nvim__id_float({flt})                                       *nvim__id_float()*
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
                 TODO: Documentation
 
-nvim__put_attr({id}, {c0}, {c1})                            *nvim__put_attr()*
+                                                            *nvim__put_attr()*
+nvim__put_attr({id}, {start_row}, {start_col}, {end_row}, {end_col})
                 Set attrs in nvim__buf_set_lua_hl callbacks
 
                 TODO(bfredl): This is rather pedestrian. The final interface
@@ -612,7 +616,8 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 Parameters: ~
                     {listed}   Sets 'buflisted'
                     {scratch}  Creates a "throwaway" |scratch-buffer| for
-                               temporary work (always 'nomodified')
+                               temporary work (always 'nomodified'). Also sets
+                               'nomodeline' on the buffer.
 
                 Return: ~
                     Buffer handle, or 0 on error
@@ -928,6 +933,23 @@ nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
 
                 Return: ~
                     Array of child process ids, empty if process not found.
+
+nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
+                Find files in runtime directories
+
+                'name' can contain wildcards. For example
+                nvim_get_runtime_file("colors/*.vim", true) will return all
+                color scheme files.
+
+                It is not an error to not find any files. An empty array is
+                returned then.
+
+                Parameters: ~
+                    {name}  pattern of files to search for
+                    {all}   whether to return all matches or only the first
+
+                Return: ~
+                    list of absolute paths to the found files
 
 nvim_get_var({name})                                          *nvim_get_var()*
                 Gets a global (g:) variable.
@@ -1517,6 +1539,9 @@ nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
 ==============================================================================
 Buffer Functions                                                  *api-buffer*
 
+
+For more information on buffers, see |buffers|.
+
 Unloaded Buffers:~
 
 Buffers may be unloaded by the |:bunload| command or the
@@ -1529,6 +1554,12 @@ affected.
 
 You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()|
 to check whether a buffer is loaded.
+
+                                                  *nvim__buf_add_decoration()*
+nvim__buf_add_decoration({buffer}, {ns_id}, {hl_group}, {start_row},
+                         {start_col}, {end_row}, {end_col},
+                         {virt_text})
+                TODO: Documentation
 
                                                     *nvim__buf_redraw_range()*
 nvim__buf_redraw_range({buffer}, {first}, {last})
@@ -1550,7 +1581,7 @@ nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
                                                     *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
+nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                        {col_start}, {col_end})
                 Adds a highlight to buffer.
 
@@ -1747,8 +1778,8 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                 as (0,0) and (-1,-1) respectively, thus the following are
                 equivalent:
 >
-                  nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-                  nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+    nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+    nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
 <
 
                 If `end` is less than `start` , traversal works backwards.
@@ -1757,18 +1788,18 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
 
                 Example:
 >
-                  local a   = vim.api
-                  local pos = a.nvim_win_get_cursor(0)
-                  local ns  = a.nvim_create_namespace('my-plugin')
-                  -- Create new extmark at line 1, column 1.
-                  local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
-                  -- Create new extmark at line 3, column 1.
-                  local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
-                  -- Get extmarks only from line 3.
-                  local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
-                  -- Get all marks in this buffer + namespace.
-                  local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-                  print(vim.inspect(ms))
+    local a   = vim.api
+    local pos = a.nvim_win_get_cursor(0)
+    local ns  = a.nvim_create_namespace('my-plugin')
+    -- Create new extmark at line 1, column 1.
+    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+    -- Create new extmark at line 3, column 1.
+    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+    -- Get extmarks only from line 3.
+    local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+    -- Get all marks in this buffer + namespace.
+    local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+    print(vim.inspect(ms))
 <
 
                 Parameters: ~
@@ -1879,7 +1910,7 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                     Variable value
 
                                                  *nvim_buf_get_virtual_text()*
-nvim_buf_get_virtual_text({buffer}, {lnum})
+nvim_buf_get_virtual_text({buffer}, {line})
                 Get the virtual text (annotation) for a buffer line.
 
                 The virtual text is returned as list of lists, whereas the
@@ -2013,7 +2044,8 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                     {value}   Variable value
 
                                                  *nvim_buf_set_virtual_text()*
-nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
+nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
+                          {opts})
                 Set the virtual text (annotation) for a buffer line.
 
                 By default (and currently the only option) the text will be
@@ -2337,28 +2369,31 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
 
                 Removes the client from the list of UIs. |nvim_list_uis()|
 
+                                                    *nvim_ui_pum_set_bounds()*
+nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
+                Tells Nvim the geometry of the popumenu, to align floating
+                windows with an external popup menu.
+
+                Note that this method is not to be confused with
+                |nvim_ui_pum_set_height()|, which sets the number of visible
+                items in the popup menu, while this function sets the bounding
+                box of the popup menu, including visual decorations such as
+                boarders and sliders. Floats need not use the same font size,
+                nor be anchored to exact grid corners, so one can set
+                floating-point numbers to the popup menu geometry.
+
+                Parameters: ~
+                    {width}   Popupmenu width.
+                    {height}  Popupmenu height.
+                    {row}     Popupmenu row.
+                    {col}     Popupmenu height.
+
 nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
                 Tells Nvim the number of elements displaying in the popumenu,
                 to decide <PageUp> and <PageDown> movement.
 
                 Parameters: ~
                     {height}  Popupmenu height, must be greater than zero.
-
-                                                    *nvim_ui_pum_set_bounds()*
-nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
-
-                Tells Nvim the geometry of the popumenu, to align floating 
-		windows with an external popup menu. Note that this method
-		is not to be confused with |nvim_ui_pum_set_height()|, which
-		sets the number of visible items in the popup menu, while
-		this function sets the bounding box of the popup menu, 
-		including visual decorations such as boarders and sliders.
-
-                Parameters: ~
-                    {width}   Popupmenu width.
-                    {height}  Popupmenu height.
-                    {row}     Popupmenu row.
-                    {height}  Popupmenu height.
 
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation

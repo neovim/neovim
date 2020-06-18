@@ -1011,12 +1011,18 @@ vim.wo                                                                *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+empty_dict()                                                *vim.empty_dict()*
+                TODO: Documentation
+
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 
                 See also: ~
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
+
+make_meta_accessor({get}, {set}, {del})             *vim.make_meta_accessor()*
+                TODO: Documentation
 
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI
@@ -1133,7 +1139,7 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                     |vim.tbl_extend()|
 
 pesc({s})                                                         *vim.pesc()*
-                Escapes magic chars in a Lua pattern string.
+                Escapes magic chars in a Lua pattern.
 
                 Parameters: ~
                     {s}  String to escape
@@ -1177,8 +1183,7 @@ startswith({s}, {prefix})                                   *vim.startswith()*
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
-                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A =
-                1 }`
+                example: tbl_add_reverse_lookup { A = 1 } == { [1] = 'A , A = 1 }`
 
                 Parameters: ~
                     {o}  table The table to add the reverse to.
@@ -1193,6 +1198,37 @@ tbl_contains({t}, {value})                                *vim.tbl_contains()*
                 Return: ~
                     true if `t` contains `value`
 
+tbl_count({t})                                               *vim.tbl_count()*
+                Counts the number of non-nil values in table `t` .
+>
+
+    vim.tbl_count({ a=1, b=2 }) => 2
+    vim.tbl_count({ 1, 2 }) => 2
+<
+
+                Parameters: ~
+                    {Table}
+
+                Return: ~
+                    Number that is the number of the value in table
+
+                See also: ~
+                    https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
+
+tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
+                Merges recursively two or more map-like tables.
+
+                Parameters: ~
+                    {behavior}  Decides what to do if a key is found in more
+                                than one map:
+                                • "error": raise an error
+                                • "keep": use value from the leftmost map
+                                • "force": use value from the rightmost map
+                    {...}       Two or more map-like tables.
+
+                See also: ~
+                    |tbl_extend()|
+
 tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                 Merges two or more map-like tables.
 
@@ -1206,6 +1242,13 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
 
                 See also: ~
                     |extend()|
+
+tbl_filter({func}, {t})                                     *vim.tbl_filter()*
+                Filter a table using a predicate function
+
+                Parameters: ~
+                    {func}  function or callable table
+                    {t}     table
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
                 Creates a copy of a list-like table such that any nested
@@ -1225,11 +1268,19 @@ tbl_isempty({t})                                           *vim.tbl_isempty()*
                     Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua@paramt Table to check
 
 tbl_islist({t})                                             *vim.tbl_islist()*
-                Table
+                Determine whether a Lua table can be treated as an array.
+
+                An empty table `{}` will default to being treated as an array.
+                Use `vim.emtpy_dict()` to create a table treated as an empty
+                dict. Empty tables returned by `rpcrequest()` and `vim.fn`
+                functions can be checked using this function whether they
+                represent empty API arrays and vimL lists.
+
+                Parameters: ~
+                    {t}  Table
 
                 Return: ~
-                    true: A non-empty array, false: A non-empty table, nil: An
-                    empty table
+                    `true` if array-like table, else `false` .
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
@@ -1243,6 +1294,13 @@ tbl_keys({t})                                                 *vim.tbl_keys()*
 
                 See also: ~
                     Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
+
+tbl_map({func}, {t})                                           *vim.tbl_map()*
+                Apply a function to all values of a table.
+
+                Parameters: ~
+                    {func}  function or callable table
+                    {t}     table
 
 tbl_values({t})                                             *vim.tbl_values()*
                 Return a list of all values used in a table. However, the
@@ -1288,12 +1346,12 @@ validate({opt})                                               *vim.validate()*
                      => NOP (success)
 <
 >
-                  vim.validate{arg1={1, 'table'}}
-                     => error('arg1: expected table, got number')
+    vim.validate{arg1={1, 'table'}}
+       => error('arg1: expected table, got number')
 <
 >
-                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-                     => error('arg1: expected even number, got 3')
+    vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+       => error('arg1: expected even number, got 3')
 <
 
                 Parameters: ~

@@ -347,16 +347,16 @@ function vim.tbl_flatten(t)
   return result
 end
 
--- Determine whether a Lua table can be treated as an array.
---
--- An empty table `{}` will default to being treated as an array.
--- Use `vim.emtpy_dict()` to create a table treated as an
--- empty dict. Empty tables returned by `rpcrequest()` and
--- `vim.fn` functions can be checked using this function
--- whether they represent empty API arrays and vimL lists.
+--- Determine whether a Lua table can be treated as an array.
 ---
---@params Table
---@returns true: An array-like table, false: A dict-like or mixed table
+--- An empty table `{}` will default to being treated as an array.
+--- Use `vim.emtpy_dict()` to create a table treated as an
+--- empty dict. Empty tables returned by `rpcrequest()` and
+--- `vim.fn` functions can be checked using this function
+--- whether they represent empty API arrays and vimL lists.
+---
+--@param t Table
+--@returns `true` if array-like table, else `false`.
 function vim.tbl_islist(t)
   if type(t) ~= 'table' then
     return false
@@ -392,7 +392,7 @@ end
 --- </pre>
 ---
 --@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
---@param Table
+--@param t Table
 --@returns Number that is the number of the value in table
 function vim.tbl_count(t)
   vim.validate{t={t,'t'}}

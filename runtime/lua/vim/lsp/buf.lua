@@ -23,6 +23,9 @@ local function request(method, params, callback)
   return vim.lsp.buf_request(0, method, params, callback)
 end
 
+--- Sends a notification through all clients associated with current buffer.
+--
+--@return `true` if server responds.
 function M.server_ready()
   return not not vim.lsp.buf_notify(0, "window/progress", {})
 end
@@ -136,6 +139,12 @@ function M.document_symbol()
   request('textDocument/documentSymbol', params)
 end
 
+
+--- Lists all symbols in the current workspace in the quickfix window.
+---
+--- The list is filtered against the optional argument {query};
+--- if the argument is omitted from the call, the user is prompted to enter a string on the command line.
+--- An empty string means no filtering is done.
 function M.workspace_symbol(query)
   query = query or npcall(vfn.input, "Query: ")
   local params = {query = query}

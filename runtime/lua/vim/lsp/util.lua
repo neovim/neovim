@@ -952,7 +952,9 @@ do
   end
 
   --- Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf
-  --
+  ---
+  --@param bufnr bufnr for which the diagnostics are for.
+  --@param diagnostics Diagnostics[] received from the language server.
   function M.buf_diagnostics_save_positions(bufnr, diagnostics)
     validate {
       bufnr = {bufnr, 'n', true};
@@ -1044,6 +1046,29 @@ do
     end
   end
 
+  --- Returns the number of diagnostics of given kind for current buffer.
+  ---
+  --- Useful for showing diagnostic counts in statusline. eg:
+  ---
+  --- <pre>
+  --- function! LspStatus() abort
+  ---     let sl = ''
+  ---     if luaeval('vim.lsp.buf.server_ready()')
+  ---         let sl.='%#MyStatuslineLSP#E:'
+  ---         let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Error]])")}'
+  ---         let sl.='%#MyStatuslineLSP# W:'
+  ---         let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Warning]])")}'
+  ---     else
+  ---         let sl.='%#MyStatuslineLSPErrors#off'
+  ---     endif
+  ---     return sl
+  --- endfunction
+  --- let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
+  --- </pre>
+  ---
+  --@param kind Diagnostic severity kind: See |vim.lsp.protocol.DiagnosticSeverity|
+  ---
+  --@return Count of diagnostics
   function M.buf_diagnostics_count(kind)
     local bufnr = vim.api.nvim_get_current_buf()
     local diagnostics = M.diagnostics_by_buf[bufnr]
@@ -1064,6 +1089,16 @@ do
     [protocol.DiagnosticSeverity.Hint] = "LspDiagnosticsHintSign";
   }
 
+  --- Place signs for each diagnostic in the sign column.
+  ---
+  --- Sign characters can be customized with the following commands:
+  ---
+  --- <pre>
+  --- sign define LspDiagnosticsErrorSign text=E texthl=LspDiagnosticsError linehl= numhl=
+  --- sign define LspDiagnosticsWarningSign text=W texthl=LspDiagnosticsWarning linehl= numhl=
+  --- sign define LspDiagnosticsInformationSign text=I texthl=LspDiagnosticsInformation linehl= numhl=
+  --- sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
+  --- </pre>
   function M.buf_diagnostics_signs(bufnr, diagnostics)
     for _, diagnostic in ipairs(diagnostics) do
       vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1)})
@@ -1151,7 +1186,7 @@ end
 
 --- Convert symbols to quickfix list items
 ---
---@symbols DocumentSymbol[] or SymbolInformation[]
+--@param symbols DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do
