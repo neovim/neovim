@@ -1207,7 +1207,7 @@ tbl_count({t})                                               *vim.tbl_count()*
 <
 
                 Parameters: ~
-                    {Table}
+                    {t}  Table
 
                 Return: ~
                     Number that is the number of the value in table

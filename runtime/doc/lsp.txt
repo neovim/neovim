@@ -994,9 +994,9 @@ buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
         let sl = ''
         if luaeval('vim.lsp.buf.server_ready()')
             let sl.='%#MyStatuslineLSP#E:'
-            let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Error")")}'
+            let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Error]])")}'
             let sl.='%#MyStatuslineLSP# W:'
-            let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count(\"Warning")")}'
+            let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Warning]])")}'
         else
             let sl.='%#MyStatuslineLSPErrors#off'
         endif
@@ -1015,6 +1015,11 @@ buf_diagnostics_count({kind})           *vim.lsp.util.buf_diagnostics_count()*
                                *vim.lsp.util.buf_diagnostics_save_positions()*
 buf_diagnostics_save_positions({bufnr}, {diagnostics})
                 Saves the diagnostics (Diagnostic[]) into diagnostics_by_buf
+
+                Parameters: ~
+                    {bufnr}        bufnr for which the diagnostics are for.
+                    {diagnostics}  Diagnostics[] received from the language
+                                   server.
 
                                         *vim.lsp.util.buf_diagnostics_signs()*
 buf_diagnostics_signs({bufnr}, {diagnostics})
@@ -1197,7 +1202,8 @@ split_lines({value})                              *vim.lsp.util.split_lines()*
 symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
                 Convert symbols to quickfix list items
 
-                @symbols DocumentSymbol[] or SymbolInformation[]
+                Parameters: ~
+                    {symbols}  DocumentSymbol[] or SymbolInformation[]
 
               *vim.lsp.util.text_document_completion_list_to_complete_items()*
 text_document_completion_list_to_complete_items({result}, {prefix})
