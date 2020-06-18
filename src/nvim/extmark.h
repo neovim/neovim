@@ -65,12 +65,12 @@ struct undo_object {
   } data;
 };
 
-
 typedef struct {
   int start_row;
   int start_col;
   int end_row;
   int end_col;
+  int prio;
   int attr_id;
   VirtText *virt_text;
 } HlRange;

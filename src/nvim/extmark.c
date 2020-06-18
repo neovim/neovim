@@ -48,6 +48,8 @@
 # include "extmark.c.generated.h"
 #endif
 
+const int HLRANGE_DEFAULT_PRIORITY = 0;
+
 static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
   if (!buf->b_extmark_ns) {
     if (!put) {
@@ -809,10 +811,10 @@ bool decorations_redraw_start(buf_T *buf, int top_row,
       HlRange range;
       if (mark.id&MARKTREE_END_FLAG) {
         range = (HlRange){ altpos.row, altpos.col, mark.row, mark.col,
-                           attr_id, vt };
+                           attr_id, HLRANGE_DEFAULT_PRIORITY, vt };
       } else {
         range = (HlRange){ mark.row, mark.col, altpos.row,
-                           altpos.col, attr_id, vt };
+                           altpos.col, HLRANGE_DEFAULT_PRIORITY, attr_id, vt };
       }
       kv_push(state->active, range);
     }
@@ -873,7 +875,7 @@ int decorations_redraw_col(buf_T *buf, int col, DecorationRedrawState *state)
       VirtText *vt = kv_size(item->virt_text) ? &item->virt_text : NULL;
       kv_push(state->active, ((HlRange){ mark.row, mark.col,
                                          endpos.row, endpos.col,
-                                         attr_id, vt }));
+                                         attr_id, HLRANGE_DEFAULT_PRIORITY, vt }));
     }
 
 next_mark:

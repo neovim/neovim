@@ -109,7 +109,7 @@ function TSHighlighter:on_line(_, _win, buf, line)
     local start_row, start_col, end_row, end_col = node:range()
     local hl = self.id_map[capture]
     if hl > 0 and active and end_row >= line then
-      a.nvim__put_attr(hl, start_row, start_col, end_row, end_col)
+      a.nvim__put_attr(hl, match or 0, start_row, start_col, end_row, end_col)
     end
     if start_row > line then
       self.nextrow = start_row
