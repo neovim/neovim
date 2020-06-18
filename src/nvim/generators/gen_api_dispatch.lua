@@ -12,7 +12,7 @@ if arg[1] == '--help' then
   print('      7: api docs msgpack file path (api.mpack)')
   print('      rest: C files where API functions are defined')
 end
-assert(#arg >= 5)
+assert(#arg >= 7)
 local functions = {}
 
 local nvimdir = arg[1]
