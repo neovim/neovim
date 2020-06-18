@@ -211,6 +211,7 @@ end
 M['textDocument/documentHighlight'] = function(_, _, result, _)
   if not result then return end
   local bufnr = api.nvim_get_current_buf()
+  util.buf_clear_references(bufnr)
   util.buf_highlight_references(bufnr, result)
 end
 
