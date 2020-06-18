@@ -465,4 +465,67 @@ static int nlua_schedule(lua_State *const lstate)
       { 10, 5, 10, 20 },
       { 14, 9, 14, 27 } }, res)
   end)
+
+  it('supports overlapping matches', function()
+    if not check_parser() then return end
+        local text = [[
+/// Schedule Lua callback on main loop's event queue
+static int nlua_schedule(lua_State *const lstate)
+{
+  if (lua_type(lstate, 1) != LUA_TFUNCTION
+      || lstate != lstate) {
+    lua_pushliteral(lstate, "vim.schedule: expected function");
+    return lua_error(lstate);
+  }
+
+  LuaRef cb = nlua_ref(lstate, 1);
+
+  multiqueue_put(main_loop.events, nlua_schedule_event,
+                 1, (void *)(ptrdiff_t)cb);
+  return 0;
+}]]
+
+        local simple_query = [[
+((type_identifier) @Special (#eq? @Special "LuaRef"))
+]]
+
+        local overlapping_query = [[
+((type_identifier) @Special (#eq? @Special "bar"))
+((type_identifier) @Special (#eq? @Special "foo"))
+(type_identifier) @type
+((type_identifier) @Special (#eq? @Special "LuaRef"))
+]]
+    insert(text)
+
+    local res = exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
+    local query_str = ...
+    local query = vim.treesitter.parse_query("c", query_str)
+
+    luaref = nil
+    root = parser:parse():root()
+    for _, node in query:iter_captures(root, 0, 0, 19) do
+      luaref = node
+    end
+
+    return { luaref:range() }
+    ]], simple_query)
+
+    eq({ 9, 2, 9, 8 }, res)
+
+
+    local res = exec_lua([[
+    local query_str = ...
+    local query = vim.treesitter.parse_query("c", query_str)
+
+    local res = {}
+    for _, node, match in query:iter_match_stack(luaref, root) do
+      table.insert(res, match.pattern)
+    end
+
+    return res
+    ]], overlapping_query)
+
+    eq({3, 4}, res)
+  end)
 end)

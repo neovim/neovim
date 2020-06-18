@@ -202,6 +202,25 @@ function Query:match_preds(match, pattern, bufnr)
   return true
 end
 
+function Query:iter_match_stack(searched_node, source_node, bufnr)
+  if not bufnr or bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  local raw_iter = searched_node:iter_match_stack(self.query,source_node)
+  local function iter()
+    local capture, captured_node, match = raw_iter()
+    if match ~= nil then
+      local active = self:match_preds(match, match.pattern, bufnr)
+      match.active = active
+      if not active then
+        return iter() -- tail call: try next match
+      end
+    end
+    return capture, captured_node, match
+  end
+  return iter
+end
+
 function Query:iter_captures(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -216,7 +235,7 @@ function Query:iter_captures(node, bufnr, start, stop)
         return iter() -- tail call: try next match
       end
     end
-    return capture, captured_node
+    return capture, captured_node, match
   end
   return iter
 end

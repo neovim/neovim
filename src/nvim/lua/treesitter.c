@@ -73,6 +73,7 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
+  { "iter_match_stack", node_match_stack },
   { "_rawquery", node_rawquery },
   { NULL, NULL }
 };
@@ -821,6 +822,98 @@ static int query_next_capture(lua_State *L)
     return 3;
   }
   return 0;
+}
+
+static int query_next_match_for(lua_State *L) {
+  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
+  TSQueryCursor *cursor = ud->cursor;
+
+  TSNode searched_node;
+  node_check(L, lua_upvalueindex(2), &searched_node);
+
+  TSNode source_node;
+  node_check(L, lua_upvalueindex(3), &source_node);
+
+  TSQuery *query = query_check(L, lua_upvalueindex(4));
+
+
+  if (ud->predicated_match > -1) {
+    lua_getfield(L, lua_upvalueindex(5), "active");
+    bool active = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    if (!active) {
+      ts_query_cursor_remove_match(cursor, ud->predicated_match);
+    }
+    ud->predicated_match = -1;
+  }
+
+  TSQueryMatch match;
+  uint32_t capture_index;
+  while (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+    TSQueryCapture capture = match.captures[capture_index];
+
+    if (ts_node_eq(searched_node, capture.node)) {
+
+      lua_pushinteger(L, capture.index+1);  // [index]
+      push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
+
+      uint32_t n_pred;
+      ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
+      lua_pushvalue(L, lua_upvalueindex(5));  // [index, node, match]
+      set_match(L, &match, lua_upvalueindex(3));
+      lua_pushinteger(L, match.pattern_index+1);
+      lua_setfield(L, -2, "pattern");
+
+      if (match.capture_count > 1) {
+        ud->predicated_match = match.id;
+        lua_pushboolean(L, false);
+        lua_setfield(L, -2, "active");
+      }
+      return 3;
+    }
+  }
+  return 0;
+}
+
+static int node_match_stack(lua_State *L) {
+  if (lua_gettop(L) < 3) {
+    return luaL_error(L, "not enough argument for node:get_match_stack()");
+  }
+
+  TSNode searched_node;
+  if (!node_check(L, 1, &searched_node)) {
+    return 0;
+  }
+
+  TSQuery *query = query_check(L, 2);
+  if (!query) {
+    return luaL_error(L, "second argument for node:get_match_stack() should be a query");
+  }
+
+  TSNode source_node;
+  if (!node_check(L, 3, &source_node)) {
+    return luaL_error(L, "third argument for node:get_match_stack() should be a node");
+  }
+
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_exec(cursor, query, source_node);
+
+  TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
+  ud->cursor = cursor;
+  ud->predicated_match = -1;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_querycursor");
+  lua_setmetatable(L, -2);  // [udata]
+  lua_pushvalue(L, 1);  // [udata, node]
+  lua_pushvalue(L, 3); // [udata, node, node]
+
+  // include query separately, as to keep a ref to it for gc
+  lua_pushvalue(L, 2);  // [udata, node, node, query]
+
+  lua_createtable(L, ts_query_capture_count(query), 2);  // [u, n, n, q, match]
+  lua_pushcclosure(L, query_next_match_for, 5);  // [closure]
+
+  return 1;
 }
 
 static int node_rawquery(lua_State *L)
