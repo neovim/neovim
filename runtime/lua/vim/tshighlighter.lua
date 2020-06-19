@@ -25,6 +25,7 @@ TSHighlighter.hl_map = {
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
+  self._dummy = vim.treesitter.parse_query(self.parser.lang, "(_) @dummy")
   self.buf = self.parser.bufnr
   -- TODO(bfredl): perhaps on_start should be called uncondionally, instead for only on mod?
   local tree = self.parser:parse()
@@ -93,30 +94,34 @@ function TSHighlighter:on_window(_, _win, _buf, _topline, botline)
 end
 
 function TSHighlighter:on_line(_, _win, buf, line)
-  if self.iter == nil then
-    self.iter = self.query:iter_captures(self.root,buf,line,self.botline)
-  end
-  while line >= self.nextrow do
-    local capture, node, match = self.iter()
-    local active = true
-    if capture == nil then
-      break
-    end
-    if match ~= nil then
-      active = self:run_pred(match)
-      match.active = active
-    end
-    local start_row, start_col, end_row, end_col = node:range()
-    local hl = self.id_map[capture]
-    if hl > 0 and active and end_row >= line then
-      a.nvim__put_attr(hl, match or 0, start_row, start_col, end_row, end_col)
-    end
-    if start_row > line then
-      self.nextrow = start_row
+  local function child_for_range(root)
+    for i=0,(root:named_child_count()-1) do
+      local child = root:named_child(i)
+      local srow, _, erow, _ = child:range()
+      if srow <= line and erow >= (line+1) then
+        return child
+      end
     end
   end
-  self.line_count[line] = (self.line_count[line] or 0) + 1
-  --return tostring(self.line_count[line])
+
+  local search_node = child_for_range(self.root) or self.root
+
+  local nodes = {}
+  for _, node, _ in self._dummy:iter_captures(search_node, buf, line, line+1) do
+    table.insert(nodes, node)
+  end
+
+  local seen = {}
+  for capture, node, match in self.query:iter_match_stack(nodes, search_node, buf) do
+    if not seen[node] then
+      seen[node] = true
+      local start_row, start_col, end_row, end_col = node:range()
+      local hl = self.id_map[capture]
+      if hl and hl > 0 then
+        a.nvim__put_attr(hl, match.pattern or 0, start_row, start_col, end_row, end_col)
+      end
+    end
+  end
 end
 
 return TSHighlighter

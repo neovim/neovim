@@ -264,7 +264,7 @@ static int nlua_schedule(lua_State *const lstate)
       [4] = {bold = true, foreground = Screen.colors.Brown},
       [5] = {foreground = Screen.colors.Magenta},
       [6] = {foreground = Screen.colors.Red},
-      [7] = {foreground = Screen.colors.SlateBlue},
+      [7] = {bold=true, foreground = Screen.colors.SlateBlue},
       [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red},
       [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red},
@@ -519,7 +519,7 @@ static int nlua_schedule(lua_State *const lstate)
     local query = vim.treesitter.parse_query("c", query_str)
 
     local res = {}
-    for _, node, match in query:iter_match_stack(luaref, root) do
+    for _, node, match in query:iter_match_stack({luaref}, root) do
       table.insert(res, match.pattern)
     end
 

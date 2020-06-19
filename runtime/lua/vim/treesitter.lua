@@ -202,11 +202,11 @@ function Query:match_preds(match, pattern, bufnr)
   return true
 end
 
-function Query:iter_match_stack(searched_node, source_node, bufnr)
+function Query:iter_match_stack(searched_nodes, source_node, bufnr)
   if not bufnr or bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
   end
-  local raw_iter = searched_node:iter_match_stack(self.query,source_node)
+  local raw_iter = self.query:iter_match_stack(searched_nodes,source_node)
   local function iter()
     local capture, captured_node, match = raw_iter()
     if match ~= nil then
