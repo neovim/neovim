@@ -21,6 +21,8 @@ describe("folded lines", function()
       [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [6] = {background = Screen.colors.Yellow},
       [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [8] = {foreground = Screen.colors.Brown },
+      [9] = {bold = true, foreground = Screen.colors.Brown}
     })
   end)
 
@@ -29,7 +31,7 @@ describe("folded lines", function()
     feed("i<cr><esc>")
     feed("vkzf")
     screen:expect([[
-        {5:                  ^+--  2 lines: ·············}|
+        {7:                  }{5:^+--  2 lines: ·············}|
         {1:~                                            }|
         {1:~                                            }|
         {1:~                                            }|
@@ -49,8 +51,8 @@ describe("folded lines", function()
     funcs.setline(4, 'line 2')
     feed("j")
     screen:expect([[
-      {7:+ }{5:  1 +--  2 lines: ·························}|
-      {7:+ }{5:  0 ^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{5:+--  2 lines: ·························}|
+      {7:+ }{9:  0 }{5:^+--  2 lines: ·························}|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
@@ -130,17 +132,27 @@ describe("folded lines", function()
     ]])
 
     feed('vkzf')
-    screen:expect([[
-      {5:^+--  2 lines: å 语 x̎͂̀̂͛͛ ﺎﻠﻋَﺮَﺒِﻳَّﺓ·················}|
+    -- screen:snapshot_util()
+    -- screen:expect([[
+    --   {5:^+--  2 lines: å 语 x̎͛ العَرَبِيَّة········
+    --   {1:~                                            }|
+    --   {1:~                                            }|
+    --   {1:~                                            }|
+    --   {1:~                                            }|
+    --   {1:~                                            }|
+    --   {1:~                                            }|
+    --                                                |
+    -- ]])
+    screen:expect{grid=[[
+      {5:^+--  2 lines: å 语 x̎͛ العَرَبِيَّة·················}|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
-                                                   |
-    ]])
-
+                                                  |
+    ]]}
     feed_command("set noarabicshape")
     screen:expect([[
       {5:^+--  2 lines: å 语 x̎͂̀̂͛͛ العَرَبِيَّة·················}|
