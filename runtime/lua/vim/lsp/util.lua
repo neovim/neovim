@@ -1103,6 +1103,8 @@ function M.locations_to_items(locations)
     local bufnr = vim.uri_to_bufnr(uri)
     if not api.nvim_buf_is_loaded(bufnr) then
       vim.fn.bufload(bufnr)
+    else
+      vim.cmd("checktime")
     end
     local filename = vim.uri_to_fname(uri)
     for _, temp in ipairs(rows) do
