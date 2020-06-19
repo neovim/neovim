@@ -2326,9 +2326,9 @@ int findsent(Direction dir, long count)
     func = decl;
 
   while (count--) {
-    /*
-     * if on an empty line, skip up to a non-empty line
-     */
+    const pos_T prev_pos = pos;
+
+    // if on an empty line, skip up to a non-empty line
     if (gchar_pos(&pos) == NUL) {
       do {
         if ((*func)(&pos) == -1) {
@@ -2411,6 +2411,17 @@ found:
     while (!noskip && ((c = gchar_pos(&pos)) == ' ' || c == '\t'))
       if (incl(&pos) == -1)
         break;
+
+    if (equalpos(prev_pos, pos)) {
+      // didn't actually move, advance one character and try again
+      if ((*func)(&pos) == -1) {
+        if (count) {
+          return FAIL;
+        }
+        break;
+      }
+      count++;
+    }
   }
 
   setpcmark();
