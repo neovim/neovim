@@ -3019,7 +3019,7 @@ Dictionary nvim_api_get_doc(void)
     msgpack_unpacked_destroy(&unpacked);
 
     Dictionary api_doc = ARRAY_DICT_INIT;
-    PUT(api_doc, "api_functions", DICTIONARY_OBJ(api_doc));
+    PUT(api_doc, "api", DICTIONARY_OBJ(api_doc));
 
     return api_doc;
 }
