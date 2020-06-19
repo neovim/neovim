@@ -35,8 +35,8 @@
 #include "nvim/os/os.h"
 #endif
 
-#include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
 
 #include "luv/luv.h"
@@ -833,7 +833,7 @@ void executor_free_luaref(LuaRef ref)
   nlua_unref(lstate, ref);
 }
 
-/// push a value referenced in the regirstry
+/// push a value referenced in the registry
 void nlua_pushref(lua_State *lstate, LuaRef ref)
 {
   lua_rawgeti(lstate, LUA_REGISTRYINDEX, ref);
@@ -931,6 +931,33 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
   if (ret_tv) {
     nlua_pop_typval(lstate, ret_tv);
   }
+}
+
+/// Call a LuaCallable given some typvals
+int typval_exec_lua_callable(
+    lua_State *lstate,
+    LuaCallable lua_cb,
+    int argcount,
+    typval_T *argvars,
+    typval_T *rettv
+)
+{
+    LuaRef cb = lua_cb.func_ref;
+
+    nlua_pushref(lstate, cb);
+
+    for (int i = 0; i < argcount; i++) {
+        nlua_push_typval(lstate, &argvars[i], false);
+    }
+
+    if (lua_pcall(lstate, argcount, 1, 0)) {
+        luaL_error(lstate, "nlua_CFunction_func_call failed.");
+        return ERROR_OTHER;
+    }
+
+    nlua_pop_typval(lstate, rettv);
+
+    return ERROR_NONE;
 }
 
 /// Execute Lua string
@@ -1280,3 +1307,31 @@ static int regex_match_line(lua_State *lstate)
 
   return nret;
 }
+
+int nlua_CFunction_func_call(
+    int argcount,
+    typval_T *argvars,
+    typval_T *rettv,
+    void *state)
+{
+    lua_State *const lstate = nlua_enter();
+    LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
+
+    return typval_exec_lua_callable(
+        lstate,
+        funcstate->lua_callable,
+        argcount,
+        argvars,
+        rettv);
+}
+/// Required functions for lua c functions as VimL callbacks
+void nlua_CFunction_func_free(void *state)
+{
+    lua_State *const lstate = nlua_enter();
+    LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
+
+    nlua_unref(lstate, funcstate->lua_callable.func_ref);
+    xfree(funcstate);
+}
+
+

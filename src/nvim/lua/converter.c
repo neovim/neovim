@@ -19,6 +19,7 @@
 #include "nvim/globals.h"
 #include "nvim/message.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ascii.h"
 #include "nvim/macros.h"
 
@@ -49,6 +50,7 @@ typedef struct {
 
 #define LUA_PUSH_STATIC_STRING(lstate, s) \
     lua_pushlstring(lstate, s, sizeof(s) - 1)
+
 
 static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -382,6 +384,20 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           }
         }
 nlua_pop_typval_table_processing_end:
+        break;
+      }
+      case LUA_TFUNCTION: {
+        LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
+
+        state->lua_callable.func_ref = nlua_ref(lstate, -1);
+
+        char_u *name = register_cfunc(
+            &nlua_CFunction_func_call,
+            &nlua_CFunction_func_free,
+            state);
+
+        cur.tv->v_type = VAR_FUNC;
+        cur.tv->vval.v_string = vim_strsave(name);
         break;
       }
       case LUA_TUSERDATA: {

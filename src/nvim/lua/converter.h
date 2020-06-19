@@ -9,6 +9,14 @@
 #include "nvim/func_attr.h"
 #include "nvim/eval.h"
 
+typedef struct {
+    LuaRef func_ref;
+} LuaCallable;
+
+typedef struct {
+    LuaCallable lua_callable;
+} LuaCFunctionState;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/converter.h.generated.h"
 #endif
