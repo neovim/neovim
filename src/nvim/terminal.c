@@ -529,7 +529,7 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
 # ifdef UNIX
          terminal_send(curbuf->terminal, "\n", 1);
 # else
-         terminal_send(curbuf->terminal, "\r", 1);
+         terminal_send(curbuf->terminal, "\r\n", 2);
 # endif
       }
       terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
