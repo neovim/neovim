@@ -912,6 +912,7 @@ function protocol.resolve_capabilities(server_capabilities)
   general_properties.workspace_symbol = server_capabilities.workspaceSymbolProvider or false
   general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
   general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
+  general_properties.rename = server_capabilities.renameProvider or false
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
