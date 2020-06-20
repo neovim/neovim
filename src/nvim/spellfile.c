@@ -628,6 +628,7 @@ spell_load_file (
     case SP_OTHERERROR: {
       emsgf(_("E5042: Failed to read spell file %s: %s"),
             fname, strerror(ferror(fd)));
+      goto endFAIL;
     }
     case 0: {
       break;
