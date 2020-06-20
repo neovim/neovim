@@ -189,7 +189,11 @@ if(NOT MSVC)
   endif()
 
   # tree-sitter: inlined external project, we don't maintain it. #10124
-  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
+  set(TS_FLAGS "-Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
+  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
+    set(TS_FLAGS "${TS_FLAGS} -Wno-implicit-fallthrough")
+  endif()
+  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${TS_FLAGS}")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
