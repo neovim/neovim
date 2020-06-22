@@ -2600,7 +2600,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
 /// interface should probably be derived from a reformed
 /// bufhl/virttext interface with full support for multi-line
 /// ranges etc
-void nvim__put_attr(Integer id, Integer prio, Integer start_row, Integer start_col,
+void nvim__put_attr(Integer id, Integer prio,
+                    Integer start_row, Integer start_col,
                     Integer end_row, Integer end_col)
   FUNC_API_LUA_ONLY
 {
@@ -2614,6 +2615,7 @@ void nvim__put_attr(Integer id, Integer prio, Integer start_row, Integer start_c
   if (attr == 0) {
     return;
   }
-  decorations_add_luahl_attr(attr, (int)prio, (int)start_row, (colnr_T)start_col,
+  decorations_add_luahl_attr(attr, (int)prio,
+                             (int)start_row, (colnr_T)start_col,
                              (int)end_row, (colnr_T)end_col);
 }

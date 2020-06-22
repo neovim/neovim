@@ -641,16 +641,19 @@ void decorations_add_luahl_attr(int attr_id, int prio,
                                 int start_row, int start_col,
                                 int end_row, int end_col)
 {
-  HlRange new = (HlRange){ start_row, start_col, end_row, end_col, prio, attr_id, NULL };
+  HlRange new = (HlRange){
+    start_row, start_col,
+    end_row, end_col,
+    prio, attr_id, NULL };
 
   for (size_t index = 0; index < kv_size(decorations.active); index++) {
     HlRange * range = &kv_A(decorations.active, index);
 
-    if ( (range->start_row == start_row)
-         && (range->start_col == start_col)
-         && (range->end_col == end_col)
-         && (range->end_row == end_row)
-         && (range->prio == prio)) {
+    if ((range->start_row == start_row)
+        && (range->start_col == start_col)
+        && (range->end_col == end_col)
+        && (range->end_row == end_row)
+        && (range->prio == prio)) {
       *range = new;
       return;
     }

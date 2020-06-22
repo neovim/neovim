@@ -873,9 +873,10 @@ int decorations_redraw_col(buf_T *buf, int col, DecorationRedrawState *state)
     if (item && (item->hl_id > 0 || kv_size(item->virt_text))) {
       int attr_id = item->hl_id > 0 ? syn_id2attr(item->hl_id) : 0;
       VirtText *vt = kv_size(item->virt_text) ? &item->virt_text : NULL;
-      kv_push(state->active, ((HlRange){ mark.row, mark.col,
-                                         endpos.row, endpos.col,
-                                         attr_id, HLRANGE_DEFAULT_PRIORITY, vt }));
+      kv_push(state->active, ((HlRange){
+          mark.row, mark.col,
+          endpos.row, endpos.col,
+          attr_id, HLRANGE_DEFAULT_PRIORITY, vt }));
     }
 
 next_mark:

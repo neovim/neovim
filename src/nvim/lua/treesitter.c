@@ -752,8 +752,10 @@ static int node_named_descendant_for_range(lua_State *L)
   return 1;
 }
 
-static int node_next_child(lua_State *L) {
-  TSTreeCursor *ud = luaL_checkudata(L, lua_upvalueindex(1), "treesitter_treecursor");
+static int node_next_child(lua_State *L)
+{
+  TSTreeCursor *ud = luaL_checkudata(
+      L, lua_upvalueindex(1), "treesitter_treecursor");
   if (!ud) {
     return 0;
   }
@@ -781,7 +783,8 @@ static int node_next_child(lua_State *L) {
   return 0;
 }
 
-static int node_iter_children(lua_State *L) {
+static int node_iter_children(lua_State *L)
+{
   TSNode source;
   if (!node_check(L, 1, &source)) {
     return 0;
@@ -790,9 +793,9 @@ static int node_iter_children(lua_State *L) {
   TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [udata]
   *ud = ts_tree_cursor_new(source);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_treecursor"); // [udata, mt]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_treecursor");  // [udata, mt]
   lua_setmetatable(L, -2);  // [udata]
-  lua_pushvalue(L, 1); // [udata, source_node]
+  lua_pushvalue(L, 1);  // [udata, source_node]
   lua_pushcclosure(L, node_next_child, 2);
 
   return 1;
@@ -884,7 +887,8 @@ static int query_next_capture(lua_State *L)
   return 0;
 }
 
-static int query_next_match_for(lua_State *L) {
+static int query_next_match_for(lua_State *L)
+{
   // [ud, nodes_tbl, source_node, query, match]
   TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
   TSQueryCursor *cursor = ud->cursor;
@@ -914,14 +918,15 @@ static int query_next_match_for(lua_State *L) {
 
     for (size_t index = 1; index <= tbl_len; index++) {
       TSNode searched_node;
-      lua_rawgeti(L, lua_upvalueindex(2), index); // [node]
+      lua_rawgeti(L, lua_upvalueindex(2), index);  // [node]
       if (!node_check(L, -1, &searched_node)) {
-        return luaL_error(L, "First argument of query:iter_match_stack() should be a table of nodes");
+        return luaL_error(
+            L,
+            "Expected a table of nodes");
       }
-      lua_pop(L, 1); // []
+      lua_pop(L, 1);  // []
 
       if (ts_node_eq(searched_node, capture.node)) {
-
         lua_pushinteger(L, capture.index+1);  // [index]
         push_node(L, capture.node, lua_upvalueindex(3));  // [index, node]
 
@@ -944,9 +949,10 @@ static int query_next_match_for(lua_State *L) {
   return 0;
 }
 
-static int query_match_stack(lua_State *L) {
+static int query_match_stack(lua_State *L)
+{
   if (lua_gettop(L) < 3) {
-    return luaL_error(L, "not enough argument for node:get_match_stack()");
+    return luaL_error(L, "not enough arguments for query:iter_match_stack()");
   }
 
   TSQuery *query = query_check(L, 1);
@@ -955,12 +961,16 @@ static int query_match_stack(lua_State *L) {
   }
 
   if (!lua_istable(L, 2)) {
-    return luaL_error(L, "second argument for node:get_match_stack() should be a table of nodes");
+    return luaL_error(
+        L,
+        "second argument of query:iter_match_stack() should be a table.");
   }
 
   TSNode source_node;
   if (!node_check(L, 3, &source_node)) {
-    return luaL_error(L, "third argument for node:get_match_stack() should be a node");
+    return luaL_error(
+        L,
+        "third argument of query:iter_match_stack() should be a node");
   }
 
   TSQueryCursor *cursor = ts_query_cursor_new();
@@ -973,12 +983,13 @@ static int query_match_stack(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_querycursor");
   lua_setmetatable(L, -2);  // [udata]
   lua_pushvalue(L, 2);  // [udata, nodes_tbl]
-  lua_pushvalue(L, 3); // [udata, nodes_tbl, node]
+  lua_pushvalue(L, 3);  // [udata, nodes_tbl, node]
 
   // include query separately, as to keep a ref to it for gc
   lua_pushvalue(L, 1);  // [udata, nodes_tbl, node, query]
 
-  lua_createtable(L, ts_query_capture_count(query), 2);  // [u, nodes_tbl, n, q, match]
+  lua_createtable(L, ts_query_capture_count(query), 2);
+  // [u, nodes_tbl, n, q, match]
   lua_pushcclosure(L, query_next_match_for, 5);  // [closure]
 
   return 1;

@@ -514,7 +514,7 @@ static int nlua_schedule(lua_State *const lstate)
     eq({ 9, 2, 9, 8 }, res)
 
 
-    local res = exec_lua([[
+    local res2 = exec_lua([[
     local query_str = ...
     local query = vim.treesitter.parse_query("c", query_str)
 
@@ -526,6 +526,6 @@ static int nlua_schedule(lua_State *const lstate)
     return res
     ]], overlapping_query)
 
-    eq({3, 4}, res)
+    eq({3, 4}, res2)
   end)
 end)
