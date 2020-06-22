@@ -489,7 +489,17 @@ static int terminal_execute(VimState *state, int key)
       terminal_send_key(s->term, key);
   }
 
-  return curbuf->handle == s->term->buf_handle;
+  if (curbuf->terminal == NULL) {
+    return 0;
+  }
+  if (s->term != curbuf->terminal) {
+    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+    invalidate_terminal(curbuf->terminal,
+                        curbuf->terminal->cursor.row,
+                        curbuf->terminal->cursor.row + 1);
+    s->term = curbuf->terminal;
+  }
+  return 1;
 }
 
 void terminal_destroy(Terminal *term)

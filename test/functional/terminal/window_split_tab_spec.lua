@@ -103,4 +103,14 @@ describe(':terminal', function()
                                                |
     ]])
   end)
+
+  it('stays in terminal mode with <Cmd>wincmd', function()
+    command('terminal')
+    command('split')
+    command('terminal')
+    feed('a<Cmd>wincmd j<CR>')
+    eq(2, eval("winnr()"))
+    eq('t', eval('mode()'))
+  end)
+
 end)
