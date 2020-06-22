@@ -84,43 +84,10 @@
 #endif
 #include "nvim/api/vim.h"
 
-// Maximum number of commands from + or -c arguments.
-#define MAX_ARG_CMDS 10
-
 // values for "window_layout"
 #define WIN_HOR     1       // "-o" horizontally split windows
 #define WIN_VER     2       // "-O" vertically split windows
 #define WIN_TABS    3       // "-p" windows on tab pages
-
-// Struct for various parameters passed between main() and other functions.
-typedef struct {
-  int argc;
-  char        **argv;
-
-  char *use_vimrc;                           // vimrc from -u argument
-
-  int n_commands;                            // no. of commands from + or -c
-  char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];          // commands that need free()
-  int n_pre_commands;                        // no. of commands from --cmd
-  char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
-
-  int edit_type;                        // type of editing to do
-  char_u      *tagname;                 // tag from -t argument
-  char_u      *use_ef;                  // 'errorfile' from -q argument
-
-  bool input_isatty;                    // stdin is a terminal
-  bool output_isatty;                   // stdout is a terminal
-  bool err_isatty;                      // stderr is a terminal
-  int no_swap_file;                     // "-n" argument used
-  int use_debug_break_level;
-  int window_count;                     // number of windows to use
-  int window_layout;                    // 0, WIN_HOR, WIN_VER or WIN_TABS
-
-  int diff_mode;                        // start with 'diff' set
-
-  char *listen_addr;                    // --listen {address}
-} mparm_T;
 
 // Values for edit_type.
 #define EDIT_NONE   0       // no edit type yet
@@ -188,7 +155,7 @@ bool event_teardown(void)
 /// Performs early initialization.
 ///
 /// Needed for unit tests. Must be called after `time_init()`.
-void early_init(void)
+void early_init(mparm_T *paramp)
 {
   env_init();
   fs_init();
@@ -222,7 +189,7 @@ void early_init(void)
   // msg_outtrans_len_attr().
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
-  set_init_1();
+  set_init_1(paramp != NULL ? paramp->clean : false);
   log_init();
   TIME_MSG("inits 1");
 
@@ -265,9 +232,17 @@ int main(int argc, char **argv)
 
   init_startuptime(&params);
 
+  // Need to find "--clean" before actually parsing arguments.
+  for (int i = 1; i < params.argc; i++) {
+    if (STRICMP(params.argv[i], "--clean") == 0) {
+      params.clean = true;
+      break;
+    }
+  }
+
   event_init();
 
-  early_init();
+  early_init(&params);
 
   set_argv_var(argv, argc);  // set v:argv
 
@@ -862,6 +837,7 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx += 11;
           } else if (STRNICMP(argv[0] + argv_idx, "clean", 5) == 0) {
             parmp->use_vimrc = "NONE";
+            parmp->clean = true;
             set_option_value("shadafile", 0L, "NONE", 0);
           } else {
             if (argv[0][argv_idx])
@@ -1277,9 +1253,8 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
-  for (int i = 1; i < paramp->argc; i++) {
-    if (STRICMP(paramp->argv[i], "--startuptime") == 0
-        && i + 1 < paramp->argc) {
+  for (int i = 1; i < paramp->argc - 1; i++) {
+    if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
       time_fd = os_fopen(paramp->argv[i + 1], "a");
       time_start("--- NVIM STARTING ---");
       break;

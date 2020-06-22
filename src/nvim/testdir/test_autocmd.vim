@@ -1252,6 +1252,10 @@ func Test_TextYankPost()
   call assert_equal(
     \{'regcontents': ['foo'], 'inclusive': v:false, 'regname': '',  'operator': 'y', 'visual': v:false, 'regtype': 'V'},
     \g:event)
+  norm Vy
+  call assert_equal(
+    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': '',  'operator': 'y', 'visual': v:true, 'regtype': 'V'},
+    \g:event)
   call feedkeys("\<C-V>y", 'x')
   call assert_equal(
     \{'regcontents': ['f'], 'inclusive': v:true, 'regname': '',  'operator': 'y', 'visual': v:true, 'regtype': "\x161"},

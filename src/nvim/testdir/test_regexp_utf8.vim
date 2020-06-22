@@ -332,4 +332,23 @@ func Test_ambiwidth()
   set regexpengine& ambiwidth&
 endfunc
 
+func Run_regexp_ignore_case()
+  call assert_equal('iIİ', substitute('iIİ', '\([iIİ]\)', '\1', 'g'))
+
+  call assert_equal('iIx', substitute('iIİ', '\c\([İ]\)', 'x', 'g'))
+  call assert_equal('xxİ', substitute('iIİ', '\(i\c\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\(İ\c\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\(\%u0130\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\([\u0130]\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\([\u012f-\u0131]\)', 'x', 'g'))
+endfunc
+
+func Test_regexp_ignore_case()
+  set regexpengine=1
+  call Run_regexp_ignore_case()
+  set regexpengine=2
+  call Run_regexp_ignore_case()
+  set regexpengine&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

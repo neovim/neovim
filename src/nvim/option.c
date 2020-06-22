@@ -524,11 +524,17 @@ char *get_lib_dir(void)
 ///
 /// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
 /// configuration and data files in the same path. #4403
-static void set_runtimepath_default(void)
+///
+/// If "clean_arg" is true, Nvim was started with --clean.
+static void set_runtimepath_default(bool clean_arg)
 {
   size_t rtp_size = 0;
-  char *const data_home = stdpaths_get_xdg_var(kXDGDataHome);
-  char *const config_home = stdpaths_get_xdg_var(kXDGConfigHome);
+  char *const data_home = clean_arg
+    ? NULL
+    : stdpaths_get_xdg_var(kXDGDataHome);
+  char *const config_home = clean_arg
+    ? NULL
+    : stdpaths_get_xdg_var(kXDGConfigHome);
   char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
@@ -622,7 +628,8 @@ static void set_runtimepath_default(void)
 /// Initialize the options, first part.
 ///
 /// Called only once from main(), just after creating the first buffer.
-void set_init_1(void)
+/// If "clean_arg" is true, Nvim was started with --clean.
+void set_init_1(bool clean_arg)
 {
   int opt_idx;
 
@@ -765,7 +772,7 @@ void set_init_1(void)
                      true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
-  set_runtimepath_default();
+  set_runtimepath_default(clean_arg);
 
   /*
    * Set all the options (except the terminal options) to their default
@@ -2538,8 +2545,8 @@ static bool valid_filetype(const char_u *val)
   return valid_name(val, ".-_");
 }
 
-/// Return true if "val" is a valid 'spellang' value.
-bool valid_spellang(const char_u *val)
+/// Return true if "val" is a valid 'spelllang' value.
+bool valid_spelllang(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return valid_name(val, ".-_,@");
@@ -3071,7 +3078,7 @@ ambw_end:
     const bool is_spellfile = varp == &(curwin->w_s->b_p_spf);
 
     if ((is_spellfile && !valid_spellfile(*varp))
-        || (!is_spellfile && !valid_spellang(*varp))) {
+        || (!is_spellfile && !valid_spelllang(*varp))) {
       errmsg = e_invarg;
     } else {
       errmsg = did_set_spell_option(is_spellfile);
@@ -5469,9 +5476,6 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
 
       // replace home directory in the whole option value into "buf"
       buf = xmalloc(size);
-      if (buf == NULL) {
-        goto fail;
-      }
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
@@ -5479,10 +5483,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {
-          part = xmalloc(size);
-        if (part == NULL) {
-          goto fail;
-        }
+        part = xmalloc(size);
 
         // write line break to clear the option, e.g. ':set rtp='
         if (put_eol(fd) == FAIL) {

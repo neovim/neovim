@@ -290,5 +290,16 @@ func! Test_sentence_with_cursor_on_delimiter()
   normal! 17|yas
   call assert_equal("A '([sentence.])'  ", @")
 
+  " don't get stuck on a quote at the start of a sentence
+  %delete _
+  call setline(1, ['A sentence.', '"A sentence"?', 'A sentence!'])
+  normal gg))
+  call assert_equal(3, getcurpos()[1])
+
+  %delete _
+  call setline(1, ['A sentence.', "'A sentence'?", 'A sentence!'])
+  normal gg))
+  call assert_equal(3, getcurpos()[1])
+
   %delete _
 endfunc

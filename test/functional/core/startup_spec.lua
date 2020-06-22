@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local command = helpers.command
+local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
@@ -17,6 +18,7 @@ local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local iswin = helpers.iswin
 local write_file = helpers.write_file
+local meths = helpers.meths
 
 describe('startup', function()
   before_each(function()
@@ -356,4 +358,11 @@ describe('sysinit', function()
     eq('loaded 1 xdg 0 vim 1',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
+end)
+
+describe('clean', function()
+  clear()
+  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) ~= nil)
+  clear('--clean')
+  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) == nil)
 end)
