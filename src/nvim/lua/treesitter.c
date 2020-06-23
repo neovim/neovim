@@ -387,8 +387,9 @@ static int parser_edit(lua_State *L)
 static int parser_set_ranges(lua_State *L)
 {
   if (lua_gettop(L) < 2) {
-    lua_pushstring(L, "not enough args to parser:set_included_ranges()");
-    return lua_error(L);
+    return luaL_error(
+        L,
+        "not enough args to parser:set_included_ranges()");
   }
 
   TSLua_parser *p = parser_check(L);
@@ -397,8 +398,9 @@ static int parser_set_ranges(lua_State *L)
   }
 
   if (!lua_istable(L, 2)) {
-    lua_pushstring(L, "argument for parser:set_included_ranges() should be a table.");
-    return lua_error(L);
+    return luaL_error(
+        L,
+        "argument for parser:set_included_ranges() should be a table.");
   }
 
   size_t tbl_len = lua_objlen(L, 2);
@@ -411,18 +413,16 @@ static int parser_set_ranges(lua_State *L)
 
     if (!lua_istable(L, -1)) {
       xfree(ranges);
-      lua_pushstring(
+      return luaL_error(
           L,
           "argument for parser:set_included_ranges() should be a table of tables.");
-      return lua_error(L);
     }
 
     if (lua_objlen(L, -1) != 2) {
       xfree(ranges);
-      lua_pushstring(
+      return luaL_error(
           L,
           "argument for parser:set_included_ranges() should be a table of ranges of 2 elements.");
-      return lua_error(L);
     }
 
 
@@ -560,7 +560,7 @@ static bool node_check(lua_State *L, int index, TSNode *res)
 static int node_tostring(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L,1, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   lua_pushstring(L, "<node ");
@@ -619,7 +619,7 @@ static int node_start(lua_State *L)
 static int node_end(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L,1, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   TSPoint end = ts_node_end_point(node);
@@ -644,7 +644,7 @@ static int node_child_count(lua_State *L)
 static int node_named_child_count(lua_State *L)
 {
   TSNode node;
-  if (!node_check(L,1, &node)) {
+  if (!node_check(L, 1, &node)) {
     return 0;
   }
   uint32_t count = ts_node_named_child_count(node);
