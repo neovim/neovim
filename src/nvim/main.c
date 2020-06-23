@@ -285,6 +285,12 @@ int main(int argc, char **argv)
     fname = get_fname(&params, cwd);
   }
 
+  // Recovery mode without a file name: List swap files.
+  // In this case, no UI is needed.
+  if (recoverymode && fname == NULL) {
+    headless_mode = true;
+  }
+
   TIME_MSG("expanding arguments");
 
   if (params.diff_mode && params.window_count == -1)
@@ -958,7 +964,6 @@ static void command_line_scan(mparm_T *parmp)
         case 'r':    // "-r" recovery mode
         case 'L': {  // "-L" recovery mode
           recoverymode = 1;
-          headless_mode = true;
           break;
         }
         case 's': {
