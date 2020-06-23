@@ -28,7 +28,7 @@ if 1
     " This uses the :s command to just fetch and process the output of the
     " tests, it doesn't actually replace anything.
     " And it uses "silent" to avoid reporting the number of matches.
-    silent %s/^Executed\s\+\zs\d\+\ze\s\+tests\?/\=Count(submatch(0),'executed')/egn
+    silent %s/Executed\s\+\zs\d\+\ze\s\+tests\?/\=Count(submatch(0),'executed')/egn
     silent %s/^SKIPPED \zs.*/\=Count(submatch(0), 'skipped')/egn
     silent %s/^\(\d\+\)\s\+FAILED:/\=Count(submatch(1), 'failed')/egn
 
