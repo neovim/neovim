@@ -117,13 +117,13 @@ onoremap <silent> <buffer> ]] :call rust#Jump('o', 'Forward')<CR>
 command! -nargs=* -complete=file -bang -buffer RustRun call rust#Run(<bang>0, <q-args>)
 
 " See |:RustExpand| for docs
-command! -nargs=* -complete=customlist,rust#CompleteExpand -bang -buffer RustExpand call rust#Expand(<bang>0, <q-args>)
+command! -nargs=* -complete=customlist,rust#CompleteExpand -bang -buffer RustExpand call rust#Expand(<bang>0, <q-args>, <q-mods>)
 
 " See |:RustEmitIr| for docs
-command! -nargs=* -buffer RustEmitIr call rust#Emit("llvm-ir", <q-args>)
+command! -nargs=* -buffer RustEmitIr call rust#Emit("llvm-ir", <q-args>, <q-mods>)
 
 " See |:RustEmitAsm| for docs
-command! -nargs=* -buffer RustEmitAsm call rust#Emit("asm", <q-args>)
+command! -nargs=* -buffer RustEmitAsm call rust#Emit("asm", <q-args>, <q-mods>)
 
 " See |:RustPlay| for docs
 command! -range=% RustPlay :call rust#Play(<count>, <line1>, <line2>, <f-args>)

@@ -80,17 +80,17 @@ endfunction
 
 " Expand {{{1
 
-function! rust#Expand(bang, args)
+function! rust#Expand(bang, args, mods)
 	let args = s:ShellTokenize(a:args)
 	if a:bang && !empty(l:args)
 		let pretty = remove(l:args, 0)
 	else
 		let pretty = "expanded"
 	endif
-	call s:WithPath(function("s:Expand"), pretty, args)
+	call s:WithPath(function("s:Expand", [a:mods]), pretty, args)
 endfunction
 
-function! s:Expand(dict, pretty, args)
+function! s:Expand(mods, dict, pretty, args)
 	try
 		let rustc = exists("g:rustc_path") ? g:rustc_path : "rustc"
 
@@ -108,7 +108,7 @@ function! s:Expand(dict, pretty, args)
 			echo output
 			echohl None
 		else
-			new
+			exe a:mods "new"
 			silent put =output
 			1
 			d
@@ -149,12 +149,12 @@ endfunction
 
 " Emit {{{1
 
-function! rust#Emit(type, args)
+function! rust#Emit(type, args, mods)
 	let args = s:ShellTokenize(a:args)
-	call s:WithPath(function("s:Emit"), a:type, args)
+	call s:WithPath(function("s:Emit", [a:mods]), a:type, args)
 endfunction
 
-function! s:Emit(dict, type, args)
+function! s:Emit(mods, dict, type, args)
 	try
 		let output_path = a:dict.tmpdir.'/output'
 
@@ -170,7 +170,7 @@ function! s:Emit(dict, type, args)
 			echohl None
 		endif
 		if !v:shell_error
-			new
+			exe a:mods "new"
 			exe 'silent keepalt read' fnameescape(output_path)
 			1
 			d
