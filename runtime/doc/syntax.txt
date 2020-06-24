@@ -3522,6 +3522,24 @@ DEFINING CASE						*:syn-case* *E390*
 :sy[ntax] case
 	Show either "syntax case match" or "syntax case ignore" (translated).
 
+
+DEFINING FOLDLEVEL					*:syn-foldlevel*
+
+:sy[ntax] foldlevel [start | minimum]
+	This defines how the foldlevel of a line is computed when using
+	foldmethod=syntax (see |fold-syntax| and |:syn-fold|):
+
+	start:		Use level of item containing start of line.
+	minimum:	Use lowest local-minimum level of items on line.
+
+	The default is 'start'.  Use 'minimum' to search a line horizontally
+	for the lowest level contained on the line that is followed by a
+	higher level.  This produces more natural folds when syntax items
+	may close and open horizontally within a line.
+
+:sy[ntax] foldlevel
+	Show either "syntax foldlevel start" or "syntax foldlevel minimum".
+
 SPELL CHECKING						*:syn-spell*
 
 :sy[ntax] spell [toplevel | notoplevel | default]
@@ -3985,6 +4003,8 @@ This will make each {} block form one fold.
 The fold will start on the line where the item starts, and end where the item
 ends.  If the start and end are within the same line, there is no fold.
 The 'foldnestmax' option limits the nesting of syntax folds.
+See |:syn-foldlevel| to control how the foldlevel of a line is computed
+from its syntax items.
 
 
 			*:syn-contains* *E405* *E406* *E407* *E408* *E409*

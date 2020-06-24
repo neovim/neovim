@@ -121,6 +121,8 @@ static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
   HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
+static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
+
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.
 // A start/end item consists of n start patterns and m end patterns.
@@ -3045,7 +3047,7 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3) {
     curwin->w_s->b_syn_conceal = false;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
   }
 }
 
@@ -3073,7 +3075,42 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6) {
     curwin->w_s->b_syn_ic = true;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
+  }
+}
+
+/// Handle ":syntax foldlevel" command.
+static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
+{
+  char_u *arg = eap->arg;
+  char_u *arg_end;
+
+  eap->nextcmd = find_nextcmd(arg);
+  if (eap->skip)
+    return;
+
+  if (*arg == NUL) {
+    switch (curwin->w_s->b_syn_foldlevel) {
+    case SYNFLD_START:   MSG(_("syntax foldlevel start"));   break;
+    case SYNFLD_MINIMUM: MSG(_("syntax foldlevel minimum")); break;
+    default: break;
+    }
+    return;
+  }
+
+  arg_end = skiptowhite(arg);
+  if (STRNICMP(arg, "start", 5) == 0 && arg_end - arg == 5) {
+    curwin->w_s->b_syn_foldlevel = SYNFLD_START;
+  } else if (STRNICMP(arg, "minimum", 7) == 0 && arg_end - arg == 7) {
+    curwin->w_s->b_syn_foldlevel = SYNFLD_MINIMUM;
+  } else {
+    EMSG2(_(e_illegal_arg), arg);
+    return;
+  }
+
+  arg = skipwhite(arg_end);
+  if (*arg != NUL) {
+    EMSG2(_(e_illegal_arg), arg);
   }
 }
 
@@ -3105,7 +3142,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7) {
     curwin->w_s->b_syn_spell = SYNSPL_DEFAULT;
   } else {
-    EMSG2(_("E390: Illegal argument: %s"), arg);
+    EMSG2(_(e_illegal_arg), arg);
     return;
   }
 
@@ -3161,6 +3198,7 @@ void syntax_clear(synblock_T *block)
   block->b_syn_error = false;           // clear previous error
   block->b_syn_slow = false;            // clear previous timeout
   block->b_syn_ic = false;              // Use case, by default
+  block->b_syn_foldlevel = SYNFLD_START;
   block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
   block->b_syn_containedin = false;
   block->b_syn_conceal = false;
@@ -5485,6 +5523,7 @@ static struct subcommand subcommands[] =
   { "cluster",   syn_cmd_cluster },
   { "conceal",   syn_cmd_conceal },
   { "enable",    syn_cmd_enable },
+  { "foldlevel", syn_cmd_foldlevel },
   { "include",   syn_cmd_include },
   { "iskeyword", syn_cmd_iskeyword },
   { "keyword",   syn_cmd_keyword },
@@ -5763,6 +5802,17 @@ int syn_get_stack_item(int i)
   return CUR_STATE(i).si_id;
 }
 
+static int syn_cur_foldlevel(void)
+{
+  int level = 0;
+  for (int i = 0; i < current_state.ga_len; i++) {
+    if (CUR_STATE(i).si_flags & HL_FOLD) {
+      level++;
+    }
+  }
+  return level;
+}
+
 /*
  * Function called to get folding level for line "lnum" in window "wp".
  */
@@ -5776,9 +5826,22 @@ int syn_get_foldlevel(win_T *wp, long lnum)
       && !wp->w_s->b_syn_slow) {
     syntax_start(wp, lnum);
 
-    for (int i = 0; i < current_state.ga_len; ++i) {
-      if (CUR_STATE(i).si_flags & HL_FOLD) {
-        ++level;
+    // Start with the fold level at the start of the line.
+    level = syn_cur_foldlevel();
+
+    if (wp->w_s->b_syn_foldlevel == SYNFLD_MINIMUM) {
+      // Find the lowest fold level that is followed by a higher one.
+      int cur_level = level;
+      int low_level = cur_level;
+      while (!current_finished) {
+        (void)syn_current_attr(false, false, NULL, false);
+        cur_level = syn_cur_foldlevel();
+        if (cur_level < low_level) {
+          low_level = cur_level;
+        } else if (cur_level > low_level) {
+          level = low_level;
+        }
+        current_col++;
       }
     }
   }
