@@ -1651,8 +1651,9 @@ au BufNewFile,BufRead *.sil 			setf sil
 au BufNewFile,BufRead */etc/sysctl.conf,*/etc/sysctl.d/*.conf	setf sysctl
 
 " Systemd unit files
-au BufNewFile,BufRead */systemd/*.{automount,mount,path,service,socket,swap,target,timer}	setf systemd
+au BufNewFile,BufRead */systemd/*.{automount,dnssd,link,mount,netdev,network,nspawn,path,service,slice,socket,swap,target,timer}	setf systemd
 " Systemd overrides
+au BufNewFile,BufRead */etc/systemd/*.conf.d/*.conf	setf systemd
 au BufNewFile,BufRead */etc/systemd/system/*.d/*.conf	setf systemd
 au BufNewFile,BufRead */.config/systemd/user/*.d/*.conf	setf systemd
 " Systemd temp files
