@@ -3,7 +3,7 @@
 " Maintainer:   Chris Morgan <me@chrismorgan.info>
 " Maintainer:   Kevin Ballard <kevin@sb.org>
 " Last Change:  June 08, 2016
-" For bugs, patches and license go to https://github.com/rust-lang/rust.vim 
+" For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("b:did_ftplugin")
 	finish
