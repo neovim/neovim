@@ -876,6 +876,34 @@ vim.region({bufnr}, {pos1}, {pos2}, {type}, {inclusive})       *vim.region()*
         whether the selection is inclusive or not, into a zero-indexed table 
         of linewise selections of the form `{linenr = {startcol, endcol}}` .
 
+                                             *vim.register_keystroke_callback()*
+vim.register_keystroke_callback({ns_id}, {fn})
+        Register a lua {fn} with an {ns_id} to be run after every keystroke.
+
+        Callbacks will not be run unless 'keystrokecallback' is set.
+
+        NOTE: {fn} will be automatically removed if an error occurs while
+        calling.
+
+        NOTE: {fn} will receive the keystrokes after mappings have been
+        evaluated
+
+        Parameters: ~
+            {id}: (number)  Namespace ID.
+                    See |nvim_create_namespace()|
+
+            {fn}: (function): Function to call on keystroke.
+                    It should take one argument, which is a string.
+                    The string will contain the literal keys typed.
+                    See |i_CTRL-V|
+
+vim.remove_keystroke_callback({ns_id})         *vim.remove_keystroke_callback()*
+        Remove the lua function associated with {ns_id}
+
+        Paramers: ~
+            {id}: (string)  Namespace ID.
+                    See |nvim_create_namespace()|
+
 vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
 	Sends {event} to {channel} via |RPC| and returns immediately.
 	If {channel} is 0, the event is broadcast to all channels.

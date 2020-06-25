@@ -489,4 +489,75 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
+local on_keystroke_callbacks = {}
+
+--- Register a lua {fn} with an {id} to be run after every keystroke.
+---
+--- Callbacks will not be run unless 'keystrokecallback' is set.
+---
+--- NOTE: {fn} will be automatically removed if an error occurs while calling.
+---
+--@param ns_id number: See |nvim_create_namesapce()|
+--@param fn function: Function to call. It should take one argument, which is a string.
+--                    The string will contain the literal keys typed.
+--                    See |i_CTRL-V|
+function vim.register_keystroke_callback(ns_id, fn)
+  vim.validate {
+    fn = { fn, 'c', true},
+    ns_id = { ns_id, function()
+      if type(ns_id) ~= 'number' then
+        return false
+      end
+
+      return ns_id > 0
+    end, 'Must be valid namespace ID. See |:help nvim_create_namespace()|' }
+  }
+
+  on_keystroke_callbacks[ns_id] = fn
+  return ns_id
+end
+
+--- Remove {id} from running on keystroke.
+---
+--@param ns_id number: See |nvim_create_namesapce()|
+function vim.remove_keystroke_callback(ns_id)
+  vim.validate { ns_id = { ns_id, 'n' } }
+
+  on_keystroke_callbacks[ns_id] = nil
+end
+
+--- Function that executes the keystroke callbacks.
+--@private
+function vim._log_keystroke(char)
+  local errored_callbacks
+  for k, v in pairs(on_keystroke_callbacks) do
+    local ok, err_msg = pcall(v, char)
+    if not ok then
+      if not errored_callbacks then
+        errored_callbacks = {}
+      end
+
+      -- Insert at the beginning of the table
+      table.insert(errored_callbacks, 1, { index = k, err_msg = err_msg })
+    end
+  end
+
+  -- Remove errored_callbacks
+  if errored_callbacks and not vim.tbl_isempty(errored_callbacks) then
+    local summary_msg = ''
+    local failed_indices = {}
+    for _, obj in ipairs(errored_callbacks) do
+      on_keystroke_callbacks[obj.index] = nil
+
+      table.insert(failed_indices, obj.index)
+      summary_msg = summary_msg .. string.format('%s\n', obj.err_msg)
+    end
+
+    error(string.format(
+      "Error executing 'on_keystroke' with indices of '%s'\n    With messages: %s",
+      table.concat(failed_indices, ", "),
+      summary_msg))
+  end
+end
+
 return module
