@@ -1101,11 +1101,7 @@ function M.locations_to_items(locations)
     local rows = grouped[uri]
     table.sort(rows, position_sort)
     local bufnr = vim.uri_to_bufnr(uri)
-    if not api.nvim_buf_is_loaded(bufnr) then
-      vim.fn.bufload(bufnr)
-    else
-      vim.cmd("checktime")
-    end
+    vim.fn.bufload(bufnr)
     local filename = vim.uri_to_fname(uri)
     for _, temp in ipairs(rows) do
       local pos = temp.start
