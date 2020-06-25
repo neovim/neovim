@@ -92,6 +92,8 @@ local function sort_by_key(fn)
   end
 end
 local edit_sort_key = sort_by_key(function(e)
+  -- Use the negative index to make changes be applied in the order they come
+  -- in the array
   return {e.A[1], e.A[2], -e.i}
 end)
 
@@ -122,6 +124,11 @@ function M.apply_text_edits(text_edits, bufnr)
   api.nvim_buf_set_option(bufnr, 'buflisted', true)
   local start_line, finish_line = math.huge, -1
   local cleaned = {}
+  local prev_insert = {
+    row = -1;
+    col = -1;
+    text = '';
+  }
   for i, e in ipairs(text_edits) do
     -- adjust start and end column for UTF-16 encoding of non-ASCII characters
     local start_row = e.range.start.line
@@ -131,16 +138,44 @@ function M.apply_text_edits(text_edits, bufnr)
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
     -- TODO(ashkan) sanity check ranges for overlap.
-    table.insert(cleaned, {
-      i = i;
-      A = {start_row; start_col};
-      B = {end_row; end_col};
-      lines = vim.split(e.newText, '\n', true);
-    })
+
+    local is_insert = start_row == end_row and start_col == end_col
+    local is_insert_same_pos = prev_insert.row == start_row and prev_insert.col == end_col
+
+    if is_insert and is_insert_same_pos then
+      -- Collapse multiple sequential inserts as a single change
+      cleaned[#cleaned].lines = vim.split(
+        prev_insert.text .. e.newText,
+        '\n',
+        true)
+    else
+      table.insert(cleaned, {
+        i = i;
+        A = {start_row; start_col};
+        B = {end_row; end_col};
+        lines = vim.split(e.newText, '\n', true);
+      })
+    end
+
+    if is_insert then
+      prev_insert = {
+        row = start_row;
+        col = start_col;
+        text = prev_insert.text .. e.newText;
+      }
+    else
+      prev_insert = {
+        row = -1;
+        col = -1;
+        text = '';
+      }
+    end
   end
 
-  -- Reverse sort the orders so we can apply them without interfering with
-  -- eachother. Also add i as a sort key to mimic a stable sort.
+  -- Reverse sort the orders so we can apply them without interfering with each
+  -- other. Also add i as a sort key to mimic a stable sort, but use the
+  -- negative index so changes with the same position are applied in the order
+  -- they are sent from the langserver.
   table.sort(cleaned, edit_sort_key)
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')

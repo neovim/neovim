@@ -815,33 +815,10 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
-    it('handles edits with the same start position, applying changes in the order in the array', function()
-      local edits = {
-        make_edit(0, 6, 0, 10, {""});
-        make_edit(0, 6, 0, 6, {"REPLACE"});
-        make_edit(1, 0, 1, 3, {""});
-        make_edit(1, 0, 1, 0, {"123"});
-        make_edit(2, 16, 2, 18, {""});
-        make_edit(2, 16, 2, 16, {"XYZ"});
-        make_edit(3, 7, 3, 11, {"this"});
-        make_edit(3, 7, 3, 11, {"will"});
-        make_edit(3, 7, 3, 11, {"not "});
-        make_edit(3, 7, 3, 11, {"show"});
-        make_edit(3, 7, 3, 11, {"(but this will)"});
-      }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
-      eq({
-        'First REPLACE of text';
-        '123ond line of text';
-        'Third line of teXYZ';
-        'Fourth (but this will) of text';
-        'å å ɧ 汉语 ↥ 🤦 🦄';
-      }, buf_lines(1))
-    end)
     it('applies complex edits', function()
       local edits = {
-        make_edit(0, 0, 0, 0, {"3", "foo"});
         make_edit(0, 0, 0, 0, {"", "12"});
+        make_edit(0, 0, 0, 0, {"3", "foo"});
         make_edit(0, 1, 0, 1, {"bar", "123"});
         make_edit(0, #"First ", 0, #"First line of text", {"guy"});
         make_edit(1, 0, 1, #'Second', {"baz"});
@@ -875,6 +852,56 @@ describe('LSP', function()
         'å ä ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
+
+    describe('edits with the same start position', function()
+      -- Spec: https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textedit-1
+
+      -- Spec: If multiple inserts have the same position, the order in the
+      -- array defines the order in which the inserted strings appear in the
+      -- resulting text.
+      it('applies inserts in the order of the array', function()
+        local edits = {
+          make_edit(0, 18, 0, 18, {","});
+          make_edit(0, 18, 0, 18, {" after"});
+          make_edit(0, 18, 0, 18, {"\nnewline"});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text, after';
+          'newline';
+          'Second line of text';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+      end)
+
+      -- Not really valid according to the spec, but some language servers send
+      -- edits like this
+      it('applies replaces/deletes in the order in the array', function()
+        local edits = {
+          make_edit(0, 6, 0, 10, {""});
+          make_edit(0, 6, 0, 6, {"REPLACE"});
+          make_edit(1, 0, 1, 3, {""});
+          make_edit(1, 0, 1, 0, {"123"});
+          make_edit(2, 16, 2, 18, {""});
+          make_edit(2, 16, 2, 16, {"XYZ"});
+          make_edit(3, 7, 3, 11, {"this"});
+          make_edit(3, 7, 3, 11, {"will"});
+          make_edit(3, 7, 3, 11, {"not "});
+          make_edit(3, 7, 3, 11, {"show"});
+          make_edit(3, 7, 3, 11, {"(but this will)"});
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+            'First REPLACE of text';
+            '123ond line of text';
+            'Third line of teXYZ';
+            'Fourth (but this will) of text';
+            'å å ɧ 汉语 ↥ 🤦 🦄';
+          }, buf_lines(1))
+        end)
+      end)
 
     describe('with LSP end line after what Vim considers to be the end line', function()
       it('applies edits when the last linebreak is considered a new line', function()
