@@ -210,10 +210,25 @@ struct prt_ps_mbfont_S {
   char                        *defcs;
 };
 
+// Types of PS resource file currently used
+typedef enum {
+  PRT_RESOURCE_TYPE_PROCSET = 0,
+  PRT_RESOURCE_TYPE_ENCODING = 1,
+  PRT_RESOURCE_TYPE_CMAP = 2,
+} PrtResourceType;
+
+// String versions of PS resource types
+static const char *const prt_resource_types[] =
+{
+  [PRT_RESOURCE_TYPE_PROCSET] = "procset",
+  [PRT_RESOURCE_TYPE_ENCODING] = "encoding",
+  [PRT_RESOURCE_TYPE_CMAP] = "cmap",
+};
+
 struct prt_ps_resource_S {
   char_u name[64];
   char_u filename[MAXPATHL + 1];
-  int type;
+  PrtResourceType type;
   char_u title[256];
   char_u version[256];
 };
@@ -1171,11 +1186,6 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
   }
 };
 
-// Types of PS resource file currently used
-#define PRT_RESOURCE_TYPE_PROCSET   (0)
-#define PRT_RESOURCE_TYPE_ENCODING  (1)
-#define PRT_RESOURCE_TYPE_CMAP      (2)
-
 /* The PS prolog file version number has to match - if the prolog file is
  * updated, increment the number in the file and here.  Version checking was
  * added as of VIM 6.2.
@@ -1188,16 +1198,6 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
  */
 #define PRT_PROLOG_VERSION  ((char_u *)"1.4")
 #define PRT_CID_PROLOG_VERSION  ((char_u *)"1.0")
-
-/* String versions of PS resource types - indexed by constants above so don't
- * re-order!
- */
-static char *prt_resource_types[] =
-{
-  "procset",
-  "encoding",
-  "cmap"
-};
 
 // Strings to look for in a PS resource file
 #define PRT_RESOURCE_HEADER         "%!PS-Adobe-"
@@ -1845,10 +1845,11 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
 }
 
 static void prt_dsc_resources(
-    char *comment,           // if NULL add to previous
-    char *type,
-    char *string
+    const char *comment,    // if NULL add to previous
+    const char *type,
+    const char *string
 )
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   if (comment != NULL)
     vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
