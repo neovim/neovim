@@ -3947,6 +3947,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on allow some options that are an expression to be set in the
 	modeline.  Check the option for whether it is affected by
 	'modelineexpr'.  Also see |modeline|.
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 						*'modelines'* *'mls'*
 'modelines' 'mls'	number	(default 5)
@@ -5807,7 +5809,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the option starts with "%!" then it is used as an expression,
 	evaluated and the result is used as the option value.  Example: >
 		:set statusline=%!MyStatusLine()
-<	The result can contain %{} items that will be evaluated too.
+<	The *g:statusline_winid* variable will be set to the |window-ID| of the
+	window that the status line belongs to.
+	The result can contain %{} items that will be evaluated too.
 	Note that the "%!" expression is evaluated in the context of the
 	current window and buffer, while %{} items are evaluated in the
 	context of the window that the statusline belongs to.
@@ -5936,13 +5940,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	become empty.  This will make a group like the following disappear
 	completely from the statusline when none of the flags are set. >
 		:set statusline=...%(\ [%M%R%H]%)...
-<							*g:actual_curbuf*
-	Beware that an expression is evaluated each and every time the status
-	line is displayed.  The current buffer and current window will be set
-	temporarily to that of the window (and buffer) whose statusline is
-	currently being drawn.  The expression will evaluate in this context.
-	The variable "g:actual_curbuf" is set to the `bufnr()` number of the
-	real current buffer.
+<	Beware that an expression is evaluated each and every time the status
+	line is displayed.
+					*g:actual_curbuf* *g:actual_curwin*
+	The current buffer and current window will be set temporarily to that
+	of the window (and buffer) whose statusline is currently being drawn.
+	The expression will evaluate in this context.  The variable
+	"g:actual_curbuf" is set to the `bufnr()` number of the real current
+	buffer and "g:actual_curwin" to the |window-ID| of the real current
+	window.  These values are strings.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
