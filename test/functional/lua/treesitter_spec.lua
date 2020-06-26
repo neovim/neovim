@@ -404,7 +404,7 @@ static int nlua_schedule(lua_State *const lstate)
     end
     eq({true,true}, {has_named,has_anonymous})
   end)
-  it('allows to set ranges', function()
+  it('allows to set simple ranges', function()
     if not check_parser() then return end
 
     insert(test_text)
@@ -416,6 +416,8 @@ static int nlua_schedule(lua_State *const lstate)
 
     eq({0, 0, 19, 0}, res)
 
+    -- The following sets the included ranges for the current parser
+    -- As stated here, this only includes the function (thus the whole buffer, without the last line)
     local res = exec_lua([[
     local root = parser:parse():root()
     parser:set_included_ranges({{root:child(0), root:child(0)}})
@@ -424,9 +426,15 @@ static int nlua_schedule(lua_State *const lstate)
     ]])
 
     eq({0, 0, 18, 1}, res)
+  end)
+  it("allows to set complex ranges", function()
+    if not check_parser() then return end
 
-    -- Pick random samples
+    insert(test_text)
+
+
     local res = exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
     query = vim.treesitter.parse_query("c", "(declaration) @decl")
 
     local nodes = {}
