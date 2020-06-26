@@ -1353,6 +1353,23 @@ function M.character_offset(buf, row, col)
   return str_utfindex(line, col)
 end
 
+function M.format_formatexpr()
+ -- only reformat on explicit gq command
+ -- `formatexpr` is also called when exceding
+ -- `textwidth` in insert mode
+ if vim.fn.mode() == 'i' or vim.fn.mode() == 'R' then
+    -- fall back to Vims internal reformatting
+    return 1
+ end
+ local start_line = vim.v.lnum
+ local end_line = start_line + vim.v.count - 1
+ if start_line > 0 and end_line > 0 then
+   vim.lsp.buf.range_formatting({}, {start_line, 0}, {end_line, 0})
+ end
+ -- do not run internal formatter.
+ return 0
+end
+
 M.buf_versions = {}
 
 return M

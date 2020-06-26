@@ -1235,4 +1235,16 @@ trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*
 try_trim_markdown_code_blocks({lines})
                 TODO: Documentation
 
+validate_lsp_position({pos})            *vim.lsp.util.validate_lsp_position()*
+                TODO: Documentation
+
+                                            *vim.lsp.util.format_formatexpr()*
+format_formatexpr()
+                To use a LSP server with |gq|,
+                set |formatexpr| to this function globally:
+                `set formatexpr = v:lua.vim.lsp.util.format_formatexpr()`
+                or using autocmd
+                `autocmd FileType c setlocal formatexpr=v:lua.vim.lsp.util.format_formatexpr()`
+
+
  vim:tw=78:ts=8:ft=help:norl:
