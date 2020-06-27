@@ -28,9 +28,9 @@ end
 --- use from init.vim via
 ---   au TextYankPost * lua require'vim.highlight'.on_yank()
 --- customize highlight group and timeout via
----   au TextYankPost * lua require'vim.highlight'.on_yank("IncSearch", 500)
+---   au TextYankPost * lua require'vim.highlight'.on_yank("IncSearch", 250)
 --- customize conditions (do not highlight a visual selection) via
----   au TextYankPost * lua require'vim.highlight'.on_yank("IncSearch", 500, {visual=false})
+---   au TextYankPost * lua require'vim.highlight'.on_yank("IncSearch", 250, {visual=false})
 ---
 -- @param higroup highlight group for yanked region
 -- @param timeout time in ms before highlight is cleared
@@ -49,7 +49,7 @@ function highlight.on_yank(higroup, timeout, opts)
   if (not visual) and event.visual then return end
 
   higroup = higroup or "IncSearch"
-  timeout = timeout or 500
+  timeout = timeout or 250
 
   local bufnr = api.nvim_get_current_buf()
   local yank_ns = api.nvim_create_namespace('')
