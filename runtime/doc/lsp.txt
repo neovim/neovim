@@ -58,6 +58,11 @@ Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
   " Use LSP omni-completion in Python files.
   autocmd Filetype python setlocal omnifunc=v:lua.vim.lsp.omnifunc
 
+If a function has a `*_sync` variant, it's primarily intended for being run
+automatically on file save.  E.g. code formatting: >
+
+  " Auto-format *.rs files prior to saving them
+  autocmd BufWritePre *.rs lua vim.lsp.buf.formatting_sync(nil, 1000)
 
 ================================================================================
 FAQ                                                     *lsp-faq*
@@ -766,6 +771,12 @@ document_symbol()                              *vim.lsp.buf.document_symbol()*
 
 formatting({options})                               *vim.lsp.buf.formatting()*
                 TODO: Documentation
+
+formatting_sync({options}, {timeout_ms})       *vim.lsp.buf.formatting_sync()*
+                Same as |vim.lsp.buf.formatting()| but synchronous.  Useful
+                for running on save, to make sure buffer is formatted prior
+                to being saved.  {timeout_ms} is passed on to
+                |vim.lsp.buf_request_sync()|.
 
 hover()                                                  *vim.lsp.buf.hover()*
                 TODO: Documentation

@@ -1424,4 +1424,19 @@ describe('LSP', function()
       eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
     end)
   end)
+
+  describe('lsp.util.get_effective_tabstop', function()
+    local function test_tabstop(tabsize, softtabstop)
+      exec_lua(string.format([[
+        vim.api.nvim_buf_set_option(0, 'softtabstop', %d)
+        vim.api.nvim_buf_set_option(0, 'tabstop', 2)
+        vim.api.nvim_buf_set_option(0, 'shiftwidth', 3)
+      ]], softtabstop))
+      eq(tabsize, exec_lua('return vim.lsp.util.get_effective_tabstop()'))
+    end
+
+    it('with softtabstop = 1', function() test_tabstop(1, 1) end)
+    it('with softtabstop = 0', function() test_tabstop(2, 0) end)
+    it('with softtabstop = -1', function() test_tabstop(3, -1) end)
+  end)
 end)

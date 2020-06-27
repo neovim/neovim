@@ -65,17 +65,16 @@ function M.completion(context)
 end
 
 function M.formatting(options)
-  validate { options = {options, 't', true} }
-  local sts = vim.bo.softtabstop;
-  options = vim.tbl_extend('keep', options or {}, {
-    tabSize = (sts > 0 and sts) or (sts < 0 and vim.bo.shiftwidth) or vim.bo.tabstop;
-    insertSpaces = vim.bo.expandtab;
-  })
-  local params = {
-    textDocument = { uri = vim.uri_from_bufnr(0) };
-    options = options;
-  }
+  local params = util.make_formatting_params(options)
   return request('textDocument/formatting', params)
+end
+
+function M.formatting_sync(options, timeout_ms)
+  local params = util.make_formatting_params(options)
+  local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
+  if not result then return end
+  result = result[1].result
+  vim.lsp.util.apply_text_edits(result)
 end
 
 function M.range_formatting(options, start_pos, end_pos)
