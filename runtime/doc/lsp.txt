@@ -758,13 +758,14 @@ code_action({context})                             *vim.lsp.buf.code_action()*
                 TODO: Documentation
 
 completion({context})                               *vim.lsp.buf.completion()*
-                TODO: Documentation
+                Retrieves the completion items at the current cursor position.
+                Can only be called in Insert mode.
 
 declaration()                                      *vim.lsp.buf.declaration()*
-                TODO: Documentation
+                Jumps to the declaration of the symbol under the cursor.
 
 definition()                                        *vim.lsp.buf.definition()*
-                TODO: Documentation
+                Jumps to the definition of the symbol under the cursor.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to server to resolve document highlights for the
@@ -777,13 +778,18 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
 <
 
 document_symbol()                              *vim.lsp.buf.document_symbol()*
-                TODO: Documentation
+                Lists all symbols in the current buffer in the quickfix
+                window.
 
 execute_command({command})                     *vim.lsp.buf.execute_command()*
                 TODO: Documentation
 
 formatting({options})                               *vim.lsp.buf.formatting()*
-                TODO: Documentation
+                Formats the current buffer. The optional {options} table can
+                be used to specify FormattingOptions, a list of which is
+                available at https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting.
+                Some unspecified options will be automatically derived from
+                the current Neovim options.
 
                                                *vim.lsp.buf.formatting_sync()*
 formatting_sync({options}, {timeout_ms})
@@ -794,10 +800,13 @@ formatting_sync({options}, {timeout_ms})
                 |vim.lsp.buf_request_sync()|.
 
 hover()                                                  *vim.lsp.buf.hover()*
-                TODO: Documentation
+                Displays hover information about the symbol under the cursor
+                in a floating window. Calling the function twice will jump
+                into the floating window.
 
 implementation()                                *vim.lsp.buf.implementation()*
-                TODO: Documentation
+                Lists all the implementations for the symbol under the cursor
+                in the quickfix window.
 
 npcall({fn}, {...})                                     *vim.lsp.buf.npcall()*
                 TODO: Documentation
@@ -810,10 +819,13 @@ range_formatting({options}, {start_pos}, {end_pos})
                 TODO: Documentation
 
 references({context})                               *vim.lsp.buf.references()*
-                TODO: Documentation
+                Lists all the references to the symbol under the cursor in the
+                quickfix window.
 
 rename({new_name})                                      *vim.lsp.buf.rename()*
-                TODO: Documentation
+                Renames all references to the symbol under the cursor. If
+                {new_name} is not provided, the user will be prompted for a
+                new name using |input()|.
 
 request({method}, {params}, {callback})                *vim.lsp.buf.request()*
                 TODO: Documentation
@@ -823,10 +835,11 @@ server_ready()                                    *vim.lsp.buf.server_ready()*
                     `true` if server responds.
 
 signature_help()                                *vim.lsp.buf.signature_help()*
-                TODO: Documentation
+                Displays signature information about the symbol under the
+                cursor in a floating window.
 
 type_definition()                              *vim.lsp.buf.type_definition()*
-                TODO: Documentation
+                Jumps to the definition of the symbol under the cursor.
 
 workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
