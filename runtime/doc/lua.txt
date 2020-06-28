@@ -716,21 +716,20 @@ https://github.com/machakann/vim-highlightedyank). To enable it, add
 to your `init.vim`. You can customize the highlight group and the duration of
 the highlight via
 >
- au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch", 250)
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank({higroup="IncSearch", timeout=250})
 <
 If you want to exclude visual selections from highlighting on yank, use
 >
- au TextYankPost * silent! lua require'vim.highlight'.on_yank("IncSearch", 250, {visual=false})
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank({visual=false})
 <
 
-vim.highlight.on_yank([{higroup}, {timeout}, {opts}]) 
-                                                    *vim.highlight.on_yank()*
-        Highlights the yanked text. Optional arguments are the highlight group
-        to use ({higroup}, default `"IncSearch"`), the duration of highlighting
-        in milliseconds ({timeout}, default `250`), and a dict with options 
-        controlling the when to highlight ({opts}, containing the fields {visual}
-        (boolean, default `true`), {macro} (boolean, default `false`), and {event}
-        (struct, default `vim.v.event`).
+vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
+        Highlights the yanked text. The fields of the optional dict {opts}
+        control the highlight: the highlight group to use ({higroup}, default
+        `"IncSearch"`), the duration of highlighting in milliseconds
+        ({timeout}, default `250`), whether to highlight a visual selection 
+        ({visual}, default `true`), whether to highlight when executing a macro
+        ({macro}, default `false`), and the {event} (struct, default `vim.v.event`).
 
 vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
                                                        *vim.highlight.range()*
