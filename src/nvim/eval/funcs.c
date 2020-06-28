@@ -2186,7 +2186,9 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   list = argvars[0].vval.v_list;
   if (list != NULL
-      && !tv_check_lock(tv_list_locked(list), N_("flatten() argument"), TV_TRANSLATE)
+      && !tv_check_lock(tv_list_locked(list),
+                        N_("flatten() argument"),
+                        TV_TRANSLATE)
       && tv_list_flatten(list, maxdepth) == OK) {
     tv_copy(&argvars[0], rettv);
   }
