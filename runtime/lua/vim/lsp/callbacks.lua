@@ -219,7 +219,7 @@ local make_call_hierarchy_callback = function(direction)
   -- result is a CallHierarchy{Incoming,Outgoing}Call[]
   return function(_, _, result)
     if not result then return end
-    items = {}
+    local items = {}
     for _, call_hierarchy_call in pairs(result) do
       local call_hierarchy_item = call_hierarchy_call[direction]
       table.insert(items, {
