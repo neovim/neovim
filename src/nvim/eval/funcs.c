@@ -2160,10 +2160,11 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * "flatten(list[, {maxdepth}])" function
  */
-static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
   list_T *list;
   long maxdepth;
-  bool error = FALSE;
+  bool error = false;
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "flatten()");
@@ -2185,7 +2186,7 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
 
   list = argvars[0].vval.v_list;
   if (list != NULL
-      && !tv_check_lock(list->lv_lock, N_("flatten() argument"), TV_TRANSLATE)
+      && !tv_check_lock(tv_list_locked(list), N_("flatten() argument"), TV_TRANSLATE)
       && tv_list_flatten(list, maxdepth) == OK) {
     tv_copy(&argvars[0], rettv);
   }
