@@ -720,16 +720,17 @@ the highlight via
 <
 If you want to exclude visual selections from highlighting on yank, use
 >
- au TextYankPost * silent! lua require'vim.highlight'.on_yank {visual=false}
+ au TextYankPost * silent! lua require'vim.highlight'.on_yank {on_visual=false}
 <
 
 vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
         Highlights the yanked text. The fields of the optional dict {opts}
         control the highlight: the highlight group to use ({higroup}, default
         `"IncSearch"`), the duration of highlighting in milliseconds
-        ({timeout}, default `250`), whether to highlight a visual selection 
-        ({visual}, default `true`), whether to highlight when executing a macro
-        ({macro}, default `false`), and the {event} (struct, default `vim.v.event`).
+        ({timeout}, default `250`), whether to highlight a visual selection
+        ({on_visual}, default `true`), whether to highlight when executing a
+        macro ({on_macro}, default `false`), and the {event} (struct, default
+        `vim.v.event`).
 
 vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
                                                        *vim.highlight.range()*

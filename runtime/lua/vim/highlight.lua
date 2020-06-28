@@ -37,18 +37,18 @@ end
 -- @param opts dictionary with options controlling the highlight:
 --              - higroup highlight group for yanked region
 --              - timeout time in ms before highlight is cleared
---              - macro (bool) highlight when executing macro (default false)
---              - visual (bool) highlight when yanking visual selection (default true)
+--              - on_macro (bool) highlight when executing macro (default false)
+--              - on_visual (bool) highlight when yanking visual selection (default true)
 --              - event  (struct) event structure (default vim.v.event)
 function highlight.on_yank(opts)
   opts = opts or {}
   local event = opts.event or vim.v.event
-  local macro = opts.macro or false
-  local visual = (opts.visual ~= false)
+  local on_macro = opts.on_macro or false
+  local on_visual = (opts.on_visual ~= false)
 
-  if (not macro) and vim.fn.reg_executing() ~= '' then return end
+  if (not on_macro) and vim.fn.reg_executing() ~= '' then return end
   if event.operator ~= 'y' or event.regtype == '' then return end
-  if (not visual) and event.visual then return end
+  if (not on_visual) and event.visual then return end
 
   local higroup = opts.higroup or "IncSearch"
   local timeout = opts.timeout or 250
