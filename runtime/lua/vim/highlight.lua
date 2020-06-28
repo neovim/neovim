@@ -26,11 +26,11 @@ end
 --- Highlight the yanked region
 ---
 --- use from init.vim via
----   au TextYankPost * lua require'vim.highlight'.on_yank()
+---   au TextYankPost * lua vim.highlight.on_yank()
 --- customize highlight group and timeout via
----   au TextYankPost * lua require'vim.highlight'.on_yank {higroup="IncSearch", timeout=250}
+---   au TextYankPost * lua vim.highlight.on_yank {higroup="IncSearch", timeout=250}
 --- customize conditions (do not highlight a visual selection) via
----   au TextYankPost * lua require'vim.highlight'.on_yank {visual=false}
+---   au TextYankPost * lua vim.highlight.on_yank {visual=false}
 ---
 -- @param higroup highlight group for yanked region
 -- @param timeout time in ms before highlight is cleared
