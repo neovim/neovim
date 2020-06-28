@@ -149,8 +149,8 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
     return call_hierarchy_items[1]
   end
   local items = {}
-  for i, item in ipairs(result) do
-    entry = item.detail or item.name
+  for i, item in ipairs(call_hierarchy_items) do
+    local entry = item.detail or item.name
     table.insert(items, string.format("%d. %s", i, entry))
   end
   local choice = vim.fn.inputlist(items)
