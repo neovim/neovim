@@ -152,6 +152,9 @@ msgstr "ligne %ld"
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Un tampon porte déjà ce nom"
 
+msgid "E900: maxdepth must be non-negative number"
+msgstr "E900: maxdepth doit être un nombre non-négatif"
+
 msgid " [Modified]"
 msgstr "[Modifié]"
 

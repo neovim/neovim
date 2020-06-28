@@ -2126,6 +2126,7 @@ finddir({name} [, {path} [, {count}]])
 				String	find directory {name} in {path}
 findfile({name} [, {path} [, {count}]])
 				String	find file {name} in {path}
+flatten({list} [, {maxdepth}])	List	flatten {list} up to {maxdepth} levels
 float2nr({expr})		Number	convert Float {expr} to a Number
 floor({expr})			Float	round {expr} down
 fmod({expr1}, {expr2})		Float	remainder of {expr1} / {expr2}
@@ -3917,6 +3918,25 @@ findfile({name} [, {path} [, {count}]])				*findfile()*
 			:echo findfile("tags.vim", ".;")
 <		Searches from the directory of the current file upwards until
 		it finds the file "tags.vim".
+
+flatten({list} [, {maxdepth}])					*flatten()*
+		Flatten {list} up to {maxdepth} levels.  Without {maxdepth}
+		the result is a |List| without nesting, as if {maxdepth} is
+		a very large number.
+		The {list} is changed in place, make a copy first if you do
+		not want that.
+							        *E964*
+		{maxdepth} means how deep in nested lists changes are made.
+		{list} is not modified when {maxdepth} is 0.
+		{maxdepth} must be positive number.
+
+		If there is an error the number zero is returned.
+
+		Example: >
+			:echo flatten([1, [2, [3, 4]], 5])
+<			[1, 2, 3, 4, 5] >
+			:echo flatten([1, [2, [3, 4]], 5], 1)
+<			[1, 2, [3, 4], 5]
 
 float2nr({expr})					*float2nr()*
 		Convert {expr} to a Number by omitting the part after the

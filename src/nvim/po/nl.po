@@ -151,6 +151,10 @@ msgstr "regel %<PRId64>"
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: buffer met deze naam bestaat al"
 
+#: ../eval/funcs.c:2182
+msgid "E900: maxdepth must be non-negative number"
+msgstr "E900: maxdepth moet een niet-negatief getal zijn"
+
 #: ../buffer.c:2498
 msgid " [Modified]"
 msgstr " [Gewijzigd]"
