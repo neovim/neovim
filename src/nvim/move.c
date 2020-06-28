@@ -29,6 +29,7 @@
 #include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
+#include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/window.h"
 
@@ -944,6 +945,152 @@ void curs_columns(
   }
 
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+}
+
+/*
+ * Move 'dist' lines in direction 'dir', counting lines by *screen*
+ * lines rather than lines in the file.
+ * 'dist' must be positive.
+ *
+ * Return true if able to move cursor, false otherwise.
+ */
+bool move_cursor_rowwise(win_T *wp, int dir, long dist)
+{
+  colnr_T linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
+  bool retval = true;
+  bool atend = false;
+  int n;
+  int col_off1;                 /* margin offset for first screen line */
+  int col_off2;                 /* margin offset for wrapped screen line */
+  int width1;                   /* text width for first screen line */
+  int width2;                   /* test width for wrapped screen line */
+
+  col_off1 = win_col_off(wp);
+  col_off2 = col_off1 - win_col_off2(wp);
+  width1 = wp->w_width_inner - col_off1;
+  width2 = wp->w_width_inner - col_off2;
+
+  if (width2 == 0) {
+    width2 = 1;  // Avoid divide by zero.
+  }
+
+  if (wp->w_width_inner != 0) {
+    // Instead of sticking at the last character of the buffer line we
+    // try to stick in the last column of the screen.
+    if (wp->w_curswant == MAXCOL) {
+      atend = true;
+      validate_virtcol_win(wp);
+      if (width1 <= 0)
+        wp->w_curswant = 0;
+      else {
+        wp->w_curswant = width1 - 1;
+        if (wp->w_virtcol > wp->w_curswant)
+          wp->w_curswant += ((wp->w_virtcol
+                             - wp->w_curswant -
+                             1) / width2 + 1) * width2;
+      }
+    } else {
+      if (linelen > width1)
+        n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
+      else
+        n = width1;
+      wp->w_curswant = MIN(wp->w_curswant, n - 1);
+    }
+
+    while (dist--) {
+      if (dir == BACKWARD) {
+        if (wp->w_curswant >= width1) {
+          // Move back within the line. This can give a negative value
+          // for w_curswant if width1 < width2 (with cpoptions+=n),
+          // which will get clipped to column 0.
+          wp->w_curswant -= width2;
+        } else {
+          /* to previous line */
+          if (wp->w_cursor.lnum == 1) {
+            retval = false;
+            break;
+          }
+          --wp->w_cursor.lnum;
+          /* Move to the start of a closed fold.  Don't do that when
+           * 'foldopen' contains "all": it will open in a moment. */
+          if (!(fdo_flags & FDO_ALL))
+            (void)hasFoldingWin(wp, wp->w_cursor.lnum,
+                &wp->w_cursor.lnum, NULL, true, NULL);
+          linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
+          if (linelen > width1) {
+            int w = (((linelen - width1 - 1) / width2) + 1) * width2;
+            assert(wp->w_curswant <= INT_MAX - w);
+            wp->w_curswant += w;
+          }
+        }
+      } else { /* dir == FORWARD */
+        if (linelen > width1)
+          n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
+        else
+          n = width1;
+        if (wp->w_curswant + width2 < (colnr_T)n)
+          /* move forward within line */
+          wp->w_curswant += width2;
+        else {
+          /* to next line */
+          /* Move to the end of a closed fold. */
+          (void)hasFoldingWin(wp, wp->w_cursor.lnum, NULL,
+              &wp->w_cursor.lnum, true, NULL);
+          if (wp->w_cursor.lnum == wp->w_buffer->b_ml.ml_line_count) {
+            retval = false;
+            break;
+          }
+          wp->w_cursor.lnum++;
+          wp->w_curswant %= width2;
+          // Check if the cursor has moved below the number display
+          // when width1 < width2 (with cpoptions+=n). Subtract width2
+          // to get a negative value for w_curswant, which will get
+          // clipped to column 0.
+          if (wp->w_curswant >= width1) {
+            wp->w_curswant -= width2;
+          }
+          linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
+        }
+      }
+    }
+  }
+
+  // If we're moving in the current window, we can use coladvance(), which
+  // supports virtual editing, but uses several pieces of global state that
+  // can't be touched when moving in other windows.
+  if (wp == curwin) {
+    if (virtual_active() && atend) {
+      coladvance(MAXCOL);
+    } else {
+      coladvance(wp->w_curswant);
+    }
+  } else {
+    coladvance_win(wp, &wp->w_cursor, wp->w_curswant);
+  }
+
+  if (wp->w_cursor.col > 0 && wp->w_p_wrap) {
+    /*
+     * Check for landing on a character that got split at the end of the
+     * last line.  We want to advance a screenline, not end up in the same
+     * screenline or move two screenlines.
+     */
+    validate_virtcol_win(wp);
+    colnr_T virtcol = wp->w_virtcol;
+    if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
+        virtcol -= vim_strsize(p_sbr);
+
+    if (virtcol > wp->w_curswant
+        && (wp->w_curswant < (colnr_T)width1
+            ? (wp->w_curswant > (colnr_T)width1 / 2)
+            : ((wp->w_curswant - width1) % width2
+               > (colnr_T)width2 / 2)))
+      --wp->w_cursor.col;
+  }
+
+  if (atend)
+    wp->w_curswant = MAXCOL;            /* stick in the last column */
+
+  return retval;
 }
 
 /// Compute the screen position of text character at "pos" in window "wp"
