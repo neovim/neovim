@@ -947,13 +947,11 @@ void curs_columns(
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
 }
 
-/*
- * Move 'dist' lines in direction 'dir', counting lines by *screen*
- * lines rather than lines in the file.
- * 'dist' must be positive.
- *
- * Return true if able to move cursor, false otherwise.
- */
+// Move 'dist' lines in direction 'dir', counting lines by *screen*
+// lines rather than lines in the file.
+// 'dist' must be positive.
+//
+// Return true if able to move cursor, false otherwise.
 bool move_cursor_rowwise(win_T *wp, int dir, long dist)
 {
   colnr_T linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
@@ -980,9 +978,9 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
     if (wp->w_curswant == MAXCOL) {
       atend = true;
       validate_virtcol_win(wp);
-      if (width1 <= 0)
+      if (width1 <= 0) {
         wp->w_curswant = 0;
-      else {
+      } else {
         wp->w_curswant = width1 - 1;
         if (wp->w_virtcol > wp->w_curswant)
           wp->w_curswant += ((wp->w_virtcol
@@ -1005,17 +1003,18 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
           // which will get clipped to column 0.
           wp->w_curswant -= width2;
         } else {
-          /* to previous line */
+          // to previous line
           if (wp->w_cursor.lnum == 1) {
             retval = false;
             break;
           }
-          --wp->w_cursor.lnum;
-          /* Move to the start of a closed fold.  Don't do that when
-           * 'foldopen' contains "all": it will open in a moment. */
-          if (!(fdo_flags & FDO_ALL))
-            (void)hasFoldingWin(wp, wp->w_cursor.lnum,
-                &wp->w_cursor.lnum, NULL, true, NULL);
+          wp->w_cursor.lnum--;
+          // Move to the start of a closed fold.  Don't do that when
+          // 'foldopen' contains "all": it will open in a moment.
+          if (!(fdo_flags & FDO_ALL)) {
+            (void)hasFoldingWin(wp, wp->w_cursor.lnum, &wp->w_cursor.lnum,
+                                NULL, true, NULL);
+          }
           linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
@@ -1023,19 +1022,19 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
             wp->w_curswant += w;
           }
         }
-      } else { /* dir == FORWARD */
+      } else { // dir == FORWARD
         if (linelen > width1)
           n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
         else
           n = width1;
-        if (wp->w_curswant + width2 < (colnr_T)n)
-          /* move forward within line */
+        if (wp->w_curswant + width2 < (colnr_T)n) {
+          // move forward within line
           wp->w_curswant += width2;
-        else {
-          /* to next line */
-          /* Move to the end of a closed fold. */
+        } else {
+          // to next line
+          // Move to the end of a closed fold.
           (void)hasFoldingWin(wp, wp->w_cursor.lnum, NULL,
-              &wp->w_cursor.lnum, true, NULL);
+                              &wp->w_cursor.lnum, true, NULL);
           if (wp->w_cursor.lnum == wp->w_buffer->b_ml.ml_line_count) {
             retval = false;
             break;
@@ -1069,26 +1068,28 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
   }
 
   if (wp->w_cursor.col > 0 && wp->w_p_wrap) {
-    /*
-     * Check for landing on a character that got split at the end of the
-     * last line.  We want to advance a screenline, not end up in the same
-     * screenline or move two screenlines.
-     */
+    // Check for landing on a character that got split at the end of the
+    // last line.  We want to advance a screenline, not end up in the same
+    // screenline or move two screenlines.
     validate_virtcol_win(wp);
     colnr_T virtcol = wp->w_virtcol;
-    if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
-        virtcol -= vim_strsize(p_sbr);
+    if (virtcol > (colnr_T)width1 && *p_sbr != NUL) {
+      virtcol -= vim_strsize(p_sbr);
+    }
 
     if (virtcol > wp->w_curswant
         && (wp->w_curswant < (colnr_T)width1
             ? (wp->w_curswant > (colnr_T)width1 / 2)
             : ((wp->w_curswant - width1) % width2
-               > (colnr_T)width2 / 2)))
-      --wp->w_cursor.col;
+               > (colnr_T)width2 / 2))) {
+      wp->w_cursor.col--;
+    }
   }
 
-  if (atend)
-    wp->w_curswant = MAXCOL;            /* stick in the last column */
+  if (atend) {
+    // stick in the last column
+    wp->w_curswant = MAXCOL;
+  }
 
   return retval;
 }
