@@ -273,12 +273,20 @@ end
 -- Returns text that should be inserted when selecting completion item. The precedence is as follows:
 -- textEdit.newText > insertText > label
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function get_completion_word(item)
+local function get_completion_word(item, prefix)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil then
-    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
-      return item.textEdit.newText
+    local start_range = item.textEdit.range["start"]
+    local end_range = item.textEdit.range["end"]
+    local newText = ""
+    if start_range.line == end_range.line and start_range.character == end_range.character then
+      newText = prefix .. item.textEdit.newText
     else
-      return M.parse_snippet(item.textEdit.newText)
+      newText = item.textEdit.newText
+    end
+    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
+      return newText
+    else
+      return M.parse_snippet(newText)
     end
   elseif item.insertText ~= nil then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
@@ -294,7 +302,7 @@ end
 -- So we exclude completion candidates whose prefix does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
-    local word = get_completion_word(item)
+    local word = get_completion_word(item, prefix)
     return vim.startswith(word, prefix)
   end, items)
 end
@@ -333,7 +341,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       end
     end
 
-    local word = get_completion_word(completion_item)
+    local word = get_completion_word(completion_item, prefix)
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
