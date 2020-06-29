@@ -168,13 +168,27 @@ end
 --@param new_name (string) If not provided, the user will be prompted for a new
 ---name using |input()|.
 function M.rename(new_name)
-  -- TODO(ashkan) use prepareRename
   -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
+
+  local rename = function(placeholder, params)
+    new_name = new_name or npcall(vfn.input, "New Name: ", placeholder)
+    if not (new_name and #new_name > 0) then return end
+    params.newName = new_name
+    request('textDocument/rename', params)
+  end
   local params = util.make_position_params()
-  new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
-  if not (new_name and #new_name > 0) then return end
-  params.newName = new_name
-  request('textDocument/rename', params)
+  request('textDocument/prepareRename', params, function(_, _, result, client_id)
+    -- if no client_id, it means prepareRename isn't supported, so just rename <cword>.
+    if not client_id then return rename(vfn.expand('<cword>'), params) end
+
+    -- if no result, prepareRename is supported, but renaming the word under
+    -- the cursor isn't allowed.
+    if not result then return end
+
+    -- otherwise, renaming is supported, but some servers return nil for the
+    -- placeholder.
+    rename(result.placeholder or vfn.expand('<cword>'), params)
+  end)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.

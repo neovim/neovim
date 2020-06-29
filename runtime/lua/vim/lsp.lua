@@ -36,6 +36,7 @@ lsp._request_name_to_capability = {
   ['textDocument/documentSymbol'] = 'document_symbol';
   ['textDocument/workspaceSymbol'] = 'workspace_symbol';
   ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
+  ['textDocument/prepareRename'] = 'prepare_rename';
   ['textDocument/rename'] = 'rename';
   ['textDocument/codeAction'] = 'code_action';
   ['workspace/executeCommand'] = 'execute_command';

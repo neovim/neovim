@@ -935,10 +935,13 @@ function protocol.resolve_capabilities(server_capabilities)
 
   if server_capabilities.renameProvider == nil then
     general_properties.rename = false
+    general_properties.prepare_rename = false
   elseif type(server_capabilities.renameProvider) == 'boolean' then
     general_properties.rename = server_capabilities.renameProvider
+    general_properties.prepare_rename = false
   else
     general_properties.rename = true
+    general_properties.prepare_rename = server_capabilities.renameProvider.prepareProvider or false
   end
 
   if server_capabilities.codeActionProvider == nil then
