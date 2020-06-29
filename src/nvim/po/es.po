@@ -2854,8 +2854,7 @@ msgstr "E485: No se pudo leer el archivo \"%s\""
 
 #: ../globals.h:1054
 msgid "E37: No write since last change (add ! to ignore)"
-msgstr ""
-"E37: No guardó el archivo desde el último cambio (añada \"!\" para forzar)"
+msgstr "E37: No guardó el archivo desde el último cambio (añada \"!\" para forzar)"
 
 #: ../globals.h:1055
 #, fuzzy

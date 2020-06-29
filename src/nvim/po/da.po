@@ -107,8 +107,7 @@ msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: Job kører stadig (tilføj ! for at afslutte jobbet)"
 
 msgid "E37: No write since last change (add ! to ignore)"
-msgstr ""
-"E37: Ingen skrivning siden sidste ændring (tilføj ! for at tilsidesætte)"
+msgstr "E37: Ingen skrivning siden sidste ændring (tilføj ! for at tilsidesætte)"
 
 msgid "E948: Job still running"
 msgstr "E948: Job kører stadig"

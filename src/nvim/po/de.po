@@ -2241,7 +2241,7 @@ msgstr "E485: Kann Datei %s nicht lesen"
 
 #: ../globals.h:1053
 msgid "E37: No write since last change (add ! to ignore)"
-msgstr "E37: Kein Schreibvorgang seit der letzten Änderung (mit ! erzwingen)"
+msgstr "E37: Kein Schreiben seit der letzten Änderung (mit ! ignorieren)"
 
 #: ../globals.h:1054
 msgid "E37: No write since last change"

@@ -2736,8 +2736,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Ei voi lukea tiedostoa %s"
 
 msgid "E37: No write since last change (add ! to ignore)"
-msgstr ""
-"E37: Viimeisen muutoksen jälkeen ei ole kirjoitettu (lisää ! ohittaaksesi)"
+msgstr "E37: Viimeisen muutoksen jälkeen ei ole kirjoitettu (lisää ! ohittaaksesi)"
 
 msgid "E37: No write since last change"
 msgstr "E37: Viimeisimmän muutoksen jälkeen ei ole kirjoitettu mitään"
