@@ -533,13 +533,8 @@ a timer to throttle too frequent updates.
 
 tsparser:set_included_ranges(ranges)			*tsparser:set_included_ranges()*
 	Changes the ranges the parser should consider. This is used for
-	language injection.  `ranges` should be of the form (all zero-based): >
-	{
-		{start_node, end_node},
-		...
-	}
-<
-	NOTE: `start_node` and `end_node` are both inclusive.
+	language injection.  `ranges` should be of the form: >
+	{ node1, node2, ...  }
 
 Tree methods						*lua-treesitter-tree*
 
