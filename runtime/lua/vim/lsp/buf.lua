@@ -30,21 +30,26 @@ function M.server_ready()
   return not not vim.lsp.buf_notify(0, "window/progress", {})
 end
 
+--- Displays hover information about the symbol under the cursor in a floating
+--- window. Calling the function twice will jump into the floating window.
 function M.hover()
   local params = util.make_position_params()
   request('textDocument/hover', params)
 end
 
+--- Jumps to the declaration of the symbol under the cursor.
 function M.declaration()
   local params = util.make_position_params()
   request('textDocument/declaration', params)
 end
 
+--- Jumps to the definition of the symbol under the cursor.
 function M.definition()
   local params = util.make_position_params()
   request('textDocument/definition', params)
 end
 
+--- Jumps to the definition of the type of the symbol under the cursor.
 function M.type_definition()
   local params = util.make_position_params()
   request('textDocument/typeDefinition', params)
@@ -55,18 +60,28 @@ function M.implementation()
   request('textDocument/implementation', params)
 end
 
+--- Displays signature information about the symbol under the cursor in a
+--- floating window.
 function M.signature_help()
   local params = util.make_position_params()
   request('textDocument/signatureHelp', params)
 end
 
--- TODO(ashkan) ?
+--- Retrieves the completion items at the current cursor position. Can only be
+--- called in Insert mode.
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
   return request('textDocument/completion', params)
 end
 
+--- Formats the current buffer.
+---
+--- The optional {options} table can be used to specify FormattingOptions, a
+--- list of which is available at
+--- https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting.
+--- Some unspecified options will be automatically derived from the current
+--- Neovim options.
 function M.formatting(options)
   local params = util.make_formatting_params(options)
   return request('textDocument/formatting', params)
@@ -118,6 +133,8 @@ function M.range_formatting(options, start_pos, end_pos)
   return request('textDocument/rangeFormatting', params)
 end
 
+--- Renames all references to the symbol under the cursor. If {new_name} is not
+--- provided, the user will be prompted for a new name using |input()|.
 function M.rename(new_name)
   -- TODO(ashkan) use prepareRename
   -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
@@ -128,6 +145,7 @@ function M.rename(new_name)
   request('textDocument/rename', params)
 end
 
+--- Lists all the references to the symbol under the cursor in the quickfix window.
 function M.references(context)
   validate { context = { context, 't', true } }
   local params = util.make_position_params()
@@ -138,6 +156,7 @@ function M.references(context)
   request('textDocument/references', params)
 end
 
+--- Lists all symbols in the current buffer in the quickfix window.
 function M.document_symbol()
   local params = { textDocument = util.make_text_document_params() }
   request('textDocument/documentSymbol', params)

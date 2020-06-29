@@ -839,7 +839,8 @@ signature_help()                                *vim.lsp.buf.signature_help()*
                 cursor in a floating window.
 
 type_definition()                              *vim.lsp.buf.type_definition()*
-                Jumps to the definition of the symbol under the cursor.
+                Jumps to the definition of the type of the symbol under the
+                cursor.
 
 workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
