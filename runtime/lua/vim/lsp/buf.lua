@@ -72,6 +72,10 @@ function M.formatting(options)
   return request('textDocument/formatting', params)
 end
 
+--- Perform |vim.lsp.buf.formatting()| synchronously.
+---
+--- Useful for running on save, to make sure buffer is formatted prior to being
+--- saved.  {timeout_ms} is passed on to |vim.lsp.buf_request_sync()|.
 function M.formatting_sync(options, timeout_ms)
   local params = util.make_formatting_params(options)
   local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)

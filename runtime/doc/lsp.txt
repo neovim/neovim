@@ -785,10 +785,12 @@ execute_command({command})                     *vim.lsp.buf.execute_command()*
 formatting({options})                               *vim.lsp.buf.formatting()*
                 TODO: Documentation
 
-formatting_sync({options}, {timeout_ms})       *vim.lsp.buf.formatting_sync()*
-                Same as |vim.lsp.buf.formatting()| but synchronous.  Useful
-                for running on save, to make sure buffer is formatted prior
-                to being saved.  {timeout_ms} is passed on to
+                                               *vim.lsp.buf.formatting_sync()*
+formatting_sync({options}, {timeout_ms})
+                Perform |vim.lsp.buf.formatting()| synchronously.
+
+                Useful for running on save, to make sure buffer is formatted
+                prior to being saved. {timeout_ms} is passed on to
                 |vim.lsp.buf_request_sync()|.
 
 hover()                                                  *vim.lsp.buf.hover()*
@@ -1101,6 +1103,19 @@ get_completion_word({item})               *vim.lsp.util.get_completion_word()*
 get_current_line_to_cursor()
                 TODO: Documentation
 
+get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
+                Get visual width of tabstop.
+
+                Parameters: ~
+                    {bufnr}  (optional, number): Buffer handle, defaults to
+                             current
+
+                Return: ~
+                    (number) tabstop visual width
+
+                See also: ~
+                    |softtabstop|
+
                                   *vim.lsp.util.get_line_byte_from_position()*
 get_line_byte_from_position({bufnr}, {position})
                 TODO: Documentation
@@ -1120,6 +1135,10 @@ locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
 
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})
+                TODO: Documentation
+
+                                       *vim.lsp.util.make_formatting_params()*
+make_formatting_params({options})
                 TODO: Documentation
 
 make_position_param()                     *vim.lsp.util.make_position_param()*

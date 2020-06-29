@@ -306,7 +306,6 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
         # return prefix + text
         return text
 
-
     # Whitespace used to indent all lines except the first line.
     indent = ' ' * len(prefix) if indent is None else indent
     indent_only = (prefix == '' and indent is not None)
@@ -397,7 +396,12 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ' [verbatim] {}'.format(get_text(n))
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
-            result = render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+            result = render_node(
+                c,
+                text,
+                indent=indent + (' ' * len(prefix)),
+                width=width
+            )
 
             if is_blank(result):
                 continue
@@ -437,7 +441,6 @@ def render_node(n, text, prefix='', indent='', width=62):
     else:
         raise RuntimeError('unhandled node type: {}\n{}'.format(
             n.nodeName, n.toprettyxml(indent='  ', newl='\n')))
-
 
     return text
 
@@ -502,7 +505,7 @@ def para_as_map(parent, indent='', width=62):
                         and '' != get_text(self_or_child(child)).strip()
                         and ' ' != text[-1]):
                     text += ' '
-                prev_text = prev
+
                 text += render_node(child, text, indent=indent, width=width)
                 prev = child
 
@@ -784,7 +787,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
         start = 0
         while True:
             try:
-               start = split_lines.index('>', start)
+                start = split_lines.index('>', start)
             except ValueError:
                 break
 
@@ -793,9 +796,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             except ValueError:
                 break
 
-
             split_lines[start + 1:end] = [
-                ('    '  + x).rstrip()
+                ('    ' + x).rstrip()
                 for x in textwrap.dedent(
                     "\n".join(
                         split_lines[start+1:end]
@@ -896,7 +898,6 @@ def main(config):
                 for child in brief_desc.childNodes:
                     doc_list.append(fmt_node_as_vimhelp(child))
 
-
             desc = find_first(group_parsed, 'detaileddescription')
             if desc:
                 doc = fmt_node_as_vimhelp(desc)
@@ -905,7 +906,6 @@ def main(config):
                     doc_list.append(doc)
 
             intros[groupname] = "\n".join(doc_list)
-
 
         for compound in dom.getElementsByTagName('compound'):
             if compound.getAttribute('kind') != 'file':
