@@ -1611,7 +1611,7 @@ int open_line(
     }
     ml_replace(curwin->w_cursor.lnum, p_extra, true);
     changed_bytes(curwin->w_cursor.lnum, 0);
-    // TODO: extmark_splice_cols here??
+    // TODO(vigoux): extmark_splice_cols here??
     curwin->w_cursor.lnum--;
     did_append = false;
   }

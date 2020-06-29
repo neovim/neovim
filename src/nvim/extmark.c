@@ -540,7 +540,7 @@ void extmark_adjust(buf_T *buf,
   int old_row, new_row;
   if (amount == MAXLNUM) {
     old_row = (int)(line2 - line1+1);
-    // TODO: ej kasta?
+    // TODO(bfredl): ej kasta?
     old_byte = (bcount_t)buf->deleted_bytes2;
 
     new_row = (int)(amount_after + old_row);
@@ -553,7 +553,8 @@ void extmark_adjust(buf_T *buf,
     new_row = (int)amount;
   }
   if (new_row > 0) {
-    new_byte = ml_find_line_or_offset(buf, line1+new_row, NULL, true)-start_byte;
+    new_byte = ml_find_line_or_offset(buf, line1+new_row, NULL, true)
+      - start_byte;
   }
   extmark_splice_impl(buf,
                       (int)line1-1, 0, start_byte,
@@ -562,10 +563,10 @@ void extmark_adjust(buf_T *buf,
 }
 
 void extmark_splice(buf_T *buf,
-                         int start_row, colnr_T start_col,
-                         int old_row, colnr_T old_col, bcount_t old_byte,
-                         int new_row, colnr_T new_col, bcount_t new_byte,
-                         ExtmarkOp undo)
+                    int start_row, colnr_T start_col,
+                    int old_row, colnr_T old_col, bcount_t old_byte,
+                    int new_row, colnr_T new_col, bcount_t new_byte,
+                    ExtmarkOp undo)
 {
   long offset = ml_find_line_or_offset(buf, start_row+1, NULL, true);
   extmark_splice_impl(buf, start_row, start_col, offset+start_col,
@@ -668,11 +669,12 @@ void extmark_splice_cols(buf_T *buf,
                  0, new_col, new_col, undo);
 }
 
-void extmark_move_region(buf_T *buf,
-                         int start_row, colnr_T start_col, bcount_t start_byte,
-                         int extent_row, colnr_T extent_col, bcount_t extent_byte,
-                         int new_row, colnr_T new_col, bcount_t new_byte,
-                         ExtmarkOp undo)
+void extmark_move_region(
+    buf_T *buf,
+    int start_row, colnr_T start_col, bcount_t start_byte,
+    int extent_row, colnr_T extent_col, bcount_t extent_byte,
+    int new_row, colnr_T new_col, bcount_t new_byte,
+    ExtmarkOp undo)
 {
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured

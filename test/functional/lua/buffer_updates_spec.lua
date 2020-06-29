@@ -255,15 +255,14 @@ describe('lua buffer event callbacks: on_bytes', function()
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
   -- test both ways.
   local function check(verify)
-    local lastsize
     meths.buf_set_lines(0, 0, -1, true, origlines)
     local shadow = deepcopy(origlines)
     local shadowbytes = table.concat(shadow, '\n') .. '\n'
     if verify then
-      lastsize = meths.buf_get_offset(0, meths.buf_line_count(0))
+      meths.buf_get_offset(0, meths.buf_line_count(0))
     end
-    exec_lua("return test_register(...)", 0, "test1",false,utf_sizes)
-    local tick = meths.buf_get_changedtick(0)
+    exec_lua("return test_register(...)", 0, "test1",false, nil)
+    meths.buf_get_changedtick(0)
 
     local verify_name = "test1"
     local function check_events(expected)
@@ -272,7 +271,7 @@ describe('lua buffer event callbacks: on_bytes', function()
       if verify then
         for _, event in ipairs(events) do
           if event[1] == verify_name and event[2] == "bytes" then
-            local _, _, buf, tick, start_row, start_col, start_byte, old_row, old_col, old_byte, new_row, new_col, new_byte = unpack(event)
+            local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
             local before = string.sub(shadowbytes, 1, start_byte)
             -- no text in the tests will contain 0xff bytes (invalid UTF-8)
             -- so we can use it as marker for unknown bytes

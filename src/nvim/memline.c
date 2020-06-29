@@ -257,11 +257,11 @@ int ml_open(buf_T *buf)
   /*
    * init fields in memline struct
    */
-  buf->b_ml.ml_stack_size = 0;   /* no stack yet */
-  buf->b_ml.ml_stack = NULL;    /* no stack yet */
-  buf->b_ml.ml_stack_top = 0;   /* nothing in the stack */
-  buf->b_ml.ml_locked = NULL;   /* no cached block */
-  buf->b_ml.ml_line_lnum = 0;   /* no cached line */
+  buf->b_ml.ml_stack_size = 0;   // no stack yet
+  buf->b_ml.ml_stack = NULL;    // no stack yet
+  buf->b_ml.ml_stack_top = 0;   // nothing in the stack
+  buf->b_ml.ml_locked = NULL;   // no cached block
+  buf->b_ml.ml_line_lnum = 0;   // no cached line
   buf->b_ml.ml_line_offset = 0;
   buf->b_ml.ml_chunksize = NULL;
 
@@ -832,12 +832,12 @@ void ml_recover(bool checkext)
   /*
    * init fields in memline struct
    */
-  buf->b_ml.ml_stack_size = 0;          /* no stack yet */
-  buf->b_ml.ml_stack = NULL;            /* no stack yet */
-  buf->b_ml.ml_stack_top = 0;           /* nothing in the stack */
-  buf->b_ml.ml_line_lnum = 0;           /* no cached line */
+  buf->b_ml.ml_stack_size = 0;          // no stack yet
+  buf->b_ml.ml_stack = NULL;            // no stack yet
+  buf->b_ml.ml_stack_top = 0;           // nothing in the stack
+  buf->b_ml.ml_line_lnum = 0;           // no cached line
   buf->b_ml.ml_line_offset = 0;
-  buf->b_ml.ml_locked = NULL;           /* no locked block */
+  buf->b_ml.ml_locked = NULL;           // no locked block
   buf->b_ml.ml_flags = 0;
 
   /*

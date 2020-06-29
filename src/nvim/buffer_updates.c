@@ -282,10 +282,11 @@ void buf_updates_send_changes(buf_T *buf,
   kv_size(buf->update_callbacks) = j;
 }
 
-void buf_updates_send_splice(buf_T *buf,
-                             int start_row, colnr_T start_col, bcount_t start_byte,
-                             int old_row, colnr_T old_col, bcount_t old_byte,
-                             int new_row, colnr_T new_col, bcount_t new_byte)
+void buf_updates_send_splice(
+    buf_T *buf,
+    int start_row, colnr_T start_col, bcount_t start_byte,
+    int old_row, colnr_T old_col, bcount_t old_byte,
+    int new_row, colnr_T new_col, bcount_t new_byte)
 {
   if (!buf_updates_active(buf)) {
     return;
