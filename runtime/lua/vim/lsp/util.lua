@@ -92,7 +92,7 @@ local function sort_by_key(fn)
   end
 end
 local edit_sort_key = sort_by_key(function(e)
-  return {e.A[1], e.A[2], -e.i}
+  return {e.A[1], e.A[2], e.i}
 end)
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
