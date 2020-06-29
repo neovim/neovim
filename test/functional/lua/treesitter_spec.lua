@@ -404,4 +404,65 @@ static int nlua_schedule(lua_State *const lstate)
     end
     eq({true,true}, {has_named,has_anonymous})
   end)
+  it('allows to set simple ranges', function()
+    if not check_parser() then return end
+
+    insert(test_text)
+
+    local res = exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
+    return { parser:parse():root():range() }
+    ]])
+
+    eq({0, 0, 19, 0}, res)
+
+    -- The following sets the included ranges for the current parser
+    -- As stated here, this only includes the function (thus the whole buffer, without the last line)
+    local res2 = exec_lua([[
+    local root = parser:parse():root()
+    parser:set_included_ranges({root:child(0)})
+    parser.valid = false
+    return { parser:parse():root():range() }
+    ]])
+
+    eq({0, 0, 18, 1}, res2)
+  end)
+  it("allows to set complex ranges", function()
+    if not check_parser() then return end
+
+    insert(test_text)
+
+
+    local res = exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
+    query = vim.treesitter.parse_query("c", "(declaration) @decl")
+
+    local nodes = {}
+    for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
+      table.insert(nodes, node)
+    end
+
+    parser:set_included_ranges(nodes)
+
+    local root = parser:parse():root()
+
+    local res = {}
+    for i=0,(root:named_child_count() - 1) do
+      table.insert(res, { root:named_child(i):range() })
+    end
+    return res
+    ]])
+
+    eq({
+      { 2, 2, 2, 40 },
+      { 3, 3, 3, 32 },
+      { 4, 7, 4, 8 },
+      { 4, 8, 4, 25 },
+      { 8, 2, 8, 6 },
+      { 8, 7, 8, 33 },
+      { 9, 8, 9, 20 },
+      { 10, 4, 10, 5 },
+      { 10, 5, 10, 20 },
+      { 14, 9, 14, 27 } }, res)
+  end)
 end)

@@ -30,6 +30,12 @@ function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_
   self.valid = false
 end
 
+function Parser:set_included_ranges(ranges)
+  self._parser:set_included_ranges(ranges)
+  -- The buffer will need to be parsed again later
+  self.valid = false
+end
+
 local M = {
   parse_query = vim._ts_parse_query,
 }
