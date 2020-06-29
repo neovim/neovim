@@ -277,11 +277,9 @@ local function get_completion_word(item, prefix)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil then
     local start_range = item.textEdit.range["start"]
     local end_range = item.textEdit.range["end"]
-    local newText = ""
+    local newText = item.textEdit.newText
     if start_range.line == end_range.line and start_range.character == end_range.character then
-      newText = prefix .. item.textEdit.newText
-    else
-      newText = item.textEdit.newText
+      newText = prefix .. newText
     end
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return newText
