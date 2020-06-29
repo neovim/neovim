@@ -418,14 +418,14 @@ static int nlua_schedule(lua_State *const lstate)
 
     -- The following sets the included ranges for the current parser
     -- As stated here, this only includes the function (thus the whole buffer, without the last line)
-    local res = exec_lua([[
+    local res2 = exec_lua([[
     local root = parser:parse():root()
-    parser:set_included_ranges({{root:child(0), root:child(0)}})
+    parser:set_included_ranges({root:child(0)})
     parser.valid = false
     return { parser:parse():root():range() }
     ]])
 
-    eq({0, 0, 18, 1}, res)
+    eq({0, 0, 18, 1}, res2)
   end)
   it("allows to set complex ranges", function()
     if not check_parser() then return end
@@ -439,7 +439,7 @@ static int nlua_schedule(lua_State *const lstate)
 
     local nodes = {}
     for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
-      table.insert(nodes, { node, node })
+      table.insert(nodes, node)
     end
 
     parser:set_included_ranges(nodes)

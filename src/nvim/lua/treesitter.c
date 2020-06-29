@@ -411,50 +411,21 @@ static int parser_set_ranges(lua_State *L)
   for (size_t index = 0; index < tbl_len; index++) {
     lua_rawgeti(L, 2, index + 1);  // [ parser, ranges, range ]
 
-    if (!lua_istable(L, -1)) {
+    TSNode node;
+    if (!node_check(L, -1, &node)) {
       xfree(ranges);
       return luaL_error(
           L,
-          "argument for parser:set_included_ranges() should be a table of tables.");
-    }
-
-    if (lua_objlen(L, -1) != 2) {
-      xfree(ranges);
-      return luaL_error(
-          L,
-          "argument for parser:set_included_ranges() should be a table of ranges of 2 elements.");
-    }
-
-
-    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, start_node ]
-    TSNode start_node;
-    if (!node_check(L, -1, &start_node)) {
-      xfree(ranges);
-      lua_pushstring(
-          L,
           "ranges should be tables of nodes.");
-      return lua_error(L);
     }
-    lua_pop(L, 1);  // [ parser, ranges, range ]
-
-    lua_rawgeti(L, -1, 1);  // [ parser, ranges, range, stop_node ]
-    TSNode stop_node;
-    if (!node_check(L, -1, &stop_node)) {
-      xfree(ranges);
-      lua_pushstring(
-          L,
-          "ranges should be tables of nodes.");
-      return lua_error(L);
-    }
-    lua_pop(L, 1);  // [ parser, ranges, range ]
+    lua_pop(L, 1);  // [ parser, ranges ]
 
     ranges[index] = (TSRange) {
-      .start_point = ts_node_start_point(start_node),
-      .end_point = ts_node_end_point(stop_node),
-      .start_byte = ts_node_start_byte(start_node),
-      .end_byte = ts_node_end_byte(stop_node)
+      .start_point = ts_node_start_point(node),
+      .end_point = ts_node_end_point(node),
+      .start_byte = ts_node_start_byte(node),
+      .end_byte = ts_node_end_byte(node)
     };
-    lua_pop(L, 1);  // [ parser, ranges ]
   }
 
   // This memcpies ranges, thus we can free it afterwards
