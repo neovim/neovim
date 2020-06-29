@@ -1053,7 +1053,7 @@ do
   --- <pre>
   --- function! LspStatus() abort
   ---     let sl = ''
-  ---     if luaeval('vim.lsp.buf.server_ready()')
+  ---     if luaeval('not vim.tbl_isempty(vim.lsp.buf_get_clients(0))')
   ---         let sl.='%#MyStatuslineLSP#E:'
   ---         let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Error]])")}'
   ---         let sl.='%#MyStatuslineLSP# W:'
