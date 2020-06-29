@@ -296,6 +296,40 @@ setmetatable(vim, {
 -- An easier alias for commands.
 vim.cmd = vim.api.nvim_command
 
+-- VIM_COMPAT: vim.command
+vim.command = vim.api.nvim_command
+
+-- VIM_COMPAT: vim.eval
+vim.eval = vim.api.nvim_eval
+
+-- VIM_COMPAT: vim.list
+vim.list = function(list)
+  if type(list) ~= 'table' then
+    return {}
+  end
+
+  local result = {}
+  for _, v in ipairs(list) do
+    table.insert(result, v)
+  end
+
+  return result
+end
+
+-- VIM_COMPAT: vim.dict
+vim.dict = function(dict)
+  if type(dict) ~= 'table' then
+    return vim.empty_dict()
+  end
+
+  local result = {}
+  for k, v in pairs(dict) do
+    result[string.format('%s', k)] = v
+  end
+
+  return result
+end
+
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   local a = vim.api
