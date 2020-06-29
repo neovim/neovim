@@ -9367,7 +9367,7 @@ wordcount()						*wordcount()*
 					(only in Visual mode)
 			visual_chars    Number of chars visually selected
 					(only in Visual mode)
-			visual_words    Number of chars visually selected
+			visual_words    Number of words visually selected
 					(only in Visual mode)
 
 
