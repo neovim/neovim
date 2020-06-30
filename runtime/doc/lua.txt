@@ -95,6 +95,66 @@ Note:
   plugins using shell which will not work with paths containing semicolons it
   is better to not have them in 'runtimepath' at all.
 
+==============================================================================
+Lua Syntax Information                                         *lua-syntax-help*
+
+While Lua has a simple syntax, there are a few things to understand,
+particularly when looking at the documentation above.
+
+                                                      *lua-syntax-call-function*
+
+Lua functions can be called in multiple ways. Consider the function: >
+
+    local example_func = function(a, b)
+        print("A is: ", a)
+        print("B is: ", b)
+    end
+
+
+The first way to call a function is: >
+    
+    example_func(1, 2)
+    -- ==== Result ====
+    -- A is: 1
+    -- B is: 2
+<
+    This way of calling a function is familiar to most scripting languages.
+    In Lua, it's important to understand that any function arguments that are
+    not supplied are automatically set to `nil`. For example: >
+
+    example_func(1)
+    -- ==== Result ====
+    -- A is: 1
+    -- B is: nil
+<
+
+    Additionally, if any extra parameters are passed, they are discarded
+    completely.
+
+In Lua, it is also possible, if only argument is desired to be passed, to call
+the function without any parentheses. This is most often used to approximate
+"keyword"-style arguments with a single dictionary. For example: >
+
+    local func_with_opts = function(opts)
+        local will_do_foo = opts.foo
+        local filename = opts.filename
+
+        ...
+    end
+
+    func_with_opts { foo = true, filename = "hello.world" }
+<
+
+    In this style, each "parameter" is passed via keyword. It is still valid
+    to call the function in this style: >
+
+    func_with_opts({ foo = true, filename = "hello.world" })
+<
+
+    But often in the documentation, you will see the former rather than the
+    latter style, due to its brevity (this is vim after all!).
+
+
 ------------------------------------------------------------------------------
 LUA PLUGIN EXAMPLE					*lua-require-example*
 
