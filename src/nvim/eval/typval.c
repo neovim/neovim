@@ -651,6 +651,7 @@ int tv_list_flatten(list_T *list, long maxdepth)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T *item;
+  listitem_T *to_free;
   int n;
   if (maxdepth == 0) {
     return OK;
@@ -668,12 +669,15 @@ int tv_list_flatten(list_T *list, long maxdepth)
 
       tv_list_drop_items(list, item, item);
       tv_list_extend(list, item->li_tv.vval.v_list, next);
+      tv_clear(&item->li_tv);
+      to_free = item;
 
       if (item->li_prev == NULL) {
         item = list->lv_first;
       } else {
         item = item->li_prev->li_next;
       }
+      xfree(to_free);
 
       if (++n >= maxdepth) {
         n = 0;
