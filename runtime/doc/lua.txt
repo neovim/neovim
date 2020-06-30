@@ -1011,9 +1011,6 @@ vim.wo                                                                *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-empty_dict()                                                *vim.empty_dict()*
-                TODO: Documentation
-
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 
