@@ -1274,9 +1274,18 @@ end
 
 function M.make_formatting_params(options)
   validate { options = {options, 't', true} }
+  local bo = vim.bo
+  local ets = M.get_effective_tabstop()
   options = vim.tbl_extend('keep', options or {}, {
-    tabSize = M.get_effective_tabstop();
-    insertSpaces = vim.bo.expandtab;
+    tabSize = ets;
+    -- If softtabstop is non-zero and tabstop is not equal to the effective
+    -- tabstop, then the user has configured Nvim so that it will indent using
+    -- a mix of tabs and spaces. There's no way to request such mixed
+    -- indentation in the LSP protocol, so the next best thing is to override
+    -- expandtab and indent using spaces in this case, which is at least
+    -- visually consistent with the user's settings and can be fixed with
+    -- :retab!.
+    insertSpaces = bo.softtabstop ~= 0 and bo.tabstop ~= ets or bo.expandtab;
   })
   return {
     textDocument = { uri = vim.uri_from_bufnr(0) };
