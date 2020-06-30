@@ -180,6 +180,8 @@ struct listvar_S {
   int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
   int lv_copyID;  ///< ID used by deepcopy().
   VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
+
+  LuaRef lua_table_ref;
 };
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.
@@ -245,6 +247,8 @@ struct dictvar_S {
   dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
   dict_T *dv_used_prev;   ///< Previous dictionary in used dictionaries list.
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
+
+  LuaRef lua_table_ref;
 };
 
 /// Type used for script ID
@@ -271,9 +275,10 @@ typedef struct {
 /// Number of fixed variables used for arguments
 #define FIXVAR_CNT 12
 
-/// Callback interface for C function reference
+/// Callback interface for C function reference>
+///     Used for managing functions that were registered with |register_cfunc|
 typedef int (*cfunc_T)(int argcount, typval_T *argvars, typval_T *rettv, void *state);  // NOLINT
-/// Callback to clear cfunc_T
+/// Callback to clear cfunc_T and any associated state.
 typedef void (*cfunc_free_T)(void *state);
 
 // Structure to hold info for a function that is currently being executed.

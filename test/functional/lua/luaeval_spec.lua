@@ -295,13 +295,12 @@ describe('luaeval()', function()
     ]])
   end)
 
-  -- TODO(tjdevries): Need to figure
-  pending('should work with metatables using __call', function()
-    eq(true, exec_lua [[
+  it('should work with metatables using __call', function()
+    eq(1, exec_lua [[
       local this_is_local_variable = false
-      local callable_table = setmetatable({}, {
-        __call = function(...)
-          this_is_local_variable = true
+      local callable_table = setmetatable({x = 1}, {
+        __call = function(t, ...)
+          this_is_local_variable = t.x
         end
       })
 
@@ -312,6 +311,73 @@ describe('luaeval()', function()
       end)
 
       return this_is_local_variable
+    ]])
+  end)
+
+  it('should handle being called from a timer once.', function()
+    eq(3, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({5, 4, 3, 2, 1}, {
+        __call = function(t, ...) this_is_local_variable = t[3] end
+      })
+
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should call functions once with __call metamethod', function()
+    eq(true, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({a = true, b = false}, {
+        __call = function(t, ...) this_is_local_variable = t.a end
+      })
+
+      assert(getmetatable(callable_table).__call)
+      vim.fn.call(callable_table, {})
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should work with lists using __call', function()
+    eq(3, exec_lua [[
+      local this_is_local_variable = false
+      local mt = {
+        __call = function(t, ...)
+          this_is_local_variable = t[3]
+        end
+      }
+      local callable_table = setmetatable({5, 4, 3, 2, 1}, mt)
+
+      -- Call it once...
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      assert(this_is_local_variable)
+      this_is_local_variable = false
+
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should not work with tables not using __call', function()
+    eq({false, 'Vim:E921: Invalid callback argument'}, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({x = 1}, {})
+
+      return {pcall(function() vim.fn.timer_start(5, callable_table) end)}
     ]])
   end)
 

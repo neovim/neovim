@@ -10,11 +10,12 @@
 #include "nvim/eval.h"
 
 typedef struct {
-    LuaRef func_ref;
+  LuaRef func_ref;
+  LuaRef table_ref;
 } LuaCallable;
 
 typedef struct {
-    LuaCallable lua_callable;
+  LuaCallable lua_callable;
 } LuaCFunctionState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

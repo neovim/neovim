@@ -3458,7 +3458,6 @@ char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
 {
   char_u *name = get_lambda_name();
   ufunc_T *fp = NULL;
-  int flags = FC_CFUNC;
 
   fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
   if (fp == NULL) {
@@ -3467,7 +3466,7 @@ char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;
-  fp->uf_flags = flags;
+  fp->uf_flags = FC_CFUNC;
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
   fp->uf_cb = cb;
@@ -3477,5 +3476,5 @@ char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
   STRCPY(fp->uf_name, name);
   hash_add(&func_hashtab, UF2HIKEY(fp));
 
-  return name;
+  return fp->uf_name;
 }
