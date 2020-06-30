@@ -431,7 +431,7 @@ function lsp.start_client(config)
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
-      capabilities = config.capabilities or protocol.make_client_capabilities();
+      capabilities = vim.tbl_deep_extend('keep', config.capabilities, protocol.make_client_capabilities());
       -- The initial trace setting. If omitted trace is disabled ("off").
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off';
