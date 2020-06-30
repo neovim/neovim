@@ -39,6 +39,11 @@ end
 --              - on_visual highlight when yanking visual selection (default true)
 --              - event     event structure (default vim.v.event)
 function highlight.on_yank(opts)
+  vim.validate {
+    opts = { opts,
+    function(t) if t == nil then return true else return type(t) == 'table' end end,
+    'a table or nil to configure options (see `:h highlight.on_yank`)',
+  }}
   opts = opts or {}
   local event = opts.event or vim.v.event
   local on_macro = opts.on_macro or false
