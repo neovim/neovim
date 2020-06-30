@@ -111,6 +111,7 @@ return {
     filter={args=2},
     finddir={args={1, 3}},
     findfile={args={1, 3}},
+    flatten={args={1, 2}},
     float2nr={args=1},
     floor={args=1, func="float_op_wrapper", data="&floor"},
     fmod={args=2},
