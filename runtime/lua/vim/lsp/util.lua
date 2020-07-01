@@ -727,6 +727,13 @@ do
     return require("vim.lsp.structures").Diagnostic.get_line_diagnostics(bufnr, line_nr)
   end
 
+  -- TODO(tjdevries): Pull up function definition into structures.Diagnostics.
+  --    Also, handle the comments from ms:
+  --        Very minor, but adding an indication about the client origin could be
+  --        useful. And once we know the server, an option in the action to set
+  --        relative client priority for a given severity level. (I'm thinking of
+  --        TypeScript vs eslint here, where TS is almost always the more pressing
+  --        problem.)
   function M.show_line_diagnostics()
     -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
     -- if #marks == 0 then

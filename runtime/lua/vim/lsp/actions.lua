@@ -263,7 +263,9 @@ actions.Diagnostic.handle_publish_diagnostics = function(args)
     -- util.buf_diagnostics_save_positions(bufnr, notification.diagnostics)
     structures.Diagnostic.save_buf_diagnostics(diagnostics, bufnr, client_id)
 
-    if not args.update_in_insert then
+    if args.update_in_insert then
+      structures.Diagnostic.buf_remove_schedule_display_on_insert_leave(bufnr, client_id)
+    else
       local mode = vim.api.nvim_get_mode()
 
       if string.sub(mode.mode, 1, 1) == 'i' then

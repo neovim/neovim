@@ -17,6 +17,11 @@ local lsp = {
   callbacks = default_callbacks;
   buf = require'vim.lsp.buf';
   util = util;
+
+  -- TODO(tjdevries): Consider loading these lazily, rather than immediately.
+  actions = require('vim.lsp.actions');
+  structures = structures;
+
   -- Allow raw RPC access.
   rpc = lsp_rpc;
   -- Export these directly from rpc.
