@@ -992,6 +992,12 @@ describe('LSP', function()
     -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
     it('should choose right completion option', function ()
       local prefix = 'foo'
+      local insertTextRange = {}
+      insertTextRange["start"] = { line = 5, character = 23 }
+      insertTextRange["end"] = { line = 5, character = 23 }
+      local replaceTextRange = {}
+      replaceTextRange["start"] = { line = 5, character = 21 }
+      replaceTextRange["end"] = { line = 5, character = 23 }
       local completion_list = {
         -- resolves into label
         { label='foobar' },
@@ -1000,10 +1006,11 @@ describe('LSP', function()
         { label='foocar', insertText='foobar' },
         { label='foocar', insertText='foobar', textEdit={} },
         -- resolves into textEdit.newText
-        { label='foocar', insertText='foodar', textEdit={newText='foobar'} },
-        { label='foocar', textEdit={newText='foobar'} },
+        { label='foocar', insertText='foodar', textEdit={newText='bar', range=insertTextRange} },
+        { label='foocar', insertText='foodar', textEdit={newText='foobar', range=replaceTextRange} },
+        { label='foocar', textEdit={newText='bar', range=insertTextRange} },
         -- real-world snippet text
-        { label='foocar', insertText='foodar', textEdit={newText='foobar(${1:place holder}, ${2:more ...holder{\\}})'} },
+        { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} },
         { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} },
         -- nested snippet tokens
         { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} },
@@ -1016,9 +1023,10 @@ describe('LSP', function()
         { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foobar', textEdit={} } } }  } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar' } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar', textEdit={} } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar'} } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='foobar'} } } } } },
-        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar(place holder, more ...holder{})', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar(${1:place holder}, ${2:more ...holder{\\}})'} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='bar', range=insertTextRange} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar', range=replaceTextRange} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='bar', range=insertTextRange} } } } } },
+        { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar(place holder, more ...holder{})', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(var1 typ1, var2 *typ2) {}', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(var1 typ2,typ3 tail) {}', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(${1:var1})', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} } } } } },
