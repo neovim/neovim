@@ -476,7 +476,7 @@ Diagnostic.buf_remove_schedule_display_on_insert_leave = function(bufnr, client_
   local key = make_augroup_key(bufnr, client_id)
 
   if registered[key] then
-    vim.cmd("augroup %s", key)
+    vim.cmd(string.format("augroup %s", key))
     vim.cmd("  au!")
     vim.cmd("augroup END")
 
@@ -492,7 +492,7 @@ Diagnostic.buf_schedule_display_on_insert_leave = function(bufnr, client_id, arg
 
   local key = make_augroup_key(bufnr, client_id)
   if not registered[key] then
-    vim.cmd("augroup %s", key)
+    vim.cmd(string.format("augroup %s", key))
     vim.cmd("  au!")
     vim.cmd(
       string.format(
