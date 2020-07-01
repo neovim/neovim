@@ -3,10 +3,12 @@ local a = vim.api
 -- support reload for quick experimentation
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
+local ts_hs_ns = a.nvim_create_namespace("treesitter_hl")
 
 -- These are conventions defined by tree-sitter, though it
 -- needs to be user extensible also.
 -- TODO(bfredl): this is very much incomplete, we will need to
+-- test
 -- go through a few tree-sitter provided queries and decide
 -- on translations that makes the most sense.
 TSHighlighter.hl_map = {
@@ -24,6 +26,7 @@ TSHighlighter.hl_map = {
 
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
+
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
   self._dummy = vim.treesitter.parse_query(self.parser.lang, "(_) @dummy")
   self.buf = self.parser.bufnr
@@ -31,15 +34,16 @@ function TSHighlighter.new(query, bufnr, ft)
   local tree = self.parser:parse()
   self.root = tree:root()
   self:set_query(query)
-  self.edit_count = 0
   self.redraw_count = 0
   self.line_count = {}
   a.nvim_buf_set_option(self.buf, "syntax", "")
-  a.nvim__buf_set_luahl(self.buf, {
-    on_start=function(...) return self:on_start(...) end,
-    on_window=function(...) return self:on_window(...) end,
-    on_line=function(...) return self:on_line(...) end,
-  })
+  -- a.nvim__buf_set_luahl(self.buf, {
+  --   on_start=function(...) return self:on_start(...) end,
+  --   on_window=function(...) return self:on_window(...) end,
+  --   on_line=function(...) return self:on_line(...) end,
+  -- })
+
+  self:on_change({{self.root:range()}})
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
   -- but use synload.vim rather than syntax.vim to not enable
@@ -75,10 +79,23 @@ function TSHighlighter:set_query(query)
 end
 
 function TSHighlighter:on_change(changes)
-  for _, ch in ipairs(changes or {}) do
-    a.nvim__buf_redraw_range(self.buf, ch[1], ch[3]+1)
+  if not self.root then
+    self.root = self.parser:parse():root()
   end
-  self.edit_count = self.edit_count + 1
+
+  for _, ch in ipairs(changes or {}) do
+
+    local changed_node = self.root:named_descendant_for_range(ch[1], ch[2], ch[3], ch[4])
+    print(vim.inspect(ch))
+
+    for capture, node in self.query:iter_captures(changed_node, self.buf, ch[1], ch[3]) do
+      local start_row, start_col, end_row, end_col = node:range()
+      local hl = TSHighlighter.hl_map[self.query.captures[capture]]
+      if hl then
+        a.nvim__buf_add_decoration(self.buf, ts_hs_ns, hl, start_row, start_col, end_row, end_col, {})
+      end
+    end
+  end
 end
 
 function TSHighlighter:on_start(_, _buf, _tick)
@@ -111,17 +128,17 @@ function TSHighlighter:on_line(_, _win, buf, line)
     table.insert(nodes, node)
   end
 
-  local seen = {}
-  for capture, node, match in self.query:iter_match_stack(nodes, search_node, buf) do
-    if not seen[node] then
-      seen[node] = true
-      local start_row, start_col, end_row, end_col = node:range()
-      local hl = self.id_map[capture]
-      if hl and hl > 0 then
-        a.nvim__put_attr(hl, match.pattern or 0, start_row, start_col, end_row, end_col)
-      end
-    end
-  end
+  -- local seen = {}
+  -- for capture, node, match in self.query:iter_match_stack(nodes, search_node, buf) do
+  --   if not seen[node] then
+  --     seen[node] = true
+  --     local start_row, start_col, end_row, end_col = node:range()
+  --     local hl = self.id_map[capture]
+  --     if hl and hl > 0 then
+  --       a.nvim__put_attr(hl, match.pattern or 0, start_row, start_col, end_row, end_col)
+  --     end
+  --   end
+  -- end
 end
 
 return TSHighlighter

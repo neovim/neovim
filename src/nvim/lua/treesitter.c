@@ -289,6 +289,7 @@ static const char *input_cb(void *payload, uint32_t byte_index,
 
   if (position.column > len) {
     *bytes_read = 0;
+    return "";
   } else {
     size_t tocopy = MIN(len-position.column, BUFSIZE);
 
@@ -752,6 +753,43 @@ static int node_named_descendant_for_range(lua_State *L)
   return 1;
 }
 
+static bool node_next_child_impl(TSTreeCursor *cursor, TSNode source)
+{
+#define SHOULD_RETURN(node) ts_node_is_named((node))
+  if (ts_tree_cursor_goto_first_child(cursor)) {
+
+    if (SHOULD_RETURN(ts_tree_cursor_current_node(cursor))) {
+      return true;
+    } else {
+      return node_next_child_impl(cursor, source);
+    }
+
+  } else if (ts_tree_cursor_goto_next_sibling(cursor)) {
+
+    if (SHOULD_RETURN(ts_tree_cursor_current_node(cursor))) {
+      return true;
+    } else {
+      return node_next_child_impl(cursor, source);
+    }
+
+  } else if (ts_tree_cursor_goto_parent(cursor)) {
+
+    if (ts_node_eq(source, ts_tree_cursor_current_node(cursor))) {
+      return false;
+    } else if (ts_tree_cursor_goto_next_sibling(cursor)) {
+      if (SHOULD_RETURN(ts_tree_cursor_current_node(cursor))) {
+        return true;
+      } else {
+        return node_next_child_impl(cursor, source);
+      }
+    }
+
+  }
+
+  return false;
+#undef SHOULD_RETURN
+}
+
 static int node_next_child(lua_State *L)
 {
   TSTreeCursor *ud = luaL_checkudata(
@@ -765,19 +803,9 @@ static int node_next_child(lua_State *L)
     return 0;
   }
 
-  if (ts_tree_cursor_goto_first_child(ud)) {
-    push_node(L, ts_tree_cursor_current_node(ud), lua_upvalueindex(2));
-    return 1;
-  } else if (ts_tree_cursor_goto_next_sibling(ud)) {
-    push_node(L, ts_tree_cursor_current_node(ud), lua_upvalueindex(2));
-    return 1;
-  } else if (ts_tree_cursor_goto_parent(ud)) {
-    if (ts_node_eq(source, ts_tree_cursor_current_node(ud))) {
-      return 0;
-    } else {
-      // Try next node
-      return node_next_child(L);
-    }
+  if (node_next_child_impl(ud, source)) {
+      push_node(L, ts_tree_cursor_current_node(ud), lua_upvalueindex(2));
+      return 1;
   }
 
   return 0;
