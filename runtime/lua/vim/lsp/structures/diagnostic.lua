@@ -1,7 +1,7 @@
 local api = vim.api
 local validate = vim.validate
 
-local log = require('vim.lsp.log')
+-- local log = require('vim.lsp.log')
 local highlight = require('vim.highlight')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
@@ -287,12 +287,17 @@ Diagnostic.get_buf_diagnostics = function(bufnr, client_id)
   return diagnostic_cache[bufnr][client_id]
 end
 
-local iter_diagnostic_lines = function(start, finish, bufnr, client_id, cursor_position)
+local iter_diagnostic_lines = function(start, finish, bufnr, client_id)
   if bufnr == nil then
     bufnr = vim.api.nvim_get_current_buf()
   end
 
-  for line_nr = start, finish do
+  local step = 1
+  if start > finish then
+    step = -1
+  end
+
+  for line_nr = start, finish, step do
     local line_diagnostics = Diagnostic.get_line_diagnostics(bufnr, line_nr, client_id)
     if line_diagnostics ~= nil and not vim.tbl_isempty(line_diagnostics) then
       return line_diagnostics
@@ -302,73 +307,64 @@ local iter_diagnostic_lines = function(start, finish, bufnr, client_id, cursor_p
   return nil
 end
 
-Diagnostic.buf_get_prev_diagnostic = function(bufnr, client_id, cursor_position)
-  if cursor_position == nil then
-    cursor_position = vim.api.nvim_win_get_cursor(0)
+local iter_diagnosctic_lines_pos = function(line_diagnostics, bufnr)
+  if line_diagnostics == nil or vim.tbl_isempty(line_diagnostics) then
+    return false
   end
 
-  local start = cursor_position[1]
-  local finish = 1
+  -- TODO(tjdevries): Decide if we should choose by severity or other?
+  local iter_diagnostic = line_diagnostics[1]
 
-  return iter_diagnostic_lines(start, finish, bufnr, client_id, cursor_position)
+  return Position.to_pos(iter_diagnostic.range["start"], bufnr)
+end
+
+local iter_diagnosctic_move_pos = function(name, pos)
+  if not pos then
+    print(string.format("%s: No more valid diagnostics to move to.", name))
+    return
+  end
+
+  vim.api.nvim_win_set_cursor(0, {pos[1] + 1, pos[2]})
+end
+
+Diagnostic.buf_get_prev_diagnostic = function(bufnr, client_id, cursor_position)
+  cursor_position = cursor_position or vim.api.nvim_win_get_cursor(0)
+  return iter_diagnostic_lines(cursor_position[1] - 2, 0, bufnr, client_id)
 end
 
 --- Return the pos, {row, col}, for the prev diagnostic in t he current buffer.
 Diagnostic.buf_get_prev_diagnostic_pos = function(bufnr, client_id, cursor_position)
-  local line_diagnostics = Diagnostic.buf_get_prev_diagnostic(bufnr, client_id, cursor_position)
-
-  if line_diagnostics == nil then
-    return false
-  end
-
-  -- TODO(tjdevries): Decide if we should choose by severity or other?
-  local prev_diagnostic = line_diagnostics[1]
-
-  return Position.to_pos(prev_diagnostic.range["start"], bufnr)
+  return iter_diagnosctic_lines_pos(
+    Diagnostic.buf_get_prev_diagnostic(bufnr, client_id, cursor_position),
+    bufnr
+  )
 end
 
 Diagnostic.buf_move_prev_diagnostic = function(bufnr, client_id, cursor_position)
-  local pos = Diagnostic.buf_get_prev_diagnostic_pos(bufnr, client_id, cursor_position)
-  if pos == nil then
-    print("No diagnostic to go to prev")
-  end
-
-  vim.fn.cursor(pos[1], pos[2])
+  return iter_diagnosctic_move_pos(
+    "DiagnosicPrevious",
+    Diagnostic.buf_get_prev_diagnostic_pos(bufnr, client_id, cursor_position)
+  )
 end
 
---- Return the next diagnostic in the file, after the cursor_position
 Diagnostic.buf_get_next_diagnostic = function(bufnr, client_id, cursor_position)
-  if cursor_position == nil then
-    cursor_position = vim.api.nvim_win_get_cursor(0)
-  end
-
-  local start = cursor_position[1]
-  local finish = vim.fn.line('$')
-
-  return iter_diagnostic_lines(start, finish, bufnr, client_id, cursor_position)
+  cursor_position = cursor_position or vim.api.nvim_win_get_cursor(0)
+  return iter_diagnostic_lines(cursor_position[1], vim.fn.line('$'), bufnr, client_id)
 end
 
 --- Return the pos, {row, col}, for the next diagnostic in t he current buffer.
 Diagnostic.buf_get_next_diagnostic_pos = function(bufnr, client_id, cursor_position)
-  local line_diagnostics = Diagnostic.buf_get_next_diagnostic(bufnr, client_id, cursor_position)
-
-  if line_diagnostics == nil then
-    return false
-  end
-
-  -- TODO(tjdevries): Decide if we should choose by severity or other?
-  local next_diagnostic = line_diagnostics[1]
-
-  return Position.to_pos(next_diagnostic.range["start"], bufnr)
+  return iter_diagnosctic_lines_pos(
+    Diagnostic.buf_get_next_diagnostic(bufnr, client_id, cursor_position),
+    bufnr
+  )
 end
 
 Diagnostic.buf_move_next_diagnostic = function(bufnr, client_id, cursor_position)
-  local pos = Diagnostic.buf_get_next_diagnostic_pos(bufnr, client_id, cursor_position)
-  if pos == nil then
-    print("No diagnostic to go to next")
-  end
-
-  vim.fn.cursor(pos[1], pos[2])
+  return iter_diagnosctic_move_pos(
+    "DiagnosicNext",
+    Diagnostic.buf_get_next_diagnostic_pos(bufnr, client_id, cursor_position)
+  )
 end
 
 -- TODO: I don't like that this function is "special" in that doesn't take any diagnostics as first arg.
