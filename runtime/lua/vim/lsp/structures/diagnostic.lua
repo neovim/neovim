@@ -198,6 +198,7 @@ local set_diagnostic_cache = function(diagnostics, bufnr, client_id)
     end
   end
 
+  -- TODO: Check that on startup / when we receive these, it only saves per buffer.
   diagnostic_cache[bufnr][client_id] = diagnostics
   diagnostic_cache_lines[bufnr][client_id] = _diagnostic_lines(diagnostics)
   diagnostic_cache_counts[bufnr][client_id] = _diagnostic_counts(diagnostics)
@@ -283,6 +284,90 @@ Diagnostic.get_buf_diagnostics = function(bufnr, client_id)
   end
 
   return diagnostic_cache[bufnr][client_id]
+end
+
+local iter_diagnostic_lines = function(start, finish, bufnr, client_id, cursor_position)
+  if bufnr == nil then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  for line_nr = start, finish do
+    local line_diagnostics = Diagnostic.get_line_diagnostics(bufnr, line_nr, client_id)
+    if line_diagnostics ~= nil and not vim.tbl_isempty(line_diagnostics) then
+      return line_diagnostics
+    end
+  end
+
+  return nil
+end
+
+Diagnostic.buf_get_prev_diagnostic = function(bufnr, client_id, cursor_position)
+  if cursor_position == nil then
+    cursor_position = vim.api.nvim_win_get_cursor(0)
+  end
+
+  local start = cursor_position[1]
+  local finish = 1
+
+  return iter_diagnostic_lines(start, finish, bufnr, client_id, cursor_position)
+end
+
+--- Return the pos, {row, col}, for the prev diagnostic in t he current buffer.
+Diagnostic.buf_get_prev_diagnostic_pos = function(bufnr, client_id, cursor_position)
+  local line_diagnostics = Diagnostic.buf_get_prev_diagnostic(bufnr, client_id, cursor_position)
+
+  if line_diagnostics == nil then
+    return false
+  end
+
+  -- TODO(tjdevries): Decide if we should choose by severity or other?
+  local prev_diagnostic = line_diagnostics[1]
+
+  return Position.to_pos(prev_diagnostic.range["start"], bufnr)
+end
+
+Diagnostic.buf_move_prev_diagnostic = function(bufnr, client_id, cursor_position)
+  local pos = Diagnostic.buf_get_prev_diagnostic_pos(bufnr, client_id, cursor_position)
+  if pos == nil then
+    print("No diagnostic to go to prev")
+  end
+
+  vim.fn.cursor(pos[1], pos[2])
+end
+
+--- Return the next diagnostic in the file, after the cursor_position
+Diagnostic.buf_get_next_diagnostic = function(bufnr, client_id, cursor_position)
+  if cursor_position == nil then
+    cursor_position = vim.api.nvim_win_get_cursor(0)
+  end
+
+  local start = cursor_position[1]
+  local finish = vim.fn.line('$')
+
+  return iter_diagnostic_lines(start, finish, bufnr, client_id, cursor_position)
+end
+
+--- Return the pos, {row, col}, for the next diagnostic in t he current buffer.
+Diagnostic.buf_get_next_diagnostic_pos = function(bufnr, client_id, cursor_position)
+  local line_diagnostics = Diagnostic.buf_get_next_diagnostic(bufnr, client_id, cursor_position)
+
+  if line_diagnostics == nil then
+    return false
+  end
+
+  -- TODO(tjdevries): Decide if we should choose by severity or other?
+  local next_diagnostic = line_diagnostics[1]
+
+  return Position.to_pos(next_diagnostic.range["start"], bufnr)
+end
+
+Diagnostic.buf_move_next_diagnostic = function(bufnr, client_id, cursor_position)
+  local pos = Diagnostic.buf_get_next_diagnostic_pos(bufnr, client_id, cursor_position)
+  if pos == nil then
+    print("No diagnostic to go to next")
+  end
+
+  vim.fn.cursor(pos[1], pos[2])
 end
 
 -- TODO: I don't like that this function is "special" in that doesn't take any diagnostics as first arg.

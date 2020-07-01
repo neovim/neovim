@@ -77,6 +77,9 @@ To explain:
 Actions should be composable
 Actions should be chainable / consecutive
 
+If an action returns false, stop the chain of actions.
+  If it returns false, it can optionally return an error message.
+
 --]=]
 
 local api = vim.api
@@ -89,6 +92,15 @@ local wrap_generator = util.wrap_generator
 
 local actions = {}
 
+
+local handle_success_and_message = function(method, success, message)
+  if success == false then
+    log.info(method, message)
+    return false
+  end
+end
+
+
 --- Location actions.
 -- Supports both Location and LocationLink
 --@ref |structures.Location|
@@ -97,17 +109,14 @@ actions.Location = {}
 --- Jump to the first location. Accepts Location and Location[]
 actions.Location.jump_first = function()
   return function(_, method, location, _, _)
-    local success = structures.Location.jump(location)
-
-    if success == false then
-      log.info(method, 'No location found')
-    end
+    return handle_success_and_message(method, structures.Location.jump(location))
   end
 end
 
 --- Jump to the first Location. If more than one Location is returned, quickfix list is populated
 actions.Location.jump_and_quickfix = function()
   return function(_, method, result)
+    -- How can I not repeat myself here.
     if result == nil or vim.tbl_isempty(result) then
       log.info(method, 'No location found')
       return nil

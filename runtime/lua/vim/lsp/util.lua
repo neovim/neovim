@@ -395,7 +395,7 @@ end
 -- Location stuff...
 -- TODO(tjdevries): Could mark as deprecated? or just delete? we haven't yet released anything, so now is the time.
 function M.jump_to_location(location)
-  return require("vim.lsp.structures").Location.jump(location)
+  return require("vim.lsp.structures").Location.jump(location) ~= false
 end
 
 function M.preview_location(location)

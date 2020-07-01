@@ -1567,7 +1567,7 @@ describe('LSP', function()
   describe('structures', function()
     describe('diagnostic', function()
       describe('handle_publish_diagnostics', function()
-        local target_bufnr, fake_uri
+        local diagnostic_bufnr, fake_uri
 
         before_each(function()
           clear()
@@ -1603,14 +1603,18 @@ describe('LSP', function()
 
           fake_uri = "file://fake/uri"
 
-          target_bufnr = exec_lua([[
+          diagnostic_bufnr = exec_lua([[
             fake_uri = ...
-            target_bufnr = vim.uri_to_bufnr(fake_uri)
-            local lines = {"1st line of text", "2nd line of text"}
-            vim.fn.bufload(target_bufnr)
-            vim.api.nvim_buf_set_lines(target_bufnr, 0, 1, false, lines)
-            return target_bufnr
+            diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
+            local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
+            vim.fn.bufload(diagnostic_bufnr)
+            vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
+            return diagnostic_bufnr
           ]], fake_uri)
+        end)
+
+        after_each(function()
+          clear()
         end)
 
         it('should be able to save and count a single client', function()
@@ -1703,9 +1707,10 @@ describe('LSP', function()
           -- 1 Error (1)
           -- 1 Warning (2)
           -- 1 Warning (2) + 1 Warning (1)
-          -- 2 highlights and an underline (since error)
-          -- 1 highlight
-          eq({1, 1, 2, 3, 1}, exec_lua [[
+          -- 2 highlights and 2 underlines (since error)
+          -- 1 highlight + 1 underline
+          local all_highlights = {1, 1, 2, 4, 2}
+          eq(all_highlights, exec_lua [[
             local actions = require('vim.lsp.actions')
             local Diagnostic = require('vim.lsp.structures').Diagnostic
 
@@ -1722,43 +1727,78 @@ describe('LSP', function()
             actions.Diagnostic.handle_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
 
             return {
-              Diagnostic.get_counts(target_bufnr, "Error", 1),
-              Diagnostic.get_counts(target_bufnr, "Warning", 2),
-              Diagnostic.get_counts(target_bufnr, "Warning"),
-              count_of_extmarks_for_client(target_bufnr, 1),
-              count_of_extmarks_for_client(target_bufnr, 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Error", 1),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning", 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning"),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
             }
           ]])
 
           -- Clear diagnostics from server 1, and make sure we have the right amount of stuff for client 2
-          eq({1, 1, 2, 0, 1}, exec_lua [[
+          eq({1, 1, 2, 0, 2}, exec_lua [[
             local Diagnostic = require('vim.lsp.structures').Diagnostic
 
-            Diagnostic.buf_clear_displayed_diagnostics(target_bufnr, 1)
+            Diagnostic.buf_clear_displayed_diagnostics(diagnostic_bufnr, 1)
 
             return {
-              Diagnostic.get_counts(target_bufnr, "Error", 1),
-              Diagnostic.get_counts(target_bufnr, "Warning", 2),
-              Diagnostic.get_counts(target_bufnr, "Warning"),
-              count_of_extmarks_for_client(target_bufnr, 1),
-              count_of_extmarks_for_client(target_bufnr, 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Error", 1),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning", 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning"),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
             }
           ]])
 
           -- Show diagnostics from server 1 again
-          eq({1, 1, 2, 3, 1}, exec_lua([[
+          eq(all_highlights, exec_lua([[
             local Diagnostic = require('vim.lsp.structures').Diagnostic
 
-            Diagnostic.display(nil, target_bufnr, 1)
+            Diagnostic.display(nil, diagnostic_bufnr, 1)
 
             return {
-              Diagnostic.get_counts(target_bufnr, "Error", 1),
-              Diagnostic.get_counts(target_bufnr, "Warning", 2),
-              Diagnostic.get_counts(target_bufnr, "Warning"),
-              count_of_extmarks_for_client(target_bufnr, 1),
-              count_of_extmarks_for_client(target_bufnr, 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Error", 1),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning", 2),
+              Diagnostic.get_counts(diagnostic_bufnr, "Warning"),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
             }
           ]]))
+        end)
+
+        describe('get_next_diagnostic_pos', function()
+          it('can find the next pos with only one client', function()
+            eq({1, 1}, exec_lua [[
+              local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+              Diagnostic.save_buf_diagnostics(
+                {
+                  make_error('Diagnostic #1', 1, 1, 1, 1),
+                }, diagnostic_bufnr, 1
+              )
+
+              vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+              return Diagnostic.buf_get_next_diagnostic_pos()
+            ]])
+          end)
+
+          it('can find next pos with two errors', function()
+            eq({4, 4}, exec_lua [[
+              local Diagnostic = require('vim.lsp.structures').Diagnostic
+
+              Diagnostic.save_buf_diagnostics(
+                {
+                  make_error('Diagnostic #1', 1, 1, 1, 1),
+                  make_error('Diagnostic #2', 4, 4, 4, 4),
+                }, diagnostic_bufnr, 1
+              )
+
+              vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+              vim.api.nvim_win_set_cursor(0, {3, 1})
+
+              return Diagnostic.buf_get_next_diagnostic_pos(diagnostic_bufnr, 1)
+            ]])
+          end)
         end)
       end)
     end)

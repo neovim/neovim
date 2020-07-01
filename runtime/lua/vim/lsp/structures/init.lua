@@ -20,6 +20,11 @@ Naming scheme:
 
     function(location, ...)
 
+TODO(tjdevries): Determine if this is the right place to put this.
+Function interface:
+  - Functions that do not succeed, either via invalid parameters or unable to complete
+    must return false. Optionally, they can return a message as the second return value.
+
 Additionally, within each `structure.*`, they can import only directly from other structures using:
 
   require('vim.lsp.structures.location')

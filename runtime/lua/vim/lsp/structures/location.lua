@@ -32,11 +32,20 @@ Location.to_uri_and_range = function(location)
   return uri, range
 end
 
+--[[
+
+local cbs = { Location.jump, Location.highlight, ... }
+
+jump(), highlight(), ...
+if jump() == false then stop doing stuff end
+
+--]]
+
 Location.jump = function(location)
   location = get_first_or_only(location)
 
   if location == nil then
-    return false
+    return false, "Location not found"
   end
 
   local uri, range = Location.to_uri_and_range(location)
@@ -62,8 +71,6 @@ Location.jump = function(location)
   local row, col = unpack(Position.to_pos(range.start, bufnr))
 
   api.nvim_win_set_cursor(0, {row + 1, col})
-
-  return true
 end
 
 Location.preview = function(location, lines_above, lines_below)
