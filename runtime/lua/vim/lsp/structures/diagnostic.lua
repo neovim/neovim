@@ -255,7 +255,8 @@ Diagnostic.set_virtual_text = function(diagnostics, bufnr, client_id, diagnostic
     -- TODO(ashkan) use first line instead of subbing 2 spaces?
 
     -- TODO(tjdevries): Should use highest severity message here.
-    -- TODO(tjdevries): Allow different severs to be shown first somehow?
+    -- TODO(tjdevries): Allow different servers to be shown first somehow?
+    -- TODO(tjdevries): Display server name associated with these?
     if last.message then
       table.insert(
         virt_texts,
@@ -444,8 +445,6 @@ Diagnostic.display = function(diagnostics, bufnr, client_id, args)
 
   diagnostics = diagnostics or diagnostic_cache[bufnr][client_id]
 
-  log.debug("Calling display...", vim.inspect(vim.v.event), bufnr, client_id, vim.inspect(args), vim.inspect(diagnostics))
-
   if not diagnostics or vim.tbl_isempty(diagnostics) then
     return
   end
@@ -454,10 +453,8 @@ Diagnostic.display = function(diagnostics, bufnr, client_id, args)
     Diagnostic.underline(diagnostics, bufnr, client_id)
   end
 
-  -- util.buf_diagnostics_virtual_text(bufnr, notification.diagnostics)
   Diagnostic.set_virtual_text(diagnostics, bufnr, client_id)
 
-  -- util.buf_diagnostics_signs(bufnr, notification.diagnostics)
   Diagnostic.set_signs(diagnostics, bufnr, client_id)
 
   vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
@@ -471,15 +468,32 @@ end
 
 local registered = {}
 
+local make_augroup_key = function(bufnr, client_id)
+  return string.format("LspDiagnosticInsertLeave:%s:%s", bufnr, client_id)
+end
+
+Diagnostic.buf_remove_schedule_display_on_insert_leave = function(bufnr, client_id)
+  local key = make_augroup_key(bufnr, client_id)
+
+  if registered[key] then
+    vim.cmd("augroup %s", key)
+    vim.cmd("  au!")
+    vim.cmd("augroup END")
+
+    registered[key] = nil
+  end
+end
+
 Diagnostic.buf_schedule_display_on_insert_leave = function(bufnr, client_id, args)
   if _bufs_waiting_to_update[bufnr][client_id] then
+    _bufs_waiting_to_update[bufnr][client_id] = args
     return
   end
 
-  _bufs_waiting_to_update[bufnr][client_id] = args
-
-  local key = string.format("%s:%s", bufnr, client_id)
+  local key = make_augroup_key(bufnr, client_id)
   if not registered[key] then
+    vim.cmd("augroup %s", key)
+    vim.cmd("  au!")
     vim.cmd(
       string.format(
         -- TODO: Should really think about these more or make it configurable.
@@ -489,6 +503,7 @@ Diagnostic.buf_schedule_display_on_insert_leave = function(bufnr, client_id, arg
         client_id
       )
     )
+    vim.cmd("augroup END")
 
     registered[key] = true
   end

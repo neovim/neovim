@@ -34,7 +34,9 @@ Rather than:
   require('vim.lsp.structures').location
 
 
-However, from the rest of the project, they should be imported in the latter style.
+However, from the rest of the project, they should be imported in the latter style. The reason for this
+is that this prevents circular dependencies within `structures/*`, but allows for us to make sure that
+all of the appropriate APIs are exposed via the public api of `vim.lsp.structures`
 
 --]]
 
