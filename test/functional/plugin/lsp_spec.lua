@@ -1129,6 +1129,142 @@ describe('LSP', function()
       eq(expected, get_completion_list(completion_list_items, prefix))
       eq({}, get_completion_list({}, prefix))
     end)
+    describe('completion_list_to_complete_items for lua lsp', function()
+      it("completion for 'pri'", function ()
+      local result = {
+        isIncomplete = true,
+        items = { {
+            data = {
+              offset = 0,
+              uri = ""
+            },
+            detail = "(function)",
+            documentation = {
+              kind = "markdown",
+              value = "```lua\nfunction ipairs(t: table)\n  -> iterator: any\n  2. t: table\n  3. i: integer(0)\n```\n----------------\n```lua\nfor i, v in ipairs(t) do\n    body\nend\n```\n\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-ipairs)\n"
+            },
+            insertTextFormat = 2,
+            kind = 3,
+            label = "ipairs",
+            sortText = "0001",
+            textEdit = {
+              newText = "ipairs",
+              range = {
+                [ "end" ] = {
+                  character = 3,
+                  line = 0
+                },
+                [ "start" ] = {
+                  character = 0,
+                  line = 0
+                }
+              }
+            }
+          }, {
+            data = {
+              offset = 37101,
+              uri = "file:///Users/USER/local/nvim/share/nvim/runtime/lua/vim/lsp/util.lua"
+            },
+            detail = "(function)",
+            documentation = {
+              kind = "markdown",
+              value = "```lua\nfunction pairs(t: table)\n  -> @next: any\n  2. t: table\n  3. nil\n```\n----------------\n```lua\nfor k, v in pairs(t) do\n    body\nend\n```\n\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-pairs)\n"
+            },
+            insertTextFormat = 2,
+            kind = 3,
+            label = "pairs",
+            sortText = "0002",
+            textEdit = {
+              newText = "pairs",
+              range = {
+                [ "end" ] = {
+                  character = 3,
+                  line = 0
+                },
+                [ "start" ] = {
+                  character = 0,
+                  line = 0
+                }
+              }
+            }
+          }, {
+            data = {
+              offset = 0,
+              uri = ""
+            },
+            detail = "(function)",
+            documentation = {
+              kind = "markdown",
+              value = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n"
+            },
+            insertTextFormat = 2,
+            kind = 3,
+            label = "print",
+            sortText = "0003",
+            textEdit = {
+              newText = "print",
+              range = {
+                [ "end" ] = {
+                  character = 3,
+                  line = 0
+                },
+                [ "start" ] = {
+                  character = 0,
+                  line = 0
+                }
+              }
+            }
+          },
+        }
+      }
+      local prefix = "pri"
+      local matches = { {
+          abbr = "print",
+          dup = 1,
+          empty = 1,
+          icase = 1,
+          info = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n",
+          kind = "Function",
+          menu = "(function)",
+          user_data = {
+            nvim = {
+              lsp = {
+                completion_item = {
+                  data = {
+                    offset = 0,
+                    uri = ""
+                  },
+                  detail = "(function)",
+                  documentation = {
+                    kind = "markdown",
+                    value = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n"
+                  },
+                  insertTextFormat = 2,
+                  kind = 3,
+                  label = "print",
+                  sortText = "0003",
+                  textEdit = {
+                    newText = "print",
+                    range = {
+                      [ "end" ] = {
+                        character = 3,
+                        line = 0
+                      },
+                      [ "start" ] = {
+                        character = 0,
+                        line = 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          word = "print"
+        } }
+        eq(matches, get_completion_list(result, prefix))
+      end)
+    end)
   end)
   describe('buf_diagnostics_save_positions', function()
     it('stores the diagnostics in diagnostics_by_buf', function ()
