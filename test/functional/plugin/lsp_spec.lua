@@ -1038,8 +1038,8 @@ describe('LSP', function()
       local prefix = 'foo'
       local completion_list = {
         -- resolves into insertText
-        { label='foocar', insertText='foobar' },
-        { label='foocar', insertText='foobar', textEdit={} },
+        { label = 'foocar', insertText = 'foobar' },
+        { label = 'foocar', insertText = 'foobar', textEdit = {} },
       }
       local completion_list_items = {items=completion_list}
       local expected = {
@@ -1063,15 +1063,15 @@ describe('LSP', function()
       }
       local completion_list = {
         -- resolves into textEdit.newText
-        { label='foocar', insertText='foodar', textEdit = { newText='bar', range=insertTextRange } },
-        { label='foocar', insertText='foodar', textEdit = { newText='foobar', range=replaceTextRange } },
-        { label='foocar', textEdit = { newText = 'bar', range = insertTextRange } },
+        { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar', range = insertTextRange } },
+        { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'foobar', range = replaceTextRange } },
+        { label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
       local completion_list_items = {items=completion_list}
       local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit= { newText = 'bar', range=insertTextRange} },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit = {newText = 'foobar', range = replaceTextRange} },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', textEdit = { newText = 'bar', range=insertTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit = { newText = 'bar', range = insertTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit = {newText = 'foobar', range = replaceTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
 
       eq(expected, get_completion_list(completion_list, prefix))
@@ -1086,8 +1086,8 @@ describe('LSP', function()
       }
       local completion_list = {
         -- real-world snippet text
-        { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} },
-        { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} },
+        { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar(${1:place holder}, ${2:more ...holder{\\}})', range = insertTextRange } },
+        { label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
       }
       local completion_list_items = {items=completion_list}
       local expected = {
@@ -1103,9 +1103,9 @@ describe('LSP', function()
       local prefix = 'foo'
       local completion_list = {
         -- nested snippet tokens
-        { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} },
+        { label = 'foocar', insertText = 'foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit = {} },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = { items = completion_list }
       local expected = {
         create_compl_item { abbr = 'foocar', word = 'foodar(var1 typ2,typ3 tail) {}', label = 'foocar', insertText = 'foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit = {} },
       }
@@ -1118,7 +1118,7 @@ describe('LSP', function()
       local prefix = 'foo'
       local completion_list = {
         -- plain text
-        { label='foocar', insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} },
+        { label = 'foocar', insertText = 'foodar(${1:var1})', insertTextFormat = 1, textEdit = {} },
       }
       local completion_list_items = {items=completion_list}
       local expected = {
