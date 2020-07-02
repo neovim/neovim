@@ -15,8 +15,6 @@ describe('autoread TUI FocusGained/FocusLost', function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
-    feed_command('set autoread')
-    feed_data("\034\016")
   end)
 
   it('external file change', function()
