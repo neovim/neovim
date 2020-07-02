@@ -716,7 +716,7 @@ https://github.com/machakann/vim-highlightedyank). To enable it, add
 to your `init.vim`. You can customize the highlight group and the duration of
 the highlight via
 >
- au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=250}
+ au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
 <
 If you want to exclude visual selections from highlighting on yank, use
 >
@@ -727,7 +727,7 @@ vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
         Highlights the yanked text. The fields of the optional dict {opts}
         control the highlight:
           - {higroup} highlight group for yanked region (default `"IncSearch"`)
-          - {timeout} time in ms before highlight is cleared (default `250`)
+          - {timeout} time in ms before highlight is cleared (default `150`)
           - {on_macro} highlight when executing macro (default `false`)
           - {on_visual} highlight when yanking visual selection (default `true`)
           - {event} event structure (default `vim.v.event`)
