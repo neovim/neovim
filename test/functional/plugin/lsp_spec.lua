@@ -1021,10 +1021,10 @@ describe('LSP', function()
       local prefix = 'foo'
       local completion_list = {
         -- resolves into label
-        { label='foobar' },
-        { label='foobar', textEdit={} },
+        { label = 'foobar' },
+        { label = 'foobar', textEdit = {} },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = { items = completion_list }
       local expected = {
         create_compl_item { abbr = 'foobar', word = 'foobar', label = 'foobar' },
         create_compl_item { abbr = 'foobar', word = 'foobar', label = 'foobar', textEdit = {} },
@@ -1041,10 +1041,10 @@ describe('LSP', function()
         { label = 'foocar', insertText = 'foobar' },
         { label = 'foocar', insertText = 'foobar', textEdit = {} },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = { items = completion_list }
       local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText = 'foobar' },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foobar', textEdit={} },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foobar' },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foobar', textEdit = {} },
       }
 
       eq(expected, get_completion_list(completion_list, prefix))
@@ -1067,11 +1067,11 @@ describe('LSP', function()
         { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'foobar', range = replaceTextRange } },
         { label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = {items = completion_list}
       local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit = { newText = 'bar', range = insertTextRange } },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foodar', textEdit = {newText = 'foobar', range = replaceTextRange } },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', textEdit = { newText = 'bar', range = insertTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar', range = insertTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foodar', textEdit = {newText = 'foobar', range = replaceTextRange } },
+        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
 
       eq(expected, get_completion_list(completion_list, prefix))
@@ -1089,7 +1089,7 @@ describe('LSP', function()
         { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar(${1:place holder}, ${2:more ...holder{\\}})', range = insertTextRange } },
         { label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = { items = completion_list }
       local expected = {
         create_compl_item { abbr = 'foocar', word = 'foobar(place holder, more ...holder{})', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar(${1:place holder}, ${2:more ...holder{\\}})', range = insertTextRange } },
         create_compl_item { abbr = 'foocar', word = 'foodar(var1 typ1, var2 *typ2) {}', label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
@@ -1120,7 +1120,7 @@ describe('LSP', function()
         -- plain text
         { label = 'foocar', insertText = 'foodar(${1:var1})', insertTextFormat = 1, textEdit = {} },
       }
-      local completion_list_items = {items=completion_list}
+      local completion_list_items = {items = completion_list}
       local expected = {
         create_compl_item { abbr = 'foocar', word = 'foodar(${1:var1})', label = 'foocar', insertText = 'foodar(${1:var1})', insertTextFormat = 1, textEdit = {} },
       }
