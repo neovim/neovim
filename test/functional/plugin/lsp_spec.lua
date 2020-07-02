@@ -1141,7 +1141,7 @@ describe('LSP', function()
             detail = "(function)",
             documentation = {
               kind = "markdown",
-              value = "```lua\nfunction ipairs(t: table)\n  -> iterator: any\n  2. t: table\n  3. i: integer(0)\n```\n----------------\n```lua\nfor i, v in ipairs(t) do\n    body\nend\n```\n\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-ipairs)\n"
+              value = "shortened for brevity"
             },
             insertTextFormat = 2,
             kind = 3,
@@ -1163,12 +1163,12 @@ describe('LSP', function()
           }, {
             data = {
               offset = 37101,
-              uri = "file:///Users/USER/local/nvim/share/nvim/runtime/lua/vim/lsp/util.lua"
+              uri = "shortened for brevity"
             },
             detail = "(function)",
             documentation = {
               kind = "markdown",
-              value = "```lua\nfunction pairs(t: table)\n  -> @next: any\n  2. t: table\n  3. nil\n```\n----------------\n```lua\nfor k, v in pairs(t) do\n    body\nend\n```\n\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-pairs)\n"
+              value = "shortened for brevity"
             },
             insertTextFormat = 2,
             kind = 3,
@@ -1195,7 +1195,7 @@ describe('LSP', function()
             detail = "(function)",
             documentation = {
               kind = "markdown",
-              value = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n"
+              value = "shortened for brevity"
             },
             insertTextFormat = 2,
             kind = 3,
@@ -1223,7 +1223,7 @@ describe('LSP', function()
           dup = 1,
           empty = 1,
           icase = 1,
-          info = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n",
+          info = "shortened for brevity",
           kind = "Function",
           menu = "(function)",
           user_data = {
@@ -1237,7 +1237,7 @@ describe('LSP', function()
                   detail = "(function)",
                   documentation = {
                     kind = "markdown",
-                    value = "```lua\nfunction print(...)\n```\nReceives any number of arguments and prints their values to stdout.\n```lua\n\n```\n[View documents](http://www.lua.org/manual/5.3/manual.html#pdf-print)\n"
+                    value = "shortened for brevity"
                   },
                   insertTextFormat = 2,
                   kind = 3,
