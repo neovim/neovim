@@ -990,45 +990,111 @@ describe('LSP', function()
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
     -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-    it('should choose right completion option', function ()
+    it('should choose right completion option for label', function ()
       local prefix = 'foo'
-      local insertTextRange = {}
-      insertTextRange["start"] = { line = 5, character = 23 }
-      insertTextRange["end"] = { line = 5, character = 23 }
-      local replaceTextRange = {}
-      replaceTextRange["start"] = { line = 5, character = 21 }
-      replaceTextRange["end"] = { line = 5, character = 23 }
       local completion_list = {
         -- resolves into label
         { label='foobar' },
         { label='foobar', textEdit={} },
-        -- resolves into insertText
-        { label='foocar', insertText='foobar' },
-        { label='foocar', insertText='foobar', textEdit={} },
-        -- resolves into textEdit.newText
-        { label='foocar', insertText='foodar', textEdit={newText='bar', range=insertTextRange} },
-        { label='foocar', insertText='foodar', textEdit={newText='foobar', range=replaceTextRange} },
-        { label='foocar', textEdit={newText='bar', range=insertTextRange} },
-        -- real-world snippet text
-        { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} },
-        { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} },
-        -- nested snippet tokens
-        { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} },
-        -- plain text
-        { label='foocar', insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} },
       }
       local completion_list_items = {items=completion_list}
       local expected = {
         { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label = 'foobar' } } } } },
         { abbr = 'foobar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foobar', textEdit={} } } }  } },
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+    it('should choose right completion option for insertText', function ()
+      local prefix = 'foo'
+      local completion_list = {
+        -- resolves into insertText
+        { label='foocar', insertText='foobar' },
+        { label='foocar', insertText='foobar', textEdit={} },
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar' } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foobar', textEdit={} } } } } },
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+    it('should choose right completion option for textEdit.newText', function ()
+      local prefix = 'foo'
+      local insertTextRange = {
+        ["start"] = { line = 5, character = 23 },
+        ["end"] = { line = 5, character = 23 },
+      }
+      local replaceTextRange = {
+        ["start"] = { line = 5, character = 21 },
+        ["end"] = { line = 5, character = 23 },
+      }
+      local completion_list = {
+        -- resolves into textEdit.newText
+        { label='foocar', insertText='foodar', textEdit={newText='bar', range=insertTextRange} },
+        { label='foocar', insertText='foodar', textEdit={newText='foobar', range=replaceTextRange} },
+        { label='foocar', textEdit={newText='bar', range=insertTextRange} },
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='bar', range=insertTextRange} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='foobar', range=replaceTextRange} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar', user_data = { nvim = { lsp = { completion_item = { label='foocar', textEdit={newText='bar', range=insertTextRange} } } } } },
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+    it('should choose right completion option for snippet', function ()
+      local prefix = 'foo'
+      local insertTextRange = {
+        ["start"] = { line = 5, character = 23 },
+        ["end"] = { line = 5, character = 23 },
+      }
+      local completion_list = {
+        -- real-world snippet text
+        { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} },
+        { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} },
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foobar(place holder, more ...holder{})', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar', textEdit={newText='bar(${1:place holder}, ${2:more ...holder{\\}})', range=insertTextRange} } } } } },
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(var1 typ1, var2 *typ2) {}', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit={} } } } } },
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+    it('should choose right completion option snippet tokens', function ()
+      local prefix = 'foo'
+      local completion_list = {
+        -- nested snippet tokens
+        { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} },
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(var1 typ2,typ3 tail) {}', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit={} } } } } },
+      }
+
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+    it('should choose right completion option for plain text', function ()
+      local prefix = 'foo'
+      local completion_list = {
+        -- plain text
+        { label='foocar', insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} },
+      }
+      local completion_list_items = {items=completion_list}
+      local expected = {
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(${1:var1})', user_data = { nvim = { lsp = { completion_item = { label='foocar', insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} } } } } },
       }
 
