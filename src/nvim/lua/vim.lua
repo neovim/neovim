@@ -255,6 +255,8 @@ function vim.schedule_wrap(cb)
   end)
 end
 
+--- <Docs described in |vim.empty_dict()| >
+--@private
 function vim.empty_dict()
   return setmetatable({}, vim._empty_dict_mt)
 end
