@@ -3762,7 +3762,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       tword[sp->ts_twordlen] = NUL;
 
       if (sp->ts_prefixdepth <= PFD_NOTSPECIAL
-          && (sp->ts_flags & TSF_PREFIXOK) == 0) {
+          && (sp->ts_flags & TSF_PREFIXOK) == 0
+          && pbyts != NULL) {
         // There was a prefix before the word.  Check that the prefix
         // can be used with this word.
         // Count the length of the NULs in the prefix.  If there are
