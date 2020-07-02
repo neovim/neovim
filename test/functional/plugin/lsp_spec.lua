@@ -1011,6 +1011,9 @@ describe('LSP', function()
           },
         }
     end
+    local function get_completion_list(completion_list, prefix)
+      return exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix)
+    end
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
     -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
@@ -1027,9 +1030,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foobar', word = 'foobar', label = 'foobar', textEdit = {} },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
     it('should choose right completion option for insertText', function ()
       local prefix = 'foo'
@@ -1044,9 +1047,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', insertText='foobar', textEdit={} },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
     it('should choose right completion option for textEdit.newText', function ()
       local prefix = 'foo'
@@ -1071,9 +1074,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foocar', word = 'foobar', label='foocar', textEdit = { newText = 'bar', range=insertTextRange } },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
     it('should choose right completion option for snippet', function ()
       local prefix = 'foo'
@@ -1092,9 +1095,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foocar', word = 'foodar(var1 typ1, var2 *typ2) {}', label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
     it('should choose right completion option snippet tokens', function ()
       local prefix = 'foo'
@@ -1107,9 +1110,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foocar', word = 'foodar(var1 typ2,typ3 tail) {}', label = 'foocar', insertText = 'foodar(${1:var1 ${2|typ2,typ3|} ${3:tail}}) {$0\\}', textEdit = {} },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
     it('should choose right completion option for plain text', function ()
       local prefix = 'foo'
@@ -1122,9 +1125,9 @@ describe('LSP', function()
         create_compl_item { abbr = 'foocar', word = 'foodar(${1:var1})', label = 'foocar', insertText = 'foodar(${1:var1})', insertTextFormat = 1, textEdit = {} },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+      eq({}, get_completion_list({}, prefix))
     end)
   end)
   describe('buf_diagnostics_save_positions', function()
