@@ -67,7 +67,6 @@ static void do_autocmd_focusgained(bool gained)
   // 1. Some filesystems have modification time granularity in seconds. Fat32
   //    has a granularity of 2 seconds.
   // 2. We could get multiple notifications in a row.
-
   if (gained && last_time + (Timestamp)2000 < os_now()) {
     need_redraw = check_timestamps(true);
     last_time = os_now();
