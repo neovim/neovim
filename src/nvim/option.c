@@ -2537,6 +2537,7 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
+<<<<<<< HEAD
     char_u *fcnotify = p_fcnotify;
 
     if (opt_flags & OPT_LOCAL) {
@@ -2546,6 +2547,9 @@ ambw_end:
     if (check_opt_strings(fcnotify, p_fcn_values, true) != OK
         || (strstr((char *)fcnotify, "off")
             && vim_strchr(fcnotify, ','))) {
+=======
+    if (check_opt_strings(p_fcnotify, p_fcn_values, true) != OK) {
+>>>>>>> c145e5511... refactor
       errmsg = e_invarg;
     }
   // 'encoding', 'fileencoding' and 'makeencoding'

@@ -301,9 +301,9 @@ local function __index(t, key)
   elseif key == 'F' then
     t.F = require('vim.F')
     return t.F
-  elseif key == 'fcnotify' then
-    t.fcnotify = require('vim.fcnotify')
-    return t.fcnotify
+  elseif key == 'autoread' then
+    t.autoread = require('vim.fswatch.autoread')
+    return t.autoread
   end
 end
 
