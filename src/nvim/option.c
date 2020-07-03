@@ -143,6 +143,7 @@ static char_u   *p_tfu;
 static int p_eol;
 static int p_fixeol;
 static int p_et;
+static char_u   *p_fcnotify;
 static char_u   *p_fenc;
 static char_u   *p_ff;
 static char_u   *p_fo;
@@ -313,6 +314,8 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
+static char *(p_fcn_values[]) =       { "off", "autoread", "watcher", "onfocus",
+                                        NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 #ifdef BACKSLASH_IN_FILENAME
@@ -2073,6 +2076,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_menc);
   check_string_option(&buf->b_p_vsts);
   check_string_option(&buf->b_p_vts);
+  check_string_option(&buf->b_p_fcnotify);
 }
 
 /// Free the string allocated for an option.
@@ -2530,6 +2534,18 @@ ambw_end:
     }
   } else if (varp == &p_ei) {  // 'eventignore'
     if (check_ei() == FAIL) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
+    char_u *fcnotify = p_fcnotify;
+
+    if (opt_flags & OPT_LOCAL) {
+      fcnotify = curbuf->b_p_fcnotify;
+    }
+
+    if (check_opt_strings(fcnotify, p_fcn_values, true) != OK
+        || (strstr((char *)fcnotify, "off")
+            && vim_strchr(fcnotify, ','))) {
       errmsg = e_invarg;
     }
   // 'encoding', 'fileencoding' and 'makeencoding'
@@ -5720,6 +5736,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_EOL:    return (char_u *)&(curbuf->b_p_eol);
   case PV_FIXEOL: return (char_u *)&(curbuf->b_p_fixeol);
   case PV_ET:     return (char_u *)&(curbuf->b_p_et);
+  case PV_FCNOTIFY:return (char_u *)&(curbuf->b_p_fcnotify);
   case PV_FENC:   return (char_u *)&(curbuf->b_p_fenc);
   case PV_FF:     return (char_u *)&(curbuf->b_p_ff);
   case PV_FT:     return (char_u *)&(curbuf->b_p_ft);
@@ -6084,6 +6101,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
+      buf->b_p_fcnotify = empty_option;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,

@@ -841,6 +841,17 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='filechangenotify', abbreviation='fcnotify',
+      type='string', list='comma', scope={'global', 'buffer'},
+      vi_def='false',
+      varname='p_fcnotify',
+<<<<<<< HEAD
+      defaults={if_true={vi="off"}}
+=======
+      defaults={if_true={vi="autoread,onfocus"}}
+>>>>>>> 2f7c22510... global local option error fix
+    },
+    {
       full_name='fileencoding', abbreviation='fenc',
       short_desc=N_("file encoding for multi-byte text"),
       type='string', scope={'buffer'},

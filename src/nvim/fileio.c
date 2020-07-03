@@ -4694,6 +4694,9 @@ check_timestamps(
     did_check_timestamps = true;
     already_warned = false;
     FOR_ALL_BUFFERS(buf) {
+      if (focus && strstr((char *)buf->b_p_fcnotify, "onfocus") == NULL) {
+        continue;
+      }
       // Only check buffers in a window.
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
@@ -4825,6 +4828,7 @@ int buf_check_timestamp(buf_T *buf)
      * explorer. */
     if (os_isdir(buf->b_fname)) {
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
+               && strstr((char *)buf->b_p_fcnotify, "autoread")
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it
@@ -4925,8 +4929,21 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "\n", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      if (do_dialog(VIM_WARNING, (char_u *) _("Warning"), (char_u *) tbuf,
-                    (char_u *) _("&OK\n&Load File"), 1, NULL, true) == 2) {
+      int choice = do_dialog(VIM_WARNING, (char_u *) _("Warning"), (char_u *) tbuf,
+                    (char_u *) _("&OK\n&Show diff\n&Load File"), 1, NULL, true);
+      if (choice == 2) {
+        tabpage_new();
+        win_split(0, WSP_VERT);
+        do_cmdline((char_u *)"set buftype=nofile", NULL, NULL, 0);
+        readfile(buf->b_ffname, buf->b_fname, (linenr_T)1, (linenr_T)0, (linenr_T)MAXLNUM, NULL, 0);
+        do_cmdline((char_u *)"0d_", NULL, NULL, 0);
+        do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+        do_window('r', 0, NUL);
+        do_window('p', 0, NUL);
+        do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->handle, false);
+        do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+      }
+      else if (choice == 3) {
         reload = true;
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
