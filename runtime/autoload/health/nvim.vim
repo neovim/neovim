@@ -129,6 +129,25 @@ function! s:check_performance() abort
   endif
 endfunction
 
+function! s:get_tmux_option(option) abort
+  let cmd = 'tmux show-option -qvg '.a:option  " try global scope
+  let out = system(cmd)
+  let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
+  if v:shell_error
+    call health#report_error('command failed: '.cmd."\n".out)
+    return 'error'
+  elseif empty(val)
+    let cmd = 'tmux show-option -qvgs '.a:option  " try session scope
+    let out = system(cmd)
+    let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
+    if v:shell_error
+      call health#report_error('command failed: '.cmd."\n".out)
+      return 'error'
+    endif
+  endif
+  return val
+endfunction
+
 function! s:check_tmux() abort
   if empty($TMUX) || !executable('tmux')
     return
@@ -136,20 +155,31 @@ function! s:check_tmux() abort
   call health#report_start('tmux')
 
   " check escape-time
-  let suggestions = ["Set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10",
+  let suggestions = ["set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10",
         \ s:suggest_faq]
-  let cmd = 'tmux show-option -qvgs escape-time'
-  let out = system(cmd)
-  let tmux_esc_time = substitute(out, '\v(\s|\r|\n)', '', 'g')
-  if v:shell_error
-    call health#report_error('command failed: '.cmd."\n".out)
-  elseif empty(tmux_esc_time)
-    call health#report_error('escape-time is not set', suggestions)
-  elseif tmux_esc_time > 300
-    call health#report_error(
-        \ 'escape-time ('.tmux_esc_time.') is higher than 300ms', suggestions)
-  else
-    call health#report_ok('escape-time: '.tmux_esc_time.'ms')
+  let tmux_esc_time = s:get_tmux_option('escape-time')
+  if tmux_esc_time !=# 'error'
+    if empty(tmux_esc_time)
+      call health#report_error('`escape-time` is not set', suggestions)
+    elseif tmux_esc_time > 300
+      call health#report_error(
+          \ '`escape-time` ('.tmux_esc_time.') is higher than 300ms', suggestions)
+    else
+      call health#report_ok('escape-time: '.tmux_esc_time)
+    endif
+  endif
+
+  " check focus-events
+  let suggestions = ["(tmux 1.9+ only) Set `focus-events` in ~/.tmux.conf:\nset-option -g focus-events on"]
+  let tmux_focus_events = s:get_tmux_option('focus-events')
+  call health#report_info('Checking stuff')
+  if tmux_focus_events !=# 'error'
+    if empty(tmux_focus_events) || tmux_focus_events !=# 'on'
+      call health#report_warn(
+          \ "`focus-events` is not enabled. |'autoread'| may not work.", suggestions)
+    else
+      call health#report_ok('focus-events: '.tmux_focus_events)
+    endif
   endif
 
   " check default-terminal and $TERM
@@ -203,9 +233,9 @@ function! s:check_terminal() abort
     call health#report_error('command failed: '.cmd."\n".out)
   else
     call health#report_info('key_backspace (kbs) terminfo entry: '
-        \ .(empty(kbs_entry) ? '? (not found)' : kbs_entry))
+          \ .(empty(kbs_entry) ? '? (not found)' : kbs_entry))
     call health#report_info('key_dc (kdch1) terminfo entry: '
-        \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
+          \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
   endif
   for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
     if exists('$'.env_var)
