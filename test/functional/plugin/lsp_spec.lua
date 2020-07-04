@@ -1694,5 +1694,8 @@ describe('LSP', function()
 
       eq(expected, qflist)
     end)
+
+    describe('lsp.buf.rename', function()
+    end)
   end)
 end)
