@@ -75,7 +75,7 @@ function M.set_lines(lines, A, B, new_lines)
   if #prefix > 0 then
     lines[i_0] = prefix..lines[i_0]
   end
-  return lines
+  return lines, i_0, (i_0 + #new_lines - 1), prefix, suffix
 end
 
 local function sort_by_key(fn)
@@ -149,16 +149,41 @@ function M.apply_text_edits(text_edits, bufnr)
     table.insert(lines, '')
   end
 
+  -- store current cursor pos
+  local curpos_fixed = false
+  local curpos = api.nvim_win_get_cursor(0)
+  curpos[1] = curpos[1] - 1
+  curpos[2] = curpos[2]
+
   for i = #cleaned, 1, -1 do
     local e = cleaned[i]
     local A = {e.A[1] - start_line, e.A[2]}
     local B = {e.B[1] - start_line, e.B[2]}
-    lines = M.set_lines(lines, A, B, e.lines)
+
+    local lines_len = #e.lines
+    local range_len = (e.B[1] - e.A[1]) + 1
+
+    local end_index, suffix, _
+    lines, _, end_index, _, suffix = M.set_lines(lines, A, B, e.lines)
+
+    if e.B[1] <= curpos[1] then
+      if e.B[1] == curpos[1] and e.B[2] <= curpos[2] then
+        curpos[2] = (#(lines[end_index] or '') - #(suffix or '')) + (curpos[2] - e.B[2])
+      end
+      curpos[1] = curpos[1] + (lines_len - range_len)
+      curpos_fixed = true
+    end
   end
+
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
   end
   api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+
+  -- apply modified cursor pos
+  if curpos_fixed and api.nvim_get_current_buf() == bufnr then
+    api.nvim_win_set_cursor(0, { curpos[1] + 1, curpos[2] })
+  end
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"

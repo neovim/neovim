@@ -4,6 +4,7 @@ local assert_log = helpers.assert_log
 local clear = helpers.clear
 local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
+local winmeths = helpers.winmeths
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
@@ -795,9 +796,10 @@ describe('LSP', function()
       insert(dedent([[
         First line of text
         Second line of text
-        Third line of text
+        Third| line of text
         Fourth line of text
         å å ɧ 汉语 ↥ 🤦 🦄]]))
+      winmeths.set_cursor(0, { 3, 5 })
     end)
     it('applies simple edits', function()
       local edits = {
@@ -810,10 +812,11 @@ describe('LSP', function()
       eq({
         '123First line of text';
         '2econd line of text';
-        '3ird line of text';
+        '3ird| line of text';
         'Foth line of text';
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
+      eq({ 3, 4 }, winmeths.get_cursor(0))
     end)
     it('handles edits with the same start position, applying changes in the order in the array', function()
       local edits = {
@@ -821,8 +824,8 @@ describe('LSP', function()
         make_edit(0, 6, 0, 6, {"REPLACE"});
         make_edit(1, 0, 1, 3, {""});
         make_edit(1, 0, 1, 0, {"123"});
-        make_edit(2, 16, 2, 18, {""});
-        make_edit(2, 16, 2, 16, {"XYZ"});
+        make_edit(2, 17, 2, 19, {""});
+        make_edit(2, 17, 2, 17, {"XYZ"});
         make_edit(3, 7, 3, 11, {"this"});
         make_edit(3, 7, 3, 11, {"will"});
         make_edit(3, 7, 3, 11, {"not "});
@@ -833,10 +836,39 @@ describe('LSP', function()
       eq({
         'First REPLACE of text';
         '123ond line of text';
-        'Third line of teXYZ';
+        'Third| line of teXYZ';
         'Fourth (but this will) of text';
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
+      eq({ 3, 5 }, winmeths.get_cursor(0))
+    end)
+    it('fix cursor position when edit is above of cursor line', function()
+      local edits = {
+        make_edit(0, 0, 1, 11, {"", "", "Modified line"})
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        '',
+        '',
+        'Modified line of text',
+        'Third| line of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄'
+      }, buf_lines(1))
+      eq({ 4, 5 }, winmeths.get_cursor(0))
+    end)
+    it('fix cursor position when edits end pos is cursor pos', function()
+      local edits = {
+        make_edit(1, 14, 2, 5, {" baz"})
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'First line of text',
+        'Second line of baz| line of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄'
+      }, buf_lines(1))
+      eq({ 2, 18 }, winmeths.get_cursor(0))
     end)
     it('applies complex edits', function()
       local edits = {
@@ -856,11 +888,12 @@ describe('LSP', function()
         'fooFbar';
         '123irst guy';
         'baz line of text';
-        'The next line of text';
+        'The next| line of text';
         'another line of text';
         'before this!';
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
+      eq({ 6, 8 }, winmeths.get_cursor(0))
     end)
     it('applies non-ASCII characters edits', function()
       local edits = {
@@ -870,10 +903,11 @@ describe('LSP', function()
       eq({
         'First line of text';
         'Second line of text';
-        'Third line of text';
+        'Third| line of text';
         'Fourth line of text';
         'å ä ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
+      eq({ 3, 5 }, winmeths.get_cursor(0))
     end)
 
     describe('with LSP end line after what Vim considers to be the end line', function()
