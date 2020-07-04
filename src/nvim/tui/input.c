@@ -198,9 +198,6 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
   char buf[64];
 
   if (key->type == TERMKEY_TYPE_KEYSYM
-      && key->code.sym == TERMKEY_SYM_ESCAPE) {
-    len = (size_t)snprintf(buf, sizeof(buf), "<Esc>");
-  } else if (key->type == TERMKEY_TYPE_KEYSYM
       && key->code.sym == TERMKEY_SYM_SUSPEND) {
     len = (size_t)snprintf(buf, sizeof(buf), "<C-Z>");
   } else {

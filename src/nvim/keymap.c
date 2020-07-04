@@ -156,6 +156,7 @@ static const struct key_name_entry {
   { K_BS,              "BS" },
   { K_BS,              "BackSpace" },   // Alternative name
   { ESC,               "Esc" },
+  { ESC,               "Escape" },      // Alternative name
   { CSI,               "CSI" },
   { K_CSI,             "xCSI" },
   { '|',               "Bar" },
