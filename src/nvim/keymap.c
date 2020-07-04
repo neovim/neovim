@@ -712,7 +712,8 @@ static int extract_modifiers(int key, int *modp)
 {
   int modifiers = *modp;
 
-  if (!(modifiers & MOD_MASK_CMD)) {  // Command-key is special
+  // Command-key and ctrl are special
+  if (!(modifiers & MOD_MASK_CMD) && !(modifiers & MOD_MASK_CTRL)) {
     if ((modifiers & MOD_MASK_SHIFT) && ASCII_ISALPHA(key)) {
       key = TOUPPER_ASC(key);
       modifiers &= ~MOD_MASK_SHIFT;
