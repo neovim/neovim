@@ -57,7 +57,7 @@ function highlight.on_yank(opts)
   local timeout = opts.timeout or 150
 
   local bufnr = api.nvim_get_current_buf()
-  local yank_ns = api.nvim_create_namespace('')
+  local yank_ns = api.nvim_create_namespace('hlyank')
   api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
 
   local pos1 = vim.fn.getpos("'[")
