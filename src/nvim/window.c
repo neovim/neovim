@@ -711,6 +711,8 @@ int win_fdccol_count(win_T *wp)
 
 static void ui_ext_win_position(win_T *wp)
 {
+  ILOG("~~~~~~~~~~");
+  ILOG("Calculating position for: %d", wp->handle);
   if (!wp->w_floating) {
     ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,
                     wp->w_wincol, wp->w_width, wp->w_height);
@@ -726,18 +728,46 @@ static void ui_ext_win_position(win_T *wp)
       win_T *win = find_window_by_handle(c.window, &dummy);
       if (win) {
         grid = &win->w_grid;
-        int row_off = 0, col_off = 0;
+        int row_off = 0, col_off = 0, floating_row = 0, floating_col = 0;
         screen_adjust_grid(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
+
+        if (win->w_floating) {
+          // Enforce that the window was updated before we do stuff.
+          ui_ext_win_position(win);
+          ILOG("We have a win: Calculating for handle: %d", wp->handle);
+          row += floating_row;
+          col += floating_col;
+
+          if (wp->w_grid.comp_index < win->w_grid.comp_index) {
+            ILOG("Bad index. Sad face. %d %d", (int)wp->w_grid.comp_index, (int)win->w_grid.comp_index);
+            /* int temp_index = win->w_grid.comp_index; */
+            /* win->w_grid.comp_index = wp->w_grid.comp_index; */
+            wp->w_grid.comp_index = 9999;
+          }
+        }
+
         if (c.bufpos.lnum >= 0) {
           pos_T pos = { c.bufpos.lnum+1, c.bufpos.col, 0 };
           int trow, tcol, tcolc, tcole;
           textpos2screenpos(win, &pos, &trow, &tcol, &tcolc, &tcole, true);
           row += trow-1;
           col += tcol-1;
+
+          if (win->w_floating) {
+            row += win->w_winrow;
+            col += win->w_wincol;
+
+            ILOG("pos: %d %ld", pos.col, pos.lnum);
+            ILOG("ROW & COL: %f %f", row, col);
+
+            ILOG("winrow %d", win->w_winrow);
+            ILOG("wincol %d", win->w_wincol);
+          }
         }
       }
+      ILOG("Donezo");
       api_clear_error(&dummy);
     }
     if (ui_has(kUIMultigrid)) {

@@ -956,6 +956,10 @@ void curs_columns(
 void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
                        int *ccolp, int *ecolp, bool local)
 {
+  if (wp->w_floating) {
+    ILOG("Relative to Floating Window! %d", wp->handle);
+  }
+
   colnr_T scol = 0, ccol = 0, ecol = 0;
   int row = 0;
   int rowoff = 0;
@@ -1012,6 +1016,9 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
   *scolp = scol + coloff;
   *ccolp = ccol + coloff;
   *ecolp = ecol + coloff;
+
+  if (wp->w_floating) {
+  }
 }
 
 /*
