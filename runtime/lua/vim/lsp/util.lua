@@ -637,12 +637,12 @@ function M._trim_and_pad(contents, opts)
   end
   if opts.pad_top then
     for _ = 1, opts.pad_top do
-      table.insert(contents,1,"")
+      table.insert(contents, 1, "")
     end
   end
   if opts.pad_bottom then
     for _ = 1, opts.pad_bottom do
-      table.insert(contents,"")
+      table.insert(contents, "")
     end
   end
   return contents
