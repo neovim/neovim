@@ -805,7 +805,7 @@ function M._make_floating_popup_size(contents, opts)
   end
   if max_width then
     width = math.min(width, max_width)
-    wrap_at = math.min(wrap_at, max_width)
+    wrap_at = math.min(wrap_at or max_width, max_width)
   end
 
   if not height then
