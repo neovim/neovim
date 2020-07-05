@@ -819,7 +819,7 @@ function M._make_floating_popup_size(contents, opts)
         end
       else
         for i = 1, #contents do
-          height = height + math.max(1,math.ceil(line_widths[i]/wrap_at))
+          height = height + math.max(1, math.ceil(line_widths[i]/wrap_at))
         end
       end
     end
