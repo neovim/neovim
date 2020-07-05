@@ -1240,7 +1240,12 @@ void cleanup_jumplist(win_T *wp, bool checktail)
       && wp->w_jumplistidx == wp->w_jumplistlen) {
     const xfmark_T *fm_last = &wp->w_jumplist[wp->w_jumplistlen - 1];
     if (fm_last->fmark.fnum == curbuf->b_fnum
-        && fm_last->fmark.mark.lnum == wp->w_cursor.lnum) {
+        && fm_last->fmark.mark.lnum == wp->w_cursor.lnum
+        && fm_last->fmark.mark.col == wp->w_cursor.col) {
+        // If the * or # command doesn't move the cursor, this block
+        // erroneously erases the newly created jumplist entry. More generally,
+        // the answer to "did the cursor move?" is insufficient to determine
+        // whether erasing entries is really safe. neovim/neovim#9874
       xfree(fm_last->fname);
       wp->w_jumplistlen--;
       wp->w_jumplistidx--;

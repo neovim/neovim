@@ -2,11 +2,17 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
+local curbuf_contents = helpers.curbuf_contents
 local eq = helpers.eq
 local funcs = helpers.funcs
 local feed = helpers.feed
 local redir_exec = helpers.redir_exec
 local write_file = helpers.write_file
+
+local ensure_empty_jumplist = function()
+  funcs.execute('clearjumps')
+  eq('\n jump line  col file/text\n>', funcs.execute('jumps'))
+end
 
 describe('jumplist', function()
   local fname1 = 'Xtest-functional-normal-jump'
@@ -45,6 +51,88 @@ describe('jumplist', function()
     command('drop '..fname2)
     feed('<C-O>')
     eq(buf1, funcs.bufnr('%'))
+  end)
+
+  it('adds an entry when * moves the cursor to "first keyword after" in-line #9874', function()
+    -- The cursor will start outside a word boundary so * will move the cursor
+    -- to "the first keyword after the cursor" and update the jumplist. The
+    -- keyword is unique but that doesn't matter here.
+
+    write_file(fname1, ' unique', true)
+    command('args '..fname1)
+
+    eq(' unique', curbuf_contents(), 'ensure leading whitespace')
+
+    -- Explicitly move to (0, 0) because of 'nostartofline'.
+    feed('0')
+
+    ensure_empty_jumplist()
+
+    feed('*')
+
+    eq(
+      '\n jump line  col file/text\n   1     1    0 unique\n>',
+      funcs.execute('jumps'))
+  end)
+
+  it('adds an entry when * moves the cursor to next match in-line #9874', function()
+    -- The cursor will start at the start of a word boundary. The keyword
+    -- occurs multiple times in the same line so the cursor will move to the
+    -- next occurrence and update the jumplist.
+
+    write_file(fname1, 'dup dup')
+    command('args '..fname1)
+
+    eq('dup dup', curbuf_contents(), 'ensure no leading whitespace')
+
+    ensure_empty_jumplist()
+
+    feed('*')
+
+    eq(
+      '\n jump line  col file/text\n   1     1    0 dup dup\n>',
+      funcs.execute('jumps'))
+  end)
+
+  it('adds an entry when * moves the cursor to next match in other line #9874', function()
+    -- The cursor will start at the start of a word boundary. The keyword
+    -- occurs multiple times in different lines so the cursor will move to the
+    -- next occurrence and update the jumplist.
+
+    write_file(fname1, 'dup\ndup')
+    command('args '..fname1)
+
+    eq('dup\ndup', curbuf_contents(), 'ensure no leading whitespace')
+
+    ensure_empty_jumplist()
+
+    feed('*')
+
+    eq(
+      '\n jump line  col file/text\n   1     1    0 dup\n>',
+      funcs.execute('jumps'))
+  end)
+
+  it('has regression for: adds an entry when * does not move the cursor #9874', function()
+    -- The cursor will start at the start of a word boundary. The keyword is
+    -- unique so the cursor stays in place and fails to update the jumplist.
+    -- (Actually the jumplist does update, the entry just gets erased).
+
+    write_file(fname1, 'unique')
+    command('args '..fname1)
+
+    eq('unique', curbuf_contents(), 'ensure no leading whitespace')
+
+    ensure_empty_jumplist()
+
+    feed('*')
+
+    local regression = function()
+      eq(
+        '\n jump line  col file/text\n   1     1    0 unique\n>',
+        funcs.execute('jumps'))
+    end
+    assert.has_error(regression)
   end)
 end)
 
