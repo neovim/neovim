@@ -619,8 +619,10 @@ end
 ---
 --@param contents table of lines to trim and pad
 --@param opts dictionary with optional fields
---             - pad_left  amount of columns to pad contents at left (default 1)
---             - pad_right amount of columns to pad contents at right (default 1)
+--             - pad_left   number of columns to pad contents at left (default 1)
+--             - pad_right  number of columns to pad contents at right (default 1)
+--             - pad_top    number of lines to pad contents at top (default 0)
+--             - pad_bottom number of lines to pad contents at bottom (default 0)
 --@return contents table of trimmed and padded lines
 function M._trim_and_pad(contents, opts)
   validate {
@@ -633,6 +635,16 @@ function M._trim_and_pad(contents, opts)
   contents = M.trim_empty_lines(contents)
   for i, line in ipairs(contents) do
     contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
+  end
+  if opts.pad_top then
+    for _ = 1, opts.pad_top do
+      table.insert(contents, 1, "")
+    end
+  end
+  if opts.pad_bottom then
+    for _ = 1, opts.pad_bottom do
+      table.insert(contents, "")
+    end
   end
   return contents
 end
@@ -651,8 +663,12 @@ end
 --             - height    of floating window
 --             - width     of floating window
 --             - wrap_at   character to wrap at for computing height
---             - pad_left  amount of columns to pad contents at left
---             - pad_right amount of columns to pad contents at right
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
+--             - pad_left   number of columns to pad contents at left
+--             - pad_right  number of columns to pad contents at right
+--             - pad_top    number of lines to pad contents at top
+--             - pad_bottom number of lines to pad contents at bottom
 --             - separator insert separator after code block
 --@return width,height size of float
 function M.fancy_floating_markdown(contents, opts)
@@ -763,6 +779,8 @@ end
 --             - height  of floating window
 --             - width   of floating window
 --             - wrap_at character to wrap at for computing height
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
 --@return width,height size of float
 function M._make_floating_popup_size(contents, opts)
   validate {
@@ -773,6 +791,9 @@ function M._make_floating_popup_size(contents, opts)
 
   local width = opts.width
   local height = opts.height
+  local wrap_at = opts.wrap_at
+  local max_width = opts.max_width
+  local max_height = opts.max_height
   local line_widths = {}
 
   if not width then
@@ -783,11 +804,14 @@ function M._make_floating_popup_size(contents, opts)
       width = math.max(line_widths[i], width)
     end
   end
+  if max_width then
+    width = math.min(width, max_width)
+    wrap_at = math.min(wrap_at or max_width, max_width)
+  end
 
   if not height then
     height = #contents
-    local wrap_at = opts.wrap_at
-    if wrap_at and width > wrap_at then
+    if wrap_at and width >= wrap_at then
       height = 0
       if vim.tbl_isempty(line_widths) then
         for _, line in ipairs(contents) do
@@ -796,10 +820,13 @@ function M._make_floating_popup_size(contents, opts)
         end
       else
         for i = 1, #contents do
-          height = height + math.ceil(line_widths[i]/wrap_at)
+          height = height + math.max(1, math.ceil(line_widths[i]/wrap_at))
         end
       end
     end
+  end
+  if max_height then
+    height = math.min(height, max_height)
   end
 
   return width, height
@@ -813,8 +840,12 @@ end
 --             - height    of floating window
 --             - width     of floating window
 --             - wrap_at   character to wrap at for computing height
---             - pad_left  amount of columns to pad contents at left
---             - pad_right amount of columns to pad contents at right
+--             - max_width  maximal width of floating window
+--             - max_height maximal height of floating window
+--             - pad_left   number of columns to pad contents at left
+--             - pad_right  number of columns to pad contents at right
+--             - pad_top    number of lines to pad contents at top
+--             - pad_bottom number of lines to pad contents at bottom
 --@return bufnr,winnr buffer and window number of floating window or nil
 function M.open_floating_preview(contents, filetype, opts)
   validate {
