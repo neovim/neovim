@@ -415,6 +415,8 @@ To avoid the error use |vim.schedule_wrap()| to defer the callback: >
       vim.api.nvim_command('echomsg "test"')
     end))
 
+(For one-shot timers, see |vim.defer_fn()|, which automatically adds the wrapping.)
+
 Example: repeating timer
     1. Save this code to a file.
     2. Execute it with ":luafile %". >
@@ -858,6 +860,9 @@ vim.schedule({callback})				*vim.schedule()*
 vim.defer_fn({fn}, {timeout})                                    *vim.defer_fn*
     Defers calling {fn} until {timeout} ms passes.  Use to do a one-shot timer
     that calls {fn}.
+
+    Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+    safe to call.
 
     Parameters: ~
         {fn}        Callback to call once {timeout} expires

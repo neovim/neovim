@@ -467,6 +467,8 @@ end
 --- Defers calling `fn` until `timeout` ms passes.
 ---
 --- Use to do a one-shot timer that calls `fn`
+--- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+--- safe to call.
 --@param fn Callback to call once `timeout` expires
 --@param timeout Number of milliseconds to wait before calling `fn`
 --@return timer luv timer object
