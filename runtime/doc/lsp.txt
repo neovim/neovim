@@ -785,10 +785,10 @@ execute_command({command})                     *vim.lsp.buf.execute_command()*
                 TODO: Documentation
 
 formatting({options})                               *vim.lsp.buf.formatting()*
-                Formats the current buffer. The optional {options} table can
-                be used to specify FormattingOptions, a list of which is
-                available at https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting.
-                Some unspecified options will be automatically derived from
+                Formats the current buffer.
+
+                The optional {options} table can be used to specify
+                FormattingOptions, a list of which is available at https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting . Some unspecified options will be automatically derived from
                 the current Neovim options.
 
                                                *vim.lsp.buf.formatting_sync()*

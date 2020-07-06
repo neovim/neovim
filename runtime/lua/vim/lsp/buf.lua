@@ -38,23 +38,28 @@ function M.hover()
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
+---
 function M.declaration()
   local params = util.make_position_params()
   request('textDocument/declaration', params)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
+---
 function M.definition()
   local params = util.make_position_params()
   request('textDocument/definition', params)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
+---
 function M.type_definition()
   local params = util.make_position_params()
   request('textDocument/typeDefinition', params)
 end
 
+--- Lists all the implementations for the symbol under the cursor in the
+--- quickfix window.
 function M.implementation()
   local params = util.make_position_params()
   request('textDocument/implementation', params)
@@ -146,6 +151,7 @@ function M.rename(new_name)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
+---
 function M.references(context)
   validate { context = { context, 't', true } }
   local params = util.make_position_params()
@@ -157,6 +163,7 @@ function M.references(context)
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
+---
 function M.document_symbol()
   local params = { textDocument = util.make_text_document_params() }
   request('textDocument/documentSymbol', params)
