@@ -7,6 +7,7 @@
 "   %X
 
 source view_util.vim
+source term_util.vim
 
 func s:get_statusline()
   return ScreenLines(&lines - 1, &columns)[0]
@@ -29,7 +30,9 @@ endfunc
 
 " Function used to display syntax group.
 func SyntaxItem()
-  return synIDattr(synID(line("."),col("."),1),"name")
+  call assert_equal(s:expected_curbuf, g:actual_curbuf)
+  call assert_equal(s:expected_curwin, g:actual_curwin)
+  return synIDattr(synID(line("."), col("."),1), "name")
 endfunc
 
 func Test_caught_error_in_statusline()
@@ -218,6 +221,8 @@ func Test_statusline()
 
   "%{: Evaluate expression between '%{' and '}' and substitute result.
   syntax on
+  let s:expected_curbuf = string(bufnr(''))
+  let s:expected_curwin = string(win_getid())
   set statusline=%{SyntaxItem()}
   call assert_match('^vimNumber\s*$', s:get_statusline())
   s/^/"/
@@ -331,6 +336,23 @@ func Test_statusline()
   " %!: evaluated expression is used as the option value
   set statusline=%!2*3+1
   call assert_match('7\s*$', s:get_statusline())
+
+  func GetNested()
+    call assert_equal(string(win_getid()), g:actual_curwin)
+    call assert_equal(string(bufnr('')), g:actual_curbuf)
+    return 'nested'
+  endfunc
+  func GetStatusLine()
+    call assert_equal(win_getid(), g:statusline_winid)
+    return 'the %{GetNested()} line'
+  endfunc
+  set statusline=%!GetStatusLine()
+  call assert_match('the nested line', s:get_statusline())
+  call assert_false(exists('g:actual_curwin'))
+  call assert_false(exists('g:actual_curbuf'))
+  call assert_false(exists('g:statusline_winid'))
+  delfunc GetNested
+  delfunc GetStatusLine
 
   " Check statusline in current and non-current window
   " with the 'fillchars' option.

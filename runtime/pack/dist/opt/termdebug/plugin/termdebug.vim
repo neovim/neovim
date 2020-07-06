@@ -466,12 +466,17 @@ endfunc
 " Function called when pressing CTRL-C in the prompt buffer and when placing a
 " breakpoint.
 func s:PromptInterrupt()
-  if s:pid == 0
-    echoerr 'Cannot interrupt gdb, did not find a process ID'
+  " call ch_log('Interrupting gdb')
+  if has('win32')
+    " Using job_stop() does not work on MS-Windows, need to send SIGTRAP to
+    " the debugger program so that gdb responds again.
+    if s:pid == 0
+      echoerr 'Cannot interrupt gdb, did not find a process ID'
+    else
+      call debugbreak(s:pid)
+    endif
   else
-    "call ch_log('Interrupting gdb')
-    " Using job_stop(s:gdbjob, 'int') does not work.
-    call debugbreak(s:pid)
+    call jobstop(s:gdbjob)
   endif
 endfunc
 

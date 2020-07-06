@@ -2818,7 +2818,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
 /// @param[in]  fonceit  If true, do not complain if variable doesn’t exist.
 ///
 /// @return OK if it existed, FAIL otherwise.
-int do_unlet(const char *const name, const size_t name_len, const int forceit)
+int do_unlet(const char *const name, const size_t name_len, const bool forceit)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *varname;
