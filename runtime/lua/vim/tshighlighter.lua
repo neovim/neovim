@@ -46,8 +46,25 @@ function TSHighlighter.new(query, bufnr, ft)
   if vim.g.syntax_on ~= 1 then
     vim.api.nvim_command("runtime! syntax/synload.vim")
   end
-
   return self
+end
+
+local function is_highlight_name(capture_name)
+  local firstc = string.sub(capture_name, 1, 1)
+  return firstc ~= string.lower(firstc)
+end
+
+function TSHighlighter:get_hl_from_capture(capture)
+
+  local name = self.query.captures[capture]
+
+  if is_highlight_name(name) then
+    -- From "Normal.left" only keep "Normal"
+    return vim.split(name, '.', true)[1]
+  else
+    -- Default to false to avoid recomputing
+    return TSHighlighter.hl_map[name]
+  end
 end
 
 function TSHighlighter:set_query(query)
@@ -55,6 +72,15 @@ function TSHighlighter:set_query(query)
     query = vim.treesitter.parse_query(self.parser.lang, query)
   end
   self.query = query
+
+  self.hl_cache = setmetatable({}, {
+    __index = function(table, capture)
+      local hl = self:get_hl_from_capture(capture)
+      rawset(table, capture, hl)
+
+      return hl
+    end
+  })
 
   self:on_change({{self.root:range()}})
 end
@@ -71,17 +97,7 @@ function TSHighlighter:on_change(changes)
 
     for capture, node in self.query:iter_captures(changed_node, self.buf, ch[1], ch[3] + 1) do
       local start_row, start_col, end_row, end_col = node:range()
-      local capture_name = self.query.captures[capture]
-
-      local firstc = string.sub(capture_name, 1, 1)
-      local hl
-      -- TODO(vigoux): maybe we want to cache the capture -> highlight relation
-      if firstc ~= string.lower(firstc) then
-        hl = vim.split(capture_name, '.', true)[1]
-      else
-        hl = TSHighlighter.hl_map[capture_name]
-      end
-
+      local hl = self.hl_cache[capture]
       if hl then
         a.nvim__buf_add_decoration(self.buf, ts_hs_ns, hl,
           start_row, start_col,
