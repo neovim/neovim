@@ -274,7 +274,7 @@ static void terminfo_start(UI *ui)
                                : (konsole ? 1 : 0);
 
   patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
-  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
+  augment_terminfo(data, term, vtev, konsolev, iterm_env, nsterm);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -1907,7 +1907,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
-                             const char *colorterm, long vte_version,
+                             long vte_version,
                              long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
