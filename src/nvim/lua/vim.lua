@@ -288,6 +288,9 @@ local function __index(t, key)
   elseif key == 'lsp' then
     t.lsp = require('vim.lsp')
     return t.lsp
+  elseif key == 'highlight' then
+    t.highlight = require('vim.highlight')
+    return t.highlight
   end
 end
 
