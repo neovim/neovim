@@ -1353,21 +1353,37 @@ function M.character_offset(buf, row, col)
   return str_utfindex(line, col)
 end
 
-function M.format_formatexpr()
- -- only reformat on explicit gq command
- -- `formatexpr` is also called when exceding
- -- `textwidth` in insert mode
- if vim.fn.mode() == 'i' or vim.fn.mode() == 'R' then
-    -- fall back to Vims internal reformatting
-    return 1
- end
- local start_line = vim.v.lnum
- local end_line = start_line + vim.v.count - 1
- if start_line > 0 and end_line > 0 then
-   vim.lsp.buf.range_formatting({}, {start_line, 0}, {end_line, 0})
- end
- -- do not run internal formatter.
- return 0
+-- for use with `formatexpr` if called without parms
+-- @param start_line 1-indexed line
+-- @param end_line 1-indexed line
+-- @param timeout_ms optional
+function M.formatexpr(start_line, end_line, timeout_ms)
+  if not start_line or not end_line then
+    if vim.fn.mode() == 'i' or vim.fn.mode() == 'R' then
+      -- `formatexpr` is also called when exceding
+      -- `textwidth` in insert mode
+      -- fall back to internal formatting
+      return 1
+    end
+    start_line = vim.v.lnum
+    end_line = start_line + vim.v.count - 1
+  end
+  if start_line > 0 and end_line > 0 then
+    local params = {
+      textDocument = { uri = vim.uri_from_bufnr(0) };
+      range = {
+        start = { line = start_line - 1; character = 0; };
+        ["end"] = { line = end_line - 1; character = 0; };
+      };
+    };
+    local result = vim.lsp.buf_request_sync(0, "textDocument/rangeFormatting", params, timeout_ms)
+    if result then
+      result = result[1].result
+      vim.lsp.util.apply_text_edits(result)
+    end
+  end
+ -- do not run builtin formatter.
+  return 0
 end
 
 M.buf_versions = {}
