@@ -648,7 +648,7 @@ tv_list_copy_error:
 ///
 /// @return OK or FAIL
 int tv_list_flatten(list_T *list, long maxdepth)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   listitem_T *item;
   listitem_T *to_free;
