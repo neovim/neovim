@@ -15,10 +15,10 @@ GENERATED_INCLUDE_RE = re.compile(
 def main(argv):
     argparser = ArgumentParser()
     argparser.add_argument('--generated-includes-dir', action='append',
-                           help='Directory where generated includes are located.')
-    argparser.add_argument('--file', type=open, help='File to check.')
+                           help='Directory where generated includes are located.',required=True)
+    argparser.add_argument('--file', type=open, help='File to check.',required=True)
     argparser.add_argument('iwyu_args', nargs='*',
-                           help='IWYU arguments, must go after --.')
+                           help='IWYU arguments, must go after --.',required=True)
     args = argparser.parse_args(argv)
 
     with args.file:
