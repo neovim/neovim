@@ -354,21 +354,29 @@ do
     function(v, k) return a.nvim_tabpage_set_var(0, v, k) end,
     function(v) return a.nvim_tabpage_del_var(0, v) end
   )
+
+  local make_vim_table_mt = function(s, var)
+    local proxy = vim.deepcopy(var)
+
+    return {
+      __index = function(_, k)
+        -- assert(false, string.format("%s %s", s, k))
+        return a.nvim__get_var_from_keys({s, k})
+      end,
+
+      __newindex = function(_, k, v)
+        return a.nvim__set_var_from_keys({s, k}, v)
+        -- rawset(proxy, k, v)
+        -- a.nvim_set_var(s, proxy)
+      end
+    }
+  end
+
   vim.g = make_meta_accessor(nil_wrap(function(s)
     local var = a.nvim_get_var(s)
-
-    if type(var) == 'table' and not vim.tbl_islist(var) then
-      return setmetatable(var, {
-        __index = function(_, k)
-          -- assert(false, string.format("%s %s", s, k))
-          return a.nvim__get_var_from_keys({s, k})
-        end,
-
-        __newindex = function(_, k, v)
-          -- assert(false, string.format("%s %s %s", s, k, v))
-          return a.nvim__set_var_from_keys({s, k}, v)
-        end
-      })
+    if type(var) == 'table' and (
+        not vim.tbl_islist(var) or #var == 0) then
+      return setmetatable({}, make_vim_table_mt(s, var))
     end
 
     return var

@@ -852,28 +852,31 @@ void nvim__set_var_from_keys(ArrayOf(Object) keys, Object value, Error *err)
   for (size_t i = 0; i < keys.size - 1; i++) {
     Object item = keys.items[i];
     if (item.type == kObjectTypeString) {
-      ILOG("SETTING: %s", item.data.string.data);
-      dictitem_T *const di = tv_dict_find(&d, item.data.string.data, (ptrdiff_t)item.data.string.size);
+      dictitem_T *const di = tv_dict_find(
+          &d,
+          item.data.string.data,
+          (ptrdiff_t)item.data.string.size);
+
       if (di->di_tv.v_type == VAR_DICT) {
         ILOG("IS DICT: %s", item.data.string.data);
         d = *(di->di_tv.vval.v_dict);
-        ILOG("IS DICT: %s", item.data.string.data);
       } else {
-        api_set_error(err, kErrorTypeValidation, "Invalid type");
+        api_set_error(err, kErrorTypeValidation, "Invalid type for setting dict");
         return;
       }
     } else {
-      api_set_error(err, kErrorTypeValidation, "Invalid type");
+      api_set_error(err, kErrorTypeValidation, "Invalid type for key");
       return;
     }
   }
 
+  String dict_key = keys.items[keys.size - 1].data.string;
+
   ILOG("DONE");
-  ILOG("SIZE: %s", keys.items[keys.size].data.string.data);
-  ILOG("SIZE - 1: %s", keys.items[keys.size - 1].data.string.data);
+  ILOG("SIZE - 1: %s", dict_key.data);
   dict_set_var(
       &d,
-      keys.items[keys.size - 1].data.string,
+      dict_key,
       value, false, false, err);
 }
 

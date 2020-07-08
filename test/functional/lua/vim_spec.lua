@@ -886,13 +886,24 @@ describe('lua stdlib', function()
     end)
 
     it('should handle updating dictionary types', function()
-      eq({a = true, b = false}, exec_lua [[
-        vim.g.x = {}
-        vim.g.x.a = true
+      eq({a = true, b = true}, exec_lua [[
+        vim.g.x = {a = true}
         vim.g.x.b = false
+        vim.g.x.b = true
 
-        return vim.g.x
+        return {
+          a = vim.g.x.a,
+          b = vim.g.x.b,
+        }
       ]])
+
+      local t = vim.g.y 
+      t.foo = 7
+      t.bar = false
+
+      assert(t ~= {})
+      assert(vim.g.y.bar == false)
+
     end)
 
     it('should handle updating list types', function()
