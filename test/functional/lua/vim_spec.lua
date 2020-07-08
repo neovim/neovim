@@ -885,25 +885,22 @@ describe('lua stdlib', function()
       eq(NIL, funcs.luaeval "vim.g.to_delete")
     end)
 
+    it('should return an index from a dictionary', function()
+      eq(true, exec_lua [[
+        vim.g.test = { a = true }
+        return vim.g.test.a
+      ]])
+    end)
+
     it('should handle updating dictionary types', function()
       eq({a = true, b = true}, exec_lua [[
         vim.g.x = {a = true}
         vim.g.x.b = false
         vim.g.x.b = true
+        vim.g.x.c = true
 
-        return {
-          a = vim.g.x.a,
-          b = vim.g.x.b,
-        }
+        return vim.g.x
       ]])
-
-      local t = vim.g.y 
-      t.foo = 7
-      t.bar = false
-
-      assert(t ~= {})
-      assert(vim.g.y.bar == false)
-
     end)
 
     it('should handle updating list types', function()

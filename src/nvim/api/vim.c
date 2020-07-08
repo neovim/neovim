@@ -825,8 +825,13 @@ Object nvim__get_var_from_keys(ArrayOf(Object) keys, Error *err)
 
   for (size_t i = 0; i < keys.size - 1; i++) {
     Object item = keys.items[i];
+
     if (item.type == kObjectTypeString) {
-      dictitem_T *const di = tv_dict_find(&d, item.data.string.data, (ptrdiff_t)item.data.string.size);
+      dictitem_T *const di = tv_dict_find(
+          &d,
+          item.data.string.data,
+          (ptrdiff_t)item.data.string.size);
+
       if (di->di_tv.v_type == VAR_DICT) {
         d = *(di->di_tv.vval.v_dict);
       } else {
@@ -839,7 +844,7 @@ Object nvim__get_var_from_keys(ArrayOf(Object) keys, Error *err)
     }
   }
 
-  return dict_get_value(&d, keys.items[keys.size].data.string, err);
+  return dict_get_value(&d, keys.items[keys.size - 1].data.string, err);
 
 err:
   return (Object) OBJECT_INIT;
@@ -848,18 +853,18 @@ err:
 void nvim__set_var_from_keys(ArrayOf(Object) keys, Object value, Error *err)
   FUNC_API_SINCE(7)
 {
-  dict_T d = globvardict;
+  dict_T *d = &globvardict;
   for (size_t i = 0; i < keys.size - 1; i++) {
     Object item = keys.items[i];
     if (item.type == kObjectTypeString) {
       dictitem_T *const di = tv_dict_find(
-          &d,
+          d,
           item.data.string.data,
           (ptrdiff_t)item.data.string.size);
 
       if (di->di_tv.v_type == VAR_DICT) {
         ILOG("IS DICT: %s", item.data.string.data);
-        d = *(di->di_tv.vval.v_dict);
+        d = di->di_tv.vval.v_dict;
       } else {
         api_set_error(err, kErrorTypeValidation, "Invalid type for setting dict");
         return;
@@ -870,14 +875,16 @@ void nvim__set_var_from_keys(ArrayOf(Object) keys, Object value, Error *err)
     }
   }
 
+  // TODO: This should check to make sure that we actually have a string here.
   String dict_key = keys.items[keys.size - 1].data.string;
 
-  ILOG("DONE");
-  ILOG("SIZE - 1: %s", dict_key.data);
+  ILOG("DONE?... %s", dict_key.data);
+  ILOG("value %d", value.type);
   dict_set_var(
-      &d,
+      d,
       dict_key,
       value, false, false, err);
+  ILOG("...DONE");
 }
 
 /// Sets a global (g:) variable.

@@ -365,9 +365,14 @@ do
       end,
 
       __newindex = function(_, k, v)
+        rawset(proxy, k, v)
         return a.nvim__set_var_from_keys({s, k}, v)
         -- rawset(proxy, k, v)
         -- a.nvim_set_var(s, proxy)
+      end,
+
+      __vim_serialize = function(_)
+        return proxy
       end
     }
   end

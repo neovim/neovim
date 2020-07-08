@@ -314,6 +314,21 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         break;
       }
       case LUA_TTABLE: {
+        // get metatable
+        // get __vim_serialize
+        // if __vim_serialize, then return nlua_pop_typval(__seralialize(table))
+        if (lua_getmetatable(lstate, -1)) {
+          ILOG("This has metatable");
+          lua_getfield(lstate, -1, "__vim_serialize");
+          if (lua_isfunction(lstate, -1)) {
+            ILOG("This has __vim_serialize");
+            lua_pop(lstate, -2);
+            lua_pcall(lstate, 1, 1, 0);
+          }
+        } else {
+          ILOG("No metatable");
+        }
+
         const LuaTableProps table_props = nlua_traverse_table(lstate);
 
         for (size_t i = 0; i < kv_size(stack); i++) {
