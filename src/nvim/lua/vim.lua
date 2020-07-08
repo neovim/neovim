@@ -325,7 +325,8 @@ do
       end
     end
     function mt:__index(k)
-      return get(k)
+      local val = get(k)
+      return val
     end
     return setmetatable({}, mt)
   end
@@ -353,7 +354,25 @@ do
     function(v, k) return a.nvim_tabpage_set_var(0, v, k) end,
     function(v) return a.nvim_tabpage_del_var(0, v) end
   )
-  vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
+  vim.g = make_meta_accessor(nil_wrap(function(s)
+    local var = a.nvim_get_var(s)
+
+    if type(var) == 'table' and not vim.tbl_islist(var) then
+      return setmetatable(var, {
+        __index = function(_, k)
+          -- assert(false, string.format("%s %s", s, k))
+          return a.nvim__get_var_from_keys({s, k})
+        end,
+
+        __newindex = function(_, k, v)
+          -- assert(false, string.format("%s %s %s", s, k, v))
+          return a.nvim__set_var_from_keys({s, k}, v)
+        end
+      })
+    end
+
+    return var
+  end), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
 

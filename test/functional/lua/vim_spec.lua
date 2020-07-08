@@ -866,22 +866,43 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.is_callable({})"))
   end)
 
-  it('vim.g', function()
-    exec_lua [[
-    vim.api.nvim_set_var("testing", "hi")
-    vim.api.nvim_set_var("other", 123)
-    vim.api.nvim_set_var("to_delete", {hello="world"})
-    ]]
+  describe('vim.g', function()
+    it('should handle direct gets and sets', function()
+      exec_lua [[
+      vim.api.nvim_set_var("testing", "hi")
+      vim.api.nvim_set_var("other", 123)
+      vim.api.nvim_set_var("to_delete", {hello="world"})
+      ]]
 
-    eq('hi', funcs.luaeval "vim.g.testing")
-    eq(123, funcs.luaeval "vim.g.other")
-    eq(NIL, funcs.luaeval "vim.g.nonexistant")
+      eq('hi', funcs.luaeval "vim.g.testing")
+      eq(123, funcs.luaeval "vim.g.other")
+      eq(NIL, funcs.luaeval "vim.g.nonexistant")
 
-    eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
-    exec_lua [[
-    vim.g.to_delete = nil
-    ]]
-    eq(NIL, funcs.luaeval "vim.g.to_delete")
+      eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
+      exec_lua [[
+      vim.g.to_delete = nil
+      ]]
+      eq(NIL, funcs.luaeval "vim.g.to_delete")
+    end)
+
+    it('should handle updating dictionary types', function()
+      eq({a = true, b = false}, exec_lua [[
+        vim.g.x = {}
+        vim.g.x.a = true
+        vim.g.x.b = false
+
+        return vim.g.x
+      ]])
+    end)
+
+    it('should handle updating list types', function()
+      eq({"a", "b"}, exec_lua [[
+        vim.g.x = {"a"}
+
+        table.insert(vim.g.x, "b")
+        return vim.g.x
+      ]])
+    end)
   end)
 
   it('vim.b', function()
