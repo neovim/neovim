@@ -25,7 +25,15 @@ TSHighlighter.hl_map = {
 
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
-  self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
+  self.parser = vim.treesitter.get_parser(
+    bufnr,
+    ft,
+    {
+      on_changedtree = function(...) self:on_changedtree(...) end,
+      on_lines = function() self.root = self.parser:parse():root() end
+    }
+  )
+
   self.buf = self.parser.bufnr
 
   local tree = self.parser:parse()
@@ -35,9 +43,6 @@ function TSHighlighter.new(query, bufnr, ft)
   self.redraw_count = 0
   self.line_count = {}
   a.nvim_buf_set_option(self.buf, "syntax", "")
-  a.nvim_buf_attach(self.buf, false, {
-    on_lines=function(_) self.root = self.parser:parse():root() end
-  })
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
   -- but use synload.vim rather than syntax.vim to not enable
@@ -82,10 +87,10 @@ function TSHighlighter:set_query(query)
     end
   })
 
-  self:on_change({{self.root:range()}})
+  self:on_changedtree({{self.root:range()}})
 end
 
-function TSHighlighter:on_change(changes)
+function TSHighlighter:on_changedtree(changes)
   -- Get a fresh root
   self.root = self.parser.tree:root()
 
