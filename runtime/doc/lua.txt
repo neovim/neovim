@@ -131,7 +131,7 @@ The first way to call a function is: >
     Additionally, if any extra parameters are passed, they are discarded
     completely.
 
-In Lua, it is also possible, if only argument is desired to be passed, to call
+In Lua, it is also possible (when only one argument is desired to be passed) to call
 the function without any parentheses. This is most often used to approximate
 "keyword"-style arguments with a single dictionary. For example: >
 
