@@ -926,6 +926,9 @@ do
 
     -- clear virtual text namespace
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
+
+    -- Clear local diagnostic cache of this buffer.
+    M.diagnostics_by_buf[bufnr] = nil
   end
 
   function M.get_severity_highlight_name(severity)
