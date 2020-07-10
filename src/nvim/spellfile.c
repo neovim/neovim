@@ -1134,7 +1134,6 @@ static int read_sal_section(FILE *fd, slang_T *slang)
   salitem_T   *smp;
   int ccnt;
   char_u      *p;
-  int c = NUL;
 
   slang->sl_sofo = false;
 
@@ -1158,7 +1157,9 @@ static int read_sal_section(FILE *fd, slang_T *slang)
   ga_grow(gap, cnt + 1);
 
   // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
-  for (; gap->ga_len < cnt; ++gap->ga_len) {
+  for (; gap->ga_len < cnt; gap->ga_len++) {
+    int c = NUL;
+
     smp = &((salitem_T *)gap->ga_data)[gap->ga_len];
     ccnt = getc(fd);                            // <salfromlen>
     if (ccnt < 0)
