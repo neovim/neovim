@@ -237,9 +237,7 @@ static int nlua_schedule(lua_State *const lstate)
 (number_literal) @number
 (char_literal) @string
 
-; TODO(bfredl): overlapping matches are unreliable,
-; we need a proper priority mechanism
-;(type_identifier) @type
+(type_identifier) @type
 ((type_identifier) @Special (#eq? @Special "LuaRef"))
 
 (primitive_type) @type
@@ -264,7 +262,7 @@ static int nlua_schedule(lua_State *const lstate)
       [4] = {bold = true, foreground = Screen.colors.Brown},
       [5] = {foreground = Screen.colors.Magenta},
       [6] = {foreground = Screen.colors.Red},
-      [7] = {foreground = Screen.colors.SlateBlue},
+      [7] = {bold = true, foreground = Screen.colors.SlateBlue},
       [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red},
       [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red},
@@ -300,7 +298,7 @@ static int nlua_schedule(lua_State *const lstate)
     ]], hl_query)
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule(lua_State *{3:const} lstate)                |
+      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
       {                                                                |
         {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
@@ -311,7 +309,7 @@ static int nlua_schedule(lua_State *const lstate)
         {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
                                                                        |
         multiqueue_put(main_loop.events, nlua_schedule_event,          |
-                       {5:1}, ({3:void} *)(ptrdiff_t)cb);                      |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       ^}                                                                |
       {1:~                                                                }|
@@ -322,7 +320,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed('7Go*/<esc>')
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule(lua_State *{3:const} lstate)                |
+      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
       {                                                                |
         {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
@@ -334,7 +332,7 @@ static int nlua_schedule(lua_State *const lstate)
         {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
                                                                        |
         multiqueue_put(main_loop.events, nlua_schedule_event,          |
-                       {5:1}, ({3:void} *)(ptrdiff_t)cb);                      |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       }                                                                |
       {1:~                                                                }|
@@ -344,7 +342,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed('3Go/*<esc>')
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule(lua_State *{3:const} lstate)                |
+      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
       {                                                                |
       {2:/^*}                                                               |
       {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
@@ -357,7 +355,7 @@ static int nlua_schedule(lua_State *const lstate)
         {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
                                                                        |
         multiqueue_put(main_loop.events, nlua_schedule_event,          |
-                       {5:1}, ({3:void} *)(ptrdiff_t)cb);                      |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
                                                                        |

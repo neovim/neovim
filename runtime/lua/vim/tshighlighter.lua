@@ -3,6 +3,7 @@ local a = vim.api
 -- support reload for quick experimentation
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
+local ts_hs_ns = a.nvim_create_namespace("treesitter_hl")
 
 -- These are conventions defined by tree-sitter, though it
 -- needs to be user extensible also.
@@ -24,9 +25,17 @@ TSHighlighter.hl_map = {
 
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
-  self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
+  self.parser = vim.treesitter.get_parser(
+    bufnr,
+    ft,
+    {
+      on_changedtree = function(...) self:on_changedtree(...) end,
+      on_lines = function() self.root = self.parser:parse():root() end
+    }
+  )
+
   self.buf = self.parser.bufnr
-  -- TODO(bfredl): perhaps on_start should be called uncondionally, instead for only on mod?
+
   local tree = self.parser:parse()
   self.root = tree:root()
   self:set_query(query)
@@ -34,11 +43,6 @@ function TSHighlighter.new(query, bufnr, ft)
   self.redraw_count = 0
   self.line_count = {}
   a.nvim_buf_set_option(self.buf, "syntax", "")
-  a.nvim__buf_set_luahl(self.buf, {
-    on_start=function(...) return self:on_start(...) end,
-    on_window=function(...) return self:on_window(...) end,
-    on_line=function(...) return self:on_line(...) end,
-  })
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
   -- but use synload.vim rather than syntax.vim to not enable
@@ -50,73 +54,63 @@ function TSHighlighter.new(query, bufnr, ft)
   return self
 end
 
+local function is_highlight_name(capture_name)
+  local firstc = string.sub(capture_name, 1, 1)
+  return firstc ~= string.lower(firstc)
+end
+
+function TSHighlighter:get_hl_from_capture(capture)
+
+  local name = self.query.captures[capture]
+
+  if is_highlight_name(name) then
+    -- From "Normal.left" only keep "Normal"
+    return vim.split(name, '.', true)[1]
+  else
+    -- Default to false to avoid recomputing
+    return TSHighlighter.hl_map[name]
+  end
+end
+
 function TSHighlighter:set_query(query)
   if type(query) == "string" then
     query = vim.treesitter.parse_query(self.parser.lang, query)
   end
   self.query = query
 
-  self.id_map = {}
-  for i, capture in ipairs(self.query.captures) do
-    local hl = 0
-    local firstc = string.sub(capture, 1, 1)
-    local hl_group = self.hl_map[capture]
-    if firstc ~= string.lower(firstc) then
-      hl_group = vim.split(capture, '.', true)[1]
-    end
-    if hl_group then
-      hl = a.nvim_get_hl_id_by_name(hl_group)
-    end
-    self.id_map[i] = hl
-  end
+  self.hl_cache = setmetatable({}, {
+    __index = function(table, capture)
+      local hl = self:get_hl_from_capture(capture)
+      rawset(table, capture, hl)
 
-    a.nvim__buf_redraw_range(self.buf, 0, a.nvim_buf_line_count(self.buf))
+      return hl
+    end
+  })
+
+  self:on_changedtree({{self.root:range()}})
 end
 
-function TSHighlighter:on_change(changes)
+function TSHighlighter:on_changedtree(changes)
+  -- Get a fresh root
+  self.root = self.parser.tree:root()
+
   for _, ch in ipairs(changes or {}) do
-    a.nvim__buf_redraw_range(self.buf, ch[1], ch[3]+1)
-  end
-  self.edit_count = self.edit_count + 1
-end
+    -- Try to be as exact as possible
+    local changed_node = self.root:descendant_for_range(ch[1], ch[2], ch[3], ch[4])
 
-function TSHighlighter:on_start(_, _buf, _tick)
-  local tree = self.parser:parse()
-  self.root = tree:root()
-end
+    a.nvim_buf_clear_namespace(self.buf, ts_hs_ns, ch[1], ch[3])
 
-function TSHighlighter:on_window(_, _win, _buf, _topline, botline)
-  self.iter = nil
-  self.nextrow = 0
-  self.botline = botline
-  self.redraw_count = self.redraw_count + 1
-end
-
-function TSHighlighter:on_line(_, _win, buf, line)
-  if self.iter == nil then
-    self.iter = self.query:iter_captures(self.root,buf,line,self.botline)
-  end
-  while line >= self.nextrow do
-    local capture, node, match = self.iter()
-    local active = true
-    if capture == nil then
-      break
-    end
-    if match ~= nil then
-      active = self:run_pred(match)
-      match.active = active
-    end
-    local start_row, start_col, end_row, end_col = node:range()
-    local hl = self.id_map[capture]
-    if hl > 0 and active and end_row >= line then
-      a.nvim__put_attr(hl, start_row, start_col, end_row, end_col)
-    end
-    if start_row > line then
-      self.nextrow = start_row
+    for capture, node in self.query:iter_captures(changed_node, self.buf, ch[1], ch[3] + 1) do
+      local start_row, start_col, end_row, end_col = node:range()
+      local hl = self.hl_cache[capture]
+      if hl then
+        a.nvim__buf_add_decoration(self.buf, ts_hs_ns, hl,
+          start_row, start_col,
+          end_row, end_col,
+          {})
+      end
     end
   end
-  self.line_count[line] = (self.line_count[line] or 0) + 1
-  --return tostring(self.line_count[line])
 end
 
 return TSHighlighter

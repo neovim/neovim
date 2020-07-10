@@ -15,19 +15,27 @@ function Parser:parse()
   local changes
   self.tree, changes = self._parser:parse_buf(self.bufnr)
   self.valid = true
-  for _, cb in ipairs(self.change_cbs) do
-    cb(changes)
+
+  if not vim.tbl_isempty(changes) then
+    for _, cb in ipairs(self.changedtree_cbs) do
+      cb(changes)
+    end
   end
+
   return self.tree, changes
 end
 
-function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
+function Parser:_on_lines(bufnr, changed_tick, start_row, old_stop_row, stop_row, old_byte_size)
   local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
   local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
   local old_stop_byte = start_byte + old_byte_size
   self._parser:edit(start_byte,old_stop_byte,stop_byte,
                     start_row,0,old_stop_row,0,stop_row,0)
   self.valid = false
+
+  for _, cb in ipairs(self.lines_cbs) do
+    cb(bufnr, changed_tick, start_row, old_stop_row, stop_row, old_byte_size)
+  end
 end
 
 function Parser:set_included_ranges(ranges)
@@ -80,7 +88,8 @@ function M.create_parser(bufnr, lang, id)
 
   local self = setmetatable({bufnr=bufnr, lang=lang, valid=false}, Parser)
   self._parser = vim._create_ts_parser(lang)
-  self.change_cbs = {}
+  self.changedtree_cbs = {}
+  self.lines_cbs = {}
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
     -- using it.
@@ -99,7 +108,7 @@ function M.create_parser(bufnr, lang, id)
   return self
 end
 
-function M.get_parser(bufnr, ft, cb)
+function M.get_parser(bufnr, ft, buf_attach_cbs)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
@@ -111,9 +120,15 @@ function M.get_parser(bufnr, ft, cb)
   if parsers[id] == nil then
     parsers[id] = M.create_parser(bufnr, ft, id)
   end
-  if cb ~= nil then
-    table.insert(parsers[id].change_cbs, cb)
+
+  if buf_attach_cbs and buf_attach_cbs.on_changedtree then
+    table.insert(parsers[id].changedtree_cbs, buf_attach_cbs.on_changedtree)
   end
+
+  if buf_attach_cbs and buf_attach_cbs.on_lines then
+    table.insert(parsers[id].lines_cbs, buf_attach_cbs.on_lines)
+  end
+
   return parsers[id]
 end
 
