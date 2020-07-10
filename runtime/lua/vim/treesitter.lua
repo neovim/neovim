@@ -75,6 +75,9 @@ function M.create_parser(bufnr, lang, id)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
+
+  vim.fn.bufload(bufnr)
+
   local self = setmetatable({bufnr=bufnr, lang=lang, valid=false}, Parser)
   self._parser = vim._create_ts_parser(lang)
   self.change_cbs = {}

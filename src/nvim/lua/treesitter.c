@@ -307,11 +307,13 @@ static int parser_parse_buf(lua_State *L)
   }
 
   long bufnr = lua_tointeger(L, 2);
-  void *payload = handle_get_buffer(bufnr);
-  if (!payload) {
+  buf_T *buf = handle_get_buffer(bufnr);
+
+  if (!buf) {
     return luaL_error(L, "invalid buffer handle: %d", bufnr);
   }
-  TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
+
+  TSInput input = { (void *)buf, input_cb, TSInputEncodingUTF8 };
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
 
   uint32_t n_ranges = 0;
