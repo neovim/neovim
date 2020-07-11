@@ -6,6 +6,7 @@ endif
 
 source screendump.vim
 
+" Note: In neovim, swapfile feature must be disabled
 set noswapfile
 
 func Test_sign()

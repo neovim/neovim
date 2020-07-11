@@ -7404,6 +7404,7 @@ int win_signcol_count(win_T *wp)
   int maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
+  // Note: It checks "no" or "number" in 'signcolumn' option
   if (*scl == 'n'
       && (*(scl + 1) == 'o' || (*(scl + 1) == 'u'
                                 && (wp->w_p_nu || wp->w_p_rnu)))) {

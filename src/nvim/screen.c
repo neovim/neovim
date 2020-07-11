@@ -4477,7 +4477,7 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
 static void get_sign_display_info(
-    int nrcol,
+    bool nrcol,
     win_T *wp,
     linenr_T lnum,
     int row,
