@@ -272,6 +272,10 @@ vim.fn = setmetatable({}, {
   end
 })
 
+vim.funcref = function(viml_func_name)
+  return vim.fn[viml_func_name]
+end
+
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 local function __index(t, key)

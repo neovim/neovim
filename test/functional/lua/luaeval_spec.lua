@@ -2,7 +2,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local redir_exec = helpers.redir_exec
 local pcall_err = helpers.pcall_err
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
@@ -188,23 +187,198 @@ describe('luaeval()', function()
   it('issues an error in some cases', function()
     eq("Vim(call):E5100: Cannot convert given lua table: table should either have a sequence of positive integer keys or contain only string keys",
        exc_exec('call luaeval("{1, foo=2}")'))
-    eq("Vim(call):E5101: Cannot convert given lua type",
-       exc_exec('call luaeval("vim.api.nvim_buf_get_lines")'))
+
     startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",
                exc_exec('call luaeval("1, 2, 3")'))
     startswith("Vim(call):E5108: Error executing lua [string \"luaeval()\"]:",
                exc_exec('call luaeval("(nil)()")'))
-    eq("Vim(call):E5101: Cannot convert given lua type",
-       exc_exec('call luaeval("{42, vim.api}")'))
-    eq("Vim(call):E5101: Cannot convert given lua type",
-       exc_exec('call luaeval("{foo=42, baz=vim.api}")'))
 
-    -- The following should not crash: conversion error happens inside
-    eq("Vim(call):E5101: Cannot convert given lua type",
-       exc_exec('call luaeval("vim.api")'))
-    -- The following should not show internal error
-    eq("\nE5101: Cannot convert given lua type\n0",
-       redir_exec('echo luaeval("vim.api")'))
+  end)
+
+  it('should handle sending lua functions to viml', function()
+    eq(true, exec_lua [[
+      can_pass_lua_callback_to_vim_from_lua_result = nil
+
+      vim.fn.call(function()
+        can_pass_lua_callback_to_vim_from_lua_result = true
+      end, {})
+
+      return can_pass_lua_callback_to_vim_from_lua_result
+    ]])
+  end)
+
+  it('run functions even in timers', function()
+    eq(true, exec_lua [[
+      can_pass_lua_callback_to_vim_from_lua_result = nil
+
+      vim.fn.timer_start(50, function()
+        can_pass_lua_callback_to_vim_from_lua_result = true
+      end)
+
+      vim.wait(1000, function()
+        return can_pass_lua_callback_to_vim_from_lua_result
+      end)
+
+      return can_pass_lua_callback_to_vim_from_lua_result
+    ]])
+  end)
+
+  it('can run named functions more than once', function()
+    eq(5, exec_lua [[
+      count_of_vals = 0
+
+      vim.fn.timer_start(5, function()
+        count_of_vals = count_of_vals + 1
+      end, {['repeat'] = 5})
+
+      vim.fn.wait(1000, function()
+        return count_of_vals >= 5
+      end)
+
+      return count_of_vals
+    ]])
+  end)
+
+  it('can handle clashing names', function()
+    eq(1, exec_lua [[
+      local f_loc = function() return 1 end
+
+      local result = nil
+      vim.fn.timer_start(100, function()
+        result = f_loc()
+      end)
+
+      local f_loc = function() return 2 end
+      vim.wait(1000, function() return result ~= nil end)
+
+      return result
+    ]])
+  end)
+
+  it('should handle passing functions around', function()
+    command [[
+      function VimCanCallLuaCallbacks(Concat, Cb)
+        let message = a:Concat("Hello Vim", "I'm Lua")
+        call a:Cb(message)
+      endfunction
+    ]]
+
+    eq("Hello Vim I'm Lua", exec_lua [[
+      can_pass_lua_callback_to_vim_from_lua_result = ""
+
+      vim.fn.VimCanCallLuaCallbacks(
+        function(greeting, message) return greeting .. " " .. message end,
+        function(message) can_pass_lua_callback_to_vim_from_lua_result = message end
+      )
+
+      return can_pass_lua_callback_to_vim_from_lua_result
+    ]])
+  end)
+
+  it('should handle funcrefs', function()
+    command [[
+      function VimCanCallLuaCallbacks(Concat, Cb)
+        let message = a:Concat("Hello Vim", "I'm Lua")
+        call a:Cb(message)
+      endfunction
+    ]]
+
+    eq("Hello Vim I'm Lua", exec_lua [[
+      can_pass_lua_callback_to_vim_from_lua_result = ""
+
+      vim.funcref('VimCanCallLuaCallbacks')(
+        function(greeting, message) return greeting .. " " .. message end,
+        function(message) can_pass_lua_callback_to_vim_from_lua_result = message end
+      )
+
+      return can_pass_lua_callback_to_vim_from_lua_result
+    ]])
+  end)
+
+  it('should work with metatables using __call', function()
+    eq(1, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({x = 1}, {
+        __call = function(t, ...)
+          this_is_local_variable = t.x
+        end
+      })
+
+      vim.fn.timer_start(5, callable_table)
+
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should handle being called from a timer once.', function()
+    eq(3, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({5, 4, 3, 2, 1}, {
+        __call = function(t, ...) this_is_local_variable = t[3] end
+      })
+
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should call functions once with __call metamethod', function()
+    eq(true, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({a = true, b = false}, {
+        __call = function(t, ...) this_is_local_variable = t.a end
+      })
+
+      assert(getmetatable(callable_table).__call)
+      vim.fn.call(callable_table, {})
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should work with lists using __call', function()
+    eq(3, exec_lua [[
+      local this_is_local_variable = false
+      local mt = {
+        __call = function(t, ...)
+          this_is_local_variable = t[3]
+        end
+      }
+      local callable_table = setmetatable({5, 4, 3, 2, 1}, mt)
+
+      -- Call it once...
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      assert(this_is_local_variable)
+      this_is_local_variable = false
+
+      vim.fn.timer_start(5, callable_table)
+      vim.wait(1000, function()
+        return this_is_local_variable
+      end)
+
+      return this_is_local_variable
+    ]])
+  end)
+
+  it('should not work with tables not using __call', function()
+    eq({false, 'Vim:E921: Invalid callback argument'}, exec_lua [[
+      local this_is_local_variable = false
+      local callable_table = setmetatable({x = 1}, {})
+
+      return {pcall(function() vim.fn.timer_start(5, callable_table) end)}
+    ]])
   end)
 
   it('correctly converts containers with type_idx', function()

@@ -16,6 +16,7 @@
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/lua/executor.h"
 #include "nvim/types.h"
 #include "nvim/assert.h"
 #include "nvim/memory.h"
@@ -301,6 +302,7 @@ void tv_list_free_list(list_T *const l)
   }
   list_log(l, NULL, NULL, "freelist");
 
+  nlua_free_typval_list(l);
   xfree(l);
 }
 
@@ -1374,6 +1376,7 @@ void tv_dict_free_dict(dict_T *const d)
     d->dv_used_next->dv_used_prev = d->dv_used_prev;
   }
 
+  nlua_free_typval_dict(d);
   xfree(d);
 }
 

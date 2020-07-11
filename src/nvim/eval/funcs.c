@@ -824,9 +824,12 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if (argvars[0].v_type == VAR_PARTIAL) {
     partial = argvars[0].vval.v_partial;
     func = partial_name(partial);
+  } else if (nlua_is_table_from_lua(&argvars[0])) {
+    func = nlua_register_table_as_callable(&argvars[0]);
   } else {
     func = (char_u *)tv_get_string(&argvars[0]);
   }
+
   if (*func == NUL) {
     return;             // type error or empty name
   }

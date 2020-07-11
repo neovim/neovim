@@ -32,6 +32,7 @@
 #define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
 #define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 #define FC_SANDBOX  0x40          // function defined in the sandbox
+#define FC_CFUNC    0x80          // C function extension
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "eval/userfunc.c.generated.h"
@@ -162,6 +163,17 @@ static void register_closure(ufunc_T *fp)
     [current_funccal->fc_funcs.ga_len++] = fp;
 }
 
+
+/// Get a name for a lambda.  Returned in static memory.
+char_u * get_lambda_name(void)
+{
+    static char_u   name[30];
+    static int      lambda_no = 0;
+
+    snprintf((char *)name, sizeof(name), "<lambda>%d", ++lambda_no);
+    return name;
+}
+
 /// Parse a lambda expression and get a Funcref from "*arg".
 ///
 /// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
@@ -175,7 +187,6 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   int        ret;
   char_u     *start = skipwhite(*arg + 1);
   char_u     *s, *e;
-  static int lambda_no = 0;
   bool       *old_eval_lavars = eval_lavars_used;
   bool       eval_lavars = false;
 
@@ -219,11 +230,9 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   if (evaluate) {
     int len, flags = 0;
     char_u *p;
-    char_u name[20];
     garray_T newlines;
 
-    lambda_no++;
-    snprintf((char *)name, sizeof(name), "<lambda>%d", lambda_no);
+    char_u *name = get_lambda_name();
 
     fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
     pt = xcalloc(1, sizeof(partial_T));
@@ -699,6 +708,11 @@ static void func_clear_items(ufunc_T *fp)
 {
   ga_clear_strings(&(fp->uf_args));
   ga_clear_strings(&(fp->uf_lines));
+
+  if (fp->uf_cb_free != NULL) {
+    fp->uf_cb_free(fp->uf_cb_state);
+    fp->uf_cb_free = NULL;
+  }
 
   XFREE_CLEAR(fp->uf_tml_count);
   XFREE_CLEAR(fp->uf_tml_total);
@@ -1408,6 +1422,9 @@ call_func(
 
       if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
         error = ERROR_DELETED;
+      } else if (fp != NULL && (fp->uf_flags & FC_CFUNC)) {
+        cfunc_T cb = fp->uf_cb;
+        error = (*cb)(argcount, argvars, rettv, fp->uf_cb_state);
       } else if (fp != NULL) {
         if (argv_func != NULL) {
           // postponed filling in the arguments, do it now
@@ -3434,4 +3451,30 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
   }
   xfree(tofree);
   return abort;
+}
+
+/// Registers a C extension user function.
+char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
+{
+  char_u *name = get_lambda_name();
+  ufunc_T *fp = NULL;
+
+  fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
+  if (fp == NULL) {
+    return NULL;
+  }
+
+  fp->uf_refcount = 1;
+  fp->uf_varargs = true;
+  fp->uf_flags = FC_CFUNC;
+  fp->uf_calls = 0;
+  fp->uf_script_ctx = current_sctx;
+  fp->uf_cb = cb;
+  fp->uf_cb_free = cb_free;
+  fp->uf_cb_state = state;
+
+  STRCPY(fp->uf_name, name);
+  hash_add(&func_hashtab, UF2HIKEY(fp));
+
+  return fp->uf_name;
 }
