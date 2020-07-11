@@ -314,7 +314,7 @@ static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
-  "yes:9", NULL };
+  "yes:9", "number", NULL };
 static char *(p_fdc_values[]) =       { "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL };
@@ -7397,7 +7397,9 @@ int win_signcol_count(win_T *wp)
   int maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
-  if (*scl == 'n') {
+  if (*scl == 'n'
+      && (*(scl + 1) == 'o' || (*(scl + 1) == 'u'
+                                && (wp->w_p_nu || wp->w_p_rnu)))) {
     return 0;
   }
   needed_signcols = buf_signcols(wp->w_buffer);
