@@ -31,6 +31,10 @@ func Test_assert_equalfile()
   call assert_match("difference at byte 4", v:errors[0])
   call remove(v:errors, 0)
 
+  call assert_equal(1, assert_equalfile('Xone', 'Xtwo', 'a message'))
+  call assert_match("a message: difference at byte 4", v:errors[0])
+  call remove(v:errors, 0)
+
   call delete('Xone')
   call delete('Xtwo')
 endfunc

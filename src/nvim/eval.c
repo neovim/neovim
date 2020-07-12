@@ -5739,6 +5739,12 @@ int assert_equalfile(typval_T *argvars)
   }
   if (IObuff[0] != NUL) {
     prepare_assert_error(&ga);
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      char *const tofree = encode_tv2echo(&argvars[2], NULL);
+      ga_concat(&ga, (char_u *)tofree);
+      xfree(tofree);
+      ga_concat(&ga, (char_u *)": ");
+    }
     ga_concat(&ga, IObuff);
     assert_error(&ga);
     ga_clear(&ga);

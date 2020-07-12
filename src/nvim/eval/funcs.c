@@ -415,7 +415,7 @@ static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = assert_equal_common(argvars, ASSERT_EQUAL);
 }
 
-// "assert_equalfile(fname-one, fname-two)" function
+// "assert_equalfile(fname-one, fname-two[, msg])" function
 static void f_assert_equalfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = assert_equalfile(argvars);
