@@ -38,6 +38,9 @@ describe('assert function:', function()
         call assert_equal(4, n)
         let l = [1, 2, 3]
         call assert_equal([1, 2, 3], l)
+        call assert_equal(v:_null_list, v:_null_list)
+        call assert_equal(v:_null_list, [])
+        call assert_equal([], v:_null_list)
         fu Func()
         endfu
         let F1 = function('Func')
