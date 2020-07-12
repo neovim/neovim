@@ -1811,10 +1811,16 @@ spell_reload_one (
 #define CONDIT_SUF      4       // add a suffix for matching flags
 #define CONDIT_AFF      8       // word already has an affix
 
-// Tunable parameters for when the tree is compressed.  See 'mkspellmem'.
+// Tunable parameters for when the tree is compressed.  Filled from the
+// 'mkspellmem' option.
 static long compress_start = 30000;     // memory / SBLOCKSIZE
 static long compress_inc = 100;         // memory / SBLOCKSIZE
 static long compress_added = 500000;    // word count
+
+// Actually used values.  These can change if compression doesn't result in
+// reducing the size.
+static long used_compress_inc;
+static long used_compress_added;
 
 // Check the 'mkspellmem' option.  Return FAIL if it's wrong.
 // Sets "sps_flags".
@@ -3915,9 +3921,10 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
   ++spin->si_msg_count;
 
   if (spin->si_compress_cnt > 1) {
-    if (--spin->si_compress_cnt == 1)
+    if (--spin->si_compress_cnt == 1) {
       // Did enough words to lower the block count limit.
-      spin->si_blocks_cnt += compress_inc;
+      spin->si_blocks_cnt += used_compress_inc;
+    }
   }
 
   // When we have allocated lots of memory we need to compress the word tree
@@ -3925,9 +3932,9 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
   // need that room, thus only compress in the following situations:
   // 1. When not compressed before (si_compress_cnt == 0): when using
   //    "compress_start" blocks.
-  // 2. When compressed before and used "compress_inc" blocks before
-  //    adding "compress_added" words (si_compress_cnt > 1).
-  // 3. When compressed before, added "compress_added" words
+  // 2. When compressed before and used "used_compress_inc" blocks before
+  //    adding "used_compress_added" words (si_compress_cnt > 1).
+  // 3. When compressed before, added "used_compress_added" words
   //    (si_compress_cnt == 1) and the number of free nodes drops below the
   //    maximum word length.
 #ifndef SPELL_COMPRESS_ALLWAYS
@@ -3937,11 +3944,11 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
 #endif
   {
     // Decrement the block counter.  The effect is that we compress again
-    // when the freed up room has been used and another "compress_inc"
-    // blocks have been allocated.  Unless "compress_added" words have
+    // when the freed up room has been used and another "used_compress_inc"
+    // blocks have been allocated.  Unless "used_compress_added" words have
     // been added, then the limit is put back again.
-    spin->si_blocks_cnt -= compress_inc;
-    spin->si_compress_cnt = compress_added;
+    spin->si_blocks_cnt -= used_compress_inc;
+    spin->si_compress_cnt = used_compress_added;
 
     if (spin->si_verbose) {
       msg_start();
@@ -3991,6 +3998,7 @@ static wordnode_T *get_wordnode(spellinfo_T *spin)
 // siblings.
 // Returns the number of nodes actually freed.
 static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
+  FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T  *np;
   int cnt = 0;
@@ -4010,6 +4018,7 @@ static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
 // Free a wordnode_T for re-use later.
 // Only the "wn_child" field becomes invalid.
 static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
+  FUNC_ATTR_NONNULL_ALL
 {
   n->wn_child = spin->si_first_free;
   spin->si_first_free = n;
@@ -4020,15 +4029,21 @@ static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
 static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
 {
   hashtab_T ht;
-  int n;
-  int tot = 0;
-  int perc;
+  long tot = 0;
+  long perc;
 
   // Skip the root itself, it's not actually used.  The first sibling is the
   // start of the tree.
   if (root->wn_sibling != NULL) {
     hash_init(&ht);
-    n = node_compress(spin, root->wn_sibling, &ht, &tot);
+    const long n = node_compress(spin, root->wn_sibling, &ht, &tot);
+
+    if (tot == 0) {
+      // Compression did not have effect.  Increase the limits by 20% to
+      // avoid wasting time on compression, memory will be used anyway.
+      used_compress_inc += used_compress_inc / 5;
+      used_compress_added += used_compress_added / 5;
+    }
 
 #ifndef SPELL_PRINTTREE
     if (spin->si_verbose || p_verbose > 2)
@@ -4041,8 +4056,8 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
       else
         perc = (tot - n) * 100 / tot;
       vim_snprintf((char *)IObuff, IOSIZE,
-          _("Compressed %d of %d nodes; %d (%d%%) remaining"),
-          n, tot, tot - n, perc);
+                   _("Compressed %ld of %ld nodes; %ld (%ld%%) remaining"),
+                   n, tot, tot - n, perc);
       spell_message(spin, IObuff);
     }
 #ifdef SPELL_PRINTTREE
@@ -4054,23 +4069,23 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
 
 // Compress a node, its siblings and its children, depth first.
 // Returns the number of compressed nodes.
-static int
-node_compress (
+static long node_compress(
     spellinfo_T *spin,
     wordnode_T *node,
     hashtab_T *ht,
-    int *tot            // total count of nodes before compressing,
+    long *tot           // total count of nodes before compressing,
                         // incremented while going through the tree
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T  *np;
   wordnode_T  *tp;
   wordnode_T  *child;
   hash_T hash;
   hashitem_T  *hi;
-  int len = 0;
+  long len = 0;
   unsigned nr, n;
-  int compressed = 0;
+  long compressed = 0;
 
   // Go through the list of siblings.  Compress each child and then try
   // finding an identical child to replace it.
@@ -5094,6 +5109,8 @@ mkspell (
   ga_init(&spin.si_prefcond, (int)sizeof(char_u *), 50);
   hash_init(&spin.si_commonwords);
   spin.si_newcompID = 127;      // start compound ID at first maximum
+  used_compress_inc = compress_inc;
+  used_compress_added = compress_added;
 
   // default: fnames[0] is output file, following are input files
   // When "fcount" is 1 there is only one file.
@@ -5274,7 +5291,8 @@ theend:
 
 // Display a message for spell file processing when 'verbose' is set or using
 // ":mkspell".  "str" can be IObuff.
-static void spell_message(spellinfo_T *spin, char_u *str)
+static void spell_message(const spellinfo_T *spin, char_u *str)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (spin->si_verbose || p_verbose > 2) {
     if (!spin->si_verbose)
