@@ -5708,6 +5708,9 @@ int assert_equalfile(typval_T *argvars)
 
   IObuff[0] = NUL;
   FILE *const fd1 = os_fopen(fname1, READBIN);
+  char line1[200];
+  char line2[200];
+  ptrdiff_t lineidx = 0;
   if (fd1 == NULL) {
     snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname1);
   } else {
@@ -5716,6 +5719,7 @@ int assert_equalfile(typval_T *argvars)
       fclose(fd1);
       snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
     } else {
+      int64_t linecount = 1;
       for (int64_t count = 0; ; count++) {
         const int c1 = fgetc(fd1);
         const int c2 = fgetc(fd2);
@@ -5727,10 +5731,24 @@ int assert_equalfile(typval_T *argvars)
         } else if (c2 == EOF) {
           STRCPY(IObuff, "second file is shorter");
           break;
-        } else if (c1 != c2) {
-          snprintf((char *)IObuff, IOSIZE,
-                   "difference at byte %" PRId64, count);
-          break;
+        } else {
+          line1[lineidx] = c1;
+          line2[lineidx] = c2;
+          lineidx++;
+          if (c1 != c2) {
+            snprintf((char *)IObuff, IOSIZE,
+                     "difference at byte %" PRId64 ", line %" PRId64,
+                     count, linecount);
+            break;
+          }
+        }
+        if (c1 == NL) {
+          linecount++;
+          lineidx = 0;
+        } else if (lineidx + 2 == (ptrdiff_t)sizeof(line1)) {
+          memmove(line1, line1 + 100, lineidx - 100);
+          memmove(line2, line2 + 100, lineidx - 100);
+          lineidx -= 100;
         }
       }
       fclose(fd1);
@@ -5746,6 +5764,17 @@ int assert_equalfile(typval_T *argvars)
       ga_concat(&ga, (char_u *)": ");
     }
     ga_concat(&ga, IObuff);
+    if (lineidx > 0) {
+      line1[lineidx] = NUL;
+      line2[lineidx] = NUL;
+      ga_concat(&ga, (char_u *)" after \"");
+      ga_concat(&ga, (char_u *)line1);
+      if (STRCMP(line1, line2) != 0) {
+        ga_concat(&ga, (char_u *)"\" vs \"");
+        ga_concat(&ga, (char_u *)line2);
+      }
+      ga_concat(&ga, (char_u *)"\"");
+    }
     assert_error(&ga);
     ga_clear(&ga);
     return 1;
