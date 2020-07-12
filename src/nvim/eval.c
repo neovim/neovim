@@ -5552,19 +5552,18 @@ void prepare_assert_error(garray_T *gap)
   }
 }
 
-// Append "str" to "gap", escaping unprintable characters.
+// Append "p[clen]" to "gap", escaping unprintable characters.
 // Changes NL to \n, CR to \r, etc.
-static void ga_concat_esc(garray_T *gap, char_u *str)
+static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u *p;
   char_u buf[NUMBUFLEN];
 
-  if (str == NULL) {
-    ga_concat(gap, (char_u *)"NULL");
-    return;
-  }
-
-  for (p = str; *p != NUL; p++) {
+  if (clen > 1) {
+    memmove(buf, p, clen);
+    buf[clen] = NUL;
+    ga_concat(gap, buf);
+  } else {
     switch (*p) {
       case BS: ga_concat(gap, (char_u *)"\\b"); break;
       case ESC: ga_concat(gap, (char_u *)"\\e"); break;
@@ -5581,6 +5580,41 @@ static void ga_concat_esc(garray_T *gap, char_u *str)
           ga_append(gap, *p);
         }
         break;
+    }
+  }
+}
+
+// Append "str" to "gap", escaping unprintable characters.
+// Changes NL to \n, CR to \r, etc.
+static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  char_u buf[NUMBUFLEN];
+
+  if (str == NULL) {
+    ga_concat(gap, (char_u *)"NULL");
+    return;
+  }
+
+  for (const char_u *p = str; *p != NUL; p++) {
+    int same_len = 1;
+    const char_u *s = p;
+    const int c = mb_ptr2char_adv(&s);
+    const int clen = s - p;
+    while (*s != NUL && c == utf_ptr2char(s)) {
+      same_len++;
+      s += clen;
+    }
+    if (same_len > 20) {
+      ga_concat(gap, (char_u *)"\\[");
+      ga_concat_esc(gap, p, clen);
+      ga_concat(gap, (char_u *)" occurs ");
+      vim_snprintf((char *)buf, NUMBUFLEN, "%d", same_len);
+      ga_concat(gap, buf);
+      ga_concat(gap, (char_u *)" times]");
+      p = s - 1;
+    } else {
+      ga_concat_esc(gap, p, clen);
     }
   }
 }
@@ -5609,10 +5643,10 @@ void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
 
   if (exp_str == NULL) {
     tofree = (char_u *)encode_tv2string(exp_tv, NULL);
-    ga_concat_esc(gap, tofree);
+    ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   } else {
-    ga_concat_esc(gap, exp_str);
+    ga_concat_shorten_esc(gap, exp_str);
   }
 
   if (atype != ASSERT_NOTEQUAL) {
@@ -5624,7 +5658,7 @@ void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
       ga_concat(gap, (char_u *)" but got ");
     }
     tofree = (char_u *)encode_tv2string(got_tv, NULL);
-    ga_concat_esc(gap, tofree);
+    ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   }
 }

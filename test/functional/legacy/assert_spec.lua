@@ -92,6 +92,11 @@ describe('assert function:', function()
       call('assert_equal', 'foo', 'bar', 'testing')
       expected_errors({"testing: Expected 'foo' but got 'bar'"})
     end)
+
+    it('should shorten a long message', function()
+      call ('assert_equal', 'XxxxxxxxxxxxxxxxxxxxxxX', 'XyyyyyyyyyyyyyyyyyyyyyyyyyX')
+      expected_errors({"Expected 'X\\[x occurs 21 times]X' but got 'X\\[y occurs 25 times]X'"})
+    end)
   end)
 
   -- assert_notequal({expected}, {actual}[, {msg}])
