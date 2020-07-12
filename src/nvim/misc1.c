@@ -1029,6 +1029,15 @@ void fast_breakcheck(void)
   }
 }
 
+// Like line_breakcheck() but check 100 times less often.
+void veryfast_breakcheck(void)
+{
+  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
+    breakcheck_count = 0;
+    os_breakcheck();
+  }
+}
+
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
 /// Invalidates cached tags.
 ///
