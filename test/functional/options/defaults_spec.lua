@@ -317,22 +317,21 @@ describe('XDG-based defaults', function()
 
     it('are correctly set', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-
       eq((('/x'):rep(4096) .. '/nvim'
           .. ',' .. ('/a'):rep(2048) .. '/nvim'
           .. ',' .. ('/b'):rep(2048) .. '/nvim'
-          .. (',' .. '/c/nvim'):rep(512)
+          .. (',' .. '/c/nvim')
           .. ',' .. ('/X'):rep(4096) .. '/nvim/site'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
-          .. (',' .. '/C/nvim/site'):rep(512)
+          .. (',' .. '/C/nvim/site')
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. (',' .. '/C/nvim/site/after'):rep(512)
+          .. (',' .. '/C/nvim/site/after')
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/X'):rep(4096) .. '/nvim/site/after'
-          .. (',' .. '/c/nvim/after'):rep(512)
+          .. (',' .. '/c/nvim/after')
           .. ',' .. ('/b'):rep(2048) .. '/nvim/after'
           .. ',' .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. ('/x'):rep(4096) .. '/nvim/after'
@@ -345,18 +344,18 @@ describe('XDG-based defaults', function()
       eq((('/x'):rep(4096) .. '/nvim'
           .. ',' .. ('/a'):rep(2048) .. '/nvim'
           .. ',' .. ('/b'):rep(2048) .. '/nvim'
-          .. (',' .. '/c/nvim'):rep(512)
+          .. (',' .. '/c/nvim')
           .. ',' .. ('/X'):rep(4096) .. '/nvim/site'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
-          .. (',' .. '/C/nvim/site'):rep(512)
+          .. (',' .. '/C/nvim/site')
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. (',' .. '/C/nvim/site/after'):rep(512)
+          .. (',' .. '/C/nvim/site/after')
           .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
           .. ',' .. ('/X'):rep(4096) .. '/nvim/site/after'
-          .. (',' .. '/c/nvim/after'):rep(512)
+          .. (',' .. '/c/nvim/after')
           .. ',' .. ('/b'):rep(2048) .. '/nvim/after'
           .. ',' .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. ('/x'):rep(4096) .. '/nvim/after'
