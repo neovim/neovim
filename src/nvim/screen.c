@@ -4518,8 +4518,13 @@ static void get_sign_display_info(
         *c_finalp = NUL;
 
         if (nrcol) {
-          snprintf((char *)extra, extra_size, "%-*s ",
-                   number_width(wp), *pp_extra);
+          int n, width = number_width(wp) - 2;
+          for (n = 0; n < width; n++) {
+            extra[n] = ' ';
+          }
+          extra[n] = NUL;
+          STRCAT(extra, *pp_extra);
+          STRCAT(extra, " ");
           *pp_extra = extra;
           *n_extrap = (int)STRLEN(*pp_extra);
         } else {
