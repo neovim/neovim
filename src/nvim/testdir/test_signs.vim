@@ -1796,6 +1796,56 @@ func Test_sign_numcol()
   redraw!
   call assert_equal("=>  1 01234", s:ScreenLine(1, 1, 11))
 
+  " Test displaying signs in the number column with width 1
+  call sign_unplace('*')
+  call append(1, "abcde")
+  call append(2, "01234")
+  " Enable number column with width 1
+  set number numberwidth=1 signcolumn=auto
+  redraw!
+  call assert_equal("3 01234", s:ScreenLine(3, 1, 7))
+  " Place a sign and make sure number column width remains the same
+  sign place 20 line=2 name=sign1
+  redraw!
+  call assert_equal("=>2 abcde", s:ScreenLine(2, 1, 9))
+  call assert_equal("  3 01234", s:ScreenLine(3, 1, 9))
+  " Set 'signcolumn' to 'number', make sure the number column width increases
+  set signcolumn=number
+  redraw!
+  call assert_equal("=> abcde", s:ScreenLine(2, 1, 8))
+  call assert_equal(" 3 01234", s:ScreenLine(3, 1, 8))
+  " Set 'signcolumn' to 'auto', make sure the number column width is 1.
+  set signcolumn=auto
+  redraw!
+  call assert_equal("=>2 abcde", s:ScreenLine(2, 1, 9))
+  call assert_equal("  3 01234", s:ScreenLine(3, 1, 9))
+  " Set 'signcolumn' to 'number', make sure the number column width is 2.
+  set signcolumn=number
+  redraw!
+  call assert_equal("=> abcde", s:ScreenLine(2, 1, 8))
+  call assert_equal(" 3 01234", s:ScreenLine(3, 1, 8))
+  " Disable 'number' column
+  set nonumber
+  redraw!
+  call assert_equal("=>abcde", s:ScreenLine(2, 1, 7))
+  call assert_equal("  01234", s:ScreenLine(3, 1, 7))
+  " Enable 'number' column
+  set number
+  redraw!
+  call assert_equal("=> abcde", s:ScreenLine(2, 1, 8))
+  call assert_equal(" 3 01234", s:ScreenLine(3, 1, 8))
+  " Remove the sign and make sure the width of the number column is 1.
+  call sign_unplace('', {'id' : 20})
+  redraw!
+  call assert_equal("3 01234", s:ScreenLine(3, 1, 7))
+  " When the first sign is placed with 'signcolumn' set to number, verify that
+  " the number column width increases
+  sign place 30 line=1 name=sign1
+  redraw!
+  call assert_equal("=> 01234", s:ScreenLine(1, 1, 8))
+  call assert_equal(" 2 abcde", s:ScreenLine(2, 1, 8))
+
+  sign unplace * group=*
   sign undefine sign1
   set signcolumn&
   set number&

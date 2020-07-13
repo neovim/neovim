@@ -7400,9 +7400,17 @@ int number_width(win_T *wp)
     ++n;
   } while (lnum > 0);
 
-  /* 'numberwidth' gives the minimal width plus one */
-  if (n < wp->w_p_nuw - 1)
+  // 'numberwidth' gives the minimal width plus one
+  if (n < wp->w_p_nuw - 1) {
     n = wp->w_p_nuw - 1;
+  }
+
+  // If 'signcolumn' is set to 'number' and there is a sign to display, then
+  // the minimal width for the number column is 2.
+  if (n < 2 && (wp->w_buffer->b_signlist != NULL)
+      && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+    n = 2;
+  }
 
   wp->w_nrwidth_width = n;
   return n;

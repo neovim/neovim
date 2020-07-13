@@ -3183,6 +3183,13 @@ ambw_end:
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
       errmsg = e_invarg;
     }
+    // When changing the 'signcolumn' to or from 'number', recompute the
+    // width of the number column if 'number' or 'relativenumber' is set.
+    if (((*oldval == 'n' && *(oldval + 1) == 'u')
+         || (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) =='u'))
+        && (curwin->w_p_nu || curwin->w_p_rnu)) {
+      curwin->w_nrwidth_line_count = 0;
+    }
   } else if (varp == &curwin->w_p_fdc || varp == &curwin->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
     if (check_opt_strings(*varp, p_fdc_values, false) != OK) {
