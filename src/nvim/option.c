@@ -6032,6 +6032,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_tfu = vim_strsave(p_tfu);
+      buf->b_p_fcnotify = vim_strsave(p_fcnotify);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = vim_strsave(p_vsts);

@@ -842,14 +842,11 @@ return {
     },
     {
       full_name='filechangenotify', abbreviation='fcnotify',
-      type='string', list='comma', scope={'global', 'buffer'},
-      vi_def='false',
+      type='string', scope={'buffer'},
+      vi_def=true,
+      alloced=true,
       varname='p_fcnotify',
-<<<<<<< HEAD
-      defaults={if_true={vi="off"}}
-=======
-      defaults={if_true={vi="autoread,onfocus"}}
->>>>>>> 2f7c22510... global local option error fix
+      defaults={if_true={vi="changed"}}
     },
     {
       full_name='fileencoding', abbreviation='fenc',
