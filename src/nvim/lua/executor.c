@@ -543,6 +543,14 @@ static lua_State *nlua_enter(void)
   return lstate;
 }
 
+/// Force an update of lua's package paths if runtime path has changed.
+bool nlua_update_package_path(void)
+{
+  lua_State *const lstate = nlua_enter();
+
+  return !!lstate;
+}
+
 static void nlua_print_event(void **argv)
 {
   char *str = argv[0];
