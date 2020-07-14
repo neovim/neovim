@@ -597,13 +597,17 @@ function lsp.start_client(config)
       --  -- workspace folder in the user interface.
       --  name
       -- }
-      workspaceFolders = nil;
+      workspaceFolders = {{
+        uri=vim.uri_from_fname(config.root_dir);
+        name=string.format("%s", config.root_dir);
+      }};
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
       pcall(config.before_init, initialize_params, config)
     end
     local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
+    
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
