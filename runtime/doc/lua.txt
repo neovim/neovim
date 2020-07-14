@@ -574,6 +574,15 @@ retained for the lifetime of a buffer but this is subject to change. A plugin
 should keep a reference to the parser object as long as it wants incremental
 updates.
 
+Required runtime files					*lua-treesitter-files*
+
+Treesitter requires some files to work properly :
+	- Parsers : this is the `.so` files created whan compiling parsers,
+	  they are searched under the `parsers` subdirectory.
+	- Queries : these are `.scm` files that are "sourced" when
+	  `vim.treesitter.get_query(lang, type)` is called. They are searched under the
+	  `queries/{lang}` subdirectory.
+
 Parser methods						*lua-treesitter-parser*
 
 tsparser:parse()					*tsparser:parse()*
@@ -678,9 +687,15 @@ supported match predicate is `eq?` (both comparing a capture against a string
 and two captures against each other).
 
 vim.treesitter.parse_query(lang, query)
-						*vim.treesitter.parse_query(()*
+						*vim.treesitter.parse_query()*
 	Parse the query as a string. (If the query is in a file, the caller
         should read the contents into a string before calling).
+
+vim.treesitter.get_query(lang, query_name)
+						*vim.treesitter.get_query()*
+	Get the runtime query named `query_name`. This internally calls
+	`parse_query`. This will "source" all the runtime and user defined
+	queries (see |lua-treesitter-files|).
 
 query:iter_captures(node, bufnr, start_row, end_row)
 							*query:iter_captures()*

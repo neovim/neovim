@@ -15,15 +15,31 @@ before_each(clear)
 describe('treesitter API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
-    eq("Error executing lua: .../treesitter.lua: no parser for 'borklang' language",
-       pcall_err(exec_lua, "parser = vim.treesitter.create_parser(0, 'borklang')"))
+    eq("Error executing lua: .../language.lua: no parser for 'borklang' language, see :help treesitter-parsers",
+       pcall_err(exec_lua, "parser = vim.treesitter.get_parser(0, 'borklang')"))
 
     -- actual message depends on platform
     matches("Error executing lua: Failed to load parser: uv_dlopen: .+",
        pcall_err(exec_lua, "parser = vim.treesitter.require_language('borklang', 'borkbork.so')"))
 
-    eq("Error executing lua: .../treesitter.lua: no parser for 'borklang' language",
+    eq("Error executing lua: .../language.lua: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
+  end)
+
+  it('allows to define base languages', function()
+    local value = exec_lua([[
+      vim.treesitter.base_language_add('borklang', 'foo')
+      return vim.treesitter.base_language_get('borklang')
+    ]])
+
+    eq(value, { 'foo' })
+
+    local value2 = exec_lua([[
+      vim.treesitter.base_language_add('borklang', 'c')
+      return vim.treesitter.get_query('borklang', 'highglights')
+    ]])
+
+    eq(value2 == nil, false)
   end)
 
 end)
@@ -292,9 +308,9 @@ static int nlua_schedule(lua_State *const lstate)
     ]]}
 
     exec_lua([[
-      local TSHighlighter = vim.treesitter.TSHighlighter
+      local highlighter = vim.treesitter.highlighter
       local query = ...
-      test_hl = TSHighlighter.new(query, 0, "c")
+      test_hl = highlighter.new(0, "c", query)
     ]], hl_query)
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
