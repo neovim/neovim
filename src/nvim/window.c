@@ -783,8 +783,13 @@ void ui_ext_win_viewport(win_T *wp)
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
+    int linecount = botline;
+    if (wp->w_buffer != NULL) {
+      linecount = wp->w_buffer->b_ml.ml_line_count;
+    }
     ui_call_win_viewport(wp->w_grid.handle, wp->handle, wp->w_topline-1,
-                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col);
+                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col,
+                         linecount);
     wp->w_viewport_invalid = false;
   }
 }
