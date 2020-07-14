@@ -716,7 +716,7 @@ function protocol.make_client_capabilities()
         };
         hierarchicalWorkspaceSymbolSupport = true;
       };
-      workspaceFolders = {supported =  true; changeNotifications = true;};
+      workspaceFolders = true;
       applyEdit = true;
     };
     callHierarchy = {
