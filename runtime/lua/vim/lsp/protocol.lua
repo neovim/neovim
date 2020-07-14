@@ -705,9 +705,6 @@ function protocol.make_client_capabilities()
     workspace = {
       symbol = {
         dynamicRegistration = false;
-        didChangeConfiguration =  {
-          dynamicRegistration = true;
-        };
         symbolKind = {
           valueSet = (function()
             local res = {}
