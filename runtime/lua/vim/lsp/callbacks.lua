@@ -109,19 +109,6 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
 end
 
-local workspaceFolders = {}
-
-M['workspace/didChangeWorkspaceFolders'] = function(_, _, result)
-  if not result then return end
-  print(vim.fn.inspect(result))
-  local added = result.event.addWorkspaceFolder;
-  local removed = result.event.removeWorkspaceFolder;
-  print(added, removed)
-  -- workspaceFolders[client_id] = added[1]
-  -- print(vim.inspect(vim.lsp.get_client_by_id(client_id)), "test2")
-  return result
-end
-
 M['client/registerCapability'] = function(_, _, result, client_id)
   if not result then return end
   return {}
