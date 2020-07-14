@@ -238,31 +238,36 @@ function M.outgoing_calls()
   end)
 
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cword>'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cfile>'))
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = {
-    event = {{
+    event = {
       added = {
         {
           uri = vim.uri_from_fname(workspace_folder);
           name = workspace_folder;
         };
       };
-      removed = nil;
-    }};
+      removed = { };
+    };
   }
   vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
 
 end
 
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cword>'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cfile>'))
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = {
-    event = {{
-      added = vim.empty_dict();
-      removed = workspace_folder;
-    }};
+    event = {
+      added = { };
+      removed = { 
+        {
+          uri = vim.uri_from_fname(workspace_folder);
+          name = workspace_folder;
+        };
+      };
+    };
   }
   vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
 end
