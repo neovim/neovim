@@ -1314,7 +1314,10 @@ function M.make_text_document_params()
   return { uri = vim.uri_from_bufnr(0) }
 end
 
---- Returns visual width of tabstop.
+function M.make_workspace_params()
+  return { event = { added = {}; removed = {}; } }
+end
+--- Get visual width of tabstop.
 ---
 --@see |softtabstop|
 --@param bufnr (optional, number): Buffer handle, defaults to current
