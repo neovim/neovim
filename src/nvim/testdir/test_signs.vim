@@ -6,9 +6,6 @@ endif
 
 source screendump.vim
 
-" Note: In neovim, swapfile feature must be disabled
-set noswapfile
-
 func Test_sign()
   new
   call setline(1, ['a', 'b', 'c', 'd'])
@@ -1786,7 +1783,7 @@ func Test_sign_numcol()
   " Enable number column. Check whether sign is displayed in the number column
   set number
   redraw!
-  call assert_equal("=>  01234", s:ScreenLine(1, 1, 9))
+  call assert_equal(" => 01234", s:ScreenLine(1, 1, 9))
 
   " Disable sign column. Make sure line number is displayed
   set signcolumn=no
