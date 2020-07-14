@@ -238,7 +238,7 @@ function M.outgoing_calls()
   end)
 
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cfile>'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = {
     event = {
@@ -256,7 +256,7 @@ function M.add_workspace_folder(workspace_folder)
 end
 
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('<cfile>'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = {
     event = {
