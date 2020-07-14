@@ -249,7 +249,13 @@ end
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   if not (workspace_folder and #workspace_folder > 0) then return end
-  if workspaceFolders[workspace_folder] then return end
+  if vim.fn.isdirectory(workspace_folder) == 0 then
+    print(workspace_folder, "is not a valid directory")
+    return
+  end
+  if workspaceFolders[workspace_folder] == true then
+    print(workspace_folder, "is already part of the workspace, ignoring")
+  return end
   local params = util.make_workspace_params()
   table.insert(params.event.added, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
   vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
@@ -260,7 +266,9 @@ end
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   if not (workspace_folder and #workspace_folder > 0) then return end
-  if workspaceFolders[workspace_folder] == nil then return end
+  if workspaceFolders[workspace_folder] == nil then
+    print(workspace_folder,  "is not currently part of the workspace, not removing")
+  return end
   local params = util.make_workspace_params()
   table.insert(params.event.removed, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
   vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
