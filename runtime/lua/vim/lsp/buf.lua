@@ -240,6 +240,12 @@ function M.outgoing_calls()
 local workspaceFolders = {}
 ======= end
 
+function M.list_workspace_folders()
+  for i, _ in pairs(workspaceFolders) do
+    print(i)
+  end
+end
+
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   if not (workspace_folder and #workspace_folder > 0) then return end
