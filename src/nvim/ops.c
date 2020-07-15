@@ -3721,7 +3721,7 @@ char_u *skip_comment(
 // to set those marks.
 //
 // return FAIL for failure, OK otherwise
-int do_join(size_t count,
+int do_join(ptrdiff_t count,
             int insert_space,
             int save_undo,
             int use_formatoptions,
@@ -3752,9 +3752,9 @@ int do_join(size_t count,
   // Allocate an array to store the number of spaces inserted before each
   // line.  We will use it to pre-compute the length of the new line and the
   // proper placement of each original line in the new one.
-  spaces = xcalloc(count, 1);
+  spaces = xcalloc((size_t)count, 1);
   if (remove_comments) {
-    comments = xcalloc(count, sizeof(*comments));
+    comments = xcalloc((size_t)count, sizeof(*comments));
   }
 
   // Don't move anything, just compute the final line length

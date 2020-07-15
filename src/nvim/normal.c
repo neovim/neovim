@@ -1804,7 +1804,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {
-        do_join((size_t)oap->line_count, oap->op_type == OP_JOIN,
+        do_join(oap->line_count, oap->op_type == OP_JOIN,
                 true, true, true);
         auto_format(false, true);
       }
@@ -7822,7 +7822,7 @@ static void nv_join(cmdarg_T *cap)
 
     prep_redo(cap->oap->regname, cap->count0,
               NUL, cap->cmdchar, NUL, NUL, cap->nchar);
-    do_join((size_t)cap->count0, cap->nchar == NUL, true, true, true);
+    do_join(cap->count0, cap->nchar == NUL, true, true, true);
   }
 }
 
