@@ -109,6 +109,8 @@ typedef struct {
 # include "ex_cmds.c.generated.h"
 #endif
 
+static int preview_bufnr = 0;
+
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
 {
@@ -3244,7 +3246,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// @param do_buf_event If `true`, send buffer updates.
 /// @return buffer used for 'inccommand' preview
 static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
-                     bool do_buf_event)
+                     bool do_buf_event, handle_T bufnr)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -4198,7 +4200,7 @@ skip:
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
       preview_buf = show_sub(eap, old_cursor, &preview_lines,
-                             pre_hl_id, pre_src_id);
+                             pre_hl_id, pre_src_id, bufnr);
       if (subsize > 0) {
         extmark_clear(orig_buf, pre_src_id, eap->line1-1, 0,
                       kv_last(preview_lines.subresults).end.lnum-1, MAXCOL);
@@ -5575,14 +5577,31 @@ void ex_helpclose(exarg_T *eap)
   }
 }
 
+/// Tries to enter to an existing window of given buffer. If no existing buffer
+/// is found, creates a new split.
+///
+/// Returns OK/FAIL.
+int sub_preview_win(buf_T *preview_buf)
+{
+  if (preview_buf != NULL) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == preview_buf) {
+        win_enter(wp, false);
+
+        return OK;
+      }
+    }
+  }
+  return win_split((int)p_cwh, WSP_BOT);
+}
+
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
 static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
-                       PreviewLines *preview_lines, int hl_id, int src_id)
+                       PreviewLines *preview_lines, int hl_id, int src_id,
+                       handle_T bufnr)
   FUNC_ATTR_NONNULL_ALL
 {
-  static handle_T bufnr = 0;  // special buffer, re-used on each visit
-
   win_T *save_curwin = curwin;
   cmdmod_T save_cmdmod = cmdmod;
   char_u *save_shm_p = vim_strsave(p_shm);
@@ -5600,9 +5619,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   bool outside_curline = (eap->line1 != old_cusr.lnum
                           || eap->line2 != old_cusr.lnum);
-  bool split = outside_curline && (*p_icm != 'n');
+  bool preview = outside_curline && (*p_icm != 'n');
   if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
-    split = false;
+    preview = false;
     preview_buf = NULL;
   }
 
@@ -5620,11 +5639,10 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   linenr_T highest_num_line = 0;
   int col_width = 0;
 
-  if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
+  if (preview && sub_preview_win(preview_buf) != FAIL) {
     buf_open_scratch(preview_buf ? bufnr : 0, "[Preview]");
     buf_clear();
     preview_buf = curbuf;
-    bufnr = preview_buf->handle;
     curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;
     curbuf->b_p_ul = -1;
@@ -5713,7 +5731,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   win_enter(save_curwin, false);  // Return to original window
   update_topline();
 
-  // Update screen now. Must do this _before_ close_windows().
+  // Update screen now.
   int save_rd = RedrawingDisabled;
   RedrawingDisabled = 0;
   update_screen(SOME_VALID);
@@ -5727,6 +5745,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   return preview_buf;
 }
 
+/// Closes any open windows for inccommand preview buffer.
+void close_preview_windows(void)
+{
+    block_autocmds();
+    buf_T *buf = preview_bufnr ? buflist_findnr(preview_bufnr) : NULL;
+    if (buf != NULL) {
+      close_windows(buf, false);
+    }
+    unblock_autocmds();
+}
+
 /// :substitute command
 ///
 /// If 'inccommand' is empty: calls do_sub().
@@ -5736,7 +5765,9 @@ void ex_substitute(exarg_T *eap)
 {
   bool preview = (State & CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    (void)do_sub(eap, profile_zero(), true);
+    close_preview_windows();
+    (void)do_sub(eap, profile_zero(), true, preview_bufnr);
+
     return;
   }
 
@@ -5760,8 +5791,13 @@ void ex_substitute(exarg_T *eap)
   // Don't show search highlighting during live substitution
   bool save_hls = p_hls;
   p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false,
+                              preview_bufnr);
   p_hls = save_hls;
+
+  if (preview_buf != NULL) {
+    preview_bufnr = preview_buf->handle;
+  }
 
   if (save_changedtick != buf_get_changedtick(curbuf)) {
     // Undo invisibly. This also moves the cursor!
@@ -5772,10 +5808,7 @@ void ex_substitute(exarg_T *eap)
     curbuf->b_u_time_cur = save_b_u_time_cur;
     buf_set_changedtick(curbuf, save_changedtick);
   }
-  if (buf_valid(preview_buf)) {
-    // XXX: Must do this *after* u_undo_and_forget(), why?
-    close_windows(preview_buf, false);
-  }
+
   curbuf->b_p_ul = save_b_p_ul;
   curwin->w_p_cul = save_w_p_cul;   // Restore 'cursorline'
   curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'

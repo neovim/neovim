@@ -450,6 +450,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
 
+  if (s->gotesc) {
+    // There might be a preview window open for inccommand. Close it.
+    close_preview_windows();
+  }
+
   if (s->did_incsearch) {
     if (s->gotesc) {
       curwin->w_cursor = s->save_cursor;
@@ -1958,8 +1963,10 @@ static int command_line_changed(CommandLineState *s)
     update_topline();
 
     redrawcmdline();
+
   } else if (State & CMDPREVIEW) {
     State = (State & ~CMDPREVIEW);
+    close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   }
 
