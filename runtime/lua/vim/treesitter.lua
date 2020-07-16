@@ -10,6 +10,12 @@ local parsers = {}
 local Parser = {}
 Parser.__index = Parser
 
+--- Parses the buffer if needed and returns a tree.
+--
+-- Calling this will call the on_changedtree callbacks if the tree has changed.
+--
+-- @returns An up to date tree
+-- @returns If the tree changed with this call, the changed ranges
 function Parser:parse()
   if self.valid then
     return self.tree
@@ -40,6 +46,9 @@ function Parser:_on_lines(bufnr, changed_tick, start_row, old_stop_row, stop_row
   end
 end
 
+--- Sets the included ranges for the current parser
+--
+-- @param ranges A table of nodes that will be used as the ranges the parser should include.
 function Parser:set_included_ranges(ranges)
   self._parser:set_included_ranges(ranges)
   -- The buffer will need to be parsed again later

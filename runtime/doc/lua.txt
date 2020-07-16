@@ -574,6 +574,14 @@ retained for the lifetime of a buffer but this is subject to change. A plugin
 should keep a reference to the parser object as long as it wants incremental
 updates.
 
+Parser files						*treesitter-parsers*
+
+Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
+search for in the `parsers` runtime directory.
+
+For a parser to be available for a given language, there must be a file named
+`{lang}.so` within the parser directory.
+
 Parser methods						*lua-treesitter-parser*
 
 tsparser:parse()					*tsparser:parse()*
@@ -593,9 +601,9 @@ shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
 a timer to throttle too frequent updates.
 
-tsparser:set_included_ranges(ranges)			*tsparser:set_included_ranges()*
+tsparser:set_included_ranges({ranges})			*tsparser:set_included_ranges()*
 	Changes the ranges the parser should consider. This is used for
-	language injection.  `ranges` should be of the form (all zero-based): >
+	language injection.  {ranges} should be of the form (all zero-based): >
 	{
 		{start_node, end_node},
 		...
@@ -617,15 +625,15 @@ tsnode:parent()						*tsnode:parent()*
 tsnode:child_count()					*tsnode:child_count()*
 	Get the node's number of children.
 
-tsnode:child(N)						*tsnode:child()*
-	Get the node's child at the given index, where zero represents the
+tsnode:child({index})						*tsnode:child()*
+	Get the node's child at the given {index}, where zero represents the
 	first child.
 
 tsnode:named_child_count()			*tsnode:named_child_count()*
 	Get the node's number of named children.
 
-tsnode:named_child(N)					*tsnode:named_child()*
-	Get the node's named child at the given index, where zero represents
+tsnode:named_child({index})					*tsnode:named_child()*
+	Get the node's named child at the given {index}, where zero represents
 	the first named child.
 
 tsnode:start()						*tsnode:start()*
@@ -661,12 +669,12 @@ tsnode:has_error()					*tsnode:has_error()*
 tsnode:sexpr()						*tsnode:sexpr()*
 	Get an S-expression representing the node as a string.
 
-tsnode:descendant_for_range(start_row, start_col, end_row, end_col)
+tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 						*tsnode:descendant_for_range()*
 	Get the smallest node within this node that spans the given range of
 	(row, column) positions
 
-tsnode:named_descendant_for_range(start_row, start_col, end_row, end_col)
+tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 					*tsnode:named_descendant_for_range()*
 	Get the smallest named node within this node that spans the given
 	range of (row, column) positions
@@ -677,17 +685,17 @@ Tree-sitter queries are supported, with some limitations. Currently, the only
 supported match predicate is `eq?` (both comparing a capture against a string
 and two captures against each other).
 
-vim.treesitter.parse_query(lang, query)
-						*vim.treesitter.parse_query(()*
-	Parse the query as a string. (If the query is in a file, the caller
+vim.treesitter.parse_query({lang}, {query})
+						*vim.treesitter.parse_query()*
+	Parse {query} as a string. (If the query is in a file, the caller
         should read the contents into a string before calling).
 
-query:iter_captures(node, bufnr, start_row, end_row)
+query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_captures()*
-	Iterate over all captures from all matches inside a `node`.
-	`bufnr` is needed if the query contains predicates, then the caller
+	Iterate over all captures from all matches inside {node}.
+	{bufnr} is needed if the query contains predicates, then the caller
 	must ensure to use a freshly parsed tree consistent with the current
-	text of the buffer. `start_row` and `end_row` can be used to limit
+	text of the buffer. {start_row} and {end_row} can be used to limit
 	matches inside a row range (this is typically used with root node
 	as the node, i e to get syntax highlight matches in the current
 	viewport)
@@ -704,7 +712,7 @@ query:iter_captures(node, bufnr, start_row, end_row)
 	  ... use the info here ...
 	end
 <
-query:iter_matches(node, bufnr, start_row, end_row)
+query:iter_matches({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_matches()*
 	Iterate over all matches within a node. The arguments are the same as
 	for |query:iter_captures()| but the iterated values are different:

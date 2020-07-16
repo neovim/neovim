@@ -67,6 +67,11 @@ local predicate_handlers = {
   end,
 }
 
+--- Adds a new predicates to be used in queries
+--
+-- @param name the name of the predicate, without leading #
+-- @param handler the handler function to be used
+--    signature will be (match, pattern, bufnr, predicate)
 function M.add_predicate(name, handler)
   if predicate_handlers[name] then
     a.nvim_err_writeln("It is recomended to not overwrite predicates.")
@@ -93,6 +98,15 @@ function Query:match_preds(match, pattern, bufnr)
   return true
 end
 
+--- Iterates of the captures of self on a given range.
+--
+-- @param node The node under witch the search will occur
+-- @param buffer The source buffer to search
+-- @param start The starting line of the search
+-- @param stop The stoping line of the search (end-exclusive)
+--
+-- @returns The matching capture id
+-- @returns The captured node
 function Query:iter_captures(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -112,6 +126,15 @@ function Query:iter_captures(node, bufnr, start, stop)
   return iter
 end
 
+--- Iterates of the matches of self on a given range.
+--
+-- @param node The node under witch the search will occur
+-- @param buffer The source buffer to search
+-- @param start The starting line of the search
+-- @param stop The stoping line of the search (end-exclusive)
+--
+-- @returns The matching pattern id
+-- @returns The matching match
 function Query:iter_matches(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
