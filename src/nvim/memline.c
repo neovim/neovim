@@ -1876,8 +1876,10 @@ errorret:
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
   }
-  if (will_change)
+  if (will_change) {
     buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
+    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
+  }
 
   return buf->b_ml.ml_line_ptr;
 }
