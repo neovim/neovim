@@ -55,12 +55,13 @@ function Parser:set_included_ranges(ranges)
   self.valid = false
 end
 
--- TODO(vigoux): not that great way to do it, but that __index method bothers me...
 local M = vim.tbl_extend("error", query, lang)
 
 setmetatable(M, {
   __index = function (t, k)
       if k == "TSHighlighter" then
+        a.nvim_err_writeln(
+          "Using vim.TSHighlighter is deprecated, please use vim.treesitter.highlighter instead.")
         t[k] = require'vim.treesitter.highlighter'
         return t[k]
       elseif k == "highlighter" then

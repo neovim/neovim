@@ -19,6 +19,9 @@ function M.require_language(lang, path)
       -- TODO(bfredl): help tag?
       error("no parser for '"..lang.."' language, see :help treesitter-parsers")
     end
+    if #paths > 1 then
+      print("Warning: multiple parsers were found for :", lang)
+    end
     path = paths[1]
   end
   vim._ts_add_language(path, lang)
