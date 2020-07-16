@@ -7,9 +7,6 @@ local ts_hs_ns = a.nvim_create_namespace("treesitter_hl")
 
 -- These are conventions defined by tree-sitter, though it
 -- needs to be user extensible also.
--- TODO(bfredl): this is very much incomplete, we will need to
--- go through a few tree-sitter provided queries and decide
--- on translations that makes the most sense.
 TSHighlighter.hl_map = {
     ["error"] = "Error",
 
@@ -112,11 +109,8 @@ function TSHighlighter:set_query(query)
     query = vim.treesitter.get_query(self.parser.lang, 'highlights')
 
     if query == nil then
-      a.err_writeln("No highlights.scm query found for " .. self.parser.lang)
-
-      if query == nil then
-        query = vim.treesitter.parse_query(self.parser.lang, "")
-      end
+      a.nvim_err_writeln("No highlights.scm query found for " .. self.parser.lang)
+      query = vim.treesitter.parse_query(self.parser.lang, "")
     end
   end
 

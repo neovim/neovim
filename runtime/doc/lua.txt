@@ -574,14 +574,25 @@ retained for the lifetime of a buffer but this is subject to change. A plugin
 should keep a reference to the parser object as long as it wants incremental
 updates.
 
-Required runtime files					*lua-treesitter-files*
+Parser files						*treesitter-parsers*
 
-Treesitter requires some files to work properly :
-	- Parsers : this is the `.so` files created whan compiling parsers,
-	  they are searched under the `parsers` subdirectory.
-	- Queries : these are `.scm` files that are "sourced" when
-	  `vim.treesitter.get_query(lang, type)` is called. They are searched under the
-	  `queries/{lang}` subdirectory.
+Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
+search for in the `parsers` runtime directory.
+
+For a parser to be available for a given language, there must be a file named
+`{lang}.so` within the parser directory.
+
+Query files						*treesitter-query*
+
+Queries are objects that tree-sitter uses to extract informations. They are
+built from a `scheme`-like language, and treesitter parses them to build the
+object.
+
+Treesitter also searches for query files within the `queries` directory. For a
+given language, treesitter will search the queries in the `queries/{lang}`. A
+query file is a `scheme` file (ending with `.scm`).
+
+An example query can be found at |lua-treesitter-highlight|
 
 Parser methods						*lua-treesitter-parser*
 
@@ -602,9 +613,9 @@ shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
 a timer to throttle too frequent updates.
 
-tsparser:set_included_ranges(ranges)			*tsparser:set_included_ranges()*
+tsparser:set_included_ranges({ranges})			*tsparser:set_included_ranges()*
 	Changes the ranges the parser should consider. This is used for
-	language injection.  `ranges` should be of the form (all zero-based): >
+	language injection.  {ranges} should be of the form (all zero-based): >
 	{
 		{start_node, end_node},
 		...
@@ -626,15 +637,15 @@ tsnode:parent()						*tsnode:parent()*
 tsnode:child_count()					*tsnode:child_count()*
 	Get the node's number of children.
 
-tsnode:child(N)						*tsnode:child()*
-	Get the node's child at the given index, where zero represents the
+tsnode:child({index})						*tsnode:child()*
+	Get the node's child at the given {index}, where zero represents the
 	first child.
 
 tsnode:named_child_count()			*tsnode:named_child_count()*
 	Get the node's number of named children.
 
-tsnode:named_child(N)					*tsnode:named_child()*
-	Get the node's named child at the given index, where zero represents
+tsnode:named_child({index})					*tsnode:named_child()*
+	Get the node's named child at the given {index}, where zero represents
 	the first named child.
 
 tsnode:start()						*tsnode:start()*
@@ -670,12 +681,12 @@ tsnode:has_error()					*tsnode:has_error()*
 tsnode:sexpr()						*tsnode:sexpr()*
 	Get an S-expression representing the node as a string.
 
-tsnode:descendant_for_range(start_row, start_col, end_row, end_col)
+tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 						*tsnode:descendant_for_range()*
 	Get the smallest node within this node that spans the given range of
 	(row, column) positions
 
-tsnode:named_descendant_for_range(start_row, start_col, end_row, end_col)
+tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 					*tsnode:named_descendant_for_range()*
 	Get the smallest named node within this node that spans the given
 	range of (row, column) positions
@@ -686,23 +697,23 @@ Tree-sitter queries are supported, with some limitations. Currently, the only
 supported match predicate is `eq?` (both comparing a capture against a string
 and two captures against each other).
 
-vim.treesitter.parse_query(lang, query)
+vim.treesitter.parse_query({lang}, {query})
 						*vim.treesitter.parse_query()*
-	Parse the query as a string. (If the query is in a file, the caller
+	Parse {query} as a string. (If the query is in a file, the caller
         should read the contents into a string before calling).
 
-vim.treesitter.get_query(lang, query_name)
+vim.treesitter.get_query({lang}, {query_name})
 						*vim.treesitter.get_query()*
-	Get the runtime query named `query_name`. This internally calls
-	`parse_query`. This will "source" all the runtime and user defined
-	queries (see |lua-treesitter-files|).
+	Get the runtime query named {query_name}. This internally calls
+	|vim.treesitter.parse_query()|. This will "source" all the runtime and
+	user defined queries (see |lua-treesitter-files|).
 
-query:iter_captures(node, bufnr, start_row, end_row)
+query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_captures()*
-	Iterate over all captures from all matches inside a `node`.
-	`bufnr` is needed if the query contains predicates, then the caller
+	Iterate over all captures from all matches inside {node}.
+	{bufnr} is needed if the query contains predicates, then the caller
 	must ensure to use a freshly parsed tree consistent with the current
-	text of the buffer. `start_row` and `end_row` can be used to limit
+	text of the buffer. {start_row} and {end_row} can be used to limit
 	matches inside a row range (this is typically used with root node
 	as the node, i e to get syntax highlight matches in the current
 	viewport)
@@ -719,7 +730,7 @@ query:iter_captures(node, bufnr, start_row, end_row)
 	  ... use the info here ...
 	end
 <
-query:iter_matches(node, bufnr, start_row, end_row)
+query:iter_matches({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_matches()*
 	Iterate over all matches within a node. The arguments are the same as
 	for |query:iter_captures()| but the iterated values are different:
@@ -762,9 +773,9 @@ buffer with this code: >
       ; ... more definitions
     ]]
 
-    highlighter = vim.treesitter.TSHighlighter.new(query, bufnr, lang)
-    -- alternatively, to use the current buffer and its filetype:
-    -- highlighter = vim.treesitter.TSHighlighter.new(query)
+    -- the query parameter is optionnal here, and if not provided, treesitter
+    -- will search for a highlights.scm query in the runtime files.
+    highlighter = vim.treesitter.TSHighlighter.new(bufnr, lang, query)
 
     -- Don't recreate the highlighter for the same buffer, instead
     -- modify the query like this:

@@ -10,6 +10,12 @@ local parsers = {}
 local Parser = {}
 Parser.__index = Parser
 
+--- Parses the buffer if needed and returns a tree.
+--
+-- Calling this will call the on_changedtree callbacks if the tree has changed.
+--
+-- @returns An up to date tree
+-- @returns If the tree changed with this call, the changed ranges
 function Parser:parse()
   if self.valid then
     return self.tree
@@ -40,6 +46,9 @@ function Parser:_on_lines(bufnr, changed_tick, start_row, old_stop_row, stop_row
   end
 end
 
+--- Sets the included ranges for the current parser
+--
+-- @param ranges A table of nodes that will be used as the ranges the parser should include.
 function Parser:set_included_ranges(ranges)
   self._parser:set_included_ranges(ranges)
   -- The buffer will need to be parsed again later
@@ -61,6 +70,13 @@ setmetatable(M, {
    end
  })
 
+--- Creates a new parser.
+--
+-- It is not recommended to use this, use vim.treesitter.get_parser() instead.
+--
+-- @param bufnr The buffer the parser will be tied to
+-- @param language The language of the parser.
+-- @param id The id the parser will have
 function M._create_parser(bufnr, language, id)
   lang.require_language(language)
   if bufnr == 0 then
@@ -91,6 +107,20 @@ function M._create_parser(bufnr, language, id)
   return self
 end
 
+--- Gets the parser for this bufnr / ft combination.
+--
+-- If needed this will create the parser.
+-- Unconditionnally attach the provided callback
+--
+-- @param bufnr The buffer the parser should be tied to
+-- @param ft The filetype of this parser
+-- @param buf_attach_cbs An `nvim_buf_attach`-like table argument with the following keys :
+--  `on_lines` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
+--  `on_changedtree` : a callback that will be called everytime the tree has syntactical changes.
+--      it will only be passed one argument, that is a table of the ranges (as node ranges) that
+--      changed.
+--
+-- @returns The parser
 function M.get_parser(bufnr, ft, buf_attach_cbs)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()

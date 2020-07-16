@@ -24,6 +24,10 @@ local base_language_map = {
   tsx = {'typescript', 'javascript'},
 }
 
+--- Register a language as using base_language as it's base.
+--
+-- @param language The language
+-- @param base_langue The language of which the queries will be used as a base.
 function M.base_language_add(language, base_language)
   if not base_language_map[language] then
     base_language_map[language] = {}
@@ -32,10 +36,21 @@ function M.base_language_add(language, base_language)
   table.insert(base_language_map[language], base_language)
 end
 
+--- Returns the base languages of a given language
+--
+-- @param language The language
+--
+-- @returns A table containing the languages @param language uses as it's base.
 function M.base_language_get(language)
   return base_language_map[language] or {}
 end
 
+--- Parses a query.
+--
+-- @param language The language
+-- @param query A string containing the query (s-expr syntax)
+--
+-- @returns The query
 function M.parse_query(language, query)
   lang.require_language(language)
   local self = setmetatable({}, Query)
@@ -67,8 +82,11 @@ local function read_query_file(filename)
 end
 
 --- Gets a fully fledged query from runtime files
--- @param lang the source language
--- @param query_name the name of the query (without `.scm`)
+--
+-- @param lang The source language
+-- @param query_name The name of the query (without `.scm`)
+--
+-- @returns The query
 function M.get_query(language, query_name)
   local query_string = ''
   if vim.fn.filereadable(query_name) == 1 then
@@ -167,6 +185,15 @@ function Query:match_preds(match, pattern, bufnr)
   return true
 end
 
+--- Iterates of the captures of self on a given range.
+--
+-- @param node The node under witch the search will occur
+-- @param buffer The source buffer to search
+-- @param start The starting line of the search
+-- @param stop The stoping line of the search (end-exclusive)
+--
+-- @returns The matching capture id
+-- @returns The captured node
 function Query:iter_captures(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -186,6 +213,15 @@ function Query:iter_captures(node, bufnr, start, stop)
   return iter
 end
 
+--- Iterates of the matches of self on a given range.
+--
+-- @param node The node under witch the search will occur
+-- @param buffer The source buffer to search
+-- @param start The starting line of the search
+-- @param stop The stoping line of the search (end-exclusive)
+--
+-- @returns The matching pattern id
+-- @returns The matching match
 function Query:iter_matches(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
