@@ -3476,6 +3476,7 @@ win_line (
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
+        v = (long)(ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           if (!attr_pri) {
