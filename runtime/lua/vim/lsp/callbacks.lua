@@ -102,13 +102,6 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
 end
 
-M['textDocument/references'] = function(_, _, result)
-  if not result then return end
-  util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
-end
-
 local symbol_callback = function(_, _, result, _, bufnr)
   if not result or vim.tbl_isempty(result) then return end
 
@@ -116,6 +109,7 @@ local symbol_callback = function(_, _, result, _, bufnr)
   api.nvim_command("copen")
   api.nvim_command("wincmd p")
 end
+
 M['textDocument/documentSymbol'] = symbol_callback
 M['workspace/symbol'] = symbol_callback
 
@@ -165,33 +159,6 @@ M['textDocument/hover'] = function(_, method, result)
     return bufnr, winnr
   end)
 end
-
-local function location_callback(_, method, result)
-  if result == nil or vim.tbl_isempty(result) then
-    local _ = log.info() and log.info(method, 'No location found')
-    return nil
-  end
-
-  -- textDocument/definition can return Location or Location[]
-  -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-
-  if vim.tbl_islist(result) then
-    util.jump_to_location(result[1])
-
-    if #result > 1 then
-      util.set_qflist(util.locations_to_items(result))
-      api.nvim_command("copen")
-      api.nvim_command("wincmd p")
-    end
-  else
-    util.jump_to_location(result)
-  end
-end
-
-M['textDocument/declaration'] = location_callback
-M['textDocument/definition'] = location_callback
-M['textDocument/typeDefinition'] = location_callback
-M['textDocument/implementation'] = location_callback
 
 M['textDocument/signatureHelp'] = function(_, method, result)
   util.focusable_preview(method, function()
