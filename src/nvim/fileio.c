@@ -300,6 +300,7 @@ readfile(
   int skip_read = false;
   context_sha256_T sha_ctx;
   int read_undo_file = false;
+  int split = 0;  // number of split lines
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
@@ -1013,8 +1014,21 @@ retry:
      */
     {
       if (!skip_read) {
-        size = 0x10000L;                            /* use buffer >= 64K */
+        // Use buffer >= 64K.  Add linerest to double the size if the
+        // line gets very long, to avoid a lot of copying. But don't
+        // read more than 1 Mbyte at a time, so we can be interrupted.
+        size = 0x10000L + linerest;
+        if (size > 0x100000L) {
+          size = 0x100000L;
+        }
+      }
 
+      // Protect against the argument of lalloc() going negative.
+      if (size < 0 || size + linerest + 1 < 0 || linerest >= MAXCOL) {
+        split++;
+        *ptr = NL;  // split line by inserting a NL
+        size = 1;
+      } else if (!skip_read) {
         for (; size >= 10; size /= 2) {
           new_buffer = verbose_try_malloc((size_t)size + (size_t)linerest + 1);
           if (new_buffer) {
@@ -1861,6 +1875,10 @@ failed:
       if (ff_error == EOL_DOS) {
         STRCAT(IObuff, _("[CR missing]"));
         c = TRUE;
+      }
+      if (split) {
+        STRCAT(IObuff, _("[long lines split]"));
+        c = true;
       }
       if (notconverted) {
         STRCAT(IObuff, _("[NOT converted]"));
