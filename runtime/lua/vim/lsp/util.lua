@@ -594,6 +594,7 @@ function M.focusable_float(unique_name, fn)
     if win then
       api.nvim_set_current_win(win)
       api.nvim_command("stopinsert")
+      api.nvim_buf_set_option(0, 'modifiable', false)
       return
     end
   end
