@@ -1,9 +1,12 @@
 " Test spell checking
 " Note: this file uses latin1 encoding, but is used with utf-8 encoding.
 
+source check.vim
 if !has('spell')
   finish
 endif
+
+source screendump.vim
 
 func TearDown()
   set nospell
@@ -475,6 +478,44 @@ func RunGoodBad(good, bad, expected_words, expected_bad_words)
   let bad_words = TestGoodBadBase()
   call assert_equal(a:expected_bad_words, bad_words)
   bwipe!
+endfunc
+
+func Test_spell_screendump()
+  CheckScreendump
+
+  let lines =<< trim END
+       call setline(1, [
+             \ "This is some text without any spell errors.  Everything",
+             \ "should just be black, nothing wrong here.",
+             \ "",
+             \ "This line has a sepll error. and missing caps.",
+             \ "And and this is the the duplication.",
+             \ "with missing caps here.",
+             \ ])
+       set spell spelllang=en_nz
+  END
+  call writefile(lines, 'XtestSpell')
+  let buf = RunVimInTerminal('-S XtestSpell', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_spell_1', {})
+
+  let lines =<< trim END
+       call setline(1, [
+             \ "This is some text without any spell errors.  Everything",
+             \ "should just be black, nothing wrong here.",
+             \ "",
+             \ "This line has a sepll error. and missing caps.",
+             \ "And and this is the the duplication.",
+             \ "with missing caps here.",
+             \ ])
+       set spell spelllang=en_nz
+  END
+  call writefile(lines, 'XtestSpell')
+  let buf = RunVimInTerminal('-S XtestSpell', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_spell_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestSpell')
 endfunc
 
 let g:test_data_aff1 = [
