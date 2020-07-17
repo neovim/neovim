@@ -214,10 +214,7 @@ void ui_refresh(void)
     }, res)
   end)
 
-  it('supports highlighting', function()
-    if not check_parser() then return end
-
-    local hl_text = [[
+local hl_text = [[
 /// Schedule Lua callback on main loop's event queue
 static int nlua_schedule(lua_State *const lstate)
 {
@@ -234,7 +231,7 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }]]
 
-    local hl_query = [[
+local hl_query = [[
 (ERROR) @ErrorMsg
 
 "if" @keyword
@@ -268,6 +265,10 @@ static int nlua_schedule(lua_State *const lstate)
 
 (comment) @comment
 ]]
+
+
+  it('supports highlighting', function()
+    if not check_parser() then return end
 
     local screen = Screen.new(65, 18)
     screen:attach()
@@ -422,6 +423,69 @@ static int nlua_schedule(lua_State *const lstate)
       {8:}}                                                                |
                                                                        |
     ]]}
+  end)
+
+  it('highlights C out of the box', function()
+    local screen = Screen.new(65, 18)
+    screen:attach()
+    insert(hl_text)
+    screen:expect{grid=[[
+      /// Schedule Lua callback on main loop's event queue             |
+      static int nlua_schedule(lua_State *const lstate)                |
+      {                                                                |
+        if (lua_type(lstate, 1) != LUA_TFUNCTION                       |
+            || lstate != lstate) {                                     |
+          lua_pushliteral(lstate, "vim.schedule: expected function");  |
+          return lua_error(lstate);                                    |
+        }                                                              |
+                                                                       |
+        LuaRef cb = nlua_ref(lstate, 1);                               |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       1, (void *)(ptrdiff_t)cb);                      |
+        return 0;                                                      |
+      ^}                                                                |
+      ~                                                                |
+      ~                                                                |
+                                                                       |
+    ]]}
+
+    exec_lua([[
+      vim.treesitter.highlighter.new(0, "c")
+    ]])
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {4:static} {3:int} {11:nlua_schedule}({3:lua_State} {4:*const}{11: lstate}{12:)}                |
+      {12:{}                                                                |
+        {4:if} ({11:lua_type}(lstate{12:,} {5:1}{12:)} {4:!=} {5:LUA_TFUNCTION}                       |
+            {4:||} lstate {4:!=} lstate{12:)} {12:{}                                     |
+          {11:lua_pushliteral}(lstate{12:,} {5:"vim.schedule: expected function"}{12:);}  |
+          {4:return} {11:lua_error}(lstate{12:);}                                    |
+        {12:}}                                                              |
+                                                                       |
+        {3:LuaRef} cb {4:=} {11:nlua_ref}(lstate{12:,} {5:1}{12:);}                               |
+                                                                       |
+        {11:multiqueue_put}(main_loop{12:.}{11:events}{12:,} nlua_schedule_event{12:,}          |
+                       {5:1}{12:,} ({3:void }{4:*}{12:)}({3:ptrdiff_t}{12:)}cb{12:);}                      |
+        {4:return} {5:0}{12:;}                                                      |
+      {12:^}}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]], attr_ids={
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Blue1},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [4] = {bold = true, foreground = Screen.colors.Brown},
+      [5] = {foreground = Screen.colors.Magenta},
+      [6] = {foreground = Screen.colors.Red},
+      [7] = {bold = true, foreground = Screen.colors.SlateBlue},
+      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red},
+      [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red},
+      [11] = {foreground = Screen.colors.Cyan4},
+      [12] = {foreground = Screen.colors.SlateBlue},
+    }}
   end)
 
   it('inspects language', function()
