@@ -1405,7 +1405,9 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
 
   lua_State *const lstate = nlua_enter();
 
+#ifndef NDEBUG
   int top = lua_gettop(lstate);
+#endif
 
   nlua_pushref(lstate, table_ref);
   if (!lua_getmetatable(lstate, -1)) {
