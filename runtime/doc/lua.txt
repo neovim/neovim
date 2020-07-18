@@ -1325,6 +1325,7 @@ uri_to_bufnr({uri})                                       *vim.uri_to_bufnr()*
 
                 Return: ~
                     bufnr.
+
                 Note:
                     Creates buffer but does not load it
 

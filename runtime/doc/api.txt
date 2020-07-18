@@ -475,6 +475,9 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
+nvim__get_hl_defs({ns_id})                               *nvim__get_hl_defs()*
+                TODO: Documentation
+
 nvim__get_lib_dir()                                      *nvim__get_lib_dir()*
                 TODO: Documentation
 
@@ -952,6 +955,9 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
                 It is not an error to not find any files. An empty array is
                 returned then.
 
+                Attributes: ~
+                    {fast}
+
                 Parameters: ~
                     {name}  pattern of files to search for
                     {all}   whether to return all matches or only the first
@@ -987,6 +993,7 @@ nvim_input({keys})                                              *nvim_input()*
                 Note:
                     |keycodes| like <CR> are translated, so "<" is special. To
                     input a literal "<", send <LT>.
+
                 Note:
                     For mouse events use |nvim_input_mouse()|. The pseudokey
                     form "<LeftMouse><col,row>" is deprecated since
@@ -1378,8 +1385,7 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
                     {opts}    Optional parameters. Reserved for future use.
 
                                                       *nvim_set_client_info()*
-nvim_set_client_info({name}, {version}, {type}, {methods},
-                     {attributes})
+nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                 Self-identifies the client.
 
                 The client/plugin/application should call this after
@@ -1491,7 +1497,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
                 disable the provider until the next redraw. Similarily, return
                 `false` in `on_win` will skip the `on_lines` calls for that
                 window (but any extmarks set in `on_win` will still be used).
-                A plugin managing multiple sources of decorations should
+                A plugin managing multiple sources of decoration should
                 ideally only set one provider, and merge the sources
                 internally. You can use multiple `ns_id` for the extmarks
                 set/modified inside the callback anyway.
@@ -1518,6 +1524,33 @@ nvim_set_decoration_provider({ns_id}, {opts})
                                subject to change) ["win", winid, bufnr, row]
                              • on_end: called at the end of a redraw cycle
                                ["end", tick]
+
+nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
+                Set a highlight group.
+
+                TODO: ns_id = 0, should modify :highlight namespace TODO val
+                should take update vs reset flag
+
+                Parameters: ~
+                    {ns_id}  number of namespace for this highlight
+                    {name}   highlight group name, like ErrorMsg
+                    {val}    highlight definiton map, like
+                             |nvim_get_hl_by_name|.
+
+nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
+                Set active namespace for highlights.
+
+                NB: this function can be called from async contexts, but the
+                semantics are not yet well-defined. To start with
+                |nvim_set_decoration_provider| on_win and on_line callbacks
+                are explicitly allowed to change the namespace during a redraw
+                cycle.
+
+                Attributes: ~
+                    {fast}
+
+                Parameters: ~
+                    {ns_id}  the namespace to activate
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {opts})              *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
@@ -1618,8 +1651,8 @@ nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
                                                     *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
-                       {col_start}, {col_end})
+nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line}, {col_start},
+                       {col_end})
                 Adds a highlight to buffer.
 
                 Useful for plugins that dynamically generate highlights to a
@@ -2067,8 +2100,7 @@ nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {opts})
                     |nvim_set_keymap()|
 
                                                         *nvim_buf_set_lines()*
-nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
-                   {replacement})
+nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
                 Sets (replaces) a line-range in the buffer.
 
                 Indexing is zero-based, end-exclusive. Negative indices are
@@ -2116,8 +2148,7 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                     {value}   Variable value
 
                                                  *nvim_buf_set_virtual_text()*
-nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
-                          {opts})
+nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks}, {opts})
                 Set the virtual text (annotation) for a buffer line.
 
                 By default (and currently the only option) the text will be
@@ -2449,8 +2480,8 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
                 Note that this method is not to be confused with
                 |nvim_ui_pum_set_height()|, which sets the number of visible
                 items in the popup menu, while this function sets the bounding
-                box of the popup menu, including visual decorations such as
-                boarders and sliders. Floats need not use the same font size,
+                box of the popup menu, including visual elements such as
+                borders and sliders. Floats need not use the same font size,
                 nor be anchored to exact grid corners, so one can set
                 floating-point numbers to the popup menu geometry.
 

@@ -231,41 +231,42 @@ local function rpc_response_error(code, message, data)
   })
 end
 
-local default_handlers = {}
+local default_dispatchers = {}
+
 --@private
---- Default handler for notifications sent to an LSP server.
+--- Default dispatcher for notifications sent to an LSP server.
 ---
 --@param method (string) The invoked LSP method
 --@param params (table): Parameters for the invoked LSP method
-function default_handlers.notification(method, params)
+function default_dispatchers.notification(method, params)
   local _ = log.debug() and log.debug('notification', method, params)
 end
 --@private
---- Default handler for requests sent to an LSP server.
+--- Default dispatcher for requests sent to an LSP server.
 ---
 --@param method (string) The invoked LSP method
 --@param params (table): Parameters for the invoked LSP method
 --@returns `nil` and `vim.lsp.protocol.ErrorCodes.MethodNotFound`.
-function default_handlers.server_request(method, params)
+function default_dispatchers.server_request(method, params)
   local _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
 --@private
---- Default handler for when a client exits.
+--- Default dispatcher for when a client exits.
 ---
 --@param code (number): Exit code
 --@param signal (number): Number describing the signal used to terminate (if
 ---any)
-function default_handlers.on_exit(code, signal)
+function default_dispatchers.on_exit(code, signal)
   local _ = log.info() and log.info("client_exit", { code = code, signal = signal })
 end
 --@private
---- Default handler for client errors.
+--- Default dispatcher for client errors.
 ---
 --@param code (number): Error code
 --@param err (any): Details about the error
 ---any)
-function default_handlers.on_error(code, err)
+function default_dispatchers.on_error(code, err)
   local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
@@ -274,8 +275,8 @@ end
 ---
 --@param cmd (string) Command to start the LSP server.
 --@param cmd_args (table) List of additional string arguments to pass to {cmd}.
---@param handlers (table, optional) Handlers for LSP message types. Valid
----handler names are:
+--@param dispatchers (table, optional) Dispatchers for LSP message types. Valid
+---dispatcher names are:
 --- - `"notification"`
 --- - `"server_request"`
 --- - `"on_error"`
@@ -294,39 +295,39 @@ end
 --- - {pid} (number) The LSP server's PID.
 --- - {handle} A handle for low-level interaction with the LSP server process
 ---   |vim.loop|.
-local function start(cmd, cmd_args, handlers, extra_spawn_params)
+local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   validate {
     cmd = { cmd, 's' };
     cmd_args = { cmd_args, 't' };
-    handlers = { handlers, 't', true };
+    dispatchers = { dispatchers, 't', true };
   }
 
   if not (vim.fn.executable(cmd) == 1) then
     error(string.format("The given command %q is not executable.", cmd))
   end
-  if handlers then
-    local user_handlers = handlers
-    handlers = {}
-    for handle_name, default_handler in pairs(default_handlers) do
-      local user_handler = user_handlers[handle_name]
-      if user_handler then
-        if type(user_handler) ~= 'function' then
-          error(string.format("handler.%s must be a function", handle_name))
+  if dispatchers then
+    local user_dispatchers = dispatchers
+    dispatchers = {}
+    for dispatch_name, default_dispatch in pairs(default_dispatchers) do
+      local user_dispatcher = user_dispatchers[dispatch_name]
+      if user_dispatcher then
+        if type(user_dispatcher) ~= 'function' then
+          error(string.format("dispatcher.%s must be a function", dispatch_name))
         end
         -- server_request is wrapped elsewhere.
-        if not (handle_name == 'server_request'
-          or handle_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
+        if not (dispatch_name == 'server_request'
+          or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
         then
-          user_handler = schedule_wrap(user_handler)
+          user_dispatcher = schedule_wrap(user_dispatcher)
         end
-        handlers[handle_name] = user_handler
+        dispatchers[dispatch_name] = user_dispatcher
       else
-        handlers[handle_name] = default_handler
+        dispatchers[dispatch_name] = default_dispatch
       end
     end
   else
-    handlers = default_handlers
+    dispatchers = default_dispatchers
   end
 
   local stdin = uv.new_pipe(false)
@@ -339,8 +340,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
   local handle, pid
   do
     --@private
-    --- Callback for |vim.loop.spawn()| Closes all streams and runs the
-    --- `on_exit` handler.
+    --- Callback for |vim.loop.spawn()| Closes all streams and runs the `on_exit` dispatcher.
     --@param code (number) Exit code
     --@param signal (number) Signal that was used to terminate (if any)
     local function onexit(code, signal)
@@ -350,7 +350,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
       handle:close()
       -- Make sure that message_callbacks can be gc'd.
       message_callbacks = nil
-      handlers.on_exit(code, signal)
+      dispatchers.on_exit(code, signal)
     end
     local spawn_params = {
       args = cmd_args;
@@ -448,7 +448,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
   local function on_error(errkind, ...)
     assert(client_errors[errkind])
     -- TODO what to do if this fails?
-    pcall(handlers.on_error, errkind, ...)
+    pcall(dispatchers.on_error, errkind, ...)
   end
   --@private
   local function pcall_handler(errkind, status, head, ...)
@@ -471,7 +471,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
   local function handle_body(body)
     local decoded, err = json_decode(body)
     if not decoded then
-      on_error(client_errors.INVALID_SERVER_JSON, err)
+      -- on_error(client_errors.INVALID_SERVER_JSON, err)
       return
     end
     local _ = log.debug() and log.debug("decoded", decoded)
@@ -484,7 +484,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
       schedule(function()
         local status, result
         status, result, err = try_call(client_errors.SERVER_REQUEST_HANDLER_ERROR,
-            handlers.server_request, decoded.method, decoded.params)
+            dispatchers.server_request, decoded.method, decoded.params)
         local _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
         if status then
           if not (result or err) then
@@ -551,7 +551,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
       -- Notification
       decoded.params = convert_NIL(decoded.params)
       try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
-          handlers.notification, decoded.method, decoded.params)
+          dispatchers.notification, decoded.method, decoded.params)
     else
       -- Invalid server message
       on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)

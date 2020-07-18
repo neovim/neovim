@@ -1,4 +1,4 @@
-local default_callbacks = require 'vim.lsp.callbacks'
+local default_handlers = require 'vim.lsp.handlers'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
@@ -13,16 +13,21 @@ local validate = vim.validate
 
 local lsp = {
   protocol = protocol;
-  callbacks = default_callbacks;
+
+  -- TODO(tjdevries): Add in the warning that `callbacks` is no longer supported.
+  -- util.warn_once("vim.lsp.callbacks is deprecated. Use vim.lsp.handlers instead.")
+  handlers = default_handlers;
+  callbacks = default_handlers;
+
   buf = require'vim.lsp.buf';
+  diagnostic = require'vim.lsp.diagnostic';
   util = util;
+
   -- Allow raw RPC access.
   rpc = lsp_rpc;
+
   -- Export these directly from rpc.
   rpc_response_error = lsp_rpc.rpc_response_error;
-  -- You probably won't need this directly, since __tostring is set for errors
-  -- by the RPC.
-  -- format_rpc_error = lsp_rpc.format_rpc_error;
 }
 
 -- maps request name to the required resolved_capability in the client.
@@ -72,7 +77,7 @@ local function resolve_bufnr(bufnr)
 end
 
 --@private
---- callback called by the client when trying to call a method that's not
+--- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
 --@param method (string) name of the method
 function lsp._unsupported_method(method)
@@ -115,14 +120,14 @@ local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
 --@private
---- Invokes a callback for each LSP client attached to the buffer {bufnr}.
+--- Invokes a function for each LSP client attached to the buffer {bufnr}.
 ---
 --@param bufnr (Number) of buffer
---@param callback (function({client}, {client_id}, {bufnr}) Function to run on
+--@param fn (function({client}, {client_id}, {bufnr}) Function to run on
 ---each client attached to that buffer.
-local function for_each_buffer_client(bufnr, callback)
+local function for_each_buffer_client(bufnr, fn)
   validate {
-    callback = { callback, 'f' };
+    fn = { fn, 'f' };
   }
   bufnr = resolve_bufnr(bufnr)
   local client_ids = all_buffer_active_clients[bufnr]
@@ -132,7 +137,7 @@ local function for_each_buffer_client(bufnr, callback)
   for client_id in pairs(client_ids) do
     local client = active_clients[client_id]
     if client then
-      callback(client, client_id, bufnr)
+      fn(client, client_id, bufnr)
     end
   end
 end
@@ -209,7 +214,9 @@ local function validate_client_config(config)
   }
   validate {
     root_dir        = { config.root_dir, is_dir, "directory" };
+    -- TODO(remove-callbacks)
     callbacks       = { config.callbacks, "t", true };
+    handlers        = { config.handlers, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
     cmd_env         = { config.cmd_env, "t", true };
@@ -220,13 +227,23 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
+
+  -- TODO(remove-callbacks)
+  if config.handlers and config.callbacks then
+    error(debug.traceback(
+      "Unable to configure LSP with both 'config.handlers' and 'config.callbacks'. Use 'config.handlers' exclusively."
+    ))
+  end
+
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
   end
+
   return {
-    cmd = cmd; cmd_args = cmd_args;
+    cmd = cmd;
+    cmd_args = cmd_args;
     offset_encoding = offset_encoding;
   }
 end
@@ -276,12 +293,11 @@ end
 ---
 --- - Methods:
 ---
----  - request(method, params, [callback], bufnr)
+---  - request(method, params, [handler], bufnr)
 ---     Sends a request to the server.
 ---     This is a thin wrapper around {client.rpc.request} with some additional
 ---     checking.
----     If {callback} is not specified, it will use {client.callbacks} to try to
----     find a callback. If one is not found there, then an error will occur.
+---     If {handler} is not specified,  If one is not found there, then an error will occur.
 ---     Returns: {status}, {[client_id]}. {status} is a boolean indicating if
 ---     the notification was successful. If it is `false`, then it will always
 ---     be `false` (the client has shutdown).
@@ -325,8 +341,7 @@ end
 ---    with the server. You can modify this in the `config`'s `on_init` method
 ---    before text is sent to the server.
 ---
----  - {callbacks} (table): The callbacks used by the client as
----    described in |lsp-callbacks|.
+---  - {handlers} (table): The handlers used by the client as described in |lsp-handler|.
 ---
 ---  - {config} (table): copy of the table that was passed by the user
 ---    to |vim.lsp.start_client()|.
@@ -378,15 +393,7 @@ end
 ---   `{[vim.type_idx]=vim.types.dictionary}`, else it will be encoded as an
 ---   array.
 ---
---@param callbacks Map of language server method names to
---- `function(err, method, params, client_id)` handler. Invoked for:
---- - Notifications to the server, where `err` will always be `nil`.
---- - Requests by the server. For these you can respond by returning
----   two values: `result, err` where err must be shaped like a RPC error,
----   i.e. `{ code, message, data? }`. Use |vim.lsp.rpc_response_error()| to
----   help with this.
---- - Default callback for client requests not explicitly specifying
----   a callback.
+--@param handlers Map of language server method names to |lsp-handler|
 ---
 --@param init_options Values to pass in the initialization request
 --- as `initializationOptions`. See `initialize` in the LSP spec.
@@ -437,52 +444,51 @@ function lsp.start_client(config)
 
   local client_id = next_client_id()
 
-  local callbacks = config.callbacks or {}
+  -- TODO(remove-callbacks)
+  local handlers = config.handlers or config.callbacks or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
-  local handlers = {}
+  local dispatch = {}
 
   --@private
-  --- Returns the callback associated with an LSP method. Returns the default
-  --- callback if the user hasn't set a custom one.
+  --- Returns the handler associated with an LSP method.
+  --- Returns the default handler if the user hasn't set a custom one.
   ---
   --@param method (string) LSP method name
-  --@returns (fn) The callback for the given method, if defined, or the default
-  ---from |lsp-callbacks|
-  local function resolve_callback(method)
-    return callbacks[method] or default_callbacks[method]
+  --@returns (fn) The handler for the given method, if defined, or the default from |vim.lsp.handlers|
+  local function resolve_handler(method)
+    return handlers[method] or default_handlers[method]
   end
 
   --@private
   --- Handles a notification sent by an LSP server by invoking the
-  --- corresponding callback.
+  --- corresponding handler.
   ---
   --@param method (string) LSP method name
   --@param params (table) The parameters for that method.
-  function handlers.notification(method, params)
+  function dispatch.notification(method, params)
     local _ = log.debug() and log.debug('notification', method, params)
-    local callback = resolve_callback(method)
-    if callback then
+    local handler = resolve_handler(method)
+    if handler then
       -- Method name is provided here for convenience.
-      callback(nil, method, params, client_id)
+      handler(nil, method, params, client_id)
     end
   end
 
   --@private
-  --- Handles a request from an LSP server by invoking the corresponding
-  --- callback.
+  --- Handles a request from an LSP server by invoking the corresponding handler.
   ---
   --@param method (string) LSP method name
   --@param params (table) The parameters for that method
-  function handlers.server_request(method, params)
+  function dispatch.server_request(method, params)
     local _ = log.debug() and log.debug('server_request', method, params)
-    local callback = resolve_callback(method)
-    if callback then
-      local _ = log.debug() and log.debug("server_request: found callback for", method)
-      return callback(nil, method, params, client_id)
+    local handler = resolve_handler(method)
+    if handler then
+      local _ = log.debug() and log.debug("server_request: found handler for", method)
+      return handler(nil, method, params, client_id)
     end
-    local _ = log.debug() and log.debug("server_request: no callback found for", method)
+    local _ = log.debug() and log.debug("server_request: no handler found for", method)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
 
@@ -493,7 +499,7 @@ function lsp.start_client(config)
   --@param err (...) Other arguments may be passed depending on the error kind
   --@see |vim.lsp.client_errors| for possible errors. Use
   ---`vim.lsp.client_errors[code]` to get a human-friendly name.
-  function handlers.on_error(code, err)
+  function dispatch.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
     err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
     if config.on_error then
@@ -510,7 +516,7 @@ function lsp.start_client(config)
   ---
   --@param code (number) exit code of the process
   --@param signal (number) the signal used to terminate (if any)
-  function handlers.on_exit(code, signal)
+  function dispatch.on_exit(code, signal)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
     local active_buffers = {}
@@ -523,7 +529,7 @@ function lsp.start_client(config)
     -- Buffer level cleanup
     vim.schedule(function()
       for _, bufnr in ipairs(active_buffers) do
-        util.buf_clear_diagnostics(bufnr)
+        lsp.diagnostic.clear(bufnr)
       end
     end)
     if config.on_exit then
@@ -532,7 +538,7 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc = lsp_rpc.start(cmd, cmd_args, handlers, {
+  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
     cwd = config.cmd_cwd;
     env = config.cmd_env;
   })
@@ -542,12 +548,14 @@ function lsp.start_client(config)
     name = name;
     rpc = rpc;
     offset_encoding = offset_encoding;
-    callbacks = callbacks;
     config = config;
+
+    -- TODO(remove-callbacks)
+    callbacks = handlers;
+    handlers = handlers;
   }
 
-  -- Store the uninitialized_clients for cleanup in case we exit before
-  -- initialize finishes.
+  -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client;
 
   --@private
@@ -641,13 +649,11 @@ function lsp.start_client(config)
   --- Sends a request to the server.
   ---
   --- This is a thin wrapper around {client.rpc.request} with some additional
-  --- checks for capabilities and callback availability.
+  --- checks for capabilities and handler availability.
   ---
   --@param method (string) LSP method name.
   --@param params (table) LSP request params.
-  --@param callback (function, optional) Response handler for this method.
-  ---If {callback} is not specified, it will use {client.callbacks} to try to
-  ---find a callback. If one is not found there, then an error will occur.
+  --@param handler (function, optional) Response |lsp-handler| for this method.
   --@param bufnr (number) Buffer handle (0 for current).
   --@returns ({status}, [request_id]): {status} is a bool indicating
   ---whether the request was successful. If it is `false`, then it will
@@ -656,16 +662,14 @@ function lsp.start_client(config)
   ---second result. You can use this with `client.cancel_request(request_id)`
   ---to cancel the-request.
   --@see |vim.lsp.buf_request()|
-  function client.request(method, params, callback, bufnr)
-    -- FIXME: callback is optional, but bufnr is apparently not? Shouldn't that
-    -- require a `select('#', ...)` call?
-    if not callback then
-      callback = resolve_callback(method)
-        or error(string.format("not found: %q request callback for client %q.", method, client.name))
+  function client.request(method, params, handler, bufnr)
+    if not handler then
+      handler = resolve_handler(method)
+        or error(string.format("not found: %q request handler for client %q.", method, client.name))
     end
-    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
+    local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      callback(err, method, result, client_id, bufnr)
+      handler(err, method, result, client_id, bufnr)
     end)
   end
 
@@ -995,19 +999,18 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 --@param bufnr (number) Buffer handle, or 0 for current.
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param callback (optional, functionnil) Handler
---  `function(err, method, params, client_id)` for this request. Defaults
---  to the client callback in `client.callbacks`. See |lsp-callbacks|.
+--@param handler (optional, function) See |lsp-handler|
+--  If nil, follows resolution strategy defined in |lsp-handler-configuration|
 --
 --@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
 ---    iterate all clients and call their `cancel_request()` methods.
-function lsp.buf_request(bufnr, method, params, callback)
+function lsp.buf_request(bufnr, method, params, handler)
   validate {
     bufnr    = { bufnr, 'n', true };
     method   = { method, 's' };
-    callback = { callback, 'f', true };
+    handler  = { handler, 'f', true };
   }
   local client_request_ids = {}
 
@@ -1015,7 +1018,7 @@ function lsp.buf_request(bufnr, method, params, callback)
   for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
     if client.supports_method(method) then
       method_supported = true
-      local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
+      local request_success, request_id = client.request(method, params, handler, resolved_bufnr)
 
       -- This could only fail if the client shut down in the time since we looked
       -- it up and we did the request, which should be rare.
@@ -1025,13 +1028,13 @@ function lsp.buf_request(bufnr, method, params, callback)
     end
   end)
 
-  -- if no clients support the given method, call the callback with the proper
+  -- if no clients support the given method, call the handler with the proper
   -- error message.
   if not method_supported then
     local unsupported_err = lsp._unsupported_method(method)
-    local cb = callback or lsp.callbacks[method]
-    if cb then
-      cb(unsupported_err, method, bufnr)
+    handler = handler or lsp.handlers[method]
+    if handler then
+      handler(unsupported_err, method, bufnr)
     end
     return
   end
@@ -1064,11 +1067,11 @@ end
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
-  local function _callback(err, _method, result, client_id)
+  local function _sync_handler(err, _, result, client_id)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1
   end
-  local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _callback)
+  local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
   local expected_result_count = 0
   for _ in pairs(client_request_ids) do
     expected_result_count = expected_result_count + 1
@@ -1209,22 +1212,53 @@ function lsp.get_log_path()
   return log.get_filename()
 end
 
--- Defines the LspDiagnostics signs if they're not defined already.
-do
-  --@private
-  --- Defines a sign if it isn't already defined.
-  --@param name (String) Name of the sign
-  --@param properties (table) Properties to attach to the sign
-  local function define_default_sign(name, properties)
-    if vim.tbl_isempty(vim.fn.sign_getdefined(name)) then
-      vim.fn.sign_define(name, properties)
+--- Call {fn} for every client attached to {bufnr}
+function lsp.for_each_buffer_client(bufnr, fn)
+  return for_each_buffer_client(bufnr, fn)
+end
+
+--- Function to manage overriding defaults for LSP handlers.
+--@param handler (function) See |lsp-handler|
+--@param override_config (table) Table containing the keys to override behavior of the {handler}
+function lsp.with(handler, override_config)
+  return function(err, method, params, client_id, bufnr, config)
+    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+  end
+end
+
+--- Helper function to use when implementing a handler.
+--- This will check that all of the keys in the user configuration
+--- are valid keys and make sense to include for this handler.
+---
+--- Will error on invalid keys (i.e. keys that do not exist in the options)
+function lsp._with_extend(name, options, user_config)
+  user_config = user_config or {}
+
+  local resulting_config = {}
+  for k, v in pairs(user_config) do
+    if options[k] == nil then
+      error(debug.traceback(string.format(
+        "Invalid option for `%s`: %s. Valid options are:\n%s",
+        name,
+        k,
+        vim.inspect(vim.tbl_keys(options))
+      )))
+    end
+
+    resulting_config[k] = v
+  end
+
+  for k, v in pairs(options) do
+    if resulting_config[k] == nil then
+      resulting_config[k] = v
     end
   end
-  define_default_sign('LspDiagnosticsErrorSign', {text='E', texthl='LspDiagnosticsErrorSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsWarningSign', {text='W', texthl='LspDiagnosticsWarningSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsInformationSign', {text='I', texthl='LspDiagnosticsInformationSign', linehl='', numhl=''})
-  define_default_sign('LspDiagnosticsHintSign', {text='H', texthl='LspDiagnosticsHintSign', linehl='', numhl=''})
+
+  return resulting_config
 end
+
+-- Define the LspDiagnostics signs if they're not defined already.
+require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
 
 return lsp
 -- vim:sw=2 ts=2 et

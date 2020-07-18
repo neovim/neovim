@@ -272,6 +272,9 @@ local function __index(t, key)
   elseif key == 'highlight' then
     t.highlight = require('vim.highlight')
     return t.highlight
+  elseif key == 'F' then
+    t.F = require('vim.F')
+    return t.F
   end
 end
 

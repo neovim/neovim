@@ -5,48 +5,30 @@ local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
 
+local npcall = vim.F.npcall
+local split = vim.split
+
+local _warned = {}
+local warn_once = function(message)
+  if not _warned[message] then
+    vim.api.nvim_err_writeln(message)
+    _warned[message] = true
+  end
+end
+
 local M = {}
 
--- FIXME: DOC: Expose in vimdocs
---- Diagnostics received from the server via `textDocument/publishDiagnostics`
--- by buffer.
---
---  {<bufnr>: {diagnostics}}
---
--- This contains only entries for active buffers. Entries for detached buffers
--- are discarded.
---
--- If you override the `textDocument/publishDiagnostic` callback,
--- this will be empty unless you call `buf_diagnostics_save_positions`.
---
---
--- Diagnostic is:
---
--- {
---    range: Range
---    message: string
---    severity?: DiagnosticSeverity
---    code?: number | string
---    source?: string
---    tags?: DiagnosticTag[]
---    relatedInformation?: DiagnosticRelatedInformation[]
--- }
-M.diagnostics_by_buf = {}
+-- TODO(remove-callbacks)
+M.diagnostics_by_buf = setmetatable({}, {
+  __index = function(_, bufnr)
+    warn_once("diagnostics_by_buf is deprecated. Use 'vim.lsp.diagnostic.get'")
+    return vim.lsp.diagnostic.get(bufnr)
+  end
+})
 
-local split = vim.split
 --@private
 local function split_lines(value)
   return split(value, '\n', true)
-end
-
---@private
-local function ok_or_nil(status, ...)
-  if not status then return end
-  return ...
-end
---@private
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
 end
 
 --- Replaces text in a range with new text.
@@ -121,10 +103,18 @@ local function get_line_byte_from_position(bufnr, position)
   -- When on the first character, we can ignore the difference between byte and
   -- character
   if col > 0 then
+    if not api.nvim_buf_is_loaded(bufnr) then
+      vim.fn.bufload(bufnr)
+    end
+
     local line = position.line
     local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
     if #lines > 0 then
-      return vim.str_byteindex(lines[1], col)
+      local ok, result = pcall(vim.str_byteindex, lines[1], col)
+
+      if ok then
+        return result
+      end
     end
   end
   return col
@@ -700,13 +690,13 @@ end
 
 --- Trims empty lines from input and pad left and right with spaces
 ---
---@param contents table of lines to trim and pad
---@param opts dictionary with optional fields
---             - pad_left   number of columns to pad contents at left (default 1)
---             - pad_right  number of columns to pad contents at right (default 1)
---             - pad_top    number of lines to pad contents at top (default 0)
---             - pad_bottom number of lines to pad contents at bottom (default 0)
---@returns contents table of trimmed and padded lines
+---@param contents table of lines to trim and pad
+---@param opts dictionary with optional fields
+---             - pad_left   number of columns to pad contents at left (default 1)
+---             - pad_right  number of columns to pad contents at right (default 1)
+---             - pad_top    number of lines to pad contents at top (default 0)
+---             - pad_bottom number of lines to pad contents at bottom (default 0)
+---@return contents table of trimmed and padded lines
 function M._trim_and_pad(contents, opts)
   validate {
     contents = { contents, 't' };
@@ -742,19 +732,19 @@ end
 --- regions to improve readability.
 --- The result is shown in a floating preview.
 ---
---@param contents table of lines to show in window
---@param opts dictionary with optional fields
---             - height    of floating window
---             - width     of floating window
---             - wrap_at   character to wrap at for computing height
---             - max_width  maximal width of floating window
---             - max_height maximal height of floating window
---             - pad_left   number of columns to pad contents at left
---             - pad_right  number of columns to pad contents at right
---             - pad_top    number of lines to pad contents at top
---             - pad_bottom number of lines to pad contents at bottom
---             - separator insert separator after code block
---@returns width,height size of float
+---@param contents table of lines to show in window
+---@param opts dictionary with optional fields
+---  - height    of floating window
+---  - width     of floating window
+---  - wrap_at   character to wrap at for computing height
+---  - max_width  maximal width of floating window
+---  - max_height maximal height of floating window
+---  - pad_left   number of columns to pad contents at left
+---  - pad_right  number of columns to pad contents at right
+---  - pad_top    number of lines to pad contents at top
+---  - pad_bottom number of lines to pad contents at bottom
+---  - separator insert separator after code block
+---@returns width,height size of float
 function M.fancy_floating_markdown(contents, opts)
   validate {
     contents = { contents, 't' };
@@ -971,170 +961,80 @@ function M.open_floating_preview(contents, filetype, opts)
   return floating_bufnr, floating_winnr
 end
 
+-- TODO(remove-callbacks)
 do
-  local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
-  local reference_ns = api.nvim_create_namespace("vim_lsp_references")
-  local sign_ns = 'vim_lsp_signs'
-  local underline_highlight_name = "LspDiagnosticsUnderline"
-  vim.cmd(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
-  for kind, _ in pairs(protocol.DiagnosticSeverity) do
-    if type(kind) == 'string' then
-      vim.cmd(string.format("highlight default link %s%s %s", underline_highlight_name, kind, underline_highlight_name))
-    end
-  end
-
-  local severity_highlights = {}
-
-  local severity_floating_highlights = {}
-
-  local default_severity_highlight = {
-    [protocol.DiagnosticSeverity.Error] = { guifg = "Red" };
-    [protocol.DiagnosticSeverity.Warning] = { guifg = "Orange" };
-    [protocol.DiagnosticSeverity.Information] = { guifg = "LightBlue" };
-    [protocol.DiagnosticSeverity.Hint] = { guifg = "LightGrey" };
-  }
-
-  -- Initialize default severity highlights
-  for severity, hi_info in pairs(default_severity_highlight) do
-    local severity_name = protocol.DiagnosticSeverity[severity]
-    local highlight_name = "LspDiagnostics"..severity_name
-    local floating_highlight_name = highlight_name.."Floating"
-    -- Try to fill in the foreground color with a sane default.
-    local cmd_parts = {"highlight", "default", highlight_name}
-    for k, v in pairs(hi_info) do
-      table.insert(cmd_parts, k.."="..v)
-    end
-    api.nvim_command(table.concat(cmd_parts, ' '))
-    api.nvim_command('highlight link ' .. highlight_name .. 'Sign ' .. highlight_name)
-    api.nvim_command('highlight link ' .. highlight_name .. 'Floating ' .. highlight_name)
-    severity_highlights[severity] = highlight_name
-    severity_floating_highlights[severity] = floating_highlight_name
-  end
-
-  --- Clears diagnostics for a buffer.
-  ---
-  --@param bufnr (number) buffer id
-  function M.buf_clear_diagnostics(bufnr)
-    validate { bufnr = {bufnr, 'n', true} }
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-
-    -- clear sign group
-    vim.fn.sign_unplace(sign_ns, {buffer=bufnr})
-
-    -- clear virtual text namespace
-    api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
-  end
-
-  --- Gets the name of a severity's highlight group.
-  ---
-  --@param severity A member of `vim.lsp.protocol.DiagnosticSeverity`
-  --@returns (string) Highlight group name
+  --@deprecated
   function M.get_severity_highlight_name(severity)
-    return severity_highlights[severity]
+    warn_once("vim.lsp.util.get_severity_highlight_name is deprecated.")
+    return vim.lsp.diagnostic._get_severity_highlight_name(severity)
   end
 
-  --- Gets list of diagnostics for the current line.
-  ---
-  --@returns (table) list of `Diagnostic` tables
-  --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
+  --@deprecated
+  function M.buf_clear_diagnostics(bufnr, client_id)
+    warn_once("buf_clear_diagnostics is deprecated. Use vim.lsp.diagnostic.clear")
+    return vim.lsp.diagnostic.clear(bufnr, client_id)
+  end
+
+  --@deprecated
   function M.get_line_diagnostics()
+    warn_once("get_line_diagnostics is deprecated. Use vim.lsp.diagnostic.get_line_diagnostics")
+
     local bufnr = api.nvim_get_current_buf()
-    local linenr = api.nvim_win_get_cursor(0)[1] - 1
+    local line_nr = api.nvim_win_get_cursor(0)[1] - 1
 
-    local buffer_diagnostics = M.diagnostics_by_buf[bufnr]
-
-    if not buffer_diagnostics then
-      return {}
-    end
-
-    local diagnostics_by_line = M.diagnostics_group_by_line(buffer_diagnostics)
-    return diagnostics_by_line[linenr] or {}
+    return vim.lsp.diagnostic.get_line_diagnostics(bufnr, line_nr)
   end
 
-  --- Displays the diagnostics for the current line in a floating hover
-  --- window.
+  --@deprecated
   function M.show_line_diagnostics()
-    -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
-    -- if #marks == 0 then
-    --   return
-    -- end
-    local lines = {"Diagnostics:"}
-    local highlights = {{0, "Bold"}}
-    local line_diagnostics = M.get_line_diagnostics()
-    if vim.tbl_isempty(line_diagnostics) then return end
+    warn_once("show_line_diagnostics is deprecated. Use vim.lsp.diagnostic.show_line_diagnostics")
 
-    for i, diagnostic in ipairs(line_diagnostics) do
-    -- for i, mark in ipairs(marks) do
-    --   local mark_id = mark[1]
-    --   local diagnostic = buffer_diagnostics[mark_id]
+    local bufnr = api.nvim_get_current_buf()
+    local line_nr = api.nvim_win_get_cursor(0)[1] - 1
 
-      -- TODO(ashkan) make format configurable?
-      local prefix = string.format("%d. ", i)
-      local hiname = severity_floating_highlights[diagnostic.severity]
-      assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
-      local message_lines = split_lines(diagnostic.message)
-      table.insert(lines, prefix..message_lines[1])
-      table.insert(highlights, {#prefix + 1, hiname})
-      for j = 2, #message_lines do
-        table.insert(lines, message_lines[j])
-        table.insert(highlights, {0, hiname})
-      end
-    end
-    local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
-    for i, hi in ipairs(highlights) do
-      local prefixlen, hiname = unpack(hi)
-      -- Start highlight after the prefix
-      api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-    end
-    return popup_bufnr, winnr
+    return vim.lsp.diagnostic.show_line_diagnostics(bufnr, line_nr)
   end
 
-  --- Saves diagnostics into vim.lsp.util.diagnostics_by_buf[{bufnr}].
-  ---
-  --@param bufnr (number) buffer id for which the diagnostics are for
-  --@param diagnostics list of `Diagnostic`s received from the LSP server
-  function M.buf_diagnostics_save_positions(bufnr, diagnostics)
-    validate {
-      bufnr = {bufnr, 'n', true};
-      diagnostics = {diagnostics, 't', true};
-    }
-    if not diagnostics then return end
-    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
-
-    if not M.diagnostics_by_buf[bufnr] then
-      -- Clean up our data when the buffer unloads.
-      api.nvim_buf_attach(bufnr, false, {
-        on_detach = function(b)
-          M.diagnostics_by_buf[b] = nil
-        end
-      })
-    end
-    M.diagnostics_by_buf[bufnr] = diagnostics
+  --@deprecated
+  function M.buf_diagnostics_save_positions(bufnr, diagnostics, client_id)
+    warn_once("buf_diagnostics_save_positions is deprecated. Use vim.lsp.diagnostic.save")
+    return vim.lsp.diagnostic.save(diagnostics, bufnr, client_id)
   end
 
-  --- Highlights a list of diagnostics in a buffer by underlining them.
-  ---
-  --@param bufnr (number) buffer id
-  --@param diagnostics (list of `Diagnostic`s)
-  function M.buf_diagnostics_underline(bufnr, diagnostics)
-    for _, diagnostic in ipairs(diagnostics) do
-      local start = diagnostic.range["start"]
-      local finish = diagnostic.range["end"]
-
-      local hlmap = {
-        [protocol.DiagnosticSeverity.Error]='Error',
-        [protocol.DiagnosticSeverity.Warning]='Warning',
-        [protocol.DiagnosticSeverity.Information]='Information',
-        [protocol.DiagnosticSeverity.Hint]='Hint',
-      }
-
-      highlight.range(bufnr, diagnostic_ns,
-        underline_highlight_name..hlmap[diagnostic.severity],
-        {start.line, start.character},
-        {finish.line, finish.character}
-      )
-    end
+  --@deprecated
+  function M.buf_diagnostics_get_positions(bufnr, client_id)
+    warn_once("buf_diagnostics_get_positions is deprecated. Use vim.lsp.diagnostic.get")
+    return vim.lsp.diagnostic.get(bufnr, client_id)
   end
+
+  --@deprecated
+  function M.buf_diagnostics_underline(bufnr, diagnostics, client_id)
+    warn_once("buf_diagnostics_underline is deprecated. Use 'vim.lsp.diagnostic.set_underline'")
+    return vim.lsp.diagnostic.set_underline(diagnostics, bufnr, client_id)
+  end
+
+  --@deprecated
+  function M.buf_diagnostics_virtual_text(bufnr, diagnostics, client_id)
+    warn_once("buf_diagnostics_virtual_text is deprecated. Use 'vim.lsp.diagnostic.set_virtual_text'")
+    return vim.lsp.diagnostic.set_virtual_text(diagnostics, bufnr, client_id)
+  end
+
+  --@deprecated
+  function M.buf_diagnostics_signs(bufnr, diagnostics, client_id)
+    warn_once("buf_diagnostics_signs is deprecated. Use 'vim.lsp.diagnostics.set_signs'")
+    return vim.lsp.diagnostic.set_signs(diagnostics, bufnr, client_id)
+  end
+
+  --@deprecated
+  function M.buf_diagnostics_count(kind, client_id)
+    warn_once("buf_diagnostics_count is deprecated. Use 'vim.lsp.diagnostic.get_count'")
+    return vim.lsp.diagnostic.get_count(vim.api.nvim_get_current_buf(), client_id, kind)
+  end
+
+end
+
+do --[[ References ]]
+  local reference_ns = api.nvim_create_namespace("vim_lsp_references")
 
   --- Removes document highlights from a buffer.
   ---
@@ -1160,109 +1060,6 @@ do
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
       highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
-    end
-  end
-
-  --- Groups a list of diagnostics by line.
-  ---
-  --@param diagnostics (table) list of `Diagnostic`s
-  --@returns (table) dictionary mapping lines to lists of diagnostics valid on
-  ---those lines
-  --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
-  function M.diagnostics_group_by_line(diagnostics)
-    if not diagnostics then return end
-    local diagnostics_by_line = {}
-    for _, diagnostic in ipairs(diagnostics) do
-      local start = diagnostic.range.start
-      -- TODO: Are diagnostics only valid for a single line? I don't understand
-      -- why this would be okay otherwise
-      local line_diagnostics = diagnostics_by_line[start.line]
-      if not line_diagnostics then
-        line_diagnostics = {}
-        diagnostics_by_line[start.line] = line_diagnostics
-      end
-      table.insert(line_diagnostics, diagnostic)
-    end
-    return diagnostics_by_line
-  end
-
-  --- Given a list of diagnostics, sets the corresponding virtual text for a
-  --- buffer.
-  ---
-  --@param bufnr buffer id
-  --@param diagnostics (table) list of `Diagnostic`s
-  function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
-    if not diagnostics then
-      return
-    end
-    local buffer_line_diagnostics = M.diagnostics_group_by_line(diagnostics)
-    for line, line_diags in pairs(buffer_line_diagnostics) do
-      local virt_texts = {}
-      for i = 1, #line_diags - 1 do
-        table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})
-      end
-      local last = line_diags[#line_diags]
-      -- TODO(ashkan) use first line instead of subbing 2 spaces?
-      table.insert(virt_texts, {"■ "..last.message:gsub("\r", ""):gsub("\n", "  "), severity_highlights[last.severity]})
-      api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
-    end
-  end
-
-  --- Returns the number of diagnostics of given kind for current buffer.
-  ---
-  --- Useful for showing diagnostic counts in statusline. eg:
-  ---
-  --- <pre>
-  --- function! LspStatus() abort
-  ---     let sl = ''
-  ---     if luaeval('not vim.tbl_isempty(vim.lsp.buf_get_clients(0))')
-  ---         let sl.='%#MyStatuslineLSP#E:'
-  ---         let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Error]])")}'
-  ---         let sl.='%#MyStatuslineLSP# W:'
-  ---         let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.util.buf_diagnostics_count([[Warning]])")}'
-  ---     else
-  ---         let sl.='%#MyStatuslineLSPErrors#off'
-  ---     endif
-  ---     return sl
-  --- endfunction
-  --- let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
-  --- </pre>
-  ---
-  --@param kind Diagnostic severity kind: See |vim.lsp.protocol.DiagnosticSeverity|
-  --@returns Count of diagnostics
-  function M.buf_diagnostics_count(kind)
-    local bufnr = vim.api.nvim_get_current_buf()
-    local diagnostics = M.diagnostics_by_buf[bufnr]
-    if not diagnostics then return end
-    local count = 0
-    for _, diagnostic in pairs(diagnostics) do
-      if protocol.DiagnosticSeverity[kind] == diagnostic.severity then
-        count = count + 1
-      end
-    end
-    return count
-  end
-
-  local diagnostic_severity_map = {
-    [protocol.DiagnosticSeverity.Error] = "LspDiagnosticsErrorSign";
-    [protocol.DiagnosticSeverity.Warning] = "LspDiagnosticsWarningSign";
-    [protocol.DiagnosticSeverity.Information] = "LspDiagnosticsInformationSign";
-    [protocol.DiagnosticSeverity.Hint] = "LspDiagnosticsHintSign";
-  }
-
-  --- Places signs for each diagnostic in the sign column.
-  ---
-  --- Sign characters can be customized with the following commands:
-  ---
-  --- <pre>
-  --- sign define LspDiagnosticsErrorSign text=E texthl=LspDiagnosticsError linehl= numhl=
-  --- sign define LspDiagnosticsWarningSign text=W texthl=LspDiagnosticsWarning linehl= numhl=
-  --- sign define LspDiagnosticsInformationSign text=I texthl=LspDiagnosticsInformation linehl= numhl=
-  --- sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
-  --- </pre>
-  function M.buf_diagnostics_signs(bufnr, diagnostics)
-    for _, diagnostic in ipairs(diagnostics) do
-      vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1)})
     end
   end
 end
@@ -1560,6 +1357,9 @@ function M.character_offset(buf, row, col)
   end
   return str_utfindex(line, col)
 end
+
+M._get_line_byte_from_position = get_line_byte_from_position
+M._warn_once = warn_once
 
 M.buf_versions = {}
 
