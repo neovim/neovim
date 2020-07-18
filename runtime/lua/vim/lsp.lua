@@ -511,6 +511,7 @@ function lsp.start_client(config)
       or (not client.resolved_capabilities.type_definition and method == 'textDocument/typeDefinition')
       or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
       or (not client.resolved_capabilities.workspace_symbol and method == 'textDocument/workspaceSymbol')
+      or (not client.resolved_capabilities.call_hierarchy and method == 'textDocument/prepareCallHierarchy')
     then
       callback(unsupported_method(method), method, nil, client_id, bufnr)
       return

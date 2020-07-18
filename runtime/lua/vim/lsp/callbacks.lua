@@ -214,6 +214,33 @@ M['textDocument/documentHighlight'] = function(_, _, result, _)
   util.buf_highlight_references(bufnr, result)
 end
 
+-- direction is "from" for incoming calls and "to" for outgoing calls
+local make_call_hierarchy_callback = function(direction)
+  -- result is a CallHierarchy{Incoming,Outgoing}Call[]
+  return function(_, _, result)
+    if not result then return end
+    local items = {}
+    for _, call_hierarchy_call in pairs(result) do
+      local call_hierarchy_item = call_hierarchy_call[direction]
+      for _, range in pairs(call_hierarchy_call.fromRanges) do
+        table.insert(items, {
+          filename = assert(vim.uri_to_fname(call_hierarchy_item.uri)),
+          text = call_hierarchy_item.name,
+          lnum = range.start.line + 1,
+          col = range.start.character + 1,
+        })
+      end
+    end
+    util.set_qflist(items)
+    api.nvim_command("copen")
+    api.nvim_command("wincmd p")
+  end
+end
+
+M['callHierarchy/incomingCalls'] = make_call_hierarchy_callback('from')
+
+M['callHierarchy/outgoingCalls'] = make_call_hierarchy_callback('to')
+
 M['window/logMessage'] = function(_, _, result, client_id)
   local message_type = result.type
   local message = result.message

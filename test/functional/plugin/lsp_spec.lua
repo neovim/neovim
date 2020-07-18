@@ -1497,4 +1497,147 @@ describe('LSP', function()
     it('with softtabstop = 0', function() test_tabstop(2, 0) end)
     it('with softtabstop = -1', function() test_tabstop(3, -1) end)
   end)
+
+  describe('vim.lsp.buf.outgoing_calls', function()
+    it('does nothing for an empty response', function()
+      local qflist_count = exec_lua([=[
+        require'vim.lsp.callbacks'['callHierarchy/outgoingCalls']()
+        return #vim.fn.getqflist()
+      ]=])
+      eq(0, qflist_count)
+    end)
+
+    it('opens the quickfix list with the right caller', function()
+      local qflist = exec_lua([=[
+        local rust_analyzer_response = { {
+          fromRanges = { {
+            ['end'] = {
+              character = 7,
+              line = 3
+            },
+            start = {
+              character = 4,
+              line = 3
+            }
+          } },
+          to = {
+            detail = "fn foo()",
+            kind = 12,
+            name = "foo",
+            range = {
+              ['end'] = {
+                character = 11,
+                line = 0
+              },
+              start = {
+                character = 0,
+                line = 0
+              }
+            },
+            selectionRange = {
+              ['end'] = {
+                character = 6,
+                line = 0
+              },
+              start = {
+              character = 3,
+              line = 0
+              }
+            },
+            uri = "file:///src/main.rs"
+          }
+        } }
+        local callback = require'vim.lsp.callbacks'['callHierarchy/outgoingCalls']
+        callback(nil, nil, rust_analyzer_response)
+        return vim.fn.getqflist()
+      ]=])
+
+      local expected = { {
+        bufnr = 2,
+        col = 5,
+        lnum = 4,
+        module = "",
+        nr = 0,
+        pattern = "",
+        text = "foo",
+        type = "",
+        valid = 1,
+        vcol = 0
+      } }
+
+      eq(expected, qflist)
+    end)
+  end)
+
+  describe('vim.lsp.buf.incoming_calls', function()
+    it('does nothing for an empty response', function()
+      local qflist_count = exec_lua([=[
+        require'vim.lsp.callbacks'['callHierarchy/incomingCalls']()
+        return #vim.fn.getqflist()
+      ]=])
+      eq(0, qflist_count)
+    end)
+
+    it('opens the quickfix list with the right callee', function()
+      local qflist = exec_lua([=[
+        local rust_analyzer_response = { {
+          from = {
+            detail = "fn main()",
+            kind = 12,
+            name = "main",
+            range = {
+              ['end'] = {
+                character = 1,
+                line = 4
+              },
+              start = {
+                character = 0,
+                line = 2
+              }
+            },
+            selectionRange = {
+              ['end'] = {
+                character = 7,
+                line = 2
+              },
+              start = {
+                character = 3,
+                line = 2
+              }
+            },
+            uri = "file:///src/main.rs"
+          },
+          fromRanges = { {
+            ['end'] = {
+              character = 7,
+              line = 3
+            },
+            start = {
+              character = 4,
+              line = 3
+            }
+          } }
+        } }
+
+        local callback = require'vim.lsp.callbacks'['callHierarchy/incomingCalls']
+        callback(nil, nil, rust_analyzer_response)
+        return vim.fn.getqflist()
+      ]=])
+
+      local expected = { {
+        bufnr = 2,
+        col = 5,
+        lnum = 4,
+        module = "",
+        nr = 0,
+        pattern = "",
+        text = "main",
+        type = "",
+        valid = 1,
+        vcol = 0
+      } }
+
+      eq(expected, qflist)
+    end)
+  end)
 end)

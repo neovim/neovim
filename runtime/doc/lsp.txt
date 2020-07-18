@@ -837,6 +837,16 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 enter a string on the command line. An empty string means no
                 filtering is done.
 
+incoming_calls()                               *vim.lsp.buf.incoming_calls()*
+                Lists all the call sites of the symbol under the cursor in the
+                |quickfix| window. If the symbol can resolve to multiple
+                items, the user can pick one in the |inputlist|.
+
+outgoing_calls()                               *vim.lsp.buf.outgoing_calls()*
+                Lists all the items that are called by the symbol under the
+                cursor in the |quickfix| window. If the symbol can resolve to
+                multiple items, the user can pick one in the |inputlist|.
+
 
 ==============================================================================
 Lua module: vim.lsp.callbacks                                  *lsp-callbacks*
