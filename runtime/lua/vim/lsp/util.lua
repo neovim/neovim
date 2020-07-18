@@ -166,11 +166,12 @@ function M.apply_text_edits(text_edits, bufnr)
     local end_index, suffix, _
     lines, _, end_index, _, suffix = M.set_lines(lines, A, B, e.lines)
 
-    if e.B[1] <= curpos[1] then
-      if e.B[1] == curpos[1] and e.B[2] <= curpos[2] then
-        curpos[2] = (#(lines[end_index] or '') - #(suffix or '')) + (curpos[2] - e.B[2])
-      end
+    if e.B[1] < curpos[1] then
       curpos[1] = curpos[1] + (lines_len - range_len)
+      curpos_fixed = true
+    elseif e.B[1] == curpos[1] and e.B[1] == curpos[1] and e.B[2] <= curpos[2] then
+      curpos[1] = curpos[1] + (lines_len - range_len)
+      curpos[2] = (#(lines[end_index] or '') - #(suffix or '')) + (curpos[2] - e.B[2])
       curpos_fixed = true
     end
   end

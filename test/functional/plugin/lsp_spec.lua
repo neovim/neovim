@@ -870,6 +870,21 @@ describe('LSP', function()
       }, buf_lines(1))
       eq({ 2, 18 }, winmeths.get_cursor(0))
     end)
+    it('does not fix cursor position when edits end pos is same line but edits col after cursor col', function()
+      local edits = {
+        make_edit(2, 11, 2, 11, {"", ""})
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'First line of text',
+        'Second line of text',
+        'Third| line',
+        ' of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄'
+      }, buf_lines(1))
+      eq({ 3, 5 }, winmeths.get_cursor(0))
+    end)
     it('applies complex edits', function()
       local edits = {
         make_edit(0, 0, 0, 0, {"3", "foo"});
