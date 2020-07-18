@@ -1571,7 +1571,7 @@ describe('LSP', function()
 
   describe('vim.lsp.buf.incoming_calls', function()
     it('does nothing for an empty response', function()
-      qflist_count = exec_lua([=[
+      local qflist_count = exec_lua([=[
         require'vim.lsp.callbacks'['callHierarchy/incomingCalls']()
         return #vim.fn.getqflist()
       ]=])
