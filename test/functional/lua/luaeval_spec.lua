@@ -255,6 +255,18 @@ describe('luaeval()', function()
     ]])
   end)
 
+  it('can handle functions with errors', function()
+    eq(true, exec_lua [[
+      vim.fn.timer_start(10, function()
+        error("dead function")
+      end)
+
+      vim.wait(1000, function() return false end)
+
+      return true
+    ]])
+  end)
+
   it('should handle passing functions around', function()
     command [[
       function VimCanCallLuaCallbacks(Concat, Cb)
