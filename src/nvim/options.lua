@@ -846,7 +846,7 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_fcnotify',
-      defaults={if_true={vi="changed"}}
+      defaults={if_true={vi="off"}}
     },
     {
       full_name='fileencoding', abbreviation='fenc',
