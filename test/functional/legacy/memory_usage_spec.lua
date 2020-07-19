@@ -7,6 +7,7 @@ local iswin = helpers.iswin
 local retry = helpers.retry
 local ok = helpers.ok
 local source = helpers.source
+local uname = helpers.uname
 
 local monitor_memory_usage = {
   memory_usage = function(self)
@@ -151,8 +152,9 @@ describe('memory usage', function()
     -- The usage may be a bit less than the last value, use 80%.
     -- Allow for 20% tolerance at the upper limit. That's very permissive, but
     -- otherwise the test fails sometimes.
+    local upper_multiplier = uname() == 'freebsd' and 20 or 12
     local lower = before.last * 8 / 10
-    local upper = (after.max + (after.last - before.last)) * 12 / 10
+    local upper = (after.max + (after.last - before.last)) * upper_multiplier / 10
     check_result({before=before, after=after, last=last},
                  pcall(ok, lower < last.last))
     check_result({before=before, after=after, last=last},
