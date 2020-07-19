@@ -15,14 +15,14 @@ GENERATED_INCLUDE_RE = re.compile(
 def main(argv):
     argparser = ArgumentParser()
     argparser.add_argument('--generated-includes-dir', action='append',
-                           help='Directory where generated includes are located.',required=True)
-    argparser.add_argument('--file', type=open, help='File to check.',required=True)
+                           help='Directory where generated includes are located.', required=True)
+    argparser.add_argument('file', type=open, help='File to check.', required=True)
     argparser.add_argument('iwyu_args', nargs='*',
-                           help='IWYU arguments, must go after --.',required=True)
+                           help='Include-What-You-Use arguments, must go after --.', required=True)
     args = argparser.parse_args(argv)
 
     with args.file:
-        iwyu = Popen(['include-what-you-use', '-xc'] + args.iwyu_args + ['/dev/stdin'],
+        iwyu = Popen(['Include-What-You-Use', '-xc'] + args.iwyu_args + ['/dev/stdin'],
                      stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
         for line in args.file:
@@ -51,7 +51,7 @@ def main(argv):
     ret = iwyu.wait()
 
     if ret != 2:
-        print('IWYU failed with exit code {0}:'.format(ret))
+        print('Include-What-You-Use failed with exit code {0}:'.format(ret))
         print('{0} stdout {0}'.format('=' * ((80 - len(' stdout ')) // 2)))
         print(out)
         print('{0} stderr {0}'.format('=' * ((80 - len(' stderr ')) // 2)))
