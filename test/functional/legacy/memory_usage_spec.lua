@@ -7,6 +7,9 @@ local iswin = helpers.iswin
 local retry = helpers.retry
 local ok = helpers.ok
 local source = helpers.source
+local wait = helpers.wait
+local uname = helpers.uname
+local load_adjust = helpers.load_adjust
 
 local monitor_memory_usage = {
   memory_usage = function(self)
@@ -99,6 +102,7 @@ describe('memory usage', function()
         call s:f(0)
       endfor
     ]])
+    wait()
     local after = monitor_memory_usage(pid)
     -- Estimate the limit of max usage as 2x initial usage.
     -- The lower limit can fluctuate a bit, use 97%.
@@ -143,16 +147,20 @@ describe('memory usage', function()
         call s:f()
       endfor
     ]])
+    wait()
     local after = monitor_memory_usage(pid)
     for _ = 1, 3 do
       feed_command('so '..fname)
+      wait()
     end
     local last = monitor_memory_usage(pid)
     -- The usage may be a bit less than the last value, use 80%.
     -- Allow for 20% tolerance at the upper limit. That's very permissive, but
-    -- otherwise the test fails sometimes.
+    -- otherwise the test fails sometimes.  On Sourcehut CI with FreeBSD we need to
+    -- be even more permissive.
+    local upper_multiplier = uname() == 'freebsd' and 15 or 12
     local lower = before.last * 8 / 10
-    local upper = (after.max + (after.last - before.last)) * 12 / 10
+    local upper = load_adjust((after.max + (after.last - before.last)) * upper_multiplier / 10)
     check_result({before=before, after=after, last=last},
                  pcall(ok, lower < last.last))
     check_result({before=before, after=after, last=last},
