@@ -987,7 +987,7 @@ int typval_exec_lua_callable(
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 
   if (lua_pcall(lstate, argcount + offset, 1, 0)) {
-    luaL_error(lstate, "nlua_CFunction_func_call failed.");
+    nlua_print(lstate);
     return ERROR_OTHER;
   }
 
