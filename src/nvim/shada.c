@@ -2676,6 +2676,36 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (name == NULL) {
         break;
       }
+      switch (vartv.v_type) {
+        case VAR_FUNC:
+        case VAR_PARTIAL:
+          tv_clear(&vartv);
+          continue;
+        case VAR_DICT:
+          {
+            dict_T *di = vartv.vval.v_dict;
+            int copyID = get_copyID();
+            if (!set_ref_in_ht(&di->dv_hashtab, copyID, NULL)
+                && copyID == di->dv_copyID) {
+              tv_clear(&vartv);
+              continue;
+            }
+            break;
+          }
+        case VAR_LIST:
+          {
+            list_T *l = vartv.vval.v_list;
+            int copyID = get_copyID();
+            if (!set_ref_in_list(l, copyID, NULL)
+                && copyID == l->lv_copyID) {
+              tv_clear(&vartv);
+              continue;
+            }
+            break;
+          }
+        default:
+          break;
+      }
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
       ShaDaWriteResult spe_ret;
