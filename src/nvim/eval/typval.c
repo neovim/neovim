@@ -799,10 +799,14 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
   if (l1 == l2) {
     return true;
   }
-  if (l1 == NULL || l2 == NULL) {
+  if (tv_list_len(l1) != tv_list_len(l2)) {
     return false;
   }
-  if (tv_list_len(l1) != tv_list_len(l2)) {
+  if (tv_list_len(l1) == 0) {
+    // empty and NULL list are considered equal
+    return true;
+  }
+  if (l1 == NULL || l2 == NULL) {
     return false;
   }
 

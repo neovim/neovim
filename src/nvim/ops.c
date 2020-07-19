@@ -3080,10 +3080,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     if (ve_flags == VE_ALL
         && (curwin->w_cursor.coladd > 0
             || endcol2 == curwin->w_cursor.col)) {
-      if (dir == FORWARD && c == NUL)
-        ++col;
-      if (dir != FORWARD && c != NUL)
-        ++curwin->w_cursor.col;
+      if (dir == FORWARD && c == NUL) {
+        col++;
+      }
+      if (dir != FORWARD && c != NUL && curwin->w_cursor.coladd > 0) {
+        curwin->w_cursor.col++;
+      }
       if (c == TAB) {
         if (dir == BACKWARD && curwin->w_cursor.col)
           curwin->w_cursor.col--;

@@ -1234,13 +1234,13 @@ describe('typval.c', function()
         local l = list()
         local l2 = list()
 
-        -- NULL lists are not equal to empty lists
-        eq(false, lib.tv_list_equal(l, nil, true, false))
-        eq(false, lib.tv_list_equal(nil, l, false, false))
-        eq(false, lib.tv_list_equal(nil, l, false, true))
-        eq(false, lib.tv_list_equal(l, nil, true, true))
+        -- NULL lists are equal to empty lists
+        eq(true, lib.tv_list_equal(l, nil, true, false))
+        eq(true, lib.tv_list_equal(nil, l, false, false))
+        eq(true, lib.tv_list_equal(nil, l, false, true))
+        eq(true, lib.tv_list_equal(l, nil, true, true))
 
-        -- Yet NULL lists are equal themselves
+        -- NULL lists are equal themselves
         eq(true, lib.tv_list_equal(nil, nil, true, false))
         eq(true, lib.tv_list_equal(nil, nil, false, false))
         eq(true, lib.tv_list_equal(nil, nil, false, true))
@@ -2648,13 +2648,13 @@ describe('typval.c', function()
         local l2 = lua2typvalt(empty_list)
         local nl = lua2typvalt(null_list)
 
-        -- NULL lists are not equal to empty lists
-        eq(false, lib.tv_equal(l, nl, true, false))
-        eq(false, lib.tv_equal(nl, l, false, false))
-        eq(false, lib.tv_equal(nl, l, false, true))
-        eq(false, lib.tv_equal(l, nl, true, true))
+        -- NULL lists are equal to empty lists
+        eq(true, lib.tv_equal(l, nl, true, false))
+        eq(true, lib.tv_equal(nl, l, false, false))
+        eq(true, lib.tv_equal(nl, l, false, true))
+        eq(true, lib.tv_equal(l, nl, true, true))
 
-        -- Yet NULL lists are equal themselves
+        -- NULL lists are equal themselves
         eq(true, lib.tv_equal(nl, nl, true, false))
         eq(true, lib.tv_equal(nl, nl, false, false))
         eq(true, lib.tv_equal(nl, nl, false, true))

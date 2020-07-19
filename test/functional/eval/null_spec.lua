@@ -47,10 +47,8 @@ describe('NULL', function()
 
     -- Subjectable behaviour
 
-    -- FIXME Should return 1
-    null_expr_test('is equal to empty list', 'L == []', 0, 0)
-    -- FIXME Should return 1
-    null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 0)
+    null_expr_test('is equal to empty list', 'L == []', 0, 1)
+    null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 1)
 
     -- Correct behaviour
     null_expr_test('can be indexed with error message for empty list', 'L[0]',
