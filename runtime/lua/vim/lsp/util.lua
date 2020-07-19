@@ -45,6 +45,9 @@ local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
+--- Apply TextEdit for lines variable
+-- Returns a tuple of (modified_lines, modified_start_line_idx, modified_end_line_idx, old_start_line_prefix, old_end_line_suffix)
+-- The line_idx is 1-based
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -75,6 +78,7 @@ function M.set_lines(lines, A, B, new_lines)
   if #prefix > 0 then
     lines[i_0] = prefix..lines[i_0]
   end
+  -- (modified_lines, modified_start_line_idx, modified_end_line_idx, old_start_line_prefix, old_end_line_suffix)
   return lines, i_0, (i_0 + #new_lines - 1), prefix, suffix
 end
 
