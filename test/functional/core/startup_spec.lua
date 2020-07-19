@@ -358,6 +358,31 @@ describe('sysinit', function()
     eq('loaded 1 xdg 0 vim 1',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
+
+  it('fixed hang issue with -D (#12647)', function()
+    local screen
+    screen = Screen.new(60, 6)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    screen:expect([[
+      ^                                                            |
+      Entering Debug mode.  Type "cont" to continue.              |
+      cmd: augroup nvim_terminal                                  |
+      >                                                           |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+    command([[call chansend(g:id, "cont\n")]])
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('clean', function()
