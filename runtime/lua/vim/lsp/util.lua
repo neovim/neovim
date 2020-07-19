@@ -151,9 +151,7 @@ function M.apply_text_edits(text_edits, bufnr)
 
   -- store current cursor pos
   local curpos_fixed = false
-  local curpos = api.nvim_win_get_cursor(0)
-  curpos[1] = curpos[1] - 1
-  curpos[2] = curpos[2]
+  local cursor_position = M.make_position_param()
 
   for i = #cleaned, 1, -1 do
     local e = cleaned[i]
@@ -166,12 +164,12 @@ function M.apply_text_edits(text_edits, bufnr)
     local end_index, suffix, _
     lines, _, end_index, _, suffix = M.set_lines(lines, A, B, e.lines)
 
-    if e.B[1] < curpos[1] then
-      curpos[1] = curpos[1] + (lines_len - range_len)
+    if e.B[1] < cursor_position.line then
+      cursor_position.line = cursor_position.line + (lines_len - range_len)
       curpos_fixed = true
-    elseif e.B[1] == curpos[1] and e.B[1] == curpos[1] and e.B[2] <= curpos[2] then
-      curpos[1] = curpos[1] + (lines_len - range_len)
-      curpos[2] = (#(lines[end_index] or '') - #(suffix or '')) + (curpos[2] - e.B[2])
+    elseif e.B[1] == cursor_position.line and e.B[2] <= cursor_position.character then
+      cursor_position.line = cursor_position.line + (lines_len - range_len)
+      cursor_position.character = (#(lines[end_index] or '') - #(suffix or '')) + (cursor_position.character - e.B[2])
       curpos_fixed = true
     end
   end
@@ -183,7 +181,7 @@ function M.apply_text_edits(text_edits, bufnr)
 
   -- apply modified cursor pos
   if curpos_fixed and api.nvim_get_current_buf() == bufnr then
-    api.nvim_win_set_cursor(0, { curpos[1] + 1, curpos[2] })
+    api.nvim_win_set_cursor(0, { cursor_position.line + 1, get_line_byte_from_position(0, cursor_position) })
   end
 end
 
@@ -1285,7 +1283,8 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 local str_utfindex = vim.str_utfindex
-local function make_position_param()
+
+function M.make_position_param()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
@@ -1296,12 +1295,12 @@ end
 function M.make_position_params()
   return {
     textDocument = M.make_text_document_params();
-    position = make_position_param()
+    position = M.make_position_param()
   }
 end
 
 function M.make_range_params()
-  local position = make_position_param()
+  local position = M.make_position_param()
   return {
     textDocument = { uri = vim.uri_from_bufnr(0) },
     range = { start = position; ["end"] = position; }
