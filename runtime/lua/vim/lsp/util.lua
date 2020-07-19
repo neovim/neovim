@@ -153,7 +153,7 @@ function M.apply_text_edits(text_edits, bufnr)
     table.insert(lines, '')
   end
 
-  -- store current cursor pos
+  -- store current cursor position (when target buffer is not current one, it will be ignore)
   local curpos_fixed = false
   local cursor_position = M.make_position_param()
 
