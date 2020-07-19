@@ -16,9 +16,9 @@ def main(argv):
     argparser = ArgumentParser()
     argparser.add_argument('--generated-includes-dir', action='append',
                            help='Directory where generated includes are located.', required=True)
-    argparser.add_argument('file', type=open, help='File to check.', required=True)
+    argparser.add_argument('file', type=open, help='File to check.')
     argparser.add_argument('iwyu_args', nargs='*',
-                           help='Include-What-You-Use arguments, must go after --.', required=True)
+                           help='Include-What-You-Use arguments, must go after --.')
     args = argparser.parse_args(argv)
 
     with args.file:
