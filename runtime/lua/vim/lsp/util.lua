@@ -594,7 +594,6 @@ function M.focusable_float(unique_name, fn)
     if win then
       api.nvim_set_current_win(win)
       api.nvim_command("stopinsert")
-      api.nvim_buf_set_option(0, 'modifiable', false)
       return
     end
   end
@@ -736,6 +735,7 @@ function M.fancy_floating_markdown(contents, opts)
   local bufnr = api.nvim_create_buf(false, true)
   local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+  api.nvim_buf_set_option(bufnr, 'modifiable', false)
 
   -- Switch to the floating window to apply the syntax highlighting.
   -- This is because the syntax command doesn't accept a target.
