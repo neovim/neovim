@@ -570,10 +570,16 @@ add_library(
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+if(MSVC)
+  set(LIBNVIM_NAME libnvim)
+else()
+  set(LIBNVIM_NAME nvim)
+endif()
 set_target_properties(
   libnvim
   PROPERTIES
     POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME ${LIBNVIM_NAME}
 )
 set_property(
   TARGET libnvim
