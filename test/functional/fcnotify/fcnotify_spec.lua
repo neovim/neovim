@@ -12,7 +12,7 @@ describe('backupcopy=no fcnotify', function()
   local screen
 
   before_each(function()
-    clear('--cmd', 'runtime plugin/fswatch.vim')
+    clear('--cmd', 'runtime plugin/fcnotify.vim')
     screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({
@@ -215,7 +215,7 @@ describe('backupcopy=yes fcnotify', function()
   local screen
 
   before_each(function()
-    clear('--cmd', 'runtime plugin/fswatch.vim', '-c', 'set backupcopy=yes')
+    clear('--cmd', 'runtime plugin/fcnotify.vim', '-c', 'set backupcopy=yes')
     screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({

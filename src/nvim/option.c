@@ -314,7 +314,7 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
-static char *(p_fcn_values[]) =       { "off", "autoread", "watcher", "onfocus",
+static char *(p_fcn_values[]) =       { "off", "always", "changed", "never",
                                         NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
@@ -2537,19 +2537,7 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
-<<<<<<< HEAD
-    char_u *fcnotify = p_fcnotify;
-
-    if (opt_flags & OPT_LOCAL) {
-      fcnotify = curbuf->b_p_fcnotify;
-    }
-
-    if (check_opt_strings(fcnotify, p_fcn_values, true) != OK
-        || (strstr((char *)fcnotify, "off")
-            && vim_strchr(fcnotify, ','))) {
-=======
     if (check_opt_strings(p_fcnotify, p_fcn_values, true) != OK) {
->>>>>>> c145e5511... refactor
       errmsg = e_invarg;
     }
   // 'encoding', 'fileencoding' and 'makeencoding'

@@ -842,7 +842,7 @@ return {
     },
     {
       full_name='filechangenotify', abbreviation='fcnotify',
-      type='string', scope={'buffer'},
+      type='string', list='comma', scope={'buffer'},
       vi_def=true,
       alloced=true,
       varname='p_fcnotify',
