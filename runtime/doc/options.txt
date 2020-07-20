@@ -824,7 +824,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup//")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -6421,7 +6421,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo//")
 			global
 	List of directory names for undo files, separated with commas.
 	See |'backupdir'| for details of the format.
@@ -6546,7 +6546,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view//")
 			global
 	Name of the directory where to store files for |:mkview|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
