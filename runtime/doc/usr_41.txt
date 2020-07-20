@@ -644,6 +644,7 @@ List manipulation:					*list-functions*
 	min()			minimum value in a List
 	count()			count number of times a value appears in a List
 	repeat()		repeat a List multiple times
+	flatten()		flatten a List
 
 Dictionary manipulation:				*dict-functions*
 	get()			get an entry without an error for a wrong key
