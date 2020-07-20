@@ -643,7 +643,7 @@ tv_list_copy_error:
 /// Flatten "list" in place to depth "maxdepth".
 /// Does nothing if "maxdepth" is 0.
 ///
-/// @param[in] list       List to flatten
+/// @param[in,out] list   List to flatten
 /// @param[in] maxdepth   Maximum depth that will be flattened
 ///
 /// @return OK or FAIL
