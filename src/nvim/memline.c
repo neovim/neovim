@@ -1876,8 +1876,10 @@ errorret:
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
   }
-  if (will_change)
+  if (will_change) {
     buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
+    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
+  }
 
   return buf->b_ml.ml_line_ptr;
 }
@@ -2445,14 +2447,14 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
   if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
     ml_flush_line(buf);  // flush it
   } else if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
-    ml_add_deleted_len(buf->b_ml.ml_line_ptr, -1);
+    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
     readlen = false;  // already added the length
 
     xfree(buf->b_ml.ml_line_ptr);  // free it
   }
 
   if (readlen && kv_size(buf->update_callbacks)) {
-    ml_add_deleted_len(ml_get_buf(buf, lnum, false), -1);
+    ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
   }
 
   buf->b_ml.ml_line_ptr = line;
@@ -2539,7 +2541,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   // Line should always have an NL char internally (represented as NUL),
   // even if 'noeol' is set.
   assert(line_size >= 1);
-  ml_add_deleted_len((char_u *)dp + line_start, line_size-1);
+  ml_add_deleted_len_buf(buf, (char_u *)dp + line_start, line_size-1);
 
   /*
    * special case: If there is only one line in the data block it becomes empty.

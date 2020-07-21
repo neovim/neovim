@@ -360,6 +360,52 @@ static int nlua_schedule(lua_State *const lstate)
       {8:}}                                                                |
                                                                        |
     ]]}
+
+    feed("gg$")
+    feed("~")
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queu^E}             |
+      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+      {2:/*}                                                               |
+      {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
+      {2:      || lstate != lstate) {}                                     |
+      {2:    lua_pushliteral(lstate, "vim.schedule: expected function");}  |
+      {2:    return lua_error(lstate);}                                    |
+      {2:*/}                                                               |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      {8:}}                                                                |
+                                                                       |
+    ]]}
+
+
+    feed("re")
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queu^e}             |
+      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+      {2:/*}                                                               |
+      {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
+      {2:      || lstate != lstate) {}                                     |
+      {2:    lua_pushliteral(lstate, "vim.schedule: expected function");}  |
+      {2:    return lua_error(lstate);}                                    |
+      {2:*/}                                                               |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      {8:}}                                                                |
+                                                                       |
+    ]]}
   end)
 
   it('inspects language', function()
