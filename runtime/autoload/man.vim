@@ -7,22 +7,10 @@ let s:loaded_man = 1
 
 let s:find_arg = '-w'
 let s:localfile_arg = v:true  " Always use -l if possible. #6683
-let s:section_arg = '-s'
+let s:section_arg = '-S'
 
-function! s:init_section_flag()
-  call system(['env', 'MANPAGER=cat', 'man', s:section_arg, '1', 'man'])
-  if v:shell_error
-    let s:section_arg = '-S'
-  endif
-endfunction
-
-function! s:init() abort
-  call s:init_section_flag()
-  " TODO(nhooyr): Does `man -l` on SunOS list searched directories?
+function! man#init() abort
   try
-    if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
-      let s:find_arg = '-l'
-    endif
     " Check for -l support.
     call s:get_page(s:get_path('', 'man'))
   catch /E145:/
@@ -141,7 +129,7 @@ function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
   " Hard-wrap: driven by `man`.
-  let manwidth = !get(g:,'man_hardwrap', 1) ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
+  let manwidth = !get(g:, 'man_hardwrap', 1) ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
@@ -466,4 +454,4 @@ function! man#goto_tag(pattern, flags, info) abort
   \  })
 endfunction
 
-call s:init()
+call man#init()
