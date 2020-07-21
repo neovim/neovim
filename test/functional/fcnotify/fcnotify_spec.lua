@@ -68,7 +68,7 @@ describe('backupcopy=no fcnotify', function()
       {EOB:~                                                 }|
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      Xtest-foo not exists                              |
+      "Xtest-foo" 4L, 28C                               |
     ]]}
   end)
 
@@ -160,7 +160,7 @@ describe('backupcopy=no fcnotify', function()
       {EOB:~                                                 }|
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      Xtest-foo not exists                              |
+      "Xtest-foo" 4L, 28C                               |
     ]]}
   end)
 
@@ -270,7 +270,7 @@ describe('backupcopy=yes fcnotify', function()
       {EOB:~                                                 }|
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      Xtest-foo not exists                              |
+      "Xtest-foo" 4L, 28C                               |
     ]]}
   end)
 
@@ -362,7 +362,7 @@ describe('backupcopy=yes fcnotify', function()
       {EOB:~                                                 }|
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      Xtest-foo not exists                              |
+      "Xtest-foo" 4L, 28C                               |
     ]]}
   end)
 
