@@ -20,10 +20,7 @@ endfunction
 
 " function to reload the buffer
 function! fcnotify#Reload(buf)
-  tab new
-  set nobuflisted
-  execute 'edit! '.bufname(a:buf)
-  tab close
+  execute 'checktime '.a:buf
 endfunction
 
 " function display the diff between the current buffer and original file

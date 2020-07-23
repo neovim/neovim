@@ -1,5 +1,6 @@
 " autocommands for starting filesystem based file watcher
 
+set noautoread
 augroup fcnotify
   autocmd!
   au BufRead,BufWritePost * call v:lua.vim.fcnotify.start_watch(expand('<afile>'))
