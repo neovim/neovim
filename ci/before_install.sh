@@ -9,8 +9,8 @@ echo 'Python info:'
   python3 --version
   python2 --version
   python --version
-  pip3 --version
-  pip2 --version
+  python3 -m pip --version
+  python2 -m pip --version
   pip --version
 
   pyenv --version
