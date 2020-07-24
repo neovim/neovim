@@ -50,8 +50,10 @@ import msgpack
 
 from xml.dom import minidom
 
-if sys.version_info[0] < 3 or sys.version_info[1] < 5:
-    print("requires Python 3.5+")
+MIN_PYTHON_VERSION = (3, 5)
+
+if sys.version_info < MIN_PYTHON_VERSION:
+    print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
     sys.exit(1)
 
 DEBUG = ('DEBUG' in os.environ)
