@@ -22,7 +22,7 @@ if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   echo 'Setting Python versions via pyenv'
 
   # Prefer Python 2 over 3 (more conservative).
-  pyenv global 2.7.15:3.7
+  pyenv global 2.7.15:3.7.1
 
   echo 'Updated Python info:'
   (
