@@ -159,7 +159,7 @@ describe('memory usage', function()
     -- to be even more permissive.
     local multiplier = 12
     if helpers.uname() == 'freebsd' then
-      multiplier = 14
+      multiplier = 15
     end
     local lower = before.last * 8 / 10
     local upper = (after.max + (after.last - before.last)) * multiplier / 10
