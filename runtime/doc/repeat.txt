@@ -591,8 +591,8 @@ Creating Vim packages					*package-create*
 This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
-users can chose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the ones he wants with
+users can choose what they include or not.  Or you can decide to use one
+package with optional plugins, and tell the user to add the ones they want with
 `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or

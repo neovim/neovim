@@ -342,8 +342,8 @@ by a ">" before the line.  To fold these quotes use this: >
 
 You can try it out on this text:
 
-> quoted text he wrote
-> quoted text he wrote
+> quoted text they wrote
+> quoted text they wrote
 > > double quoted text I wrote
 > > double quoted text I wrote
 

@@ -1407,7 +1407,7 @@ are spelling mistakes this may not be quite right.
 Common words can be specified with the COMMON item.  This will give better
 suggestions when editing a short file.  Example:
 
-	COMMON  the of to and a in is it you that he was for on are ~
+	COMMON  the of to and a in is it you that he she they was for on are ~
 
 The words must be separated by white space, up to 25 per line.
 When multiple regions are specified in a ":mkspell" command the common words

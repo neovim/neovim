@@ -370,8 +370,8 @@ displaying the line.  The text in the file remains unchanged.
 	|letter generation program for a b|
 	|ank.  They wanted to send out a s|
 	|pecial, personalized letter to th|
-	|eir richest 1000 customers.  Unfo|
-	|rtunately for the programmer, he |
+	|eir richest 1000 customers.  Lame|
+	|ntably for the programmer, they  |
 	+---------------------------------+
 After: >
 
@@ -384,7 +384,7 @@ it looks like this:
 	|bank.  They wanted to send out a |
 	|special, personalized letter to  |
 	|their richest 1000 customers.    |
-	|Unfortunately for the programmer,|
+	|Lamentably for the programmer,   |
 	+---------------------------------+
 
 Related options:
