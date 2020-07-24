@@ -230,7 +230,10 @@ enum {
   NFA_CLASS_TAB,
   NFA_CLASS_RETURN,
   NFA_CLASS_BACKSPACE,
-  NFA_CLASS_ESCAPE
+  NFA_CLASS_ESCAPE,
+  NFA_CLASS_IDENT,
+  NFA_CLASS_KEYWORD,
+  NFA_CLASS_FNAME,
 };
 
 /* Keep in sync with classchars. */
@@ -1643,6 +1646,15 @@ collection:
             case CLASS_ESCAPE:
               EMIT(NFA_CLASS_ESCAPE);
               break;
+            case CLASS_IDENT:
+              EMIT(NFA_CLASS_IDENT);
+              break;
+            case CLASS_KEYWORD:
+              EMIT(NFA_CLASS_KEYWORD);
+              break;
+            case CLASS_FNAME:
+              EMIT(NFA_CLASS_FNAME);
+              break;
             }
             EMIT(NFA_CONCAT);
             continue;
@@ -2407,6 +2419,9 @@ static void nfa_set_code(int c)
   case NFA_CLASS_RETURN:  STRCPY(code, "NFA_CLASS_RETURN"); break;
   case NFA_CLASS_BACKSPACE:   STRCPY(code, "NFA_CLASS_BACKSPACE"); break;
   case NFA_CLASS_ESCAPE:  STRCPY(code, "NFA_CLASS_ESCAPE"); break;
+  case NFA_CLASS_IDENT:   STRCPY(code, "NFA_CLASS_IDENT"); break;
+  case NFA_CLASS_KEYWORD: STRCPY(code, "NFA_CLASS_KEYWORD"); break;
+  case NFA_CLASS_FNAME:   STRCPY(code, "NFA_CLASS_FNAME"); break;
 
   case NFA_ANY:   STRCPY(code, "NFA_ANY"); break;
   case NFA_IDENT: STRCPY(code, "NFA_IDENT"); break;
@@ -4471,6 +4486,21 @@ static int check_char_class(int class, int c)
     break;
   case NFA_CLASS_ESCAPE:
     if (c == ESC) {
+      return OK;
+    }
+    break;
+  case NFA_CLASS_IDENT:
+    if (vim_isIDc(c)) {
+      return OK;
+    }
+    break;
+  case NFA_CLASS_KEYWORD:
+    if (reg_iswordc(c)) {
+      return OK;
+    }
+    break;
+  case NFA_CLASS_FNAME:
+    if (vim_isfilec(c)) {
       return OK;
     }
     break;
