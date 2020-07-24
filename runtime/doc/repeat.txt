@@ -591,8 +591,8 @@ Creating Vim packages					*package-create*
 This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
-users can chose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the ones he wants with
+users can choose what they include or not.  Or you can decide to use one
+package with optional plugins, and tell the user to add the ones they want with
 `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or
@@ -628,9 +628,9 @@ You could add this packadd command in one of your plugins, to be executed when
 the optional plugin is needed.
 
 Run the `:helptags` command to generate the doc/tags file.  Including this
-generated file in the package means that the user can drop the package in his
-pack directory and the help command works right away.  Don't forget to re-run
-the command after changing the plugin help: >
+generated file in the package means that the user can drop the package in
+their pack directory and the help command works right away.  Don't forget to
+re-run the command after changing the plugin help: >
 	:helptags path/start/foobar/doc
 	:helptags path/opt/fooextra/doc
 

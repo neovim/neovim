@@ -335,7 +335,7 @@ Now when you type >
 Vim echoes "Hello World".  However, if you add a double quote, it won't work.
 For example: >
 
-	:Say he said "hello"
+	:Say they said "hello"
 
 To get special characters turned into a string, properly escaped to use as an
 expression, use "<q-args>": >
@@ -344,7 +344,7 @@ expression, use "<q-args>": >
 
 Now the above ":Say" command will result in this to be executed: >
 
-	:echo "he said \"hello\""
+	:echo "they said \"hello\""
 
 The <f-args> keyword contains the same information as the <args> keyword,
 except in a format suitable for use as function call arguments.  For example:
