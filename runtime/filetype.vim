@@ -84,6 +84,9 @@ au BufNewFile,BufRead *.gpr			setf ada
 " AHDL
 au BufNewFile,BufRead *.tdf			setf ahdl
 
+" AIDL
+au BufNewFile,BufRead *.aidl			setf aidl
+
 " AMPL
 au BufNewFile,BufRead *.run			setf ampl
 

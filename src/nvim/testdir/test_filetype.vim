@@ -54,6 +54,7 @@ let s:filename_checks = {
     \ 'acedb': ['file.wrm'],
     \ 'ada': ['file.adb', 'file.ads', 'file.ada', 'file.gpr'],
     \ 'ahdl': ['file.tdf'],
+    \ 'aidl': ['file.aidl'],
     \ 'alsaconf': ['.asoundrc', '/usr/share/alsa/alsa.conf', '/etc/asound.conf'],
     \ 'aml': ['file.aml'],
     \ 'ampl': ['file.run'],
