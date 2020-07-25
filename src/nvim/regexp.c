@@ -40,11 +40,11 @@
  * Named character class support added by Walter Briscoe (1998 Jul 01)
  */
 
-/* Uncomment the first if you do not want to see debugging logs or files
- * related to regular expressions, even when compiling with -DDEBUG.
- * Uncomment the second to get the regexp debugging. */
-/* #undef REGEXP_DEBUG */
-/* #define REGEXP_DEBUG */
+// By default: do not create debugging logs or files related to regular
+// expressions, even when compiling with -DDEBUG.
+// Uncomment the second line to get the regexp debugging.
+// #undef REGEXP_DEBUG
+// #define REGEXP_DEBUG
 
 #include <assert.h>
 #include <inttypes.h>
