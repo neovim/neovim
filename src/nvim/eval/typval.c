@@ -1779,9 +1779,9 @@ int tv_dict_add_bool(dict_T *const d, const char *const key,
 int tv_dict_add_str(dict_T *const d,
                     const char *const key, const size_t key_len,
                     const char *const val)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  return tv_dict_add_allocated_str(d, key, key_len, xstrdup(val));
+  return tv_dict_add_str_len(d, key, key_len, val, -1);
 }
 
 /// Add a string entry to dictionary
@@ -1795,10 +1795,10 @@ int tv_dict_add_str(dict_T *const d,
 /// @return OK in case of success, FAIL when key already exists.
 int tv_dict_add_str_len(dict_T *const d,
                         const char *const key, const size_t key_len,
-                        char *const val, int len)
+                        const char *const val, int len)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  char *s = val ? val : "";
+  char *s = NULL;
   if (val != NULL) {
     s = (len < 0) ? xstrdup(val) : xstrndup(val, (size_t)len);
   }
@@ -1821,7 +1821,7 @@ int tv_dict_add_str_len(dict_T *const d,
 int tv_dict_add_allocated_str(dict_T *const d,
                               const char *const key, const size_t key_len,
                               char *const val)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
