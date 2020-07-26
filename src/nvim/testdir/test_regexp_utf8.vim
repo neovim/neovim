@@ -354,4 +354,128 @@ func Test_regexp_ignore_case()
   set regexpengine&
 endfunc
 
+" Tests for regexp with multi-byte encoding and various magic settings
+func Run_regexp_multibyte_magic()
+  let text =<< trim END
+    1 a aa abb abbccc
+    2 d dd dee deefff
+    3 g gg ghh ghhiii
+    4 j jj jkk jkklll
+    5 m mm mnn mnnooo
+    6 x ^aa$ x
+    7 (a)(b) abbaa
+    8 axx [ab]xx
+    9 หม่x อมx
+    a อมx หม่x
+    b ちカヨは
+    c x ¬€x
+    d 天使x
+    e ������y
+    f ������z
+    g a啷bb
+    j 0123❤x
+    k combinations
+    l äö üᾱ̆́
+  END
+
+  new
+  call setline(1, text)
+  exe 'normal /a*b\{2}c\+/e' .. "\<CR>x"
+  call assert_equal('1 a aa abb abbcc', getline('.'))
+  exe 'normal /\Md\*e\{2}f\+/e' .. "\<CR>x"
+  call assert_equal('2 d dd dee deeff', getline('.'))
+  set nomagic
+  exe 'normal /g\*h\{2}i\+/e' .. "\<CR>x"
+  call assert_equal('3 g gg ghh ghhii', getline('.'))
+  exe 'normal /\mj*k\{2}l\+/e' .. "\<CR>x"
+  call assert_equal('4 j jj jkk jkkll', getline('.'))
+  exe 'normal /\vm*n{2}o+/e' .. "\<CR>x"
+  call assert_equal('5 m mm mnn mnnoo', getline('.'))
+  exe 'normal /\V^aa$/' .. "\<CR>x"
+  call assert_equal('6 x aa$ x', getline('.'))
+  set magic
+  exe 'normal /\v(a)(b)\2\1\1/e' .. "\<CR>x"
+  call assert_equal('7 (a)(b) abba', getline('.'))
+  exe 'normal /\V[ab]\(\[xy]\)\1' .. "\<CR>x"
+  call assert_equal('8 axx ab]xx', getline('.'))
+
+  " search for multi-byte without composing char
+  exe 'normal /ม' .. "\<CR>x"
+  call assert_equal('9 หม่x อx', getline('.'))
+
+  " search for multi-byte with composing char
+  exe 'normal /ม่' .. "\<CR>x"
+  call assert_equal('a อมx หx', getline('.'))
+
+  " find word by change of word class
+  exe 'normal /ち\<カヨ\>は' .. "\<CR>x"
+  call assert_equal('b カヨは', getline('.'))
+
+  " Test \%u, [\u] and friends
+  " c
+  exe 'normal /\%u20ac' .. "\<CR>x"
+  call assert_equal('c x ¬x', getline('.'))
+  " d
+  exe 'normal /[\u4f7f\u5929]\+' .. "\<CR>x"
+  call assert_equal('d 使x', getline('.'))
+  " e
+  exe 'normal /\%U12345678' .. "\<CR>x"
+  call assert_equal('e y', getline('.'))
+  " f
+  exe 'normal /[\U1234abcd\u1234\uabcd]' .. "\<CR>x"
+  call assert_equal('f z', getline('.'))
+  " g
+  exe 'normal /\%d21879b' .. "\<CR>x"
+  call assert_equal('g abb', getline('.'))
+
+  " j Test backwards search from a multi-byte char
+  exe "normal /x\<CR>x?.\<CR>x"
+  call assert_equal('j 012❤', getline('.'))
+  " k
+  let @w=':%s#comb[i]nations#œ̄ṣ́m̥̄ᾱ̆́#g'
+  @w
+  call assert_equal('k œ̄ṣ́m̥̄ᾱ̆́', getline(18))
+
+  close!
+endfunc
+
+func Test_regexp_multibyte_magic()
+  set regexpengine=1
+  call Run_regexp_multibyte_magic()
+  set regexpengine=2
+  call Run_regexp_multibyte_magic()
+  set regexpengine&
+endfunc
+
+" Test for 7.3.192
+" command ":s/ \?/ /g" splits multi-byte characters into bytes
+func Test_split_multibyte_to_bytes()
+  new
+  call setline(1, 'l äö üᾱ̆́')
+  s/ \?/ /g
+  call assert_equal(' l ä ö ü ᾱ̆́', getline(1))
+  close!
+endfunc
+
+" Test for matchstr() with multibyte characters
+func Test_matchstr_multibyte()
+  new
+  call assert_equal('ב', matchstr("אבגד", ".", 0, 2))
+  call assert_equal('בג', matchstr("אבגד", "..", 0, 2))
+  call assert_equal('א', matchstr("אבגד", ".", 0, 0))
+  call assert_equal('ג', matchstr("אבגד", ".", 4, -1))
+  close!
+endfunc
+
+" Test for 7.4.636
+" A search with end offset gets stuck at end of file.
+func Test_search_with_end_offset()
+  new
+  call setline(1, ['', 'dog(a', 'cat('])
+  exe "normal /(/e+" .. "\<CR>"
+  normal "ayn
+  call assert_equal("a\ncat(", @a)
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
