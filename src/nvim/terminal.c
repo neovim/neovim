@@ -607,6 +607,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     return;
   }
 
+  width = MIN(TERM_ATTRS_MAX, width);
   for (int col = 0; col < width; col++) {
     VTermScreenCell cell;
     bool color_valid = fetch_cell(term, row, col, &cell);
