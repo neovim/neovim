@@ -2536,8 +2536,14 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
-    if (check_opt_strings(p_fcnotify, p_fcn_values, true) != OK) {
+    if (check_opt_strings(curbuf->b_p_fcnotify, p_fcn_values, false) != OK) {
       errmsg = e_invarg;
+    } else {
+      if (strcmp(curbuf->b_p_fcnotify, "always") == 0) {
+        curbuf->b_p_ar = false;
+      } else if (strcmp(curbuf->b_p_fcnotify, "changed") == 0) {
+        curbuf->b_p_ar = true;
+      }
     }
   // 'encoding', 'fileencoding' and 'makeencoding'
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
