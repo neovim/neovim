@@ -3,20 +3,21 @@
 
 local uv = vim.loop
 local Watcher = {}
+local w = {}
 local WatcherList = {}
 
 --- Callback for the check handle, checks if there are pending notifications
 --- for any watcher, and handles them as per the value of the `fcnotify`
 --- option.
 local function check_notifications()
-  for f, watcher in pairs(WatcherList) do
+  for _, watcher in pairs(WatcherList) do
     local option = vim.api.nvim_buf_get_option(watcher.bufnr, 'filechangenotify')
     if watcher.pending_notifs and watcher.paused == false and option ~= 'off' then
       if uv.fs_stat(watcher.ffname) ~= nil then
         vim.api.nvim_command('checktime '..watcher.bufnr)
         watcher.pending_notifs = false
       else
-        print("ERR: File "..watcher.fname.." removed")
+        error("ERR: File "..watcher.fname.." removed")
       end
     end
   end
@@ -34,10 +35,15 @@ local function valid_buf(fname)
   end
 
   local bufnr = vim.api.nvim_call_function('bufnr', {fname})
+
+  if bufnr < 0 then
+    return false
+  end
+
   local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
   local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
 
-  if bufnr < 0 or not buflisted or buftype == 'nofile' then
+  if not buflisted or buftype == 'nofile' or buftype == 'quickfix' then
     return false
   end
   return true
@@ -90,11 +96,15 @@ end
 ---
 --@param err: (string) Error if any occured during the execution of the callback.
 ---
---@param fname: (string) The file for which the notification was received. (Not 
+--@param fname: (string) The file for which the notification was received. (Not
 ---             very reliable.)
 ---
 --@param event: (table) The type of event recieved for a file.
 function Watcher:on_change(err, fname, event)
+  if err ~= nil then
+    error(err)
+  end
+
   self.pending_notifs = true
 
   self:stop()
@@ -146,7 +156,7 @@ function Watcher:resume_notif()
   self.paused = false
 end
 
---- Stop reacting to notifications for all the watchers until we are 
+--- Stop reacting to notifications for all the watchers until we are
 --- asked to start reacting again.
 function Watcher.pause_notif_all()
   check_handle:stop()
@@ -159,7 +169,7 @@ end
 
 function Watcher.print_all()
   print('Printing all watchers:')
-  for i, watcher in pairs(WatcherList) do
+  for _, watcher in pairs(WatcherList) do
     print(vim.inspect(watcher))
   end
 end
