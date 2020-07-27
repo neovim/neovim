@@ -2,13 +2,12 @@
 -- watches.
 
 local uv = vim.loop
-
 local Watcher = {}
 local WatcherList = {}
 
--- Callback for the check handle, checks if there are pending notifications
--- for any watcher, and handles them as per the value of the `fcnotify`
--- option.
+--- Callback for the check handle, checks if there are pending notifications
+--- for any watcher, and handles them as per the value of the `fcnotify`
+--- option.
 local function check_notifications()
   for f, watcher in pairs(WatcherList) do
     local option = vim.api.nvim_buf_get_option(watcher.bufnr, 'filechangenotify')
@@ -23,10 +22,12 @@ local function check_notifications()
   end
 end
 
--- Checks if a buffer should have a watcher attached to it.
--- Ignores all the buffers that aren't listed, or have a buf id
--- less than 0.
--- Ignores the [NO NAME] buffer.
+--- Checks if a buffer should have a watcher attached to it.
+--- Ignores all the buffers that aren't listed, or have a buf id
+--- less than 0.
+--- Ignores the [NO NAME] buffer.
+---
+--@param fname: The validity of this buffer will be checked.
 local function valid_buf(fname)
   if fname == '' then
     return false
@@ -45,8 +46,8 @@ end
 local check_handle = uv.new_check()
 check_handle:start(vim.schedule_wrap(check_notifications))
 
--- Creates and initializes a new watcher with the given filename.
---
+--- Creates and initializes a new watcher object with the given filename.
+---
 --@param fname: (required, string) The path that the watcher should watch.
 function Watcher:new(fname)
   vim.validate{fname = {fname, 'string', false}}
@@ -54,13 +55,15 @@ function Watcher:new(fname)
   local ffname = vim.api.nvim_call_function('fnamemodify', {fname, ':p'})
   w = {bufnr = vim.api.nvim_call_function('bufnr', {fname}),
        fname = fname, ffname = ffname, handle = nil,
-       paused = false, pending_notifs = false,}
+       paused = false, pending_notifs = false}
   setmetatable(w, self)
   self.__index = self
   return w
 end
 
--- Starts the watcher
+--- Starts the watcher
+---
+--@param self: (required, table) The watcher object on which start was called.
 function Watcher:start()
   self.handle = uv.new_fs_event()
   self.handle:start(self.ffname, {}, function(...)
@@ -68,7 +71,9 @@ function Watcher:start()
   end)
 end
 
--- Stops the watcher and closes the handle.
+--- Stops the watcher and closes the handle.
+---
+--@param self: (required, table) The watcher object on which stop was called.
 function Watcher:stop()
   self.handle:stop()
 
@@ -79,6 +84,16 @@ function Watcher:stop()
   self.handle:close()
 end
 
+--- Callback for watcher handle. Marks a watcher as having pending
+--- notifications. The nature of notification is determined while
+--- responding to the notification.
+---
+--@param err: (string) Error if any occured during the execution of the callback.
+---
+--@param fname: (string) The file for which the notification was received. (Not 
+---             very reliable.)
+---
+--@param event: (table) The type of event recieved for a file.
 function Watcher:on_change(err, fname, event)
   self.pending_notifs = true
 
@@ -86,8 +101,9 @@ function Watcher:on_change(err, fname, event)
   self:start()
 end
 
--- Starts and initializes a watcher for the given path.
---
+--- Starts and initializes a watcher for the given path. A thin wrapper around
+--- Watcher:start() that can be called from vimscript.
+---
 --@param fname: (required, string) The path that the watcher should watch.
 function Watcher.start_watch(fname)
   if not valid_buf(fname) then
@@ -102,8 +118,9 @@ function Watcher.start_watch(fname)
   WatcherList[fname]:start()
 end
 
--- Stops the watcher watching a given file and closes it's handle.
---
+--- Stops the watcher watching a given file and closes it's handle. A
+--- thin wrapper around Watcher:stop() that can be called from vimscript.
+---
 --@param fname: (required, string) The path which is being watched.
 function Watcher.stop_watch(fname)
   -- can't close watchers for certain buffers
@@ -129,10 +146,13 @@ function Watcher:resume_notif()
   self.paused = false
 end
 
+--- Stop reacting to notifications for all the watchers until we are 
+--- asked to start reacting again.
 function Watcher.pause_notif_all()
   check_handle:stop()
 end
 
+--- Start reacting to notifications for all wathcers.
 function Watcher.resume_notif_all()
   check_handle:start(vim.schedule_wrap(check_notifications))
 end
