@@ -2692,8 +2692,8 @@ win_line (
     off += col;
   }
 
-  // wont highlight after 1024 columns
-  int term_attrs[1024] = {0};
+  // wont highlight after TERM_ATTRS_MAX columns
+  int term_attrs[TERM_ATTRS_MAX] = { 0 };
   if (wp->w_buffer->terminal) {
     terminal_get_line_attributes(wp->w_buffer->terminal, wp, lnum, term_attrs);
     extra_check = true;
@@ -4030,7 +4030,7 @@ win_line (
         int n = wp->w_p_rl ? -1 : 1;
         while (col >= 0 && col < grid->Columns) {
           schar_from_ascii(linebuf_char[off], ' ');
-          linebuf_attr[off] = term_attrs[vcol];
+          linebuf_attr[off] = vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[vcol];
           off += n;
           vcol += n;
           col += n;
