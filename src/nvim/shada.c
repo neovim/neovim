@@ -2207,8 +2207,12 @@ static inline ShaDaWriteResult shada_read_when_writing(
           shada_free_shada_entry(&entry);
           break;
         }
-        hms_insert(&wms->hms[entry.data.history_item.histtype], entry, true,
-                   true);
+        if (wms->hms[entry.data.history_item.histtype].hmll.size != 0) {
+          hms_insert(&wms->hms[entry.data.history_item.histtype], entry, true,
+                     true);
+        } else {
+          shada_free_shada_entry(&entry);
+        }
         break;
       }
       case kSDItemRegister: {
