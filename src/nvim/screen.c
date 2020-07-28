@@ -898,12 +898,7 @@ static void win_update(win_T *wp)
        || type == INVERTED || type == INVERTED_ALL)
       && !wp->w_botfill && !wp->w_old_botfill
       ) {
-    if (mod_top != 0 && wp->w_topline == mod_top) {
-      /*
-       * w_topline is the first changed line, the scrolling will be done
-       * further down.
-       */
-    } else if (wp->w_lines[0].wl_valid
+    if (wp->w_lines[0].wl_valid
                && (wp->w_topline < wp->w_lines[0].wl_lnum
                    || (wp->w_topline == wp->w_lines[0].wl_lnum
                        && wp->w_topfill > wp->w_old_topfill)
