@@ -842,9 +842,8 @@ return {
     },
     {
       full_name='filechangenotify', abbreviation='fcnotify',
-      type='string', list='comma', scope={'buffer'},
-      vi_def=true,
-      alloced=true,
+      type='string', list='comma', scope={'global', 'buffer'},
+      vi_def='false',
       varname='p_fcnotify',
       defaults={if_true={vi="off"}}
     },

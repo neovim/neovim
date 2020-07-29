@@ -2,11 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local lfs = require('lfs')
 local command = helpers.command
-local insert = helpers.insert
 local clear = helpers.clear
 local feed = helpers.feed
-local nvim_async = helpers.nvim_async
-local lfs = require('lfs')
 
 describe('backupcopy=no fcnotify', function()
   local screen
@@ -34,7 +31,6 @@ describe('backupcopy=no fcnotify', function()
     command('set fcnotify=changed')
 
     command('edit '..path)
-    -- TODO: Why is unload triggered here?
     screen:expect{grid=[[
       ^aa bb                                             |
       {EOB:~                                                 }|
@@ -107,71 +103,25 @@ describe('backupcopy=no fcnotify', function()
                                                         |
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
       {SEP:                                                  }|
                                                         |
-      {CONFIRM:File Xtest-foo changed. Would you like to reload?} |
-      {CONFIRM:[Y]es, (S)how diff, (N)o: }^                        |
+      {CONFIRM:W12: Warning: File "Xtest-foo" has changed and the}|
+      {CONFIRM: buffer was changed in Vim as well}                |
+      {CONFIRM:See ":help W12" for more info.}                    |
+      {CONFIRM:[O]K, (S)how diff, (L)oad File: }^                  |
     ]]}
-
     feed([[<cr>]])
-    -- TODO: Change this after fixing checktime prompt
-    feed([[l]])
-  end)
-
-  it('never', function()
-    local path = 'Xtest-foo'
-    helpers.write_file(path, 'aa bb')
-    lfs.touch(path, os.time() - 10)
-    command('set fcnotify=changed')
-
-    command('edit '..path)
-    -- TODO: Why is unload triggered here?
-    screen:expect{grid=[[
-      ^aa bb                                             |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      Xtest-foo not exists                              |
-    ]]}
-
-
-    local expected_additions = [[
-    line 1
-    line 2
-    line 3
-    line 4
-    ]]
-
-    helpers.write_file(path, expected_additions)
-    screen:expect{grid=[[
-      ^line 1                                            |
-      line 2                                            |
-      line 3                                            |
-      line 4                                            |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      "Xtest-foo" 4L, 28C                               |
-    ]]}
   end)
 
   it('always', function()
     local path = 'Xtest-foo'
     helpers.write_file(path, 'aa bb')
-    lfs.touch(path, os.time() - 10)
+    -- lfs.touch(path, os.time() - 2)
     command('set fcnotify=always')
+    command('set noautoread')
+    screen:snapshot_util()
 
     command('edit '..path)
-    -- TODO: Why is unload triggered here?
     screen:expect{grid=[[
       ^aa bb                                             |
       {EOB:~                                                 }|
@@ -185,7 +135,6 @@ describe('backupcopy=no fcnotify', function()
       Xtest-foo not exists                              |
     ]]}
 
-
     local expected_additions = [[
     line 1
     line 2
@@ -193,21 +142,11 @@ describe('backupcopy=no fcnotify', function()
     line 4
     ]]
 
+    helpers.sleep(2000)
     helpers.write_file(path, expected_additions)
-    screen:expect{grid=[[
-      aa bb                                             |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {SEP:                                                  }|
-      Xtest-foo not exists                              |
-      {CONFIRM:File Xtest-foo changed. Would you like to reload?} |
-      {CONFIRM:[Y]es, (S)how diff, (N)o: }^                        |
-    ]]}
+    screen:snapshot_util()
 
-    feed([[<cr>]])
+    -- feed([[<cr>]])
   end)
 end)
 
@@ -237,7 +176,6 @@ describe('backupcopy=yes fcnotify', function()
     command('set fcnotify=changed')
 
     command('edit '..path)
-    -- TODO: Why is unload triggered here?
     screen:expect{grid=[[
       ^aa bb                                             |
       {EOB:~                                                 }|
@@ -309,61 +247,14 @@ describe('backupcopy=yes fcnotify', function()
                                                         |
       {EOB:~                                                 }|
       {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
       {SEP:                                                  }|
                                                         |
-      {CONFIRM:File Xtest-foo changed. Would you like to reload?} |
-      {CONFIRM:[Y]es, (S)how diff, (N)o: }^                        |
+      {CONFIRM:W12: Warning: File "Xtest-foo" has changed and the}|
+      {CONFIRM: buffer was changed in Vim as well}                |
+      {CONFIRM:See ":help W12" for more info.}                    |
+      {CONFIRM:[O]K, (S)how diff, (L)oad File: }^                  |
     ]]}
-
     feed([[<cr>]])
-    -- TODO: Change this after fixing checktime prompt
-    feed([[l]])
-  end)
-
-  it('never', function()
-    local path = 'Xtest-foo'
-    helpers.write_file(path, 'aa bb')
-    lfs.touch(path, os.time() - 10)
-    command('set fcnotify=changed')
-
-    command('edit '..path)
-    -- TODO: Why is unload triggered here?
-    screen:expect{grid=[[
-      ^aa bb                                             |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      Xtest-foo not exists                              |
-    ]]}
-
-
-    local expected_additions = [[
-    line 1
-    line 2
-    line 3
-    line 4
-    ]]
-
-    helpers.write_file(path, expected_additions)
-    screen:expect{grid=[[
-      ^line 1                                            |
-      line 2                                            |
-      line 3                                            |
-      line 4                                            |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      "Xtest-foo" 4L, 28C                               |
-    ]]}
   end)
 
   it('always', function()
@@ -373,7 +264,6 @@ describe('backupcopy=yes fcnotify', function()
     command('set fcnotify=always')
 
     command('edit '..path)
-    -- TODO: Why is unload triggered here?
     screen:expect{grid=[[
       ^aa bb                                             |
       {EOB:~                                                 }|
@@ -396,18 +286,7 @@ describe('backupcopy=yes fcnotify', function()
     ]]
 
     helpers.write_file(path, expected_additions)
-    screen:expect{grid=[[
-      aa bb                                             |
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {EOB:~                                                 }|
-      {SEP:                                                  }|
-      Xtest-foo not exists                              |
-      {CONFIRM:File Xtest-foo changed. Would you like to reload?} |
-      {CONFIRM:[Y]es, (S)how diff, (N)o: }^                        |
-    ]]}
+    screen:snapshot_util()
     feed([[<cr>]])
   end)
 end)

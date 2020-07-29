@@ -12,13 +12,11 @@ local WatcherList = {}
 local function check_notifications()
   for _, watcher in pairs(WatcherList) do
     local option = vim.api.nvim_buf_get_option(watcher.bufnr, 'filechangenotify')
-    if watcher.pending_notifs and watcher.paused == false and option ~= 'off' then
-      if uv.fs_stat(watcher.ffname) ~= nil then
-        vim.api.nvim_command('checktime '..watcher.bufnr)
-        watcher.pending_notifs = false
-      else
-        error("ERR: File "..watcher.fname.." removed")
-      end
+    if option:find('watcher') == nil then
+      watcher.pending_notifs = false
+    elseif watcher.pending_notifs and watcher.paused == false then
+      vim.api.nvim_command('checktime '..watcher.bufnr)
+      watcher.pending_notifs = false
     end
   end
 end
@@ -100,7 +98,7 @@ end
 ---             very reliable.)
 ---
 --@param event: (table) The type of event recieved for a file.
-function Watcher:on_change(err, fname, event)
+function Watcher:on_change(err, _, _)
   if err ~= nil then
     error(err)
   end

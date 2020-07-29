@@ -4828,7 +4828,10 @@ int buf_check_timestamp(buf_T *buf)
      * explorer. */
     if (os_isdir(buf->b_fname)) {
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
+<<<<<<< HEAD
+=======
                && strstr((char *)buf->b_p_fcnotify, "autoread")
+>>>>>>> 1505c96c6... fixed error with blank vim screen
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it

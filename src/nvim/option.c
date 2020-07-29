@@ -2539,10 +2539,13 @@ ambw_end:
     if (check_opt_strings(curbuf->b_p_fcnotify, p_fcn_values, false) != OK) {
       errmsg = e_invarg;
     } else {
-      if (strcmp(curbuf->b_p_fcnotify, "always") == 0) {
+      // TODO(BK1603): Why do tests don't respect local buffer?
+      if (strcmp((char *)curbuf->b_p_fcnotify, "always") == 0) {
         curbuf->b_p_ar = false;
-      } else if (strcmp(curbuf->b_p_fcnotify, "changed") == 0) {
+        // do_cmdline((char_u *)"set noautoread", NULL, NULL, 0);
+      } else if (strcmp((char *)curbuf->b_p_fcnotify, "changed") == 0) {
         curbuf->b_p_ar = true;
+        // do_cmdline((char_u *)"set autoread", NULL, NULL, 0);
       }
     }
   // 'encoding', 'fileencoding' and 'makeencoding'
@@ -6025,7 +6028,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_tfu = vim_strsave(p_tfu);
-      buf->b_p_fcnotify = vim_strsave(p_fcnotify);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = vim_strsave(p_vsts);
