@@ -45,6 +45,9 @@ local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
+--- Apply TextEdit for lines variable
+-- Returns a tuple of (modified_lines, modified_start_line_idx, modified_end_line_idx, old_start_line_prefix, old_end_line_suffix)
+-- The line_idx is 1-based
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -75,7 +78,8 @@ function M.set_lines(lines, A, B, new_lines)
   if #prefix > 0 then
     lines[i_0] = prefix..lines[i_0]
   end
-  return lines
+  -- (modified_lines, modified_start_line_idx, modified_end_line_idx, old_start_line_prefix, old_end_line_suffix)
+  return lines, i_0, (i_0 + #new_lines - 1), prefix, suffix
 end
 
 local function sort_by_key(fn)
@@ -149,16 +153,40 @@ function M.apply_text_edits(text_edits, bufnr)
     table.insert(lines, '')
   end
 
+  -- store current cursor position (when target buffer is not current one, it will be ignore)
+  local curpos_fixed = false
+  local cursor_position = M.make_position_param()
+
   for i = #cleaned, 1, -1 do
     local e = cleaned[i]
     local A = {e.A[1] - start_line, e.A[2]}
     local B = {e.B[1] - start_line, e.B[2]}
-    lines = M.set_lines(lines, A, B, e.lines)
+
+    local lines_len = #e.lines
+    local range_len = (e.B[1] - e.A[1]) + 1
+
+    local end_index, suffix, _
+    lines, _, end_index, _, suffix = M.set_lines(lines, A, B, e.lines)
+
+    if e.B[1] < cursor_position.line then
+      cursor_position.line = cursor_position.line + (lines_len - range_len)
+      curpos_fixed = true
+    elseif e.B[1] == cursor_position.line and e.B[2] <= cursor_position.character then
+      cursor_position.line = cursor_position.line + (lines_len - range_len)
+      cursor_position.character = (#(lines[end_index] or '') - #(suffix or '')) + (cursor_position.character - e.B[2])
+      curpos_fixed = true
+    end
   end
+
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
   end
   api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+
+  -- apply modified cursor pos
+  if curpos_fixed and api.nvim_get_current_buf() == bufnr then
+    api.nvim_win_set_cursor(0, { cursor_position.line + 1, get_line_byte_from_position(0, cursor_position) })
+  end
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
@@ -1291,7 +1319,8 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 local str_utfindex = vim.str_utfindex
-local function make_position_param()
+
+function M.make_position_param()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
@@ -1302,12 +1331,12 @@ end
 function M.make_position_params()
   return {
     textDocument = M.make_text_document_params();
-    position = make_position_param()
+    position = M.make_position_param()
   }
 end
 
 function M.make_range_params()
-  local position = make_position_param()
+  local position = M.make_position_param()
   return {
     textDocument = { uri = vim.uri_from_bufnr(0) },
     range = { start = position; ["end"] = position; }
