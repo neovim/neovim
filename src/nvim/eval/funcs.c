@@ -3509,6 +3509,29 @@ static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_qf_loc_list(false, wp, &argvars[1], rettv);
 }
 
+
+/// "getmarklist()" function
+static void f_getmarklist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  buf_T *buf = NULL;
+
+  if (tv_list_alloc_ret(rettv, kListLenMayKnow) == NULL) {
+    return;
+  }
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    get_global_marks(rettv->vval.v_list);
+    return;
+  }
+
+  buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  get_buf_local_marks(buf, rettv->vval.v_list);
+}
+
 /*
  * "getmatches()" function
  */

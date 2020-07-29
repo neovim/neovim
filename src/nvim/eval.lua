@@ -150,6 +150,7 @@ return {
     getjumplist={args={0, 2}},
     getline={args={1, 2}},
     getloclist={args={1, 2}},
+    getmarklist={args={0, 1}},
     getmatches={args={0, 1}},
     getpid={},
     getpos={args=1},
