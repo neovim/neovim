@@ -815,33 +815,10 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
-    it('handles edits with the same start position, applying changes in the order in the array', function()
-      local edits = {
-        make_edit(0, 6, 0, 10, {""});
-        make_edit(0, 6, 0, 6, {"REPLACE"});
-        make_edit(1, 0, 1, 3, {""});
-        make_edit(1, 0, 1, 0, {"123"});
-        make_edit(2, 16, 2, 18, {""});
-        make_edit(2, 16, 2, 16, {"XYZ"});
-        make_edit(3, 7, 3, 11, {"this"});
-        make_edit(3, 7, 3, 11, {"will"});
-        make_edit(3, 7, 3, 11, {"not "});
-        make_edit(3, 7, 3, 11, {"show"});
-        make_edit(3, 7, 3, 11, {"(but this will)"});
-      }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
-      eq({
-        'First REPLACE of text';
-        '123ond line of text';
-        'Third line of teXYZ';
-        'Fourth (but this will) of text';
-        'å å ɧ 汉语 ↥ 🤦 🦄';
-      }, buf_lines(1))
-    end)
     it('applies complex edits', function()
       local edits = {
-        make_edit(0, 0, 0, 0, {"3", "foo"});
         make_edit(0, 0, 0, 0, {"", "12"});
+        make_edit(0, 0, 0, 0, {"3", "foo"});
         make_edit(0, 1, 0, 1, {"bar", "123"});
         make_edit(0, #"First ", 0, #"First line of text", {"guy"});
         make_edit(1, 0, 1, #'Second', {"baz"});
