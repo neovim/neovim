@@ -172,7 +172,7 @@ describe('env.c', function()
         i = i + 1
         name = cimp.os_getenvname_at_index(i)
       end
-      eq(true, (table.getn(names)) > 0)
+      eq(true, #names > 0)
       eq(true, found_name)
     end)
 
