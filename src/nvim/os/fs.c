@@ -743,7 +743,9 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
   }
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
-  *statbuf = request.statbuf;
+  if (result == kLibuvSuccess) {
+    *statbuf = request.statbuf;
+  }
   uv_fs_req_cleanup(&request);
   return result;
 }
@@ -1009,6 +1011,7 @@ int os_remove(const char *path)
 bool os_fileinfo(const char *path, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  memset(file_info, 0, sizeof(*file_info));
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
 
@@ -1020,14 +1023,17 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 bool os_fileinfo_link(const char *path, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  memset(file_info, 0, sizeof(*file_info));
   if (path == NULL) {
     return false;
   }
   uv_fs_t request;
-  int result = uv_fs_lstat(&fs_loop, &request, path, NULL);
-  file_info->stat = request.statbuf;
+  bool ok = uv_fs_lstat(&fs_loop, &request, path, NULL) == kLibuvSuccess;
+  if (ok) {
+    file_info->stat = request.statbuf;
+  }
   uv_fs_req_cleanup(&request);
-  return (result == kLibuvSuccess);
+  return ok;
 }
 
 /// Get the file information for a given file descriptor
@@ -1039,10 +1045,16 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  int result = uv_fs_fstat(&fs_loop, &request, file_descriptor, NULL);
-  file_info->stat = request.statbuf;
+  memset(file_info, 0, sizeof(*file_info));
+  bool ok = uv_fs_fstat(&fs_loop,
+                        &request,
+                        file_descriptor,
+                        NULL) == kLibuvSuccess;
+  if (ok) {
+    file_info->stat = request.statbuf;
+  }
   uv_fs_req_cleanup(&request);
-  return (result == kLibuvSuccess);
+  return ok;
 }
 
 /// Compare the inodes of two FileInfos
