@@ -26,10 +26,6 @@ describe('Signs', function()
     } )
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe(':sign place', function()
     it('allows signs with combining characters', function()
       feed('ia<cr>b<cr><esc>')

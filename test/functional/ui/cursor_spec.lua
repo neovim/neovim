@@ -13,10 +13,6 @@ describe('ui/cursor', function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("'guicursor' is published as a UI event", function()
     local expected_mode_info = {
       [1] = {
@@ -248,6 +244,25 @@ describe('ui/cursor', function()
       eq(true, screen._cursor_style_enabled)
       eq('normal', screen.mode)
     end)
+
+    -- update the highlight again to hide cursor
+    helpers.command('hi Cursor blend=100')
+
+    for _, m in ipairs(expected_mode_info) do
+      if m.hl_id then
+          m.attr = {background = Screen.colors.Red, blend = 100}
+      end
+    end
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      test                     |
+    ]], condition=function()
+      eq(expected_mode_info, screen._mode_info)
+    end
+    }
 
     -- Another cursor style.
     meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173'

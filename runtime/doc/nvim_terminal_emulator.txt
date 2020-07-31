@@ -50,6 +50,13 @@ mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
 except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
 to normal-mode. |CTRL-\_CTRL-N|
 
+Terminal-mode forces these local options:
+
+    'nocursorline'
+    'nocursorcolumn'
+    'scrolloff' = 0
+    'sidescrolloff' = 0
+
 Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
 to automate any terminal interaction.
 
@@ -305,6 +312,23 @@ Other commands ~
  *:Program*    jump to the window with the running program
  *:Source*     jump to the window with the source code, create it if there
 	     isn't one
+
+
+Prompt mode ~
+						*termdebug-prompt*
+When on MS-Windows, gdb will run in a buffer with 'buftype' set to "prompt".
+This works slightly differently:
+- The gdb window will be in Insert mode while typing commands.  Go to Normal
+  mode with <Esc>, then you can move around in the buffer, copy/paste, etc.
+  Go back to editing the gdb command with any command that starts Insert mode,
+  such as `a` or `i`.
+- The program being debugged will run in a separate window.  On MS-Windows
+  this is a new console window.  On Unix, if the |+terminal| feature is
+  available a Terminal window will be opened to run the debugged program in.
+
+						*termdebug_use_prompt*
+Prompt mode can be used even when the |+terminal| feature is present with: >
+	let g:termdebug_use_prompt = 1
 
 
 Communication ~

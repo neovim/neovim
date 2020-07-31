@@ -89,6 +89,10 @@ local Gcc = {
   get_defines_extra_flags = {'-std=c99', '-dM', '-E'},
   get_declarations_extra_flags = {'-std=c99', '-P', '-E'},
 }
+if ffi.abi("32bit") then
+  table.insert(Gcc.get_defines_extra_flags, '-m32')
+  table.insert(Gcc.get_declarations_extra_flags, '-m32')
+end
 
 function Gcc:define(name, args, val)
   local define = '-D' .. name

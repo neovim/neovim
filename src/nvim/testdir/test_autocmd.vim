@@ -52,7 +52,7 @@ if has('timers')
     au CursorHoldI * let g:triggered += 1
     set updatetime=500
     call job_start(has('win32') ? 'cmd /c echo:' : 'echo',
-          \ {'exit_cb': {j, s -> timer_start(1000, 'ExitInsertMode')}})
+          \ {'exit_cb': {-> timer_start(1000, 'ExitInsertMode')}})
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     unlet g:triggered
@@ -425,18 +425,20 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   set noswapfile
   mksession!
 
-  let content = ['set nocp noswapfile',
-        \ 'let v:swapchoice="e"',
-        \ 'augroup test_autocmd_sessionload',
-        \ 'autocmd!',
-        \ 'autocmd SessionLoadPost * exe bufnr("Xsomething") . "bw!"',
-        \ 'augroup END',
-	\ '',
-	\ 'func WriteErrors()',
-	\ '  call writefile([execute("messages")], "Xerrors")',
-	\ 'endfunc',
-	\ 'au VimLeave * call WriteErrors()',
-        \ ]
+  let content =<< trim [CODE]
+    set nocp noswapfile
+    let v:swapchoice="e"
+    augroup test_autocmd_sessionload
+    autocmd!
+    autocmd SessionLoadPost * exe bufnr("Xsomething") . "bw!"
+    augroup END
+
+    func WriteErrors()
+      call writefile([execute("messages")], "Xerrors")
+    endfunc
+    au VimLeave * call WriteErrors()
+  [CODE]
+
   call writefile(content, 'Xvimrc')
   call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
@@ -454,27 +456,29 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
   set noswapfile
   mksession!
 
-  let content = ['set nocp noswapfile',
-      \ 'function! DeleteInactiveBufs()',
-      \ '  tabfirst',
-      \ '  let tabblist = []',
-      \ '  for i in range(1, tabpagenr(''$''))',
-      \ '    call extend(tabblist, tabpagebuflist(i))',
-      \ '  endfor',
-      \ '  for b in range(1, bufnr(''$''))',
-      \ '    if bufexists(b) && buflisted(b) && (index(tabblist, b) == -1 || bufname(b) =~# ''^$'')',
-      \ '      exec ''bwipeout '' . b',
-      \ '    endif',
-      \ '  endfor',
-      \ '  echomsg "SessionLoadPost DONE"',
-      \ 'endfunction',
-      \ 'au SessionLoadPost * call DeleteInactiveBufs()',
-      \ '',
-      \ 'func WriteErrors()',
-      \ '  call writefile([execute("messages")], "Xerrors")',
-      \ 'endfunc',
-      \ 'au VimLeave * call WriteErrors()',
-      \ ]
+  let content =<< trim [CODE]
+    set nocp noswapfile
+    function! DeleteInactiveBufs()
+      tabfirst
+      let tabblist = []
+      for i in range(1, tabpagenr(''$''))
+        call extend(tabblist, tabpagebuflist(i))
+      endfor
+      for b in range(1, bufnr(''$''))
+        if bufexists(b) && buflisted(b) && (index(tabblist, b) == -1 || bufname(b) =~# ''^$'')
+          exec ''bwipeout '' . b
+        endif
+      endfor
+      echomsg "SessionLoadPost DONE"
+    endfunction
+    au SessionLoadPost * call DeleteInactiveBufs()
+
+    func WriteErrors()
+      call writefile([execute("messages")], "Xerrors")
+    endfunc
+    au VimLeave * call WriteErrors()
+  [CODE]
+
   call writefile(content, 'Xvimrc')
   call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
@@ -936,21 +940,23 @@ func Test_bufunload_all()
   call writefile(['Test file Xxx1'], 'Xxx1')"
   call writefile(['Test file Xxx2'], 'Xxx2')"
 
-  let content = [
-	      \ "func UnloadAllBufs()",
-	      \ "  let i = 1",
-	      \ "  while i <= bufnr('$')",
-	      \ "    if i != bufnr('%') && bufloaded(i)",
-	      \ "      exe  i . 'bunload'",
-	      \ "    endif",
-	      \ "    let i += 1",
-	      \ "  endwhile",
-	      \ "endfunc",
-	      \ "au BufUnload * call UnloadAllBufs()",
-	      \ "au VimLeave * call writefile(['Test Finished'], 'Xout')",
-	      \ "edit Xxx1",
-	      \ "split Xxx2",
-	      \ "q"]
+  let content =<< trim [CODE]
+    func UnloadAllBufs()
+      let i = 1
+      while i <= bufnr('$')
+        if i != bufnr('%') && bufloaded(i)
+          exe  i . 'bunload'
+        endif
+        let i += 1
+      endwhile
+    endfunc
+    au BufUnload * call UnloadAllBufs()
+    au VimLeave * call writefile(['Test Finished'], 'Xout')
+    edit Xxx1
+    split Xxx2
+    q
+  [CODE]
+
   call writefile(content, 'Xtest')
 
   call delete('Xout')
@@ -1064,6 +1070,40 @@ func Test_Cmd_Autocmds()
   %bwipe!
   call delete('Xxx')
   enew!
+endfunc
+
+func s:ReadFile()
+  setl noswapfile nomodified
+  let filename = resolve(expand("<afile>:p"))
+  execute 'read' fnameescape(filename)
+  1d_
+  exe 'file' fnameescape(filename)
+  setl buftype=acwrite
+endfunc
+
+func s:WriteFile()
+  let filename = resolve(expand("<afile>:p"))
+  setl buftype=
+  noautocmd execute 'write' fnameescape(filename)
+  setl buftype=acwrite
+  setl nomodified
+endfunc
+
+func Test_BufReadCmd()
+  autocmd BufReadCmd *.test call s:ReadFile()
+  autocmd BufWriteCmd *.test call s:WriteFile()
+
+  call writefile(['one', 'two', 'three'], 'Xcmd.test')
+  edit Xcmd.test
+  call assert_match('Xcmd.test" line 1 of 3', execute('file'))
+  normal! Gofour
+  write
+  call assert_equal(['one', 'two', 'three', 'four'], readfile('Xcmd.test'))
+
+  bwipe!
+  call delete('Xcmd.test')
+  au! BufReadCmd
+  au! BufWriteCmd
 endfunc
 
 func SetChangeMarks(start, end)
@@ -1206,23 +1246,27 @@ func Test_TextYankPost()
 
   norm "ayiw
   call assert_equal(
-    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': 'a', 'operator': 'y', 'regtype': 'v'},
+    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': 'a', 'operator': 'y', 'visual': v:false, 'regtype': 'v'},
     \g:event)
   norm y_
   call assert_equal(
-    \{'regcontents': ['foo'], 'inclusive': v:false, 'regname': '',  'operator': 'y', 'regtype': 'V'},
+    \{'regcontents': ['foo'], 'inclusive': v:false, 'regname': '',  'operator': 'y', 'visual': v:false, 'regtype': 'V'},
+    \g:event)
+  norm Vy
+  call assert_equal(
+    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': '',  'operator': 'y', 'visual': v:true, 'regtype': 'V'},
     \g:event)
   call feedkeys("\<C-V>y", 'x')
   call assert_equal(
-    \{'regcontents': ['f'], 'inclusive': v:true, 'regname': '',  'operator': 'y', 'regtype': "\x161"},
+    \{'regcontents': ['f'], 'inclusive': v:true, 'regname': '',  'operator': 'y', 'visual': v:true, 'regtype': "\x161"},
     \g:event)
   norm "xciwbar
   call assert_equal(
-    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': 'x', 'operator': 'c', 'regtype': 'v'},
+    \{'regcontents': ['foo'], 'inclusive': v:true, 'regname': 'x', 'operator': 'c', 'visual': v:false, 'regtype': 'v'},
     \g:event)
   norm "bdiw
   call assert_equal(
-    \{'regcontents': ['bar'], 'inclusive': v:true, 'regname': 'b', 'operator': 'd', 'regtype': 'v'},
+    \{'regcontents': ['bar'], 'inclusive': v:true, 'regname': 'b', 'operator': 'd', 'visual': v:false, 'regtype': 'v'},
     \g:event)
 
   call assert_equal({}, v:event)
@@ -1344,11 +1388,11 @@ func Test_Changed_FirstTime()
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
   call assert_equal('running', term_getstatus(buf))
   " Wait for the ruler (in the status line) to be shown.
-  call WaitFor({-> term_getline(buf, 3) =~# '\<All$'})
+  call WaitForAssert({-> assert_match('\<All$', term_getline(buf, 3))})
   " It's only adding autocmd, so that no event occurs.
   call term_sendkeys(buf, ":au! TextChanged <buffer> call writefile(['No'], 'Xchanged.txt')\<cr>")
   call term_sendkeys(buf, "\<C-\\>\<C-N>:qa!\<cr>")
-  call WaitFor({-> term_getstatus(buf) == 'finished'})
+  call WaitForAssert({-> assert_equal('finished', term_getstatus(buf))})
   call assert_equal([''], readfile('Xchanged.txt'))
 
   " clean up
@@ -1780,3 +1824,46 @@ func Test_FileChangedShell_reload()
   bwipe!
   call delete('Xchanged')
 endfunc
+
+" Test for FileReadCmd autocmd
+func Test_autocmd_FileReadCmd()
+  func ReadFileCmd()
+    call append(line('$'), "v:cmdarg = " .. v:cmdarg)
+  endfunc
+  augroup FileReadCmdTest
+    au!
+    au FileReadCmd Xtest call ReadFileCmd()
+  augroup END
+
+  new
+  read ++bin Xtest
+  read ++nobin Xtest
+  read ++edit Xtest
+  read ++bad=keep Xtest
+  read ++bad=drop Xtest
+  read ++bad=- Xtest
+  read ++ff=unix Xtest
+  read ++ff=dos Xtest
+  read ++ff=mac Xtest
+  read ++enc=utf-8 Xtest
+
+  call assert_equal(['',
+        \ 'v:cmdarg =  ++bin',
+        \ 'v:cmdarg =  ++nobin',
+        \ 'v:cmdarg =  ++edit',
+        \ 'v:cmdarg =  ++bad=keep',
+        \ 'v:cmdarg =  ++bad=drop',
+        \ 'v:cmdarg =  ++bad=-',
+        \ 'v:cmdarg =  ++ff=unix',
+        \ 'v:cmdarg =  ++ff=dos',
+        \ 'v:cmdarg =  ++ff=mac',
+        \ 'v:cmdarg =  ++enc=utf-8'], getline(1, '$'))
+
+  close!
+  augroup FileReadCmdTest
+    au!
+  augroup END
+  delfunc ReadFileCmd
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

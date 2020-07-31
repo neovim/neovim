@@ -113,8 +113,13 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     return 'doitclient'
   elseif executable('win32yank.exe')
-    let s:copy['+'] = 'win32yank.exe -i --crlf'
-    let s:paste['+'] = 'win32yank.exe -o --lf'
+    if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
+      let win32yank = resolve(exepath('win32yank.exe'))
+    else
+      let win32yank = 'win32yank.exe'
+    endif
+    let s:copy['+'] = win32yank.' -i --crlf'
+    let s:paste['+'] = win32yank.' -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
@@ -172,6 +177,10 @@ function! s:clipboard.set(lines, regtype, reg) abort
   if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
+    " xclip does not close stdout when receiving input via stdin
+    if argv[0] ==# 'xclip'
+      call jobclose(jobid, 'stdout')
+    endif
     let selection.owner = jobid
     let ret = 1
   else

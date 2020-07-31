@@ -33,7 +33,7 @@ describe('cmdline autocommands', function()
     eq({'notification', 'CmdlineEnter', {{cmdtype=':', cmdlevel=1}}}, next_msg())
 
     -- note: feed('bork<c-c>') might not consume 'bork'
-    -- due to out-of-band interupt handling
+    -- due to out-of-band interrupt handling
     feed('bork<esc>')
     eq({'notification', 'CmdlineLeave',
         {{cmdtype=':', cmdlevel=1, abort=true}}}, next_msg())

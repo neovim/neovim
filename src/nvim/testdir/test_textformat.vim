@@ -489,3 +489,426 @@ func Test_format_list_auto()
   bwipe!
   set fo& ai& bs&
 endfunc
+
+" Test for formatting multi-byte text with 'fo=t'
+func Test_tw_2_fo_t()
+  new
+  let t =<< trim END
+    {
+    ＸＹＺ
+    abc ＸＹＺ
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set tw=2 fo=t
+  let t =<< trim END
+    ＸＹＺ
+    abc ＸＹＺ
+  END
+  exe "normal gqgqjgqgq"
+  exe "normal o\n" . join(t, "\n")
+
+  let expected =<< trim END
+    {
+    ＸＹＺ
+    abc
+    ＸＹＺ
+
+    ＸＹＺ
+    abc
+    ＸＹＺ
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo&
+  bwipe!
+endfunc
+
+" Test for formatting multi-byte text with 'fo=tm' and 'tw=1'
+func Test_tw_1_fo_tm()
+  new
+  let t =<< trim END
+    {
+    Ｘ
+    Ｘa
+    Ｘ a
+    ＸＹ
+    Ｘ Ｙ
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set tw=1 fo=tm
+  let t =<< trim END
+    Ｘ
+    Ｘa
+    Ｘ a
+    ＸＹ
+    Ｘ Ｙ
+  END
+  exe "normal gqgqjgqgqjgqgqjgqgqjgqgq"
+  exe "normal o\n" . join(t, "\n")
+
+  let expected =<< trim END
+    {
+    Ｘ
+    Ｘ
+    a
+    Ｘ
+    a
+    Ｘ
+    Ｙ
+    Ｘ
+    Ｙ
+
+    Ｘ
+    Ｘ
+    a
+    Ｘ
+    a
+    Ｘ
+    Ｙ
+    Ｘ
+    Ｙ
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo&
+  bwipe!
+endfunc
+
+" Test for formatting multi-byte text with 'fo=tm' and 'tw=2'
+func Test_tw_2_fo_tm()
+  new
+  let t =<< trim END
+    {
+    Ｘ
+    Ｘa
+    Ｘ a
+    ＸＹ
+    Ｘ Ｙ
+    aＸ
+    abＸ
+    abcＸ
+    abＸ c
+    abＸＹ
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set tw=2 fo=tm
+  let t =<< trim END
+    Ｘ
+    Ｘa
+    Ｘ a
+    ＸＹ
+    Ｘ Ｙ
+    aＸ
+    abＸ
+    abcＸ
+    abＸ c
+    abＸＹ
+  END
+  exe "normal gqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgq"
+  exe "normal o\n" . join(t, "\n")
+
+  let expected =<< trim END
+    {
+    Ｘ
+    Ｘ
+    a
+    Ｘ
+    a
+    Ｘ
+    Ｙ
+    Ｘ
+    Ｙ
+    a
+    Ｘ
+    ab
+    Ｘ
+    abc
+    Ｘ
+    ab
+    Ｘ
+    c
+    ab
+    Ｘ
+    Ｙ
+
+    Ｘ
+    Ｘ
+    a
+    Ｘ
+    a
+    Ｘ
+    Ｙ
+    Ｘ
+    Ｙ
+    a
+    Ｘ
+    ab
+    Ｘ
+    abc
+    Ｘ
+    ab
+    Ｘ
+    c
+    ab
+    Ｘ
+    Ｙ
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo&
+  bwipe!
+endfunc
+
+" Test for formatting multi-byte text with 'fo=tm', 'tw=2' and 'autoindent'.
+func Test_tw_2_fo_tm_ai()
+  new
+  let t =<< trim END
+    {
+      Ｘ
+      Ｘa
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set ai tw=2 fo=tm
+  let t =<< trim END
+    Ｘ
+    Ｘa
+  END
+  exe "normal gqgqjgqgq"
+  exe "normal o\n" . join(t, "\n")
+
+  let expected =<< trim END
+    {
+      Ｘ
+      Ｘ
+      a
+
+      Ｘ
+      Ｘ
+      a
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo& ai&
+  bwipe!
+endfunc
+
+" Test for formatting multi-byte text with 'fo=tm', 'tw=2' and 'noai'.
+func Test_tw_2_fo_tm_noai()
+  new
+  let t =<< trim END
+    {
+      Ｘ
+      Ｘa
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set noai tw=2 fo=tm
+  exe "normal gqgqjgqgqo\n  Ｘ\n  Ｘa"
+
+  let expected =<< trim END
+    {
+      Ｘ
+      Ｘ
+    a
+
+      Ｘ
+      Ｘ
+    a
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo& ai&
+  bwipe!
+endfunc
+
+func Test_tw_2_fo_cqm_com()
+  new
+  let t =<< trim END
+    {
+    Ｘ
+    Ｘa
+    ＸaＹ
+    ＸＹ
+    ＸＹＺ
+    Ｘ Ｙ
+    Ｘ ＹＺ
+    ＸＸ
+    ＸＸa
+    ＸＸＹ
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set tw=2 fo=cqm comments=n:Ｘ
+  exe "normal gqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgq"
+  let t =<< trim END
+    Ｘ
+    Ｘa
+    ＸaＹ
+    ＸＹ
+    ＸＹＺ
+    Ｘ Ｙ
+    Ｘ ＹＺ
+    ＸＸ
+    ＸＸa
+    ＸＸＹ
+  END
+  exe "normal o\n" . join(t, "\n")
+
+  let expected =<< trim END
+    {
+    Ｘ
+    Ｘa
+    Ｘa
+    ＸＹ
+    ＸＹ
+    ＸＹ
+    ＸＺ
+    Ｘ Ｙ
+    Ｘ Ｙ
+    Ｘ Ｚ
+    ＸＸ
+    ＸＸa
+    ＸＸＹ
+
+    Ｘ
+    Ｘa
+    Ｘa
+    ＸＹ
+    ＸＹ
+    ＸＹ
+    ＸＺ
+    Ｘ Ｙ
+    Ｘ Ｙ
+    Ｘ Ｚ
+    ＸＸ
+    ＸＸa
+    ＸＸＹ
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo& comments&
+  bwipe!
+endfunc
+
+func Test_tw_2_fo_tm_replace()
+  new
+  let t =<< trim END
+    {
+
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set tw=2 fo=tm
+  exe "normal RＸa"
+
+  let expected =<< trim END
+    {
+    Ｘ
+    a
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set tw& fo&
+  bwipe!
+endfunc
+
+" Test for 'matchpairs' with multibyte chars
+func Test_mps()
+  new
+  let t =<< trim END
+    {
+    ‘ two three ’ four
+    }
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  exe "set mps+=\u2018:\u2019"
+  normal d%
+
+  let expected =<< trim END
+    {
+     four
+    }
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  set mps&
+  bwipe!
+endfunc
+
+" Test for ra on multi-byte characters
+func Test_ra_multibyte()
+  new
+  let t =<< trim END
+    ra test
+    ａbbａ
+    ａａb
+  END
+  call setline(1, t)
+  call cursor(1, 1)
+
+  normal jVjra
+
+  let expected =<< trim END
+    ra test
+    aaaa
+    aaa
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  bwipe!
+endfunc
+
+" Test for 'whichwrap' with multi-byte character
+func Test_whichwrap_multi_byte()
+  new
+  let t =<< trim END
+    á
+    x
+  END
+  call setline(1, t)
+  call cursor(2, 1)
+
+  set whichwrap+=h
+  normal dh
+  set whichwrap&
+
+  let expected =<< trim END
+    áx
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_substitute()
+  call assert_equal('a１a２a３a', substitute('１２３', '\zs', 'a', 'g'))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

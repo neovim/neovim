@@ -8,3 +8,31 @@ function Test_edit()
   call delete('Xfile1')
   call delete('Xfile2')
 endfunction
+
+func Test_edit_bad()
+  if !has('multi_byte')
+    finish
+  endif
+
+  " Test loading a utf8 file with bad utf8 sequences.
+  call writefile(["[\xff][\xc0][\xe2\x89\xf0][\xc2\xc2]"], "Xfile")
+  new
+
+  " Without ++bad=..., the default behavior is like ++bad=?
+  e! ++enc=utf8 Xfile
+  call assert_equal('[?][?][???][??]', getline(1))
+
+  e! ++enc=utf8 ++bad=_ Xfile
+  call assert_equal('[_][_][___][__]', getline(1))
+
+  e! ++enc=utf8 ++bad=drop Xfile
+  call assert_equal('[][][][]', getline(1))
+
+  e! ++enc=utf8 ++bad=keep Xfile
+  call assert_equal("[\xff][\xc0][\xe2\x89\xf0][\xc2\xc2]", getline(1))
+
+  call assert_fails('e! ++enc=utf8 ++bad=foo Xfile', 'E474:')
+
+  bw!
+  call delete('Xfile')
+endfunc

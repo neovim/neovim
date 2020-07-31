@@ -26,11 +26,11 @@ function! Test_Incr_Marks()
 endfunction
 
 func Test_setpos()
-  new one
+  new Xone
   let onebuf = bufnr('%')
   let onewin = win_getid()
   call setline(1, ['aaa', 'bbb', 'ccc'])
-  new two
+  new Xtwo
   let twobuf = bufnr('%')
   let twowin = win_getid()
   call setline(1, ['aaa', 'bbb', 'ccc'])
@@ -63,7 +63,24 @@ func Test_setpos()
   call setpos("'N", [onebuf, 1, 3, 0])
   call assert_equal([onebuf, 1, 3, 0], getpos("'N"))
 
+  " try invalid column and check virtcol()
   call win_gotoid(onewin)
+  call setpos("'a", [0, 1, 2, 0])
+  call assert_equal([0, 1, 2, 0], getpos("'a"))
+  call setpos("'a", [0, 1, -5, 0])
+  call assert_equal([0, 1, 2, 0], getpos("'a"))
+  call setpos("'a", [0, 1, 0, 0])
+  call assert_equal([0, 1, 1, 0], getpos("'a"))
+  call setpos("'a", [0, 1, 4, 0])
+  call assert_equal([0, 1, 4, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+  call setpos("'a", [0, 1, 5, 0])
+  call assert_equal([0, 1, 5, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+  call setpos("'a", [0, 1, 21341234, 0])
+  call assert_equal([0, 1, 21341234, 0], getpos("'a"))
+  call assert_equal(4, virtcol("'a"))
+
   bwipe!
   call win_gotoid(twowin)
   bwipe!
@@ -77,33 +94,43 @@ func Test_marks_cmd()
   new Xtwo
   call setline(1, ['ccc', 'ddd'])
   norm! $mcGmD
+  exe "norm! GVgg\<Esc>G"
   w!
 
   b Xone
   let a = split(execute('marks'), "\n")
   call assert_equal(9, len(a))
-  call assert_equal('mark line  col file/text', a[0])
-  call assert_equal(" '      2    0 bbb", a[1])
-  call assert_equal(' a      1    0 aaa', a[2])
-  call assert_equal(' B      2    2 bbb', a[3])
-  call assert_equal(' D      2    0 Xtwo', a[4])
-  call assert_equal(' "      1    0 aaa', a[5])
-  call assert_equal(' [      1    0 aaa', a[6])
-  call assert_equal(' ]      2    0 bbb', a[7])
-  call assert_equal(' .      2    0 bbb', a[8])
+  call assert_equal(['mark line  col file/text',
+        \ " '      2    0 bbb",
+        \ ' a      1    0 aaa',
+        \ ' B      2    2 bbb',
+        \ ' D      2    0 Xtwo',
+        \ ' "      1    0 aaa',
+        \ ' [      1    0 aaa',
+        \ ' ]      2    0 bbb',
+        \ ' .      2    0 bbb'], a)
 
   b Xtwo
   let a = split(execute('marks'), "\n")
-  call assert_equal(9, len(a))
-  call assert_equal('mark line  col file/text', a[0])
-  call assert_equal(" '      1    0 ccc", a[1])
-  call assert_equal(' c      1    2 ccc', a[2])
-  call assert_equal(' B      2    2 Xone', a[3])
-  call assert_equal(' D      2    0 ddd', a[4])
-  call assert_equal(' "      2    0 ddd', a[5])
-  call assert_equal(' [      1    0 ccc', a[6])
-  call assert_equal(' ]      2    0 ddd', a[7])
-  call assert_equal(' .      2    0 ddd', a[8])
+  call assert_equal(11, len(a))
+  call assert_equal(['mark line  col file/text',
+        \ " '      1    0 ccc",
+        \ ' c      1    2 ccc',
+        \ ' B      2    2 Xone',
+        \ ' D      2    0 ddd',
+        \ ' "      2    0 ddd',
+        \ ' [      1    0 ccc',
+        \ ' ]      2    0 ddd',
+        \ ' .      2    0 ddd',
+        \ ' <      1    0 ccc',
+        \ ' >      2    0 ddd'], a)
+  norm! Gdd
+  w!
+  let a = split(execute('marks <>'), "\n")
+  call assert_equal(3, len(a))
+  call assert_equal(['mark line  col file/text',
+        \ ' <      1    0 ccc',
+        \ ' >      2    0 -invalid-'], a)
 
   b Xone
   delmarks aB

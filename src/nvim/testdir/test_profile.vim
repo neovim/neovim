@@ -6,34 +6,35 @@ endif
 source screendump.vim
 
 func Test_profile_func()
-  let lines = [
-    \ 'profile start Xprofile_func.log',
-    \ 'profile func Foo*"',
-    \ "func! Foo1()",
-    \ "endfunc",
-    \ "func! Foo2()",
-    \ "  let l:count = 100",
-    \ "  while l:count > 0",
-    \ "    let l:count = l:count - 1",
-    \ "  endwhile",
-    \ "endfunc",
-    \ "func! Foo3()",
-    \ "endfunc",
-    \ "func! Bar()",
-    \ "endfunc",
-    \ "call Foo1()",
-    \ "call Foo1()",
-    \ "profile pause",
-    \ "call Foo1()",
-    \ "profile continue",
-    \ "call Foo2()",
-    \ "call Foo3()",
-    \ "call Bar()",
-    \ "if !v:profiling",
-    \ "  delfunc Foo2",
-    \ "endif",
-    \ "delfunc Foo3",
-    \ ]
+  let lines =<< trim [CODE]
+    profile start Xprofile_func.log
+    profile func Foo*
+    func! Foo1()
+    endfunc
+    func! Foo2()
+      let l:count = 100
+      while l:count > 0
+        let l:count = l:count - 1
+      endwhile
+      sleep 1m
+    endfunc
+    func! Foo3()
+    endfunc
+    func! Bar()
+    endfunc
+    call Foo1()
+    call Foo1()
+    profile pause
+    call Foo1()
+    profile continue
+    call Foo2()
+    call Foo3()
+    call Bar()
+    if !v:profiling
+      delfunc Foo2
+    endif
+    delfunc Foo3
+  [CODE]
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(v:progpath
@@ -51,10 +52,10 @@ func Test_profile_func()
   " - Unlike Foo3(), Foo2() should not be deleted since there is a check
   "   for v:profiling.
   " - Bar() is not reported since it does not match "profile func Foo*".
-  call assert_equal(30, len(lines))
+  call assert_equal(31, len(lines))
 
   call assert_equal('FUNCTION  Foo1()',                            lines[0])
-  call assert_match('Defined:.*Xprofile_func.vim',                 lines[1])
+  call assert_match('Defined:.*Xprofile_func.vim:3',               lines[1])
   call assert_equal('Called 2 times',                              lines[2])
   call assert_match('^Total time:\s\+\d\+\.\d\+$',                 lines[3])
   call assert_match('^ Self time:\s\+\d\+\.\d\+$',                 lines[4])
@@ -71,55 +72,56 @@ func Test_profile_func()
   call assert_match('^\s*101\s\+.*\swhile l:count > 0$',           lines[16])
   call assert_match('^\s*100\s\+.*\s  let l:count = l:count - 1$', lines[17])
   call assert_match('^\s*101\s\+.*\sendwhile$',                    lines[18])
-  call assert_equal('',                                            lines[19])
-  call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[20])
-  call assert_equal('count  total (s)   self (s)  function',       lines[21])
-  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[22])
-  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[23])
-  call assert_equal('',                                            lines[24])
-  call assert_equal('FUNCTIONS SORTED ON SELF TIME',               lines[25])
-  call assert_equal('count  total (s)   self (s)  function',       lines[26])
-  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[27])
-  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[28])
-  call assert_equal('',                                            lines[29])
+  call assert_match('^\s*1\s\+.\+sleep 1m$',                       lines[19])
+  call assert_equal('',                                            lines[20])
+  call assert_equal('FUNCTIONS SORTED ON TOTAL TIME',              lines[21])
+  call assert_equal('count  total (s)   self (s)  function',       lines[22])
+  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[23])
+  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[24])
+  call assert_equal('',                                            lines[25])
+  call assert_equal('FUNCTIONS SORTED ON SELF TIME',               lines[26])
+  call assert_equal('count  total (s)   self (s)  function',       lines[27])
+  call assert_match('^\s*1\s\+\d\+\.\d\+\s\+Foo2()$',              lines[28])
+  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+Foo1()$',              lines[29])
+  call assert_equal('',                                            lines[30])
 
   call delete('Xprofile_func.vim')
   call delete('Xprofile_func.log')
 endfunc
 
 func Test_profile_func_with_ifelse()
-  let lines = [
-    \ "func! Foo1()",
-    \ "  if 1",
-    \ "    let x = 0",
-    \ "  elseif 1",
-    \ "    let x = 1",
-    \ "  else",
-    \ "    let x = 2",
-    \ "  endif",
-    \ "endfunc",
-    \ "func! Foo2()",
-    \ "  if 0",
-    \ "    let x = 0",
-    \ "  elseif 1",
-    \ "    let x = 1",
-    \ "  else",
-    \ "    let x = 2",
-    \ "  endif",
-    \ "endfunc",
-    \ "func! Foo3()",
-    \ "  if 0",
-    \ "    let x = 0",
-    \ "  elseif 0",
-    \ "    let x = 1",
-    \ "  else",
-    \ "    let x = 2",
-    \ "  endif",
-    \ "endfunc",
-    \ "call Foo1()",
-    \ "call Foo2()",
-    \ "call Foo3()",
-    \ ]
+  let lines =<< trim [CODE]
+    func! Foo1()
+      if 1
+        let x = 0
+      elseif 1
+        let x = 1
+      else
+        let x = 2
+      endif
+    endfunc
+    func! Foo2()
+      if 0
+        let x = 0
+      elseif 1
+        let x = 1
+      else
+        let x = 2
+      endif
+    endfunc
+    func! Foo3()
+      if 0
+        let x = 0
+      elseif 0
+        let x = 1
+      else
+        let x = 2
+      endif
+    endfunc
+    call Foo1()
+    call Foo2()
+    call Foo3()
+  [CODE]
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(v:progpath
@@ -198,41 +200,41 @@ func Test_profile_func_with_ifelse()
 endfunc
 
 func Test_profile_func_with_trycatch()
-  let lines = [
-    \ "func! Foo1()",
-    \ "  try",
-    \ "    let x = 0",
-    \ "  catch",
-    \ "    let x = 1",
-    \ "  finally",
-    \ "    let x = 2",
-    \ "  endtry",
-    \ "endfunc",
-    \ "func! Foo2()",
-    \ "  try",
-    \ "    throw 0",
-    \ "  catch",
-    \ "    let x = 1",
-    \ "  finally",
-    \ "    let x = 2",
-    \ "  endtry",
-    \ "endfunc",
-    \ "func! Foo3()",
-    \ "  try",
-    \ "    throw 0",
-    \ "  catch",
-    \ "    throw 1",
-    \ "  finally",
-    \ "    let x = 2",
-    \ "  endtry",
-    \ "endfunc",
-    \ "call Foo1()",
-    \ "call Foo2()",
-    \ "try",
-    \ "  call Foo3()",
-    \ "catch",
-    \ "endtry",
-    \ ]
+  let lines =<< trim [CODE]
+    func! Foo1()
+      try
+        let x = 0
+      catch
+        let x = 1
+      finally
+        let x = 2
+      endtry
+    endfunc
+    func! Foo2()
+      try
+        throw 0
+      catch
+        let x = 1
+      finally
+        let x = 2
+      endtry
+    endfunc
+    func! Foo3()
+      try
+        throw 0
+      catch
+        throw 1
+      finally
+        let x = 2
+      endtry
+    endfunc
+    call Foo1()
+    call Foo2()
+    try
+      call Foo3()
+    catch
+    endtry
+  [CODE]
 
   call writefile(lines, 'Xprofile_func.vim')
   call system(v:progpath
@@ -311,15 +313,15 @@ func Test_profile_func_with_trycatch()
 endfunc
 
 func Test_profile_file()
-  let lines = [
-    \ 'func! Foo()',
-    \ 'endfunc',
-    \ 'for i in range(10)',
-    \ '  " a comment',
-    \ '  call Foo()',
-    \ 'endfor',
-    \ 'call Foo()',
-    \ ]
+  let lines =<< trim [CODE]
+    func! Foo()
+    endfunc
+    for i in range(10)
+      " a comment
+      call Foo()
+    endfor
+    call Foo()
+  [CODE]
 
   call writefile(lines, 'Xprofile_file.vim')
   call system(v:progpath
@@ -450,26 +452,27 @@ func Test_profile_truncate_mbyte()
 endfunc
 
 func Test_profdel_func()
-  let lines = [
-    \  'profile start Xprofile_file.log',
-    \  'func! Foo1()',
-    \  'endfunc',
-    \  'func! Foo2()',
-    \  'endfunc',
-    \  'func! Foo3()',
-    \  'endfunc',
-    \  '',
-    \  'profile func Foo1',
-    \  'profile func Foo2',
-    \  'call Foo1()',
-    \  'call Foo2()',
-    \  '',
-    \  'profile func Foo3',
-    \  'profdel func Foo2',
-    \  'profdel func Foo3',
-    \  'call Foo1()',
-    \  'call Foo2()',
-    \  'call Foo3()' ]
+  let lines =<< trim [CODE]
+    profile start Xprofile_file.log
+    func! Foo1()
+    endfunc
+    func! Foo2()
+    endfunc
+    func! Foo3()
+    endfunc
+
+    profile func Foo1
+    profile func Foo2
+    call Foo1()
+    call Foo2()
+
+    profile func Foo3
+    profdel func Foo2
+    profdel func Foo3
+    call Foo1()
+    call Foo2()
+    call Foo3()
+  [CODE]
   call writefile(lines, 'Xprofile_file.vim')
   call system(v:progpath . ' -es --clean -c "so Xprofile_file.vim" -c q')
   call assert_equal(0, v:shell_error)
@@ -496,14 +499,15 @@ endfunc
 func Test_profdel_star()
   " Foo() is invoked once before and once after 'profdel *'.
   " So profiling should report it only once.
-  let lines = [
-    \  'profile start Xprofile_file.log',
-    \  'func! Foo()',
-    \  'endfunc',
-    \  'profile func Foo',
-    \  'call Foo()',
-    \  'profdel *',
-    \  'call Foo()' ]
+  let lines =<< trim [CODE]
+    profile start Xprofile_file.log
+    func! Foo()
+    endfunc
+    profile func Foo
+    call Foo()
+    profdel *
+    call Foo()
+  [CODE]
   call writefile(lines, 'Xprofile_file.vim')
   call system(v:progpath . ' -es --clean -c "so Xprofile_file.vim" -c q')
   call assert_equal(0, v:shell_error)

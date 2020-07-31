@@ -45,10 +45,6 @@ describe('TUI', function()
     child_session = helpers.connect(child_server)
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
   local function wait_for_mode(mode)
     retry(nil, nil, function()
@@ -303,7 +299,52 @@ describe('TUI', function()
     feed_data('u')
     expect_child_buf_lines({'"pasted from terminal"'})
     feed_data('u')
+    expect_child_buf_lines({'""'})
+    feed_data('u')
     expect_child_buf_lines({''})
+  end)
+
+  it('paste: select-mode', function()
+    feed_data('ithis is line 1\nthis is line 2\nline 3 is here\n\027')
+    wait_for_mode('n')
+    screen:expect{grid=[[
+      this is line 1                                    |
+      this is line 2                                    |
+      line 3 is here                                    |
+      {1: }                                                 |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Select-mode. Use <C-n> to move down.
+    feed_data('gg04lgh\14\14')
+    wait_for_mode('s')
+    feed_data('\027[200~')
+    feed_data('just paste it™')
+    feed_data('\027[201~')
+    screen:expect{grid=[[
+      thisjust paste it™{1:3} is here                       |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines{
+      'this is line 1',
+      'this is line 2',
+      'line 3 is here',
+      '',
+      }
+    -- Redo.
+    feed_data('\18')  -- <C-r>
+    expect_child_buf_lines{
+      'thisjust paste it™3 is here',
+      '',
+      }
   end)
 
   it('paste: terminal mode', function()
@@ -447,7 +488,7 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       _G.save_paste_fn = vim.paste
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
@@ -505,7 +546,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -524,7 +565,7 @@ describe('TUI', function()
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = function(lines, phase) return false end
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -539,7 +580,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
+      {MATCH:paste: Error executing lua: vim.lua:%d+: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
@@ -566,7 +607,6 @@ describe('TUI', function()
     feed_data('\027[200~'..expected..'\027[201~')
     feed_data(' end')
     expected = expected..' end'
-    expect_child_buf_lines({expected})
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz end{1: }                               |
@@ -576,6 +616,24 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
+    expect_child_buf_lines({expected})
+  end)
+
+  it('paste: less-than sign in cmdline  #11088', function()
+    local expected = '<'
+    feed_data(':')
+    wait_for_mode('c')
+    -- "bracketed paste"
+    feed_data('\027[200~'..expected..'\027[201~')
+    screen:expect{grid=[[
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :<{1: }                                               |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('paste: big burst of input', function()
@@ -667,11 +725,11 @@ describe('TUI', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
       [1] = {reverse = true},
-      [2] = {foreground = tonumber('0x4040ff')},
+      [2] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
       [3] = {bold = true, reverse = true},
       [4] = {bold = true},
-      [5] = {reverse = true, foreground = tonumber('0xe0e000')},
-      [6] = {foreground = tonumber('0xe0e000')},
+      [5] = {reverse = true, foreground = tonumber('0xe0e000'), fg_indexed=true},
+      [6] = {foreground = tonumber('0xe0e000'), fg_indexed=true},
       [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
       [8] = {foreground = Screen.colors.SeaGreen4},
       [9] = {bold = true, foreground = Screen.colors.Blue1},
@@ -713,6 +771,54 @@ describe('TUI', function()
       :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('forwards :term palette colors with termguicolors', function()
+    screen:set_rgb_cterm(true)
+    screen:set_default_attr_ids({
+      [1] = {{reverse = true}, {reverse = true}},
+      [2] = {{bold = true, reverse = true}, {bold = true, reverse = true}},
+      [3] = {{bold = true}, {bold = true}},
+      [4] = {{fg_indexed = true, foreground = tonumber('0xe0e000')}, {foreground = 3}},
+      [5] = {{foreground = tonumber('0xff8000')}, {}},
+    })
+
+    feed_data(':set statusline=^^^^^^^\n')
+    feed_data(':set termguicolors\n')
+    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    -- Depending on platform the above might or might not fit in the cmdline
+    -- so clear it for consistent behavior.
+    feed_data(':\027')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+                                                        |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data(':call chansend(&channel, "\\033[38;5;3mtext\\033[38:2:255:128:0mcolor\\033[0;10mtext")\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}{5:color}text                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data(':set notermguicolors\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}colortext                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+      :set notermguicolors                              |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('is included in nvim_list_uis()', function()
@@ -911,7 +1017,15 @@ describe('TUI FocusGained/FocusLost', function()
 
     feed_data(':terminal\n')
     -- Wait for terminal to be ready.
-    screen:expect{any='-- TERMINAL --'}
+    screen:expect{grid=[[
+      {1:r}eady $                                           |
+      [Process exited 0]                                |
+                                                        |
+                                                        |
+                                                        |
+      :terminal                                         |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     feed_data('\027[I')
     screen:expect{grid=[[
@@ -922,7 +1036,7 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       gained                                            |
       {3:-- TERMINAL --}                                    |
-    ]], timeout=(3 * screen.timeout)}
+    ]], timeout=(4 * screen.timeout)}
 
     feed_data('\027[O')
     screen:expect([[
@@ -1266,7 +1380,7 @@ describe("TUI 'term' option", function()
     elseif is_macos then
       local status, _ = pcall(assert_term, "xterm", "xterm")
       if not status then
-        pending("macOS: unibilium could not find terminfo", function() end)
+        pending("macOS: unibilium could not find terminfo")
       end
     else
       assert_term("xterm", "xterm")
@@ -1328,125 +1442,26 @@ describe("TUI", function()
 
 end)
 
-describe('TUI background color', function()
-  local screen
+it('TUI bg color triggers OptionSet event on terminal-response', function()
+  -- Only single integration test.
+  -- See test/unit/tui_spec.lua for unit tests.
+  clear()
+  local screen = thelpers.screen_setup(0, '["'..nvim_prog
+    ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
+    ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
 
-  before_each(function()
-    clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
-  end)
+  screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+  ]])
+  feed_data('\027]11;rgb:ffff/ffff/ffff\007')
+  screen:expect{any='did OptionSet, yay!'}
 
-  it("triggers OptionSet event on terminal-response", function()
-    feed_data('\027:autocmd OptionSet background echo "did OptionSet, yay!"\n')
-
-    -- Wait for the child Nvim to register the OptionSet handler.
-    feed_data('\027:autocmd OptionSet\n')
-    screen:expect({any='--- Autocommands ---'})
-
-    feed_data('\012')  -- CTRL-L: clear the screen
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
-    screen:expect{any='did OptionSet, yay!'}
-  end)
-
-  it("handles deferred background color", function()
-    local last_bg = 'dark'
-    local function wait_for_bg(bg)
-      -- Retry until the terminal response is handled.
-      retry(100, nil, function()
-        feed_data(':echo &background\n')
-        screen:expect({
-          timeout=40,
-          grid=string.format([[
-            {1: }                                                 |
-            {4:~                                                 }|
-            {4:~                                                 }|
-            {4:~                                                 }|
-            {5:[No Name]                       0,0-1          All}|
-            %-5s                                             |
-            {3:-- TERMINAL --}                                    |
-          ]], bg)
-        })
-      end)
-      last_bg = bg
-    end
-
-    local function assert_bg(colorspace, color, bg)
-      -- Ensure the opposite of the expected bg is active.
-      local other_bg = (bg == 'dark' and 'light' or 'dark')
-      if last_bg ~= other_bg then
-        feed_data(other_bg == 'light' and '\027]11;rgb:f/f/f\007'
-                                      or  '\027]11;rgb:0/0/0\007')
-        wait_for_bg(other_bg)
-      end
-
-      feed_data('\027]11;'..colorspace..':'..color..'\007')
-      wait_for_bg(bg)
-    end
-
-    assert_bg('rgb', '0000/0000/0000', 'dark')
-    assert_bg('rgb', 'ffff/ffff/ffff', 'light')
-    assert_bg('rgb', '000/000/000', 'dark')
-    assert_bg('rgb', 'fff/fff/fff', 'light')
-    assert_bg('rgb', '00/00/00', 'dark')
-    assert_bg('rgb', 'ff/ff/ff', 'light')
-    assert_bg('rgb', '0/0/0', 'dark')
-    assert_bg('rgb', 'f/f/f', 'light')
-
-    assert_bg('rgb', 'f/0/0', 'dark')
-    assert_bg('rgb', '0/f/0', 'light')
-    assert_bg('rgb', '0/0/f', 'dark')
-
-    assert_bg('rgb', '1/1/1', 'dark')
-    assert_bg('rgb', '2/2/2', 'dark')
-    assert_bg('rgb', '3/3/3', 'dark')
-    assert_bg('rgb', '4/4/4', 'dark')
-    assert_bg('rgb', '5/5/5', 'dark')
-    assert_bg('rgb', '6/6/6', 'dark')
-    assert_bg('rgb', '7/7/7', 'dark')
-    assert_bg('rgb', '8/8/8', 'light')
-    assert_bg('rgb', '9/9/9', 'light')
-    assert_bg('rgb', 'a/a/a', 'light')
-    assert_bg('rgb', 'b/b/b', 'light')
-    assert_bg('rgb', 'c/c/c', 'light')
-    assert_bg('rgb', 'd/d/d', 'light')
-    assert_bg('rgb', 'e/e/e', 'light')
-
-    assert_bg('rgb', '0/e/0', 'light')
-    assert_bg('rgb', '0/d/0', 'light')
-    assert_bg('rgb', '0/c/0', 'dark')
-    assert_bg('rgb', '0/b/0', 'dark')
-
-    assert_bg('rgb', 'f/0/f', 'dark')
-    assert_bg('rgb', 'f/1/f', 'dark')
-    assert_bg('rgb', 'f/2/f', 'dark')
-    assert_bg('rgb', 'f/3/f', 'light')
-    assert_bg('rgb', 'f/4/f', 'light')
-
-    assert_bg('rgba', '0000/0000/0000/0000', 'dark')
-    assert_bg('rgba', '0000/0000/0000/ffff', 'dark')
-    assert_bg('rgba', 'ffff/ffff/ffff/0000', 'light')
-    assert_bg('rgba', 'ffff/ffff/ffff/ffff', 'light')
-    assert_bg('rgba', '000/000/000/000', 'dark')
-    assert_bg('rgba', '000/000/000/fff', 'dark')
-    assert_bg('rgba', 'fff/fff/fff/000', 'light')
-    assert_bg('rgba', 'fff/fff/fff/fff', 'light')
-    assert_bg('rgba', '00/00/00/00', 'dark')
-    assert_bg('rgba', '00/00/00/ff', 'dark')
-    assert_bg('rgba', 'ff/ff/ff/00', 'light')
-    assert_bg('rgba', 'ff/ff/ff/ff', 'light')
-    assert_bg('rgba', '0/0/0/0', 'dark')
-    assert_bg('rgba', '0/0/0/f', 'dark')
-    assert_bg('rgba', 'f/f/f/0', 'light')
-    assert_bg('rgba', 'f/f/f/f', 'light')
-  end)
+  feed_data(':echo "new_bg=".&background\n')
+  screen:expect{any='new_bg=light'}
 end)

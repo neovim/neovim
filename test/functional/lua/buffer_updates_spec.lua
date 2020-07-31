@@ -98,7 +98,7 @@ describe('lua: buffer event callbacks', function()
     command('undo')
 
     -- plugins can opt in to receive changedtick events, or choose
-    -- to only recieve actual changes.
+    -- to only receive actual changes.
     check_events({{ "test1", "lines", 1, tick, 3, 4, 5, 13 },
         { "test2", "lines", 1, tick, 3, 4, 5, 13 },
         { "test2", "changedtick", 1, tick+1 } })
@@ -111,7 +111,7 @@ describe('lua: buffer event callbacks', function()
     tick = tick + 1
 
     -- plugins can opt in to receive changedtick events, or choose
-    -- to only recieve actual changes.
+    -- to only receive actual changes.
     check_events({{ "test1", "lines", 1, tick, 6, 7, 9, 16 },
         { "test2", "lines", 1, tick, 6, 7, 9, 16 }})
 
@@ -201,6 +201,19 @@ describe('lua: buffer event callbacks', function()
     -- NB: this is inefficient (but not really wrong).
     eq({{ "test1", "lines", 1,   tick, 4, 5, 5, 14, 5, 8 },
         { "test1", "lines", 1, tick+1, 5, 6, 5, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
+  end)
+
+  it('has valid cursor position while shifting', function()
+    meths.buf_set_lines(0, 0, -1, true, {'line1'})
+    exec_lua([[
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function()
+          vim.api.nvim_set_var('listener_cursor_line', vim.api.nvim_win_get_cursor(0)[1])
+        end,
+      })
+    ]])
+    feed('>>')
+    eq(1, meths.get_var('listener_cursor_line'))
   end)
 
 end)

@@ -149,6 +149,8 @@ Nvim will adjust the shape of the cursor from a block to a line when in insert
 mode (or as specified by the 'guicursor' option), on terminals that support
 it.  It uses the same |terminfo| extensions that were pioneered by tmux for
 this: "Ss" and "Se".
+Similarly, if you set the cursor highlight group with blend=100, Nvim hides
+the cursor through the "cvvis" and "civis" extensions.
 
 If your terminfo definition is missing them, then Nvim will decide whether to
 add them to your terminfo definition, by looking at $TERM and other

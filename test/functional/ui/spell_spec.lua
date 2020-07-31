@@ -20,10 +20,6 @@ describe("'spell'", function()
     })
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('joins long lines #7937', function()
     feed_command('set spell')
     insert([[

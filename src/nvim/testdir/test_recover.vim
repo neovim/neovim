@@ -14,6 +14,12 @@ func Test_recover_root_dir()
     set dir=/notexist/
   endif
   call assert_fails('split Xtest', 'E303:')
+
+  " No error with empty 'directory' setting.
+  set directory=
+  split XtestOK
+  close!
+
   set dir&
 endfunc
 

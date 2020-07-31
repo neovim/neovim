@@ -14,6 +14,8 @@ updated.
 
 API ~
 *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+*nvim_command_output()*		Use |nvim_exec()| instead.
+*nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
 
 Commands ~
 *:rv*
@@ -26,6 +28,7 @@ Environment Variables ~
 			$NVIM_LISTEN_ADDRESS is ignored.
 
 Events ~
+*BufCreate*		Use |BufAdd| instead.
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
 *GUIEnter*		Never fired; use |UIEnter| instead.

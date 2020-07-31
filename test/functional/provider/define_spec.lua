@@ -89,6 +89,21 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
         runx(sync, handler, on_setup)
       end)
 
+      it('with nargs/double-quote', function()
+        call(fn, args..', {"nargs": "*"}')
+        local function on_setup()
+          command('RpcCommand "arg1" "arg2" "arg3"')
+        end
+
+        local function handler(method, arguments)
+          eq('test-handler', method)
+          eq({'"arg1"', '"arg2"', '"arg3"'}, arguments[1])
+          return ''
+        end
+
+        runx(sync, handler, on_setup)
+      end)
+
       it('with range', function()
         call(fn,args..', {"range": ""}')
         local function on_setup()

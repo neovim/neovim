@@ -226,13 +226,28 @@ int ui_pum_get_height(void)
 {
   int pum_height = 0;
   for (size_t i = 1; i < ui_count; i++) {
-    int ui_pum_height = uis[i]->pum_height;
+    int ui_pum_height = uis[i]->pum_nlines;
     if (ui_pum_height) {
       pum_height =
         pum_height != 0 ? MIN(pum_height, ui_pum_height) : ui_pum_height;
     }
   }
   return pum_height;
+}
+
+bool ui_pum_get_pos(double *pwidth, double *pheight, double *prow, double *pcol)
+{
+  for (size_t i = 1; i < ui_count; i++) {
+    if (!uis[i]->pum_pos) {
+      continue;
+    }
+    *pwidth = uis[i]->pum_width;
+    *pheight = uis[i]->pum_height;
+    *prow = uis[i]->pum_row;
+    *pcol = uis[i]->pum_col;
+    return true;
+  }
+  return false;
 }
 
 static void ui_refresh_event(void **argv)
@@ -424,7 +439,7 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
-  win_ui_flush_positions();
+  win_ui_flush();
   msg_ext_ui_flush();
   msg_scroll_flush();
 
@@ -505,7 +520,7 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
   }
 
   if (wp->w_floating) {
-    if (width != wp->w_width && height != wp->w_height) {
+    if (width != wp->w_width || height != wp->w_height) {
       wp->w_float_config.width = width;
       wp->w_float_config.height = height;
       win_config_float(wp, wp->w_float_config);

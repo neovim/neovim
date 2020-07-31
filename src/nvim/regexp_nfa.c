@@ -249,6 +249,7 @@ static char_u e_nul_found[] = N_(
 static char_u e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
 static char_u e_ill_char_class[] = N_(
     "E877: (NFA regexp) Invalid character class: %" PRId64);
+static char_u e_value_too_large[] = N_("E951: \\% value too large");
 
 /* Since the out pointers in the list are always
  * uninitialized, we use the pointers themselves
@@ -1499,7 +1500,8 @@ static int nfa_regatom(void)
         c = getchr();
       while (ascii_isdigit(c)) {
         if (n > (INT32_MAX - (c - '0')) / 10) {
-          EMSG(_("E951: \\% value too large"));
+          // overflow.
+          EMSG(_(e_value_too_large));
           return FAIL;
         }
         n = n * 10 + (c - '0');
@@ -1526,7 +1528,7 @@ static int nfa_regatom(void)
           limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
-          EMSG(_("E951: \\% value too large"));
+          EMSG(_(e_value_too_large));
           return FAIL;
         }
         EMIT((int)n);
@@ -4943,7 +4945,7 @@ static int skip_to_start(int c, colnr_T *colp)
  */
 static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 {
-#define PTR2LEN(x) enc_utf8 ? utf_ptr2len(x) : MB_PTR2LEN(x)
+#define PTR2LEN(x) utf_ptr2len(x)
 
   colnr_T col = startcol;
   int regstart_len = PTR2LEN(regline + startcol);
@@ -4958,7 +4960,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
       int c2_len = PTR2LEN(s2);
       int c2 = PTR2CHAR(s2);
 
-      if ((c1 != c2 && (!rex.reg_ic || mb_tolower(c1) != mb_tolower(c2)))
+      if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
           || c1_len != c2_len) {
         match = false;
         break;
@@ -5680,11 +5682,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
               break;
             }
             if (rex.reg_ic) {
-              int curc_low = mb_tolower(curc);
+              int curc_low = utf_fold(curc);
               int done = false;
 
               for (; c1 <= c2; c1++) {
-                if (mb_tolower(c1) == curc_low) {
+                if (utf_fold(c1) == curc_low) {
                   result = result_if_matched;
                   done = TRUE;
                   break;
@@ -5696,8 +5698,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
                      : (curc == state->c
-                        || (rex.reg_ic && mb_tolower(curc)
-                            == mb_tolower(state->c)))) {
+                        || (rex.reg_ic
+                            && utf_fold(curc) == utf_fold(state->c)))) {
             result = result_if_matched;
             break;
           }
@@ -6104,7 +6106,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         result = (c == curc);
 
         if (!result && rex.reg_ic) {
-          result = mb_tolower(c) == mb_tolower(curc);
+          result = utf_fold(c) == utf_fold(curc);
         }
 
         // If rex.reg_icombine is not set only skip over the character
@@ -6258,8 +6260,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
             c = PTR2CHAR(reginput + clen);
-            if (c != prog->regstart && (!rex.reg_ic || mb_tolower(c)
-                                        != mb_tolower(prog->regstart))) {
+            if (c != prog->regstart
+                && (!rex.reg_ic
+                    || utf_fold(c) != utf_fold(prog->regstart))) {
 #ifdef REGEXP_DEBUG
               fprintf(log_fd,
                   "  Skipping start state, regstart does not match\n");

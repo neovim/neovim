@@ -843,6 +843,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  name, precede it with a backslash.
 	- To include a comma in a directory name precede it with a backslash.
 	- A directory name may end in an '/'.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators changed to percent '%' signs. This will
+	  ensure file name uniqueness in the backup directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Environment variables are expanded |:set_env|.
 	- Careful with '\' characters, type one before a space, type two to
 	  get one in the option (see |option-backslash|), for example: >
@@ -1085,6 +1093,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  nowrite	buffer will not be written
 	  quickfix	list of errors |:cwindow| or locations |:lwindow|
 	  terminal	|terminal-emulator| buffer
+	  prompt	buffer where only the last line can be edited, meant
+			to be used by a plugin, see |prompt-buffer|
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.
@@ -1478,7 +1488,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See 'preserveindent'.
 
 						*'cpoptions'* *'cpo'* *cpo*
-'cpoptions' 'cpo'	string	(Vim default: "aABceFs",
+'cpoptions' 'cpo'	string	(Vim default: "aABceFs_",
 				 Vi default: all flags)
 			global
 	A sequence of single character flags.  When a character is present
@@ -1875,7 +1885,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		string	(default "internal,filler")
+'diffopt' 'dip'		string	(default "internal,filler,closeoff")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -1932,6 +1942,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 		vertical	Start diff mode with vertical splits (unless
 				explicitly specified otherwise).
 
+		closeoff	When a window is closed where 'diff' is set
+				and there is only one window remaining in the
+				same tab page with 'diff' set, execute
+				`:diffoff` in that window.  This undoes a
+				`:diffsplit` command.
+
 		hiddenoff	Do not use diff mode for a buffer when it
 				becomes hidden.
 
@@ -1978,7 +1994,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  possible.  If it is not possible in any directory, but last 
 	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
-	  impossible!).
+	  impossible!) and no |E303| error will be given.
 	- A directory "." means to put the swap file in the same directory as
 	  the edited file.  On Unix, a dot is prepended to the file name, so
 	  it doesn't show in a directory listing.  On MS-Windows the "hidden"
@@ -1986,12 +2002,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- A directory starting with "./" (or ".\" for Windows) means to
 	  put the swap file relative to where the edited file is.  The leading
 	  "." is replaced with the path name of the edited file.
-	- For Unix and Win32, if a directory ends in two path separators "//"
-	  or "\\", the swap file name will be built from the complete path to
-	  the file with all path separators substituted to percent '%' signs.
-	  This will ensure file name uniqueness in the preserve directory.
-	  On Win32, when a separating comma is following, you must use "//",
-	  since "\\" will include the comma in the file name.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators substituted to percent '%' signs. This will
+	  ensure file name uniqueness in the preserve directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Spaces after the comma are ignored, other spaces are considered part
 	  of the directory name.  To have a space at the start of a directory
 	  name, precede it with a backslash.
@@ -2242,8 +2260,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformat'* *'ff'*
 'fileformat' 'ff'	string (Windows default: "dos",
-				Unix default: "unix",
-				Macintosh default: "mac")
+				Unix default: "unix")
 			local to buffer
 	This gives the <EOL> of the current buffer, which is used for
 	reading/writing the buffer from/to a file:
@@ -2265,7 +2282,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fileformats' 'ffs'	string (default:
 				Vim+Vi	Win32: "dos,unix",
 				Vim	Unix: "unix,dos",
-				Vim	Mac: "mac,unix,dos",
 				Vi	others: "")
 			global
 	This gives the end-of-line (<EOL>) formats that will be tried when
@@ -2348,7 +2364,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
-			local to window
+			global or local to window |global-local|
 	Characters to fill the statuslines and vertical separators.
 	It is a comma separated list of items:
 
@@ -2357,6 +2373,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  stlnc:c	' ' or '='	statusline of the non-current windows
 	  vert:c	'│' or '|'	vertical separators |:vsplit|
 	  fold:c	'·' or '-'	filling 'foldtext'
+	  foldopen:c	'-'		mark the beginning of a fold
+	  foldclose:c	'+'		show a closed fold
+	  foldsep:c	'│' or '|'      open fold middle marker
 	  diff:c	'-'		deleted lines of the 'diff' option
 	  msgsep:c	' '		message separator 'display'
 	  eob:c		'~'		empty lines at the end of a buffer
@@ -2365,7 +2384,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
-	If 'ambiwidth' is "double" then "vert" and "fold" default to
+	If 'ambiwidth' is "double" then "vert", "foldsep" and "fold" default to
 	single-byte alternatives.
 
 	Example: >
@@ -2402,11 +2421,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	automatically close when moving out of them.
 
 						*'foldcolumn'* *'fdc'*
-'foldcolumn' 'fdc'	number (default 0)
+'foldcolumn' 'fdc'	string (default "0")
 			local to window
-	When non-zero, a column with the specified width is shown at the side
-	of the window which indicates open and closed folds.  The maximum
-	value is 12.
+	When and how to draw the foldcolumn. Valid values are:
+	    "auto":       resize to the maximum amount of folds to display.
+	    "auto:[1-9]": resize to accommodate multiple folds up to the
+			  selected level
+            0:            to disable foldcolumn
+	    "[1-9]":      to display a fixed number of columns
 	See |folding|.
 
 			*'foldenable'* *'fen'* *'nofoldenable'* *'nofen'*
@@ -3443,6 +3465,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Unprintable and zero-width Unicode characters are displayed as <xxxx>.
 	There is no option to specify these characters.
 
+						*'jumpoptions'* *'jop'*
+'jumpoptions' 'jop'	string	(default "")
+			global
+	List of words that change the behavior of the |jumplist|.
+	  stack         Make the jumplist behave like the tagstack or like a
+	                web browser.  Relative location of entries in the
+			jumplist is preserved at the cost of discarding
+			subsequent entries when navigating backwards in the
+			jumplist and then jumping to a location.
+			|jumplist-stack|
+
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
 'joinspaces' 'js'	boolean	(default on)
 			global
@@ -3657,7 +3690,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'listchars'* *'lcs'*
 'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
 				 Vi default: "eol:$")
-			local to window
+			global or local to window |global-local|
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
 
@@ -3698,9 +3731,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			off and the line continues beyond the right of the
 			screen.
 							*lcs-precedes*
-	  precedes:c	Character to show in the first column, when 'wrap'
-			is off and there is text preceding the character
-			visible in the first column.
+	  precedes:c	Character to show in the first visible column of the
+			physical line, when there is text preceding the
+			character visible in the first column.
 							*lcs-conceal*
 	  conceal:c	Character to show in place of concealed text, when
 			'conceallevel' is set to 1.  A space when omitted.
@@ -3914,6 +3947,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on allow some options that are an expression to be set in the
 	modeline.  Check the option for whether it is affected by
 	'modelineexpr'.  Also see |modeline|.
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 						*'modelines'* *'mls'*
 'modelines' 'mls'	number	(default 5)
@@ -4496,13 +4531,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When on a ":" prompt is used in Ex mode.
 
-						*'pumheight'* *'ph'*
-'pumheight' 'ph'	number	(default 0)
-			global
-	Determines the maximum number of items to show in the popup menu for
-	Insert mode completion.  When zero as much space as available is used.
-	|ins-completion-menu|.
-
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global
@@ -4518,6 +4546,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:hi PmenuSel blend=0
 <
 	UI-dependent. Works best with RGB colors. 'termguicolors'
+
+						*'pumheight'* *'ph'*
+'pumheight' 'ph'	number	(default 0)
+			global
+	Maximum number of items to show in the popup menu
+	(|ins-completion-menu|). Zero means "use available screen space".
+
+						*'pumwidth'* *'pw'*
+'pumwidth' 'pw'		number	(default 15)
+			global
+	Minimum width for the popup menu (|ins-completion-menu|).  If the
+	cursor column + 'pumwidth' exceeds screen width, the popup menu is
+	nudged to fit on the screen.
 
 						*'pyxversion'* *'pyx'*
 'pyxversion' 'pyx'	number	(default depends on the build)
@@ -4583,6 +4624,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 		RedrawDebugRecompose guibg=Red    redraw generated by the
 						  compositor itself, due to a
 						  grid being moved or deleted.
+	    nothrottle	Turn off throttling of the message grid. This is an
+			optimization that joins many small scrolls to one
+			larger scroll when drawing the message area (with
+			'display' msgsep flag active).
+	    invalid	Enable stricter checking (abort) of inconsistencies
+			of the internal screen state. This is mostly
+			useful when running nvim inside a debugger (and
+			the test suite).
+	    nodelta	Send all internally redrawn cells to the UI, even if
+	                they are unchanged from the already displayed state.
 
 						*'redrawtime'* *'rdt'*
 'redrawtime' 'rdt'	number	(default 2000)
@@ -4851,13 +4902,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'scrolloff'* *'so'*
 'scrolloff' 'so'	number	(default 0)
-			global
+			global or local to window |global-local|
 	Minimal number of screen lines to keep above and below the cursor.
 	This will make some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
 	in the middle of the window (except at the start or end of the file or
 	when long lines wrap).
-	For scrolling horizontally see 'sidescrolloff'.
+	After using the local value, go back the global value with one of
+	these two: >
+		setlocal scrolloff<
+		setlocal scrolloff=-1
+<	For scrolling horizontally see 'sidescrolloff'.
 
 						*'scrollopt'* *'sbo'*
 'scrollopt' 'sbo'	string	(default "ver,jump")
@@ -5158,8 +5213,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
-	To use powershell (on Windows): >
-		set shell=powershell shellquote=( shellpipe=\| shellxquote=
+	To use powershell: >
+		let &shell = has('win32') ? 'powershell' : 'pwsh'
+		set shellquote= shellpipe=\| shellxquote=
 		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
 		set shellredir=\|\ Out-File\ -Encoding\ UTF8
 
@@ -5465,7 +5521,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)
-			global
+			global or local to window |global-local|
 	The minimal number of screen columns to keep to the left and to the
 	right of the cursor if 'nowrap' is set.  Setting this option to a
 	value greater than 0 while having |'sidescroll'| also at a non-zero
@@ -5474,7 +5530,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to a large value (like 999) has the effect of keeping the cursor
 	horizontally centered in the window, as long as one does not come too
 	close to the beginning of the line.
-
+	After using the local value, go back the global value with one of
+	these two: >
+		setlocal sidescrolloff<
+		setlocal sidescrolloff=-1
+<
 	Example: Try this together with 'sidescroll' and 'listchars' as
 		 in the following example to never allow the cursor to move
 		 onto the "extends" character: >
@@ -5722,7 +5782,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	current one. |:vsplit|
 
 			   *'startofline'* *'sol'* *'nostartofline'* *'nosol'*
-'startofline' 'sol'	boolean	(default on)
+'startofline' 'sol'	boolean	(default off)
 			global
 	When "on" the commands listed below move the cursor to the first
 	non-blank of the line.  When off the cursor is kept in the same column
@@ -5749,7 +5809,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the option starts with "%!" then it is used as an expression,
 	evaluated and the result is used as the option value.  Example: >
 		:set statusline=%!MyStatusLine()
-<	The result can contain %{} items that will be evaluated too.
+<	The *g:statusline_winid* variable will be set to the |window-ID| of the
+	window that the status line belongs to.
+	The result can contain %{} items that will be evaluated too.
 	Note that the "%!" expression is evaluated in the context of the
 	current window and buffer, while %{} items are evaluated in the
 	context of the window that the statusline belongs to.
@@ -5878,13 +5940,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	become empty.  This will make a group like the following disappear
 	completely from the statusline when none of the flags are set. >
 		:set statusline=...%(\ [%M%R%H]%)...
-<							*g:actual_curbuf*
-	Beware that an expression is evaluated each and every time the status
-	line is displayed.  The current buffer and current window will be set
-	temporarily to that of the window (and buffer) whose statusline is
-	currently being drawn.  The expression will evaluate in this context.
-	The variable "g:actual_curbuf" is set to the `bufnr()` number of the
-	real current buffer.
+<	Beware that an expression is evaluated each and every time the status
+	line is displayed.
+					*g:actual_curbuf* *g:actual_curwin*
+	The current buffer and current window will be set temporarily to that
+	of the window (and buffer) whose statusline is currently being drawn.
+	The expression will evaluate in this context.  The variable
+	"g:actual_curbuf" is set to the `bufnr()` number of the real current
+	buffer and "g:actual_curwin" to the |window-ID| of the real current
+	window.  These values are strings.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
@@ -5990,6 +6054,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   vsplit	Just like "split" but split vertically.
 	   newtab	Like "split", but open a new tab page.  Overrules
 			"split" when both are present.
+	   uselast	If included, jump to the previously used window when
+			jumping to errors with |quickfix| commands.
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	number	(default 3000)
@@ -6148,6 +6214,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   ignore	Ignore case
 	   match	Match case
 	   smart	Ignore case unless an upper case letter is used
+
+							*'tagfunc'* *'tfu'*
+'tagfunc' 'tfu'		string	(default: empty)
+			local to buffer
+	This option specifies a function to be used to perform tag searches.
+	The function gets the tag pattern and should return a List of matching
+	tags.  See |tag-function| for an explanation of how to write the
+	function and an example.
 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	number	(default 0)
@@ -6448,9 +6522,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	>= 1	When the shada file is read or written.
 	>= 2	When a file is ":source"'ed.
 	>= 3	UI info, terminal capabilities
+	>= 4	Shell commands.
 	>= 5	Every searched tags file and include file.
 	>= 8	Files for which a group of autocommands is executed.
 	>= 9	Every executed autocommand.
+	>= 11	Finding items in a path
 	>= 12	Every executed function.
 	>= 13	When an exception is thrown, caught, finished, or discarded.
 	>= 14	Anything pending in a ":finally" clause.
@@ -6620,23 +6696,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
 'wildmenu' 'wmnu'	boolean	(default on)
 			global
-	When 'wildmenu' is on, command-line completion operates in an enhanced
-	mode.  On pressing 'wildchar' (usually <Tab>) to invoke completion,
-	the possible matches are shown just above the command line, with the
-	first match highlighted (overwriting the status line, if there is
-	one).  Keys that show the previous/next match, such as <Tab> or
-	CTRL-P/CTRL-N, cause the highlight to move to the appropriate match.
-	When 'wildmode' is used, "wildmenu" mode is used where "full" is
-	specified.  "longest" and "list" do not start "wildmenu" mode.
-	You can check the current mode with |wildmenumode()|.
-	If there are more matches than can fit in the line, a ">" is shown on
-	the right and/or a "<" is shown on the left.  The status line scrolls
-	as needed.
-	The "wildmenu" mode is abandoned when a key is hit that is not used
-	for selecting a completion.
-	While the "wildmenu" is active the following keys have special
-	meanings:
+	Enables "enhanced mode" of command-line completion. When user hits
+	<Tab> (or 'wildchar') to invoke completion, the possible matches are
+	shown in a menu just above the command-line (see 'wildoptions'), with
+	the first match highlighted (overwriting the statusline).  Keys that
+	show the previous/next match (<Tab>/CTRL-P/CTRL-N) highlight the
+	match.
+	'wildmode' must specify "full": "longest" and "list" do not start
+	'wildmenu' mode. You can check the current mode with |wildmenumode()|.
+	The menu is canceled when a key is hit that is not used for selecting
+	a completion.
 
+	While the menu is active these keys have special meanings:
+
+	CTRL-Y		- accept the currently selected match and stop
+			  completion.
+	CTRL-E		- end completion, go back to what was there before
+			  selecting a match.
 	<Left> <Right>	- select previous/next match (like CTRL-P/CTRL-N)
 	<Down>		- in filename/menu name completion: move into a
 			  subdirectory or submenu.
@@ -6645,15 +6721,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	<Up>		- in filename/menu name completion: move up into
 			  parent directory or parent menu.
 
-	This makes the menus accessible from the console |console-menus|.
-
-	If you prefer the <Left> and <Right> keys to move the cursor instead
-	of selecting a different match, use this: >
+	If you want <Left> and <Right> to move the cursor instead of selecting
+	a different match, use this: >
 		:cnoremap <Left> <Space><BS><Left>
 		:cnoremap <Right> <Space><BS><Right>
 <
-	The "WildMenu" highlighting is used for displaying the current match
-	|hl-WildMenu|.
+	|hl-WildMenu| highlights the current match.
 
 						*'wildmode'* *'wim'*
 'wildmode' 'wim'	string	(default: "full")
@@ -6677,6 +6750,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			complete first match.
 	"list:longest"	When more than one match, list all matches and
 			complete till longest common string.
+	"list:lastused" When more than one buffer matches, sort buffers
+			by time last used (other than the current buffer).
 	When there is only a single match, it is fully completed in all cases.
 
 	Examples: >
@@ -6908,7 +6983,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	The number of milliseconds to wait for each character sent to the
 	screen.  When positive, characters are sent to the UI one by one.
-	When negative, all redrawn characters cause a delay, even if the
-	character already was displayed by the UI.  For debugging purposes.
+	See 'redrawdebug' for more options.  For debugging purposes.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

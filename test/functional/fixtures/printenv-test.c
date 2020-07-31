@@ -44,7 +44,7 @@ int main(int argc, char **argv)
                                  utf8_len,
                                  NULL,
                                  NULL);
-  fprintf(stderr, "%s", utf8_value);
+  fprintf(stdout, "%s", utf8_value);
   free(utf8_value);
 #else
   char *value = getenv(argv[1]);
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "env var not found: %s", argv[1]);
     return 1;
   }
-  // Print to stderr to avoid buffering.
-  fprintf(stderr, "%s", value);
+  fprintf(stdout, "%s", value);
 #endif
+  fflush(stdout);
   return 0;
 }

@@ -18,13 +18,14 @@ local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('ruby') then
+  local reason = missing_provider('ruby')
+  if reason then
     it(':ruby reports E319 if provider is missing', function()
       local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
       matches(expected, pcall_err(command, 'ruby puts "foo"'))
       matches(expected, pcall_err(command, 'rubyfile foo'))
     end)
-    pending("Missing neovim RubyGem.", function() end)
+    pending(string.format('Missing neovim RubyGem (%s)', reason), function() end)
     return
   end
 end

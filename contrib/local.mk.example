@@ -25,6 +25,12 @@
 #
 # CMAKE_BUILD_TYPE := Debug
 
+# With non-Debug builds interprocedural optimization (IPO) (which includes
+# link-time optimization (LTO)) is enabled by default, which causes the link
+# step to take a significant amout of time, which is relevant when building
+# often.  You can disable it explicitly:
+# CMAKE_EXTRA_FLAGS += -DENABLE_LTO=OFF
+
 # Log levels: 0 (DEBUG), 1 (INFO), 2 (WARNING), 3 (ERROR)
 # Default is 1 (INFO) unless CMAKE_BUILD_TYPE is Release or RelWithDebInfo.
 # CMAKE_EXTRA_FLAGS += -DMIN_LOG_LEVEL=1
@@ -42,6 +48,7 @@
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LUAROCKS=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_MSGPACK=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_UNIBILIUM=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_UTF8PROC=OFF
 #
 # Or disable all bundled dependencies at once.
 #

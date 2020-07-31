@@ -186,6 +186,32 @@ func Test_strftime()
 
   call assert_fails('call strftime([])', 'E730:')
   call assert_fails('call strftime("%Y", [])', 'E745:')
+
+  " Check that the time changes after we change the timezone
+  " Save previous timezone value, if any
+  if exists('$TZ')
+    let tz = $TZ
+  endif
+
+  " Force EST and then UTC, save the current hour (24-hour clock) for each
+  let $TZ = 'EST' | let est = strftime('%H')
+  let $TZ = 'UTC' | let utc = strftime('%H')
+
+  " Those hours should be two bytes long, and should not be the same; if they
+  " are, a tzset(3) call may have failed somewhere
+  call assert_equal(strlen(est), 2)
+  call assert_equal(strlen(utc), 2)
+  " TODO: this fails on MS-Windows
+  if has('unix')
+    call assert_notequal(est, utc)
+  endif
+
+  " If we cached a timezone value, put it back, otherwise clear it
+  if exists('tz')
+    let $TZ = tz
+  else
+    unlet $TZ
+  endif
 endfunc
 
 func Test_resolve()
@@ -639,6 +665,16 @@ func Test_getbufvar()
   call assert_equal(1, getbufvar(bufnr('%'), '&bin'))
   call assert_equal('iso-8859-2', getbufvar(bufnr('%'), '&fenc'))
   close
+
+  " Get the b: dict.
+  let b:testvar = 'one'
+  new
+  let b:testvar = 'two'
+  let thebuf = bufnr()
+  wincmd w
+  call assert_equal('two', getbufvar(thebuf, 'testvar'))
+  call assert_equal('two', getbufvar(thebuf, '').testvar)
+  bwipe!
 
   set fileformats&
 endfunc
@@ -1132,6 +1168,13 @@ func Test_reg_executing_and_recording()
 
   " :normal command saves and restores reg_executing
   let s:reg_stat = ''
+  let @q = ":call TestFunc()\<CR>:call s:save_reg_stat()\<CR>"
+  func TestFunc() abort
+    normal! ia
+  endfunc
+  call feedkeys("@q", 'xt')
+  call assert_equal(':q', s:reg_stat)
+  delfunc TestFunc
 
   " getchar() command saves and restores reg_executing
   map W :call TestFunc()<CR>
@@ -1263,4 +1306,34 @@ func Test_bufadd_bufload()
   bwipe someName
   bwipe otherName
   call assert_equal(0, bufexists('someName'))
+endfunc
+
+func Test_readdir()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/foo.txt')
+  call writefile([], 'Xdir/bar.txt')
+  call mkdir('Xdir/dir')
+
+  " All results
+  let files = readdir('Xdir')
+  call assert_equal(['bar.txt', 'dir', 'foo.txt'], sort(files))
+
+  " Only results containing "f"
+  let files = readdir('Xdir', { x -> stridx(x, 'f') !=- 1 })
+  call assert_equal(['foo.txt'], sort(files))
+
+  " Only .txt files
+  let files = readdir('Xdir', { x -> x =~ '.txt$' })
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Only .txt files with string
+  let files = readdir('Xdir', 'v:val =~ ".txt$"')
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Limit to 1 result.
+  let l = []
+  let files = readdir('Xdir', {x -> len(add(l, x)) == 2 ? -1 : 1})
+  call assert_equal(1, len(files))
+
+  call delete('Xdir', 'rf')
 endfunc

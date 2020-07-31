@@ -111,7 +111,13 @@ describe('timers', function()
 
     curbufmeths.set_lines(0, -1, true, {"ITEM 1", "ITEM 2"})
     source([[
+      let g:cont = 0
       func! AddItem(timer)
+        if !g:cont
+          return
+        endif
+        call timer_stop(a:timer)
+
         call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
 
         " Meant to test for what Vim tests in Test_peek_and_get_char.
@@ -121,7 +127,7 @@ describe('timers', function()
       endfunc
     ]])
     nvim_async("command", "let g:c2 = getchar()")
-    nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem')")
+    nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem', {'repeat': -1})")
 
     screen:expect([[
       ITEM 1                                  |
@@ -131,6 +137,7 @@ describe('timers', function()
       {1:~                                       }|
       ^                                        |
     ]])
+    nvim_async("command", "let g:cont = 1")
 
     screen:expect([[
       ITEM 1                                  |
@@ -222,12 +229,17 @@ describe('timers', function()
     source([[
       let g:val = 0
       func! MyHandler(timer)
+        while !g:val
+          return
+        endwhile
+        call timer_stop(a:timer)
+
         echo "evil"
         redraw
-        let g:val = 1
+        let g:val = 2
       endfunc
     ]])
-    command("call timer_start(100,  'MyHandler', {'repeat': 1})")
+    command("call timer_start(100,  'MyHandler', {'repeat': -1})")
     feed(":good")
     screen:expect([[
                                               |
@@ -237,6 +249,7 @@ describe('timers', function()
       {0:~                                       }|
       :good^                                   |
     ]])
+    command('let g:val = 1')
 
     screen:expect{grid=[[
                                               |
@@ -247,6 +260,6 @@ describe('timers', function()
       :good^                                   |
     ]], intermediate=true, timeout=load_adjust(200)}
 
-    eq(1, eval('g:val'))
+    eq(2, eval('g:val'))
   end)
 end)

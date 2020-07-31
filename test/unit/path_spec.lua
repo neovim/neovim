@@ -66,10 +66,10 @@ describe('path.c', function()
   end)
 
   describe('path_full_compare', function()
-    local function path_full_compare(s1, s2, cn)
+    local function path_full_compare(s1, s2, cn, ee)
       s1 = to_cstr(s1)
       s2 = to_cstr(s2)
-      return cimp.path_full_compare(s1, s2, cn or 0)
+      return cimp.path_full_compare(s1, s2, cn or 0, ee or 1)
     end
 
     local f1 = 'f1.o'
@@ -456,7 +456,7 @@ describe('path.c', function()
     end)
 
     itp('fails and uses filename when the path is relative to HOME', function()
-      eq(false, cimp.os_isdir('~')) -- sanity check: no literal "~" directory.
+      eq(false, cimp.os_isdir('~'), 'sanity check: no literal "~" directory')
       local absolute_path = '~/home.file'
       local buflen = string.len(absolute_path) + 1
       local do_expand = 1

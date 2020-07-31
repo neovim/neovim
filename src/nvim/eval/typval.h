@@ -33,7 +33,7 @@ typedef double float_T;
 enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
 
 /// Additional values for tv_list_alloc() len argument
-enum {
+enum ListLenSpecials {
   /// List length is not known in advance
   ///
   /// To be used when there is neither a way to know how many elements will be
@@ -49,7 +49,7 @@ enum {
   ///
   /// To be used when it looks impractical to determine list length.
   kListLenMayKnow = -3,
-} ListLenSpecials;
+};
 
 /// Maximal possible value of varnumber_T variable
 #define VARNUMBER_MAX INT64_MAX
@@ -91,10 +91,14 @@ typedef struct dict_watcher {
   bool busy;  // prevent recursion if the dict is changed in the callback
 } DictWatcher;
 
+/// Bool variable values
+typedef enum {
+  kBoolVarFalse,         ///< v:false
+  kBoolVarTrue,          ///< v:true
+} BoolVarValue;
+
 /// Special variable values
 typedef enum {
-  kSpecialVarFalse,  ///< v:false
-  kSpecialVarTrue,   ///< v:true
   kSpecialVarNull,   ///< v:null
 } SpecialVarValue;
 
@@ -114,6 +118,7 @@ typedef enum {
   VAR_LIST,         ///< List, .v_list is used.
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
+  VAR_BOOL,         ///< true, false
   VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
                     ///< is used.
   VAR_PARTIAL,      ///< Partial, .v_partial is used.
@@ -125,6 +130,7 @@ typedef struct {
   VarLockStatus v_lock;  ///< Variable lock status.
   union typval_vval_union {
     varnumber_T v_number;  ///< Number, for VAR_NUMBER.
+    BoolVarValue v_bool;        ///< Bool value, for VAR_BOOL
     SpecialVarValue v_special;  ///< Special value, for VAR_SPECIAL.
     float_T v_float;  ///< Floating-point number, for VAR_FLOAT.
     char_u *v_string;  ///< String, for VAR_STRING and VAR_FUNC, can be NULL.
@@ -174,6 +180,8 @@ struct listvar_S {
   int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
   int lv_copyID;  ///< ID used by deepcopy().
   VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
+
+  LuaRef lua_table_ref;
 };
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.
@@ -239,6 +247,8 @@ struct dictvar_S {
   dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
   dict_T *dv_used_prev;   ///< Previous dictionary in used dictionaries list.
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
+
+  LuaRef lua_table_ref;
 };
 
 /// Type used for script ID
@@ -246,7 +256,7 @@ typedef int scid_T;
 /// Format argument for scid_T
 #define PRIdSCID "d"
 
-// SCript ConteXt (SCTX): identifies a script script line.
+// SCript ConteXt (SCTX): identifies a script line.
 // When sourcing a script "sc_lnum" is zero, "sourcing_lnum" is the current
 // line number. When executing a user function "sc_lnum" is the line where the
 // function was defined, "sourcing_lnum" is the line number inside the
@@ -258,8 +268,44 @@ typedef struct {
   linenr_T sc_lnum;  // line number
 } sctx_T;
 
+/// Maximum number of function arguments
+#define MAX_FUNC_ARGS   20
+/// Short variable name length
+#define VAR_SHORT_LEN 20
+/// Number of fixed variables used for arguments
+#define FIXVAR_CNT 12
+
+/// Callback interface for C function reference>
+///     Used for managing functions that were registered with |register_cfunc|
+typedef int (*cfunc_T)(int argcount, typval_T *argvars, typval_T *rettv, void *state);  // NOLINT
+/// Callback to clear cfunc_T and any associated state.
+typedef void (*cfunc_free_T)(void *state);
+
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
+
+struct funccall_S {
+  ufunc_T *func;  ///< Function being called.
+  int linenr;  ///< Next line to be executed.
+  int returned;  ///< ":return" used.
+  /// Fixed variables for arguments.
+  TV_DICTITEM_STRUCT(VAR_SHORT_LEN + 1) fixvar[FIXVAR_CNT];
+  dict_T l_vars;  ///< l: local function variables.
+  ScopeDictDictItem l_vars_var;  ///< Variable for l: scope.
+  dict_T l_avars;  ///< a: argument variables.
+  ScopeDictDictItem l_avars_var;  ///< Variable for a: scope.
+  list_T l_varlist;  ///< List for a:000.
+  listitem_T l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
+  typval_T *rettv;  ///< Return value.
+  linenr_T breakpoint;  ///< Next line with breakpoint or zero.
+  int dbg_tick;  ///< Debug_tick when breakpoint was set.
+  int level;  ///< Top nesting level of executed function.
+  proftime_T prof_child;  ///< Time spent in a child.
+  funccall_T *caller;  ///< Calling function or NULL.
+  int fc_refcount;  ///< Number of user functions that reference this funccall.
+  int fc_copyID;  ///< CopyID used for garbage collection.
+  garray_T fc_funcs;  ///< List of ufunc_T* which keep a reference to "func".
+};
 
 /// Structure to hold info for a user function.
 struct ufunc {
@@ -271,6 +317,10 @@ struct ufunc {
   garray_T     uf_lines;         ///< function lines
   int          uf_profiling;     ///< true when func is being profiled
   int          uf_prof_initialized;
+  // Managing cfuncs
+  cfunc_T      uf_cb;            ///< C function extension callback
+  cfunc_free_T uf_cb_free;       ///< C function extesion free callback
+  void        *uf_cb_state;      ///< State of C function extension.
   // Profiling the function as a whole.
   int          uf_tm_count;      ///< nr of calls
   proftime_T   uf_tm_total;      ///< time spent in function + children
@@ -292,9 +342,6 @@ struct ufunc {
   char_u       uf_name[];        ///< Name of function; can start with <SNR>123_
                                  ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
-
-/// Maximum number of function arguments
-#define MAX_FUNC_ARGS   20
 
 struct partial_S {
   int pt_refcount;  ///< Reference count.
@@ -798,7 +845,7 @@ static inline bool tv_get_float_chk(const typval_T *const tv,
     *ret_f = (float_T)tv->vval.v_number;
     return true;
   }
-  emsgf(_("E808: Number or Float required"));
+  emsgf("%s", _("E808: Number or Float required"));
   return false;
 }
 

@@ -558,7 +558,7 @@ syn match	vimHiGuiFontname	contained	"'[a-zA-Z\-* ]\+'"
 syn match	vimHiGuiRgb	contained	"#\x\{6}"
 
 " Highlighting: hi group key=arg ... {{{2
-syn cluster	vimHiCluster contains=vimGroup,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation
+syn cluster	vimHiCluster contains=vimGroup,vimHiBlend,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation
 syn region	vimHiKeyList	contained oneline start="\i\+" skip="\\\\\|\\|" end="$\||"	contains=@vimHiCluster
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_vimhikeyerror")
  syn match	vimHiKeyError	contained	"\i\+="he=e-1
@@ -571,6 +571,7 @@ syn match	vimHiGui	contained	"\cgui="he=e-1		nextgroup=vimHiAttribList
 syn match	vimHiGuiFont	contained	"\cfont="he=e-1		nextgroup=vimHiFontname
 syn match	vimHiGuiFgBg	contained	"\cgui\%([fb]g\|sp\)="he=e-1	nextgroup=vimHiGroup,vimHiGuiFontname,vimHiGuiRgb,vimFgBgAttrib
 syn match	vimHiTermcap	contained	"\S\+"		contains=vimNotation
+syn match	vimHiBlend	contained	"\cblend="he=e-1		nextgroup=vimHiNmbr
 syn match	vimHiNmbr	contained	'\d\+'
 
 " Highlight: clear {{{2
@@ -850,6 +851,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimGroupSpecial	Special
  hi def link vimGroup	Type
  hi def link vimHiAttrib	PreProc
+ hi def link vimHiBlend	vimHiTerm
  hi def link vimHiClear	vimHighlight
  hi def link vimHiCtermFgBg	vimHiTerm
  hi def link vimHiCTerm	vimHiTerm

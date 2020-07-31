@@ -779,4 +779,40 @@ func Test_increment_empty_line()
   bwipe!
 endfunc
 
+func Test_normal_increment_with_virtualedit()
+  set virtualedit=all
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 0\<C-A>"
+  call assert_equal("\<TAB>2", getline(1))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 0l\<C-A>"
+  call assert_equal("\<TAB>2", getline(1))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 07l\<C-A>"
+  call assert_equal("\<TAB>2", getline(1))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 0w\<C-A>"
+  call assert_equal("\<TAB>2", getline(1))
+  call assert_equal([0, 1, 2, 0], getpos('.'))
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 0wl\<C-A>"
+  call assert_equal("\<TAB>1", getline(1))
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+
+  call setline(1, ["\<TAB>1"])
+  exec "norm! 0w30l\<C-A>"
+  call assert_equal("\<TAB>1", getline(1))
+  call assert_equal([0, 1, 3, 29], getpos('.'))
+
+  set virtualedit&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

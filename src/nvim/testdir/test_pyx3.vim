@@ -72,3 +72,11 @@ func Test_pyxfile()
     call assert_match(s:py2pattern, split(var)[0])
   endif
 endfunc
+
+func Test_Catch_Exception_Message()
+  try
+    pyx raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
+endfunc

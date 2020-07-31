@@ -32,6 +32,9 @@ EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
+// Maximum columns for terminal highlight attributes
+#define TERM_ATTRS_MAX 1024
+
 /// Status line click definition
 typedef struct {
   enum {
@@ -55,6 +58,9 @@ extern StlClickDefinition *tab_page_click_defs;
 
 /// Size of the tab_page_click_defs array
 extern long tab_page_click_defs_size;
+
+#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
+#define W_ENDROW(wp)   (wp->w_winrow + wp->w_height)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"

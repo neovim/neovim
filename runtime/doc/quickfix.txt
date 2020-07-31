@@ -109,6 +109,36 @@ processing a quickfix or location list command, it will be aborted.
 			list for the current window is used instead of the
 			quickfix list.
 
+							*:cabo* *:cabove*
+:[count]cabo[ve]	Go to the [count] error above the current line in the
+			current buffer.  If [count] is omitted, then 1 is
+			used.  If there are no errors, then an error message
+			is displayed.  Assumes that the entries in a quickfix
+			list are sorted by their buffer number and line
+			number. If there are multiple errors on the same line,
+			then only the first entry is used.  If [count] exceeds
+			the number of entries above the current line, then the
+			first error in the file is selected.
+
+							*:lab* *:labove*
+:[count]lab[ove]	Same as ":cabove", except the location list for the
+			current window is used instead of the quickfix list.
+
+							*:cbe* *:cbelow*
+:[count]cbe[low]	Go to the [count] error below the current line in the
+			current buffer.  If [count] is omitted, then 1 is
+			used.  If there are no errors, then an error message
+			is displayed.  Assumes that the entries in a quickfix
+			list are sorted by their buffer number and line
+			number.  If there are multiple errors on the same
+			line, then only the first entry is used.  If [count]
+			exceeds the number of entries below the current line,
+			then the last error in the file is selected.
+
+							*:lbe* *:lbelow*
+:[count]lbe[low]	Same as ":cbelow", except the location list for the
+			current window is used instead of the quickfix list.
+
 							*:cnf* *:cnfile*
 :[count]cnf[ile][!]	Display the first error in the [count] next file in
 			the list that includes a file name.  If there are no

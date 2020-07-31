@@ -44,7 +44,7 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Wrong type for argument 1, expecting Buffer', err)
 
     err = exc_exec('call nvim_buf_line_count(17)')
-    eq('Vim(call):E5555: API call: Invalid buffer id', err)
+    eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
 
@@ -144,7 +144,6 @@ describe('eval-API', function()
       {5:~                                       }|
                                               |
     ]])
-    screen:detach()
   end)
 
   it('cannot be called from sandbox', function()

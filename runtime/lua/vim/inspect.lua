@@ -244,6 +244,11 @@ function Inspector:putTable(t)
 
     local nonSequentialKeys, nonSequentialKeysLength, sequenceLength = getNonSequentialKeys(t)
     local mt                = getmetatable(t)
+    if (vim and sequenceLength == 0 and nonSequentialKeysLength == 0
+        and mt == vim._empty_dict_mt) then
+      self:puts(tostring(t))
+      return
+    end
 
     self:puts('{')
     self:down(function()
@@ -289,7 +294,7 @@ function Inspector:putValue(v)
   if tv == 'string' then
     self:puts(smartQuote(escape(v)))
   elseif tv == 'number' or tv == 'boolean' or tv == 'nil' or
-         tv == 'cdata' or tv == 'ctype' then
+         tv == 'cdata' or tv == 'ctype' or (vim and v == vim.NIL) then
     self:puts(tostring(v))
   elseif tv == 'table' then
     self:putTable(v)
