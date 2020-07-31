@@ -4887,7 +4887,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool executable = true;
   char **argv = tv_to_argv(&argvars[0], NULL, &executable);
-  char **env = NULL;
+  dict_T *env = NULL;
   if (!argv) {
     rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
@@ -4936,7 +4936,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #endif
 
     char *new_cwd = tv_dict_get_string(job_opts, "cwd", false);
-    if (new_cwd && strlen(new_cwd) > 0) {
+    if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
       if (!os_isdir_executable((const char *)cwd)) {
@@ -4945,48 +4945,30 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
       }
     }
+
     dictitem_T *job_env = tv_dict_find(job_opts, S_LEN("env"));
-    if (job_env) {
-      if (job_env->di_tv.v_type != VAR_DICT) {
-        EMSG2(_(e_invarg2), "env");
-        shell_free_argv(argv);
-        return;
-      }
-
-      size_t custom_env_size = (size_t)tv_dict_len(job_env->di_tv.vval.v_dict);
-      size_t i = 0;
-      size_t env_size = 0;
-
-      if (clear_env) {
-        // + 1 for last null entry
-        env = xmalloc((custom_env_size + 1) * sizeof(*env));
-        env_size = 0;
-      } else {
-        env_size = os_get_fullenv_size();
-
-        env = xmalloc((custom_env_size + env_size + 1) * sizeof(*env));
-
-        os_copy_fullenv(env, env_size);
-        i = env_size;
-      }
-      assert(env);  // env must be allocated at this point
-
-      TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
-        const char *str = tv_get_string(&var->di_tv);
-        assert(str);
-        size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
-        env[i] = xmalloc(len);
-        snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
-        i++;
-      });
-
-      // must be null terminated
-      env[env_size + custom_env_size] = NULL;
+    if (job_env && job_env->di_tv.v_type != VAR_DICT) {
+      EMSG2(_(e_invarg2), "env");
+      shell_free_argv(argv);
+      return;
     }
 
+    env = tv_dict_alloc();
+
+    if (!clear_env) {
+      typval_T temp_env = TV_INITIAL_VALUE;
+      f_environ(NULL, &temp_env, NULL);
+      tv_dict_extend(env, temp_env.vval.v_dict, "force");
+      tv_dict_free(temp_env.vval.v_dict);
+    }
+
+    if (job_env) {
+      tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
+    }
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
+      tv_dict_free(env);
       return;
     }
   }

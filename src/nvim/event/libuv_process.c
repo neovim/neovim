@@ -41,13 +41,18 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
-  uvproc->uvopts.env = proc->env;
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;
   uvproc->uvstdio[0].flags = UV_IGNORE;
   uvproc->uvstdio[1].flags = UV_IGNORE;
   uvproc->uvstdio[2].flags = UV_IGNORE;
   uvproc->uv.data = proc;
+
+  if (proc->env) {
+    uvproc->uvopts.env = tv_dict_to_env(proc->env);
+  } else {
+    uvproc->uvopts.env = NULL;
+  }
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
