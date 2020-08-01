@@ -376,7 +376,7 @@ on writing and loading a buffer to file, nor in undo/redo cycles.
 Highlights are registered using the |nvim_buf_add_highlight()| function. If an
 external highlighter plugin wants to add many highlights in a batch,
 performance can be improved by calling |nvim_buf_add_highlight()| as an
-asynchronous notification, after first (synchronously) reqesting a source id.
+asynchronous notification, after first (synchronously) requesting a source id.
 
 Example using the Python API client (|pynvim|):
 >
