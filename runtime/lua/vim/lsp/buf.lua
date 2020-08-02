@@ -236,9 +236,9 @@ function M.outgoing_calls()
     local call_hierarchy_item = pick_call_hierarchy_item(result)
     vim.lsp.buf_request(0, 'callHierarchy/outgoingCalls', { item = call_hierarchy_item })
   end)
->>>>>>> variant B
+end
+
 local workspaceFolders = {}
-======= end
 
 function M.list_workspace_folders()
   for i, _ in pairs(workspaceFolders) do
