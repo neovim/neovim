@@ -240,12 +240,14 @@ end
 
 local workspaceFolders = {}
 
+--- List workspace folders.
 function M.list_workspace_folders()
   for i, _ in pairs(workspaceFolders) do
     print(i)
   end
 end
 
+--- Add a workspace folder.
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   api.nvim_command("redraw")
@@ -264,6 +266,7 @@ function M.add_workspace_folder(workspace_folder)
   workspaceFolders[workspace_folder] = true
 end
 
+--- Remove a workspace folder.
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   api.nvim_command("redraw")
@@ -276,6 +279,7 @@ function M.remove_workspace_folder(workspace_folder)
   vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
   workspaceFolders[workspace_folder] = nil
 end
+
 --- Lists all symbols in the current workspace in the quickfix window.
 ---
 --- The list is filtered against {query}; if the argument is omitted from the
