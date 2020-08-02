@@ -248,9 +248,10 @@ end
 
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then
-    print(workspace_folder, "is not a valid directory")
+    print(workspace_folder, " is not a valid directory")
     return
   end
   if workspaceFolders[workspace_folder] == true then
@@ -265,6 +266,7 @@ end
 
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if workspaceFolders[workspace_folder] == nil then
     print(workspace_folder,  "is not currently part of the workspace, not removing")
