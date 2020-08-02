@@ -3646,12 +3646,18 @@ int build_stl_str_hl(
           }
         }
         if (n == curitem && group_start_userhl == group_end_userhl) {
+          // empty group
           out_p = t;
           group_len = 0;
-          // do not use the highlighting from the removed group
           for (n = groupitems[groupdepth] + 1; n < curitem; n++) {
+            // do not use the highlighting from the removed group
             if (items[n].type == Highlight) {
               items[n].type = Empty;
+            }
+            // adjust the start position of TabPage to the next
+            // item position
+            if (items[n].type == TabPage) {
+              items[n].start = out_p;
             }
           }
         }

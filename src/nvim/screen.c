@@ -3068,10 +3068,12 @@ win_line (
     }
 
     // When still displaying '$' of change command, stop at cursor
-    if ((dollar_vcol >= 0 && wp == curwin
-         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
-         && filler_todo <= 0)
-        || (number_only && draw_state > WL_NR)) {
+    if (((dollar_vcol >= 0
+          && wp == curwin
+          && lnum == wp->w_cursor.lnum
+          && vcol >= (long)wp->w_virtcol)
+         || (number_only && draw_state > WL_NR))
+        && filler_todo <= 0) {
       grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
@@ -3476,6 +3478,7 @@ win_line (
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
+        v = (long)(ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           if (!attr_pri) {

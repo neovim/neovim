@@ -605,6 +605,8 @@ describe('TUI', function()
     wait_for_mode('i')
     -- "bracketed paste"
     feed_data('\027[200~'..expected..'\027[201~')
+    -- FIXME: Data race between the two feeds
+    if uname() == 'freebsd' then screen:sleep(1) end
     feed_data(' end')
     expected = expected..' end'
     screen:expect([[

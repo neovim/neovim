@@ -1271,7 +1271,11 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_isi',
-      defaults={if_true={vi="@,48-57,_,192-255"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="@,48-57,_,128-167,224-235"},
+        if_false={vi="@,48-57,_,192-255"}
+      }
     },
     {
       full_name='iskeyword', abbreviation='isk',

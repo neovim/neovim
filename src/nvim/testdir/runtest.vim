@@ -84,6 +84,11 @@ let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
 " Always use forward slashes.
 set shellslash
 
+if has('win32')
+  " avoid prompt that is long or contains a line break
+  let $PROMPT = '$P$G'
+endif
+
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 

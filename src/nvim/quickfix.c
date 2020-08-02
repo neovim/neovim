@@ -3757,13 +3757,13 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
   buf_T *errbuf;
 
   if (qfp->qf_module != NULL) {
-    STRCPY(IObuff, qfp->qf_module);
+    STRLCPY(IObuff, qfp->qf_module, IOSIZE - 1);
     len = (int)STRLEN(IObuff);
   } else if (qfp->qf_fnum != 0
              && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
              && errbuf->b_fname != NULL) {
     if (qfp->qf_type == 1) {  // :helpgrep
-      STRLCPY(IObuff, path_tail(errbuf->b_fname), sizeof(IObuff));
+      STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE - 1);
     } else {
       // shorten the file name if not done already
       if (errbuf->b_sfname == NULL
@@ -3773,33 +3773,37 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
         }
         shorten_buf_fname(errbuf, dirname, false);
       }
-      STRLCPY(IObuff, errbuf->b_fname, sizeof(IObuff));
+      STRLCPY(IObuff, errbuf->b_fname, IOSIZE - 1);
     }
     len = (int)STRLEN(IObuff);
   } else {
     len = 0;
   }
-  IObuff[len++] = '|';
-
+  if (len < IOSIZE - 1) {
+    IObuff[len++] = '|';
+  }
   if (qfp->qf_lnum > 0) {
-    snprintf((char *)IObuff + len, sizeof(IObuff), "%" PRId64,
+    snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), "%" PRId64,
              (int64_t)qfp->qf_lnum);
     len += (int)STRLEN(IObuff + len);
 
     if (qfp->qf_col > 0) {
-      snprintf((char *)IObuff + len, sizeof(IObuff), " col %d", qfp->qf_col);
+      snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), " col %d",
+               qfp->qf_col);
       len += (int)STRLEN(IObuff + len);
     }
 
-    snprintf((char *)IObuff + len, sizeof(IObuff), "%s",
+    snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), "%s",
              (char *)qf_types(qfp->qf_type, qfp->qf_nr));
     len += (int)STRLEN(IObuff + len);
   } else if (qfp->qf_pattern != NULL) {
     qf_fmt_text(qfp->qf_pattern, IObuff + len, IOSIZE - len);
     len += (int)STRLEN(IObuff + len);
   }
-  IObuff[len++] = '|';
-  IObuff[len++] = ' ';
+  if (len < IOSIZE - 2) {
+    IObuff[len++] = '|';
+    IObuff[len++] = ' ';
+  }
 
   // Remove newlines and leading whitespace from the text.
   // For an unrecognized line keep the indent, the compiler may
