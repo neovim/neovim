@@ -975,23 +975,27 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid implementationProvider")
   end
 
-  local workspace_properties
-  local workspaceFolderCapabilities = server_capabilities.WorkspaceFoldersServerCapabilities
-  if workspaceFolderCapabilities == nil then
-      -- Defaults if omitted.
-      workspace_properties = {
-        workspaceFolders=true;
-        changeNotifications=true;
+  local workspace = server_capabilities.workspace
+  if workspace == nil or workspace.workspaceFolders == nil then
+    -- Defaults if omitted.
+    workspace_properties = {
+      workspace_folder_properties =  {
+        supported = false;
+        changeNotifications=false;
       }
-  elseif type(workspaceFolderCapabilities) == 'table' then
-      workspace_properties = {
-        supported = ifnil(workspaceFolderCapabilities.workspaceFolders, false);
-        changeNotifications = ifnil(workspaceFolderCapabilities.changeNotifications, false);
+    }
+  elseif type(workspace.workspaceFolders) == 'table' then
+    workspace_properties = {
+      workspace_folder_properties = {
+        supported = ifnil(workspace.workspaceFolders.supported, false);
+        changeNotifications = ifnil(workspace.workspaceFolders.changeNotifications, false);
 
       }
+    }
   else
-    error("The server sent invalid workspaceFolders")
+    error("The server sent invalid workspace")
   end
+
   local signature_help_properties
   if server_capabilities.signatureHelpProvider == nil then
     signature_help_properties = {

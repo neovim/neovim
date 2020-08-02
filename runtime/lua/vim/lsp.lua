@@ -608,6 +608,8 @@ function lsp.start_client(config)
     end
     local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
+      -- print(vim.inspect(initialize_params))
+      -- print(vim.inspect(result))
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
       rpc.notify('initialized', {[vim.type_idx]=vim.types.dictionary})
@@ -616,6 +618,7 @@ function lsp.start_client(config)
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
+      -- print(vim.inspect(client.server_capabilities))
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
       client.supports_method = function(method)
         local required_capability = lsp._request_name_to_capability[method]
