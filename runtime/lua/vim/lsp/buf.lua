@@ -269,7 +269,7 @@ function M.remove_workspace_folder(workspace_folder)
   api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if workspaceFolders[workspace_folder] == nil then
-    print(workspace_folder,  "is not currently part of the workspace, not removing")
+    print(workspace_folder,  "is not currently part of the workspace, ignoring")
   return end
   local params = util.make_workspace_params()
   table.insert(params.event.removed, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
