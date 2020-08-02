@@ -238,12 +238,12 @@ function M.outgoing_calls()
   end)
 end
 
-local workspaceFolders = {}
-
 --- List workspace folders.
 function M.list_workspace_folders()
-  for i, _ in pairs(workspaceFolders) do
-    print(i)
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    for _, folder in ipairs(client.workspaceFolders) do
+      print(folder.name)
+    end
   end
 end
 
@@ -256,14 +256,22 @@ function M.add_workspace_folder(workspace_folder)
     print(workspace_folder, " is not a valid directory")
     return
   end
-  if workspaceFolders[workspace_folder] == true then
-    print(workspace_folder, "is already part of the workspace")
-  return end
   local params = util.make_workspace_params()
-  table.insert(params.event.added, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
-  vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
-
-  workspaceFolders[workspace_folder] = true
+  local workspace_folder_entry = {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}
+  table.insert(params.event.added, workspace_folder_entry )
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    for idx, folder in ipairs(client.workspaceFolders) do
+      local found = false
+      if folder.name == workspace_folder then
+        found = true
+        print(workspace_folder "is already part of this workspace")
+      end
+    end
+    if not found then
+      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      table.insert(client.workspaceFolders, workspace_folder_entry)
+    end
+  end
 end
 
 --- Remove a workspace folder.
@@ -271,13 +279,22 @@ function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
-  if workspaceFolders[workspace_folder] == nil then
-    print(workspace_folder,  "is not currently part of the workspace")
-  return end
   local params = util.make_workspace_params()
   table.insert(params.event.removed, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
-  vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
-  workspaceFolders[workspace_folder] = nil
+  local removed = false;
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    for idx, folder in ipairs(client.workspaceFolders) do
+      if folder.name == workspace_folder then
+        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+        client.workspaceFolders[idx] = nil
+        removed = true;
+        return
+      end
+    end
+  end
+  if not removed then
+    print(workspace_folder,  "is not currently part of the workspace")
+  end
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
