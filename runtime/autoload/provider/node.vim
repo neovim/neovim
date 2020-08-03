@@ -51,6 +51,9 @@ function! provider#node#Detect() abort
   if exists('g:node_host_prog')
     return expand(g:node_host_prog)
   endif
+  if !executable('node')
+    return ''
+  endif
   if !s:is_minimum_version(v:null, 6, 0)
     return ''
   endif

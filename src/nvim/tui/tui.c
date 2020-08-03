@@ -31,6 +31,7 @@
 #include "nvim/event/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -93,7 +94,7 @@ typedef struct {
   int out_fd;
   bool scroll_region_is_full_screen;
   bool can_change_scroll_region;
-  bool can_set_lr_margin;
+  bool can_set_lr_margin;  // smglr
   bool can_set_left_right_margin;
   bool can_scroll;
   bool can_erase_chars;
@@ -312,6 +313,7 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+  flush_buf(ui);
 }
 
 static void terminfo_stop(UI *ui)
@@ -1231,7 +1233,9 @@ static void suspend_event(void **argv)
   tui_terminal_stop(ui);
   data->cont_received = false;
   stream_set_blocking(input_global_fd(), true);   // normalize stream (#2598)
+  signal_stop();
   kill(0, SIGTSTP);
+  signal_start();
   while (!data->cont_received) {
     // poll the event loop until SIGCONT is received
     loop_poll_events(data->loop, -1);
@@ -1598,6 +1602,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
+    } else {
+      // Fix things advertised via TERM=xterm, for non-xterm.
+      if (unibi_get_str(ut, unibi_set_lr_margin)) {
+        ILOG("Disabling smglr with TERM=xterm for non-xterm.");
+        unibi_set_str(ut, unibi_set_lr_margin, NULL);
+      }
     }
 
 #ifdef WIN32

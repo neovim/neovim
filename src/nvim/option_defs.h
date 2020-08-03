@@ -484,6 +484,7 @@ EXTERN long     p_linespace;    // 'linespace'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
 EXTERN long p_stal;             // 'showtabline'
+EXTERN char_u   *p_lcs;         // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
@@ -518,10 +519,18 @@ EXTERN long p_pyx;              // 'pyxversion'
 EXTERN char_u *p_rdb;           // 'redrawdebug'
 EXTERN unsigned rdb_flags;
 # ifdef IN_OPTION_C
-static char *(p_rdb_values[]) = { "compositor", "nothrottle", NULL };
+static char *(p_rdb_values[]) = {
+  "compositor",
+  "nothrottle",
+  "invalid",
+  "nodelta",
+  NULL
+};
 # endif
 # define RDB_COMPOSITOR         0x001
 # define RDB_NOTHROTTLE         0x002
+# define RDB_INVALID            0x004
+# define RDB_NODELTA            0x008
 
 EXTERN long p_rdt;              // 'redrawtime'
 EXTERN int p_remap;             // 'remap'
@@ -644,6 +653,7 @@ EXTERN long p_ul;               ///< 'undolevels'
 EXTERN long p_ur;               ///< 'undoreload'
 EXTERN long p_uc;               ///< 'updatecount'
 EXTERN long p_ut;               ///< 'updatetime'
+EXTERN char_u *p_fcs;           ///< 'fillchar'
 EXTERN char_u *p_shada;         ///< 'shada'
 EXTERN char *p_shadafile;       ///< 'shadafile'
 EXTERN char_u *p_vdir;          ///< 'viewdir'

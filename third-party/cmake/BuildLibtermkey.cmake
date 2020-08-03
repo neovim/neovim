@@ -48,6 +48,7 @@ ExternalProject_Add(libtermkey
                               PREFIX=${DEPS_INSTALL_DIR}
                               PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
                               CFLAGS=-fPIC
+                              LDFLAGS+=-static
                               ${DEFAULT_MAKE_CFLAGS}
                               install)
 endif()
