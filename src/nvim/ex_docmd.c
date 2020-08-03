@@ -8617,14 +8617,20 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 #define SPEC_SFILE  (SPEC_CFILE + 1)
     "<slnum>",                          // ":so" file line number
 #define SPEC_SLNUM  (SPEC_SFILE + 1)
+    "<stack>",                          // call stack
+#define SPEC_STACK  (SPEC_SLNUM + 1)
     "<afile>",                          // autocommand file name
-#define SPEC_AFILE  (SPEC_SLNUM + 1)
+#define SPEC_AFILE  (SPEC_STACK + 1)
     "<abuf>",                           // autocommand buffer number
 #define SPEC_ABUF   (SPEC_AFILE + 1)
     "<amatch>",                         // autocommand match name
 #define SPEC_AMATCH (SPEC_ABUF + 1)
     "<sflnum>",                         // script file line number
 #define SPEC_SFLNUM (SPEC_AMATCH + 1)
+    "<SID>",                            // script ID: <SNR>123_
+#define SPEC_SID  (SPEC_SFLNUM + 1)
+    "<client>"
+#define SPEC_CLIENT (SPEC_SID + 1)
   };
 
   for (size_t i = 0; i < ARRAY_SIZE(spec_str); ++i) {
@@ -8868,6 +8874,16 @@ eval_vars (
       }
       snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
                current_sctx.sc_lnum + sourcing_lnum);
+      result = (char_u *)strbuf;
+      break;
+
+    case SPEC_SID:
+      if (current_sctx.sc_sid <= 0) {
+        *errormsg = (char_u *)_(e_usingsid);
+        return NULL;
+      }
+      snprintf(strbuf, sizeof(strbuf), "<SNR>%" PRIdSCID "_",
+               current_sctx.sc_sid);
       result = (char_u *)strbuf;
       break;
 

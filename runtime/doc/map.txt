@@ -1078,6 +1078,10 @@ When executing an autocommand or a user command, it will run in the context of
 the script it was defined in.  This makes it possible that the command calls a
 local function or uses a local mapping.
 
+In case the value is used in a context where <SID> cannot be correctly
+expanded, use the expand() function: >
+	let &includexpr = expand('<SID>') .. 'My_includeexpr()'
+
 Otherwise, using "<SID>" outside of a script context is an error.
 
 If you need to get the script number to use in a complicated script, you can
