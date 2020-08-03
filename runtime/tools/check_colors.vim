@@ -8,7 +8,7 @@ set cpo&vim
 func! Test_check_colors()
   let l:savedview = winsaveview()
   call cursor(1,1)
-  let err={}
+  let err = {}
 
   " 1) Check g:colors_name is existing
   if !search('\<\%(g:\)\?colors_name\>', 'cnW')
@@ -81,36 +81,39 @@ func! Test_check_colors()
         \ 'WarningMsg',
         \ 'WildMenu',
         \ ]
-  let groups={}
+  let groups = {}
   for group in hi_groups
-    if search('\c@suppress\s\+'.group, 'cnW')
+    if search('\c@suppress\s\+\<' .. group .. '\>', 'cnW')
       " skip check, if the script contains a line like
       " @suppress Visual:
-      let groups[group] = 'Ignoring '.group
       continue
     endif
-    if search('hi\%[ghlight]!\= \+link \+'.group, 'cnW') " Linked group
+    if search('hi\%[ghlight]!\= \+link \+' .. group, 'cnW') " Linked group
       continue
     endif
-    if !search('hi\%[ghlight] \+'.group, 'cnW')
-      let groups[group] = 'No highlight definition for '.group
+    if !search('hi\%[ghlight] \+\<' .. group .. '\>', 'cnW')
+      let groups[group] = 'No highlight definition for ' .. group
       continue
     endif
-    if !search('hi\%[ghlight] \+'.group. '.*fg=', 'cnW')
-      let groups[group] = 'Missing foreground color for '.group
+    if !search('hi\%[ghlight] \+\<' .. group .. '\>.*[bf]g=', 'cnW')
+      let groups[group] = 'Missing foreground or background color for ' .. group
       continue
     endif
-    if search('hi\%[ghlight] \+'.group. '.*guibg=', 'cnW') &&
-        \ !search('hi\%[ghlight] \+'.group. '.*ctermbg=', 'cnW')
-      let groups[group] = 'Missing bg terminal color for '.group
+    if search('hi\%[ghlight] \+\<' .. group .. '\>.*guibg=', 'cnW') &&
+        \ !search('hi\%[ghlight] \+\<' .. group .. '\>.*ctermbg=', 'cnW')
+	\ && group != 'Cursor'
+      let groups[group] = 'Missing bg terminal color for ' .. group
       continue
     endif
-    if !search('hi\%[ghlight] \+'.group. '.*guifg=', 'cnW')
-      let groups[group] = 'Missing guifg definition for '.group
+    if !search('hi\%[ghlight] \+\<' .. group .. '\>.*guifg=', 'cnW')
+	  \ && group !~ '^Diff'
+      let groups[group] = 'Missing guifg definition for ' .. group
       continue
     endif
-    if !search('hi\%[ghlight] \+'.group. '.*ctermfg=', 'cnW')
-      let groups[group] = 'Missing ctermfg definition for '.group
+    if !search('hi\%[ghlight] \+\<' .. group .. '\>.*ctermfg=', 'cnW')
+	  \ && group !~ '^Diff'
+	  \ && group != 'Cursor'
+      let groups[group] = 'Missing ctermfg definition for ' .. group
       continue
     endif
     " do not check for background colors, they could be intentionally left out
@@ -120,10 +123,10 @@ func! Test_check_colors()
 
   " 3) Check, that it does not set background highlighting
   " Doesn't ':hi Normal ctermfg=253 ctermfg=233' also set the background sometimes?
-  let bg_set='\(set\?\|setl\(ocal\)\?\) .*\(background\|bg\)=\(dark\|light\)'
-  let bg_let='let \%([&]\%([lg]:\)\?\)\%(background\|bg\)\s*=\s*\([''"]\?\)\w\+\1'
-  let bg_pat='\%('.bg_set. '\|'.bg_let.'\)'
-  let line=search(bg_pat, 'cnW')
+  let bg_set = '\(set\?\|setl\(ocal\)\?\) .*\(background\|bg\)=\(dark\|light\)'
+  let bg_let = 'let \%([&]\%([lg]:\)\?\)\%(background\|bg\)\s*=\s*\([''"]\?\)\w\+\1'
+  let bg_pat = '\%(' .. bg_set .. '\|' .. bg_let .. '\)'
+  let line = search(bg_pat, 'cnW')
   if search(bg_pat, 'cnW')
     exe line
     if search('hi \U\w\+\s\+\S', 'cbnW')
@@ -145,7 +148,7 @@ func! Test_check_colors()
   " if exists("syntax_on")
   " syntax reset
   " endif
-  let pat='hi\%[ghlight]\s*clear\n\s*if\s*exists(\([''"]\)syntax_on\1)\n\s*syn\%[tax]\s*reset\n\s*endif'
+  let pat = 'hi\%[ghlight]\s*clear\n\s*if\s*exists(\([''"]\)syntax_on\1)\n\s*syn\%[tax]\s*reset\n\s*endif'
   if !search(pat, 'cnW')
     let err['init'] = 'No initialization'
   endif
@@ -160,7 +163,7 @@ func! Test_check_colors()
   let ft_groups = []
   " let group = '\%('.join(hi_groups, '\|').'\)' " More efficient than a for loop, but less informative
   for group in hi_groups
-    let pat='\Chi\%[ghlight]!\= *\%[link] \+\zs'.group.'\w\+\>\ze \+.' " Skips `hi clear`
+    let pat = '\Chi\%[ghlight]!\= *\%[link] \+\zs' .. group .. '\w\+\>\ze \+.' " Skips `hi clear`
     if search(pat, 'cW')
       call add(ft_groups, matchstr(getline('.'), pat))
     endif
@@ -172,7 +175,7 @@ func! Test_check_colors()
 
   " 8) Were debugPC and debugBreakpoint defined?
   for group in ['debugPC', 'debugBreakpoint']
-    let pat='\Chi\%[ghlight]!\= *\%[link] \+\zs'.group.'\>'
+    let pat = '\Chi\%[ghlight]!\= *\%[link] \+\zs' .. group .. '\>'
     if search(pat, 'cnW')
       let line = search(pat, 'cW')
       let err['filetype'] = get(err, 'filetype', 'Should not define: ') . matchstr(getline('.'), pat). ' '
