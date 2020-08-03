@@ -1,6 +1,6 @@
 " This script tests a color scheme for some errors and lists potential errors.
 " Load the scheme and source this script, like this:
-"    :edit colors/desert.vim | :so colors/tools/check_colors.vim
+"    :edit colors/desert.vim | :so tools/check_colors.vim
 
 let s:save_cpo= &cpo
 set cpo&vim
