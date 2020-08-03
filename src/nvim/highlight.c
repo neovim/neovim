@@ -90,7 +90,12 @@ static int get_attr_entry(HlEntry entry)
     }
   }
 
-  id = (int)kv_size(attr_entries);
+  size_t next_id = kv_size(attr_entries);
+  if (next_id > INT_MAX) {
+    ELOG("The index on attr_entries has overflowed");
+    return 0;
+  }
+  id = (int)next_id;
   kv_push(attr_entries, entry);
 
   map_put(HlEntry, int)(attr_entry_ids, entry, id);

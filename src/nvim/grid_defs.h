@@ -11,7 +11,7 @@
 
 // The characters and attributes drawn on grids.
 typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
-typedef int16_t sattr_T;
+typedef int sattr_T;
 
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
 ///
