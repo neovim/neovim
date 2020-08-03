@@ -2224,6 +2224,7 @@ inputsecret({prompt} [, {text}])
 				String  like input() but hiding the text
 insert({list}, {item} [, {idx}])
 				List	insert {item} in {list} [before {idx}]
+interrupt()			none	interrupt script execution
 invert({expr})			Number  bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
 isinf({expr})			Number	determine if {expr} is infinity value
@@ -5411,6 +5412,19 @@ insert({list}, {item} [, {idx}])			*insert()*
 <		The last example can be done simpler with |add()|.
 		Note that when {item} is a |List| it is inserted as a single
 		item.  Use |extend()| to concatenate |Lists|.
+
+interrupt()						*interrupt()*
+		Interrupt script execution.  It works more or less like the
+		user typing CTRL-C, most commands won't execute and control
+		returns to the user.  This is useful to abort execution
+		from lower down, e.g. in an autocommand.  Example: >
+		:function s:check_typoname(file)
+		:   if fnamemodify(a:file, ':t') == '['
+		:       echomsg 'Maybe typo'
+		:       call interrupt()
+		:   endif
+		:endfunction
+		:au BufWritePre * call s:check_typoname(expand('<amatch>'))
 
 invert({expr})						*invert()*
 		Bitwise invert.  The argument is converted to a number.  A
