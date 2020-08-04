@@ -4671,6 +4671,8 @@ check_timestamps(
 )
 {
   int didit = 0;
+  int n;
+  bool onfocus = strstr((char *)p_fcnotify, "onfocus") != NULL;
 
   /* Don't check timestamps while system() or another low-level function may
    * cause us to lose and gain focus. */
@@ -4694,7 +4696,10 @@ check_timestamps(
     did_check_timestamps = true;
     already_warned = false;
     FOR_ALL_BUFFERS(buf) {
-      if (focus && strstr((char *)buf->b_p_fcnotify, "onfocus") == NULL) {
+      if (*buf->b_p_fcnotify != NUL) {
+        onfocus = strstr((char *)buf->b_p_fcnotify, "onfocus") != NULL;
+      }
+      if (focus && !onfocus) {
         continue;
       }
       // Only check buffers in a window.
@@ -4824,14 +4829,14 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
+    bool autoread = strstr((char *)p_fcnotify, "autoread") != NULL;
+    if (*buf->b_p_fcnotify != NUL) {
+      autoread = strstr((char *)buf->b_p_fcnotify, "autoread") != NULL;
+    }
     /* Don't do anything for a directory.  Might contain the file
      * explorer. */
     if (os_isdir(buf->b_fname)) {
-    } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
-<<<<<<< HEAD
-=======
-               && strstr((char *)buf->b_p_fcnotify, "autoread")
->>>>>>> 1505c96c6... fixed error with blank vim screen
+    } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar) && autoread
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it

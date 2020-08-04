@@ -845,7 +845,7 @@ return {
       type='string', list='comma', scope={'global', 'buffer'},
       vi_def='false',
       varname='p_fcnotify',
-      defaults={if_true={vi="off"}}
+      defaults={if_true={vi="autoread,onfocus"}}
     },
     {
       full_name='fileencoding', abbreviation='fenc',

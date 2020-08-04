@@ -2190,14 +2190,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 'filechangenotify' 'fcnotify'	string (default "off")
 				local to buffer
 	Watch for changes to a file. How to react for the changes depends on
-	the value of the option. The option can take following values:
-	
-		off	Don't react to changes happening to a file.
-		always	Always notify about the changes to a file, by
-			prompting the user for a reload.
-		changed	Notify about the changes to a file and prompt for a
-			reload if there are unsaved changes in a buffer. Else
-			update the buffer.
+	the value of the option. The option can take a list of following values:
+
+		off		Don't react to changes happening to a file.
+				Can't be set with anyother of the following
+				values.
+		autoread	Notify about the changes to a file and prompt
+				the user if there are changes in the current
+				buffer. If there are no changes reload the
+				buffer without prompts.
+				In the absence of this value the user will be
+				prompted for every change.
+		watcher		Use filesystem notifications for watching a
+				file. Might not work on all filesystems.
+		onfocus		Use aucmds to check for changes to a file on
+				the events `FocusGained`
 
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")

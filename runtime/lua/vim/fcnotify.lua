@@ -11,8 +11,11 @@ local WatcherList = {}
 --- option.
 local function check_notifications()
   for _, watcher in pairs(WatcherList) do
-    local option = vim.api.nvim_buf_get_option(watcher.bufnr, 'filechangenotify')
-    if option:find('watcher') == nil then
+    local status, option = pcall(vim.api.nvim_buf_get_option, watcher.bufnr, 'filechangenotify')
+    if not status then
+      option = vim.api.nvim_get_option('filechangenotify')
+    end
+    if option == 'off' or option:find('watcher') == nil then
       watcher.pending_notifs = false
     elseif watcher.pending_notifs and watcher.paused == false then
       vim.api.nvim_command('checktime '..watcher.bufnr)

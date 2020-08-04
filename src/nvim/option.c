@@ -143,7 +143,6 @@ static char_u   *p_tfu;
 static int p_eol;
 static int p_fixeol;
 static int p_et;
-static char_u   *p_fcnotify;
 static char_u   *p_fenc;
 static char_u   *p_ff;
 static char_u   *p_fo;
@@ -314,7 +313,8 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
-static char *(p_fcn_values[]) =       { "off", "always", "changed", NULL };
+static char *(p_fcn_values[]) =       { "off", "autoread", "watcher", "onfocus",
+                                        NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 #ifdef BACKSLASH_IN_FILENAME
@@ -2536,17 +2536,16 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
-    if (check_opt_strings(curbuf->b_p_fcnotify, p_fcn_values, false) != OK) {
+    char_u *fcnotify = p_fcnotify;
+
+    if (opt_flags & OPT_LOCAL) {
+      fcnotify = curbuf->b_p_fcnotify;
+    }
+
+    if (check_opt_strings(fcnotify, p_fcn_values, true) != OK
+        || (strstr((char *)fcnotify, "off")
+            && vim_strchr(fcnotify, ','))) {
       errmsg = e_invarg;
-    } else {
-      // TODO(BK1603): Why do tests don't respect local buffer?
-      if (strcmp((char *)curbuf->b_p_fcnotify, "always") == 0) {
-        curbuf->b_p_ar = false;
-        // do_cmdline((char_u *)"set noautoread", NULL, NULL, 0);
-      } else if (strcmp((char *)curbuf->b_p_fcnotify, "changed") == 0) {
-        curbuf->b_p_ar = true;
-        // do_cmdline((char_u *)"set autoread", NULL, NULL, 0);
-      }
     }
   // 'encoding', 'fileencoding' and 'makeencoding'
   } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
@@ -5565,6 +5564,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_MENC:
       clear_string_option(&buf->b_p_menc);
       break;
+    case PV_FCNOTIFY:
+      clear_string_option(&buf->b_p_fcnotify);
+      break;
     case PV_LCS:
       clear_string_option(&((win_T *)from)->w_p_lcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
@@ -5589,30 +5591,31 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
   }
   if ((opt_flags & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
     switch ((int)p->indir) {
-    case PV_FP:   return (char_u *)&(curbuf->b_p_fp);
-    case PV_EFM:  return (char_u *)&(curbuf->b_p_efm);
-    case PV_GP:   return (char_u *)&(curbuf->b_p_gp);
-    case PV_MP:   return (char_u *)&(curbuf->b_p_mp);
-    case PV_EP:   return (char_u *)&(curbuf->b_p_ep);
-    case PV_KP:   return (char_u *)&(curbuf->b_p_kp);
-    case PV_PATH: return (char_u *)&(curbuf->b_p_path);
-    case PV_AR:   return (char_u *)&(curbuf->b_p_ar);
-    case PV_TAGS: return (char_u *)&(curbuf->b_p_tags);
-    case PV_TC:   return (char_u *)&(curbuf->b_p_tc);
-    case PV_SISO: return (char_u *)&(curwin->w_p_siso);
-    case PV_SO:   return (char_u *)&(curwin->w_p_so);
-    case PV_DEF:  return (char_u *)&(curbuf->b_p_def);
-    case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
-    case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
-    case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
-    case PV_TFU:  return (char_u *)&(curbuf->b_p_tfu);
-    case PV_STL:  return (char_u *)&(curwin->w_p_stl);
-    case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
-    case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
-    case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
-    case PV_MENC: return (char_u *)&(curbuf->b_p_menc);
-    case PV_FCS:  return (char_u *)&(curwin->w_p_fcs);
-    case PV_LCS:  return (char_u *)&(curwin->w_p_lcs);
+    case PV_FP:         return (char_u *)&(curbuf->b_p_fp);
+    case PV_EFM:        return (char_u *)&(curbuf->b_p_efm);
+    case PV_GP:         return (char_u *)&(curbuf->b_p_gp);
+    case PV_MP:         return (char_u *)&(curbuf->b_p_mp);
+    case PV_EP:         return (char_u *)&(curbuf->b_p_ep);
+    case PV_KP:         return (char_u *)&(curbuf->b_p_kp);
+    case PV_PATH:       return (char_u *)&(curbuf->b_p_path);
+    case PV_AR:         return (char_u *)&(curbuf->b_p_ar);
+    case PV_TAGS:       return (char_u *)&(curbuf->b_p_tags);
+    case PV_TC:         return (char_u *)&(curbuf->b_p_tc);
+    case PV_SISO:       return (char_u *)&(curwin->w_p_siso);
+    case PV_SO:         return (char_u *)&(curwin->w_p_so);
+    case PV_DEF:        return (char_u *)&(curbuf->b_p_def);
+    case PV_INC:        return (char_u *)&(curbuf->b_p_inc);
+    case PV_DICT:       return (char_u *)&(curbuf->b_p_dict);
+    case PV_TSR:        return (char_u *)&(curbuf->b_p_tsr);
+    case PV_TFU:        return (char_u *)&(curbuf->b_p_tfu);
+    case PV_STL:        return (char_u *)&(curwin->w_p_stl);
+    case PV_UL:         return (char_u *)&(curbuf->b_p_ul);
+    case PV_LW:         return (char_u *)&(curbuf->b_p_lw);
+    case PV_BKC:        return (char_u *)&(curbuf->b_p_bkc);
+    case PV_MENC:       return (char_u *)&(curbuf->b_p_menc);
+    case PV_FCNOTIFY:   return (char_u *)&(curbuf->b_p_fcnotify);
+    case PV_FCS:        return (char_u *)&(curwin->w_p_fcs);
+    case PV_LCS:        return (char_u *)&(curwin->w_p_lcs);
     }
     return NULL;     // "cannot happen"
   }
@@ -5677,6 +5680,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curwin->w_p_fcs) : p->var;
   case PV_LCS:    return *curwin->w_p_lcs != NUL
            ? (char_u *)&(curwin->w_p_lcs) : p->var;
+  case PV_FCNOTIFY: return *curbuf->b_p_fcnotify != NUL
+           ? (char_u *)&(curbuf->b_p_fcnotify) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -5736,7 +5741,6 @@ static char_u *get_varp(vimoption_T *p)
   case PV_EOL:    return (char_u *)&(curbuf->b_p_eol);
   case PV_FIXEOL: return (char_u *)&(curbuf->b_p_fixeol);
   case PV_ET:     return (char_u *)&(curbuf->b_p_et);
-  case PV_FCNOTIFY:return (char_u *)&(curbuf->b_p_fcnotify);
   case PV_FENC:   return (char_u *)&(curbuf->b_p_fenc);
   case PV_FF:     return (char_u *)&(curbuf->b_p_ff);
   case PV_FT:     return (char_u *)&(curbuf->b_p_ft);
