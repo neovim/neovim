@@ -137,6 +137,7 @@ struct cmdline_info {
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
 
+// Struct to store the viewstate during 'incsearch' highlighting.
 typedef struct {
   colnr_T   vs_curswant;
   colnr_T   vs_leftcol;
@@ -145,6 +146,18 @@ typedef struct {
   linenr_T  vs_botline;
   int       vs_empty_rows;
 } viewstate_T;
+
+// Struct to store the state of 'incsearch' highlighting.
+typedef struct {
+  pos_T       search_start;   // where 'incsearch' starts searching
+  pos_T       save_cursor;
+  viewstate_T init_viewstate;
+  viewstate_T old_viewstate;
+  pos_T       match_start;
+  pos_T       match_end;
+  bool        did_incsearch;
+  bool        incsearch_postponed;
+} incsearch_state_T;
 
 typedef struct command_line_state {
   VimState state;
@@ -159,14 +172,7 @@ typedef struct command_line_state {
   int save_hiscnt;                      // history line before attempting
                                         // to jump to next match
   int histype;                          // history type to be used
-  pos_T     search_start;               // where 'incsearch' starts searching
-  pos_T     save_cursor;
-  viewstate_T init_viewstate;
-  viewstate_T old_viewstate;
-  pos_T     match_start;
-  pos_T     match_end;
-  int did_incsearch;
-  int incsearch_postponed;
+  incsearch_state_T is_state;
   int did_wild_list;                    // did wild_list() recently
   int wim_index;                        // index in wim_flags[]
   int res;
@@ -252,6 +258,184 @@ static void restore_viewstate(viewstate_T *vs)
   curwin->w_empty_rows = vs->vs_empty_rows;
 }
 
+static void init_incsearch_state(incsearch_state_T *s)
+{
+  s->match_start = curwin->w_cursor;
+  s->did_incsearch = false;
+  s->incsearch_postponed = false;
+  clearpos(&s->match_end);
+  s->save_cursor = curwin->w_cursor;  // may be restored later
+  s->search_start = curwin->w_cursor;
+  save_viewstate(&s->init_viewstate);
+  save_viewstate(&s->old_viewstate);
+}
+
+// Return true when 'incsearch' highlighting is to be done.
+static bool do_incsearch_highlighting(int firstc)
+{
+  return p_is && !cmd_silent && (firstc == '/' || firstc == '?');
+}
+
+// May do 'incsearch' highlighting if desired.
+static void may_do_incsearch_highlighting(int firstc, long count,
+                                          incsearch_state_T *s)
+{
+  pos_T end_pos;
+  proftime_T tm;
+  searchit_arg_T sia;
+
+  if (!do_incsearch_highlighting(firstc)) {
+    return;
+  }
+
+  // if there is a character waiting, search and redraw later
+  if (char_avail()) {
+    s->incsearch_postponed = true;
+    return;
+  }
+  s->incsearch_postponed = false;
+  curwin->w_cursor = s->search_start;  // start at old position
+  save_last_search_pattern();
+  int i;
+
+  // If there is no command line, don't do anything
+  if (ccline.cmdlen == 0) {
+    i = 0;
+    set_no_hlsearch(true);  // turn off previous highlight
+    redraw_all_later(SOME_VALID);
+  } else {
+    int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
+    ui_busy_start();
+    ui_flush();
+    emsg_off++;            // So it doesn't beep if bad expr
+    // Set the time limit to half a second.
+    tm = profile_setlimit(500L);
+    if (!p_hls) {
+      search_flags += SEARCH_KEEP;
+    }
+    memset(&sia, 0, sizeof(sia));
+    sia.sa_tm = &tm;
+    i = do_search(NULL, firstc, ccline.cmdbuff, count,
+                  search_flags, &sia);
+    emsg_off--;
+    // if interrupted while searching, behave like it failed
+    if (got_int) {
+      (void)vpeekc();               // remove <C-C> from input stream
+      got_int = false;              // don't abandon the command line
+      i = 0;
+    } else if (char_avail()) {
+      // cancelled searching because a char was typed
+      s->incsearch_postponed = true;
+    }
+    ui_busy_stop();
+  }
+
+  if (i != 0) {
+    highlight_match = true;   // highlight position
+  } else {
+    highlight_match = false;  // remove highlight
+  }
+
+  // first restore the old curwin values, so the screen is
+  // positioned in the same way as the actual search command
+  restore_viewstate(&s->old_viewstate);
+  changed_cline_bef_curs();
+  update_topline();
+
+  if (i != 0) {
+    pos_T save_pos = curwin->w_cursor;
+
+    s->match_start = curwin->w_cursor;
+    set_search_match(&curwin->w_cursor);
+    validate_cursor();
+    end_pos = curwin->w_cursor;
+    s->match_end = end_pos;
+    curwin->w_cursor = save_pos;
+  } else {
+    end_pos = curwin->w_cursor;         // shutup gcc 4
+  }
+
+  // Disable 'hlsearch' highlighting if the pattern matches
+  // everything. Avoids a flash when typing "foo\|".
+  if (empty_pattern(ccline.cmdbuff)) {
+    set_no_hlsearch(true);
+  }
+
+  validate_cursor();
+  // May redraw the status line to show the cursor position.
+  if (p_ru && curwin->w_status_height > 0) {
+    curwin->w_redr_status = true;
+  }
+
+  update_screen(SOME_VALID);
+  restore_last_search_pattern();
+
+  // Leave it at the end to make CTRL-R CTRL-W work.
+  if (i != 0) {
+    curwin->w_cursor = end_pos;
+  }
+
+  msg_starthere();
+  redrawcmdline();
+  s->did_incsearch = true;
+}
+
+// When CTRL-L typed: add character from the match to the pattern.
+// May set "*c" to the added character.
+// Return OK when calling command_line_not_changed.
+static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
+{
+  // Add a character from under the cursor for 'incsearch'
+  if (!do_incsearch_highlighting(firstc)) {
+    return FAIL;
+  }
+
+  if (s->did_incsearch) {
+    curwin->w_cursor = s->match_end;
+    if (!equalpos(curwin->w_cursor, s->search_start)) {
+      *c = gchar_cursor();
+      // If 'ignorecase' and 'smartcase' are set and the
+      // command line has no uppercase characters, convert
+      // the character to lowercase
+      if (p_ic && p_scs
+          && !pat_has_uppercase(ccline.cmdbuff)) {
+        *c = mb_tolower(*c);
+      }
+      if (*c != NUL) {
+        if (*c == firstc
+            || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), *c)
+            != NULL) {
+          // put a backslash before special characters
+          stuffcharReadbuff(*c);
+          *c = '\\';
+        }
+        return FAIL;
+      }
+    }
+  }
+  return OK;
+}
+
+static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s)
+{
+  if (s->did_incsearch) {
+    if (gotesc) {
+      curwin->w_cursor = s->save_cursor;
+    } else {
+      if (!equalpos(s->save_cursor, s->search_start)) {
+        // put the '" mark at the original position
+        curwin->w_cursor = s->save_cursor;
+        setpcmark();
+      }
+      curwin->w_cursor = s->search_start;  // -V519
+    }
+    restore_viewstate(&s->old_viewstate);
+    highlight_match = false;
+    validate_cursor();          // needed for TAB
+    redraw_all_later(SOME_VALID);
+  }
+}
+
 /// Internal entry point for cmdline mode.
 ///
 /// caller must use save_cmdline and restore_cmdline. Best is to use
@@ -269,11 +453,10 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     .save_msg_scroll = msg_scroll,
     .save_State = State,
     .ignore_drag_release = true,
-    .match_start = curwin->w_cursor,
   };
   CommandLineState *s = &state;
   s->save_p_icm = vim_strsave(p_icm);
-  save_viewstate(&state.init_viewstate);
+  init_incsearch_state(&s->is_state);
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -288,10 +471,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   ccline.prompt_id = last_prompt_id++;
   ccline.level = cmdline_level;
   ccline.overstrike = false;                // always start in insert mode
-  clearpos(&s->match_end);
-  s->save_cursor = curwin->w_cursor;        // may be restored later
-  s->search_start = curwin->w_cursor;
-  save_viewstate(&state.old_viewstate);
 
   assert(indent >= 0);
 
@@ -455,22 +634,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     close_preview_windows();
   }
 
-  if (s->did_incsearch) {
-    if (s->gotesc) {
-      curwin->w_cursor = s->save_cursor;
-    } else {
-      if (!equalpos(s->save_cursor, s->search_start)) {
-        // put the '" mark at the original position
-        curwin->w_cursor = s->save_cursor;
-        setpcmark();
-      }
-      curwin->w_cursor = s->search_start;  // -V519
-    }
-    restore_viewstate(&s->old_viewstate);
-    highlight_match = false;
-    validate_cursor();          // needed for TAB
-    redraw_all_later(SOME_VALID);
-  }
+  finish_incsearch_highlighting(s->gotesc, &s->is_state);
 
   if (ccline.cmdbuff != NULL) {
     // Put line in history buffer (":" and "=" only when it was typed).
@@ -1075,8 +1239,20 @@ static int command_line_execute(VimState *state, int key)
   return command_line_handle_key(s);
 }
 
-static void command_line_next_incsearch(CommandLineState *s, bool next_match)
+// May adjust 'incsearch' highlighting for typing CTRL-G and CTRL-T, go to next
+// or previous match.
+// Returns FAIL when calling command_line_not_changed.
+static int may_do_command_line_next_incsearch(int firstc, long count,
+                                              incsearch_state_T *s,
+                                              bool next_match)
 {
+  if (!do_incsearch_highlighting(firstc)) {
+    return OK;
+  }
+  if (ccline.cmdlen == 0) {
+    return FAIL;
+  }
+
   ui_busy_start();
   ui_flush();
 
@@ -1085,7 +1261,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   int search_flags = SEARCH_NOOF;
 
 
-  if (s->firstc == ccline.cmdbuff[0]) {
+  if (firstc == ccline.cmdbuff[0]) {
     pat = last_search_pattern();
   } else {
     pat = ccline.cmdbuff;
@@ -1110,7 +1286,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   emsg_off++;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
-                       pat, s->count, search_flags,
+                       pat, count, search_flags,
                        RE_SEARCH, NULL);
   emsg_off--;
   ui_busy_stop();
@@ -1118,13 +1294,13 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     s->search_start = s->match_start;
     s->match_end = t;
     s->match_start = t;
-    if (!next_match && s->firstc == '/') {
+    if (!next_match && firstc == '/') {
       // move just before the current match, so that
       // when nv_search finishes the cursor will be
       // put back on the match
       s->search_start = t;
       (void)decl(&s->search_start);
-    } else if (next_match && s->firstc == '?') {
+    } else if (next_match && firstc == '?') {
       // move just after the current match, so that
       // when nv_search finishes the cursor will be
       // put back on the match
@@ -1134,7 +1310,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     if (lt(t, s->search_start) && next_match) {
       // wrap around
       s->search_start = t;
-      if (s->firstc == '?') {
+      if (firstc == '?') {
         (void)incl(&s->search_start);
       } else {
         (void)decl(&s->search_start);
@@ -1154,7 +1330,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     vim_beep(BO_ERROR);
   }
   restore_last_search_pattern();
-  return;
+  return FAIL;
 }
 
 static void command_line_next_histidx(CommandLineState *s, bool next_match)
@@ -1265,10 +1441,10 @@ static int command_line_handle_key(CommandLineState *s)
       // Truncate at the end, required for multi-byte chars.
       ccline.cmdbuff[ccline.cmdlen] = NUL;
       if (ccline.cmdlen == 0) {
-        s->search_start = s->save_cursor;
+        s->is_state.search_start = s->is_state.save_cursor;
         // save view settings, so that the screen won't be restored at the
         // wrong position
-        s->old_viewstate = s->init_viewstate;
+        s->is_state.old_viewstate = s->is_state.init_viewstate;
       }
       redrawcmd();
     } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
@@ -1287,7 +1463,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
         msg_putchar(' ');                             // delete ':'
       }
-      s->search_start = s->save_cursor;
+      s->is_state.search_start = s->is_state.save_cursor;
       redraw_cmdline = true;
       return 0;                           // back to cmd mode
     }
@@ -1337,7 +1513,7 @@ static int command_line_handle_key(CommandLineState *s)
     // Truncate at the end, required for multi-byte chars.
     ccline.cmdbuff[ccline.cmdlen] = NUL;
     if (ccline.cmdlen == 0) {
-      s->search_start = s->save_cursor;
+      s->is_state.search_start = s->is_state.save_cursor;
     }
     redrawcmd();
     return command_line_changed(s);
@@ -1565,31 +1741,7 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_changed(s);
 
   case Ctrl_L:
-    if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
-      // Add a character from under the cursor for 'incsearch'
-      if (s->did_incsearch) {
-        curwin->w_cursor = s->match_end;
-        if (!equalpos(curwin->w_cursor, s->search_start)) {
-          s->c = gchar_cursor();
-          // If 'ignorecase' and 'smartcase' are set and the
-          // command line has no uppercase characters, convert
-          // the character to lowercase
-          if (p_ic && p_scs
-              && !pat_has_uppercase(ccline.cmdbuff)) {
-            s->c = mb_tolower(s->c);
-          }
-          if (s->c != NUL) {
-            if (s->c == s->firstc
-                || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), s->c)
-                != NULL) {
-              // put a backslash before special characters
-              stuffcharReadbuff(s->c);
-              s->c = '\\';
-            }
-            break;
-          }
-        }
-      }
+    if (may_add_char_to_search(s->firstc, &s->c, &s->is_state) == OK) {
       return command_line_not_changed(s);
     }
 
@@ -1703,10 +1855,8 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_G:  // next match
   case Ctrl_T:  // previous match
-    if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
-      if (ccline.cmdlen != 0) {
-        command_line_next_incsearch(s, s->c == Ctrl_G);
-      }
+    if (may_do_command_line_next_incsearch(s->firstc, s->count, &s->is_state,
+                                           s->c == Ctrl_G) == FAIL) {
       return command_line_not_changed(s);
     }
     break;
@@ -1791,7 +1941,7 @@ static int command_line_not_changed(CommandLineState *s)
   // command line did not change. Then we only search and redraw if something
   // changed in the past.
   // Enter command_line_changed() when the command line did change.
-  if (!s->incsearch_postponed) {
+  if (!s->is_state.incsearch_postponed) {
     return 1;
   }
   return command_line_changed(s);
@@ -1843,108 +1993,13 @@ static int command_line_changed(CommandLineState *s)
   }
 
   // 'incsearch' highlighting.
-  if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
-    pos_T end_pos;
-    proftime_T tm;
-    searchit_arg_T sia;
-
-    // if there is a character waiting, search and redraw later
-    if (char_avail()) {
-      s->incsearch_postponed = true;
-      return 1;
-    }
-    s->incsearch_postponed = false;
-    curwin->w_cursor = s->search_start;  // start at old position
-    save_last_search_pattern();
-    int i;
-
-    // If there is no command line, don't do anything
-    if (ccline.cmdlen == 0) {
-      i = 0;
-      set_no_hlsearch(true);  // turn off previous highlight
-      redraw_all_later(SOME_VALID);
-    } else {
-      int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
-      ui_busy_start();
-      ui_flush();
-      ++emsg_off;            // So it doesn't beep if bad expr
-      // Set the time limit to half a second.
-      tm = profile_setlimit(500L);
-      if (!p_hls) {
-        search_flags += SEARCH_KEEP;
-      }
-      memset(&sia, 0, sizeof(sia));
-      sia.sa_tm = &tm;
-      i = do_search(NULL, s->firstc, ccline.cmdbuff, s->count,
-                    search_flags, &sia);
-      emsg_off--;
-      // if interrupted while searching, behave like it failed
-      if (got_int) {
-        (void)vpeekc();               // remove <C-C> from input stream
-        got_int = false;              // don't abandon the command line
-        i = 0;
-      } else if (char_avail()) {
-        // cancelled searching because a char was typed
-        s->incsearch_postponed = true;
-      }
-      ui_busy_stop();
-    }
-
-    if (i != 0) {
-      highlight_match = true;   // highlight position
-    } else {
-      highlight_match = false;  // remove highlight
-    }
-
-    // first restore the old curwin values, so the screen is
-    // positioned in the same way as the actual search command
-    restore_viewstate(&s->old_viewstate);
-    changed_cline_bef_curs();
-    update_topline();
-
-    if (i != 0) {
-      pos_T save_pos = curwin->w_cursor;
-
-      s->match_start = curwin->w_cursor;
-      set_search_match(&curwin->w_cursor);
-      validate_cursor();
-      end_pos = curwin->w_cursor;
-      s->match_end = end_pos;
-      curwin->w_cursor = save_pos;
-    } else {
-      end_pos = curwin->w_cursor;         // shutup gcc 4
-    }
-
-    // Disable 'hlsearch' highlighting if the pattern matches
-    // everything. Avoids a flash when typing "foo\|".
-    if (empty_pattern(ccline.cmdbuff)) {
-      set_no_hlsearch(true);
-    }
-
-    validate_cursor();
-    // May redraw the status line to show the cursor position.
-    if (p_ru && curwin->w_status_height > 0) {
-      curwin->w_redr_status = true;
-    }
-
-    update_screen(SOME_VALID);
-    restore_last_search_pattern();
-
-    // Leave it at the end to make CTRL-R CTRL-W work.
-    if (i != 0) {
-      curwin->w_cursor = end_pos;
-    }
-
-    msg_starthere();
-    redrawcmdline();
-    s->did_incsearch = true;
-  } else if (s->firstc == ':'
-             && current_sctx.sc_sid == 0    // only if interactive
-             && *p_icm != NUL       // 'inccommand' is set
-             && curbuf->b_p_ma      // buffer is modifiable
-             && cmdline_star == 0   // not typing a password
-             && cmd_can_preview(ccline.cmdbuff)
-             && !vpeekc_any()) {
+  if (s->firstc == ':'
+      && current_sctx.sc_sid == 0    // only if interactive
+      && *p_icm != NUL       // 'inccommand' is set
+      && curbuf->b_p_ma      // buffer is modifiable
+      && cmdline_star == 0   // not typing a password
+      && cmd_can_preview(ccline.cmdbuff)
+      && !vpeekc_any()) {
     // Show 'inccommand' preview. It works like this:
     //    1. Do the command.
     //    2. Command implementation detects CMDPREVIEW state, then:
@@ -1958,8 +2013,8 @@ static int command_line_changed(CommandLineState *s)
     emsg_silent--;  // Unblock error reporting
 
     // Restore the window "view".
-    curwin->w_cursor   = s->save_cursor;
-    restore_viewstate(&s->old_viewstate);
+    curwin->w_cursor   = s->is_state.save_cursor;
+    restore_viewstate(&s->is_state.old_viewstate);
     update_topline();
 
     redrawcmdline();
@@ -1968,6 +2023,8 @@ static int command_line_changed(CommandLineState *s)
     State = (State & ~CMDPREVIEW);
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
+  } else {
+    may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
   }
 
   if (cmdmsg_rl || (p_arshape && !p_tbidi && enc_utf8)) {
