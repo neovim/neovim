@@ -1005,7 +1005,8 @@ function M.focusable_float(unique_name, fn)
   local bufnr = api.nvim_get_current_buf()
   do
     local win = find_window_by_var(unique_name, bufnr)
-    if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
+    local pumvisible_ok, pumvisible = pcall(vim.fn.pumvisible)
+    if win and api.nvim_win_is_valid(win) and pumvisible_ok and pumvisible == 0 then
       api.nvim_set_current_win(win)
       api.nvim_command("stopinsert")
       return
@@ -1196,13 +1197,31 @@ function M.fancy_floating_markdown(contents, opts)
   return bufnr, winnr
 end
 
+--- Creates the name for an augroup to be used by `close_preview_autocmd()`.
+local function close_preview_augroup_name(winnr)
+  return 'close_preview_' .. tostring(winnr)
+end
+
 --- Creates autocommands to close a preview window when events happen.
+--- Removes remaining augroups and autocmds once the preview window is closed.
 ---
 --@param events (table) list of events
 --@param winnr (number) window id of preview window
+--@param bufnr (number, optional) buffer to associate the autocmds with
+--(default: current buffer)
 --@see |autocmd-events|
-function M.close_preview_autocmd(events, winnr)
-  api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
+function M.close_preview_autocmd(events, winnr, bufnr)
+  if not events or vim.tbl_isempty(events) then return end
+  local augroup = close_preview_augroup_name(winnr)
+  local buffer_opt = bufnr and "<buffer=" .. tostring(bufnr) .. ">" or "<buffer>"
+  local autocmd_setup = "autocmd " .. table.concat(events, ',') .. " " .. buffer_opt .. " ++once"
+  local rm_window_cmd = "lua pcall(vim.api.nvim_win_close, "..winnr..", true)"
+  local rm_augroup_cmd = "vim.schedule(function() vim.api.nvim_command[[augroup "..augroup.." | autocmd! | augroup end | augroup! "..augroup.."]] end)"
+
+  api.nvim_command('augroup ' .. augroup)
+  api.nvim_command('autocmd!')
+  api.nvim_command(autocmd_setup .. " " .. rm_window_cmd .. ";" .. rm_augroup_cmd)
+  api.nvim_command('augroup end')
 end
 
 --@internal
@@ -1294,6 +1313,7 @@ end
 --             - pad_right  number of columns to pad contents at right
 --             - pad_top    number of lines to pad contents at top
 --             - pad_bottom number of lines to pad contents at bottom
+--             - focus_id string for being able to focus this window upon next call
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1303,7 +1323,30 @@ function M.open_floating_preview(contents, syntax, opts)
     opts = { opts, 't', true };
   }
   opts = opts or {}
+  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave", "WinLeave"}
 
+  local bufnr = api.nvim_get_current_buf()
+  if opts.focus_id then
+    local focus_id = opts.focus_id
+    -- Go back to previous window if we are in a focusable one
+    if npcall(api.nvim_win_get_var, 0, focus_id) then
+      return api.nvim_command("wincmd p")
+    end
+    do
+      local win = find_window_by_var(focus_id, bufnr)
+      local pumvisible_ok, pumvisible = pcall(vim.fn.pumvisible)
+      if win and api.nvim_win_is_valid(win) and pumvisible_ok and pumvisible == 0 then
+        -- Filter problematic autocmds (WinLeave, BufLeave)
+        local augroup = close_preview_augroup_name(win)
+        pcall(api.nvim_command, 'autocmd! '..augroup..' WinLeave,BufLeave <buffer>')
+        api.nvim_set_current_win(win)
+        -- Recreate autocmds
+        M.close_preview_autocmd(opts.close_events, win, bufnr)
+        api.nvim_command("stopinsert")
+        return
+      end
+    end
+  end
   -- Clean up input: trim empty lines from the end, pad
   contents = M._trim(contents, opts)
 
@@ -1323,7 +1366,8 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
-  M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave"}, floating_winnr)
+  M.close_preview_autocmd(opts.close_events, floating_winnr)
+  if opts.focus_id then api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr) end
   return floating_bufnr, floating_winnr
 end
 
