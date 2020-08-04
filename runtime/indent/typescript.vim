@@ -442,7 +442,7 @@ let &cpo = s:cpo_save
 unlet s:cpo_save
 
 function! Fixedgq(lnum, count)
-    let l:tw = &tw ? &tw : 80;
+    let l:tw = &tw ? &tw : 80
 
     let l:count = a:count
     let l:first_char = indent(a:lnum) + 1
