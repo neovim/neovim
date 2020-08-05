@@ -2086,6 +2086,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
           tv_clear(&var1);
           return NULL;
         }
+        p = skipwhite(p);
       }
 
       // Optionally get the second index [ :expr].
