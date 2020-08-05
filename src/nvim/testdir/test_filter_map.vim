@@ -11,6 +11,7 @@ func Test_filter_map_list_expr_string()
   call assert_equal([2, 4, 6, 8], map([1, 2, 3, 4], 'v:val * 2'))
   call assert_equal([0, 2, 4, 6], map([1, 2, 3, 4], 'v:key * 2'))
   call assert_equal([9, 9, 9, 9], map([1, 2, 3, 4], 9))
+  call assert_equal([7, 7, 7], map([1, 2, 3], ' 7 '))
 endfunc
 
 " dict with expression string
