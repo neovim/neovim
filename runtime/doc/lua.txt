@@ -622,6 +622,12 @@ Node methods						*lua-treesitter-node*
 tsnode:parent()						*tsnode:parent()*
 	Get the node's immediate parent.
 
+tsnode:iter_children()					*tsnode:iter_children()*
+	Iterates over all the direct children of {tsnode}, regardless of
+	wether they are named or not.
+	Returns the child node plus the eventual field name corresponding to
+	this child node.
+
 tsnode:child_count()					*tsnode:child_count()*
 	Get the node's number of children.
 

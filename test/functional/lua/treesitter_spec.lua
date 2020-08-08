@@ -127,6 +127,30 @@ void ui_refresh(void)
   }
 }]]
 
+  it('allows to iterate over nodes children', function()
+    if not check_parser() then return end
+
+    insert(test_text);
+
+    local res = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c")
+
+      func_node = parser:parse():root():child(0)
+
+      res = {}
+      for node, field in func_node:iter_children() do
+        table.insert(res, {node:type(), field})
+      end
+      return res
+    ]])
+
+    eq({
+      {"primitive_type", "type"},
+      {"function_declarator", "declarator"},
+      {"compound_statement", "body"}
+    }, res)
+  end)
+
   local query = [[
     ((call_expression function: (identifier) @minfunc (argument_list (identifier) @min_id)) (eq? @minfunc "MIN"))
     "for" @keyword
