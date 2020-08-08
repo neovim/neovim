@@ -240,11 +240,13 @@ end
 
 --- List workspace folders.
 function M.list_workspace_folders()
+  local workspace_folders = {}
   for _, client in ipairs(vim.lsp.buf_get_clients()) do
     for _, folder in ipairs(client.workspaceFolders) do
-      print(folder.name)
+      table.insert(workspace_folders, folder.name)
     end
   end
+  return workspace_folders
 end
 
 --- Add a workspace folder.

@@ -1317,7 +1317,7 @@ end
 function M.make_workspace_params(added, removed)
   return { event = { added = added; removed = removed; } }
 end
---- Get visual width of tabstop.
+--- Returns visual width of tabstop.
 ---
 --@see |softtabstop|
 --@param bufnr (optional, number): Buffer handle, defaults to current

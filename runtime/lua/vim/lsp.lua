@@ -598,8 +598,8 @@ function lsp.start_client(config)
       --  name
       -- }
       workspaceFolders = {{
-        uri=vim.uri_from_fname(config.root_dir);
-        name=string.format("%s", config.root_dir);
+        uri = vim.uri_from_fname(config.root_dir);
+        name = string.format("%s", config.root_dir);
       }};
     }
     if config.before_init then
