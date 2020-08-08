@@ -63,6 +63,8 @@ local.mk
 /runtime/doc/errors.log
 # Don't include the mpack files.
 /runtime/doc/*.mpack
+# Also don't include intermediary doc output
+/tmp-*-doc
 
 # CLion
 /.idea/
