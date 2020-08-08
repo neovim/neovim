@@ -5365,7 +5365,7 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
     if (eval1(&start, &tv, false) == FAIL) {    // recursive!
       return FAIL;
     }
-    if (*start == '}') {
+    if (*skipwhite(start) == '}') {
       return NOTDONE;
     }
   }
