@@ -16,6 +16,7 @@ setlocal noswapfile buftype=nofile bufhidden=hide
 setlocal nomodified readonly nomodifiable
 setlocal noexpandtab tabstop=8 softtabstop=8 shiftwidth=8
 setlocal wrap breakindent linebreak
+setlocal iskeyword+=-
 
 setlocal nonumber norelativenumber
 setlocal foldcolumn=0 colorcolumn=0 nolist nofoldenable
