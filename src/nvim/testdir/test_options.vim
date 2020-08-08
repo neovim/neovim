@@ -576,3 +576,13 @@ func Test_opt_boolean()
   set number&
 endfunc
 
+" Test for setting option value containing spaces with isfname+=32
+func Test_isfname_with_options()
+  set isfname+=32
+  setlocal keywordprg=:term\ help.exe
+  call assert_equal(':term help.exe', &keywordprg)
+  set isfname&
+  setlocal keywordprg&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
