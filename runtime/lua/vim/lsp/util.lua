@@ -195,12 +195,6 @@ function M.apply_text_document_edit(text_document_edit)
   M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
-function M.get_current_line_to_cursor()
-  local pos = api.nvim_win_get_cursor(0)
-  local line = assert(api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
-  return line:sub(pos[2]+1)
-end
-
 local function parse_snippet_rec(input, inner)
   local res = ""
 
