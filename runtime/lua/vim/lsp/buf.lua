@@ -265,6 +265,7 @@ function M.add_workspace_folder(workspace_folder)
       if folder.name == workspace_folder then
         found = true
         print(workspace_folder, "is already part of this workspace")
+        break
       end
     end
     if not found then
