@@ -21,10 +21,6 @@ describe(':terminal scrollback', function()
     screen = thelpers.screen_setup(nil, nil, 30)
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe('when the limit is exceeded', function()
     before_each(function()
       local lines = {}
@@ -406,8 +402,6 @@ describe("'scrollback' option", function()
     feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
-
-    screen:detach()
   end)
 
   it('deletes lines (only) if necessary', function()
@@ -438,14 +432,32 @@ describe("'scrollback' option", function()
     command('sleep 100m')
 
     feed_data(nvim_dir.."/shell-test REP 41 line"..(iswin() and '\r' or '\n'))
-    screen:expect{any='40: line                      '}
+    if iswin() then
+      screen:expect{grid=[[
+        37: line                      |
+        38: line                      |
+        39: line                      |
+        40: line                      |
+                                      |
+        ${1: }                            |
+        {3:-- TERMINAL --}                |
+      ]]}
+    else
+      screen:expect{grid=[[
+        36: line                      |
+        37: line                      |
+        38: line                      |
+        39: line                      |
+        40: line                      |
+        {MATCH:.*}|
+        {3:-- TERMINAL --}                |
+      ]]}
+    end
+    expect_lines(58)
 
-    retry(nil, nil, function() expect_lines(58) end)
     -- Verify off-screen state
     eq((iswin() and '36: line' or '35: line'), eval("getline(line('w0') - 1)"))
     eq((iswin() and '27: line' or '26: line'), eval("getline(line('w0') - 10)"))
-
-    screen:detach()
   end)
 
   it('defaults to 10000 in :terminal buffers', function()

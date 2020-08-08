@@ -7,6 +7,7 @@
 "   %X
 
 source view_util.vim
+source term_util.vim
 
 func s:get_statusline()
   return ScreenLines(&lines - 1, &columns)[0]
@@ -29,7 +30,9 @@ endfunc
 
 " Function used to display syntax group.
 func SyntaxItem()
-  return synIDattr(synID(line("."),col("."),1),"name")
+  call assert_equal(s:expected_curbuf, g:actual_curbuf)
+  call assert_equal(s:expected_curwin, g:actual_curwin)
+  return synIDattr(synID(line("."), col("."),1), "name")
 endfunc
 
 func Test_caught_error_in_statusline()
@@ -218,6 +221,8 @@ func Test_statusline()
 
   "%{: Evaluate expression between '%{' and '}' and substitute result.
   syntax on
+  let s:expected_curbuf = string(bufnr(''))
+  let s:expected_curwin = string(win_getid())
   set statusline=%{SyntaxItem()}
   call assert_match('^vimNumber\s*$', s:get_statusline())
   s/^/"/
@@ -332,6 +337,23 @@ func Test_statusline()
   set statusline=%!2*3+1
   call assert_match('7\s*$', s:get_statusline())
 
+  func GetNested()
+    call assert_equal(string(win_getid()), g:actual_curwin)
+    call assert_equal(string(bufnr('')), g:actual_curbuf)
+    return 'nested'
+  endfunc
+  func GetStatusLine()
+    call assert_equal(win_getid(), g:statusline_winid)
+    return 'the %{GetNested()} line'
+  endfunc
+  set statusline=%!GetStatusLine()
+  call assert_match('the nested line', s:get_statusline())
+  call assert_false(exists('g:actual_curwin'))
+  call assert_false(exists('g:actual_curbuf'))
+  call assert_false(exists('g:statusline_winid'))
+  delfunc GetNested
+  delfunc GetStatusLine
+
   " Check statusline in current and non-current window
   " with the 'fillchars' option.
   set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
@@ -346,4 +368,47 @@ func Test_statusline()
   set statusline&
   set laststatus&
   set splitbelow&
+endfunc
+
+func Test_statusline_visual()
+  func CallWordcount()
+    call wordcount()
+  endfunc
+  new x1
+  setl statusline=count=%{CallWordcount()}
+  " buffer must not be empty
+  call setline(1, 'hello')
+
+  " window with more lines than x1
+  new x2
+  call setline(1, range(10))
+  $
+  " Visual mode in line below liast line in x1 should not give ml_get error
+  call feedkeys("\<C-V>", "xt")
+  redraw
+
+  delfunc CallWordcount
+  bwipe! x1
+  bwipe! x2
+endfunc
+
+func Test_statusline_removed_group()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  let lines =<< trim END
+    scriptencoding utf-8
+    set laststatus=2
+    let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'
+  END
+  call writefile(lines, 'XTest_statusline')
+
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 10, 'cols': 50})
+  call term_wait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_statusline_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_statusline')
 endfunc

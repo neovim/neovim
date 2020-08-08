@@ -1,5 +1,5 @@
 " Test for python 2 commands.
-" TODO: move tests from test87.in here.
+" TODO: move tests from test86.in here.
 
 if !has('python')
   finish
@@ -164,3 +164,11 @@ func Test_Write_To_Current_Buffer_Fixes_Cursor_Str()
 
   bwipe!
 endfunction
+
+func Test_Catch_Exception_Message()
+  try
+    py raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
+endfunc

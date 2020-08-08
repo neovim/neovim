@@ -133,9 +133,6 @@ typedef enum {
 # include "viml/parser/expressions.c.generated.h"
 #endif
 
-/// Character used as a separator in autoload function/variable names.
-#define AUTOLOAD_CHAR '#'
-
 /// Scale number by a given factor
 ///
 /// Used to apply exponent to a number. Idea taken from uClibc.

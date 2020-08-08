@@ -1,4 +1,4 @@
-" Maintainer:          Anmol Sethi <anmol@aubble.com>
+" Maintainer:          Anmol Sethi <hi@nhooyr.io>
 " Previous Maintainer: SungHyun Nam <goweol@gmail.com>
 
 if exists('b:current_syntax')
@@ -30,6 +30,7 @@ endif
 if !exists('b:man_sect')
   call man#init_pager()
 endif
+
 if b:man_sect =~# '^[023]'
   syntax case match
   syntax include @c $VIMRUNTIME/syntax/c.vim

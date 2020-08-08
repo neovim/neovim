@@ -60,3 +60,46 @@ func Test_getvcol()
   call assert_equal(2, virtcol("'["))
   call assert_equal(2, virtcol("']"))
 endfunc
+
+func Test_list2str_str2list_utf8()
+  " One Unicode codepoint
+  let s = "\u3042\u3044"
+  let l = [0x3042, 0x3044]
+  call assert_equal(l, str2list(s, 1))
+  call assert_equal(s, list2str(l, 1))
+  if &enc ==# 'utf-8'
+    call assert_equal(str2list(s), str2list(s, 1))
+    call assert_equal(list2str(l), list2str(l, 1))
+  endif
+
+  " With composing characters
+  let s = "\u304b\u3099\u3044"
+  let l = [0x304b, 0x3099, 0x3044]
+  call assert_equal(l, str2list(s, 1))
+  call assert_equal(s, list2str(l, 1))
+  if &enc ==# 'utf-8'
+    call assert_equal(str2list(s), str2list(s, 1))
+    call assert_equal(list2str(l), list2str(l, 1))
+  endif
+
+  " Null list is the same as an empty list
+  call assert_equal('', list2str([]))
+  " call assert_equal('', list2str(test_null_list()))
+endfunc
+
+func Test_list2str_str2list_latin1()
+  " When 'encoding' is not multi-byte can still get utf-8 string.
+  " But we need to create the utf-8 string while 'encoding' is utf-8.
+  let s = "\u3042\u3044"
+  let l = [0x3042, 0x3044]
+
+  let save_encoding = &encoding
+  " set encoding=latin1
+
+  let lres = str2list(s, 1)
+  let sres = list2str(l, 1)
+
+  let &encoding = save_encoding
+  call assert_equal(l, lres)
+  call assert_equal(s, sres)
+endfunc

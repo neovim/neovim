@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <wctype.h>
-#include <wchar.h>  // for towupper() and towlower()
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -1087,8 +1086,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     }
 
     if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width_inner)) {
-      added = 0;
-
       if (*p_sbr != NUL) {
         if (size + sbrlen + numberwidth > (colnr_T)wp->w_width_inner) {
           // Calculate effective window width.
@@ -1573,6 +1570,7 @@ char_u* skiptohex(char_u *q)
 ///
 /// @return Pointer to the next whitespace or NUL character.
 char_u *skiptowhite(const char_u *p)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;

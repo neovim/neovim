@@ -25,6 +25,12 @@
  * SUCH DAMAGE.
  */
 
+// Gotchas
+// -------
+//
+// if you delete from a kbtree while iterating over it you must use
+// kb_del_itr and not kb_del otherwise the iterator might point to freed memory.
+
 #ifndef NVIM_LIB_KBTREE_H
 #define NVIM_LIB_KBTREE_H
 

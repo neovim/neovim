@@ -433,6 +433,18 @@ func Test_digraphs_output()
   call assert_equal('Z% Ж  1046',  matchstr(out, '\C\<Z%\D*1046\>'))
   call assert_equal('u- ū  363',   matchstr(out, '\C\<u-\D*363\>'))
   call assert_equal('SH ^A   1',   matchstr(out, '\C\<SH\D*1\>'))
+  call assert_notmatch('Latin supplement', out)
+
+  let out_bang_without_custom = execute(':digraph!')
+  digraph lt 60
+  let out_bang_with_custom = execute(':digraph!')
+  call assert_notmatch('lt', out_bang_without_custom)
+  call assert_match("^\n"
+        \        .. "NU ^@  10 .*\n"
+        \        .. "Latin supplement\n"
+        \        .. "!I ¡  161 .*\n"
+        \        .. ".*\n"
+        \        .. 'Custom\n.*\<lt <   60\>', out_bang_with_custom)
   bw!
 endfunc
 
@@ -462,6 +474,19 @@ func Test_show_digraph()
   new
   call Put_Dig("e=")
   call assert_equal("\n<е> 1077, Hex 0435, Oct 2065, Digr e=", execute('ascii'))
+  bwipe!
+endfunc
+
+func Test_show_digraph_cp1251()
+  throw 'skipped: Nvim supports ''utf8'' encoding only'
+  if !has('multi_byte')
+    return
+  endif
+  new
+  set encoding=cp1251
+  call Put_Dig("='")
+  call assert_equal("\n<\xfa>  <|z>  <M-z>  250,  Hex fa,  Oct 372, Digr ='", execute('ascii'))
+  set encoding=utf-8
   bwipe!
 endfunc
 

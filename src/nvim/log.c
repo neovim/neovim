@@ -93,6 +93,7 @@ static bool log_path_init(void)
 void log_init(void)
 {
   uv_mutex_init(&mutex);
+  log_path_init();
 }
 
 void log_lock(void)

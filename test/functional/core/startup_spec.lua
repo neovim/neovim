@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local command = helpers.command
+local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
@@ -17,6 +18,7 @@ local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local iswin = helpers.iswin
 local write_file = helpers.write_file
+local meths = helpers.meths
 
 describe('startup', function()
   before_each(function()
@@ -277,6 +279,32 @@ describe('startup', function()
         [4] = {bold = true, foreground = Screen.colors.Blue1},
     }})
   end)
+
+  it('fixed hang issue with --headless (#11386)', function()
+    local expected = ''
+    local period = 100
+    for i = 1, period - 1 do
+      expected = expected .. i .. '\r\n'
+    end
+    expected = expected .. period
+    eq(
+      expected,
+      -- FIXME(codehex): We should really set a timeout for the system function.
+      -- If this test fails, there will be a waiting input state.
+      funcs.system({nvim_prog, '-u', 'NONE', '-c',
+        'for i in range(1, 100) | echo i | endfor | quit',
+        '--headless'
+      })
+    )
+  end)
+
+  it("get command line arguments from v:argv", function()
+    local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+                               '--cmd', nvim_set,
+                               '-c', [[echo v:argv[-1:] len(v:argv) > 1]],
+                               '+q' })
+    eq('[\'+q\'] 1', out)
+  end)
 end)
 
 describe('sysinit', function()
@@ -330,4 +358,36 @@ describe('sysinit', function()
     eq('loaded 1 xdg 0 vim 1',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
+
+  it('fixed hang issue with -D (#12647)', function()
+    local screen
+    screen = Screen.new(60, 6)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    screen:expect([[
+      ^                                                            |
+      Entering Debug mode.  Type "cont" to continue.              |
+      cmd: augroup nvim_terminal                                  |
+      >                                                           |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+    command([[call chansend(g:id, "cont\n")]])
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+  end)
+end)
+
+describe('clean', function()
+  clear()
+  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) ~= nil)
+  clear('--clean')
+  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) == nil)
 end)

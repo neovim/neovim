@@ -91,7 +91,7 @@ NOTE: [:q!](:q) <Enter> discards any changes you made. In a few lessons you
 
 ** Press `x`{normal} to delete the character under the cursor. **
 
- 1. Move the cursor to the line below marked --->.
+ 1. Move the cursor to the line below marked ✗.
 
  2. To fix the errors, move the cursor until it is on top of the
      character to be deleted.
@@ -111,7 +111,7 @@ NOTE: As you go through this tutor, do not try to memorize, learn by
 
 ** Press `i`{normal} to insert text. **
 
- 1. Move the cursor to the first line below marked --->.
+ 1. Move the cursor to the first line below marked ✗.
 
  2. To make the first line the same as the second, move the cursor on top
      of the first character AFTER where the text is to be inserted.
@@ -130,7 +130,7 @@ There is some text missing from this line.
 
 ** Press `A`{normal} to append text. **
 
- 1. Move the cursor to the first line below marked --->.
+ 1. Move the cursor to the first line below marked ✗.
     It does not matter on what character the cursor is in that line.
 
  2. Press [A](A) and type in the necessary additions.
@@ -138,7 +138,7 @@ There is some text missing from this line.
  3. As the text has been appended press `<Esc>`{normal} to return to Normal
      mode.
 
- 4. Move the cursor to the second line marked ---> and repeat
+ 4. Move the cursor to the second line marked ✗ and repeat
     steps 2 and 3 to correct this sentence.
 
 There is some text missing from th
@@ -211,7 +211,7 @@ Now continue with Lesson 2.
 
  1. Press `<Esc>`{normal} to make sure you are in Normal mode.
 
- 2. Move the cursor to the line below marked --->.
+ 2. Move the cursor to the line below marked ✗.
 
  3. Move the cursor to the beginning of a word that needs to be deleted.
 
@@ -227,7 +227,7 @@ There are a some words fun that don't belong paper in this sentence.
 
  1. Press `<Esc>`{normal} to make sure you are in Normal mode.
 
- 2. Move the cursor to the line below marked --->.
+ 2. Move the cursor to the line below marked ✗.
 
  3. Move the cursor to the end of the correct line (AFTER the first . ).
 
@@ -263,7 +263,7 @@ NOTE:  Pressing just the motion while in Normal mode without an operator
 
 ** Typing a number before a motion repeats it that many times. **
 
- 1. Move the cursor to the start of the line marked ---> below.
+ 1. Move the cursor to the start of the line marked ✓ below.
 
  2. Type `2w`{normal} to move the cursor two words forward.
 
@@ -285,7 +285,7 @@ In the combination of the delete operator and a motion mentioned above you
 insert a count before the motion to delete more:
      d   number   motion
 
- 1. Move the cursor to the first UPPER CASE word in the line marked --->.
+ 1. Move the cursor to the first UPPER CASE word in the line marked ✗.
 
  2. Type `d2w`{normal} to delete the two UPPER CASE words
 
@@ -318,7 +318,7 @@ it would be easier to simply type two d's to delete a line.
 
 ** Press `u`{normal} to undo the last commands, `U`{normal} to fix a whole line. **
 
- 1. Move the cursor to the line below marked ---> and place it on the
+ 1. Move the cursor to the line below marked ✗ and place it on the
     first error.
  2. Type `x`{normal} to delete the first unwanted character.
  3. Now type `u`{normal} to undo the last command executed.
@@ -359,7 +359,7 @@ Fiix the errors oon thhis line and reeplace them witth undo.
 
 ** Type `p`{normal} to put previously deleted text after the cursor. **
 
- 1. Move the cursor to the first ---> line below.
+ 1. Move the cursor to the first ✓ line below.
 
  2. Type `dd`{normal} to delete the line and store it in a Vim register.
 
@@ -378,7 +378,7 @@ a) Roses are red,
 
 ** Type `rx`{normal} to replace the character at the cursor with x. **
 
- 1. Move the cursor to the first line below marked --->.
+ 1. Move the cursor to the first line below marked ✗.
 
  2. Move the cursor so that it is on top of the first error.
 
@@ -397,7 +397,7 @@ NOTE: Remember that you should be learning by doing, not memorization.
 
 ** To change until the end of a word, type `ce`{normal}. **
 
- 1. Move the cursor to the first line below marked --->.
+ 1. Move the cursor to the first line below marked ✗.
 
  2. Place the cursor on the "u" in "lubw".
 
@@ -423,7 +423,7 @@ Notice that [c](c)e deletes the word and places you in Insert mode.
 
  2. The motions are the same, such as `w`{normal} (word) and `$`{normal} (end of line).
 
- 3. Move to the first line below marked --->.
+ 3. Move to the first line below marked ✗.
 
  4. Move the cursor to the first error.
 
@@ -503,7 +503,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
 ** Type `%`{normal} to find a matching ),], or }. **
 
- 1. Place the cursor on any (, [, or { in the line below marked --->.
+ 1. Place the cursor on any (, [, or { in the line below marked ✓.
 
  2. Now type the [%](%) character.
 
@@ -521,7 +521,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
 
 ** Type `:s/old/new/g` to substitute "new" for "old". **
 
- 1. Move the cursor to the line below marked --->.
+ 1. Move the cursor to the line below marked ✗.
 
  2. Type
 ~~~ cmd
@@ -725,7 +725,7 @@ NOTE: You can also read the output of an external command. For example,
 
 ** Type `o`{normal} to open a line below the cursor and place you in Insert mode. **
 
- 1. Move the cursor to the line below marked --->.
+ 1. Move the cursor to the line below marked ✓.
 
  2. Type the lowercase letter `o`{normal} to [open](o) up a line BELOW the
     cursor and place you in Insert mode.
@@ -743,7 +743,7 @@ Open up a line above this by typing O while the cursor is on this line.
 
 ** Type `a`{normal} to insert text AFTER the cursor. **
 
- 1. Move the cursor to the start of the line below marked --->.
+ 1. Move the cursor to the start of the line below marked ✗.
 
  2. Press `e`{normal} until the cursor is on the end of "li".
 
@@ -766,7 +766,7 @@ NOTE: [a](a), [i](i) and [A](A) all go to the same Insert mode, the only
 
 ** Type a capital `R`{normal} to replace more than one character. **
 
- 1. Move the cursor to the first line below marked --->. Move the cursor to
+ 1. Move the cursor to the first line below marked ✗. Move the cursor to
      the beginning of the first "xxx".
 
  2. Now press `R`{normal} ([capital R](R)) and type the number below it in the
@@ -787,7 +787,7 @@ NOTE: Replace mode is like Insert mode, but every typed character deletes an
 
 ** Use the `y`{normal} operator to copy text and `p`{normal} to paste it. **
 
- 1. Go to the line marked with ---> below and place the cursor after "a)".
+ 1. Go to the line marked with ✓ below and place the cursor after "a)".
 
  2. Start Visual mode with `v`{normal} and move the cursor to just before
     "first".
@@ -805,7 +805,7 @@ NOTE: Replace mode is like Insert mode, but every typed character deletes an
     end of the next line with `j$`{normal} and put the text there with `p`{normal}
 
 a) This is the first item.
-    b)
+b)
 
 NOTE: you can use `y`{normal} as an operator: `yw`{normal} yanks one word.
 

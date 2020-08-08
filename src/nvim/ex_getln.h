@@ -16,6 +16,8 @@
 #define WILD_ALL                6
 #define WILD_LONGEST            7
 #define WILD_ALL_KEEP           8
+#define WILD_CANCEL             9
+#define WILD_APPLY              10
 
 #define WILD_LIST_NOTFOUND      0x01
 #define WILD_HOME_REPLACE       0x02
@@ -27,6 +29,9 @@
 #define WILD_ESCAPE             0x80
 #define WILD_ICASE              0x100
 #define WILD_ALLLINKS           0x200
+#define WILD_IGNORE_COMPLETESLASH   0x400
+#define WILD_NOERROR            0x800  // sets EW_NOERROR
+#define WILD_BUFLASTUSED        0x1000
 
 /// Present history tables
 typedef enum {

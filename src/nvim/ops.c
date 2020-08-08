@@ -31,6 +31,7 @@
 #include "nvim/indent.h"
 #include "nvim/log.h"
 #include "nvim/mark.h"
+#include "nvim/extmark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -49,6 +50,7 @@
 #include "nvim/undo.h"
 #include "nvim/macros.h"
 #include "nvim/window.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
@@ -87,6 +89,10 @@ struct block_def {
 # include "ops.c.generated.h"
 #endif
 
+// Flags for third item in "opchars".
+#define OPF_LINES  1  // operator always works on lines
+#define OPF_CHANGE 2  // operator changes text
+
 /*
  * The names of operators.
  * IMPORTANT: Index must correspond with defines in vim.h!!!
@@ -94,36 +100,36 @@ struct block_def {
  */
 static char opchars[][3] =
 {
-  { NUL,    NUL, false },    // OP_NOP
-  { 'd',    NUL, false },    // OP_DELETE
-  { 'y',    NUL, false },    // OP_YANK
-  { 'c',    NUL, false },    // OP_CHANGE
-  { '<',    NUL, true },     // OP_LSHIFT
-  { '>',    NUL, true },     // OP_RSHIFT
-  { '!',    NUL, true },     // OP_FILTER
-  { 'g',    '~', false },    // OP_TILDE
-  { '=',    NUL, true },     // OP_INDENT
-  { 'g',    'q', true },     // OP_FORMAT
-  { ':',    NUL, true },     // OP_COLON
-  { 'g',    'U', false },    // OP_UPPER
-  { 'g',    'u', false },    // OP_LOWER
-  { 'J',    NUL, true },     // DO_JOIN
-  { 'g',    'J', true },     // DO_JOIN_NS
-  { 'g',    '?', false },    // OP_ROT13
-  { 'r',    NUL, false },    // OP_REPLACE
-  { 'I',    NUL, false },    // OP_INSERT
-  { 'A',    NUL, false },    // OP_APPEND
-  { 'z',    'f', true },     // OP_FOLD
-  { 'z',    'o', true },     // OP_FOLDOPEN
-  { 'z',    'O', true },     // OP_FOLDOPENREC
-  { 'z',    'c', true },     // OP_FOLDCLOSE
-  { 'z',    'C', true },     // OP_FOLDCLOSEREC
-  { 'z',    'd', true },     // OP_FOLDDEL
-  { 'z',    'D', true },     // OP_FOLDDELREC
-  { 'g',    'w', true },     // OP_FORMAT2
-  { 'g',    '@', false },    // OP_FUNCTION
-  { Ctrl_A, NUL, false },    // OP_NR_ADD
-  { Ctrl_X, NUL, false },    // OP_NR_SUB
+  { NUL, NUL, 0 },                       // OP_NOP
+  { 'd', NUL, OPF_CHANGE },              // OP_DELETE
+  { 'y', NUL, 0 },                       // OP_YANK
+  { 'c', NUL, OPF_CHANGE },              // OP_CHANGE
+  { '<', NUL, OPF_LINES | OPF_CHANGE },  // OP_LSHIFT
+  { '>', NUL, OPF_LINES | OPF_CHANGE },  // OP_RSHIFT
+  { '!', NUL, OPF_LINES | OPF_CHANGE },  // OP_FILTER
+  { 'g', '~', OPF_CHANGE },              // OP_TILDE
+  { '=', NUL, OPF_LINES | OPF_CHANGE },  // OP_INDENT
+  { 'g', 'q', OPF_LINES | OPF_CHANGE },  // OP_FORMAT
+  { ':', NUL, OPF_LINES },               // OP_COLON
+  { 'g', 'U', OPF_CHANGE },              // OP_UPPER
+  { 'g', 'u', OPF_CHANGE },              // OP_LOWER
+  { 'J', NUL, OPF_LINES | OPF_CHANGE },  // DO_JOIN
+  { 'g', 'J', OPF_LINES | OPF_CHANGE },  // DO_JOIN_NS
+  { 'g', '?', OPF_CHANGE },              // OP_ROT13
+  { 'r', NUL, OPF_CHANGE },              // OP_REPLACE
+  { 'I', NUL, OPF_CHANGE },              // OP_INSERT
+  { 'A', NUL, OPF_CHANGE },              // OP_APPEND
+  { 'z', 'f', OPF_LINES },               // OP_FOLD
+  { 'z', 'o', OPF_LINES },               // OP_FOLDOPEN
+  { 'z', 'O', OPF_LINES },               // OP_FOLDOPENREC
+  { 'z', 'c', OPF_LINES },               // OP_FOLDCLOSE
+  { 'z', 'C', OPF_LINES },               // OP_FOLDCLOSEREC
+  { 'z', 'd', OPF_LINES },               // OP_FOLDDEL
+  { 'z', 'D', OPF_LINES },               // OP_FOLDDELREC
+  { 'g', 'w', OPF_LINES | OPF_CHANGE },  // OP_FORMAT2
+  { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
+  { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
+  { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
 };
 
 /*
@@ -167,7 +173,13 @@ int get_op_type(int char1, int char2)
  */
 int op_on_lines(int op)
 {
-  return opchars[op][2];
+  return opchars[op][2] & OPF_LINES;
+}
+
+// Return TRUE if operator "op" changes text.
+int op_is_change(int op)
+{
+    return opchars[op][2] & OPF_CHANGE;
 }
 
 /*
@@ -219,8 +231,6 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     ++curwin->w_cursor.lnum;
   }
 
-  changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
-
   if (oap->motion_type == kMTBlockWise) {
     curwin->w_cursor.lnum = oap->start.lnum;
     curwin->w_cursor.col = block_col;
@@ -251,7 +261,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
         sprintf((char *)IObuff, _("%" PRId64 " lines %sed %d times"),
             (int64_t)oap->line_count, s, amount);
     }
-    msg(IObuff);
+    msg_attr_keep(IObuff, 0, true, false);
   }
 
   /*
@@ -260,8 +270,11 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   curbuf->b_op_start = oap->start;
   curbuf->b_op_end.lnum = oap->end.lnum;
   curbuf->b_op_end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
-  if (curbuf->b_op_end.col > 0)
-    --curbuf->b_op_end.col;
+  if (curbuf->b_op_end.col > 0) {
+    curbuf->b_op_end.col--;
+  }
+
+  changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
 }
 
 // Shift the current line one shiftwidth left (if left != 0) or right
@@ -270,20 +283,21 @@ void shift_line(
     int left,
     int round,
     int amount,
-    int call_changed_bytes         /* call changed_bytes() */
+    int call_changed_bytes  // call changed_bytes()
 )
 {
   int count;
   int i, j;
   int p_sw = get_sw_value(curbuf);
 
-  count = get_indent();         /* get current indent */
+  count = get_indent();  // get current indent
 
-  if (round) {                  /* round off indent */
-    i = count / p_sw;           /* number of p_sw rounded down */
-    j = count % p_sw;           /* extra spaces */
-    if (j && left)              /* first remove extra spaces */
-      --amount;
+  if (round) {  // round off indent
+    i = count / p_sw;  // number of p_sw rounded down
+    j = count % p_sw;  // extra spaces
+    if (j && left) {  // first remove extra spaces
+      amount--;
+    }
     if (left) {
       i -= amount;
       if (i < 0)
@@ -291,7 +305,7 @@ void shift_line(
     } else
       i += amount;
     count = i * p_sw;
-  } else {            /* original vi indent */
+  } else {  // original vi indent
     if (left) {
       count -= p_sw * amount;
       if (count < 0)
@@ -300,11 +314,12 @@ void shift_line(
       count += p_sw * amount;
   }
 
-  /* Set new indent */
-  if (State & VREPLACE_FLAG)
-    change_indent(INDENT_SET, count, FALSE, NUL, call_changed_bytes);
-  else
+  // Set new indent
+  if (State & VREPLACE_FLAG) {
+    change_indent(INDENT_SET, count, false, NUL, call_changed_bytes);
+  } else {
     (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+  }
 }
 
 /*
@@ -340,6 +355,8 @@ static void shift_block(oparg_T *oap, int amount)
 
   char_u *const oldp = get_cursor_line_ptr();
 
+  int startcol, oldlen, newlen;
+
   if (!left) {
     /*
      *  1. Get start vcol
@@ -349,16 +366,13 @@ static void shift_block(oparg_T *oap, int amount)
      */
     total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
+    char_u * old_textstart = bd.textstart;
     if (bd.startspaces) {
-      if (has_mbyte) {
-        if ((*mb_ptr2len)(bd.textstart) == 1) {
-          bd.textstart++;
-        } else {
-          ws_vcol = 0;
-          bd.startspaces = 0;
-        }
-      } else {
+      if (utfc_ptr2len(bd.textstart) == 1) {
         bd.textstart++;
+      } else {
+        ws_vcol = 0;
+        bd.startspaces = 0;
       }
     }
     for (; ascii_iswhite(*bd.textstart); ) {
@@ -375,14 +389,19 @@ static void shift_block(oparg_T *oap, int amount)
       j = ((ws_vcol % p_ts) + total) % p_ts;       /* number of spp */
     else
       j = total;
-    /* if we're splitting a TAB, allow for it */
-    bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
+
+    // if we're splitting a TAB, allow for it
+    int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
+    bd.textcol -= col_pre;
     const int len = (int)STRLEN(bd.textstart) + 1;
     int col = bd.textcol + i +j + len;
     assert(col >= 0);
     newp = (char_u *)xmalloc((size_t)col);
     memset(newp, NUL, (size_t)col);
     memmove(newp, oldp, (size_t)bd.textcol);
+    startcol = bd.textcol;
+    oldlen = (int)(bd.textstart-old_textstart) + col_pre;
+    newlen = i+j;
     memset(newp + bd.textcol, TAB, (size_t)i);
     memset(newp + bd.textcol + i, ' ', (size_t)j);
     /* the end */
@@ -466,7 +485,10 @@ static void shift_block(oparg_T *oap, int amount)
     // - the rest of the line, pointed to by non_white.
     new_line_len = verbatim_diff + fill + STRLEN(non_white) + 1;
 
-    newp = (char_u *) xmalloc(new_line_len);
+    newp = (char_u *)xmalloc(new_line_len);
+    startcol = (int)verbatim_diff;
+    oldlen = bd.textcol + (int)(non_white - bd.textstart) - (int)verbatim_diff;
+    newlen = (int)fill;
     memmove(newp, oldp, verbatim_diff);
     memset(newp + verbatim_diff, ' ', fill);
     STRMOVE(newp + verbatim_diff + fill, non_white);
@@ -474,6 +496,9 @@ static void shift_block(oparg_T *oap, int amount)
   // replace the line
   ml_replace(curwin->w_cursor.lnum, newp, false);
   changed_bytes(curwin->w_cursor.lnum, (colnr_T)bd.textcol);
+  extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, startcol,
+                 0, oldlen, 0, newlen,
+                 kExtmarkUndo);
   State = oldstate;
   curwin->w_cursor.col = oldcol;
   p_ri = old_p_ri;
@@ -545,6 +570,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     // copy up to shifted part
     memmove(newp, oldp, (size_t)offset);
     oldp += offset;
+    int startcol = offset;
 
     // insert pre-padding
     memset(newp + offset, ' ', (size_t)spaces);
@@ -553,6 +579,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     memmove(newp + offset + spaces, s, s_len);
     offset += (int)s_len;
 
+    int skipped = 0;
     if (spaces && !bdp->is_short) {
       // insert post-padding
       memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
@@ -560,6 +587,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       oldp++;
       // We allowed for that TAB, remember this now
       count++;
+      skipped = 1;
     }
 
     if (spaces > 0)
@@ -567,6 +595,9 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     STRMOVE(newp + offset, oldp);
 
     ml_replace(lnum, newp, false);
+    extmark_splice(curbuf, (int)lnum-1, startcol,
+                   0, skipped,
+                   0, offset-startcol, kExtmarkUndo);
 
     if (lnum == oap->end.lnum) {
       /* Set "']" mark to the end of the block instead of the end of
@@ -621,9 +652,10 @@ void op_reindent(oparg_T *oap, Indenter how)
         amount = how();                     /* get the indent for this line */
 
       if (amount >= 0 && set_indent(amount, SIN_UNDO)) {
-        /* did change the indent, call changed_lines() later */
-        if (first_changed == 0)
+        // did change the indent, call changed_lines() later
+        if (first_changed == 0) {
           first_changed = curwin->w_cursor.lnum;
+        }
         last_changed = curwin->w_cursor.lnum;
       }
     }
@@ -671,13 +703,15 @@ int get_expr_register(void)
 {
   char_u      *new_line;
 
-  new_line = getcmdline('=', 0L, 0);
-  if (new_line == NULL)
+  new_line = getcmdline('=', 0L, 0, true);
+  if (new_line == NULL) {
     return NUL;
-  if (*new_line == NUL)         /* use previous line */
+  }
+  if (*new_line == NUL) {  // use previous line
     xfree(new_line);
-  else
+  } else {
     set_expr_line(new_line);
+  }
   return '=';
 }
 
@@ -806,6 +840,15 @@ yankreg_T *get_yank_register(int regname, int mode)
 static bool is_append_register(int regname)
 {
   return ASCII_ISUPPER(regname);
+}
+
+/// @see get_yank_register
+/// @returns true when register should be inserted literally
+/// (selection or clipboard)
+static inline bool is_literal_register(int regname)
+  FUNC_ATTR_CONST
+{
+  return regname == '*' || regname == '+';
 }
 
 /// Returns a copy of contents in register `name`
@@ -1118,11 +1161,12 @@ static int put_in_typebuf(
  */
 int insert_reg(
     int regname,
-    int literally                  /* insert literally, not as if typed */
+    bool literally_arg            // insert literally, not as if typed
 )
 {
   int retval = OK;
   bool allocated;
+  const bool literally = literally_arg || is_literal_register(regname);
 
   /*
    * It is possible to get into an endless loop by having CTRL-R a in
@@ -1188,9 +1232,7 @@ static void stuffescaped(const char *arg, int literally)
 
     /* stuff a single special character */
     if (*arg != NUL) {
-      const int c = (has_mbyte
-                     ? mb_cptr2char_adv((const char_u **)&arg)
-                     : (uint8_t)(*arg++));
+      const int c = mb_cptr2char_adv((const char_u **)&arg);
       if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
         stuffcharReadbuff(Ctrl_V);
       }
@@ -1294,12 +1336,14 @@ bool get_spec_reg(
 /// register contents will be interpreted as commands.
 ///
 /// @param regname   Register name.
-/// @param literally Insert text literally instead of "as typed".
+/// @param literally_arg Insert text literally instead of "as typed".
 /// @param remcr     When true, don't add CR characters.
 ///
 /// @returns FAIL for failure, OK otherwise
-bool cmdline_paste_reg(int regname, bool literally, bool remcr)
+bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
 {
+  const bool literally = literally_arg || is_literal_register(regname);
+
   yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
   if (reg->y_array == NULL)
     return FAIL;
@@ -1345,7 +1389,7 @@ int op_delete(oparg_T *oap)
   linenr_T lnum;
   char_u              *ptr;
   char_u              *newp, *oldp;
-  struct block_def bd;
+  struct block_def bd = { 0 };
   linenr_T old_lcount = curbuf->b_ml.ml_line_count;
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {  // nothing to do
@@ -1362,8 +1406,7 @@ int op_delete(oparg_T *oap)
     return FAIL;
   }
 
-  if (has_mbyte)
-    mb_adjust_opend(oap);
+  mb_adjust_opend(oap);
 
   /*
    * Imitate the strange Vi behaviour: If the delete spans more than one
@@ -1490,6 +1533,11 @@ int op_delete(oparg_T *oap)
       STRMOVE(newp + bd.textcol + bd.startspaces + bd.endspaces, oldp);
       // replace the line
       ml_replace(lnum, newp, false);
+
+      extmark_splice(curbuf, (int)lnum-1, bd.textcol,
+                     0, bd.textlen,
+                     0, bd.startspaces+bd.endspaces,
+                     kExtmarkUndo);
     }
 
     check_cursor_col();
@@ -1558,6 +1606,7 @@ int op_delete(oparg_T *oap)
         oap->end = curwin->w_cursor;
         curwin->w_cursor = oap->start;
       }
+      mb_adjust_opend(oap);
     }
 
     if (oap->line_count == 1) {         /* delete characters within one line */
@@ -1605,6 +1654,8 @@ int op_delete(oparg_T *oap)
               (linenr_T)(curwin->w_cursor.lnum + oap->line_count)) == FAIL)
         return FAIL;
 
+      curbuf_splice_pending++;
+      pos_T startpos = curwin->w_cursor;  // start position for delete
       truncate_line(true);        // delete from cursor to end of line
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
@@ -1618,6 +1669,9 @@ int op_delete(oparg_T *oap)
                       oap->op_type == OP_DELETE && !oap->is_VIsual);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
+      curbuf_splice_pending--;
+      extmark_splice(curbuf, (int)startpos.lnum-1, startpos.col,
+                     (int)oap->line_count-1, n, 0, 0, kExtmarkUndo);
     }
   }
 
@@ -1627,8 +1681,9 @@ setmarks:
   if (oap->motion_type == kMTBlockWise) {
     curbuf->b_op_end.lnum = oap->end.lnum;
     curbuf->b_op_end.col = oap->start.col;
-  } else
+  } else {
     curbuf->b_op_end = oap->start;
+  }
   curbuf->b_op_start = oap->start;
 
   return OK;
@@ -1653,8 +1708,11 @@ static void mb_adjust_opend(oparg_T *oap)
  */
 static inline void pbyte(pos_T lp, int c)
 {
-    assert(c <= UCHAR_MAX);
-    *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char_u)c;
+  assert(c <= UCHAR_MAX);
+  *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char_u)c;
+  if (!curbuf_splice_pending) {
+    extmark_splice(curbuf, (int)lp.lnum-1, lp.col, 0, 1, 0, 1, kExtmarkUndo);
+  }
 }
 
 // Replace the character under the cursor with "c".
@@ -1694,8 +1752,7 @@ int op_replace(oparg_T *oap, int c)
     c = NL;
   }
 
-  if (has_mbyte)
-    mb_adjust_opend(oap);
+  mb_adjust_opend(oap);
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
           (linenr_T)(oap->end.lnum + 1)) == FAIL)
@@ -1775,6 +1832,7 @@ int op_replace(oparg_T *oap, int c)
       size_t after_p_len = 0;
       int col = oldlen - bd.textcol - bd.textlen + 1;
       assert(col >= 0);
+      int newrows = 0, newcols = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
           // strlen(newp) at this point
           int newp_len = bd.textcol + bd.startspaces;
@@ -1787,21 +1845,27 @@ int op_replace(oparg_T *oap, int c)
             newp_len += bd.endspaces;
             // copy the part after the changed part
             memmove(newp + newp_len, oldp, (size_t)col);
-        }
+          }
+          newcols = newp_len - bd.textcol;
       } else {
         // Replacing with \r or \n means splitting the line.
         after_p_len = (size_t)col;
         after_p = (char_u *)xmalloc(after_p_len);
         memmove(after_p, oldp, after_p_len);
+        newrows = 1;
       }
       // replace the line
       ml_replace(curwin->w_cursor.lnum, newp, false);
+      linenr_T baselnum = curwin->w_cursor.lnum;
       if (after_p != NULL) {
         ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
         appended_lines_mark(curwin->w_cursor.lnum, 1L);
         oap->end.lnum++;
         xfree(after_p);
       }
+      extmark_splice(curbuf, (int)baselnum-1, bd.textcol,
+                     0, bd.textlen,
+                     newrows, newcols, kExtmarkUndo);
     }
   } else {
     // Characterwise or linewise motion replace.
@@ -1814,6 +1878,8 @@ int op_replace(oparg_T *oap, int c)
     } else if (!oap->inclusive)
       dec(&(oap->end));
 
+    // TODO(bfredl): we could batch all the splicing
+    // done on the same line, at least
     while (ltoreq(curwin->w_cursor, oap->end)) {
       n = gchar_cursor();
       if (n != NUL) {
@@ -1961,17 +2027,16 @@ void op_tilde(oparg_T *oap)
  * Returns TRUE if some character was changed.
  */
 static int swapchars(int op_type, pos_T *pos, int length)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int todo;
   int did_change = 0;
 
-  for (todo = length; todo > 0; --todo) {
-    if (has_mbyte) {
-      int len = (*mb_ptr2len)(ml_get_pos(pos));
+  for (int todo = length; todo > 0; todo--) {
+    const int len = utfc_ptr2len(ml_get_pos(pos));
 
-      /* we're counting bytes, not characters */
-      if (len > 0)
-        todo -= len - 1;
+    // we're counting bytes, not characters
+    if (len > 0) {
+      todo -= len - 1;
     }
     did_change |= swapchar(op_type, pos);
     if (inc(pos) == -1)        /* at end of file */
@@ -2026,8 +2091,8 @@ bool swapchar(int op_type, pos_T *pos)
       pos_T sp = curwin->w_cursor;
 
       curwin->w_cursor = *pos;
-      /* don't use del_char(), it also removes composing chars */
-      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), FALSE, FALSE);
+      // don't use del_char(), it also removes composing chars
+      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), false, false);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else {
@@ -2100,8 +2165,9 @@ void op_insert(oparg_T *oap, long count1)
          * values in "bd". */
         if (u_save_cursor() == FAIL)
           return;
-        for (i = 0; i < bd.endspaces; i++)
+        for (i = 0; i < bd.endspaces; i++) {
           ins_char(' ');
+        }
         bd.textlen += bd.endspaces;
       }
     } else {
@@ -2333,6 +2399,9 @@ int op_change(oparg_T *oap)
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
           ml_replace(linenr, newp, false);
+          extmark_splice(curbuf, (int)linenr-1, bd.textcol,
+                         0, 0,
+                         0, vpos.coladd+(int)ins_len, kExtmarkUndo);
         }
       }
       check_cursor();
@@ -2477,7 +2546,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     case kMTCharWise:
     {
       colnr_T startcol = 0, endcol = MAXCOL;
-      int is_oneChar = FALSE;
+      int is_oneChar = false;
       colnr_T cs, ce;
       p = ml_get(lnum);
       bd.startspaces = 0;
@@ -2508,8 +2577,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
                                    && utf_head_off(p, p + endcol) == 0)) {
             if (oap->start.lnum == oap->end.lnum
                 && oap->start.col == oap->end.col) {
-              /* Special case: inside a single char */
-              is_oneChar = TRUE;
+              // Special case: inside a single char
+              is_oneChar = true;
               bd.startspaces = oap->end.coladd
                                - oap->start.coladd + oap->inclusive;
               endcol = startcol;
@@ -2671,13 +2740,17 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   tv_dict_add_str(dict, S_LEN("regname"), buf);
 
   // Motion type: inclusive or exclusive.
-  tv_dict_add_special(dict, S_LEN("inclusive"),
-                      oap->inclusive ? kSpecialVarTrue : kSpecialVarFalse);
+  tv_dict_add_bool(dict, S_LEN("inclusive"),
+                   oap->inclusive ? kBoolVarTrue : kBoolVarFalse);
 
   // Kind of operation: yank, delete, change).
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("operator"), buf);
+
+  // Selection type: visual or not.
+  tv_dict_add_bool(dict, S_LEN("visual"),
+                   oap->is_VIsual ? kBoolVarTrue : kBoolVarFalse);
 
   tv_dict_set_keys_readonly(dict);
   textlock++;
@@ -2687,7 +2760,6 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 
   recursive = false;
 }
-
 
 /*
  * Put contents of register "regname" into the text.
@@ -2703,8 +2775,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   char_u *oldp;
   int yanklen;
   size_t totlen = 0;  // init for gcc
-  linenr_T lnum;
-  colnr_T col;
+  linenr_T lnum = 0;
+  colnr_T col = 0;
   size_t i;  // index in y_array[]
   MotionType y_type;
   size_t y_size;
@@ -2998,7 +3070,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
 
       // move to start of next multi-byte character
-      curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
+      curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
       col++;
     } else {
       getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
@@ -3008,10 +3080,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     if (ve_flags == VE_ALL
         && (curwin->w_cursor.coladd > 0
             || endcol2 == curwin->w_cursor.col)) {
-      if (dir == FORWARD && c == NUL)
-        ++col;
-      if (dir != FORWARD && c != NUL)
-        ++curwin->w_cursor.col;
+      if (dir == FORWARD && c == NUL) {
+        col++;
+      }
+      if (dir != FORWARD && c != NUL && curwin->w_cursor.coladd > 0) {
+        curwin->w_cursor.col++;
+      }
       if (c == TAB) {
         if (dir == BACKWARD && curwin->w_cursor.col)
           curwin->w_cursor.col--;
@@ -3108,6 +3182,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       assert(columns >= 0);
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
+      extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
+                     0, delcount,
+                     0, (int)totlen,
+                     kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
       if (i == 0)
@@ -3209,6 +3287,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND)))
         ++curwin->w_cursor.col;
       changed_bytes(lnum, col);
+      extmark_splice(curbuf, (int)lnum-1, col,
+                     0, 0,
+                     0, (int)totlen, kExtmarkUndo);
     } else {
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
@@ -3264,12 +3345,21 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
               first_indent = FALSE;
             } else if ((indent = get_indent() + indent_diff) < 0)
               indent = 0;
-            (void)set_indent(indent, 0);
+            (void)set_indent(indent, SIN_NOMARK);
             curwin->w_cursor = old_pos;
             /* remember how many chars were removed */
             if (cnt == count && i == y_size - 1)
               lendiff -= (int)STRLEN(ml_get(lnum));
           }
+        }
+
+        if (y_type == kMTCharWise) {
+          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0,
+                         (int)y_size-1, (int)STRLEN(y_array[y_size-1]),
+                         kExtmarkUndo);
+        } else if (y_type == kMTLineWise && flags & PUT_LINE_SPLIT) {
+          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0,
+                         (int)y_size+1, 0, kExtmarkUndo);
         }
       }
 
@@ -3281,11 +3371,13 @@ error:
           curbuf->b_op_start.lnum++;
       }
       // Skip mark_adjust when adding lines after the last one, there
-      // can't be marks there. But still needed in diff mode.
+      // can't be marks there.
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
-          < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
+          < curbuf->b_ml.ml_line_count) {
+        ExtmarkOp kind = (y_type == kMTLineWise && !(flags & PUT_LINE_SPLIT))
+                         ? kExtmarkUndo : kExtmarkNOOP;
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                    (linenr_T)MAXLNUM, nr_lines, 0L, false);
+                    (linenr_T)MAXLNUM, nr_lines, 0L, kind);
       }
 
       // note changed text for displaying and folding
@@ -3347,7 +3439,7 @@ end:
 
   /* If the cursor is past the end of the line put it at the end. */
   adjust_cursor_eol();
-}
+}  // NOLINT(readability/fn_size)
 
 /*
  * When the cursor is on the NUL past the end of the line and it should not be
@@ -3543,7 +3635,7 @@ dis_msg(
   while (*p != NUL
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
          && (n -= ptr2cells(p)) >= 0) {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
+    if ((l = utfc_ptr2len(p)) > 1) {
       msg_outtrans_len(p, l);
       p += l;
     } else
@@ -3689,7 +3781,10 @@ int do_join(size_t count,
 
     if (insert_space && t > 0) {
       curr = skipwhite(curr);
-      if (*curr != ')' && currsize != 0 && endcurr1 != TAB
+      if (*curr != NUL
+          && *curr != ')'
+          && sumsize != 0
+          && endcurr1 != TAB
           && (!has_format_option(FO_MBYTE_JOIN)
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
@@ -3705,6 +3800,13 @@ int do_join(size_t count,
           ++spaces[t];
         }
       }
+    }
+
+    if (t > 0 && curbuf_splice_pending == 0) {
+      extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
+                     1, (int)(curr- curr_start),
+                     0, spaces[t],
+                     kExtmarkUndo);
     }
     currsize = (int)STRLEN(curr);
     sumsize += currsize + spaces[t];
@@ -3740,6 +3842,9 @@ int do_join(size_t count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
+
+  curbuf_splice_pending++;
+
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
@@ -3751,12 +3856,17 @@ int do_join(size_t count,
     // If deleting more spaces than adding, the cursor moves no more than
     // what is added if it is inside these spaces.
     const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
+    linenr_T lnum = curwin->w_cursor.lnum + t;
+    colnr_T mincol = (colnr_T)0;
+    long lnum_amount = (linenr_T)-t;
+    long col_amount = (long)(cend - newp - spaces_removed);
 
-    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
-                    (long)(cend - newp - spaces_removed), spaces_removed);
+    mark_col_adjust(lnum, mincol, lnum_amount, col_amount, spaces_removed);
+
     if (t == 0) {
       break;
     }
+
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
     if (remove_comments)
       curr += comments[t - 1];
@@ -3764,6 +3874,7 @@ int do_join(size_t count,
       curr = skipwhite(curr);
     currsize = (int)STRLEN(curr);
   }
+
   ml_replace(curwin->w_cursor.lnum, newp, false);
 
   if (setmark) {
@@ -3786,6 +3897,7 @@ int do_join(size_t count,
   curwin->w_cursor.lnum++;
   del_lines((long)count - 1, false);
   curwin->w_cursor.lnum = t;
+  curbuf_splice_pending--;
 
   /*
    * Set the cursor column:
@@ -4189,7 +4301,7 @@ format_lines(
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
-            (void)del_bytes(indent, FALSE, FALSE);
+            (void)del_bytes(indent, false, false);
             mark_col_adjust(curwin->w_cursor.lnum,
                             (colnr_T)0, 0L, (long)-indent, 0);
           }
@@ -4279,15 +4391,13 @@ int paragraph_start(linenr_T lnum)
     return TRUE;                /* after empty line */
 
   do_comments = has_format_option(FO_Q_COMS);
-  if (fmt_check_par(lnum - 1
-          , &leader_len, &leader_flags, do_comments
-          ))
-    return TRUE;                /* after non-paragraph line */
+  if (fmt_check_par(lnum - 1, &leader_len, &leader_flags, do_comments)) {
+    return true;  // after non-paragraph line
+  }
 
-  if (fmt_check_par(lnum
-          , &next_leader_len, &next_leader_flags, do_comments
-          ))
-    return TRUE;                /* "lnum" is not a paragraph line */
+  if (fmt_check_par(lnum, &next_leader_len, &next_leader_flags, do_comments)) {
+    return true;  // "lnum" is not a paragraph line
+  }
 
   if (has_format_option(FO_WHITE_PAR) && !ends_in_white(lnum - 1))
     return TRUE;                /* missing trailing space in previous line. */
@@ -4324,14 +4434,17 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   char_u      *line;
   char_u      *prev_pstart;
   char_u      *prev_pend;
+  const int lbr_saved = curwin->w_p_lbr;
 
+  // Avoid a problem with unwanted linebreaks in block mode.
+  curwin->w_p_lbr = false;
   bdp->startspaces = 0;
   bdp->endspaces = 0;
   bdp->textlen = 0;
   bdp->start_vcol = 0;
   bdp->end_vcol = 0;
-  bdp->is_short = FALSE;
-  bdp->is_oneChar = FALSE;
+  bdp->is_short = false;
+  bdp->is_oneChar = false;
   bdp->pre_whitesp = 0;
   bdp->pre_whitesp_c = 0;
   bdp->end_char_vcols = 0;
@@ -4357,9 +4470,10 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   bdp->start_char_vcols = incr;
   if (bdp->start_vcol < oap->start_vcol) {      /* line too short */
     bdp->end_vcol = bdp->start_vcol;
-    bdp->is_short = TRUE;
-    if (!is_del || oap->op_type == OP_APPEND)
+    bdp->is_short = true;
+    if (!is_del || oap->op_type == OP_APPEND) {
       bdp->endspaces = oap->end_vcol - oap->start_vcol + 1;
+    }
   } else {
     /* notice: this converts partly selected Multibyte characters to
      * spaces, too. */
@@ -4368,11 +4482,11 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
       bdp->startspaces = bdp->start_char_vcols - bdp->startspaces;
     pend = pstart;
     bdp->end_vcol = bdp->start_vcol;
-    if (bdp->end_vcol > oap->end_vcol) {        /* it's all in one character */
-      bdp->is_oneChar = TRUE;
-      if (oap->op_type == OP_INSERT)
+    if (bdp->end_vcol > oap->end_vcol) {  // it's all in one character
+      bdp->is_oneChar = true;
+      if (oap->op_type == OP_INSERT) {
         bdp->endspaces = bdp->start_char_vcols - bdp->startspaces;
-      else if (oap->op_type == OP_APPEND) {
+      } else if (oap->op_type == OP_APPEND) {
         bdp->startspaces += oap->end_vcol - oap->start_vcol + 1;
         bdp->endspaces = bdp->start_char_vcols - bdp->startspaces;
       } else {
@@ -4397,17 +4511,16 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
       if (bdp->end_vcol <= oap->end_vcol
           && (!is_del
               || oap->op_type == OP_APPEND
-              || oap->op_type == OP_REPLACE)) {         /* line too short */
-        bdp->is_short = TRUE;
-        /* Alternative: include spaces to fill up the block.
-         * Disadvantage: can lead to trailing spaces when the line is
-         * short where the text is put */
-        /* if (!is_del || oap->op_type == OP_APPEND) */
-        if (oap->op_type == OP_APPEND || virtual_op)
+              || oap->op_type == OP_REPLACE)) {  // line too short
+        bdp->is_short = true;
+        // Alternative: include spaces to fill up the block.
+        // Disadvantage: can lead to trailing spaces when the line is
+        // short where the text is put
+        // if (!is_del || oap->op_type == OP_APPEND)
+        if (oap->op_type == OP_APPEND || virtual_op) {
           bdp->endspaces = oap->end_vcol - bdp->end_vcol
                            + oap->inclusive;
-        else
-          bdp->endspaces = 0;           /* replace doesn't add characters */
+        }
       } else if (bdp->end_vcol > oap->end_vcol) {
         bdp->endspaces = bdp->end_vcol - oap->end_vcol - 1;
         if (!is_del && bdp->endspaces) {
@@ -4424,6 +4537,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
   }
   bdp->textcol = (colnr_T) (pstart - line);
   bdp->textstart = pstart;
+  curwin->w_p_lbr = lbr_saved;
 }
 
 /// Handle the add/subtract operator.
@@ -4536,7 +4650,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 {
   int col;
-  char_u      *buf1;
+  char_u      *buf1 = NULL;
   char_u buf2[NUMBUFLEN];
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
@@ -4559,17 +4673,23 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   int maxlen = 0;
   pos_T startpos;
   pos_T endpos;
+  colnr_T save_coladd = 0;
 
   dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
   dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    // "Bin"
   doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    // "alPha"
 
+  if (virtual_active()) {
+    save_coladd = pos->coladd;
+    pos->coladd = 0;
+  }
+
   curwin->w_cursor = *pos;
   ptr = ml_get(pos->lnum);
   col = pos->col;
 
-  if (*ptr == NUL) {
+  if (*ptr == NUL || col + !!save_coladd >= (int)STRLEN(ptr)) {
     goto theend;
   }
 
@@ -4641,7 +4761,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (visual) {
     while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col]))) {
-      int mb_len = MB_PTR2LEN(ptr + col);
+      int mb_len = utfc_ptr2len(ptr + col);
 
       col += mb_len;
       length -= mb_len;
@@ -4845,7 +4965,6 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     *ptr = NUL;
     STRCAT(buf1, buf2);
     ins_str(buf1);              // insert the new number
-    xfree(buf1);
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {
       curwin->w_cursor.col--;
@@ -4860,10 +4979,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   }
 
 theend:
+  xfree(buf1);
   if (visual) {
     curwin->w_cursor = save_cursor;
   } else if (did_change) {
     curwin->w_set_curswant = true;
+  } else if (virtual_active()) {
+    curwin->w_cursor.coladd = save_coladd;
   }
 
   return did_change;
@@ -5114,8 +5236,7 @@ void write_reg_contents_lst(int name, char_u **strings,
 
 /// write_reg_contents_ex - store `str` in register `name`
 ///
-/// If `str` ends in '\n' or '\r', use linewise, otherwise use
-/// characterwise.
+/// If `str` ends in '\n' or '\r', use linewise, otherwise use charwise.
 ///
 /// @warning when `name` is '/', `len` and `must_append` are ignored. This
 ///          means that `str` MUST be NUL-terminated.
@@ -5576,7 +5697,8 @@ void cursor_pos_info(dict_T *dict)
 
     bom_count = bomb_size();
     if (dict == NULL && bom_count > 0) {
-      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
+      const size_t len = STRLEN(IObuff);
+      vim_snprintf((char *)IObuff + len, IOSIZE - len,
                    _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
     if (dict == NULL) {

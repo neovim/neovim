@@ -23,7 +23,10 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
+#include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/move.h"
 #include "nvim/syntax.h"
@@ -38,6 +41,8 @@
 
 
 /// \defgroup api-buffer
+///
+/// \brief For more information on buffers, see |buffers|
 ///
 /// Unloaded Buffers:~
 ///
@@ -101,25 +106,50 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// Activates buffer-update events on a channel, or as lua callbacks.
+/// Activates buffer-update events on a channel, or as Lua callbacks.
+///
+/// Example (Lua): capture buffer updates in a global `events` variable
+/// (use "print(vim.inspect(events))" to see its contents):
+/// <pre>
+///   events = {}
+///   vim.api.nvim_buf_attach(0, false, {
+///     on_lines=function(...) table.insert(events, {...}) end})
+/// </pre>
+///
+/// @see |nvim_buf_detach()|
+/// @see |api-buffer-updates-lua|
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
-/// @param send_buffer Set to true if the initial notification should contain
-///        the whole buffer. If so, the first notification will be a
-///        `nvim_buf_lines_event`. Otherwise, the first notification will be
-///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
+/// @param send_buffer True if the initial notification should contain the
+///        whole buffer: first notification will be `nvim_buf_lines_event`.
+///        Else the first notification will be `nvim_buf_changedtick_event`.
+///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
-///             - `on_lines`:       lua callback received on change.
-///             - `on_changedtick`: lua callback received on changedtick
-///                                 increment without text change.
-///             - `utf_sizes`:      include UTF-32 and UTF-16 size of
-///                                 the replaced region.
-///               See |api-buffer-updates-lua| for more information
+///             - on_lines: Lua callback invoked on change.
+///               Return `true` to detach. Args:
+///               - the string "lines"
+///               - buffer handle
+///               - b:changedtick
+///               - first line that changed (zero-indexed)
+///               - last line that was changed
+///               - last line in the updated range
+///               - byte count of previous contents
+///               - deleted_codepoints (if `utf_sizes` is true)
+///               - deleted_codeunits (if `utf_sizes` is true)
+///             - on_changedtick: Lua callback invoked on changedtick
+///               increment without text change. Args:
+///               - the string "changedtick"
+///               - buffer handle
+///               - b:changedtick
+///             - on_detach: Lua callback invoked on detach. Args:
+///               - the string "detach"
+///               - buffer handle
+///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
+///               region, as args to `on_lines`.
 /// @param[out] err Error details, if any
-/// @return False when updates couldn't be enabled because the buffer isn't
-///         loaded or `opts` contained an invalid key; otherwise True.
-///         TODO: LUA_API_NO_EVAL
+/// @return False if attach failed (invalid parameter, or buffer isn't loaded);
+///         otherwise True. TODO: LUA_API_NO_EVAL
 Boolean nvim_buf_attach(uint64_t channel_id,
                         Buffer buffer,
                         Boolean send_buffer,
@@ -144,21 +174,29 @@ Boolean nvim_buf_attach(uint64_t channel_id,
         goto error;
       }
       cb.on_lines = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
+    } else if (is_lua && strequal("_on_bytes", k.data)) {
+      // NB: undocumented, untested and incomplete interface!
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      cb.on_bytes = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_changedtick = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_detach", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_detach = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("utf_sizes", k.data)) {
       if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
@@ -176,6 +214,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 error:
   // TODO(bfredl): ASAN build should check that the ref table is empty?
   executor_free_luaref(cb.on_lines);
+  executor_free_luaref(cb.on_bytes);
   executor_free_luaref(cb.on_changedtick);
   executor_free_luaref(cb.on_detach);
   return false;
@@ -183,13 +222,14 @@ error:
 
 /// Deactivates buffer-update events on the channel.
 ///
-/// For Lua callbacks see |api-lua-detach|.
+/// @see |nvim_buf_attach()|
+/// @see |api-lua-detach| for detaching Lua callbacks
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
-/// @return False when updates couldn't be disabled because the buffer
-///         isn't loaded; otherwise True.
+/// @return False if detach failed (because the buffer isn't loaded);
+///         otherwise True.
 Boolean nvim_buf_detach(uint64_t channel_id,
                         Buffer buffer,
                         Error *err)
@@ -203,6 +243,90 @@ Boolean nvim_buf_detach(uint64_t channel_id,
 
   buf_updates_unregister(buf, channel_id);
   return true;
+}
+
+static void buf_clear_luahl(buf_T *buf, bool force)
+{
+  if (buf->b_luahl || force) {
+    executor_free_luaref(buf->b_luahl_start);
+    executor_free_luaref(buf->b_luahl_window);
+    executor_free_luaref(buf->b_luahl_line);
+    executor_free_luaref(buf->b_luahl_end);
+  }
+  buf->b_luahl_start = LUA_NOREF;
+  buf->b_luahl_window = LUA_NOREF;
+  buf->b_luahl_line = LUA_NOREF;
+  buf->b_luahl_end = LUA_NOREF;
+}
+
+/// Unstabilized interface for defining syntax hl in lua.
+///
+/// This is not yet safe for general use, lua callbacks will need to
+/// be restricted, like textlock and probably other stuff.
+///
+/// The API on_line/nvim__put_attr is quite raw and not intended to be the
+/// final shape. Ideally this should operate on chunks larger than a single
+/// line to reduce interpreter overhead, and generate annotation objects
+/// (bufhl/virttext) on the fly but using the same representation.
+void nvim__buf_set_luahl(uint64_t channel_id, Buffer buffer,
+                         DictionaryOf(LuaRef) opts, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return;
+  }
+
+  redraw_buf_later(buf, NOT_VALID);
+  buf_clear_luahl(buf, false);
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_start", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_start = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_window", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_window = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+  buf->b_luahl = true;
+  return;
+error:
+  buf_clear_luahl(buf, true);
+  buf->b_luahl = false;
+}
+
+void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last,
+                            Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  redraw_buf_range_later(buf, (linenr_T)first+1, (linenr_T)last);
 }
 
 /// Sets a buffer line
@@ -529,7 +653,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
               (linenr_T)(end - 1),
               MAXLNUM,
               (long)extra,
-              false);
+              kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
@@ -984,6 +1108,247 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+/// Returns position for a given extmark id
+///
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param id  Extmark id
+/// @param[out] err   Error details, if any
+/// @return (row, col) tuple or empty list () if extmark id was absent
+ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
+                                            Integer id, Error *err)
+  FUNC_API_SINCE(7)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
+    return rv;
+  }
+
+  ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+  if (extmark.row < 0) {
+    return rv;
+  }
+  ADD(rv, INTEGER_OBJ((Integer)extmark.row));
+  ADD(rv, INTEGER_OBJ((Integer)extmark.col));
+  return rv;
+}
+
+/// Gets extmarks in "traversal order" from a |charwise| region defined by
+/// buffer positions (inclusive, 0-indexed |api-indexing|).
+///
+/// Region can be given as (row,col) tuples, or valid extmark ids (whose
+/// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
+/// respectively, thus the following are equivalent:
+///
+/// <pre>
+///   nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+///   nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+/// </pre>
+///
+/// If `end` is less than `start`, traversal works backwards. (Useful
+/// with `limit`, to get the first marks prior to a given position.)
+///
+/// Example:
+///
+/// <pre>
+///   local a   = vim.api
+///   local pos = a.nvim_win_get_cursor(0)
+///   local ns  = a.nvim_create_namespace('my-plugin')
+///   -- Create new extmark at line 1, column 1.
+///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+///   -- Create new extmark at line 3, column 1.
+///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+///   -- Get extmarks only from line 3.
+///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+///   -- Get all marks in this buffer + namespace.
+///   local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+///   print(vim.inspect(ms))
+/// </pre>
+///
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param start  Start of range, given as (row, col) or valid extmark id
+///               (whose position defines the bound)
+/// @param end  End of range, given as (row, col) or valid extmark id
+///             (whose position defines the bound)
+/// @param opts  Optional parameters. Keys:
+///          - limit:  Maximum number of marks to return
+/// @param[out] err   Error details, if any
+/// @return List of [extmark_id, row, col] tuples in "traversal order".
+Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
+                            Object end, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return rv;
+  }
+
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
+    return rv;
+  }
+  Integer limit = -1;
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("limit", k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation, "limit is not an integer");
+        return rv;
+      }
+      limit = v->data.integer;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return rv;
+    }
+  }
+
+  if (limit == 0) {
+    return rv;
+  } else if (limit < 0) {
+    limit = INT64_MAX;
+  }
+
+
+  bool reverse = false;
+
+  int l_row;
+  colnr_T l_col;
+  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
+    return rv;
+  }
+
+  int u_row;
+  colnr_T u_col;
+  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
+    return rv;
+  }
+
+  if (l_row > u_row || (l_row == u_row && l_col > u_col)) {
+    reverse = true;
+  }
+
+
+  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_row, l_col, u_row,
+                                   u_col, (int64_t)limit, reverse);
+
+  for (size_t i = 0; i < kv_size(marks); i++) {
+    Array mark = ARRAY_DICT_INIT;
+    ExtmarkInfo extmark = kv_A(marks, i);
+    ADD(mark, INTEGER_OBJ((Integer)extmark.mark_id));
+    ADD(mark, INTEGER_OBJ(extmark.row));
+    ADD(mark, INTEGER_OBJ(extmark.col));
+    ADD(rv, ARRAY_OBJ(mark));
+  }
+
+  kv_destroy(marks);
+  return rv;
+}
+
+/// Creates or updates an extmark.
+///
+/// To create a new extmark, pass id=0. The extmark id will be returned.
+//  To move an existing mark, pass its id.
+///
+/// It is also allowed to create a new mark by passing in a previously unused
+/// id, but the caller must then keep track of existing and unused ids itself.
+/// (Useful over RPC, to avoid waiting for the return value.)
+///
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param id  Extmark id, or 0 to create new
+/// @param line  Line number where to place the mark
+/// @param col  Column where to place the mark
+/// @param opts  Optional parameters. Currently not used.
+/// @param[out]  err   Error details, if any
+/// @return Id of the created/updated extmark
+Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
+                             Integer line, Integer col,
+                             Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  size_t len = 0;
+  if (line < 0 || line > buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "line value outside range");
+    return 0;
+  } else if (line < buf->b_ml.ml_line_count) {
+    len = STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
+  }
+
+  if (col == -1) {
+    col = (Integer)len;
+  } else if (col < -1 || col > (Integer)len) {
+    api_set_error(err, kErrorTypeValidation, "col value outside range");
+    return 0;
+  }
+
+  uint64_t id_num;
+  if (id >= 0) {
+    id_num = (uint64_t)id;
+  } else {
+    api_set_error(err, kErrorTypeValidation, "Invalid mark id");
+    return 0;
+  }
+
+  id_num = extmark_set(buf, (uint64_t)ns_id, id_num,
+                       (int)line, (colnr_T)col, kExtmarkUndo);
+
+  return (Integer)id_num;
+}
+
+/// Removes an extmark.
+///
+/// @param buffer Buffer handle, or 0 for current buffer
+/// @param ns_id Namespace id from |nvim_create_namespace()|
+/// @param id Extmark id
+/// @param[out] err   Error details, if any
+/// @return true if the extmark was found, else false
+Boolean nvim_buf_del_extmark(Buffer buffer,
+                             Integer ns_id,
+                             Integer id,
+                             Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
+    return false;
+  }
+
+  return extmark_del(buf, (uint64_t)ns_id, (uint64_t)id);
+}
+
 /// Adds a highlight to buffer.
 ///
 /// Useful for plugins that dynamically generate highlights to a buffer
@@ -1015,7 +1380,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer ns_id,
+                               Integer src_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -1040,17 +1405,35 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
+  uint64_t ns_id = src2ns(&src_id);
+
+  if (!(line < buf->b_ml.ml_line_count)) {
+    // safety check, we can't add marks outside the range
+    return src_id;
+  }
+
   int hlg_id = 0;
   if (hl_group.size > 0) {
     hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  } else {
+    return src_id;
   }
 
-  ns_id = bufhl_add_hl(buf, (int)ns_id, hlg_id, (linenr_T)line+1,
-                       (colnr_T)col_start+1, (colnr_T)col_end);
-  return ns_id;
+  int end_line = (int)line;
+  if (col_end == MAXCOL) {
+    col_end = 0;
+    end_line++;
+  }
+
+  extmark_add_decoration(buf, ns_id, hlg_id,
+                         (int)line, (colnr_T)col_start,
+                         end_line, (colnr_T)col_end,
+                         VIRTTEXT_EMPTY);
+  return src_id;
 }
 
-/// Clears namespaced objects, highlights and virtual text, from a line range
+/// Clears namespaced objects (highlights, extmarks, virtual text) from
+/// a region.
 ///
 /// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
 /// buffer, specify line_start=0 and line_end=-1.
@@ -1080,8 +1463,9 @@ void nvim_buf_clear_namespace(Buffer buffer,
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
   }
-
-  bufhl_clear_line_range(buf, (int)ns_id, (int)line_start+1, (int)line_end);
+  extmark_clear(buf, (ns_id < 0 ? 0 : (uint64_t)ns_id),
+                (int)line_start, 0,
+                (int)line_end-1, MAXCOL);
 }
 
 /// Clears highlights and virtual text from namespace and range of lines
@@ -1102,6 +1486,43 @@ void nvim_buf_clear_highlight(Buffer buffer,
   FUNC_API_SINCE(1)
 {
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
+}
+
+static VirtText parse_virt_text(Array chunks, Error *err)
+{
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  return virt_text;
+
+free_exit:
+  clear_virttext(&virt_text);
+  return virt_text;
 }
 
 
@@ -1133,7 +1554,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_set_virtual_text(Buffer buffer,
-                                  Integer ns_id,
+                                  Integer src_id,
                                   Integer line,
                                   Array chunks,
                                   Dictionary opts,
@@ -1155,41 +1576,129 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     return 0;
   }
 
-  VirtText virt_text = KV_INITIAL_VALUE;
-  for (size_t i = 0; i < chunks.size; i++) {
-    if (chunks.items[i].type != kObjectTypeArray) {
-      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
-      goto free_exit;
-    }
-    Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
-      goto free_exit;
-    }
+  uint64_t ns_id = src2ns(&src_id);
 
-    String str = chunk.items[0].data.string;
-    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
-
-    int hl_id = 0;
-    if (chunk.size == 2) {
-      String hl = chunk.items[1].data.string;
-      if (hl.size > 0) {
-        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
-      }
-    }
-    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  VirtText virt_text = parse_virt_text(chunks, err);
+  if (ERROR_SET(err)) {
+    return 0;
   }
 
-  ns_id = bufhl_add_virt_text(buf, (int)ns_id, (linenr_T)line+1,
-                              virt_text);
-  return ns_id;
 
-free_exit:
-  kv_destroy(virt_text);
-  return 0;
+  VirtText *existing = extmark_find_virttext(buf, (int)line, ns_id);
+
+  if (existing) {
+    clear_virttext(existing);
+    *existing = virt_text;
+    return src_id;
+  }
+
+  extmark_add_decoration(buf, ns_id, 0,
+                         (int)line, 0, -1, -1,
+                         virt_text);
+  return src_id;
+}
+
+/// Get the virtual text (annotation) for a buffer line.
+///
+/// The virtual text is returned as list of lists, whereas the inner lists have
+/// either one or two elements. The first element is the actual text, the
+/// optional second element is the highlight group.
+///
+/// The format is exactly the same as given to nvim_buf_set_virtual_text().
+///
+/// If there is no virtual text associated with the given line, an empty list
+/// is returned.
+///
+/// @param buffer   Buffer handle, or 0 for current buffer
+/// @param line     Line to get the virtual text from (zero-indexed)
+/// @param[out] err Error details, if any
+/// @return         List of virtual text chunks
+Array nvim_buf_get_virtual_text(Buffer buffer, Integer line, Error *err)
+  FUNC_API_SINCE(7)
+{
+  Array chunks = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return chunks;
+  }
+
+  if (line < 0 || line >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return chunks;
+  }
+
+  VirtText *virt_text = extmark_find_virttext(buf, (int)line, 0);
+
+  if (!virt_text) {
+    return chunks;
+  }
+
+  for (size_t i = 0; i < virt_text->size; i++) {
+    Array chunk = ARRAY_DICT_INIT;
+    VirtTextChunk *vtc = &virt_text->items[i];
+    ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+    if (vtc->hl_id > 0) {
+      ADD(chunk, STRING_OBJ(cstr_to_string(
+          (const char *)syn_id2name(vtc->hl_id))));
+    }
+    ADD(chunks, ARRAY_OBJ(chunk));
+  }
+
+  return chunks;
+}
+
+Integer nvim__buf_add_decoration(Buffer buffer, Integer ns_id, String hl_group,
+                                 Integer start_row, Integer start_col,
+                                 Integer end_row, Integer end_col,
+                                 Array virt_text,
+                                 Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (!ns_initialized((uint64_t)ns_id)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
+    return 0;
+  }
+
+
+  if (start_row < 0 || start_row >= MAXLNUM || end_row > MAXCOL) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return 0;
+  }
+
+  if (start_col < 0 || start_col > MAXCOL || end_col > MAXCOL) {
+    api_set_error(err, kErrorTypeValidation, "Column value outside range");
+    return 0;
+  }
+  if (end_row < 0 || end_col < 0) {
+    end_row = -1;
+    end_col = -1;
+  }
+
+  if (start_row >= buf->b_ml.ml_line_count
+      || end_row >= buf->b_ml.ml_line_count) {
+    // safety check, we can't add marks outside the range
+    return 0;
+  }
+
+  int hlg_id = 0;
+  if (hl_group.size > 0) {
+    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  }
+
+  VirtText vt = parse_virt_text(virt_text, err);
+  if (ERROR_SET(err)) {
+    return 0;
+  }
+
+  uint64_t mark_id = extmark_add_decoration(buf, (uint64_t)ns_id, hlg_id,
+                                            (int)start_row, (colnr_T)start_col,
+                                            (int)end_row, (colnr_T)end_col, vt);
+  return (Integer)mark_id;
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)
@@ -1212,6 +1721,16 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // NB: this should be zero at any time API functions are called,
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+
+  u_header_T *uhp = NULL;
+  if (buf->b_u_curhead != NULL) {
+    uhp = buf->b_u_curhead;
+  } else if (buf->b_u_newhead) {
+    uhp = buf->b_u_newhead;
+  }
+  if (uhp) {
+    PUT(rv, "uhp_extmark_size", INTEGER_OBJ((Integer)kv_size(uhp->uh_extmark)));
+  }
 
   return rv;
 }

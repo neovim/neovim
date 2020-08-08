@@ -18,7 +18,7 @@ describe('CTRL-W CTRL-I', function()
       start found wrong line
       test text]])
 
-    -- Search for the second occurence of start and append to register
+    -- Search for the second occurrence of start and append to register
     feed_command('/start')
     feed('2[<C-i>')
     feed_command('yank A')

@@ -279,6 +279,9 @@ function Test_printf_misc()
   call assert_equal('abc ', printf('%-4s', 'abc'))
   call assert_equal('abc ', printf('%-4S', 'abc'))
 
+  call assert_equal('🐍', printf('%.2S', '🐍🐍'))
+  call assert_equal('', printf('%.1S', '🐍🐍'))
+
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
 
@@ -472,6 +475,8 @@ func Test_funcref()
   let OneByRef = funcref('One')
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
+  let OneByRef = funcref("One", repeat(["foo"], 20))
+  call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
 endfunc
 
 func Test_empty_concatenate()

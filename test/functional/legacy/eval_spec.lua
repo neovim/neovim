@@ -360,7 +360,7 @@ describe('eval', function()
        abcD3b]])
 
     -- From now on we delete the buffer contents after each expect() to make
-    -- the next expect() easier to write.  This is neccessary because null
+    -- the next expect() easier to write.  This is necessary because null
     -- bytes on a line by itself don't play well together with the dedent
     -- function used in expect().
     command('%delete')
@@ -416,7 +416,7 @@ describe('eval', function()
       ' abcD3b50')
   end)
 
-  -- The tests for setting lists with NLs are split into seperate it() blocks
+  -- The tests for setting lists with NLs are split into separate it() blocks
   -- to make the expect() calls easier to write.  Otherwise the null byte can
   -- make trouble on a line on its own.
   it('setting lists with NLs with setreg(), part 1', function()

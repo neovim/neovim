@@ -43,3 +43,5 @@ running.  Add a test if the function exists and use ":finish", like this:
 The user may have several options set unlike you, try to write the file such
 that it works with any option settings.  Also be aware of certain features not
 being compiled in.
+
+To test the indent file, see testdir/README.txt.

@@ -1,8 +1,7 @@
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
-[Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
-[Chat/Discussion](https://gitter.im/neovim/neovim) |
+[Chat](https://gitter.im/neovim/neovim) |
 [Twitter](https://twitter.com/Neovim)
 
 [![Travis build status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
@@ -15,6 +14,7 @@
 [![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
 [![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
+[![nvim](https://snapcraft.io//nvim/badge.svg)](https://snapcraft.io/nvim)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -67,7 +67,7 @@ To skip bundled (`third-party/*`) dependencies:
 
 1. Install the dependencies using a package manager.
    ```
-   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev
+   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libutf8proc-dev
    sudo luarocks build mpack
    sudo luarocks build lpeg
    sudo luarocks build inspect
@@ -113,17 +113,9 @@ Project layout
 License
 -------
 
-Neovim is licensed under the terms of the Apache 2.0 license, except for
-parts that were contributed under the Vim license.
-
-- Contributions committed before [b17d96][license-commit] remain under the Vim
-  license.
-
-- Contributions committed after [b17d96][license-commit] are licensed under
-  Apache 2.0 unless those contributions were copied from Vim (identified in
-  the commit logs by the `vim-patch` token).
-
-See `LICENSE` for details.
+Neovim contributions since [b17d96][license-commit] are licensed under the
+Apache 2.0 license, except for contributions copied from Vim (identified by the
+`vim-patch` token). See LICENSE for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the

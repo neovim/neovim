@@ -59,10 +59,6 @@ describe(':let', function()
   end)
 
   it("multibyte env var to child process #8398 #9267",  function()
-    if (not helpers.iswin()) and helpers.isCI() then
-      -- Fails on non-Windows CI. Buffering/timing issue?
-      pending('fails on unix CI', function() end)
-    end
     local cmd_get_child_env = "let g:env_from_child = system(['"..nvim_dir.."/printenv-test', 'NVIM_TEST'])"
     command("let $NVIM_TEST = 'AìaB'")
     command(cmd_get_child_env)
@@ -78,5 +74,20 @@ describe(':let', function()
     command("let $NVIM_TEST = '"..mbyte.."'")
     command(cmd_get_child_env)
     eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+  end)
+
+  it("release of list assigned to l: variable does not trigger assertion #12387, #12430", function()
+    source([[
+      func! s:f()
+        let l:x = [1]
+        let g:x = l:
+      endfunc
+      for _ in range(2)
+        call s:f()
+      endfor
+      call garbagecollect()
+      call feedkeys('i', 't')
+    ]])
+    eq(1, eval('1'))
   end)
 end)

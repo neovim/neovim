@@ -34,10 +34,13 @@
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
 
+const char *const encode_bool_var_names[] = {
+  [kBoolVarTrue] = "true",
+  [kBoolVarFalse] = "false",
+};
+
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
-  [kSpecialVarTrue] = "true",
-  [kSpecialVarFalse] = "false",
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -248,7 +251,7 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
 /// @param[out]  read_bytes  Is set to amount of bytes read.
 ///
 /// @return OK when reading was finished, FAIL in case of error (i.e. list item
-///         was not a string), NOTDONE if reading was successfull, but there are
+///         was not a string), NOTDONE if reading was successful, but there are
 ///         more bytes to read.
 int encode_read_from_list(ListReaderState *const state, char *const buf,
                           const size_t nbuf, size_t *const read_bytes)

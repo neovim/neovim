@@ -25,3 +25,6 @@ coverage:
     changes: no
 
 comment: off
+
+ignore:
+    - "src/tree_sitter"

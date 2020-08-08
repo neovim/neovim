@@ -14,6 +14,7 @@
 #include <math.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/buffer.h"
 #include "nvim/log.h"
 #include "nvim/vim.h"
@@ -39,6 +40,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/extmark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -106,6 +108,8 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #endif
+
+static int preview_bufnr = 0;
 
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
@@ -658,10 +662,10 @@ void ex_sort(exarg_T *eap)
   deleted = (long)(count - (lnum - eap->line2));
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
-                false);
+                kExtmarkUndo);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkUndo);
   }
   if (change_occurred || deleted != 0) {
     changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
@@ -874,22 +878,22 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * their final destination at the new text position -- webb
    */
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  mark_adjust_nofold(line1, line2, last_line - line2, 0L, kExtmarkNOOP);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
+    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
-        foldMoveRange(&win->w_folds, line1, line2, dest);
+        foldMoveRange(win, &win->w_folds, line1, line2, dest);
       }
     }
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false);
+    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
-        foldMoveRange(&win->w_folds, dest + 1, line1 - 1, line2);
+        foldMoveRange(win, &win->w_folds, dest + 1, line1 - 1, line2);
       }
     }
     curbuf->b_op_start.lnum = dest + 1;
@@ -897,7 +901,15 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, true);
+                     -(last_line - dest - extra), 0L, kExtmarkNOOP);
+
+  // extmarks are handled separately
+  int size = line2-line1+1;
+  int off = dest >= line2 ? -size : 0;
+  extmark_move_region(curbuf, line1-1, 0,
+                      line2-line1+1, 0,
+                      dest+off, 0, kExtmarkUndo);
+
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
@@ -1279,14 +1291,19 @@ static void do_filter(
 
     if (do_in) {
       if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+        // TODO(bfredl): Currently not active for extmarks. What would we
+        // do if columns don't match, assume added/deleted bytes at the
+        // end of each line?
         if (read_linecount >= linecount) {
           // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0L, false);
+          mark_adjust(line1, line2, linecount, 0L, kExtmarkNOOP);
         } else {
           // move marks from old lines to new lines, delete marks
           // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false);
+          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L,
+                      kExtmarkNOOP);
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L,
+                      kExtmarkNOOP);
         }
       }
 
@@ -1579,7 +1596,7 @@ int rename_buffer(char_u *new_fname)
   xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
-  if (setfname(curbuf, new_fname, NULL, TRUE) == FAIL) {
+  if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
     curbuf->b_ffname = fname;
     curbuf->b_sfname = sfname;
     return FAIL;
@@ -2162,6 +2179,7 @@ int do_ecmd(
   int did_get_winopts = FALSE;
   int readfile_flags = 0;
   bool did_inc_redrawing_disabled = false;
+  long *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
 
   if (eap != NULL)
     command = eap->do_ecmd_cmd;
@@ -2654,6 +2672,8 @@ int do_ecmd(
     msg_scrolled_ign = FALSE;
   }
 
+  curbuf->b_last_used = time(NULL);
+
   if (command != NULL)
     do_cmdline(command, NULL, NULL, DOCMD_VERBOSE);
 
@@ -2663,13 +2683,14 @@ int do_ecmd(
   RedrawingDisabled--;
   did_inc_redrawing_disabled = false;
   if (!skip_redraw) {
-    n = p_so;
-    if (topline == 0 && command == NULL)
-      p_so = 999;        // force cursor to be vertically centered in the window
+    n = *so_ptr;
+    if (topline == 0 && command == NULL) {
+      *so_ptr = 999;    // force cursor to be vertically centered in the window
+    }
     update_topline();
     curwin->w_scbind_pos = curwin->w_topline;
-    p_so = n;
-    redraw_curbuf_later(NOT_VALID);     /* redraw this buffer later */
+    *so_ptr = n;
+    redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
   }
 
   if (p_im)
@@ -2767,7 +2788,7 @@ void ex_append(exarg_T *eap)
       State = CMDLINE;
       theline = eap->getline(
           eap->cstack->cs_looplevel > 0 ? -1 :
-          NUL, eap->cookie, indent);
+          NUL, eap->cookie, indent, true);
       State = save_State;
     }
     lines_left = Rows - 1;
@@ -2993,18 +3014,18 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/*
- * Check if the restricted flag is set.
- * If so, give an error message and return TRUE.
- * Otherwise, return FALSE.
- */
-int check_restricted(void)
+// Check if the restricted flag is set.
+// If so, give an error message and return true.
+// Otherwise, return false.
+bool check_restricted(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (restricted) {
-    EMSG(_("E145: Shell commands not allowed in restricted mode"));
-    return TRUE;
+    EMSG(_("E145: Shell commands and some functionality not allowed"
+           " in restricted mode"));
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3214,6 +3235,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
+
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
 ///
@@ -3224,7 +3246,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 /// @param do_buf_event If `true`, send buffer updates.
 /// @return buffer used for 'inccommand' preview
 static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
-                     bool do_buf_event)
+                     bool do_buf_event, handle_T bufnr)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3260,6 +3282,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
   bool preview = (State & CMDPREVIEW);
+
+  // inccommand tests fail without this check
+  if (!preview) {
+    // Required for Undo to work for extmarks.
+    u_save_cursor();
+  }
 
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3418,6 +3446,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   // Check for a match on each line.
   // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
+
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
        && (!preview || preview_lines.lines_needed <= (linenr_T)p_cwh
@@ -3524,6 +3553,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         // Note: If not first match on a line, column can't be known here
         current_match.start.lnum = sub_firstlnum;
 
+        // Match might be after the last line for "\n\zs" matching at
+        // the end of the last line.
+        if (lnum > curbuf->b_ml.ml_line_count) {
+          break;
+        }
         if (sub_firstline == NULL) {
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
         }
@@ -3630,7 +3664,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               for (; i <= (long)ec; ++i)
                 msg_putchar('^');
 
-              resp = getexmodeline('?', NULL, 0);
+              resp = getexmodeline('?', NULL, 0, true);
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);
@@ -3804,9 +3838,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           goto skip;
         }
 
+
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (!preview || has_second_delim) {
+          long lnum_start = lnum;  // save the start lnum
           save_ma = curbuf->b_p_ma;
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
@@ -3854,7 +3890,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
 
           // Finally, at this point we can know where the match actually will
           // start in the new text
-          current_match.start.col = new_end - new_start;
+          int start_col = new_end - new_start;
+          current_match.start.col = start_col;
 
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
@@ -3871,6 +3908,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
 
           ADJUST_SUB_FIRSTLNUM();
 
+
           // Now the trick is to replace CTRL-M chars with a real line
           // break.  This would make it impossible to insert a CTRL-M in
           // the text.  The line break can be avoided by preceding the
@@ -3885,7 +3923,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
-                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
+                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
+
                 if (subflags.do_ask) {
                   appended_lines(lnum - 1, 1L);
                 } else {
@@ -3908,9 +3947,23 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               p1 += (*mb_ptr2len)(p1) - 1;
             }
           }
-          current_match.end.col = STRLEN(new_start);
+          size_t new_endcol = STRLEN(new_start);
+          current_match.end.col = new_endcol;
           current_match.end.lnum = lnum;
+
+          // TODO(bfredl): adjust in preview, because decorations?
+          // this has some robustness issues, will look into later.
+          if (!preview) {
+            lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
+            int matchcols = end.col - ((end.lnum == start.lnum)
+                                       ? start.col : 0);
+            int subcols = new_endcol - ((lnum == lnum_start) ? start_col : 0);
+            extmark_splice(curbuf, lnum_start-1, start_col,
+                           end.lnum-start.lnum, matchcols,
+                           lnum-lnum_start, subcols, kExtmarkUndo);
+            }
         }
+
 
         // 4. If subflags.do_all is set, find next match.
         // Prevent endless loop with patterns that match empty
@@ -3978,7 +4031,7 @@ skip:
                 ml_delete(lnum, false);
               }
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                          (long)MAXLNUM, -nmatch_tl, false);
+                          (long)MAXLNUM, -nmatch_tl, kExtmarkNOOP);
               if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
               }
@@ -4140,17 +4193,17 @@ skip:
     } else if (*p_icm != NUL &&  pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
-        pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
+        pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
       }
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group((char_u *)S_LEN("Substitute"));
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
       preview_buf = show_sub(eap, old_cursor, &preview_lines,
-                             pre_hl_id, pre_src_id);
+                             pre_hl_id, pre_src_id, bufnr);
       if (subsize > 0) {
-        bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
-                               kv_last(preview_lines.subresults).end.lnum);
+        extmark_clear(orig_buf, pre_src_id, eap->line1-1, 0,
+                      kv_last(preview_lines.subresults).end.lnum-1, MAXCOL);
       }
     }
   }
@@ -4435,8 +4488,9 @@ prepare_tagpreview (
       curwin->w_p_wfh = TRUE;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
-      curwin->w_p_diff = FALSE;             /* no 'diff' */
-      curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
+      curwin->w_p_diff = false;             // no 'diff'
+      set_string_option_direct((char_u *)"fdc", -1,     // no 'foldcolumn'
+                               (char_u *)"0", OPT_FREE, SID_NONE);
       return true;
     }
   }
@@ -4669,17 +4723,21 @@ help_heuristic(
    * If the match is more than 2 chars from the start, multiply by 200 to
    * put it after matches at the start.
    */
-  if (ASCII_ISALNUM(matched_string[offset]) && offset > 0
-      && ASCII_ISALNUM(matched_string[offset - 1]))
+  if (offset > 0
+      && ASCII_ISALNUM(matched_string[offset])
+      && ASCII_ISALNUM(matched_string[offset - 1])) {
     offset += 10000;
-  else if (offset > 2)
+  } else if (offset > 2) {
     offset *= 200;
-  if (wrong_case)
+  }
+  if (wrong_case) {
     offset += 5000;
-  /* Features are less interesting than the subjects themselves, but "+"
-   * alone is not a feature. */
-  if (matched_string[0] == '+' && matched_string[1] != NUL)
+  }
+  // Features are less interesting than the subjects themselves, but "+"
+  // alone is not a feature.
+  if (matched_string[0] == '+' && matched_string[1] != NUL) {
     offset += 100;
+  }
   return (int)(100 * num_letters + STRLEN(matched_string) + offset);
 }
 
@@ -4739,11 +4797,19 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
     // When the string starting with "expr-" and containing '?' and matches
-    // the table, it is taken literally.  Otherwise '?' is recognized as a
-    // wildcard.
+    // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
+    // is recognized as a wildcard.
     for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
       if (STRCMP(arg + 5, expr_table[i]) == 0) {
-        STRCPY(d, arg);
+        for (int si = 0, di = 0; ; si++) {
+          if (arg[si] == '~') {
+            d[di++] = '\\';
+          }
+          d[di++] = arg[si];
+          if (arg[si] == NUL) {
+            break;
+          }
+        }
         break;
       }
     }
@@ -4897,7 +4963,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   *matches = NULL;
   *num_matches = 0;
-  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
+  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE | TAG_NO_TAGFUNC;
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
@@ -5023,7 +5089,7 @@ void fix_help_buffer(void)
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         char_u *const rt = (char_u *)vim_getenv("VIMRUNTIME");
         if (rt != NULL
-            && path_full_compare(rt, NameBuff, false) != kEqualFiles) {
+            && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
           char_u      *s;
@@ -5233,7 +5299,7 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags
       || path_full_compare((char_u *)"$VIMRUNTIME/doc",
-                           dir, false) == kEqualFiles) {
+                           dir, false, true) == kEqualFiles) {
     s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
     GA_APPEND(char_u *, &ga, s);
@@ -5511,14 +5577,31 @@ void ex_helpclose(exarg_T *eap)
   }
 }
 
+/// Tries to enter to an existing window of given buffer. If no existing buffer
+/// is found, creates a new split.
+///
+/// Returns OK/FAIL.
+int sub_preview_win(buf_T *preview_buf)
+{
+  if (preview_buf != NULL) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == preview_buf) {
+        win_enter(wp, false);
+
+        return OK;
+      }
+    }
+  }
+  return win_split((int)p_cwh, WSP_BOT);
+}
+
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
 static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
-                       PreviewLines *preview_lines, int hl_id, int src_id)
+                       PreviewLines *preview_lines, int hl_id, int src_id,
+                       handle_T bufnr)
   FUNC_ATTR_NONNULL_ALL
 {
-  static handle_T bufnr = 0;  // special buffer, re-used on each visit
-
   win_T *save_curwin = curwin;
   cmdmod_T save_cmdmod = cmdmod;
   char_u *save_shm_p = vim_strsave(p_shm);
@@ -5527,6 +5610,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
+  cmdmod.split = 0;               // disable :leftabove/botright modifiers
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
@@ -5535,9 +5619,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   bool outside_curline = (eap->line1 != old_cusr.lnum
                           || eap->line2 != old_cusr.lnum);
-  bool split = outside_curline && (*p_icm != 'n');
+  bool preview = outside_curline && (*p_icm != 'n');
   if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
-    split = false;
+    preview = false;
     preview_buf = NULL;
   }
 
@@ -5555,11 +5639,10 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   linenr_T highest_num_line = 0;
   int col_width = 0;
 
-  if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
+  if (preview && sub_preview_win(preview_buf) != FAIL) {
     buf_open_scratch(preview_buf ? bufnr : 0, "[Preview]");
     buf_clear();
     preview_buf = curbuf;
-    bufnr = preview_buf->handle;
     curbuf->b_p_bl = false;
     curbuf->b_p_ma = true;
     curbuf->b_p_ul = -1;
@@ -5573,6 +5656,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
       highest_num_line = kv_last(lines.subresults).end.lnum;
       col_width = log10(highest_num_line) + 1 + 3;
     }
+  } else {
+    // Failed to split the window, don't show 'inccommand' preview.
+    preview_buf = NULL;
   }
 
   char *str = NULL;  // construct the line to show in here
@@ -5585,7 +5671,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
-    if (split && preview_buf) {
+    if (preview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
 
@@ -5645,7 +5731,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   win_enter(save_curwin, false);  // Return to original window
   update_topline();
 
-  // Update screen now. Must do this _before_ close_windows().
+  // Update screen now.
   int save_rd = RedrawingDisabled;
   RedrawingDisabled = 0;
   update_screen(SOME_VALID);
@@ -5659,6 +5745,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   return preview_buf;
 }
 
+/// Closes any open windows for inccommand preview buffer.
+void close_preview_windows(void)
+{
+    block_autocmds();
+    buf_T *buf = preview_bufnr ? buflist_findnr(preview_bufnr) : NULL;
+    if (buf != NULL) {
+      close_windows(buf, false);
+    }
+    unblock_autocmds();
+}
+
 /// :substitute command
 ///
 /// If 'inccommand' is empty: calls do_sub().
@@ -5668,7 +5765,9 @@ void ex_substitute(exarg_T *eap)
 {
   bool preview = (State & CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    (void)do_sub(eap, profile_zero(), true);
+    close_preview_windows();
+    (void)do_sub(eap, profile_zero(), true, preview_bufnr);
+
     return;
   }
 
@@ -5692,8 +5791,13 @@ void ex_substitute(exarg_T *eap)
   // Don't show search highlighting during live substitution
   bool save_hls = p_hls;
   p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false,
+                              preview_bufnr);
   p_hls = save_hls;
+
+  if (preview_buf != NULL) {
+    preview_bufnr = preview_buf->handle;
+  }
 
   if (save_changedtick != buf_get_changedtick(curbuf)) {
     // Undo invisibly. This also moves the cursor!
@@ -5704,10 +5808,7 @@ void ex_substitute(exarg_T *eap)
     curbuf->b_u_time_cur = save_b_u_time_cur;
     buf_set_changedtick(curbuf, save_changedtick);
   }
-  if (buf_valid(preview_buf)) {
-    // XXX: Must do this *after* u_undo_and_forget(), why?
-    close_windows(preview_buf, false);
-  }
+
   curbuf->b_p_ul = save_b_p_ul;
   curwin->w_p_cul = save_w_p_cul;   // Restore 'cursorline'
   curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'

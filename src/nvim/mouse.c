@@ -60,6 +60,7 @@ int jump_to_mouse(int flags,
 {
   static int on_status_line = 0;        // #lines below bottom of window
   static int on_sep_line = 0;           // on separator right of window
+  static bool in_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
   static win_T *dragwin = NULL;         // window being dragged
@@ -73,6 +74,7 @@ int jump_to_mouse(int flags,
   int col = mouse_col;
   int grid = mouse_grid;
   int mouse_char;
+  int fdc = 0;
 
   mouse_past_bottom = false;
   mouse_past_eol = false;
@@ -92,10 +94,24 @@ int jump_to_mouse(int flags,
 retnomove:
     // before moving the cursor for a left click which is NOT in a status
     // line, stop Visual mode
-    if (on_status_line)
+    if (on_status_line) {
       return IN_STATUS_LINE;
-    if (on_sep_line)
+    }
+    if (on_sep_line) {
       return IN_SEP_LINE;
+    }
+    if (in_winbar) {
+      // A quick second click may arrive as a double-click, but we use it
+      // as a second click in the WinBar.
+      if ((mod_mask & MOD_MASK_MULTI_CLICK) && !(flags & MOUSE_RELEASED)) {
+        wp = mouse_find_win(&grid, &row, &col);
+        if (wp == NULL) {
+          return IN_UNKNOWN;
+        }
+        winbar_click(wp, col);
+      }
+      return IN_OTHER_WIN | MOUSE_WINBAR;
+    }
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -109,12 +125,12 @@ retnomove:
   if (flags & MOUSE_SETPOS)
     goto retnomove;                             // ugly goto...
 
-  // Remember the character under the mouse, it might be a '-' or '+' in the
-  // fold column. NB: only works for ASCII chars!
+  // Remember the character under the mouse, might be one of foldclose or
+  // foldopen fillchars in the fold column.
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
       && default_grid.chars != NULL) {
-    mouse_char = default_grid.chars[default_grid.line_offset[row]
-                                    + (unsigned)col][0];
+     mouse_char = utf_ptr2char(default_grid.chars[default_grid.line_offset[row]
+                                                  + (unsigned)col]);
   } else {
     mouse_char = ' ';
   }
@@ -131,7 +147,18 @@ retnomove:
     if (wp == NULL) {
       return IN_UNKNOWN;
     }
+    fdc = win_fdccol_count(wp);
     dragwin = NULL;
+
+    if (row == -1) {
+      // A click in the window toolbar does not enter another window or
+      // change Visual highlighting.
+      winbar_click(wp, col);
+      in_winbar = true;
+      return IN_OTHER_WIN | MOUSE_WINBAR;
+    }
+    in_winbar = false;
+
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
       // In (or below) status line
@@ -165,9 +192,8 @@ retnomove:
             || (!on_status_line
                 && !on_sep_line
                 && (wp->w_p_rl
-                    ? col < wp->w_width_inner - wp->w_p_fdc
-                    : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
-                                            ? 0 : 1))
+                    ? col < wp->w_width_inner - fdc
+                    : col >= fdc + (cmdwin_type == 0 && wp == curwin ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -222,6 +248,9 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         // Cursor didn't move
+  } else if (in_winbar) {
+    // After a click on the window toolbar don't start Visual mode.
+    return IN_OTHER_WIN | MOUSE_WINBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode
@@ -305,8 +334,8 @@ retnomove:
   }
 
   // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_width_inner - curwin->w_p_fdc :
-      col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
+  if (curwin->w_p_rl ? col < curwin->w_width_inner - fdc :
+      col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
     mouse_char = ' ';
   }
 
@@ -350,7 +379,7 @@ retnomove:
     count |= CURSOR_MOVED;              // Cursor has moved
   }
 
-  if (mouse_char == '+') {
+  if (mouse_char == curwin->w_p_fcs_chars.foldclosed) {
     count |= MOUSE_FOLD_OPEN;
   } else if (mouse_char != ' ') {
     count |= MOUSE_FOLD_CLOSE;
@@ -470,6 +499,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
+      *rowp -= wp->w_winbar_height;
       return wp;
     }
   }
@@ -479,7 +509,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
   if (*gridp == msg_grid.handle) {
-    rowp += msg_grid_pos;
+    // rowp += msg_grid_pos;  // PVS: dead store #11612
     *gridp = DEFAULT_GRID_HANDLE;
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);
@@ -508,31 +538,30 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
-/*
- * setmouse() - switch mouse on/off depending on current mode and 'mouse'
- */
+/// Set UI mouse depending on current mode and 'mouse'.
+///
+/// Emits mouse_on/mouse_off UI event (unless 'mouse' is empty).
 void setmouse(void)
 {
-  int checkfor;
-
   ui_cursor_shape();
 
-  /* be quick when mouse is off */
-  if (*p_mouse == NUL)
+  // Be quick when mouse is off.
+  if (*p_mouse == NUL) {
     return;
+  }
 
-  if (VIsual_active)
+  int checkfor = MOUSE_NORMAL;  // assume normal mode
+  if (VIsual_active) {
     checkfor = MOUSE_VISUAL;
-  else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE)
+  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
     checkfor = MOUSE_RETURN;
-  else if (State & INSERT)
+  } else if (State & INSERT) {
     checkfor = MOUSE_INSERT;
-  else if (State & CMDLINE)
+  } else if (State & CMDLINE) {
     checkfor = MOUSE_COMMAND;
-  else if (State == CONFIRM || State == EXTERNCMD)
-    checkfor = ' ';     /* don't use mouse for ":confirm" or ":!cmd" */
-  else
-    checkfor = MOUSE_NORMAL;        /* assume normal mode */
+  } else if (State == CONFIRM || State == EXTERNCMD) {
+    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
+  }
 
   if (mouse_has(checkfor)) {
     ui_call_mouse_on();

@@ -44,4 +44,4 @@ int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 
 
 
-#endif /* #if !defined(XUTILS_H) */
+#endif // #if !defined(XUTILS_H)

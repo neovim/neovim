@@ -87,6 +87,7 @@
 #include "nvim/highlight.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/extmark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -116,15 +117,16 @@
 #include "nvim/window.h"
 #include "nvim/os/time.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/lua/executor.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
-#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
-#define W_ENDROW(wp)   (wp->w_winrow + wp->w_height)
 
 
 // temporary buffer for rendering a single screenline, so it can be
-// comparared with previous contents to calulate smallest delta.
+// compared with previous contents to calculate smallest delta.
+// Per-cell attributes
 static size_t linebuf_size = 0;
 static schar_T *linebuf_char = NULL;
 static sattr_T *linebuf_attr = NULL;
@@ -232,6 +234,22 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
   }
 }
 
+void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf
+        && lastline >= wp->w_topline && firstline < wp->w_botline) {
+      if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
+          wp->w_redraw_top = firstline;
+      }
+      if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
+          wp->w_redraw_bot = lastline;
+      }
+      redraw_win_later(wp, VALID);
+    }
+  }
+}
+
 /*
  * Changed something in the current window, at buffer line "lnum", that
  * requires that line and possibly other lines to be redrawn.
@@ -286,6 +304,11 @@ int update_screen(int type)
     return FAIL;
   }
 
+  // May have postponed updating diffs.
+  if (need_diff_redraw) {
+    diff_redraw(true);
+  }
+
   if (must_redraw) {
     if (type < must_redraw)         /* use maximal type */
       type = must_redraw;
@@ -311,10 +334,10 @@ int update_screen(int type)
     }
     return FAIL;
   }
+  updating_screen = 1;
 
-  updating_screen = TRUE;
-  ++display_tick;           /* let syntax code know we're in a next round of
-                             * display updating */
+  display_tick++;           // let syntax code know we're in a next round of
+                            // display updating
 
   // Tricky: vim code can reset msg_scrolled behind our back, so need
   // separate bookkeeping for now.
@@ -346,6 +369,17 @@ int update_screen(int type)
         for (int i = valid; i < Rows-p_ch; i++) {
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
+        }
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+          if (wp->w_floating) {
+            continue;
+          }
+          if (W_ENDROW(wp) > valid) {
+            wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
+          }
+          if (W_ENDROW(wp) + wp->w_status_height > valid) {
+            wp->w_redr_status = true;
+          }
         }
       }
       msg_grid_set_pos(Rows-p_ch, false);
@@ -383,7 +417,7 @@ int update_screen(int type)
     need_wait_return = false;
   }
 
-  win_ui_flush_positions();
+  win_ui_flush();
   msg_ext_check_clear();
 
   /* reset cmdline_row now (may have been changed temporarily) */
@@ -472,6 +506,19 @@ int update_screen(int type)
       if (wwp == wp && syntax_present(wp)) {
         syn_stack_apply_changes(wp->w_buffer);
       }
+
+      buf_T *buf = wp->w_buffer;
+      if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+        Error err = ERROR_INIT;
+        FIXED_TEMP_ARRAY(args, 2);
+        args.items[0] = BUFFER_OBJ(buf->handle);
+        args.items[1] = INTEGER_OBJ(display_tick);
+        executor_exec_lua_cb(buf->b_luahl_start, "start", args, false, &err);
+        if (ERROR_SET(&err)) {
+          ELOG("error in luahl start: %s", err.msg);
+          api_clear_error(&err);
+        }
+      }
     }
   }
 
@@ -518,7 +565,7 @@ int update_screen(int type)
     wp->w_buffer->b_mod_set = false;
   }
 
-  updating_screen = FALSE;
+  updating_screen = 0;
 
   /* Clear or redraw the command line.  Done last, because scrolling may
    * mess up the command line. */
@@ -577,11 +624,25 @@ void conceal_check_cursor_line(void)
 /// Whether cursorline is drawn in a special way
 ///
 /// If true, both old and new cursorline will need
-/// need to be redrawn when moving cursor within windows.
+/// to be redrawn when moving cursor within windows.
+/// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
+///               caused by scrolling.
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul
+    || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
+}
+
+static DecorationRedrawState decorations;
+bool decorations_active = false;
+
+void decorations_add_luahl_attr(int attr_id,
+                                int start_row, int start_col,
+                                int end_row, int end_col)
+{
+  kv_push(decorations.active,
+          ((HlRange){ start_row, start_col, end_row, end_col, attr_id, NULL }));
 }
 
 /*
@@ -871,7 +932,7 @@ static void win_update(win_T *wp)
         if (wp->w_lines[0].wl_lnum != wp->w_topline)
           i += diff_check_fill(wp, wp->w_lines[0].wl_lnum)
                - wp->w_old_topfill;
-        if (i < wp->w_grid.Rows - 2) {  // less than a screen off
+        if (i != 0 && i < wp->w_grid.Rows - 2) {  // less than a screen off
           // Try to insert the correct number of lines.
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
@@ -1173,7 +1234,31 @@ static void win_update(win_T *wp)
   idx = 0;              /* first entry in w_lines[].wl_size */
   row = 0;
   srow = 0;
-  lnum = wp->w_topline;         /* first line shown in window */
+  lnum = wp->w_topline;  // first line shown in window
+
+  decorations_active = decorations_redraw_reset(buf, &decorations);
+
+  if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+    Error err = ERROR_INIT;
+    FIXED_TEMP_ARRAY(args, 4);
+    linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
+                         ? wp->w_botline
+                         : (wp->w_topline + wp->w_height_inner));
+    args.items[0] = WINDOW_OBJ(wp->handle);
+    args.items[1] = BUFFER_OBJ(buf->handle);
+    // TODO(bfredl): we are not using this, but should be first drawn line?
+    args.items[2] = INTEGER_OBJ(wp->w_topline-1);
+    args.items[3] = INTEGER_OBJ(knownmax);
+    // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
+    // For now the "start" callback is expected to use nvim__buf_redraw_range.
+    executor_exec_lua_cb(buf->b_luahl_window, "window", args, false, &err);
+    if (ERROR_SET(&err)) {
+      ELOG("error in luahl window: %s", err.msg);
+      api_clear_error(&err);
+    }
+  }
+
+
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
@@ -1544,6 +1629,7 @@ static void win_update(win_T *wp)
      * changes are relevant).
      */
     wp->w_valid |= VALID_BOTLINE;
+    wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
       recursive = TRUE;
       curwin->w_valid &= ~VALID_TOPLINE;
@@ -1563,7 +1649,7 @@ static void win_update(win_T *wp)
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
-}
+}  // NOLINT(readability/fn_size)
 
 /// Returns width of the signcolumn that should be used for the whole window
 ///
@@ -1655,11 +1741,36 @@ static int advance_color_col(int vcol, int **color_cols)
   return **color_cols >= 0;
 }
 
+// Returns the next grid column.
+static int text_to_screenline(win_T *wp, char_u *text, int col, int off)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int idx = wp->w_p_rl ? off : off + col;
+  LineState s = LINE_STATE(text);
+
+  while (*s.p != NUL) {
+    // TODO(bfredl): cargo-culted from the old Vim code:
+    // if(col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) { break; }
+    // This is obvious wrong. If Vim ever fixes this, solve for "cells" again
+    // in the correct condition.
+    const int maxcells = wp->w_grid.Columns - col - (wp->w_p_rl ? col : 0);
+    const int cells = line_putchar(&s, &linebuf_char[idx], maxcells,
+                                   wp->w_p_rl);
+    if (cells == -1) {
+      break;
+    }
+    col += cells;
+    idx += cells;
+  }
+
+  return col;
+}
+
 // Compute the width of the foldcolumn.  Based on 'foldcolumn' and how much
 // space is available for window "wp", minus "col".
 static int compute_foldcolumn(win_T *wp, int col)
 {
-  int fdc = wp->w_p_fdc;
+  int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
   int wwidth = wp->w_grid.Columns;
 
@@ -1755,27 +1866,6 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     col++;
   }
 
-  // 2. Add the 'foldcolumn'
-  // Reduce the width when there is not enough space.
-  fdc = compute_foldcolumn(wp, col);
-  if (fdc > 0) {
-    fill_foldcolumn(buf, wp, TRUE, lnum);
-    if (wp->w_p_rl) {
-      int i;
-
-      copy_text_attr(off + wp->w_grid.Columns - fdc - col, buf, fdc,
-                     win_hl_attr(wp, HLF_FC));
-      // reverse the fold column
-      for (i = 0; i < fdc; i++) {
-        schar_from_ascii(linebuf_char[off + wp->w_grid.Columns - i - 1 - col],
-                         buf[i]);
-      }
-    } else {
-      copy_text_attr(off + col, buf, fdc, win_hl_attr(wp, HLF_FC));
-    }
-    col += fdc;
-  }
-
 # define RL_MEMSET(p, v, l) \
   do { \
     if (wp->w_p_rl) { \
@@ -1788,6 +1878,25 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       } \
     } \
   } while (0)
+
+  // 2. Add the 'foldcolumn'
+  // Reduce the width when there is not enough space.
+  fdc = compute_foldcolumn(wp, col);
+  if (fdc > 0) {
+    fill_foldcolumn(buf, wp, true, lnum);
+    const char_u *it = &buf[0];
+    for (int i = 0; i < fdc; i++) {
+      int mb_c = mb_ptr2char_adv(&it);
+      if (wp->w_p_rl) {
+          schar_from_char(linebuf_char[off + wp->w_grid.Columns - i - 1 - col],
+                          mb_c);
+      } else {
+        schar_from_char(linebuf_char[off + col + i], mb_c);
+      }
+    }
+    RL_MEMSET(col, win_hl_attr(wp, HLF_FC), fdc);
+    col += fdc;
+  }
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
@@ -1858,29 +1967,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   // 5. move the text to linebuf_char[off].  Fill up with "fold".
   //    Right-left text is put in columns 0 - number-col, normal text is put
   //    in columns number-col - window-width.
-  int idx;
-
-  if (wp->w_p_rl) {
-    idx = off;
-  } else {
-    idx = off + col;
-  }
-
-  LineState s = LINE_STATE(text);
-
-  while (*s.p != NUL) {
-    // TODO(bfredl): cargo-culted from the old Vim code:
-    // if(col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) { break; }
-    // This is obvious wrong. If Vim ever fixes this, solve for "cells" again
-    // in the correct condition.
-    int maxcells = wp->w_grid.Columns - col - (wp->w_p_rl ? col : 0);
-    int cells = line_putchar(&s, &linebuf_char[idx], maxcells, wp->w_p_rl);
-    if (cells == -1) {
-      break;
-    }
-    col += cells;
-    idx += cells;
-  }
+  col = text_to_screenline(wp, text, col, off);
 
   /* Fill the rest of the line with the fold filler */
   if (wp->w_p_rl)
@@ -2009,58 +2096,73 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
   }
 }
 
-/*
- * Fill the foldcolumn at "p" for window "wp".
- * Only to be called when 'foldcolumn' > 0.
- */
-static void
-fill_foldcolumn (
+/// Fills the foldcolumn at "p" for window "wp".
+/// Only to be called when 'foldcolumn' > 0.
+///
+/// @param[out] p  Char array to write into
+/// @param lnum    Absolute current line number
+/// @param closed  Whether it is in 'foldcolumn' mode
+///
+/// Assume monocell characters
+/// @return number of chars added to \param p
+static size_t
+fill_foldcolumn(
     char_u *p,
     win_T *wp,
-    int closed,                     /* TRUE of FALSE */
-    linenr_T lnum                  /* current line number */
+    int closed,
+    linenr_T lnum
 )
 {
   int i = 0;
   int level;
   int first_level;
-  int empty;
-  int fdc = compute_foldcolumn(wp, 0);
-
+  int fdc = compute_foldcolumn(wp, 0);    // available cell width
+  size_t char_counter = 0;
+  int symbol = 0;
+  int len = 0;
   // Init to all spaces.
-  memset(p, ' ', (size_t)fdc);
+  memset(p, ' ', MAX_MCO * fdc + 1);
 
   level = win_foldinfo.fi_level;
-  if (level > 0) {
-    // If there is only one column put more info in it.
-    empty = (fdc == 1) ? 0 : 1;
 
-    // If the column is too narrow, we start at the lowest level that
-    // fits and use numbers to indicated the depth.
-    first_level = level - fdc - closed + 1 + empty;
-    if (first_level < 1) {
-      first_level = 1;
+  // If the column is too narrow, we start at the lowest level that
+  // fits and use numbers to indicated the depth.
+  first_level = level - fdc - closed + 1;
+  if (first_level < 1) {
+    first_level = 1;
+  }
+
+  for (i = 0; i  < MIN(fdc, level); i++) {
+    if (win_foldinfo.fi_lnum == lnum
+        && first_level + i >= win_foldinfo.fi_low_level) {
+      symbol = wp->w_p_fcs_chars.foldopen;
+    } else if (first_level == 1) {
+      symbol = wp->w_p_fcs_chars.foldsep;
+    } else if (first_level + i <= 9) {
+      symbol = '0' + first_level + i;
+    } else {
+      symbol = '>';
     }
 
-    for (i = 0; i + empty < fdc; i++) {
-      if (win_foldinfo.fi_lnum == lnum
-          && first_level + i >= win_foldinfo.fi_low_level) {
-        p[i] = '-';
-      } else if (first_level == 1) {
-        p[i] = '|';
-      } else if (first_level + i <= 9) {
-        p[i] = '0' + first_level + i;
-      } else {
-        p[i] = '>';
-      }
-      if (first_level + i == level) {
-        break;
-      }
+    len = utf_char2bytes(symbol, &p[char_counter]);
+    char_counter += len;
+    if (first_level + i >= level) {
+      i++;
+      break;
     }
   }
+
   if (closed) {
-    p[i >= fdc ? i - 1 : i] = '+';
+    if (symbol != 0) {
+      // rollback previous write
+      char_counter -= len;
+      memset(&p[char_counter], ' ', len);
+    }
+    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, &p[char_counter]);
+    char_counter += len;
   }
+
+  return MAX(char_counter + (fdc-i), (size_t)fdc);
 }
 
 /*
@@ -2117,10 +2219,10 @@ win_line (
 
   int n_skip = 0;                       /* nr of chars to skip for 'nowrap' */
 
-  int fromcol = 0, tocol = 0;           // start/end of inverting
+  int fromcol = -10;                    // start of inverting
+  int tocol = MAXCOL;                   // end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
-  int noinvcur = false;                 // don't invert the cursor
-  pos_T *top, *bot;
+  bool noinvcur = false;                // don't invert the cursor
   int lnum_in_visual_area = false;
   pos_T pos;
   long v;
@@ -2165,7 +2267,7 @@ win_line (
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
-  int need_showbreak = false;           // overlong line, skip first x chars
+  bool need_showbreak = false;          // overlong line, skip first x chars
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   matchitem_T *cur;                     // points to the match list
@@ -2179,8 +2281,7 @@ win_line (
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
-  BufhlLineInfo bufhl_info;             // bufhl data for this line
-  bool has_bufhl = false;               // this buffer has highlight matches
+  bool has_decorations = false;         // this buffer has decorations
   bool do_virttext = false;             // draw virtual text for this line
 
   /* draw_state: items that are drawn in sequence: */
@@ -2221,6 +2322,10 @@ win_line (
 
   row = startrow;
 
+  char *luatext = NULL;
+
+  buf_T *buf = wp->w_buffer;
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -2242,13 +2347,34 @@ win_line (
       }
     }
 
-    if (bufhl_start_line(wp->w_buffer, lnum, &bufhl_info)) {
-      if (kv_size(bufhl_info.line->items)) {
-        has_bufhl = true;
+    if (decorations_active) {
+      if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
+        Error err = ERROR_INIT;
+        FIXED_TEMP_ARRAY(args, 3);
+        args.items[0] = WINDOW_OBJ(wp->handle);
+        args.items[1] = BUFFER_OBJ(buf->handle);
+        args.items[2] = INTEGER_OBJ(lnum-1);
+        lua_attr_active = true;
         extra_check = true;
+        Object o = executor_exec_lua_cb(buf->b_luahl_line, "line",
+                                        args, true, &err);
+        lua_attr_active = false;
+        if (o.type == kObjectTypeString) {
+          // TODO(bfredl): this is a bit of a hack. A final API should use an
+          // "unified" interface where luahl can add both bufhl and virttext
+          luatext = o.data.string.data;
+          do_virttext = true;
+        } else if (ERROR_SET(&err)) {
+          ELOG("error in luahl line: %s", err.msg);
+          luatext = err.msg;
+          do_virttext = true;
+        }
       }
-      if (kv_size(bufhl_info.line->virt_text)) {
-        do_virttext = true;
+
+      has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
+                                                &decorations);
+      if (has_decorations) {
+        extra_check = true;
       }
     }
 
@@ -2294,27 +2420,28 @@ win_line (
       capcol_lnum = 0;
     }
 
-    //
-    // handle visual active in this window
-    //
-    fromcol = -10;
-    tocol = MAXCOL;
+    // handle Visual active in this window
     if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
-      // Visual is after curwin->w_cursor
+      pos_T *top, *bot;
+
       if (ltoreq(curwin->w_cursor, VIsual)) {
+        // Visual is after curwin->w_cursor
         top = &curwin->w_cursor;
         bot = &VIsual;
-      } else {                          // Visual is before curwin->w_cursor
+      } else {
+        // Visual is before curwin->w_cursor
         top = &VIsual;
         bot = &curwin->w_cursor;
       }
       lnum_in_visual_area = (lnum >= top->lnum && lnum <= bot->lnum);
-      if (VIsual_mode == Ctrl_V) {        // block mode
+      if (VIsual_mode == Ctrl_V) {
+        // block mode
         if (lnum_in_visual_area) {
           fromcol = wp->w_old_cursor_fcol;
           tocol = wp->w_old_cursor_lcol;
         }
-      } else {                          // non-block mode
+      } else {
+        // non-block mode
         if (lnum > top->lnum && lnum <= bot->lnum) {
           fromcol = 0;
         } else if (lnum == top->lnum) {
@@ -2372,8 +2499,6 @@ win_line (
         pos.lnum = lnum;
         pos.col = search_match_endcol;
         getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
-      } else {
-        tocol = MAXCOL;
       }
       // do at least one character; happens when past end of line
       if (fromcol == tocol) {
@@ -2403,10 +2528,10 @@ win_line (
   filler_todo = filler_lines;
 
   // Cursor line highlighting for 'cursorline' in the current window.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+  if (lnum == wp->w_cursor.lnum) {
     // Do not show the cursor line when Visual mode is active, because it's
     // not clear what is selected then.
-    if (!(wp == curwin && VIsual_active)) {
+    if (wp->w_p_cul && !(wp == curwin && VIsual_active)) {
       int cul_attr = win_hl_attr(wp, HLF_CUL);
       HlAttrs ae = syn_attr2entry(cul_attr);
 
@@ -2544,11 +2669,12 @@ win_line (
     else if (fromcol >= 0 && fromcol < vcol)
       fromcol = vcol;
 
-    /* When w_skipcol is non-zero, first line needs 'showbreak' */
-    if (wp->w_p_wrap)
-      need_showbreak = TRUE;
-    /* When spell checking a word we need to figure out the start of the
-     * word and if it's badly spelled or not. */
+    // When w_skipcol is non-zero, first line needs 'showbreak'
+    if (wp->w_p_wrap) {
+      need_showbreak = true;
+    }
+    // When spell checking a word we need to figure out the start of the
+    // word and if it's badly spelled or not.
     if (has_spell) {
       size_t len;
       colnr_T linecol = (colnr_T)(ptr - line);
@@ -2678,8 +2804,8 @@ win_line (
     off += col;
   }
 
-  // wont highlight after 1024 columns
-  int term_attrs[1024] = {0};
+  // wont highlight after TERM_ATTRS_MAX columns
+  int term_attrs[TERM_ATTRS_MAX] = { 0 };
   if (wp->w_buffer->terminal) {
     terminal_get_line_attributes(wp->w_buffer->terminal, wp, lnum, term_attrs);
     extra_check = true;
@@ -2711,9 +2837,8 @@ win_line (
           // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
           // already be in use.
           xfree(p_extra_free);
-          p_extra_free = xmalloc(12 + 1);
-          fill_foldcolumn(p_extra_free, wp, false, lnum);
-          n_extra = fdc;
+          p_extra_free = xmalloc(MAX_MCO * fdc + 1);
+          n_extra = fill_foldcolumn(p_extra_free, wp, false, lnum);
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
@@ -2841,11 +2966,11 @@ win_line (
         }
       }
 
-      if (wp->w_p_brisbr && draw_state == WL_BRI - 1
+      if (wp->w_briopt_sbr && draw_state == WL_BRI - 1
           && n_extra == 0 && *p_sbr != NUL) {
         // draw indent after showbreak value
         draw_state = WL_BRI;
-      } else if (wp->w_p_brisbr && draw_state == WL_SBR && n_extra == 0) {
+      } else if (wp->w_briopt_sbr && draw_state == WL_SBR && n_extra == 0) {
         // after the showbreak, draw the breakindent
         draw_state = WL_BRI - 1;
       }
@@ -2866,11 +2991,23 @@ win_line (
           }
           p_extra = NULL;
           c_extra = ' ';
-          n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
-          /* Correct end of highlighted area for 'breakindent',
-             required wen 'linebreak' is also set. */
-          if (tocol == vcol)
+          c_final = NUL;
+          n_extra =
+            get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, false));
+          if (row == startrow) {
+            n_extra -= win_col_off2(wp);
+            if (n_extra < 0) {
+              n_extra = 0;
+            }
+          }
+          if (wp->w_skipcol > 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
+            need_showbreak = false;
+          }
+          // Correct end of highlighted area for 'breakindent',
+          // required wen 'linebreak' is also set.
+          if (tocol == vcol) {
             tocol += n_extra;
+          }
         }
       }
 
@@ -2899,7 +3036,9 @@ win_line (
           c_final = NUL;
           n_extra = (int)STRLEN(p_sbr);
           char_attr = win_hl_attr(wp, HLF_AT);
-          need_showbreak = false;
+          if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
+            need_showbreak = false;
+          }
           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
           /* Correct end of highlighted area for 'showbreak',
            * required when 'linebreak' is also set. */
@@ -2929,10 +3068,12 @@ win_line (
     }
 
     // When still displaying '$' of change command, stop at cursor
-    if ((dollar_vcol >= 0 && wp == curwin
-         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
-         && filler_todo <= 0)
-        || (number_only && draw_state > WL_NR)) {
+    if (((dollar_vcol >= 0
+          && wp == curwin
+          && lnum == wp->w_cursor.lnum
+          && vcol >= (long)wp->w_virtcol)
+         || (number_only && draw_state > WL_NR))
+        && filler_todo <= 0) {
       grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
@@ -2991,7 +3132,7 @@ win_line (
             if (shl->startcol != MAXCOL
                 && v >= (long)shl->startcol
                 && v < (long)shl->endcol) {
-              int tmp_col = v + MB_PTR2LEN(ptr);
+              int tmp_col = v + utfc_ptr2len(ptr);
 
               if (shl->endcol < tmp_col) {
                 shl->endcol = tmp_col;
@@ -3031,8 +3172,8 @@ win_line (
                   shl->endcol += (*mb_ptr2len)(line + shl->endcol);
                 }
 
-                /* Loop to check if the match starts at the
-                 * current position */
+                // Loop to check if the match starts at the
+                // current position
                 continue;
               }
             }
@@ -3176,9 +3317,7 @@ win_line (
     } else {
       int c0;
 
-      if (p_extra_free != NULL) {
-        XFREE_CLEAR(p_extra_free);
-      }
+      XFREE_CLEAR(p_extra_free);
 
       // Get a character from the line itself.
       c0 = c = *ptr;
@@ -3339,6 +3478,7 @@ win_line (
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
+        v = (long)(ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           if (!attr_pri) {
@@ -3410,13 +3550,14 @@ win_line (
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (has_bufhl && v > 0) {
-          int bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
-          if (bufhl_attr != 0) {
+        if (has_decorations && v > 0) {
+          int extmark_attr = decorations_redraw_col(wp->w_buffer, (colnr_T)v-1,
+                                                    &decorations);
+          if (extmark_attr != 0) {
             if (!attr_pri) {
-              char_attr = hl_combine_attr(char_attr, bufhl_attr);
+              char_attr = hl_combine_attr(char_attr, extmark_attr);
             } else {
-              char_attr = hl_combine_attr(bufhl_attr, char_attr);
+              char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
           }
         }
@@ -3520,8 +3661,9 @@ win_line (
               tab_len += n_extra - tab_len;
             }
 
-            /* if n_extra > 0, it gives the number of chars to use for
-             * a tab, else we need to calculate the width for a tab */
+            // if n_extra > 0, it gives the number of chars
+            // to use for a tab, else we need to calculate the width
+            // for a tab
             int len = (tab_len * mb_char2len(wp->w_p_lcs_chars.tab2));
             if (n_extra > 0) {
               len += n_extra - tab_len;
@@ -3533,10 +3675,16 @@ win_line (
             xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
-              utf_char2bytes(wp->w_p_lcs_chars.tab2, p);
-              p += mb_char2len(wp->w_p_lcs_chars.tab2);
-              n_extra += mb_char2len(wp->w_p_lcs_chars.tab2)
-                         - (saved_nextra > 0 ? 1: 0);
+              int lcs = wp->w_p_lcs_chars.tab2;
+
+              // if tab3 is given, need to change the char
+              // for tab
+              if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
+                lcs = wp->w_p_lcs_chars.tab3;
+              }
+              utf_char2bytes(lcs, p);
+              p += mb_char2len(lcs);
+              n_extra += mb_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
             }
             p_extra = p_extra_free;
 
@@ -3749,6 +3897,7 @@ win_line (
       }
       wp->w_wrow = row;
       did_wcol = true;
+      curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
     }
 
     // Don't override visual selection highlighting.
@@ -3756,14 +3905,12 @@ win_line (
       char_attr = hl_combine_attr(char_attr, extra_attr);
     }
 
-    /*
-     * Handle the case where we are in column 0 but not on the first
-     * character of the line and the user wants us to show us a
-     * special character (via 'listchars' option "precedes:<char>".
-     */
+    // Handle the case where we are in column 0 but not on the first
+    // character of the line and the user wants us to show us a
+    // special character (via 'listchars' option "precedes:<char>".
     if (lcs_prec_todo != NUL
         && wp->w_p_list
-        && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
+        && (wp->w_p_wrap ? (wp->w_skipcol > 0 && row == 0) : wp->w_leftcol > 0)
         && filler_todo <= 0
         && draw_state > WL_NR
         && c != NUL) {
@@ -3901,6 +4048,18 @@ win_line (
       if (draw_color_col)
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
+      VirtText virt_text = KV_INITIAL_VALUE;
+      if (luatext) {
+        kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
+        do_virttext = true;
+      } else if (has_decorations) {
+        VirtText *vp = decorations_redraw_virt_text(wp->w_buffer, &decorations);
+        if (vp) {
+          virt_text = *vp;
+          do_virttext = true;
+        }
+      }
+
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
@@ -3911,8 +4070,6 @@ win_line (
         int rightmost_vcol = 0;
         int i;
 
-        VirtText virt_text = do_virttext ? bufhl_info.line->virt_text
-                                        : (VirtText)KV_INITIAL_VALUE;
         size_t virt_pos = 0;
         LineState s = LINE_STATE((char_u *)"");
         int virt_attr = 0;
@@ -4007,7 +4164,7 @@ win_line (
             break;
           }
 
-          ++vcol;
+          vcol += cells;
         }
       }
 
@@ -4015,10 +4172,13 @@ win_line (
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
-        while (col < grid->Columns) {
+        int n = wp->w_p_rl ? -1 : 1;
+        while (col >= 0 && col < grid->Columns) {
           schar_from_ascii(linebuf_char[off], ' ');
-          linebuf_attr[off++] = term_attrs[vcol++];
-          col++;
+          linebuf_attr[off] = vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[vcol];
+          off += n;
+          vcol += n;
+          col += n;
         }
       }
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
@@ -4310,6 +4470,7 @@ win_line (
   }
 
   xfree(p_extra_free);
+  xfree(luatext);
   return row;
 }
 
@@ -4353,7 +4514,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to,
                || (line_off2cells(linebuf_char, off_from, off_from + cols) > 1
                    && schar_cmp(linebuf_char[off_from + 1],
                                 grid->chars[off_to + 1])))
-              || p_wd < 0));
+              || rdb_flags & RDB_NODELTA));
 }
 
 /// Move one buffered line to the window grid, but only the characters that
@@ -5103,6 +5264,8 @@ win_redr_custom (
   win_T       *ewp;
   int p_crb_save;
 
+  ScreenGrid *grid = &default_grid;
+
   /* There is a tiny chance that this gets called recursively: When
    * redrawing a status line triggers redrawing the ruler or tabline.
    * Avoid trouble by not allowing recursion. */
@@ -5142,10 +5305,11 @@ win_redr_custom (
       }
       maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
+        grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = ' ';
-        attr = 0;
+        attr = HL_ATTR(HLF_MSG);
       }
 
       use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
@@ -5195,13 +5359,13 @@ win_redr_custom (
   /*
    * Draw each snippet with the specified highlighting.
    */
-  grid_puts_line_start(&default_grid, row);
+  grid_puts_line_start(grid, row);
 
   curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(&default_grid, p, textlen, row, col, curattr);
+    grid_puts_len(grid, p, textlen, row, col, curattr);
     col += vim_strnsize(p, textlen);
     p = hltab[n].start;
 
@@ -5215,7 +5379,7 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(&default_grid, p >= buf + len ? (char_u *)"" : p, row, col,
+  grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
             curattr);
 
   grid_puts_line_flush(false);
@@ -5559,6 +5723,7 @@ void grid_puts_line_flush(bool set_cursor)
 static void start_search_hl(void)
 {
   if (p_hls && !no_hlsearch) {
+    end_search_hl();  // just in case it wasn't called before
     last_pat_prog(&search_hl.rm);
     // Set the time limit to 'redrawtime'.
     search_hl.tm = profile_setlimit(p_rdt);
@@ -5581,12 +5746,11 @@ static void end_search_hl(void)
  * Init for calling prepare_search_hl().
  */
 static void init_search_hl(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  matchitem_T *cur;
-
-  /* Setup for match and 'hlsearch' highlighting.  Disable any previous
-   * match */
-  cur = wp->w_match_head;
+  // Setup for match and 'hlsearch' highlighting.  Disable any previous
+  // match
+  matchitem_T *cur = wp->w_match_head;
   while (cur != NULL) {
     cur->hl.rm = cur->match;
     if (cur->hlg_id == 0)
@@ -5596,7 +5760,7 @@ static void init_search_hl(win_T *wp)
     cur->hl.buf = wp->w_buffer;
     cur->hl.lnum = 0;
     cur->hl.first_lnum = 0;
-    /* Set the time limit to 'redrawtime'. */
+    // Set the time limit to 'redrawtime'.
     cur->hl.tm = profile_setlimit(p_rdt);
     cur = cur->next;
   }
@@ -5612,18 +5776,16 @@ static void init_search_hl(win_T *wp)
  * Advance to the match in window "wp" line "lnum" or past it.
  */
 static void prepare_search_hl(win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
 {
-  matchitem_T *cur;             /* points to the match list */
-  match_T     *shl;             /* points to search_hl or a match */
-  int shl_flag;                 /* flag to indicate whether search_hl
-                                   has been processed or not */
-  int n;
+  matchitem_T *cur;             // points to the match list
+  match_T     *shl;             // points to search_hl or a match
+  bool shl_flag;                // flag to indicate whether search_hl
+                                // has been processed or not
 
-  /*
-   * When using a multi-line pattern, start searching at the top
-   * of the window or just after a closed fold.
-   * Do this both for search_hl and the match list.
-   */
+  // When using a multi-line pattern, start searching at the top
+  // of the window or just after a closed fold.
+  // Do this both for search_hl and the match list.
   cur = wp->w_match_head;
   shl_flag = false;
   while (cur != NULL || shl_flag == false) {
@@ -5650,7 +5812,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
       }
       bool pos_inprogress = true; // mark that a position match search is
                                   // in progress
-      n = 0;
+      int n = 0;
       while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
                                         || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
@@ -5688,6 +5850,7 @@ next_search_hl (
     colnr_T mincol,                /* minimal column for a match */
     matchitem_T *cur               /* to retrieve match positions if any */
 )
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   linenr_T l;
   colnr_T matchcol;
@@ -5695,11 +5858,10 @@ next_search_hl (
   int save_called_emsg = called_emsg;
 
   if (shl->lnum != 0) {
-    /* Check for three situations:
-     * 1. If the "lnum" is below a previous match, start a new search.
-     * 2. If the previous match includes "mincol", use it.
-     * 3. Continue after the previous match.
-     */
+    // Check for three situations:
+    // 1. If the "lnum" is below a previous match, start a new search.
+    // 2. If the previous match includes "mincol", use it.
+    // 3. Continue after the previous match.
     l = shl->lnum + shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
     if (lnum > l)
       shl->lnum = 0;
@@ -5713,22 +5875,21 @@ next_search_hl (
    */
   called_emsg = FALSE;
   for (;; ) {
-    /* Stop searching after passing the time limit. */
+    // Stop searching after passing the time limit.
     if (profile_passed_limit(shl->tm)) {
       shl->lnum = 0;                    /* no match found in time */
       break;
     }
-    /* Three situations:
-     * 1. No useful previous match: search from start of line.
-     * 2. Not Vi compatible or empty match: continue at next character.
-     *    Break the loop if this is beyond the end of the line.
-     * 3. Vi compatible searching: continue at end of previous match.
-     */
-    if (shl->lnum == 0)
+    // Three situations:
+    // 1. No useful previous match: search from start of line.
+    // 2. Not Vi compatible or empty match: continue at next character.
+    //    Break the loop if this is beyond the end of the line.
+    // 3. Vi compatible searching: continue at end of previous match.
+    if (shl->lnum == 0) {
       matchcol = 0;
-    else if (vim_strchr(p_cpo, CPO_SEARCH) == NULL
-        || (shl->rm.endpos[0].lnum == 0
-          && shl->rm.endpos[0].col <= shl->rm.startpos[0].col)) {
+    } else if (vim_strchr(p_cpo, CPO_SEARCH) == NULL
+               || (shl->rm.endpos[0].lnum == 0
+                   && shl->rm.endpos[0].col <= shl->rm.startpos[0].col)) {
       char_u      *ml;
 
       matchcol = shl->rm.startpos[0].col;
@@ -5745,8 +5906,8 @@ next_search_hl (
 
     shl->lnum = lnum;
     if (shl->rm.regprog != NULL) {
-      /* Remember whether shl->rm is using a copy of the regprog in
-       * cur->match. */
+      // Remember whether shl->rm is using a copy of the regprog in
+      // cur->match.
       bool regprog_is_copy = (shl != &search_hl
                               && cur != NULL
                               && shl == &cur->hl
@@ -5775,7 +5936,7 @@ next_search_hl (
       nmatched = next_search_hl_pos(shl, lnum, &(cur->pos), matchcol);
     }
     if (nmatched == 0) {
-      shl->lnum = 0;                    /* no match found */
+      shl->lnum = 0;                    // no match found
       break;
     }
     if (shl->rm.startpos[0].lnum > 0
@@ -5783,7 +5944,7 @@ next_search_hl (
         || nmatched > 1
         || shl->rm.endpos[0].col > mincol) {
       shl->lnum += shl->rm.startpos[0].lnum;
-      break;                            /* useful match found */
+      break;                            // useful match found
     }
 
     // Restore called_emsg for assert_fails().
@@ -5800,6 +5961,7 @@ next_search_hl_pos(
     posmatch_T *posmatch, // match positions
     colnr_T mincol        // minimal column for a match
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   int i;
   int found = -1;
@@ -5954,9 +6116,10 @@ void check_for_delay(int check_msg_scroll)
       && emsg_silent == 0) {
     ui_flush();
     os_delay(1000L, true);
-    emsg_on_display = FALSE;
-    if (check_msg_scroll)
-      msg_scroll = FALSE;
+    emsg_on_display = false;
+    if (check_msg_scroll) {
+      msg_scroll = false;
+    }
   }
 }
 
@@ -7060,7 +7223,7 @@ static void win_redr_ruler(win_T *wp, int always)
     } else {
       row = Rows - 1;
       fillchar = ' ';
-      attr = 0;
+      attr = HL_ATTR(HLF_MSG);
       width = Columns;
       off = 0;
     }

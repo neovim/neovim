@@ -612,7 +612,7 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true={vi="internal,filler"}}
+      defaults={if_true={vi="internal,filler,closeoff"}}
     },
     {
       full_name='digraph', abbreviation='dg',
@@ -804,11 +804,12 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='onecomma', scope={'window'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vi_def=true,
       alloced=true,
       redraw={'current_window'},
+      varname='p_fcs',
       defaults={if_true={vi=''}}
     },
     {
@@ -830,10 +831,11 @@ return {
     },
     {
       full_name='foldcolumn', abbreviation='fdc',
-      type='number', scope={'window'},
+      type='string', scope={'window'},
       vi_def=true,
+      alloced=true,
       redraw={'current_window'},
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi="0"}}
     },
     {
       full_name='foldenable', abbreviation='fen',
@@ -1269,7 +1271,11 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_isi',
-      defaults={if_true={vi="@,48-57,_,192-255"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="@,48-57,_,128-167,224-235"},
+        if_false={vi="@,48-57,_,192-255"}
+      }
     },
     {
       full_name='iskeyword', abbreviation='isk',
@@ -1297,6 +1303,14 @@ return {
       vim=true,
       varname='p_js',
       defaults={if_true={vi=true}}
+    },
+    {
+      full_name='jumpoptions', abbreviation='jop',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      varname='p_jop',
+      vim=true,
+      defaults={if_true={vim=''}}
     },
     {
       full_name='keymap', abbreviation='kmp',
@@ -1420,11 +1434,12 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='onecomma', scope={'window'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       vim=true,
       alloced=true,
       redraw={'current_window'},
+      varname='p_lcs',
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {
@@ -1806,6 +1821,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='pumblend', abbreviation='pb',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'ui_option'},
+      varname='p_pb',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pumheight', abbreviation='ph',
       type='number', scope={'global'},
       vi_def=true,
@@ -1813,12 +1836,11 @@ return {
       defaults={if_true={vi=0}}
     },
     {
-      full_name='pumblend', abbreviation='pb',
+      full_name='pumwidth', abbreviation='pw',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'ui_option'},
-      varname='p_pb',
-      defaults={if_true={vi=0}}
+      varname='p_pw',
+      defaults={if_true={vi=15}}
     },
     {
       full_name='pyxversion', abbreviation='pyx',
@@ -1972,7 +1994,7 @@ return {
     },
     {
       full_name='scrolloff', abbreviation='so',
-      type='number', scope={'global'},
+      type='number', scope={'global', 'window'},
       vi_def=true,
       vim=true,
       redraw={'all_windows'},
@@ -2211,10 +2233,10 @@ return {
     },
     {
       full_name='sidescrolloff', abbreviation='siso',
-      type='number', scope={'global'},
+      type='number', scope={'global', 'window'},
       vi_def=true,
       vim=true,
-      redraw={'current_buffer'},
+      redraw={'all_windows'},
       varname='p_siso',
       defaults={if_true={vi=0}}
     },
@@ -2323,9 +2345,9 @@ return {
       full_name='startofline', abbreviation='sol',
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
+      vim=false,
       varname='p_sol',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='statusline', abbreviation='stl',
@@ -2386,6 +2408,14 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_syn',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='tagfunc', abbreviation='tfu',
+      type='string', scope={'buffer'},
+      vim=true,
+      vi_def=true,
+      varname='p_tfu',
       defaults={if_true={vi=""}}
     },
     {
@@ -2561,6 +2591,7 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
+      redraw={'ui_option'},
       varname='p_ttimeout',
       defaults={if_true={vi=true}}
     },
@@ -2568,6 +2599,7 @@ return {
       full_name='ttimeoutlen', abbreviation='ttm',
       type='number', scope={'global'},
       vi_def=true,
+      redraw={'ui_option'},
       varname='p_ttm',
       defaults={if_true={vi=50}}
     },

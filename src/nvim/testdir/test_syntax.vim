@@ -1,6 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
 source view_util.vim
+source screendump.vim
 
 func GetSyntaxItem(pat)
   let c = ''
@@ -152,7 +153,7 @@ endfunc
 
 func Test_syntax_completion()
   call feedkeys(":syn \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"syn case clear cluster conceal enable include iskeyword keyword list manual match off on region reset spell sync', @:)
+  call assert_equal('"syn case clear cluster conceal enable foldlevel include iskeyword keyword list manual match off on region reset spell sync', @:)
 
   call feedkeys(":syn case \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syn case ignore match', @:)
@@ -501,9 +502,7 @@ func Test_syntax_c()
   endif
   call writefile([
 	\ '/* comment line at the top */',
-	\ '  int',
-	\ 'main(int argc, char **argv)// another comment',
-	\ '{',
+	\ 'int main(int argc, char **argv) { // another comment',
 	\ '#if 0',
 	\ '   int   not_used;',
 	\ '#else',
@@ -518,6 +517,7 @@ func Test_syntax_c()
 	\ '  for (int i = 0; i < count; ++i) {',
 	\ '    break;',
 	\ '  }',
+	\ "  Note: asdf",
 	\ '}',
 	\ ], 'Xtest.c')
 
@@ -526,7 +526,8 @@ func Test_syntax_c()
   let $COLORFGBG = '15;0'
 
   let buf = RunVimInTerminal('Xtest.c', {})
-  call VerifyScreenDump(buf, 'Test_syntax_c_01')
+  call term_sendkeys(buf, ":syn keyword Search Note\r")
+  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
   call StopVimInTerminal(buf)
 
   let $COLORFGBG = ''
@@ -577,4 +578,87 @@ func Test_syntax_hangs()
 
   set redrawtime&
   bwipe!
+endfunc
+
+func Test_syntax_foldlevel()
+  new
+  call setline(1, [
+   \ 'void f(int a)',
+   \ '{',
+   \ '    if (a == 1) {',
+   \ '        a = 0;',
+   \ '    } else if (a == 2) {',
+   \ '        a = 1;',
+   \ '    } else {',
+   \ '        a = 2;',
+   \ '    }',
+   \ '    if (a > 0) {',
+   \ '        if (a == 1) {',
+   \ '            a = 0;',
+   \ '        } /* missing newline */ } /* end of outer if */ else {',
+   \ '        a = 1;',
+   \ '    }',
+   \ '    if (a == 1)',
+   \ '    {',
+   \ '        a = 0;',
+   \ '    }',
+   \ '    else if (a == 2)',
+   \ '    {',
+   \ '        a = 1;',
+   \ '    }',
+   \ '    else',
+   \ '    {',
+   \ '        a = 2;',
+   \ '    }',
+   \ '}',
+   \ ])
+  setfiletype c
+  syntax on
+  set foldmethod=syntax
+
+  call assert_fails('syn foldlevel start start', 'E390')
+  call assert_fails('syn foldlevel not_an_option', 'E390')
+
+  set foldlevel=1
+
+  syn foldlevel start
+  redir @c
+  syn foldlevel
+  redir END
+  call assert_equal("\nsyntax foldlevel start", @c)
+  syn sync fromstart
+  let a = map(range(3,9), 'foldclosed(v:val)')
+  call assert_equal([3,3,3,3,3,3,3], a) " attached cascade folds together
+  let a = map(range(10,15), 'foldclosed(v:val)')
+  call assert_equal([10,10,10,10,10,10], a) " over-attached 'else' hidden
+  let a = map(range(16,27), 'foldclosed(v:val)')
+  let unattached_results = [-1,17,17,17,-1,21,21,21,-1,25,25,25]
+  call assert_equal(unattached_results, a) " unattached cascade folds separately
+
+  syn foldlevel minimum
+  redir @c
+  syn foldlevel
+  redir END
+  call assert_equal("\nsyntax foldlevel minimum", @c)
+  syn sync fromstart
+  let a = map(range(3,9), 'foldclosed(v:val)')
+  call assert_equal([3,3,5,5,7,7,7], a) " attached cascade folds separately
+  let a = map(range(10,15), 'foldclosed(v:val)')
+  call assert_equal([10,10,10,13,13,13], a) " over-attached 'else' visible
+  let a = map(range(16,27), 'foldclosed(v:val)')
+  call assert_equal(unattached_results, a) " unattached cascade folds separately
+
+  set foldlevel=2
+
+  syn foldlevel start
+  syn sync fromstart
+  let a = map(range(11,14), 'foldclosed(v:val)')
+  call assert_equal([11,11,11,-1], a) " over-attached 'else' hidden
+
+  syn foldlevel minimum
+  syn sync fromstart
+  let a = map(range(11,14), 'foldclosed(v:val)')
+  call assert_equal([11,11,-1,-1], a) " over-attached 'else' visible
+
+  quit!
 endfunc

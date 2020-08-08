@@ -1,10 +1,12 @@
-$ErrorActionPreference = 'stop'
-Set-PSDebug -Strict -Trace 1
+param([switch]$NoTests)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 $isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
-$compileOption = $Matches.option
+$compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
 $bits = $Matches.bits
 $cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
@@ -23,9 +25,31 @@ $uploadToCodeCov = $false
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
-    Set-PSDebug -Off
     exit $LastExitCode
   }
+}
+
+# https://github.com/lukesampson/scoop#installation
+$scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+& {
+  Set-StrictMode -Off
+  Invoke-Expression $scoop
+}
+
+scoop install perl
+perl --version
+cpanm.bat --version
+
+if (-not $NoTests) {
+  scoop install nodejs-lts
+  node --version
+  npm.cmd --version
+
+  cpanm.bat -n Neovim::Ext
+  if ($LastExitCode -ne 0) {
+    Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
+  }
+  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
 }
 
 if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
@@ -46,13 +70,17 @@ if ($compiler -eq 'MINGW') {
     $nvimCmakeVars['USE_GCOV'] = 'ON'
     $uploadToCodecov = $true
     $env:GCOV = "C:\msys64\mingw$bits\bin\gcov"
+
+    # Setup/build Lua coverage.
+    $env:USE_LUACOV = 1
+    $env:BUSTED_ARGS = "--coverage"
   }
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
   # in MSYS2, but we cannot build inside the MSYS2 shell.
   $cmakeGenerator = 'Ninja'
   $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils').ForEach({
+  $mingwPackages = @('ninja', 'cmake', 'diffutils').ForEach({
     "mingw-w64-$arch-$_"
   })
 
@@ -76,23 +104,30 @@ elseif ($compiler -eq 'MSVC') {
   }
 }
 
-# Setup python (use AppVeyor system python)
-C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
-C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
-# Disambiguate python3
-move c:\Python35\python.exe c:\Python35\python3.exe
-$env:PATH = "C:\Python35;C:\Python27;$env:PATH"
-# Sanity check
-python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
-python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+if (-not $NoTests) {
+  # Setup python (use AppVeyor system python)
+  C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
+  C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
+  # Disambiguate python3
+  move c:\Python35\python.exe c:\Python35\python3.exe
+  $env:PATH = "C:\Python35;C:\Python27;$env:PATH"
+  # Sanity check
+  python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+  python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
-$env:PATH = "C:\Ruby24\bin;$env:PATH"
-gem.cmd install neovim
-Get-Command -CommandType Application neovim-ruby-host.bat
+  $env:PATH = "C:\Ruby24\bin;$env:PATH"
+  gem.cmd install neovim
+  Get-Command -CommandType Application neovim-ruby-host.bat
 
-npm.cmd install -g neovim
-Get-Command -CommandType Application neovim-node-host.cmd
-npm.cmd link neovim
+  npm.cmd install -g neovim
+  Get-Command -CommandType Application neovim-node-host.cmd
+  npm.cmd link neovim
+}
+
+if ($compiler -eq 'MSVC') {
+  # Required for LuaRocks (https://github.com/luarocks/luarocks/issues/1039#issuecomment-507296940).
+  $env:VCINSTALLDIR = "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/"
+}
 
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
@@ -113,37 +148,42 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 # Ensure that the "win32" feature is set.
 .\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
 
-# Functional tests
-# The $LastExitCode from MSBuild can't be trusted
-$failed = $false
-# Temporarily turn off tracing to reduce log file output
-Set-PSDebug -Off
-cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
-  foreach { $failed = $failed -or
-    $_ -match 'functional tests failed with error'; $_ }
-if ($failed) {
+if ($env:USE_LUACOV -eq 1) {
+  & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
+}
+
+if (-not $NoTests) {
+  # Functional tests
+  # The $LastExitCode from MSBuild can't be trusted
+  $failed = $false
+
+  # Run only this test file:
+  # $env:TEST_FILE = "test\functional\foo.lua"
+  cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
+    foreach { $failed = $failed -or
+      $_ -match 'functional tests failed with error'; $_ }
+
   if ($uploadToCodecov) {
+    if ($env:USE_LUACOV -eq 1) {
+      & $env:DEPS_PREFIX\bin\luacov.bat
+    }
     bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
   }
-  exit $LastExitCode
-}
-Set-PSDebug -Strict -Trace 1
+  if ($failed) {
+    exit $LastExitCode
+  }
 
+  # Old tests
+  # Add MSYS to path, required for e.g. `find` used in test scripts.
+  # But would break functionaltests, where its `more` would be used then.
+  $OldPath = $env:PATH
+  $env:PATH = "C:\msys64\usr\bin;$env:PATH"
+  & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
+  $env:PATH = $OldPath
 
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-}
-
-# Old tests
-# Add MSYS to path, required for e.g. `find` used in test scripts.
-# But would break functionaltests, where its `more` would be used then.
-$OldPath = $env:PATH
-$env:PATH = "C:\msys64\usr\bin;$env:PATH"
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
-$env:PATH = $OldPath
-
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  if ($uploadToCodecov) {
+    bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  }
 }
 
 # Build artifacts

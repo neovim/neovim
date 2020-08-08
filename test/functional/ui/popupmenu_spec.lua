@@ -8,7 +8,7 @@ local command = helpers.command
 local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
-local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -382,7 +382,7 @@ describe('ui/ext_popupmenu', function()
   end
 
   describe('pum_set_height', function()
-    it('can be set pum height', function()
+    it('can set pum height', function()
       source_complete_month()
       local month_expected = {
         {'January', '', '', ''},
@@ -421,22 +421,79 @@ describe('ui/ext_popupmenu', function()
     end)
 
     it('an error occurs if set 0 or less', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, true)
-      ok, err = pcall(meths.ui_pum_set_height, 0)
-      eq(ok, false)
-      matches('.*: Expected pum height > 0', err)
+      meths.ui_pum_set_height(1)
+      eq('Expected pum height > 0',
+         pcall_err(meths.ui_pum_set_height, 0))
     end)
 
     it('an error occurs when ext_popupmenu is false', function()
-      local ok, err, _
-      ok, _ = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, true)
+      meths.ui_pum_set_height(1)
       screen:set_option('ext_popupmenu', false)
-      ok, err = pcall(meths.ui_pum_set_height, 1)
-      eq(ok, false)
-      matches('.*: It must support the ext_popupmenu option', err)
+      eq('It must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_height, 1))
+    end)
+  end)
+
+  describe('pum_set_bounds', function()
+    it('can set pum bounds', function()
+      source_complete_month()
+      local month_expected = {
+        {'January', '', '', ''},
+        {'February', '', '', ''},
+        {'March', '', '', ''},
+        {'April', '', '', ''},
+        {'May', '', '', ''},
+        {'June', '', '', ''},
+        {'July', '', '', ''},
+        {'August', '', '', ''},
+        {'September', '', '', ''},
+        {'October', '', '', ''},
+        {'November', '', '', ''},
+        {'December', '', '', ''},
+      }
+      local pum_height = 6
+      feed('o<C-r>=TestCompleteMonth()<CR>')
+      meths.ui_pum_set_height(pum_height)
+      -- set bounds w h r c
+      meths.ui_pum_set_bounds(10.5, 5.2, 6.3, 7.4)
+      feed('<PageDown>')
+      -- pos becomes pum_height-2 because it is subtracting 2 to keep some
+      -- context in ins_compl_key2count()
+      screen:expect{grid=[[
+                                                                  |
+      January^                                                     |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+      ]], popupmenu={
+        items=month_expected,
+        pos=pum_height-2,
+        anchor={1,1,0},
+      }}
+    end)
+
+    it('no error occurs if row or col set less than 0', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      meths.ui_pum_set_bounds(1.0, 1.0, -1.0, 0.0)
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, -1.0)
+    end)
+
+    it('an error occurs if width or height set 0 or less', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      eq('Expected width > 0',
+         pcall_err(meths.ui_pum_set_bounds, 0.0, 1.0, 1.0, 0.0))
+      eq('Expected height > 0',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, -1.0, 1.0, 0.0))
+    end)
+
+    it('an error occurs when ext_popupmenu is false', function()
+      meths.ui_pum_set_bounds(1.0, 1.0, 0.0, 1.5)
+      screen:set_option('ext_popupmenu', false)
+      eq('UI must support the ext_popupmenu option',
+         pcall_err(meths.ui_pum_set_bounds, 1.0, 1.0, 0.0, 1.5))
     end)
   end)
 
@@ -516,6 +573,7 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       :sign ^                          |
     ]])
+    eq(0, funcs.wildmenumode())
 
     feed('<tab>')
     screen:expect{grid=[[
@@ -530,6 +588,7 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       :sign define^                    |
     ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    eq(1, funcs.wildmenumode())
 
     feed('<left>')
     screen:expect{grid=[[
@@ -589,6 +648,7 @@ describe('ui/ext_popupmenu', function()
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
     feed('<esc>')
+    eq(0, funcs.wildmenumode())
 
     -- check positioning with multibyte char in pattern
     command("e långfile1")
@@ -637,7 +697,7 @@ describe('builtin popupmenu', function()
     })
   end)
 
-  it('works with preview-window above', function()
+  it('with preview-window above', function()
     feed(':ped<CR><c-w>4+')
     feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
     feed('<c-x><c-n>')
@@ -665,7 +725,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with preview-window below', function()
+  it('with preview-window below', function()
     feed(':ped<CR><c-w>4+<c-w>r')
     feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
     feed('<c-x><c-n>')
@@ -693,7 +753,7 @@ describe('builtin popupmenu', function()
       ]])
   end)
 
-  it('works with preview-window above and tall and inverted', function()
+  it('with preview-window above and tall and inverted', function()
     feed(':ped<CR><c-w>8+')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -723,7 +783,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with preview-window above and short and inverted', function()
+  it('with preview-window above and short and inverted', function()
     feed(':ped<CR><c-w>4+')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -736,23 +796,23 @@ describe('builtin popupmenu', function()
       ee                              |
       ff                              |
       gg                              |
-      {s:aa             }                 |
-      {n:bb             }{3:iew][+]          }|
-      {n:cc             }                 |
-      {n:dd             }                 |
-      {n:ee             }                 |
-      {n:ff             }                 |
-      {n:gg             }                 |
-      {n:hh             }                 |
-      {n:ii             }                 |
-      {n:jj             }                 |
+      hh                              |
+      {s:aa             }{c: }{3:ew][+]          }|
+      {n:bb             }{c: }                |
+      {n:cc             }{c: }                |
+      {n:dd             }{c: }                |
+      {n:ee             }{c: }                |
+      {n:ff             }{c: }                |
+      {n:gg             }{c: }                |
+      {n:hh             }{c: }                |
+      {n:ii             }{s: }                |
       aa^                              |
       {4:[No Name] [+]                   }|
       {2:-- }{5:match 1 of 10}                |
     ]])
   end)
 
-  it('works with preview-window below and inverted', function()
+  it('with preview-window below and inverted', function()
     feed(':ped<CR><c-w>4+<c-w>r')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -781,7 +841,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with vsplits', function()
+  it('with vsplits', function()
     insert('aaa aab aac\n')
     feed(':vsplit<cr>')
     screen:expect([[
@@ -856,7 +916,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with split and scroll', function()
+  it('with split and scroll', function()
     screen:try_resize(60,14)
     command("split")
     command("set completeopt+=noinsert")
@@ -1153,10 +1213,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1201,10 +1261,10 @@ describe('builtin popupmenu', function()
     feed('<c-p>')
     screen:expect([[
       some long prefix before the text|
-      {1:^~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{s: text  }|
-      {1:~                        }{n: thing }|
+      {n:^word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {s:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1290,7 +1350,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('behaves correcty with VimResized autocmd', function()
+  it('with VimResized autocmd', function()
     feed('isome long prefix before the ')
     command("set completeopt+=noinsert,noselect")
     command("autocmd VimResized * redraw!")
@@ -1298,10 +1358,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                        }{n: word  }|
-      {1:~                        }{n: choice}|
-      {1:~                        }{n: text  }|
-      {1:~                        }{n: thing }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1334,8 +1394,8 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with rightleft window', function()
-    command("set rl")
+  it('with rightleft window', function()
+    command("set rl wildoptions+=pum")
     feed('isome rightleft ')
     screen:expect([[
                       ^  tfelthgir emos|
@@ -1432,9 +1492,58 @@ describe('builtin popupmenu', function()
       {1:                               ~}|
       {2:-- INSERT --}                    |
     ]])
+
+    -- not rightleft on the cmdline
+    feed('<esc>:sign ')
+    screen:expect{grid=[[
+                   drow tfelthgir emos|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      :sign ^                          |
+    ]]}
+
+    feed('<tab>')
+    screen:expect{grid=[[
+                   drow tfelthgir emos|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:                               ~}|
+      {1:     }{s: define         }{1:          ~}|
+      {1:     }{n: jump           }{1:          ~}|
+      {1:     }{n: list           }{1:          ~}|
+      {1:     }{n: place          }{1:          ~}|
+      {1:     }{n: undefine       }{1:          ~}|
+      {1:     }{n: unplace        }{1:          ~}|
+      :sign define^                    |
+    ]]}
   end)
 
-  it('works with multiline messages', function()
+  it('with multiline messages', function()
     screen:try_resize(40,8)
     feed('ixx<cr>')
     command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
@@ -1488,20 +1597,20 @@ describe('builtin popupmenu', function()
 
     command("split")
     screen:expect([[
+      xx                                      |
       choice^                                  |
-      {1:~                                       }|
       {n:word           }{1:                         }|
       {s:choice         }{4:                         }|
       {n:text           }                         |
-      {n:thing          }{1:                         }|
+      {n:thing          }                         |
       {3:[No Name] [+]                           }|
       {2:-- INSERT --}                            |
     ]])
 
     meths.input_mouse('wheel', 'down', '', 0, 6, 15)
     screen:expect{grid=[[
+      xx                                      |
       choice^                                  |
-      {1:~                                       }|
       {n:word           }{1:                         }|
       {s:choice         }{4:                         }|
       {n:text           }                         |
@@ -1511,7 +1620,7 @@ describe('builtin popupmenu', function()
     ]], unchanged=true}
   end)
 
-  it('works with kind, menu and abbr attributes', function()
+  it('with kind, menu and abbr attributes', function()
     screen:try_resize(40,8)
     feed('ixx ')
     funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
@@ -1563,7 +1672,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with wildoptions=pum', function()
+  it('wildoptions=pum', function()
     screen:try_resize(32,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -1735,7 +1844,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with wildoptions=pum with scrolled mesages ', function()
+  it('wildoptions=pum with scrolled mesages ', function()
     screen:try_resize(40,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -1781,6 +1890,39 @@ describe('builtin popupmenu', function()
       {6:error}                                   |
       :sign defined^                           |
     ]]}
+  end)
+
+  it('wildoptions=pum and wildmode=longest,full #11622', function()
+    screen:try_resize(30,8)
+    command('set wildmenu')
+    command('set wildoptions=pum')
+    command('set wildmode=longest,full')
+
+    feed(':sign u<tab>')
+    screen:expect{grid=[[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :sign un^                      |
+    ]]}
+    eq(0, funcs.wildmenumode())
+
+    feed('<tab>')
+    screen:expect{grid=[[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~    }{s: undefine       }{1:         }|
+      {1:~    }{n: unplace        }{1:         }|
+      :sign undefine^                |
+    ]]}
+    eq(1, funcs.wildmenumode())
   end)
 
   it("'pumblend' RGB-color", function()
@@ -2014,6 +2156,44 @@ describe('builtin popupmenu', function()
       laborum.                                                    |
       {8:~                                                           }|
       {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
+    ]])
+  end)
+
+  it("'pumheight'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumheight=2")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word           }{c: }{1:                }|
+      {n:choice         }{s: }{1:                }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+
+  it("'pumwidth'", function()
+    screen:try_resize(32,8)
+    feed('isome long prefix before the ')
+    command("set completeopt+=noinsert,noselect")
+    command("set linebreak")
+    command("set pumwidth=8")
+    funcs.complete(29, {'word', 'choice', 'text', 'thing'})
+    screen:expect([[
+      some long prefix before the ^    |
+      {n:word    }{1:                        }|
+      {n:choice  }{1:                        }|
+      {n:text    }{1:                        }|
+      {n:thing   }{1:                        }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
     ]])
   end)
 end)

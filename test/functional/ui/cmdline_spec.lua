@@ -25,10 +25,6 @@ local function test_cmdline(linegrid)
     screen = new_screen({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('works', function()
     feed(':')
     screen:expect{grid=[[
@@ -779,7 +775,7 @@ local function test_cmdline(linegrid)
     }}}
 
     -- This used to send an invalid event where pos where larger than the total
-    -- lenght of content. Checked in _handle_cmdline_show.
+    -- length of content. Checked in _handle_cmdline_show.
     feed('<esc>')
     screen:expect([[
       ^                         |
@@ -804,10 +800,6 @@ describe('cmdline redraw', function()
     screen = new_screen({rgb=true})
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('with timer', function()
     feed(':012345678901234567890123456789')
     screen:expect{grid=[[
@@ -829,8 +821,7 @@ describe('cmdline redraw', function()
 
   it('with <Cmd>', function()
     if 'openbsd' == helpers.uname() then
-      pending('FIXME #10804', function() end)
-      return
+      pending('FIXME #10804')
     end
     command('cmap a <Cmd>call sin(0)<CR>')  -- no-op
     feed(':012345678901234567890123456789')

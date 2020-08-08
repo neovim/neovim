@@ -110,7 +110,7 @@ describe('fs.c', function()
 
   describe('os_chdir', function()
     itp('fails with path="~"', function()
-      eq(false, os_isdir('~')) -- sanity check: no literal "~" directory.
+      eq(false, os_isdir('~'), 'sanity check: no literal "~" directory')
       local length = 4096
       local expected_cwd = cstr(length, '')
       local cwd = cstr(length, '')

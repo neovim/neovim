@@ -41,7 +41,7 @@ describe(':write', function()
       command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     end
     if eval('v:shell_error') ~= 0 then
-      pending('Cannot create symlink', function()end)
+      pending('Cannot create symlink')
     end
     source([[
       edit test_bkc_link.txt
@@ -61,7 +61,7 @@ describe(':write', function()
       command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     end
     if eval('v:shell_error') ~= 0 then
-      pending('Cannot create symlink', function()end)
+      pending('Cannot create symlink')
     end
     source([[
       edit test_bkc_link.txt
@@ -75,8 +75,7 @@ describe(':write', function()
   it("appends FIFO file", function()
     -- mkfifo creates read-only .lnk files on Windows
     if iswin() or eval("executable('mkfifo')") == 0 then
-      pending('missing "mkfifo" command', function()end)
-      return
+      pending('missing "mkfifo" command')
     end
 
     local text = "some fifo text from write_spec"

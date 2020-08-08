@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
+local retry = helpers.retry
 
 describe('ui mode_change event', function()
   local screen
@@ -61,30 +62,36 @@ describe('ui mode_change event', function()
                                |
     ]], mode="normal"}
 
+    local matchtime = 0
     command("set showmatch")
-    command("set matchtime=2") -- tenths of seconds
-    feed('a(stuff')
-    screen:expect{grid=[[
-      word(stuff^               |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], mode="insert"}
+    retry(nil, nil, function()
+      matchtime = matchtime + 1
+      local screen_timeout = 1000 * matchtime  -- fail faster for retry.
 
-    feed(')')
-    screen:expect{grid=[[
-      word^(stuff)              |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], mode="showmatch"}
+      command("set matchtime=" .. matchtime) -- tenths of seconds
+      feed('a(stuff')
+      screen:expect{grid=[[
+        word(stuff^               |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="insert", timeout=screen_timeout}
 
-    screen:expect{grid=[[
-      word(stuff)^              |
-      {0:~                        }|
-      {0:~                        }|
-      {2:-- INSERT --}             |
-    ]], mode="insert"}
+      feed(')')
+      screen:expect{grid=[[
+        word^(stuff)              |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="showmatch", timeout=screen_timeout}
+
+      screen:expect{grid=[[
+        word(stuff)^              |
+        {0:~                        }|
+        {0:~                        }|
+        {2:-- INSERT --}             |
+      ]], mode="insert", timeout=screen_timeout}
+    end)
   end)
 
   it('works in replace mode', function()

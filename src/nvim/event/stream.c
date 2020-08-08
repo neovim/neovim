@@ -11,9 +11,17 @@
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
 #include "nvim/event/stream.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/stream.c.generated.h"
+#endif
+
+// For compatbility with libuv < 1.19.0 (tested on 1.18.0)
+#if UV_VERSION_MINOR < 19
+#define uv_stream_get_write_queue_size(stream) stream->write_queue_size
 #endif
 
 /// Sets the stream associated with `fd` to "blocking" mode.
@@ -57,6 +65,11 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       if (type == UV_TTY) {
         uv_tty_init(&loop->uv, &stream->uv.tty, fd, 0);
         uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_RAW);
+        DWORD dwMode;
+        if (GetConsoleMode(stream->uv.tty.handle, &dwMode)) {
+          dwMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+          SetConsoleMode(stream->uv.tty.handle, dwMode);
+        }
         stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.tty);
       } else {
 #endif

@@ -80,7 +80,7 @@ _do_bump_commit() {
     <release date="'"${__DATE}"'" version="xxx"/>,' runtime/nvim.appdata.xml
   rm CMakeLists.txt.bk
   rm runtime/nvim.appdata.xml.bk
-  nvim +'/NVIM_VERSION' +1new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
+  nvim +'/NVIM_VERSION' +1new +'exe "norm! iUpdate version numbers!!!"' \
     -O CMakeLists.txt runtime/nvim.appdata.xml
 
   git add CMakeLists.txt runtime/nvim.appdata.xml
@@ -93,8 +93,8 @@ fi
 _do_bump_commit
 echo "
 Next steps:
-    - Double-check NVIM_VERSION_* in CMakeLists.txt
-    - Double-check runtime/nvim.appdata.xml
+    - Update runtime/nvim.appdata.xml on _master_
+    - Run tests/CI (version_spec.lua)!
     - Push the tag:
         git push --follow-tags
     - Update the 'stable' tag:

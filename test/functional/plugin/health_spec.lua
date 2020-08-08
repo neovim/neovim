@@ -116,8 +116,6 @@ describe('health.vim', function()
       screen:set_default_attr_ids({
         Ok = { foreground = Screen.colors.Grey3, background = 6291200 },
         Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      })
-      screen:set_default_attr_ignore({
         Heading = { bold=true, foreground=Screen.colors.Magenta },
         Heading2 = { foreground = Screen.colors.SlateBlue },
         Bar = { foreground=Screen.colors.Purple },
@@ -126,18 +124,18 @@ describe('health.vim', function()
       command("checkhealth foo success1")
       command("1tabclose")
       command("set laststatus=0")
-      screen:expect([[
+      screen:expect{grid=[[
         ^                                                                        |
-        health#foo#check                                                        |
-        ========================================================================|
-          - {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
+        {Heading:health#foo#check}                                                        |
+        {Bar:========================================================================}|
+        {Bullet:  -} {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
                                                                                 |
-        health#success1#check                                                   |
-        ========================================================================|
-        ## report 1                                                             |
-          - {Ok:OK:} everything is fine                                              |
+        {Heading:health#success1#check}                                                   |
+        {Bar:========================================================================}|
+        {Heading2:##}{Heading: report 1}                                                             |
+        {Bullet:  -} {Ok:OK:} everything is fine                                              |
                                                                                 |
-      ]])
+      ]]}
     end)
 
     it("gracefully handles invalid healthcheck", function()

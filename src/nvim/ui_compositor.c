@@ -425,6 +425,15 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     flags = flags & ~kLineFlagWrap;
   }
 
+  for (int i = skipstart; i < (endcol-skipend)-startcol; i++) {
+    if (attrbuf[i] < 0) {
+      if (rdb_flags & RDB_INVALID) {
+        abort();
+      } else {
+        attrbuf[i] = 0;
+      }
+    }
+  }
   ui_composed_call_raw_line(1, row, startcol+skipstart,
                             endcol-skipend, endcol-skipend, 0, flags,
                             (const schar_T *)linebuf+skipstart,
@@ -535,6 +544,11 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
   } else {
     compose_debug(row, row+1, startcol, endcol, dbghl_normal, false);
     compose_debug(row, row+1, endcol, clearcol, dbghl_clear, true);
+#ifndef NDEBUG
+    for (int i = 0; i < endcol-startcol; i++) {
+      assert(attrs[i] >= 0);
+    }
+#endif
     ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,
                               flags, chunk, attrs);
   }
@@ -612,7 +626,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
   if (covered || curgrid->blending) {
     // TODO(bfredl):
     // 1. check if rectangles actually overlap
-    // 2. calulate subareas that can scroll.
+    // 2. calculate subareas that can scroll.
     compose_debug(top, bot, left, right, dbghl_recompose, true);
     for (int r = (int)(top + MAX(-rows, 0)); r < bot - MAX(rows, 0); r++) {
       // TODO(bfredl): workaround for win_update() performing two scrolls in a
