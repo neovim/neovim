@@ -12656,7 +12656,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
   // input variables
   char *str_in = (in_type == VAR_STRING)
       ? (char *) argvars[2].vval.v_string : NULL;
-  int64_t int_in = argvars[2].vval.v_number;
+  int int_in = argvars[2].vval.v_number;
 
   // output variables
   char **str_out = (out_type == VAR_STRING)
