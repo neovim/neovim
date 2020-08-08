@@ -3201,7 +3201,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         curwin->w_cursor.col += bd.startspaces;
     }
 
-    changed_lines(lnum, 0, curwin->w_cursor.lnum, nr_lines, true);
+    changed_lines(lnum, 0, curbuf->b_op_start.lnum + (linenr_T)y_size
+                  - (linenr_T)nr_lines , nr_lines, true);
 
     /* Set '[ mark. */
     curbuf->b_op_start = curwin->w_cursor;

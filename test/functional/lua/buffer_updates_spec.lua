@@ -245,6 +245,31 @@ describe('lua buffer event callbacks: on_lines', function()
     helpers.assert_alive()
   end)
 
+  it('#12718 lnume', function()
+    meths.buf_set_lines(0, 0, -1, true, {'1', '2', '3'})
+    exec_lua([[
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(...)
+          vim.api.nvim_set_var('linesev', { ... })
+        end,
+      })
+    ]])
+    feed('1G0')
+    feed('y<C-v>2j')
+    feed('G0')
+    feed('p')
+    -- Is the last arg old_byte_size correct? Doesn't matter for this PR
+    eq(meths.get_var('linesev'), { "lines", 1, 4, 2, 3, 5, 4 })
+
+    feed('2G0')
+    feed('p')
+    eq(meths.get_var('linesev'), { "lines", 1, 5, 1, 4, 4, 8 })
+
+    feed('1G0')
+    feed('P')
+    eq(meths.get_var('linesev'), { "lines", 1, 6, 0, 3, 3, 9 })
+
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
