@@ -256,12 +256,10 @@ function M.add_workspace_folder(workspace_folder)
     print(workspace_folder, " is not a valid directory")
     return
   end
-  local params = util.make_workspace_params()
-  local workspace_folder_entry = {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}
-  table.insert(params.event.added, workspace_folder_entry )
+  local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
   for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    local found = false
     for idx, folder in ipairs(client.workspaceFolders) do
-      local found = false
       if folder.name == workspace_folder then
         found = true
         print(workspace_folder, "is already part of this workspace")
@@ -270,7 +268,7 @@ function M.add_workspace_folder(workspace_folder)
     end
     if not found then
       vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
-      table.insert(client.workspaceFolders, workspace_folder_entry)
+      table.insert(client.workspaceFolders, params.event.added[1])
     end
   end
 end
@@ -280,8 +278,7 @@ function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
   api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
-  local params = util.make_workspace_params()
-  table.insert(params.event.removed, {uri = vim.uri_from_fname(workspace_folder); name = workspace_folder})
+  local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
   local removed = false;
   for _, client in ipairs(vim.lsp.buf_get_clients()) do
     for idx, folder in ipairs(client.workspaceFolders) do
