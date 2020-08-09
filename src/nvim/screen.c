@@ -2816,6 +2816,7 @@ win_line (
   for (;; ) {
     int has_match_conc = 0;  ///< match wants to conceal
     bool did_decrement_ptr = false;
+
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
@@ -2854,47 +2855,12 @@ win_line (
            * buffer or when using Netbeans. */
           int count = win_signcol_count(wp);
           if (count > 0) {
-              int text_sign;
-              // Draw cells with the sign value or blank.
-              c_extra = ' ';
-              c_final = NUL;
-              char_attr = win_hl_attr(wp, HLF_SC);
-              n_extra = win_signcol_width(wp);
-
-              if (row == startrow + filler_lines && filler_todo <= 0) {
-                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
-                                              sign_idx, count);
-                  if (text_sign != 0) {
-                      p_extra = sign_get_text(text_sign);
-                      if (p_extra != NULL) {
-                          int symbol_blen = (int)STRLEN(p_extra);
-
-                          c_extra = NUL;
-                          c_final = NUL;
-
-                          // TODO(oni-link): Is sign text already extended to
-                          // full cell width?
-                          assert((size_t)win_signcol_width(wp)
-                                 >= mb_string2cells(p_extra));
-                          // symbol(s) bytes + (filling spaces) (one byte each)
-                          n_extra = symbol_blen +
-                            (win_signcol_width(wp) - mb_string2cells(p_extra));
-
-                          assert(sizeof(extra) > (size_t)symbol_blen);
-                          memset(extra, ' ', sizeof(extra));
-                          memcpy(extra, p_extra, symbol_blen);
-
-                          p_extra = extra;
-                          p_extra[n_extra] = NUL;
-                      }
-                      char_attr = sign_get_attr(text_sign, SIGN_TEXT);
-                  }
-              }
-
-              sign_idx++;
-              if (sign_idx < count) {
-                  draw_state = WL_SIGN - 1;
-              }
+              get_sign_display_info(
+                  false, wp, lnum, row,
+                  startrow, filler_lines, filler_todo, count,
+                  &c_extra, &c_final, extra, sizeof(extra),
+                  &p_extra, &n_extra,
+                  &char_attr, &draw_state, &sign_idx);
           }
       }
 
@@ -2903,65 +2869,78 @@ win_line (
         /* Display the absolute or relative line number. After the
          * first fill with blanks when the 'n' flag isn't in 'cpo' */
         if ((wp->w_p_nu || wp->w_p_rnu)
-            && (row == startrow
-                + filler_lines
+            && (row == startrow + filler_lines
                 || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
-          /* Draw the line number (empty space after wrapping). */
-          if (row == startrow
-              + filler_lines
-              ) {
-            long num;
-            char *fmt = "%*ld ";
-
-            if (wp->w_p_nu && !wp->w_p_rnu)
-              /* 'number' + 'norelativenumber' */
-              num = (long)lnum;
-            else {
-              /* 'relativenumber', don't use negative numbers */
-              num = labs((long)get_cursor_rel_lnum(wp, lnum));
-              if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
-                /* 'number' + 'relativenumber' */
-                num = lnum;
-                fmt = "%-*ld ";
-              }
-            }
-
-            sprintf((char *)extra, fmt,
-                number_width(wp), num);
-            if (wp->w_skipcol > 0)
-              for (p_extra = extra; *p_extra == ' '; ++p_extra)
-                *p_extra = '-';
-            if (wp->w_p_rl) {                       // reverse line numbers
-              // like rl_mirror(), but keep the space at the end
-              char_u *p2 = skiptowhite(extra) - 1;
-              for (char_u *p1 = extra; p1 < p2; p1++, p2--) {
-                const int t = *p1;
-                *p1 = *p2;
-                *p2 = t;
-              }
-            }
-            p_extra = extra;
-            c_extra = NUL;
-            c_final = NUL;
+          // If 'signcolumn' is set to 'number' and a sign is present
+          // in 'lnum', then display the sign instead of the line
+          // number.
+          if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
+              && buf_findsign_id(wp->w_buffer, lnum, (char_u *)"*") != 0) {
+            int count = win_signcol_count(wp);
+            get_sign_display_info(
+                true, wp, lnum, row,
+                startrow, filler_lines, filler_todo, count,
+                &c_extra, &c_final, extra, sizeof(extra),
+                &p_extra, &n_extra,
+                &char_attr, &draw_state, &sign_idx);
           } else {
-            c_extra = ' ';
-            c_final = NUL;
-          }
-          n_extra = number_width(wp) + 1;
-          char_attr = win_hl_attr(wp, HLF_N);
+            if (row == startrow + filler_lines) {
+              // Draw the line number (empty space after wrapping). */
+              long num;
+              char *fmt = "%*ld ";
 
-          int num_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_NUMHL,
-                                         0, 1);
-          if (num_sign != 0) {
-            // :sign defined with "numhl" highlight.
-            char_attr = sign_get_attr(num_sign, SIGN_NUMHL);
-          } else if ((wp->w_p_cul || wp->w_p_rnu)
-                     && lnum == wp->w_cursor.lnum) {
-            // When 'cursorline' is set highlight the line number of
-            // the current line differently.
-            // TODO(vim): Can we use CursorLine instead of CursorLineNr
-            // when CursorLineNr isn't set?
-            char_attr = win_hl_attr(wp, HLF_CLN);
+              if (wp->w_p_nu && !wp->w_p_rnu) {
+                // 'number' + 'norelativenumber'
+                num = (long)lnum;
+              } else {
+                // 'relativenumber', don't use negative numbers
+                num = labs((long)get_cursor_rel_lnum(wp, lnum));
+                if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
+                  // 'number' + 'relativenumber'
+                  num = lnum;
+                  fmt = "%-*ld ";
+                }
+              }
+
+              snprintf((char *)extra, sizeof(extra),
+                       fmt, number_width(wp), num);
+              if (wp->w_skipcol > 0) {
+                for (p_extra = extra; *p_extra == ' '; p_extra++) {
+                  *p_extra = '-';
+                }
+              }
+              if (wp->w_p_rl) {                       // reverse line numbers
+                // like rl_mirror(), but keep the space at the end
+                char_u *p2 = skiptowhite(extra) - 1;
+                for (char_u *p1 = extra; p1 < p2; p1++, p2--) {
+                  const int t = *p1;
+                  *p1 = *p2;
+                  *p2 = t;
+                }
+              }
+              p_extra = extra;
+              c_extra = NUL;
+              c_final = NUL;
+            } else {
+              c_extra = ' ';
+              c_final = NUL;
+            }
+            n_extra = number_width(wp) + 1;
+            char_attr = win_hl_attr(wp, HLF_N);
+
+            int num_sign = buf_getsigntype(
+                wp->w_buffer, lnum, SIGN_NUMHL, 0, 1);
+            if (num_sign != 0) {
+              // :sign defined with "numhl" highlight.
+              char_attr = sign_get_attr(num_sign, SIGN_NUMHL);
+            } else if ((wp->w_p_cul || wp->w_p_rnu)
+                       && lnum == wp->w_cursor.lnum) {
+              // When 'cursorline' is set highlight the line number of
+              // the current line differently.
+              // TODO(vim): Can we use CursorLine instead of CursorLineNr
+              // when CursorLineNr isn't set?
+              char_attr = win_hl_attr(wp, HLF_CLN);
+            }
           }
         }
       }
@@ -4494,6 +4473,88 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
     } else {
       *grid = &default_grid;
     }
+  }
+}
+
+// Get information needed to display the sign in line 'lnum' in window 'wp'.
+// If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
+// Otherwise the sign is going to be displayed in the sign column.
+static void get_sign_display_info(
+    bool nrcol,
+    win_T *wp,
+    linenr_T lnum,
+    int row,
+    int startrow,
+    int filler_lines,
+    int filler_todo,
+    int count,
+    int *c_extrap,
+    int *c_finalp,
+    char_u *extra,
+    size_t extra_size,
+    char_u **pp_extra,
+    int *n_extrap,
+    int *char_attrp,
+    int *draw_statep,
+    int *sign_idxp
+)
+{
+  int text_sign;
+
+  // Draw cells with the sign value or blank.
+  *c_extrap = ' ';
+  *c_finalp = NUL;
+  if (nrcol) {
+    *n_extrap = number_width(wp) + 1;
+  } else {
+    *char_attrp = win_hl_attr(wp, HLF_SC);
+    *n_extrap = win_signcol_width(wp);
+  }
+
+  if (row == startrow + filler_lines && filler_todo <= 0) {
+    text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
+                                *sign_idxp, count);
+    if (text_sign != 0) {
+      *pp_extra = sign_get_text(text_sign);
+      if (*pp_extra != NULL) {
+        *c_extrap = NUL;
+        *c_finalp = NUL;
+
+        if (nrcol) {
+          int n, width = number_width(wp) - 2;
+          for (n = 0; n < width; n++) {
+            extra[n] = ' ';
+          }
+          extra[n] = NUL;
+          STRCAT(extra, *pp_extra);
+          STRCAT(extra, " ");
+          *pp_extra = extra;
+          *n_extrap = (int)STRLEN(*pp_extra);
+        } else {
+          int symbol_blen = (int)STRLEN(*pp_extra);
+
+          // TODO(oni-link): Is sign text already extended to
+          // full cell width?
+          assert((size_t)win_signcol_width(wp) >= mb_string2cells(*pp_extra));
+          // symbol(s) bytes + (filling spaces) (one byte each)
+          *n_extrap = symbol_blen +
+            (win_signcol_width(wp) - mb_string2cells(*pp_extra));
+
+          assert(extra_size > (size_t)symbol_blen);
+          memset(extra, ' ', extra_size);
+          memcpy(extra, *pp_extra, symbol_blen);
+
+          *pp_extra = extra;
+          (*pp_extra)[*n_extrap] = NUL;
+        }
+      }
+      *char_attrp = sign_get_attr(text_sign, SIGN_TEXT);
+    }
+  }
+
+  (*sign_idxp)++;
+  if (*sign_idxp < count) {
+    *draw_statep = WL_SIGN - 1;
   }
 }
 
@@ -7347,9 +7408,17 @@ int number_width(win_T *wp)
     ++n;
   } while (lnum > 0);
 
-  /* 'numberwidth' gives the minimal width plus one */
-  if (n < wp->w_p_nuw - 1)
+  // 'numberwidth' gives the minimal width plus one
+  if (n < wp->w_p_nuw - 1) {
     n = wp->w_p_nuw - 1;
+  }
+
+  // If 'signcolumn' is set to 'number' and there is a sign to display, then
+  // the minimal width for the number column is 2.
+  if (n < 2 && (wp->w_buffer->b_signlist != NULL)
+      && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+    n = 2;
+  }
 
   wp->w_nrwidth_width = n;
   return n;
@@ -7511,3 +7580,5 @@ win_T *get_win_by_grid_handle(handle_T handle)
   }
   return NULL;
 }
+
+

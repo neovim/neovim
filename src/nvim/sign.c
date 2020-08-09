@@ -881,6 +881,17 @@ int sign_undefine_by_name(const char_u *name)
   return OK;
 }
 
+static void may_force_numberwidth_recompute(buf_T *buf, int unplace)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+    if (wp->w_buffer == buf
+        && (wp->w_p_nu || wp->w_p_rnu)
+        && (unplace || wp->w_nrwidth_width < 2)
+        && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+      wp->w_nrwidth_line_count = 0;
+    }
+}
+
 /// List the signs matching 'name'
 static void sign_list_by_name(char_u *name)
 {
@@ -935,6 +946,10 @@ int sign_place(
   }
   if (lnum > 0) {
     redraw_buf_line_later(buf, lnum);
+
+    // When displaying signs in the 'number' column, if the width of the
+    // number column is less than 2, then force recomputing the width.
+    may_force_numberwidth_recompute(buf, false);
   } else {
     EMSG2(_("E885: Not possible to change sign %s"), sign_name);
     return FAIL;
@@ -962,6 +977,13 @@ int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
       return FAIL;
     }
     redraw_buf_line_later(buf, lnum);
+  }
+
+  // When all the signs in a buffer are removed, force recomputing the
+  // number column width (if enabled) in all the windows displaying the
+  // buffer if 'signcolumn' is set to 'number' in that window.
+  if (buf->b_signlist == NULL) {
+    may_force_numberwidth_recompute(buf, true);
   }
 
   return OK;
