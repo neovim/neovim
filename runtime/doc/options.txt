@@ -5043,9 +5043,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Don't include both "curdir" and "sesdir".
 	When neither "curdir" nor "sesdir" is included, file names are stored
 	with absolute paths.
-	"slash" and "unix" are useful on Windows when sharing session files
-	with Unix.  The Unix version of Vim cannot source dos format scripts,
-	but the Windows version of Vim can source unix format scripts.
+	"slash" and "unix" are always enabled.
 
 				*'shada'* *'sd'* *E526* *E527* *E528*
 'shada' 'sd'		string	(Vim default for

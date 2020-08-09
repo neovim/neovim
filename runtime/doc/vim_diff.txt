@@ -50,7 +50,7 @@ the differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
-- 'sessionoptions' excludes "options"
+- 'sessionoptions' enables "slash,unix", excludes "options"
 - 'shortmess' includes "F", excludes "S"
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
