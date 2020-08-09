@@ -271,9 +271,68 @@ static void init_incsearch_state(incsearch_state_T *s)
 }
 
 // Return true when 'incsearch' highlighting is to be done.
-static bool do_incsearch_highlighting(int firstc)
+// Sets search_first_line and search_last_line to the address range.
+static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
+                                      int *skiplen, int *patlen)
 {
-  return p_is && !cmd_silent && (firstc == '/' || firstc == '?');
+  *skiplen = 0;
+  *patlen = ccline.cmdlen;
+
+  if (p_is && !cmd_silent) {
+    // by default search all lines
+    search_first_line = 0;
+    search_last_line = MAXLNUM;
+
+    if (firstc == '/' || firstc == '?') {
+      return true;
+    }
+    if (firstc == ':') {
+      char_u *cmd = skip_range(ccline.cmdbuff, NULL);
+      char_u *p;
+      int delim;
+      char_u *end;
+
+      if (*cmd == 's' || *cmd == 'g' || *cmd == 'v') {
+        // Skip over "substitute" to find the pattern separator.
+        for (p = cmd; ASCII_ISALPHA(*p); p++) {}
+        if (*p != NUL) {
+          delim = *p++;
+          end = skip_regexp(p, delim, p_magic, NULL);
+          if (end > p) {
+            char_u  *dummy;
+            exarg_T ea;
+            pos_T save_cursor = curwin->w_cursor;
+
+            // found a non-empty pattern
+            *skiplen = (int)(p - ccline.cmdbuff);
+            *patlen = (int)(end - p);
+
+            // parse the address range
+            memset(&ea, 0, sizeof(ea));
+            ea.line1 = 1;
+            ea.line2 = 1;
+            ea.cmd = ccline.cmdbuff;
+            ea.addr_type = ADDR_LINES;
+            parse_cmd_address(&ea, &dummy);
+            curwin->w_cursor = s->search_start;
+            if (ea.addr_count > 0) {
+              search_first_line = ea.line1;
+              search_last_line = ea.line2;
+            } else if (*cmd == 's') {
+              // :s defaults to the current line
+              search_first_line = curwin->w_cursor.lnum;
+              search_last_line = curwin->w_cursor.lnum;
+            }
+
+            curwin->w_cursor = save_cursor;
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 // May do 'incsearch' highlighting if desired.
@@ -283,8 +342,10 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   pos_T end_pos;
   proftime_T tm;
   searchit_arg_T sia;
+  int skiplen, patlen;
+  char_u c;
 
-  if (!do_incsearch_highlighting(firstc)) {
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
     return;
   }
 
@@ -294,12 +355,20 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     return;
   }
   s->incsearch_postponed = false;
-  curwin->w_cursor = s->search_start;  // start at old position
+
+  if (search_first_line == 0) {
+    // start at the original cursor position
+    curwin->w_cursor = s->search_start;
+  } else {
+    // start at the first line in the range
+    curwin->w_cursor.lnum = search_first_line;
+    curwin->w_cursor.col = 0;
+  }
   save_last_search_pattern();
   int i;
 
   // If there is no command line, don't do anything
-  if (ccline.cmdlen == 0) {
+  if (patlen == 0) {
     i = 0;
     set_no_hlsearch(true);  // turn off previous highlight
     redraw_all_later(SOME_VALID);
@@ -313,11 +382,21 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
+    c = ccline.cmdbuff[skiplen + patlen];
+    ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    i = do_search(NULL, firstc, ccline.cmdbuff, count,
+    i = do_search(NULL, firstc == ':' ? '/' : firstc,
+                  ccline.cmdbuff + skiplen, count,
                   search_flags, &sia);
+    ccline.cmdbuff[skiplen + patlen] = c;
     emsg_off--;
+    if (curwin->w_cursor.lnum < search_first_line
+        || curwin->w_cursor.lnum > search_last_line) {
+      // match outside of address range
+      i = 0;
+    }
+
     // if interrupted while searching, behave like it failed
     if (got_int) {
       (void)vpeekc();               // remove <C-C> from input stream
@@ -357,9 +436,12 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 
   // Disable 'hlsearch' highlighting if the pattern matches
   // everything. Avoids a flash when typing "foo\|".
+  c = ccline.cmdbuff[skiplen + patlen];
+  ccline.cmdbuff[skiplen + patlen] = NUL;
   if (empty_pattern(ccline.cmdbuff)) {
     set_no_hlsearch(true);
   }
+  ccline.cmdbuff[skiplen + patlen] = c;
 
   validate_cursor();
   // May redraw the status line to show the cursor position.
@@ -385,8 +467,9 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 // Return OK when calling command_line_not_changed.
 static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 {
+  int skiplen, patlen;
   // Add a character from under the cursor for 'incsearch'
-  if (!do_incsearch_highlighting(firstc)) {
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
     return FAIL;
   }
 
@@ -398,7 +481,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
       // command line has no uppercase characters, convert
       // the character to lowercase
       if (p_ic && p_scs
-          && !pat_has_uppercase(ccline.cmdbuff)) {
+          && !pat_has_uppercase(ccline.cmdbuff + skiplen)) {
         *c = mb_tolower(*c);
       }
       if (*c != NUL) {
@@ -1246,10 +1329,11 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
                                               incsearch_state_T *s,
                                               bool next_match)
 {
-  if (!do_incsearch_highlighting(firstc)) {
+  int skiplen, patlen;
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
     return OK;
   }
-  if (ccline.cmdlen == 0) {
+  if (patlen == 0 && ccline.cmdbuff[skiplen] == NUL) {
     return FAIL;
   }
 
@@ -1259,12 +1343,13 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   pos_T  t;
   char_u *pat;
   int search_flags = SEARCH_NOOF;
+  char_u save;
 
 
-  if (firstc == ccline.cmdbuff[0]) {
+  if (firstc == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
   } else {
-    pat = ccline.cmdbuff;
+    pat = ccline.cmdbuff + skiplen;
   }
 
   save_last_search_pattern();
@@ -1284,17 +1369,20 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     search_flags += SEARCH_KEEP;
   }
   emsg_off++;
+  save = pat[patlen];
+  pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
                        pat, count, search_flags,
                        RE_SEARCH, NULL);
   emsg_off--;
+  pat[patlen] = save;
   ui_busy_stop();
   if (found) {
     s->search_start = s->match_start;
     s->match_end = t;
     s->match_start = t;
-    if (!next_match && firstc == '/') {
+    if (!next_match && firstc != '?') {
       // move just before the current match, so that
       // when nv_search finishes the cursor will be
       // put back on the match
