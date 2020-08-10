@@ -167,4 +167,10 @@ function Watcher.resume_notif_all()
   check_handle:start(vim.schedule_wrap(check_notifications))
 end
 
+function Watcher.stop_all_watcher()
+  for _, watcher in WatcherList do
+    watcher:stop()
+  end
+end
+
 return Watcher
