@@ -243,9 +243,8 @@ static int nlua_schedule(lua_State *const lstate)
 (primitive_type) @type
 (sized_type_specifier) @type
 
-; defaults to very magic syntax, for best compatibility
-((identifier) @Identifier (#match? @Identifier "^l(u)a_"))
-; still support \M etc prefixes
+; Use lua regexes
+((identifier) @Identifier (#contains? @Identifier "lua_"))
 ((identifier) @Constant (#match? @Constant "^[A-Z_]+$"))
 
 ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
@@ -298,7 +297,7 @@ static int nlua_schedule(lua_State *const lstate)
     ]], hl_query)
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
         {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
@@ -306,9 +305,9 @@ static int nlua_schedule(lua_State *const lstate)
           {4:return} {11:lua_error}(lstate);                                    |
         }                                                              |
                                                                        |
-        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       ^}                                                                |
@@ -320,7 +319,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed('7Go*/<esc>')
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
         {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
@@ -329,9 +328,9 @@ static int nlua_schedule(lua_State *const lstate)
       {8:*^/}                                                               |
         }                                                              |
                                                                        |
-        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       }                                                                |
@@ -342,7 +341,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed('3Go/*<esc>')
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
-      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
       {2:/^*}                                                               |
       {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
@@ -352,9 +351,9 @@ static int nlua_schedule(lua_State *const lstate)
       {2:*/}                                                               |
         }                                                              |
                                                                        |
-        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
@@ -365,7 +364,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed("~")
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queu^E}             |
-      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
       {2:/*}                                                               |
       {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
@@ -375,9 +374,9 @@ static int nlua_schedule(lua_State *const lstate)
       {2:*/}                                                               |
         }                                                              |
                                                                        |
-        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
@@ -388,7 +387,7 @@ static int nlua_schedule(lua_State *const lstate)
     feed("re")
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queu^e}             |
-      {3:static} {3:int} nlua_schedule({3:lua_State} *{3:const} lstate)                |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
       {2:/*}                                                               |
       {2:  if (lua_type(lstate, 1) != LUA_TFUNCTION}                       |
@@ -398,9 +397,9 @@ static int nlua_schedule(lua_State *const lstate)
       {2:*/}                                                               |
         }                                                              |
                                                                        |
-        {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
                                                                        |
-        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       {8:}}                                                                |

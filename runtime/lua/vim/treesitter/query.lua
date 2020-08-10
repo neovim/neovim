@@ -65,6 +65,19 @@ local predicate_handlers = {
 
       return string.find(get_node_text(node, bufnr), regex)
   end,
+
+  ["contains?"] = function(match, _, bufnr, predicate)
+    local node = match[predicate[2]]
+    local node_text = get_node_text(node, bufnr)
+
+    for i=3,#predicate do
+      if string.find(node_text, predicate[i], 1, true) then
+        return true
+      end
+    end
+
+    return false
+  end
 }
 
 --- Adds a new predicates to be used in queries
