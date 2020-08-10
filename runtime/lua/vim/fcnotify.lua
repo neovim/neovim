@@ -3,6 +3,7 @@
 
 local uv = vim.loop
 local Watcher = {}
+Watcher.__index = Watcher
 local w = {}
 local WatcherList = {}
 
@@ -64,7 +65,6 @@ function Watcher:new(fname)
        fname = fname, ffname = ffname, handle = nil,
        paused = false, pending_notifs = false}
   setmetatable(w, self)
-  self.__index = self
   return w
 end
 
@@ -139,7 +139,6 @@ function Watcher.stop_watch(fname)
     return
   end
 
-  print(fname)
   -- shouldn't happen
   if WatcherList[fname] == nil then
     print(fname..' not exists')
@@ -168,10 +167,4 @@ function Watcher.resume_notif_all()
   check_handle:start(vim.schedule_wrap(check_notifications))
 end
 
-function Watcher.print_all()
-  print('Printing all watchers:')
-  for _, watcher in pairs(WatcherList) do
-    print(vim.inspect(watcher))
-  end
-end
 return Watcher

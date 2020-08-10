@@ -4833,8 +4833,8 @@ int buf_check_timestamp(buf_T *buf)
     if (*buf->b_p_fcnotify != NUL) {
       autoread = strstr((char *)buf->b_p_fcnotify, "autoread") != NULL;
     }
-    /* Don't do anything for a directory.  Might contain the file
-     * explorer. */
+    // Don't do anything for a directory.  Might contain the file
+    // explorer.
     if (os_isdir(buf->b_fname)) {
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar) && autoread
                && !bufIsChanged(buf) && file_info_ok) {
