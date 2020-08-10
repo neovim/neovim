@@ -643,8 +643,14 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, ':5,2s/foo')
   sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_04', {})
-
   call term_sendkeys(buf, "\<Esc>")
+
+  " White space after the command is skipped
+  call term_sendkeys(buf, ':2,3sub  /fo')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_05', {})
+  call term_sendkeys(buf, "\<Esc>")
+
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
 endfunc
