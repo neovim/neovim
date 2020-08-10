@@ -198,6 +198,41 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('allows to add predicates', function()
+    insert([[
+    int main(void) {
+      return 0;
+    }
+    ]])
+
+    local custom_query = "((identifier) @main (#is-main? @main))"
+
+    local res = exec_lua([[
+    local query = require"vim.treesitter.query"
+
+    local function is_main(match, pattern, bufnr, predicate)
+      local node = match[ predicate[2] ]
+
+      return query.get_node_text(node, bufnr)
+    end
+
+    local parser = vim.treesitter.get_parser(0, "c")
+
+    query.add_predicate("is-main?", is_main)
+
+    local query = query.parse_query("c", ...)
+
+    local nodes = {}
+    for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
+      table.insert(nodes, {node:range()})
+    end
+
+    return nodes
+    ]], custom_query)
+
+    eq({{0, 4, 0, 8}}, res)
+  end)
+
   it('supports highlighting', function()
     if not check_parser() then return end
 
@@ -246,6 +281,7 @@ static int nlua_schedule(lua_State *const lstate)
 ; Use lua regexes
 ((identifier) @Identifier (#contains? @Identifier "lua_"))
 ((identifier) @Constant (#match? @Constant "^[A-Z_]+$"))
+((identifier) @Normal (#vim-match? @Constant "^lstate$"))
 
 ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
 
