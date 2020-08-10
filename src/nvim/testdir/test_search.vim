@@ -346,27 +346,6 @@ func Test_searchc()
   bw!
 endfunc
 
-func Test_search_cmdline3()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
-  " need to disable char_avail,
-  " so that expansion of commandline works
-  call test_override("char_avail", 1)
-  new
-  call setline(1, ['  1', '  2 the~e', '  3 the theother'])
-  set incsearch
-  1
-  " first match
-  call feedkeys("/the\<c-l>\<cr>", 'tx')
-  call assert_equal('  2 the~e', getline('.'))
-  " clean up
-  set noincsearch
-  call test_override("char_avail", 0)
-  bw!
-endfunc
-
 func Cmdline3_prep()
   throw 'skipped: Nvim does not support test_override()'
   " need to disable char_avail,
@@ -384,6 +363,20 @@ func Cmdline3_cleanup()
   bw!
 endfunc
 
+func Test_search_cmdline3()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
+  1
+  " first match
+  call feedkeys("/the\<c-l>\<cr>", 'tx')
+  call assert_equal('  2 the~e', getline('.'))
+
+  call Cmdline3_cleanup()
+endfunc
+
 func Test_search_cmdline3s()
   throw 'skipped: Nvim does not support test_override()'
   if !exists('+incsearch')
@@ -392,6 +385,12 @@ func Test_search_cmdline3s()
   call Cmdline3_prep()
   1
   call feedkeys(":%s/the\<c-l>/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%subs/the\<c-l>/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%substitute/the\<c-l>/xxx\<cr>", 'tx')
   call assert_equal('  2 xxxe', getline('.'))
 
   call Cmdline3_cleanup()
@@ -406,6 +405,9 @@ func Test_search_cmdline3g()
   1
   call feedkeys(":g/the\<c-l>/d\<cr>", 'tx')
   call assert_equal('  3 the theother', getline(2))
+  undo
+  call feedkeys(":global/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal('  3 the theother', getline(2))
 
   call Cmdline3_cleanup()
 endfunc
@@ -418,6 +420,10 @@ func Test_search_cmdline3v()
   call Cmdline3_prep()
   1
   call feedkeys(":v/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+  undo
+  call feedkeys(":vglobal/the\<c-l>/d\<cr>", 'tx')
   call assert_equal(1, line('$'))
   call assert_equal('  2 the~e', getline(1))
 
@@ -477,6 +483,45 @@ func Test_search_cmdline5()
   call assert_equal('  2 the second', getline('.'))
   " clean up
   set noincsearch
+  bw!
+endfunc
+
+func Test_search_cmdline7()
+  throw 'skipped: Nvim does not support test_override()'
+  " Test that an pressing <c-g> in an empty command line
+  " does not move the cursor
+  if !exists('+incsearch')
+    return
+  endif
+  " need to disable char_avail,
+  " so that expansion of commandline works
+  call test_override("char_avail", 1)
+  new
+  let @/ = 'b'
+  call setline(1, [' bbvimb', ''])
+  set incsearch
+  " first match
+  norm! gg0
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,2,0], getpos('.'))
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<cr>", 'tx')
+  call assert_equal([0,1,3,0], getpos('.'))
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<c-t>\<cr>", 'tx')
+  call assert_equal([0,1,7,0], getpos('.'))
+
+  " using an offset uses the last search pattern
+  call cursor(1, 1)
+  call setline(1, ['1 bbvimb', ' 2 bbvimb'])
+  let @/ = 'b'
+  call feedkeys("//e\<c-g>\<cr>", 'tx')
+  call assert_equal('1 bbvimb', getline('.'))
+  call assert_equal(4, col('.'))
+
+  set noincsearch
+  call test_override("char_avail", 0)
   bw!
 endfunc
 
