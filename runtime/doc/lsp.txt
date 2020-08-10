@@ -1123,10 +1123,6 @@ focusable_preview({unique_name}, {fn})
 get_completion_word({item})               *vim.lsp.util.get_completion_word()*
                 TODO: Documentation
 
-                                   *vim.lsp.util.get_current_line_to_cursor()*
-get_current_line_to_cursor()
-                TODO: Documentation
-
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                 Get visual width of tabstop.
 
