@@ -1817,9 +1817,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || tmux       // per tmux manual page
             // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
             || (true_screen
-                && (!screen_host_linuxvt
-                    || (screen_host_linuxvt
-                        && (xterm_version || (vte_version > 0) || colorterm))))
+                && (screen_host_linuxvt
+                    && (xterm_version || (vte_version > 0) || colorterm)))
             // Since GNU Screen does not support DECSCUSR, DECSCUSR is wrapped
             // in DCS and output to the host terminal.
             || st         // #7641
