@@ -319,8 +319,14 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
             curwin->w_cursor = s->search_start;
             parse_cmd_address(&ea, &dummy);
             if (ea.addr_count > 0) {
-              search_first_line = ea.line1;
-              search_last_line = ea.line2;
+              // Allow for reverse match.
+              if (ea.line2 < ea.line1) {
+                search_first_line = ea.line2;
+                search_last_line = ea.line1;
+              } else {
+                search_first_line = ea.line1;
+                search_last_line = ea.line2;
+              }
             } else if (*cmd == 's') {
               // :s defaults to the current line
               search_first_line = curwin->w_cursor.lnum;

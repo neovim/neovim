@@ -637,6 +637,12 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, "\<BS>")
   sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_03', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Reverse range is accepted
+  call term_sendkeys(buf, ':5,2s/foo')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_04', {})
 
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
