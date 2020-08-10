@@ -356,7 +356,7 @@ func Cmdline3_prep()
   set incsearch
 endfunc
 
-func Cmdline3_cleanup()
+func Incsearch_cleanup()
   throw 'skipped: Nvim does not support test_override()'
   set noincsearch
   call test_override("char_avail", 0)
@@ -374,7 +374,7 @@ func Test_search_cmdline3()
   call feedkeys("/the\<c-l>\<cr>", 'tx')
   call assert_equal('  2 the~e', getline('.'))
 
-  call Cmdline3_cleanup()
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_cmdline3s()
@@ -393,7 +393,7 @@ func Test_search_cmdline3s()
   call feedkeys(":%substitute/the\<c-l>/xxx\<cr>", 'tx')
   call assert_equal('  2 xxxe', getline('.'))
 
-  call Cmdline3_cleanup()
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_cmdline3g()
@@ -409,7 +409,7 @@ func Test_search_cmdline3g()
   call feedkeys(":global/the\<c-l>/d\<cr>", 'tx')
   call assert_equal('  3 the theother', getline(2))
 
-  call Cmdline3_cleanup()
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_cmdline3v()
@@ -427,7 +427,7 @@ func Test_search_cmdline3v()
   call assert_equal(1, line('$'))
   call assert_equal('  2 the~e', getline(1))
 
-  call Cmdline3_cleanup()
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_cmdline4()
@@ -680,6 +680,28 @@ func Test_incsearch_scrolling()
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
   call delete('Xscript')
+endfunc
+
+func Test_incsearch_substitute()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call test_override("char_avail", 1)
+  new
+  set incsearch
+  for n in range(1, 10)
+    call setline(n, 'foo ' . n)
+  endfor
+  4
+  call feedkeys(":.,.+2s/foo\<BS>o\<BS>o/xxx\<cr>", 'tx')
+  call assert_equal('foo 3', getline(3))
+  call assert_equal('xxx 4', getline(4))
+  call assert_equal('xxx 5', getline(5))
+  call assert_equal('xxx 6', getline(6))
+  call assert_equal('foo 7', getline(7))
+
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_undefined_behaviour()

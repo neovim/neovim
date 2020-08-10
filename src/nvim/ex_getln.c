@@ -316,8 +316,8 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
             ea.line2 = 1;
             ea.cmd = ccline.cmdbuff;
             ea.addr_type = ADDR_LINES;
-            parse_cmd_address(&ea, &dummy);
             curwin->w_cursor = s->search_start;
+            parse_cmd_address(&ea, &dummy);
             if (ea.addr_count > 0) {
               search_first_line = ea.line1;
               search_last_line = ea.line2;
@@ -384,6 +384,9 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     tm = profile_setlimit(500L);
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
+    }
+    if (search_first_line != 0) {
+      search_flags += SEARCH_START;
     }
     c = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
