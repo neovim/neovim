@@ -4148,7 +4148,7 @@ static inline size_t shada_init_jumps(
     }
     const char *const fname = (char *) (fm.fmark.fnum == 0
                                         ? (fm.fname == NULL ? NULL : fm.fname)
-                                        : buf->b_ffname);
+                                        : buf ? buf->b_ffname : NULL);
     if (fname == NULL) {
       continue;
     }
