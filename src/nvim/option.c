@@ -80,6 +80,7 @@
 #ifdef WIN32
 # include "nvim/os/pty_conpty_win.h"
 #endif
+#include "nvim/lua/executor.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
@@ -3343,6 +3344,10 @@ ambw_end:
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
+    }
+  } else if (varp == &p_rtp) {  // 'runtimepath'
+    if (!nlua_update_package_path()) {
+      errmsg = (char_u *)N_("E970: Failed to initialize lua interpreter");
     }
   } else {
     // Options that are a list of flags.
