@@ -614,6 +614,7 @@ func Test_incsearch_substitute_dump()
   sleep 100m
 
   " Need to send one key at a time to force a redraw.
+  " Select three lines at the cursor with typed pattern.
   call term_sendkeys(buf, ':.,.+2s/')
   sleep 100m
   call term_sendkeys(buf, 'f')
@@ -621,7 +622,21 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, 'o')
   sleep 100m
   call term_sendkeys(buf, 'o')
+  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Select three lines at the cursor using previous pattern.
+  call term_sendkeys(buf, "/foo\<CR>")
+  sleep 100m
+  call term_sendkeys(buf, ':.,.+2s//')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_02', {})
+
+  " Deleting last slash should remove the match.
+  call term_sendkeys(buf, "\<BS>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_03', {})
 
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)

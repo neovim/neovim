@@ -301,7 +301,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
                 || STRNCMP(cmd, "vglobal", p - cmd) == 0)) {
           delim = *p++;
           end = skip_regexp(p, delim, p_magic, NULL);
-          if (end > p) {
+          if (end > p || *end == delim) {
             char_u  *dummy;
             exarg_T ea;
             pos_T save_cursor = curwin->w_cursor;
@@ -346,9 +346,11 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   proftime_T tm;
   searchit_arg_T sia;
   int skiplen, patlen;
-  char_u c;
+  char_u next_char;
+  char_u use_last_pat;
 
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+    finish_incsearch_highlighting(false, s, true);
     return;
   }
 
@@ -370,8 +372,13 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   save_last_search_pattern();
   int i;
 
-  // If there is no command line, don't do anything
-  if (patlen == 0) {
+  // Use the previous pattern for ":s//".
+  next_char = ccline.cmdbuff[skiplen + patlen];
+  use_last_pat = patlen == 0 && skiplen > 0
+    && ccline.cmdbuff[skiplen - 1] == next_char;
+
+  // If there is no pattern, don't do anything.
+  if (patlen == 0 && !use_last_pat) {
     i = 0;
     set_no_hlsearch(true);  // turn off previous highlight
     redraw_all_later(SOME_VALID);
@@ -388,14 +395,13 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     if (search_first_line != 0) {
       search_flags += SEARCH_START;
     }
-    c = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
     i = do_search(NULL, firstc == ':' ? '/' : firstc,
                   ccline.cmdbuff + skiplen, count,
                   search_flags, &sia);
-    ccline.cmdbuff[skiplen + patlen] = c;
+    ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;
     if (curwin->w_cursor.lnum < search_first_line
         || curwin->w_cursor.lnum > search_last_line) {
@@ -442,12 +448,14 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 
   // Disable 'hlsearch' highlighting if the pattern matches
   // everything. Avoids a flash when typing "foo\|".
-  c = ccline.cmdbuff[skiplen + patlen];
-  ccline.cmdbuff[skiplen + patlen] = NUL;
-  if (empty_pattern(ccline.cmdbuff)) {
-    set_no_hlsearch(true);
+  if (!use_last_pat) {
+    next_char = ccline.cmdbuff[skiplen + patlen];
+    ccline.cmdbuff[skiplen + patlen] = NUL;
+    if (empty_pattern(ccline.cmdbuff)) {
+      set_no_hlsearch(true);
+    }
+    ccline.cmdbuff[skiplen + patlen] = next_char;
   }
-  ccline.cmdbuff[skiplen + patlen] = c;
 
   validate_cursor();
   // May redraw the status line to show the cursor position.
@@ -505,9 +513,11 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   return OK;
 }
 
-static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s)
+static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s,
+                                          bool call_update_screen)
 {
   if (s->did_incsearch) {
+    s->did_incsearch = false;
     if (gotesc) {
       curwin->w_cursor = s->save_cursor;
     } else {
@@ -521,7 +531,11 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s)
     restore_viewstate(&s->old_viewstate);
     highlight_match = false;
     validate_cursor();          // needed for TAB
-    redraw_all_later(SOME_VALID);
+    if (call_update_screen) {
+      update_screen(SOME_VALID);
+    } else {
+      redraw_all_later(SOME_VALID);
+    }
   }
 }
 
@@ -723,7 +737,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     close_preview_windows();
   }
 
-  finish_incsearch_highlighting(s->gotesc, &s->is_state);
+  finish_incsearch_highlighting(s->gotesc, &s->is_state, false);
 
   if (ccline.cmdbuff != NULL) {
     // Put line in history buffer (":" and "=" only when it was typed).
