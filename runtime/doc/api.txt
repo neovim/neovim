@@ -127,6 +127,10 @@ Special types (msgpack EXT) ~
 Most of the API uses 0-based indices, and ranges are end-exclusive. For the
 end of a range, -1 denotes the last line/column.
 
+Exception: the following API functions use 0-based, end-inclusive indexing:
+
+    |nvim_buf_get_extmarks()|
+
 Exception: the following API functions use "mark-like" indexing (1-based
 lines, 0-based columns):
 
@@ -733,14 +737,9 @@ nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 |nvim_input()|.
 
                 On execution error: does not fail, but updates v:errmsg.
-
-                If you need to input sequences like <C-o> use nvim_replace_termcodes
-                to replace the termcodes and then pass the resulting string to
-                nvim_feedkeys. You'll also want to enable escape_csi.
-
                 Example: >
-		    :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
-		    :call nvim_feedkeys(key, 'n', v:true)
+                    :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
+                    :call nvim_feedkeys(key, 'n', v:true)
 <
 
                 Parameters: ~
@@ -1766,7 +1765,7 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
 
                                                 *nvim_buf_get_extmark_by_id()*
 nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id})
-                Returns position for a given extmark id
+                Returns 0-indexed position for a given extmark id
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -1774,7 +1773,8 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id})
                     {id}      Extmark id
 
                 Return: ~
-                    (row, col) tuple or empty list () if extmark id was absent
+                    0-indexed (row, col) tuple or empty list () if extmark id
+                    was absent
 
                                                      *nvim_buf_get_extmarks()*
 nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
@@ -1814,10 +1814,12 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {start}   Start of range, given as (row, col) or valid
-                              extmark id (whose position defines the bound)
-                    {end}     End of range, given as (row, col) or valid
-                              extmark id (whose position defines the bound)
+                    {start}   Start of range, given as 0-indexed (row, col) or
+                              valid extmark id (whose position defines the
+                              bound)
+                    {end}     End of range (inclusive), given as 0-indexed
+                              (row, col) or valid extmark id (whose position
+                              defines the bound)
                     {opts}    Optional parameters. Keys:
                               • limit: Maximum number of marks to return
 
@@ -1982,12 +1984,14 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {id}, {line}, {col}, {opts})
                 of existing and unused ids itself. (Useful over RPC, to avoid
                 waiting for the return value.)
 
+                Uses |api-indexing|.
+
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
                     {id}      Extmark id, or 0 to create new
-                    {line}    Line number where to place the mark
-                    {col}     Column where to place the mark
+                    {line}    0-indexed line number where to place the mark
+                    {col}     0-indexed column where to place the mark
                     {opts}    Optional parameters. Currently not used.
 
                 Return: ~
