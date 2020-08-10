@@ -98,6 +98,15 @@ func Test_ins_complete()
   call delete('Xdir', 'rf')
 endfunc
 
+func s:CompleteDone_CompleteFuncNone( findstart, base )
+  throw 'skipped: Nvim does not support v:none'
+  if a:findstart
+    return 0
+  endif
+
+  return v:none
+endfunc
+
 function! s:CompleteDone_CompleteFuncDict( findstart, base )
   if a:findstart
     return 0
@@ -111,32 +120,58 @@ function! s:CompleteDone_CompleteFuncDict( findstart, base )
               \ 'menu': 'extra text',
               \ 'info': 'words are cool',
               \ 'kind': 'W',
-              \ 'user_data': 'test'
+              \ 'user_data': ['one', 'two']
             \ }
           \ ]
         \ }
 endfunction
 
-function! s:CompleteDone_CheckCompletedItemDict()
+func s:CompleteDone_CheckCompletedItemNone()
+  let s:called_completedone = 1
+endfunc
+
+func s:CompleteDone_CheckCompletedItemDict(pre)
   call assert_equal( 'aword',          v:completed_item[ 'word' ] )
   call assert_equal( 'wrd',            v:completed_item[ 'abbr' ] )
   call assert_equal( 'extra text',     v:completed_item[ 'menu' ] )
   call assert_equal( 'words are cool', v:completed_item[ 'info' ] )
   call assert_equal( 'W',              v:completed_item[ 'kind' ] )
-  call assert_equal( 'test',           v:completed_item[ 'user_data' ] )
+  call assert_equal( ['one', 'two'],   v:completed_item[ 'user_data' ] )
+
+  if a:pre
+    call assert_equal('function', complete_info().mode)
+  endif
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneDict()
-  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDict()
+func Test_CompleteDoneNone()
+  throw 'skipped: Nvim does not support v:none'
+  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemNone()
+  let oldline = join(map(range(&columns), 'nr2char(screenchar(&lines-1, v:val+1))'), '')
+
+  set completefunc=<SID>CompleteDone_CompleteFuncNone
+  execute "normal a\<C-X>\<C-U>\<C-Y>"
+  set completefunc&
+  let newline = join(map(range(&columns), 'nr2char(screenchar(&lines-1, v:val+1))'), '')
+
+  call assert_true(s:called_completedone)
+  call assert_equal(oldline, newline)
+
+  let s:called_completedone = 0
+  au! CompleteDone
+endfunc
+
+func Test_CompleteDoneDict()
+  au CompleteDonePre * :call <SID>CompleteDone_CheckCompletedItemDict(1)
+  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDict(0)
 
   set completefunc=<SID>CompleteDone_CompleteFuncDict
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( 'test', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal(['one', 'two'], v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
@@ -155,7 +190,7 @@ func Test_CompleteDone_undo()
   au! CompleteDone
 endfunc
 
-function! s:CompleteDone_CompleteFuncDictNoUserData( findstart, base )
+func s:CompleteDone_CompleteFuncDictNoUserData(findstart, base)
   if a:findstart
     return 0
   endif
@@ -171,9 +206,9 @@ function! s:CompleteDone_CompleteFuncDictNoUserData( findstart, base )
             \ }
           \ ]
         \ }
-endfunction
+endfunc
 
-function! s:CompleteDone_CheckCompletedItemDictNoUserData()
+func s:CompleteDone_CheckCompletedItemDictNoUserData()
   call assert_equal( 'aword',          v:completed_item[ 'word' ] )
   call assert_equal( 'wrd',            v:completed_item[ 'abbr' ] )
   call assert_equal( 'extra text',     v:completed_item[ 'menu' ] )
@@ -182,31 +217,31 @@ function! s:CompleteDone_CheckCompletedItemDictNoUserData()
   call assert_equal( '',               v:completed_item[ 'user_data' ] )
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneDictNoUserData()
+func Test_CompleteDoneDictNoUserData()
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDictNoUserData()
 
   set completefunc=<SID>CompleteDone_CompleteFuncDictNoUserData
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( '', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal('', v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
 endfunc
 
-function! s:CompleteDone_CompleteFuncList( findstart, base )
+func s:CompleteDone_CompleteFuncList(findstart, base)
   if a:findstart
     return 0
   endif
 
   return [ 'aword' ]
-endfunction
+endfunc
 
-function! s:CompleteDone_CheckCompletedItemList()
+func s:CompleteDone_CheckCompletedItemList()
   call assert_equal( 'aword', v:completed_item[ 'word' ] )
   call assert_equal( '',      v:completed_item[ 'abbr' ] )
   call assert_equal( '',      v:completed_item[ 'menu' ] )
@@ -215,17 +250,17 @@ function! s:CompleteDone_CheckCompletedItemList()
   call assert_equal( '',      v:completed_item[ 'user_data' ] )
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneList()
+func Test_CompleteDoneList()
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemList()
 
   set completefunc=<SID>CompleteDone_CompleteFuncList
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( '', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal('', v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
@@ -284,4 +319,22 @@ func Test_compl_feedkeys()
   call assert_equal("jump jump", getline(1))
   bwipe!
   set completeopt&
+endfunc
+
+func Test_compl_in_cmdwin()
+  set wildmenu wildchar=<Tab>
+  com! -nargs=1 -complete=command GetInput let input = <q-args>
+  com! -buffer TestCommand echo 'TestCommand'
+
+  let input = ''
+  call feedkeys("q:iGetInput T\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('TestCommand', input)
+
+  let input = ''
+  call feedkeys("q::GetInput T\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('T', input)
+
+  delcom TestCommand
+  delcom GetInput
+  set wildmenu& wildchar&
 endfunc

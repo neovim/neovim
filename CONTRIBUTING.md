@@ -8,7 +8,7 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - [Merge a Vim patch].
-- Try a [complexity:low] issue.
+- Try a [good first issue](../../labels/good%20first%20issue) or [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
 
@@ -65,10 +65,11 @@ Pull requests (PRs)
 Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
 For Comment) and `[RDY]` (Ready).
 
-- `[RFC]` is assumed by default, i.e. you are requesting a review.
-- Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-  is still in flux.
-- Add `[RDY]` if you are _done_ and only waiting on merge.
+1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
+   noise to merge commit messages).
+2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
+   is still in flux.
+3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
 
 ### Commit messages
 
@@ -85,7 +86,7 @@ the VCS/git logs more valuable.
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [Travis CI], [QuickBuild]
+Each pull request must pass the automated builds on [Travis CI], [sourcehut]
 and [AppVeyor].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
@@ -100,14 +101,19 @@ and [AppVeyor].
 - The [lint](#lint) build checks modified lines _and their immediate
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
-- [How to investigate QuickBuild failures](https://github.com/neovim/neovim/pull/4718#issuecomment-217631350)
-    - QuickBuild uses this invocation:
-      ```
-      mkdir -p build/${params.get("buildType")} \
-      && cd build/${params.get("buildType")} \
-      && cmake -G "Unix Makefiles" -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_BUILD_TYPE=${params.get("buildType")}
-      -DTRAVIS_CI_BUILD=ON ../.. && ${node.getAttribute("make", "make")}
-      VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
+- CI for freebsd and openbsd runs on [sourcehut].
+    - To get a backtrace on freebsd (after connecting via ssh):
+      ```sh
+      sudo pkg install tmux  # If you want tmux.
+      lldb build/bin/nvim -c nvim.core
+
+      # To get a full backtrace:
+      #   1. Rebuild with debug info.
+      rm -rf nvim.core build
+      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
+      #   2. Run the failing test to generate a new core file.
+      TEST_FILE=test/functional/foo.lua gmake functionaltest
+      lldb build/bin/nvim -c nvim.core
       ```
 
 ### Clang scan-build
@@ -223,7 +229,7 @@ as context, use the `-W` argument as well.
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174
 [Travis CI]: https://travis-ci.org/neovim/neovim
-[QuickBuild]: http://neovim-qb.szakmeister.net/dashboard
+[sourcehut]: https://builds.sr.ht/~jmk
 [AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [Clang report]: https://neovim.io/doc/reports/clang/

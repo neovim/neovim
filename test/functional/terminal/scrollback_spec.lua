@@ -449,7 +449,7 @@ describe("'scrollback' option", function()
         38: line                      |
         39: line                      |
         40: line                      |
-        {IGNORE}|
+        {MATCH:.*}|
         {3:-- TERMINAL --}                |
       ]]}
     end

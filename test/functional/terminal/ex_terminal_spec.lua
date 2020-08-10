@@ -245,12 +245,14 @@ describe(':terminal (with fake shell)', function()
   it('works with gf', function()
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+    retry(nil, 4 * screen.timeout, function()
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
       :terminal echo "scripts/shadacat.py"              |
     ]])
+    end)
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[ggf"lgf]])

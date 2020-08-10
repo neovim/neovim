@@ -626,7 +626,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
   if (covered || curgrid->blending) {
     // TODO(bfredl):
     // 1. check if rectangles actually overlap
-    // 2. calulate subareas that can scroll.
+    // 2. calculate subareas that can scroll.
     compose_debug(top, bot, left, right, dbghl_recompose, true);
     for (int r = (int)(top + MAX(-rows, 0)); r < bot - MAX(rows, 0); r++) {
       // TODO(bfredl): workaround for win_update() performing two scrolls in a

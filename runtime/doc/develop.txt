@@ -143,6 +143,87 @@ DOCUMENTATION						*dev-doc*
       /// @param dirname The path fragment before `pend`
 <
 
+C docstrings ~
+
+Nvim API documentation lives in the source code, as docstrings (Doxygen
+comments) on the function definitions.  The |api| :help is generated
+from the docstrings defined in src/nvim/api/*.c.
+
+Docstring format:
+- Lines start with `///`
+- Special tokens start with `@` followed by the token name:
+  `@note`, `@param`, `@returns`
+- Limited markdown is supported.
+  - List-items start with `-` (useful to nest or "indent")
+- Use `<pre>`  for code samples.
+
+Example: the help for |nvim_open_win()| is generated from a docstring defined
+in src/nvim/api/vim.c like this: >
+
+    /// Opens a new window.
+    /// ...
+    ///
+    /// Example (Lua): window-relative float
+    /// <pre>
+    ///     vim.api.nvim_open_win(0, false,
+    ///       {relative='win', row=3, col=3, width=12, height=3})
+    /// </pre>
+    ///
+    /// @param buffer Buffer to display
+    /// @param enter  Enter the window
+    /// @param config Map defining the window configuration. Keys:
+    ///   - relative: Sets the window layout, relative to:
+    ///      - "editor" The global editor grid.
+    ///      - "win"    Window given by the `win` field.
+    ///      - "cursor" Cursor position in current window.
+    /// ...
+    /// @param[out] err Error details, if any
+    ///
+    /// @return Window handle, or 0 on error
+
+
+Lua docstrings ~
+							*dev-lua-doc*
+Lua documentation lives in the source code, as docstrings on the function
+definitions.  The |lua-vim| :help is generated from the docstrings.
+
+Docstring format:
+- Lines in the main description start with `---`
+- Special tokens start with `--@` followed by the token name:
+  `--@see`, `--@param`, `--@returns`
+- Limited markdown is supported.
+  - List-items start with `-` (useful to nest or "indent")
+- Use `<pre>`  for code samples.
+
+Example: the help for |vim.paste()| is generated from a docstring decorating
+vim.paste in src/nvim/lua/vim.lua like this: >
+
+    --- Paste handler, invoked by |nvim_paste()| when a conforming UI
+    --- (such as the |TUI|) pastes text into the editor.
+    ---
+    --- Example: To remove ANSI color codes when pasting:
+    --- <pre>
+    --- vim.paste = (function()
+    ---   local overridden = vim.paste
+    ---   ...
+    --- end)()
+    --- </pre>
+    ---
+    --@see |paste|
+    ---
+    --@param lines  ...
+    --@param phase  ...
+    --@returns false if client should cancel the paste.
+
+
+LUA							*dev-lua*
+
+- Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
+  pseudo-OOP designs. Plugin authors just want functions to call, they don't
+  want to learn a big, fancy inheritance hierarchy. So we should avoid complex
+  objects: tables are usually better.
+
+
 API							*dev-api*
 
 Use this template to name new API functions:
@@ -155,10 +236,11 @@ with a {thing} that groups functions under a common concept).
 
 Use existing common {action} names if possible:
     add   Append to, or insert into, a collection
-    get   Get a thing (or group of things by query)
-    set   Set a thing (or group of things)
     del   Delete a thing (or group of things)
+    exec  Execute code
+    get   Get a thing (or group of things by query)
     list  Get all things
+    set   Set a thing (or group of things)
 
 Use consistent names for {thing} in all API functions. E.g. a buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
@@ -268,8 +350,8 @@ External UIs are expected to implement these common features:
   chords (<C-,> <C-Enter> <C-S-x> <D-x>) and patterns ("shift shift") that do
   not potentially conflict with Nvim defaults, plugins, etc.
 - Consider the "option_set" |ui-global| event as a hint for other GUI
-  behaviors. UI-related options ('guifont', 'ambiwidth', …) are published in
-  this event.
+  behaviors. Various UI-related options ('guifont', 'ambiwidth', …) are
+  published in this event. See also "mouse_on", "mouse_off".
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

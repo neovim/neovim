@@ -1,9 +1,11 @@
 " Functions shared by several tests.
 
 " Only load this script once.
-if exists('*WaitFor')
+if exists('*PythonProg')
   finish
 endif
+
+source view_util.vim
 
 " {Nvim}
 " Filepath captured from output may be truncated, like this:
@@ -69,7 +71,8 @@ endfunc
 " Read the port number from the Xportnr file.
 func GetPort()
   let l = []
-  for i in range(200)
+  " with 200 it sometimes failed
+  for i in range(400)
     try
       let l = readfile("Xportnr")
     catch
@@ -252,6 +255,8 @@ func GetVimProg()
   endif
 endfunc
 
+let g:valgrind_cnt = 1
+
 " Get the command to run Vim, with -u NONE and --headless arguments.
 " If there is an argument use it instead of "NONE".
 func GetVimCommand(...)
@@ -267,14 +272,25 @@ func GetVimCommand(...)
   endif
   let cmd .= ' --headless -i NONE'
   let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+
+  " If using valgrind, make sure every run uses a different log file.
+  if cmd =~ 'valgrind.*--log-file='
+    let cmd = substitute(cmd, '--log-file=\(\S*\)', '--log-file=\1.' . g:valgrind_cnt, '')
+    let g:valgrind_cnt += 1
+  endif
+
   return cmd
 endfunc
 
-" Get the command to run Vim, with --clean.
+" Get the command to run Vim, with --clean instead of "-u NONE".
 func GetVimCommandClean()
   let cmd = GetVimCommand()
   let cmd = substitute(cmd, '-u NONE', '--clean', '')
   let cmd = substitute(cmd, '--headless', '', '')
+
+  " Optionally run Vim under valgrind
+  " let cmd = 'valgrind --tool=memcheck --leak-check=yes --num-callers=25 --log-file=valgrind ' . cmd
+
   return cmd
 endfunc
 
@@ -290,9 +306,6 @@ endfunc
 func RunVimPiped(before, after, arguments, pipecmd)
   let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   let cmd = GetVimCommand()
-  if cmd == ''
-    return 0
-  endif
   let args = ''
   if len(a:before) > 0
     call writefile(a:before, 'Xbefore.vim')
@@ -303,6 +316,9 @@ func RunVimPiped(before, after, arguments, pipecmd)
     let args .= ' -S Xafter.vim'
   endif
 
+  " Optionally run Vim under valgrind
+  " let cmd = 'valgrind --tool=memcheck --leak-check=yes --num-callers=25 --log-file=valgrind ' . cmd
+
   exe "silent !" . a:pipecmd . cmd . args . ' ' . a:arguments
 
   if len(a:before) > 0
@@ -312,17 +328,6 @@ func RunVimPiped(before, after, arguments, pipecmd)
     call delete('Xafter.vim')
   endif
   return 1
-endfunc
-
-" Get line "lnum" as displayed on the screen.
-" Trailing white space is trimmed.
-func! Screenline(lnum)
-  let chars = []
-  for c in range(1, winwidth(0))
-    call add(chars, nr2char(screenchar(a:lnum, c)))
-  endfor
-  let line = join(chars, '')
-  return matchstr(line, '^.\{-}\ze\s*$')
 endfunc
 
 func CanRunGui()

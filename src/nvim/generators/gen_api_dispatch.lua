@@ -192,7 +192,7 @@ end
 -- the real API.
 for i = 1, #functions do
   local fn = functions[i]
-  if fn.impl_name == nil then
+  if fn.impl_name == nil and not fn.lua_only then
     local args = {}
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
@@ -236,6 +236,12 @@ for i = 1, #functions do
           output:write('\n  } else if (args.items['..
             (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
+        end
+        if rt:match('^Float$') then
+          -- accept integers for Floats
+          output:write('\n  } else if (args.items['..
+            (j - 1)..'].type == kObjectTypeInteger) {')
+          output:write('\n    '..converted..' = (Float)args.items['..(j - 1)..'].data.integer;')
         end
         -- accept empty lua tables as empty dictionarys
         if rt:match('^Dictionary') then
@@ -310,12 +316,13 @@ void msgpack_rpc_init_method_table(void)
 
 for i = 1, #functions do
   local fn = functions[i]
-  output:write('  msgpack_rpc_add_method_handler('..
-               '(String) {.data = "'..fn.name..'", '..
-               '.size = sizeof("'..fn.name..'") - 1}, '..
-               '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .fast = '..tostring(fn.fast)..'});\n')
-
+  if not fn.lua_only then
+      output:write('  msgpack_rpc_add_method_handler('..
+                   '(String) {.data = "'..fn.name..'", '..
+                   '.size = sizeof("'..fn.name..'") - 1}, '..
+                   '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
+                   ', .fast = '..tostring(fn.fast)..'});\n')
+  end
 end
 
 output:write('\n}\n\n')

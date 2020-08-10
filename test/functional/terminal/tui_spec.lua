@@ -299,7 +299,52 @@ describe('TUI', function()
     feed_data('u')
     expect_child_buf_lines({'"pasted from terminal"'})
     feed_data('u')
+    expect_child_buf_lines({'""'})
+    feed_data('u')
     expect_child_buf_lines({''})
+  end)
+
+  it('paste: select-mode', function()
+    feed_data('ithis is line 1\nthis is line 2\nline 3 is here\n\027')
+    wait_for_mode('n')
+    screen:expect{grid=[[
+      this is line 1                                    |
+      this is line 2                                    |
+      line 3 is here                                    |
+      {1: }                                                 |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Select-mode. Use <C-n> to move down.
+    feed_data('gg04lgh\14\14')
+    wait_for_mode('s')
+    feed_data('\027[200~')
+    feed_data('just paste it™')
+    feed_data('\027[201~')
+    screen:expect{grid=[[
+      thisjust paste it™{1:3} is here                       |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines{
+      'this is line 1',
+      'this is line 2',
+      'line 3 is here',
+      '',
+      }
+    -- Redo.
+    feed_data('\18')  -- <C-r>
+    expect_child_buf_lines{
+      'thisjust paste it™3 is here',
+      '',
+      }
   end)
 
   it('paste: terminal mode', function()
@@ -443,7 +488,7 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       _G.save_paste_fn = vim.paste
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
@@ -501,7 +546,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -520,7 +565,7 @@ describe('TUI', function()
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = function(lines, phase) return false end
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -535,7 +580,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
+      {MATCH:paste: Error executing lua: vim.lua:%d+: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
@@ -560,6 +605,8 @@ describe('TUI', function()
     wait_for_mode('i')
     -- "bracketed paste"
     feed_data('\027[200~'..expected..'\027[201~')
+    -- FIXME: Data race between the two feeds
+    if uname() == 'freebsd' then screen:sleep(1) end
     feed_data(' end')
     expected = expected..' end'
     screen:expect([[
@@ -680,11 +727,11 @@ describe('TUI', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
       [1] = {reverse = true},
-      [2] = {foreground = tonumber('0x4040ff')},
+      [2] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
       [3] = {bold = true, reverse = true},
       [4] = {bold = true},
-      [5] = {reverse = true, foreground = tonumber('0xe0e000')},
-      [6] = {foreground = tonumber('0xe0e000')},
+      [5] = {reverse = true, foreground = tonumber('0xe0e000'), fg_indexed=true},
+      [6] = {foreground = tonumber('0xe0e000'), fg_indexed=true},
       [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
       [8] = {foreground = Screen.colors.SeaGreen4},
       [9] = {bold = true, foreground = Screen.colors.Blue1},
@@ -726,6 +773,54 @@ describe('TUI', function()
       :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('forwards :term palette colors with termguicolors', function()
+    screen:set_rgb_cterm(true)
+    screen:set_default_attr_ids({
+      [1] = {{reverse = true}, {reverse = true}},
+      [2] = {{bold = true, reverse = true}, {bold = true, reverse = true}},
+      [3] = {{bold = true}, {bold = true}},
+      [4] = {{fg_indexed = true, foreground = tonumber('0xe0e000')}, {foreground = 3}},
+      [5] = {{foreground = tonumber('0xff8000')}, {}},
+    })
+
+    feed_data(':set statusline=^^^^^^^\n')
+    feed_data(':set termguicolors\n')
+    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    -- Depending on platform the above might or might not fit in the cmdline
+    -- so clear it for consistent behavior.
+    feed_data(':\027')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+                                                        |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data(':call chansend(&channel, "\\033[38;5;3mtext\\033[38:2:255:128:0mcolor\\033[0;10mtext")\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}{5:color}text                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data(':set notermguicolors\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}colortext                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+      :set notermguicolors                              |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('is included in nvim_list_uis()', function()
@@ -924,7 +1019,15 @@ describe('TUI FocusGained/FocusLost', function()
 
     feed_data(':terminal\n')
     -- Wait for terminal to be ready.
-    screen:expect{any='-- TERMINAL --'}
+    screen:expect{grid=[[
+      {1:r}eady $                                           |
+      [Process exited 0]                                |
+                                                        |
+                                                        |
+                                                        |
+      :terminal                                         |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     feed_data('\027[I')
     screen:expect{grid=[[
@@ -1279,7 +1382,7 @@ describe("TUI 'term' option", function()
     elseif is_macos then
       local status, _ = pcall(assert_term, "xterm", "xterm")
       if not status then
-        pending("macOS: unibilium could not find terminfo", function() end)
+        pending("macOS: unibilium could not find terminfo")
       end
     else
       assert_term("xterm", "xterm")

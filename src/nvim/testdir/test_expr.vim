@@ -475,6 +475,8 @@ func Test_funcref()
   let OneByRef = funcref('One')
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
+  let OneByRef = funcref("One", repeat(["foo"], 20))
+  call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
 endfunc
 
 func Test_empty_concatenate()

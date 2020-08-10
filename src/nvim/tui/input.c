@@ -14,6 +14,9 @@
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/event/rstream.h"
 
 #define KEY_BUFFER_SIZE 0xfff
@@ -26,8 +29,12 @@ void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
   input->paste = 0;
-  input->in_fd = 0;
+  input->in_fd = STDIN_FILENO;
   input->waiting_for_bg_response = 0;
+  // The main thread is waiting for the UI thread to call CONTINUE, so it can
+  // safely access global variables.
+  input->ttimeout = (bool)p_ttimeout;
+  input->ttimeoutlen = p_ttm;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
@@ -36,18 +43,12 @@ void tinput_init(TermInput *input, Loop *loop)
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
 #ifdef WIN32
-  if (!os_isatty(0)) {
-      const HANDLE conin_handle = CreateFile("CONIN$",
-                                             GENERIC_READ | GENERIC_WRITE,
-                                             FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                             (LPSECURITY_ATTRIBUTES)NULL,
-                                             OPEN_EXISTING, 0, (HANDLE)NULL);
-      input->in_fd = _open_osfhandle(conin_handle, _O_RDONLY);
-      assert(input->in_fd != -1);
+  if (!os_isatty(input->in_fd)) {
+      input->in_fd = os_get_conin_fd();
   }
 #else
-  if (!os_isatty(0) && os_isatty(2)) {
-    input->in_fd = 2;
+  if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
+    input->in_fd = STDERR_FILENO;
   }
 #endif
   input_global_fd_init(input->in_fd);
@@ -288,21 +289,6 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
 
 static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
-static int get_key_code_timeout(void)
-{
-  Integer ms = -1;
-  // Check 'ttimeout' to determine if we should send ESC after 'ttimeoutlen'.
-  Error err = ERROR_INIT;
-  if (nvim_get_option(cstr_as_string("ttimeout"), &err).data.boolean) {
-    Object rv = nvim_get_option(cstr_as_string("ttimeoutlen"), &err);
-    if (!ERROR_SET(&err)) {
-      ms = rv.data.integer;
-    }
-  }
-  api_clear_error(&err);
-  return (int)ms;
-}
-
 static void tk_getkeys(TermInput *input, bool force)
 {
   TermKeyKey key;
@@ -327,12 +313,11 @@ static void tk_getkeys(TermInput *input, bool force)
   // yet contain all the bytes required. `key` structure indicates what
   // termkey_getkey_force() would return.
 
-  int ms  = get_key_code_timeout();
-
-  if (ms > 0) {
+  if (input->ttimeout && input->ttimeoutlen >= 0) {
     // Stop the current timer if already running
     time_watcher_stop(&input->timer_handle);
-    time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+    time_watcher_start(&input->timer_handle, tinput_timer_cb,
+                       (uint64_t)input->ttimeoutlen, 0);
   } else {
     tk_getkeys(input, true);
   }

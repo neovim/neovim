@@ -41,6 +41,7 @@
 #include "nvim/option.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/ex_session.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
@@ -1095,26 +1096,40 @@ void del_typebuf(int len, int offset)
  * Write typed characters to script file.
  * If recording is on put the character in the recordbuffer.
  */
-static void gotchars(char_u *chars, size_t len)
+static void gotchars(const char_u *chars, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *s = chars;
-  int c;
+  const char_u *s = chars;
+  static char_u buf[4] = { 0 };
+  static size_t buflen = 0;
+  size_t todo = len;
 
-  // remember how many chars were last recorded
-  if (reg_recording != 0) {
-    last_recorded_len += len;
-  }
+  while (todo--) {
+    buf[buflen++] = *s++;
 
-  while (len--) {
+    // When receiving a special key sequence, store it until we have all
+    // the bytes and we can decide what to do with it.
+    if (buflen == 1 && buf[0] == K_SPECIAL) {
+      continue;
+    }
+    if (buflen == 2) {
+      continue;
+    }
+
     // Handle one byte at a time; no translation to be done.
-    c = *s++;
-    updatescript(c);
+    for (size_t i = 0; i < buflen; i++) {
+      updatescript(buf[i]);
+    }
 
     if (reg_recording != 0) {
-      char buf[2] = { (char)c, NUL };
-      add_buff(&recordbuff, buf, 1L);
+      buf[buflen] = NUL;
+      add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
+      // remember how many chars were last recorded
+      last_recorded_len += buflen;
     }
+    buflen = 0;
   }
+
   may_sync_undo();
 
   /* output "debug mode" message next time in debug mode */
@@ -1201,7 +1216,7 @@ void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
   alloc_typebuf();
-  tp->typebuf_valid = TRUE;
+  tp->typebuf_valid = true;
   tp->old_char = old_char;
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;
@@ -1518,7 +1533,7 @@ int vgetc(void)
    * collection in the first next vgetc().  It's disabled after that to
    * avoid internally used Lists and Dicts to be freed.
    */
-  may_garbage_collect = FALSE;
+  may_garbage_collect = false;
 
   return c;
 }
@@ -1562,7 +1577,7 @@ int vpeekc(void)
 {
   if (old_char != -1)
     return old_char;
-  return vgetorpeek(FALSE);
+  return vgetorpeek(false);
 }
 
 /*
@@ -1615,20 +1630,20 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    Also stores the result of mappings.
 ///    Also used for the ":normal" command.
 /// 3. from the user
-///    This may do a blocking wait if "advance" is TRUE.
+///    This may do a blocking wait if "advance" is true.
 ///
-/// if "advance" is TRUE (vgetc()):
+/// if "advance" is true (vgetc()):
 ///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
-/// if "advance" is FALSE (vpeekc()):
+/// if "advance" is false (vpeekc()):
 ///    Just look whether there is a character available.
 ///    Return NUL if not.
 ///
 /// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
-static int vgetorpeek(int advance)
+static int vgetorpeek(bool advance)
 {
   int c, c1;
   int keylen;
@@ -1721,7 +1736,7 @@ static int vgetorpeek(int advance)
           // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
           // If inchar() returns TRUE (script file was active) or we
-          // are inside a mapping, get out of insert mode.
+          // are inside a mapping, get out of Insert mode.
           // Otherwise we behave like having gotten a CTRL-C.
           // As a result typing CTRL-C in insert mode will
           // really insert a CTRL-C.
@@ -2324,7 +2339,7 @@ static int vgetorpeek(int advance)
       }             /* for (;;) */
     }           /* if (!character from stuffbuf) */
 
-    /* if advance is FALSE don't loop on NULs */
+    // if advance is false don't loop on NULs
   } while (c < 0 || (advance && c == NUL));
 
   /*
@@ -2409,7 +2424,6 @@ int inchar(
     did_outofmem_msg = FALSE;       /* display out of memory message (again) */
     did_swapwrite_msg = FALSE;      /* display swap file write error again */
   }
-  undo_off = FALSE;                 /* restart undo now */
 
   // Get a character from a script file if there is one.
   // If interrupted: Stop reading script files, close them all.
@@ -2481,12 +2495,11 @@ int inchar(
   return fix_input_buffer(buf, len);
 }
 
-/*
- * Fix typed characters for use by vgetc() and check_termcode().
- * buf[] must have room to triple the number of bytes!
- * Returns the new length.
- */
+// Fix typed characters for use by vgetc() and check_termcode().
+// "buf[]" must have room to triple the number of bytes!
+// Returns the new length.
 int fix_input_buffer(char_u *buf, int len)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
@@ -3107,7 +3120,7 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
     case 0:
       break;
     case 1:
-      result = 1;  // invalid arguments
+      // invalid arguments
       goto free_and_return;
     default:
       assert(false && "Unknown return code from str_to_mapargs!");
@@ -3348,7 +3361,7 @@ showmap (
     msg_putchar(' ');
 
   // Display the LHS.  Get length of what we write.
-  len = (size_t)msg_outtrans_special(mp->m_keys, true);
+  len = (size_t)msg_outtrans_special(mp->m_keys, true, 0);
   do {
     msg_putchar(' ');                   /* padd with blanks */
     ++len;
@@ -3376,7 +3389,7 @@ showmap (
     // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
-    msg_outtrans_special(s, FALSE);
+    msg_outtrans_special(s, false, 0);
     xfree(s);
   }
   if (p_verbose > 0) {

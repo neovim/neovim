@@ -123,6 +123,10 @@ describe('multibyte rendering: statusline', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 4)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+    })
     screen:attach()
     command('set laststatus=2')
   end)
@@ -131,8 +135,8 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=你好')
     screen:expect([[
     ^                                        |
-    ~                                       |
-    你好                                    |
+    {1:~                                       }|
+    {2:你好                                    }|
                                             |
     ]])
   end)
@@ -140,8 +144,8 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=abc')
     screen:expect([[
     ^                                        |
-    ~                                       |
-    abc                                     |
+    {1:~                                       }|
+    {2:abc                                     }|
                                             |
     ]])
   end)
@@ -149,8 +153,8 @@ describe('multibyte rendering: statusline', function()
     command('set statusline=')
     screen:expect([[
     ^                                        |
-    ~                                       |
-    <9f>                                    |
+    {1:~                                       }|
+    {2:<9f>                                    }|
                                             |
     ]])
   end)
@@ -159,8 +163,8 @@ describe('multibyte rendering: statusline', function()
     -- o + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
     screen:expect([[
     ^                                        |
-    ~                                       |
-    o̸⃯ᷰ⃐⃧⃝                                       |
+    {1:~                                       }|
+    {2:o̸⃯ᷰ⃐⃧⃝                                       }|
                                             |
     ]])
   end)
@@ -169,9 +173,19 @@ describe('multibyte rendering: statusline', function()
     -- U+9F + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
     screen:expect([[
     ^                                        |
-    ~                                       |
-    <9f><1df0><20ef><0338><20d0><20e7><20dd>|
+    {1:~                                       }|
+    {2:<9f><1df0><20ef><0338><20d0><20e7><20dd>}|
                                             |
     ]])
+  end)
+
+  it('hidden group %( %) does not cause invalid unicode', function()
+    command("let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'")
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {2: Q≡                                     }|
+                                              |
+    ]]}
   end)
 end)

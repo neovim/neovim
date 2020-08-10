@@ -150,7 +150,9 @@ static inline TSNode ts_node__child(
     while (ts_node_child_iterator_next(&iterator, &child)) {
       if (ts_node__is_relevant(child, include_anonymous)) {
         if (index == child_index) {
-          ts_tree_set_cached_parent(self.tree, &child, &self);
+          if (ts_node__is_relevant(self, true)) {
+            ts_tree_set_cached_parent(self.tree, &child, &self);
+          }
           return child;
         }
         index++;
@@ -415,13 +417,15 @@ TSPoint ts_node_end_point(TSNode self) {
 }
 
 TSSymbol ts_node_symbol(TSNode self) {
-  return ts_node__alias(&self)
-    ? ts_node__alias(&self)
-    : ts_subtree_symbol(ts_node__subtree(self));
+  TSSymbol symbol = ts_node__alias(&self);
+  if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
+  return ts_language_public_symbol(self.tree->language, symbol);
 }
 
 const char *ts_node_type(TSNode self) {
-  return ts_language_symbol_name(self.tree->language, ts_node_symbol(self));
+  TSSymbol symbol = ts_node__alias(&self);
+  if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
+  return ts_language_symbol_name(self.tree->language, symbol);
 }
 
 char *ts_node_string(TSNode self) {

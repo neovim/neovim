@@ -1,4 +1,5 @@
 require('coxpcall')
+local busted = require('busted')
 local luv = require('luv')
 local lfs = require('lfs')
 local mpack = require('mpack')
@@ -14,9 +15,9 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.filter
+local filter = global_helpers.tbl_filter
 local is_os = global_helpers.is_os
-local map = global_helpers.map
+local map = global_helpers.tbl_map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
@@ -28,15 +29,13 @@ local module = {
 }
 
 local start_dir = lfs.currentdir()
--- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
 module.nvim_prog = (
-  os.getenv('NVIM_PROG')
-  or os.getenv('NVIM_PRG')
+  os.getenv('NVIM_PRG')
   or global_helpers.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.
 module.nvim_set = (
-  'set shortmess+=IS background=light noswapfile noautoindent'
+  'set shortmess+=IS background=light noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
@@ -187,7 +186,12 @@ function module.expect_msg_seq(...)
     if status then
       return result
     end
-    final_error = cat_err(final_error, result)
+    local message = result
+    if type(result) == "table" then
+      -- 'eq' returns several things
+      message = result.message
+    end
+    final_error = cat_err(final_error, message)
   end
   error(final_error)
 end
@@ -385,7 +389,7 @@ function module.retry(max, max_ms, fn)
     end
     luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      error("\nretry() attempts: "..tostring(tries).."\n"..tostring(result))
+      busted.fail(string.format("retry() attempts: %d\n%s", tries, tostring(result)), 2)
     end
     tries = tries + 1
     luv.sleep(20)  -- Avoid hot loop...
@@ -500,9 +504,13 @@ function module.source(code)
   return fname
 end
 
+function module.has_powershell()
+  return module.eval('executable("'..(iswin() and 'powershell' or 'pwsh')..'")') == 1
+end
+
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
-  assert(module.eval('executable("'..shell..'")'))
+  assert(module.has_powershell())
   local cmd = 'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'
@@ -551,6 +559,11 @@ function module.wait()
   session:request('nvim_eval', '1')
 end
 
+function module.buf_lines(bufnr)
+  return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
+end
+
+--@see buf_lines()
 function module.curbuf_contents()
   module.wait()  -- Before inspecting the buffer, process all input.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
@@ -582,6 +595,19 @@ end
 -- Checks that the Nvim session did not terminate.
 function module.assert_alive()
   assert(2 == module.eval('1+1'), 'crash? request failed')
+end
+
+-- Asserts that buffer is loaded and visible in the current tabpage.
+function module.assert_visible(bufnr, visible)
+  assert(type(visible) == 'boolean')
+  eq(visible, module.bufmeths.is_loaded(bufnr))
+  if visible then
+    assert(-1 ~= module.funcs.bufwinnr(bufnr),
+      'expected buffer to be visible in current tabpage: '..tostring(bufnr))
+  else
+    assert(-1 == module.funcs.bufwinnr(bufnr),
+      'expected buffer NOT visible in current tabpage: '..tostring(bufnr))
+  end
 end
 
 local function do_rmdir(path)
@@ -707,7 +733,7 @@ module.curwinmeths = module.create_callindex(module.curwin)
 module.curtabmeths = module.create_callindex(module.curtab)
 
 function module.exec_lua(code, ...)
-  return module.meths.execute_lua(code, {...})
+  return module.meths.exec_lua(code, {...})
 end
 
 function module.redir_exec(cmd)
@@ -742,7 +768,7 @@ function module.new_pipename()
 end
 
 function module.missing_provider(provider)
-  if provider == 'ruby' or provider == 'node' then
+  if provider == 'ruby' or provider == 'node' or provider == 'perl' then
     local prog = module.funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
@@ -768,7 +794,7 @@ function module.alter_slashes(obj)
     end
     return ret
   else
-    assert(false, 'Could only alter slashes for tables of strings and strings')
+    assert(false, 'expected string or table of strings, got '..type(obj))
   end
 end
 

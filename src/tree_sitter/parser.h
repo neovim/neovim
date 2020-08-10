@@ -45,7 +45,8 @@ struct TSLexer {
   void (*advance)(TSLexer *, bool);
   void (*mark_end)(TSLexer *);
   uint32_t (*get_column)(TSLexer *);
-  bool (*is_at_included_range_start)(TSLexer *);
+  bool (*is_at_included_range_start)(const TSLexer *);
+  bool (*eof)(const TSLexer *);
 };
 
 typedef enum {
@@ -61,13 +62,13 @@ typedef struct {
       TSStateId state;
       bool extra : 1;
       bool repetition : 1;
-    };
+    } shift;
     struct {
       TSSymbol symbol;
       int16_t dynamic_precedence;
       uint8_t child_count;
       uint8_t production_id;
-    };
+    } reduce;
   } params;
   TSParseActionType type : 4;
 } TSParseAction;
@@ -82,7 +83,7 @@ typedef union {
   struct {
     uint8_t count;
     bool reusable : 1;
-  };
+  } entry;
 } TSParseActionEntry;
 
 struct TSLanguage {
@@ -117,6 +118,7 @@ struct TSLanguage {
   uint32_t large_state_count;
   const uint16_t *small_parse_table;
   const uint32_t *small_parse_table_map;
+  const TSSymbol *public_symbol_map;
 };
 
 /*
@@ -126,6 +128,7 @@ struct TSLanguage {
 #define START_LEXER()           \
   bool result = false;          \
   bool skip = false;            \
+  bool eof = false;             \
   int32_t lookahead;            \
   goto start;                   \
   next_state:                   \
@@ -164,22 +167,28 @@ struct TSLanguage {
 
 #define ACTIONS(id) id
 
-#define SHIFT(state_value)              \
-  {                                     \
-    {                                   \
-      .type = TSParseActionTypeShift,   \
-      .params = {.state = state_value}, \
-    }                                   \
+#define SHIFT(state_value)                \
+  {                                       \
+    {                                     \
+      .params = {                         \
+        .shift = {                        \
+          .state = state_value            \
+        }                                 \
+      },                                  \
+      .type = TSParseActionTypeShift      \
+    }                                     \
   }
 
 #define SHIFT_REPEAT(state_value)     \
   {                                   \
     {                                 \
-      .type = TSParseActionTypeShift, \
       .params = {                     \
-        .state = state_value,         \
-        .repetition = true            \
+        .shift = {                    \
+          .state = state_value,       \
+          .repetition = true          \
+        }                             \
       },                              \
+      .type = TSParseActionTypeShift  \
     }                                 \
   }
 
@@ -191,20 +200,26 @@ struct TSLanguage {
 #define SHIFT_EXTRA()                 \
   {                                   \
     {                                 \
-      .type = TSParseActionTypeShift, \
-      .params = {.extra = true}       \
+      .params = {                     \
+        .shift = {                    \
+          .extra = true               \
+        }                             \
+      },                              \
+      .type = TSParseActionTypeShift  \
     }                                 \
   }
 
 #define REDUCE(symbol_val, child_count_val, ...) \
   {                                              \
     {                                            \
-      .type = TSParseActionTypeReduce,           \
       .params = {                                \
-        .symbol = symbol_val,                    \
-        .child_count = child_count_val,          \
-        __VA_ARGS__                              \
-      }                                          \
+        .reduce = {                              \
+          .symbol = symbol_val,                  \
+          .child_count = child_count_val,        \
+          __VA_ARGS__                            \
+        },                                       \
+      },                                         \
+      .type = TSParseActionTypeReduce            \
     }                                            \
   }
 

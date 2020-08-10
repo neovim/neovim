@@ -138,6 +138,8 @@ struct terminal {
   int pressed_button;               // which mouse button is pressed
   bool pending_resize;              // pending width/height
 
+  bool color_set[16];
+
   size_t refcount;                  // reference count
 };
 
@@ -241,6 +243,7 @@ Terminal *terminal_open(TerminalOptions opts)
                         (uint8_t)((color_val >> 8) & 0xFF),
                         (uint8_t)((color_val >> 0) & 0xFF));
         vterm_state_set_palette_color(state, i, &color);
+        rv->color_set[i] = true;
       }
     }
   }
@@ -340,12 +343,16 @@ void terminal_enter(void)
   RedrawingDisabled = false;
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
-  // placed at end of buffer to "follow" output.
+  // placed at end of buffer to "follow" output. #11072
   win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
+  long save_w_p_so = curwin->w_p_so;
+  long save_w_p_siso = curwin->w_p_siso;
   curwin->w_p_cul = false;
   curwin->w_p_cuc = false;
+  curwin->w_p_so = 0;
+  curwin->w_p_siso = 0;
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
@@ -367,6 +374,8 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;
+    curwin->w_p_so = save_w_p_so;
+    curwin->w_p_siso = save_w_p_siso;
   }
 
   // draw the unfocused cursor
@@ -480,7 +489,17 @@ static int terminal_execute(VimState *state, int key)
       terminal_send_key(s->term, key);
   }
 
-  return curbuf->handle == s->term->buf_handle;
+  if (curbuf->terminal == NULL) {
+    return 0;
+  }
+  if (s->term != curbuf->terminal) {
+    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+    invalidate_terminal(curbuf->terminal,
+                        curbuf->terminal->cursor.row,
+                        curbuf->terminal->cursor.row + 1);
+    s->term = curbuf->terminal;
+  }
+  return 1;
 }
 
 void terminal_destroy(Terminal *term)
@@ -588,6 +607,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     return;
   }
 
+  width = MIN(TERM_ATTRS_MAX, width);
   for (int col = 0; col < width; col++) {
     VTermScreenCell cell;
     bool color_valid = fetch_cell(term, row, col, &cell);
@@ -598,16 +618,22 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int vt_fg = fg_default ? -1 : get_rgb(state, cell.fg);
     int vt_bg = bg_default ? -1 : get_rgb(state, cell.bg);
 
-    int vt_fg_idx = ((!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
-                     ? cell.fg.indexed.idx + 1 : 0);
-    int vt_bg_idx = ((!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
-                     ? cell.bg.indexed.idx + 1 : 0);
+    bool fg_indexed = VTERM_COLOR_IS_INDEXED(&cell.fg);
+    bool bg_indexed = VTERM_COLOR_IS_INDEXED(&cell.bg);
+
+    int vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
+    int vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
+
+    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx-1];
+    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx-1];
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
                  | (cell.attrs.reverse ? HL_INVERSE : 0)
                  | (cell.attrs.underline ? HL_UNDERLINE : 0)
-                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0);
+                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
+                 | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
+                 | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
 
     int attr_id = 0;
 
@@ -639,6 +665,11 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 Buffer terminal_buf(const Terminal *term)
 {
   return term->buf_handle;
+}
+
+bool terminal_running(const Terminal *term)
+{
+  return !term->closed;
 }
 
 // }}}
@@ -983,8 +1014,9 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 static bool send_mouse_event(Terminal *term, int c)
 {
   int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  int offset;
   win_T *mouse_win = mouse_find_win(&grid, &row, &col);
-  if (mouse_win == NULL) {
+  if (mouse_win == NULL || (offset = win_col_off(mouse_win)) > col) {
     goto end;
   }
 
@@ -1006,7 +1038,7 @@ static bool send_mouse_event(Terminal *term, int c)
       default: return false;
     }
 
-    mouse_action(term, button, row, col, drag, 0);
+    mouse_action(term, button, row, col - offset, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
                                    sizeof(term->textbuf));
     terminal_send(term, term->textbuf, (size_t)len);

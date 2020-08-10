@@ -1265,7 +1265,7 @@ exist, the next-higher scope in the hierarchy applies.
 			other tabs and windows is not changed.
 
 							*:tcd-*
-:tcd[!] -		Change to the previous current directory (before the
+:tc[d][!] -		Change to the previous current directory (before the
 			previous ":tcd {path}" command).
 
 							*:tch* *:tchdir*
@@ -1280,7 +1280,7 @@ exist, the next-higher scope in the hierarchy applies.
 :lch[dir][!]		Same as |:lcd|.
 
 							*:lcd-* 
-:lcd[!] -		Change to the previous current directory (before the
+:lc[d][!] -		Change to the previous current directory (before the
 			previous ":lcd {path}" command).
 
 							*:pw* *:pwd* *E187*

@@ -1,4 +1,4 @@
-" Maintainer:          Anmol Sethi <anmol@aubble.com>
+" Maintainer:          Anmol Sethi <hi@nhooyr.io>
 " Previous Maintainer: SungHyun Nam <goweol@gmail.com>
 
 if exists('b:did_ftplugin') || &filetype !=# 'man'
@@ -6,7 +6,7 @@ if exists('b:did_ftplugin') || &filetype !=# 'man'
 endif
 let b:did_ftplugin = 1
 
-let s:pager = get(s:, 'pager', 0) || !exists('b:man_sect')
+let s:pager = !exists('b:man_sect')
 
 if s:pager
   call man#init_pager()
@@ -16,18 +16,18 @@ setlocal noswapfile buftype=nofile bufhidden=hide
 setlocal nomodified readonly nomodifiable
 setlocal noexpandtab tabstop=8 softtabstop=8 shiftwidth=8
 setlocal wrap breakindent linebreak
+setlocal iskeyword+=-
 
 setlocal nonumber norelativenumber
 setlocal foldcolumn=0 colorcolumn=0 nolist nofoldenable
+
+setlocal tagfunc=man#goto_tag
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> j          gj
   nnoremap <silent> <buffer> k          gk
   nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
-  nnoremap <silent> <buffer> <C-]>      :Man<CR>
-  nnoremap <silent> <buffer> K          :Man<CR>
-  nnoremap <silent> <buffer> <C-T>      :call man#pop_tag()<CR>
-  if 1 == bufnr('%') || s:pager
+  if s:pager
     nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
   else
     nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c

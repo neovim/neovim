@@ -693,6 +693,8 @@ void free_all_mem(void)
 
   clear_hl_tables(false);
   list_free_log();
+
+  check_quickfix_busy();
 }
 
 #endif

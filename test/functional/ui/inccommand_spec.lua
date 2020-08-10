@@ -18,6 +18,7 @@ local wait = helpers.wait
 local nvim = helpers.nvim
 local sleep = helpers.sleep
 local nvim_dir = helpers.nvim_dir
+local assert_alive = helpers.assert_alive
 
 local default_text = [[
   Inc substitution on
@@ -84,18 +85,19 @@ local function common_setup(screen, inccommand, text)
       [14] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [15] = {bold=true, foreground=Screen.colors.Blue},
       [16] = {background=Screen.colors.Grey90},  -- cursorline
+      [17] = {foreground = Screen.colors.Blue1},
       vis  = {background=Screen.colors.LightGrey}
     })
   end
 
-  command("set inccommand=" .. (inccommand and inccommand or ""))
+  command("set inccommand=" .. (inccommand or ""))
 
   if text then
     insert(text)
   end
 end
 
-describe(":substitute, inccommand=split", function()
+describe(":substitute, inccommand=split interactivity", function()
   before_each(function()
     clear()
     common_setup(nil, "split", default_text)
@@ -779,6 +781,59 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       :silent tabedit %s/tw/to^      |
     ]])
+    feed('<Esc>')
+
+    -- leading colons
+    feed(':::%s/tw/to')
+    screen:expect{any=[[{12:to}o lines]]}
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+  end)
+
+  it("ignores new-window modifiers when splitting the preview window", function()
+    -- one modifier
+    feed(':topleft %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft %s/tw/to^             |
+    ]])
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+
+    -- multiple modifiers
+    feed(':topleft vert %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft vert %s/tw/to^        |
+    ]])
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
   end)
 
   it('shows split window when typing the pattern', function()
@@ -2238,6 +2293,76 @@ describe(":substitute", function()
     ]])
   end)
 
+  it("inccommand=split, contraction of two subsequent NL chars", function()
+    -- luacheck: push ignore 611
+    local text = [[
+      AAA AA
+      
+      BBB BB
+      
+      CCC CC
+      
+]]
+    -- luacheck: pop
+
+    -- This used to crash, but more than 20 highlight entries are required
+    -- to reproduce it (so that the marktree has multiple nodes)
+    common_setup(screen, "split", string.rep(text,10))
+    feed(":%s/\\n\\n/<c-v><c-m>/g")
+    screen:expect{grid=[[
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+                                    |
+      {11:[No Name] [+]                 }|
+      | 1| AAA AA                   |
+      | 2|{12: }BBB BB                   |
+      | 3|{12: }CCC CC                   |
+      | 4|{12: }AAA AA                   |
+      | 5|{12: }BBB BB                   |
+      | 6|{12: }CCC CC                   |
+      | 7|{12: }AAA AA                   |
+      {10:[Preview]                     }|
+      :%s/\n\n/{17:^M}/g^                 |
+    ]]}
+    assert_alive()
+  end)
+
+  it("inccommand=nosplit, contraction of two subsequent NL chars", function()
+    -- luacheck: push ignore 611
+    local text = [[
+      AAA AA
+      
+      BBB BB
+      
+      CCC CC
+      
+]]
+    -- luacheck: pop
+
+    common_setup(screen, "nosplit", string.rep(text,10))
+    feed(":%s/\\n\\n/<c-v><c-m>/g")
+    screen:expect{grid=[[
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+                                    |
+      :%s/\n\n/{17:^M}/g^                 |
+    ]]}
+    assert_alive()
+  end)
+
   it("inccommand=split, multibyte text", function()
     common_setup(screen, "split", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
@@ -2527,6 +2652,49 @@ describe(":substitute", function()
       {15:~                             }|
       {10:[Preview]                     }|
       :%s/some\(thing\)\@!/every/^   |
+    ]])
+  end)
+
+  it("doesn't prompt to swap cmd range", function()
+    screen = Screen.new(50, 8) -- wide to avoid hit-enter prompt
+    common_setup(screen, "split", default_text)
+    feed(':2,1s/tw/MO/g')
+
+    -- substitution preview should have been made, without prompting
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      :2,1s/tw/MO/g^                                     |
+    ]])
+
+    -- but should be prompted on hitting enter
+    feed('<CR>')
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      {13:Backwards range given, OK to swap (y/n)?}^          |
+    ]])
+
+    feed('y')
+    screen:expect([[
+      Inc substitution on                               |
+      ^MOo lines                                         |
+                                                        |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {13:Backwards range given, OK to swap (y/n)?}y         |
     ]])
   end)
 end)

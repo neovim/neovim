@@ -1,4 +1,7 @@
 " Tests for diff mode
+source shared.vim
+source screendump.vim
+source check.vim
 
 func Test_diff_fold_sync()
   enew!
@@ -67,7 +70,7 @@ func Common_vert_split()
   set foldmethod=marker foldcolumn=4
   call assert_equal(0, &diff)
   call assert_equal('marker', &foldmethod)
-  call assert_equal(4, &foldcolumn)
+  call assert_equal('4', &foldcolumn)
   call assert_equal(0, &scrollbind)
   call assert_equal(0, &cursorbind)
   call assert_equal(1, &wrap)
@@ -76,7 +79,7 @@ func Common_vert_split()
   vert diffsplit Xtest2
   call assert_equal(1, &diff)
   call assert_equal('diff', &foldmethod)
-  call assert_equal(2, &foldcolumn)
+  call assert_equal('2', &foldcolumn)
   call assert_equal(1, &scrollbind)
   call assert_equal(1, &cursorbind)
   call assert_equal(0, &wrap)
@@ -142,7 +145,7 @@ func Common_vert_split()
   1wincmd w
   call assert_equal(0, &diff)
   call assert_equal('marker', &foldmethod)
-  call assert_equal(4, &foldcolumn)
+  call assert_equal('4', &foldcolumn)
   call assert_equal(0, &scrollbind)
   call assert_equal(0, &cursorbind)
   call assert_equal(1, &wrap)
@@ -150,7 +153,7 @@ func Common_vert_split()
   wincmd w
   call assert_equal(0, &diff)
   call assert_equal('marker', &foldmethod)
-  call assert_equal(4, &foldcolumn)
+  call assert_equal('4', &foldcolumn)
   call assert_equal(0, &scrollbind)
   call assert_equal(0, &cursorbind)
   call assert_equal(1, &wrap)
@@ -158,7 +161,7 @@ func Common_vert_split()
   wincmd w
   call assert_equal(0, &diff)
   call assert_equal('marker', &foldmethod)
-  call assert_equal(4, &foldcolumn)
+  call assert_equal('4', &foldcolumn)
   call assert_equal(0, &scrollbind)
   call assert_equal(0, &cursorbind)
   call assert_equal(1, &wrap)
@@ -773,3 +776,78 @@ func Test_diff_of_diff()
   call StopVimInTerminal(buf)
   call delete('Xtest_diff_diff')
 endfunc
+
+func CloseoffSetup()
+  enew
+  call setline(1, ['one', 'two', 'three'])
+  diffthis
+  new
+  call setline(1, ['one', 'tow', 'three'])
+  diffthis
+  call assert_equal(1, &diff)
+  only!
+endfunc
+
+func Test_diff_closeoff()
+  " "closeoff" included by default: last diff win gets 'diff' reset'
+  call CloseoffSetup()
+  call assert_equal(0, &diff)
+  enew!
+
+  " "closeoff" excluded: last diff win keeps 'diff' set'
+  set diffopt-=closeoff
+  call CloseoffSetup()
+  call assert_equal(1, &diff)
+  diffoff!
+  enew!
+endfunc
+
+func Test_diff_rnu()
+  CheckScreendump
+
+  let content =<< trim END
+    call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
+    vnew
+    call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
+    call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
+    vnew
+    call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
+    windo diffthis
+    setlocal number rnu foldcolumn=0
+  END
+  call writefile(content, 'Xtest_diff_rnu')
+  let buf = RunVimInTerminal('-S Xtest_diff_rnu', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_rnu_01', {})
+
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_rnu_02', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_rnu_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_rnu')
+endfunc
+
+func Test_diff_and_scroll()
+  " this was causing an ml_get error
+  set ls=2
+  for i in range(winheight(0) * 2) 
+    call setline(i, i < winheight(0) - 10 ? i : i + 10) 
+  endfor
+  vnew
+  for i in range(winheight(0)*2 + 10) 
+    call setline(i, i < winheight(0) - 10 ? 0 : i) 
+  endfor
+  diffthis
+  wincmd p
+  diffthis
+  execute 'normal ' . winheight(0) . "\<C-d>"
+
+  bwipe!
+  bwipe!
+  set ls&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

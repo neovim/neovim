@@ -203,3 +203,7 @@ call remote#host#Register('ruby', '*.rb',
 " nodejs
 call remote#host#Register('node', '*',
       \ function('provider#node#Require'))
+
+" perl
+call remote#host#Register('perl', '*',
+      \ function('provider#perl#Require'))

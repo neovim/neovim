@@ -1367,8 +1367,9 @@ func Test_normal23_K()
     return
   endif
 
-  if has('mac')
-    " In MacOS, the option for specifying a pager is different
+  let not_gnu_man = has('mac') || has('bsd')
+  if not_gnu_man
+    " In MacOS and BSD, the option for specifying a pager is different
     set keywordprg=man\ -P\ cat
   else
     set keywordprg=man\ --pager=cat
@@ -1376,7 +1377,7 @@ func Test_normal23_K()
   " Test for using man
   2
   let a = execute('unsilent norm! K')
-  if has('mac')
+  if not_gnu_man
     call assert_match("man -P cat 'man'", a)
   else
     call assert_match("man --pager=cat 'man'", a)
@@ -1564,34 +1565,34 @@ endfunc
 fun! Test_normal29_brace()
   " basic test for { and } movements
   let text =<< trim [DATA]
-  A paragraph begins after each empty line, and also at each of a set of
-  paragraph macros, specified by the pairs of characters in the 'paragraphs'
-  option.  The default is "IPLPPPQPP TPHPLIPpLpItpplpipbp", which corresponds to
-  the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
-  the first column).  A section boundary is also a paragraph boundary.
-  Note that a blank line (only containing white space) is NOT a paragraph
-  boundary.
+    A paragraph begins after each empty line, and also at each of a set of
+    paragraph macros, specified by the pairs of characters in the 'paragraphs'
+    option.  The default is "IPLPPPQPP TPHPLIPpLpItpplpipbp", which corresponds to
+    the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
+    the first column).  A section boundary is also a paragraph boundary.
+    Note that a blank line (only containing white space) is NOT a paragraph
+    boundary.
 
 
-  Also note that this does not include a '{' or '}' in the first column.  When
-  the '{' flag is in 'cpoptions' then '{' in the first column is used as a
-  paragraph boundary |posix|.
-  {
-  This is no paragraph
-  unless the '{' is set
-  in 'cpoptions'
-  }
-  .IP
-  The nroff macros IP separates a paragraph
-  That means, it must be a '.'
-  followed by IP
-  .LPIt does not matter, if afterwards some
-  more characters follow.
-  .SHAlso section boundaries from the nroff
-  macros terminate a paragraph. That means
-  a character like this:
-  .NH
-  End of text here
+    Also note that this does not include a '{' or '}' in the first column.  When
+    the '{' flag is in 'cpoptions' then '{' in the first column is used as a
+    paragraph boundary |posix|.
+    {
+    This is no paragraph
+    unless the '{' is set
+    in 'cpoptions'
+    }
+    .IP
+    The nroff macros IP separates a paragraph
+    That means, it must be a '.'
+    followed by IP
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
+    .NH
+    End of text here
   [DATA]
 
   new
@@ -1600,17 +1601,17 @@ fun! Test_normal29_brace()
   norm! 0d2}
 
   let expected =<< trim [DATA]
-  .IP
-  The nroff macros IP separates a paragraph
-  That means, it must be a '.'
-  followed by IP
-  .LPIt does not matter, if afterwards some
-  more characters follow.
-  .SHAlso section boundaries from the nroff
-  macros terminate a paragraph. That means
-  a character like this:
-  .NH
-  End of text here
+    .IP
+    The nroff macros IP separates a paragraph
+    That means, it must be a '.'
+    followed by IP
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
+    .NH
+    End of text here
 
   [DATA]
   call assert_equal(expected, getline(1, '$'))
@@ -1618,13 +1619,13 @@ fun! Test_normal29_brace()
   norm! 0d}
 
   let expected =<< trim [DATA]
-  .LPIt does not matter, if afterwards some
-  more characters follow.
-  .SHAlso section boundaries from the nroff
-  macros terminate a paragraph. That means
-  a character like this:
-  .NH
-  End of text here
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
+    .NH
+    End of text here
 
   [DATA]
   call assert_equal(expected, getline(1, '$'))
@@ -1633,11 +1634,11 @@ fun! Test_normal29_brace()
   norm! d{
 
   let expected =<< trim [DATA]
-  .LPIt does not matter, if afterwards some
-  more characters follow.
-  .SHAlso section boundaries from the nroff
-  macros terminate a paragraph. That means
-  a character like this:
+    .LPIt does not matter, if afterwards some
+    more characters follow.
+    .SHAlso section boundaries from the nroff
+    macros terminate a paragraph. That means
+    a character like this:
 
   [DATA]
   call assert_equal(expected, getline(1, '$'))
@@ -1645,8 +1646,8 @@ fun! Test_normal29_brace()
   norm! d{
 
   let expected =<< trim [DATA]
-  .LPIt does not matter, if afterwards some
-  more characters follow.
+    .LPIt does not matter, if afterwards some
+    more characters follow.
 
   [DATA]
   call assert_equal(expected, getline(1, '$'))
@@ -1659,22 +1660,22 @@ fun! Test_normal29_brace()
   " 1
   " norm! 0d2}
   " let expected =<< trim [DATA]
-  " {
-  " This is no paragraph
-  " unless the '{' is set
-  " in 'cpoptions'
-  " }
-  " .IP
-  " The nroff macros IP separates a paragraph
-  " That means, it must be a '.'
-  " followed by IP
-  " .LPIt does not matter, if afterwards some
-  " more characters follow.
-  " .SHAlso section boundaries from the nroff
-  " macros terminate a paragraph. That means
-  " a character like this:
-  " .NH
-  " End of text here
+  "   {
+  "   This is no paragraph
+  "   unless the '{' is set
+  "   in 'cpoptions'
+  "   }
+  "   .IP
+  "   The nroff macros IP separates a paragraph
+  "   That means, it must be a '.'
+  "   followed by IP
+  "   .LPIt does not matter, if afterwards some
+  "   more characters follow.
+  "   .SHAlso section boundaries from the nroff
+  "   macros terminate a paragraph. That means
+  "   a character like this:
+  "   .NH
+  "   End of text here
   "
   " [DATA]
   " call assert_equal(expected, getline(1, '$'))
@@ -1682,22 +1683,22 @@ fun! Test_normal29_brace()
   " $
   " norm! d}
   " let expected =<< trim [DATA]
-  " {
-  " This is no paragraph
-  " unless the '{' is set
-  " in 'cpoptions'
-  " }
-  " .IP
-  " The nroff macros IP separates a paragraph
-  " That means, it must be a '.'
-  " followed by IP
-  " .LPIt does not matter, if afterwards some
-  " more characters follow.
-  " .SHAlso section boundaries from the nroff
-  " macros terminate a paragraph. That means
-  " a character like this:
-  " .NH
-  " End of text here
+  "   {
+  "   This is no paragraph
+  "   unless the '{' is set
+  "   in 'cpoptions'
+  "   }
+  "   .IP
+  "   The nroff macros IP separates a paragraph
+  "   That means, it must be a '.'
+  "   followed by IP
+  "   .LPIt does not matter, if afterwards some
+  "   more characters follow.
+  "   .SHAlso section boundaries from the nroff
+  "   macros terminate a paragraph. That means
+  "   a character like this:
+  "   .NH
+  "   End of text here
   "
   " [DATA]
   " call assert_equal(expected, getline(1, '$'))
@@ -1706,11 +1707,11 @@ fun! Test_normal29_brace()
   " norm! d5}
   "
   " let expected =<< trim [DATA]
-  " {
-  " This is no paragraph
-  " unless the '{' is set
-  " in 'cpoptions'
-  " }
+  "   {
+  "   This is no paragraph
+  "   unless the '{' is set
+  "   in 'cpoptions'
+  "   }
 
   " [DATA]
   " call assert_equal(expected, getline(1, '$'))
@@ -1895,6 +1896,7 @@ fun! Test_normal33_g_cmd2()
   set wrap listchars= sbr=
   let lineA='abcdefghijklmnopqrstuvwxyz'
   let lineB='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let lineC='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   $put =lineA
   $put =lineB
 
@@ -1928,9 +1930,30 @@ fun! Test_normal33_g_cmd2()
   call assert_equal(15, col('.'))
   call assert_equal('l', getreg(0))
 
+  norm! 2ggdd
+  $put =lineC
+
+  " Test for gM
+  norm! gMyl
+  call assert_equal(73, col('.'))
+  call assert_equal('0', getreg(0))
+  " Test for 20gM
+  norm! 20gMyl
+  call assert_equal(29, col('.'))
+  call assert_equal('S', getreg(0))
+  " Test for 60gM
+  norm! 60gMyl
+  call assert_equal(87, col('.'))
+  call assert_equal('E', getreg(0))
+
+  " Test for g Ctrl-G
+  set ff=unix
+  let a=execute(":norm! g\<c-g>")
+  call assert_match('Col 87 of 144; Line 2 of 2; Word 1 of 1; Byte 88 of 146', a)
+
   " Test for gI
   norm! gIfoo
-  call assert_equal(['', 'fooabcdefghijk   lmno0123456789AMNOPQRSTUVWXYZ'], getline(1,'$'))
+  call assert_equal(['', 'foo0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'], getline(1,'$'))
 
   " Test for gi
   wincmd c
@@ -2813,4 +2836,29 @@ func Test_normal_gk()
   call assert_equal(95, virtcol('.'))
   bw!
   bw!
+
+  " needs 80 column new window
+  new
+  vert 80new
+  set number
+  set numberwidth=10
+  set cpoptions+=n
+  put =[repeat('0',90), repeat('1',90)]
+  norm! 075l
+  call assert_equal(76, col('.'))
+  norm! gk
+  call assert_equal(1, col('.'))
+  norm! gk
+  call assert_equal(76, col('.'))
+  norm! gk
+  call assert_equal(1, col('.'))
+  norm! gj
+  call assert_equal(76, col('.'))
+  norm! gj
+  call assert_equal(1, col('.'))
+  norm! gj
+  call assert_equal(76, col('.'))
+  bw!
+  bw!
+  set cpoptions& number& numberwidth&
 endfunc

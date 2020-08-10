@@ -115,6 +115,10 @@ void win_close(Integer grid)
 void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
 
+void win_viewport(Integer grid, Window win, Integer topline,
+                  Integer botline, Integer curline, Integer curcol)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
+
 void popupmenu_show(Array items, Integer selected,
                     Integer row, Integer col, Integer grid)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;

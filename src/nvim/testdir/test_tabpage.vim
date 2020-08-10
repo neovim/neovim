@@ -1,6 +1,6 @@
 " Tests for tabpage
 
-" source screendump.vim
+source screendump.vim
 
 function Test_tabpage()
   bw!
@@ -548,7 +548,7 @@ func Test_tabs()
   norm ixxx
   let a=split(execute(':tabs'), "\n")
   call assert_equal(['Tab page 1',
-      \              '    [No Name]',
+      \              '#   [No Name]',
       \              'Tab page 2',
       \              '> + tab1'], a)
 

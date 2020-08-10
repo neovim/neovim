@@ -1083,7 +1083,8 @@ items:
 	empty		when non-zero this match will be added even when it is
 			an empty string
 	user_data 	custom data which is associated with the item and
-			available in |v:completed_item|
+			available in |v:completed_item|; it can be any type;
+			defaults to an empty string
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and

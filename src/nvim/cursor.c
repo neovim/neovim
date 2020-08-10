@@ -93,11 +93,12 @@ int coladvance(colnr_T wcol)
 
 static int coladvance2(
     pos_T *pos,
-    bool addspaces,                /* change the text to achieve our goal? */
-    bool finetune,                 /* change char offset for the exact column */
-    colnr_T wcol                   /* column to move to */
+    bool addspaces,               // change the text to achieve our goal?
+    bool finetune,                // change char offset for the exact column
+    colnr_T wcol_arg              // column to move to (can be negative)
 )
 {
+  colnr_T wcol = wcol_arg;
   int idx;
   char_u      *ptr;
   char_u      *line;
@@ -165,6 +166,7 @@ static int coladvance2(
 
     if (virtual_active()
         && addspaces
+        && wcol >= 0
         && ((col != wcol && col != wcol + 1) || csize > 1)) {
       /* 'virtualedit' is set: The difference between wcol and col is
        * filled with spaces. */
@@ -244,8 +246,9 @@ static int coladvance2(
     mark_mb_adjustpos(curbuf, pos);
   }
 
-  if (col < wcol)
+  if (wcol < 0 || col < wcol) {
     return FAIL;
+  }
   return OK;
 }
 

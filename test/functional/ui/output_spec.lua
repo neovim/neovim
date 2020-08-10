@@ -10,6 +10,7 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
@@ -51,8 +52,7 @@ describe("shell command :!", function()
 
   it("throttles shell-command output greater than ~10KB", function()
     if 'openbsd' == helpers.uname() then
-      pending('FIXME #10804', function() end)
-      return
+      pending('FIXME #10804')
     end
     child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
@@ -96,8 +96,7 @@ describe("shell command :!", function()
 
   it('handles control codes', function()
     if iswin() then
-      pending('missing printf', function() end)
-      return
+      pending('missing printf')
     end
     local screen = Screen.new(50, 4)
     screen:attach()
@@ -230,7 +229,7 @@ describe("shell command :!", function()
       ]])
     end)
   end)
-  if iswin() or eval('executable("pwsh")') == 1 then
+  if has_powershell() then
     it('powershell supports literal strings', function()
       set_shell_powershell()
       local screen = Screen.new(30, 4)

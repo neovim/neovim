@@ -12,61 +12,60 @@
 # include "ex_cmds_enum.generated.h"
 #endif
 
-/*
- * When adding an Ex command:
- * 1. Add an entry to the table in src/nvim/ex_cmds.lua.  Keep it sorted on the 
- *    shortest version of the command name that works.  If it doesn't start with 
- *    a lower case letter, add it at the end.
- *
- *    Each table entry is a table with the following keys:
- *
- *      Key     | Description
- *      ------- | -------------------------------------------------------------
- *      command | Name of the command. Required.
- *      enum    | Name of the enum entry. If not set defaults to CMD_{command}.
- *      flags   | A set of the flags from below list joined by bitwise or.
- *      func    | Name of the function containing the implementation.
- *
- *    Referenced function should be either non-static one or defined in 
- *    ex_docmd.c and be coercible to ex_func_T type from below.
- *
- *    All keys not described in the above table are reserved for future use.
- *
- * 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
- * 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
- * 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
- *    long name of the command.
- */
+// When adding an Ex command:
+// 1. Add an entry to the table in src/nvim/ex_cmds.lua.  Keep it sorted on the
+//    shortest version of the command name that works.  If it doesn't start with
+//    a lower case letter, add it at the end.
+//
+//    Each table entry is a table with the following keys:
+//
+//      Key     | Description
+//      ------- | -------------------------------------------------------------
+//      command | Name of the command. Required.
+//      enum    | Name of the enum entry. If not set defaults to CMD_{command}.
+//      flags   | A set of the flags from below list joined by bitwise or.
+//      func    | Name of the function containing the implementation.
+//
+//    Referenced function should be either non-static one or defined in
+//    ex_docmd.c and be coercible to ex_func_T type from below.
+//
+//    All keys not described in the above table are reserved for future use.
+//
+// 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
+// 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
+// 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
+//    long name of the command.
 
-#define RANGE           0x001   /* allow a linespecs */
-#define BANG            0x002   /* allow a ! after the command name */
-#define EXTRA           0x004   /* allow extra args after command name */
-#define XFILE           0x008   /* expand wildcards in extra part */
-#define NOSPC           0x010   /* no spaces allowed in the extra part */
-#define DFLALL          0x020   /* default file range is 1,$ */
-#define WHOLEFOLD       0x040   /* extend range to include whole fold also
-                                   when less than two numbers given */
-#define NEEDARG         0x080   /* argument required */
-#define TRLBAR          0x100   /* check for trailing vertical bar */
-#define REGSTR          0x200   /* allow "x for register designation */
-#define COUNT           0x400   /* allow count in argument, after command */
-#define NOTRLCOM        0x800   /* no trailing comment allowed */
-#define ZEROR          0x1000   /* zero line number allowed */
-#define USECTRLV       0x2000   /* do not remove CTRL-V from argument */
-#define NOTADR         0x4000   /* number before command is not an address */
-#define EDITCMD        0x8000   /* allow "+command" argument */
-#define BUFNAME       0x10000   /* accepts buffer name */
-#define BUFUNL        0x20000   /* accepts unlisted buffer too */
-#define ARGOPT        0x40000   /* allow "++opt=val" argument */
-#define SBOXOK        0x80000   /* allowed in the sandbox */
-#define CMDWIN       0x100000   /* allowed in cmdline window; when missing
-                                 * disallows editing another buffer when
-                                 * curbuf_lock is set */
-#define MODIFY       0x200000   /* forbidden in non-'modifiable' buffer */
-#define EXFLAGS      0x400000   /* allow flags after count in argument */
-#define FILES   (XFILE | EXTRA) /* multiple extra files allowed */
-#define WORD1   (EXTRA | NOSPC) /* one extra word allowed */
-#define FILE1   (FILES | NOSPC) /* 1 file allowed, defaults to current file */
+#define RANGE           0x001   // allow a linespecs
+#define BANG            0x002   // allow a ! after the command name
+#define EXTRA           0x004   // allow extra args after command name
+#define XFILE           0x008   // expand wildcards in extra part
+#define NOSPC           0x010   // no spaces allowed in the extra part
+#define DFLALL          0x020   // default file range is 1,$
+#define WHOLEFOLD       0x040   // extend range to include whole fold also
+                                // when less than two numbers given
+#define NEEDARG         0x080   // argument required
+#define TRLBAR          0x100   // check for trailing vertical bar
+#define REGSTR          0x200   // allow "x for register designation
+#define COUNT           0x400   // allow count in argument, after command
+#define NOTRLCOM        0x800   // no trailing comment allowed
+#define ZEROR          0x1000   // zero line number allowed
+#define USECTRLV       0x2000   // do not remove CTRL-V from argument
+#define NOTADR         0x4000   // number before command is not an address
+#define EDITCMD        0x8000   // allow "+command" argument
+#define BUFNAME       0x10000   // accepts buffer name
+#define BUFUNL        0x20000   // accepts unlisted buffer too
+#define ARGOPT        0x40000   // allow "++opt=val" argument
+#define SBOXOK        0x80000   // allowed in the sandbox
+#define CMDWIN       0x100000   // allowed in cmdline window; when missing
+                                // disallows editing another buffer when
+                                // curbuf_lock is set
+#define MODIFY       0x200000   // forbidden in non-'modifiable' buffer
+#define EXFLAGS      0x400000   // allow flags after count in argument
+#define RESTRICT     0x800000L  // forbidden in restricted mode
+#define FILES (XFILE | EXTRA)   // multiple extra files allowed
+#define WORD1 (EXTRA | NOSPC)   // one extra word allowed
+#define FILE1 (FILES | NOSPC)   // 1 file allowed, defaults to current file
 
 // values for cmd_addr_type
 #define ADDR_LINES              0
@@ -98,6 +97,47 @@ typedef struct cmdname {
   int cmd_addr_type;     ///< Flag for address type
 } CommandDefinition;
 
+// A list used for saving values of "emsg_silent".  Used by ex_try() to save the
+// value of "emsg_silent" if it was non-zero.  When this is done, the CSF_SILENT
+// flag below is set.
+typedef struct eslist_elem eslist_T;
+struct eslist_elem {
+  int saved_emsg_silent;  // saved value of "emsg_silent"
+  eslist_T *next;         // next element on the list
+};
+
+// For conditional commands a stack is kept of nested conditionals.
+// When cs_idx < 0, there is no conditional command.
+enum {
+  CSTACK_LEN = 50,
+};
+
+typedef struct {
+  int cs_flags[CSTACK_LEN];         // CSF_ flags
+  char cs_pending[CSTACK_LEN];      // CSTP_: what's pending in ":finally"
+  union {
+    void *csp_rv[CSTACK_LEN];       // return typeval for pending return
+    void *csp_ex[CSTACK_LEN];       // exception for pending throw
+  } cs_pend;
+  void *cs_forinfo[CSTACK_LEN];     // info used by ":for"
+  int cs_line[CSTACK_LEN];          // line nr of ":while"/":for" line
+  int cs_idx;                       // current entry, or -1 if none
+  int cs_looplevel;                 // nr of nested ":while"s and ":for"s
+  int cs_trylevel;                  // nr of nested ":try"s
+  eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
+  int cs_lflags;                    // loop flags: CSL_ flags
+} cstack_T;
+# define cs_rettv       cs_pend.csp_rv
+# define cs_exception   cs_pend.csp_ex
+
+// Flags for the cs_lflags item in cstack_T.
+enum {
+  CSL_HAD_LOOP =    1,  // just found ":while" or ":for"
+  CSL_HAD_ENDLOOP = 2,  // just found ":endwhile" or ":endfor"
+  CSL_HAD_CONT =    4,  // just found ":continue"
+  CSL_HAD_FINA =    8,  // just found ":finally"
+};
+
 /// Arguments used for Ex commands.
 struct exarg {
   char_u      *arg;             ///< argument of the command
@@ -121,14 +161,14 @@ struct exarg {
   int regname;                  ///< register name (NUL if none)
   int force_bin;                ///< 0, FORCE_BIN or FORCE_NOBIN
   int read_edit;                ///< ++edit argument
-  int force_ff;                 ///< ++ff= argument (index in cmd[])
+  int force_ff;                 ///< ++ff= argument (first char of argument)
   int force_enc;                ///< ++enc= argument (index in cmd[])
   int bad_char;                 ///< BAD_KEEP, BAD_DROP or replacement byte
   int useridx;                  ///< user command index
   char_u *errmsg;               ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
   void   *cookie;               ///< argument for getline()
-  struct condstack *cstack;     ///< condition stack for ":if" etc.
+  cstack_T *cstack;             ///< condition stack for ":if" etc.
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"

@@ -46,8 +46,18 @@ func Test_quote_selection_selection_exclusive()
   new
   call setline(1, "a 'bcde' f")
   set selection=exclusive
+
   exe "norm! fdvhi'y"
   call assert_equal('bcde', @")
+
+  let @"='dummy'
+  exe "norm! $gevi'y"
+  call assert_equal('bcde', @")
+
+  let @"='dummy'
+  exe "norm! 0fbhvi'y"
+  call assert_equal('bcde', @")
+
   set selection&vim
   bw!
 endfunc
@@ -279,6 +289,17 @@ func! Test_sentence_with_cursor_on_delimiter()
   call assert_equal("A '([sentence.])'", @")
   normal! 17|yas
   call assert_equal("A '([sentence.])'  ", @")
+
+  " don't get stuck on a quote at the start of a sentence
+  %delete _
+  call setline(1, ['A sentence.', '"A sentence"?', 'A sentence!'])
+  normal gg))
+  call assert_equal(3, getcurpos()[1])
+
+  %delete _
+  call setline(1, ['A sentence.', "'A sentence'?", 'A sentence!'])
+  normal gg))
+  call assert_equal(3, getcurpos()[1])
 
   %delete _
 endfunc

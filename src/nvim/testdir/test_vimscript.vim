@@ -1284,7 +1284,7 @@ func s:DoNothing()
 endfunc
 
 func Test_script_local_func()
-  set nocp viminfo+=nviminfo
+  set nocp nomore viminfo+=nviminfo
   new
   nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
 
@@ -1407,6 +1407,76 @@ func Test_compound_assignment_operators()
     let @/ .= 's'
     call assert_equal('1s', @/)
     let @/ = ''
+endfunc
+
+func Test_function_defined_line()
+    if has('gui_running')
+        " Can't catch the output of gvim.
+        return
+    endif
+
+    let lines =<< trim [CODE]
+    " F1
+    func F1()
+        " F2
+        func F2()
+            "
+            "
+            "
+            return
+        endfunc
+        " F3
+        execute "func F3()\n\n\n\nreturn\nendfunc"
+        " F4
+        execute "func F4()\n
+                    \\n
+                    \\n
+                    \\n
+                    \return\n
+                    \endfunc"
+    endfunc
+    " F5
+    execute "func F5()\n\n\n\nreturn\nendfunc"
+    " F6
+    execute "func F6()\n
+                \\n
+                \\n
+                \\n
+                \return\n
+                \endfunc"
+    call F1()
+    verbose func F1
+    verbose func F2
+    verbose func F3
+    verbose func F4
+    verbose func F5
+    verbose func F6
+    qall!
+    [CODE]
+
+    call writefile(lines, 'Xtest.vim')
+    let res = system(v:progpath .. ' --clean -es -X -S Xtest.vim')
+    call assert_equal(0, v:shell_error)
+
+    let m = matchstr(res, 'function F1()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 2$', m)
+
+    let m = matchstr(res, 'function F2()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 4$', m)
+
+    let m = matchstr(res, 'function F3()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 11$', m)
+
+    let m = matchstr(res, 'function F4()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 13$', m)
+
+    let m = matchstr(res, 'function F5()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 21$', m)
+
+    let m = matchstr(res, 'function F6()[^[:print:]]*[[:print:]]*')
+    call assert_match(' line 23$', m)
+
+    call delete('Xtest.vim')
 endfunc
 
 "-------------------------------------------------------------------------------

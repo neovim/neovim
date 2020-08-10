@@ -317,8 +317,7 @@ describe('server -> client', function()
       set_session(server)
       local status, address = pcall(funcs.serverstart, "127.0.0.1:")
       if not status then
-        pending('no ipv4 stack', function() end)
-        return
+        pending('no ipv4 stack')
       end
       eq('127.0.0.1:', string.sub(address,1,10))
       connect_test(server, 'tcp', address)
@@ -329,8 +328,7 @@ describe('server -> client', function()
       set_session(server)
       local status, address = pcall(funcs.serverstart, '::1:')
       if not status then
-        pending('no ipv6 stack', function() end)
-        return
+        pending('no ipv6 stack')
       end
       eq('::1:', string.sub(address,1,4))
       connect_test(server, 'tcp', address)
@@ -347,11 +345,6 @@ describe('server -> client', function()
 
   describe('connecting to its own pipe address', function()
     it('does not deadlock', function()
-      if not helpers.isCI('travis') and helpers.is_os('mac') then
-        -- It does, in fact, deadlock on QuickBuild. #6851
-        pending("deadlocks on QuickBuild", function() end)
-        return
-      end
       local address = funcs.serverlist()[1]
       local first = string.sub(address,1,1)
       ok(first == '/' or first == '\\')

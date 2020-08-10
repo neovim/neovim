@@ -69,7 +69,7 @@ See `:messages` above.
 LIST OF MESSAGES
 			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
-			*E323* *E341* *E473* *E570* *E685* *E950*  >
+			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
   makemap: Illegal mode
   Cannot create BalloonEval with both message and callback
@@ -556,7 +556,8 @@ allowed for the command that was used.
 Vim was not able to create a swap file.  You can still edit the file, but if
 Vim unexpectedly exits the changes will be lost.  And Vim may consume a lot of
 memory when editing a big file.  You may want to change the 'directory' option
-to avoid this error.  See |swap-file|.
+to avoid this error.  This error is not given when 'directory' is empty.  See
+|swap-file|.
 
 							*E140*  >
   Use ! to write partial buffer
@@ -670,21 +671,20 @@ being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
 							*E471*  >
   Argument required
 
-This happens when an Ex command with mandatory argument(s) was executed, but
-no argument has been specified.
+Ex command was executed without a mandatory argument(s).
 
 							*E474* *E475* *E983*  >
   Invalid argument
   Invalid argument: {arg}
   Duplicate argument: {arg}
 
-An Ex command or function has been executed, but an invalid argument has been
-specified.
+Ex command or function was given an invalid argument. Or |jobstart()| or
+|system()| was given a non-executable command.
 
 							*E488*  >
   Trailing characters
 
-An argument has been added to an Ex command that does not permit one.
+An argument was given to an Ex command that does not permit one.
 
 							*E477* *E478*  >
   No ! allowed

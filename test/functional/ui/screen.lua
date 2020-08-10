@@ -71,6 +71,7 @@
 -- To debug screen tests, see Screen:redraw_debug().
 
 local helpers = require('test.functional.helpers')(nil)
+local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
@@ -157,6 +158,7 @@ function Screen.new(width, height)
     wildmenu_items = nil,
     wildmenu_selected = nil,
     win_position = {},
+    win_viewport = {},
     float_pos = {},
     msg_grid = nil,
     msg_grid_pos = nil,
@@ -253,7 +255,7 @@ end
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
   'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
-  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos',
+  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
 }
 
 -- Asserts that the screen state eventually matches an expected state.
@@ -268,7 +270,7 @@ local ext_keys = {
 -- grid:        Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
---              Lines containing only "{IGNORE}|" are skipped.
+--              "{MATCH:x}|" lines are matched against Lua pattern `x`.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -389,9 +391,10 @@ function Screen:expect(expected, attr_ids, ...)
         err_msg = "Expected screen height " .. #expected_rows
         .. ' differs from actual height ' .. #actual_rows .. '.'
       end
-      for i = 1, #expected_rows do
-         msg_expected_rows[i] = expected_rows[i]
-        if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
+      for i, row in ipairs(expected_rows) do
+        msg_expected_rows[i] = row
+        local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
+        if row ~= actual_rows[i] and (not m or not actual_rows[i]:match(m)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
@@ -418,6 +421,9 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     local extstate = self:_extstate_repr(attr_state)
     if expected.mode ~= nil then
       extstate.mode = self.mode
+    end
+    if expected.win_viewport == nil then
+      extstate.win_viewport = nil
     end
 
     -- Convert assertion errors into invalid screen state descriptions.
@@ -574,7 +580,7 @@ asynchronous (feed(), nvim_input()) and synchronous API calls.
 
 
   if err then
-    assert(false, err)
+    busted.fail(err, 3)
   elseif did_warn then
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
@@ -604,17 +610,12 @@ function Screen:_redraw(updates)
     for i = 2, #update do
       local handler_name = '_handle_'..method
       local handler = self[handler_name]
-      if handler ~= nil then
-        local status, res = pcall(handler, self, unpack(update[i]))
-        if not status then
-          error(handler_name..' failed'
-            ..'\n  payload: '..inspect(update)
-            ..'\n  error:   '..tostring(res))
-        end
-      else
-        assert(self._on_event,
-          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
-        self._on_event(method, update[i])
+      assert(handler ~= nil, "missing handler: Screen:"..handler_name)
+      local status, res = pcall(handler, self, unpack(update[i]))
+      if not status then
+        error(handler_name..' failed'
+          ..'\n  payload: '..inspect(update)
+          ..'\n  error:   '..tostring(res))
       end
     end
     if k == #updates and method == "flush" then
@@ -622,10 +623,6 @@ function Screen:_redraw(updates)
     end
   end
   return did_flush
-end
-
-function Screen:set_on_event_handler(callback)
-  self._on_event = callback
 end
 
 function Screen:_handle_resize(width, height)
@@ -733,6 +730,7 @@ function Screen:_handle_grid_destroy(grid)
   self._grids[grid] = nil
   if self._options.ext_multigrid then
     self.win_position[grid] = nil
+    self.win_viewport[grid] = nil
   end
 end
 
@@ -753,14 +751,24 @@ function Screen:_handle_grid_cursor_goto(grid, row, col)
 end
 
 function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
-    self.win_position[grid] = {
-        win = win,
-        startrow = startrow,
-        startcol = startcol,
-        width = width,
-        height = height
-    }
-    self.float_pos[grid] = nil
+  self.win_position[grid] = {
+    win = win,
+    startrow = startrow,
+    startcol = startcol,
+    width = width,
+    height = height
+  }
+  self.float_pos[grid] = nil
+end
+
+function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol)
+  self.win_viewport[grid] = {
+    win = win,
+    topline = topline,
+    botline = botline,
+    curline = curline,
+    curcol = curcol
+  }
 end
 
 function Screen:_handle_win_float_pos(grid, ...)
@@ -1137,6 +1145,8 @@ function Screen:_extstate_repr(attr_state)
     messages[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
   end
 
+  local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
+
   return {
     popupmenu=self.popupmenu,
     cmdline=cmdline,
@@ -1148,7 +1158,8 @@ function Screen:_extstate_repr(attr_state)
     showcmd=self:_chunks_repr(self.showcmd, attr_state),
     ruler=self:_chunks_repr(self.ruler, attr_state),
     msg_history=msg_history,
-    float_pos=self.float_pos
+    float_pos=self.float_pos,
+    win_viewport=win_viewport,
   }
 end
 
@@ -1223,10 +1234,6 @@ function Screen:render(headers, attr_state, preview)
   return rv
 end
 
-local remove_all_metatables = function(item, path)
-  if path[#path] ~= inspect.METATABLE then return item end
-end
-
 -- Returns the current screen state in the form of a screen:expect()
 -- keyword-args map.
 function Screen:get_snapshot(attrs, ignore)
@@ -1276,6 +1283,26 @@ function Screen:get_snapshot(attrs, ignore)
   return kwargs, ext_state, attr_state
 end
 
+local function fmt_ext_state(name, state)
+  if name == "win_viewport" then
+    local str = "{\n"
+    for k,v in pairs(state) do
+      str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
+             ..v.topline..", botline = "..v.botline..", curline = "..v.curline
+             ..", curcol = "..v.curcol.."},\n")
+    end
+    return str .. "}"
+  else
+    -- TODO(bfredl): improve formatting of more states
+    local function remove_all_metatables(item, path)
+      if path[#path] ~= inspect.METATABLE then
+        return item
+      end
+    end
+    return inspect(state,{process=remove_all_metatables})
+  end
+end
+
 function Screen:print_snapshot(attrs, ignore)
   local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
   local attrstr = ""
@@ -1298,9 +1325,8 @@ function Screen:print_snapshot(attrs, ignore)
   print(kwargs.grid)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
-    if ext_state[k] ~= nil then
-      -- TODO(bfredl): improve formatting
-      io.stdout:write(", "..k.."="..inspect(ext_state[k],{process=remove_all_metatables}))
+    if ext_state[k] ~= nil and not (k == "win_viewport" and not self.options.ext_multigrid) then
+      io.stdout:write(", "..k.."="..fmt_ext_state(k, ext_state[k]))
     end
   end
   print("}\n")
@@ -1361,6 +1387,7 @@ function Screen:linegrid_check_attrs(attrs)
       if self._rgb_cterm then
         attr_rgb, attr_cterm, info = unpack(v)
         attr = {attr_rgb, attr_cterm}
+        info = info or {}
       elseif self._options.ext_hlstate then
         attr, info = unpack(v)
       else
@@ -1399,11 +1426,12 @@ end
 function Screen:_pprint_hlitem(item)
     -- print(inspect(item))
     local multi = self._rgb_cterm or self._options.ext_hlstate
-    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item).."}"
+    local cterm = (not self._rgb_cterm and not self._options.rgb)
+    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item, cterm).."}"
     local attrdict2, hlinfo
     local descdict = ""
     if self._rgb_cterm then
-      attrdict2 = ", {"..self:_pprint_attrs(item[2]).."}"
+      attrdict2 = ", {"..self:_pprint_attrs(item[2], true).."}"
       hlinfo = item[3]
     else
       attrdict2 = ""
@@ -1432,13 +1460,15 @@ function Screen:_pprint_hlinfo(states)
 end
 
 
-function Screen:_pprint_attrs(attrs)
+function Screen:_pprint_attrs(attrs, cterm)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        elseif cterm then
+          desc = tostring(v)
         else
           desc = string.format("tonumber('0x%06x')",v)
         end
@@ -1510,7 +1540,8 @@ function Screen:_equal_attrs(a, b)
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
        a.special == b.special and a.blend == b.blend and
-       a.strikethrough == b.strikethrough
+       a.strikethrough == b.strikethrough and
+       a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end
 
 function Screen:_equal_info(a, b)

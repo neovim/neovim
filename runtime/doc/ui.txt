@@ -161,7 +161,9 @@ the editor.
 	`cursor_shape`:	"block", "horizontal", "vertical"
 	`cell_percentage`: Cell % occupied by the cursor.
 	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
-	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`)
+	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`).
+			When attr_id is 0, the background and foreground
+			colors should be swapped.
 	`attr_id_lm`:	Cursor attribute id for when 'langmap' is active.
 	`short_name`:	Mode code name, see 'guicursor'.
 	`name`:		Mode descriptive name.
@@ -201,8 +203,8 @@ the editor.
 	sent from Nvim, like for |ui-cmdline|.
 
 ["mode_change", mode, mode_idx]
-	The mode changed.  The first parameter `mode` is a string representing
-	the current mode. `mode_idx` is an index into the array received in
+	Editor mode changed.  The `mode` parameter is a string representing
+	the current mode. `mode_idx` is an index into the array emitted in
 	the `mode_info_set` event. UIs should change the cursor style
 	according to the properties specified in the corresponding item. The
 	set of modes reported will change in new versions of Nvim, for
@@ -211,11 +213,11 @@ the editor.
 
 ["mouse_on"]
 ["mouse_off"]
-	Tells the client whether mouse support, as determined by |'mouse'|
-	option, is considered to be active in the current mode. This is mostly
-	useful for a terminal frontend, or other situations where Nvim mouse
-	would conflict with other usages of the mouse. It is safe for a client
-	to ignore this and always send mouse events.
+	|'mouse'| was enabled/disabled in the current editor mode. Useful for
+	a terminal UI, or other situations where Nvim mouse would conflict
+	with other usages of the mouse. UIs may ignore this and always send
+	mouse input, because 'mouse' decides the behavior of |nvim_input()|
+	implicitly.
 
 ["busy_start"]
 ["busy_stop"]
@@ -294,7 +296,8 @@ numerical highlight ids to the actual attributes.
 	`underline`:	underlined text. The line has `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
 	`blend`:	Blend level (0-100). Could be used by UIs to support
-			blending floating windows to the background.
+			blending floating windows to the background or to
+			signal a transparent cursor.
 
 	For absent color keys the default color should be used. Don't store
 	the default value in the table, rather a sentinel value, so that
@@ -590,6 +593,12 @@ tabs.
 
 	When |ext_messages| is active, no message grid is used, and this event
 	will not be sent.
+
+["win_viewport", grid, win, topline, botline, curline, curcol]
+	Indicates the range of buffer text displayed in the window, as well
+	as the cursor position in the buffer. All positions are zero-based.
+	`botline` is set to one more than the line count of the buffer, if
+	there are filler lines past the end.
 
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*

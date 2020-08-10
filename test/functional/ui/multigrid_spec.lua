@@ -1962,4 +1962,191 @@ describe('ext_multigrid', function()
       {1:~                             }|
     ]]}
   end)
+
+  it('has viewport information', function()
+    screen:try_resize(48, 8)
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name]                                       }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      ^                                                |
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+    ## grid 3
+                                                      |
+    ]], win_viewport={
+      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0}
+    }}
+    insert([[
+      Lorem ipsum dolor sit amet, consectetur
+      adipisicing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua.
+      Ut enim ad minim veniam, quis nostrud
+      exercitation ullamco laboris nisi ut aliquip ex
+      ea commodo consequat. Duis aute irure dolor in
+      reprehenderit in voluptate velit esse cillum
+      dolore eu fugiat nulla pariatur. Excepteur sint
+      occaecat cupidatat non proident, sunt in culpa
+      qui officia deserunt mollit anim id est
+      laborum.]])
+
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+      occaecat cupidatat non proident, sunt in culpa  |
+      qui officia deserunt mollit anim id est         |
+      laborum^.                                        |
+    ## grid 3
+                                                      |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7},
+    }}
+
+
+    feed('<c-u>')
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      incididunt ut labore et dolore magna aliqua.    |
+      Ut enim ad minim veniam, quis nostrud           |
+      exercitation ullamco laboris nisi ut aliquip ex |
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+      ^dolore eu fugiat nulla pariatur. Excepteur sint |
+    ## grid 3
+                                                      |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 2, botline = 9, curline = 7, curcol = 0},
+    }}
+
+    command("split")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+    ## grid 3
+                                                      |
+    ## grid 4
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+      ^dolore eu fugiat nulla pariatur. Excepteur sint |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0},
+      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 7, curcol = 0},
+    }}
+
+    feed("b")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+    ## grid 3
+                                                      |
+    ## grid 4
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse ^cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0},
+      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 6, curcol = 38},
+    }}
+
+    feed("2k")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+    ## grid 3
+                                                      |
+    ## grid 4
+      exercitation ullamco laboris nisi ut a^liquip ex |
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0},
+      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38},
+    }}
+
+    -- handles non-current window
+    meths.win_set_cursor(1000, {1, 10})
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      Lorem ipsum dolor sit amet, consectetur         |
+      adipisicing elit, sed do eiusmod tempor         |
+    ## grid 3
+                                                      |
+    ## grid 4
+      exercitation ullamco laboris nisi ut a^liquip ex |
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10},
+      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38},
+    }}
+  end)
 end)

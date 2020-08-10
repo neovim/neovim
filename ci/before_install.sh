@@ -3,10 +3,6 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  exit
-fi
-
 echo 'Python info:'
 (
   set -x
@@ -26,7 +22,7 @@ if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   echo 'Setting Python versions via pyenv'
 
   # Prefer Python 2 over 3 (more conservative).
-  pyenv global 2.7.15:3.7
+  pyenv global 2.7.15:3.7.1
 
   echo 'Updated Python info:'
   (
@@ -47,8 +43,7 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
 fi
 
 source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+nvm install 10
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"

@@ -12,7 +12,10 @@ describe('ui/mouse/input', function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('list', true)
-    meths.set_option('listchars', 'eol:$')
+    -- NB: this is weird, but mostly irrelevant to the test
+    -- So I didn't bother to change it
+    command('set listchars=eol:$')
+    command('setl listchars=nbsp:x')
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -812,7 +815,8 @@ describe('ui/mouse/input', function()
 
       feed_command('set concealcursor=ni')
       feed_command('set nowrap')
-      feed_command('set shiftwidth=2 tabstop=4 list listchars=tab:>-')
+      feed_command('set shiftwidth=2 tabstop=4 list')
+      feed_command('setl listchars=tab:>-')
       feed_command('syntax match NonText "\\*" conceal')
       feed_command('syntax match NonText "cats" conceal cchar=X')
       feed_command('syntax match NonText "x" conceal cchar=>')

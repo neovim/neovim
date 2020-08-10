@@ -87,6 +87,36 @@ describe(':terminal mouse', function()
           {3:-- TERMINAL --}                                    |
         ]])
       end)
+
+      it('will forward mouse clicks to the program with the correct even if set nu', function()
+        if helpers.pending_win32(pending) then return end
+        nvim('command', 'set number')
+        -- When the display area such as a number is clicked, it returns to the
+        -- normal mode.
+        feed('<LeftMouse><3,0>')
+        eq('n', eval('mode()'))
+        screen:expect([[
+          {7: 11 }^line28                                        |
+          {7: 12 }line29                                        |
+          {7: 13 }line30                                        |
+          {7: 14 }mouse enabled                                 |
+          {7: 15 }rows: 6, cols: 46                             |
+          {7: 16 }{2: }                                             |
+                                                            |
+        ]])
+        -- If click on the coordinate (0,1) of the region of the terminal
+        -- (i.e. the coordinate (4,1) of vim), 'CSI !"' is sent to the terminal.
+        feed('i<LeftMouse><4,1>')
+        screen:expect([[
+          {7: 11 }line28                                        |
+          {7: 12 }line29                                        |
+          {7: 13 }line30                                        |
+          {7: 14 }mouse enabled                                 |
+          {7: 15 }rows: 6, cols: 46                             |
+          {7: 16 } !"{1: }                                          |
+          {3:-- TERMINAL --}                                    |
+        ]])
+      end)
     end)
 
     describe('with a split window and other buffer', function()
@@ -148,7 +178,7 @@ describe(':terminal mouse', function()
       end)
 
       it('wont lose focus if another window is scrolled', function()
-        feed('<ScrollWheelUp><0,0><ScrollWheelUp><0,0>')
+        feed('<ScrollWheelUp><4,0><ScrollWheelUp><4,0>')
         screen:expect([[
           {7: 21 }line                 │line30                  |
           {7: 22 }line                 │rows: 5, cols: 25       |
@@ -158,7 +188,7 @@ describe(':terminal mouse', function()
           ==========                ==========              |
           {3:-- TERMINAL --}                                    |
         ]])
-        feed('<S-ScrollWheelDown><0,0>')
+        feed('<S-ScrollWheelDown><4,0>')
         screen:expect([[
           {7: 26 }line                 │line30                  |
           {7: 27 }line                 │rows: 5, cols: 25       |

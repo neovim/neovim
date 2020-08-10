@@ -277,6 +277,7 @@ enum {
 #define WIM_FULL        1
 #define WIM_LONGEST     2
 #define WIM_LIST        4
+#define WIM_BUFLASTUSED 8
 
 // arguments for can_bs()
 #define BS_INDENT       'i'     // "Indent"
@@ -371,8 +372,9 @@ EXTERN long p_columns;          // 'columns'
 EXTERN int p_confirm;           // 'confirm'
 EXTERN int p_cp;                // 'compatible'
 EXTERN char_u   *p_cot;         // 'completeopt'
-EXTERN long p_ph;               // 'pumheight'
 EXTERN long p_pb;               // 'pumblend'
+EXTERN long p_ph;               // 'pumheight'
+EXTERN long p_pw;               // 'pumwidth'
 EXTERN char_u   *p_cpo;         // 'cpoptions'
 EXTERN char_u   *p_csprg;       // 'cscopeprg'
 EXTERN int p_csre;              // 'cscoperelative'
@@ -473,6 +475,12 @@ EXTERN char_u   *p_isf;         // 'isfname'
 EXTERN char_u   *p_isi;         // 'isident'
 EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
+EXTERN char_u *p_jop;           // 'jumpooptions'
+EXTERN unsigned jop_flags;
+#ifdef IN_OPTION_C
+static char *(p_jop_values[]) = { "stack", NULL };
+#endif
+#define JOP_STACK               0x01
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
 EXTERN char_u   *p_langmap;     // 'langmap'
@@ -484,6 +492,7 @@ EXTERN long     p_linespace;    // 'linespace'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
 EXTERN long p_stal;             // 'showtabline'
+EXTERN char_u   *p_lcs;         // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
@@ -569,8 +578,8 @@ static char *(p_ssop_values[]) = {
 # define SSOP_HELP              0x040
 # define SSOP_BLANK             0x080
 # define SSOP_GLOBALS           0x100
-# define SSOP_SLASH             0x200
-# define SSOP_UNIX              0x400
+# define SSOP_SLASH             0x200  // Deprecated, always set.
+# define SSOP_UNIX              0x400  // Deprecated, always set.
 # define SSOP_SESDIR            0x800
 # define SSOP_CURDIR            0x1000
 # define SSOP_FOLDS             0x2000
@@ -611,13 +620,14 @@ EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) =
-  { "useopen", "usetab", "split", "newtab", "vsplit", NULL };
+  { "useopen", "usetab", "split", "newtab", "vsplit", "uselast", NULL };
 #endif
 #define SWB_USEOPEN             0x001
 #define SWB_USETAB              0x002
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
 #define SWB_VSPLIT              0x010
+#define SWB_USELAST             0x020
 EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char_u *p_tc;            ///< 'tagcase'
 EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
@@ -652,6 +662,7 @@ EXTERN long p_ul;               ///< 'undolevels'
 EXTERN long p_ur;               ///< 'undoreload'
 EXTERN long p_uc;               ///< 'updatecount'
 EXTERN long p_ut;               ///< 'updatetime'
+EXTERN char_u *p_fcs;           ///< 'fillchar'
 EXTERN char_u *p_shada;         ///< 'shada'
 EXTERN char *p_shadafile;       ///< 'shadafile'
 EXTERN char_u *p_vdir;          ///< 'viewdir'
@@ -780,6 +791,7 @@ enum {
   , BV_SUA
   , BV_SW
   , BV_SWF
+  , BV_TFU
   , BV_TAGS
   , BV_TC
   , BV_TS
@@ -824,6 +836,8 @@ enum {
   , WV_RLC
   , WV_SCBIND
   , WV_SCROLL
+  , WV_SISO
+  , WV_SO
   , WV_SPELL
   , WV_CUC
   , WV_CUL

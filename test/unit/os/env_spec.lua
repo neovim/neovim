@@ -119,7 +119,7 @@ describe('env.c', function()
       local name = 'NVIM_UNIT_TEST_GETENV_1N'
       local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
-      -- Use os_setenv because Lua dosen't have setenv.
+      -- Use os_setenv because Lua doesn't have setenv.
       os_setenv(name, value, 1)
       eq(value, os_getenv(name))
 
@@ -170,7 +170,7 @@ describe('env.c', function()
         i = i + 1
         name = cimp.os_getenvname_at_index(i)
       end
-      eq(true, (table.getn(names)) > 0)
+      eq(true, #names > 0)
       eq(true, found_name)
     end)
 

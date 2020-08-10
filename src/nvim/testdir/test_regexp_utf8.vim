@@ -32,6 +32,9 @@ func Test_equivalence_re2()
 endfunc
 
 func s:classes_test()
+  if has('win32')
+    set iskeyword=@,48-57,_,192-255
+  endif
   set isprint=@,161-255
   call assert_equal('Motörhead', matchstr('Motörhead', '[[:print:]]\+'))
 
@@ -51,6 +54,12 @@ func s:classes_test()
   let tabchar = ''
   let upperchars = ''
   let xdigitchars = ''
+  let identchars = ''
+  let identchars1 = ''
+  let kwordchars = ''
+  let kwordchars1 = ''
+  let fnamechars = ''
+  let fnamechars1 = ''
   let i = 1
   while i <= 255
     let c = nr2char(i)
@@ -102,6 +111,24 @@ func s:classes_test()
     if c =~ '[[:xdigit:]]'
       let xdigitchars .= c
     endif
+    if c =~ '[[:ident:]]'
+      let identchars .= c
+    endif
+    if c =~ '\i'
+      let identchars1 .= c
+    endif
+    if c =~ '[[:keyword:]]'
+      let kwordchars .= c
+    endif
+    if c =~ '\k'
+      let kwordchars1 .= c
+    endif
+    if c =~ '[[:fname:]]'
+      let fnamechars .= c
+    endif
+    if c =~ '\f'
+      let fnamechars1 .= c
+    endif
     let i += 1
   endwhile
 
@@ -121,6 +148,37 @@ func s:classes_test()
   call assert_equal("\t\n\x0b\f\r ", spacechars)
   call assert_equal("\t", tabchar)
   call assert_equal('0123456789ABCDEFabcdef', xdigitchars)
+
+  if has('win32')
+    let identchars_ok = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz ¡¢£¤¥¦§µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ'
+    let kwordchars_ok = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyzµÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  elseif has('ebcdic')
+    let identchars_ok = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz¬®µº¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    let kwordchars_ok = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz¬®µº¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  else
+    let identchars_ok = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyzµÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+    let kwordchars_ok = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyzµÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  endif
+
+  if has('win32')
+    let fnamechars_ok = '!#$%+,-./0123456789:=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]_abcdefghijklmnopqrstuvwxyz{}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  elseif has('amiga')
+    let fnamechars_ok = '$+,-./0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  elseif has('vms')
+    let fnamechars_ok = '#$%+,-./0123456789:;<>ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  elseif has('ebcdic')
+    let fnamechars_ok = '#$%+,-./=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  else
+    let fnamechars_ok = '#$%+,-./0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ'
+  endif
+
+  call assert_equal(identchars_ok, identchars)
+  call assert_equal(kwordchars_ok, kwordchars)
+  call assert_equal(fnamechars_ok, fnamechars)
+
+  call assert_equal(identchars1, identchars)
+  call assert_equal(kwordchars1, kwordchars)
+  call assert_equal(fnamechars1, fnamechars)
 endfunc
 
 func Test_classes_re1()
@@ -192,3 +250,287 @@ func Test_optmatch_toolong()
   set re=0
 endfunc
 
+" Test for regexp patterns with multi-byte support, using utf-8.
+func Test_multibyte_chars()
+  " tl is a List of Lists with:
+  "    2: test auto/old/new  0: test auto/old  1: test auto/new
+  "    regexp pattern
+  "    text to test the pattern on
+  "    expected match (optional)
+  "    expected submatch 1 (optional)
+  "    expected submatch 2 (optional)
+  "    etc.
+  "  When there is no match use only the first two items.
+  let tl = []
+
+  " Multi-byte character tests. These will fail unless vim is compiled
+  " with Multibyte (FEAT_MBYTE) or BIG/HUGE features.
+  call add(tl, [2, '[[:alpha:][=a=]]\+', '879 aiaãâaiuvna ', 'aiaãâaiuvna'])
+  call add(tl, [2, '[[=a=]]\+', 'ddaãâbcd', 'aãâ'])								" equivalence classes
+  call add(tl, [2, '[^ม ]\+', 'มม oijasoifjos ifjoisj f osij j มมมมม abcd', 'oijasoifjos'])
+  call add(tl, [2, ' [^ ]\+', 'start มabcdม ', ' มabcdม'])
+  call add(tl, [2, '[ม[:alpha:][=a=]]\+', '879 aiaãมâมaiuvna ', 'aiaãมâมaiuvna'])
+
+  " this is not a normal "i" but 0xec
+  call add(tl, [2, '\p\+', 'ìa', 'ìa'])
+  call add(tl, [2, '\p*', 'aあ', 'aあ'])
+
+  " Test recognition of some character classes
+  call add(tl, [2, '\i\+', '&*¨xx ', 'xx'])
+  call add(tl, [2, '\f\+', '&*fname ', 'fname'])
+
+  " Test composing character matching
+  call add(tl, [2, '.ม', 'xม่x yมy', 'yม'])
+  call add(tl, [2, '.ม่', 'xม่x yมy', 'xม่'])
+  call add(tl, [2, "\u05b9", " x\u05b9 ", "x\u05b9"])
+  call add(tl, [2, ".\u05b9", " x\u05b9 ", "x\u05b9"])
+  call add(tl, [2, "\u05b9\u05bb", " x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, ".\u05b9\u05bb", " x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, "\u05bb\u05b9", " x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, ".\u05bb\u05b9", " x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, "\u05b9", " y\u05bb x\u05b9 ", "x\u05b9"])
+  call add(tl, [2, ".\u05b9", " y\u05bb x\u05b9 ", "x\u05b9"])
+  call add(tl, [2, "\u05b9", " y\u05bb\u05b9 x\u05b9 ", "y\u05bb\u05b9"])
+  call add(tl, [2, ".\u05b9", " y\u05bb\u05b9 x\u05b9 ", "y\u05bb\u05b9"])
+  call add(tl, [1, "\u05b9\u05bb", " y\u05b9 x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, ".\u05b9\u05bb", " y\u05bb x\u05b9\u05bb ", "x\u05b9\u05bb"])
+  call add(tl, [2, "a", "ca\u0300t"])
+  call add(tl, [2, "ca", "ca\u0300t"])
+  call add(tl, [2, "a\u0300", "ca\u0300t", "a\u0300"])
+  call add(tl, [2, 'a\%C', "ca\u0300t", "a\u0300"])
+  call add(tl, [2, 'ca\%C', "ca\u0300t", "ca\u0300"])
+  call add(tl, [2, 'ca\%Ct', "ca\u0300t", "ca\u0300t"])
+
+  " Test \Z
+  call add(tl, [2, 'ú\Z', 'x'])
+  call add(tl, [2, 'יהוה\Z', 'יהוה', 'יהוה'])
+  call add(tl, [2, 'יְהוָה\Z', 'יהוה', 'יהוה'])
+  call add(tl, [2, 'יהוה\Z', 'יְהוָה', 'יְהוָה'])
+  call add(tl, [2, 'יְהוָה\Z', 'יְהוָה', 'יְהוָה'])
+  call add(tl, [2, 'יְ\Z', 'וְיַ', 'יַ'])
+  call add(tl, [2, "ק\u200d\u05b9x\\Z", "xק\u200d\u05b9xy", "ק\u200d\u05b9x"])
+  call add(tl, [2, "ק\u200d\u05b9x\\Z", "xק\u200dxy", "ק\u200dx"])
+  call add(tl, [2, "ק\u200dx\\Z", "xק\u200d\u05b9xy", "ק\u200d\u05b9x"])
+  call add(tl, [2, "ק\u200dx\\Z", "xק\u200dxy", "ק\u200dx"])
+  call add(tl, [2, "\u05b9\\Z", "xyz"])
+  call add(tl, [2, "\\Z\u05b9", "xyz"])
+  call add(tl, [2, "\u05b9\\Z", "xy\u05b9z", "y\u05b9"])
+  call add(tl, [2, "\\Z\u05b9", "xy\u05b9z", "y\u05b9"])
+  call add(tl, [1, "\u05b9\\+\\Z", "xy\u05b9z\u05b9 ", "y\u05b9z\u05b9"])
+  call add(tl, [1, "\\Z\u05b9\\+", "xy\u05b9z\u05b9 ", "y\u05b9z\u05b9"])
+
+  " Combining different tests and features
+  call add(tl, [2, '[^[=a=]]\+', 'ddaãâbcd', 'dd'])
+
+  " Run the tests
+  for t in tl
+    let re = t[0]
+    let pat = t[1]
+    let text = t[2]
+    let matchidx = 3
+    for engine in [0, 1, 2]
+      if engine == 2 && re == 0 || engine == 1 && re == 1
+        continue
+      endif
+      let &regexpengine = engine
+      try
+        let l = matchlist(text, pat)
+      catch
+        call assert_report('Error ' . engine . ': pat: \"' . pat .
+		    \ '\", text: \"' . text .
+		    \ '\", caused an exception: \"' . v:exception . '\"')
+      endtry
+      " check the match itself
+      if len(l) == 0 && len(t) > matchidx
+        call assert_report('Error ' . engine . ': pat: \"' . pat .
+		    \ '\", text: \"' . text .
+		    \ '\", did not match, expected: \"' . t[matchidx] . '\"')
+      elseif len(l) > 0 && len(t) == matchidx
+        call assert_report('Error ' . engine . ': pat: \"' . pat .
+		    \ '\", text: \"' . text . '\", match: \"' . l[0] .
+		    \ '\", expected no match')
+      elseif len(t) > matchidx && l[0] != t[matchidx]
+        call assert_report('Error ' . engine . ': pat: \"' . pat .
+		    \ '\", text: \"' . text . '\", match: \"' . l[0] .
+		    \ '\", expected: \"' . t[matchidx] . '\"')
+      else
+        " Test passed
+      endif
+      if len(l) > 0
+        " check all the nine submatches
+        for i in range(1, 9)
+          if len(t) <= matchidx + i
+            let e = ''
+          else
+            let e = t[matchidx + i]
+          endif
+          if l[i] != e
+            call assert_report('Error ' . engine . ': pat: \"' . pat .
+                  \ '\", text: \"' . text . '\", submatch ' . i .
+                  \ ': \"' . l[i] . '\", expected: \"' . e . '\"')
+          endif
+        endfor
+        unlet i
+      endif
+    endfor
+  endfor
+  set regexpengine&
+endfunc
+
+" check that 'ambiwidth' does not change the meaning of \p
+func Test_ambiwidth()
+  set regexpengine=1 ambiwidth=single
+  call assert_equal(0, match("\u00EC", '\p'))
+  set regexpengine=1 ambiwidth=double
+  call assert_equal(0, match("\u00EC", '\p'))
+  set regexpengine=2 ambiwidth=single
+  call assert_equal(0, match("\u00EC", '\p'))
+  set regexpengine=2 ambiwidth=double
+  call assert_equal(0, match("\u00EC", '\p'))
+  set regexpengine& ambiwidth&
+endfunc
+
+func Run_regexp_ignore_case()
+  call assert_equal('iIİ', substitute('iIİ', '\([iIİ]\)', '\1', 'g'))
+
+  call assert_equal('iIx', substitute('iIİ', '\c\([İ]\)', 'x', 'g'))
+  call assert_equal('xxİ', substitute('iIİ', '\(i\c\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\(İ\c\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\(\%u0130\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\([\u0130]\)', 'x', 'g'))
+  call assert_equal('iIx', substitute('iIİ', '\c\([\u012f-\u0131]\)', 'x', 'g'))
+endfunc
+
+func Test_regexp_ignore_case()
+  set regexpengine=1
+  call Run_regexp_ignore_case()
+  set regexpengine=2
+  call Run_regexp_ignore_case()
+  set regexpengine&
+endfunc
+
+" Tests for regexp with multi-byte encoding and various magic settings
+func Run_regexp_multibyte_magic()
+  let text =<< trim END
+    1 a aa abb abbccc
+    2 d dd dee deefff
+    3 g gg ghh ghhiii
+    4 j jj jkk jkklll
+    5 m mm mnn mnnooo
+    6 x ^aa$ x
+    7 (a)(b) abbaa
+    8 axx [ab]xx
+    9 หม่x อมx
+    a อมx หม่x
+    b ちカヨは
+    c x ¬€x
+    d 天使x
+    e ������y
+    f ������z
+    g a啷bb
+    j 0123❤x
+    k combinations
+    l äö üᾱ̆́
+  END
+
+  new
+  call setline(1, text)
+  exe 'normal /a*b\{2}c\+/e' .. "\<CR>x"
+  call assert_equal('1 a aa abb abbcc', getline('.'))
+  exe 'normal /\Md\*e\{2}f\+/e' .. "\<CR>x"
+  call assert_equal('2 d dd dee deeff', getline('.'))
+  set nomagic
+  exe 'normal /g\*h\{2}i\+/e' .. "\<CR>x"
+  call assert_equal('3 g gg ghh ghhii', getline('.'))
+  exe 'normal /\mj*k\{2}l\+/e' .. "\<CR>x"
+  call assert_equal('4 j jj jkk jkkll', getline('.'))
+  exe 'normal /\vm*n{2}o+/e' .. "\<CR>x"
+  call assert_equal('5 m mm mnn mnnoo', getline('.'))
+  exe 'normal /\V^aa$/' .. "\<CR>x"
+  call assert_equal('6 x aa$ x', getline('.'))
+  set magic
+  exe 'normal /\v(a)(b)\2\1\1/e' .. "\<CR>x"
+  call assert_equal('7 (a)(b) abba', getline('.'))
+  exe 'normal /\V[ab]\(\[xy]\)\1' .. "\<CR>x"
+  call assert_equal('8 axx ab]xx', getline('.'))
+
+  " search for multi-byte without composing char
+  exe 'normal /ม' .. "\<CR>x"
+  call assert_equal('9 หม่x อx', getline('.'))
+
+  " search for multi-byte with composing char
+  exe 'normal /ม่' .. "\<CR>x"
+  call assert_equal('a อมx หx', getline('.'))
+
+  " find word by change of word class
+  exe 'normal /ち\<カヨ\>は' .. "\<CR>x"
+  call assert_equal('b カヨは', getline('.'))
+
+  " Test \%u, [\u] and friends
+  " c
+  exe 'normal /\%u20ac' .. "\<CR>x"
+  call assert_equal('c x ¬x', getline('.'))
+  " d
+  exe 'normal /[\u4f7f\u5929]\+' .. "\<CR>x"
+  call assert_equal('d 使x', getline('.'))
+  " e
+  exe 'normal /\%U12345678' .. "\<CR>x"
+  call assert_equal('e y', getline('.'))
+  " f
+  exe 'normal /[\U1234abcd\u1234\uabcd]' .. "\<CR>x"
+  call assert_equal('f z', getline('.'))
+  " g
+  exe 'normal /\%d21879b' .. "\<CR>x"
+  call assert_equal('g abb', getline('.'))
+
+  " j Test backwards search from a multi-byte char
+  exe "normal /x\<CR>x?.\<CR>x"
+  call assert_equal('j 012❤', getline('.'))
+  " k
+  let @w=':%s#comb[i]nations#œ̄ṣ́m̥̄ᾱ̆́#g'
+  @w
+  call assert_equal('k œ̄ṣ́m̥̄ᾱ̆́', getline(18))
+
+  close!
+endfunc
+
+func Test_regexp_multibyte_magic()
+  set regexpengine=1
+  call Run_regexp_multibyte_magic()
+  set regexpengine=2
+  call Run_regexp_multibyte_magic()
+  set regexpengine&
+endfunc
+
+" Test for 7.3.192
+" command ":s/ \?/ /g" splits multi-byte characters into bytes
+func Test_split_multibyte_to_bytes()
+  new
+  call setline(1, 'l äö üᾱ̆́')
+  s/ \?/ /g
+  call assert_equal(' l ä ö ü ᾱ̆́', getline(1))
+  close!
+endfunc
+
+" Test for matchstr() with multibyte characters
+func Test_matchstr_multibyte()
+  new
+  call assert_equal('ב', matchstr("אבגד", ".", 0, 2))
+  call assert_equal('בג', matchstr("אבגד", "..", 0, 2))
+  call assert_equal('א', matchstr("אבגד", ".", 0, 0))
+  call assert_equal('ג', matchstr("אבגד", ".", 4, -1))
+  close!
+endfunc
+
+" Test for 7.4.636
+" A search with end offset gets stuck at end of file.
+func Test_search_with_end_offset()
+  new
+  call setline(1, ['', 'dog(a', 'cat('])
+  exe "normal /(/e+" .. "\<CR>"
+  normal "ayn
+  call assert_equal("a\ncat(", @a)
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

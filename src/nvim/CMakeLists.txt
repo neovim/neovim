@@ -23,6 +23,7 @@ endif()
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
+set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
@@ -52,7 +53,8 @@ set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
-set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -133,6 +135,12 @@ foreach(sfile ${NVIM_SOURCES})
   if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_conpty_win.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(os_win_console.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
@@ -142,6 +150,8 @@ set(CONV_SOURCES
   diff.c
   edit.c
   eval.c
+  eval/funcs.c
+  eval/userfunc.c
   ex_cmds.c
   ex_docmd.c
   fileio.c
@@ -172,10 +182,10 @@ if(NOT MSVC)
   check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
   if(HAS_WSTATIC_IN_INLINE)
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
   else()
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
 
   # tree-sitter: inlined external project, we don't maintain it. #10124
@@ -211,7 +221,7 @@ set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
 function(get_preproc_output varname iname)
   if(MSVC)
-    set(${varname} /P /Fi${iname} PARENT_SCOPE)
+    set(${varname} /P /Fi${iname} /nologo PARENT_SCOPE)
   else()
     set(${varname} -E -o ${iname} PARENT_SCOPE)
   endif()
@@ -317,11 +327,13 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE} vim_module
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
+      ${LUA_VIM_MODULE_SOURCE} vim_module
+      ${LUA_SHARED_MODULE_SOURCE} shared_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
-    ${VIM_MODULE_SOURCE}
+    ${LUA_VIM_MODULE_SOURCE}
+    ${LUA_SHARED_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -419,6 +431,7 @@ if(Iconv_LIBRARIES)
 endif()
 
 if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES netapi32)
   list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
@@ -461,6 +474,7 @@ install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+set_property(TARGET nvim PROPERTY ENABLE_EXPORTS TRUE)
 
 if(ENABLE_LTO AND (POLICY CMP0069))
   include(CheckIPOSupported)
@@ -535,6 +549,17 @@ else()
 endif()
 set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
+file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
+
+# install treesitter parser if bundled
+if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
+  file(COPY ${DEPS_PREFIX}/lib/nvim/parser DESTINATION ${BINARY_LIB_DIR})
+endif()
+
+install(DIRECTORY ${BINARY_LIB_DIR}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/
+  USE_SOURCE_PERMISSIONS)
+
 add_library(
   libnvim
   STATIC
@@ -545,11 +570,16 @@ add_library(
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+if(MSVC)
+  set(LIBNVIM_NAME libnvim)
+else()
+  set(LIBNVIM_NAME nvim)
+endif()
 set_target_properties(
   libnvim
   PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME nvim
+    OUTPUT_NAME ${LIBNVIM_NAME}
 )
 set_property(
   TARGET libnvim
@@ -632,6 +662,8 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   os/pty_process_win.h
+  os/pty_conpty_win.h
+  os/os_win_console.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)

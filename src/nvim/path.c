@@ -1120,10 +1120,22 @@ static bool has_env_var(char_u *p)
 static bool has_special_wildchar(char_u *p)
 {
   for (; *p; MB_PTR_ADV(p)) {
-    // Allow for escaping
-    if (*p == '\\' && p[1] != NUL) {
+    // Disallow line break characters.
+    if (*p == '\r' || *p == '\n') {
+      break;
+    }
+    // Allow for escaping.
+    if (*p == '\\' && p[1] != NUL && p[1] != '\r' && p[1] != '\n') {
       p++;
     } else if (vim_strchr((char_u *)SPECIAL_WILDCHAR, *p) != NULL) {
+      // A { must be followed by a matching }.
+      if (*p == '{' && vim_strchr(p, '}') == NULL) {
+        continue;
+      }
+      // A quote and backtick must be followed by another one.
+      if ((*p == '`' || *p == '\'') && vim_strchr(p, *p) == NULL) {
+        continue;
+      }
       return true;
     }
   }
@@ -1166,7 +1178,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
    */
   if (recursive)
 #ifdef SPECIAL_WILDCHAR
-    return mch_expand_wildcards(num_pat, pat, num_file, file, flags);
+    return os_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
     return FAIL;
 #endif
@@ -1181,7 +1193,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   for (int i = 0; i < num_pat; i++) {
     if (has_special_wildchar(pat[i])
         && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
-      return mch_expand_wildcards(num_pat, pat, num_file, file, flags);
+      return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
   }
 #endif
@@ -1221,8 +1233,8 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
         else if (has_env_var(p) || *p == '~') {
           xfree(p);
           ga_clear_strings(&ga);
-          i = mch_expand_wildcards(num_pat, pat, num_file, file,
-              flags | EW_KEEPDOLLAR);
+          i = os_expand_wildcards(num_pat, pat, num_file, file,
+                                  flags | EW_KEEPDOLLAR);
           recursive = false;
           return i;
         }

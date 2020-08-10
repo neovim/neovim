@@ -77,11 +77,14 @@ To run all legacy Vim tests:
 
     make oldtest
 
-To run a *single* legacy test set `TEST_FILE`, for example:
+To run a *single* legacy test file you can use either:
 
-    TEST_FILE=test_syntax.res make oldtest
+    make oldtest TEST_FILE=test_syntax.vim
 
-- The `.res` extension (instead of `.vim`) is required.
+or:
+
+    make src/nvim/testdir/test_syntax.vim
+
 - Specify only the test file name, not the full path.
 
 

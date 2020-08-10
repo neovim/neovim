@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
@@ -23,6 +24,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
+#include "nvim/extmark.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
@@ -629,7 +631,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
+    api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
   }
 
   return rv;
@@ -644,7 +646,7 @@ win_T *find_window_by_handle(Window window, Error *err)
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid window id");
+    api_set_error(err, kErrorTypeValidation, "Invalid window id: %d", window);
   }
 
   return rv;
@@ -659,7 +661,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id");
+    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id: %d", tabpage);
   }
 
   return rv;
@@ -1073,8 +1075,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeBoolean:
-      tv->v_type = VAR_SPECIAL;
-      tv->vval.v_special = obj.data.boolean? kSpecialVarTrue: kSpecialVarFalse;
+      tv->v_type = VAR_BOOL;
+      tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
       break;
 
     case kObjectTypeBuffer:
@@ -1363,6 +1365,9 @@ Dictionary copy_dictionary(Dictionary dict)
 Object copy_object(Object obj)
 {
   switch (obj.type) {
+    case kObjectTypeBuffer:
+    case kObjectTypeTabpage:
+    case kObjectTypeWindow:
     case kObjectTypeNil:
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
@@ -1504,4 +1509,73 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   tv_dict_free(dict);
 
   return mappings;
+}
+
+// Is the Namespace in use?
+bool ns_initialized(uint64_t ns)
+{
+  if (ns < 1) {
+    return false;
+  }
+  return ns < (uint64_t)next_namespace_id;
+}
+
+/// Gets the line and column of an extmark.
+///
+/// Extmarks may be queried by position, name or even special names
+/// in the future such as "cursor".
+///
+/// @param[out] lnum extmark line
+/// @param[out] colnr extmark column
+///
+/// @return true if the extmark was found, else false
+bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
+                                *row, colnr_T *col, Error *err)
+{
+  // Check if it is mark id
+  if (obj.type == kObjectTypeInteger) {
+    Integer id = obj.data.integer;
+    if (id == 0) {
+        *row = 0;
+        *col = 0;
+        return true;
+    } else if (id == -1) {
+        *row = MAXLNUM;
+        *col = MAXCOL;
+        return true;
+    } else if (id < 0) {
+      api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
+      return false;
+    }
+
+    ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+    if (extmark.row >= 0) {
+      *row = extmark.row;
+      *col = extmark.col;
+      return true;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "No mark with requested id");
+      return false;
+    }
+
+  // Check if it is a position
+  } else if (obj.type == kObjectTypeArray) {
+    Array pos = obj.data.array;
+    if (pos.size != 2
+        || pos.items[0].type != kObjectTypeInteger
+        || pos.items[1].type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Position must have 2 integer elements");
+      return false;
+    }
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
+    return true;
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  "Position must be a mark id Integer or position Array");
+    return false;
+  }
 }

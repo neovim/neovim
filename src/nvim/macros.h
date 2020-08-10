@@ -36,38 +36,34 @@
 #define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
                     NUL)
 
-/*
- * toupper() and tolower() that use the current locale.
- * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
- * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
- * Note: It is often better to use mb_tolower() and mb_toupper(), because many
- * toupper() and tolower() implementations only work for ASCII.
- */
+// toupper() and tolower() that use the current locale.
+// Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
+// range 0 - 255.  toupper()/tolower() on some systems can't handle others.
+// Note: It is often better to use mb_tolower() and mb_toupper(), because many
+// toupper() and tolower() implementations only work for ASCII.
 #define TOUPPER_LOC toupper
 #define TOLOWER_LOC tolower
 
-/* toupper() and tolower() for ASCII only and ignore the current locale. */
+// toupper() and tolower() for ASCII only and ignore the current locale.
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
 # define TOLOWER_ASC(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) + ('a' - 'A'))
 
-/* Like isalpha() but reject non-ASCII characters.  Can't be used with a
- * special key (negative value). */
+// Like isalpha() but reject non-ASCII characters.  Can't be used with a
+// special key (negative value).
 # define ASCII_ISLOWER(c) ((unsigned)(c) >= 'a' && (unsigned)(c) <= 'z')
 # define ASCII_ISUPPER(c) ((unsigned)(c) >= 'A' && (unsigned)(c) <= 'Z')
 # define ASCII_ISALPHA(c) (ASCII_ISUPPER(c) || ASCII_ISLOWER(c))
 # define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
-/* Returns empty string if it is NULL. */
+// Returns empty string if it is NULL.
 #define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
 
-/*
- * Adjust chars in a language according to 'langmap' option.
- * NOTE that there is no noticeable overhead if 'langmap' is not set.
- * When set the overhead for characters < 256 is small.
- * Don't apply 'langmap' if the character comes from the Stuff buffer or from a
- * mapping and the langnoremap option was set.
- * The do-while is just to ignore a ';' after the macro.
- */
+// Adjust chars in a language according to 'langmap' option.
+// NOTE that there is no noticeable overhead if 'langmap' is not set.
+// When set the overhead for characters < 256 is small.
+// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
+// mapping and the langnoremap option was set.
+// The do-while is just to ignore a ';' after the macro.
 #  define LANGMAP_ADJUST(c, condition) \
   do { \
     if (*p_langmap \
@@ -83,12 +79,12 @@
     } \
   } while (0)
 
-#define WRITEBIN   "wb"        /* no CR-LF translation */
+#define WRITEBIN   "wb"        // no CR-LF translation
 #define READBIN    "rb"
 #define APPENDBIN  "ab"
 
-/* mch_open_rw(): invoke os_open() with third argument for user R/W. */
-#if defined(UNIX)  /* open in rw------- mode */
+// mch_open_rw(): invoke os_open() with third argument for user R/W.
+#if defined(UNIX)  // open in rw------- mode
 # define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
 #elif defined(WIN32)
 # define mch_open_rw(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
@@ -100,7 +96,7 @@
 
 # define UTF_COMPOSINGLIKE(p1, p2)  utf_composinglike((p1), (p2))
 
-/* Whether to draw the vertical bar on the right side of the cell. */
+// Whether to draw the vertical bar on the right side of the cell.
 # define CURSOR_BAR_RIGHT (curwin->w_p_rl && (!(State & CMDLINE) || cmdmsg_rl))
 
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of

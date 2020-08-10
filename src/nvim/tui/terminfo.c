@@ -31,7 +31,10 @@ bool terminfo_is_term_family(const char *term, const char *family)
   return tlen >= flen
     && 0 == memcmp(term, family, flen)
     // Per commentary in terminfo, minus is the only valid suffix separator.
-    && ('\0' == term[flen] || '-' == term[flen]);
+    // The screen terminfo may have a terminal name like screen.xterm. By making
+    // the dot(.) a valid separator, such terminal names will also be the
+    // terminal family of the screen.
+    && ('\0' == term[flen] || '-' == term[flen] || '.' == term[flen]);
 }
 
 bool terminfo_is_bsd_console(const char *term)
@@ -47,9 +50,8 @@ bool terminfo_is_bsd_console(const char *term)
   // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
   return strequal(term, "xterm") && !!os_getenv("XTERM_VERSION");
 # endif
-#else
-  return false;
 #endif
+  return false;
 }
 
 /// Loads a built-in terminfo db when we (unibilium) failed to load a terminfo
@@ -188,7 +190,7 @@ void terminfo_info_msg(const unibi_term *const ut)
       msg_printf_attr(0, "  %-25s %-10s = ", unibi_name_str(i),
                       unibi_short_name_str(i));
       // Most of these strings will contain escape sequences.
-      msg_outtrans_special((char_u *)s, false);
+      msg_outtrans_special((char_u *)s, false, 0);
       msg_putchar('\n');
     }
   }
@@ -215,7 +217,7 @@ void terminfo_info_msg(const unibi_term *const ut)
     msg_puts("Extended string capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_str(ut); i++) {
       msg_printf_attr(0, "  %-25s = ", unibi_get_ext_str_name(ut, i));
-      msg_outtrans_special((char_u *)unibi_get_ext_str(ut, i), false);
+      msg_outtrans_special((char_u *)unibi_get_ext_str(ut, i), false, 0);
       msg_putchar('\n');
     }
   }

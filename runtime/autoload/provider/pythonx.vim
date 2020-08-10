@@ -10,7 +10,8 @@ function! provider#pythonx#Require(host) abort
 
   " Python host arguments
   let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
-  let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path = list(filter(lambda x: x != "", sys.path)); import neovim; neovim.start_host()']
+
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)
@@ -18,7 +19,7 @@ function! provider#pythonx#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  return provider#Poll(args, a:host.orig_name, '$NVIM_PYTHON_LOG_FILE')
+  return provider#Poll(args, a:host.orig_name, '$NVIM_PYTHON_LOG_FILE', {'overlapped': v:true})
 endfunction
 
 function! s:get_python_executable_from_host_var(major_version) abort
@@ -28,8 +29,8 @@ endfunction
 function! s:get_python_candidates(major_version) abort
   return {
         \ 2: ['python2', 'python2.7', 'python2.6', 'python'],
-        \ 3: ['python3', 'python3.7', 'python3.6', 'python3.5', 'python3.4', 'python3.3',
-        \     'python']
+        \ 3: ['python3', 'python3.9', 'python3.8', 'python3.7', 'python3.6', 'python3.5',
+        \     'python3.4', 'python3.3', 'python']
         \ }[a:major_version]
 endfunction
 
@@ -66,7 +67,7 @@ endfunction
 function! s:import_module(prog, module) abort
   let prog_version = system([a:prog, '-c' , printf(
         \ 'import sys; ' .
-        \ 'sys.path.remove(""); ' .
+        \ 'sys.path = list(filter(lambda x: x != "", sys.path)); ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'import pkgutil; ' .
         \ 'exit(2*int(pkgutil.get_loader("%s") is None))',

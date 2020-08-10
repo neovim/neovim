@@ -10,7 +10,9 @@ compile_commands.json
 /dist/
 /.deps/
 /tmp/
+/.clangd/
 
+.DS_Store
 *.mo
 .*.sw?
 *~
@@ -59,6 +61,8 @@ local.mk
 /runtime/doc/*.html
 /runtime/doc/tags.ref
 /runtime/doc/errors.log
+# Don't include the mpack files.
+/runtime/doc/*.mpack
 
 # CLion
 /.idea/

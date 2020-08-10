@@ -125,29 +125,27 @@ set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 6)         # Bump this after any API change.
+set(NVIM_API_LEVEL 7)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE false)
+set(NVIM_API_PRERELEASE true)
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Minimize logging for release-type builds.
-if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
-endif()
-
 # Log level (MIN_LOG_LEVEL in log.h)
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+  # Minimize logging for release-type builds.
+  if(CMAKE_BUILD_TYPE STREQUAL "Release"
+      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
+    set(MIN_LOG_LEVEL 3)
+  else()
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+    set(MIN_LOG_LEVEL 1)
+  endif()
 else()
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
     message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
@@ -303,9 +301,16 @@ if(UNIX)
 
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
     add_compile_options(-fstack-protector-strong)
+    link_libraries(-fstack-protector-strong)
   elseif(HAS_FSTACK_PROTECTOR_FLAG)
     add_compile_options(-fstack-protector --param ssp-buffer-size=4)
+    link_libraries(-fstack-protector --param ssp-buffer-size=4)
   endif()
+endif()
+
+check_c_compiler_flag(-fno-common HAVE_FNO_COMMON)
+if (HAVE_FNO_COMMON)
+  add_compile_options(-fno-common)
 endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
@@ -317,10 +322,10 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
+option(TRAVIS_CI_BUILD "Travis/sourcehut CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/QuickBuild CI build enabled")
+  message(STATUS "Travis/sourcehut CI build enabled")
   add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
@@ -368,13 +373,6 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
 find_package(LibLUV 1.30.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
-
-find_package(UTF8PROC REQUIRED)
-include_directories(SYSTEM ${UTF8PROC_INCLUDE_DIRS})
-if(WIN32)
-  add_definitions(-DUTF8PROC_STATIC)
-endif()
-
 
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
@@ -455,15 +453,15 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
+if(ENABLE_LIBICONV)
+  find_package(Iconv REQUIRED)
+  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
+endif()
+
 if(ENABLE_LIBINTL)
   # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
   find_package(LibIntl REQUIRED)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
-endif()
-
-if(ENABLE_LIBICONV)
-  find_package(Iconv REQUIRED)
-  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
@@ -562,10 +560,7 @@ if(BUSTED_PRG)
   endif()
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
-  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test streams-test ${GENERATED_HELP_TAGS})
-  if(NOT WIN32)
-    list(APPEND FUNCTIONALTEST_PREREQS tty-test)
-  endif()
+  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
 
   # Useful for automated build systems, if they want to manually run the tests.

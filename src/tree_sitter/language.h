@@ -10,6 +10,7 @@ extern "C" {
 
 #define ts_builtin_sym_error_repeat (ts_builtin_sym_error - 1)
 #define TREE_SITTER_LANGUAGE_VERSION_WITH_FIELDS 10
+#define TREE_SITTER_LANGUAGE_VERSION_WITH_SYMBOL_DEDUPING 11
 #define TREE_SITTER_LANGUAGE_VERSION_WITH_SMALL_STATES 11
 
 typedef struct {
@@ -22,14 +23,18 @@ void ts_language_table_entry(const TSLanguage *, TSStateId, TSSymbol, TableEntry
 
 TSSymbolMetadata ts_language_symbol_metadata(const TSLanguage *, TSSymbol);
 
+TSSymbol ts_language_public_symbol(const TSLanguage *, TSSymbol);
+
 static inline bool ts_language_is_symbol_external(const TSLanguage *self, TSSymbol symbol) {
   return 0 < symbol && symbol < self->external_token_count + 1;
 }
 
-static inline const TSParseAction *ts_language_actions(const TSLanguage *self,
-                                                       TSStateId state,
-                                                       TSSymbol symbol,
-                                                       uint32_t *count) {
+static inline const TSParseAction *ts_language_actions(
+  const TSLanguage *self,
+  TSStateId state,
+  TSSymbol symbol,
+  uint32_t *count
+) {
   TableEntry entry;
   ts_language_table_entry(self, state, symbol, &entry);
   *count = entry.action_count;
@@ -87,8 +92,8 @@ static inline TSStateId ts_language_next_state(const TSLanguage *self,
     const TSParseAction *actions = ts_language_actions(self, state, symbol, &count);
     if (count > 0) {
       TSParseAction action = actions[count - 1];
-      if (action.type == TSParseActionTypeShift || action.type == TSParseActionTypeRecover) {
-        return action.params.state;
+      if (action.type == TSParseActionTypeShift) {
+        return action.params.shift.extra ? state : action.params.shift.state;
       }
     }
     return 0;

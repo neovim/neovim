@@ -55,8 +55,8 @@ describe('API/win', function()
     end)
 
     it('validates args', function()
-      eq('Invalid buffer id', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
-      eq('Invalid window id', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
+      eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
+      eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
   end)
 
@@ -73,7 +73,7 @@ describe('API/win', function()
 
     it('does not leak memory when using invalid window ID with invalid pos',
     function()
-      eq('Invalid window id', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
+      eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
