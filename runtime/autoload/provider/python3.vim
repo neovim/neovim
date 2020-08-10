@@ -7,11 +7,15 @@
 if exists('g:loaded_python3_provider')
   finish
 endif
-let [s:prog, s:err] = provider#pythonx#Detect(3)
+let [s:prog, s:ver, s:err] = provider#pythonx#Detect(3)
 let g:loaded_python3_provider = empty(s:prog) ? 1 : 2
 
 function! provider#python3#Prog() abort
   return s:prog
+endfunction
+
+function! provider#python3#Version() abort
+  return s:ver
 endfunction
 
 function! provider#python3#Error() abort

@@ -773,7 +773,7 @@ function module.missing_provider(provider)
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local errors = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    local errors = module.funcs['provider#pythonx#Detect'](py_major_version)[3]
     return errors ~= '' and errors or false
   else
     assert(false, 'Unknown provider: ' .. provider)
