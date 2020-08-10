@@ -4010,13 +4010,26 @@ static int eval7(
   case '[':   ret = get_list_tv(arg, rettv, evaluate);
     break;
 
+  // Dictionary: #{key: val, key: val}
+  case '#': {
+    if ((*arg)[1] == '{') {
+      *arg += 1;
+      ret = dict_get_tv(arg, rettv, true, true);
+    } else {
+      ret = NOTDONE;
+    }
+
+    break;
+  }
   // Lambda: {arg, arg -> expr}
   // Dictionary: {key: val, key: val}
-  case '{':   ret = get_lambda_tv(arg, rettv, evaluate);
-              if (ret == NOTDONE) {
-                ret = dict_get_tv(arg, rettv, evaluate);
-              }
+  case '{': {
+    ret = get_lambda_tv(arg, rettv, evaluate);
+    if (ret == NOTDONE) {
+      ret = dict_get_tv(arg, rettv, false, evaluate);
+    }
     break;
+  }
 
   // Option value: &name
   case '&': {
@@ -5339,11 +5352,14 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
   return false;
 }
 
-/*
- * Allocate a variable for a Dictionary and fill it from "*arg".
- * Return OK or FAIL.  Returns NOTDONE for {expr}.
- */
-static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
+/// Allocate a variable for a Dictionary and fill it from "*arg".
+/// Return OK or FAIL.  Returns NOTDONE for {expr}.
+static int dict_get_tv(
+    char_u **arg,
+    typval_T *rettv,
+    bool literal,
+    int evaluate
+)
 {
   dict_T      *d = NULL;
   typval_T tvkey;
@@ -5377,9 +5393,14 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   *arg = skipwhite(*arg + 1);
   while (**arg != '}' && **arg != NUL) {
-    if (eval1(arg, &tvkey, evaluate) == FAIL) {         // recursive!
+    if (literal) {
+      if (dict_get_literal_key(arg, &tvkey) == FAIL) {
+        goto failret;
+      }
+    } else if (eval1(arg, &tvkey, evaluate) == FAIL) {
       goto failret;
     }
+
     if (**arg != ':') {
       EMSG2(_("E720: Missing colon in Dictionary: %s"), *arg);
       tv_clear(&tvkey);
@@ -5441,6 +5462,26 @@ failret:
     tv_dict_set_ret(rettv, d);
   }
 
+  return OK;
+}
+
+/// Get the literal key for a dictionary.
+static int dict_get_literal_key(char_u **arg, typval_T *tv)
+{
+  char_u *p;
+
+  if (!ASCII_ISALNUM(**arg) && **arg != '_' && **arg != '-') {
+    return FAIL;
+  }
+
+  for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {
+    // Intentionally empty.
+  }
+
+  tv->v_type = VAR_STRING;
+  tv->vval.v_string = vim_strnsave(*arg, (size_t)(p - *arg));
+
+  *arg = skipwhite(p);
   return OK;
 }
 
