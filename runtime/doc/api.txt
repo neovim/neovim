@@ -456,8 +456,8 @@ extmark index on a line is 1 larger than the character index: >
      0 1 2 3 4 5  <-- character positions (0-based)
     0 1 2 3 4 5 6 <-- extmark positions (0-based)
 
-Note that extmarks have "right gravity": If you place the cursor directly on
-an extmark position and enter some text, the extmark gets pushed rightward. >
+Note that extmarks have "forward gravity": If you place the cursor directly on
+an extmark position and enter some text, the extmark gets pushed forward. >
 
      f o o|b a r  <-- line (| = cursor)
           3       <-- extmark
@@ -467,9 +467,9 @@ an extmark position and enter some text, the extmark gets pushed rightward. >
      f o o z|b a r  <-- line (| = cursor)
             4       <-- extmark
 
-If your extmark is on the last possible index of a line (`7` in the
-above "foozbar" example) and you enter a newline at that point, the extmark is
-pushed to the next line: >
+If your extmark is on the last possible index of a line (7 in the above
+"foozbar" example) and you enter a newline at that point, the extmark will
+accordingly be pushed to the next line: >
 
      f o o z b a r|  <-- line (| = cursor)
                   7  <-- extmark
