@@ -1348,6 +1348,8 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
 
   if (firstc == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
+    skiplen = 0;
+    patlen = (int)STRLEN(pat);
   } else {
     pat = ccline.cmdbuff + skiplen;
   }
