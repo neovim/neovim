@@ -59,6 +59,7 @@ local predicate_handlers = {
 
       return true
   end,
+
   ["match?"] = function(match, _, bufnr, predicate)
       local node = match[predicate[2]]
       local regex = predicate[3]
@@ -71,7 +72,6 @@ local predicate_handlers = {
   end,
 
   ["vim-match?"] = (function()
-
     local magic_prefixes = {['\\v']=true, ['\\m']=true, ['\\M']=true, ['\\V']=true}
     local function check_magic(str)
       if string.len(str) < 2 or magic_prefixes[string.sub(str,1,2)] then
@@ -121,7 +121,7 @@ local predicate_handlers = {
 --    signature will be (match, pattern, bufnr, predicate)
 function M.add_predicate(name, handler)
   if predicate_handlers[name] then
-    a.nvim_err_writeln("It is recomended to not overwrite predicates.")
+    a.nvim_err_writeln(string.format("Overriding %s", name))
   end
 
   predicate_handlers[name] = handler
@@ -137,7 +137,14 @@ function Query:match_preds(match, pattern, bufnr)
     -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
     -- Also, tree-sitter strips the leading # from predicates for us.
-    if predicate_handlers[pred[1]] and
+    if string.sub(pred[1], 1, 4) == "not-" then
+      local pred_name = string.sub(pred[1], 5)
+      if predicate_handlers[pred_name] and
+        predicate_handlers[pred_name](match, pattern, bufnr, pred) then
+        return false
+      end
+
+    elseif predicate_handlers[pred[1]] and
       not predicate_handlers[pred[1]](match, pattern, bufnr, pred) then
       return false
     end
