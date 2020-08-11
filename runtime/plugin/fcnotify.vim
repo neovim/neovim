@@ -2,9 +2,9 @@
 
 augroup fcnotify
   autocmd!
-  au BufRead,BufWritePost * call v:lua.vim.fcnotify.start_watch(expand('<afile>'))
-  au BufDelete,BufUnload,BufWritePre * call v:lua.vim.fcnotify.stop_watch(expand('<afile>'))
-  au FocusLost * call  v:lua.vim.fcnotify.pause_notif_all()
-  au FocusGained * call v:lua.vim.fcnotify.resume_notif_all()
-  au VimLeave * call v:lua.vim.fcnotify.stop_all_watchers()
+  au BufRead,BufWritePost,FileWritePost,FileAppendPost * call v:lua.vim.fcnotify.start_watch(expand('<afile>'))
+  au BufDelete,BufUnload,BufWritePre,FileWritePre,FileAppendPre * call v:lua.vim.fcnotify.stop_watch(expand('<afile>'))
+  au FocusLost * call  v:lua.vim.fcnotify.start_notifcations()
+  au FocusGained * call v:lua.vim.fcnotify.stop_notifications()
+  au VimLeave * call v:lua.vim.fcnotify.quit()
 augroup END

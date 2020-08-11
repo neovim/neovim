@@ -6,6 +6,7 @@ local Watcher = {}
 Watcher.__index = Watcher
 local w = {}
 local WatcherList = {}
+local check_handle = nil
 
 --- Callback for the check handle, checks if there are pending notifications
 --- for any watcher, and handles them as per the value of the `fcnotify`
@@ -18,7 +19,7 @@ local function check_notifications()
     end
     if option == 'off' or option:find('watcher') == nil then
       watcher.pending_notifs = false
-    elseif watcher.pending_notifs and watcher.paused == false then
+    elseif watcher.pending_notifs then
       vim.api.nvim_command('checktime '..watcher.bufnr)
       watcher.pending_notifs = false
     end
@@ -50,9 +51,6 @@ local function valid_buf(fname)
   end
   return true
 end
-
-local check_handle = uv.new_check()
-check_handle:start(vim.schedule_wrap(check_notifications))
 
 --- Creates and initializes a new watcher object with the given filename.
 ---
@@ -148,29 +146,27 @@ function Watcher.stop_watch(fname)
   WatcherList[fname]:stop()
 end
 
-function Watcher:pause_notif()
-  self.paused = true
-end
-
-function Watcher:resume_notif()
-  self.paused = false
-end
-
 --- Stop reacting to notifications for all the watchers until we are
 --- asked to start reacting again.
-function Watcher.pause_notif_all()
+function Watcher.stop_notifications()
   check_handle:stop()
+  if not check_handle:is_closing() then
+    check_handle:close()
+  end
 end
 
 --- Start reacting to notifications for all wathcers.
-function Watcher.resume_notif_all()
+function Watcher.start_notifications()
+  check_handle = uv.new_check()
   check_handle:start(vim.schedule_wrap(check_notifications))
 end
 
-function Watcher.stop_all_watcher()
+--- Close all the handles so that resources are freed.
+function Watcher.quit()
   for _, watcher in WatcherList do
     watcher:stop()
   end
+  Watcher.stop_notifications()
 end
 
 return Watcher
