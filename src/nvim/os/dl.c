@@ -20,8 +20,8 @@
 typedef void (*gen_fn)(void);
 typedef const char *(*str_str_fn)(const char *str);
 typedef int (*str_int_fn)(const char *str);
-typedef const char *(*int_str_fn)(int64_t i);
-typedef int (*int_int_fn)(int64_t i);
+typedef const char *(*int_str_fn)(int i);
+typedef int (*int_int_fn)(int i);
 
 /// os_libcall - call a function in a dynamic loadable library
 ///
@@ -41,7 +41,7 @@ typedef int (*int_int_fn)(int64_t i);
 bool os_libcall(const char *libname,
                 const char *funcname,
                 const char *argv,
-                int64_t argi,
+                int argi,
                 char **str_out,
                 int *int_out)
 {
