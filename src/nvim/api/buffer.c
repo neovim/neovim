@@ -1358,17 +1358,17 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
 /// like signs and marks do.
 ///
 /// Namespaces are used for batch deletion/updating of a set of highlights. To
-/// create a namespace, use |nvim_create_namespace| which returns a namespace
+/// create a namespace, use |nvim_create_namespace()| which returns a namespace
 /// id. Pass it in to this function as `ns_id` to add highlights to the
 /// namespace. All highlights in the same namespace can then be cleared with
-/// single call to |nvim_buf_clear_namespace|. If the highlight never will be
+/// single call to |nvim_buf_clear_namespace()|. If the highlight never will be
 /// deleted by an API call, pass `ns_id = -1`.
 ///
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
 /// highlight, the allocated id is then returned. If `hl_group` is the empty
 /// string no highlight is added, but a new `ns_id` is still returned. This is
 /// supported for backwards compatibility, new code should use
-/// |nvim_create_namespace| to create a new empty namespace.
+/// |nvim_create_namespace()| to create a new empty namespace.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      namespace to use or -1 for ungrouped highlight
@@ -1470,7 +1470,7 @@ void nvim_buf_clear_namespace(Buffer buffer,
 
 /// Clears highlights and virtual text from namespace and range of lines
 ///
-/// @deprecated use |nvim_buf_clear_namespace|.
+/// @deprecated use |nvim_buf_clear_namespace()|.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all.
@@ -1534,11 +1534,11 @@ free_exit:
 /// begin one cell (|lcs-eol| or space) after the ordinary text.
 ///
 /// Namespaces are used to support batch deletion/updating of virtual text.
-/// To create a namespace, use |nvim_create_namespace|. Virtual text is
-/// cleared using |nvim_buf_clear_namespace|. The same `ns_id` can be used for
-/// both virtual text and highlights added by |nvim_buf_add_highlight|, both
-/// can then be cleared with a single call to |nvim_buf_clear_namespace|. If the
-/// virtual text never will be cleared by an API call, pass `ns_id = -1`.
+/// To create a namespace, use |nvim_create_namespace()|. Virtual text is
+/// cleared using |nvim_buf_clear_namespace()|. The same `ns_id` can be used for
+/// both virtual text and highlights added by |nvim_buf_add_highlight()|, both
+/// can then be cleared with a single call to |nvim_buf_clear_namespace()|. If
+/// the virtual text never will be cleared by an API call, pass `ns_id = -1`.
 ///
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
 /// virtual text, the allocated id is then returned.
