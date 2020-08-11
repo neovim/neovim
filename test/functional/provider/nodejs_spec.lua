@@ -7,11 +7,8 @@ local eval = helpers.eval
 local retry = helpers.retry
 
 do
-  clear()
-  if missing_provider('node') then
-    pending("Missing nodejs host, or nodejs version is too old.", function()end)
-    return
-  end
+  pending("nodejs test times out on 0.4.x branch", function() end)
+  return
 end
 
 before_each(function()

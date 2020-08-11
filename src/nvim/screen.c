@@ -347,6 +347,17 @@ int update_screen(int type)
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
         }
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+          if (wp->w_floating) {
+            continue;
+          }
+          if (W_ENDROW(wp) > valid) {
+            wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
+          }
+          if (W_ENDROW(wp) + wp->w_status_height > valid) {
+            wp->w_redr_status = true;
+          }
+        }
       }
       msg_grid_set_pos(Rows-p_ch, false);
       msg_grid_invalid = false;
@@ -577,11 +588,14 @@ void conceal_check_cursor_line(void)
 /// Whether cursorline is drawn in a special way
 ///
 /// If true, both old and new cursorline will need
-/// need to be redrawn when moving cursor within windows.
+/// to be redrawn when moving cursor within windows.
+/// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
+///               caused by scrolling.
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul
+    || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
 }
 
 /*
@@ -871,7 +885,7 @@ static void win_update(win_T *wp)
         if (wp->w_lines[0].wl_lnum != wp->w_topline)
           i += diff_check_fill(wp, wp->w_lines[0].wl_lnum)
                - wp->w_old_topfill;
-        if (i < wp->w_grid.Rows - 2) {  // less than a screen off
+        if (i != 0 && i < wp->w_grid.Rows - 2) {  // less than a screen off
           // Try to insert the correct number of lines.
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
@@ -2403,10 +2417,10 @@ win_line (
   filler_todo = filler_lines;
 
   // Cursor line highlighting for 'cursorline' in the current window.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+  if (lnum == wp->w_cursor.lnum) {
     // Do not show the cursor line when Visual mode is active, because it's
     // not clear what is selected then.
-    if (!(wp == curwin && VIsual_active)) {
+    if (wp->w_p_cul && !(wp == curwin && VIsual_active)) {
       int cul_attr = win_hl_attr(wp, HLF_CUL);
       HlAttrs ae = syn_attr2entry(cul_attr);
 
@@ -3756,14 +3770,12 @@ win_line (
       char_attr = hl_combine_attr(char_attr, extra_attr);
     }
 
-    /*
-     * Handle the case where we are in column 0 but not on the first
-     * character of the line and the user wants us to show us a
-     * special character (via 'listchars' option "precedes:<char>".
-     */
+    // Handle the case where we are in column 0 but not on the first
+    // character of the line and the user wants us to show us a
+    // special character (via 'listchars' option "precedes:<char>".
     if (lcs_prec_todo != NUL
         && wp->w_p_list
-        && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
+        && (wp->w_p_wrap ? (wp->w_skipcol > 0 && row == 0) : wp->w_leftcol > 0)
         && filler_todo <= 0
         && draw_state > WL_NR
         && c != NUL) {
@@ -4007,7 +4019,7 @@ win_line (
             break;
           }
 
-          ++vcol;
+          vcol += cells;
         }
       }
 
@@ -4015,10 +4027,13 @@ win_line (
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
-        while (col < grid->Columns) {
+        int n = wp->w_p_rl ? -1 : 1;
+        while (col >= 0 && col < grid->Columns) {
           schar_from_ascii(linebuf_char[off], ' ');
-          linebuf_attr[off++] = term_attrs[vcol++];
-          col++;
+          linebuf_attr[off] = term_attrs[vcol];
+          off += n;
+          vcol += n;
+          col += n;
         }
       }
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
@@ -4353,7 +4368,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to,
                || (line_off2cells(linebuf_char, off_from, off_from + cols) > 1
                    && schar_cmp(linebuf_char[off_from + 1],
                                 grid->chars[off_to + 1])))
-              || p_wd < 0));
+              || rdb_flags & RDB_NODELTA));
 }
 
 /// Move one buffered line to the window grid, but only the characters that
@@ -5103,6 +5118,8 @@ win_redr_custom (
   win_T       *ewp;
   int p_crb_save;
 
+  ScreenGrid *grid = &default_grid;
+
   /* There is a tiny chance that this gets called recursively: When
    * redrawing a status line triggers redrawing the ruler or tabline.
    * Avoid trouble by not allowing recursion. */
@@ -5142,10 +5159,11 @@ win_redr_custom (
       }
       maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
+        grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = ' ';
-        attr = 0;
+        attr = HL_ATTR(HLF_MSG);
       }
 
       use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
@@ -5195,13 +5213,13 @@ win_redr_custom (
   /*
    * Draw each snippet with the specified highlighting.
    */
-  grid_puts_line_start(&default_grid, row);
+  grid_puts_line_start(grid, row);
 
   curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(&default_grid, p, textlen, row, col, curattr);
+    grid_puts_len(grid, p, textlen, row, col, curattr);
     col += vim_strnsize(p, textlen);
     p = hltab[n].start;
 
@@ -5215,7 +5233,7 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(&default_grid, p >= buf + len ? (char_u *)"" : p, row, col,
+  grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
             curattr);
 
   grid_puts_line_flush(false);
@@ -7060,7 +7078,7 @@ static void win_redr_ruler(win_T *wp, int always)
     } else {
       row = Rows - 1;
       fillchar = ' ';
-      attr = 0;
+      attr = HL_ATTR(HLF_MSG);
       width = Columns;
       off = 0;
     }

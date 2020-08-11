@@ -228,20 +228,25 @@ int msg_attr(const char *s, const int attr)
 }
 
 /// similar to msg_outtrans_attr, but support newlines and tabs.
-void msg_multiline_attr(const char *s, int attr, bool check_int)
+void msg_multiline_attr(const char *s, int attr,
+                        bool check_int, bool *need_clear)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
 
-  while (next_spec != NULL && (!check_int || !got_int)) {
+  while (next_spec != NULL) {
+    if (check_int && got_int) {
+      return;
+    }
     next_spec = strpbrk(s, "\t\n\r");
 
     if (next_spec != NULL) {
       // Printing all char that are before the char found by strpbrk
       msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
 
-      if (*next_spec != TAB) {
+      if (*next_spec != TAB && *need_clear) {
         msg_clr_eos();
+        *need_clear = false;
       }
       msg_putchar_attr((uint8_t)(*next_spec), attr);
       s = next_spec + 1;
@@ -253,6 +258,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int)
   if (*s != NUL) {
     msg_outtrans_attr((char_u *)s, attr);
   }
+  return;
 }
 
 
@@ -311,12 +317,15 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   if (buf != NULL)
     s = buf;
 
+  bool need_clear = true;
   if (multiline) {
-    msg_multiline_attr((char *)s, attr, false);
+    msg_multiline_attr((char *)s, attr, false, &need_clear);
   } else {
     msg_outtrans_attr(s, attr);
   }
-  msg_clr_eos();
+  if (need_clear) {
+    msg_clr_eos();
+  }
   retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
@@ -2561,10 +2570,15 @@ static int do_more_prompt(int typed_char)
   msgchunk_T  *mp;
   int i;
 
+  // If headless mode is enabled and no input is required, this variable
+  // will be true. However If server mode is enabled, the message "--more--"
+  // should be displayed.
+  bool no_need_more = headless_mode && !embedded_mode;
+
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt
   // and nothing was typed.
-  if (entered || (State == HITRETURN && typed_char == 0)) {
+  if (no_need_more || entered || (State == HITRETURN && typed_char == 0)) {
     return false;
   }
   entered = true;

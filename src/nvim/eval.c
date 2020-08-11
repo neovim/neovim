@@ -8492,7 +8492,7 @@ static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (p == NULL) {
     rettv->v_type = VAR_SPECIAL;
-    rettv->vval.v_number = kSpecialVarNull;
+    rettv->vval.v_special = kSpecialVarNull;
     return;
   }
   rettv->vval.v_string = p;
@@ -15441,7 +15441,7 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *name = tv_get_string_buf(&argvars[0], namebuf);
 
   if (argvars[1].v_type == VAR_SPECIAL
-      && argvars[1].vval.v_number == kSpecialVarNull) {
+      && argvars[1].vval.v_special == kSpecialVarNull) {
     os_unsetenv(name);
   } else {
     os_setenv(name, tv_get_string_buf(&argvars[1], valbuf), 1);
@@ -18747,8 +18747,9 @@ static void f_visualmode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_wildmenumode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (wild_menu_showing)
+  if (wild_menu_showing || ((State & CMDLINE) && pum_visible())) {
     rettv->vval.v_number = 1;
+  }
 }
 
 /// "win_findbuf()" function
@@ -20871,6 +20872,7 @@ void ex_echo(exarg_T *eap)
   char_u      *arg = eap->arg;
   typval_T rettv;
   bool atstart = true;
+  bool need_clear = true;
   const int did_emsg_before = did_emsg;
 
   if (eap->skip)
@@ -20913,7 +20915,7 @@ void ex_echo(exarg_T *eap)
       char *tofree = encode_tv2echo(&rettv, NULL);
       if (*tofree != NUL) {
         msg_ext_set_kind("echo");
-        msg_multiline_attr(tofree, echo_attr, true);
+        msg_multiline_attr(tofree, echo_attr, true, &need_clear);
       }
       xfree(tofree);
     }
@@ -20926,7 +20928,9 @@ void ex_echo(exarg_T *eap)
     emsg_skip--;
   } else {
     // remove text that may still be there from the command
-    msg_clr_eos();
+    if (need_clear) {
+      msg_clr_eos();
+    }
     if (eap->cmdidx == CMD_echo) {
       msg_end();
     }
