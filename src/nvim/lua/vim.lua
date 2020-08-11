@@ -489,4 +489,81 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
+--- Delays fn until timeout ms passes, optionally forwarding arguments.
+---
+--@param ms Number of milliseconds to wait before calling `fn`
+--@param fn Callback to call once `timeout` expires
+--@return timer luv timer object
+vim.delay = function(ms, fn, ...)
+  local argv = {...}
+  local argc = select("#", ...)
+  if argc > 0 then
+    local old_fn = fn
+    fn = function()
+      old_fn(unpack(argv, 1, argc))
+    end
+  end
+  return vim.defer_fn(fn, ms)
+end
+
+--[[
+| indicates that the function which is being
+debounced is called in the timing graph.
+
+# Leading edge:
+  ------|-----------------
+        a a a a a a
+
+  Shorter timeout:
+  ------|----|------------
+        a a a a a a
+
+# Trailing edge:
+
+  ----------------|-------
+        a
+  ----------------|-------
+        a a a a a a
+  Shorter timeout:
+  -----------|----|-------
+        a a a a a a
+--]]
+-- WARNING:
+-- If you capture upvalues, they will be the values at
+-- the time of definition, not the time of calling the
+-- function in the case of a trailing edge.
+function vim.debounce_trailing_edge(ms, fn)
+  vim.validate {
+    ms = { ms, 'n'},
+    fn = { fn, 'c'},
+  }
+  assert(ms > 0, "Your interval is <= 0")
+
+  local timer = vim.loop.new_timer()
+  local running = false
+  local argv = {}
+  local argc = 0
+  local function stop()
+    timer:stop()
+    timer:close()
+  end
+  local function callback(...)
+    argv = {...}
+    argc = select("#", ...)
+    if not running then
+      timer:start(ms, 0, function()
+        -- TODO(ashkan): double check ordering race conditions
+        -- for long running functions/add unit tests.
+        -- If the outer function is called again during the
+        -- execution of fn, then it will be completely
+        -- ignored if running is set after the pcall...
+        running, argv, argc = false, {}, 0
+        pcall(fn, unpack(argv, 1, argc))
+      end)
+      running = true
+    end
+  end
+  return callback, stop
+end
+
 return module

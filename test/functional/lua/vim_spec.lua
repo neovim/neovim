@@ -1130,6 +1130,33 @@ describe('lua stdlib', function()
       ]])
     end)
 
+    it('should debounce_trailing_edges correctly', function()
+      -- TODO(ashkan): finish test.
+      --[[
+      local now = uv.hrtime()
+      print(now)
+      local dprint = debounce_trailing_edge(100, function(...)
+        print("DPRINT", (uv.hrtime() - now)/1e9, ...)
+      end)
+      dprint(1)
+      dprint(1, 2)
+      dprint(1, nil, 3)
+      vim.delay = function(ms, fn, ...)
+        local argv = {...}
+        local argc = select("#", ...)
+        if argc > 0 then
+          local old_fn = fn
+          fn = function()
+            old_fn(unpack(argv, 1, argc))
+          end
+        end
+        return vim.defer_fn(fn, ms)
+      end
+      -- Should print 0.300-ish
+      vim.delay(200, dprint, 200, "after")
+      --]]
+    end)
+
     it('should require functions to be passed', function()
       local pcall_result = exec_lua [[
         return {pcall(function() vim.wait(1000, 13) end)}
