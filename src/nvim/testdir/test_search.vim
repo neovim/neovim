@@ -408,6 +408,14 @@ func Test_search_cmdline3g()
   undo
   call feedkeys(":global/the\<c-l>/d\<cr>", 'tx')
   call assert_equal('  3 the theother', getline(2))
+  undo
+  call feedkeys(":g!/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+  undo
+  call feedkeys(":global!/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
 
   call Incsearch_cleanup()
 endfunc

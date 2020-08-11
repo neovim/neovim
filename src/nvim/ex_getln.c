@@ -299,6 +299,13 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
             && (STRNCMP(cmd, "substitute", p - cmd) == 0
                 || STRNCMP(cmd, "global", p - cmd) == 0
                 || STRNCMP(cmd, "vglobal", p - cmd) == 0)) {
+          // Check for "global!/".
+          if (*cmd == 'g' && *p == '!') {
+            p++;
+            if (*skipwhite(p) == NUL) {
+              return false;
+            }
+          }
           p = skipwhite(p);
           delim = *p++;
           end = skip_regexp(p, delim, p_magic, NULL);
