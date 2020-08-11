@@ -336,7 +336,7 @@ callbacks. These callbacks are called frequently in various contexts;
 |textlock| prevents changing buffer contents and window layout (use
 |vim.schedule| to defer such operations to the main loop instead).
 
-|nvim_buf_attach| will take keyword args for the callbacks. "on_lines" will
+|nvim_buf_attach()| will take keyword args for the callbacks. "on_lines" will
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
 {new_lastline}, {old_byte_size}[, {old_utf32_size}, {old_utf16_size}]).
 Unlike remote channel events the text contents are not passed. The new text can
@@ -355,7 +355,7 @@ was changed. The parameters recieved are ("changedtick", {buf}, {changedtick}).
 
                                                         *api-lua-detach*
 In-process Lua callbacks can detach by returning `true`. This will detach all
-callbacks attached with the same |nvim_buf_attach| call.
+callbacks attached with the same |nvim_buf_attach()| call.
 
 
 ==============================================================================
@@ -1602,19 +1602,20 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                 marks do.
 
                 Namespaces are used for batch deletion/updating of a set of
-                highlights. To create a namespace, use |nvim_create_namespace|
-                which returns a namespace id. Pass it in to this function as
-                `ns_id` to add highlights to the namespace. All highlights in
-                the same namespace can then be cleared with single call to
-                |nvim_buf_clear_namespace|. If the highlight never will be
-                deleted by an API call, pass `ns_id = -1` .
+                highlights. To create a namespace, use
+                |nvim_create_namespace()| which returns a namespace id. Pass
+                it in to this function as `ns_id` to add highlights to the
+                namespace. All highlights in the same namespace can then be
+                cleared with single call to |nvim_buf_clear_namespace()|. If
+                the highlight never will be deleted by an API call, pass
+                `ns_id = -1` .
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the highlight, the allocated id is then
                 returned. If `hl_group` is the empty string no highlight is
                 added, but a new `ns_id` is still returned. This is supported
                 for backwards compatibility, new code should use
-                |nvim_create_namespace| to create a new empty namespace.
+                |nvim_create_namespace()| to create a new empty namespace.
 
                 Parameters: ~
                     {buffer}     Buffer handle, or 0 for current buffer
@@ -2065,12 +2066,12 @@ nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
 
                 Namespaces are used to support batch deletion/updating of
                 virtual text. To create a namespace, use
-                |nvim_create_namespace|. Virtual text is cleared using
-                |nvim_buf_clear_namespace|. The same `ns_id` can be used for
+                |nvim_create_namespace()|. Virtual text is cleared using
+                |nvim_buf_clear_namespace()|. The same `ns_id` can be used for
                 both virtual text and highlights added by
-                |nvim_buf_add_highlight|, both can then be cleared with a
-                single call to |nvim_buf_clear_namespace|. If the virtual text
-                never will be cleared by an API call, pass `ns_id = -1` .
+                |nvim_buf_add_highlight()|, both can then be cleared with a
+                single call to |nvim_buf_clear_namespace()|. If the virtual
+                text never will be cleared by an API call, pass `ns_id = -1` .
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the virtual text, the allocated id is then
