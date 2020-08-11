@@ -447,6 +447,41 @@ in the buffer. They could be used to represent cursors, folds, misspelled
 words, and anything else that needs to track a logical location in the buffer
 over time.
 
+Extmarks use |api-indexing|, and you can think of them as cursor positions.
+For example, an extmark at position 1 exists between the first and second
+character on a line, similar to a bar cursor. For that reason, the maximum
+extmark index on a line is 1 larger than the character index: >
+
+     f o o b a r  <-- line contents (with spaces for illustration purposes)
+     0 1 2 3 4 5  <-- character positions (0-based)
+    0 1 2 3 4 5 6 <-- extmark positions (0-based)
+
+Note that extmarks have "right gravity": If you place the cursor directly on
+an extmark position and enter some text, the extmark gets pushed rightward. >
+
+     f o o|b a r  <-- line (| = cursor)
+          3       <-- extmark
+
+     (Now add "z" at cursor position):
+
+     f o o z|b a r  <-- line (| = cursor)
+            4       <-- extmark
+
+If your extmark is on the last possible index of a line (`7` in the
+above "foozbar" example) and you enter a newline at that point, the extmark is
+pushed to the next line: >
+
+     f o o z b a r|  <-- line (| = cursor)
+                  7  <-- extmark
+
+     (Now add <cr> at cursor position):
+
+     f o o z b a r  <-- first line
+                    <-- extmarks (none present)
+     |              <-- second line (| = cursor)
+     0              <-- new extmark position
+
+
 Example:
 
 We will set an extmark at the first row and third column. |api-indexing| is
