@@ -880,8 +880,6 @@ vim.region({bufnr}, {pos1}, {pos2}, {type}, {inclusive})       *vim.region()*
 vim.register_keystroke_callback({ns_id}, {fn})
         Register a lua {fn} with an {ns_id} to be run after every keystroke.
 
-        Callbacks will not be run unless 'keystrokecallback' is set.
-
         NOTE: {fn} will be automatically removed if an error occurs while
         calling.
 

@@ -493,8 +493,6 @@ local on_keystroke_callbacks = {}
 
 --- Register a lua {fn} with an {id} to be run after every keystroke.
 ---
---- Callbacks will not be run unless 'keystrokecallback' is set.
----
 --- NOTE: {fn} will be automatically removed if an error occurs while calling.
 ---
 --@param ns_id number: See |nvim_create_namesapce()|
