@@ -1086,12 +1086,8 @@ describe('lua stdlib', function()
 
       helpers.insert([[next 🤦 lines å ]])
 
-      local next_status = exec_lua [[
-        return table.concat(KeysPressed, '')
-      ]]
-
       -- It has escape in the keys pressed
-      eq('inext 🤦 lines å <ESC>', next_status)
+      eq('inext 🤦 lines å <ESC>', exec_lua [[return table.concat(KeysPressed, '')]])
     end)
 
     it('should allow removing trackers.', function()
@@ -1115,12 +1111,8 @@ describe('lua stdlib', function()
 
       helpers.insert([[more lines]])
 
-      local next_status = exec_lua [[
-        return table.concat(KeysPressed, '')
-      ]]
-
       -- It has escape in the keys pressed
-      eq('inext lines<ESC>', next_status)
+      eq('inext lines<ESC>', exec_lua [[return table.concat(KeysPressed, '')]])
     end)
 
     it('should not call functions that error again.', function()
@@ -1145,13 +1137,8 @@ describe('lua stdlib', function()
       helpers.insert([[next lines]])
       helpers.insert([[more lines]])
 
-
-      local next_status = exec_lua [[
-        return table.concat(KeysPressed, '')
-      ]]
-
       -- Only the first letter gets added. After that we remove the callback
-      eq('inext l', next_status)
+      eq('inext l', exec_lua [[ return table.concat(KeysPressed, '') ]])
     end)
 
     it('should process mapped keys, not unmapped keys', function()
@@ -1171,9 +1158,11 @@ describe('lua stdlib', function()
 
       helpers.insert("hello")
 
-      eq({'i', 'w', 'o', 'r', 'l', 'd', '<ESC>'}, exec_lua [[
-        return KeysPressed
-      ]])
+      local next_status = exec_lua [[
+        return table.concat(KeysPressed, '')
+      ]]
+
+      eq("iworld<ESC>", next_status)
     end)
   end)
 

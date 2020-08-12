@@ -1473,7 +1473,7 @@ void nlua_execute_log_keystroke(int c)
 
   lua_State *const lstate = nlua_enter();
 
-#ifdef DEBUG
+#ifndef NDEBUG
   int top = lua_gettop(lstate);
 #endif
 
@@ -1496,7 +1496,7 @@ void nlua_execute_log_keystroke(int c)
   // [ vim ]
   lua_pop(lstate, 1);
 
-#ifdef DEBUG
+#ifndef NDEBUG
   // [ ]
   assert(top == lua_gettop(lstate));
 #endif
