@@ -316,3 +316,128 @@ func Test_Debugger()
 
   call delete('Xtest.vim')
 endfunc
+
+" Test for setting a breakpoint on a :endif where the :if condition is false
+" and then quit the script. This should generate an interrupt.
+func Test_breakpt_endif_intr()
+  func F()
+    let g:Xpath ..= 'a'
+    if v:false
+      let g:Xpath ..= 'b'
+    endif
+    invalid_command
+  endfunc
+
+  let g:Xpath = ''
+  breakadd func 4 F
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":call F()\<CR>quit\<CR>", "xt")
+    call F()
+  catch /^Vim:Interrupt$/
+    call assert_match('\.F, line 4', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  delfunc F
+endfunc
+
+" Test for setting a breakpoint on a :else where the :if condition is false
+" and then quit the script. This should generate an interrupt.
+func Test_breakpt_else_intr()
+  func F()
+    let g:Xpath ..= 'a'
+    if v:false
+      let g:Xpath ..= 'b'
+    else
+      invalid_command
+    endif
+    invalid_command
+  endfunc
+
+  let g:Xpath = ''
+  breakadd func 4 F
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":call F()\<CR>quit\<CR>", "xt")
+    call F()
+  catch /^Vim:Interrupt$/
+    call assert_match('\.F, line 4', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  delfunc F
+endfunc
+
+" Test for setting a breakpoint on a :endwhile where the :while condition is
+" false and then quit the script. This should generate an interrupt.
+func Test_breakpt_endwhile_intr()
+  func F()
+    let g:Xpath ..= 'a'
+    while v:false
+      let g:Xpath ..= 'b'
+    endwhile
+    invalid_command
+  endfunc
+
+  let g:Xpath = ''
+  breakadd func 4 F
+  try
+    let caught_intr = 0
+    debuggreedy
+    call feedkeys(":call F()\<CR>quit\<CR>", "xt")
+    call F()
+  catch /^Vim:Interrupt$/
+    call assert_match('\.F, line 4', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  delfunc F
+endfunc
+
+" Test for setting a breakpoint on an :endtry where an exception is pending to
+" be processed and then quit the script. This should generate an interrupt and
+" the thrown exception should be ignored.
+func Test_breakpt_endtry_intr()
+  func F()
+    try
+      let g:Xpath ..= 'a'
+      throw "abc"
+    endtry
+    invalid_command
+  endfunc
+
+  let g:Xpath = ''
+  breakadd func 4 F
+  try
+    let caught_intr = 0
+    let caught_abc = 0
+    debuggreedy
+    call feedkeys(":call F()\<CR>quit\<CR>", "xt")
+    call F()
+  catch /abc/
+    let caught_abc = 1
+  catch /^Vim:Interrupt$/
+    call assert_match('\.F, line 4', v:throwpoint)
+    let caught_intr = 1
+  endtry
+  0debuggreedy
+  call assert_equal(1, caught_intr)
+  call assert_equal(0, caught_abc)
+  call assert_equal('a', g:Xpath)
+  breakdel *
+  delfunc F
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
