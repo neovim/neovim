@@ -729,8 +729,52 @@ query:iter_matches({node}, {bufnr}, {start_row}, {end_row})
 	    ... use the info here ...
 	  end
 	end
->
-Treesitter syntax highlighting (WIP)		    *lua-treesitter-highlight*
+
+Treesitter Query Predicates				*lua-treesitter-predicates*
+
+When writing queries for treesitter, one might use `predicates`, that is,
+special scheme nodes that are evaluted to verify things on a captured node for
+example, the |eq?| predicate : >
+	((identifier) @foo (#eq? @foo "foo"))
+
+This will only match identifier corresponding to the `"foo"` text.
+Here is a list of built-in predicates :
+
+	`eq?`						*ts-predicate-eq?*
+		This predicate will check text correspondance between nodes or
+		strings : >
+			((identifier) @foo (#eq? @foo "foo"))
+			((node1) @left (node2) @right (#eq? @left @right))
+<
+	`match?`					*ts-predicate-match?*
+		This will match if the provived lua regex matches the text
+		corresponding to a node : >
+			((idenfitier) @constant (#match? @constant "^[A-Z_]+$"))
+<		Note: the `^` and `$` anchors will respectively match the
+			start and end of the node's text.
+
+	`vim-match?`					*ts-predicate-vim-match?*
+		This will match the same way than |match?| but using vim
+		regexes.
+	
+	`contains?`					*ts-predicate-contains?*
+		Will check if any of the following arguments appears in the
+		text corresponding to the node : >
+			((identifier) @foo (#contains? @foo "foo"))
+			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
+<
+							*lua-treesitter-not-predicate*
+Each predicate has a `not-` prefixed predicate that is just the negation of
+the predicate.
+
+					*vim.treesitter.query.add_predicate()*
+vim.treesitter.query.add_predicate({name}, {handler})
+
+This adds a predicate with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate)
+
+Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 
 NOTE: This is a partially implemented feature, and not usable as a default
 solution yet. What is documented here is a temporary interface indented
