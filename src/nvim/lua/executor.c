@@ -1469,7 +1469,7 @@ void nlua_free_typval_dict(dict_T *const d)
 void nlua_execute_log_keystroke(int c)
 {
   char_u buf[NUMBUFLEN];
-  buf[special_to_buf(c, mod_mask, false, buf)] = NUL;
+  uint64_t buf_len = special_to_buf(c, mod_mask, false, buf);
 
   lua_State *const lstate = nlua_enter();
 
@@ -1485,7 +1485,7 @@ void nlua_execute_log_keystroke(int c)
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
   // [ vim, vim._log_keystroke, buf ]
-  lua_pushstring(lstate, (const char *)buf);
+  lua_pushlstring(lstate, (const char *)buf, buf_len);
 
   if (lua_pcall(lstate, 1, 0, 0)) {
     nlua_error(

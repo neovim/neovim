@@ -1075,7 +1075,7 @@ describe('lua stdlib', function()
       exec_lua [[
         KeysPressed = {}
 
-        vim.register_keystroke_callback(vim.api.nvim_create_namespace("logger"), function(buf)
+        vim.register_keystroke_callback(function(buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
@@ -1096,18 +1096,18 @@ describe('lua stdlib', function()
       exec_lua [[
         KeysPressed = {}
 
-        return vim.register_keystroke_callback(vim.api.nvim_create_namespace("logger"), function(buf)
+        return vim.register_keystroke_callback(function(buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
 
           table.insert(KeysPressed, buf)
-        end)
+        end, vim.api.nvim_create_namespace("logger"))
       ]]
 
       helpers.insert([[next lines]])
 
-      exec_lua("vim.remove_keystroke_callback(vim.api.nvim_create_namespace('logger'))")
+      exec_lua("vim.register_keystroke_callback(nil, vim.api.nvim_create_namespace('logger'))")
 
       helpers.insert([[more lines]])
 
@@ -1121,7 +1121,7 @@ describe('lua stdlib', function()
       exec_lua [[
         KeysPressed = {}
 
-        return vim.register_keystroke_callback(vim.api.nvim_create_namespace("logger"), function(buf)
+        return vim.register_keystroke_callback(function(buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
@@ -1147,7 +1147,7 @@ describe('lua stdlib', function()
 
         vim.cmd("inoremap hello world")
 
-        vim.register_keystroke_callback(vim.api.nvim_create_namespace("logger"), function(buf)
+        vim.register_keystroke_callback(function(buf)
           if buf:byte() == 27 then
             buf = "<ESC>"
           end
