@@ -119,8 +119,8 @@ local predicate_handlers = {
 -- @param name the name of the predicate, without leading #
 -- @param handler the handler function to be used
 --    signature will be (match, pattern, bufnr, predicate)
-function M.add_predicate(name, handler)
-  if predicate_handlers[name] then
+function M.add_predicate(name, handler, force)
+  if predicate_handlers[name] and not force then
     a.nvim_err_writeln(string.format("Overriding %s", name))
   end
 
