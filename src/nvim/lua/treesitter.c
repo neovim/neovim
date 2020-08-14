@@ -62,6 +62,7 @@ static struct luaL_Reg node_meta[] = {
   { "end_", node_end },
   { "type", node_type },
   { "symbol", node_symbol },
+  { "field", node_field },
   { "named", node_named },
   { "missing", node_missing },
   { "has_error", node_has_error },
@@ -650,6 +651,34 @@ static int node_symbol(lua_State *L)
   }
   TSSymbol symbol = ts_node_symbol(node);
   lua_pushnumber(L, symbol);
+  return 1;
+}
+
+static int node_field(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  size_t name_len;
+  const char *field_name = luaL_checklstring(L, 2, &name_len);
+
+  TSTreeCursor cursor = ts_tree_cursor_new(node);
+
+  lua_newtable(L);  // [table]
+  unsigned int curr_index = 0;
+
+  if (ts_tree_cursor_goto_first_child(&cursor)) {
+    do {
+      if (!STRCMP(field_name, ts_tree_cursor_current_field_name(&cursor))) {
+        push_node(L, ts_tree_cursor_current_node(&cursor), 1);  // [table, node]
+        lua_rawseti(L, -2, ++curr_index);
+      }
+    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  }
+
+  ts_tree_cursor_delete(&cursor);
   return 1;
 }
 
