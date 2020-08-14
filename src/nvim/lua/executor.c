@@ -1469,7 +1469,7 @@ void nlua_free_typval_dict(dict_T *const d)
 void nlua_execute_log_keystroke(int c)
 {
   char_u buf[NUMBUFLEN];
-  uint64_t buf_len = special_to_buf(c, mod_mask, false, buf);
+  size_t buf_len = special_to_buf(c, mod_mask, false, buf);
 
   lua_State *const lstate = nlua_enter();
 
