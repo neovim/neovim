@@ -7,20 +7,50 @@ local ts_hs_ns = a.nvim_create_namespace("treesitter_hl")
 
 -- These are conventions defined by tree-sitter, though it
 -- needs to be user extensible also.
--- TODO(bfredl): this is very much incomplete, we will need to
--- go through a few tree-sitter provided queries and decide
--- on translations that makes the most sense.
 TSHighlighter.hl_map = {
-    keyword="Keyword",
-    string="String",
-    type="Type",
-    comment="Comment",
-    constant="Constant",
-    operator="Operator",
-    number="Number",
-    label="Label",
-    ["function"]="Function",
-    ["function.special"]="Function",
+    ["error"] = "Error",
+
+-- Miscs
+    ["comment"] = "Comment",
+    ["punctuation.delimiter"] = "Delimiter",
+    ["punctuation.bracket"] = "Delimiter",
+    ["punctuation.special"] = "Delimiter",
+
+-- Constants
+    ["constant"] = "Constant",
+    ["constant.builtin"] = "Special",
+    ["constant.macro"] = "Define",
+    ["string"] = "String",
+    ["string.regex"] = "String",
+    ["string.escape"] = "SpecialChar",
+    ["character"] = "Character",
+    ["number"] = "Number",
+    ["boolean"] = "Boolean",
+    ["float"] = "Float",
+
+-- Functions
+    ["function"] = "Function",
+    ["function.special"] = "Function",
+    ["function.builtin"] = "Special",
+    ["function.macro"] = "Macro",
+    ["parameter"] = "Identifier",
+    ["method"] = "Function",
+    ["field"] = "Identifier",
+    ["property"] = "Identifier",
+    ["constructor"] = "Special",
+
+-- Keywords
+    ["conditional"] = "Conditional",
+    ["repeat"] = "Repeat",
+    ["label"] = "Label",
+    ["operator"] = "Operator",
+    ["keyword"] = "Keyword",
+    ["exception"] = "Exception",
+
+    ["type"] = "Type",
+    ["type.builtin"] = "Type",
+    ["structure"] = "Structure",
+    ["include"] = "Include",
 }
 
 function TSHighlighter.new(query, bufnr, ft)
@@ -75,7 +105,15 @@ end
 function TSHighlighter:set_query(query)
   if type(query) == "string" then
     query = vim.treesitter.parse_query(self.parser.lang, query)
+  elseif query == nil then
+    query = vim.treesitter.get_query(self.parser.lang, 'highlights')
+
+    if query == nil then
+      a.nvim_err_writeln("No highlights.scm query found for " .. self.parser.lang)
+      query = vim.treesitter.parse_query(self.parser.lang, "")
+    end
   end
+
   self.query = query
 
   self.hl_cache = setmetatable({}, {
