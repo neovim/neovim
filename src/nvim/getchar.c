@@ -27,6 +27,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/func_attr.h"
+#include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -1534,6 +1535,9 @@ int vgetc(void)
    * avoid internally used Lists and Dicts to be freed.
    */
   may_garbage_collect = false;
+
+  // Exec lua callbacks for on_keystroke
+  nlua_execute_log_keystroke(c);
 
   return c;
 }

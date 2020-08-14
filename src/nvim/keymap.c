@@ -530,12 +530,23 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
 {
   int modifiers = 0;
   int key;
-  unsigned int dlen = 0;
 
   key = find_special_key(srcp, src_len, &modifiers, keycode, false, in_string);
   if (key == 0) {
     return 0;
   }
+
+  return special_to_buf(key, modifiers, keycode, dst);
+}
+
+/// Put the character sequence for "key" with "modifiers" into "dst" and return
+/// the resulting length.
+/// When "keycode" is TRUE prefer key code, e.g. K_DEL instead of DEL.
+/// The sequence is not NUL terminated.
+/// This is how characters in a string are encoded.
+unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
+{
+  unsigned int dlen = 0;
 
   // Put the appropriate modifier in a string.
   if (modifiers != 0) {

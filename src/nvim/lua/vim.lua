@@ -489,4 +489,60 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
+local on_keystroke_callbacks = {}
+
+--- Register a lua {fn} with an {id} to be run after every keystroke.
+---
+--@param fn function: Function to call. It should take one argument, which is a string.
+---                   The string will contain the literal keys typed.
+---                   See |i_CTRL-V|
+---
+---                   If {fn} is nil, it removes the callback for the associated {ns_id}
+--@param ns_id number? Namespace ID. If not passed or 0, will generate and return a new
+---                    namespace ID from |nvim_create_namesapce()|
+---
+--@return number Namespace ID associated with {fn}
+---
+--@note {fn} will be automatically removed if an error occurs while calling.
+---     This is to prevent the annoying situation of every keystroke erroring
+---     while trying to remove a broken callback.
+--@note {fn} will not be cleared from |nvim_buf_clear_namespace()|
+--@note {fn} will receive the keystrokes after mappings have been evaluated
+function vim.register_keystroke_callback(fn, ns_id)
+  vim.validate {
+    fn = { fn, 'c', true},
+    ns_id = { ns_id, 'n', true }
+  }
+
+  if ns_id == nil or ns_id == 0 then
+    ns_id = vim.api.nvim_create_namespace('')
+  end
+
+  on_keystroke_callbacks[ns_id] = fn
+  return ns_id
+end
+
+--- Function that executes the keystroke callbacks.
+--@private
+function vim._log_keystroke(char)
+  local failed_ns_ids = {}
+  local failed_messages = {}
+  for k, v in pairs(on_keystroke_callbacks) do
+    local ok, err_msg = pcall(v, char)
+    if not ok then
+      vim.register_keystroke_callback(nil, k)
+
+      table.insert(failed_ns_ids, k)
+      table.insert(failed_messages, err_msg)
+    end
+  end
+
+  if failed_ns_ids[1] then
+    error(string.format(
+      "Error executing 'on_keystroke' with ns_ids of '%s'\n    With messages: %s",
+      table.concat(failed_ns_ids, ", "),
+      table.concat(failed_messages, "\n")))
+  end
+end
+
 return module
