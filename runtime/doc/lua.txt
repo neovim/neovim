@@ -902,7 +902,7 @@ vim.register_keystroke_callback({fn}, {ns_id})
         NOTE: {fn} will receive the keystrokes after mappings have been
         evaluated
 
-        NOTE: {fn} will not be cleared from |nvim_buf_clear_namespace()|
+        NOTE: {fn} will *NOT* be cleared from |nvim_buf_clear_namespace()|
 
 vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
 	Sends {event} to {channel} via |RPC| and returns immediately.
