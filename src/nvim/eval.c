@@ -760,7 +760,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
     if (eval1_emsg(&s, rettv, true) == FAIL) {
       return FAIL;
     }
-    if (*s != NUL) {  // check for trailing chars after expr
+    if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
       tv_clear(rettv);
       emsgf(_(e_invexpr2), s);
       return FAIL;
@@ -2086,6 +2086,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
           tv_clear(&var1);
           return NULL;
         }
+        p = skipwhite(p);
       }
 
       // Optionally get the second index [ :expr].
@@ -5364,7 +5365,7 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
     if (eval1(&start, &tv, false) == FAIL) {    // recursive!
       return FAIL;
     }
-    if (*start == '}') {
+    if (*skipwhite(start) == '}') {
       return NOTDONE;
     }
   }

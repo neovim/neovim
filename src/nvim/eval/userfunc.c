@@ -3457,12 +3457,7 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
 {
   char_u *name = get_lambda_name();
-  ufunc_T *fp = NULL;
-
-  fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
-  if (fp == NULL) {
-    return NULL;
-  }
+  ufunc_T *fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;

@@ -155,7 +155,7 @@ endfunc
 
 " Verify that arglist is stored correctly to the session file.
 func Test_mksession_arglist()
-  argdel *
+  %argdel
   next file1 file2 file3 file4
   mksession! Xtest_mks.out
   source Xtest_mks.out
@@ -305,6 +305,126 @@ func Test_mksession_quote_in_filename()
 
   %bwipe!
   call delete('Xtest_mks_quoted.out')
+endfunc
+
+" Test for storing global variables in a session file
+func Test_mksession_globals()
+  set sessionoptions+=globals
+
+  " create different global variables
+  let g:Global_string = "Sun is shining"
+  let g:Global_count = 100
+  let g:Global_pi = 3.14
+
+  mksession! Xtest_mks.out
+
+  unlet g:Global_string
+  unlet g:Global_count
+  unlet g:Global_pi
+
+  source Xtest_mks.out
+  call assert_equal("Sun is shining", g:Global_string)
+  call assert_equal(100, g:Global_count)
+  call assert_equal(3.14, g:Global_pi)
+
+  unlet g:Global_string
+  unlet g:Global_count
+  unlet g:Global_pi
+  call delete('Xtest_mks.out')
+  set sessionoptions&
+endfunc
+
+" Test for changing backslash to forward slash in filenames
+func Test_mksession_slash()
+  if exists('+shellslash')
+    throw 'Skipped: cannot use backslash in file name'
+  endif
+  enew
+  %bwipe!
+  e a\\b\\c
+  mksession! Xtest_mks1.out
+  set sessionoptions+=slash
+  mksession! Xtest_mks2.out
+
+  %bwipe!
+  source Xtest_mks1.out
+  call assert_equal('a/b/c', bufname(''))
+  %bwipe!
+  source Xtest_mks2.out
+  call assert_equal('a/b/c', bufname(''))
+
+  %bwipe!
+  call delete('Xtest_mks1.out')
+  call delete('Xtest_mks2.out')
+  set sessionoptions&
+endfunc
+
+" Test for storing global and local argument list in a session file
+func Test_mkseesion_arglocal()
+  enew | only
+  n a b c
+  new
+  arglocal
+  mksession! Xtest_mks.out
+
+  %bwipe!
+  %argdelete
+  argglobal
+  source Xtest_mks.out
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, arglistid(1))
+  call assert_equal(0, arglistid(2))
+
+  %bwipe!
+  %argdelete
+  argglobal
+  call delete('Xtest_mks.out')
+endfunc
+
+" Test for changing directory to the session file directory
+func Test_mksession_sesdir()
+  call mkdir('Xproj')
+  mksession! Xproj/Xtest_mks1.out
+  set sessionoptions-=curdir
+  set sessionoptions+=sesdir
+  mksession! Xproj/Xtest_mks2.out
+
+  source Xproj/Xtest_mks1.out
+  call assert_equal('testdir', fnamemodify(getcwd(), ':t'))
+  source Xproj/Xtest_mks2.out
+  call assert_equal('Xproj', fnamemodify(getcwd(), ':t'))
+  cd ..
+
+  set sessionoptions&
+  call delete('Xproj', 'rf')
+endfunc
+
+" Test for storing the 'lines' and 'columns' settings
+func Test_mksession_resize()
+  mksession! Xtest_mks1.out
+  set sessionoptions+=resize
+  mksession! Xtest_mks2.out
+
+  let lines = readfile('Xtest_mks1.out')
+  let found_resize = v:false
+  for line in lines
+    if line =~ '^set lines='
+      let found_resize = v:true
+    endif
+  endfor
+  call assert_equal(v:false, found_resize)
+  let lines = readfile('Xtest_mks2.out')
+  let found_resize = v:false
+  for line in lines
+    if line =~ '^set lines='
+      let found_resize = v:true
+    endif
+  endfor
+  call assert_equal(v:true, found_resize)
+
+  call delete('Xtest_mks1.out')
+  call delete('Xtest_mks2.out')
+  set sessionoptions&
 endfunc
 
 func s:ClearMappings()

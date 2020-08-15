@@ -4717,6 +4717,14 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "interrupt()" function
+static void f_interrupt(typval_T *argvars FUNC_ATTR_UNUSED,
+                        typval_T *rettv FUNC_ATTR_UNUSED,
+                        FunPtr fptr FUNC_ATTR_UNUSED)
+{
+  got_int = true;
+}
+
 /*
  * "invert(expr)" function
  */

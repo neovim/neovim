@@ -180,7 +180,7 @@ au BufNewFile,BufRead *.at			setf m4
 au BufNewFile,BufRead *.ave			setf ave
 
 " Awk
-au BufNewFile,BufRead *.awk			setf awk
+au BufNewFile,BufRead *.awk,*.gawk		setf awk
 
 " B
 au BufNewFile,BufRead *.mch,*.ref,*.imp		setf b
@@ -1089,6 +1089,9 @@ au BufNewFile,BufRead .netrc			setf netrc
 " Ninja file
 au BufNewFile,BufRead *.ninja			setf ninja
 
+" NPM RC file
+au BufNewFile,BufRead npmrc,.npmrc		setf dosini
+
 " Novell netware batch files
 au BufNewFile,BufRead *.ncf			setf ncf
 
@@ -1194,6 +1197,9 @@ au BufNewFile,BufRead *.pod6			setf pod6
 " Also Phtml (was used for PHP 2 in the past)
 " Also .ctp for Cake template file
 au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp	setf php
+
+" PHP config
+au BufNewFile,BufRead php.ini,php.ini-*		setf dosini
 
 " Pike and Cmod
 au BufNewFile,BufRead *.pike,*.pmod		setf pike

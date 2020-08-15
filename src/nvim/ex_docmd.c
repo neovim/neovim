@@ -5026,8 +5026,13 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
     }
 
     if (cmp == 0) {
-      if (!force) {
-        EMSG(_("E174: Command already exists: add ! to replace it"));
+      // Command can be replaced with "command!" and when sourcing the
+      // same script again, but only once.
+      if (!force
+          && (cmd->uc_script_ctx.sc_sid != current_sctx.sc_sid
+              || cmd->uc_script_ctx.sc_seq == current_sctx.sc_seq)) {
+        EMSG2(_("E174: Command already exists: add ! to replace it: %s"),
+              name);
         goto fail;
       }
 
@@ -8586,6 +8591,24 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
       eap->forceit, TRUE);
 }
 
+enum {
+  SPEC_PERC = 0,
+  SPEC_HASH,
+  SPEC_CWORD,
+  SPEC_CCWORD,
+  SPEC_CEXPR,
+  SPEC_CFILE,
+  SPEC_SFILE,
+  SPEC_SLNUM,
+  SPEC_STACK,
+  SPEC_AFILE,
+  SPEC_ABUF,
+  SPEC_AMATCH,
+  SPEC_SFLNUM,
+  SPEC_SID,
+  // SPEC_CLIENT,
+};
+
 /*
  * Check "str" for starting with a special cmdline variable.
  * If found return one of the SPEC_ values and set "*usedlen" to the length of
@@ -8596,30 +8619,21 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 {
   size_t len;
   static char *(spec_str[]) = {
-    "%",
-#define SPEC_PERC   0
-    "#",
-#define SPEC_HASH   (SPEC_PERC + 1)
-    "<cword>",                          // cursor word
-#define SPEC_CWORD  (SPEC_HASH + 1)
-    "<cWORD>",                          // cursor WORD
-#define SPEC_CCWORD (SPEC_CWORD + 1)
-    "<cexpr>",                          // expr under cursor
-#define SPEC_CEXPR  (SPEC_CCWORD + 1)
-    "<cfile>",                          // cursor path name
-#define SPEC_CFILE  (SPEC_CEXPR + 1)
-    "<sfile>",                          // ":so" file name
-#define SPEC_SFILE  (SPEC_CFILE + 1)
-    "<slnum>",                          // ":so" file line number
-#define SPEC_SLNUM  (SPEC_SFILE + 1)
-    "<afile>",                          // autocommand file name
-#define SPEC_AFILE  (SPEC_SLNUM + 1)
-    "<abuf>",                           // autocommand buffer number
-#define SPEC_ABUF   (SPEC_AFILE + 1)
-    "<amatch>",                         // autocommand match name
-#define SPEC_AMATCH (SPEC_ABUF + 1)
-    "<sflnum>",                         // script file line number
-#define SPEC_SFLNUM (SPEC_AMATCH + 1)
+    [SPEC_PERC] = "%",
+    [SPEC_HASH] = "#",
+    [SPEC_CWORD] = "<cword>",           // cursor word
+    [SPEC_CCWORD] = "<cWORD>",          // cursor WORD
+    [SPEC_CEXPR] = "<cexpr>",           // expr under cursor
+    [SPEC_CFILE] = "<cfile>",           // cursor path name
+    [SPEC_SFILE] = "<sfile>",           // ":so" file name
+    [SPEC_SLNUM] = "<slnum>",           // ":so" file line number
+    [SPEC_STACK] = "<stack>",           // call stack
+    [SPEC_AFILE] = "<afile>",           // autocommand file name
+    [SPEC_ABUF] = "<abuf>",             // autocommand buffer number
+    [SPEC_AMATCH] = "<amatch>",         // autocommand match name
+    [SPEC_SFLNUM] = "<sflnum>",         // script file line number
+    [SPEC_SID] = "<SID>",               // script ID: <SNR>123_
+    // [SPEC_CLIENT] = "<client>",
   };
 
   for (size_t i = 0; i < ARRAY_SIZE(spec_str); ++i) {
@@ -8863,6 +8877,16 @@ eval_vars (
       }
       snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
                current_sctx.sc_lnum + sourcing_lnum);
+      result = (char_u *)strbuf;
+      break;
+
+    case SPEC_SID:
+      if (current_sctx.sc_sid <= 0) {
+        *errormsg = (char_u *)_(e_usingsid);
+        return NULL;
+      }
+      snprintf(strbuf, sizeof(strbuf), "<SNR>%" PRIdSCID "_",
+               current_sctx.sc_sid);
       result = (char_u *)strbuf;
       break;
 

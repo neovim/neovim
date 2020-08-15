@@ -191,6 +191,7 @@ return {
     inputsave={},
     inputsecret={args={1, 2}},
     insert={args={2, 3}},
+    interrupt={args=0},
     invert={args=1},
     isdirectory={args=1},
     isinf={args=1},

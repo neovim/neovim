@@ -49,6 +49,9 @@ func Test_dict()
   let d['a'] = 'aaa'
   call assert_equal('none', d[''])
   call assert_equal('aaa', d['a'])
+
+  let d[ 'b' ] = 'bbb'
+  call assert_equal('bbb', d[ 'b' ])
 endfunc
 
 func Test_strgetchar()

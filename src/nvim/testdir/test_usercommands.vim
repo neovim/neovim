@@ -184,6 +184,34 @@ func Test_Ambiguous()
   call assert_fails("\x4ei\041", 'E492: Not an editor command: Ni!')
 endfunc
 
+func Test_redefine_on_reload()
+  call writefile(['command ExistingCommand echo "yes"'], 'Xcommandexists')
+  call assert_equal(0, exists(':ExistingCommand'))
+  source Xcommandexists
+  call assert_equal(2, exists(':ExistingCommand'))
+  " Redefining a command when reloading a script is OK.
+  source Xcommandexists
+  call assert_equal(2, exists(':ExistingCommand'))
+
+  " But redefining in another script is not OK.
+  call writefile(['command ExistingCommand echo "yes"'], 'Xcommandexists2')
+  call assert_fails('source Xcommandexists2', 'E174:')
+  call delete('Xcommandexists2')
+
+  " And defining twice in one script is not OK.
+  delcommand ExistingCommand
+  call assert_equal(0, exists(':ExistingCommand'))
+  call writefile([
+	\ 'command ExistingCommand echo "yes"',
+	\ 'command ExistingCommand echo "no"',
+	\ ], 'Xcommandexists')
+  call assert_fails('source Xcommandexists', 'E174:')
+  call assert_equal(2, exists(':ExistingCommand'))
+
+  call delete('Xcommandexists')
+  delcommand ExistingCommand
+endfunc
+
 func Test_CmdUndefined()
   call assert_fails('Doit', 'E492:')
   au CmdUndefined Doit :command Doit let g:didit = 'yes'

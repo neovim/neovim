@@ -1125,7 +1125,7 @@ func Test_change_mark_in_autocmds()
   write
   au! BufWritePre
 
-  if executable('cat')
+  if has('unix')
     write XtestFilter
     write >> XtestFilter
 
