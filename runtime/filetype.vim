@@ -180,7 +180,7 @@ au BufNewFile,BufRead *.at			setf m4
 au BufNewFile,BufRead *.ave			setf ave
 
 " Awk
-au BufNewFile,BufRead *.awk			setf awk
+au BufNewFile,BufRead *.awk,*.gawk		setf awk
 
 " B
 au BufNewFile,BufRead *.mch,*.ref,*.imp		setf b
