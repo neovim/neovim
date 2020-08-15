@@ -217,6 +217,8 @@ int main(int argc, char **argv)
     argv[i] = buf;
   }
 #endif
+  unsetenv("VIM");
+  unsetenv("VIMRUNTIME");
 
   argv0 = argv[0];
 
