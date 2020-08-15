@@ -218,8 +218,8 @@ int main(int argc, char **argv)
     argv[i] = buf;
   }
 #endif
-  unsetenv("VIM");
-  unsetenv("VIMRUNTIME");
+  os_unsetenv("VIM");
+  os_unsetenv("VIMRUNTIME");
 
   argv0 = argv[0];
 
