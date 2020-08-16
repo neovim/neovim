@@ -493,7 +493,8 @@ static int put_view(
 
 /// Writes commands for restoring the current buffers, for :mksession.
 ///
-/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
+/// Legacy 'sessionoptions'/'viewoptions' flags SSOP_UNIX, SSOP_SLASH are
+/// always enabled.
 ///
 /// @param dirnow  Current directory name
 /// @param fd  File descriptor to write to
@@ -822,9 +823,9 @@ void ex_loadview(exarg_T *eap)
 
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
 ///
-/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
-///   - SSOP_UNIX: line-endings are always LF
-///   - SSOP_SLASH: filenames are always written with "/" slash
+/// Legacy 'sessionoptions'/'viewoptions' flags are always enabled:
+///   - SSOP_UNIX: line-endings are LF
+///   - SSOP_SLASH: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;

@@ -50,7 +50,7 @@ the differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
-- 'sessionoptions' enables "slash,unix", excludes "options"
+- 'sessionoptions' includes "unix,slash", excludes "options"
 - 'shortmess' includes "F", excludes "S"
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
@@ -60,6 +60,7 @@ the differences.
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
+- 'viewoptions' includes "unix,slash"
 - 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
