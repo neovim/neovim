@@ -36,6 +36,7 @@ func Test_define_var_with_lock()
     call assert_fails('let s = "vim"', 'E741:')
     call assert_fails('let F = funcref("s:noop")', 'E741:')
     call assert_fails('let l = [1, 2, 3]', 'E741:')
+    call assert_fails('call filter(l, "v:val % 2 == 0")', 'E741:')
     call assert_fails('let d = {"foo": 10}', 'E741:')
     if has('channel')
         call assert_fails('let j = test_null_job()', 'E741:')
@@ -247,11 +248,14 @@ func Test_lock_depth_is_1()
     const l = [1, 2, 3]
     const d = {'foo': 10}
 
-    " Modify list
-    call add(l, 4)
+    " Modify list - setting item is OK, adding/removing items not
     let l[0] = 42
+    call assert_fails('call add(l, 4)', 'E741:')
+    call assert_fails('unlet l[1]', 'E741:')
 
-    " Modify dict
-    let d['bar'] = 'hello'
+    " Modify dict - changing item is OK, adding/removing items not
+    let d['foo'] = 'hello'
     let d.foo = 44
+    call assert_fails("let d['bar'] = 'hello'", 'E741:')
+    call assert_fails("unlet d['foo']", 'E741:')
 endfunc

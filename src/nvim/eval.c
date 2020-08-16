@@ -9045,7 +9045,7 @@ static void set_var_const(const char *name, const size_t name_len,
   }
 
   if (is_const) {
-    v->di_tv.v_lock |= VAR_LOCKED;
+    tv_item_lock(&v->di_tv, 1, true);
   }
 }
 
