@@ -9,6 +9,8 @@ local nvim_prog = helpers.nvim_prog
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 
+if helpers.pending_win32(pending) then return end
+
 describe('fcnotify watcher', function()
   local screen
 
@@ -158,8 +160,6 @@ describe('fcnotify watcher', function()
     ]]}
   end)
 end)
-
-if helpers.pending_win32(pending) then return end
 
 describe('fcnotify onfocus', function()
   local screen
