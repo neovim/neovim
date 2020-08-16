@@ -3002,7 +3002,7 @@ error:
 //
 // @return Dictionary of the form
 // { "nvim_win_set_option": {...}, "nvim_win_get_option": {...}, ... }
-Dictionary nvim_api_get_doc(void)
+Dictionary nvim_doc_get_api(void)
   FUNC_API_SINCE(7)
 {
     msgpack_unpacked unpacked;
