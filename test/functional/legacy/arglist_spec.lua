@@ -42,9 +42,7 @@ describe('argument list commands', function()
   end)
 
   it('test that argadd() works', function()
-    -- Fails with “E474: Invalid argument”. Not sure whether it is how it is
-    -- supposed to behave.
-    -- command('%argdelete')
+    command('%argdelete')
     command('argadd a b c')
     eq(0, eval('argidx()'))
 
@@ -176,9 +174,14 @@ describe('argument list commands', function()
     command('last')
     command('argdelete %')
     eq({'b'}, eval('argv()'))
-    assert_fails('argdelete', 'E471:')
+    assert_fails('argdelete', 'E610:')
     assert_fails('1,100argdelete', 'E16:')
-    command('%argd')
+    reset_arglist()
+    command('args a b c d')
+    command('next')
+    command('argdel')
+    eq({'a', 'c', 'd'}, eval('argv()'))
+    command('%argdel')
   end)
 
   it('test for the :next, :prev, :first, :last, :rewind commands', function()

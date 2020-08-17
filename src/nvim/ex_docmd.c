@@ -4949,7 +4949,7 @@ check_more(
   int n = ARGCOUNT - curwin->w_arg_idx - 1;
 
   if (!forceit && only_one_window()
-      && ARGCOUNT > 1 && !arg_had_last && n >= 0 && quitmore == 0) {
+      && ARGCOUNT > 1 && !arg_had_last && n > 0 && quitmore == 0) {
     if (message) {
       if ((p_confirm || cmdmod.confirm) && curbuf->b_fname != NULL) {
         char_u buff[DIALOG_MSG_SIZE];
