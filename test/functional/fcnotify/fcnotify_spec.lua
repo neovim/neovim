@@ -36,7 +36,7 @@ describe('fcnotify watcher', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:Xtest-foo                                         }|
-      Xtest-foo not exists                              |
+      :edit Xtest-foo                                   |
       {3:-- TERMINAL --}                                    |
     ]]}
 
