@@ -639,7 +639,6 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, 'o')
   sleep 100m
   call term_sendkeys(buf, 'o')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_01', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -647,30 +646,25 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, "/foo\<CR>")
   sleep 100m
   call term_sendkeys(buf, ':.,.+2s//')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_02', {})
 
   " Deleting last slash should remove the match.
   call term_sendkeys(buf, "\<BS>")
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_03', {})
   call term_sendkeys(buf, "\<Esc>")
 
   " Reverse range is accepted
   call term_sendkeys(buf, ':5,2s/foo')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_04', {})
   call term_sendkeys(buf, "\<Esc>")
 
   " White space after the command is skipped
   call term_sendkeys(buf, ':2,3sub  /fo')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_05', {})
   call term_sendkeys(buf, "\<Esc>")
 
   " Command modifiers are skipped
   call term_sendkeys(buf, ':above below browse botr confirm keepmar keepalt keeppat keepjum filter xxx hide lockm leftabove noau noswap rightbel sandbox silent silent! $tab top unsil vert verbose 4,5s/fo.')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_06', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -678,13 +672,11 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, ":set cursorline\<CR>")
   call term_sendkeys(buf, 'G9G')
   call term_sendkeys(buf, ':9,11s/bar')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_07', {})
   call term_sendkeys(buf, "\<Esc>")
 
   " Cursorline highlighting at cursor when no match
   call term_sendkeys(buf, ':9,10s/bar')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_08', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -692,7 +684,6 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, '3G4G')
   call term_sendkeys(buf, ":nohlsearch\<CR>")
   call term_sendkeys(buf, ':6,7s/\v')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_09', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -704,6 +695,15 @@ func Test_incsearch_substitute_dump()
   sleep 100m
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_10', {})
+
+  call term_sendkeys(buf, ":split\<CR>")
+  call term_sendkeys(buf, ":let @/ = 'xyz'\<CR>")
+  call term_sendkeys(buf, ":%s/.")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_11', {})
+  call term_sendkeys(buf, "\<BS>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_12', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_13', {})
 
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
@@ -728,7 +728,6 @@ func Test_incsearch_sort_dump()
 
   " Need to send one key at a time to force a redraw.
   call term_sendkeys(buf, ':sort ni u /on')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_sort_01', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -755,27 +754,22 @@ func Test_incsearch_vimgrep_dump()
 
   " Need to send one key at a time to force a redraw.
   call term_sendkeys(buf, ':vimgrep on')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_01', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call term_sendkeys(buf, ':vimg /on/ *.txt')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_02', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call term_sendkeys(buf, ':vimgrepadd "\<on')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_03', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call term_sendkeys(buf, ':lv "tha')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_04', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call term_sendkeys(buf, ':lvimgrepa "the" **/*.txt')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_05', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -918,13 +912,11 @@ func Test_incsearch_search_dump()
 
   " Need to send one key at a time to force a redraw.
   call term_sendkeys(buf, '/fo')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_search_01', {})
   call term_sendkeys(buf, "\<Esc>")
   sleep 100m
 
   call term_sendkeys(buf, '/\v')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_search_02', {})
   call term_sendkeys(buf, "\<Esc>")
 

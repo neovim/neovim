@@ -529,7 +529,8 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   if (!use_last_pat) {
     next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
-    if (empty_pattern(ccline.cmdbuff)) {
+    if (empty_pattern(ccline.cmdbuff) && !no_hlsearch) {
+      redraw_all_later(SOME_VALID);
       set_no_hlsearch(true);
     }
     ccline.cmdbuff[skiplen + patlen] = next_char;
@@ -624,10 +625,9 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s,
     p_magic = s->magic_save;
 
     validate_cursor();          // needed for TAB
+    redraw_all_later(SOME_VALID);
     if (call_update_screen) {
       update_screen(SOME_VALID);
-    } else {
-      redraw_all_later(SOME_VALID);
     }
   }
 }
