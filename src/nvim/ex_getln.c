@@ -519,6 +519,17 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   } else {
     end_pos = curwin->w_cursor;         // shutup gcc 4
   }
+  //
+  // Disable 'hlsearch' highlighting if the pattern matches
+  // everything. Avoids a flash when typing "foo\|".
+  if (!use_last_pat) {
+    next_char = ccline.cmdbuff[skiplen + patlen];
+    ccline.cmdbuff[skiplen + patlen] = NUL;
+    if (empty_pattern(ccline.cmdbuff)) {
+      set_no_hlsearch(true);
+    }
+    ccline.cmdbuff[skiplen + patlen] = next_char;
+  }
 
   validate_cursor();
   // May redraw the status line to show the cursor position.
