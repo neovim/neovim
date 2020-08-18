@@ -447,7 +447,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     curwin->w_cursor.lnum = search_first_line;
     curwin->w_cursor.col = 0;
   }
-  int i;
+  int found;  // do_search() result
 
   // Use the previous pattern for ":s//".
   next_char = ccline.cmdbuff[skiplen + patlen];
@@ -456,7 +456,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 
   // If there is no pattern, don't do anything.
   if (patlen == 0 && !use_last_pat) {
-    i = 0;
+    found = 0;
     set_no_hlsearch(true);  // turn off previous highlight
     redraw_all_later(SOME_VALID);
   } else {
@@ -475,15 +475,15 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    i = do_search(NULL, firstc == ':' ? '/' : firstc,
-                  ccline.cmdbuff + skiplen, count,
-                  search_flags, &sia);
+    found = do_search(NULL, firstc == ':' ? '/' : firstc,
+                      ccline.cmdbuff + skiplen, count,
+                      search_flags, &sia);
     ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;
     if (curwin->w_cursor.lnum < search_first_line
         || curwin->w_cursor.lnum > search_last_line) {
       // match outside of address range
-      i = 0;
+      found = 0;
       curwin->w_cursor = s->search_start;
     }
 
@@ -491,7 +491,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     if (got_int) {
       (void)vpeekc();               // remove <C-C> from input stream
       got_int = false;              // don't abandon the command line
-      i = 0;
+      found = 0;
     } else if (char_avail()) {
       // cancelled searching because a char was typed
       s->incsearch_postponed = true;
@@ -499,7 +499,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ui_busy_stop();
   }
 
-  if (i != 0) {
+  if (found != 0) {
     highlight_match = true;   // highlight position
   } else {
     highlight_match = false;  // remove highlight
@@ -511,7 +511,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   changed_cline_bef_curs();
   update_topline();
 
-  if (i != 0) {
+  if (found != 0) {
     pos_T save_pos = curwin->w_cursor;
 
     s->match_start = curwin->w_cursor;
@@ -544,8 +544,11 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   update_screen(SOME_VALID);
   restore_last_search_pattern();
 
-  // Leave it at the end to make CTRL-R CTRL-W work.
-  if (i != 0) {
+  // Leave it at the end to make CTRL-R CTRL-W work.  But not when beyond the
+  // end of the pattern, e.g. for ":s/pat/".
+  if (ccline.cmdbuff[skiplen + patlen] != NUL) {
+    curwin->w_cursor = s->search_start;
+  } else if (found != 0) {
     curwin->w_cursor = end_pos;
   }
 

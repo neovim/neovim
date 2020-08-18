@@ -801,6 +801,44 @@ func Test_keep_last_search_pattern()
   set noincsearch
 endfunc
 
+func Test_word_under_cursor_after_match()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  new
+  call setline(1, 'foo bar')
+  set incsearch
+  call test_override("char_avail", 1)
+  try
+    call feedkeys("/foo\<C-R>\<C-W>\<CR>", 'ntx')
+  catch /E486:/
+  endtry
+  call assert_equal('foobar', @/)
+
+  bwipe!
+  call test_override("ALL", 0)
+  set noincsearch
+endfunc
+
+func Test_subst_word_under_cursor()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  new
+  call setline(1, ['int SomeLongName;', 'for (xxx = 1; xxx < len; ++xxx)'])
+  set incsearch
+  call test_override("char_avail", 1)
+  call feedkeys("/LongName\<CR>", 'ntx')
+  call feedkeys(":%s/xxx/\<C-R>\<C-W>/g\<CR>", 'ntx')
+  call assert_equal('for (SomeLongName = 1; SomeLongName < len; ++SomeLongName)', getline(2))
+
+  bwipe!
+  call test_override("ALL", 0)
+  set noincsearch
+endfunc
+
 func Test_incsearch_with_change()
   if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
     throw 'Skipped: cannot make screendumps and/or timers feature and/or incsearch option missing'
