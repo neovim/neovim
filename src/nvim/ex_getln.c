@@ -277,127 +277,123 @@ static void init_incsearch_state(incsearch_state_T *s)
 static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
                                       int *skiplen, int *patlen)
 {
+  char_u *cmd;
+  cmdmod_T save_cmdmod = cmdmod;
+  char_u *p;
+  bool delim_optional = false;
+  int delim;
+  char_u *end;
+  char_u *dummy;
+  exarg_T ea;
+  pos_T save_cursor;
+
   *skiplen = 0;
   *patlen = ccline.cmdlen;
 
-  if (p_is && !cmd_silent) {
-    // by default search all lines
-    search_first_line = 0;
-    search_last_line = MAXLNUM;
-
-    if (firstc == '/' || firstc == '?') {
-      return true;
-    }
-    if (firstc == ':') {
-      char_u *cmd;
-      cmdmod_T save_cmdmod = cmdmod;
-      char_u *p;
-      int delim;
-      char_u *end;
-      char_u *dummy;
-      exarg_T ea;
-
-      memset(&ea, 0, sizeof(ea));
-      ea.line1 = 1;
-      ea.line2 = 1;
-      ea.cmd = ccline.cmdbuff;
-      ea.addr_type = ADDR_LINES;
-
-      parse_command_modifiers(&ea, &dummy, TRUE);
-      cmdmod = save_cmdmod;
-
-      cmd = skip_range(ea.cmd, NULL);
-      if (*cmd == 's' || *cmd == 'g' || *cmd == 'v' || *cmd == 'l') {
-        // Skip over "substitute" to find the pattern separator.
-        for (p = cmd; ASCII_ISALPHA(*p); p++) {}
-        if (*skipwhite(p) != NUL) {
-          if (STRNCMP(cmd, "substitute", p - cmd) == 0
-              || STRNCMP(cmd, "smagic", p - cmd) == 0
-              || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
-              || STRNCMP(cmd, "sort", MAX(p - cmd,3)) == 0
-              || STRNCMP(cmd, "global", p - cmd) == 0
-              || STRNCMP(cmd, "vglobal", p - cmd) == 0) {
-            if (*cmd == 's' && cmd[1] == 'm') {
-              p_magic = true;
-            }
-            else if (*cmd == 's' && cmd[1] == 'n') {
-              p_magic = false;
-            }
-
-            // Check for "global!/".
-            if (*cmd == 'g' && *p == '!') {
-              p++;
-              if (*skipwhite(p) == NUL) {
-                return false;
-              }
-            }
-
-            // For ":sort" skip over flags.
-            if (cmd[0] == 's' && cmd[1] == 'o') {
-              while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
-                ++p;
-              }
-              if (*p == NUL) {
-                return false;
-              }
-            }
-
-            p = skipwhite(p);
-            delim = *p++;
-            end = skip_regexp(p, delim, p_magic, NULL);
-          } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
-                     || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
-                     || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
-                     || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0) {
-            // Check for "!/".
-            if (*p == '!') {
-              p++;
-              if (*skipwhite(p) == NUL) {
-                return false;
-              }
-            }
-            p = skipwhite(p);
-            delim = (vim_isIDc(*p)) ? ' ' : *p++;
-            end = skip_regexp(p, delim, p_magic, NULL);
-          }
-          else {
-            end = p;
-            delim = -1;
-          }
-          if (end > p || *end == delim) {
-            pos_T save_cursor = curwin->w_cursor;
-
-            // found a non-empty pattern or //
-            *skiplen = (int)(p - ccline.cmdbuff);
-            *patlen = (int)(end - p);
-
-            // parse the address range
-            curwin->w_cursor = s->search_start;
-            parse_cmd_address(&ea, &dummy);
-            if (ea.addr_count > 0) {
-              // Allow for reverse match.
-              if (ea.line2 < ea.line1) {
-                search_first_line = ea.line2;
-                search_last_line = ea.line1;
-              } else {
-                search_first_line = ea.line1;
-                search_last_line = ea.line2;
-              }
-            } else if (cmd[0] == 's' && cmd[1] != 'o') {
-              // :s defaults to the current line
-              search_first_line = curwin->w_cursor.lnum;
-              search_last_line = curwin->w_cursor.lnum;
-            }
-
-            curwin->w_cursor = save_cursor;
-            return true;
-          }
-        }
-      }
-    }
+  if (!p_is || cmd_silent) {
+    return false;
   }
 
-  return false;
+  // by default search all lines
+  search_first_line = 0;
+  search_last_line = MAXLNUM;
+
+  if (firstc == '/' || firstc == '?') {
+    return true;
+  }
+  if (firstc != ':') {
+    return false;
+  }
+
+  memset(&ea, 0, sizeof(ea));
+  ea.line1 = 1;
+  ea.line2 = 1;
+  ea.cmd = ccline.cmdbuff;
+  ea.addr_type = ADDR_LINES;
+
+  parse_command_modifiers(&ea, &dummy, true);
+  cmdmod = save_cmdmod;
+
+  cmd = skip_range(ea.cmd, NULL);
+  if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
+    return false;
+  }
+
+  // Skip over "substitute" to find the pattern separator.
+  for (p = cmd; ASCII_ISALPHA(*p); p++) {}
+  if (*skipwhite(p) == NUL) {
+    return false;
+  }
+
+  if (STRNCMP(cmd, "substitute", p - cmd) == 0
+      || STRNCMP(cmd, "smagic", p - cmd) == 0
+      || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
+      || STRNCMP(cmd, "vglobal", p - cmd) == 0) {
+    if (*cmd == 's' && cmd[1] == 'm') {
+      p_magic = true;
+    } else if (*cmd == 's' && cmd[1] == 'n') {
+      p_magic = false;
+    }
+  } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
+    // skip over flags.
+    while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
+      p++;
+    }
+    if (*p == NUL) {
+      return false;
+    }
+  } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
+             || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
+             || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
+             || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0
+             || STRNCMP(cmd, "global", p - cmd) == 0) {
+    // skip over "!/".
+    if (*p == '!') {
+      p++;
+      if (*skipwhite(p) == NUL) {
+        return false;
+      }
+    }
+    if (*cmd != 'g') {
+      delim_optional = true;
+    }
+  } else {
+    return false;
+  }
+
+  p = skipwhite(p);
+  delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
+  end = skip_regexp(p, delim, p_magic, NULL);
+
+  if (end == p && *end != delim) {
+    return false;
+  }
+  // found a non-empty pattern or //
+
+  *skiplen = (int)(p - ccline.cmdbuff);
+  *patlen = (int)(end - p);
+
+  // parse the address range
+  save_cursor = curwin->w_cursor;
+  curwin->w_cursor = s->search_start;
+  parse_cmd_address(&ea, &dummy);
+  if (ea.addr_count > 0) {
+    // Allow for reverse match.
+    if (ea.line2 < ea.line1) {
+      search_first_line = ea.line2;
+      search_last_line = ea.line1;
+    } else {
+      search_first_line = ea.line1;
+      search_last_line = ea.line2;
+    }
+  } else if (cmd[0] == 's' && cmd[1] != 'o') {
+    // :s defaults to the current line
+    search_first_line = curwin->w_cursor.lnum;
+    search_last_line = curwin->w_cursor.lnum;
+  }
+
+  curwin->w_cursor = save_cursor;
+  return true;
 }
 
 // May do 'incsearch' highlighting if desired.
