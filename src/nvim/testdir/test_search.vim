@@ -719,6 +719,53 @@ func Test_incsearch_ssort_dump()
   call delete('Xis_sort_script')
 endfunc
 
+" Similar to Test_incsearch_substitute_dump() for :vimgrep famiry
+func Test_incsearch_vimgrep_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
+	\ ], 'Xis_vimgrep_script')
+  let buf = RunVimInTerminal('-S Xis_vimgrep_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':vimgrep on')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':vimg /on/ *.txt')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_02', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':vimgrepadd "\<on')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_03', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':lv "tha')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_04', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':lvimgrepa "the" **/*.txt')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_05', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_vimgrep_script')
+endfunc
+
 func Test_incsearch_with_change()
   if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
     throw 'Skipped: cannot make screendumps and/or timers feature and/or incsearch option missing'

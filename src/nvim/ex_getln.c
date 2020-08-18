@@ -307,48 +307,67 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
       cmdmod = save_cmdmod;
 
       cmd = skip_range(ea.cmd, NULL);
-      if (*cmd == 's' || *cmd == 'g' || *cmd == 'v') {
+      if (*cmd == 's' || *cmd == 'g' || *cmd == 'v' || *cmd == 'l') {
         // Skip over "substitute" to find the pattern separator.
         for (p = cmd; ASCII_ISALPHA(*p); p++) {}
-        if (*skipwhite(p) != NUL
-            && (STRNCMP(cmd, "substitute", p - cmd) == 0
-                || STRNCMP(cmd, "smagic", p - cmd) == 0
-                || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
-                || STRNCMP(cmd, "sort", p - cmd) == 0
-                || STRNCMP(cmd, "global", p - cmd) == 0
-                || STRNCMP(cmd, "vglobal", p - cmd) == 0)) {
-          if (*cmd == 's' && cmd[1] == 'm') {
-            p_magic = true;
-          }
-          else if (*cmd == 's' && cmd[1] == 'n') {
-            p_magic = false;
-          }
-
-          // Check for "global!/".
-          if (*cmd == 'g' && *p == '!') {
-            p++;
-            if (*skipwhite(p) == NUL) {
-              return false;
+        if (*skipwhite(p) != NUL) {
+          if (STRNCMP(cmd, "substitute", p - cmd) == 0
+              || STRNCMP(cmd, "smagic", p - cmd) == 0
+              || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
+              || STRNCMP(cmd, "sort", MAX(p - cmd,3)) == 0
+              || STRNCMP(cmd, "global", p - cmd) == 0
+              || STRNCMP(cmd, "vglobal", p - cmd) == 0) {
+            if (*cmd == 's' && cmd[1] == 'm') {
+              p_magic = true;
             }
-          }
-
-          // For ":sort" skip over flags.
-          if (cmd[0] == 's' && cmd[1] == 'o') {
-            while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
-              ++p;
+            else if (*cmd == 's' && cmd[1] == 'n') {
+              p_magic = false;
             }
-            if (*p == NUL) {
-              return false;
-            }
-          }
 
-          p = skipwhite(p);
-          delim = *p++;
-          end = skip_regexp(p, delim, p_magic, NULL);
+            // Check for "global!/".
+            if (*cmd == 'g' && *p == '!') {
+              p++;
+              if (*skipwhite(p) == NUL) {
+                return false;
+              }
+            }
+
+            // For ":sort" skip over flags.
+            if (cmd[0] == 's' && cmd[1] == 'o') {
+              while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
+                ++p;
+              }
+              if (*p == NUL) {
+                return false;
+              }
+            }
+
+            p = skipwhite(p);
+            delim = *p++;
+            end = skip_regexp(p, delim, p_magic, NULL);
+          } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
+                     || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
+                     || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
+                     || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0) {
+            // Check for "!/".
+            if (*p == '!') {
+              p++;
+              if (*skipwhite(p) == NUL) {
+                return false;
+              }
+            }
+            p = skipwhite(p);
+            delim = (vim_isIDc(*p)) ? ' ' : *p++;
+            end = skip_regexp(p, delim, p_magic, NULL);
+          }
+          else {
+            end = p;
+            delim = -1;
+          }
           if (end > p || *end == delim) {
             pos_T save_cursor = curwin->w_cursor;
 
-            // found a non-empty pattern
+            // found a non-empty pattern or //
             *skiplen = (int)(p - ccline.cmdbuff);
             *patlen = (int)(end - p);
 

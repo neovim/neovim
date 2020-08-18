@@ -587,4 +587,56 @@ describe('search cmdline', function()
     ]])
     feed('<esc>')
   end)
+
+  it('incsearch works with :vimgrep family', function()
+    -- oldtest: Test_incsearch_vimgrep_dump().
+    screen:try_resize(30, 4)
+    command('set incsearch hlsearch scrolloff=0')
+    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+
+    feed(':vimgrep on')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimgrep on^                   |
+    ]])
+    feed('<esc>')
+
+    feed(':vimg /on/ *.txt')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimg /on/ *.txt^              |
+    ]])
+    feed('<esc>')
+
+    feed(':vimgrepadd "\\<LT>on')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimgrepadd "\<on^             |
+    ]])
+    feed('<esc>')
+
+    feed(':lv "tha')
+    screen:expect([[
+      another one 2                 |
+      {inc:tha}t one 3                    |
+      the one 1                     |
+      :lv "tha^                      |
+    ]])
+    feed('<esc>')
+
+    feed(':lvimgrepa "the" **/*.txt')
+    screen:expect([[
+      ano{inc:the}r one 2                 |
+      that one 3                    |
+      {hl:the} one 1                     |
+      :lvimgrepa "the" **/*.txt^     |
+    ]])
+    feed('<esc>')
+  end)
 end)
