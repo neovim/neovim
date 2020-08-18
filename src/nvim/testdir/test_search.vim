@@ -392,6 +392,14 @@ func Test_search_cmdline3s()
   undo
   call feedkeys(":%substitute/the\<c-l>/xxx\<cr>", 'tx')
   call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%smagic/the.e/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxx', getline('.'))
+  undo
+  call assert_fails(":%snomagic/the.e/xxx\<cr>", 'E486')
+  "
+  call feedkeys(":%snomagic/the\\.e/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxx', getline('.'))
 
   call Incsearch_cleanup()
 endfunc
