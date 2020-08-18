@@ -696,6 +696,15 @@ func Test_incsearch_substitute_dump()
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_09', {})
   call term_sendkeys(buf, "\<Esc>")
 
+  call term_sendkeys(buf, ":set nocursorline\<CR>")
+
+  " All matches are highlighted for 'hlsearch' after the incsearch canceled
+  call term_sendkeys(buf, "1G*")
+  call term_sendkeys(buf, ":2,5s/foo")
+  sleep 100m
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_10', {})
+
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
 endfunc

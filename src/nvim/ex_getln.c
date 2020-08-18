@@ -604,13 +604,19 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s,
     }
     restore_viewstate(&s->old_viewstate);
     highlight_match = false;
+
+    // by default search all lines
+    search_first_line = 0;
+    search_last_line = MAXLNUM;
+
+    p_magic = s->magic_save;
+
     validate_cursor();          // needed for TAB
     if (call_update_screen) {
       update_screen(SOME_VALID);
     } else {
       redraw_all_later(SOME_VALID);
     }
-    p_magic = s->magic_save;
   }
 }
 
