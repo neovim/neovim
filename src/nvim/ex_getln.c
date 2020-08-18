@@ -314,6 +314,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
             && (STRNCMP(cmd, "substitute", p - cmd) == 0
                 || STRNCMP(cmd, "smagic", p - cmd) == 0
                 || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
+                || STRNCMP(cmd, "sort", p - cmd) == 0
                 || STRNCMP(cmd, "global", p - cmd) == 0
                 || STRNCMP(cmd, "vglobal", p - cmd) == 0)) {
           if (*cmd == 's' && cmd[1] == 'm') {
@@ -330,6 +331,17 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
               return false;
             }
           }
+
+          // For ":sort" skip over flags.
+          if (cmd[0] == 's' && cmd[1] == 'o') {
+            while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
+              ++p;
+            }
+            if (*p == NUL) {
+              return false;
+            }
+          }
+
           p = skipwhite(p);
           delim = *p++;
           end = skip_regexp(p, delim, p_magic, NULL);
@@ -352,7 +364,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
                 search_first_line = ea.line1;
                 search_last_line = ea.line2;
               }
-            } else if (*cmd == 's') {
+            } else if (cmd[0] == 's' && cmd[1] != 'o') {
               // :s defaults to the current line
               search_first_line = curwin->w_cursor.lnum;
               search_last_line = curwin->w_cursor.lnum;

@@ -21,6 +21,7 @@ describe('search cmdline', function()
       err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       more = { bold = true, foreground = Screen.colors.SeaGreen4 },
       tilde = { bold = true, foreground = Screen.colors.Blue1 },
+      hl = { background = Screen.colors.Yellow },
     })
   end)
 
@@ -569,5 +570,21 @@ describe('search cmdline', function()
         3 the third                           |
       ?the                                    |
     ]])
+  end)
+
+  it('incsearch works with :sort', function()
+    -- oldtest: Test_incsearch_sort_dump().
+    screen:try_resize(20, 4)
+    command('set incsearch hlsearch scrolloff=0')
+    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+
+    feed(':sort ni u /on')
+    screen:expect([[
+      another {inc:on}e 2       |
+      that {hl:on}e 3          |
+      the {hl:on}e 1           |
+      :sort ni u /on^      |
+    ]])
+    feed('<esc>')
   end)
 end)

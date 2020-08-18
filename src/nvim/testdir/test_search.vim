@@ -692,6 +692,33 @@ func Test_incsearch_substitute_dump()
   call delete('Xis_subst_script')
 endfunc
 
+" Similar to Test_incsearch_substitute_dump() for :sort
+func Test_incsearch_ssort_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
+	\ ], 'Xis_sort_script')
+  let buf = RunVimInTerminal('-S Xis_sort_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':sort ni u /on')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_sort_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_sort_script')
+endfunc
+
 func Test_incsearch_with_change()
   if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
     throw 'Skipped: cannot make screendumps and/or timers feature and/or incsearch option missing'
