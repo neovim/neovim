@@ -1269,17 +1269,17 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     goto doend;
   }
 
-  /*
-   * Repeat until no more command modifiers are found.
-   * The "ea" structure holds the arguments that can be used.
-   */
+  // 1. Skip comment lines and leading white space and colons.
+  // 2. Handle command modifiers.
+
+  // The "ea" structure holds the arguments that can be used.
   ea.cmd = *cmdlinep;
   ea.cmdlinep = cmdlinep;
   ea.getline = fgetline;
   ea.cookie = cookie;
   ea.cstack = cstack;
 
-  if (parse_command_modifiers(&ea, &errormsg) == FAIL) {
+  if (parse_command_modifiers(&ea, &errormsg, false) == FAIL) {
     goto doend;
   }
 
@@ -1994,16 +1994,7 @@ doend:
   if (ea.verbose_save >= 0) {
     p_verbose = ea.verbose_save;
   }
-  if (cmdmod.save_ei != NULL) {
-    /* Restore 'eventignore' to the value before ":noautocmd". */
-    set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
-        OPT_FREE, SID_NONE);
-    free_string_option(cmdmod.save_ei);
-  }
-
-  if (cmdmod.filter_regmatch.regprog != NULL) {
-    vim_regfree(cmdmod.filter_regmatch.regprog);
-  }
+  free_cmdmod();
 
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
@@ -2045,11 +2036,14 @@ doend:
 // - store flags in "cmdmod".
 // - Set ex_pressedreturn for an empty command line.
 // - set msg_silent for ":silent"
+// - set 'eventignore' to "all" for ":noautocmd"
 // - set p_verbose for ":verbose"
 // - Increment "sandbox" for ":sandbox"
+// When "skip_only" is true the global variables are not changed, except for
+// "cmdmod".
 // Return FAIL when the command is not to be executed.
 // May set "errormsg" to an error message.
-int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
+int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
 {
   char_u *p;
 
@@ -2057,10 +2051,8 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
   eap->verbose_save = -1;
   eap->save_msg_silent = -1;
 
+  // Repeat until no more command modifiers are found.
   for (;; ) {
-    /*
-     * 1. Skip comment lines and leading white space and colons.
-     */
     while (*eap->cmd == ' '
            || *eap->cmd == '\t'
            || *eap->cmd == ':') {
@@ -2073,7 +2065,9 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
             || getline_equal(eap->getline, eap->cookie, getexline))
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = (char_u *)"+";
-      ex_pressedreturn = true;
+      if (!skip_only) {
+        ex_pressedreturn = true;
+      }
     }
 
     // ignore comment and empty lines
@@ -2081,13 +2075,12 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
       return FAIL;
     }
     if (*eap->cmd == NUL) {
-      ex_pressedreturn = true;
+      if (!skip_only) {
+        ex_pressedreturn = true;
+      }
       return FAIL;
     }
 
-    /*
-     * 2. Handle command modifiers.
-     */
     p = skip_range(eap->cmd, NULL);
     switch (*p) {
     // When adding an entry, also modify cmd_exists().
@@ -2146,13 +2139,20 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
           break;
         }
       }
-      p = skip_vimgrep_pat(p, &reg_pat, NULL);
+      if (skip_only) {
+        p = skip_vimgrep_pat(p, NULL, NULL);
+      } else {
+        // NOTE: This puts a NUL after the pattern.
+        p = skip_vimgrep_pat(p, &reg_pat, NULL);
+      }
       if (p == NULL || *p == NUL) {
         break;
       }
-      cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
-      if (cmdmod.filter_regmatch.regprog == NULL) {
-        break;
+      if (!skip_only) {
+        cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+        if (cmdmod.filter_regmatch.regprog == NULL) {
+          break;
+        }
       }
       eap->cmd = p;
       continue;
@@ -2179,7 +2179,7 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
 
     case 'n':
       if (checkforcmd(&eap->cmd, "noautocmd", 3)) {
-        if (cmdmod.save_ei == NULL) {
+        if (cmdmod.save_ei == NULL && !skip_only) {
           // Set 'eventignore' to "all". Restore the
           // existing option value later.
           cmdmod.save_ei = vim_strsave(p_ei);
@@ -2200,24 +2200,30 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
       continue;
 
     case 's':   if (checkforcmd(&eap->cmd, "sandbox", 3)) {
-        if (!eap->did_sandbox) {
-          sandbox++;
+        if (!skip_only) {
+          if (!eap->did_sandbox) {
+            sandbox++;
+          }
+          eap->did_sandbox = true;
         }
-        eap->did_sandbox = true;
         continue;
     }
       if (!checkforcmd(&eap->cmd, "silent", 3)) {
         break;
       }
-      if (eap->save_msg_silent == -1) {
-        eap->save_msg_silent = msg_silent;
+      if (!skip_only) {
+        if (eap->save_msg_silent == -1) {
+          eap->save_msg_silent = msg_silent;
+        }
+        msg_silent++;
       }
-      msg_silent++;
       if (*eap->cmd == '!' && !ascii_iswhite(eap->cmd[-1])) {
         // ":silent!", but not "silent !cmd"
         eap->cmd = skipwhite(eap->cmd + 1);
-        emsg_silent++;
-        eap->did_esilent++;
+        if (!skip_only) {
+          emsg_silent++;
+          eap->did_esilent++;
+        }
       }
       continue;
 
@@ -2245,10 +2251,12 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
 
     case 'u':   if (!checkforcmd(&eap->cmd, "unsilent", 3))
         break;
-      if (eap->save_msg_silent == -1) {
-        eap->save_msg_silent = msg_silent;
+      if (!skip_only) {
+        if (eap->save_msg_silent == -1) {
+          eap->save_msg_silent = msg_silent;
+        }
+        msg_silent = 0;
       }
-      msg_silent = 0;
       continue;
 
     case 'v':   if (checkforcmd(&eap->cmd, "vertical", 4)) {
@@ -2257,13 +2265,15 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
     }
       if (!checkforcmd(&p, "verbose", 4))
         break;
-      if (eap->verbose_save < 0) {
-        eap->verbose_save = p_verbose;
-      }
-      if (ascii_isdigit(*eap->cmd)) {
-        p_verbose = atoi((char *)eap->cmd);
-      } else {
-        p_verbose = 1;
+      if (!skip_only) {
+        if (eap->verbose_save < 0) {
+          eap->verbose_save = p_verbose;
+        }
+        if (ascii_isdigit(*eap->cmd)) {
+          p_verbose = atoi((char *)eap->cmd);
+        } else {
+          p_verbose = 1;
+        }
       }
       eap->cmd = p;
       continue;
@@ -2273,6 +2283,22 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg)
 
   return OK;
 }
+
+// Free contents of "cmdmod".
+static void free_cmdmod(void)
+{
+  if (cmdmod.save_ei != NULL) {
+    /* Restore 'eventignore' to the value before ":noautocmd". */
+    set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
+        OPT_FREE, SID_NONE);
+    free_string_option(cmdmod.save_ei);
+  }
+
+  if (cmdmod.filter_regmatch.regprog != NULL) {
+    vim_regfree(cmdmod.filter_regmatch.regprog);
+  }
+}
+
 
 // Parse the address range, if any, in "eap".
 // Return FAIL and set "errormsg" or return OK.

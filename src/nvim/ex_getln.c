@@ -287,11 +287,24 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
       return true;
     }
     if (firstc == ':') {
-      char_u *cmd = skip_range(ccline.cmdbuff, NULL);
+      char_u *cmd;
+      cmdmod_T save_cmdmod = cmdmod;
       char_u *p;
       int delim;
       char_u *end;
+      char_u *dummy;
+      exarg_T ea;
 
+      memset(&ea, 0, sizeof(ea));
+      ea.line1 = 1;
+      ea.line2 = 1;
+      ea.cmd = ccline.cmdbuff;
+      ea.addr_type = ADDR_LINES;
+
+      parse_command_modifiers(&ea, &dummy, TRUE);
+      cmdmod = save_cmdmod;
+
+      cmd = skip_range(ea.cmd, NULL);
       if (*cmd == 's' || *cmd == 'g' || *cmd == 'v') {
         // Skip over "substitute" to find the pattern separator.
         for (p = cmd; ASCII_ISALPHA(*p); p++) {}
@@ -310,8 +323,6 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
           delim = *p++;
           end = skip_regexp(p, delim, p_magic, NULL);
           if (end > p || *end == delim) {
-            char_u  *dummy;
-            exarg_T ea;
             pos_T save_cursor = curwin->w_cursor;
 
             // found a non-empty pattern
@@ -319,11 +330,6 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
             *patlen = (int)(end - p);
 
             // parse the address range
-            memset(&ea, 0, sizeof(ea));
-            ea.line1 = 1;
-            ea.line2 = 1;
-            ea.cmd = ccline.cmdbuff;
-            ea.addr_type = ADDR_LINES;
             curwin->w_cursor = s->search_start;
             parse_cmd_address(&ea, &dummy);
             if (ea.addr_count > 0) {

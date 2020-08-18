@@ -659,6 +659,12 @@ func Test_incsearch_substitute_dump()
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_05', {})
   call term_sendkeys(buf, "\<Esc>")
 
+  " Command modifiers are skipped
+  call term_sendkeys(buf, ':above below browse botr confirm keepmar keepalt keeppat keepjum filter xxx hide lockm leftabove noau noswap rightbel sandbox silent silent! $tab top unsil vert verbose 4,5s/fo.')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_06', {})
+  call term_sendkeys(buf, "\<Esc>")
+
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
 endfunc
