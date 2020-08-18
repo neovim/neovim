@@ -427,6 +427,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
         || curwin->w_cursor.lnum > search_last_line) {
       // match outside of address range
       i = 0;
+      curwin->w_cursor = s->search_start;
     }
 
     // if interrupted while searching, behave like it failed

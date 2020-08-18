@@ -614,6 +614,7 @@ func Test_incsearch_substitute_dump()
 	\ 'for n in range(1, 10)',
 	\ '  call setline(n, "foo " . n)',
 	\ 'endfor',
+	\ 'call setline(11, "bar 11")',
 	\ '3',
 	\ ], 'Xis_subst_script')
   let buf = RunVimInTerminal('-S Xis_subst_script', {'rows': 9, 'cols': 70})
@@ -663,6 +664,20 @@ func Test_incsearch_substitute_dump()
   call term_sendkeys(buf, ':above below browse botr confirm keepmar keepalt keeppat keepjum filter xxx hide lockm leftabove noau noswap rightbel sandbox silent silent! $tab top unsil vert verbose 4,5s/fo.')
   sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_06', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Cursorline highlighting at match
+  call term_sendkeys(buf, ":set cursorline\<CR>")
+  call term_sendkeys(buf, 'G9G')
+  call term_sendkeys(buf, ':9,11s/bar')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_07', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Cursorline highlighting at cursor when no match
+  call term_sendkeys(buf, ':9,10s/bar')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_08', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)
