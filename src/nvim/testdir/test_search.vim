@@ -688,6 +688,14 @@ func Test_incsearch_substitute_dump()
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_08', {})
   call term_sendkeys(buf, "\<Esc>")
 
+  " Only \v handled as empty pattern, does not move cursor
+  call term_sendkeys(buf, '3G4G')
+  call term_sendkeys(buf, ":nohlsearch\<CR>")
+  call term_sendkeys(buf, ':6,7s/\v')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_09', {})
+  call term_sendkeys(buf, "\<Esc>")
+
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
 endfunc

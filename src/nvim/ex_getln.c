@@ -286,6 +286,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   char_u *dummy;
   exarg_T ea;
   pos_T save_cursor;
+  bool use_last_pat;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -365,11 +366,25 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
   end = skip_regexp(p, delim, p_magic, NULL);
 
-  if (end == p && *end != delim) {
+  use_last_pat = end == p && *end == delim;
+  if (end == p && !use_last_pat) {
     return false;
   }
-  // found a non-empty pattern or //
 
+  // Don't do 'hlsearch' highlighting if the pattern matches everything.
+  if (!use_last_pat) {
+    char_u c = *end;
+    int  empty;
+
+    *end = NUL;
+    empty = empty_pattern(p);
+    *end = c;
+    if (empty) {
+      return false;
+    }
+  }
+
+  // found a non-empty pattern or //
   *skiplen = (int)(p - ccline.cmdbuff);
   *patlen = (int)(end - p);
 
@@ -503,17 +518,6 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     curwin->w_cursor = save_pos;
   } else {
     end_pos = curwin->w_cursor;         // shutup gcc 4
-  }
-
-  // Disable 'hlsearch' highlighting if the pattern matches
-  // everything. Avoids a flash when typing "foo\|".
-  if (!use_last_pat) {
-    next_char = ccline.cmdbuff[skiplen + patlen];
-    ccline.cmdbuff[skiplen + patlen] = NUL;
-    if (empty_pattern(ccline.cmdbuff)) {
-      set_no_hlsearch(true);
-    }
-    ccline.cmdbuff[skiplen + patlen] = next_char;
   }
 
   validate_cursor();
