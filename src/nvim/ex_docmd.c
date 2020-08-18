@@ -2301,6 +2301,7 @@ static void free_cmdmod(void)
 
 
 // Parse the address range, if any, in "eap".
+// May set the last search pattern.
 // Return FAIL and set "errormsg" or return OK.
 int parse_cmd_address(exarg_T *eap, char_u **errormsg)
   FUNC_ATTR_NONNULL_ALL
@@ -3683,14 +3684,13 @@ char_u *skip_range(
   return (char_u *)cmd;
 }
 
-/*
- * get a single EX address
- *
- * Set ptr to the next character after the part that was interpreted.
- * Set ptr to NULL when an error is encountered.
- *
- * Return MAXLNUM when no Ex address was found.
- */
+// Get a single EX address
+//
+// Set ptr to the next character after the part that was interpreted.
+// Set ptr to NULL when an error is encountered.
+// This may set the last used search pattern.
+//
+// Return MAXLNUM when no Ex address was found.
 static linenr_T get_address(exarg_T *eap,
                             char_u **ptr,
                             int addr_type,  // flag: one of ADDR_LINES, ...

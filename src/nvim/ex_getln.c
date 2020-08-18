@@ -422,13 +422,18 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   char_u next_char;
   char_u use_last_pat;
 
+  // Parsing range may already set the last search pattern.
+  save_last_search_pattern();
+
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+    restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
   }
 
   // if there is a character waiting, search and redraw later
   if (char_avail()) {
+    restore_last_search_pattern();
     s->incsearch_postponed = true;
     return;
   }
@@ -442,7 +447,6 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     curwin->w_cursor.lnum = search_first_line;
     curwin->w_cursor.col = 0;
   }
-  save_last_search_pattern();
   int i;
 
   // Use the previous pattern for ":s//".
@@ -556,8 +560,13 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 {
   int skiplen, patlen;
+
+  // Parsing range may already set the last search pattern.
+  save_last_search_pattern();
+
   // Add a character from under the cursor for 'incsearch'
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+    restore_last_search_pattern();
     return FAIL;
   }
 
@@ -1431,10 +1440,16 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
                                               bool next_match)
 {
   int skiplen, patlen;
+
+  // Parsing range may already set the last search pattern.
+  save_last_search_pattern();
+
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+    restore_last_search_pattern();
     return OK;
   }
   if (patlen == 0 && ccline.cmdbuff[skiplen] == NUL) {
+    restore_last_search_pattern();
     return FAIL;
   }
 
@@ -1454,8 +1469,6 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   } else {
     pat = ccline.cmdbuff + skiplen;
   }
-
-  save_last_search_pattern();
 
   if (next_match) {
     t = s->match_end;
