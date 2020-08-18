@@ -1371,7 +1371,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
 
   ea.cmd = cmd;
-  if (parse_cmd_address(&ea, &errormsg) == FAIL) {
+  if (parse_cmd_address(&ea, &errormsg, false) == FAIL) {
     goto doend;
   }
 
@@ -2229,7 +2229,7 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
       long tabnr = get_address(
-          eap, &eap->cmd, ADDR_TABS, eap->skip, false, 1);
+          eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only, false, 1);
 
       if (tabnr == MAXLNUM) {
         cmdmod.tab = tabpage_index(curtab) + 1;
@@ -2301,9 +2301,9 @@ static void free_cmdmod(void)
 
 
 // Parse the address range, if any, in "eap".
-// May set the last search pattern.
+// May set the last search pattern, unless "silent" is true.
 // Return FAIL and set "errormsg" or return OK.
-int parse_cmd_address(exarg_T *eap, char_u **errormsg)
+int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
   FUNC_ATTR_NONNULL_ALL
 {
   int address_count = 1;
@@ -2341,7 +2341,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg)
         break;
     }
     eap->cmd = skipwhite(eap->cmd);
-    lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip,
+    lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
                        eap->addr_count == 0, address_count++);
     if (eap->cmd == NULL) {  // error detected
       return FAIL;
@@ -3695,6 +3695,7 @@ static linenr_T get_address(exarg_T *eap,
                             char_u **ptr,
                             int addr_type,  // flag: one of ADDR_LINES, ...
                             int skip,  // only skip the address, don't use it
+                            bool silent,  // no errors or side effects
                             int to_other_file,  // flag: may jump to other file
                             int address_count)  // 1 for first, >1 after comma
 {
@@ -3826,13 +3827,15 @@ static linenr_T get_address(exarg_T *eap,
         if (*cmd == c)
           ++cmd;
       } else {
-        pos = curwin->w_cursor;                     /* save curwin->w_cursor */
-        /*
-         * When '/' or '?' follows another address, start
-         * from there.
-         */
-        if (lnum != MAXLNUM)
+        int flags;
+
+        pos = curwin->w_cursor;  // save curwin->w_cursor
+
+        // When '/' or '?' follows another address, start from
+        // there.
+        if (lnum != MAXLNUM) {
           curwin->w_cursor.lnum = lnum;
+        }
 
         // Start a forward search at the end of the line (unless
         // before the first line).
@@ -3846,7 +3849,8 @@ static linenr_T get_address(exarg_T *eap,
           curwin->w_cursor.col = 0;
         }
         searchcmdlen = 0;
-        if (!do_search(NULL, c, cmd, 1L, SEARCH_HIS | SEARCH_MSG, NULL)) {
+        flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
+        if (!do_search(NULL, c, cmd, 1L, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -7751,7 +7755,7 @@ static void ex_put(exarg_T *eap)
  */
 static void ex_copymove(exarg_T *eap)
 {
-  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, 1);
+  long n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1);
   if (eap->arg == NULL) {  // error detected
     eap->nextcmd = NULL;
     return;

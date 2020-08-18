@@ -796,6 +796,10 @@ func Test_keep_last_search_pattern()
   call feedkeys(":/foo/s//\<Esc>", 'ntx')
   call assert_equal('bar', @/)
 
+  " no error message if pattern not found
+  call feedkeys(":/xyz/s//\<Esc>", 'ntx')
+  call assert_equal('bar', @/)
+
   bwipe!
   call test_override("ALL", 0)
   set noincsearch
