@@ -33,7 +33,6 @@ local function check_handle_start()
 end
 
 local function set_mechanism(option_type, bufnr)
-  -- if global option changed, change start for all watchers.
   if option_type == 'global' then
     local option = vim.api.nvim_get_option('filechangenotify')
     if option:find('watcher') then
@@ -47,7 +46,6 @@ local function set_mechanism(option_type, bufnr)
       end
       Watcher.start_notifications = function(_) end
     end
-  -- if local option changed, simply change start for the current buffer.
   elseif option_type == 'local' then
     bufnr = bufnr or vim.api.nvim_get_current_buf()
     local status, option = pcall(vim.api.nvim_buf_get_option, 0, 'filechangenotify')
@@ -66,7 +64,6 @@ local function set_mechanism(option_type, bufnr)
 end
 
 -- Checks if a buffer should have a watcher attached to it.
-
 local function valid_buf(bufnr)
   if bufnr < 0 then
     return false
@@ -193,6 +190,8 @@ function Watcher.stop_notifications()
 end
 
 --- Start reacting to notifications for all watcher.
+--- A stub that calls the correct function depending upon
+--- the option value for `fcnotify`.
 function Watcher.start_notifications()
 end
 
