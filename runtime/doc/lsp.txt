@@ -876,8 +876,46 @@ location_callback({_}, {method}, {result})
 ==============================================================================
 Lua module: vim.lsp.log                                              *lsp-log*
 
+debug({...})                                             *vim.lsp.log.debug()*
+                Log a message at level DEBUG.
+
+                Recommended usage:
+>
+    log.debug("123")
+<
+
+                Only log if the log level is high enough (this way you can
+                avoid string allocations):
+>
+    log.debug() and log.debug("123")
+<
+
+                Parameters: ~
+                    {...}  (any, optional) When called with arguments, log
+                           them at level DEBUG (if applicable, it is checked
+                           either way). Tables are converted to strings using
+                           |vim.inspect()|. When called without arguments, it
+                           will check whether the log level is greater than or
+                           equal to this one.
+
+                Return: ~
+                    `nil` when called with arguments. When called without
+                    arguments, returns the same as |vim.lsp.log.should_log()|.
+
+error({...})                                             *vim.lsp.log.error()*
+                Log a message at level ERROR.
+
+                See also: ~
+                    |vim.lsp.log.debug()| for details
+
 get_filename()                                    *vim.lsp.log.get_filename()*
                 TODO: Documentation
+
+info({...})                                               *vim.lsp.log.info()*
+                Log a message at level INFO.
+
+                See also: ~
+                    |vim.lsp.log.debug()| for details
 
 path_join({...})                                     *vim.lsp.log.path_join()*
                 TODO: Documentation
@@ -887,6 +925,18 @@ set_level({level})                                   *vim.lsp.log.set_level()*
 
 should_log({level})                                 *vim.lsp.log.should_log()*
                 TODO: Documentation
+
+trace({...})                                             *vim.lsp.log.trace()*
+                Log a message at level TRACE.
+
+                See also: ~
+                    |vim.lsp.log.debug()| for details
+
+warn({...})                                               *vim.lsp.log.warn()*
+                Log a message at level WARN (the default log level).
+
+                See also: ~
+                    |vim.lsp.log.debug()| for details
 
 
 ==============================================================================
