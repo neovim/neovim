@@ -35,8 +35,7 @@ endfunction
 let s:selections = { '*': s:selection, '+': copy(s:selection) }
 
 function! s:try_cmd(cmd, ...) abort
-  let argv = split(a:cmd, " ")
-  let out = systemlist(argv, (a:0 ? a:1 : ['']), 1)
+  let out = systemlist(a:cmd, (a:0 ? a:1 : ['']), 1)
   if v:shell_error
     if !exists('s:did_error_try_cmd')
       echohl WarningMsg
@@ -53,6 +52,14 @@ endfunction
 function! s:cmd_ok(cmd) abort
   call system(a:cmd)
   return v:shell_error == 0
+endfunction
+
+function! s:split_cmd(cmd) abort
+  if type(a:cmd) == v:t_string
+    return split(a:cmd, " ")
+  else
+    return a:cmd
+  endif
 endfunction
 
 let s:cache_enabled = 1
@@ -74,44 +81,44 @@ function! provider#clipboard#Executable() abort
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
-    return get(g:clipboard, 'name', 'g:clipboard')
+    let name = get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
-    return 'pbcopy'
+    let name = 'pbcopy'
   elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
     let s:copy['+'] = 'wl-copy --foreground --type text/plain'
     let s:paste['+'] = 'wl-paste --no-newline'
     let s:copy['*'] = 'wl-copy --foreground --primary --type text/plain'
     let s:paste['*'] = 'wl-paste --no-newline --primary'
-    return 'wl-copy'
+    let name = 'wl-copy'
   elseif exists('$DISPLAY') && executable('xclip')
     let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
     let s:paste['+'] = 'xclip -o -selection clipboard'
     let s:copy['*'] = 'xclip -quiet -i -selection primary'
     let s:paste['*'] = 'xclip -o -selection primary'
-    return 'xclip'
+    let name = 'xclip'
   elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = 'xsel --nodetach -i -b'
     let s:paste['+'] = 'xsel -o -b'
     let s:copy['*'] = 'xsel --nodetach -i -p'
     let s:paste['*'] = 'xsel -o -p'
-    return 'xsel'
+    let name = 'xsel'
   elseif executable('lemonade')
     let s:copy['+'] = 'lemonade copy'
     let s:paste['+'] = 'lemonade paste'
     let s:copy['*'] = 'lemonade copy'
     let s:paste['*'] = 'lemonade paste'
-    return 'lemonade'
+    let name = 'lemonade'
   elseif executable('doitclient')
     let s:copy['+'] = 'doitclient wclip'
     let s:paste['+'] = 'doitclient wclip -r'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    return 'doitclient'
+    let name = 'doitclient'
   elseif executable('win32yank.exe')
     if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
       let win32yank = resolve(exepath('win32yank.exe'))
@@ -122,17 +129,23 @@ function! provider#clipboard#Executable() abort
     let s:paste['+'] = win32yank.' -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    return 'win32yank'
+    let name = 'win32yank'
   elseif exists('$TMUX') && executable('tmux')
     let s:copy['+'] = 'tmux load-buffer -'
     let s:paste['+'] = 'tmux save-buffer -'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    return 'tmux'
+    let name = 'tmux'
+  else
+    let s:err = 'clipboard: No clipboard tool. :help clipboard'
+    return ''
   endif
 
-  let s:err = 'clipboard: No clipboard tool. :help clipboard'
-  return ''
+  let s:copy['+'] = s:split_cmd(get(s:copy, '+', v:null))
+  let s:paste['+'] = s:split_cmd(get(s:paste, '+', v:null))
+  let s:copy['*'] = s:split_cmd(get(s:copy, '*', v:null))
+  let s:paste['*'] = s:split_cmd(get(s:paste, '*', v:null))
+  return name
 endfunction
 
 function! s:clipboard.get(reg) abort
@@ -169,16 +182,15 @@ function! s:clipboard.set(lines, regtype, reg) abort
   let s:selections[a:reg] = copy(s:selection)
   let selection = s:selections[a:reg]
   let selection.data = [a:lines, a:regtype]
-  let argv = split(s:copy[a:reg], " ")
-  let selection.argv = argv
+  let selection.argv = s:copy[a:reg]
   let selection.detach = s:cache_enabled
   let selection.cwd = "/"
-  let jobid = jobstart(argv, selection)
+  let jobid = jobstart(selection.argv, selection)
   if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     " xclip does not close stdout when receiving input via stdin
-    if argv[0] ==# 'xclip'
+    if selection.argv[0] ==# 'xclip'
       call jobclose(jobid, 'stdout')
     endif
     let selection.owner = jobid

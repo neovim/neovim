@@ -153,6 +153,16 @@ describe('clipboard', function()
     eq('', eval('provider#clipboard#Error()'))
   end)
 
+  it('g:clipboard using lists', function()
+    source([[let g:clipboard = {
+            \  'name': 'custom',
+            \  'copy': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \  'paste': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \}]])
+    eq('custom', eval('provider#clipboard#Executable()'))
+    eq('', eval('provider#clipboard#Error()'))
+  end)
+
   it('g:clipboard using VimL functions', function()
     -- Implements a fake clipboard provider. cache_enabled is meaningless here.
     source([[let g:clipboard = {

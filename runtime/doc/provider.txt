@@ -222,6 +222,23 @@ For example this configuration integrates the tmux clipboard: >
           \   'cache_enabled': 1,
           \ }
 
+Commands can also be specified with lists, which would be useful for arguments
+containing spaces.
+For example the above configuration can be written in this form: >
+
+    let g:clipboard = {
+          \   'name': 'myClipboard',
+          \   'copy': {
+          \      '+': ['tmux', 'load-buffer', '-'],
+          \      '*': ['tmux', 'load-buffer', '-'],
+          \    },
+          \   'paste': {
+          \      '+': ['tmux', 'save-buffer', '-'],
+          \      '*': ['tmux', 'save-buffer', '-'],
+          \   },
+          \   'cache_enabled': 1,
+          \ }
+
 If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
 process has not died the cached selection is applied.
