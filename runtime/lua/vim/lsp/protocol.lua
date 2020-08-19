@@ -2,6 +2,11 @@
 
 local protocol = {}
 
+--@private
+--- Returns {a} if it is not nil, otherwise returns {b}.
+---
+--@param a
+--@param b
 local function ifnil(a, b)
   if a == nil then return b end
   return a
@@ -9,12 +14,14 @@ end
 
 
 --[=[
--- Useful for interfacing with:
--- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
+--@private
+--- Useful for interfacing with:
+--- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
   nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
 end
+--@private
 function transform_schema_to_table()
   transform_schema_comments()
   nvim.command [[silent! '<,'>s/: \S\+//]]

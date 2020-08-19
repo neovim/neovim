@@ -960,7 +960,11 @@ def main(config):
 
         i = 0
         for filename in CONFIG[target]['section_order']:
-            title, helptag, section_doc = sections.pop(filename)
+            try:
+                title, helptag, section_doc = sections.pop(filename)
+            except KeyError:
+                print("Warning:", filename, "has empty docs, skipping")
+                continue
             i += 1
             if filename not in CONFIG[target]['append_only']:
                 docs += sep
