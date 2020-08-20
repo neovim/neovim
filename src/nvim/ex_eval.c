@@ -138,16 +138,15 @@ int aborted_in_try(void)
   return force_abort;
 }
 
-/*
- * cause_errthrow(): Cause a throw of an error exception if appropriate.
- * Return TRUE if the error message should not be displayed by emsg().
- * Sets "ignore", if the emsg() call should be ignored completely.
- *
- * When several messages appear in the same command, the first is usually the
- * most specific one and used as the exception value.  The "severe" flag can be
- * set to TRUE, if a later but severer message should be used instead.
- */
-int cause_errthrow(char_u *mesg, int severe, int *ignore)
+// cause_errthrow(): Cause a throw of an error exception if appropriate.
+// Return true if the error message should not be displayed by emsg().
+// Sets "ignore", if the emsg() call should be ignored completely.
+//
+// When several messages appear in the same command, the first is usually the
+// most specific one and used as the exception value.  The "severe" flag can be
+// set to true, if a later but severer message should be used instead.
+bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
+  FUNC_ATTR_NONNULL_ALL
 {
   struct msglist *elem;
   struct msglist **plist;
@@ -158,8 +157,9 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    * level.  Also when no exception can be thrown.  The message will be
    * displayed by emsg().
    */
-  if (suppress_errthrow)
-    return FALSE;
+  if (suppress_errthrow) {
+    return false;
+  }
 
   /*
    * If emsg() has not been called previously, temporarily reset
@@ -195,8 +195,8 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    * not replaced by an interrupt message error exception.
    */
   if (mesg == (char_u *)_(e_interr)) {
-    *ignore = TRUE;
-    return TRUE;
+    *ignore = true;
+    return true;
   }
 
   /*
@@ -231,8 +231,8 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
      * catch clause; just finally clauses are executed before the script
      * is terminated.
      */
-    return FALSE;
-  } else
+    return false;
+  } else  // NOLINT(readability/braces)
 #endif
   {
     /*
@@ -271,7 +271,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
           (*msg_list)->throw_msg = tmsg;
       }
     }
-    return TRUE;
+    return true;
   }
 }
 

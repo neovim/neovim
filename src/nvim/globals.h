@@ -208,7 +208,7 @@ EXTERN int need_clr_eos INIT(= false);      // need to clear text before
                                             // displaying a message.
 EXTERN int emsg_skip INIT(= 0);             // don't display errors for
                                             // expression that is skipped
-EXTERN int emsg_severe INIT(= false);       // use message of next of several
+EXTERN bool emsg_severe INIT(= false);      // use message of next of several
                                             //  emsg() calls for throw
 EXTERN int did_endif INIT(= false);         // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
