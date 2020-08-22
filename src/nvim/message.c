@@ -607,8 +607,7 @@ int emsg_not_now(void)
 static bool emsg_multiline(const char *s, bool multiline)
 {
   int attr;
-  int ignore = false;
-  int severe;
+  bool ignore = false;
 
   // Skip this if not giving error messages at the moment.
   if (emsg_not_now()) {
@@ -617,9 +616,9 @@ static bool emsg_multiline(const char *s, bool multiline)
 
   called_emsg = true;
 
-  // If "emsg_severe" is TRUE: When an error exception is to be thrown,
+  // If "emsg_severe" is true: When an error exception is to be thrown,
   // prefer this message over previous messages for the same command.
-  severe = emsg_severe;
+  bool severe = emsg_severe;
   emsg_severe = false;
 
   if (!emsg_off || vim_strchr(p_debug, 't') != NULL) {
@@ -630,7 +629,7 @@ static bool emsg_multiline(const char *s, bool multiline)
      * when the message should be ignored completely (used for the
      * interrupt message).
      */
-    if (cause_errthrow((char_u *)s, severe, &ignore) == true) {
+    if (cause_errthrow((char_u *)s, severe, &ignore)) {
       if (!ignore) {
         did_emsg++;
       }

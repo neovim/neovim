@@ -1984,9 +1984,16 @@ void ex_argadd(exarg_T *eap)
 /// ":argdelete"
 void ex_argdelete(exarg_T *eap)
 {
-  if (eap->addr_count > 0) {
-    // ":1,4argdel": Delete all arguments in the range.
-    if (eap->line2 > ARGCOUNT) {
+  if (eap->addr_count > 0 || *eap->arg == NUL) {
+    // ":argdel" works like ":.argdel"
+    if (eap->addr_count == 0) {
+      if (curwin->w_arg_idx >= ARGCOUNT) {
+        EMSG(_("E610: No argument to delete"));
+        return;
+      }
+      eap->line1 = eap->line2 = curwin->w_arg_idx + 1;
+    } else if (eap->line2 > ARGCOUNT) {
+      // ":1,4argdel": Delete all arguments in the range.
       eap->line2 = ARGCOUNT;
     }
     linenr_T n = eap->line2 - eap->line1 + 1;
@@ -2016,8 +2023,6 @@ void ex_argdelete(exarg_T *eap)
           curwin->w_arg_idx = ARGCOUNT - 1;
       }
     }
-  } else if (*eap->arg == NUL) {
-    EMSG(_(e_argreq));
   } else {
     do_arglist(eap->arg, AL_DEL, 0);
   }

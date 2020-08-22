@@ -397,9 +397,15 @@ func Test_argdelete()
   last
   argdelete %
   call assert_equal(['b'], argv())
-  call assert_fails('argdelete', 'E471:')
+  call assert_fails('argdelete', 'E610:')
   call assert_fails('1,100argdelete', 'E16:')
-  %argd
+
+  call Reset_arglist()
+  args a b c d
+  next
+  argdel
+  call Assert_argc(['a', 'c', 'd'])
+  %argdel
 endfunc
 
 func Test_argdelete_completion()

@@ -432,3 +432,14 @@ func Test_Visual_Block()
 
   close!
 endfunc
+
+func Test_visual_put_in_block()
+  new
+  call setline(1, ['xxxx', 'y∞yy', 'zzzz'])
+  normal 1G2yl
+  exe "normal 1G2l\<C-V>jjlp"
+  call assert_equal(['xxxx', 'y∞xx', 'zzxx'], getline(1, 3))
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

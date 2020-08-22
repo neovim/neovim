@@ -2650,7 +2650,7 @@ void buflist_list(exarg_T *eap)
   int i;
 
   garray_T buflist;
-  buf_T **buflist_data = NULL, **p;
+  buf_T **buflist_data = NULL;
 
   if (vim_strchr(eap->arg, 't')) {
     ga_init(&buflist, sizeof(buf_T *), 50);
@@ -2662,13 +2662,14 @@ void buflist_list(exarg_T *eap)
     qsort(buflist.ga_data, (size_t)buflist.ga_len,
           sizeof(buf_T *), buf_time_compare);
 
-    p = buflist_data = (buf_T **)buflist.ga_data;
-    buf = *p;
+    buflist_data = (buf_T **)buflist.ga_data;
+    buf = *buflist_data;
   }
+  buf_T **p = buflist_data;
 
   for (;
        buf != NULL && !got_int;
-       buf = buflist_data
+       buf = buflist_data != NULL
        ? (++p < buflist_data + buflist.ga_len ? *p : NULL)
        : buf->b_next) {
     const bool is_terminal = buf->terminal;
