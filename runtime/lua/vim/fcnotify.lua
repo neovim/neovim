@@ -37,26 +37,26 @@ local function set_mechanism(option_type, bufnr)
     local option = vim.api.nvim_get_option('filechangenotify')
     if option:find('watcher') then
       for _, watcher in pairs(WatcherList) do
-        watcher.__start_handle = fs_event_start
+        watcher._start_handle = fs_event_start
       end
       Watcher.start_notifications = check_handle_start
     else
       for _, watcher in pairs(WatcherList) do
-        watcher.__start_handle = function(_) end
+        watcher._start_handle = function(_) end
       end
       Watcher.start_notifications = function(_) end
     end
   elseif option_type == 'local' then
     bufnr = bufnr or vim.api.nvim_get_current_buf()
-    local status, option = pcall(vim.api.nvim_buf_get_option, 0, 'filechangenotify')
+    local status, option = pcall(vim.api.nvim_buf_get_option, bufnr, 'filechangenotify')
     if not status then
       option = vim.api.nvim_get_option('filechangenotify')
     end
     if option:find('watcher') then
-      WatcherList[bufnr].__start_handle = fs_event_start
+      WatcherList[bufnr]._start_handle = fs_event_start
       Watcher.start_notifications = check_handle_start
     else
-      WatcherList[bufnr].__start_handle = function(_) end
+      WatcherList[bufnr]._start_handle = function(_) end
     end
   end
   Watcher.stop_notifications()
@@ -69,7 +69,7 @@ local function valid_buf(bufnr)
     return false
   end
 
-  local fname = vim.api.nvim_call_function('bufname', {bufnr})
+  local fname = vim.api.nvim_buf_get_name(bufnr)
   local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
   local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
 
@@ -87,26 +87,26 @@ end
 function Watcher:new(bufnr)
   vim.validate{bufnr = {bufnr, 'number', false}}
   -- get full path name for the file
-  local fname = vim.api.nvim_call_function('bufname', {bufnr})
+  local fname = vim.api.nvim_buf_get_name(bufnr)
   local ffname = vim.api.nvim_call_function('fnamemodify', {fname, ':p'})
   w = {bufnr = bufnr, fname = fname, ffname = ffname,
        handle = nil, pending_notifs = false}
-  w.__start_handle = function(_) end
+  w._start_handle = function(_) end
   setmetatable(w, self)
   return w
 end
 
 --- Starts the watcher
 ---
---@param self: (required, table) The watcher object on which start was called.
+--@param self: (required, table) The watcher which should be started.
 function Watcher:start()
   set_mechanism('local', self.bufnr)
-  self.__start_handle(self.bufnr)
+  self._start_handle(self.bufnr)
 end
 
 --- Stops the watcher and closes the handle.
 ---
---@param self: (required, table) The watcher object on which stop was called.
+--@param self: (required, table) The watcher which should be stopped.
 function Watcher:stop()
   if self.handle == nil then
     return
@@ -119,6 +119,17 @@ function Watcher:stop()
     return
   end
   self.handle:close()
+end
+
+--- Debounces the watcher. Completely closes the handle and starts again with a new
+--- handle. Necessary for cases when the file being monitored is edited via editors
+--- like vim, which, depending on the value of `backupcopy`, move the original file
+--- for backing it up.
+---
+--@param self:(required, table) The watcher object which should be debounced.
+function Watcher:debounce()
+  self:stop()
+  self:start()
 end
 
 --- Callback for watcher handle. Marks a watcher as having pending
@@ -134,8 +145,7 @@ function Watcher:on_change(err, _, _)
 
   self.pending_notifs = true
 
-  self:stop()
-  self:start()
+  self:debounce()
 end
 
 --- Starts and initializes a watcher for the given path. A thin wrapper around
@@ -204,13 +214,11 @@ function Watcher.check_option(option_type)
   set_mechanism(option_type)
   if option_type == 'global' then
     for _, watcher in pairs(WatcherList) do
-      watcher:stop()
-      watcher:start()
+      watcher:debounce()
     end
   elseif option_type == 'local' then
     local bufnr = vim.api.nvim_get_current_buf()
-    WatcherList[bufnr]:stop()
-    WatcherList[bufnr]:start()
+    WatcherList[bufnr]:debounce()
   end
 end
 
