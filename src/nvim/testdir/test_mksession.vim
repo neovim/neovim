@@ -9,6 +9,29 @@ endif
 source shared.vim
 source term_util.vim
 
+" Test for storing global and local argument list in a session file
+" This one must be done first.
+func Test__mksession_arglocal()
+  enew | only
+  n a b c
+  new
+  arglocal
+  mksession! Xtest_mks.out
+
+  %bwipe!
+  %argdelete
+  argglobal
+  source Xtest_mks.out
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, arglistid(1))
+  call assert_equal(0, arglistid(2))
+
+  %bwipe!
+  %argdelete
+  argglobal
+  call delete('Xtest_mks.out')
+endfunc
+
 func Test_mksession()
   tabnew
   let wrap_save = &wrap
@@ -357,28 +380,6 @@ func Test_mksession_slash()
   call delete('Xtest_mks1.out')
   call delete('Xtest_mks2.out')
   set sessionoptions&
-endfunc
-
-" Test for storing global and local argument list in a session file
-func Test_mkseesion_arglocal()
-  enew | only
-  n a b c
-  new
-  arglocal
-  mksession! Xtest_mks.out
-
-  %bwipe!
-  %argdelete
-  argglobal
-  source Xtest_mks.out
-  call assert_equal(2, winnr('$'))
-  call assert_equal(2, arglistid(1))
-  call assert_equal(0, arglistid(2))
-
-  %bwipe!
-  %argdelete
-  argglobal
-  call delete('Xtest_mks.out')
 endfunc
 
 " Test for changing directory to the session file directory
