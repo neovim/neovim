@@ -2,6 +2,9 @@
 
 local log = {}
 
+-- FIXME: DOC
+-- Should be exposed in the vim docs.
+--
 -- Log level dictionary with reverse lookup as well.
 --
 -- Can be used to lookup the number from the name or the name from the number.
@@ -38,6 +41,9 @@ do
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
+    -- FIXME: DOC
+    -- Should be exposed in the vim docs.
+    --
     -- Set the lowercase name as the main use function.
     -- If called without arguments, it will check whether the log level is
     -- greater than or equal to this one. When called with arguments, it will

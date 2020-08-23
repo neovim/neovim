@@ -238,6 +238,8 @@ local function text_document_did_open_handler(bufnr, client)
   util.buf_versions[bufnr] = params.textDocument.version
 end
 
+-- FIXME: DOC: Shouldn't need to use a dummy function
+--
 --- LSP client object. You can get an active client object via
 --- |vim.lsp.get_client_by_id()| or |vim.lsp.get_active_clients()|.
 ---
@@ -308,12 +310,12 @@ function lsp.client()
   error()
 end
 
--- FIXME: Currently all methods on the `vim.lsp.client` object are documented
--- twice: Here, and on the methods themselves (e.g. `client.request()`). This
--- is a workaround for the vimdoc generator script not handling method names
--- correctly. If you change the documentation on either, please make sure to
--- update the other as well.
-
+-- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
+-- documented twice: Here, and on the methods themselves (e.g.
+-- `client.request()`). This is a workaround for the vimdoc generator script
+-- not handling method names correctly. If you change the documentation on
+-- either, please make sure to update the other as well.
+--
 --- Starts and initializes a client with the given configuration.
 ---
 --- Parameters `cmd` and `root_dir` are required.

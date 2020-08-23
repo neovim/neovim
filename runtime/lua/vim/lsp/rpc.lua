@@ -368,7 +368,9 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
     return true
   end
 
-  -- FIXME: Should be placed on the RPC client object returned by `start()`
+  -- FIXME: DOC: Should be placed on the RPC client object returned by
+  -- `start()`
+  --
   --- Sends a notification to the LSP server.
   --@param method (string) The invoked LSP method
   --@param params (table): Parameters for the invoked LSP method
@@ -393,7 +395,9 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
     }
   end
 
-  -- FIXME: Should be placed on the RPC client object returned by `start()`
+  -- FIXME: DOC: Should be placed on the RPC client object returned by
+  -- `start()`
+  --
   --- Sends a request to the LSP server and runs {callback} upon response.
   ---
   --@param method (string) The invoked LSP method

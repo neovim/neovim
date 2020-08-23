@@ -7,7 +7,7 @@ local highlight = require 'vim.highlight'
 
 local M = {}
 
--- FIXME: Expose in documentation
+-- FIXME: DOC: Expose in vimdocs
 --- Diagnostics received from the server via `textDocument/publishDiagnostics`
 -- by buffer.
 --

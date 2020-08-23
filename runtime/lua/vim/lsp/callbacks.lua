@@ -7,6 +7,8 @@ local buf = require 'vim.lsp.buf'
 
 local M = {}
 
+-- FIXME: DOC: Expose in vimdocs
+
 --@private
 --- Writes to error buffer.
 --@param ... (table of strings) Will be concatenated before being written
