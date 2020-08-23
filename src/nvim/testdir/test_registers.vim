@@ -43,6 +43,9 @@ func Test_yank_shows_register()
 endfunc
 
 func Test_display_registers()
+    " Disable clipboard
+    let g:clipboard = {}
+
     e file1
     e file2
     call setline(1, ['foo', 'bar'])
