@@ -136,13 +136,6 @@ func RunTheTest(test)
     endtry
   endif
 
-  let message = 'Executed ' . a:test
-  if has('reltime')
-    let message ..= ' in ' .. reltimestr(reltime(func_start)) .. ' seconds'
-  endif
-  call add(s:messages, message)
-  let s:done += 1
-
   if a:test =~ 'Test_nocatch_'
     " Function handles errors itself.  This avoids skipping commands after the
     " error.
@@ -196,6 +189,13 @@ func RunTheTest(test)
   endwhile
 
   exe 'cd ' . save_cwd
+
+  let message = 'Executed ' . a:test
+  if has('reltime')
+    let message ..= ' in ' .. reltimestr(reltime(func_start)) .. ' seconds'
+  endif
+  call add(s:messages, message)
+  let s:done += 1
 endfunc
 
 func AfterTheTest()
