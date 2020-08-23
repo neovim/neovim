@@ -7,6 +7,19 @@
 "	../vim -u NONE -S runtest.vim test_channel.vim open_delay
 " The output can be found in the "messages" file.
 "
+" If the environment variable $TEST_FILTER is set then only test functions
+" matching this pattern are executed.  E.g. for sh/bash:
+"     export TEST_FILTER=Test_channel
+" For csh:
+"     setenv TEST_FILTER Test_channel
+"
+" To ignore failure for tests that are known to fail in a certain environment,
+" set $TEST_MAY_FAIL to a comma separated list of function names.  E.g. for
+" sh/bash:
+"     export TEST_MAY_FAIL=Test_channel_one,Test_channel_other
+" The failure report will then not be included in the test.log file and
+" "make test" will not fail.
+"
 " The test script may contain anything, only functions that start with
 " "Test_" are special.  These will be invoked and should contain assert
 " functions.  See test_assert.vim for an example.
@@ -202,11 +215,17 @@ func RunTheTest(test)
   let s:done += 1
 endfunc
 
-func AfterTheTest()
+func AfterTheTest(func_name)
   if len(v:errors) > 0
-    let s:fail += 1
-    call add(s:errors, 'Found errors in ' . s:test . ':')
-    call extend(s:errors, v:errors)
+    if match(s:may_fail_list, '^' .. a:func_name) >= 0
+      let s:fail_expected += 1
+      call add(s:errors_expected, 'Found errors in ' . s:test . ':')
+      call extend(s:errors_expected, v:errors)
+    else
+      let s:fail += 1
+      call add(s:errors, 'Found errors in ' . s:test . ':')
+      call extend(s:errors, v:errors)
+    endif
     let v:errors = []
   endif
 endfunc
@@ -222,7 +241,7 @@ endfunc
 
 " This function can be called by a test if it wants to abort testing.
 func FinishTesting()
-  call AfterTheTest()
+  call AfterTheTest('')
 
   " Don't write viminfo on exit.
   set viminfo=
@@ -230,7 +249,7 @@ func FinishTesting()
   " Clean up files created by setup.vim
   call delete('XfakeHOME', 'rf')
 
-  if s:fail == 0
+  if s:fail == 0 && s:fail_expected == 0
     " Success, create the .res file so that make knows it's done.
     exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
     write
@@ -268,6 +287,12 @@ func FinishTesting()
     call add(s:messages, message)
     call extend(s:messages, s:errors)
   endif
+  if s:fail_expected > 0
+    let message = s:fail_expected . ' FAILED (matching $TEST_MAY_FAIL):'
+    echo message
+    call add(s:messages, message)
+    call extend(s:messages, s:errors_expected)
+  endif
 
   " Add SKIPPED messages
   call extend(s:messages, s:skipped)
@@ -287,11 +312,13 @@ endfunc
 let g:testname = expand('%')
 let s:done = 0
 let s:fail = 0
+let s:fail_expected = 0
 let s:errors = []
+let s:errors_expected = []
 let s:messages = []
 let s:skipped = []
 if expand('%') =~ 'test_vimscript.vim'
-  " this test has intentional s:errors, don't use try/catch.
+  " this test has intentional errors, don't use try/catch.
   source %
 else
   try
@@ -354,6 +381,12 @@ if $TEST_FILTER != ''
   let s:filtered -= len(s:tests)
 endif
 
+let s:may_fail_list = []
+if $TEST_MAY_FAIL != ''
+  " Split the list at commas and add () to make it match s:test.
+  let s:may_fail_list = split($TEST_MAY_FAIL, ',')->map({i, v -> v .. '()'})
+endif
+
 " Execute the tests in alphabetical order.
 for s:test in sort(s:tests)
   " Silence, please!
@@ -403,7 +436,7 @@ for s:test in sort(s:tests)
     endwhile
   endif
 
-  call AfterTheTest()
+  call AfterTheTest(s:test)
 endfor
 
 call FinishTesting()
