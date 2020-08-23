@@ -65,10 +65,14 @@ set encoding=utf-8
 let s:test_script_fname = expand('%')
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
-  " Only ignore finding a swap file for the test script (the user might be
+  " Ignore finding a swap file for the test script (the user might be
   " editing it and do ":make test_name") and the output file.
+  " Report finding another swap file and chose 'q' to avoid getting stuck.
   if expand('<afile>') == 'messages' || expand('<afile>') =~ s:test_script_fname
     let v:swapchoice = 'e'
+  else
+    call assert_report('Unexpected swap file: ' .. v:swapname)
+    let v:swapchoice = 'q'
   endif
 endfunc
 
