@@ -327,6 +327,7 @@ let s:flaky_tests = [
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',
+      \ 'Test_termwinscroll()',
       \ 'Test_with_partial_callback()',
       \ ]
 
