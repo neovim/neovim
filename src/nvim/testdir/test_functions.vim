@@ -334,6 +334,10 @@ func Test_strpart()
 
   call assert_equal('lép', strpart('éléphant', 2, 4))
   call assert_equal('léphant', strpart('éléphant', 2))
+
+  call assert_equal('é', strpart('éléphant', 0, 1, 1))
+  call assert_equal('ép', strpart('éléphant', 3, 2, v:true))
+  call assert_equal('ó', strpart('cómposed', 1, 1, 1))
 endfunc
 
 func Test_tolower()

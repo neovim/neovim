@@ -2409,7 +2409,8 @@ str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
 strcharpart({str}, {start} [, {len}])
-				String	{len} characters of {str} at {start}
+				String	{len} characters of {str} at
+					character {start}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
 strftime({format} [, {time}])	String	time in specified format
 strgetchar({str}, {index})	Number	get char {index} from {str}
@@ -2417,8 +2418,9 @@ stridx({haystack}, {needle} [, {start}])
 				Number	index of {needle} in {haystack}
 string({expr})			String	String representation of {expr} value
 strlen({expr})			Number	length of the String {expr}
-strpart({str}, {start} [, {len}])
-				String	{len} characters of {str} at {start}
+strpart({str}, {start} [, {len} [, {chars}]])
+				String	{len} bytes/chars of {str} at
+					byte {start}
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
@@ -2906,7 +2908,8 @@ byte2line({byte})					*byte2line()*
 
 byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
-		{expr}.  Use zero for the first character, it returns zero.
+		{expr}.  Use zero for the first character, it then returns
+		zero.
 		This function is only useful when there are multibyte
 		characters, otherwise the returned value is equal to {nr}.
 		Composing characters are not counted separately, their byte
@@ -8438,14 +8441,19 @@ strlen({expr})	The result is a Number, which is the length of the String
 		{expr} in bytes.
 		If the argument is a Number it is first converted to a String.
 		For other types an error is given.
-		If you want to count the number of multi-byte characters use
+		If you want to count the number of multibyte characters use
 		|strchars()|.
 		Also see |len()|, |strdisplaywidth()| and |strwidth()|.
 
-strpart({src}, {start} [, {len}])			*strpart()*
+strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		The result is a String, which is part of {src}, starting from
 		byte {start}, with the byte length {len}.
-		To count characters instead of bytes use |strcharpart()|.
+		When {chars} is present and TRUE then {len} is the number of
+		characters positions (composing characters are not counted
+		separately, thus "1" means one base character and any
+		following composing characters).
+		To count {start} as characters instead of bytes use
+		|strcharpart()|.
 
 		When bytes are selected which do not exist, this doesn't
 		result in an error, the bytes are simply omitted.
@@ -8457,8 +8465,8 @@ strpart({src}, {start} [, {len}])			*strpart()*
 			strpart("abcdefg", 3)	    == "defg"
 
 <		Note: To get the first character, {start} must be 0.  For
-		example, to get three bytes under and after the cursor: >
-			strpart(getline("."), col(".") - 1, 3)
+		example, to get the character under the cursor: >
+			strpart(getline("."), col(".") - 1, 1, v:true)
 <
 strridx({haystack}, {needle} [, {start}])			*strridx()*
 		The result is a Number, which gives the byte index in

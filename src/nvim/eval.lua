@@ -336,7 +336,7 @@ return {
     stridx={args={2, 3}},
     string={args=1},
     strlen={args=1},
-    strpart={args={2, 3}},
+    strpart={args={2, 4}},
     strridx={args={2, 3}},
     strtrans={args=1},
     strwidth={args=1},
