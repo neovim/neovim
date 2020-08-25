@@ -28,7 +28,6 @@ describe('&encoding', function()
     neq(nil, string.find(eval('v:errmsg'), '^E519:'))
     eq('utf-8', eval('&encoding'))
     eq(3, eval('strwidth("Bär")'))
-    helpers.wait()
   end)
 
   it('can be set to utf-8 without error', function()

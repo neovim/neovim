@@ -58,9 +58,6 @@ describe('logging', function()
       }})
 
       -- TODO
-      -- The tests are commented out because only error logs are printed
-      -- in the ci. Can run the tests locally by specifying a low enough
-      -- MIN_LOG_LEVEL.
       -- meths.log('debug', 'low-level log message...', {})
       -- meths.log('info', 'you did it! :D', {})
       -- meths.log('warn', 'beware of dragons ノ( º _ ºノ)', {})
@@ -69,15 +66,6 @@ describe('logging', function()
       print(eval('$NVIM_LOG_FILE'))
       local loglines = global_helpers.read_file(eval('$NVIM_LOG_FILE'))
       -- ERROR 2020-01-12T01:56:19.484 93296 (null):(null): test log message :D
-      -- matches{
-      --    '.*DEBUG%s+[^ ]+ %d+%s+%(null%):%(null%): you did it! :D.*',
-      --    loglines)
-      -- matches(
-      --   '.*INFO%s+[^ ]+ %d+%s+%(null%):%(null%): you did it! :D.*',
-      --   loglines)
-      -- matches(
-      --   '.*WARN%s+[^ ]+ %d+%s+%(null%):%(null%): beware of dragons ノ%( º _ ºノ%).*',
-      --   loglines)
       matches(
         '.*ERROR%s+[^ ]+ %d+%s+testclient:remote: problem %(╯°□°%)╯︵ ┻━┻.*',
         loglines)
