@@ -9946,6 +9946,16 @@ static void f_strpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     len = slen - n;
   }
 
+  if (argvars[2].v_type != VAR_UNKNOWN && argvars[3].v_type != VAR_UNKNOWN) {
+    int off;
+
+    // length in characters
+    for (off = n; off < (int)slen && len > 0; len--) {
+      off += utfc_ptr2len((char_u *)p + off);
+    }
+    len = off - n;
+  }
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)xmemdupz(p + n, (size_t)len);
 }
