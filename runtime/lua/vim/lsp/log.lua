@@ -15,6 +15,45 @@ log.levels = {
   ERROR = 4;
 }
 
+-- FIXME: Hack for docs; these functions get overwritten later
+--- Log a message at level TRACE.
+--@see |vim.lsp.log.debug()| for details
+function log.trace(...) end -- luacheck: no unused args
+-- The description is on this function because it's first alphabetically
+
+--- Log a message at level DEBUG.
+---
+--- Recommended usage:
+---
+---<pre>
+---    log.debug("123")
+---</pre>
+---
+--- Only log if the log level is high enough (this way you can avoid string
+--- allocations):
+---
+---<pre>
+---    log.debug() and log.debug("123")
+---</pre>
+---
+--@param ... (any, optional) When called with arguments, log them at level
+---DEBUG (if applicable, it is checked either way). Tables are converted to
+---strings using |vim.inspect()|.
+---When called without arguments, it will check whether the
+---log level is greater than or equal to this one.
+--@returns `nil` when called with arguments. When called without arguments,
+---returns the same as |vim.lsp.log.should_log()|.
+function log.debug(...) end --luacheck: no unused args
+--- Log a message at level INFO.
+--@see |vim.lsp.log.debug()| for details
+function log.info(...) end --luacheck: no unused args
+--- Log a message at level WARN (the default log level).
+--@see |vim.lsp.log.debug()| for details
+function log.warn(...) end --luacheck: no unused args
+--- Log a message at level ERROR.
+--@see |vim.lsp.log.debug()| for details
+function log.error(...) end --luacheck: no unused args
+
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
 local log_date_format = "%FT%H:%M:%S%z"
@@ -37,20 +76,9 @@ do
     -- Also export the log level on the root object.
     log[level] = levelnr
     -- Set the lowercase name as the main use function.
-    -- If called without arguments, it will check whether the log level is
-    -- greater than or equal to this one. When called with arguments, it will
-    -- log at that level (if applicable, it is checked either way).
-    --
-    -- Recommended usage:
-    -- ```
-    -- local _ = log.warn() and log.warn("123")
-    -- ```
-    --
-    -- This way you can avoid string allocations if the log level isn't high enough.
     log[level:lower()] = function(...)
       local argc = select("#", ...)
-      if levelnr < current_log_level then return false end
-      if argc == 0 then return true end
+      if argc == 0 then return log.should_log(levelnr) end
       local info = debug.getinfo(2, "Sl")
       local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
       local parts = { table.concat({"[", level, "]", os.date(log_date_format), "]", fileinfo, "]"}, " ") }
