@@ -1108,13 +1108,14 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
-/// Returns position for a given extmark id
+/// Returns 0-indexed position for a given extmark id
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
 /// @param[out] err   Error details, if any
-/// @return (row, col) tuple or empty list () if extmark id was absent
+/// @return 0-indexed (row, col) tuple or empty list () if extmark id was
+/// absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Error *err)
   FUNC_API_SINCE(7)
@@ -1175,10 +1176,10 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param start  Start of range, given as (row, col) or valid extmark id
-///               (whose position defines the bound)
-/// @param end  End of range, given as (row, col) or valid extmark id
-///             (whose position defines the bound)
+/// @param start  Start of range, given as 0-indexed (row, col) or valid
+///               extmark id (whose position defines the bound)
+/// @param end  End of range (inclusive), given as 0-indexed (row, col) or
+///             valid extmark id (whose position defines the bound)
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
 /// @param[out] err   Error details, if any
@@ -1266,11 +1267,13 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
 /// id, but the caller must then keep track of existing and unused ids itself.
 /// (Useful over RPC, to avoid waiting for the return value.)
 ///
+/// Uses |api-indexing|.
+///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id, or 0 to create new
-/// @param line  Line number where to place the mark
-/// @param col  Column where to place the mark
+/// @param line  0-indexed line number where to place the mark
+/// @param col  0-indexed column where to place the mark
 /// @param opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
