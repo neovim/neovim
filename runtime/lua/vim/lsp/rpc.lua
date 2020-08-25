@@ -5,6 +5,11 @@ local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
 
 -- TODO replace with a better implementation.
+--@private
+--- Encodes to JSON.
+---
+--@param data (table) Data to encode
+--@returns (string) Encoded object
 local function json_encode(data)
   local status, result = pcall(vim.fn.json_encode, data)
   if status then
@@ -13,6 +18,11 @@ local function json_encode(data)
     return nil, result
   end
 end
+--@private
+--- Decodes from JSON.
+---
+--@param data (string) Data to decode
+--@returns (table) Decoded JSON object
 local function json_decode(data)
   local status, result = pcall(vim.fn.json_decode, data)
   if status then
@@ -22,17 +32,26 @@ local function json_decode(data)
   end
 end
 
+--@private
+--- Checks whether a given path exists and is a directory.
+--@param filename (string) path to check
+--@returns (bool)
 local function is_dir(filename)
   local stat = vim.loop.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
 
 local NIL = vim.NIL
+--@private
+--- Returns its argument, but converts `vim.NIL` to Lua `nil`.
+--@param v (any) Argument
+--@returns (any)
 local function convert_NIL(v)
   if v == NIL then return nil end
   return v
 end
 
+--@private
 --- Merges current process env with the given env and returns the result as
 --- a list of "k=v" strings.
 ---
@@ -42,6 +61,8 @@ end
 ---  in:    { PRODUCTION="false", PATH="/usr/bin/", PORT=123, HOST="0.0.0.0", }
 ---  out:   { "PRODUCTION=false", "PATH=/usr/bin/", "PORT=123", "HOST=0.0.0.0", }
 --- </pre>
+--@param env (table) table of environment variable assignments
+--@returns (table) list of `"k=v"` strings
 local function env_merge(env)
   if env == nil then
     return env
@@ -56,6 +77,11 @@ local function env_merge(env)
   return final_env
 end
 
+--@private
+--- Embeds the given string into a table and correctly computes `Content-Length`.
+---
+--@param encoded_message (string)
+--@returns (table) table containing encoded message and `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
   return table.concat {
     'Content-Length: '; tostring(#encoded_message); '\r\n\r\n';
@@ -63,8 +89,11 @@ local function format_message_with_content_length(encoded_message)
   }
 end
 
---- Parse an LSP Message's header
--- @param header: The header to parse.
+--@private
+--- Parses an LSP Message's header
+---
+--@param header: The header to parse.
+--@returns Parsed headers
 local function parse_headers(header)
   if type(header) ~= 'string' then
     return nil
@@ -92,6 +121,8 @@ end
 -- case insensitive pattern.
 local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c:upper().."]" end)
 
+--@private
+--- The actual workhorse.
 local function request_parser_loop()
   local buffer = ''
   while true do
@@ -138,6 +169,10 @@ local client_errors = vim.tbl_add_reverse_lookup {
   SERVER_RESULT_CALLBACK_ERROR = 7;
 }
 
+--- Constructs an error message from an LSP error object.
+---
+--@param err (table) The error object
+--@returns (string) The formatted error message
 local function format_rpc_error(err)
   validate {
     err = { err, 't' };
@@ -182,23 +217,69 @@ local function rpc_response_error(code, message, data)
 end
 
 local default_handlers = {}
+--@private
+--- Default handler for notifications sent to an LSP server.
+---
+--@param method (string) The invoked LSP method
+--@param params (table): Parameters for the invoked LSP method
 function default_handlers.notification(method, params)
   local _ = log.debug() and log.debug('notification', method, params)
 end
+--@private
+--- Default handler for requests sent to an LSP server.
+---
+--@param method (string) The invoked LSP method
+--@param params (table): Parameters for the invoked LSP method
+--@returns `nil` and `vim.lsp.protocol.ErrorCodes.MethodNotFound`.
 function default_handlers.server_request(method, params)
   local _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
+--@private
+--- Default handler for when a client exits.
+---
+--@param code (number): Exit code
+--@param signal (number): Number describing the signal used to terminate (if
+---any)
 function default_handlers.on_exit(code, signal)
-  local _ = log.info() and log.info("client exit", { code = code, signal = signal })
+  local _ = log.info() and log.info("client_exit", { code = code, signal = signal })
 end
+--@private
+--- Default handler for client errors.
+---
+--@param code (number): Error code
+--@param err (any): Details about the error
+---any)
 function default_handlers.on_error(code, err)
   local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
---- Create and start an RPC client.
--- @param cmd [
-local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
+--- Starts an LSP server process and create an LSP RPC client object to
+--- interact with it.
+---
+--@param cmd (string) Command to start the LSP server.
+--@param cmd_args (table) List of additional string arguments to pass to {cmd}.
+--@param handlers (table, optional) Handlers for LSP message types. Valid
+---handler names are:
+--- - `"notification"`
+--- - `"server_request"`
+--- - `"on_error"`
+--- - `"on_exit"`
+--@param extra_spawn_params (table, optional) Additional context for the LSP
+--- server process. May contain:
+--- - {cwd} (string) Working directory for the LSP server process
+--- - {env} (table) Additional environment variables for LSP server process
+--@returns Client RPC object.
+---
+--@returns Methods:
+--- - `notify()` |vim.lsp.rpc.notify()|
+--- - `request()` |vim.lsp.rpc.request()|
+---
+--@returns Members:
+--- - {pid} (number) The LSP server's PID.
+--- - {handle} A handle for low-level interaction with the LSP server process
+---   |vim.loop|.
+local function start(cmd, cmd_args, handlers, extra_spawn_params)
   local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   validate {
     cmd = { cmd, 's' };
@@ -242,6 +323,11 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 
   local handle, pid
   do
+    --@private
+    --- Callback for |vim.loop.spawn()| Closes all streams and runs the
+    --- `on_exit` handler.
+    --@param code (number) Exit code
+    --@param signal (number) Signal that was used to terminate (if any)
     local function onexit(code, signal)
       stdin:close()
       stdout:close()
@@ -265,6 +351,12 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
   end
 
+  --@private
+  --- Encodes {payload} into a JSON-RPC message and sends it to the remote
+  --- process.
+  ---
+  --@param payload (table) Converted into a JSON string, see |json_encode()|
+  --@returns true if the payload could be scheduled, false if the main event-loop is in the process of closing.
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send.payload", payload)
     if handle:is_closing() then return false end
@@ -276,7 +368,14 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     return true
   end
 
-  local function send_notification(method, params)
+  -- FIXME: DOC: Should be placed on the RPC client object returned by
+  -- `start()`
+  --
+  --- Sends a notification to the LSP server.
+  --@param method (string) The invoked LSP method
+  --@param params (table): Parameters for the invoked LSP method
+  --@returns (bool) `true` if notification could be sent, `false` if not
+  local function notify(method, params)
     local _ = log.debug() and log.debug("rpc.notify", method, params)
     return encode_and_send {
       jsonrpc = "2.0";
@@ -285,6 +384,8 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     }
   end
 
+  --@private
+  --- sends an error object to the remote LSP process.
   local function send_response(request_id, err, result)
     return encode_and_send {
       id = request_id;
@@ -294,7 +395,16 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     }
   end
 
-  local function send_request(method, params, callback)
+  -- FIXME: DOC: Should be placed on the RPC client object returned by
+  -- `start()`
+  --
+  --- Sends a request to the LSP server and runs {callback} upon response.
+  ---
+  --@param method (string) The invoked LSP method
+  --@param params (table) Parameters for the invoked LSP method
+  --@param callback (function) Callback to invoke
+  --@returns (bool, number) `(true, message_id)` if request could be sent, `false` if not
+  local function request(method, params, callback)
     validate {
       callback = { callback, 'f' };
     }
@@ -320,11 +430,13 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
   end)
 
+  --@private
   local function on_error(errkind, ...)
     assert(client_errors[errkind])
     -- TODO what to do if this fails?
     pcall(handlers.on_error, errkind, ...)
   end
+  --@private
   local function pcall_handler(errkind, status, head, ...)
     if not status then
       on_error(errkind, head, ...)
@@ -332,6 +444,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
     return status, head, ...
   end
+  --@private
   local function try_call(errkind, fn, ...)
     return pcall_handler(errkind, pcall(fn, ...))
   end
@@ -340,6 +453,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   -- time and log them. This would require storing the timestamp. I could call
   -- them with an error then, perhaps.
 
+  --@private
   local function handle_body(body)
     local decoded, err = json_decode(body)
     if not decoded then
@@ -458,13 +572,13 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   return {
     pid = pid;
     handle = handle;
-    request = send_request;
-    notify = send_notification;
+    request = request;
+    notify = notify
   }
 end
 
 return {
-  start = create_and_start_client;
+  start = start;
   rpc_response_error = rpc_response_error;
   format_rpc_error = format_rpc_error;
   client_errors = client_errors;

@@ -39,6 +39,7 @@ Each function :help block is formatted as follows:
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
 """
+import argparse
 import os
 import re
 import sys
@@ -841,7 +842,7 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
-def main(config):
+def main(config, args=None):
     """Generates:
 
     1. Vim :help docs
@@ -960,7 +961,11 @@ def main(config):
 
         i = 0
         for filename in CONFIG[target]['section_order']:
-            title, helptag, section_doc = sections.pop(filename)
+            try:
+                title, helptag, section_doc = sections.pop(filename)
+            except KeyError:
+                print("Warning:", filename, "has empty docs, skipping")
+                continue
             i += 1
             if filename not in CONFIG[target]['append_only']:
                 docs += sep
@@ -983,7 +988,8 @@ def main(config):
         with open(mpack_file, 'wb') as fp:
             fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
 
-        shutil.rmtree(output_dir)
+        if not args.keep_tmpfiles:
+            shutil.rmtree(output_dir)
 
 
 def filter_source(filename):
@@ -999,6 +1005,15 @@ def filter_source(filename):
                          lambda m: m.group(1)+'_'.join(
                              re.split(r'[^\w]+', m.group(2))),
                          fp.read(), flags=re.M))
+
+
+def parse_args():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('source_filter', nargs='*',
+                    help="Filter source file(s)")
+    ap.add_argument('-k', '--keep-tmpfiles', action='store_true',
+                    help="Keep temporary files")
+    return ap.parse_args()
 
 
 Doxyfile = textwrap.dedent('''
@@ -1037,9 +1052,10 @@ Doxyfile = textwrap.dedent('''
 ''')
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        filter_source(sys.argv[1])
+    args = parse_args()
+    if len(args.source_filter) > 0:
+        filter_source(args.source_filter[0])
     else:
-        main(Doxyfile)
+        main(Doxyfile, args)
 
 # vim: set ft=python ts=4 sw=4 tw=79 et :
