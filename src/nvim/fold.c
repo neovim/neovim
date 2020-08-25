@@ -2681,7 +2681,8 @@ static void foldRemove(
       fold_changed = true;
       continue;
     }
-    if (fp >= (fold_T *)(gap->ga_data) + gap->ga_len
+    if (gap->ga_data == NULL
+        || fp >= (fold_T *)(gap->ga_data) + gap->ga_len
         || fp->fd_top > bot) {
       // 6: Found a fold below bot, can stop looking.
       break;
