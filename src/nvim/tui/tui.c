@@ -1574,7 +1574,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
-  bool screen = terminfo_is_term_family(term, "screen");
+  bool screen = terminfo_is_term_family(term, "screen") && !os_getenv("TMUX");
+  bool screen_host_linuxvt =
+    terminfo_is_term_family(screen && term[6] == '.'
+                            ? term + 7 : NULL, "linux");
   bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
@@ -1591,10 +1594,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
-  bool true_screen = screen && !os_getenv("TMUX");
-  bool screen_host_linuxvt =
-    terminfo_is_term_family(true_screen && term[6] == '.'
-                            ? term + 7 : NULL, "linux");
   bool cygwin = terminfo_is_term_family(term, "cygwin");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
@@ -1739,8 +1738,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 
   data->unibi_ext.get_bg =
     (int)unibi_add_ext_str(ut, "ext.get_bg",
-                           SCREEN_TMUX_WRAP(true_screen,
-                                            tmux, "\x1b]11;?\x07"));
+                           SCREEN_TMUX_WRAP(screen, tmux, "\x1b]11;?\x07"));
 
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
@@ -1777,7 +1775,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 
   // GNU Screen does not have Ss/Se. When terminfo has Ss/Se, it is wrapped with
   // DCS because it is inherited from the host terminal.
-  if (true_screen) {
+  if (screen) {
     size_t len;
     size_t dcs_st_len = strlen(DCS_STR) + strlen(STERM_STR);
     if (-1 != data->unibi_ext.set_cursor_style) {
@@ -1816,9 +1814,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || (konsolev >= 180770)  // #9364
             || tmux       // per tmux manual page
             // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
-            || (true_screen
-                && (screen_host_linuxvt
-                    && (xterm_version || (vte_version > 0) || colorterm)))
+            || (screen
+                && (!screen_host_linuxvt
+                    || (screen_host_linuxvt
+                        && (xterm_version || (vte_version > 0) || colorterm))))
             // Since GNU Screen does not support DECSCUSR, DECSCUSR is wrapped
             // in DCS and output to the host terminal.
             || st         // #7641
@@ -1833,14 +1832,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || (linuxvt
                 && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
-        (int)unibi_add_ext_str(ut, "Ss",
-                               SCREEN_WRAP(true_screen, "\x1b[%p1%d q"));
+        (int)unibi_add_ext_str(ut, "Ss", SCREEN_WRAP(screen, "\x1b[%p1%d q"));
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
                                                                       "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-                        SCREEN_WRAP(true_screen, "\x1b[ q"));
+                        SCREEN_WRAP(screen, "\x1b[ q"));
     } else if (linuxvt || screen_host_linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
@@ -1851,7 +1849,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // linux-specific sequence in DCS and outputs it.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(
           ut, "Ss",
-          SCREEN_WRAP(true_screen,
+          SCREEN_WRAP(screen,
                       "\x1b[?"
                       "%?"
                       // The parameter passed to Ss is the DECSCUSR parameter,
@@ -1876,13 +1874,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
                                                                       "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-                        SCREEN_WRAP(true_screen, "\x1b[?c"));
+                        "\x1b[?c");
     } else if (konsolev > 0 && konsolev < 180770) {
       // Konsole before version 18.07.70: set up a nonce profile. This has
       // side-effects on temporary font resizing. #6798
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(
           ut, "Ss",
-          SCREEN_TMUX_WRAP(true_screen, tmux,
+          SCREEN_TMUX_WRAP(screen, tmux,
                            "\x1b]50;CursorShape=%?"
                            "%p1%{3}%<" "%t%{0}"    // block
                            "%e%p1%{5}%<" "%t%{2}"  // underline
@@ -1898,7 +1896,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
                                                                       "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-                        SCREEN_TMUX_WRAP(true_screen, tmux, "\x1b]50;\x07"));
+                        SCREEN_TMUX_WRAP(screen, tmux, "\x1b]50;\x07"));
     }
   }
 }
@@ -1927,13 +1925,11 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
+  bool screen_host_rxvt =
+    terminfo_is_term_family(screen && term[6] == '.' ? term + 7 : NULL, "rxvt");
 
   const char *xterm_version = os_getenv("XTERM_VERSION");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
-  bool true_screen = screen && !os_getenv("TMUX");
-  bool screen_host_rxvt =
-    terminfo_is_term_family(true_screen
-                            && term[6] == '.' ? term + 7 : NULL, "rxvt");
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
@@ -2000,7 +1996,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // all panes, which is not particularly desirable.  A better approach
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, SCREEN_TMUX_WRAP(true_screen, tmux, "\033]Pl%p1%06x\033\\"));
+        ut, NULL, SCREEN_TMUX_WRAP(screen, tmux, "\033]Pl%p1%06x\033\\"));
   } else if ((xterm || rxvt || tmux || alacritty)
              && (vte_version == 0 || vte_version >= 3900)) {
     // Supported in urxvt, newer VTE.
@@ -2027,20 +2023,20 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(
       ut, "ext.disable_lr_margin", "\x1b[?69l");
   data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(
-      ut, "ext.enable_bpaste", SCREEN_WRAP(true_screen, "\x1b[?2004h"));
+      ut, "ext.enable_bpaste", SCREEN_WRAP(screen, "\x1b[?2004h"));
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(
-      ut, "ext.disable_bpaste", SCREEN_WRAP(true_screen, "\x1b[?2004l"));
+      ut, "ext.disable_bpaste", SCREEN_WRAP(screen, "\x1b[?2004l"));
   // For urxvt send BOTH xterm and old urxvt sequences. #8695
   data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(
       ut, "ext.enable_focus",
       (rxvt || screen_host_rxvt)
-      ? SCREEN_WRAP(true_screen, "\x1b[?1004h\x1b]777;focus;on\x7")
-      : SCREEN_WRAP(true_screen, "\x1b[?1004h"));
+      ? SCREEN_WRAP(screen, "\x1b[?1004h\x1b]777;focus;on\x7")
+      : SCREEN_WRAP(screen, "\x1b[?1004h"));
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(
       ut, "ext.disable_focus",
       (rxvt || screen_host_rxvt)
-      ? SCREEN_WRAP(true_screen, "\x1b[?1004l\x1b]777;focus;off\x7")
-      : SCREEN_WRAP(true_screen, "\x1b[?1004l"));
+      ? SCREEN_WRAP(screen, "\x1b[?1004l\x1b]777;focus;off\x7")
+      : SCREEN_WRAP(screen, "\x1b[?1004l"));
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(
       ut, "ext.enable_mouse", "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
