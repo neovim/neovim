@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 
 language: c
 
@@ -119,7 +119,7 @@ jobs:
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            - sourceline: 'deb [arch=amd64] https://packages.microsoft.com/ubuntu/16.04/prod xenial main'
+            - sourceline: 'deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main'
               key_url: 'https://packages.microsoft.com/keys/microsoft.asc'
           packages:
             - *common-apt-packages
