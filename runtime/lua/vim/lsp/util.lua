@@ -308,7 +308,7 @@ end
 --- Returns text that should be inserted when selecting completion item. The
 --- precedence is as follows: textEdit.newText > insertText > label
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function get_completion_word(item)
+local function get_completion_word(item, prefix)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil then
     local start_range = item.textEdit.range["start"]
     local end_range = item.textEdit.range["end"]
@@ -316,19 +316,21 @@ local function get_completion_word(item)
     if start_range.line == end_range.line and start_range.character == end_range.character then
       newText = prefix .. newText
     end
-    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
+
+    if protocol.InsertTextFormat.PlainText == item.insertTextFormat then
       return newText
     else
       return M.parse_snippet(newText)
     end
   elseif item.insertText ~= nil then
-    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
+    if protocol.InsertTextFormat.PlainText == item.insertTextFormat then
       return item.insertText
     else
       return M.parse_snippet(item.insertText)
     end
+  else
+    return item.label or ''
   end
-  return item.label
 end
 
 --@private
@@ -337,7 +339,7 @@ end
 --- does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
-    local word = get_completion_word(item, prefix)
+    local word = item.filterText or get_completion_word(item, prefix)
     return vim.startswith(word, prefix)
   end, items)
 end

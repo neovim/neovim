@@ -966,72 +966,127 @@ describe('LSP', function()
   describe('completion_list_to_complete_items', function()
     local function create_compl_item(opt)
         return {
-          abbr = opt.abbr,
+          word = opt.word,
+          abbr = opt.abbr or opt.word,
           dup = opt.dup or 1,
           empty = opt.empty or 1,
           icase = opt.icase or 1,
           info = opt.info or ' ',
           kind = opt.kind or 'Unknown',
           menu = opt.menu or '',
-          word = opt.word,
           user_data = {
             nvim = {
               lsp = {
                 completion_item = {
-                  label = opt.label,
+                  label = opt.label or opt.abbr or opt.word,
                   insertText = opt.insertText,
                   insertTextFormat = opt.insertTextFormat,
                   textEdit = opt.textEdit,
+                  sortText = opt.sortText,
+                  filterText = opt.filterText,
                 }
               }
             }
           },
         }
     end
+
     local function get_completion_list(completion_list, prefix)
       return exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix)
     end
+
+    local function test_completion_list(expected, completion_list, prefix)
+      local completion_list_items = { items = completion_list }
+
+      eq(expected, get_completion_list(completion_list, prefix))
+      eq(expected, get_completion_list(completion_list_items, prefix))
+    end
+
+    it('should return an empty list from an empty list and no prefix', function()
+      eq({}, get_completion_list({}, ''))
+    end)
+
+    it('should return an empty list from an empty list', function()
+      eq({}, get_completion_list({}, 'nothing'))
+    end)
+
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
     -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-    it('should choose right completion option for label', function ()
-      local prefix = 'foo'
+    it('should choose right completion option for label', function()
       local completion_list = {
-        -- resolves into label
-        { label = 'foobar' },
-        { label = 'foobar', textEdit = {} },
-      }
-      local completion_list_items = { items = completion_list }
-      local expected = {
-        create_compl_item { abbr = 'foobar', word = 'foobar', label = 'foobar' },
-        create_compl_item { abbr = 'foobar', word = 'foobar', label = 'foobar', textEdit = {} },
+        { label = 'foo_1' },
+        { label = 'foo_2', textEdit = {} },
+
+        -- Filtered out, due to prefix
+        { label = 'baz' },
       }
 
-      eq(expected, get_completion_list(completion_list, prefix))
-      eq(expected, get_completion_list(completion_list_items, prefix))
-      eq({}, get_completion_list({}, prefix))
+      local expected = {
+        create_compl_item { word = 'foo_1', label = 'foo_1' },
+        create_compl_item { word = 'foo_2', label = 'foo_2', textEdit = {} },
+      }
+
+      test_completion_list(expected, completion_list, 'foo')
     end)
 
-    it('should choose right completion option for insertText', function ()
-      local prefix = 'foo'
+    it('should sort based on sortText', function()
       local completion_list = {
-        -- resolves into insertText
-        { label = 'foocar', insertText = 'foobar' },
-        { label = 'foocar', insertText = 'foobar', textEdit = {} },
-      }
-      local completion_list_items = { items = completion_list }
-      local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foobar' },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foobar', textEdit = {} },
+        -- Note: sortTexts are reversed ordering of label
+        { label = 'foo_1', sortText = 'b' },
+        { label = 'foo_2', sortText = 'a' },
+
+        -- Filtered out, due to prefix
+        { label = 'baz' },
       }
 
-      eq(expected, get_completion_list(completion_list, prefix))
-      eq(expected, get_completion_list(completion_list_items, prefix))
-      eq({}, get_completion_list({}, prefix))
+      local expected = {
+        create_compl_item { word = 'foo_2', label = 'foo_2', sortText = 'a' },
+        create_compl_item { word = 'foo_1', label = 'foo_1', sortText = 'b' },
+      }
+
+      test_completion_list(expected, completion_list, 'foo')
     end)
 
-    it('should choose right completion option for textEdit.newText', function ()
-      local prefix = 'foo'
+    it('should sort using combination of sortText and label, if necessary', function()
+      local completion_list = {
+        { label = 'foo_1' },
+        { label = 'foo_2', sortText = 'a' },
+
+        -- Filtered out, due to prefix
+        { label = 'baz' },
+      }
+
+      local expected = {
+        create_compl_item { word = 'foo_2', label = 'foo_2', sortText = 'a' },
+        create_compl_item { word = 'foo_1', label = 'foo_1' },
+      }
+
+      test_completion_list(expected, completion_list, 'foo')
+    end)
+
+    it('should get word from insertText, not from label', function()
+      local completion_list = { { label = 'discarded', insertText = 'foobar' }, }
+      local expected = { create_compl_item { word = 'foobar', abbr = 'discarded', label = 'discarded', insertText = 'foobar' }, }
+
+      test_completion_list(expected, completion_list, 'foo')
+    end)
+
+    it('should choose right completion option for insertText with empty textEdit', function()
+      local completion_list = { { label = 'foocar', insertText = 'foobar', textEdit = {} }, }
+      local expected = { create_compl_item { word = 'foobar', abbr = 'foocar', label = 'foocar', insertText = 'foobar', textEdit = {} }, }
+
+      test_completion_list(expected, completion_list, 'foo')
+    end)
+
+    it('should use filterText, when available', function()
+      local completion_list = { { label = 'label_is_ignored', filterText = 'filter' }, }
+      local expected = { create_compl_item { word = 'label_is_ignored', filterText = 'filter' }, }
+
+      test_completion_list(expected, completion_list, 'fil')
+    end)
+
+    it('should choose right completion option for textEdit.newText', function()
       local insertTextRange = {
         ["start"] = { line = 5, character = 23 },
         ["end"] = { line = 5, character = 23 },
@@ -1040,47 +1095,49 @@ describe('LSP', function()
         ["start"] = { line = 5, character = 21 },
         ["end"] = { line = 5, character = 23 },
       }
+
       local completion_list = {
         -- resolves into textEdit.newText
         { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar', range = insertTextRange } },
         { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'foobar', range = replaceTextRange } },
         { label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
-      local completion_list_items = {items = completion_list}
+
       local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar', range = insertTextRange } },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', insertText = 'foodar', textEdit = {newText = 'foobar', range = replaceTextRange } },
-        create_compl_item { abbr = 'foocar', word = 'foobar', label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
+        create_compl_item { word = 'foobar', abbr = 'foocar', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar', range = insertTextRange } },
+        create_compl_item { word = 'foobar', abbr = 'foocar', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'foobar', range = replaceTextRange } },
+        create_compl_item { word = 'foobar', abbr = 'foocar', label = 'foocar', textEdit = { newText = 'bar', range = insertTextRange } },
       }
 
-      eq(expected, get_completion_list(completion_list, prefix))
-      eq(expected, get_completion_list(completion_list_items, prefix))
-      eq({}, get_completion_list({}, prefix))
+      test_completion_list(expected, completion_list, 'foo')
     end)
 
-    it('should choose right completion option for snippet', function ()
+    it('should choose right completion option for snippet', function()
       local prefix = 'foo'
       local insertTextRange = {
         ["start"] = { line = 5, character = 23 },
         ["end"] = { line = 5, character = 23 },
       }
+
+      local snippet_1 = 'bar(${1:place holder}, ${2:more ...holder{\\}})'
+      local snippet_2 = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}'
+
       local completion_list = {
         -- real-world snippet text
-        { label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar(${1:place holder}, ${2:more ...holder{\\}})', range = insertTextRange } },
-        { label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
+        { label = 'foocar', insertText = 'foodar', textEdit = { newText = snippet_1, range = insertTextRange } },
+        { label = 'foocar', insertText = snippet_2 },
       }
       local completion_list_items = { items = completion_list }
       local expected = {
-        create_compl_item { abbr = 'foocar', word = 'foobar(place holder, more ...holder{})', label = 'foocar', insertText = 'foodar', textEdit = { newText = 'bar(${1:place holder}, ${2:more ...holder{\\}})', range = insertTextRange } },
-        create_compl_item { abbr = 'foocar', word = 'foodar(var1 typ1, var2 *typ2) {}', label = 'foocar', insertText = 'foodar(${1:var1} typ1, ${2:var2} *typ2) {$0\\}', textEdit = {} },
+        create_compl_item { word = 'foobar(place holder, more ...holder{})', abbr = 'foocar', insertText = 'foodar', textEdit = { newText = snippet_1, range = insertTextRange } },
+        create_compl_item { word = 'foodar(var1 typ1, var2 *typ2) {}', abbr = 'foocar', insertText = snippet_2, },
       }
 
       eq(expected, get_completion_list(completion_list, prefix))
       eq(expected, get_completion_list(completion_list_items, prefix))
       eq({}, get_completion_list({}, prefix))
     end)
-
-    it('should choose right completion option snippet tokens', function ()
+    it('should choose right completion option snippet tokens', function()
       local prefix = 'foo'
       local completion_list = {
         -- nested snippet tokens
@@ -1095,8 +1152,7 @@ describe('LSP', function()
       eq(expected, get_completion_list(completion_list_items, prefix))
       eq({}, get_completion_list({}, prefix))
     end)
-
-    it('should choose right completion option for plain text', function ()
+    it('should choose right completion option for plain text', function()
       local prefix = 'foo'
       local completion_list = {
         -- plain text
@@ -1112,7 +1168,7 @@ describe('LSP', function()
       eq({}, get_completion_list({}, prefix))
     end)
     describe('completion_list_to_complete_items for lua lsp', function()
-      it("completion for 'pri'", function ()
+      it("completion for 'pri'", function()
       local result = {
         isIncomplete = true,
         items = { {
@@ -1249,7 +1305,7 @@ describe('LSP', function()
     end)
   end)
   describe('buf_diagnostics_save_positions', function()
-    it('stores the diagnostics in diagnostics_by_buf', function ()
+    it('stores the diagnostics in diagnostics_by_buf', function()
       local diagnostics = {
         { range = {}; message = "diag1" },
         { range = {}; message = "diag2" },
