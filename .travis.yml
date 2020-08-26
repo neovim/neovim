@@ -116,15 +116,15 @@ jobs:
         - BUSTED_ARGS="--coverage"
         - *common-job-env
       addons:
+        snaps:
+          - name: powershell
+            confinement: classic
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            - sourceline: 'deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main'
-              key_url: 'https://packages.microsoft.com/keys/microsoft.asc'
           packages:
             - *common-apt-packages
             - gcc-9
-            - powershell
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint
       os: linux
