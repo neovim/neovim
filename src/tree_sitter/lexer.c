@@ -73,7 +73,6 @@ static void ts_lexer__get_chunk(Lexer *self) {
 // code that spans the current position.
 static void ts_lexer__get_lookahead(Lexer *self) {
   uint32_t position_in_chunk = self->current_position.bytes - self->chunk_start;
-  const uint8_t *chunk = (const uint8_t *)self->chunk + position_in_chunk;
   uint32_t size = self->chunk_size - position_in_chunk;
 
   if (size == 0) {
@@ -82,6 +81,7 @@ static void ts_lexer__get_lookahead(Lexer *self) {
     return;
   }
 
+  const uint8_t *chunk = (const uint8_t *)self->chunk + position_in_chunk;
   UnicodeDecodeFunction decode = self->input.encoding == TSInputEncodingUTF8
     ? ts_decode_utf8
     : ts_decode_utf16;

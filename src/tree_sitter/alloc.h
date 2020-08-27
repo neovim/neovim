@@ -58,7 +58,7 @@ static inline bool ts_toggle_allocation_recording(bool value) {
 static inline void *ts_malloc(size_t size) {
   void *result = malloc(size);
   if (size > 0 && !result) {
-    fprintf(stderr, "tree-sitter failed to allocate %lu bytes", size);
+    fprintf(stderr, "tree-sitter failed to allocate %zu bytes", size);
     exit(1);
   }
   return result;
@@ -67,7 +67,7 @@ static inline void *ts_malloc(size_t size) {
 static inline void *ts_calloc(size_t count, size_t size) {
   void *result = calloc(count, size);
   if (count > 0 && !result) {
-    fprintf(stderr, "tree-sitter failed to allocate %lu bytes", count * size);
+    fprintf(stderr, "tree-sitter failed to allocate %zu bytes", count * size);
     exit(1);
   }
   return result;
@@ -76,7 +76,7 @@ static inline void *ts_calloc(size_t count, size_t size) {
 static inline void *ts_realloc(void *buffer, size_t size) {
   void *result = realloc(buffer, size);
   if (size > 0 && !result) {
-    fprintf(stderr, "tree-sitter failed to reallocate %lu bytes", size);
+    fprintf(stderr, "tree-sitter failed to reallocate %zu bytes", size);
     exit(1);
   }
   return result;

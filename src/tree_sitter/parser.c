@@ -292,6 +292,7 @@ static bool ts_parser__better_version_exists(
         return true;
       case ErrorComparisonPreferRight:
         if (ts_stack_can_merge(self->stack, i, version)) return true;
+        break;
       default:
         break;
     }
@@ -355,10 +356,14 @@ static Subtree ts_parser__lex(
   StackVersion version,
   TSStateId parse_state
 ) {
+  TSLexMode lex_mode = self->language->lex_modes[parse_state];
+  if (lex_mode.lex_state == (uint16_t)-1) {
+    LOG("no_lookahead_after_non_terminal_extra");
+    return NULL_SUBTREE;
+  }
+
   Length start_position = ts_stack_position(self->stack, version);
   Subtree external_token = ts_stack_last_external_token(self->stack, version);
-  TSLexMode lex_mode = self->language->lex_modes[parse_state];
-  if (lex_mode.lex_state == (uint16_t)-1) return NULL_SUBTREE;
   const bool *valid_external_tokens = ts_language_enabled_external_tokens(
     self->language,
     lex_mode.external_lex_state
@@ -761,20 +766,26 @@ static StackVersion ts_parser__reduce(
   int dynamic_precedence,
   uint16_t production_id,
   bool is_fragile,
-  bool is_extra
+  bool end_of_non_terminal_extra
 ) {
   uint32_t initial_version_count = ts_stack_version_count(self->stack);
-  uint32_t removed_version_count = 0;
-  StackSliceArray pop = ts_stack_pop_count(self->stack, version, count);
 
+  // Pop the given number of nodes from the given version of the parse stack.
+  // If stack versions have previously merged, then there may be more than one
+  // path back through the stack. For each path, create a new parent node to
+  // contain the popped children, and push it onto the stack in place of the
+  // children.
+  StackSliceArray pop = ts_stack_pop_count(self->stack, version, count);
+  uint32_t removed_version_count = 0;
   for (uint32_t i = 0; i < pop.size; i++) {
     StackSlice slice = pop.contents[i];
     StackVersion slice_version = slice.version - removed_version_count;
 
-    // Error recovery can sometimes cause lots of stack versions to merge,
-    // such that a single pop operation can produce a lots of slices.
-    // Avoid creating too many stack versions in that situation.
-    if (i > 0 && slice_version > MAX_VERSION_COUNT + MAX_VERSION_COUNT_OVERFLOW) {
+    // This is where new versions are added to the parse stack. The versions
+    // will all be sorted and truncated at the end of the outer parsing loop.
+    // Allow the maximum version count to be temporarily exceeded, but only
+    // by a limited threshold.
+    if (slice_version > MAX_VERSION_COUNT + MAX_VERSION_COUNT_OVERFLOW) {
       ts_stack_remove_version(self->stack, slice_version);
       ts_subtree_array_delete(&self->tree_pool, &slice.subtrees);
       removed_version_count++;
@@ -826,7 +837,9 @@ static StackVersion ts_parser__reduce(
 
     TSStateId state = ts_stack_state(self->stack, slice_version);
     TSStateId next_state = ts_language_next_state(self->language, state, symbol);
-    if (is_extra) parent.ptr->extra = true;
+    if (end_of_non_terminal_extra && next_state == state) {
+      parent.ptr->extra = true;
+    }
     if (is_fragile || pop.size > 1 || initial_version_count > 1) {
       parent.ptr->fragile_left = true;
       parent.ptr->fragile_right = true;
@@ -963,6 +976,7 @@ static bool ts_parser__do_all_potential_reductions(
                 .dynamic_precedence = action.params.reduce.dynamic_precedence,
                 .production_id = action.params.reduce.production_id,
               });
+            break;
           default:
             break;
         }
@@ -1339,23 +1353,26 @@ static bool ts_parser__advance(
     );
   }
 
-  // Otherwise, re-run the lexer.
-  if (!lookahead.ptr) {
-    lookahead = ts_parser__lex(self, version, state);
-    if (lookahead.ptr) {
-      ts_parser__set_cached_token(self, position, last_external_token, lookahead);
-      ts_language_table_entry(self->language, state, ts_subtree_symbol(lookahead), &table_entry);
-    }
-
-    // When parsing a non-terminal extra, a null lookahead indicates the
-    // end of the rule. The reduction is stored in the EOF table entry.
-    // After the reduction, the lexer needs to be run again.
-    else {
-      ts_language_table_entry(self->language, state, ts_builtin_sym_end, &table_entry);
-    }
-  }
-
+  bool needs_lex = !lookahead.ptr;
   for (;;) {
+    // Otherwise, re-run the lexer.
+    if (needs_lex) {
+      needs_lex = false;
+      lookahead = ts_parser__lex(self, version, state);
+
+      if (lookahead.ptr) {
+        ts_parser__set_cached_token(self, position, last_external_token, lookahead);
+        ts_language_table_entry(self->language, state, ts_subtree_symbol(lookahead), &table_entry);
+      }
+
+      // When parsing a non-terminal extra, a null lookahead indicates the
+      // end of the rule. The reduction is stored in the EOF table entry.
+      // After the reduction, the lexer needs to be run again.
+      else {
+        ts_language_table_entry(self->language, state, ts_builtin_sym_end, &table_entry);
+      }
+    }
+
     // If a cancellation flag or a timeout was provided, then check every
     // time a fixed number of parse actions has been processed.
     if (++self->operation_count == OP_COUNT_PER_TIMEOUT_CHECK) {
@@ -1407,12 +1424,12 @@ static bool ts_parser__advance(
 
         case TSParseActionTypeReduce: {
           bool is_fragile = table_entry.action_count > 1;
-          bool is_extra = lookahead.ptr == NULL;
+          bool end_of_non_terminal_extra = lookahead.ptr == NULL;
           LOG("reduce sym:%s, child_count:%u", SYM_NAME(action.params.reduce.symbol), action.params.reduce.child_count);
           StackVersion reduction_version = ts_parser__reduce(
             self, version, action.params.reduce.symbol, action.params.reduce.child_count,
             action.params.reduce.dynamic_precedence, action.params.reduce.production_id,
-            is_fragile, is_extra
+            is_fragile, end_of_non_terminal_extra
           );
           if (reduction_version != STACK_VERSION_NONE) {
             last_reduction_version = reduction_version;
@@ -1452,8 +1469,10 @@ static bool ts_parser__advance(
       // (and completing the non-terminal extra rule) run the lexer again based
       // on the current parse state.
       if (!lookahead.ptr) {
-        lookahead = ts_parser__lex(self, version, state);
+        needs_lex = true;
+        continue;
       }
+
       ts_language_table_entry(
         self->language,
         state,
@@ -1461,6 +1480,11 @@ static bool ts_parser__advance(
         &table_entry
       );
       continue;
+    }
+
+    if (!lookahead.ptr) {
+      ts_stack_pause(self->stack, version, ts_builtin_sym_end);
+      return true;
     }
 
     // If there were no parse actions for the current lookahead token, then
@@ -1500,6 +1524,9 @@ static bool ts_parser__advance(
     // push each of its children. Then try again to process the current
     // lookahead.
     if (ts_parser__breakdown_top_of_stack(self, version)) {
+      state = ts_stack_state(self->stack, version);
+      ts_subtree_release(&self->tree_pool, lookahead);
+      needs_lex = true;
       continue;
     }
 
