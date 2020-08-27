@@ -1,0 +1,45 @@
+# sourcehut CI: https://builds.sr.ht/~jmk/neovim
+
+image: nixos/unstable
+
+packages:
+- autoconf-2.69p2
+- automake-1.15.1
+- cmake
+- gettext-runtime-0.20.1p1
+- gettext-tools-0.20.1p3
+- gmake
+- libtool
+- ninja-1.10.0
+- unzip-6.0p13
+
+sources:
+- https://github.com/neovim/neovim
+
+environment:
+  SOURCEHUT: 1
+  LC_CTYPE: en_US.UTF-8
+  CMAKE_EXTRA_FLAGS: -DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3
+
+tasks:
+- build-deps: |
+    export AUTOCONF_VERSION=2.69
+    export AUTOMAKE_VERSION=1.15
+    mkdir neovim/.deps
+    cd neovim/.deps
+    cmake -G Ninja ../third-party/
+    cmake --build . --config Debug
+- build: |
+    nix-build -A
+    mkdir neovim/build
+    cd neovim/build
+    cmake -G Ninja $CMAKE_EXTRA_FLAGS ..
+    cmake --build . --config Debug
+    ./bin/nvim --version
+- functionaltest: |
+    cd neovim/build
+    cmake --build . --config Debug --target functionaltest
+- oldtest: |
+    cd neovim
+    gmake oldtest
+
