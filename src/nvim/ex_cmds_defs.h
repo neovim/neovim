@@ -169,6 +169,10 @@ struct exarg {
   LineGetter getline;           ///< Function used to get the next line
   void   *cookie;               ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
+  long verbose_save;            ///< saved value of p_verbose
+  int save_msg_silent;          ///< saved value of msg_silent
+  int did_esilent;              ///< how many times emsg_silent was incremented
+  bool did_sandbox;             ///< when true did sandbox++
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"
