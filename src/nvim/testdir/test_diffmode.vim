@@ -881,6 +881,42 @@ func Test_diff_with_cursorline()
   call delete('Xtest_diff_cursorline')
 endfunc
 
+func Test_diff_with_syntax()
+  CheckScreendump
+
+  let lines =<< trim END
+  	void doNothing() {
+	   int x = 0;
+	   char *s = "hello";
+	   return 5;
+	}
+  END
+  call writefile(lines, 'Xprogram1.c')
+  let lines =<< trim END
+  	void doSomething() {
+	   int x = 0;
+	   char *s = "there";
+	   return 5;
+	}
+  END
+  call writefile(lines, 'Xprogram2.c')
+
+  let lines =<< trim END
+  	edit Xprogram1.c
+	diffsplit Xprogram2.c
+  END
+  call writefile(lines, 'Xtest_diff_syntax')
+  let buf = RunVimInTerminal('-S Xtest_diff_syntax', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_syntax_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_syntax')
+  call delete('Xprogram1.c')
+  call delete('Xprogram2.c')
+endfunc
+
 func Test_diff_of_diff()
   CheckScreendump
   CheckFeature rightleft
