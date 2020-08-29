@@ -90,6 +90,17 @@ func Test_scroll_without_region()
   call term_sendkeys(buf, ":4put\<cr>")
   call VerifyScreenDump(buf, 'Test_scroll_no_region_3', {})
 
+  call term_sendkeys(buf, ":undo\<cr>")
+  call term_sendkeys(buf, ":undo\<cr>")
+  call term_sendkeys(buf, ":set laststatus=0\<cr>")
+  call VerifyScreenDump(buf, 'Test_scroll_no_region_4', {})
+
+  call term_sendkeys(buf, ":3delete\<cr>")
+  call VerifyScreenDump(buf, 'Test_scroll_no_region_5', {})
+
+  call term_sendkeys(buf, ":4put\<cr>")
+  call VerifyScreenDump(buf, 'Test_scroll_no_region_6', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtestscroll')
