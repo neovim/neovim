@@ -57,3 +57,11 @@ func CheckRunVimInTerminal()
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
 endfunc
+
+" Command to check that we can run the GUI
+command CheckCanRunGui call CheckCanRunGui()
+func CheckCanRunGui()
+  if !has('gui') || ($DISPLAY == "" && !has('gui_running'))
+    throw 'Skipped: cannot start the GUI'
+  endif
+endfunc

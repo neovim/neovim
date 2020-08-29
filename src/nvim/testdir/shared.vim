@@ -329,7 +329,3 @@ func RunVimPiped(before, after, arguments, pipecmd)
   endif
   return 1
 endfunc
-
-func CanRunGui()
-  return has('gui') && ($DISPLAY != "" || has('gui_running'))
-endfunc
