@@ -271,7 +271,7 @@ func GetVimCommand(...)
     let cmd = cmd . ' -u ' . name
   endif
   let cmd .= ' --headless -i NONE'
-  let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+  let cmd = substitute(cmd, 'VIMRUNTIME=\S\+', '', '')
 
   " If using valgrind, make sure every run uses a different log file.
   if cmd =~ 'valgrind.*--log-file='
