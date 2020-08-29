@@ -209,7 +209,15 @@ func RunTheTest(test)
 
   let message = 'Executed ' . a:test
   if has('reltime')
-    let message ..= ' in ' .. reltimestr(reltime(func_start)) .. ' seconds'
+    let message ..= repeat(' ', 50 - len(message))
+    let time = reltime(func_start)
+    if has('float') && reltimefloat(time) > 0.1
+      let message = &t_md .. message
+    endif
+    let message ..= ' in ' .. reltimestr(time) .. ' seconds'
+    if has('float') && reltimefloat(time) > 0.1
+      let message ..= &t_me
+    endif
   endif
   call add(s:messages, message)
   let s:done += 1
@@ -277,7 +285,9 @@ func FinishTesting()
     let message = 'Executed ' . s:done . (s:done > 1 ? ' tests' : ' test')
   endif
   if s:done > 0 && has('reltime')
+    let message = &t_md .. message .. repeat(' ', 40 - len(message))
     let message ..= ' in ' .. reltimestr(reltime(s:start_time)) .. ' seconds'
+    let message ..= &t_me
   endif
   echo message
   call add(s:messages, message)
