@@ -1,4 +1,7 @@
 " Tests for the various 'formatoptions' settings
+
+source check.vim
+
 func Test_text_format()
   enew!
 
@@ -488,6 +491,23 @@ func Test_format_list_auto()
   call assert_equal('2. defx ghi', getline(2))
   bwipe!
   set fo& ai& bs&
+endfunc
+
+func Test_crash_github_issue_5095()
+  CheckFeature autocmd
+
+  " This used to segfault, see https://github.com/vim/vim/issues/5095
+  augroup testing
+    au BufNew x center
+  augroup END
+
+  next! x
+
+  bw
+  augroup testing
+    au!
+  augroup END
+  augroup! testing
 endfunc
 
 " Test for formatting multi-byte text with 'fo=t'
