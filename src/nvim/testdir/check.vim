@@ -49,3 +49,11 @@ func CheckScreendump()
     throw 'Skipped: cannot make screendumps'
   endif
 endfunc
+
+" Command to check that we can Run Vim in a terminal window
+command CheckRunVimInTerminal call CheckRunVimInTerminal()
+func CheckRunVimInTerminal()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+endfunc
