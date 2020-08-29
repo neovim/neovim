@@ -1927,13 +1927,19 @@ return {
     command='perl',
     flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, SBOXOK, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
-    func='ex_script_ni',
+    func='ex_perl',
   },
   {
     command='perldo',
     flags=bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, CMDWIN, RESTRICT),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_perldo',
+  },
+  {
+    command='perlfile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN, RESTRICT),
+    addr_type=ADDR_LINES,
+    func='ex_perlfile',
   },
   {
     command='pedit',

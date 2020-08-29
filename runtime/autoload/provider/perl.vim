@@ -46,7 +46,7 @@ function! provider#perl#Call(method, args) abort
 
   if !exists('s:host')
     try
-      let s:host = remote#host#Require('perl')
+      let s:host = remote#host#Require('legacy-perl-provider')
     catch
       let s:err = v:exception
       echohl WarningMsg
@@ -66,4 +66,9 @@ if g:loaded_perl_provider != 2
   let s:err = 'Cannot find perl or the required perl module'
 endif
 
-call remote#host#RegisterPlugin('perl-provider', 'perl', [])
+
+" The perl provider plugin will run in a separate instance of the perl
+" host.
+call remote#host#RegisterClone('legacy-perl-provider', 'perl')
+call remote#host#RegisterPlugin('legacy-perl-provider', 'ScriptHost.pm', [])
+

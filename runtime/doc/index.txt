@@ -1441,6 +1441,9 @@ tag		command		action ~
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
+|:perl|		:perl		execute perl command
+|:perldo|	:perldo		execute perl command for each line
+|:perfile|	:perlfile	execute perl script file
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
