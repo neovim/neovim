@@ -161,3 +161,26 @@ func Test_display_listchars_precedes()
   set list& listchars& wrap&
   bw!
 endfunc
+
+" Check that win_lines() works correctly with the number_only parameter=TRUE
+" should break early to optimize cost of drawing, but needs to make sure
+" that the number column is correctly highlighted.
+func Test_scroll_CursorLineNr_update()
+  CheckScreendump
+
+  let lines =<< trim END
+    hi CursorLineNr ctermfg=73 ctermbg=236
+    set nu rnu cursorline cursorlineopt=number
+    exe ":norm! o\<esc>110ia\<esc>"
+  END
+  let filename = 'Xdrawscreen'
+  call writefile(lines, filename)
+  let buf = RunVimInTerminal('-S '.filename, #{rows: 5, cols: 50})
+  call term_sendkeys(buf, "k")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_winline_rnu', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete(filename)
+endfunc
