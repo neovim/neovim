@@ -129,7 +129,9 @@ To use the RVM "system" Ruby installation: >
 ==============================================================================
 Perl integration				*provider-perl*
 
-Nvim supports Perl |remote-plugin|s.
+Nvim supports Perl |remote-plugin|s on non-Windows platforms. Support for
+polling STDIN on Windows in lacking from all known event loop implementations
+currently.
 https://github.com/jacquesg/p5-Neovim-Ext
 
 
