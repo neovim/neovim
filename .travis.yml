@@ -193,6 +193,7 @@ jobs:
         - LANG: C.UTF-8
         - SNAPCRAFT_ENABLE_SILENT_REPORT: y
         - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
+        - SNAPCRAFT_BUILD_ENVIRONMENT: lxd
       addons:
         snaps:
           - name: snapcraft
@@ -221,6 +222,7 @@ jobs:
       - LANG: C.UTF-8
       - SNAPCRAFT_ENABLE_SILENT_REPORT: y
       - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
+      - SNAPCRAFT_BUILD_ENVIRONMENT: lxd
   fast_finish: true
 
 before_install: ci/before_install.sh
