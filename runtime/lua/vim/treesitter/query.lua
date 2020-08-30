@@ -17,7 +17,7 @@ local M = {}
 function M.parse_query(lang, query)
   language.require_language(lang)
   local self = setmetatable({}, Query)
-  self.query = vim._ts_parse_query(lang, vim.fn.escape(query,'\\'))
+  self.query = vim._ts_parse_query(lang, query)
   self.info = self.query:inspect()
   self.captures = self.info.captures
   return self
@@ -82,7 +82,7 @@ local predicate_handlers = {
 
     local compiled_vim_regexes = setmetatable({}, {
       __index = function(t, pattern)
-        local res = vim.regex(check_magic(pattern))
+        local res = vim.regex(check_magic(vim.fn.escape(pattern, '\\')))
         rawset(t, pattern, res)
         return res
       end
