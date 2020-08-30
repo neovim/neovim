@@ -1,5 +1,5 @@
 name: nvim
-base: core18
+base: core20
 adopt-info: nvim
 summary: Vim-fork focused on extensibility and agility.
 description: |
@@ -37,8 +37,10 @@ parts:
           snapcraftctl set-version "${version_prefix}-${git_described}"
         plugin: make
         make-parameters:
-            - CMAKE_BUILD_TYPE=Release
+            - CMAKE_BUILD_TYPE=RelWithDebInfo
             - CMAKE_INSTALL_PREFIX=/usr
+            - CMAKE_FLAGS=-DPREFER_LUA=ON
+            - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
         override-build: |
             snapcraftctl build
             # Fix Desktop file
@@ -52,11 +54,13 @@ parts:
             - autoconf
             - automake
             - cmake
+            - gawk
             - g++
             - git
             - gettext
             - pkg-config
             - unzip
+            - wget
         prime:
             - -usr/share/man
 
