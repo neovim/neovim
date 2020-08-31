@@ -326,14 +326,19 @@ static int linelen(int *has_tab)
   int save;
   int len;
 
-  /* find the first non-blank character */
+  // Get the line.  If it's empty bail out early (could be the empty string
+  // for an unloaded buffer).
   line = get_cursor_line_ptr();
+  if (*line == NUL) {
+    return 0;
+  }
+  // find the first non-blank character
   first = skipwhite(line);
 
-  /* find the character after the last non-blank character */
+  // find the character after the last non-blank character
   for (last = first + STRLEN(first);
-       last > first && ascii_iswhite(last[-1]); --last)
-    ;
+       last > first && ascii_iswhite(last[-1]); last--) {
+  }
   save = *last;
   *last = NUL;
   // Get line length.

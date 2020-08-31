@@ -271,7 +271,7 @@ func GetVimCommand(...)
     let cmd = cmd . ' -u ' . name
   endif
   let cmd .= ' --headless -i NONE'
-  let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+  let cmd = substitute(cmd, 'VIMRUNTIME=\S\+', '', '')
 
   " If using valgrind, make sure every run uses a different log file.
   if cmd =~ 'valgrind.*--log-file='
@@ -328,8 +328,4 @@ func RunVimPiped(before, after, arguments, pipecmd)
     call delete('Xafter.vim')
   endif
   return 1
-endfunc
-
-func CanRunGui()
-  return has('gui') && ($DISPLAY != "" || has('gui_running'))
 endfunc

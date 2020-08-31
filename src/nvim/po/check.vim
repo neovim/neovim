@@ -25,6 +25,7 @@ func! GetMline()
 
   " remove '%', not used for formatting.
   let idline = substitute(idline, "'%'", '', 'g')
+  let idline = substitute(idline, "%%", '', 'g')
 
   " remove '%' used for plural forms.
   let idline = substitute(idline, '\\nPlural-Forms: .\+;\\n', '', '')
