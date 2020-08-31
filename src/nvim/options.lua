@@ -1022,15 +1022,6 @@ return {
       defaults={if_true={vi=""}}
     },
     {
-      full_name='guifontset', abbreviation='gfs',
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      vi_def=true,
-      varname='p_guifontset',
-      redraw={'ui_option'},
-      defaults={if_true={vi=""}}
-    },
-    {
       full_name='guifontwide', abbreviation='gfw',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,

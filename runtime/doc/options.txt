@@ -118,8 +118,7 @@ A few special texts:
 		Option was set with command line argument |-c|, +, |-S| or
 		|-q|.
 	Last set from environment variable ~
-		Option was set from an environment variable, $VIMINIT,
-		$GVIMINIT or $EXINIT.
+		Option was set from $VIMINIT.
 	Last set from error handler ~
 		Option was cleared when evaluating it resulted in an error.
 
@@ -2796,9 +2795,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	font names a list can be specified, font names separated with commas.
 	The first valid font is used.
 
-	On systems where 'guifontset' is supported (X11) and 'guifontset' is
-	not empty, then 'guifont' is not used.
-
 	Spaces after a comma are ignored.  To include a comma in a font name
 	precede it with a backslash.  Setting an option requires an extra
 	backslash before a space and a backslash.  See also
@@ -2850,45 +2846,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set guifont=courier_new:h12:w5:b:cRUSSIAN
 	    :set guifont=Andale_Mono:h7.5:w4.5
 <
-
-					*'guifontset'* *'gfs'*
-					*E250* *E252* *E234* *E597* *E598*
-'guifontset' 'gfs'	string	(default "")
-			global
-	When not empty, specifies two (or more) fonts to be used.  The first
-	one for normal English, the second one for your special language.  See
-	|xfontset|.
-	Setting this option also means that all font names will be handled as
-	a fontset name.  Also the ones used for the "font" argument of the
-	|:highlight| command.
-	The fonts must match with the current locale.  If fonts for the
-	character sets that the current locale uses are not included, setting
-	'guifontset' will fail.
-	Note the difference between 'guifont' and 'guifontset': In 'guifont'
-	the comma-separated names are alternative names, one of which will be
-	used.  In 'guifontset' the whole string is one fontset name,
-	including the commas.  It is not possible to specify alternative
-	fontset names.
-	This example works on many X11 systems: >
-		:set guifontset=-*-*-medium-r-normal--16-*-*-*-c-*-*-*
-<
 				*'guifontwide'* *'gfw'* *E231* *E533* *E534*
 'guifontwide' 'gfw'	string	(default "")
 			global
-	When not empty, specifies a comma-separated list of fonts to be used
-	for double-width characters.  The first font that can be loaded is
-	used.
+	Comma-separated list of fonts to be used for double-width characters.
+	The first font that can be loaded is used.
 	Note: The size of these fonts must be exactly twice as wide as the one
 	specified with 'guifont' and the same height.
 
-	'guifontwide' is only used when 'guifontset' is empty or invalid.
-	When 'guifont' is set and a valid font is found in it and
-	'guifontwide' is empty Vim will attempt to find a matching
-	double-width font and set 'guifontwide' to it.
-
-	Windows +multibyte only:		*guifontwide_win_mbyte*
-
-	If set and valid, 'guifontwide' is used for IME instead of 'guifont'.
+	When 'guifont' has a valid font and 'guifontwide' is empty Vim will
+	attempt to set 'guifontwide' to a matching double-width font.
 
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))

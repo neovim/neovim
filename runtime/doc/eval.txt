@@ -7754,26 +7754,23 @@ sha256({string})						*sha256()*
 
 shellescape({string} [, {special}])			*shellescape()*
 		Escape {string} for use as a shell command argument.
-		On Windows when 'shellslash' is not set, it
-		will enclose {string} in double quotes and double all double
-		quotes within {string}.
-		Otherwise, it will enclose {string} in single quotes and
-		replace all "'" with "'\''".
 
-		When the {special} argument is present and it's a non-zero
-		Number or a non-empty String (|non-zero-arg|), then special
-		items such as "!", "%", "#" and "<cword>" will be preceded by
-		a backslash.  This backslash will be removed again by the |:!|
-		command.
+		On Windows when 'shellslash' is not set, encloses {string} in
+		double-quotes and doubles all double-quotes within {string}.
+		Otherwise encloses {string} in single-quotes and replaces all
+		"'" with "'\''".
 
-		The "!" character will be escaped (again with a |non-zero-arg|
-		{special}) when 'shell' contains "csh" in the tail.  That is
-		because for csh and tcsh "!" is used for history replacement
-		even when inside single quotes.
+		If {special} is a ||non-zero-arg|:
+		- Special items such as "!", "%", "#" and "<cword>" will be
+		  preceded by a backslash. The backslash will be removed again
+		  by the |:!| command.
+		- The <NL> character is escaped.
 
-		With a |non-zero-arg| {special} the <NL> character is also
-		escaped.  When 'shell' containing "csh" in the tail it's
-		escaped a second time.
+		If 'shell' contains "csh" in the tail:
+		- The "!" character will be escaped. This is because csh and
+		  tcsh use "!" for history replacement even in single-quotes.
+		- The <NL> character is escaped (twice if {special} is
+		  a ||non-zero-arg|).
 
 		Example of use with a |:!| command: >
 		    :exe '!dir ' . shellescape(expand('<cfile>'), 1)
@@ -8246,15 +8243,13 @@ sqrt({expr})						*sqrt()*
 
 
 stdioopen({opts})			 *stdioopen()*
-		In a nvim launched with the |--headless| option, this opens
-		stdin and stdout as a |channel|. This function can only be
-		invoked once per instance. See |channel-stdio| for more
-		information and examples. Note that stderr is not handled by
-		this function, see |v:stderr|.
+		With |--headless| this opens stdin and stdout as a |channel|.
+		May be called only once. See |channel-stdio|. stderr is not
+		handled by this function, see |v:stderr|.
 
-		Returns a |channel| ID. Close the stdio descriptors with |chanclose()|.
-		Use |chansend()| to send data to stdout, and
-		|rpcrequest()| and |rpcnotify()| to communicate over RPC.
+		Close the stdio handles with |chanclose()|. Use |chansend()|
+		to send data to stdout, and |rpcrequest()| and |rpcnotify()|
+		to communicate over RPC.
 
 		{opts} is a dictionary with these keys:
 		  |on_stdin| : callback invoked when stdin is written to.
@@ -8262,7 +8257,7 @@ stdioopen({opts})			 *stdioopen()*
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     over stdio
 		Returns:
-		  - The channel ID on success (this is always 1)
+		  - |channel-id| on success (value is always 1)
 		  - 0 on invalid arguments
 
 

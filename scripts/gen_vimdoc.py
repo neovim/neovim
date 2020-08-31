@@ -58,7 +58,6 @@ if sys.version_info < MIN_PYTHON_VERSION:
     sys.exit(1)
 
 DEBUG = ('DEBUG' in os.environ)
-TARGET = os.environ.get('TARGET', None)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
 INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
 
@@ -69,6 +68,7 @@ base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
 filter_cmd = '%s %s' % (sys.executable, script_path)
 seen_funcs = set()
+msgs = []  # Messages to show on exit.
 lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
 
 CONFIG = {
@@ -192,7 +192,7 @@ xrefs = set()
 
 # Raises an error with details about `o`, if `cond` is in object `o`,
 # or if `cond()` is callable and returns True.
-def debug_this(cond, o):
+def debug_this(o, cond=True):
     name = ''
     if not isinstance(o, str):
         try:
@@ -204,6 +204,23 @@ def debug_this(cond, o):
             or (not callable(cond) and cond)
             or (not callable(cond) and cond in o)):
         raise RuntimeError('xxx: {}\n{}'.format(name, o))
+
+
+# Appends a message to a list which will be printed on exit.
+def msg(s):
+    msgs.append(s)
+
+
+# Print all collected messages.
+def msg_report():
+    for m in msgs:
+        print(f'    {m}')
+
+
+# Print collected messages, then throw an exception.
+def fail(s):
+    msg_report()
+    raise RuntimeError(s)
 
 
 def find_first(parent, name):
@@ -842,7 +859,7 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
-def main(config, args=None):
+def main(config, args):
     """Generates:
 
     1. Vim :help docs
@@ -851,7 +868,7 @@ def main(config, args=None):
     Doxygen is called and configured through stdin.
     """
     for target in CONFIG:
-        if TARGET is not None and target != TARGET:
+        if args.target is not None and target != args.target:
             continue
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
@@ -916,9 +933,10 @@ def main(config, args=None):
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
+                xmlfile = os.path.join(base,
+                                       '{}.xml'.format(compound.getAttribute('refid')))
                 # Extract unformatted (*.mpack).
-                fn_map, _ = extract_from_xml(os.path.join(base, '{}.xml'.format(
-                    compound.getAttribute('refid'))), target, width=9999)
+                fn_map, _ = extract_from_xml(xmlfile, target, width=9999)
                 # Extract formatted (:help).
                 functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
                     os.path.join(base, '{}.xml'.format(
@@ -951,7 +969,8 @@ def main(config, args=None):
                         sections[filename] = (title, helptag, doc)
                         fn_map_full.update(fn_map)
 
-        assert sections
+        if len(sections) == 0:
+            fail(f'no sections for target: {target}')
         if len(sections) > len(CONFIG[target]['section_order']):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
@@ -964,7 +983,7 @@ def main(config, args=None):
             try:
                 title, helptag, section_doc = sections.pop(filename)
             except KeyError:
-                print("Warning:", filename, "has empty docs, skipping")
+                msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 continue
             i += 1
             if filename not in CONFIG[target]['append_only']:
@@ -991,6 +1010,8 @@ def main(config, args=None):
         if not args.keep_tmpfiles:
             shutil.rmtree(output_dir)
 
+    msg_report()
+
 
 def filter_source(filename):
     name, extension = os.path.splitext(filename)
@@ -1008,11 +1029,14 @@ def filter_source(filename):
 
 
 def parse_args():
+    targets = ', '.join(CONFIG.keys())
     ap = argparse.ArgumentParser()
     ap.add_argument('source_filter', nargs='*',
                     help="Filter source file(s)")
     ap.add_argument('-k', '--keep-tmpfiles', action='store_true',
                     help="Keep temporary files")
+    ap.add_argument('-t', '--target',
+                    help=f'One of ({targets}), defaults to "all"')
     return ap.parse_args()
 
 

@@ -206,169 +206,9 @@ autocommands, this doesn't happen.
 
 You can use the 'eventignore' option to ignore a number of events or all
 events.
-					*autocommand-events* *{event}*
-Vim recognizes the following events.  Vim ignores the case of event names
-(e.g., you can use "BUFread" or "bufread" instead of "BufRead").
 
-First an overview by function with a short explanation.  Then the list
-alphabetically with full explanations |autocmd-events-abc|.
-
-Name			triggered by ~
-
-	Reading
-|BufNewFile|		starting to edit a file that doesn't exist
-|BufReadPre|		starting to edit a new buffer, before reading the file
-|BufRead|		starting to edit a new buffer, after reading the file
-|BufReadPost|		starting to edit a new buffer, after reading the file
-|BufReadCmd|		before starting to edit a new buffer |Cmd-event|
-
-|FileReadPre|		before reading a file with a ":read" command
-|FileReadPost|		after reading a file with a ":read" command
-|FileReadCmd|		before reading a file with a ":read" command |Cmd-event|
-
-|FilterReadPre|		before reading a file from a filter command
-|FilterReadPost|	after reading a file from a filter command
-
-|StdinReadPre|		before reading from stdin into the buffer
-|StdinReadPost|		After reading from the stdin into the buffer
-
-	Writing
-|BufWrite|		starting to write the whole buffer to a file
-|BufWritePre|		starting to write the whole buffer to a file
-|BufWritePost|		after writing the whole buffer to a file
-|BufWriteCmd|		before writing the whole buffer to a file |Cmd-event|
-
-|FileWritePre|		starting to write part of a buffer to a file
-|FileWritePost|		after writing part of a buffer to a file
-|FileWriteCmd|		before writing part of a buffer to a file |Cmd-event|
-
-|FileAppendPre|		starting to append to a file
-|FileAppendPost|	after appending to a file
-|FileAppendCmd|		before appending to a file |Cmd-event|
-
-|FilterWritePre|	starting to write a file for a filter command or diff
-|FilterWritePost|	after writing a file for a filter command or diff
-
-	Buffers
-|BufAdd|		just after adding a buffer to the buffer list
-|BufDelete|		before deleting a buffer from the buffer list
-|BufWipeout|		before completely deleting a buffer
-
-|BufFilePre|		before changing the name of the current buffer
-|BufFilePost|		after changing the name of the current buffer
-
-|BufEnter|		after entering a buffer
-|BufLeave|		before leaving to another buffer
-|BufWinEnter|		after a buffer is displayed in a window
-|BufWinLeave|		before a buffer is removed from a window
-
-|BufUnload|		before unloading a buffer
-|BufHidden|		just after a buffer has become hidden
-|BufNew|		just after creating a new buffer
-
-|SwapExists|		detected an existing swap file
-|TermOpen|		starting a terminal job
-|TermEnter|		entering Terminal-mode
-|TermLeave|		leaving Terminal-mode
-|TermClose|		stopping a terminal job
-|ChanOpen|		after a channel opened
-|ChanInfo|		after a channel has its state changed
-
-	Options
-|FileType|		when the 'filetype' option has been set
-|Syntax|		when the 'syntax' option has been set
-|OptionSet|		after setting any option
-
-	Startup and exit
-|VimEnter|		after doing all the startup stuff
-|UIEnter|		after a UI attaches
-|UILeave|		after a UI detaches
-|TermResponse|		after the terminal response to t_RV is received
-|QuitPre|		when using `:quit`, before deciding whether to exit
-|ExitPre|		when using a command that may make Vim exit
-|VimLeavePre|		before exiting Nvim, before writing the shada file
-|VimLeave|		before exiting Nvim, after writing the shada file
-|VimResume|		after Nvim is resumed
-|VimSuspend|		before Nvim is suspended
-
-	Various
-|DiffUpdated|		after diffs have been updated
-|DirChanged|		after the |current-directory| was changed
-
-|FileChangedShell|	Vim notices that a file changed since editing started
-|FileChangedShellPost|	after handling a file changed since editing started
-|FileChangedRO|		before making the first change to a read-only file
-
-|ShellCmdPost|		after executing a shell command
-|ShellFilterPost|	after filtering with a shell command
-
-|CmdUndefined|		a user command is used but it isn't defined
-|FuncUndefined|		a user function is used but it isn't defined
-|SpellFileMissing|	a spell file is used but it can't be found
-|SourcePre|		before sourcing a Vim script
-|SourcePost|		after sourcing a Vim script
-|SourceCmd|		before sourcing a Vim script |Cmd-event|
-
-|VimResized|		after the Vim window size changed
-|FocusGained|		Nvim got focus
-|FocusLost|		Nvim lost focus
-|CursorHold|		the user doesn't press a key for a while
-|CursorHoldI|		the user doesn't press a key for a while in Insert mode
-|CursorMoved|		the cursor was moved in Normal mode
-|CursorMovedI|		the cursor was moved in Insert mode
-
-|WinClosed|		after closing a window
-|WinNew|		after creating a new window
-|WinEnter|		after entering another window
-|WinLeave|		before leaving a window
-|TabEnter|		after entering another tab page
-|TabLeave|		before leaving a tab page
-|TabNew|		when creating a new tab page
-|TabNewEntered|		after entering a new tab page
-|TabClosed|		after closing a tab page
-|CmdlineChanged|	after a change was made to the command-line text
-|CmdlineEnter|		after entering cmdline mode
-|CmdlineLeave|		before leaving cmdline mode
-|CmdwinEnter|		after entering the command-line window
-|CmdwinLeave|		before leaving the command-line window
-
-|InsertEnter|		starting Insert mode
-|InsertChange|		when typing <Insert> while in Insert or Replace mode
-|InsertLeave|		when leaving Insert mode
-|InsertCharPre|		when a character was typed in Insert mode, before
-			inserting it
-
-|TextYankPost|		when some text is yanked or deleted
-
-|TextChanged|		after a change was made to the text in Normal mode
-|TextChangedI|		after a change was made to the text in Insert mode
-			when popup menu is not visible
-|TextChangedP|		after a change was made to the text in Insert mode
-			when popup menu visible
-
-|ColorSchemePre|	before loading a color scheme
-|ColorScheme|		after loading a color scheme
-
-|RemoteReply|		a reply from a server Vim was received
-
-|QuickFixCmdPre|	before a quickfix command is run
-|QuickFixCmdPost|	after a quickfix command is run
-
-|SessionLoadPost|	after loading a session file
-
-|MenuPopup|		just before showing the popup menu
-|CompleteChanged|	after popup menu changed, not fired on popup menu hide
-|CompleteDonePre|	after Insert mode completion is done, before clearing
-			info
-|CompleteDone|		after Insert mode completion is done, after clearing
-			info
-
-|User|			to be used in combination with ":doautocmd"
-|Signal|		after Nvim receives a signal
-
-
-
-The alphabetical list of autocommand events:		*autocmd-events-abc*
+							*events* *{event}*
+Nvim recognizes the following events.  Names are case-insensitive.
 
 							*BufAdd*
 BufAdd				Just after creating a new buffer which is
@@ -642,7 +482,7 @@ CursorHold			When the user doesn't press a key for the time
 				Hint: to force an update of the status lines
 				use: >
 					:let &ro = &ro
-
+<
 							*CursorHoldI*
 CursorHoldI			Like CursorHold, but in Insert mode. Not
 				triggered when waiting for another key, e.g.
@@ -1111,13 +951,13 @@ VimEnter			After doing all the startup stuff, including
 				   if v:vim_did_enter
 				     call s:init()
 				   else
- 	  			     au VimEnter * call s:init()
+				     au VimEnter * call s:init()
 				   endif
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
 				VimLeavePre.
-<				Use |v:dying| to detect an abnormal exit.
+				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
@@ -1126,7 +966,7 @@ VimLeavePre			Before exiting Vim, just before writing the
 				if there is a match with the name of what
 				happens to be the current buffer when exiting.
 				Mostly useful with a "*" pattern. >
-	:autocmd VimLeavePre * call CleanupStuff()
+				   :autocmd VimLeavePre * call CleanupStuff()
 <				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.

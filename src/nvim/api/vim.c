@@ -204,9 +204,9 @@ Integer nvim_get_hl_id_by_name(String name)
 ///
 /// On execution error: does not fail, but updates v:errmsg.
 ///
-///  If you need to input sequences like <C-o> use |nvim_replace_termcodes|
-///  to replace the termcodes and then pass the resulting string to
-///  nvim_feedkeys. You'll also want to enable escape_csi.
+/// If you need to input sequences like <C-o> use |nvim_replace_termcodes| to
+/// replace the termcodes and then pass the resulting string to nvim_feedkeys.
+/// You'll also want to enable escape_csi.
 ///
 /// Example:
 /// <pre>

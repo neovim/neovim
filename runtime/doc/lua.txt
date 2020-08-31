@@ -9,7 +9,7 @@ Lua engine						*lua* *Lua*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Introduction						*lua-intro*
+INTRODUCTION						*lua-intro*
 
 The Lua 5.1 language is builtin and always available.  Try this command to get
 an idea of what lurks beneath: >
@@ -30,7 +30,7 @@ finds and loads Lua modules.  The conventions are similar to VimL plugins,
 with some extra features.  See |lua-require-example| for a walkthrough.
 
 ==============================================================================
-Importing Lua modules					*lua-require*
+IMPORTING LUA MODULES					*lua-require*
 
                                                         *lua-package-path*
 Nvim automatically adjusts `package.path` and `package.cpath` according to
@@ -233,7 +233,7 @@ lua/charblob.lua: >
     }
 
 ==============================================================================
-Commands						*lua-commands*
+COMMANDS						*lua-commands*
 
 These commands execute a Lua chunk from either the command line (:lua, :luado)
 or a file (:luafile) on the given line [range]. As always in Lua, each chunk
@@ -456,7 +456,7 @@ management.  Try this command to see available functions: >
 
     :lua print(vim.inspect(vim.loop))
 
-Reference: http://docs.libuv.org
+Reference: https://github.com/luvit/luv/blob/master/docs.md
 Examples:  https://github.com/luvit/luv/tree/master/examples
 
 						*E5560* *lua-loop-callbacks*
@@ -891,11 +891,6 @@ vim.api.{func}({...})					*vim.api*
         Example: call the "nvim_get_current_line()" API function: >
             print(tostring(vim.api.nvim_get_current_line()))
 
-vim.call({func}, {...})					*vim.call()*
-        Invokes |vim-function| or |user-function| {func} with arguments {...}.
-        See also |vim.fn|. Equivalent to: >
-            vim.fn[func]({...})
-
 vim.in_fast_event()					*vim.in_fast_event()*
         Returns true if the code is executing as part of a "fast" event
         handler, where most of the API is disabled. These are low-level events
@@ -1055,22 +1050,6 @@ vim.wait({time}, {callback} [, {interval}])                         *vim.wait()*
     end
 <
 
-vim.fn.{func}({...})					*vim.fn*
-        Invokes |vim-function| or |user-function| {func} with arguments {...}.
-        To call autoload functions, use the syntax: >
-            vim.fn['some#function']({...})
-<
-        Unlike vim.api.|nvim_call_function| this converts directly between Vim
-        objects and Lua objects. If the Vim function returns a float, it will
-        be represented directly as a Lua number. Empty lists and dictionaries
-        both are represented by an empty table.
-
-        Note: |v:null| values as part of the return value is represented as
-        |vim.NIL| special value
-
-        Note: vim.fn keys are generated lazily, thus `pairs(vim.fn)` only
-        enumerates functions that were called at least once.
-
 vim.type_idx						*vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |vim.types| allows typing the empty table (it is 
@@ -1106,64 +1085,103 @@ vim.types						*vim.types*
 	`vim.types.dictionary` will not change or that `vim.types` table will 
 	only contain values for these three types.
 
-==============================================================================
-Vim Internal Variables                              *lua-vim-internal-variables*
+------------------------------------------------------------------------------
+LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
 
-Built-in Vim dictionaries can be accessed and set idiomatically in Lua by each
-of the following tables.
+Nvim Lua provides an interface to Vimscript variables and functions, and
+editor commands and options.
 
-To set a value: >
+vim.call({func}, {...})					*vim.call()*
+        Invokes |vim-function| or |user-function| {func} with arguments {...}.
+        See also |vim.fn|.
+        Equivalent to: >
+            vim.fn[func]({...})
 
-  vim.g.my_global_variable = 5
+vim.cmd({cmd})                                          *vim.cmd()*
+        Invokes an Ex command (the ":" commands, Vimscript statements).
+        See also |ex-cmd-index|.
+        Example: >
+            vim.cmd('echo 42')
+
+vim.fn.{func}({...})					*vim.fn*
+        Invokes |vim-function| or |user-function| {func} with arguments {...}.
+        To call autoload functions, use the syntax: >
+            vim.fn['some#function']({...})
+<
+        Unlike vim.api.|nvim_call_function| this converts directly between Vim
+        objects and Lua objects. If the Vim function returns a float, it will
+        be represented directly as a Lua number. Empty lists and dictionaries
+        both are represented by an empty table.
+
+        Note: |v:null| values as part of the return value is represented as
+        |vim.NIL| special value
+
+        Note: vim.fn keys are generated lazily, thus `pairs(vim.fn)` only
+        enumerates functions that were called at least once.
+
+
+                                                        *lua-vim-variables*
+The Vim editor global dictionaries |g:| |w:| |b:| |t:| |v:| can be accessed
+from Lua conveniently and idiomatically by referencing the `vim.*` Lua tables
+described below. In this way you can easily read and modify global Vimscript
+variables from Lua.
+
+Example: >
+
+    vim.g.foo = 5     -- Set the g:foo Vimscript variable.
+    print(vim.g.foo)  -- Get and print the g:foo Vimscript variable.
+    vim.g.foo = nil   -- Delete (:unlet) the Vimscript variable.
+
+vim.g                                                   *vim.g*
+        Global (|g:|) editor variables.
+        Key with no value returns `nil`.
+
+vim.b                                                   *vim.b*
+        Buffer-scoped (|b:|) variables for the current buffer.
+        Invalid or unset key returns `nil`.
+
+vim.w                                                   *vim.w*
+        Window-scoped (|w:|) variables for the current window.
+        Invalid or unset key returns `nil`.
+
+vim.t                                                   *vim.t*
+        Tabpage-scoped (|t:|) variables for the current tabpage.
+        Invalid or unset key returns `nil`.
+
+vim.v                                                   *vim.v*
+        |v:| variables.
+        Invalid or unset key returns `nil`.
+
+vim.env                                                 *vim.env*
+        Environment variables defined in the editor session.
+        See |expand-env| and |:let-environment| for the Vimscript behavior.
+        Invalid or unset key returns `nil`.
+        Example: >
+            vim.env.FOO = 'bar'
+            print(vim.env.TERM)
 <
 
-To read a value: >
+                                                        *lua-vim-options*
+From Lua you can work with editor |options| by reading and setting items in
+these Lua tables:
 
-  print(vim.g.my_global_variable)
-<
+vim.o                                                   *vim.o*
+        Get or set editor options, like |:set|. Invalid key is an error.
+        Example: >
+            vim.o.cmdheight = 4
+            print(vim.o.columns)
 
-To delete a value: >
+vim.bo                                                  *vim.bo*
+        Get or set buffer-scoped |local-options|. Invalid key is an error.
+        Example: >
+            vim.bo.buflisted = true
+            print(vim.bo.comments)
 
-  vim.g.my_global_variable = nil
-<
-
-vim.g                                                                 *vim.g*
-        Table with values from |g:|
-        Keys with no values set will result in `nil`.
-
-vim.b                                                                 *vim.b*
-        Gets a buffer-scoped (b:) variable for the current buffer.
-        Keys with no values set will result in `nil`.
-
-vim.w                                                                 *vim.w*
-        Gets a window-scoped (w:) variable for the current window.
-        Keys with no values set will result in `nil`.
-
-vim.t                                                                 *vim.t*
-        Gets a tabpage-scoped (t:) variable for the current table.
-        Keys with no values set will result in `nil`.
-
-vim.v                                                                 *vim.v*
-        Gets a v: variable.
-        Keys with no values set will result in `nil`.
-
-
-Vim Internal Options                                *lua-vim-internal-options*
-
-Read, set and clear vim |options| in Lua by each of the following tables.
-
-
-vim.o                                                                 *vim.o*
-        Table with values from |options|
-        Invalid keys will result in an error.
-
-vim.bo                                                                *vim.bo*
-        Gets a buffer-scoped option for the current buffer.
-        Invalid keys will result in an error.
-
-vim.wo                                                                *vim.wo*
-        Gets a window-scoped option for the current window.
-        Invalid keys will result in an error.
+vim.wo                                                  *vim.wo*
+        Get or set window-scoped |local-options|. Invalid key is an error.
+        Example: >
+            vim.wo.cursorcolumn = true
+            print(vim.wo.foldmarker)
 
 
 ==============================================================================
@@ -1419,8 +1437,13 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
                     Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_isempty({t})                                           *vim.tbl_isempty()*
+                Checks if a table is empty.
+
+                Parameters: ~
+                    {t}  Table to check
+
                 See also: ~
-                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua@paramt Table to check
+                    https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_islist({t})                                             *vim.tbl_islist()*
                 Determine whether a Lua table can be treated as an array.
@@ -1530,4 +1553,4 @@ validate({opt})                                               *vim.validate()*
                               • msg: (optional) error string if validation
                                 fails
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:
