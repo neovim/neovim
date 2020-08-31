@@ -5919,7 +5919,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   const char regname = (char)name;
   tv_list_append_string(args, &regname, 1);
 
-  typval_T result = eval_call_provider("clipboard", "get", args);
+  typval_T result = eval_call_provider("clipboard", "get", args, false);
 
   if (result.v_type != VAR_LIST) {
     if (result.v_type == VAR_NUMBER && result.vval.v_number == 0) {
@@ -6067,7 +6067,7 @@ static void set_clipboard(int name, yankreg_T *reg)
   tv_list_append_string(args, &regtype, 1);  // -V614
   tv_list_append_string(args, ((char[]) { (char)name }), 1);
 
-  (void)eval_call_provider("clipboard", "set", args);
+  (void)eval_call_provider("clipboard", "set", args, true);
 }
 
 /// Avoid slow things (clipboard) during batch operations (while/for-loops).
