@@ -4,21 +4,15 @@
 			    NVIM REFERENCE MANUAL
 
 
-Introduction to Vim					*ref* *reference*
+Nvim							*ref* *reference*
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
 Introduction						*intro*
 
-Vim stands for Vi IMproved.  It used to be Vi IMitation, but there are so many
-improvements that a name change was appropriate.  Vim is a text editor which
-includes almost all the commands from the Unix program "Vi" and a lot of new
-ones.  It is very useful for editing programs and other plain text.
-   All commands are given with the keyboard.  This has the advantage that you
-can keep your fingers on the keyboard and your eyes on the screen.  For those
-who want it, there is mouse support and a GUI version with scrollbars and
-menus (see |gui.txt|).
+Vim is a text editor which includes most commands from the Unix program "Vi"
+and many new ones.
 
 An overview of this manual can be found in the file "help.txt", |help.txt|.
 It can be accessed from within Vim with the <Help> or <F1> key and with the
@@ -28,16 +22,15 @@ is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
 							*pronounce*
-Vim is pronounced as one word, like Jim.  Nvim is pronounced as N-vim, or,
-continuing with the Jim simile, N-Jim, which sounds like Ninja.
+Vim is pronounced as one word, like Jim.  So Nvim is N-Jim, which sounds like
+"Ninja".  Starting Nvim is like performing a roundhouse kick.
 
-This manual is a reference for all the Vim commands and options.  This is not
-an introduction to the use of Vi or Vim, it gets a bit complicated here and
-there.  For beginners, there is a hands-on |tutor|.  To learn using Vim, read
-the user manual |usr_toc.txt|.
+This manual is a reference for all Nvim editor and API features.  It is not an
+introduction; instead for beginners, there is a hands-on |tutor| and a user
+manual |usr_toc.txt|.
 
 							*book*
-There are many books on Vi and Vim.  We recommend these books:
+There are many books on Vi and Vim.  We recommend:
 
 	"Practical Vim" by Drew Neil
 	"Modern Vim" by Drew Neil
@@ -48,7 +41,7 @@ tasks with Vim.  "Modern Vim" explores new features in Nvim and Vim 8.
 
 	"Vim - Vi Improved" by Steve Oualline
 
-This is the first book dedicated to Vim.  Parts of it were included in the
+This was the first book dedicated to Vim.  Parts of it were included in the
 user manual. |frombook|  ISBN: 0735710015
 For more information try one of these:
 	https://iccf-holland.org/click5.html
@@ -63,11 +56,9 @@ Nvim on the interwebs					*internet*
 	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
 	Downloads:	  https://github.com/neovim/neovim/releases
 	Vim FAQ:	  https://vimhelp.appspot.com/vim_faq.txt.html
-	Vim home page:	  https://www.vim.org/
 
 
-			*bugs* *bug-report* *bugreport.vim* *feature-request* 
-
+			*bugs* *bug-report*
 Report bugs and request features here:
 https://github.com/neovim/neovim/issues
 
@@ -97,7 +88,7 @@ Neovim development is funded separately from Vim:
 	https://neovim.io/#sponsor
 
 ==============================================================================
-Credits				*credits* *author* *Bram* *Moolenaar*
+Credits				*credits*
 
 Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
 
@@ -185,25 +176,21 @@ the ideas from all these people: They keep Vim alive!
 *love* *peace* *friendship* *gross-national-happiness*
 
 
-In this documentation there are several references to other versions of Vi:
+Documentation may refer to other versions of Vi:
 							*Vi* *vi*
 Vi	"the original".  Without further remarks this is the version
 	of Vi that appeared in Sun OS 4.x.  ":version" returns
-	"Version 3.7, 6/7/85".  Sometimes other versions are referred
-	to.  Only runs under Unix.  Source code only available with a
-	license.
+	"Version 3.7, 6/7/85".  Source code only available with a license.
 							*Nvi*
 Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
 	Very good compatibility with the original Vi, with a few extensions.
 	The version used is 1.79.  ":version" returns "Version 1.79
-	(10/23/96)".  There has been no release the last few years, although
-	there is a development version 1.81.
-	Source code is freely available.
+	(10/23/96)".  Source code is freely available.
 							*Elvis*
 Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
-	as flexible as Vim.
-	The version used is 2.1.  It is still being developed.  Source code is
-	freely available.
+	as flexible as Vim.  Source code is freely available.
+
+Vim	Nvim is based on Vim.  https://www.vim.org/
 
 ==============================================================================
 Notation						*notation*
@@ -387,37 +374,24 @@ notation	meaning		    equivalent	decimal value(s)	~
 <D-…>		command-key or "super" key	*<D-*
 -----------------------------------------------------------------------
 
-Note: The shifted cursor keys, the help key, and the undo key are only
-available on a few terminals.
+Note:
 
-Note: There are two codes for the delete key.  127 is the decimal ASCII value
-for the delete key, which is always recognized.  Some delete keys send another
-value, in which case this value is obtained from the |terminfo| entry "key_dc".
-Both values have the same effect.
-
-Note: The keypad keys are used in the same way as the corresponding "normal"
-keys.  For example, <kHome> has the same effect as <Home>.  If a keypad key
-sends the same raw key code as its non-keypad equivalent, it will be
-recognized as the non-keypad code.  For example, when <kHome> sends the same
-code as <Home>, when pressing <kHome> Vim will think <Home> was pressed.
-Mapping <kHome> will not work then.
-
-Note: If numlock is on, the |TUI| receives plain ASCII values, so
-mappings to <k0> - <k9> and <kPoint> will not work.
-
-Note: Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`.
-Which combinations actually are usable depends on the terminal emulator or GUI.
+- Availability of some keys (<Help>, <S-Right>, …) depends on the UI or host
+  terminal.
+- If numlock is on the |TUI| receives plain ASCII values, so mapping <k0>,
+  <k1>, ..., <k9> and <kPoint> will not work.
+- Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`. Which
+  combinations actually work depends on the the UI or host terminal.
 
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make
 clear what you need to type, but often it can be typed literally, e.g., with
 the ":map" command.  The rules are:
- 1.  Any printable characters are typed directly, except backslash and '<'
- 2.  A backslash is represented with "\\", double backslash, or "<Bslash>".
- 3.  A real '<' is represented with "\<" or "<lt>".  When there is no
-     confusion possible, a '<' can be used directly.
- 4.  "<key>" means the special key typed.  This is the notation explained in
-     the table above.  A few examples:
+ 1.  Printable characters are typed directly, except backslash and "<"
+ 2.  Backslash is represented with "\\", double backslash, or "<Bslash>".
+ 3.  Literal "<" is represented with "\<" or "<lt>".  When there is no
+     confusion possible, "<" can be used directly.
+ 4.  "<key>" means the special key typed (see the table above).  Examples:
 	   <Esc>		Escape key
 	   <C-G>		CTRL-G
 	   <Up>			cursor up key
@@ -436,11 +410,6 @@ The first one only works when the 'B' flag is not in 'cpoptions'.  The second
 one always works.
 To get a literal "<lt>" in a mapping: >
 	:map <C-L> <lt>lt>
-
-For mapping, abbreviation and menu commands you can then copy-paste the
-examples and use them directly.  Or type them literally, including the '<' and
-'>' characters.  This does NOT work for other commands, like ":set" and
-":autocmd"!
 
 ==============================================================================
 Modes, introduction				*vim-modes-intro* *vim-modes*
@@ -599,7 +568,7 @@ Q or gQ			Switch to Ex mode.  This is like typing ":" commands
 			Use the ":vi" command |:visual| to exit this mode.
 
 ==============================================================================
-The window contents					*window-contents*
+Window contents						*window-contents*
 
 In Normal mode and Insert/Replace mode the screen window will show the current
 contents of the buffer: What You See Is What You Get.  There are two

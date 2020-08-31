@@ -92,7 +92,7 @@ Mouse input has the following behavior:
   the terminal wont lose focus and the hovered window will be scrolled.
 
 ==============================================================================
-Configuration					*terminal-configuration*
+Configuration					*terminal-config*
 
 Options:		'modified', 'scrollback'
 Events:			|TermOpen|, |TermEnter|, |TermLeave|, |TermClose|

@@ -13,7 +13,7 @@ the differences.
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Configuration					    *nvim-configuration*
+1. Configuration					    *nvim-config*
 
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for configuration.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
@@ -66,8 +66,8 @@ the differences.
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
-- The |man.vim| plugin is enabled, to provide the |:Man| command.
-- The |matchit| plugin is enabled. To disable it in your config: >
+- |man.vim| plugin is enabled, so |:Man| is available by default.
+- |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 
 ==============================================================================
@@ -173,6 +173,7 @@ Functions:
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
+  |tabpagenr()| "#" argument
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
@@ -187,18 +188,18 @@ Highlight groups:
   |hl-TermCursorNC|
   |hl-Whitespace| highlights 'listchars' whitespace
 
-Input:
+Input/Mappings:
+  |<Cmd>| pseudokey
+
   ALT (|META|) chords always work (even in the |TUI|). Map |<M-| with any key:
   <M-1>, <M-BS>, <M-Del>, <M-Ins>, <M-/>, <M-\>, <M-Space>, <M-Enter>, etc.
   Case-sensitive: <M-a> and <M-A> are two different keycodes.
 
   ALT in insert-mode behaves like <Esc> if not mapped. |i_ALT|
 
-Mappings:
-  |<Cmd>| pseudokey
-
 Normal commands:
-  "Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
+  |g<Tab>| goes to the last-accessed tabpage.
+  |gO| shows a filetype-defined "outline" of the current buffer.
 
 Options:
   'cpoptions'   flags: |cpo-_|

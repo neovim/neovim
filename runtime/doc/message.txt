@@ -359,7 +359,7 @@ the other way around.  It should be used like this: {foo,bar}.  This matches
   ml_get: invalid lnum: {number}
 
 This is an internal Vim error.  Please try to find out how it can be
-reproduced, and submit a bug report |bugreport.vim|.
+reproduced, and submit a |bug-report|.
 
 							*E173*  >
   {number} more files to edit

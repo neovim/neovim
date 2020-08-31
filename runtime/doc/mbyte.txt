@@ -267,15 +267,15 @@ Recognized 'fileencoding' values include:		*encoding-values*
 1   cp1258	Vietnamese
 1   cp{number}	MS-Windows: any installed single-byte codepage
 2   cp932	Japanese (Windows only)
-2   euc-jp	Japanese (Unix only)
-2   sjis	Japanese (Unix only)
+2   euc-jp	Japanese
+2   sjis	Japanese
 2   cp949	Korean (Unix and Windows)
-2   euc-kr	Korean (Unix only)
+2   euc-kr	Korean
 2   cp936	simplified Chinese (Windows only)
-2   euc-cn	simplified Chinese (Unix only)
+2   euc-cn	simplified Chinese
 2   cp950	traditional Chinese (on Unix alias for big5)
 2   big5	traditional Chinese (on Windows alias for cp950)
-2   euc-tw	traditional Chinese (Unix only)
+2   euc-tw	traditional Chinese
 2   2byte-{name} Unix: any double-byte encoding (Vim specific name)
 2   cp{number}	MS-Windows: any installed double-byte codepage
 u   utf-8	32 bit UTF-8 encoded Unicode (ISO/IEC 10646-1)
@@ -298,14 +298,14 @@ the same encoding is used and it's called latin1.  'isprint' can be used to
 display the characters 0x80 - 0xA0 or not.
 
 Several aliases can be used, they are translated to one of the names above.
-An incomplete list:
+Incomplete list:
 
 1   ansi	same as latin1 (obsolete, for backward compatibility)
-2   japan	Japanese: on Unix "euc-jp", on MS-Windows cp932
-2   korea	Korean: on Unix "euc-kr", on MS-Windows cp949
-2   prc		simplified Chinese: on Unix "euc-cn", on MS-Windows cp936
+2   japan	Japanese: "euc-jp"
+2   korea	Korean: "euc-kr"
+2   prc		simplified Chinese: "euc-cn"
 2   chinese     same as "prc"
-2   taiwan	traditional Chinese: on Unix "euc-tw", on MS-Windows cp950
+2   taiwan	traditional Chinese: "euc-tw"
 u   utf8	same as utf-8
 u   unicode	same as ucs-2
 u   ucs2be	same as ucs-2 (big endian)

@@ -922,7 +922,7 @@ end
 --- To stop all clients:
 ---
 --- <pre>
---- vim.lsp.stop_client(lsp.get_active_clients())
+--- vim.lsp.stop_client(vim.lsp.get_active_clients())
 --- </pre>
 ---
 --- By default asks the server to shutdown, unless stop was requested

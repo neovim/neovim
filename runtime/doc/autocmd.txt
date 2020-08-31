@@ -482,7 +482,7 @@ CursorHold			When the user doesn't press a key for the time
 				Hint: to force an update of the status lines
 				use: >
 					:let &ro = &ro
-
+<
 							*CursorHoldI*
 CursorHoldI			Like CursorHold, but in Insert mode. Not
 				triggered when waiting for another key, e.g.
@@ -951,13 +951,13 @@ VimEnter			After doing all the startup stuff, including
 				   if v:vim_did_enter
 				     call s:init()
 				   else
- 	  			     au VimEnter * call s:init()
+				     au VimEnter * call s:init()
 				   endif
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
 				VimLeavePre.
-<				Use |v:dying| to detect an abnormal exit.
+				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
@@ -966,7 +966,7 @@ VimLeavePre			Before exiting Vim, just before writing the
 				if there is a match with the name of what
 				happens to be the current buffer when exiting.
 				Mostly useful with a "*" pattern. >
-	:autocmd VimLeavePre * call CleanupStuff()
+				   :autocmd VimLeavePre * call CleanupStuff()
 <				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.

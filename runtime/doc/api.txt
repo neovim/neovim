@@ -70,7 +70,7 @@ Nvim instance:
     nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM_LISTEN_ADDRESS'])
     result = nvim.call(:nvim_command, 'echo "hello world!"')
 <
-A better way is to use the Python REPL with the `neovim` package, where API
+A better way is to use the Python REPL with the "pynvim" package, where API
 functions can be called interactively:
 >
     >>> from pynvim import attach

@@ -118,8 +118,7 @@ A few special texts:
 		Option was set with command line argument |-c|, +, |-S| or
 		|-q|.
 	Last set from environment variable ~
-		Option was set from an environment variable, $VIMINIT,
-		$GVIMINIT or $EXINIT.
+		Option was set from $VIMINIT.
 	Last set from error handler ~
 		Option was cleared when evaluating it resulted in an error.
 

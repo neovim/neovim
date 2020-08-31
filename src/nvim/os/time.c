@@ -56,6 +56,8 @@ uint64_t os_now(void)
 
 /// Sleeps for `ms` milliseconds.
 ///
+/// @see uv_sleep() (libuv v1.34.0)
+///
 /// @param ms          Number of milliseconds to sleep
 /// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t ms, bool ignoreinput)
@@ -71,6 +73,8 @@ void os_delay(uint64_t ms, bool ignoreinput)
 }
 
 /// Sleeps for `us` microseconds.
+///
+/// @see uv_sleep() (libuv v1.34.0)
 ///
 /// @param us          Number of microseconds to sleep.
 /// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).

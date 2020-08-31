@@ -168,9 +168,9 @@ Versions ~
 |vi_diff.txt|	Main differences between Vim and Vi
 						*standard-plugin-list*
 Standard plugins ~
+|matchit.txt|      Extended |%| matching
 |pi_gzip.txt|      Reading and writing compressed files
 |pi_health.txt|    Healthcheck framework
-|pi_matchit.txt|   Extended |%| matching
 |pi_msgpack.txt|   msgpack utilities
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens

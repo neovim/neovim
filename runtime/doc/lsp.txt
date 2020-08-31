@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-LSP client/framework                                     *lsp*
+LSP client/framework                                     *lsp* *LSP*
 
 Nvim supports the Language Server Protocol (LSP), which means it acts as
 a client to LSP servers and includes a Lua framework `vim.lsp` for building
@@ -647,7 +647,7 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                 object. To stop all clients:
 >
 
-    vim.lsp.stop_client(lsp.get_active_clients())
+    vim.lsp.stop_client(vim.lsp.get_active_clients())
 <
 
                 By default asks the server to shutdown, unless stop was
@@ -1435,4 +1435,4 @@ try_trim_markdown_code_blocks({lines})
                 Return: ~
                     (string) filetype or 'markdown' if it was unchanged.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:
