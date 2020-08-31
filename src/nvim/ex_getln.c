@@ -423,6 +423,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   char_u use_last_pat;
 
   // Parsing range may already set the last search pattern.
+  // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
@@ -566,6 +567,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   int skiplen, patlen;
 
   // Parsing range may already set the last search pattern.
+  // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   // Add a character from under the cursor for 'incsearch'
@@ -573,6 +575,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
     restore_last_search_pattern();
     return FAIL;
   }
+  restore_last_search_pattern();
 
   if (s->did_incsearch) {
     curwin->w_cursor = s->match_end;
@@ -1445,6 +1448,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   int skiplen, patlen;
 
   // Parsing range may already set the last search pattern.
+  // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
