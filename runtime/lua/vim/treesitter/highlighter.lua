@@ -98,7 +98,7 @@ function TSHighlighter:get_hl_from_capture(capture)
     return vim.split(name, '.', true)[1]
   else
     -- Default to false to avoid recomputing
-    return TSHighlighter.hl_map[name]
+    return a.nvim_get_hl_id_by_name(TSHighlighter.hl_map[name])
   end
 end
 
@@ -142,10 +142,11 @@ function TSHighlighter:on_changedtree(changes)
       local start_row, start_col, end_row, end_col = node:range()
       local hl = self.hl_cache[capture]
       if hl then
-        a.nvim__buf_add_decoration(self.buf, ts_hs_ns, hl,
-          start_row, start_col,
-          end_row, end_col,
-          {})
+        a.nvim_buf_set_extmark(self.buf, ts_hs_ns, start_row, start_col, {
+          end_col = end_col,
+          end_line = end_row,
+          hl_group = hl
+        })
       end
     end
   end
