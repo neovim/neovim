@@ -500,8 +500,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
         or decoded.error.code == protocol.ErrorCodes.ContentModified) then
         if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
           local _ = log.debug() and log.debug("Received cancellation ack", decoded)
-        end
-        else if decoded.error.code == protocol.ErrorCodes.ContentModified then
+        elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
           local _ = log.debug() and log.debug("Received content modified ack", decoded)
         end
         local result_id = tonumber(decoded.id)
