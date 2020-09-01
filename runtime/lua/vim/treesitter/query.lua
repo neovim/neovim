@@ -135,25 +135,38 @@ function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
 
+local function xor(a, b)
+  return (a or b) and not (a and b)
+end
+
 function Query:match_preds(match, pattern, bufnr)
   local preds = self.info.patterns[pattern]
-  if not preds then
-    return true
-  end
-  for _, pred in pairs(preds) do
+
+  for _, pred in pairs(preds or {}) do
     -- Here we only want to return if a predicate DOES NOT match, and
     -- continue on the other case. This way unknown predicates will not be considered,
     -- which allows some testing and easier user extensibility (#12173).
     -- Also, tree-sitter strips the leading # from predicates for us.
+    local pred_name
+    local is_not
     if string.sub(pred[1], 1, 4) == "not-" then
-      local pred_name = string.sub(pred[1], 5)
-      if predicate_handlers[pred_name] and
-        predicate_handlers[pred_name](match, pattern, bufnr, pred) then
-        return false
-      end
+      pred_name = string.sub(pred[1], 5)
+      is_not = true
+    else
+      pred_name = pred[1]
+      is_not = false
+    end
 
-    elseif predicate_handlers[pred[1]] and
-      not predicate_handlers[pred[1]](match, pattern, bufnr, pred) then
+    local handler = predicate_handlers[pred_name]
+
+    if not handler then
+      a.nvim_err_writeln(string.format("No handler for %s", pred[1]))
+      return false
+    end
+
+    local pred_matches = handler(match, pattern, bufnr, pred)
+
+    if not xor(is_not, pred_matches) then
       return false
     end
   end
