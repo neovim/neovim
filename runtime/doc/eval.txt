@@ -2288,6 +2288,7 @@ nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number  bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
+perleval({expr})		any	evaluate |perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
@@ -6422,6 +6423,21 @@ pathshorten({expr})					*pathshorten()*
 			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
 <			~/.c/n/a/file1.vim ~
 		It doesn't matter if the path exists or not.
+
+perleval({expr})					*perleval()*
+		Evaluate |perl| expression {expr} and return its result
+		converted to Vim data structures.
+		Numbers and strings are returned as they are (strings are
+		copied though).
+		Lists are represented as Vim |List| type.
+		Dictionaries are represented as Vim |Dictionary| type,
+		non-string keys result in error.
+
+		Note: If you want an array or hash, {expr} must return a
+		reference to it.
+		Example: >
+			:echo perleval('[1 .. 4]')
+<			[1, 2, 3, 4]
 
 pow({x}, {y})						*pow()*
 		Return the power of {x} to the exponent {y} as a |Float|.
