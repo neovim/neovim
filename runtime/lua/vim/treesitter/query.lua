@@ -60,7 +60,7 @@ local predicate_handlers = {
       return true
   end,
 
-  ["match?"] = function(match, _, bufnr, predicate)
+  ["lua-match?"] = function(match, _, bufnr, predicate)
       local node = match[predicate[2]]
       local regex = predicate[3]
       local start_row, _, end_row, _ = node:range()
@@ -71,7 +71,7 @@ local predicate_handlers = {
       return string.find(M.get_node_text(node, bufnr), regex)
   end,
 
-  ["vim-match?"] = (function()
+  ["match?"] = (function()
     local magic_prefixes = {['\\v']=true, ['\\m']=true, ['\\M']=true, ['\\V']=true}
     local function check_magic(str)
       if string.len(str) < 2 or magic_prefixes[string.sub(str,1,2)] then
@@ -113,6 +113,9 @@ local predicate_handlers = {
     return false
   end
 }
+
+-- As we provide lua-match? also expose vim-match?
+predicate_handlers["vim-match?"] = predicate_handlers["match?"]
 
 --- Adds a new predicates to be used in queries
 --
