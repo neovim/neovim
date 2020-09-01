@@ -250,6 +250,35 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('allow loading query with escaped quotes and capture them with `match?` and `vim-match?`', function()
+    if not check_parser() then return end
+
+    insert('char* astring = "Hello World!";')
+
+    local res = exec_lua([[
+      cquery = vim.treesitter.parse_query("c", '((_) @quote (vim-match? @quote "^\\"$")) ((_) @quote (match? @quote "^\\"$"))')
+      parser = vim.treesitter.get_parser(0, "c")
+      tree = parser:parse()
+      res = {}
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, 1) do
+        -- can't transmit node over RPC. just check the name and range
+        local mrepr = {}
+        for cid,node in pairs(match) do
+          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        end
+        table.insert(res, {pattern, mrepr})
+      end
+      return res
+    ]])
+
+    eq({
+      { 1, { { "quote", '"', 0, 16, 0, 17 } } },
+      { 2, { { "quote", '"', 0, 16, 0, 17 } } },
+      { 1, { { "quote", '"', 0, 29, 0, 30 } } },
+      { 2, { { "quote", '"', 0, 29, 0, 30 } } },
+    }, res)
+  end)
+
   it('allows to add predicates', function()
     insert([[
     int main(void) {
