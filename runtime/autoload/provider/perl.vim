@@ -11,6 +11,12 @@ function! provider#perl#Detect() abort
     return ''
   endif
 
+  " if perl is available, make sure we have 5.22+
+  call system([prog, '-e', 'use v5.22'])
+  if v:shell_error
+    return ''
+  endif
+
   " if perl is available, make sure the required module is available
   call system([prog, '-W', '-MNeovim::Ext', '-e', ''])
   return v:shell_error ? '' : prog

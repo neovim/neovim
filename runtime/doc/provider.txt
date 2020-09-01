@@ -135,6 +135,7 @@ The Vim legacy |perl-vim| interface is also supported (which is itself
 implemented as a Nvim remote-plugin).
 https://github.com/jacquesg/p5-Neovim-Ext
 
+Note: Only perl versions from 5.22 onward are supported.
 
 PERL QUICKSTART~
 

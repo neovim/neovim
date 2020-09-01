@@ -695,10 +695,10 @@ function! s:check_perl() abort
           \ ['Install Perl and cpanminus and verify that `perl` and `cpanm` commands work.'])
     return
   endif
-  let perl_v = get(split(s:system(['perl', '-W', '-e', 'print $^V']), "\n"), 0, '')
-  call health#report_info('Perl: '. perl_v)
+
+  call s:system(['perl', '-e', 'use v5.22'])
   if s:shell_error
-    call health#report_warn('Nvim perl host does not support '.perl_v)
+    call health#report_warn('Perl version is too old, 5.22+ required')
     " Skip further checks, they are nonsense if perl is too old.
     return
   endif
