@@ -55,11 +55,7 @@ function! s:cmd_ok(cmd) abort
 endfunction
 
 function! s:split_cmd(cmd) abort
-  if type(a:cmd) == v:t_string
-    return split(a:cmd, " ")
-  else
-    return a:cmd
-  endif
+  return (type(a:cmd) == v:t_string) ? split(a:cmd, " ") : a:cmd
 endfunction
 
 let s:cache_enabled = 1
