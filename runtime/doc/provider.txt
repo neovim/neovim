@@ -212,23 +212,6 @@ For example this configuration integrates the tmux clipboard: >
     let g:clipboard = {
           \   'name': 'myClipboard',
           \   'copy': {
-          \      '+': 'tmux load-buffer -',
-          \      '*': 'tmux load-buffer -',
-          \    },
-          \   'paste': {
-          \      '+': 'tmux save-buffer -',
-          \      '*': 'tmux save-buffer -',
-          \   },
-          \   'cache_enabled': 1,
-          \ }
-
-Commands can also be specified with lists, which is useful for arguments
-containing spaces.
-For example the above configuration can be written in this form: >
-
-    let g:clipboard = {
-          \   'name': 'myClipboard',
-          \   'copy': {
           \      '+': ['tmux', 'load-buffer', '-'],
           \      '*': ['tmux', 'load-buffer', '-'],
           \    },

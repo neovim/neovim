@@ -74,74 +74,74 @@ function! provider#clipboard#Executable() abort
       return ''
     endif
 
-    let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
-    let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
+    let s:copy = {}
+    let s:copy['+'] = s:split_cmd(get(g:clipboard.copy, '+', v:null))
+    let s:copy['*'] = s:split_cmd(get(g:clipboard.copy, '*', v:null))
+
+    let s:paste = {}
+    let s:paste['+'] = s:split_cmd(get(g:clipboard.paste, '+', v:null))
+    let s:paste['*'] = s:split_cmd(get(g:clipboard.paste, '*', v:null))
+
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
-    let name = get(g:clipboard, 'name', 'g:clipboard')
+    return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac')
-    let s:copy['+'] = 'pbcopy'
-    let s:paste['+'] = 'pbpaste'
+    let s:copy['+'] = ['pbcopy']
+    let s:paste['+'] = ['pbpaste']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
-    let name = 'pbcopy'
+    return 'pbcopy'
   elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
-    let s:copy['+'] = 'wl-copy --foreground --type text/plain'
-    let s:paste['+'] = 'wl-paste --no-newline'
-    let s:copy['*'] = 'wl-copy --foreground --primary --type text/plain'
-    let s:paste['*'] = 'wl-paste --no-newline --primary'
-    let name = 'wl-copy'
+    let s:copy['+'] = ['wl-copy', '--foreground', '--type', 'text/plain']
+    let s:paste['+'] = ['wl-paste', '--no-newline']
+    let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
+    let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
+    return 'wl-copy'
   elseif exists('$DISPLAY') && executable('xclip')
-    let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
-    let s:paste['+'] = 'xclip -o -selection clipboard'
-    let s:copy['*'] = 'xclip -quiet -i -selection primary'
-    let s:paste['*'] = 'xclip -o -selection primary'
-    let name = 'xclip'
+    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
+    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
+    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
+    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
+    return 'xclip'
   elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
-    let s:copy['+'] = 'xsel --nodetach -i -b'
-    let s:paste['+'] = 'xsel -o -b'
-    let s:copy['*'] = 'xsel --nodetach -i -p'
-    let s:paste['*'] = 'xsel -o -p'
-    let name = 'xsel'
+    let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
+    let s:paste['+'] = ['xsel', '-o', '-b']
+    let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
+    let s:paste['*'] = ['xsel', '-o', '-p']
+    return 'xsel'
   elseif executable('lemonade')
-    let s:copy['+'] = 'lemonade copy'
-    let s:paste['+'] = 'lemonade paste'
-    let s:copy['*'] = 'lemonade copy'
-    let s:paste['*'] = 'lemonade paste'
-    let name = 'lemonade'
+    let s:copy['+'] = ['lemonade', 'copy']
+    let s:paste['+'] = ['lemonade', 'paste']
+    let s:copy['*'] = ['lemonade', 'copy']
+    let s:paste['*'] = ['lemonade', 'paste']
+    return 'lemonade'
   elseif executable('doitclient')
-    let s:copy['+'] = 'doitclient wclip'
-    let s:paste['+'] = 'doitclient wclip -r'
+    let s:copy['+'] = ['doitclient', 'wclip']
+    let s:paste['+'] = ['doitclient', 'wclip', '-r']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    let name = 'doitclient'
+    return 'doitclient'
   elseif executable('win32yank.exe')
     if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
       let win32yank = resolve(exepath('win32yank.exe'))
     else
       let win32yank = 'win32yank.exe'
     endif
-    let s:copy['+'] = win32yank.' -i --crlf'
-    let s:paste['+'] = win32yank.' -o --lf'
+    let s:copy['+'] = [win32yank, '-i', '--crlf']
+    let s:paste['+'] = [win32yank, '-o', '-lf']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    let name = 'win32yank'
+    return 'win32yank'
   elseif exists('$TMUX') && executable('tmux')
-    let s:copy['+'] = 'tmux load-buffer -'
-    let s:paste['+'] = 'tmux save-buffer -'
+    let s:copy['+'] = ['tmux', 'load-buffer', '-']
+    let s:paste['+'] = ['tmux', 'save-buffer', '-']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    let name = 'tmux'
-  else
-    let s:err = 'clipboard: No clipboard tool. :help clipboard'
-    return ''
+    return 'tmux'
   endif
 
-  let s:copy['+'] = s:split_cmd(get(s:copy, '+', v:null))
-  let s:paste['+'] = s:split_cmd(get(s:paste, '+', v:null))
-  let s:copy['*'] = s:split_cmd(get(s:copy, '*', v:null))
-  let s:paste['*'] = s:split_cmd(get(s:paste, '*', v:null))
-  return name
+  let s:err = 'clipboard: No clipboard tool. :help clipboard'
+  return ''
 endfunction
 
 function! s:clipboard.get(reg) abort
