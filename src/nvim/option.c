@@ -347,22 +347,23 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
   return &dest[len + shift];
 }
 
-/// Compute length of a colon-separated value, doubled and with some suffixes
+/// Compute length of a ENV_SEPCHAR-separated value, doubled and with some
+/// suffixes
 ///
-/// @param[in]  val  Colon-separated array value.
+/// @param[in]  val  ENV_SEPCHAR-separated array value.
 /// @param[in]  common_suf_len  Length of the common suffix which is appended to
 ///                             each item in the array, twice.
 /// @param[in]  single_suf_len  Length of the suffix which is appended to each
 ///                             item in the array once.
 ///
-/// @return Length of the comma-separated string array that contains each item
-///         in the original array twice with suffixes with given length
+/// @return Length of the ENV_SEPCHAR-separated string array that contains each
+///         item in the original array twice with suffixes with given length
 ///         (common_suf is present after each new item, single_suf is present
 ///         after half of the new items) and with commas after each item, commas
 ///         inside the values are escaped.
-static inline size_t compute_double_colon_len(const char *const val,
-                                              const size_t common_suf_len,
-                                              const size_t single_suf_len)
+static inline size_t compute_double_env_sep_len(const char *const val,
+                                                const size_t common_suf_len,
+                                                const size_t single_suf_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (val == NULL || *val == NUL) {
@@ -373,7 +374,7 @@ static inline size_t compute_double_colon_len(const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = vim_env_iter(':', val, iter, &dir, &dir_len);
+    iter = vim_env_iter(ENV_SEPCHAR, val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       ret += ((dir_len + memcnt(dir, ',', dir_len) + common_suf_len
                + !after_pathsep(dir, dir + dir_len)) * 2
@@ -385,13 +386,13 @@ static inline size_t compute_double_colon_len(const char *const val,
 
 #define NVIM_SIZE (sizeof("nvim") - 1)
 
-/// Add directories to a comma-separated array from a colon-separated one
+/// Add directories to a ENV_SEPCHAR-separated array from a colon-separated one
 ///
 /// Commas are escaped in process. To each item PATHSEP "nvim" is appended in
 /// addition to suf1 and suf2.
 ///
 /// @param[in,out]  dest  Destination comma-separated array.
-/// @param[in]  val  Source colon-separated array.
+/// @param[in]  val  Source ENV_SEPCHAR-separated array.
 /// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
 ///                   directory separator is appended. Suffix must not contain
 ///                   commas.
@@ -404,10 +405,10 @@ static inline size_t compute_double_colon_len(const char *const val,
 ///                      Otherwise in reverse.
 ///
 /// @return (dest + appended_characters_length)
-static inline char *add_colon_dirs(char *dest, const char *const val,
-                                   const char *const suf1, const size_t len1,
-                                   const char *const suf2, const size_t len2,
-                                   const bool forward)
+static inline char *add_env_sep_dirs(char *dest, const char *const val,
+                                     const char *const suf1, const size_t len1,
+                                     const char *const suf2, const size_t len2,
+                                     const bool forward)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
   if (val == NULL || *val == NUL) {
@@ -417,8 +418,8 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = (forward ? vim_env_iter : vim_env_iter_rev)(':', val, iter, &dir,
-                                                       &dir_len);
+    iter = (forward ? vim_env_iter : vim_env_iter_rev)(ENV_SEPCHAR, val, iter,
+                                                       &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       dest = strcpy_comma_escaped(dest, dir, dir_len);
       if (!after_pathsep(dest - 1, dest)) {
@@ -581,10 +582,11 @@ static void set_runtimepath_default(bool clean_arg)
       rtp_size += libdir_len + memcnt(libdir, ',', libdir_len) + 1;
     }
   }
-  rtp_size += compute_double_colon_len(data_dirs, NVIM_SIZE + 1 + SITE_SIZE + 1,
-                                       AFTER_SIZE + 1);
-  rtp_size += compute_double_colon_len(config_dirs, NVIM_SIZE + 1,
-                                       AFTER_SIZE + 1);
+  rtp_size += compute_double_env_sep_len(data_dirs,
+                                         NVIM_SIZE + 1 + SITE_SIZE + 1,
+                                         AFTER_SIZE + 1);
+  rtp_size += compute_double_env_sep_len(config_dirs, NVIM_SIZE + 1,
+                                         AFTER_SIZE + 1);
   if (rtp_size == 0) {
     return;
   }
@@ -592,20 +594,20 @@ static void set_runtimepath_default(bool clean_arg)
   char *rtp_cur = rtp;
   rtp_cur = add_dir(rtp_cur, config_home, config_len, kXDGConfigHome,
                     NULL, 0, NULL, 0);
-  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, NULL, 0, NULL, 0, true);
+  rtp_cur = add_env_sep_dirs(rtp_cur, config_dirs, NULL, 0, NULL, 0, true);
   rtp_cur = add_dir(rtp_cur, data_home, data_len, kXDGDataHome,
                     "site", SITE_SIZE, NULL, 0);
-  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE, NULL, 0,
-                           true);
+  rtp_cur = add_env_sep_dirs(rtp_cur, data_dirs, "site", SITE_SIZE, NULL, 0,
+                             true);
   rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, kXDGNone,
                     NULL, 0, NULL, 0);
   rtp_cur = add_dir(rtp_cur, libdir, libdir_len, kXDGNone, NULL, 0, NULL, 0);
-  rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
-                           "after", AFTER_SIZE, false);
+  rtp_cur = add_env_sep_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
+                             "after", AFTER_SIZE, false);
   rtp_cur = add_dir(rtp_cur, data_home, data_len, kXDGDataHome,
                     "site", SITE_SIZE, "after", AFTER_SIZE);
-  rtp_cur = add_colon_dirs(rtp_cur, config_dirs, "after", AFTER_SIZE, NULL, 0,
-                           false);
+  rtp_cur = add_env_sep_dirs(rtp_cur, config_dirs, "after", AFTER_SIZE, NULL, 0,
+                             false);
   rtp_cur = add_dir(rtp_cur, config_home, config_len, kXDGConfigHome,
                     "after", AFTER_SIZE, NULL, 0);
   // Strip trailing comma.
