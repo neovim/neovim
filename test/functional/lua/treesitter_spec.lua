@@ -250,13 +250,13 @@ void ui_refresh(void)
     }, res)
   end)
 
-  it('allow loading query with escaped quotes and capture them with `match?` and `vim-match?`', function()
+  it('allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`', function()
     if not check_parser() then return end
 
     insert('char* astring = "Hello World!";')
 
     local res = exec_lua([[
-      cquery = vim.treesitter.parse_query("c", '((_) @quote (vim-match? @quote "^\\"$")) ((_) @quote (match? @quote "^\\"$"))')
+      cquery = vim.treesitter.parse_query("c", '((_) @quote (vim-match? @quote "^\\"$")) ((_) @quote (lua-match? @quote "^\\"$"))')
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()
       res = {}
@@ -373,7 +373,7 @@ static int nlua_schedule(lua_State *const lstate)
 
 ; Use lua regexes
 ((identifier) @Identifier (#contains? @Identifier "lua_"))
-((identifier) @Constant (#match? @Constant "^[A-Z_]+$"))
+((identifier) @Constant (#lua-match? @Constant "^[A-Z_]+$"))
 ((identifier) @Normal (#vim-match? @Constant "^lstate$"))
 
 ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
