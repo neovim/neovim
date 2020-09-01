@@ -128,7 +128,7 @@ function! provider#clipboard#Executable() abort
       let win32yank = 'win32yank.exe'
     endif
     let s:copy['+'] = [win32yank, '-i', '--crlf']
-    let s:paste['+'] = [win32yank, '-o', '-lf']
+    let s:paste['+'] = [win32yank, '-o', '--lf']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
