@@ -1437,6 +1437,9 @@ local function make_position_param()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  if not line then
+    return { line = 0; character = 0; }
+  end
   col = str_utfindex(line, col)
   return { line = row; character = col; }
 end
