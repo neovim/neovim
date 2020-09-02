@@ -3038,9 +3038,9 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   spin->si_msg_count = 999999;
 
   // Read and ignore the first line: word count.
-  (void)vim_fgets(line, MAXLINELEN, fd);
-  if (!ascii_isdigit(*skipwhite(line)))
+  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite(line))) {
     EMSG2(_("E760: No word count in %s"), fname);
+  }
 
   // Read all the lines in the file one by one.
   // The words are converted to 'encoding' here, before being added to
