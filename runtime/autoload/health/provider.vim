@@ -689,29 +689,31 @@ function! s:check_perl() abort
     return
   endif
 
-  if !executable('perl') || !executable('cpanm')
-    call health#report_warn(
-          \ '`perl` and `cpanm` must be in $PATH.',
-          \ ['Install Perl and cpanminus and verify that `perl` and `cpanm` commands work.'])
-    return
+  let [perl_exec, perl_errors] = provider#perl#Detect()
+  if empty(perl_exec)
+    if !empty(perl_errors)
+      call health#report_error('perl provider error:', perl_errors)
+	else
+      call health#report_warn('No usable perl executable found')
+    endif
+	return
   endif
 
-  call s:system(['perl', '-e', 'use v5.22'])
+  call health#report_info('perl executable: '. perl_exec)
+
+  " we cannot use cpanm that is on the path, as it may not be for the perl
+  " set with g:perl_host_prog
+  call s:system([perl_exec, '-W', '-MApp::cpanminus', '-e', ''])
   if s:shell_error
-    call health#report_warn('Perl version is too old, 5.22+ required')
-    " Skip further checks, they are nonsense if perl is too old.
-    return
+    return [perl_exec, '"App::cpanminus" module is not installed']
   endif
 
-  let host = provider#perl#Detect()
-  if empty(host)
-    call health#report_warn('Missing "Neovim::Ext" cpan module.',
-          \ ['Run in shell: cpanm Neovim::Ext'])
-    return
-  endif
-  call health#report_info('Nvim perl host: '. host)
+  let latest_cpan_cmd = [perl_exec,
+			  \ '-MApp::cpanminus::fatscript', '-e',
+			  \ 'my $app = App::cpanminus::script->new;
+			  \ $app->parse_options ("--info", "-q", "Neovim::Ext");
+			  \ exit $app->doit']
 
-  let latest_cpan_cmd = 'cpanm --info -q Neovim::Ext'
   let latest_cpan = s:system(latest_cpan_cmd)
   if s:shell_error || empty(latest_cpan)
     call health#report_error('Failed to run: '. latest_cpan_cmd,
@@ -735,7 +737,7 @@ function! s:check_perl() abort
     return
   endif
 
-  let current_cpan_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
+  let current_cpan_cmd = [perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
   let current_cpan = s:system(current_cpan_cmd)
   if s:shell_error
     call health#report_error('Failed to run: '. string(current_cpan_cmd),
