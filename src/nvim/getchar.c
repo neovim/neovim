@@ -1956,6 +1956,8 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     if (mp->m_expr) {
       int save_vgetc_busy = vgetc_busy;
       const bool save_may_garbage_collect = may_garbage_collect;
+      int save_cursor_row = ui_current_row();
+      int save_cursor_col = ui_current_col();
 
       vgetc_busy = 0;
       may_garbage_collect = false;
@@ -1967,6 +1969,16 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       map_str = eval_map_expr(mp, NUL);
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
+
+      if (State & CMDLINE) {
+        redrawcmdline();
+      } else {
+        if (must_redraw) {
+          update_screen(0);
+        }
+
+        ui_cursor_goto(save_cursor_row, save_cursor_col);
+      }
     } else {
       map_str = mp->m_str;
     }
