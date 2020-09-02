@@ -761,8 +761,12 @@ do
   text_document_did_change_handler = function(_, bufnr, changedtick,
       firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
       old_utf16_size)
-    local _ = log.debug() and log.debug("on_lines", bufnr, changedtick, firstline,
-    lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size, nvim_buf_get_lines(bufnr, firstline, new_lastline, true))
+
+    local _ = log.debug() and log.debug(
+      string.format("on_lines bufnr: %s, changedtick: %s, firstline: %s, lastline: %s, new_lastline: %s, old_byte_size: %s, old_utf32_size: %s, old_utf16_size: %s",
+      bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size),
+      nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+    )
 
     -- Don't do anything if there are no clients attached.
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then

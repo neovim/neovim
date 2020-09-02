@@ -376,7 +376,6 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
   --@param params (table): Parameters for the invoked LSP method
   --@returns (bool) `true` if notification could be sent, `false` if not
   local function notify(method, params)
-    local _ = log.debug() and log.debug("rpc.notify", method, params)
     return encode_and_send {
       jsonrpc = "2.0";
       method = method;
