@@ -10387,7 +10387,7 @@ void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 }
 
 /// @param discard  Clears the value returned by the provider and returns
-//                  an empty typval_T.
+///                 an empty typval_T.
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments,
                             bool discard)
 {
