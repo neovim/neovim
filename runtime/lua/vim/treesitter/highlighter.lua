@@ -134,12 +134,9 @@ function TSHighlighter:on_changedtree(changes)
   self.root = self.parser.tree:root()
 
   for _, ch in ipairs(changes or {}) do
-    -- Try to be as exact as possible
-    local changed_node = self.root:descendant_for_range(ch[1], ch[2], ch[3], ch[4])
+    a.nvim_buf_clear_namespace(self.buf, ts_hs_ns, ch[1], ch[3] + 1)
 
-    a.nvim_buf_clear_namespace(self.buf, ts_hs_ns, ch[1], ch[3])
-
-    for capture, node in self.query:iter_captures(changed_node, self.buf, ch[1], ch[3] + 1) do
+    for capture, node in self.query:iter_captures(self.root, self.buf, ch[1], ch[3] + 1) do
       local start_row, start_col, end_row, end_col = node:range()
       local hl = self.hl_cache[capture]
       if hl then

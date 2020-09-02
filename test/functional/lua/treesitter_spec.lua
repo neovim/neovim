@@ -445,6 +445,28 @@ static int nlua_schedule(lua_State *const lstate)
                                                                        |
     ]]}
 
+    feed("5Goc<esc>dd")
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
+            || {6:lstate} != {6:lstate}) {                                     |
+          {11:^lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      }                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
     feed('7Go*/<esc>')
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
