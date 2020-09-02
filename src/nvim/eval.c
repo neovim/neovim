@@ -10383,10 +10383,13 @@ void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
   list_T *args = tv_list_alloc(1);
   tv_list_append_string(args, (const char *)argvars[0].vval.v_string, -1);
-  *rettv = eval_call_provider(name, "eval", args);
+  *rettv = eval_call_provider(name, "eval", args, false);
 }
 
-typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
+/// @param discard  Clears the value returned by the provider and returns
+///                 an empty typval_T.
+typval_T eval_call_provider(char *provider, char *method, list_T *arguments,
+                            bool discard)
 {
   if (!eval_has_provider(provider)) {
     emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
@@ -10444,6 +10447,10 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   provider_caller_scope = saved_provider_caller_scope;
   provider_call_nesting--;
   assert(provider_call_nesting >= 0);
+
+  if (discard) {
+    tv_clear(&rettv);
+  }
 
   return rettv;
 }

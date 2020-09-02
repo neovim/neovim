@@ -4157,7 +4157,7 @@ static void script_host_execute(char *name, exarg_T *eap)
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
 
-    (void)eval_call_provider(name, "execute", args);
+    (void)eval_call_provider(name, "execute", args, true);
   }
 }
 
@@ -4172,7 +4172,7 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   // current range
   tv_list_append_number(args, (int)eap->line1);
   tv_list_append_number(args, (int)eap->line2);
-  (void)eval_call_provider(name, "execute_file", args);
+  (void)eval_call_provider(name, "execute_file", args, true);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
@@ -4181,7 +4181,7 @@ static void script_host_do_range(char *name, exarg_T *eap)
   tv_list_append_number(args, (int)eap->line1);
   tv_list_append_number(args, (int)eap->line2);
   tv_list_append_string(args, (const char *)eap->arg, -1);
-  (void)eval_call_provider(name, "do_range", args);
+  (void)eval_call_provider(name, "do_range", args, true);
 }
 
 /// ":drop"
