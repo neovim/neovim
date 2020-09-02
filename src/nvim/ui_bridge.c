@@ -61,6 +61,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
+  rv->bridge.screenshot = ui_bridge_screenshot;
   rv->bridge.option_set = ui_bridge_option_set;
   rv->bridge.raw_line = ui_bridge_raw_line;
   rv->bridge.inspect = ui_bridge_inspect;

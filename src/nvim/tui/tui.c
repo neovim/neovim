@@ -108,6 +108,7 @@ typedef struct {
   bool cork, overflow;
   bool cursor_color_changed;
   bool is_starting;
+  FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
@@ -167,6 +168,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->screenshot = tui_screenshot;
   ui->option_set= tui_option_set;
   ui->raw_line = tui_raw_line;
 
@@ -412,6 +414,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   data->bridge = bridge;
   data->loop = &tui_loop;
   data->is_starting = true;
+  data->screenshot = NULL;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
@@ -1317,6 +1320,31 @@ static void tui_set_icon(UI *ui, String icon)
 {
 }
 
+static void tui_screenshot(UI *ui, String path)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  flush_buf(ui);
+  grid->row = 0;
+  grid->col = 0;
+
+  FILE *f = fopen(path.data, "w");
+  data->screenshot = f;
+  fprintf(f, "%d,%d\n", grid->height, grid->width);
+  unibi_out(ui, unibi_clear_screen);
+  for (int i = 0; i < grid->height; i++) {
+    cursor_goto(ui, i, 0);
+    for (int j = 0; j < grid->width; j++) {
+      print_cell(ui, &grid->cells[i][j]);
+    }
+  }
+  flush_buf(ui);
+  data->screenshot = NULL;
+
+  fclose(f);
+}
+
+
 static void tui_option_set(UI *ui, String name, Object value)
 {
   TUIData *data = ui->data;
@@ -2054,9 +2082,15 @@ static void flush_buf(UI *ui)
     }
   }
 
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
-           bufs, (unsigned)(bufp - bufs), NULL);
-  uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  if (data->screenshot) {
+    for (size_t i = 0; i < (size_t)(bufp - bufs); i++) {
+      fwrite(bufs[i].base, bufs[i].len, 1, data->screenshot);
+    }
+  } else {
+    uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
+             bufs, (unsigned)(bufp - bufs), NULL);
+    uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  }
   data->bufpos = 0;
   data->overflow = false;
 }
