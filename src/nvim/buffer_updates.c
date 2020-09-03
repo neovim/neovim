@@ -158,7 +158,7 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      executor_exec_lua_cb(cb.on_detach, "detach", args, false, NULL);
+      nlua_call_ref(cb.on_detach, "detach", args, false, NULL);
       textlock--;
     }
     free_update_callbacks(cb);
@@ -266,7 +266,7 @@ void buf_updates_send_changes(buf_T *buf,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_lines, "lines", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -317,7 +317,7 @@ void buf_updates_send_splice(
       args.items[10] = INTEGER_OBJ(new_byte);
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_bytes, "bytes", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -352,8 +352,8 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
-                                        args, true, NULL);
+      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
+                                 args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -387,6 +387,6 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 
 static void free_update_callbacks(BufUpdateCallbacks cb)
 {
-  executor_free_luaref(cb.on_lines);
-  executor_free_luaref(cb.on_changedtick);
+  api_free_luaref(cb.on_lines);
+  api_free_luaref(cb.on_changedtick);
 }

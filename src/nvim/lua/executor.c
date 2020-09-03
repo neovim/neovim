@@ -845,7 +845,7 @@ void nlua_unref(lua_State *lstate, LuaRef ref)
   }
 }
 
-void executor_free_luaref(LuaRef ref)
+void api_free_luaref(LuaRef ref)
 {
   lua_State *const lstate = nlua_enter();
   nlua_unref(lstate, ref);
@@ -879,8 +879,8 @@ LuaRef nlua_newref(lua_State *lstate, LuaRef original_ref)
 /// @param[out]  ret_tv  Location where result will be saved.
 ///
 /// @return Result of the execution.
-void executor_eval_lua(const String str, typval_T *const arg,
-                       typval_T *const ret_tv)
+void nlua_typval_eval(const String str, typval_T *const arg,
+                      typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
 #define EVALHEADER "local _A=select(1,...) return ("
@@ -902,8 +902,8 @@ void executor_eval_lua(const String str, typval_T *const arg,
   }
 }
 
-void executor_call_lua(const char *str, size_t len, typval_T *const args,
-                       int argcount, typval_T *ret_tv)
+void nlua_typval_call(const char *str, size_t len, typval_T *const args,
+                      int argcount, typval_T *ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
 #define CALLHEADER "return "
@@ -1006,14 +1006,14 @@ int typval_exec_lua_callable(
 
 /// Execute Lua string
 ///
-/// Used for nvim_exec_lua().
+/// Used for nvim_exec_lua() and internally to execute a lua string.
 ///
 /// @param[in]  str  String to execute.
 /// @param[in]  args array of ... args
 /// @param[out]  err  Location where error will be saved.
 ///
 /// @return Return value of the execution.
-Object executor_exec_lua_api(const String str, const Array args, Error *err)
+Object nlua_exec(const String str, const Array args, Error *err)
 {
   lua_State *const lstate = nlua_enter();
 
@@ -1040,17 +1040,30 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
   return nlua_pop_Object(lstate, false, err);
 }
 
-Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
-                            bool retval, Error *err)
+/// call a LuaRef as a function (or table with __call metamethod)
+///
+/// @param ref     the reference to call (not consumed)
+/// @param name    if non-NULL, sent to callback as first arg
+///                if NULL, only args are used
+/// @param retval  if true, convert return value to Object
+///                if false, discard return value
+/// @param err     Error details, if any (if NULL, errors are echoed)
+/// @return        Return value of function, if retval was set. Otherwise NIL.
+Object nlua_call_ref(LuaRef ref, const char *name, Array args,
+                     bool retval, Error *err)
 {
   lua_State *const lstate = nlua_enter();
   nlua_pushref(lstate, ref);
-  lua_pushstring(lstate, name);
+  int nargs = (int)args.size;
+  if (name != NULL) {
+    lua_pushstring(lstate, name);
+    nargs++;
+  }
   for (size_t i = 0; i < args.size; i++) {
     nlua_push_Object(lstate, args.items[i], false);
   }
 
-  if (lua_pcall(lstate, (int)args.size+1, retval ? 1 : 0, 0)) {
+  if (lua_pcall(lstate, nargs, retval ? 1 : 0, 0)) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;

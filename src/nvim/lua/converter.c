@@ -1249,6 +1249,13 @@ type_error:
   return ret;
 }
 
+LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
+{
+  LuaRef rv = nlua_ref(lstate, -1);
+  lua_pop(lstate, 1);
+  return rv;
+}
+
 #define GENERATE_INDEX_FUNCTION(type) \
 type nlua_pop_##type(lua_State *lstate, Error *err) \
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
