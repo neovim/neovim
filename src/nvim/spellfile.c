@@ -984,15 +984,17 @@ nextone:
 static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
 {
   int cnt = 0;
-  int i;
   char_u      *str;
 
   // read the length bytes, MSB first
-  for (i = 0; i < cnt_bytes; ++i)
-    cnt = (cnt << 8) + getc(fd);
-  if (cnt < 0) {
-    *cntp = SP_TRUNCERROR;
-    return NULL;
+  for (int i = 0; i < cnt_bytes; i++) {
+    const int c = getc(fd);
+
+    if (c == EOF) {
+      *cntp = SP_TRUNCERROR;
+      return NULL;
+    }
+    cnt = (cnt << 8) + (unsigned)c;
   }
   *cntp = cnt;
   if (cnt == 0)
