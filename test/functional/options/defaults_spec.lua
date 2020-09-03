@@ -290,9 +290,6 @@ describe('XDG-based defaults', function()
     end)
   end)
 
-  -- TODO(jkeyes): tests below fail on win32 because of path separator.
-  if helpers.pending_win32(pending) then return end
-
   local function vimruntime_and_libdir()
     local vimruntime = eval('$VIMRUNTIME')
     -- libdir is hard to calculate reliably across various ci platforms
@@ -301,71 +298,78 @@ describe('XDG-based defaults', function()
     return vimruntime, libdir
   end
 
+  local env_sep = iswin() and ';' or ':'
+  local data_dir = iswin() and 'nvim-data' or 'nvim'
+  local root_path = iswin() and 'C:' or ''
+
   describe('with too long XDG variables', function()
     before_each(function()
       clear({env={
-        XDG_CONFIG_HOME=('/x'):rep(4096),
-        XDG_CONFIG_DIRS=(('/a'):rep(2048)
-                         .. ':' .. ('/b'):rep(2048)
-                         .. (':/c'):rep(512)),
-        XDG_DATA_HOME=('/X'):rep(4096),
-        XDG_DATA_DIRS=(('/A'):rep(2048)
-                       .. ':' .. ('/B'):rep(2048)
-                       .. (':/C'):rep(512)),
+        XDG_CONFIG_HOME=(root_path .. ('/x'):rep(4096)),
+        XDG_CONFIG_DIRS=(root_path .. ('/a'):rep(2048)
+                         .. env_sep.. root_path .. ('/b'):rep(2048)
+                         .. (env_sep .. root_path .. '/c'):rep(512)),
+        XDG_DATA_HOME=(root_path .. ('/X'):rep(4096)),
+        XDG_DATA_DIRS=(root_path .. ('/A'):rep(2048)
+                       .. env_sep .. root_path .. ('/B'):rep(2048)
+                       .. (env_sep .. root_path .. '/C'):rep(512)),
       }})
     end)
 
     it('are correctly set', function()
       local vimruntime, libdir = vimruntime_and_libdir()
 
-      eq((('/x'):rep(4096) .. '/nvim'
-          .. ',' .. ('/a'):rep(2048) .. '/nvim'
-          .. ',' .. ('/b'):rep(2048) .. '/nvim'
-          .. (',' .. '/c/nvim'):rep(512)
-          .. ',' .. ('/X'):rep(4096) .. '/nvim/site'
-          .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
-          .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
-          .. (',' .. '/C/nvim/site'):rep(512)
+      eq(((root_path .. ('/x'):rep(4096) .. '/nvim'
+          .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim'
+          .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim'
+          .. (',' .. root_path .. '/c/nvim'):rep(512)
+          .. ',' .. root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/site'
+          .. ',' .. root_path .. ('/A'):rep(2048) .. '/nvim/site'
+          .. ',' .. root_path .. ('/B'):rep(2048) .. '/nvim/site'
+          .. (',' .. root_path .. '/C/nvim/site'):rep(512)
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. (',' .. '/C/nvim/site/after'):rep(512)
-          .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
-          .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
-          .. ',' .. ('/X'):rep(4096) .. '/nvim/site/after'
-          .. (',' .. '/c/nvim/after'):rep(512)
-          .. ',' .. ('/b'):rep(2048) .. '/nvim/after'
-          .. ',' .. ('/a'):rep(2048) .. '/nvim/after'
-          .. ',' .. ('/x'):rep(4096) .. '/nvim/after'
-      ), meths.get_option('runtimepath'))
+          .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+          .. ',' .. root_path .. ('/B'):rep(2048) .. '/nvim/site/after'
+          .. ',' .. root_path .. ('/A'):rep(2048) .. '/nvim/site/after'
+          .. ',' .. root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/site/after'
+          .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+          .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim/after'
+          .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
+          .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
+      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
       meths.command('set undodir&')
       meths.command('set viewdir&')
-      eq((('/x'):rep(4096) .. '/nvim'
-          .. ',' .. ('/a'):rep(2048) .. '/nvim'
-          .. ',' .. ('/b'):rep(2048) .. '/nvim'
-          .. (',' .. '/c/nvim'):rep(512)
-          .. ',' .. ('/X'):rep(4096) .. '/nvim/site'
-          .. ',' .. ('/A'):rep(2048) .. '/nvim/site'
-          .. ',' .. ('/B'):rep(2048) .. '/nvim/site'
-          .. (',' .. '/C/nvim/site'):rep(512)
+      eq(((root_path .. ('/x'):rep(4096) .. '/nvim'
+          .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim'
+          .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim'
+          .. (',' .. root_path .. '/c/nvim'):rep(512)
+          .. ',' .. root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/site'
+          .. ',' .. root_path .. ('/A'):rep(2048) .. '/nvim/site'
+          .. ',' .. root_path .. ('/B'):rep(2048) .. '/nvim/site'
+          .. (',' .. root_path .. '/C/nvim/site'):rep(512)
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. (',' .. '/C/nvim/site/after'):rep(512)
-          .. ',' .. ('/B'):rep(2048) .. '/nvim/site/after'
-          .. ',' .. ('/A'):rep(2048) .. '/nvim/site/after'
-          .. ',' .. ('/X'):rep(4096) .. '/nvim/site/after'
-          .. (',' .. '/c/nvim/after'):rep(512)
-          .. ',' .. ('/b'):rep(2048) .. '/nvim/after'
-          .. ',' .. ('/a'):rep(2048) .. '/nvim/after'
-          .. ',' .. ('/x'):rep(4096) .. '/nvim/after'
-      ), meths.get_option('runtimepath'))
-      eq('.,' .. ('/X'):rep(4096) .. '/nvim/backup',
-         meths.get_option('backupdir'))
-      eq(('/X'):rep(4096) .. '/nvim/swap//', meths.get_option('directory'))
-      eq(('/X'):rep(4096) .. '/nvim/undo', meths.get_option('undodir'))
-      eq(('/X'):rep(4096) .. '/nvim/view', meths.get_option('viewdir'))
+          .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+          .. ',' .. root_path .. ('/B'):rep(2048) .. '/nvim/site/after'
+          .. ',' .. root_path .. ('/A'):rep(2048) .. '/nvim/site/after'
+          .. ',' .. root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/site/after'
+          .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+          .. ',' .. root_path .. ('/b'):rep(2048) .. '/nvim/after'
+          .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
+          .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
+      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. data_dir .. '/backup',
+         (meths.get_option('backupdir'):gsub('\\', '/')))
+      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/swap//',
+         (meths.get_option('directory')):gsub('\\', '/'))
+      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/undo',
+         (meths.get_option('undodir')):gsub('\\', '/'))
+      eq(root_path .. ('/X'):rep(4096) .. '/'  ..  data_dir .. '/view',
+         (meths.get_option('viewdir')):gsub('\\', '/'))
     end)
   end)
 
@@ -381,53 +385,61 @@ describe('XDG-based defaults', function()
 
     it('are not expanded', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      eq(('$XDG_DATA_HOME/nvim'
+      eq((('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'
-          .. ',$XDG_CONFIG_HOME/nvim/site'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
           .. ',' .. vimruntime
           .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
-          .. ',$XDG_CONFIG_HOME/nvim/site/after'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ), meths.get_option('runtimepath'))
+      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
       meths.command('set undodir&')
       meths.command('set viewdir&')
-      eq(('$XDG_DATA_HOME/nvim'
+      eq((('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'
-          .. ',$XDG_CONFIG_HOME/nvim/site'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
           .. ',' .. vimruntime
           .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
-          .. ',$XDG_CONFIG_HOME/nvim/site/after'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ), meths.get_option('runtimepath'))
-      eq('.,$XDG_CONFIG_HOME/nvim/backup', meths.get_option('backupdir'))
-      eq('$XDG_CONFIG_HOME/nvim/swap//', meths.get_option('directory'))
-      eq('$XDG_CONFIG_HOME/nvim/undo', meths.get_option('undodir'))
-      eq('$XDG_CONFIG_HOME/nvim/view', meths.get_option('viewdir'))
+      ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+          meths.get_option('backupdir'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
+          meths.get_option('directory'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+          meths.get_option('undodir'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+          meths.get_option('viewdir'):gsub('\\', '/'))
       meths.command('set all&')
       eq(('$XDG_DATA_HOME/nvim'
           .. ',$XDG_DATA_DIRS/nvim'
-          .. ',$XDG_CONFIG_HOME/nvim/site'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site'
           .. ',$XDG_CONFIG_DIRS/nvim/site'
           .. ',' .. vimruntime
           .. ',' .. libdir
           .. ',$XDG_CONFIG_DIRS/nvim/site/after'
-          .. ',$XDG_CONFIG_HOME/nvim/site/after'
+          .. ',$XDG_CONFIG_HOME/' .. data_dir .. '/site/after'
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
-      ), meths.get_option('runtimepath'))
-      eq('.,$XDG_CONFIG_HOME/nvim/backup', meths.get_option('backupdir'))
-      eq('$XDG_CONFIG_HOME/nvim/swap//', meths.get_option('directory'))
-      eq('$XDG_CONFIG_HOME/nvim/undo', meths.get_option('undodir'))
-      eq('$XDG_CONFIG_HOME/nvim/view', meths.get_option('viewdir'))
+      ):gsub('\\', '/'), (meths.get_option('runtimepath')):gsub('\\', '/'))
+      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+          meths.get_option('backupdir'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
+          meths.get_option('directory'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+          meths.get_option('undodir'):gsub('\\', '/'))
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+          meths.get_option('viewdir'):gsub('\\', '/'))
     end)
   end)
 
@@ -435,53 +447,58 @@ describe('XDG-based defaults', function()
     before_each(function()
       clear({env={
         XDG_CONFIG_HOME=', , ,',
-        XDG_CONFIG_DIRS=',-,-,:-,-,-',
+        XDG_CONFIG_DIRS=',-,-,' .. env_sep .. '-,-,-',
         XDG_DATA_HOME=',=,=,',
-        XDG_DATA_DIRS=',≡,≡,:≡,≡,≡',
+        XDG_DATA_DIRS=',≡,≡,' .. env_sep .. '≡,≡,≡',
       }})
     end)
 
     it('are escaped properly', function()
       local vimruntime, libdir = vimruntime_and_libdir()
-      eq(('\\, \\, \\,/nvim'
-          .. ',\\,-\\,-\\,/nvim'
-          .. ',-\\,-\\,-/nvim'
-          .. ',\\,=\\,=\\,/nvim/site'
-          .. ',\\,≡\\,≡\\,/nvim/site'
-          .. ',≡\\,≡\\,≡/nvim/site'
+      local path_sep = iswin() and '\\' or '/'
+      eq(('\\, \\, \\,' .. path_sep .. 'nvim'
+          .. ',\\,-\\,-\\,' .. path_sep .. 'nvim'
+          .. ',-\\,-\\,-' .. path_sep .. 'nvim'
+          .. ',\\,=\\,=\\,' .. path_sep .. data_dir .. path_sep .. 'site'
+          .. ',\\,≡\\,≡\\,' .. path_sep .. 'nvim'  .. path_sep .. 'site'
+          .. ',≡\\,≡\\,≡' .. path_sep .. 'nvim' .. path_sep .. 'site'
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. ',≡\\,≡\\,≡/nvim/site/after'
-          .. ',\\,≡\\,≡\\,/nvim/site/after'
-          .. ',\\,=\\,=\\,/nvim/site/after'
-          .. ',-\\,-\\,-/nvim/after'
-          .. ',\\,-\\,-\\,/nvim/after'
-          .. ',\\, \\, \\,/nvim/after'
+          .. ',≡\\,≡\\,≡' .. path_sep .. 'nvim' .. path_sep .. 'site' .. path_sep .. 'after'
+          .. ',\\,≡\\,≡\\,' .. path_sep .. 'nvim' .. path_sep .. 'site' .. path_sep .. 'after'
+          .. ',\\,=\\,=\\,'  .. path_sep.. data_dir .. path_sep .. 'site' .. path_sep .. 'after'
+          .. ',-\\,-\\,-' .. path_sep .. 'nvim' .. path_sep .. 'after'
+          .. ',\\,-\\,-\\,' .. path_sep .. 'nvim' .. path_sep .. 'after'
+          .. ',\\, \\, \\,' .. path_sep .. 'nvim' .. path_sep .. 'after'
       ), meths.get_option('runtimepath'))
       meths.command('set runtimepath&')
       meths.command('set backupdir&')
       meths.command('set directory&')
       meths.command('set undodir&')
       meths.command('set viewdir&')
-      eq(('\\, \\, \\,/nvim'
-          .. ',\\,-\\,-\\,/nvim'
-          .. ',-\\,-\\,-/nvim'
-          .. ',\\,=\\,=\\,/nvim/site'
-          .. ',\\,≡\\,≡\\,/nvim/site'
-          .. ',≡\\,≡\\,≡/nvim/site'
+      eq(('\\, \\, \\,' .. path_sep .. 'nvim'
+          .. ',\\,-\\,-\\,' .. path_sep ..'nvim'
+          .. ',-\\,-\\,-' .. path_sep ..'nvim'
+          .. ',\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'site'
+          .. ',\\,≡\\,≡\\,' .. path_sep ..'nvim' .. path_sep ..'site'
+          .. ',≡\\,≡\\,≡' .. path_sep ..'nvim' .. path_sep ..'site'
           .. ',' .. vimruntime
           .. ',' .. libdir
-          .. ',≡\\,≡\\,≡/nvim/site/after'
-          .. ',\\,≡\\,≡\\,/nvim/site/after'
-          .. ',\\,=\\,=\\,/nvim/site/after'
-          .. ',-\\,-\\,-/nvim/after'
-          .. ',\\,-\\,-\\,/nvim/after'
-          .. ',\\, \\, \\,/nvim/after'
+          .. ',≡\\,≡\\,≡' .. path_sep ..'nvim' .. path_sep ..'site' .. path_sep ..'after'
+          .. ',\\,≡\\,≡\\,' .. path_sep ..'nvim' .. path_sep ..'site' .. path_sep ..'after'
+          .. ',\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'site' .. path_sep ..'after'
+          .. ',-\\,-\\,-' .. path_sep ..'nvim' .. path_sep ..'after'
+          .. ',\\,-\\,-\\,' .. path_sep ..'nvim' .. path_sep ..'after'
+          .. ',\\, \\, \\,' .. path_sep ..'nvim' .. path_sep ..'after'
       ), meths.get_option('runtimepath'))
-      eq('.,\\,=\\,=\\,/nvim/backup', meths.get_option('backupdir'))
-      eq('\\,=\\,=\\,/nvim/swap//', meths.get_option('directory'))
-      eq('\\,=\\,=\\,/nvim/undo', meths.get_option('undodir'))
-      eq('\\,=\\,=\\,/nvim/view', meths.get_option('viewdir'))
+      eq('.,\\,=\\,=\\,' .. path_sep .. data_dir .. '' .. path_sep ..'backup',
+          meths.get_option('backupdir'))
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'swap' .. (path_sep):rep(2),
+          meths.get_option('directory'))
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'undo',
+          meths.get_option('undodir'))
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'view',
+          meths.get_option('viewdir'))
     end)
   end)
 end)
@@ -491,6 +508,7 @@ describe('stdpath()', function()
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
   -- due to XDG_CONFIG_HOME and XDG_DATA_HOME being the same.
   local datadir = iswin() and 'nvim-data' or 'nvim'
+  local env_sep = iswin() and ';' or ':'
 
   it('acceptance', function()
     clear()  -- Do not explicitly set any env vars.
@@ -634,13 +652,13 @@ describe('stdpath()', function()
 
     local function set_paths_via_system(var_name, paths)
       local env = base_env()
-      env[var_name] = table.concat(paths, ':')
+      env[var_name] = table.concat(paths, env_sep)
       clear({env=env})
     end
 
     local function set_paths_at_runtime(var_name, paths)
       clear({env=base_env()})
-      meths.set_var('env_val', table.concat(paths, ':'))
+      meths.set_var('env_val', table.concat(paths, env_sep))
       command(('let $%s=g:env_val'):format(var_name))
     end
 
