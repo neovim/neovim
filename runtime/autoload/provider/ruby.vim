@@ -5,7 +5,8 @@ endif
 let g:loaded_ruby_provider = 1
 
 function! provider#ruby#Detect() abort
-  return s:prog
+  let e = empty(s:prog) ? 'missing ruby or ruby-host' : ''
+  return [s:prog, e]
 endfunction
 
 function! provider#ruby#Prog() abort
