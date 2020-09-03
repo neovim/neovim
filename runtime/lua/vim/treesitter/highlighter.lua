@@ -60,14 +60,11 @@ function TSHighlighter.new(query, bufnr, ft)
     ft,
     {
       on_changedtree = function(...) self:on_changedtree(...) end,
-      on_bytes = function() self.root = self.parser:parse():root() end
+      on_bytes = function() self.parser:parse() end
     }
   )
 
   self.buf = self.parser.bufnr
-
-  local tree = self.parser:parse()
-  self.root = tree:root()
   self:set_query(query)
   self.edit_count = 0
   self.redraw_count = 0
@@ -126,17 +123,17 @@ function TSHighlighter:set_query(query)
     end
   })
 
-  self:on_changedtree({{self.root:range()}})
+  self:on_changedtree({{self.parser:parse():root():range()}})
 end
 
 function TSHighlighter:on_changedtree(changes)
   -- Get a fresh root
-  self.root = self.parser.tree:root()
+  local root = self.parser:parse():root()
 
   for _, ch in ipairs(changes or {}) do
-    a.nvim_buf_clear_namespace(self.buf, ts_hs_ns, ch[1], ch[3] + 1)
+    a.nvim_buf_clear_namespace(self.buf, ts_hs_ns, ch[1], ch[3]+1)
 
-    for capture, node in self.query:iter_captures(self.root, self.buf, ch[1], ch[3] + 1) do
+    for capture, node in self.query:iter_captures(root, self.buf, ch[1], ch[3] + 1) do
       local start_row, start_col, end_row, end_col = node:range()
       local hl = self.hl_cache[capture]
       if hl then
