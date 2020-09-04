@@ -573,31 +573,35 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
 
   // Find the place to insert the new fold
   gap = &wp->w_folds;
-  for (;; ) {
-    if (!foldFind(gap, start_rel, &fp))
-      break;
-    if (fp->fd_top + fp->fd_len > end_rel) {
-      /* New fold is completely inside this fold: Go one level deeper. */
-      gap = &fp->fd_nested;
-      start_rel -= fp->fd_top;
-      end_rel -= fp->fd_top;
-      if (use_level || fp->fd_flags == FD_LEVEL) {
-        use_level = true;
-        if (level >= wp->w_p_fdl) {
+  if (gap->ga_len == 0) {
+    i = 0;
+  } else {
+    for (;;) {
+      if (!foldFind(gap, start_rel, &fp))
+        break;
+      if (fp->fd_top + fp->fd_len > end_rel) {
+        /* New fold is completely inside this fold: Go one level deeper. */
+        gap = &fp->fd_nested;
+        start_rel -= fp->fd_top;
+        end_rel -= fp->fd_top;
+        if (use_level || fp->fd_flags == FD_LEVEL) {
+          use_level = true;
+          if (level >= wp->w_p_fdl) {
+            closed = true;
+          }
+        } else if (fp->fd_flags == FD_CLOSED) {
           closed = true;
         }
-      } else if (fp->fd_flags == FD_CLOSED) {
-        closed = true;
+        level++;
+      } else {
+        /* This fold and new fold overlap: Insert here and move some folds
+         * inside the new fold. */
+        break;
       }
-      level++;
-    } else {
-      /* This fold and new fold overlap: Insert here and move some folds
-       * inside the new fold. */
-      break;
     }
+    i = (int)(fp - (fold_T *)gap->ga_data);
   }
 
-  i = (int)(fp - (fold_T *)gap->ga_data);
   ga_grow(gap, 1);
   {
     fp = (fold_T *)gap->ga_data + i;
