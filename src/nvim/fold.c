@@ -577,10 +577,11 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
     i = 0;
   } else {
     for (;;) {
-      if (!foldFind(gap, start_rel, &fp))
+      if (!foldFind(gap, start_rel, &fp)) {
         break;
+      }
       if (fp->fd_top + fp->fd_len > end_rel) {
-        /* New fold is completely inside this fold: Go one level deeper. */
+        // New fold is completely inside this fold: Go one level deeper.
         gap = &fp->fd_nested;
         start_rel -= fp->fd_top;
         end_rel -= fp->fd_top;
@@ -594,8 +595,8 @@ void foldCreate(win_T *wp, linenr_T start, linenr_T end)
         }
         level++;
       } else {
-        /* This fold and new fold overlap: Insert here and move some folds
-         * inside the new fold. */
+        // This fold and new fold overlap: Insert here and move some folds
+        // inside the new fold.
         break;
       }
     }
@@ -1064,14 +1065,14 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
  * the first fold below it (careful: it can be beyond the end of the array!).
  * Returns FALSE when there is no fold that contains "lnum".
  */
-static int foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
+static bool foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
 {
   linenr_T low, high;
   fold_T      *fp;
 
   if (gap->ga_len == 0) {
     *fpp = NULL;
-    return FALSE;
+    return false;
   }
 
   /*
@@ -1097,7 +1098,7 @@ static int foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
     }
   }
   *fpp = fp + low;
-  return FALSE;
+  return false;
 }
 
 /* foldLevelWin() {{{2 */
@@ -1231,9 +1232,10 @@ setManualFoldWin(
   gap = &wp->w_folds;
   for (;; ) {
     if (!foldFind(gap, lnum, &fp)) {
-      /* If there is a following fold, continue there next time. */
-      if (fp != NULL && fp < (fold_T *)gap->ga_data + gap->ga_len)
+      // If there is a following fold, continue there next time.
+      if (fp != NULL && fp < (fold_T *)gap->ga_data + gap->ga_len) {
         next = fp->fd_top + off;
+      }
       break;
     }
 
@@ -2280,14 +2282,15 @@ static linenr_T foldUpdateIEMSRecurse(
         /* Find an existing fold to re-use.  Preferably one that
          * includes startlnum, otherwise one that ends just before
          * startlnum or starts after it. */
-        if (gap->ga_len > 0 && (foldFind(gap, startlnum, &fp)
-            || (fp < ((fold_T *)gap->ga_data) + gap->ga_len
-                && fp->fd_top <= firstlnum)
-            || foldFind(gap, firstlnum - concat, &fp)
-            || (fp < ((fold_T *)gap->ga_data) + gap->ga_len
-                && ((lvl < level && fp->fd_top < flp->lnum)
-                    || (lvl >= level
-                        && fp->fd_top <= flp->lnum_save))))) {
+        if (gap->ga_len > 0
+            && (foldFind(gap, startlnum, &fp)
+                || (fp < ((fold_T *)gap->ga_data) + gap->ga_len
+                    && fp->fd_top <= firstlnum)
+                || foldFind(gap, firstlnum - concat, &fp)
+                || (fp < ((fold_T *)gap->ga_data) + gap->ga_len
+                    && ((lvl < level && fp->fd_top < flp->lnum)
+                        || (lvl >= level
+                            && fp->fd_top <= flp->lnum_save))))) {
           if (fp->fd_top + fp->fd_len + concat > firstlnum) {
             /* Use existing fold for the new fold.  If it starts
              * before where we started looking, extend it.  If it
@@ -2578,9 +2581,10 @@ static void foldInsert(garray_T *gap, int i)
   ga_grow(gap, 1);
 
   fp = (fold_T *)gap->ga_data + i;
-  if (gap->ga_len > 0 && i < gap->ga_len)
+  if (gap->ga_len > 0 && i < gap->ga_len) {
     memmove(fp + 1, fp, sizeof(fold_T) * (size_t)(gap->ga_len - i));
-  ++gap->ga_len;
+  }
+  gap->ga_len++;
   ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
 }
 
