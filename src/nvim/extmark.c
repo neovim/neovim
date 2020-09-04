@@ -1,28 +1,23 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// Implements extended marks for plugins. Each mark exists in a btree of
-// lines containing btrees of columns.
+// Implements extended marks for plugins. Marks sit in a MarkTree
+// datastructure which provides both efficient mark insertations/lookups
+// and adjustment to text changes. See marktree.c for more details.
 //
-// The btree provides efficient range lookups.
 // A map of pointers to the marks is used for fast lookup by mark id.
 //
-// Marks are moved by calls to extmark_splice. Additionally mark_adjust
-// might adjust extmarks to line inserts/deletes.
+// Marks are moved by calls to extmark_splice. Some standard interfaces
+// mark_adjust and inserted_bytes already adjust marks, check if these are
+// being used before adding extmark_splice calls!
 //
 // Undo/Redo of marks is implemented by storing the call arguments to
 // extmark_splice. The list of arguments is applied in extmark_apply_undo.
-// The only case where we have to copy extmarks is for the area being effected
-// by a delete.
+// We have to copy extmark positions when the extmarks are within a
+// deleted/changed region.
 //
 // Marks live in namespaces that allow plugins/users to segregate marks
 // from other users.
-//
-// For possible ideas for efficency improvements see:
-// http://blog.atom.io/2015/06/16/optimizing-an-important-atom-primitive.html
-// TODO(bfredl): These ideas could be used for an enhanced btree, which
-// wouldn't need separate line and column layers.
-// Other implementations exist in gtk and tk toolkits.
 //
 // Deleting marks only happens when explicitly calling extmark_del, deleteing
 // over a range of marks will only move the marks. Deleting on a mark will
@@ -48,6 +43,13 @@
 # include "extmark.c.generated.h"
 #endif
 
+static PMap(uint64_t) *hl_decors;
+
+void extmark_init(void)
+{
+  hl_decors = pmap_new(uint64_t)();
+}
+
 static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
   if (!buf->b_extmark_ns) {
     if (!put) {
@@ -71,7 +73,8 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// must not be used during iteration!
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
-                     int row, colnr_T col, ExtmarkOp op)
+                     int row, colnr_T col, int end_row, colnr_T end_col,
+                     Decoration *decor, ExtmarkOp op)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   mtpos_t old_pos;
@@ -82,7 +85,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
   } else {
     uint64_t old_mark = map_get(uint64_t, uint64_t)(ns->map, id);
     if (old_mark) {
-      if (old_mark & MARKTREE_PAIRED_FLAG) {
+      if (old_mark & MARKTREE_PAIRED_FLAG || end_row > -1) {
         extmark_del(buf, ns_id, id);
       } else {
         // TODO(bfredl): we need to do more if "revising" a decoration mark.
@@ -90,7 +93,12 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
         old_pos = marktree_lookup(buf->b_marktree, old_mark, itr);
         assert(itr->node);
         if (old_pos.row == row && old_pos.col == col) {
-          map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, old_mark);
+          ExtmarkItem it = map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index,
+                                                          old_mark);
+          if (it.decor) {
+            decoration_redraw(buf, row, row, it.decor);
+            free_decoration(it.decor);
+          }
           mark = marktree_revise(buf->b_marktree, itr);
           goto revised;
         }
@@ -101,11 +109,17 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
     }
   }
 
-  mark = marktree_put(buf->b_marktree, row, col, true);
+  if (end_row > -1) {
+    mark = marktree_put_pair(buf->b_marktree,
+                             row, col, true,
+                             end_row, end_col, false);
+  } else {
+    mark = marktree_put(buf->b_marktree, row, col, true);
+  }
+
 revised:
   map_put(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark,
-                                 (ExtmarkItem){ ns_id, id, 0,
-                                                KV_INITIAL_VALUE });
+                                 (ExtmarkItem){ ns_id, id, decor });
   map_put(uint64_t, uint64_t)(ns->map, id, mark);
 
   if (op != kExtmarkNoUndo) {
@@ -113,6 +127,10 @@ revised:
     // be done "prematurely". Any movement in undo history might necessitate
     // adding new marks to old undo headers.
     u_extmark_set(buf, mark, row, col);
+  }
+
+  if (decor) {
+    decoration_redraw(buf, row, end_row > -1 ? end_row : row, decor);
   }
   return id;
 }
@@ -152,27 +170,23 @@ bool extmark_del(buf_T *buf, uint64_t ns_id, uint64_t id)
   assert(pos.row >= 0);
   marktree_del_itr(buf->b_marktree, itr, false);
   ExtmarkItem item = map_get(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark);
+  mtpos_t pos2 = pos;
 
   if (mark & MARKTREE_PAIRED_FLAG) {
-    mtpos_t pos2 = marktree_lookup(buf->b_marktree,
-                                   mark|MARKTREE_END_FLAG, itr);
+    pos2 = marktree_lookup(buf->b_marktree, mark|MARKTREE_END_FLAG, itr);
     assert(pos2.row >= 0);
     marktree_del_itr(buf->b_marktree, itr, false);
-    if (item.hl_id && pos2.row >= pos.row) {
-      redraw_buf_range_later(buf, pos.row+1, pos2.row+1);
-    }
   }
 
-  if (kv_size(item.virt_text)) {
-    redraw_buf_line_later(buf, pos.row+1);
+  if (item.decor) {
+    decoration_redraw(buf, pos.row, pos2.row, item.decor);
+    free_decoration(item.decor);
   }
-  clear_virttext(&item.virt_text);
 
   map_del(uint64_t, uint64_t)(ns->map, id);
   map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark);
 
   // TODO(bfredl): delete it from current undo header, opportunistically?
-
   return true;
 }
 
@@ -202,9 +216,11 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
   }
 
   // the value is either zero or the lnum (row+1) if highlight was present.
-  static Map(uint64_t, uint64_t) *delete_set = NULL;
+  static Map(uint64_t, ssize_t) *delete_set = NULL;
+  typedef struct { Decoration *decor; int row1; } DecorItem;
+  static kvec_t(DecorItem) decors;
   if (delete_set == NULL) {
-    delete_set = map_new(uint64_t, uint64_t)();
+    delete_set = map_new(uint64_t, ssize_t)();
   }
 
   MarkTreeIter itr[1] = { 0 };
@@ -216,14 +232,16 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
         || (mark.row == u_row && mark.col > u_col)) {
       break;
     }
-    uint64_t *del_status = map_ref(uint64_t, uint64_t)(delete_set, mark.id,
-                                                       false);
+    ssize_t *del_status = map_ref(uint64_t, ssize_t)(delete_set, mark.id,
+                                                     false);
     if (del_status) {
       marktree_del_itr(buf->b_marktree, itr, false);
-      map_del(uint64_t, uint64_t)(delete_set, mark.id);
-      if (*del_status > 0) {
-        redraw_buf_range_later(buf, (linenr_T)(*del_status), mark.row+1);
+      if (*del_status >= 0) {  // we had a decor_id
+        DecorItem it = kv_A(decors, *del_status);
+        decoration_redraw(buf, it.row1, mark.row, it.decor);
+        free_decoration(it.decor);
       }
+      map_del(uint64_t, ssize_t)(delete_set, mark.id);
       continue;
     }
 
@@ -233,15 +251,21 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
 
     assert(item.ns_id > 0 && item.mark_id > 0);
     if (item.mark_id > 0 && (item.ns_id == ns_id || all_ns)) {
-      if (kv_size(item.virt_text)) {
-        redraw_buf_line_later(buf, mark.row+1);
-      }
-      clear_virttext(&item.virt_text);
       marks_cleared = true;
       if (mark.id & MARKTREE_PAIRED_FLAG) {
         uint64_t other = mark.id ^ MARKTREE_END_FLAG;
-        uint64_t status = item.hl_id ? ((uint64_t)mark.row+1) : 0;
-        map_put(uint64_t, uint64_t)(delete_set, other, status);
+        ssize_t decor_id = -1;
+        if (item.decor) {
+          // Save the decoration and the first pos. Clear the decoration
+          // later when we know the full range.
+          decor_id = (ssize_t)kv_size(decors);
+          kv_push(decors,
+                  ((DecorItem) { .decor = item.decor, .row1 = mark.row }));
+        }
+        map_put(uint64_t, ssize_t)(delete_set, other, decor_id);
+      } else if (item.decor) {
+        decoration_redraw(buf, mark.row, mark.row, item.decor);
+        free_decoration(item.decor);
       }
       ExtmarkNs *my_ns = all_ns ? buf_ns_ref(buf, item.ns_id, false) : ns;
       map_del(uint64_t, uint64_t)(my_ns->map, item.mark_id);
@@ -251,16 +275,20 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
       marktree_itr_next(buf->b_marktree, itr);
     }
   }
-  uint64_t id, status;
-  map_foreach(delete_set, id, status, {
+  uint64_t id;
+  ssize_t decor_id;
+  map_foreach(delete_set, id, decor_id, {
     mtpos_t pos = marktree_lookup(buf->b_marktree, id, itr);
     assert(itr->node);
     marktree_del_itr(buf->b_marktree, itr, false);
-    if (status > 0) {
-      redraw_buf_range_later(buf, (linenr_T)status, pos.row+1);
+    if (decor_id >= 0) {
+      DecorItem it = kv_A(decors, decor_id);
+      decoration_redraw(buf, it.row1, pos.row, it.decor);
+      free_decoration(it.decor);
     }
   });
-  map_clear(uint64_t, uint64_t)(delete_set);
+  map_clear(uint64_t, ssize_t)(delete_set);
+  kv_size(decors) = 0;
   return marks_cleared;
 }
 
@@ -270,31 +298,44 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
 // will be searched to the start, or end
 // dir can be set to control the order of the array
 // amount = amount of marks to find or -1 for all
-ExtmarkArray extmark_get(buf_T *buf, uint64_t ns_id,
-                         int l_row, colnr_T l_col,
-                         int u_row, colnr_T u_col,
-                         int64_t amount, bool reverse)
+ExtmarkInfoArray extmark_get(buf_T *buf, uint64_t ns_id,
+                             int l_row, colnr_T l_col,
+                             int u_row, colnr_T u_col,
+                             int64_t amount, bool reverse)
 {
-  ExtmarkArray array = KV_INITIAL_VALUE;
-  MarkTreeIter itr[1] = { 0 };
+  ExtmarkInfoArray array = KV_INITIAL_VALUE;
+  MarkTreeIter itr[1];
   // Find all the marks
   marktree_itr_get_ext(buf->b_marktree, (mtpos_t){ l_row, l_col },
                        itr, reverse, false, NULL);
   int order = reverse ? -1 : 1;
   while ((int64_t)kv_size(array) < amount) {
     mtmark_t mark = marktree_itr_current(itr);
+    mtpos_t endpos = { -1, -1 };
     if (mark.row < 0
         || (mark.row - u_row) * order > 0
         || (mark.row == u_row && (mark.col - u_col) * order > 0)) {
       break;
     }
+    if (mark.id & MARKTREE_END_FLAG) {
+      goto next_mark;
+    } else if (mark.id & MARKTREE_PAIRED_FLAG) {
+      endpos = marktree_lookup(buf->b_marktree, mark.id | MARKTREE_END_FLAG,
+                               NULL);
+    }
+
+
     ExtmarkItem item = map_get(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                       mark.id);
     if (item.ns_id == ns_id) {
       kv_push(array, ((ExtmarkInfo) { .ns_id = item.ns_id,
                                       .mark_id = item.mark_id,
-                                      .row = mark.row, .col = mark.col }));
+                                      .row = mark.row, .col = mark.col,
+                                      .end_row = endpos.row,
+                                      .end_col = endpos.col,
+                                      .decor = item.decor }));
     }
+next_mark:
     if (reverse) {
       marktree_itr_prev(buf->b_marktree, itr);
     } else {
@@ -308,7 +349,7 @@ ExtmarkArray extmark_get(buf_T *buf, uint64_t ns_id,
 ExtmarkInfo extmark_from_id(buf_T *buf, uint64_t ns_id, uint64_t id)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, false);
-  ExtmarkInfo ret = { 0, 0, -1, -1 };
+  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, NULL };
   if (!ns) {
     return ret;
   }
@@ -319,12 +360,22 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint64_t ns_id, uint64_t id)
   }
 
   mtpos_t pos = marktree_lookup(buf->b_marktree, mark, NULL);
+  mtpos_t endpos = { -1, -1 };
+  if (mark & MARKTREE_PAIRED_FLAG) {
+    endpos = marktree_lookup(buf->b_marktree, mark | MARKTREE_END_FLAG, NULL);
+  }
   assert(pos.row >= 0);
+
+  ExtmarkItem item = map_get(uint64_t, ExtmarkItem)(buf->b_extmark_index,
+                                                    mark);
 
   ret.ns_id = ns_id;
   ret.mark_id = id;
   ret.row = pos.row;
   ret.col = pos.col;
+  ret.end_row = endpos.row;
+  ret.end_col = endpos.col;
+  ret.decor = item.decor;
 
   return ret;
 }
@@ -352,7 +403,7 @@ void extmark_free_all(buf_T *buf)
 
   map_foreach(buf->b_extmark_index, id, item, {
     (void)id;
-    clear_virttext(&item.virt_text);
+    free_decoration(item.decor);
   });
   map_free(uint64_t, ExtmarkItem)(buf->b_extmark_index);
   buf->b_extmark_index = NULL;
@@ -642,50 +693,6 @@ uint64_t src2ns(Integer *src_id)
   }
 }
 
-/// Adds a decoration to a buffer.
-///
-/// Unlike matchaddpos() highlights, these follow changes to the the buffer
-/// texts. Decorations are represented internally and in the API as extmarks.
-///
-/// @param buf The buffer to add decorations to
-/// @param ns_id A valid namespace id.
-/// @param hl_id Id of the highlight group to use (or zero)
-/// @param start_row The line to highlight
-/// @param start_col First column to highlight
-/// @param end_row The line to highlight
-/// @param end_col The last column to highlight
-/// @param virt_text Virtual text (currently placed at the EOL of start_row)
-/// @return The extmark id inside the namespace
-uint64_t extmark_add_decoration(buf_T *buf, uint64_t ns_id, int hl_id,
-                                int start_row, colnr_T start_col,
-                                int end_row, colnr_T end_col,
-                                VirtText virt_text)
-{
-  ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
-  ExtmarkItem item;
-  item.ns_id = ns_id;
-  item.mark_id = ns->free_id++;
-  item.hl_id = hl_id;
-  item.virt_text = virt_text;
-
-  uint64_t mark;
-
-  if (end_row > -1) {
-    mark = marktree_put_pair(buf->b_marktree,
-                             start_row, start_col, true,
-                             end_row, end_col, false);
-  } else {
-    mark = marktree_put(buf->b_marktree, start_row, start_col, true);
-  }
-
-  map_put(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark, item);
-  map_put(uint64_t, uint64_t)(ns->map, item.mark_id, mark);
-
-  redraw_buf_range_later(buf, start_row+1,
-                         (end_row >= 0 ? end_row : start_row) + 1);
-  return item.mark_id;
-}
-
 /// Add highlighting to a buffer, bounded by two cursor positions,
 /// with an offset.
 ///
@@ -705,6 +712,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
 {
   colnr_T hl_start = 0;
   colnr_T hl_end = 0;
+  Decoration *decor = decoration_hl(hl_id);
 
   // TODO(bfredl): if decoration had blocky mode, we could avoid this loop
   for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
@@ -729,10 +737,44 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
       hl_start = pos_start.col + offset;
       hl_end = pos_end.col + offset;
     }
-    (void)extmark_add_decoration(buf, (uint64_t)src_id, hl_id,
-                                 (int)lnum-1, hl_start,
-                                 (int)lnum-1+end_off, hl_end,
-                                 VIRTTEXT_EMPTY);
+    (void)extmark_set(buf, (uint64_t)src_id, 0,
+                      (int)lnum-1, hl_start, (int)lnum-1+end_off, hl_end,
+                      decor, kExtmarkUndo);
+  }
+}
+
+Decoration *decoration_hl(int hl_id)
+{
+  assert(hl_id > 0);
+  Decoration **dp = (Decoration **)pmap_ref(uint64_t)(hl_decors,
+                                                      (uint64_t)hl_id, true);
+  if (*dp) {
+    return *dp;
+  }
+
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->hl_id = hl_id;
+  decor->shared = true;
+  *dp = decor;
+  return decor;
+}
+
+void decoration_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
+{
+  if (decor->hl_id && row2 >= row1) {
+    redraw_buf_range_later(buf, row1+1, row2+1);
+  }
+
+  if (kv_size(decor->virt_text)) {
+    redraw_buf_line_later(buf, row1+1);
+  }
+}
+
+void free_decoration(Decoration *decor)
+{
+  if (decor && !decor->shared) {
+    clear_virttext(&decor->virt_text);
+    xfree(decor);
   }
 }
 
@@ -757,8 +799,8 @@ VirtText *extmark_find_virttext(buf_T *buf, int row, uint64_t ns_id)
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        mark.id, false);
     if (item && (ns_id == 0 || ns_id == item->ns_id)
-        && kv_size(item->virt_text)) {
-      return &item->virt_text;
+        && item->decor && kv_size(item->decor->virt_text)) {
+      return &item->decor->virt_text;
     }
     marktree_itr_next(buf->b_marktree, itr);
   }
@@ -787,7 +829,6 @@ bool decorations_redraw_start(buf_T *buf, int top_row,
     if (mark.row < 0) {  // || mark.row > end_row
       break;
     }
-    // TODO(bfredl): dedicated flag for being a decoration?
     if ((mark.row < top_row && mark.id&MARKTREE_END_FLAG)) {
       goto next_mark;
     }
@@ -797,25 +838,30 @@ bool decorations_redraw_start(buf_T *buf, int top_row,
     uint64_t start_id = mark.id & ~MARKTREE_END_FLAG;
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        start_id, false);
+    if (!item || !item->decor) {
+    // TODO(bfredl): dedicated flag for being a decoration?
+      goto next_mark;
+    }
+    Decoration *decor = item->decor;
+
     if ((!(mark.id&MARKTREE_END_FLAG) && altpos.row < top_row
-         && item && !kv_size(item->virt_text))
+         && item && !kv_size(decor->virt_text))
         || ((mark.id&MARKTREE_END_FLAG) && altpos.row >= top_row)) {
       goto next_mark;
     }
 
-    if (item && (item->hl_id > 0 || kv_size(item->virt_text))) {
-      int attr_id = item->hl_id > 0 ? syn_id2attr(item->hl_id) : 0;
-      VirtText *vt = kv_size(item->virt_text) ? &item->virt_text : NULL;
-      HlRange range;
-      if (mark.id&MARKTREE_END_FLAG) {
-        range = (HlRange){ altpos.row, altpos.col, mark.row, mark.col,
-                           attr_id, vt };
-      } else {
-        range = (HlRange){ mark.row, mark.col, altpos.row,
-                           altpos.col, attr_id, vt };
-      }
-      kv_push(state->active, range);
+    int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
+    VirtText *vt = kv_size(decor->virt_text) ? &decor->virt_text : NULL;
+    HlRange range;
+    if (mark.id&MARKTREE_END_FLAG) {
+      range = (HlRange){ altpos.row, altpos.col, mark.row, mark.col,
+                         attr_id, vt };
+    } else {
+      range = (HlRange){ mark.row, mark.col, altpos.row,
+                         altpos.col, attr_id, vt };
     }
+    kv_push(state->active, range);
+
 next_mark:
     if (marktree_itr_node_done(state->itr)) {
       break;
@@ -860,21 +906,24 @@ int decorations_redraw_col(buf_T *buf, int col, DecorationRedrawState *state)
 
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        mark.id, false);
+    if (!item || !item->decor) {
+    // TODO(bfredl): dedicated flag for being a decoration?
+      goto next_mark;
+    }
+    Decoration *decor = item->decor;
 
     if (endpos.row < mark.row
         || (endpos.row == mark.row && endpos.col <= mark.col)) {
-      if (item && !kv_size(item->virt_text)) {
+      if (item && !kv_size(decor->virt_text)) {
         goto next_mark;
       }
     }
 
-    if (item && (item->hl_id > 0 || kv_size(item->virt_text))) {
-      int attr_id = item->hl_id > 0 ? syn_id2attr(item->hl_id) : 0;
-      VirtText *vt = kv_size(item->virt_text) ? &item->virt_text : NULL;
-      kv_push(state->active, ((HlRange){ mark.row, mark.col,
-                                         endpos.row, endpos.col,
-                                         attr_id, vt }));
-    }
+    int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
+    VirtText *vt = kv_size(decor->virt_text) ? &decor->virt_text : NULL;
+    kv_push(state->active, ((HlRange){ mark.row, mark.col,
+                                       endpos.row, endpos.col,
+                                       attr_id, vt }));
 
 next_mark:
     marktree_itr_next(buf->b_marktree, state->itr);

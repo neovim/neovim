@@ -73,6 +73,7 @@ MAP_DECLS(String, handle_T)
 #define pmap_has(T) map_has(T, ptr_t)
 #define pmap_key(T) map_key(T, ptr_t)
 #define pmap_put(T) map_put(T, ptr_t)
+#define pmap_ref(T) map_ref(T, ptr_t)
 /// @see pmap_del2
 #define pmap_del(T) map_del(T, ptr_t)
 #define pmap_clear(T) map_clear(T, ptr_t)

@@ -18,13 +18,13 @@ local function expect(contents)
 end
 
 local function check_undo_redo(ns, mark, sr, sc, er, ec) --s = start, e = end
-  local rv = curbufmeths.get_extmark_by_id(ns, mark)
+  local rv = curbufmeths.get_extmark_by_id(ns, mark, false)
   eq({er, ec}, rv)
   feed("u")
-  rv = curbufmeths.get_extmark_by_id(ns, mark)
+  rv = curbufmeths.get_extmark_by_id(ns, mark, false)
   eq({sr, sc}, rv)
   feed("<c-r>")
-  rv = curbufmeths.get_extmark_by_id(ns, mark)
+  rv = curbufmeths.get_extmark_by_id(ns, mark, false)
   eq({er, ec}, rv)
 end
 
@@ -32,14 +32,17 @@ local function set_extmark(ns_id, id, line, col, opts)
   if opts == nil then
     opts = {}
   end
-  return curbufmeths.set_extmark(ns_id, id, line, col, opts)
+  if id ~= nil and id ~= 0 then
+    opts.id = id
+  end
+  return curbufmeths.set_extmark(ns_id, line, col, opts)
 end
 
 local function get_extmarks(ns_id, start, end_, opts)
   if opts == nil then
     opts = {}
   end
-  return curbufmeths.get_extmarks(ns_id, start, end_, opts)
+  return curbufmeths.get_extmarks(ns_id, start, end_, opts, false)
 end
 
 local function batch_set(ns_id, positions)
@@ -93,7 +96,7 @@ describe('API/extmarks', function()
   it('adds, updates  and deletes marks', function()
     local rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(marks[1], rv)
-    rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({positions[1][1], positions[1][2]}, rv)
     -- Test adding a second mark on same row works
     rv = set_extmark(ns, marks[2], positions[2][1], positions[2][2])
@@ -102,14 +105,14 @@ describe('API/extmarks', function()
     -- Test an update, (same pos)
     rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(marks[1], rv)
-    rv = curbufmeths.get_extmark_by_id(ns, marks[2])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[2], false)
     eq({positions[2][1], positions[2][2]}, rv)
     -- Test an update, (new pos)
     row = positions[1][1]
     col = positions[1][2] + 1
     rv = set_extmark(ns, marks[1], row, col)
     eq(marks[1], rv)
-    rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({row, col}, rv)
 
     -- remove the test marks
@@ -432,7 +435,7 @@ describe('API/extmarks', function()
       ~              |
                      |
     ]])
-    local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    local rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({0, 6}, rv)
     check_undo_redo(ns, marks[1], 0, 3, 0, 6)
   end)
@@ -906,9 +909,9 @@ describe('API/extmarks', function()
     -- Set the mark before the cursor, should stay there
     set_extmark(ns, marks[2], 0, 10)
     feed("i<cr><esc>")
-    local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    local rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({1, 3}, rv)
-    rv = curbufmeths.get_extmark_by_id(ns, marks[2])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[2], false)
     eq({0, 10}, rv)
     check_undo_redo(ns, marks[1], 0, 12, 1, 3)
   end)
@@ -921,12 +924,12 @@ describe('API/extmarks', function()
     feed("0iint <esc>A {<cr><esc>0i1M1<esc>")
     set_extmark(ns, marks[1], 1, 1)
     feed("0i<c-f><esc>")
-    local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    local rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({1, 3}, rv)
     check_undo_redo(ns, marks[1], 1, 1, 1, 3)
     -- now check when cursor at eol
     feed("uA<c-f><esc>")
-    rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({1, 3}, rv)
   end)
 
@@ -937,12 +940,12 @@ describe('API/extmarks', function()
     feed("0i<tab><esc>")
     set_extmark(ns, marks[1], 0, 3)
     feed("bi<c-d><esc>")
-    local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    local rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({0, 1}, rv)
     check_undo_redo(ns, marks[1], 0, 3, 0, 1)
     -- check when cursor at eol
     feed("uA<c-d><esc>")
-    rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({0, 1}, rv)
   end)
 
@@ -1072,7 +1075,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[5], 2, 0, 3, 0)
     feed('u')
     feed([[:1,2s:3:\rxx<cr>]])
-    eq({1, 3}, curbufmeths.get_extmark_by_id(ns, marks[3]))
+    eq({1, 3}, curbufmeths.get_extmark_by_id(ns, marks[3], false))
   end)
 
   it('substitions over multiple lines with replace in substition', function()
@@ -1311,16 +1314,16 @@ describe('API/extmarks', function()
     eq("Invalid ns_id", pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2]))
     eq("Invalid ns_id", pcall_err(curbufmeths.del_extmark, ns_invalid, marks[1]))
     eq("Invalid ns_id", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
-    eq("Invalid ns_id", pcall_err(curbufmeths.get_extmark_by_id, ns_invalid, marks[1]))
+    eq("Invalid ns_id", pcall_err(curbufmeths.get_extmark_by_id, ns_invalid, marks[1], false))
   end)
 
   it('when col = line-length, set the mark on eol', function()
     set_extmark(ns, marks[1], 0, -1)
-    local rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    local rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({0, init_text:len()}, rv)
     -- Test another
     set_extmark(ns, marks[1], 0, -1)
-    rv = curbufmeths.get_extmark_by_id(ns, marks[1])
+    rv = curbufmeths.get_extmark_by_id(ns, marks[1], false)
     eq({0, init_text:len()}, rv)
   end)
 
@@ -1333,7 +1336,7 @@ describe('API/extmarks', function()
     local invalid_col = init_text:len() + 1
     local invalid_lnum = 3
     eq('line value outside range', pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
-    eq({}, curbufmeths.get_extmark_by_id(ns, marks[1]))
+    eq({}, curbufmeths.get_extmark_by_id(ns, marks[1], false))
   end)
 
   it('bug from check_col in extmark_set', function()
@@ -1357,14 +1360,14 @@ describe('API/extmarks', function()
   it('can set a mark to other buffer', function()
     local buf = request('nvim_create_buf', 0, 1)
     request('nvim_buf_set_lines', buf, 0, -1, 1, {"", ""})
-    local id = bufmeths.set_extmark(buf, ns, 0, 1, 0, {})
-    eq({{id, 1, 0}}, bufmeths.get_extmarks(buf, ns, 0, -1, {}))
+    local id = bufmeths.set_extmark(buf, ns, 1, 0, {})
+    eq({{id, 1, 0}}, bufmeths.get_extmarks(buf, ns, 0, -1, {}, false))
   end)
 
   it('does not crash with append/delete/undo seqence', function()
      meths.exec([[
       let ns = nvim_create_namespace('myplugin')
-      call nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+      call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
       undo]],false)
