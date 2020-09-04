@@ -127,6 +127,11 @@ function M.add_predicate(name, handler, force)
   predicate_handlers[name] = handler
 end
 
+--- Returns the list of currently supported predicates
+function M.list_predicates()
+  return vim.tbl_keys(predicate_handlers)
+end
+
 function Query:match_preds(match, pattern, bufnr)
   local preds = self.info.patterns[pattern]
   if not preds then
