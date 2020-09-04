@@ -639,10 +639,11 @@ bool decorations_active = false;
 
 void decorations_add_luahl_attr(int attr_id,
                                 int start_row, int start_col,
-                                int end_row, int end_col)
+                                int end_row, int end_col, VirtText *virt_text)
 {
   kv_push(decorations.active,
-          ((HlRange){ start_row, start_col, end_row, end_col, attr_id, NULL }));
+          ((HlRange){ start_row, start_col,
+                      end_row, end_col, attr_id, virt_text }));
 }
 
 /*
@@ -2356,14 +2357,9 @@ win_line (
         args.items[2] = INTEGER_OBJ(lnum-1);
         lua_attr_active = true;
         extra_check = true;
-        Object o = nlua_call_ref(buf->b_luahl_line, "line", args, true, &err);
+        nlua_call_ref(buf->b_luahl_line, "line", args, false, &err);
         lua_attr_active = false;
-        if (o.type == kObjectTypeString) {
-          // TODO(bfredl): this is a bit of a hack. A final API should use an
-          // "unified" interface where luahl can add both bufhl and virttext
-          luatext = o.data.string.data;
-          do_virttext = true;
-        } else if (ERROR_SET(&err)) {
+        if (ERROR_SET(&err)) {
           ELOG("error in luahl line: %s", err.msg);
           luatext = err.msg;
           do_virttext = true;
