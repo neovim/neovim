@@ -1232,7 +1232,7 @@ setManualFoldWin(
   for (;; ) {
     if (!foldFind(gap, lnum, &fp)) {
       /* If there is a following fold, continue there next time. */
-      if (fp < (fold_T *)gap->ga_data + gap->ga_len)
+      if (fp != NULL && fp < (fold_T *)gap->ga_data + gap->ga_len)
         next = fp->fd_top + off;
       break;
     }
@@ -2615,17 +2615,18 @@ static void foldSplit(buf_T *buf, garray_T *const gap,
    * any between top and bot, they have been removed by the caller. */
   garray_T *const gap1 = &fp->fd_nested;
   garray_T *const gap2 = &fp[1].fd_nested;
-  (void)(foldFind(gap1, bot + 1 - fp->fd_top, &fp2));
-  const int len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
-  if (len > 0) {
-    ga_grow(gap2, len);
-    for (int idx = 0; idx < len; idx++) {
-      ((fold_T *)gap2->ga_data)[idx] = fp2[idx];
-      ((fold_T *)gap2->ga_data)[idx].fd_top
-        -= fp[1].fd_top - fp->fd_top;
+  if (foldFind(gap1, bot + 1 - fp->fd_top, &fp2)) {
+    const int len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
+    if (len > 0) {
+      ga_grow(gap2, len);
+      for (int idx = 0; idx < len; idx++) {
+        ((fold_T *)gap2->ga_data)[idx] = fp2[idx];
+        ((fold_T *)gap2->ga_data)[idx].fd_top
+          -= fp[1].fd_top - fp->fd_top;
+      }
+      gap2->ga_len = len;
+      gap1->ga_len -= len;
     }
-    gap2->ga_len = len;
-    gap1->ga_len -= len;
   }
   fp->fd_len = top - fp->fd_top;
   fold_changed = true;

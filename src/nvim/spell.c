@@ -5663,6 +5663,9 @@ check_suggestions (
   int len;
   hlf_T attr;
 
+  if (gap->ga_len == 0) {
+    return;
+  }
   stp = &SUG(*gap, 0);
   for (int i = gap->ga_len - 1; i >= 0; --i) {
     // Need to append what follows to check for "the the".
