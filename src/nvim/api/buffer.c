@@ -1161,11 +1161,13 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
-/// @param details Wether to include the details dict
+/// @param opts  Optional parameters. Keys:
+///          - limit:  Maximum number of marks to return
+///          - details Whether to include the details dict
 /// @param[out] err   Error details, if any
 /// @return (row, col) tuple or empty list () if extmark id was absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Boolean details,
+                                            Integer id, Dictionary opts,
                                             Error *err)
   FUNC_API_SINCE(7)
 {
@@ -1181,6 +1183,26 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return rv;
   }
+
+  bool details = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("details", k.data)) {
+      if (v->type == kObjectTypeBoolean) {
+        details = v->data.boolean;
+      } else if (v->type == kObjectTypeInteger) {
+        details = v->data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "details is not an boolean");
+        return rv;
+      }
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return rv;
+    }
+  }
+
 
   ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
   if (extmark.row < 0) {
@@ -1229,13 +1251,12 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///             (whose position defines the bound)
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
-/// @param details Wether to include the details dict
+///          - details Whether to include the details dict
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
                             Object start, Object end,
-                            Dictionary opts, Boolean details,
-                            Error *err)
+                            Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -1249,7 +1270,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
     api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
     return rv;
   }
+
   Integer limit = -1;
+  bool details = false;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
@@ -1260,6 +1283,15 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
         return rv;
       }
       limit = v->data.integer;
+    } else if (strequal("details", k.data)) {
+      if (v->type == kObjectTypeBoolean) {
+        details = v->data.boolean;
+      } else if (v->type == kObjectTypeInteger) {
+        details = v->data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "details is not an boolean");
+        return rv;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return rv;
