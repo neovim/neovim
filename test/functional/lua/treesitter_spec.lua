@@ -312,6 +312,18 @@ void ui_refresh(void)
     ]], custom_query)
 
     eq({{0, 4, 0, 8}}, res)
+
+    local res_list = exec_lua[[
+    local query = require'vim.treesitter.query'
+
+    local list = query.list_predicates()
+
+    table.sort(list)
+
+    return list
+    ]]
+
+    eq({ 'contains?', 'eq?', 'is-main?', 'match?', 'vim-match?' }, res_list)
   end)
 
   it('supports highlighting', function()

@@ -782,6 +782,11 @@ vim.treesitter.query.add_predicate({name}, {handler})
 This adds a predicate with the name {name} to be used in queries.
 {handler} should be a function whose signature will be : >
 	handler(match, pattern, bufnr, predicate)
+<
+					*vim.treesitter.query.list_predicates()*
+vim.treesitter.query.list_predicates()
+
+This lists the currently available predicates to use in queries.
 
 Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 
