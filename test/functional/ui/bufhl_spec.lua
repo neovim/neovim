@@ -699,14 +699,14 @@ describe('Buffer highlighting', function()
       -- TODO: only a virtual text from the same ns curretly overrides
       -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
-      eq({{1, 0, 0, {virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {}, true))
+      eq({{1, 0, 0, {virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
 
       -- TODO: is this really valid? shouldn't the max be line_count()-1?
       local lastline = line_count()
       set_virtual_text(id1, line_count(), s2, {})
-      eq({{3, lastline, 0, {virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {}, true))
+      eq({{3, lastline, 0, {virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
 
-      eq({}, get_extmarks(id1, {lastline+9000,0}, {lastline+9000, -1}, {}, false))
+      eq({}, get_extmarks(id1, {lastline+9000,0}, {lastline+9000, -1}, {}))
     end)
 
     it('is not highlighted by visual selection', function()
