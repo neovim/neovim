@@ -346,7 +346,8 @@ submit_pr() {
   local patches
   # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
   patches=("$(git log --grep=vim-patch --reverse --format='%s' "${git_remote}"/master..HEAD | sed 's/: .*//')")
-  patches=("${patches[@]//vim-patch:}") # Remove 'vim-patch:' prefix for each item in array.
+  # shellcheck disable=SC2206
+  patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
 
