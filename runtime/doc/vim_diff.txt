@@ -408,7 +408,6 @@ Some legacy Vim features are not implemented:
 
 - |if_lua|: Nvim Lua API is not compatible with Vim's "if_lua"
 - *if_mzscheme*
-- *if_perl*
 - |if_py|: *python-bindeval* *python-Function* are not supported
 - *if_tcl*
 

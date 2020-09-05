@@ -556,6 +556,7 @@ followed by another Vim command:
     :lfdo
     :make
     :normal
+    :perlfile
     :promptfind
     :promptrepl
     :pyfile

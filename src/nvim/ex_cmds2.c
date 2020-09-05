@@ -935,6 +935,21 @@ void ex_pydo3(exarg_T *eap)
   script_host_do_range("python3", eap);
 }
 
+void ex_perl(exarg_T *eap)
+{
+  script_host_execute("perl", eap);
+}
+
+void ex_perlfile(exarg_T *eap)
+{
+  script_host_execute_file("perl", eap);
+}
+
+void ex_perldo(exarg_T *eap)
+{
+  script_host_do_range("perl", eap);
+}
+
 // Command line expansion for :profile.
 static enum {
   PEXP_SUBCMD,          ///< expand :profile sub-commands

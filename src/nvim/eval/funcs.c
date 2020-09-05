@@ -6374,6 +6374,14 @@ static void f_pyxeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+///
+/// "perleval()" function
+///
+static void f_perleval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  script_host_eval("perl", argvars, rettv);
+}
+
 /*
  * "range()" function
  */
