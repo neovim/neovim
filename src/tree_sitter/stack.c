@@ -571,7 +571,12 @@ void ts_stack_record_summary(Stack *self, StackVersion version, unsigned max_dep
   };
   array_init(session.summary);
   stack__iter(self, version, summarize_stack_callback, &session, -1);
-  self->heads.contents[version].summary = session.summary;
+  StackHead *head = &self->heads.contents[version];
+  if (head->summary) {
+    array_delete(head->summary);
+    ts_free(head->summary);
+  }
+  head->summary = session.summary;
 }
 
 StackSummary *ts_stack_get_summary(Stack *self, StackVersion version) {
@@ -742,6 +747,10 @@ bool ts_stack_print_dot_graph(Stack *self, const TSLanguage *language, FILE *f) 
       ts_stack_node_count_since_error(self, i),
       ts_stack_error_cost(self, i)
     );
+
+    if (head->summary) {
+      fprintf(f, "\nsummary_size: %u", head->summary->size);
+    }
 
     if (head->last_external_token.ptr) {
       const ExternalScannerState *state = &head->last_external_token.ptr->external_scanner_state;

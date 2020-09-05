@@ -1431,7 +1431,7 @@ static inline void east_set_error(const ParserState *const pstate,
   const ParserLine pline = pstate->reader.lines.items[start.line];
   ret_ast_err->msg = msg;
   ret_ast_err->arg_len = (int)(pline.size - start.col);
-  ret_ast_err->arg = pline.data + start.col;
+  ret_ast_err->arg = pline.data ? pline.data + start.col : NULL;
 }
 
 /// Set error from the given token and given message
