@@ -14,7 +14,7 @@ function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive)
   inclusive = inclusive or false
 
   -- sanity check
-  if start[2] < 0 or finish[2] < start[2] then return end
+  if start[2] < 0 or finish[1] < start[1] then return end
 
   local region = vim.region(bufnr, start, finish, rtype, inclusive)
   for linenr, cols in pairs(region) do
