@@ -841,4 +841,46 @@ func Test_winnr()
   only | tabonly
 endfunc
 
+func Test_window_resize()
+  " Vertical :resize (absolute, relative, min and max size).
+  vsplit
+  vert resize 8
+  call assert_equal(8, winwidth(0))
+  vert resize +2
+  call assert_equal(10, winwidth(0))
+  vert resize -2
+  call assert_equal(8, winwidth(0))
+  vert resize
+  call assert_equal(&columns - 2, winwidth(0))
+  vert resize 0
+  call assert_equal(1, winwidth(0))
+  vert resize 99999
+  call assert_equal(&columns - 2, winwidth(0))
+
+  %bwipe!
+
+  " Horizontal :resize (with absolute, relative size, min and max size).
+  split
+  resize 8
+  call assert_equal(8, winheight(0))
+  resize +2
+  call assert_equal(10, winheight(0))
+  resize -2
+  call assert_equal(8, winheight(0))
+  resize
+  call assert_equal(&lines - 4, winheight(0))
+  resize 0
+  call assert_equal(1, winheight(0))
+  resize 99999
+  call assert_equal(&lines - 4, winheight(0))
+
+  " :resize with explicit window number.
+  let other_winnr = winnr('j')
+  exe other_winnr .. 'resize 10'
+  call assert_equal(10, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3, winheight(0))
+
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
