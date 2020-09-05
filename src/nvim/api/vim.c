@@ -2627,3 +2627,9 @@ void nvim__put_attr(Integer id, Integer start_row, Integer start_col,
   decorations_add_luahl_attr(attr, (int)start_row, (colnr_T)start_col,
                              (int)end_row, (colnr_T)end_col);
 }
+
+void nvim__screenshot(String path)
+  FUNC_API_FAST
+{
+  ui_call_screenshot(path);
+}

@@ -36,6 +36,8 @@ void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void screenshot(String path)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_IMPL;
 void option_set(String name, Object value)
   FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
