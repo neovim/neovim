@@ -573,7 +573,7 @@ function! s:check_ruby() abort
   endif
   call health#report_info('Ruby: '. s:system('ruby -v'))
 
-  let host = provider#ruby#Detect()
+  let [host, err] = provider#ruby#Detect()
   if empty(host)
     call health#report_warn('`neovim-ruby-host` not found.',
           \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
@@ -636,7 +636,7 @@ function! s:check_node() abort
     call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
   endif
 
-  let host = provider#node#Detect()
+  let [host, err] = provider#node#Detect()
   if empty(host)
     call health#report_warn('Missing "neovim" npm (or yarn) package.',
           \ ['Run in shell: npm install -g neovim',

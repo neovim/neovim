@@ -768,18 +768,15 @@ function module.new_pipename()
 end
 
 function module.missing_provider(provider)
-  if provider == 'ruby' or provider == 'node' then
-    local prog = module.funcs['provider#' .. provider .. '#Detect']()
-    return prog == '' and (provider .. ' not detected') or false
-  elseif provider == 'perl' then
-    local errors = module.funcs['provider#'..provider..'#Detect']()[2]
-    return errors ~= '' and errors or false
+  if provider == 'ruby' or provider == 'node' or provider == 'perl' then
+    local e = module.funcs['provider#'..provider..'#Detect']()[2]
+    return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local errors = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
-    return errors ~= '' and errors or false
+    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    return e ~= '' and e or false
   else
-    assert(false, 'Unknown provider: ' .. provider)
+    assert(false, 'Unknown provider: '..provider)
   end
 end
 
