@@ -28,6 +28,8 @@ parts:
         source: .
         override-pull: |
           snapcraftctl pull
+          latest_tag="$(git tag -l --sort=refname|head -1)"
+          git checkout "${latest_tag}"
           major="$(awk '/NVIM_VERSION_MAJOR/{gsub(")","",$2); print $2}' CMakeLists.txt)"
           minor="$(awk '/NVIM_VERSION_MINOR/{gsub(")","",$2); print $2}' CMakeLists.txt)"
           patch="$(awk '/NVIM_VERSION_PATCH/{gsub(")","",$2); print $2}' CMakeLists.txt)"
