@@ -419,7 +419,7 @@ client()                                                      *vim.lsp.client*
                 |vim.lsp.get_active_clients()|.
 
                 • Methods:
-                  • request(method, params, [callback], bufnr) Send a request
+                  • request(method, params, [callback], bufnr) Sends a request
                     to the server. This is a thin wrapper around
                     {client.rpc.request} with some additional checking. If
                     {callback} is not specified, it will use
@@ -431,13 +431,13 @@ client()                                                      *vim.lsp.client*
                     If {status} is `true` , the function returns {request_id}
                     as the second result. You can use this with
                     `client.cancel_request(request_id)` to cancel the request.
-                  • notify(method, params) Send a notification to an LSP
+                  • notify(method, params) Sends a notification to an LSP
                     server. Returns: a boolean to indicate if the notification
                     was successful. If it is false, then it will always be
                     false (the client has shutdown).
                   • cancel_request(id) Cancels a request with a given request
                     id. Returns: same as `notify()` .
-                  • stop([force]) Stop a client, optionally with force. By
+                  • stop([force]) Stops a client, optionally with force. By
                     default, it will just ask the server to shutdown without
                     force. If you request to stop a client which has
                     previously been requested to shutdown, it will
@@ -688,7 +688,7 @@ clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
 
 code_action({context})                             *vim.lsp.buf.code_action()*
-                Select a code action from the input list that is available at
+                Selects a code action from the input list that is available at
                 the current cursor position.
 
                 Parameters: ~
@@ -733,7 +733,7 @@ document_symbol()                              *vim.lsp.buf.document_symbol()*
                 window.
 
 execute_command({command})                     *vim.lsp.buf.execute_command()*
-                Execute an LSP server command.
+                Executes an LSP server command.
 
                 Parameters: ~
                     {command}  A valid `ExecuteCommandParams` object
@@ -755,7 +755,7 @@ formatting({options})                               *vim.lsp.buf.formatting()*
 
                                                *vim.lsp.buf.formatting_sync()*
 formatting_sync({options}, {timeout_ms})
-                Perform |vim.lsp.buf.formatting()| synchronously.
+                Performs |vim.lsp.buf.formatting()| synchronously.
 
                 Useful for running on save, to make sure buffer is formatted
                 prior to being saved. {timeout_ms} is passed on to
@@ -790,15 +790,13 @@ outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
 
                                               *vim.lsp.buf.range_formatting()*
 range_formatting({options}, {start_pos}, {end_pos})
-                Perform |vim.lsp.buf.formatting()| synchronously.
-
-                Useful for running on save, to make sure buffer is formatted
-                prior to being saved. {timeout_ms} is passed on to
-                |vim.lsp.buf_request_sync()|.
+                Formats a given range.
 
                 Parameters: ~
-                    {options}     Table with valid `FormattingOptions` entries
-                    {timeout_ms}  (number) Request timeout
+                    {options}    Table with valid `FormattingOptions` entries.
+                    {start_pos}  ({number, number}, optional) mark-indexed
+                                 position. Defaults to the end of the last
+                                 visual selection.
 
 references({context})                               *vim.lsp.buf.references()*
                 Lists all the references to the symbol under the cursor in the
@@ -918,7 +916,7 @@ rpc_response_error({code}, {message}, {data})
 
                                                          *vim.lsp.rpc.start()*
 start({cmd}, {cmd_args}, {handlers}, {extra_spawn_params})
-                Start an LSP server process and create an LSP RPC client
+                Starts an LSP server process and create an LSP RPC client
                 object to interact with it.
 
                 Parameters: ~
@@ -959,9 +957,6 @@ Lua module: vim.lsp.util                                            *lsp-util*
 
                                      *vim.lsp.util.apply_text_document_edit()*
 apply_text_document_edit({text_document_edit})
-                Apply a `TextDocumentEdit` , which is a list of changes to a
-                single document.
-
                 Parameters: ~
                     {text_document_edit}  (table) a `TextDocumentEdit` object
 
@@ -984,7 +979,7 @@ apply_workspace_edit({workspace_edit})
                     {workspace_edit}  (table) `WorkspaceEdit`
 
 buf_clear_diagnostics({bufnr})          *vim.lsp.util.buf_clear_diagnostics()*
-                Clear diagnostics for a buffer.
+                Clears diagnostics for a buffer.
 
                 Parameters: ~
                     {bufnr}  (number) buffer id
@@ -1037,7 +1032,7 @@ buf_diagnostics_save_positions({bufnr}, {diagnostics})
 
                                         *vim.lsp.util.buf_diagnostics_signs()*
 buf_diagnostics_signs({bufnr}, {diagnostics})
-                Place signs for each diagnostic in the sign column.
+                Places signs for each diagnostic in the sign column.
 
                 Sign characters can be customized with the following commands:
 >
@@ -1058,7 +1053,7 @@ buf_diagnostics_underline({bufnr}, {diagnostics})
 
                                  *vim.lsp.util.buf_diagnostics_virtual_text()*
 buf_diagnostics_virtual_text({bufnr}, {diagnostics})
-                Given a list of diagnostics, set the corresponding virtual
+                Given a list of diagnostics, sets the corresponding virtual
                 text for a buffer.
 
                 Parameters: ~
@@ -1067,7 +1062,7 @@ buf_diagnostics_virtual_text({bufnr}, {diagnostics})
 
                                      *vim.lsp.util.buf_highlight_references()*
 buf_highlight_references({bufnr}, {references})
-                Show a list of document highlights for a certain buffer.
+                Shows a list of document highlights for a certain buffer.
 
                 Parameters: ~
                     {bufnr}       buffer id
@@ -1089,7 +1084,7 @@ character_offset({buf}, {row}, {col})        *vim.lsp.util.character_offset()*
 
                                         *vim.lsp.util.close_preview_autocmd()*
 close_preview_autocmd({events}, {winnr})
-                Create autocommands to close a preview window when events
+                Creates autocommands to close a preview window when events
                 happen.
 
                 Parameters: ~
@@ -1101,7 +1096,7 @@ close_preview_autocmd({events}, {winnr})
 
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
-                Convert any of `MarkedString` | `MarkedString[]` |
+                Converts any of `MarkedString` | `MarkedString[]` |
                 `MarkupContent` into a list of lines containing valid
                 markdown. Useful to populate the hover window for
                 `textDocument/hover` , for parsing the result of
@@ -1121,7 +1116,7 @@ convert_input_to_markdown_lines({input}, {contents})
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
 convert_signature_help_to_markdown_lines({signature_help})
-                Convert `textDocument/SignatureHelp` response to markdown
+                Converts `textDocument/SignatureHelp` response to markdown
                 lines.
 
                 Parameters: ~
@@ -1163,11 +1158,11 @@ extract_completion_items({result})
 
                                       *vim.lsp.util.fancy_floating_markdown()*
 fancy_floating_markdown({contents}, {opts})
-                Convert markdown into syntax highlighted regions by stripping
+                Converts markdown into syntax highlighted regions by stripping
                 the code blocks and converting them into highlighted code.
                 This will by default insert a blank line separator after those
                 code block regions to improve readability. The result is shown
-                in a floating preview
+                in a floating preview.
 
                 Parameters: ~
                     {contents}  table of lines to show in window
@@ -1193,9 +1188,9 @@ focusable_float({unique_name}, {fn})          *vim.lsp.util.focusable_float()*
 
                                             *vim.lsp.util.focusable_preview()*
 focusable_preview({unique_name}, {fn})
-                Focus/unfocus the floating preview window associated with the
-                current buffer via the window variable `unique_name` . If no
-                such preview window exists, make a new one.
+                Focuses/unfocuses the floating preview window associated with
+                the current buffer via the window variable `unique_name` . If
+                no such preview window exists, makes a new one.
 
                 Parameters: ~
                     {unique_name}  (string) Window variable
@@ -1206,7 +1201,7 @@ focusable_preview({unique_name}, {fn})
                                    be created
 
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
-                Get visual width of tabstop.
+                Returns visual width of tabstop.
 
                 Parameters: ~
                     {bufnr}  (optional, number): Buffer handle, defaults to
@@ -1219,7 +1214,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                     |softtabstop|
 
 get_line_diagnostics()                   *vim.lsp.util.get_line_diagnostics()*
-                Get list of diagnostics for the current line.
+                Gets list of diagnostics for the current line.
 
                 Return: ~
                     (table) list of `Diagnostic` tables
@@ -1229,7 +1224,7 @@ get_line_diagnostics()                   *vim.lsp.util.get_line_diagnostics()*
 
                                   *vim.lsp.util.get_severity_highlight_name()*
 get_severity_highlight_name({severity})
-                Get the name of a severity's highlight group.
+                Gets the name of a severity's highlight group.
 
                 Parameters: ~
                     {severity}  A member of
@@ -1319,7 +1314,7 @@ make_text_document_params()         *vim.lsp.util.make_text_document_params()*
 
                                         *vim.lsp.util.open_floating_preview()*
 open_floating_preview({contents}, {filetype}, {opts})
-                Show contents in a floating window
+                Shows contents in a floating window.
 
                 Parameters: ~
                     {contents}  table of lines to show in window
@@ -1340,7 +1335,7 @@ parse_snippet({input})                          *vim.lsp.util.parse_snippet()*
                     (string) parsed snippet
 
 preview_location({location})                 *vim.lsp.util.preview_location()*
-                Preview a location in a floating window
+                Previews a location in a floating window
 
                 behavior depends on type of location:
                 • for Location, range is shown (e.g., function definition)
@@ -1355,7 +1350,7 @@ preview_location({location})                 *vim.lsp.util.preview_location()*
                     or nil
 
 set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
-                Replace text in a range with new text.
+                Replaces text in a range with new text.
 
                 CAUTION: Changes in-place!
 
@@ -1389,7 +1384,7 @@ show_line_diagnostics()                 *vim.lsp.util.show_line_diagnostics()*
                 hover window.
 
 symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
-                Convert symbols to quickfix list items
+                Converts symbols to quickfix list items.
 
                 Parameters: ~
                     {symbols}  DocumentSymbol[] or SymbolInformation[]
@@ -1414,7 +1409,7 @@ text_document_completion_list_to_complete_items({result}, {prefix})
                     |complete-items|
 
 trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*
-                Remove empty lines from the beginning and end.
+                Removes empty lines from the beginning and end.
 
                 Parameters: ~
                     {lines}  (table) list of lines to trim
@@ -1435,4 +1430,4 @@ try_trim_markdown_code_blocks({lines})
                 Return: ~
                     (string) filetype or 'markdown' if it was unchanged.
 
- vim:tw=78:ts=8:sw=2:et:ft=help:norl:
+ vim:tw=78:ts=8:ft=help:norl:
