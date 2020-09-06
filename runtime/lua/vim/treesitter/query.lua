@@ -135,8 +135,8 @@ function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
 
-local function xor(a, b)
-  return (a or b) and not (a and b)
+local function xor(x, y)
+  return (x or y) and not (x and y)
 end
 
 function Query:match_preds(match, pattern, bufnr)
