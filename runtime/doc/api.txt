@@ -537,6 +537,12 @@ nvim__put_attr({id}, {start_row}, {start_col}, {end_row}, {end_col})
                 should probably be derived from a reformed bufhl/virttext
                 interface with full support for multi-line ranges etc
 
+nvim__screenshot({path})                                  *nvim__screenshot()*
+                TODO: Documentation
+
+                Attributes: ~
+                    {fast}
+
 nvim__stats()                                                  *nvim__stats()*
                 Gets internal stats.
 
@@ -1565,12 +1571,6 @@ affected.
 You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()|
 to check whether a buffer is loaded.
 
-                                                  *nvim__buf_add_decoration()*
-nvim__buf_add_decoration({buffer}, {ns_id}, {hl_group}, {start_row},
-                         {start_col}, {end_row}, {end_col},
-                         {virt_text})
-                TODO: Documentation
-
                                                     *nvim__buf_redraw_range()*
 nvim__buf_redraw_range({buffer}, {first}, {last})
                 TODO: Documentation
@@ -1766,13 +1766,16 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
                     Map of maps describing commands.
 
                                                 *nvim_buf_get_extmark_by_id()*
-nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id})
+nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
                 Returns position for a given extmark id
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
                     {id}      Extmark id
+                    {opts}    Optional parameters. Keys:
+                              • limit: Maximum number of marks to return
+                              • details Whether to include the details dict
 
                 Return: ~
                     (row, col) tuple or empty list () if extmark id was absent
@@ -1821,6 +1824,7 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                               extmark id (whose position defines the bound)
                     {opts}    Optional parameters. Keys:
                               • limit: Maximum number of marks to return
+                              • details Whether to include the details dict
 
                 Return: ~
                     List of [extmark_id, row, col] tuples in "traversal
@@ -1919,28 +1923,6 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Return: ~
                     Variable value
 
-                                                 *nvim_buf_get_virtual_text()*
-nvim_buf_get_virtual_text({buffer}, {line})
-                Get the virtual text (annotation) for a buffer line.
-
-                The virtual text is returned as list of lists, whereas the
-                inner lists have either one or two elements. The first element
-                is the actual text, the optional second element is the
-                highlight group.
-
-                The format is exactly the same as given to
-                nvim_buf_set_virtual_text().
-
-                If there is no virtual text associated with the given line, an
-                empty list is returned.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {line}    Line to get the virtual text from (zero-indexed)
-
-                Return: ~
-                    List of virtual text chunks
-
 nvim_buf_is_loaded({buffer})                            *nvim_buf_is_loaded()*
                 Checks if a buffer is valid and loaded. See |api-buffer| for
                 more info about unloaded buffers.
@@ -1974,22 +1956,35 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     Line count, or 0 for unloaded buffer. |api-buffer|
 
                                                       *nvim_buf_set_extmark()*
-nvim_buf_set_extmark({buffer}, {ns_id}, {id}, {line}, {col}, {opts})
+nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                 Creates or updates an extmark.
 
                 To create a new extmark, pass id=0. The extmark id will be
-                returned. It is also allowed to create a new mark by passing
-                in a previously unused id, but the caller must then keep track
-                of existing and unused ids itself. (Useful over RPC, to avoid
+                returned. To move an existing mark, pass its id.
+
+                It is also allowed to create a new mark by passing in a
+                previously unused id, but the caller must then keep track of
+                existing and unused ids itself. (Useful over RPC, to avoid
                 waiting for the return value.)
+
+                Using the optional arguments, it is possible to use this to
+                highlight a range of text, and also to associate virtual text
+                to the mark.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {id}      Extmark id, or 0 to create new
                     {line}    Line number where to place the mark
                     {col}     Column where to place the mark
-                    {opts}    Optional parameters. Currently not used.
+                    {opts}    Optional parameters.
+                              • id : id of the extmark to edit.
+                              • end_line : ending line of the mark, 0-based
+                                inclusive.
+                              • end_col : ending col of the mark, 0-based
+                                inclusive.
+                              • hl_group : name of the highlight group used to
+                                highlight this mark.
+                              • virt_text : virtual text to link to this mark.
 
                 Return: ~
                     Id of the created/updated extmark
