@@ -32,6 +32,9 @@ EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
+// Maximum columns for terminal highlight attributes
+#define TERM_ATTRS_MAX 1024
+
 /// Status line click definition
 typedef struct {
   enum {

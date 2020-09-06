@@ -500,9 +500,20 @@ function module.source(code)
 end
 
 function module.set_shell_powershell()
+  local shell = iswin() and 'powershell' or 'pwsh'
+  if not module.eval('executable("'..shell..'")') then
+    error(shell..' is not executable')
+  end
+  local aliases = iswin() and {'cat', 'sleep'} or {}
+  local cmd = ''
+  for _, alias in ipairs(aliases) do
+    cmd = cmd .. 'Remove-Item -Force alias:' .. alias .. ';'
+  end
   module.source([[
-    set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
-    let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command Remove-Item -Force alias:sleep; Remove-Item -Force alias:cat;'
+    let &shell = ']]..shell..[['
+    set shellquote= shellpipe=\| shellxquote=
+    let &shellredir = '| Out-File -Encoding UTF8'
+    let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
   ]])
 end
 
