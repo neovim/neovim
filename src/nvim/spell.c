@@ -4405,8 +4405,6 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
       break;
 
-      FALLTHROUGH;
-
     case STATE_INS:
       // Insert one byte.  Repeat this for each possible byte at this
       // node.
