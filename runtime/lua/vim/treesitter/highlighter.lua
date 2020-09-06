@@ -99,11 +99,7 @@ function TSHighlighter:get_hl_from_capture(capture)
   else
     -- Default to false to avoid recomputing
     local hl = TSHighlighter.hl_map[name]
-    if hl then
-      return a.nvim_get_hl_id_by_name(hl)
-    else
-      return 0
-    end
+    return hl and a.nvim_get_hl_id_by_name(hl) or 0
   end
 end
 
