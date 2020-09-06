@@ -42,7 +42,23 @@ parts:
             - CMAKE_FLAGS=-DPREFER_LUA=ON
             - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
         override-build: |
-            snapcraftctl build
+            echo "Building on $SNAP_ARCH"
+            set -x
+            case "$SNAP_ARCH" in
+              "arm64" | "ppc64el"  | "s390x")
+              make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" \
+                CMAKE_BUILD_TYPE=RelWithDebInfo \
+                CMAKE_INSTALL_PREFIX=/usr \
+                CMAKE_FLAGS=-DPREFER_LUA=ON \
+                DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
+              ;;
+              *)
+              make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" \
+                CMAKE_BUILD_TYPE=RelWithDebInfo \
+                CMAKE_INSTALL_PREFIX=/usr
+              ;;
+            esac
+            make DESTDIR="$SNAPCRAFT_PART_INSTALL" install
             # Fix Desktop file
             sed -i 's|^Exec=nvim|Exec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
             sed -i 's|^TryExec=nvim|TryExec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
