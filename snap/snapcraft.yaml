@@ -36,7 +36,12 @@ parts:
           version_prefix="v$major.$minor.$patch"
           git_described="$(git describe --first-parent --dirty 2> /dev/null | perl -lpe 's/v\d.\d.\d-//g')"
           git_described="${git_described:-$(git describe --first-parent --tags --always --dirty)}"
-          snapcraftctl set-version "${version_prefix}-${git_described}"
+          if [ "${version_prefix}" != "${git_described}" ]; then
+            VERSION="${version_prefix}-${git_described}-${branch}"
+          else
+            VERSION="${version_prefix}-${branch}"
+          fi
+          snapcraftctl set-version "${VERSION}"
         plugin: make
         make-parameters:
             - CMAKE_BUILD_TYPE=RelWithDebInfo
