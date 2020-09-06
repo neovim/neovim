@@ -4022,7 +4022,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'mousefocus'* *'mousef'* *'nomousefocus'* *'nomousef'*
 'mousefocus' 'mousef'	boolean	(default off)
 			global
-			{only works in the GUI}
 	The window that the mouse pointer is on is automatically activated.
 	When changing the window layout or window focus in another way, the
 	mouse pointer is moved to the window with keyboard focus.  Off is the

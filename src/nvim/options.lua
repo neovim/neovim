@@ -1588,7 +1588,8 @@ return {
       full_name='mousefocus', abbreviation='mousef',
       type='bool', scope={'global'},
       vi_def=true,
-      enable_if=false,
+      redraw={'ui_option'},
+      varname='p_mousef',
       defaults={if_true={vi=false}}
     },
     {

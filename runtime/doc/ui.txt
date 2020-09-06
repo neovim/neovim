@@ -185,6 +185,7 @@ the editor.
 	'guifont'
 	'guifontwide'
 	'linespace'
+	'mousefocus'
 	'pumblend'
 	'showtabline'
 	'termguicolors'
