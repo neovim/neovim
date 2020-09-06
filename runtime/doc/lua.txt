@@ -756,14 +756,15 @@ Here is a list of built-in predicates :
 			((node1) @left (node2) @right (#eq? @left @right))
 <
 	`match?`					*ts-predicate-match?*
-		This will match if the provived lua regex matches the text
+	`vim-match?`					*ts-predicate-vim-match?*
+		This will match if the provived vim regex matches the text
 		corresponding to a node : >
 			((idenfitier) @constant (#match? @constant "^[A-Z_]+$"))
 <		Note: the `^` and `$` anchors will respectively match the
 			start and end of the node's text.
 
-	`vim-match?`					*ts-predicate-vim-match?*
-		This will match the same way than |match?| but using vim
+	`lua-match?`					*ts-predicate-lua-match?*
+		This will match the same way than |match?| but using lua
 		regexes.
 	
 	`contains?`					*ts-predicate-contains?*
