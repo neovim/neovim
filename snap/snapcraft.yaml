@@ -1,5 +1,5 @@
 name: nvim
-base: core20
+base: core18
 adopt-info: nvim
 summary: Vim-fork focused on extensibility and agility.
 description: |
