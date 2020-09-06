@@ -98,7 +98,8 @@ function TSHighlighter:get_hl_from_capture(capture)
     return vim.split(name, '.', true)[1]
   else
     -- Default to false to avoid recomputing
-    return a.nvim_get_hl_id_by_name(TSHighlighter.hl_map[name])
+    local hl = TSHighlighter.hl_map[name]
+    return hl and a.nvim_get_hl_id_by_name(hl) or 0
   end
 end
 
