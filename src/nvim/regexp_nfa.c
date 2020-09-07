@@ -6519,7 +6519,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
 
   /* Be paranoid... */
   if (prog == NULL || line == NULL) {
-    EMSG(_(e_null));
+    IEMSG(_(e_null));
     goto theend;
   }
 
