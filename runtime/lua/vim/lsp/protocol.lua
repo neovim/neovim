@@ -93,6 +93,12 @@ local constants = {
     TypeParameter = 25;
   };
 
+  -- Annotations that tweak the rendering of a completion item.
+  CompletionItemTag = {
+    -- Render a completion as obsolete, usually using a strike-out.
+    Deprecated = 1;
+  };
+
   -- How a completion was triggered
   CompletionTriggerKind = {
     -- Completion was triggered by typing an identifier (24x7 code

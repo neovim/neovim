@@ -844,6 +844,59 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
 
 
 ==============================================================================
+Lua module: vim.lsp.completion                                *lsp-completion*
+
+                      *vim.lsp.completion.completion_list_to_complete_items()*
+completion_list_to_complete_items({result}, {prefix})
+                Turns the result of a `textDocument/completion` request into
+                vim-compatible |complete-items|.
+
+                Parameters: ~
+                    {result}  The result of a `textDocument/completion` call,
+                              e.g. from |vim.lsp.buf.completion()|, which may
+                              be one of `CompletionItem[]` , `CompletionList`
+                              or `null`
+                    {prefix}  (string) the prefix to filter the completion
+                              items
+
+                Return: ~
+                    { matches = complete-items table, incomplete = bool }
+
+                See also: ~
+                    |complete-items|
+
+                               *vim.lsp.completion.extract_completion_items()*
+extract_completion_items({result})
+                Extract the completion items from a `textDocument/completion` request
+
+                Parameters: ~
+                    {result}  (table) The result of a
+                              `textDocument/completion` request
+
+                Return: ~
+                    (table) CompletionItem[]
+
+                                    *vim.lsp.completion.get_completion_word()*
+get_completion_word({item}, {prefix})
+                Returns text that should be inserted when selecting completion
+                item.
+
+                The precedence is as follows: textEdit.newText > insertText >
+                label
+
+                        *vim.lsp.completion.remove_unmatch_completion_items()*
+remove_unmatch_completion_items({items}, {prefix})
+                Some language servers return complementary candidates whose
+                prefixes do not match are also returned. So we exclude
+                completion candidates whose prefix does not match.
+
+                                  *vim.lsp.completion.sort_completion_items()*
+sort_completion_items({items})
+                Sorts by CompletionItem.sortText.Note:
+                    : This sorts in-place.
+
+
+==============================================================================
 Lua module: vim.lsp.log                                              *lsp-log*
 
 get_filename()                                    *vim.lsp.log.get_filename()*
@@ -1144,17 +1197,14 @@ diagnostics_group_by_line({diagnostics})
 
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})
-                Can be used to extract the completion items from a `textDocument/completion` request, which may return one of `CompletionItem[]` , `CompletionList` or null.
+                Extract the completion items from a `textDocument/completion` request
 
                 Parameters: ~
                     {result}  (table) The result of a
                               `textDocument/completion` request
 
                 Return: ~
-                    (table) List of completion items
-
-                See also: ~
-                    https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+                    (table) CompletionItem[]
 
                                       *vim.lsp.util.fancy_floating_markdown()*
 fancy_floating_markdown({contents}, {opts})

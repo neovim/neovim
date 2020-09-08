@@ -963,6 +963,7 @@ describe('LSP', function()
       ]])
     end)
   end)
+
   describe('completion_list_to_complete_items', function()
     local function create_compl_item(opt)
         return {
@@ -1170,7 +1171,6 @@ describe('LSP', function()
     describe('completion_list_to_complete_items for lua lsp', function()
       it("completion for 'pri'", function()
       local result = {
-        isIncomplete = true,
         items = { {
             data = {
               offset = 0,
@@ -1655,15 +1655,18 @@ describe('LSP', function()
     end)
   end)
 
-  describe('lsp.util._get_completion_item_kind_name', function()
+  describe('vim.lsp.completion._get_completion_item_kind_name', function()
+    local get_item_kind_name = function(val)
+      return exec_lua("return vim.lsp.completion._get_completion_item_kind_name(...)", val)
+    end
+
     it('returns the name specified by protocol', function()
-      eq("Text", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1)"))
-      eq("TypeParameter", exec_lua("return vim.lsp.util._get_completion_item_kind_name(25)"))
+      eq("Text", get_item_kind_name(1))
+      eq("TypeParameter", get_item_kind_name(25))
     end)
     it('returns the name not specified by protocol', function()
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(nil)"))
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(vim.NIL)"))
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1000)"))
+      eq("Unknown", get_item_kind_name(nil))
+      eq("Unknown", get_item_kind_name(1000))
     end)
   end)
 

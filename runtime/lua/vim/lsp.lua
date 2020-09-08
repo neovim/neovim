@@ -15,6 +15,7 @@ local lsp = {
   protocol = protocol;
   callbacks = default_callbacks;
   buf = require'vim.lsp.buf';
+  completion = require'vim.lsp.completion';
   util = util;
   -- Allow raw RPC access.
   rpc = lsp_rpc;
