@@ -7075,7 +7075,7 @@ void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
   do {
     size_t dir_len;
     const char *dir;
-    iter = vim_env_iter(':', dirs, iter, &dir, &dir_len);
+    iter = vim_env_iter(ENV_SEPCHAR, dirs, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       char *dir_with_nvim = xmemdupz(dir, dir_len);
       dir_with_nvim = concat_fnames_realloc(dir_with_nvim, "nvim", true);
