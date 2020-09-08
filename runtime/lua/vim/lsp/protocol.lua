@@ -640,7 +640,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false;
         completionItem = {
 
-          snippetSupport = true;
+          snippetSupport = false;
           commitCharactersSupport = false;
           preselectSupport = false;
           deprecatedSupport = false;
