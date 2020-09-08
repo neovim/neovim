@@ -44,11 +44,6 @@ do
   end
 end
 
-
-local function is_windows_file_uri(uri)
-  return uri:match('^file:///[a-zA-Z]:') ~= nil
-end
-
 local function uri_from_fname(path)
   local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
   local is_windows = volume_path ~= nil
