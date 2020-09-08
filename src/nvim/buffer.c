@@ -895,7 +895,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
     // open a new, empty buffer.
     swap_exists_action = SEA_NONE;      // don't want it again
     swap_exists_did_quit = true;
-    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
+    close_buffer(curwin, curbuf, DOBUF_DEL, false);
     if (old_curbuf == NULL
         || !bufref_valid(old_curbuf)
         || old_curbuf->br_buf == curbuf) {
