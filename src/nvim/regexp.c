@@ -1270,8 +1270,9 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   int len;
   int flags;
 
-  if (expr == NULL)
-    EMSG_RET_NULL(_(e_null));
+  if (expr == NULL) {
+    IEMSG_RET_NULL(_(e_null));
+  }
 
   init_class_tab();
 
@@ -3483,7 +3484,7 @@ static long bt_regexec_both(char_u *line,
 
   /* Be paranoid... */
   if (prog == NULL || line == NULL) {
-    EMSG(_(e_null));
+    IEMSG(_(e_null));
     goto theend;
   }
 
@@ -4789,7 +4790,7 @@ static bool regmatch(
           break;
 
         default:
-          EMSG(_(e_re_corr));
+          IEMSG(_(e_re_corr));
 #ifdef REGEXP_DEBUG
           printf("Illegal op code %d\n", op);
 #endif
@@ -5147,7 +5148,7 @@ static bool regmatch(
          * We get here only if there's trouble -- normally "case END" is
          * the terminating point.
          */
-        EMSG(_(e_re_corr));
+        IEMSG(_(e_re_corr));
 #ifdef REGEXP_DEBUG
         printf("Premature EOL\n");
 #endif
@@ -5552,8 +5553,8 @@ do_class:
     }
     break;
 
-  default:                      /* Oh dear.  Called inappropriately. */
-    EMSG(_(e_re_corr));
+  default:  // Oh dear.  Called inappropriately.
+    IEMSG(_(e_re_corr));
 #ifdef REGEXP_DEBUG
     printf("Called regrepeat with op code %d\n", OP(p));
 #endif
@@ -6911,7 +6912,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
               }
             } else if (*s == NUL) {  // we hit NUL.
               if (copy) {
-                EMSG(_(e_re_damg));
+                IEMSG(_(e_re_damg));
               }
               goto exit;
             } else {
