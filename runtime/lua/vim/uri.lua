@@ -3,7 +3,7 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
-local is_windows = vim.loop.os_uname().version:match("Windows")
+local is_windows = vim.loop.os_uname().sysname:match("Windows")
 local uri_decode
 do
   local schar = string.char
