@@ -1393,15 +1393,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   if (col2 >= 0) {
-    if (line2 >= 0) {
-      len = STRLEN(ml_get_buf(buf, (linenr_T)line2+1, false));
+    if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
+      len = STRLEN(ml_get_buf(buf, (linenr_T)line2 + 1, false));
+    } else if (line2 == buf->b_ml.ml_line_count) {
+      // We are trying to add an extmark past final newline
+      len = 0;
     } else {
       // reuse len from before
       line2 = (int)line;
     }
     if (col2 > (Integer)len) {
-      api_set_error(err, kErrorTypeValidation,
-                    "end_col value outside range");
+      api_set_error(err, kErrorTypeValidation, "end_col value outside range");
       goto error;
     }
   } else if (line2 >= 0) {

@@ -100,6 +100,15 @@ describe('API/extmarks', function()
     ns2 = request('nvim_create_namespace', "my-fancy-plugin2")
   end)
 
+  it("can end extranges past final newline using end_col = 0", function()
+    set_extmark(ns, marks[1], 0, 0, {
+      end_col = 0,
+      end_line = 1
+    })
+    eq("end_col value outside range",
+       pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_line = 1 }))
+  end)
+
   it('adds, updates  and deletes marks', function()
     local rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(marks[1], rv)
