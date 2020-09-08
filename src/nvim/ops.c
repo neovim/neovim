@@ -2652,7 +2652,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     xfree(reg->y_array);
   }
   if (curwin->w_p_rnu) {
-    redraw_later(SOME_VALID);  // cursor moved to start
+    redraw_later(curwin, SOME_VALID);  // cursor moved to start
   }
   if (message) {  // Display message about yank?
     if (yank_type == kMTCharWise && yanklines == 1) {

@@ -643,7 +643,7 @@ void diff_redraw(bool dofold)
     if (!wp->w_p_diff) {
       continue;
     }
-    redraw_win_later(wp, SOME_VALID);
+    redraw_later(wp, SOME_VALID);
     if (dofold && foldmethodIsDiff(wp)) {
       foldUpdateAll(wp);
     }
@@ -1415,7 +1415,7 @@ void diff_win_options(win_T *wp, int addbuf)
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
   }
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
 }
 
 /// Set options not to show diffs.  For the current window or all windows.

@@ -1625,11 +1625,8 @@ free_exit:
 /// @param what         The name of the object, used for error message
 /// @param nil_value    What to return if the type is nil.
 /// @param err          Set if there was an error in converting to a bool
-bool api_coerce_to_bool(
-    Object obj,
-    const char *what,
-    bool nil_value,
-    Error *err)
+bool api_object_to_bool(Object obj, const char *what,
+                        bool nil_value, Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
@@ -1653,4 +1650,31 @@ const char *describe_ns(NS ns_id)
     }
   })
   return "(UNKNOWN PLUGIN)";
+}
+
+DecorationProvider *get_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decoration_providers); i++) {
+    DecorationProvider *item = &kv_A(decoration_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decoration_providers, (size_t)j+1);
+    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
+  }
+  DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
 }

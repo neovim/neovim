@@ -3121,7 +3121,7 @@ ambw_end:
     } else {
       if (curwin->w_status_height) {
         curwin->w_redr_status = true;
-        redraw_later(VALID);
+        redraw_later(curwin, VALID);
       }
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();
@@ -4702,7 +4702,7 @@ static void check_redraw(uint32_t flags)
     redraw_curbuf_later(NOT_VALID);
   }
   if (flags & P_RWINONLY) {
-    redraw_later(NOT_VALID);
+    redraw_later(curwin, NOT_VALID);
   }
   if (doclear) {
     redraw_all_later(CLEAR);
@@ -5716,12 +5716,12 @@ void unset_global_local_option(char *name, void *from)
     case PV_LCS:
       clear_string_option(&((win_T *)from)->w_p_lcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
-      redraw_win_later((win_T *)from, NOT_VALID);
+      redraw_later((win_T *)from, NOT_VALID);
       break;
     case PV_FCS:
       clear_string_option(&((win_T *)from)->w_p_fcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
-      redraw_win_later((win_T *)from, NOT_VALID);
+      redraw_later((win_T *)from, NOT_VALID);
       break;
   }
 }

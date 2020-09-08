@@ -8571,7 +8571,7 @@ static void ins_up(
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill
         )
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -8619,7 +8619,7 @@ static void ins_down(
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill
         )
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -9013,7 +9013,7 @@ static int ins_ctrl_ey(int tc)
       scrolldown_clamp();
     else
       scrollup_clamp();
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
   } else {
     c = ins_copychar(curwin->w_cursor.lnum + (c == Ctrl_Y ? -1 : 1));
     if (c != NUL) {

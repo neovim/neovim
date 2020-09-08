@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include "nvim/macros.h"
+#include "nvim/types.h"
 
 typedef int32_t RgbValue;
 
@@ -180,6 +181,20 @@ typedef struct {
   HlKind kind;
   int id1;
   int id2;
+  int winid;
 } HlEntry;
+
+typedef struct {
+  int ns_id;
+  int syn_id;
+} ColorKey;
+
+typedef struct {
+  int attr_id;
+  int link_id;
+  int version;
+} ColorItem;
+#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1 }
+
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

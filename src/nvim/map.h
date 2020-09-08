@@ -55,6 +55,8 @@ MAP_DECLS(String, MsgpackRpcRequestHandler)
 MAP_DECLS(HlEntry, int)
 MAP_DECLS(String, handle_T)
 
+MAP_DECLS(ColorKey, ColorItem)
+
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free
 #define map_get(T, U) map_##T##_##U##_get

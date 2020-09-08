@@ -25,7 +25,7 @@
 //
 // Commands that scroll a window change w_topline and must call
 // check_cursor() to move the cursor into the visible part of the window, and
-// call redraw_later(VALID) to have the window displayed by update_screen()
+// call redraw_later(wp, VALID) to have the window displayed by update_screen()
 // later.
 //
 // Commands that change text in the buffer must call changed_bytes() or
@@ -37,7 +37,7 @@
 //
 // Commands that change how a window is displayed (e.g., setting 'list') or
 // invalidate the contents of a window in another way (e.g., change fold
-// settings), must call redraw_later(NOT_VALID) to have the whole window
+// settings), must call redraw_later(wp, NOT_VALID) to have the whole window
 // redisplayed by update_screen() later.
 //
 // Commands that change how a buffer is displayed (e.g., setting 'tabstop')
@@ -45,11 +45,11 @@
 // buffer redisplayed by update_screen() later.
 //
 // Commands that change highlighting and possibly cause a scroll too must call
-// redraw_later(SOME_VALID) to update the whole window but still use scrolling
-// to avoid redrawing everything.  But the length of displayed lines must not
-// change, use NOT_VALID then.
+// redraw_later(wp, SOME_VALID) to update the whole window but still use
+// scrolling to avoid redrawing everything.  But the length of displayed lines
+// must not change, use NOT_VALID then.
 //
-// Commands that move the window position must call redraw_later(NOT_VALID).
+// Commands that move the window position must call redraw_later(wp, NOT_VALID).
 // TODO(neovim): should minimize redrawing by scrolling when possible.
 //
 // Commands that change everything (e.g., resizing the screen) must call
@@ -176,7 +176,7 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   textlock--;
 
   if (!ERROR_SET(&err)
-      && api_coerce_to_bool(ret, "provider %s retval", default_true, &err)) {
+      && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
     return true;
   }
 
@@ -195,17 +195,11 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   return false;
 }
 
-/*
- * Redraw the current window later, with update_screen(type).
- * Set must_redraw only if not already set to a higher value.
- * e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
- */
-void redraw_later(int type)
-{
-  redraw_win_later(curwin, type);
-}
-
-void redraw_win_later(win_T *wp, int type)
+/// Redraw a window later, with update_screen(type).
+///
+/// Set must_redraw only if not already set to a higher value.
+/// e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
+void redraw_later(win_T *wp, int type)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!exiting && wp->w_redr_type < type) {
@@ -223,7 +217,7 @@ void redraw_win_later(win_T *wp, int type)
 void redraw_all_later(int type)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    redraw_win_later(wp, type);
+    redraw_later(wp, type);
   }
   // This may be needed when switching tabs.
   if (must_redraw < type) {
@@ -234,7 +228,7 @@ void redraw_all_later(int type)
 void screen_invalidate_highlights(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    redraw_win_later(wp, NOT_VALID);
+    redraw_later(wp, NOT_VALID);
     wp->w_grid.valid = false;
   }
 }
@@ -251,7 +245,7 @@ void redraw_buf_later(buf_T *buf, int type)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
-      redraw_win_later(wp, type);
+      redraw_later(wp, type);
     }
   }
 }
@@ -277,7 +271,7 @@ void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
       if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
           wp->w_redraw_bot = lastline;
       }
-      redraw_win_later(wp, VALID);
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -305,7 +299,7 @@ redrawWinline(
     if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
         wp->w_redraw_bot = lnum;
     }
-    redraw_win_later(wp, VALID);
+    redraw_later(wp, VALID);
   }
 }
 
@@ -359,7 +353,6 @@ int update_screen(int type)
   /* Postpone the redrawing when it's not needed and when being called
    * recursively. */
   if (!redrawing() || updating_screen) {
-    redraw_later(type);                 /* remember type for next time */
     must_redraw = type;
     if (type > INVERTED_ALL) {
       curwin->w_lines_valid = 0;  // don't use w_lines[].wl_size now
@@ -499,6 +492,12 @@ int update_screen(int type)
     if (active) {
       kvi_push(providers, p);
     }
+  }
+
+  // "start" callback could have changed highlights for global elements
+  if (win_check_ns_hl(NULL)) {
+    redraw_cmdline = true;
+    redraw_tabline = true;
   }
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
@@ -1330,6 +1329,8 @@ static void win_update(win_T *wp, Providers *providers)
       }
     }
   }
+
+  win_check_ns_hl(wp);
 
 
   for (;; ) {
@@ -2185,6 +2186,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // return 'false' or error: skip rest of this window
           kv_A(*providers, k) = NULL;
         }
+
+        win_check_ns_hl(wp);
       }
     }
 
@@ -4649,8 +4652,8 @@ void status_redraw_all(void)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height) {
-      wp->w_redr_status = TRUE;
-      redraw_later(VALID);
+      wp->w_redr_status = true;
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -4667,7 +4670,7 @@ void status_redraw_buf(buf_T *buf)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height != 0 && wp->w_buffer == buf) {
       wp->w_redr_status = true;
-      redraw_later(VALID);
+      redraw_later(wp, VALID);
     }
   }
 }

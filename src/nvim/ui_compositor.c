@@ -26,6 +26,7 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/lua/executor.h"
 #include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

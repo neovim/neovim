@@ -446,7 +446,7 @@ int main(int argc, char **argv)
   if (exmode_active || use_remote_ui || use_builtin_ui) {
     // Don't clear the screen when starting in Ex mode, or when a UI might have
     // displayed messages.
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");

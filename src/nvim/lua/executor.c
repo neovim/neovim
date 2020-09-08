@@ -891,6 +891,17 @@ LuaRef nlua_newref(lua_State *lstate, LuaRef original_ref)
   return new_ref;
 }
 
+LuaRef api_new_luaref(LuaRef original_ref)
+{
+  if (original_ref == LUA_NOREF) {
+    return LUA_NOREF;
+  }
+
+  lua_State *const lstate = nlua_enter();
+  return nlua_newref(lstate, original_ref);
+}
+
+
 /// Evaluate lua string
 ///
 /// Used for luaeval().
