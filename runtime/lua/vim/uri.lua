@@ -3,7 +3,7 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
-
+local is_windows = jit.os == 'Windows'
 local uri_decode
 do
   local schar = string.char
@@ -84,7 +84,7 @@ local function uri_to_fname(uri)
   end
   uri = uri_decode(uri)
   -- TODO improve this.
-  if is_windows_file_uri(uri) then
+  if is_windows then
     uri = uri:gsub('^file:///', '')
     uri = uri:gsub('/', '\\')
   else
