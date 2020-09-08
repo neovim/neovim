@@ -3,19 +3,37 @@
 set -e
 set -o pipefail
 
-# not a tagged release, abort
-# [[ "$TRAVIS_TAG" != "$TRAVIS_BRANCH" ]] && exit 0
+SNAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WEBHOOK_PAYLOAD="$(cat "${SNAP_DIR}/.snapcraft_payload")"
+PAYLOAD_SIG="${SECRET_SNAP_SIG}"
 
-mkdir -p .snapcraft
-# shellcheck disable=SC2154
-openssl aes-256-cbc -K "$encrypted_ece1c4844832_key" -iv "$encrypted_ece1c4844832_iv" \
-  -in ci/snap/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
 
-SNAP=$(find ./ -name "*.snap")
+snap_realease_needed() {
+  last_committed_tag="$(git tag -l --sort=refname|head -1)"
+  last_snap_release="$(snap info nvim | awk '$1 == "latest/edge:" { print $2 }' | perl -lpe 's/v\d.\d.\d-//g')"
+  git fetch -f --tags
+  git checkout "${last_committed_tag}" 2> /dev/null
+  last_git_release="$(git describe --first-parent 2> /dev/null | perl -lpe 's/v\d.\d.\d-//g')"
 
-# TODO(justinmk): This always does `edge` until we enable tagged builds.
-if [[ "$SNAP" =~ "dirty" || "$SNAP" =~ "nightly" ]]; then
-  snapcraft push "$SNAP" --release edge
-else
-  snapcraft push "$SNAP" --release candidate
+  if [[ -z "$(echo $last_snap_release | perl -ne "print if /${last_git_release}.*/")" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+
+trigger_snapcraft_webhook() {
+  [[ -n "${PAYLOAD_SIG}" ]] || exit
+  echo "Triggering new snap relase via webhook..."
+  curl -X POST \
+    -H "Content-Type: application/json" \
+    -H "X-Hub-Signature: sha1=${PAYLOAD_SIG}" \
+    --data "${WEBHOOK_PAYLOAD}" \
+    https://snapcraft.io/nvim/webhook/notify
+}
+
+
+if $(snap_realease_needed); then
+  echo "New snap release required"
+  trigger_snapcraft_webhook
 fi
