@@ -1176,7 +1176,9 @@ bool os_setenv_append_path(const char *fname)
       temp[0] = NUL;
     } else {
       xstrlcpy(temp, path, newlen);
-      xstrlcat(temp, ENV_SEPSTR, newlen);
+      if (ENV_SEPCHAR != path[pathlen - 1]) {
+        xstrlcat(temp, ENV_SEPSTR, newlen);
+      }
     }
     xstrlcat(temp, os_buf, newlen);
     os_setenv("PATH", temp, 1);
