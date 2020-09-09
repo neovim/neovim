@@ -674,7 +674,10 @@ function M.focusable_float(unique_name, fn)
       return
     end
   end
-  local pbufnr, pwinnr = fn()
+  local ok, pbufnr, pwinnr = pcall(fn())
+  if not ok then
+    return
+  end
   if pbufnr then
     api.nvim_win_set_var(pwinnr, unique_name, bufnr)
     return pbufnr, pwinnr
