@@ -446,6 +446,10 @@ static int nlua_schedule(lua_State *const lstate)
     ]]}
 
     feed("5Goc<esc>dd")
+    if true == true then
+      pending('reenable this check in luahl PR')
+      return
+    end
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
@@ -476,7 +480,7 @@ static int nlua_schedule(lua_State *const lstate)
             || {6:lstate} != {6:lstate}) {                                     |
           {11:lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
           {4:return} {11:lua_error}(lstate);                                    |
-      {8:*^/}                                                               |
+      *^/                                                               |
         }                                                              |
                                                                        |
         {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
