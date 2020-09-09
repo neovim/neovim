@@ -6,6 +6,9 @@ local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
 
 local M = {}
+local function default_text_transform(separator, severity)
+  return separator, severity
+end
 
 -- FIXME: DOC: Expose in vimdocs
 --- Diagnostics received from the server via `textDocument/publishDiagnostics`
@@ -1195,14 +1198,22 @@ do
       return
     end
     local buffer_line_diagnostics = M.diagnostics_group_by_line(diagnostics)
+    local text_transform = vim_lsp_util_virtual_text_transform or default_text_transform
     for line, line_diags in pairs(buffer_line_diagnostics) do
       local virt_texts = {}
       for i = 1, #line_diags - 1 do
-        table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})
+        -- table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})
+        local separator, severity = text_transform(
+          "■", severity_highlights[line_diags[i].severity],
+          line, bufnr)
+        table.insert(virt_texts, {separator, severity})
       end
       local last = line_diags[#line_diags]
       -- TODO(ashkan) use first line instead of subbing 2 spaces?
-      table.insert(virt_texts, {"■ "..last.message:gsub("\r", ""):gsub("\n", "  "), severity_highlights[last.severity]})
+      local separator, severity = text_transform(
+        "■ "..last.message:gsub("\r", ""):gsub("\n", "  "), severity_highlights[last.severity],
+        line, bufnr)
+      table.insert(virt_texts, {separator, severity})
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
