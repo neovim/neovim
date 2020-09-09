@@ -37,9 +37,9 @@ parts:
           git_described="$(git describe --first-parent --dirty 2> /dev/null | perl -lpe 's/v\d.\d.\d-//g')"
           git_described="${git_described:-$(git describe --first-parent --tags --always --dirty)}"
           if [ "${version_prefix}" != "${git_described}" ]; then
-            VERSION="${version_prefix}-${git_described}-${branch}"
+            VERSION="${version_prefix}-${git_described}-${latest_tag}"
           else
-            VERSION="${version_prefix}-${branch}"
+            VERSION="${version_prefix}-${latest_tag}"
           fi
           snapcraftctl set-version "${VERSION}"
         plugin: make
