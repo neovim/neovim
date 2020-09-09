@@ -4012,8 +4012,13 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   // This is used by the extmark code which needs the byte offset of the edited
   // line. So when doing multiple small edits on the same line the value is
   // only calculated once.
+  //
+  // NB: caching doesn't work with 'fileformat'. This is not a problem for
+  // bytetracking, as bytetracking ignores 'fileformat' option. But calling
+  // line2byte() will invalidate the cache for the time being (this function
+  // was never cached to start with anyway).
   bool can_cache = (lnum != 0 && !ffdos && buf->b_ml.ml_line_lnum == lnum);
-  if (lnum == 0 || buf->b_ml.ml_line_lnum < lnum) {
+  if (lnum == 0 || buf->b_ml.ml_line_lnum < lnum || !no_ff) {
     ml_flush_line(curbuf);
   } else if (can_cache && buf->b_ml.ml_line_offset > 0) {
     return buf->b_ml.ml_line_offset;
@@ -4113,7 +4118,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
     }
   }
 
-  if (can_cache) {
+  if (can_cache && size > 0) {
     buf->b_ml.ml_line_offset = size;
   }
 
