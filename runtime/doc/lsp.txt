@@ -39,9 +39,10 @@ To check LSP clients attached to the current buffer:  >
                                                         *lsp-config*
 Inline diagnostics are enabled automatically, e.g. syntax errors will be
 annotated in the buffer.  But you probably want to use other features like
-go-to-definition, hover, etc. See |vim.lsp.buf|. Example config: >
+go-to-definition, hover, etc. Full list of features in |vim.lsp.buf|. 
 
-  nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
+Example config: >
+
   nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
   nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
   nnoremap <silent> gD    <cmd>lua vim.lsp.buf.implementation()<CR>
@@ -50,6 +51,9 @@ go-to-definition, hover, etc. See |vim.lsp.buf|. Example config: >
   nnoremap <silent> gr    <cmd>lua vim.lsp.buf.references()<CR>
   nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
   nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
+  nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
+
+Note: Language servers may have limited support for these features.
 
 Nvim provides the |vim.lsp.omnifunc| 'omnifunc' handler which allows
 |i_CTRL-X_CTRL-O| to consume LSP completion. Example config (note the use of
