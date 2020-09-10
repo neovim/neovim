@@ -155,13 +155,6 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
-static const char *ignored_env_vars[] = {
-  "COLUMNS",
-  "LINES",
-  "TERMCAP",
-  "COLORFGBG"
-};
-
 static void init_child(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -187,46 +180,11 @@ static void init_child(PtyProcess *ptyproc)
   }
 
   char *prog = ptyproc->process.argv[0];
-  if (proc->env) {
-    for (size_t i = 0; i < ARRAY_SIZE(ignored_env_vars); i++) {
-      dictitem_T *dv = tv_dict_find(proc->env, ignored_env_vars[i], -1);
-      if (dv) {
-        tv_dict_item_remove(proc->env, dv);
-      }
-    }
-    tv_dict_add_str(proc->env, S_LEN("TERM"), ptyproc->term_name ? ptyproc->term_name : "ansi");
 
-    // setting COLORTERM to "truecolor" if termguicolors is set and 256
-    // otherwise, but only if it was set in the parent terminal at all
-    dictitem_T *dv = tv_dict_find(proc->env, S_LEN("COLORTERM"));
-    if (dv) {
-      tv_dict_item_remove(proc->env, dv);
-      tv_dict_add_str(proc->env, S_LEN("COLORTERM"), p_tgc ? "truecolor" : "256");
-    }
-
-    environ = tv_dict_to_env(proc->env);
-  } else {
-    for (size_t i = 0; i < ARRAY_SIZE(ignored_env_vars); i++) {
-      os_unsetenv(ignored_env_vars[i]);
-    }
-
-    // setting COLORTERM to "truecolor" if termguicolors is set and 256
-    // otherwise, but only if it was set in the parent terminal at all
-    if (os_env_exists("COLORTERM")) {
-      const char *colorterm = os_getenv("COLORTERM");
-      if (colorterm != NULL) {
-        if (p_tgc) {
-          os_setenv("COLORTERM", "truecolor", 1);
-        } else {
-          os_setenv("COLORTERM", "256", 1);
-        }
-      } else {
-        os_unsetenv("COLORTERM");
-      }
-    }
-
-    os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
-  }
+  assert(proc->env);
+  tv_dict_add_str(proc->env, S_LEN("TERM"),
+                  ptyproc->term_name ? ptyproc->term_name : "ansi");
+  environ = tv_dict_to_env(proc->env);
   execvp(prog, proc->argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);
 

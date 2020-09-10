@@ -4875,7 +4875,38 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;
 }
 
-static dict_T *create_environment(const dictitem_T *job_env, const bool clear_env)
+static const char *ignored_env_vars[] = {
+#ifndef WIN32
+  "COLUMNS",
+  "LINES",
+  "TERMCAP",
+  "COLORFGBG",
+#endif
+  NULL
+};
+
+/// According to comments in src/win/process.c of libuv, Windows has a few
+/// "essential" environment variables.
+static const char *required_env_vars[] = {
+#ifdef WIN32
+  "HOMEDRIVE",
+  "HOMEPATH",
+  "LOGONSERVER",
+  "PATH",
+  "SYSTEMDRIVE",
+  "SYSTEMROOT",
+  "TEMP",
+  "USERDOMAIN",
+  "USERNAME",
+  "USERPROFILE",
+  "WINDIR",
+#endif
+  NULL
+};
+
+static dict_T *create_environment(const dictitem_T *job_env,
+                                  const bool clear_env,
+                                  const bool pty)
 {
   dict_T * env = tv_dict_alloc();
 
@@ -4884,10 +4915,50 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
     f_environ(NULL, &temp_env, NULL);
     tv_dict_extend(env, temp_env.vval.v_dict, "force");
     tv_dict_free(temp_env.vval.v_dict);
+
+    if (pty) {
+      // These environment variables generally shouldn't be propagated to the
+      // child process.  We're removing them here so the user can still decide
+      // they want to explicitly set them.
+      for (size_t i = 0;
+           i < ARRAY_SIZE(ignored_env_vars) && ignored_env_vars[i];
+           i++) {
+        dictitem_T *dv = tv_dict_find(env, ignored_env_vars[i], -1);
+        if (dv) {
+          tv_dict_item_remove(env, dv);
+        }
+      }
+#ifndef WIN32
+      // Set COLORTERM to "truecolor" if termguicolors is set and 256
+      // otherwise, but only if it was set in the parent terminal at all
+      dictitem_T *dv = tv_dict_find(env, S_LEN("COLORTERM"));
+      if (dv) {
+        tv_dict_item_remove(env, dv);
+        tv_dict_add_str(env, S_LEN("COLORTERM"), p_tgc ? "truecolor" : "256");
+      }
+#endif
+    }
   }
 
   if (job_env) {
     tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
+  }
+
+  if (pty) {
+    // Now that the custom environment is configured, we need to ensure certain
+    // environment variables are present.
+    for (size_t i = 0;
+         i < ARRAY_SIZE(required_env_vars) && required_env_vars[i];
+         i++) {
+      size_t len = strlen(required_env_vars[i]);
+      dictitem_T *dv = tv_dict_find(env, required_env_vars[i], len);
+      if (!dv) {
+        const char *env_var = os_getenv(required_env_vars[i]);
+        if (env_var) {
+          tv_dict_add_str(env, required_env_vars[i], len, env_var);
+        }
+      }
+    }
   }
 
   return env;
@@ -4929,6 +5000,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
+  dictitem_T *job_env = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -4964,21 +5036,20 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
-    dictitem_T *job_env = tv_dict_find(job_opts, S_LEN("env"));
+    job_env = tv_dict_find(job_opts, S_LEN("env"));
     if (job_env && job_env->di_tv.v_type != VAR_DICT) {
       EMSG2(_(e_invarg2), "env");
       shell_free_argv(argv);
       return;
     }
 
-    env = create_environment(job_env, clear_env);
-
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
-      tv_dict_free(env);
       return;
     }
   }
+
+  env = create_environment(job_env, clear_env, pty);
 
   uint16_t width = 0, height = 0;
   char *term_name = NULL;
@@ -10508,6 +10579,9 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dict_T *job_opts = NULL;
   const char *cwd = ".";
   dict_T *env = NULL;
+  const bool pty = true;
+  bool clear_env = false;
+  dictitem_T *job_env = NULL;
 
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
@@ -10523,16 +10597,14 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
-    dictitem_T *job_env = tv_dict_find(job_opts, S_LEN("env"));
+    job_env = tv_dict_find(job_opts, S_LEN("env"));
     if (job_env && job_env->di_tv.v_type != VAR_DICT) {
       EMSG2(_(e_invarg2), "env");
       shell_free_argv(argv);
       return;
     }
 
-    bool clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
-
-    env = create_environment(job_env, clear_env);
+    clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
@@ -10540,7 +10612,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  const bool pty = true;
+  env = create_environment(job_env, clear_env, pty);
+
   const bool rpc = false;
   const bool overlapped = false;
   const bool detach = false;

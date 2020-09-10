@@ -83,6 +83,9 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   int status;
   if ((status = uv_spawn(&proc->loop->uv, &uvproc->uv, &uvproc->uvopts))) {
     ELOG("uv_spawn failed: %s", uv_strerror(status));
+    if (uvproc->uvopts.env) {
+      os_free_fullenv(uvproc->uvopts.env);
+    }
     return status;
   }
 
@@ -101,6 +104,10 @@ static void close_cb(uv_handle_t *handle)
   Process *proc = handle->data;
   if (proc->internal_close_cb) {
     proc->internal_close_cb(proc);
+  }
+  LibuvProcess *uvproc = (LibuvProcess *)proc;
+  if (uvproc->uvopts.env) {
+    os_free_fullenv(uvproc->uvopts.env);
   }
 }
 
