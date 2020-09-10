@@ -39,7 +39,7 @@ To check LSP clients attached to the current buffer:  >
                                                         *lsp-config*
 Inline diagnostics are enabled automatically, e.g. syntax errors will be
 annotated in the buffer.  But you probably want to use other features like
-go-to-definition, hover, etc. See `:help vim.lsp.buf`. Example config: >
+go-to-definition, hover, etc. See |vim.lsp.buf|. Example config: >
 
   nnoremap <silent> gd    <cmd>lua vim.lsp.buf.declaration()<CR>
   nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
