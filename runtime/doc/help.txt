@@ -137,7 +137,7 @@ Special issues ~
 
 Programming language support ~
 |indent.txt|	automatic indenting for C and other languages
-|lsp.txt|         Language Server Protocol (LSP)
+|lsp.txt|	Language Server Protocol (LSP)
 |syntax.txt|	syntax highlighting
 |filetype.txt|	settings done specifically for a type of file
 |quickfix.txt|	commands for a quick edit-compile-fix cycle
