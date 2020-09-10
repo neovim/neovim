@@ -1567,4 +1567,46 @@ validate({opt})                                               *vim.validate()*
                               • msg: (optional) error string if validation
                                 fails
 
+
+==============================================================================
+Lua module: uri                                                      *lua-uri*
+
+uri_from_bufnr({bufnr})                                 *vim.uri_from_bufnr()*
+                Get a URI from a bufnr
+
+                Parameters: ~
+                    {bufnr}  (number): Buffer number
+
+                Return: ~
+                    URI
+
+uri_from_fname({path})                                  *vim.uri_from_fname()*
+                Get a URI from a file path.
+
+                Parameters: ~
+                    {path}  (string): Path to file
+
+                Return: ~
+                    URI
+
+uri_to_bufnr({uri})                                       *vim.uri_to_bufnr()*
+                Return or create a buffer for a uri.
+
+                Parameters: ~
+                    {uri}  (string): The URI
+
+                Return: ~
+                    bufnr.
+                Note:
+                    Creates buffer but does not load it
+
+uri_to_fname({uri})                                       *vim.uri_to_fname()*
+                Get a filename from a URI
+
+                Parameters: ~
+                    {uri}  (string): The URI
+
+                Return: ~
+                    Filename
+
  vim:tw=78:ts=8:ft=help:norl:
