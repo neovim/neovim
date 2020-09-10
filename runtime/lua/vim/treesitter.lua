@@ -33,16 +33,23 @@ function Parser:parse()
   return self.tree, changes
 end
 
-function Parser:_on_lines(bufnr, changed_tick, start_row, old_stop_row, stop_row, old_byte_size)
-  local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-  local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-  local old_stop_byte = start_byte + old_byte_size
-  self._parser:edit(start_byte,old_stop_byte,stop_byte,
-                    start_row,0,old_stop_row,0,stop_row,0)
+function Parser:_on_bytes(bufnr, changed_tick,
+                          start_row, start_col, start_byte,
+                          old_row, old_col, old_byte,
+                          new_row, new_col, new_byte)
+  local old_end_col = old_col + ((old_row == 0) and start_col or 0)
+  local new_end_col = new_col + ((new_row == 0) and start_col or 0)
+  self._parser:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
+                    start_row, start_col,
+                    start_row+old_row, old_end_col,
+                    start_row+new_row, new_end_col)
   self.valid = false
 
-  for _, cb in ipairs(self.lines_cbs) do
-    cb(bufnr, changed_tick, start_row, old_stop_row, stop_row, old_byte_size)
+  for _, cb in ipairs(self.bytes_cbs) do
+    cb(bufnr, changed_tick,
+      start_row, start_col, start_byte,
+      old_row, old_col, old_byte,
+      new_row, new_col, new_byte)
   end
 end
 
@@ -88,12 +95,12 @@ function M._create_parser(bufnr, lang, id)
   local self = setmetatable({bufnr=bufnr, lang=lang, valid=false}, Parser)
   self._parser = vim._create_ts_parser(lang)
   self.changedtree_cbs = {}
-  self.lines_cbs = {}
+  self.bytes_cbs = {}
   self:parse()
-  -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
-  -- using it.
-  local function lines_cb(_, ...)
-    return self:_on_lines(...)
+    -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
+    -- using it.
+  local function bytes_cb(_, ...)
+    return self:_on_bytes(...)
   end
   local detach_cb = nil
   if id ~= nil then
@@ -103,7 +110,7 @@ function M._create_parser(bufnr, lang, id)
       end
     end
   end
-  a.nvim_buf_attach(self.bufnr, false, {on_lines=lines_cb, on_detach=detach_cb})
+  a.nvim_buf_attach(self.bufnr, false, {on_bytes=bytes_cb, on_detach=detach_cb})
   return self
 end
 
@@ -138,8 +145,8 @@ function M.get_parser(bufnr, lang, buf_attach_cbs)
     table.insert(parsers[id].changedtree_cbs, buf_attach_cbs.on_changedtree)
   end
 
-  if buf_attach_cbs and buf_attach_cbs.on_lines then
-    table.insert(parsers[id].lines_cbs, buf_attach_cbs.on_lines)
+  if buf_attach_cbs and buf_attach_cbs.on_bytes then
+    table.insert(parsers[id].bytes_cbs, buf_attach_cbs.on_bytes)
   end
 
   return parsers[id]

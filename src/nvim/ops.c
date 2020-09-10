@@ -496,9 +496,9 @@ static void shift_block(oparg_T *oap, int amount)
   // replace the line
   ml_replace(curwin->w_cursor.lnum, newp, false);
   changed_bytes(curwin->w_cursor.lnum, (colnr_T)bd.textcol);
-  extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, startcol,
-                 0, oldlen, 0, newlen,
-                 kExtmarkUndo);
+  extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, startcol,
+                      oldlen, newlen,
+                      kExtmarkUndo);
   State = oldstate;
   curwin->w_cursor.col = oldcol;
   p_ri = old_p_ri;
@@ -595,9 +595,8 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     STRMOVE(newp + offset, oldp);
 
     ml_replace(lnum, newp, false);
-    extmark_splice(curbuf, (int)lnum-1, startcol,
-                   0, skipped,
-                   0, offset-startcol, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum-1, startcol,
+                        skipped, offset-startcol, kExtmarkUndo);
 
     if (lnum == oap->end.lnum) {
       /* Set "']" mark to the end of the block instead of the end of
@@ -1534,10 +1533,9 @@ int op_delete(oparg_T *oap)
       // replace the line
       ml_replace(lnum, newp, false);
 
-      extmark_splice(curbuf, (int)lnum-1, bd.textcol,
-                     0, bd.textlen,
-                     0, bd.startspaces+bd.endspaces,
-                     kExtmarkUndo);
+      extmark_splice_cols(curbuf, (int)lnum-1, bd.textcol,
+                          bd.textlen, bd.startspaces+bd.endspaces,
+                          kExtmarkUndo);
     }
 
     check_cursor_col();
@@ -1661,17 +1659,20 @@ int op_delete(oparg_T *oap)
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
       del_lines(oap->line_count - 2, false);
+      bcount_t deleted_bytes = (bcount_t)curbuf->deleted_bytes2 - startpos.col;
 
       // delete from start of line until op_end
       n = (oap->end.col + 1 - !oap->inclusive);
       curwin->w_cursor.col = 0;
       (void)del_bytes((colnr_T)n, !virtual_op,
                       oap->op_type == OP_DELETE && !oap->is_VIsual);
+      deleted_bytes += n;
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
       curbuf_splice_pending--;
       extmark_splice(curbuf, (int)startpos.lnum-1, startpos.col,
-                     (int)oap->line_count-1, n, 0, 0, kExtmarkUndo);
+                     (int)oap->line_count-1, n, deleted_bytes,
+                     0, 0, 0, kExtmarkUndo);
     }
   }
 
@@ -1711,7 +1712,7 @@ static inline void pbyte(pos_T lp, int c)
   assert(c <= UCHAR_MAX);
   *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char_u)c;
   if (!curbuf_splice_pending) {
-    extmark_splice(curbuf, (int)lp.lnum-1, lp.col, 0, 1, 0, 1, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lp.lnum-1, lp.col, 1, 1, kExtmarkUndo);
   }
 }
 
@@ -1856,6 +1857,7 @@ int op_replace(oparg_T *oap, int c)
       }
       // replace the line
       ml_replace(curwin->w_cursor.lnum, newp, false);
+      curbuf_splice_pending++;
       linenr_T baselnum = curwin->w_cursor.lnum;
       if (after_p != NULL) {
         ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
@@ -1863,9 +1865,10 @@ int op_replace(oparg_T *oap, int c)
         oap->end.lnum++;
         xfree(after_p);
       }
+      curbuf_splice_pending--;
       extmark_splice(curbuf, (int)baselnum-1, bd.textcol,
-                     0, bd.textlen,
-                     newrows, newcols, kExtmarkUndo);
+                     0, bd.textlen, bd.textlen,
+                     newrows, newcols, newrows+newcols, kExtmarkUndo);
     }
   } else {
     // Characterwise or linewise motion replace.
@@ -2399,9 +2402,8 @@ int op_change(oparg_T *oap)
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
           ml_replace(linenr, newp, false);
-          extmark_splice(curbuf, (int)linenr-1, bd.textcol,
-                         0, 0,
-                         0, vpos.coladd+(int)ins_len, kExtmarkUndo);
+          extmark_splice_cols(curbuf, (int)linenr-1, bd.textcol,
+                              0, vpos.coladd+(int)ins_len, kExtmarkUndo);
         }
       }
       check_cursor();
@@ -3182,10 +3184,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       assert(columns >= 0);
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
-      extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
-                     0, delcount,
-                     0, (int)totlen,
-                     kExtmarkUndo);
+      extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
+                          delcount, (int)totlen, kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
       if (i == 0)
@@ -3309,9 +3309,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND)))
         ++curwin->w_cursor.col;
       changed_bytes(lnum, col);
-      extmark_splice(curbuf, (int)lnum-1, col,
-                     0, 0,
-                     0, (int)totlen, kExtmarkUndo);
+      extmark_splice_cols(curbuf, (int)lnum-1, col,
+                          0, (int)totlen, kExtmarkUndo);
     } else {
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
@@ -3375,13 +3374,23 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           }
         }
 
+        bcount_t totsize = 0;
+        int lastsize = 0;
+        if (y_type == kMTCharWise
+            || (y_type == kMTLineWise && flags & PUT_LINE_SPLIT)) {
+          for (i = 0; i < y_size-1; i++) {
+            totsize += (bcount_t)STRLEN(y_array[i]) + 1;
+          }
+          lastsize = (int)STRLEN(y_array[y_size-1]);
+          totsize += lastsize;
+        }
         if (y_type == kMTCharWise) {
-          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0,
-                         (int)y_size-1, (int)STRLEN(y_array[y_size-1]),
+          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0, 0,
+                         (int)y_size-1, lastsize, totsize,
                          kExtmarkUndo);
         } else if (y_type == kMTLineWise && flags & PUT_LINE_SPLIT) {
-          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0,
-                         (int)y_size+1, 0, kExtmarkUndo);
+          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0, 0,
+                         (int)y_size+1, 0, totsize+1, kExtmarkUndo);
         }
       }
 
@@ -3825,9 +3834,10 @@ int do_join(size_t count,
     }
 
     if (t > 0 && curbuf_splice_pending == 0) {
+      colnr_T removed = (int)(curr- curr_start);
       extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
-                     1, (int)(curr- curr_start),
-                     0, spaces[t],
+                     1, removed, removed + 1,
+                     0, spaces[t], spaces[t],
                      kExtmarkUndo);
     }
     currsize = (int)STRLEN(curr);

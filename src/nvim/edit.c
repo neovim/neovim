@@ -1919,10 +1919,10 @@ change_indent (
     // TODO(bfredl): test for crazy edge cases, like we stand on a TAB or
     // something? does this even do the right text change then?
     int delta = orig_col - new_col;
-    extmark_splice(curbuf, curwin->w_cursor.lnum-1, new_col,
-                   0, delta < 0 ? -delta : 0,
-                   0, delta > 0 ? delta : 0,
-                   kExtmarkUndo);
+    extmark_splice_cols(curbuf, curwin->w_cursor.lnum-1, new_col,
+                        delta < 0 ? -delta : 0,
+                        delta > 0 ? delta : 0,
+                        kExtmarkUndo);
   }
 }
 

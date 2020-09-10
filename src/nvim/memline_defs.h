@@ -57,6 +57,8 @@ typedef struct memline {
 
   linenr_T ml_line_lnum;        // line number of cached line, 0 if not valid
   char_u      *ml_line_ptr;     // pointer to cached line
+  size_t ml_line_offset;        // cached byte offset of ml_line_lnum
+  int ml_line_offset_ff;        // fileformat of cached line
 
   bhdr_T      *ml_locked;       // block used by last ml_get
   linenr_T ml_locked_low;       // first line in ml_locked

@@ -835,6 +835,7 @@ struct file_buffer {
   // tree-sitter) or the corresponding UTF-32/UTF-16 size (like LSP) of the
   // deleted text.
   size_t deleted_bytes;
+  size_t deleted_bytes2;
   size_t deleted_codepoints;
   size_t deleted_codeunits;
 

@@ -366,7 +366,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice(curbuf, (int)lnum-1, col, 0, old, 0, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum-1, col, old, new, kExtmarkUndo);
   }
 
   changed_bytes(lnum, col);
@@ -1597,7 +1597,7 @@ int open_line(
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
         || curwin->w_p_diff) {
       mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L,
-                  kExtmarkUndo);
+                  kExtmarkNOOP);
     }
     did_append = true;
   } else {
@@ -1611,6 +1611,7 @@ int open_line(
     }
     ml_replace(curwin->w_cursor.lnum, p_extra, true);
     changed_bytes(curwin->w_cursor.lnum, 0);
+    // TODO(vigoux): extmark_splice_cols here??
     curwin->w_cursor.lnum--;
     did_append = false;
   }
@@ -1691,8 +1692,9 @@ int open_line(
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
         int cols_added = mincol-1+less_cols_off-less_cols;
-        extmark_splice(curbuf, (int)lnum-1, mincol-1, 0, less_cols_off,
-                       1, cols_added, kExtmarkUndo);
+        extmark_splice(curbuf, (int)lnum-1, mincol-1,
+                       0, less_cols_off, less_cols_off,
+                       1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
@@ -1704,8 +1706,10 @@ int open_line(
   }
   if (did_append) {
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
-    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1,
-                   0, 0, 0, 1, 0, kExtmarkUndo);
+    // bail out and just get the final lenght of the line we just manipulated
+    bcount_t extra = (bcount_t)STRLEN(ml_get(curwin->w_cursor.lnum));
+    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, 0,
+                   0, 0, 0, 1, 0, 1+extra, kExtmarkUndo);
   }
   curbuf_splice_pending--;
 
