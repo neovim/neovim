@@ -4875,6 +4875,24 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;
 }
 
+static dict_T *create_environment(const dictitem_T *job_env, const bool clear_env)
+{
+  dict_T * env = tv_dict_alloc();
+
+  if (!clear_env) {
+    typval_T temp_env = TV_INITIAL_VALUE;
+    f_environ(NULL, &temp_env, NULL);
+    tv_dict_extend(env, temp_env.vval.v_dict, "force");
+    tv_dict_free(temp_env.vval.v_dict);
+  }
+
+  if (job_env) {
+    tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
+  }
+
+  return env;
+}
+
 // "jobstart()" function
 static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -4953,18 +4971,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
 
-    env = tv_dict_alloc();
-
-    if (!clear_env) {
-      typval_T temp_env = TV_INITIAL_VALUE;
-      f_environ(NULL, &temp_env, NULL);
-      tv_dict_extend(env, temp_env.vval.v_dict, "force");
-      tv_dict_free(temp_env.vval.v_dict);
-    }
-
-    if (job_env) {
-      tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
-    }
+    env = create_environment(job_env, clear_env);
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
@@ -10500,6 +10507,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";
+  dict_T *env = NULL;
+
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -10514,17 +10523,32 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
+    dictitem_T *job_env = tv_dict_find(job_opts, S_LEN("env"));
+    if (job_env && job_env->di_tv.v_type != VAR_DICT) {
+      EMSG2(_(e_invarg2), "env");
+      shell_free_argv(argv);
+      return;
+    }
+
+    bool clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
+
+    env = create_environment(job_env, clear_env);
+
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
       return;
     }
   }
 
+  const bool pty = true;
+  const bool rpc = false;
+  const bool overlapped = false;
+  const bool detach = false;
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    true, false, false, false, cwd,
+                                    pty, rpc, overlapped, detach, cwd,
                                     term_width, curwin->w_height_inner,
-                                    xstrdup("xterm-256color"), NULL,
+                                    xstrdup("xterm-256color"), env,
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;
