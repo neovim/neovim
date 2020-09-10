@@ -674,7 +674,7 @@ function M.focusable_float(unique_name, fn)
       return
     end
   end
-  local ok, pbufnr, pwinnr = pcall(fn())
+  local ok, pbufnr, pwinnr = pcall(fn)
   if not ok then
     return
   end
