@@ -383,11 +383,19 @@ func Test_invalid_args()
     endfor
   endif
 
-  if has('clipboard')
+  if has('gui_gtk')
     let out = split(system(GetVimCommand() .. ' --display'), "\n")
     call assert_equal(1, v:shell_error)
     call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
     call assert_equal('Argument missing after: "--display"', out[1])
+    call assert_equal('More info with: "vim -h"',            out[2])
+  endif
+
+  if has('clipboard')
+    let out = split(system(GetVimCommand() .. ' -display'), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
+    call assert_equal('Argument missing after: "-display"', out[1])
     call assert_equal('More info with: "vim -h"',            out[2])
   endif
 
