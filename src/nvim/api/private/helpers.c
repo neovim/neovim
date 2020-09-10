@@ -1198,7 +1198,7 @@ void api_free_object(Object value)
       break;
 
     case kObjectTypeLuaRef:
-      executor_free_luaref(value.data.luaref);
+      api_free_luaref(value.data.luaref);
       break;
 
     default:

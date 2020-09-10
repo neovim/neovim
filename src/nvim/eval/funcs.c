@@ -5482,7 +5482,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  executor_eval_lua(cstr_as_string((char *)str), &argvars[1], rettv);
+  nlua_typval_eval(cstr_as_string((char *)str), &argvars[1], rettv);
 }
 
 /*

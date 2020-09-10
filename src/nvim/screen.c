@@ -513,7 +513,7 @@ int update_screen(int type)
         FIXED_TEMP_ARRAY(args, 2);
         args.items[0] = BUFFER_OBJ(buf->handle);
         args.items[1] = INTEGER_OBJ(display_tick);
-        executor_exec_lua_cb(buf->b_luahl_start, "start", args, false, &err);
+        nlua_call_ref(buf->b_luahl_start, "start", args, false, &err);
         if (ERROR_SET(&err)) {
           ELOG("error in luahl start: %s", err.msg);
           api_clear_error(&err);
@@ -1251,7 +1251,7 @@ static void win_update(win_T *wp)
     args.items[3] = INTEGER_OBJ(knownmax);
     // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
     // For now the "start" callback is expected to use nvim__buf_redraw_range.
-    executor_exec_lua_cb(buf->b_luahl_window, "window", args, false, &err);
+    nlua_call_ref(buf->b_luahl_window, "window", args, false, &err);
     if (ERROR_SET(&err)) {
       ELOG("error in luahl window: %s", err.msg);
       api_clear_error(&err);
@@ -2356,8 +2356,7 @@ win_line (
         args.items[2] = INTEGER_OBJ(lnum-1);
         lua_attr_active = true;
         extra_check = true;
-        Object o = executor_exec_lua_cb(buf->b_luahl_line, "line",
-                                        args, true, &err);
+        Object o = nlua_call_ref(buf->b_luahl_line, "line", args, true, &err);
         lua_attr_active = false;
         if (o.type == kObjectTypeString) {
           // TODO(bfredl): this is a bit of a hack. A final API should use an

@@ -1395,8 +1395,7 @@ call_func(
     if (is_luafunc(partial)) {
       if (len > 0) {
         error = ERROR_NONE;
-        executor_call_lua((const char *)funcname, len,
-                          argvars, argcount, rettv);
+        nlua_typval_call((const char *)funcname, len, argvars, argcount, rettv);
       }
     } else if (!builtin_function((const char *)rfname, -1)) {
       // User defined function.

@@ -475,7 +475,7 @@ Object nvim_execute_lua(String code, Array args, Error *err)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return executor_exec_lua_api(code, args, err);
+  return nlua_exec(code, args, err);
 }
 
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
@@ -494,7 +494,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return executor_exec_lua_api(code, args, err);
+  return nlua_exec(code, args, err);
 }
 
 /// Calls a VimL function.
@@ -2477,7 +2477,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
     String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
-    Object o = nvim_exec_lua(s, a, err);
+    Object o = nlua_exec(s, a, err);
     api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
@@ -2523,7 +2523,7 @@ Object nvim_get_proc(Integer pid, Error *err)
   Array a = ARRAY_DICT_INIT;
   ADD(a, INTEGER_OBJ(pid));
   String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
-  Object o = nvim_exec_lua(s, a, err);
+  Object o = nlua_exec(s, a, err);
   api_free_string(s);
   api_free_array(a);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {

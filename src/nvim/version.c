@@ -2119,13 +2119,13 @@ void list_in_columns(char_u **items, int size, int current)
 
 void list_lua_version(void)
 {
-  typval_T luaver_tv;
-  typval_T arg = { .v_type = VAR_UNKNOWN };  // No args.
-  char *luaver_expr = "((jit and jit.version) and jit.version or _VERSION)";
-  executor_eval_lua(cstr_as_string(luaver_expr), &arg, &luaver_tv);
-  assert(luaver_tv.v_type == VAR_STRING);
-  MSG(luaver_tv.vval.v_string);
-  xfree(luaver_tv.vval.v_string);
+  char *code = "return ((jit and jit.version) and jit.version or _VERSION)";
+  Error err = ERROR_INIT;
+  Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
+  assert(!ERROR_SET(&err));
+  assert(ret.type == kObjectTypeString);
+  MSG(ret.data.string.data);
+  api_free_object(ret);
 }
 
 void list_version(void)
