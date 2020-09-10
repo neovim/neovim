@@ -1,10 +1,13 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
 
+local inspect = require'vim.inspect'
+
 local command = helpers.command
 local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
+local fail = helpers.fail
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local deepcopy = helpers.deepcopy
@@ -243,21 +246,22 @@ describe('lua buffer event callbacks: on_lines', function()
 
 end)
 
-describe('lua buffer event callbacks: on_bytes', function()
+describe('lua: nvim_buf_attach on_bytes', function()
   before_each(function()
     clear()
     attach_buffer('on_bytes')
   end)
 
-
   -- verifying the sizes with nvim_buf_get_offset is nice (checks we cannot
   -- assert the wrong thing), but masks errors with unflushed lines (as
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
   -- test both ways.
-  local function check(verify)
+  local function setup_eventcheck(verify)
     meths.buf_set_lines(0, 0, -1, true, origlines)
     local shadow = deepcopy(origlines)
     local shadowbytes = table.concat(shadow, '\n') .. '\n'
+    -- TODO: while we are brewing the real strong coffe,
+    -- verify should check buf_get_offset after every check_events
     if verify then
       meths.buf_get_offset(0, meths.buf_line_count(0))
     end
@@ -267,7 +271,21 @@ describe('lua buffer event callbacks: on_bytes', function()
     local verify_name = "test1"
     local function check_events(expected)
       local events = exec_lua("return get_events(...)" )
-      eq(expected, events)
+
+      if not pcall(eq, expected, events) then
+        local msg = 'unexpected byte updates received.\n\nBABBLA MER \n\n'
+
+        msg = msg .. 'received events:\n'
+        for _, e in ipairs(events) do
+          msg = msg .. '  ' .. inspect(e) .. ';\n'
+        end
+        msg = msg .. '\nexpected events:\n'
+        for _, e in ipairs(expected) do
+          msg = msg .. '  ' .. inspect(e) .. ';\n'
+        end
+        fail(msg)
+      end
+
       if verify then
         for _, event in ipairs(events) do
           if event[1] == verify_name and event[2] == "bytes" then
@@ -292,18 +310,60 @@ describe('lua buffer event callbacks: on_bytes', function()
       end
     end
 
-    feed('ggJ')
-    check_events({{'test1', 'bytes', 1, 3, 0, 15, 15, 1, 0, 1, 0, 1, 1}})
-
-    feed('3J')
-    check_events({
-        {'test1', 'bytes', 1, 5, 0, 31, 31, 1, 0, 1, 0, 1, 1},
-        {'test1', 'bytes', 1, 5, 0, 47, 47, 1, 0, 1, 0, 1, 1},
-    })
+    return check_events
   end
 
-  it('works with verify', function()
-    check(true)
+  -- Yes, we can do both
+  local function do_both(verify)
+    it('single and multiple join', function()
+        local check_events = setup_eventcheck(verify)
+        feed 'ggJ'
+        check_events {
+          {'test1', 'bytes', 1, 3, 0, 15, 15, 1, 0, 1, 0, 1, 1};
+        }
+
+        feed '3J'
+        check_events {
+          {'test1', 'bytes', 1, 5, 0, 31, 31, 1, 0, 1, 0, 1, 1};
+          {'test1', 'bytes', 1, 5, 0, 47, 47, 1, 0, 1, 0, 1, 1};
+        }
+    end)
+
+    it('opening lines', function()
+        local check_events = setup_eventcheck(verify)
+        -- meths.buf_set_option(0, 'autoindent', true)
+        feed 'Go'
+        check_events {
+          { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
+        }
+        feed '<cr>'
+        check_events {
+          { "test1", "bytes", 1, 4, 8, 0, 115, 0, 0, 0, 0, 0, 0 };
+          { "test1", "bytes", 1, 5, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
+        }
+    end)
+
+    it('opening lines with autoindent', function()
+        local check_events = setup_eventcheck(verify)
+        meths.buf_set_option(0, 'autoindent', true)
+        feed 'Go'
+        check_events {
+          { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 5 };
+        }
+        feed '<cr>'
+        check_events {
+          { "test1", "bytes", 1, 4, 8, 0, 115, 0, 4, 4, 0, 0, 0 };
+          { "test1", "bytes", 1, 5, 7, 4, 118, 0, 0, 0, 1, 4, 5 };
+        }
+    end)
+  end
+
+  describe('(with verify) handles', function()
+    do_both(true)
+  end)
+
+  describe('(without verify) handles', function()
+    do_both(false)
   end)
 end)
 

@@ -82,6 +82,17 @@ end
 function module.ok(res, msg, logfile)
   return dumplog(logfile, assert.is_true, res, msg)
 end
+
+-- TODO(bfredl): this should "failure" not "error" (issue with dumplog() )
+local function epicfail(state, arguments, _)
+  state.failure_message = arguments[1]
+  return false
+end
+assert:register("assertion", "epicfail", epicfail)
+function module.fail(msg, logfile)
+  return dumplog(logfile, assert.epicfail, msg)
+end
+
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
