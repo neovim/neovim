@@ -577,7 +577,7 @@ updates.
 Parser files						*treesitter-parsers*
 
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
-search for in the `parsers` runtime directory.
+search for in the `parser` runtime directory.
 
 For a parser to be available for a given language, there must be a file named
 `{lang}.so` within the parser directory.
