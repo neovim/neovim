@@ -288,7 +288,8 @@ void buf_updates_send_splice(
     int old_row, colnr_T old_col, bcount_t old_byte,
     int new_row, colnr_T new_col, bcount_t new_byte)
 {
-  if (!buf_updates_active(buf)) {
+  if (!buf_updates_active(buf)
+      || (old_byte == 0 && new_byte == 0)) {
     return;
   }
 

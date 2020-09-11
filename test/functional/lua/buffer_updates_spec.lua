@@ -338,7 +338,6 @@ describe('lua: nvim_buf_attach on_bytes', function()
         }
         feed '<cr>'
         check_events {
-          { "test1", "bytes", 1, 4, 8, 0, 115, 0, 0, 0, 0, 0, 0 };
           { "test1", "bytes", 1, 5, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
         }
     end)
