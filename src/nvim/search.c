@@ -1179,7 +1179,7 @@ int do_search(
       }
 
       if (*searchstr == NUL) {
-        p = spats[last_idx].pat;
+        p = spats[0].pat;
       } else {
         p = searchstr;
       }

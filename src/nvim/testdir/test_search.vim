@@ -982,6 +982,18 @@ func Test_search_sentence()
   /
 endfunc
 
+" Test that there is no crash when there is a last search pattern but no last
+" substitute pattern.
+func Test_no_last_substitute_pat()
+  " Use viminfo to set the last search pattern to a string and make the last
+  " substitute pattern the most recent used and make it empty (NULL).
+  call writefile(['~MSle0/bar', '~MSle0~&'], 'Xviminfo')
+  rviminfo! Xviminfo
+  call assert_fails('normal n', 'E35:')
+
+  call delete('Xviminfo')
+endfunc
+
 func Test_large_hex_chars1()
   " This used to cause a crash, the character becomes an NFA state.
   try
