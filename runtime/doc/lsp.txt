@@ -30,7 +30,7 @@ Follow these steps to get LSP features:
      package manager to install the relevant language server:
      https://microsoft.github.io/language-server-protocol/implementors/servers/
   3. Add `nvim_lsp.xx.setup{…}` to your vimrc, where "xx" is the name of the
-     relevant config.  See the nvim-lsp README for details.
+     relevant config.  See the nvim-lspconfig README for details.
 
 To check LSP clients attached to the current buffer:  >
 
