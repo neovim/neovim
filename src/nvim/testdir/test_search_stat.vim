@@ -4,6 +4,8 @@
 " as test!
 
 source shared.vim
+source screendump.vim
+source check.vim
 
 func! Test_search_stat()
   new
@@ -163,4 +165,32 @@ func! Test_search_stat()
   " close the window
   set shortmess+=S
   bwipe!
+endfunc
+
+func Test_searchcount_in_statusline()
+  CheckScreendump
+
+  let lines =<< trim END
+    set shortmess-=S
+    call append(0, 'this is something')
+    function TestSearchCount() abort
+      let search_count = searchcount()
+      if !empty(search_count)
+	return '[' . search_count.current . '/' . search_count.total . ']'
+      else
+	return ''
+      endif
+    endfunction
+    set hlsearch
+    set laststatus=2 statusline+=%{TestSearchCount()}
+  END
+  call writefile(lines, 'Xsearchstatusline')
+  let buf = RunVimInTerminal('-S Xsearchstatusline', #{rows: 10})
+  call TermWait(buf)
+  call term_sendkeys(buf, "/something")
+  call VerifyScreenDump(buf, 'Test_searchstat_4', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xsearchstatusline')
 endfunc

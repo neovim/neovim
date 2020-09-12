@@ -320,10 +320,9 @@ static bool saved_no_hlsearch = false;
 /// cancelling incremental searching even if it's called inside user functions.
 void save_last_search_pattern(void)
 {
-  if (did_save_last_search_spat != 0) {
-    IEMSG("did_save_last_search_spat is not zero");
-  } else {
-    did_save_last_search_spat++;
+  if (++did_save_last_search_spat != 1) {
+    // nested call, nothing to do
+    return;
   }
 
   saved_last_search_spat = spats[RE_SEARCH];
@@ -336,11 +335,15 @@ void save_last_search_pattern(void)
 
 void restore_last_search_pattern(void)
 {
-  if (did_save_last_search_spat != 1) {
-    IEMSG("did_save_last_search_spat is not one");
+  if (--did_save_last_search_spat > 0) {
+    // nested call, nothing to do
     return;
   }
-  did_save_last_search_spat--;
+  if (did_save_last_search_spat != 0) {
+    iemsg("restore_last_search_pattern() called more often than"
+          " save_last_search_pattern()");
+    return;
+  }
 
   xfree(spats[RE_SEARCH].pat);
   spats[RE_SEARCH] = saved_last_search_spat;
