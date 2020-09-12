@@ -6297,7 +6297,7 @@ fun! s:NetrwMaps(islocal)
 
   " generate default <Plug> maps {{{3
   if !hasmapto('<Plug>NetrwHide')              |nmap <buffer> <silent> <nowait> a	<Plug>NetrwHide_a|endif
-  if !hasmapto('<Plug>NetrwBrowseUpDir')       |nmap <buffer> <silent> <nowait> -	<Plug>NetrwBrowseUpDir |endif
+  if !hasmapto('<Plug>NetrwBrowseUpDir')       |nmap <buffer> <silent> <nowait> -	<Plug>NetrwBrowseUpDir|endif
   if !hasmapto('<Plug>NetrwOpenFile')          |nmap <buffer> <silent> <nowait> %	<Plug>NetrwOpenFile|endif
   if !hasmapto('<Plug>NetrwBadd_cb')           |nmap <buffer> <silent> <nowait> cb	<Plug>NetrwBadd_cb|endif
   if !hasmapto('<Plug>NetrwBadd_cB')           |nmap <buffer> <silent> <nowait> cB	<Plug>NetrwBadd_cB|endif
