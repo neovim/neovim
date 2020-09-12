@@ -346,25 +346,104 @@ func Test_searchc()
   bw!
 endfunc
 
-func Test_search_cmdline3()
+func Cmdline3_prep()
   throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
   new
   call setline(1, ['  1', '  2 the~e', '  3 the theother'])
   set incsearch
+endfunc
+
+func Incsearch_cleanup()
+  throw 'skipped: Nvim does not support test_override()'
+  set noincsearch
+  call test_override("char_avail", 0)
+  bw!
+endfunc
+
+func Test_search_cmdline3()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
   1
   " first match
   call feedkeys("/the\<c-l>\<cr>", 'tx')
   call assert_equal('  2 the~e', getline('.'))
-  " clean up
-  set noincsearch
-  call test_override("char_avail", 0)
-  bw!
+
+  call Incsearch_cleanup()
+endfunc
+
+func Test_search_cmdline3s()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
+  1
+  call feedkeys(":%s/the\<c-l>/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%subs/the\<c-l>/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%substitute/the\<c-l>/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxxe', getline('.'))
+  undo
+  call feedkeys(":%smagic/the.e/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxx', getline('.'))
+  undo
+  call assert_fails(":%snomagic/the.e/xxx\<cr>", 'E486')
+  "
+  call feedkeys(":%snomagic/the\\.e/xxx\<cr>", 'tx')
+  call assert_equal('  2 xxx', getline('.'))
+
+  call Incsearch_cleanup()
+endfunc
+
+func Test_search_cmdline3g()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
+  1
+  call feedkeys(":g/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal('  3 the theother', getline(2))
+  undo
+  call feedkeys(":global/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal('  3 the theother', getline(2))
+  undo
+  call feedkeys(":g!/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+  undo
+  call feedkeys(":global!/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+
+  call Incsearch_cleanup()
+endfunc
+
+func Test_search_cmdline3v()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
+  1
+  call feedkeys(":v/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+  undo
+  call feedkeys(":vglobal/the\<c-l>/d\<cr>", 'tx')
+  call assert_equal(1, line('$'))
+  call assert_equal('  2 the~e', getline(1))
+
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_cmdline4()
@@ -420,6 +499,45 @@ func Test_search_cmdline5()
   call assert_equal('  2 the second', getline('.'))
   " clean up
   set noincsearch
+  bw!
+endfunc
+
+func Test_search_cmdline7()
+  throw 'skipped: Nvim does not support test_override()'
+  " Test that an pressing <c-g> in an empty command line
+  " does not move the cursor
+  if !exists('+incsearch')
+    return
+  endif
+  " need to disable char_avail,
+  " so that expansion of commandline works
+  call test_override("char_avail", 1)
+  new
+  let @/ = 'b'
+  call setline(1, [' bbvimb', ''])
+  set incsearch
+  " first match
+  norm! gg0
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,2,0], getpos('.'))
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<cr>", 'tx')
+  call assert_equal([0,1,3,0], getpos('.'))
+  " moves to next match of previous search pattern, just like /<cr>
+  call feedkeys("/\<c-t>\<cr>", 'tx')
+  call assert_equal([0,1,7,0], getpos('.'))
+
+  " using an offset uses the last search pattern
+  call cursor(1, 1)
+  call setline(1, ['1 bbvimb', ' 2 bbvimb'])
+  let @/ = 'b'
+  call feedkeys("//e\<c-g>\<cr>", 'tx')
+  call assert_equal('1 bbvimb', getline('.'))
+  call assert_equal(4, col('.'))
+
+  set noincsearch
+  call test_override("char_avail", 0)
   bw!
 endfunc
 
@@ -504,6 +622,7 @@ func Test_incsearch_substitute_dump()
 	\ 'for n in range(1, 10)',
 	\ '  call setline(n, "foo " . n)',
 	\ 'endfor',
+	\ 'call setline(11, "bar 11")',
 	\ '3',
 	\ ], 'Xis_subst_script')
   let buf = RunVimInTerminal('-S Xis_subst_script', {'rows': 9, 'cols': 70})
@@ -512,6 +631,7 @@ func Test_incsearch_substitute_dump()
   sleep 100m
 
   " Need to send one key at a time to force a redraw.
+  " Select three lines at the cursor with typed pattern.
   call term_sendkeys(buf, ':.,.+2s/')
   sleep 100m
   call term_sendkeys(buf, 'f')
@@ -520,10 +640,201 @@ func Test_incsearch_substitute_dump()
   sleep 100m
   call term_sendkeys(buf, 'o')
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_01', {})
-
   call term_sendkeys(buf, "\<Esc>")
+
+  " Select three lines at the cursor using previous pattern.
+  call term_sendkeys(buf, "/foo\<CR>")
+  sleep 100m
+  call term_sendkeys(buf, ':.,.+2s//')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_02', {})
+
+  " Deleting last slash should remove the match.
+  call term_sendkeys(buf, "\<BS>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_03', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Reverse range is accepted
+  call term_sendkeys(buf, ':5,2s/foo')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_04', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " White space after the command is skipped
+  call term_sendkeys(buf, ':2,3sub  /fo')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_05', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Command modifiers are skipped
+  call term_sendkeys(buf, ':above below browse botr confirm keepmar keepalt keeppat keepjum filter xxx hide lockm leftabove noau noswap rightbel sandbox silent silent! $tab top unsil vert verbose 4,5s/fo.')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_06', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Cursorline highlighting at match
+  call term_sendkeys(buf, ":set cursorline\<CR>")
+  call term_sendkeys(buf, 'G9G')
+  call term_sendkeys(buf, ':9,11s/bar')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_07', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Cursorline highlighting at cursor when no match
+  call term_sendkeys(buf, ':9,10s/bar')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_08', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " Only \v handled as empty pattern, does not move cursor
+  call term_sendkeys(buf, '3G4G')
+  call term_sendkeys(buf, ":nohlsearch\<CR>")
+  call term_sendkeys(buf, ':6,7s/\v')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_09', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ":set nocursorline\<CR>")
+
+  " All matches are highlighted for 'hlsearch' after the incsearch canceled
+  call term_sendkeys(buf, "1G*")
+  call term_sendkeys(buf, ":2,5s/foo")
+  sleep 100m
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_10', {})
+
+  call term_sendkeys(buf, ":split\<CR>")
+  call term_sendkeys(buf, ":let @/ = 'xyz'\<CR>")
+  call term_sendkeys(buf, ":%s/.")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_11', {})
+  call term_sendkeys(buf, "\<BS>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_12', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_13', {})
+
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
+endfunc
+
+" Similar to Test_incsearch_substitute_dump() for :sort
+func Test_incsearch_sort_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
+	\ ], 'Xis_sort_script')
+  let buf = RunVimInTerminal('-S Xis_sort_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':sort ni u /on')
+  call VerifyScreenDump(buf, 'Test_incsearch_sort_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_sort_script')
+endfunc
+
+" Similar to Test_incsearch_substitute_dump() for :vimgrep famiry
+func Test_incsearch_vimgrep_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
+	\ ], 'Xis_vimgrep_script')
+  let buf = RunVimInTerminal('-S Xis_vimgrep_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':vimgrep on')
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':vimg /on/ *.txt')
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_02', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':vimgrepadd "\<on')
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_03', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':lv "tha')
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_04', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':lvimgrepa "the" **/*.txt')
+  call VerifyScreenDump(buf, 'Test_incsearch_vimgrep_05', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_vimgrep_script')
+endfunc
+
+func Test_keep_last_search_pattern()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  new
+  call setline(1, ['foo', 'foo', 'foo'])
+  set incsearch
+  call test_override("char_avail", 1)
+  let @/ = 'bar'
+  call feedkeys(":/foo/s//\<Esc>", 'ntx')
+  call assert_equal('bar', @/)
+
+  " no error message if pattern not found
+  call feedkeys(":/xyz/s//\<Esc>", 'ntx')
+  call assert_equal('bar', @/)
+
+  bwipe!
+  call test_override("ALL", 0)
+  set noincsearch
+endfunc
+
+func Test_word_under_cursor_after_match()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  new
+  call setline(1, 'foo bar')
+  set incsearch
+  call test_override("char_avail", 1)
+  try
+    call feedkeys("/foo\<C-R>\<C-W>\<CR>", 'ntx')
+  catch /E486:/
+  endtry
+  call assert_equal('foobar', @/)
+
+  bwipe!
+  call test_override("ALL", 0)
+  set noincsearch
+endfunc
+
+func Test_subst_word_under_cursor()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  new
+  call setline(1, ['int SomeLongName;', 'for (xxx = 1; xxx < len; ++xxx)'])
+  set incsearch
+  call test_override("char_avail", 1)
+  call feedkeys("/LongName\<CR>", 'ntx')
+  call feedkeys(":%s/xxx/\<C-R>\<C-W>/g\<CR>", 'ntx')
+  call assert_equal('for (SomeLongName = 1; SomeLongName < len; ++SomeLongName)', getline(2))
+
+  bwipe!
+  call test_override("ALL", 0)
+  set noincsearch
 endfunc
 
 func Test_incsearch_with_change()
@@ -578,6 +889,61 @@ func Test_incsearch_scrolling()
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
   call delete('Xscript')
+endfunc
+
+func Test_incsearch_search_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'for n in range(1, 8)',
+	\ '  call setline(n, "foo " . n)',
+	\ 'endfor',
+	\ '3',
+	\ ], 'Xis_search_script')
+  let buf = RunVimInTerminal('-S Xis_search_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, '/fo')
+  call VerifyScreenDump(buf, 'Test_incsearch_search_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+  sleep 100m
+
+  call term_sendkeys(buf, '/\v')
+  call VerifyScreenDump(buf, 'Test_incsearch_search_02', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_search_script')
+endfunc
+
+func Test_incsearch_substitute()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call test_override("char_avail", 1)
+  new
+  set incsearch
+  for n in range(1, 10)
+    call setline(n, 'foo ' . n)
+  endfor
+  4
+  call feedkeys(":.,.+2s/foo\<BS>o\<BS>o/xxx\<cr>", 'tx')
+  call assert_equal('foo 3', getline(3))
+  call assert_equal('xxx 4', getline(4))
+  call assert_equal('xxx 5', getline(5))
+  call assert_equal('xxx 6', getline(6))
+  call assert_equal('foo 7', getline(7))
+
+  call Incsearch_cleanup()
 endfunc
 
 func Test_search_undefined_behaviour()

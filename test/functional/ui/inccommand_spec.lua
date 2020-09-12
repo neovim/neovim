@@ -162,7 +162,7 @@ describe(":substitute, 'inccommand' preserves", function()
       insert(default_text)
       feed_command("set inccommand=" .. case)
 
-      local delims = { '/', '#', ';', '%', ',', '@', '!', ''}
+      local delims = { '/', '#', ';', '%', ',', '@', '!' }
       for _,delim in pairs(delims) do
         feed_command("%s"..delim.."lines"..delim.."LINES"..delim.."g")
         expect([[
