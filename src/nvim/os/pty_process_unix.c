@@ -160,8 +160,21 @@ static void init_child(PtyProcess *ptyproc)
   os_unsetenv("COLUMNS");
   os_unsetenv("LINES");
   os_unsetenv("TERMCAP");
-  os_unsetenv("COLORTERM");
   os_unsetenv("COLORFGBG");
+  // setting COLORTERM to "truecolor" if termguicolors is set and 256
+  // otherwise, but only if it was set in the parent terminal at all
+  if (os_env_exists("COLORTERM")) {
+    const char *colorterm = os_getenv("COLORTERM");
+    if (colorterm != NULL) {
+      if (p_tgc) {
+        os_setenv("COLORTERM", "truecolor", 1);
+      } else {
+        os_setenv("COLORTERM", "256", 1);
+      }
+    } else {
+      os_unsetenv("COLORTERM");
+    }
+  }
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
