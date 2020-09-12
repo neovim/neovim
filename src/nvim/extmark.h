@@ -85,6 +85,7 @@ typedef struct {
   int end_col;
   int attr_id;
   VirtText *virt_text;
+  bool virt_text_owned;
 } HlRange;
 
 typedef struct {

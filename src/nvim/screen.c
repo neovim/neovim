@@ -645,7 +645,7 @@ void decorations_add_luahl_attr(int attr_id,
 {
   kv_push(decorations.active,
           ((HlRange){ start_row, start_col,
-                      end_row, end_col, attr_id, virt_text }));
+                      end_row, end_col, attr_id, virt_text, true }));
 }
 
 /*
