@@ -96,12 +96,8 @@ static int lastc_bytelen = 1;             // >1 for multi-byte char
 
 // copy of spats[], for keeping the search patterns while executing autocmds
 static struct spat saved_spats[2];
-// copy of spats[RE_SEARCH], for keeping the search patterns while incremental
-// searching
-static struct spat  saved_last_search_spat;
-static int did_save_last_search_spat = 0;
-static int saved_last_idx = 0;
-static bool saved_no_hlsearch = false;
+static int saved_spats_last_idx = 0;
+static bool saved_spats_no_hlsearch = false;
 
 static char_u       *mr_pattern = NULL;    // pattern used by search_regcomp()
 static int mr_pattern_alloced = false;     // mr_pattern was allocated
@@ -268,8 +264,8 @@ void save_search_patterns(void)
     saved_spats[1] = spats[1];
     if (spats[1].pat != NULL)
       saved_spats[1].pat = vim_strsave(spats[1].pat);
-    saved_last_idx = last_idx;
-    saved_no_hlsearch = no_hlsearch;
+    saved_spats_last_idx = last_idx;
+    saved_spats_no_hlsearch = no_hlsearch;
   }
 }
 
@@ -281,8 +277,8 @@ void restore_search_patterns(void)
     set_vv_searchforward();
     free_spat(&spats[1]);
     spats[1] = saved_spats[1];
-    last_idx = saved_last_idx;
-    set_no_hlsearch(saved_no_hlsearch);
+    last_idx = saved_spats_last_idx;
+    set_no_hlsearch(saved_spats_no_hlsearch);
   }
 }
 
@@ -308,6 +304,13 @@ void free_search_patterns(void)
 }
 
 #endif
+
+// copy of spats[RE_SEARCH], for keeping the search patterns while incremental
+// searching
+static struct spat saved_last_search_spat;
+static int did_save_last_search_spat = 0;
+static int saved_last_idx = 0;
+static bool saved_no_hlsearch = false;
 
 /// Save and restore the search pattern for incremental highlight search
 /// feature.
@@ -488,7 +491,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
       saved_spats[idx].pat = NULL;
     else
       saved_spats[idx].pat = vim_strsave(spats[idx].pat);
-    saved_last_idx = last_idx;
+    saved_spats_last_idx = last_idx;
   }
   /* If 'hlsearch' set and search pat changed: need redraw. */
   if (p_hls && idx == last_idx && !no_hlsearch)
