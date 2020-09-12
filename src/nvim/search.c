@@ -101,6 +101,8 @@ static struct spat saved_spats[2];
 static struct spat  saved_last_search_spat;
 static int saved_last_idx = 0;
 static bool saved_no_hlsearch = false;
+// pattern used by incsearch
+static char_u *incsearch_pattern;
 
 static char_u       *mr_pattern = NULL;    // pattern used by search_regcomp()
 static int mr_pattern_alloced = false;     // mr_pattern was allocated
@@ -333,6 +335,27 @@ void restore_last_search_pattern(void)
   set_no_hlsearch(saved_no_hlsearch);
 }
 
+// Sets the current search pattern to the incsearch pattern.
+void save_incsearch_pattern(void)
+{
+  if (incsearch_pattern != NULL) {
+    xfree(incsearch_pattern);
+  }
+  if (spats[RE_SEARCH].pat != NULL) {
+    incsearch_pattern = vim_strsave(spats[RE_SEARCH].pat);
+  } else {
+    incsearch_pattern = NULL;
+  }
+}
+
+void clear_incsearch_pattern(void)
+{
+  if (incsearch_pattern != NULL) {
+    xfree(incsearch_pattern);
+    incsearch_pattern = NULL;
+  }
+}
+
 char_u *last_search_pattern(void)
 {
   return spats[RE_SEARCH].pat;
@@ -488,13 +511,21 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
  */
 void last_pat_prog(regmmatch_T *regmatch)
 {
-  if (spats[last_idx].pat == NULL) {
+  char_u *pat;
+  bool should_show_incsearch = cmdwin_type == 0 && is_incsearch_active();
+
+  if (should_show_incsearch
+      && highlight_match && incsearch_pattern != NULL) {
+    pat = incsearch_pattern;
+  } else if (should_show_incsearch || spats[last_idx].pat == NULL) {
     regmatch->regprog = NULL;
     return;
+  } else {
+    pat = NULL;
   }
-  ++emsg_off;           /* So it doesn't beep if bad expr */
-  (void)search_regcomp((char_u *)"", 0, last_idx, SEARCH_KEEP, regmatch);
-  --emsg_off;
+  emsg_off++;           // So it doesn't beep if bad expr
+  (void)search_regcomp(pat, 0, last_idx, SEARCH_KEEP, regmatch);
+  emsg_off--;
 }
 
 /// lowest level search function.
