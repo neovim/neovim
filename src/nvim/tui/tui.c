@@ -1083,6 +1083,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     }
   } else if (c.id == 0) {
     // No cursor color for this mode; reset to default.
+    data->want_invisible = false;
     unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
   }
 

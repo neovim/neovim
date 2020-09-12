@@ -2738,21 +2738,26 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor{N}	horizontal bar, {N} percent of the character height
 		ver{N}	vertical bar, {N} percent of the character width
 		block	block cursor, fills the whole character
-			[only one of the above three should be present]
+			- Only one of the above three should be present.
+			- Default is "block" for each mode.
 		blinkwait{N}				*cursor-blinking*
 		blinkon{N}
 		blinkoff{N}
 			blink times for cursor: blinkwait is the delay before
 			the cursor starts blinking, blinkon is the time that
 			the cursor is shown and blinkoff is the time that the
-			cursor is not shown.  The times are in msec.  When one
-			of the numbers is zero, there is no blinking. E.g.: >
+			cursor is not shown.  Times are in msec.  When one of
+			the numbers is zero, there is no blinking. E.g.: >
 				:set guicursor=n:blinkon0
-<		{group-name}
-			Highlight group name that sets the color and font for
-			the cursor. |inverse|/reverse and no group-name are
-			interpreted as "the host terminal default cursor
-			colors" which usually invert bg and fg colors.
+<			- Default is "blinkon0" for each mode.
+		{group-name}
+			Highlight group that decides the color and font of the
+			cursor.
+			In the |TUI|:
+			- |inverse|/reverse and no group-name are interpreted
+			  as "host-terminal default cursor colors" which
+			  typically means "inverted bg and fg colors".
+			- |ctermfg| and |guifg| are ignored.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
