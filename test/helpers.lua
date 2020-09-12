@@ -345,7 +345,7 @@ function module.check_cores(app, force)
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
-  elseif os.getenv('TRAVIS_OS_NAME') == 'osx' then
+  elseif 'darwin' == module.uname() then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
