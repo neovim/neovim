@@ -994,6 +994,28 @@ func Test_no_last_substitute_pat()
   call delete('Xviminfo')
 endfunc
 
+func Test_search_Ctrl_L_combining()
+  " Make sure, that Ctrl-L works correctly with combining characters.
+  " It uses an artificial example of an 'a' with 4 combining chars:
+    " 'a' U+0061 Dec:97 LATIN SMALL LETTER A &#x61; /\%u61\Z "\u0061" 
+    " ' ̀' U+0300 Dec:768 COMBINING GRAVE ACCENT &#x300; /\%u300\Z "\u0300"
+    " ' ́' U+0301 Dec:769 COMBINING ACUTE ACCENT &#x301; /\%u301\Z "\u0301"
+    " ' ̇' U+0307 Dec:775 COMBINING DOT ABOVE &#x307; /\%u307\Z "\u0307"
+    " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323" 
+  " Those should also appear on the commandline
+  if !has('multi_byte') || !exists('+incsearch')
+    return
+  endif
+  call Cmdline3_prep()
+  1
+  let bufcontent = ['', 'Miạ̀́̇m']
+  call append('$', bufcontent)
+  call feedkeys("/Mi\<c-l>\<c-l>\<cr>", 'tx')
+  call assert_equal(5, line('.'))
+  call assert_equal(bufcontent[1], @/)
+  call Incsearch_cleanup()
+endfunc
+
 func Test_large_hex_chars1()
   " This used to cause a crash, the character becomes an NFA state.
   try
