@@ -1618,3 +1618,15 @@ free_exit:
   clear_virttext(&virt_text);
   return virt_text;
 }
+
+bool api_is_truthy(Object obj, const char *what, Error *err)
+{
+  if (obj.type == kObjectTypeBoolean) {
+    return obj.data.boolean;
+  } else if (obj.type == kObjectTypeInteger) {
+    return obj.data.integer;  // C semantics: non-zery int is true
+  } else {
+    api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
+    return false;
+  }
+}

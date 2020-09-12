@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <lua.h>
+#include <lauxlib.h>
 #include <msgpack.h>
 
 #include "nvim/ascii.h"

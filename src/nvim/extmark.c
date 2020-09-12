@@ -845,7 +845,7 @@ bool decorations_redraw_reset(buf_T *buf, DecorationRedrawState *state)
 {
   state->row = -1;
   kv_size(state->active) = 0;
-  return buf->b_extmark_index || buf->b_luahl;
+  return buf->b_extmark_index;
 }
 
 

@@ -2702,3 +2702,68 @@ void nvim__screenshot(String path)
 {
   ui_call_screenshot(path);
 }
+
+static void clear_luahl(bool force)
+{
+  if (luahl_active || force) {
+    api_free_luaref(luahl_start);
+    api_free_luaref(luahl_win);
+    api_free_luaref(luahl_line);
+    api_free_luaref(luahl_end);
+  }
+  luahl_start = LUA_NOREF;
+  luahl_win = LUA_NOREF;
+  luahl_line = LUA_NOREF;
+  luahl_end = LUA_NOREF;
+  luahl_active = false;
+}
+
+/// Unstabilized interface for defining syntax hl in lua.
+///
+/// This is not yet safe for general use, lua callbacks will need to
+/// be restricted, like textlock and probably other stuff.
+///
+/// The API on_line/nvim__put_attr is quite raw and not intended to be the
+/// final shape. Ideally this should operate on chunks larger than a single
+/// line to reduce interpreter overhead, and generate annotation objects
+/// (bufhl/virttext) on the fly but using the same representation.
+void nvim__set_luahl(DictionaryOf(LuaRef) opts, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  redraw_later(NOT_VALID);
+  clear_luahl(false);
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_start", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_start = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_win", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_win = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+  luahl_active = true;
+  return;
+error:
+  clear_luahl(true);
+}
