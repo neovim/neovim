@@ -505,13 +505,13 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
   if signature.documentation then
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
-  if signature_help.parameters then
+  if signature.parameters and #signature.parameters > 0 then
     local active_parameter = signature_help.activeParameter or 0
     -- If the activeParameter is not inside the valid range, then clip it.
-    if active_parameter >= #signature_help.parameters then
+    if active_parameter >= #signature.parameters then
       active_parameter = 0
     end
-    local parameter = signature.parameters and signature.parameters[active_parameter]
+    local parameter = signature.parameters[active_parameter + 1]
     if parameter then
       --[=[
       --Represents a parameter of a callable-signature. A parameter can
@@ -532,8 +532,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
       }
       --]=]
       -- TODO highlight parameter
-      if parameter.documentation then
-        M.convert_input_help_to_markdown_lines(parameter.documentation, contents)
+      if parameter.documentation and parameter.documentation ~= vim.NIL then
+        M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end
   end
