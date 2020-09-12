@@ -1258,9 +1258,9 @@ do_buffer(
     /*
      * If deleting the last (listed) buffer, make it empty.
      * The last (listed) buffer cannot be unloaded.
-     * If the buffer to be deleted is not listed, skip
+     * If the buffer belongs to floating window, skip
      */
-    if(buf->b_p_bl != 0) {
+    if(!buf->b_wininfo->wi_win->w_floating) {
       bp = NULL;
       FOR_ALL_BUFFERS(bp2) {
         if (bp2->b_p_bl && bp2 != buf) {
