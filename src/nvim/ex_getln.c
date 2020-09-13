@@ -276,6 +276,7 @@ static void init_incsearch_state(incsearch_state_T *s)
 // Sets search_first_line and search_last_line to the address range.
 static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
                                       int *skiplen, int *patlen)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *cmd;
   cmdmod_T save_cmdmod = cmdmod;
@@ -1447,6 +1448,7 @@ static int command_line_execute(VimState *state, int key)
 static int may_do_command_line_next_incsearch(int firstc, long count,
                                               incsearch_state_T *s,
                                               bool next_match)
+  FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
 
@@ -1540,6 +1542,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     save_viewstate(&s->old_viewstate);
     update_screen(NOT_VALID);
     redrawcmdline();
+    curwin->w_cursor = s->match_end;
   } else {
     vim_beep(BO_ERROR);
   }

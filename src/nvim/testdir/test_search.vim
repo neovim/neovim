@@ -244,6 +244,10 @@ func Test_search_cmdline2()
   " go to previous match (on line 2)
   call feedkeys("/the\<C-G>\<C-G>\<C-G>\<C-T>\<C-T>\<C-T>\<cr>", 'tx')
   call assert_equal('  2 these', getline('.'))
+  1
+  " go to previous match (on line 2)
+  call feedkeys("/the\<C-G>\<C-R>\<C-W>\<cr>", 'tx')
+  call assert_equal('theother', @/)
 
   " Test 2: keep the view,
   " after deleting a character from the search cmd
@@ -255,7 +259,7 @@ func Test_search_cmdline2()
   call assert_equal({'lnum': 10, 'leftcol': 0, 'col': 4, 'topfill': 0, 'topline': 6, 'coladd': 0, 'skipcol': 0, 'curswant': 4}, winsaveview())
 
   " remove all history entries
-  for i in range(10)
+  for i in range(11)
       call histdel('/')
   endfor
 
@@ -489,14 +493,14 @@ func Test_search_cmdline5()
   " Do not call test_override("char_avail", 1) so that <C-g> and <C-t> work
   " regardless char_avail.
   new
-  call setline(1, ['  1 the first', '  2 the second', '  3 the third'])
+  call setline(1, ['  1 the first', '  2 the second', '  3 the third', ''])
   set incsearch
   1
   call feedkeys("/the\<c-g>\<c-g>\<cr>", 'tx')
   call assert_equal('  3 the third', getline('.'))
   $
   call feedkeys("?the\<c-t>\<c-t>\<c-t>\<cr>", 'tx')
-  call assert_equal('  2 the second', getline('.'))
+  call assert_equal('  1 the first', getline('.'))
   " clean up
   set noincsearch
   bw!
