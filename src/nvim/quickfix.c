@@ -239,7 +239,10 @@ static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 static char_u *qf_last_bufname = NULL;
 static bufref_T  qf_last_bufref = { NULL, 0, 0 };
 
-static char *e_loc_list_changed = N_("E926: Current location list was changed");
+static char *e_current_quickfix_list_was_changed =
+  N_("E925: Current quickfix list was changed");
+static char *e_current_location_list_was_changed =
+  N_("E926: Current location list was changed");
 
 // Counter to prevent autocmds from freeing up location lists when they are
 // still being used.
@@ -2700,9 +2703,10 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
                                win_T *oldwin, int *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
+  long old_changetick = qfl->qf_changedtick;
+  int old_qf_curlist = qi->qf_curlist;
   qfltype_T qfl_type = qfl->qfl_type;
   int retval = OK;
-  int old_qf_curlist = qi->qf_curlist;
   unsigned save_qfid = qfl->qf_id;
 
   if (qf_ptr->qf_type == 1) {
@@ -2729,16 +2733,17 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
   }
 
   if (qfl_type == QFLT_QUICKFIX && !qflist_valid(NULL, save_qfid)) {
-    EMSG(_("E925: Current quickfix was changed"));
+    EMSG(_(e_current_quickfix_list_was_changed));
     return NOTDONE;
   }
 
   if (old_qf_curlist != qi->qf_curlist
+      || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
-      EMSG(_("E925: Current quickfix was changed"));
+      EMSG(_(e_current_quickfix_list_was_changed));
     } else {
-      EMSG(_(e_loc_list_changed));
+      EMSG(_(e_current_location_list_was_changed));
     }
     return NOTDONE;
   }
@@ -2823,11 +2828,26 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr,
 static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr,
                                int *opened_window)
 {
+  qf_list_T *qfl = qf_get_curlist(qi);
+  long old_changetick = qfl->qf_changedtick;
+  int old_qf_curlist = qi->qf_curlist;
+  qfltype_T qfl_type = qfl->qfl_type;
+
     // For ":helpgrep" find a help window or open one.
   if (qf_ptr->qf_type == 1 && (!bt_help(curwin->w_buffer) || cmdmod.tab != 0)) {
     if (jump_to_help_window(qi, opened_window) == FAIL) {
       return FAIL;
     }
+  }
+  if (old_qf_curlist != qi->qf_curlist
+      || old_changetick != qfl->qf_changedtick
+      || !is_qf_entry_present(qfl, qf_ptr)) {
+    if (qfl_type == QFLT_QUICKFIX) {
+      EMSG(_(e_current_quickfix_list_was_changed));
+    } else {
+      EMSG(_(e_current_location_list_was_changed));
+    }
+    return FAIL;
   }
 
   // If currently in the quickfix window, find another window to show the
@@ -2842,6 +2862,16 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr,
     if (qf_jump_to_usable_window(qf_ptr->qf_fnum, opened_window) == FAIL) {
       return FAIL;
     }
+  }
+  if (old_qf_curlist != qi->qf_curlist
+      || old_changetick != qfl->qf_changedtick
+      || !is_qf_entry_present(qfl, qf_ptr)) {
+    if (qfl_type == QFLT_QUICKFIX) {
+      EMSG(_(e_current_quickfix_list_was_changed));
+    } else {
+      EMSG(_(e_current_location_list_was_changed));
+    }
+    return FAIL;
   }
 
   return OK;
@@ -4866,7 +4896,7 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid,
   if (!qflist_valid(wp, qfid)) {
     if (wp != NULL) {
       // An autocmd has freed the location list
-      EMSG(_(e_loc_list_changed));
+      EMSG(_(e_current_location_list_was_changed));
       return false;
     } else {
       // Quickfix list is not found, create a new one.
