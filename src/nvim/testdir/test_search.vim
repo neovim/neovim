@@ -861,6 +861,21 @@ func Test_incsearch_with_change()
   call delete('Xis_change_script')
 endfunc
 
+func Test_incsearch_cmdline_modifier()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  call test_override("char_avail", 1)
+  new
+  call setline(1, ['foo'])
+  set incsearch
+  " Test that error E14 does not occur in parsing command modifier.
+  call feedkeys("V:tab", 'tx')
+
+  call Incsearch_cleanup()
+endfunc
+
 func Test_incsearch_scrolling()
   if !CanRunVimInTerminal()
     return

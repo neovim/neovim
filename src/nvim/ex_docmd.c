@@ -2228,17 +2228,19 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
       continue;
 
     case 't':   if (checkforcmd(&p, "tab", 3)) {
-      long tabnr = get_address(
-          eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only, false, 1);
+      if (!skip_only) {
+        long tabnr = get_address(
+            eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only, false, 1);
 
-      if (tabnr == MAXLNUM) {
-        cmdmod.tab = tabpage_index(curtab) + 1;
-      } else {
-        if (tabnr < 0 || tabnr > LAST_TAB_NR) {
-          *errormsg = (char_u *)_(e_invrange);
-          return false;
+        if (tabnr == MAXLNUM) {
+          cmdmod.tab = tabpage_index(curtab) + 1;
+        } else {
+          if (tabnr < 0 || tabnr > LAST_TAB_NR) {
+            *errormsg = (char_u *)_(e_invrange);
+            return false;
+          }
+          cmdmod.tab = tabnr + 1;
         }
-        cmdmod.tab = tabnr + 1;
       }
       eap->cmd = p;
       continue;
