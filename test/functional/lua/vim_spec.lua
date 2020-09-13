@@ -1330,4 +1330,29 @@ describe('lua stdlib', function()
       eq(false, pcall_result)
     end)
   end)
+
+  describe('vim.api.nvim_buf_call', function()
+    it('can access buf options', function()
+      local buf1 = meths.get_current_buf()
+      local buf2 = exec_lua [[
+        buf2 = vim.api.nvim_create_buf(false, true)
+        return buf2
+      ]]
+
+      eq(false, meths.buf_get_option(buf1, 'autoindent'))
+      eq(false, meths.buf_get_option(buf2, 'autoindent'))
+
+      local val = exec_lua [[
+        return vim.api.nvim_buf_call(buf2, function()
+          vim.cmd "set autoindent"
+          return vim.api.nvim_get_current_buf()
+        end)
+      ]]
+
+      eq(false, meths.buf_get_option(buf1, 'autoindent'))
+      eq(true, meths.buf_get_option(buf2, 'autoindent'))
+      eq(buf1, meths.get_current_buf())
+      eq(buf2, val)
+    end)
+  end)
 end)
