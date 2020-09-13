@@ -7387,6 +7387,7 @@ long vim_regexec_multi(
     proftime_T  *tm,                // timeout limit or NULL
     int         *timed_out          // flag is set when timeout limit reached
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;

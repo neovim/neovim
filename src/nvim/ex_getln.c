@@ -443,6 +443,10 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   if (search_first_line == 0) {
     // start at the original cursor position
     curwin->w_cursor = s->search_start;
+  } else if (search_first_line > curbuf->b_ml.ml_line_count) {
+    // start after the last line
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursor.col = MAXCOL;
   } else {
     // start at the first line in the range
     curwin->w_cursor.lnum = search_first_line;
