@@ -844,8 +844,15 @@ VirtText *extmark_find_virttext(buf_T *buf, int row, uint64_t ns_id)
 bool decorations_redraw_reset(buf_T *buf, DecorationRedrawState *state)
 {
   state->row = -1;
+  for (size_t i = 0; i < kv_size(state->active); i++) {
+    HlRange item = kv_A(state->active, i);
+    if (item.virt_text_owned) {
+      clear_virttext(item.virt_text);
+      xfree(item.virt_text);
+    }
+  }
   kv_size(state->active) = 0;
-  return buf->b_extmark_index || buf->b_luahl;
+  return buf->b_extmark_index;
 }
 
 
@@ -889,10 +896,10 @@ bool decorations_redraw_start(buf_T *buf, int top_row,
     HlRange range;
     if (mark.id&MARKTREE_END_FLAG) {
       range = (HlRange){ altpos.row, altpos.col, mark.row, mark.col,
-                         attr_id, vt };
+                         attr_id, vt, false };
     } else {
       range = (HlRange){ mark.row, mark.col, altpos.row,
-                         altpos.col, attr_id, vt };
+                         altpos.col, attr_id, vt, false };
     }
     kv_push(state->active, range);
 
@@ -957,7 +964,7 @@ int decorations_redraw_col(buf_T *buf, int col, DecorationRedrawState *state)
     VirtText *vt = kv_size(decor->virt_text) ? &decor->virt_text : NULL;
     kv_push(state->active, ((HlRange){ mark.row, mark.col,
                                        endpos.row, endpos.col,
-                                       attr_id, vt }));
+                                       attr_id, vt, false }));
 
 next_mark:
     marktree_itr_next(buf->b_marktree, state->itr);
@@ -991,6 +998,9 @@ next_mark:
     }
     if (keep) {
       kv_A(state->active, j++) = kv_A(state->active, i);
+    } else if (item.virt_text_owned) {
+      clear_virttext(item.virt_text);
+      xfree(item.virt_text);
     }
   }
   kv_size(state->active) = j;

@@ -158,6 +158,8 @@ static bool msg_grid_invalid = false;
 
 static bool resizing = false;
 
+static bool do_luahl_line = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -508,12 +510,12 @@ int update_screen(int type)
       }
 
       buf_T *buf = wp->w_buffer;
-      if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+      if (luahl_active && luahl_start != LUA_NOREF) {
         Error err = ERROR_INIT;
         FIXED_TEMP_ARRAY(args, 2);
         args.items[0] = BUFFER_OBJ(buf->handle);
         args.items[1] = INTEGER_OBJ(display_tick);
-        nlua_call_ref(buf->b_luahl_start, "start", args, false, &err);
+        nlua_call_ref(luahl_start, "start", args, false, &err);
         if (ERROR_SET(&err)) {
           ELOG("error in luahl start: %s", err.msg);
           api_clear_error(&err);
@@ -639,10 +641,11 @@ bool decorations_active = false;
 
 void decorations_add_luahl_attr(int attr_id,
                                 int start_row, int start_col,
-                                int end_row, int end_col)
+                                int end_row, int end_col, VirtText *virt_text)
 {
   kv_push(decorations.active,
-          ((HlRange){ start_row, start_col, end_row, end_col, attr_id, NULL }));
+          ((HlRange){ start_row, start_col,
+                      end_row, end_col, attr_id, virt_text, true }));
 }
 
 /*
@@ -1238,7 +1241,9 @@ static void win_update(win_T *wp)
 
   decorations_active = decorations_redraw_reset(buf, &decorations);
 
-  if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+  do_luahl_line = false;
+
+  if (luahl_win != LUA_NOREF) {
     Error err = ERROR_INIT;
     FIXED_TEMP_ARRAY(args, 4);
     linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
@@ -1251,7 +1256,13 @@ static void win_update(win_T *wp)
     args.items[3] = INTEGER_OBJ(knownmax);
     // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
     // For now the "start" callback is expected to use nvim__buf_redraw_range.
-    nlua_call_ref(buf->b_luahl_window, "window", args, false, &err);
+    Object ret = nlua_call_ref(luahl_win, "win", args, true, &err);
+
+    if (!ERROR_SET(&err) && api_is_truthy(ret, "luahl_window retval", &err)) {
+      do_luahl_line = true;
+      decorations_active = true;
+    }
+
     if (ERROR_SET(&err)) {
       ELOG("error in luahl window: %s", err.msg);
       api_clear_error(&err);
@@ -2348,7 +2359,7 @@ win_line (
     }
 
     if (decorations_active) {
-      if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
+      if (do_luahl_line && luahl_line != LUA_NOREF) {
         Error err = ERROR_INIT;
         FIXED_TEMP_ARRAY(args, 3);
         args.items[0] = WINDOW_OBJ(wp->handle);
@@ -2356,14 +2367,10 @@ win_line (
         args.items[2] = INTEGER_OBJ(lnum-1);
         lua_attr_active = true;
         extra_check = true;
-        Object o = nlua_call_ref(buf->b_luahl_line, "line", args, true, &err);
+        nlua_call_ref(luahl_line, "line", args, false, &err);
         lua_attr_active = false;
-        if (o.type == kObjectTypeString) {
-          // TODO(bfredl): this is a bit of a hack. A final API should use an
-          // "unified" interface where luahl can add both bufhl and virttext
-          luatext = o.data.string.data;
-          do_virttext = true;
-        } else if (ERROR_SET(&err)) {
+
+        if (ERROR_SET(&err)) {
           ELOG("error in luahl line: %s", err.msg);
           luatext = err.msg;
           do_virttext = true;

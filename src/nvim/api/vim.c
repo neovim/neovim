@@ -2610,26 +2610,160 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
 /// interface should probably be derived from a reformed
 /// bufhl/virttext interface with full support for multi-line
 /// ranges etc
-void nvim__put_attr(Integer id, Integer start_row, Integer start_col,
-                    Integer end_row, Integer end_col)
+void nvim__put_attr(Integer line, Integer col, Dictionary opts, Error *err)
   FUNC_API_LUA_ONLY
 {
   if (!lua_attr_active) {
     return;
   }
-  if (id == 0 || syn_get_final_id((int)id) == 0) {
+  int line2 = -1, hl_id = 0;
+  colnr_T col2 = 0;
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("end_line", k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_line is not an integer");
+        goto error;
+      }
+      if (v->data.integer < 0) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_line value outside range");
+        goto error;
+      }
+
+      line2 = (int)v->data.integer;
+    } else if (strequal("end_col", k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_col is not an integer");
+        goto error;
+      }
+      if (v->data.integer < 0 || v->data.integer > MAXCOL) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_col value outside range");
+        goto error;
+      }
+
+      col2 = (colnr_T)v->data.integer;
+    } else if (strequal("hl_group", k.data)) {
+      String hl_group;
+      switch (v->type) {
+        case kObjectTypeString:
+          hl_group = v->data.string;
+          hl_id = syn_check_group(
+              (char_u *)(hl_group.data),
+              (int)hl_group.size);
+          break;
+        case kObjectTypeInteger:
+          hl_id = (int)v->data.integer;
+          break;
+        default:
+          api_set_error(err, kErrorTypeValidation,
+                        "hl_group is not valid.");
+          goto error;
+      }
+    } else if (strequal("virt_text", k.data)) {
+      if (v->type != kObjectTypeArray) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text is not an Array");
+        goto error;
+      }
+      virt_text = parse_virt_text(v->data.array, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+  if (col2 && line2 < 0) {
+    line2 = (int)line;
+  }
+
+  int attr = hl_id ? syn_id2attr((int)hl_id) : 0;
+  if (attr == 0 && !kv_size(virt_text)) {
     return;
   }
-  int attr = syn_id2attr((int)id);
-  if (attr == 0) {
-    return;
-  }
-  decorations_add_luahl_attr(attr, (int)start_row, (colnr_T)start_col,
-                             (int)end_row, (colnr_T)end_col);
+
+  VirtText *v = xmalloc(sizeof(*v));
+  *v = virt_text;  // LeakSanitizer be sad
+  decorations_add_luahl_attr(attr, (int)line, (colnr_T)col,
+                             (int)line2, (colnr_T)col2, v);
+error:
+  return;
 }
 
 void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
+}
+
+static void clear_luahl(bool force)
+{
+  if (luahl_active || force) {
+    api_free_luaref(luahl_start);
+    api_free_luaref(luahl_win);
+    api_free_luaref(luahl_line);
+    api_free_luaref(luahl_end);
+  }
+  luahl_start = LUA_NOREF;
+  luahl_win = LUA_NOREF;
+  luahl_line = LUA_NOREF;
+  luahl_end = LUA_NOREF;
+  luahl_active = false;
+}
+
+/// Unstabilized interface for defining syntax hl in lua.
+///
+/// This is not yet safe for general use, lua callbacks will need to
+/// be restricted, like textlock and probably other stuff.
+///
+/// The API on_line/nvim__put_attr is quite raw and not intended to be the
+/// final shape. Ideally this should operate on chunks larger than a single
+/// line to reduce interpreter overhead, and generate annotation objects
+/// (bufhl/virttext) on the fly but using the same representation.
+void nvim__set_luahl(DictionaryOf(LuaRef) opts, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  redraw_later(NOT_VALID);
+  clear_luahl(false);
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_start", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_start = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_win", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_win = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+  luahl_active = true;
+  return;
+error:
+  clear_luahl(true);
 }
