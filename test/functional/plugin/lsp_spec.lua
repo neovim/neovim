@@ -6,7 +6,6 @@ local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local contains = helpers.contains
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
 local insert = helpers.insert
@@ -748,8 +747,16 @@ describe('LSP', function()
     end)
 
     it('should invalid cmd argument', function()
-      contains('cmd: expected list, got nvim', pcall_err(_cmd_parts, "nvim"))
-      contains('cmd argument: expected string, got number', pcall_err(_cmd_parts, {"nvim", 1}))
+      eq(dedent([[
+          Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim
+          stack traceback:
+              .../lsp.lua:0: in function .../lsp.lua:0>]]),
+        pcall_err(_cmd_parts, 'nvim'))
+      eq(dedent([[
+          Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number
+          stack traceback:
+              .../lsp.lua:0: in function .../lsp.lua:0>]]),
+        pcall_err(_cmd_parts, {'nvim', 1}))
     end)
   end)
 end)

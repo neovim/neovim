@@ -514,20 +514,20 @@ do
       local optional = (true == spec[3])
 
       if type(t) == 'string' then
-        local translated_type_name = type_names[t]
-        if not translated_type_name then
+        local t_name = type_names[t]
+        if not t_name then
           return false, string.format('invalid type name: %s', t)
         end
 
-        if (not optional or val ~= nil) and not _is_type(val, translated_type_name) then
-          return false, string.format("%s: expected %s, got %s", param_name, translated_type_name, type(val))
+        if (not optional or val ~= nil) and not _is_type(val, t_name) then
+          return false, string.format("%s: expected %s, got %s", param_name, t_name, type(val))
         end
       elseif vim.is_callable(t) then
         -- Check user-provided validation function.
         local valid, optional_message = t(val)
         if not valid then
           local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val)
-          if not (optional_message == nil) then
+          if optional_message ~= nil then
             error_message = error_message .. string.format(". Info: %s", optional_message)
           end
 

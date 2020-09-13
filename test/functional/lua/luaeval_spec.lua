@@ -477,14 +477,14 @@ describe('v:lua', function()
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
     eq("hey eval", meths.get_current_line())
 
-    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:10: attempt to call global 'nonexistent' (a nil value)",
+    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(eval, 'v:lua.mymod.crashy()'))
   end)
 
   it('works in :call', function()
     command(":call v:lua.mymod.noisy('command')")
     eq("hey command", meths.get_current_line())
-    eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:10: attempt to call global 'nonexistent' (a nil value)",
+    eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(command, 'call v:lua.mymod.crashy()'))
   end)
 

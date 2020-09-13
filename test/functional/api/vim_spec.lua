@@ -449,19 +449,19 @@ describe('API', function()
     end)
 
     it('reports errors', function()
-      eq([[Error loading lua: [string "<nvim>"]:1: '=' expected near '+']],
+      eq([[Error loading lua: [string "<nvim>"]:0: '=' expected near '+']],
         pcall_err(meths.exec_lua, 'a+*b', {}))
 
-      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol near '1']],
+      eq([[Error loading lua: [string "<nvim>"]:0: unexpected symbol near '1']],
         pcall_err(meths.exec_lua, '1+2', {}))
 
-      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol]],
+      eq([[Error loading lua: [string "<nvim>"]:0: unexpected symbol]],
         pcall_err(meths.exec_lua, 'aa=bb\0', {}))
 
-      eq([[Error executing lua: [string "<nvim>"]:1: attempt to call global 'bork' (a nil value)]],
+      eq([[Error executing lua: [string "<nvim>"]:0: attempt to call global 'bork' (a nil value)]],
         pcall_err(meths.exec_lua, 'bork()', {}))
 
-      eq('Error executing lua: [string "<nvim>"]:1: did\nthe\nfail',
+      eq('Error executing lua: [string "<nvim>"]:0: did\nthe\nfail',
         pcall_err(meths.exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
@@ -605,7 +605,7 @@ describe('API', function()
     end)
     it('vim.paste() failure', function()
       nvim('exec_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
-      eq([[Error executing lua: [string "<nvim>"]:1: fake fail]],
+      eq([[Error executing lua: [string "<nvim>"]:0: fake fail]],
         pcall_err(request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1))
     end)
   end)
