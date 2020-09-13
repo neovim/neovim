@@ -1818,6 +1818,7 @@ ml_get_buf (
     linenr_T lnum,
     bool will_change                        // line will be changed
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   bhdr_T      *hp;
   DATA_BL     *dp;

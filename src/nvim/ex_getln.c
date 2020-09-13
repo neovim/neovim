@@ -276,6 +276,7 @@ static void init_incsearch_state(incsearch_state_T *s)
 // Sets search_first_line and search_last_line to the address range.
 static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
                                       int *skiplen, int *patlen)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *cmd;
   cmdmod_T save_cmdmod = cmdmod;
@@ -443,6 +444,10 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   if (search_first_line == 0) {
     // start at the original cursor position
     curwin->w_cursor = s->search_start;
+  } else if (search_first_line > curbuf->b_ml.ml_line_count) {
+    // start after the last line
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursor.col = MAXCOL;
   } else {
     // start at the first line in the range
     curwin->w_cursor.lnum = search_first_line;
@@ -563,6 +568,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
 // May set "*c" to the added character.
 // Return OK when calling command_line_not_changed.
 static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
 
@@ -579,8 +585,8 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 
   if (s->did_incsearch) {
     curwin->w_cursor = s->match_end;
-    if (!equalpos(curwin->w_cursor, s->search_start)) {
-      *c = gchar_cursor();
+    *c = gchar_cursor();
+    if (*c != NUL) {
       // If 'ignorecase' and 'smartcase' are set and the
       // command line has no uppercase characters, convert
       // the character to lowercase
@@ -588,16 +594,14 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
           && !pat_has_uppercase(ccline.cmdbuff + skiplen)) {
         *c = mb_tolower(*c);
       }
-      if (*c != NUL) {
-        if (*c == firstc
-            || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), *c)
-            != NULL) {
-          // put a backslash before special characters
-          stuffcharReadbuff(*c);
-          *c = '\\';
-        }
-        return FAIL;
+      if (*c == firstc
+          || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), *c)
+          != NULL) {
+        // put a backslash before special characters
+        stuffcharReadbuff(*c);
+        *c = '\\';
       }
+      return FAIL;
     }
   }
   return OK;
@@ -1444,6 +1448,7 @@ static int command_line_execute(VimState *state, int key)
 static int may_do_command_line_next_incsearch(int firstc, long count,
                                               incsearch_state_T *s,
                                               bool next_match)
+  FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
 
@@ -1537,6 +1542,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     save_viewstate(&s->old_viewstate);
     update_screen(NOT_VALID);
     redrawcmdline();
+    curwin->w_cursor = s->match_end;
   } else {
     vim_beep(BO_ERROR);
   }

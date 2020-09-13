@@ -901,6 +901,7 @@ static bool qf_list_has_valid_entries(qf_list_T *qfl)
 
 /// Return a pointer to a list in the specified quickfix stack
 static qf_list_T * qf_get_list(qf_info_T *qi, int idx)
+  FUNC_ATTR_NONNULL_ALL
 {
   return &qi->qf_lists[idx];
 }
@@ -1230,6 +1231,7 @@ static char_u * qf_cmdtitle(char_u *cmd)
 
 /// Return a pointer to the current list in the specified quickfix stack
 static qf_list_T * qf_get_curlist(qf_info_T *qi)
+  FUNC_ATTR_NONNULL_ALL
 {
   return qf_get_list(qi, qi->qf_curlist);
 }
@@ -4825,12 +4827,13 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid,
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.
 static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
-                               regmmatch_T *regmatch, long tomatch,
+                               regmmatch_T *regmatch, long *tomatch,
                                int duplicate_name, int flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
 {
   bool found_match = false;
 
-  for (long lnum = 1; lnum <= buf->b_ml.ml_line_count && tomatch > 0; lnum++) {
+  for (long lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
     colnr_T col = 0;
     while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, NULL,
                              NULL) > 0) {
@@ -4856,7 +4859,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
         break;
       }
       found_match = true;
-      if (--tomatch == 0) {
+      if (--*tomatch == 0) {
         break;
       }
       if ((flags & VGR_GLOBAL) == 0 || regmatch->endpos[0].lnum > 0) {
@@ -5030,7 +5033,7 @@ void ex_vimgrep(exarg_T *eap)
     } else {
       // Try for a match in all lines of the buffer.
       // For ":1vimgrep" look for first match only.
-      found_match = vgr_match_buflines(qi, fname, buf, &regmatch, tomatch,
+      found_match = vgr_match_buflines(qi, fname, buf, &regmatch, &tomatch,
                                        duplicate_name, flags);
 
       if (using_dummy) {
