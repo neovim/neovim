@@ -68,6 +68,8 @@
 #define UV_FS_COPYFILE_FICLONE 0
 #endif
 
+static bool notified_diff = false;
+
 #define HAS_BW_FLAGS
 #define FIO_LATIN1     0x01    /* convert Latin1 */
 #define FIO_UTF8       0x02    /* convert UTF-8 */
@@ -2538,11 +2540,13 @@ buf_write(
     /*
      * Check if the timestamp hasn't changed since reading the file.
      */
-    if (overwriting) {
+    if (overwriting && !notified_diff) {
       retval = check_mtime(buf, &file_info_old);
       if (retval == FAIL)
         goto fail;
     }
+
+    notified_diff = false;
   }
 
 #ifdef HAVE_ACL
@@ -4953,6 +4957,7 @@ int buf_check_timestamp(buf_T *buf)
         do_window('p', 0, NUL);
         do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->handle, false);
         do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+        notified_diff = true;
       } else if (choice == 3) {
         reload = true;
       }
