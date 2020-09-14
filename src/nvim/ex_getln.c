@@ -288,6 +288,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   exarg_T ea;
   pos_T save_cursor;
   bool use_last_pat;
+  bool retval = false;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -307,6 +308,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     return false;
   }
 
+  emsg_off++;
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
@@ -318,13 +320,13 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
-    return false;
+    goto theend;
   }
 
   // Skip over "substitute" to find the pattern separator.
   for (p = cmd; ASCII_ISALPHA(*p); p++) {}
   if (*skipwhite(p) == NUL) {
-    return false;
+    goto theend;
   }
 
   if (STRNCMP(cmd, "substitute", p - cmd) == 0
@@ -342,7 +344,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
       p++;
     }
     if (*p == NUL) {
-      return false;
+      goto theend;
     }
   } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
              || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
@@ -353,14 +355,14 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     if (*p == '!') {
       p++;
       if (*skipwhite(p) == NUL) {
-        return false;
+        goto theend;
       }
     }
     if (*cmd != 'g') {
       delim_optional = true;
     }
   } else {
-    return false;
+    goto theend;
   }
 
   p = skipwhite(p);
@@ -369,7 +371,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
-    return false;
+    goto theend;
   }
 
   // Don't do 'hlsearch' highlighting if the pattern matches everything.
@@ -381,7 +383,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     empty = empty_pattern(p);
     *end = c;
     if (empty) {
-      return false;
+      goto theend;
     }
   }
 
@@ -409,7 +411,10 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   }
 
   curwin->w_cursor = save_cursor;
-  return true;
+  retval = true;
+theend:
+  emsg_off--;
+  return retval;
 }
 
 // May do 'incsearch' highlighting if desired.
