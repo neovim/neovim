@@ -743,9 +743,12 @@ func Test_incsearch_sort_dump()
   " the 'ambiwidth' check.
   sleep 100m
 
-  " Need to send one key at a time to force a redraw.
   call term_sendkeys(buf, ':sort ni u /on')
   call VerifyScreenDump(buf, 'Test_incsearch_sort_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':sort! /on')
+  call VerifyScreenDump(buf, 'Test_incsearch_sort_02', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)

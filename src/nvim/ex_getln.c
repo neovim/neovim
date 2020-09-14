@@ -339,7 +339,10 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
       p_magic = false;
     }
   } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
-    // skip over flags.
+    // skip over ! and flags
+    if (*p == '!') {
+      p = skipwhite(p + 1);
+    }
     while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
       p++;
     }
