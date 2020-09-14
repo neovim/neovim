@@ -2648,7 +2648,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				  decompression programs.
 
   *g:netrw_dirhistmax*            =10: controls maximum quantity of past
-                                     history.  May be zero to supppress
+                                     history.  May be zero to suppress
 				     history.
 				     (related: |netrw-qb| |netrw-u| |netrw-U|)
 
