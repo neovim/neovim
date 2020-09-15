@@ -229,16 +229,17 @@ M['textDocument/implementation'] = location_callback
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 M['textDocument/signatureHelp'] = function(_, method, result)
-  util.focusable_preview(method, function()
-    if not (result and result.signatures and result.signatures[1]) then
-      return { 'No signature available' }
-    end
-    -- TODO show popup when signatures is empty?
-    local lines = util.convert_signature_help_to_markdown_lines(result)
-    lines = util.trim_empty_lines(lines)
-    if vim.tbl_isempty(lines) then
-      return { 'No signature available' }
-    end
+  -- When use `autocmd ComleteDone` to call signatureHelp callback
+  -- If the completion item doesn't have signatures It will make noise
+  if not (result and result.signatures and result.signatures[1]) then
+    return
+  end
+  local lines = util.convert_signature_help_to_markdown_lines(result)
+  lines = util.trim_empty_lines(lines)
+  if vim.tbl_isempty(lines) then
+    return
+  end
+  util.focusable_preview(method, function()    
     return lines, util.try_trim_markdown_code_blocks(lines)
   end)
 end
