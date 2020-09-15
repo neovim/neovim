@@ -1,6 +1,8 @@
 " Tests for autocommands
 
 source shared.vim
+source check.vim
+source term_util.vim
 
 func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
@@ -1733,6 +1735,35 @@ func Test_throw_in_BufWritePre()
 
   bwipe!
   au! throwing
+endfunc
+
+func Test_autocmd_CmdWinEnter()
+  CheckRunVimInTerminal
+  " There is not cmdwin switch, so
+  " test for cmdline_hist
+  " (both are available with small builds)
+  CheckFeature cmdline_hist
+  let lines =<< trim END
+    let b:dummy_var = 'This is a dummy'
+    autocmd CmdWinEnter * quit
+    let winnr = winnr('$')
+  END
+  let filename='XCmdWinEnter'
+  call writefile(lines, filename)
+  let buf = RunVimInTerminal('-S '.filename, #{rows: 6})
+
+  call term_sendkeys(buf, "q:")
+  call term_wait(buf)
+  call term_sendkeys(buf, ":echo b:dummy_var\<cr>")
+  call WaitForAssert({-> assert_match('^This is a dummy', term_getline(buf, 6))}, 1000)
+  call term_sendkeys(buf, ":echo &buftype\<cr>")
+  call WaitForAssert({-> assert_notmatch('^nofile', term_getline(buf, 6))}, 1000)
+  call term_sendkeys(buf, ":echo winnr\<cr>")
+  call WaitForAssert({-> assert_match('^1', term_getline(buf, 6))}, 1000)
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete(filename)
 endfunc
 
 func Test_FileChangedShell_reload()

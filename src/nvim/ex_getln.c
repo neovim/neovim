@@ -6471,11 +6471,14 @@ static int open_cmdwin(void)
   // Save the command line info, can be used recursively.
   save_cmdline(&save_ccline);
 
-  /* No Ex mode here! */
+  // No Ex mode here!
   exmode_active = 0;
 
   State = NORMAL;
   setmouse();
+
+  // Reset here so it can be set by a CmdWinEnter autocommand.
+  cmdwin_result = 0;
 
   // Trigger CmdwinEnter autocommands.
   typestr[0] = (char_u)cmdwin_type;
@@ -6492,7 +6495,6 @@ static int open_cmdwin(void)
   /*
    * Call the main loop until <CR> or CTRL-C is typed.
    */
-  cmdwin_result = 0;
   normal_enter(true, false);
 
   RedrawingDisabled = i;
