@@ -26,6 +26,7 @@
 #include "nvim/window.h"
 #include "nvim/types.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/tag.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
@@ -2766,4 +2767,30 @@ void nvim__set_luahl(DictionaryOf(LuaRef) opts, Error *err)
   return;
 error:
   clear_luahl(true);
+}
+
+/// Search the helptags for a pattern
+///
+/// @param pattern the pattern to search
+/// @param[out] err error if any
+Array nvim_get_helptags(String pattern, Error *err)
+  FUNC_API_SINCE(7)
+{
+  Array ret = ARRAY_DICT_INIT;
+
+  int num_matches;
+  char_u **matches;
+
+  if (find_tags((char_u *)pattern.data,
+                &num_matches, &matches,
+                TAG_HELP|TAG_REGEXP|TAG_NAMES, MAXCOL,
+                (char_u *)"") == FAIL) {
+    api_set_error(err, kErrorTypeException, "Error searching tags");
+  } else {
+    for (int i = 0; i < num_matches; i++) {
+      ADD(ret, STRING_OBJ(cstr_to_string((char *)matches[i])));
+    }
+  }
+
+  return ret;
 }
