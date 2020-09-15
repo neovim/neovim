@@ -6962,9 +6962,10 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
 
     if (!append && lnum <= curbuf->b_ml.ml_line_count) {
       // Existing line, replace it.
+      int old_len = (int)STRLEN(ml_get(lnum));
       if (u_savesub(lnum) == OK
           && ml_replace(lnum, (char_u *)line, true) == OK) {
-        changed_bytes(lnum, 0);
+        inserted_bytes(lnum, 0, old_len, STRLEN(line));
         if (is_curbuf && lnum == curwin->w_cursor.lnum) {
           check_cursor_col();
         }
