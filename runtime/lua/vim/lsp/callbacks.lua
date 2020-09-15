@@ -239,7 +239,7 @@ M['textDocument/signatureHelp'] = function(_, method, result)
   if vim.tbl_isempty(lines) then
     return
   end
-  util.focusable_preview(method, function()    
+  util.focusable_preview(method, function()
     return lines, util.try_trim_markdown_code_blocks(lines)
   end)
 end
