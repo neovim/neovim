@@ -496,8 +496,7 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
       decoded.result = convert_NIL(decoded.result)
 
       -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
-      if decoded.error and (decoded.error.code == protocol.ErrorCodes.RequestCancelled
-        or decoded.error.code == protocol.ErrorCodes.ContentModified) then
+      if decoded.error then
         if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
           local _ = log.debug() and log.debug("Received cancellation ack", decoded)
         elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
