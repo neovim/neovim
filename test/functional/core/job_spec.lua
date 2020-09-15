@@ -93,6 +93,7 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
       })
     else
+      nvim('command', "set shell=/bin/sh")
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
       expect_msg_seq({
         {'notification', 'stdout', {0, {'hello world', ''}}}
