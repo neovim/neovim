@@ -557,6 +557,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   }
 
   update_screen(SOME_VALID);
+  highlight_match = false;
   restore_last_search_pattern();
 
   // Leave it at the end to make CTRL-R CTRL-W work.  But not when beyond the
@@ -1549,6 +1550,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     highlight_match = true;
     save_viewstate(&s->old_viewstate);
     update_screen(NOT_VALID);
+    highlight_match = false;
     redrawcmdline();
     curwin->w_cursor = s->match_end;
   } else {
