@@ -2190,7 +2190,7 @@ void list_version(void)
 /// Show the intro message when not editing a file.
 void maybe_intro_message(void)
 {
-  if (BUFEMPTY()
+  if (BUFEMPTY(curbuf)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {

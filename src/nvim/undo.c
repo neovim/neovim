@@ -2414,7 +2414,7 @@ static void u_undoredo(int undo, bool do_buf_event)
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
-  if ((old_flags & UH_EMPTYBUF) && BUFEMPTY()) {
+  if ((old_flags & UH_EMPTYBUF) && BUFEMPTY(curbuf)) {
     curbuf->b_ml.ml_flags |= ML_EMPTY;
   }
   if (old_flags & UH_CHANGED) {

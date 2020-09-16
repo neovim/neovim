@@ -35,8 +35,8 @@
 #define LINEEMPTY(p) (*ml_get(p) == NUL)
 
 /// BUFEMPTY() - return TRUE if the current buffer is empty
-#define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
-                    NUL)
+#define BUFEMPTY(buf) ((buf)->b_ml.ml_line_count == 1 \
+                       && *ml_get_buf((buf), (linenr_T)1, false) == '\0')
 
 // toupper() and tolower() that use the current locale.
 // Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the

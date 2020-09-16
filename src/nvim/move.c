@@ -172,7 +172,7 @@ void update_topline(win_T *wp)
   old_topfill = wp->w_topfill;
 
   // If the buffer is empty, always set topline to 1.
-  if (BUFEMPTY()) {             // special case - file is empty
+  if (BUFEMPTY(curbuf)) {             // special case - file is empty
     if (wp->w_topline != 1) {
       redraw_later(wp, NOT_VALID);
     }

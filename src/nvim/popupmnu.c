@@ -735,7 +735,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bt[2] == 'f')
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!BUFEMPTY()) {
+          while (!BUFEMPTY(curbuf)) {
             ml_delete((linenr_T)1, false);
           }
         } else {
