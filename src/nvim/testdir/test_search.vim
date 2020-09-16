@@ -708,6 +708,19 @@ func Test_incsearch_substitute_dump()
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_12', {})
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_incsearch_substitute_13', {})
+  call term_sendkeys(buf, ":%bwipe!\<CR>")
+  call term_sendkeys(buf, ":only!\<CR>")
+
+  "  get :'<,'>s command in history
+  call term_sendkeys(buf, ":set cmdheight=2\<CR>")
+  call term_sendkeys(buf, "aasdfasdf\<Esc>")
+  call term_sendkeys(buf, "V:s/a/b/g\<CR>")
+  " Using '<,'> does not give E20
+  call term_sendkeys(buf, ":new\<CR>")
+  call term_sendkeys(buf, "aasdfasdf\<Esc>")
+  call term_sendkeys(buf, ":\<Up>\<Up>")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_14', {})
+  call term_sendkeys(buf, "<Esc>")
 
   call StopVimInTerminal(buf)
   call delete('Xis_subst_script')
@@ -730,9 +743,12 @@ func Test_incsearch_sort_dump()
   " the 'ambiwidth' check.
   sleep 100m
 
-  " Need to send one key at a time to force a redraw.
   call term_sendkeys(buf, ':sort ni u /on')
   call VerifyScreenDump(buf, 'Test_incsearch_sort_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ':sort! /on')
+  call VerifyScreenDump(buf, 'Test_incsearch_sort_02', {})
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)

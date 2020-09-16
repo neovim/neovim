@@ -288,6 +288,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   exarg_T ea;
   pos_T save_cursor;
   bool use_last_pat;
+  bool retval = false;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -307,6 +308,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     return false;
   }
 
+  emsg_off++;
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
@@ -318,13 +320,13 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
-    return false;
+    goto theend;
   }
 
   // Skip over "substitute" to find the pattern separator.
   for (p = cmd; ASCII_ISALPHA(*p); p++) {}
   if (*skipwhite(p) == NUL) {
-    return false;
+    goto theend;
   }
 
   if (STRNCMP(cmd, "substitute", p - cmd) == 0
@@ -337,12 +339,15 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
       p_magic = false;
     }
   } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
-    // skip over flags.
+    // skip over ! and flags
+    if (*p == '!') {
+      p = skipwhite(p + 1);
+    }
     while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
       p++;
     }
     if (*p == NUL) {
-      return false;
+      goto theend;
     }
   } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
              || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
@@ -353,14 +358,14 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     if (*p == '!') {
       p++;
       if (*skipwhite(p) == NUL) {
-        return false;
+        goto theend;
       }
     }
     if (*cmd != 'g') {
       delim_optional = true;
     }
   } else {
-    return false;
+    goto theend;
   }
 
   p = skipwhite(p);
@@ -369,7 +374,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
-    return false;
+    goto theend;
   }
 
   // Don't do 'hlsearch' highlighting if the pattern matches everything.
@@ -381,7 +386,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     empty = empty_pattern(p);
     *end = c;
     if (empty) {
-      return false;
+      goto theend;
     }
   }
 
@@ -409,7 +414,10 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   }
 
   curwin->w_cursor = save_cursor;
-  return true;
+  retval = true;
+theend:
+  emsg_off--;
+  return retval;
 }
 
 // May do 'incsearch' highlighting if desired.
@@ -549,6 +557,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   }
 
   update_screen(SOME_VALID);
+  highlight_match = false;
   restore_last_search_pattern();
 
   // Leave it at the end to make CTRL-R CTRL-W work.  But not when beyond the
@@ -1541,6 +1550,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     highlight_match = true;
     save_viewstate(&s->old_viewstate);
     update_screen(NOT_VALID);
+    highlight_match = false;
     redrawcmdline();
     curwin->w_cursor = s->match_end;
   } else {
@@ -6463,11 +6473,14 @@ static int open_cmdwin(void)
   // Save the command line info, can be used recursively.
   save_cmdline(&save_ccline);
 
-  /* No Ex mode here! */
+  // No Ex mode here!
   exmode_active = 0;
 
   State = NORMAL;
   setmouse();
+
+  // Reset here so it can be set by a CmdWinEnter autocommand.
+  cmdwin_result = 0;
 
   // Trigger CmdwinEnter autocommands.
   typestr[0] = (char_u)cmdwin_type;
@@ -6484,7 +6497,6 @@ static int open_cmdwin(void)
   /*
    * Call the main loop until <CR> or CTRL-C is typed.
    */
-  cmdwin_result = 0;
   normal_enter(true, false);
 
   RedrawingDisabled = i;
