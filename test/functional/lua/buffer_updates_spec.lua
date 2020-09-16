@@ -257,9 +257,9 @@ describe('lua: nvim_buf_attach on_bytes', function()
   -- assert the wrong thing), but masks errors with unflushed lines (as
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
   -- test both ways.
-  local function setup_eventcheck(verify)
-    meths.buf_set_lines(0, 0, -1, true, origlines)
-    local shadow = deepcopy(origlines)
+  local function setup_eventcheck(verify, start_txt)
+    meths.buf_set_lines(0, 0, -1, true, start_txt)
+    local shadow = deepcopy(start_txt)
     local shadowbytes = table.concat(shadow, '\n') .. '\n'
     -- TODO: while we are brewing the real strong coffe,
     -- verify should check buf_get_offset after every check_events
@@ -317,7 +317,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
   -- Yes, we can do both
   local function do_both(verify)
     it('single and multiple join', function()
-        local check_events = setup_eventcheck(verify)
+        local check_events = setup_eventcheck(verify, origlines)
         feed 'ggJ'
         check_events {
           {'test1', 'bytes', 1, 3, 0, 15, 15, 1, 0, 1, 0, 1, 1};
@@ -331,7 +331,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('opening lines', function()
-        local check_events = setup_eventcheck(verify)
+        local check_events = setup_eventcheck(verify, origlines)
         -- meths.buf_set_option(0, 'autoindent', true)
         feed 'Go'
         check_events {
@@ -344,7 +344,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('opening lines with autoindent', function()
-        local check_events = setup_eventcheck(verify)
+        local check_events = setup_eventcheck(verify, origlines)
         meths.buf_set_option(0, 'autoindent', true)
         feed 'Go'
         check_events {
@@ -358,7 +358,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('setline(num, line)', function()
-      local check_events = setup_eventcheck(verify)
+      local check_events = setup_eventcheck(verify, origlines)
       funcs.setline(2, "babla")
       check_events {
         { "test1", "bytes", 1, 3, 1, 0, 16, 0, 15, 15, 0, 5, 5 };
@@ -374,6 +374,32 @@ describe('lua: nvim_buf_attach on_bytes', function()
       funcs.setline(buf_len + 1, "baz")
       check_events {
         { "test1", "bytes", 1, 6, 7, 0, 90, 0, 0, 0, 1, 0, 4 };
+      }
+    end)
+
+    it('continuing comments with fo=or', function()
+      local check_events = setup_eventcheck(verify, {'// Comment'})
+      meths.buf_set_option(0, 'formatoptions', 'ro')
+      meths.buf_set_option(0, 'filetype', 'c')
+      feed 'A<CR>'
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 10, 10, 0, 0, 0, 1, 3, 4 };
+      }
+
+      feed '<ESC>'
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 2, 13, 0, 1, 1, 0, 0, 0 };
+      }
+
+      feed 'ggo' -- goto first line to continue testing
+      check_events {
+        { "test1", "bytes", 1, 6, 1, 0, 11, 0, 0, 0, 1, 0, 4 };
+      }
+
+      feed '<CR>'
+      check_events {
+        { "test1", "bytes", 1, 6, 2, 2, 16, 0, 1, 1, 0, 0, 0 };
+        { "test1", "bytes", 1, 7, 1, 3, 14, 0, 0, 0, 1, 3, 4 };
       }
     end)
   end

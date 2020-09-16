@@ -1676,9 +1676,16 @@ int open_line(
         truncate_spaces(saved_line);
       }
       ml_replace(curwin->w_cursor.lnum, saved_line, false);
-      extmark_splice_cols(
-          curbuf, (int)curwin->w_cursor.lnum,
-          0, curwin->w_cursor.col, (int)STRLEN(saved_line), kExtmarkUndo);
+
+      int new_len = (int)STRLEN(saved_line);
+
+      // TODO(vigoux): maybe there is issues there with expandtabs ?
+      if (new_len < curwin->w_cursor.col) {
+        extmark_splice_cols(
+            curbuf, (int)curwin->w_cursor.lnum,
+            new_len, curwin->w_cursor.col - new_len, 0, kExtmarkUndo);
+      }
+
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
