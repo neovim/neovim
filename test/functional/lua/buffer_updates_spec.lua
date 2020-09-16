@@ -365,9 +365,16 @@ describe('lua: nvim_buf_attach on_bytes', function()
         }
     end)
 
+    it('joining with indentation and trainling whitespace', function()
+        local check_events = setup_eventcheck(verify, {"foo  ", "    fooo indented"})
+        feed 'J'
+        check_events {
+          { "test1", "bytes", 1, 3, 0, 5, 5, 1, 4, 5, 0, 0, 0 };
+        }
+    end)
+
     it('opening lines', function()
         local check_events = setup_eventcheck(verify, origlines)
-        -- meths.buf_set_option(0, 'autoindent', true)
         feed 'Go'
         check_events {
           { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
