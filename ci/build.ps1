@@ -3,7 +3,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
 $compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
@@ -36,20 +35,20 @@ $scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'
   Invoke-Expression $scoop
 }
 
-scoop install perl
-perl --version
-cpanm.bat --version
+# scoop install perl@5.30.3.1
+# perl --version
+# cpanm.bat --version
 
 if (-not $NoTests) {
   scoop install nodejs-lts
   node --version
   npm.cmd --version
 
-  cpanm.bat -n Neovim::Ext
-  if ($LastExitCode -ne 0) {
-    Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
-  }
-  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
+  # cpanm.bat -n Neovim::Ext
+  # if ($LastExitCode -ne 0) {
+  #   Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
+  # }
+  # perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
 }
 
 if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
@@ -106,6 +105,7 @@ elseif ($compiler -eq 'MSVC') {
 
 if (-not $NoTests) {
   # Setup python (use AppVeyor system python)
+
   C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
   C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
   # Disambiguate python3
