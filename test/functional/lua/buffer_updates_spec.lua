@@ -5,6 +5,7 @@ local inspect = require'vim.inspect'
 
 local command = helpers.command
 local meths = helpers.meths
+local funcs = helpers.funcs
 local clear = helpers.clear
 local eq = helpers.eq
 local fail = helpers.fail
@@ -273,7 +274,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local events = exec_lua("return get_events(...)" )
 
       if not pcall(eq, expected, events) then
-        local msg = 'unexpected byte updates received.\n\nBABBLA MER \n\n'
+        local msg = 'unexpected byte updates received.\n\n'
 
         msg = msg .. 'received events:\n'
         for _, e in ipairs(events) do
@@ -300,7 +301,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         end
         local text = meths.buf_get_lines(0, 0, -1, true)
         local bytes = table.concat(text, '\n') .. '\n'
-        eq(string.len(bytes), string.len(shadowbytes), shadowbytes)
+        eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
         for i = 1, string.len(shadowbytes) do
           local shadowbyte = string.sub(shadowbytes, i, i)
           if shadowbyte ~= '\255' then
@@ -354,6 +355,26 @@ describe('lua: nvim_buf_attach on_bytes', function()
           { "test1", "bytes", 1, 4, 8, 0, 115, 0, 4, 4, 0, 0, 0 };
           { "test1", "bytes", 1, 5, 7, 4, 118, 0, 0, 0, 1, 4, 5 };
         }
+    end)
+
+    it('setline(num, line)', function()
+      local check_events = setup_eventcheck(verify)
+      funcs.setline(2, "babla")
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 16, 0, 15, 15, 0, 5, 5 };
+      }
+
+      funcs.setline(2, {"foo", "bar"})
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 16, 0, 5, 5, 0, 3, 3 };
+        { "test1", "bytes", 1, 5, 2, 0, 20, 0, 15, 15, 0, 3, 3 };
+      }
+
+      local buf_len = meths.buf_line_count(0)
+      funcs.setline(buf_len + 1, "baz")
+      check_events {
+        { "test1", "bytes", 1, 6, 7, 0, 90, 0, 0, 0, 1, 0, 4 };
+      }
     end)
   end
 
