@@ -1,0 +1,295 @@
+*treesitter.txt*    Nvim
+
+
+			    NVIM REFERENCE MANUAL
+
+
+Tree-sitter integration					*treesitter*
+
+                                      Type |gO| to see the table of contents.
+
+------------------------------------------------------------------------------
+VIM.TREESITTER						*lua-treesitter*
+
+Nvim integrates the tree-sitter library for incremental parsing of buffers.
+
+Currently Nvim does not provide the tree-sitter parsers, instead these must
+be built separately, for instance using the tree-sitter utility. The only
+exception is a C parser being included in official builds for testing
+purposes. Parsers are searched for as `parser/{lang}.*` in any 'runtimepath'
+directory. A parser can also be loaded manually using a full path: >
+
+    vim.treesitter.require_language("python", "/path/to/python.so")
+
+<Create a parser for a buffer and a given language (if another plugin uses the
+same buffer/language combination, it will be safely reused). Use >
+
+    parser = vim.treesitter.get_parser(bufnr, lang)
+
+<`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'  (this
+doesn't work yet for some filetypes like "cpp") Currently, the parser will be
+retained for the lifetime of a buffer but this is subject to change. A plugin
+should keep a reference to the parser object as long as it wants incremental
+updates.
+
+Parser files						*treesitter-parsers*
+
+Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
+search for in the `parser` runtime directory.
+
+For a parser to be available for a given language, there must be a file named
+`{lang}.so` within the parser directory.
+
+Parser methods						*lua-treesitter-parser*
+
+tsparser:parse()					*tsparser:parse()*
+Whenever you need to access the current syntax tree, parse the buffer: >
+
+    tstree = parser:parse()
+
+<This will return an immutable tree that represents the current state of the
+buffer. When the plugin wants to access the state after a (possible) edit
+it should call `parse()` again. If the buffer wasn't edited, the same tree will
+be returned again without extra work. If the buffer was parsed before,
+incremental parsing will be done of the changed parts.
+
+NB: to use the parser directly inside a |nvim_buf_attach| Lua callback, you must
+call `get_parser()` before you register your callback. But preferably parsing
+shouldn't be done directly in the change callback anyway as they will be very
+frequent. Rather a plugin that does any kind of analysis on a tree should use
+a timer to throttle too frequent updates.
+
+tsparser:set_included_ranges({ranges})			*tsparser:set_included_ranges()*
+	Changes the ranges the parser should consider. This is used for
+	language injection.  {ranges} should be of the form (all zero-based): >
+	{
+		{start_node, end_node},
+		...
+	}
+<
+	NOTE: `start_node` and `end_node` are both inclusive.
+
+Tree methods						*lua-treesitter-tree*
+
+tstree:root()						*tstree:root()*
+	Return the root node of this tree.
+
+
+Node methods						*lua-treesitter-node*
+
+tsnode:parent()						*tsnode:parent()*
+	Get the node's immediate parent.
+
+tsnode:iter_children()					*tsnode:iter_children()*
+	Iterates over all the direct children of {tsnode}, regardless of
+	wether they are named or not.
+	Returns the child node plus the eventual field name corresponding to
+	this child node.
+
+tsnode:field({name})					*tsnode:field()*
+	Returns a table of the nodes corresponding to the {name} field.
+
+tsnode:child_count()					*tsnode:child_count()*
+	Get the node's number of children.
+
+tsnode:child({index})						*tsnode:child()*
+	Get the node's child at the given {index}, where zero represents the
+	first child.
+
+tsnode:named_child_count()			*tsnode:named_child_count()*
+	Get the node's number of named children.
+
+tsnode:named_child({index})					*tsnode:named_child()*
+	Get the node's named child at the given {index}, where zero represents
+	the first named child.
+
+tsnode:start()						*tsnode:start()*
+	Get the node's start position. Return three values: the row, column
+	and total byte count (all zero-based).
+
+tsnode:end_()						*tsnode:end_()*
+	Get the node's end position. Return three values: the row, column
+	and total byte count (all zero-based).
+
+tsnode:range()						*tsnode:range()*
+	Get the range of the node. Return four values: the row, column
+	of the start position, then the row, column of the end position.
+
+tsnode:type()						*tsnode:type()*
+	Get the node's type as a string.
+
+tsnode:symbol()						*tsnode:symbol()*
+	Get the node's type as a numerical id.
+
+tsnode:named()						*tsnode:named()*
+	Check if the node is named. Named nodes correspond to named rules in
+	the  grammar, whereas anonymous nodes correspond to string literals
+	in the grammar.
+
+tsnode:missing()					*tsnode:missing()*
+	Check if the node is missing. Missing nodes are inserted by the
+	parser in order to recover from certain kinds of syntax errors.
+
+tsnode:has_error()					*tsnode:has_error()*
+	Check if the node is a syntax error or contains any syntax errors.
+
+tsnode:sexpr()						*tsnode:sexpr()*
+	Get an S-expression representing the node as a string.
+
+tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+						*tsnode:descendant_for_range()*
+	Get the smallest node within this node that spans the given range of
+	(row, column) positions
+
+tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+					*tsnode:named_descendant_for_range()*
+	Get the smallest named node within this node that spans the given
+	range of (row, column) positions
+
+Query methods						*lua-treesitter-query*
+
+Tree-sitter queries are supported, with some limitations. Currently, the only
+supported match predicate is `eq?` (both comparing a capture against a string
+and two captures against each other).
+
+vim.treesitter.parse_query({lang}, {query})
+						*vim.treesitter.parse_query()*
+	Parse {query} as a string. (If the query is in a file, the caller
+        should read the contents into a string before calling).
+
+query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
+							*query:iter_captures()*
+	Iterate over all captures from all matches inside {node}.
+	{bufnr} is needed if the query contains predicates, then the caller
+	must ensure to use a freshly parsed tree consistent with the current
+	text of the buffer. {start_row} and {end_row} can be used to limit
+	matches inside a row range (this is typically used with root node
+	as the node, i e to get syntax highlight matches in the current
+	viewport)
+
+	The iterator returns two values, a numeric id identifying the capture
+	and the captured node. The following example shows how to get captures
+	by name:
+>
+	for id, node in query:iter_captures(tree:root(), bufnr, first, last) do
+	  local name = query.captures[id] -- name of the capture in the query
+	  -- typically useful info about the node:
+	  local type = node:type() -- type of the captured node
+	  local row1, col1, row2, col2 = node:range() -- range of the capture
+	  ... use the info here ...
+	end
+<
+query:iter_matches({node}, {bufnr}, {start_row}, {end_row})
+							*query:iter_matches()*
+	Iterate over all matches within a node. The arguments are the same as
+	for |query:iter_captures()| but the iterated values are different:
+	an (1-based) index of the pattern in the query, and a table mapping
+	capture indices to nodes. If the query has more than one pattern
+	the capture table might be sparse, and e.g. `pairs` should be used and not
+	`ipairs`. Here an example iterating over all captures in
+	every match:
+>
+	for pattern, match in cquery:iter_matches(tree:root(), bufnr, first, last) do
+	  for id,node in pairs(match) do
+	    local name = query.captures[id]
+	    -- `node` was captured by the `name` capture in the match
+	    ... use the info here ...
+	  end
+	end
+
+Treesitter Query Predicates				*lua-treesitter-predicates*
+
+When writing queries for treesitter, one might use `predicates`, that is,
+special scheme nodes that are evaluted to verify things on a captured node for
+example, the |eq?| predicate : >
+	((identifier) @foo (#eq? @foo "foo"))
+
+This will only match identifier corresponding to the `"foo"` text.
+Here is a list of built-in predicates :
+
+	`eq?`						*ts-predicate-eq?*
+		This predicate will check text correspondance between nodes or
+		strings : >
+			((identifier) @foo (#eq? @foo "foo"))
+			((node1) @left (node2) @right (#eq? @left @right))
+<
+	`match?`					*ts-predicate-match?*
+	`vim-match?`					*ts-predicate-vim-match?*
+		This will match if the provived vim regex matches the text
+		corresponding to a node : >
+			((idenfitier) @constant (#match? @constant "^[A-Z_]+$"))
+<		Note: the `^` and `$` anchors will respectively match the
+			start and end of the node's text.
+
+	`lua-match?`					*ts-predicate-lua-match?*
+		This will match the same way than |match?| but using lua
+		regexes.
+	
+	`contains?`					*ts-predicate-contains?*
+		Will check if any of the following arguments appears in the
+		text corresponding to the node : >
+			((identifier) @foo (#contains? @foo "foo"))
+			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
+<
+							*lua-treesitter-not-predicate*
+Each predicate has a `not-` prefixed predicate that is just the negation of
+the predicate.
+
+					*vim.treesitter.query.add_predicate()*
+vim.treesitter.query.add_predicate({name}, {handler})
+
+This adds a predicate with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate)
+<
+					*vim.treesitter.query.list_predicates()*
+vim.treesitter.query.list_predicates()
+
+This lists the currently available predicates to use in queries.
+
+Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
+
+NOTE: This is a partially implemented feature, and not usable as a default
+solution yet. What is documented here is a temporary interface indented
+for those who want to experiment with this feature and contribute to
+its development.
+
+Highlights are defined in the same query format as in the tree-sitter highlight
+crate, which some limitations and additions. Set a highlight query for a
+buffer with this code: >
+
+    local query = [[
+      "for" @keyword
+      "if" @keyword
+      "return" @keyword
+
+      (string_literal) @string
+      (number_literal) @number
+      (comment) @comment
+
+      (preproc_function_def name: (identifier) @function)
+
+      ; ... more definitions
+    ]]
+
+    highlighter = vim.treesitter.TSHighlighter.new(query, bufnr, lang)
+    -- alternatively, to use the current buffer and its filetype:
+    -- highlighter = vim.treesitter.TSHighlighter.new(query)
+
+    -- Don't recreate the highlighter for the same buffer, instead
+    -- modify the query like this:
+    local query2 = [[ ... ]]
+    highlighter:set_query(query2)
+
+As mentioned above the supported predicate is currently only `eq?`. `match?`
+predicates behave like matching always fails. As an addition a capture which
+begin with an upper-case letter like `@WarningMsg` will map directly to this
+highlight group, if defined. Also if the predicate begins with upper-case and
+contains a dot only the part before the first will be interpreted as the
+highlight group. As an example, this warns of a binary expression with two
+identical identifiers, highlighting both as |hl-WarningMsg|: >
+
+    ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
+     (eq? @WarningMsg.left @WarningMsg.right))
+
+ vim:tw=78:ts=8:ft=help:norl:
