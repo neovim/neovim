@@ -402,6 +402,15 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 7, 1, 3, 14, 0, 0, 0, 1, 3, 4 };
       }
     end)
+
+    it('editing empty buffers', function()
+      local check_events = setup_eventcheck(verify, {})
+
+      feed 'ia'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+      }
+    end)
   end
 
   describe('(with verify) handles', function()

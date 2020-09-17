@@ -568,8 +568,18 @@ void extmark_splice(buf_T *buf,
                     int new_row, colnr_T new_col, bcount_t new_byte,
                     ExtmarkOp undo)
 {
-  long offset = ml_find_line_or_offset(buf, start_row+1, NULL, true);
-  extmark_splice_impl(buf, start_row, start_col, offset+start_col,
+  long offset = ml_find_line_or_offset(buf, start_row + 1, NULL, true);
+
+  // On empty buffers, when editing the first line, the line is buffered,
+  // causing offset to be < 0. While the buffer is not actually empty, the
+  // buffered line has not been flushed (and should not be) yet, so the call is
+  // valid but an edge case.
+  //
+  // TODO(vigoux): maybe the is a better way of testing that ?
+  if (offset < 0 && buf->b_ml.ml_chunksize == NULL) {
+    offset = 0;
+  }
+  extmark_splice_impl(buf, start_row, start_col, offset + start_col,
                       old_row, old_col, old_byte, new_row, new_col, new_byte,
                       undo);
 }
