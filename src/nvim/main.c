@@ -1778,7 +1778,7 @@ static bool do_user_initialization(void)
 
   char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
   if (os_path_exists(init_lua_path)
-      && load_init_lua((const char *)init_lua_path)) {
+      && nlua_exec_file((const char *)init_lua_path)) {
     os_setenv("MYVIMRC", (const char *)init_lua_path, 1);
     char_u *vimrc_path = (char_u *)stdpaths_user_conf_subpath("init.vim");
 
@@ -1852,7 +1852,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
       // Do nothing.
     } else {
       if (path_with_extension(parmp->use_vimrc, "lua")) {
-        load_init_lua(parmp->use_vimrc);
+        nlua_exec_file(parmp->use_vimrc);
       } else {
         if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
           EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
