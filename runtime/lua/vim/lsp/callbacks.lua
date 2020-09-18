@@ -232,11 +232,13 @@ M['textDocument/signatureHelp'] = function(_, method, result)
   -- When use `autocmd ComleteDone` to call signatureHelp callback
   -- If the completion item doesn't have signatures It will make noise
   if not (result and result.signatures and result.signatures[1]) then
+    print('No signature help available')
     return
   end
   local lines = util.convert_signature_help_to_markdown_lines(result)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
+    print('No signature help available')
     return
   end
   util.focusable_preview(method, function()
