@@ -229,8 +229,8 @@ M['textDocument/implementation'] = location_callback
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 M['textDocument/signatureHelp'] = function(_, method, result)
-  -- When use `autocmd ComleteDone` to call signatureHelp callback
-  -- If the completion item doesn't have signatures It will make noise
+  -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp callback
+  -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
     print('No signature help available')
     return
