@@ -289,6 +289,12 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
       if verify then
         for _, event in ipairs(events) do
+          for _, elem in ipairs(event) do
+            if type(elem) == "number" and elem < 0 then
+              fail(string.format("Received event has negative values"))
+            end
+          end
+
           if event[1] == verify_name and event[2] == "bytes" then
             local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
             local before = string.sub(shadowbytes, 1, start_byte)
@@ -409,6 +415,24 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed 'ia'
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+      }
+    end)
+
+    it("changing lines", function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      feed "cc"
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 1, 0, 15, 15, 0, 0, 0 };
+      }
+
+      feed "<ESC>"
+      check_events {}
+
+      feed "c3j"
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 1, 3, 0, 48, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 0, 0, 0, 4, 0, 0, 4, 0, 51 };
       }
     end)
   end
