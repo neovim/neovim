@@ -1514,3 +1514,22 @@ func Test_edit_startinsert()
   set backspace&
   bwipe!
 endfunc
+
+func Test_edit_noesckeys()
+  new
+
+  " <Left> moves cursor when 'esckeys' is set
+  exe "set t_kl=\<Esc>OD"
+  " set esckeys
+  call feedkeys("axyz\<Esc>ODX", "xt")
+  " call assert_equal("xyXz", getline(1))
+
+  " <Left> exits Insert mode when 'esckeys' is off
+  " set noesckeys
+  call setline(1, '')
+  call feedkeys("axyz\<Esc>ODX", "xt")
+  call assert_equal(["DX", "xyz"], getline(1, 2))
+
+  bwipe!
+  " set esckeys
+endfunc
