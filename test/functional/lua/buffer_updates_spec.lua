@@ -287,26 +287,36 @@ describe('lua: nvim_buf_attach on_bytes', function()
         fail(msg)
       end
 
-      if verify then
-        for _, event in ipairs(events) do
-          if event[1] == verify_name and event[2] == "bytes" then
-            local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
-            local before = string.sub(shadowbytes, 1, start_byte)
-            -- no text in the tests will contain 0xff bytes (invalid UTF-8)
-            -- so we can use it as marker for unknown bytes
-            local unknown = string.rep('\255', new_byte)
-            local after = string.sub(shadowbytes, start_byte + old_byte + 1)
-            shadowbytes = before .. unknown .. after
+      if not verify then
+        return
+      end
+
+      for _, event in ipairs(events) do
+        for _, elem in ipairs(event) do
+          if type(elem) == "number" and elem < 0 then
+            fail(string.format("Received event has negative values"))
           end
         end
-        local text = meths.buf_get_lines(0, 0, -1, true)
-        local bytes = table.concat(text, '\n') .. '\n'
-        eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
-        for i = 1, string.len(shadowbytes) do
-          local shadowbyte = string.sub(shadowbytes, i, i)
-          if shadowbyte ~= '\255' then
-            eq(string.sub(bytes, i, i), shadowbyte, i)
-          end
+
+        if event[1] == verify_name and event[2] == "bytes" then
+          local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
+          local before = string.sub(shadowbytes, 1, start_byte)
+          -- no text in the tests will contain 0xff bytes (invalid UTF-8)
+          -- so we can use it as marker for unknown bytes
+          local unknown = string.rep('\255', new_byte)
+          local after = string.sub(shadowbytes, start_byte + old_byte + 1)
+          shadowbytes = before .. unknown .. after
+        end
+      end
+
+      local text = meths.buf_get_lines(0, 0, -1, true)
+      local bytes = table.concat(text, '\n') .. '\n'
+
+      eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
+      for i = 1, string.len(shadowbytes) do
+        local shadowbyte = string.sub(shadowbytes, i, i)
+        if shadowbyte ~= '\255' then
+          eq(string.sub(bytes, i, i), shadowbyte, i)
         end
       end
     end
@@ -409,6 +419,23 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed 'ia'
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+      }
+    end)
+
+    it("changing lines", function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      feed "cc"
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 15, 15, 0, 0, 0 };
+      }
+
+      feed "<ESC>"
+      check_events {}
+
+      feed "c3j"
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 0, 1, 3, 0, 48, 0, 0, 0 };
       }
     end)
   end

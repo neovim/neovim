@@ -1544,10 +1544,10 @@ int op_delete(oparg_T *oap)
     oap->line_count = 0;  // no lines deleted
   } else if (oap->motion_type == kMTLineWise) {
     if (oap->op_type == OP_CHANGE) {
-      /* Delete the lines except the first one.  Temporarily move the
-       * cursor to the next line.  Save the current line number, if the
-       * last line is deleted it may be changed.
-       */
+      // Delete the lines except the first one.  Temporarily move the
+      // cursor to the next line.  Save the current line number, if the
+      // last line is deleted it may be changed.
+
       if (oap->line_count > 1) {
         lnum = curwin->w_cursor.lnum;
         ++curwin->w_cursor.lnum;
@@ -1560,12 +1560,21 @@ int op_delete(oparg_T *oap)
         beginline(BL_WHITE);                // cursor on first non-white
         did_ai = true;                      // delete the indent when ESC hit
         ai_col = curwin->w_cursor.col;
-      } else
-        beginline(0);                       /* cursor in column 0 */
-      truncate_line(FALSE);         /* delete the rest of the line */
-                                    /* leave cursor past last char in line */
-      if (oap->line_count > 1)
-        u_clearline();              /* "U" command not possible after "2cc" */
+      } else {
+        beginline(0);                       // cursor in column 0
+      }
+
+      int old_len = (int)STRLEN(ml_get(curwin->w_cursor.lnum));
+      truncate_line(false);         // delete the rest of the line
+
+      extmark_splice_cols(curbuf,
+                          (int)curwin->w_cursor.lnum-1, curwin->w_cursor.col,
+                          old_len - curwin->w_cursor.col, 0, kExtmarkUndo);
+
+                                    // leave cursor past last char in line
+      if (oap->line_count > 1) {
+        u_clearline();              // "U" command not possible after "2cc"
+      }
     } else {
       del_lines(oap->line_count, TRUE);
       beginline(BL_WHITE | BL_FIX);
