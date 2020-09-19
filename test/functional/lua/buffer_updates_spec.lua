@@ -427,7 +427,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
       feed "cc"
       check_events {
-        { "test1", "bytes", 1, 4, 1, 0, 1, 0, 15, 15, 0, 0, 0 };
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 15, 15, 0, 0, 0 };
       }
 
       feed "<ESC>"
@@ -436,7 +436,6 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed "c3j"
       check_events {
         { "test1", "bytes", 1, 4, 1, 0, 1, 3, 0, 48, 0, 0, 0 };
-        { "test1", "bytes", 1, 5, 0, 0, 0, 4, 0, 0, 4, 0, 51 };
       }
     end)
   end

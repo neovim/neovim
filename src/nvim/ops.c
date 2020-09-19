@@ -1553,10 +1553,6 @@ int op_delete(oparg_T *oap)
         ++curwin->w_cursor.lnum;
         del_lines(oap->line_count - 1, TRUE);
         curwin->w_cursor.lnum = lnum;
-
-        extmark_adjust(curbuf, curwin->w_cursor.lnum,
-                       curwin->w_cursor.lnum + oap->line_count - 1,
-                       MAXLNUM, 0, kExtmarkUndo);
       }
       if (u_save_cursor() == FAIL)
         return FAIL;
@@ -1571,7 +1567,7 @@ int op_delete(oparg_T *oap)
       truncate_line(FALSE);         // delete the rest of the line
 
       extmark_splice_cols(curbuf,
-                          (int)curwin->w_cursor.lnum, curwin->w_cursor.col,
+                          (int)curwin->w_cursor.lnum-1, curwin->w_cursor.col,
                           old_len - curwin->w_cursor.col, 0, kExtmarkUndo);
 
                                     // leave cursor past last char in line
