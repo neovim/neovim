@@ -68,6 +68,10 @@
 # define LOG_CALLSTACK_TO_FILE(fp) log_callstack_to_file(fp, __func__, __LINE__)
 #endif
 
+#if defined(__has_include) && __has_include("sanitizer/asan_interface.h")
+# include "sanitizer/asan_interface.h"
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.h.generated.h"
 #endif
