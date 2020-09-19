@@ -1560,19 +1560,21 @@ int op_delete(oparg_T *oap)
         beginline(BL_WHITE);                // cursor on first non-white
         did_ai = true;                      // delete the indent when ESC hit
         ai_col = curwin->w_cursor.col;
-      } else
+      } else {
         beginline(0);                       // cursor in column 0
+      }
 
       int old_len = (int)STRLEN(ml_get(curwin->w_cursor.lnum));
-      truncate_line(FALSE);         // delete the rest of the line
+      truncate_line(false);         // delete the rest of the line
 
       extmark_splice_cols(curbuf,
                           (int)curwin->w_cursor.lnum-1, curwin->w_cursor.col,
                           old_len - curwin->w_cursor.col, 0, kExtmarkUndo);
 
                                     // leave cursor past last char in line
-      if (oap->line_count > 1)
-        u_clearline();              /* "U" command not possible after "2cc" */
+      if (oap->line_count > 1) {
+        u_clearline();              // "U" command not possible after "2cc"
+      }
     } else {
       del_lines(oap->line_count, TRUE);
       beginline(BL_WHITE | BL_FIX);
