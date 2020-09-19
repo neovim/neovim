@@ -1359,3 +1359,21 @@ func Test_readdir()
 
   call delete('Xdir', 'rf')
 endfunc
+
+" Test for the eval() function
+func Test_eval()
+  call assert_fails("call eval('5 a')", 'E488:')
+endfunc
+
+" Test for the nr2char() function
+func Test_nr2char()
+  " set encoding=latin1
+  call assert_equal('@', nr2char(64))
+  set encoding=utf8
+  call assert_equal('a', nr2char(97, 1))
+  call assert_equal('a', nr2char(97, 0))
+
+  call assert_equal("\x80\xfc\b\xf4\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x100000) .. '>"'))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
