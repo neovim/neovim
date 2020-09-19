@@ -438,6 +438,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 4, 1, 0, 1, 3, 0, 48, 0, 0, 0 };
       }
     end)
+
+    it("visual charwise paste", function()
+      local check_events = setup_eventcheck(verify, {'1234567890'})
+      funcs.setreg('a', '___')
+
+      feed '1G1|vll'
+      check_events {}
+
+      feed '"ap'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 0, 0, 0, 0, 0, 0, 0, 3, 3 };
+      }
+    end)
   end
 
   describe('(with verify) handles', function()
