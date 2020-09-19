@@ -1374,6 +1374,7 @@ func Test_nr2char()
   call assert_equal('a', nr2char(97, 0))
 
   call assert_equal("\x80\xfc\b\xf4\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x100000) .. '>"'))
+  call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -4527,10 +4527,11 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
     if (*p == '\\' && p[1] != NUL) {
       p++;
       // A "\<x>" form occupies at least 4 characters, and produces up
-      // to 9 characters (6 for the char and 3 for a modifier): reserve
-      // space for 5 extra.
+      // to 21 characters (3 * 6 for the char and 3 for a modifier):
+      // reserve space for 18 extra.
+      // Each byte in the char could be encoded as K_SPECIAL K_EXTRA x.
       if (*p == '<') {
-        extra += 5;
+        extra += 18;
       }
     }
   }
