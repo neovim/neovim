@@ -1,8 +1,10 @@
 " Test for edit functions
-"
+
 if exists("+t_kD")
   let &t_kD="[3;*~"
 endif
+
+source check.vim
 
 " Needed for testing basic rightleft: Test_edit_rightleft
 source view_util.vim
@@ -1516,6 +1518,7 @@ func Test_edit_startinsert()
 endfunc
 
 func Test_edit_noesckeys()
+  CheckNotGui
   new
 
   " <Left> moves cursor when 'esckeys' is set
