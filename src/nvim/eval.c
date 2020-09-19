@@ -4518,7 +4518,6 @@ int get_option_tv(const char **const arg, typval_T *const rettv,
 static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u      *p;
-  char_u      *name;
   unsigned int extra = 0;
 
   /*
@@ -4526,11 +4525,14 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    */
   for (p = *arg + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
-      ++p;
-      /* A "\<x>" form occupies at least 4 characters, and produces up
-       * to 6 characters: reserve space for 2 extra */
-      if (*p == '<')
-        extra += 2;
+      p++;
+      // A "\<x>" form occupies at least 4 characters, and produces up
+      // to 21 characters (3 * 6 for the char and 3 for a modifier):
+      // reserve space for 18 extra.
+      // Each byte in the char could be encoded as K_SPECIAL K_EXTRA x.
+      if (*p == '<') {
+        extra += 18;
+      }
     }
   }
 
@@ -4549,7 +4551,8 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    * Copy the string into allocated memory, handling backslashed
    * characters.
    */
-  name = xmalloc(p - *arg + extra);
+  const int len = (int)(p - *arg + extra);
+  char_u *name = xmalloc(len);
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = name;
 
@@ -4616,6 +4619,9 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         extra = trans_special((const char_u **)&p, STRLEN(p), name, true, true);
         if (extra != 0) {
           name += extra;
+          if (name >= rettv->vval.v_string + len) {
+            iemsg("get_string_tv() used more space than allocated");
+          }
           break;
         }
         FALLTHROUGH;

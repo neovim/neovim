@@ -65,3 +65,11 @@ func CheckCanRunGui()
     throw 'Skipped: cannot start the GUI'
   endif
 endfunc
+
+" Command to check that not currently using the GUI
+command CheckNotGui call CheckNotGui()
+func CheckNotGui()
+  if has('gui_running')
+    throw 'Skipped: only works in the terminal'
+  endif
+endfunc
