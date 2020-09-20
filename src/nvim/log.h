@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "auto/config.h"
+#include "nvim/macros.h"
 
 #define DEBUG_LOG_LEVEL 0
 #define INFO_LOG_LEVEL 1
@@ -68,7 +69,7 @@
 # define LOG_CALLSTACK_TO_FILE(fp) log_callstack_to_file(fp, __func__, __LINE__)
 #endif
 
-#if defined(__has_include) && __has_include("sanitizer/asan_interface.h")
+#if NVIM_HAS_INCLUDE("sanitizer/asan_interface.h")
 # include "sanitizer/asan_interface.h"
 #endif
 

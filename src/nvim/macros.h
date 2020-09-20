@@ -152,6 +152,12 @@
 #define STR_(x) #x
 #define STR(x) STR_(x)
 
+#ifndef __has_include
+# define NVIM_HAS_INCLUDE(x) 0
+#else
+# define NVIM_HAS_INCLUDE __has_include
+#endif
+
 #ifndef __has_attribute
 # define NVIM_HAS_ATTRIBUTE(x) 0
 #elif defined(__clang__) && __clang__ == 1 \
