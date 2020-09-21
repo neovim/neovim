@@ -2320,6 +2320,16 @@ return {
       defaults={if_true={vi="best"}}
     },
     {
+      full_name='spelloptions', abbreviation='spo',
+      type='string', list='onecomma', scope={'buffer'},
+      deny_duplicates=true,
+      secure=true,
+      vi_def=true,
+      expand=true,
+      varname='p_spo',
+      defaults={if_true={vi="", vim=""}}
+    },
+    {
       full_name='splitbelow', abbreviation='sb',
       type='bool', scope={'global'},
       vi_def=true,
