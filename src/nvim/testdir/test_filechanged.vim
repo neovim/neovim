@@ -116,8 +116,9 @@ func Test_file_changed_dialog()
   call assert_match('E211:', v:warningmsg)
   call assert_equal(2, line('$'))
   call assert_equal('extra line', getline(2))
+  let v:warningmsg = 'empty'
 
-  " Recreate buffer and reload
+  " change buffer, recreate the file and reload
   call setline(1, 'buffer is changed')
   silent !echo 'new line' >Xchanged_d
   call feedkeys('L', 'L')
