@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
+
 #include <lauxlib.h>
 
 #include "nvim/api/buffer.h"
@@ -1285,6 +1286,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - virt_text : virtual text to link to this mark.
+///               - ephemeral : for use with |nvim_set_decoration_provider|
+///                   callbacks. The mark will only be used for the current
+///                   redraw cycle, and not be permantently stored in the
+///                   buffer.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
@@ -1317,6 +1322,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     api_set_error(err, kErrorTypeValidation, "col value outside range");
     return 0;
   }
+
+  bool ephemeral = false;
 
   uint64_t id = 0;
   int line2 = -1, hl_id = 0;
@@ -1386,6 +1393,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       if (ERROR_SET(err)) {
         goto error;
       }
+    } else if (strequal("ephemeral", k.data)) {
+      ephemeral = api_is_truthy(*v, "ephemeral", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1410,17 +1422,33 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     col2 = 0;
   }
 
-  Decoration *decor = NULL;
-  if (kv_size(virt_text)) {
-    decor = xcalloc(1, sizeof(*decor));
-    decor->hl_id = hl_id;
-    decor->virt_text = virt_text;
-  } else if (hl_id) {
-    decor = decoration_hl(hl_id);
-  }
+  // TODO(bfredl): synergize these two branches even more
+  if (ephemeral && redrawn_win && redrawn_win->w_buffer == buf) {
+    int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+    VirtText *vt_allocated = NULL;
+    if (kv_size(virt_text)) {
+      vt_allocated = xmalloc(sizeof *vt_allocated);
+      *vt_allocated = virt_text;
+    }
+    decorations_add_ephemeral(attr_id, (int)line, (colnr_T)col,
+                              (int)line2, (colnr_T)col2, vt_allocated);
+  } else {
+    if (ephemeral) {
+      api_set_error(err, kErrorTypeException, "not yet implemented");
+      goto error;
+    }
+    Decoration *decor = NULL;
+    if (kv_size(virt_text)) {
+      decor = xcalloc(1, sizeof(*decor));
+      decor->hl_id = hl_id;
+      decor->virt_text = virt_text;
+    } else if (hl_id) {
+      decor = decoration_hl(hl_id);
+    }
 
-  id = extmark_set(buf, (uint64_t)ns_id, id,
-                   (int)line, (colnr_T)col, line2, col2, decor, kExtmarkNoUndo);
+    id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
+                     line2, col2, decor, kExtmarkNoUndo);
+  }
 
   return (Integer)id;
 

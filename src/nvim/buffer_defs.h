@@ -544,6 +544,9 @@ struct file_buffer {
   long b_mod_xlines;            // number of extra buffer lines inserted;
                                 // negative when lines were deleted
   wininfo_T   *b_wininfo;       // list of last used info for each window
+  int b_mod_tick_syn;           // last display tick syntax was updated
+  int b_mod_tick_deco;          // last display tick decoration providers
+                                // where invoked
 
   long b_mtime;                 // last change time of original file
   long b_mtime_read;            // last change time when reading
