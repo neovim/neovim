@@ -6,6 +6,8 @@ TSHighlighter.__index = TSHighlighter
 
 TSHighlighter.active = TSHighlighter.active or {}
 
+local ns = a.nvim_create_namespace("treesitter/highlighter")
+
 -- These are conventions defined by tree-sitter, though it
 -- needs to be user extensible also.
 TSHighlighter.hl_map = {
@@ -166,7 +168,7 @@ function TSHighlighter._on_line(_, _win, buf, line)
   end
 end
 
-function TSHighlighter._on_start(_, buf, _tick)
+function TSHighlighter._on_buf(_, buf)
   local self = TSHighlighter.active[buf]
   if self then
     local tree = self.parser:parse()
@@ -187,10 +189,10 @@ function TSHighlighter._on_win(_, _win, buf, _topline, botline)
   return true
 end
 
-a.nvim__set_luahl {
-  on_start = TSHighlighter._on_start;
+a.nvim_set_decoration_provider(ns, {
+  on_buf = TSHighlighter._on_buf;
   on_win = TSHighlighter._on_win;
   on_line = TSHighlighter._on_line;
-}
+})
 
 return TSHighlighter

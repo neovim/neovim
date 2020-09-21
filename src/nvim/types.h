@@ -21,6 +21,8 @@ typedef int handle_T;
 // absent callback etc.
 typedef int LuaRef;
 
+typedef uint64_t NS;
+
 typedef struct expand expand_T;
 
 typedef enum {

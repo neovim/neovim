@@ -2,6 +2,7 @@
 #define NVIM_MARKTREE_H
 
 #include <stdint.h>
+#include "nvim/pos.h"
 #include "nvim/map.h"
 #include "nvim/garray.h"
 

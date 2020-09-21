@@ -405,12 +405,6 @@ EXTERN int sys_menu INIT(= false);
 // ('lines' and 'rows') must not be changed.
 EXTERN int updating_screen INIT(= 0);
 
-EXTERN bool luahl_active INIT(= false);
-EXTERN LuaRef luahl_start INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_win INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_line INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_end INIT(= LUA_NOREF);
-
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the
 // currently active window.

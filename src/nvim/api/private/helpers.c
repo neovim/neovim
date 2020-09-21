@@ -1619,12 +1619,14 @@ free_exit:
   return virt_text;
 }
 
-bool api_is_truthy(Object obj, const char *what, Error *err)
+bool api_is_truthy(Object obj, const char *what, bool nil_truthy, Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
   } else if (obj.type == kObjectTypeInteger) {
-    return obj.data.integer;  // C semantics: non-zery int is true
+    return obj.data.integer;  // C semantics: non-zero int is true
+  } else if (obj.type == kObjectTypeNil) {
+    return nil_truthy;  // caller decides what NIL (missing retval in lua) means
   } else {
     api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
     return false;

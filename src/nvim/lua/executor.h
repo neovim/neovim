@@ -24,6 +24,15 @@ EXTERN LuaRef nlua_empty_dict_ref INIT(= LUA_NOREF);
       memcpy(&err_->msg[0], s, sizeof(s)); \
     } while (0)
 
+#define NLUA_CLEAR_REF(x) \
+  do { \
+    /* Take the address to avoid double evaluation. #1375 */ \
+    if ((x) != LUA_NOREF) { \
+      api_free_luaref(x); \
+      (x) = LUA_NOREF; \
+    } \
+  } while (0)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.h.generated.h"
 #endif

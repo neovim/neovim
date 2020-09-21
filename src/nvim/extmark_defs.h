@@ -1,7 +1,7 @@
 #ifndef NVIM_EXTMARK_DEFS_H
 #define NVIM_EXTMARK_DEFS_H
 
-#include "nvim/pos.h"  // for colnr_T
+#include "nvim/types.h"
 #include "nvim/lib/kvec.h"
 
 typedef struct {
@@ -41,5 +41,19 @@ typedef enum {
   kExtmarkNoUndo,      // Operation should not be reversable
   kExtmarkUndoNoRedo,  // Operation should be undoable, but not redoable
 } ExtmarkOp;
+
+typedef struct {
+  NS ns_id;
+  bool active;
+  LuaRef redraw_start;
+  LuaRef redraw_buf;
+  LuaRef redraw_win;
+  LuaRef redraw_line;
+  LuaRef redraw_end;
+} DecorationProvider;
+
+#define DECORATION_PROVIDER_INIT(ns_id) (DecorationProvider) \
+                                 { ns_id, false, LUA_NOREF, LUA_NOREF, \
+                                   LUA_NOREF, LUA_NOREF, LUA_NOREF }
 
 #endif  // NVIM_EXTMARK_DEFS_H
