@@ -501,6 +501,29 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 <			Otherwise it works the same as `:ldo`.
 			{not in Vi}
 
+FILTERING A QUICKFIX OR LOCATION LIST:
+				    *cfilter-plugin* *:Cfilter* *:Lfilter*
+If you have too many entries in a quickfix list, you can use the cfilter
+plugin to reduce the number of entries.  Load the plugin with: >
+
+    packadd cfilter
+
+Then you can use the following commands to filter a quickfix/location list: >
+
+    :Cfilter[!] /{pat}/
+    :Lfilter[!] /{pat}/
+
+The |:Cfilter| command creates a new quickfix list from the entries matching
+{pat} in the current quickfix list. {pat} is a Vim |regular-expression|
+pattern. Both the file name and the text of the entries are matched against
+{pat}. If the optional ! is supplied, then the entries not matching {pat} are
+used. The pattern can be optionally enclosed using one of the following
+characters: ', ", /. If the pattern is empty, then the last used search
+pattern is used.
+
+The |:Lfilter| command does the same as |:Cfilter| but operates on the current
+location list.
+
 =============================================================================
 2. The error window					*quickfix-window*
 
@@ -1562,22 +1585,6 @@ changing the 'makeprg' option.  For example: >
 The backslashes before the pipe character are required to avoid it to be
 recognized as a command separator.  The backslash before each space is
 required for the set command.
-
-					    *cfilter-plugin* *:Cfilter* *:Lfilter*
-If you have too many matching messages, you can use the cfilter plugin to
-reduce the number of entries.  Load the plugin with: >
-   packadd cfilter
-
-Then you can use these command: >
-   :Cfilter[!] /{pat}/
-   :Lfilter[!] /{pat}/
-
-:Cfilter creates a new quickfix list from entries matching {pat} in the
-current quickfix list. Both the file name and the text of the entries are
-matched against {pat}. If ! is supplied, then entries not matching {pat} are
-used.
-
-:Lfilter does the same as :Cfilter but operates on the current location list.
 
 =============================================================================
 8. The directory stack				*quickfix-directory-stack*
