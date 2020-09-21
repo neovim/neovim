@@ -56,21 +56,14 @@ TSHighlighter.hl_map = {
     ["include"] = "Include",
 }
 
-function TSHighlighter.new(bufnr, ft, query)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
-  end
-
+function TSHighlighter.new(parser, query)
   local self = setmetatable({}, TSHighlighter)
-  self.parser = vim.treesitter.get_parser(
-    bufnr,
-    ft,
-    {
-      on_changedtree = function(...) self:on_changedtree(...) end,
-    }
-  )
 
-  self.buf = self.parser.bufnr
+  self.parser = parser
+  parser:register_cbs {
+    on_changedtree = function(...) self:on_changedtree(...) end
+  }
+
   self:set_query(query)
   self.edit_count = 0
   self.redraw_count = 0
@@ -79,7 +72,7 @@ function TSHighlighter.new(bufnr, ft, query)
   a.nvim_buf_set_option(self.buf, "syntax", "")
 
   -- TODO(bfredl): can has multiple highlighters per buffer????
-  TSHighlighter.active[bufnr] = self
+  TSHighlighter.active[parser.bufnr] = self
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
   -- but use synload.vim rather than syntax.vim to not enable
@@ -119,13 +112,6 @@ end
 function TSHighlighter:set_query(query)
   if type(query) == "string" then
     query = vim.treesitter.parse_query(self.parser.lang, query)
-  elseif query == nil then
-    query = vim.treesitter.get_query(self.parser.lang, 'highlights')
-
-    if query == nil then
-      a.nvim_err_writeln("No highlights.scm query found for " .. self.parser.lang)
-      query = vim.treesitter.parse_query(self.parser.lang, "")
-    end
   end
 
   self.query = query
@@ -139,7 +125,7 @@ function TSHighlighter:set_query(query)
     end
   })
 
-  a.nvim__buf_redraw_range(self.buf, 0, a.nvim_buf_line_count(self.buf))
+  a.nvim__buf_redraw_range(self.parser.bufnr, 0, a.nvim_buf_line_count(self.parser.bufnr))
 end
 
 function TSHighlighter._on_line(_, _win, buf, line)
