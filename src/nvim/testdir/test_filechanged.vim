@@ -86,6 +86,7 @@ func Test_FileChangedShell_reload()
 
   au! testreload
   bwipe!
+  call delete(undofile('Xchanged_r'))
   call delete('Xchanged_r')
 endfunc
 
