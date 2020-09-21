@@ -7,6 +7,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local pcall_err = helpers.pcall_err
 local ok = helpers.ok
+local assert_alive = helpers.assert_alive
 
 describe('API: highlight',function()
   local expected_rgb = {
@@ -144,5 +145,16 @@ describe('API: highlight',function()
        meths.get_hl_by_id(hl_id, true))
     eq({foreground=tonumber("0x888888"), background=tonumber("0x888888")},
        meths.get_hl_by_name("Shrubbery", true))
+  end)
+
+  it("nvim_buf_add_highlight to other buffer doesn't crash if undo is disabled #12873", function()
+    command('vsplit file')
+    local err, _ = pcall(meths.buf_set_option, 1, 'undofile', false)
+    eq(true, err)
+    err, _ = pcall(meths.buf_set_option, 1, 'undolevels', -1)
+    eq(true, err)
+    err, _ = pcall(meths.buf_add_highlight, 1, -1, 'Question', 0, 0, -1)
+    eq(true, err)
+    assert_alive()
   end)
 end)

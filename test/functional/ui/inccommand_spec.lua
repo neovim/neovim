@@ -2750,6 +2750,22 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
   ]])
 end)
 
+it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
+  local screen = Screen.new(10,5)
+  clear()
+  command('set undolevels=-1')
+  common_setup(screen, 'split', 'test')
+  feed(':%s/test/f')
+  screen:expect([[
+  {12:f}           |
+  {15:~           }|
+  {15:~           }|
+  {15:~           }|
+  :%s/test/f^  |
+  ]])
+  assert_alive()
+end)
+
 it('long :%s/ with inccommand does not collapse cmdline', function()
   local screen = Screen.new(10,5)
   clear()
