@@ -2584,8 +2584,6 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u      *text;
   char_u buf[FOLD_TEXT_LEN];
-  foldinfo_T foldinfo;
-  int fold_count;
   static bool entered = false;
 
   rettv->v_type = VAR_STRING;
@@ -2599,9 +2597,10 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (lnum < 0) {
     lnum = 0;
   }
-  fold_count = foldedCount(curwin, lnum, &foldinfo);
-  if (fold_count > 0) {
-    text = get_foldtext(curwin, lnum, lnum + fold_count - 1, &foldinfo, buf);
+
+  foldinfo_T info = fold_info(curwin, lnum);
+  if (info.fi_lines > 0) {
+    text = get_foldtext(curwin, lnum, lnum + info.fi_lines - 1, info, buf);
     if (text == buf) {
       text = vim_strsave(text);
     }
