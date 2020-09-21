@@ -106,7 +106,7 @@ local function uri_to_fname(uri,...)
     return uri
   end
   uri = uri_decode(uri)
-  -- TODO improve this.
+
   if is_windows(...) then
     uri = uri:gsub('^file:///', '')
     uri = uri:gsub('/', '\\')
