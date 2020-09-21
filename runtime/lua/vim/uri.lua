@@ -51,23 +51,31 @@ end
 
 
 --@private
-local function is_windows_file_uri(uri)
-  return uri:match('^file:///[a-zA-Z]:') ~= nil
+-- For test cases, uri is hard-coded.
+-- So control the return value through a variable parameter
+-- If we test a windows uri param is 0
+local function is_windows(...)
+  local arg = ... or 1
+  if arg == 1 then
+    return vim.loop.os_uname().sysname == "Windows"
+  else
+    return true
+  end
 end
 
 --- Get a URI from a file path.
 --@param path (string): Path to file
 --@return URI
-local function uri_from_fname(path)
+local function uri_from_fname(path,...)
   local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
-  local is_windows = volume_path ~= nil
-  if is_windows then
+  local eq_windows = is_windows(...)
+  if eq_windows then
     path = volume_path..uri_encode(fname:gsub("\\", "/"))
   else
     path = uri_encode(path)
   end
   local uri_parts = {"file://"}
-  if is_windows then
+  if eq_windows then
     table.insert(uri_parts, "/")
   end
   table.insert(uri_parts, path)
@@ -92,14 +100,14 @@ end
 --- Get a filename from a URI
 --@param uri (string): The URI
 --@return Filename
-local function uri_to_fname(uri)
+local function uri_to_fname(uri,...)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
     return uri
   end
   uri = uri_decode(uri)
   -- TODO improve this.
-  if is_windows_file_uri(uri) then
+  if is_windows(...) then
     uri = uri:gsub('^file:///', '')
     uri = uri:gsub('/', '\\')
   else
