@@ -1524,5 +1524,31 @@ end
 
 M.buf_versions = {}
 
+--- Jump to definition by edit/vsplit/split
+---
+--@param jump_type must be 1-3 1:edit 2:vsplit 3:split
+--@param timeout_ms default is 1000
+function M.jump_to_definition(jump_type,timeout_ms)
+  local method = "textDocument/definition"
+  local jump = {"edit","vsplit","split"}
+  local params = vim.lsp.util.make_position_params()
+  local result = vim.lsp.buf_request_sync(0,method,params,timeout_ms or 1000)
+  if result == nil or vim.tbl_isempty(result) then
+      print("No location found: " .. method)
+      return nil
+  end
+  if vim.tbl_islist(result) then
+    local target_file = vim.uri_to_fname(result[1].result[1].uri)
+    local target_line = result[1].result[1].range.start.line + 1
+    local target_character = result[1].result[1].range.start.character
+    if jump[jump_type] ~= nil then
+      vim.api.nvim_command(jump[jump_type] .. target_file)
+      vim.api.nvim_win_set_cursor(0,{target_line,target_character})
+    else
+      print("No available jump type")
+    end
+  end
+end
+
 return M
 -- vim:sw=2 ts=2 et
