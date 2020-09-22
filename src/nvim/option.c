@@ -2489,7 +2489,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   if (options[opt_idx].var == NULL) {  // don't set hidden option
     return NULL;
   }
-
+  static char_u errbuf[80];
   char *const s = xstrdup(value);
   char **const varp = (char **)get_varp_scope(
       &(options[opt_idx]),
@@ -2506,7 +2506,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   int value_checked = false;
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval,
-      NULL, 0, opt_flags, &value_checked);
+      errbuf, sizeof(errbuf), opt_flags, &value_checked);
   if (r == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
