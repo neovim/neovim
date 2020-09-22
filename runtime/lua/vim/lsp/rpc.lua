@@ -494,10 +494,13 @@ local function start(cmd, cmd_args, handlers, extra_spawn_params)
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)
 
-      -- Do not surface RequestCancelled to users, it is RPC-internal.
-      if decoded.error
-        and decoded.error.code == protocol.ErrorCodes.RequestCancelled then
-        local _ = log.debug() and log.debug("Received cancellation ack", decoded)
+      -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
+      if decoded.error then
+        if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
+          local _ = log.debug() and log.debug("Received cancellation ack", decoded)
+        elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
+          local _ = log.debug() and log.debug("Received content modified ack", decoded)
+        end
         local result_id = tonumber(decoded.id)
         -- Clear any callback since this is cancelled now.
         -- This is safe to do assuming that these conditions hold:
