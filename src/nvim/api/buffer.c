@@ -1534,7 +1534,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   ns_id = extmark_set(buf, ns_id, 0,
                       (int)line, (colnr_T)col_start,
                       end_line, (colnr_T)col_end,
-                      decoration_hl(hl_id), kExtmarkUndo);
+                      decoration_hl(hl_id), kExtmarkNoUndo);
   return src_id;
 }
 
@@ -1664,7 +1664,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->virt_text = virt_text;
 
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkUndo);
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkNoUndo);
   return src_id;
 }
 
