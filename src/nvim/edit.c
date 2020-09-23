@@ -467,7 +467,7 @@ static void insert_enter(InsertState *s)
   }
 
   if (!p_im && did_restart_edit == 0) {
-    change_warning(s->i == 0 ? 0 : s->i + 1);
+    change_warning(curbuf, s->i == 0 ? 0 : s->i + 1);
   }
 
   ui_cursor_shape();            // may show different cursor shape

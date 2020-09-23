@@ -4687,7 +4687,7 @@ check_timestamps(
   }
 
   if (!stuff_empty() || global_busy || !typebuf_typed()
-      || autocmd_busy || curbuf_lock > 0 || allbuf_lock > 0
+      || autocmd_busy || curbuf->b_ro_locked > 0 || allbuf_lock > 0
       ) {
     need_check_timestamps = true;               // check later
   } else {
@@ -5015,10 +5015,10 @@ void buf_reload(buf_T *buf, int orig_mode)
   old_topline = curwin->w_topline;
 
   if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-    /* Save all the text, so that the reload can be undone.
-     * Sync first so that this is a separate undo-able action. */
-    u_sync(FALSE);
-    saved = u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE);
+    // Save all the text, so that the reload can be undone.
+    // Sync first so that this is a separate undo-able action.
+    u_sync(false);
+    saved = u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true);
     flags |= READ_KEEP_UNDO;
   }
 
