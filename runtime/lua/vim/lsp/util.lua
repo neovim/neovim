@@ -1465,8 +1465,43 @@ end
 function M.make_range_params()
   local position = make_position_param()
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) },
+    textDocument = M.make_text_document_params(),
     range = { start = position; ["end"] = position; }
+  }
+end
+
+--- Using the given range in the current buffer, creates an object that
+--- is similar to |vim.lsp.util.make_range_params()|.
+---
+--@param start_pos ({number, number}, optional) mark-indexed position.
+---Defaults to the start of the last visual selection.
+--@param end_pos ({number, number}, optional) mark-indexed position.
+---Defaults to the end of the last visual selection.
+--@returns { textDocument = { uri = `current_file_uri` }, range = { start =
+---`start_position`, end = `end_position` } }
+function M.make_given_range_params(start_pos, end_pos)
+  validate {
+    start_pos = {start_pos, 't', true};
+    end_pos = {end_pos, 't', true};
+  }
+  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(0, '<'))
+  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(0, '>'))
+  -- convert to 0-index
+  A[1] = A[1] - 1
+  B[1] = B[1] - 1
+  -- account for encoding.
+  if A[2] > 0 then
+    A = {A[1], M.character_offset(0, A[1], A[2])}
+  end
+  if B[2] > 0 then
+    B = {B[1], M.character_offset(0, B[1], B[2])}
+  end
+  return {
+    textDocument = M.make_text_document_params(),
+    range = {
+      start = {line = A[1], character = A[2]},
+      ['end'] = {line = B[1], character = B[2]}
+    }
   }
 end
 
