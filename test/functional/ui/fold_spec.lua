@@ -21,6 +21,8 @@ describe("folded lines", function()
       [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [6] = {background = Screen.colors.Yellow},
       [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [8] = {foreground = Screen.colors.Brown },
+      [9] = {bold = true, foreground = Screen.colors.Brown}
     })
   end)
 
@@ -29,7 +31,7 @@ describe("folded lines", function()
     feed("i<cr><esc>")
     feed("vkzf")
     screen:expect([[
-        {5:                  ^+--  2 lines: ·············}|
+        {7:                  }{5:^+--  2 lines: ·············}|
         {1:~                                            }|
         {1:~                                            }|
         {1:~                                            }|
@@ -49,8 +51,8 @@ describe("folded lines", function()
     funcs.setline(4, 'line 2')
     feed("j")
     screen:expect([[
-      {7:+ }{5:  1 +--  2 lines: ·························}|
-      {7:+ }{5:  0 ^+--  2 lines: ·························}|
+      {7:+ }{8:  1 }{5:+--  2 lines: ·························}|
+      {7:+ }{9:  0 }{5:^+--  2 lines: ·························}|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
@@ -130,8 +132,8 @@ describe("folded lines", function()
     ]])
 
     feed('vkzf')
-    screen:expect([[
-      {5:^+--  2 lines: å 语 x̎͂̀̂͛͛ ﺎﻠﻋَﺮَﺒِﻳَّﺓ·················}|
+    screen:expect{grid=[[
+      {5:^+--  2 lines: å 语 x̎͂̀̂͛͛ العَرَبِيَّة·················}|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
@@ -139,7 +141,7 @@ describe("folded lines", function()
       {1:~                                            }|
       {1:~                                            }|
                                                    |
-    ]])
+    ]]}
 
     feed_command("set noarabicshape")
     screen:expect([[
@@ -155,7 +157,7 @@ describe("folded lines", function()
 
     feed_command("set number foldcolumn=2")
     screen:expect([[
-      {7:+ }{5:  1 ^+--  2 lines: å 语 x̎͂̀̂͛͛ العَرَبِيَّة···········}|
+      {7:+ }{8:  1 }{5:^+--  2 lines: å 语 x̎͂̀̂͛͛ العَرَبِيَّة···········}|
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
@@ -168,7 +170,7 @@ describe("folded lines", function()
     -- Note: too much of the folded line gets cut off.This is a vim bug.
     feed_command("set rightleft")
     screen:expect([[
-      {5:+--  2 lines: å ······················^·  1 }{7: +}|
+      {5:···········ةيَّبِرَعَلا x̎͂̀̂͛͛ 语 å :senil 2  --^+}{8: 1  }{7: +}|
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
@@ -180,7 +182,7 @@ describe("folded lines", function()
 
     feed_command("set nonumber foldcolumn=0")
     screen:expect([[
-      {5:+--  2 lines: å 语 x̎͂̀̂͛͛ ال·····················^·}|
+      {5:·················ةيَّبِرَعَلا x̎͂̀̂͛͛ 语 å :senil 2  --^+}|
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
@@ -192,7 +194,7 @@ describe("folded lines", function()
 
     feed_command("set arabicshape")
     screen:expect([[
-      {5:+--  2 lines: å 语 x̎͂̀̂͛͛ ﺍﻟ·····················^·}|
+      {5:·················ةيَّبِرَعَلا x̎͂̀̂͛͛ 语 å :senil 2  --^+}|
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
