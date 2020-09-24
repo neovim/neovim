@@ -555,6 +555,7 @@ EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
+EXTERN int p_scrw;              // 'scrollrowwise'
 EXTERN char_u   *p_sections;    // 'sections'
 EXTERN int p_secure;            // 'secure'
 EXTERN char_u   *p_sel;         // 'selection'
@@ -837,6 +838,7 @@ enum {
   , WV_RLC
   , WV_SCBIND
   , WV_SCROLL
+  , WV_SCRW
   , WV_SISO
   , WV_SO
   , WV_SPELL

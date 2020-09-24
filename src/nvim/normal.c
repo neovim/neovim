@@ -3897,138 +3897,10 @@ find_decl (
  */
 static bool nv_screengo(oparg_T *oap, int dir, long dist)
 {
-  int linelen = linetabsize(get_cursor_line_ptr());
-  bool retval = true;
-  bool atend = false;
-  int n;
-  int col_off1;                 /* margin offset for first screen line */
-  int col_off2;                 /* margin offset for wrapped screen line */
-  int width1;                   /* text width for first screen line */
-  int width2;                   /* test width for wrapped screen line */
-
   oap->motion_type = kMTCharWise;
   oap->inclusive = (curwin->w_curswant == MAXCOL);
 
-  col_off1 = curwin_col_off();
-  col_off2 = col_off1 - curwin_col_off2();
-  width1 = curwin->w_width_inner - col_off1;
-  width2 = curwin->w_width_inner - col_off2;
-
-  if (width2 == 0) {
-    width2 = 1;  // Avoid divide by zero.
-  }
-
-  if (curwin->w_width_inner != 0) {
-    // Instead of sticking at the last character of the buffer line we
-    // try to stick in the last column of the screen.
-    if (curwin->w_curswant == MAXCOL) {
-      atend = true;
-      validate_virtcol();
-      if (width1 <= 0)
-        curwin->w_curswant = 0;
-      else {
-        curwin->w_curswant = width1 - 1;
-        if (curwin->w_virtcol > curwin->w_curswant)
-          curwin->w_curswant += ((curwin->w_virtcol
-                                  - curwin->w_curswant -
-                                  1) / width2 + 1) * width2;
-      }
-    } else {
-      if (linelen > width1)
-        n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
-      else
-        n = width1;
-      if (curwin->w_curswant >= n) {
-        curwin->w_curswant = n - 1;
-      }
-    }
-
-    while (dist--) {
-      if (dir == BACKWARD) {
-        if (curwin->w_curswant >= width1) {
-          // Move back within the line. This can give a negative value
-          // for w_curswant if width1 < width2 (with cpoptions+=n),
-          // which will get clipped to column 0.
-          curwin->w_curswant -= width2;
-        } else {
-          // to previous line
-          if (curwin->w_cursor.lnum == 1) {
-            retval = false;
-            break;
-          }
-          --curwin->w_cursor.lnum;
-          /* Move to the start of a closed fold.  Don't do that when
-           * 'foldopen' contains "all": it will open in a moment. */
-          if (!(fdo_flags & FDO_ALL))
-            (void)hasFolding(curwin->w_cursor.lnum,
-                &curwin->w_cursor.lnum, NULL);
-          linelen = linetabsize(get_cursor_line_ptr());
-          if (linelen > width1) {
-            int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(curwin->w_curswant <= INT_MAX - w);
-            curwin->w_curswant += w;
-          }
-        }
-      } else { /* dir == FORWARD */
-        if (linelen > width1)
-          n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
-        else
-          n = width1;
-        if (curwin->w_curswant + width2 < (colnr_T)n)
-          /* move forward within line */
-          curwin->w_curswant += width2;
-        else {
-          /* to next line */
-          /* Move to the end of a closed fold. */
-          (void)hasFolding(curwin->w_cursor.lnum, NULL,
-              &curwin->w_cursor.lnum);
-          if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
-            retval = false;
-            break;
-          }
-          curwin->w_cursor.lnum++;
-          curwin->w_curswant %= width2;
-          // Check if the cursor has moved below the number display
-          // when width1 < width2 (with cpoptions+=n). Subtract width2
-          // to get a negative value for w_curswant, which will get
-          // clipped to column 0.
-          if (curwin->w_curswant >= width1) {
-            curwin->w_curswant -= width2;
-          }
-          linelen = linetabsize(get_cursor_line_ptr());
-        }
-      }
-    }
-  }
-
-  if (virtual_active() && atend)
-    coladvance(MAXCOL);
-  else
-    coladvance(curwin->w_curswant);
-
-  if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
-    /*
-     * Check for landing on a character that got split at the end of the
-     * last line.  We want to advance a screenline, not end up in the same
-     * screenline or move two screenlines.
-     */
-    validate_virtcol();
-    colnr_T virtcol = curwin->w_virtcol;
-    if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
-        virtcol -= vim_strsize(p_sbr);
-
-    if (virtcol > curwin->w_curswant
-        && (curwin->w_curswant < (colnr_T)width1
-            ? (curwin->w_curswant > (colnr_T)width1 / 2)
-            : ((curwin->w_curswant - width1) % width2
-               > (colnr_T)width2 / 2)))
-      --curwin->w_cursor.col;
-  }
-
-  if (atend)
-    curwin->w_curswant = MAXCOL;            /* stick in the last column */
-
-  return retval;
+  return move_cursor_rowwise(curwin, dir, dist);
 }
 
 /*
@@ -4102,13 +3974,29 @@ static void nv_scroll_line(cmdarg_T *cap)
 void scroll_redraw(int up, long count)
 {
   linenr_T prev_topline = curwin->w_topline;
+  colnr_T prev_skipcol = curwin->w_skipcol;
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (up)
-    scrollup(count, true);
-  else
-    scrolldown(count, true);
+  bool row_wise = (curwin->w_p_scrw && curwin->w_p_wrap);
+
+  if (row_wise) {
+    if (up) {
+      scroll_rows_up(curwin, count, true);
+    } else {
+      scroll_rows_down(curwin, count, true);
+    }
+    // HACK: nvim doesn't understand screen invalidation for row-wise
+    // scrolling yet
+    redraw_later(NOT_VALID);
+  } else {
+    if (up) {
+      scrollup(count, true);
+    } else {
+      scrolldown(count, true);
+    }
+  }
+
   if (get_scrolloff_value()) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
@@ -4121,6 +4009,7 @@ void scroll_redraw(int up, long count)
      * first line of the buffer is already on the screen */
     while (curwin->w_topline == prev_topline
            && curwin->w_topfill == prev_topfill
+           && (!row_wise || prev_skipcol == curwin->w_skipcol)
            ) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
@@ -6675,11 +6564,8 @@ static void nv_g_cmd(cmdarg_T *cap)
    */
   case 'j':
   case K_DOWN:
-    /* with 'nowrap' it works just like the normal "j" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "j" command
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
     } else
@@ -6690,11 +6576,8 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   case 'k':
   case K_UP:
-    /* with 'nowrap' it works just like the normal "k" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "k" command
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else

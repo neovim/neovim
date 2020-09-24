@@ -6036,7 +6036,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             result = col > t->state->val * ts;
           }
           if (!result) {
-            uintmax_t lts = win_linetabsize(wp, rex.line, col);
+            uintmax_t lts = (uintmax_t)win_linetabsize(wp, rex.line, col);
             assert(t->state->val >= 0);
             result = nfa_re_num_cmp((uintmax_t)t->state->val, op, lts + 1);
           }

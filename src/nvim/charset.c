@@ -789,17 +789,43 @@ int linetabsize_col(int startcol, char_u *s)
 /// @param len
 ///
 /// @return Number of characters the string will take on the screen.
-unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
+colnr_T win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 {
-  colnr_T col = 0;
+  unsigned int col = 0;
 
   for (char_u *s = line;
        *s != NUL && (len == MAXCOL || s < line + len);
        MB_PTR_ADV(s)) {
-    col += win_lbr_chartabsize(wp, line, s, col, NULL);
+    col += (unsigned int)win_lbr_chartabsize(wp, line, s, (colnr_T)col, NULL);
   }
+  // Ensure cols didn't overflow
+  assert(col <= MAXCOL);
 
-  return (unsigned int)col;
+  return (colnr_T)col;
+}
+
+/// Jump through characters of the given line, starting at ptr and column
+/// *vcolp, up until we've reached the end of the line or moved through
+/// width columns.
+///
+/// @param[in,out] vcolp   The column position that corresponds to ptr. The
+///                        final column position is also returned through this
+///                        parameter.
+/// @param[in]     width   The maximum number of screen columns to advance by
+/// @returns  a pointer to the advanced line position
+char_u *advance_line_ptr_by_width(win_T *wp, char_u *line, char_u *ptr,
+                                  colnr_T *vcolp, int width)
+{
+  int col = 0;
+  colnr_T vcol = *vcolp;
+  while (col < width && *ptr != NUL) {
+    int c = win_lbr_chartabsize(wp, line, ptr, vcol, NULL);
+    vcol += c;
+    col += c;
+    MB_PTR_ADV(ptr);
+  }
+  *vcolp = vcol;
+  return ptr;
 }
 
 /// Check that "c" is a normal identifier character:
@@ -940,12 +966,6 @@ bool vim_isprintc_strict(int c)
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(char_u *line, unsigned char *s, colnr_T col)
 {
-  if (!curwin->w_p_lbr && (*p_sbr == NUL) && !curwin->w_p_bri) {
-    if (curwin->w_p_wrap) {
-      return win_nolbr_chartabsize(curwin, s, col, NULL);
-    }
-    RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, s, col)
-  }
   return win_lbr_chartabsize(curwin, line == NULL ? s: line, s, col, NULL);
 }
 

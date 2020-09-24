@@ -5841,6 +5841,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_RL:     return (char_u *)&(curwin->w_p_rl);
   case PV_RLC:    return (char_u *)&(curwin->w_p_rlc);
   case PV_SCROLL: return (char_u *)&(curwin->w_p_scr);
+  case PV_SCRW:   return (char_u *)&(curwin->w_p_scrw);
   case PV_WRAP:   return (char_u *)&(curwin->w_p_wrap);
   case PV_LBR:    return (char_u *)&(curwin->w_p_lbr);
   case PV_BRI:    return (char_u *)&(curwin->w_p_bri);
@@ -5950,6 +5951,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
   to->wo_stl = vim_strsave(from->wo_stl);
+  to->wo_scrw = from->wo_scrw;
   to->wo_wrap = from->wo_wrap;
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;

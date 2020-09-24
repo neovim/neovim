@@ -2002,6 +2002,13 @@ return {
       defaults={if_true={vi="ver,jump"}}
     },
     {
+      full_name='scrollrowwise', abbreviation='scrw',
+      type='bool', scope={'window'},
+      vi_def=true,
+      varname='p_scrw',
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='sections', abbreviation='sect',
       type='string', scope={'global'},
       vi_def=true,

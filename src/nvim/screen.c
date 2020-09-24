@@ -1364,13 +1364,7 @@ static void win_update(win_T *wp)
            * rows, and may insert/delete lines */
           j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
-              new_rows++;
-            } else if (l == wp->w_topline) {
-              new_rows += plines_win_nofill(wp, l, true) + wp->w_topfill;
-            } else {
-              new_rows += plines_win(wp, l, true);
-            }
+            new_rows += plines_win_full(wp, l, NULL, &l, NULL, true);
             j++;
             if (new_rows > wp->w_grid.Rows - row - 2) {
               // it's getting too much, must redraw the rest
@@ -2049,7 +2043,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     while (j > -1) {
       txtcol += j;
       if (wp->w_p_wrap) {
-        txtcol -= wp->w_skipcol;
+        if (row == 0) {
+          txtcol -= wp->w_skipcol;
+        }
       } else {
         txtcol -= wp->w_leftcol;
       }
@@ -2065,10 +2061,13 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   /* Show 'cursorcolumn' in the fold line. */
   if (wp->w_p_cuc) {
     txtcol += wp->w_virtcol;
-    if (wp->w_p_wrap)
-      txtcol -= wp->w_skipcol;
-    else
+    if (wp->w_p_wrap) {
+      if (row == 0) {
+        txtcol -= wp->w_skipcol;
+      }
+    } else {
       txtcol -= wp->w_leftcol;
+    }
     if (txtcol >= 0 && txtcol < wp->w_grid.Columns) {
       linebuf_attr[off + txtcol] = hl_combine_attr(
           linebuf_attr[off + txtcol], win_hl_attr(wp, HLF_CUC));
@@ -2629,10 +2628,11 @@ win_line (
    * 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
    * first character to be displayed.
    */
-  if (wp->w_p_wrap)
-    v = wp->w_skipcol;
-  else
+  if (wp->w_p_wrap) {
+    v = (row == 0 ? wp->w_skipcol : 0);
+  } else {
     v = wp->w_leftcol;
+  }
   if (v > 0 && !number_only) {
     char_u  *prev_ptr = ptr;
     while (vcol < v && *ptr != NUL) {
@@ -2911,7 +2911,7 @@ win_line (
 
               snprintf((char *)extra, sizeof(extra),
                        fmt, number_width(wp), num);
-              if (wp->w_skipcol > 0) {
+              if (wp->w_skipcol > 0 && row == 0) {
                 for (p_extra = extra; *p_extra == ' '; p_extra++) {
                   *p_extra = '-';
                 }
@@ -3929,7 +3929,8 @@ win_line (
       long prevcol = (long)(ptr - line) - 1;
 
       // we're not really at that column when skipping some text
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
+      if (wp->w_p_wrap ? (row == 0 && wp->w_skipcol > prevcol)
+          : (wp->w_leftcol > prevcol)) {
         prevcol++;
       }
 
@@ -4018,7 +4019,7 @@ win_line (
       }
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
-        v = wp->w_skipcol;
+        v = (row == 0 ? wp->w_skipcol : 0);
       } else {
         v = wp->w_leftcol;
       }

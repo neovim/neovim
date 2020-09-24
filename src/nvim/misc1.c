@@ -406,7 +406,7 @@ int plines_win_nofill(
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  unsigned int col;
+  colnr_T col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -420,6 +420,10 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
+  if (wp->w_skipcol > 0 && lnum == wp->w_topline) {
+    col -= wp->w_skipcol;
+  }
+
   /*
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
@@ -427,30 +431,27 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (width <= 0 || col > 32000) {
     return 32000;  // bigger than the number of screen columns
   }
-  if (col <= (unsigned int)width) {
+  if (col <= width) {
     return 1;
   }
-  col -= (unsigned int)width;
+  col -= width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
-  return ((int)col + (width - 1)) / width + 1;
+  assert(col >= 0 && col < INT_MAX - (width -1));
+  return (col + (width - 1)) / width + 1;
 }
 
 /*
  * Like plines_win(), but only reports the number of physical screen lines
  * used from the start of the line to the given column number.
  */
-int plines_win_col(win_T *wp, linenr_T lnum, long column)
+int plines_win_col_nofill(win_T *wp, linenr_T lnum, long column)
 {
-  // Check for filler lines above this buffer line.  When folded the result
-  // is one line anyway.
-  int lines = diff_check_fill(wp, lnum);
-
-  if (!wp->w_p_wrap)
-    return lines + 1;
+  if (!wp->w_p_wrap) {
+    return 1;
+  }
 
   if (wp->w_width_inner == 0) {
-    return lines + 1;
+    return 1;
   }
 
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -478,10 +479,16 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     return 9999;
   }
 
-  lines += 1;
-  if (col > width)
+  int lines = 1;
+  if (col > width) {
     lines += (col - width) / (width + win_col_off2(wp)) + 1;
+  }
   return lines;
+}
+
+int plines_win_col(win_T *wp, linenr_T lnum, long column)
+{
+  return plines_win_col_nofill(wp, lnum, column) + diff_check_fill(wp, lnum);
 }
 
 /// Get the number of screen lines lnum takes up. This takes care of
@@ -489,15 +496,17 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 ///
 /// @param[in]  wp       window line is in
 /// @param[in]  lnum     line number
-/// @param[out] nextp    if not NULL, the line after a fold
+/// @param[out] firstp   if not NULL, the first line of a fold
+/// @param[out] lastp    if not NULL, the last line of a fold
 /// @param[out] foldedp  if not NULL, whether lnum is on a fold
 /// @param[in]  cache    whether to use the window's cache for folds
 ///
 /// @return the total number of screen lines
-int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp,
-                    bool *const foldedp, const bool cache)
+int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const firstp,
+                    linenr_T *const lastp, bool *const foldedp,
+                    const bool cache)
 {
-  bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
+  bool folded = hasFoldingWin(wp, lnum, firstp, lastp, cache, NULL);
   if (foldedp) {
     *foldedp = folded;
   }
@@ -515,7 +524,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
 
   while (first <= last) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false);
+    count += plines_win_full(wp, first, NULL, &next, NULL, false);
     first = next + 1;
   }
   return count;
