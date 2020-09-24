@@ -1941,6 +1941,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   vim_regfree(buf->b_s.b_cap_prog);
   buf->b_s.b_cap_prog = NULL;
   clear_string_option(&buf->b_s.b_p_spl);
+  clear_string_option(&buf->b_s.b_p_spo);
   clear_string_option(&buf->b_p_sua);
   clear_string_option(&buf->b_p_ft);
   clear_string_option(&buf->b_p_cink);

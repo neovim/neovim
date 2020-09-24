@@ -451,6 +451,7 @@ typedef struct {
   regprog_T   *b_cap_prog;      // program for 'spellcapcheck'
   char_u      *b_p_spf;         // 'spellfile'
   char_u      *b_p_spl;         // 'spelllang'
+  char_u      *b_p_spo;         // 'spelloptions'
   int b_cjk;                    // all CJK letters as OK
   char_u b_syn_chartab[32];     // syntax iskeyword option
   char_u *b_syn_isk;            // iskeyword option

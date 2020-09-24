@@ -174,6 +174,7 @@ static char_u   *p_syn;
 static char_u   *p_spc;
 static char_u   *p_spf;
 static char_u   *p_spl;
+static char_u   *p_spo;
 static long p_ts;
 static long p_tw;
 static int p_udf;
@@ -2285,6 +2286,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_s.b_p_spc);
   check_string_option(&buf->b_s.b_p_spf);
   check_string_option(&buf->b_s.b_p_spl);
+  check_string_option(&buf->b_s.b_p_spo);
   check_string_option(&buf->b_p_sua);
   check_string_option(&buf->b_p_cink);
   check_string_option(&buf->b_p_cino);
@@ -3090,6 +3092,10 @@ ambw_end:
   } else if (varp == &(curwin->w_s->b_p_spc)) {
     // When 'spellcapcheck' is set compile the regexp program.
     errmsg = compile_cap_prog(curwin->w_s);
+  } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
+    if (**varp != NUL && STRCMP("camel", *varp) != 0) {
+      errmsg = e_invarg;
+    }
   } else if (varp == &p_sps) {  // 'spellsuggest'
     if (spell_check_sps() != OK) {
       errmsg = e_invarg;
@@ -5896,6 +5902,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_SPC:    return (char_u *)&(curwin->w_s->b_p_spc);
   case PV_SPF:    return (char_u *)&(curwin->w_s->b_p_spf);
   case PV_SPL:    return (char_u *)&(curwin->w_s->b_p_spl);
+  case PV_SPO:    return (char_u *)&(curwin->w_s->b_p_spo);
   case PV_SW:     return (char_u *)&(curbuf->b_p_sw);
   case PV_TFU:    return (char_u *)&(curbuf->b_p_tfu);
   case PV_TS:     return (char_u *)&(curbuf->b_p_ts);
@@ -6175,6 +6182,7 @@ void buf_copy_options(buf_T *buf, int flags)
       (void)compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = vim_strsave(p_spf);
       buf->b_s.b_p_spl = vim_strsave(p_spl);
+      buf->b_s.b_p_spo = vim_strsave(p_spo);
       buf->b_p_inde = vim_strsave(p_inde);
       buf->b_p_indk = vim_strsave(p_indk);
       buf->b_p_fp = empty_option;

@@ -5588,9 +5588,11 @@ void ex_ownsyntax(exarg_T *eap)
     hash_init(&curwin->w_s->b_keywtab_ic);
     // TODO: Keep the spell checking as it was. NOLINT(readability/todo)
     curwin->w_p_spell = false;  // No spell checking
+    // make sure option values are "empty_option" instead of NULL
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);
+    clear_string_option(&curwin->w_s->b_p_spo);
     clear_string_option(&curwin->w_s->b_syn_isk);
   }
 

@@ -787,6 +787,7 @@ enum {
   , BV_SPC
   , BV_SPF
   , BV_SPL
+  , BV_SPO
   , BV_STS
   , BV_SUA
   , BV_SW
