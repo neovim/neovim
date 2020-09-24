@@ -182,22 +182,22 @@ static void u_check_tree(u_header_T *uhp,
   }
 }
 
-static void u_check(int newhead_may_be_NULL)                 {
+static void u_check(but_T *buf, int newhead_may_be_NULL)                 {
   seen_b_u_newhead = 0;
   seen_b_u_curhead = 0;
   header_count = 0;
 
-  u_check_tree(curbuf->b_u_oldhead, NULL, NULL);
+  u_check_tree(buf->b_u_oldhead, NULL, NULL);
 
-  if (seen_b_u_newhead == 0 && curbuf->b_u_oldhead != NULL
-      && !(newhead_may_be_NULL && curbuf->b_u_newhead == NULL))
-    EMSGN("b_u_newhead invalid: 0x%x", curbuf->b_u_newhead);
-  if (curbuf->b_u_curhead != NULL && seen_b_u_curhead == 0)
-    EMSGN("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
-  if (header_count != curbuf->b_u_numhead) {
+  if (seen_b_u_newhead == 0 && buf->b_u_oldhead != NULL
+      && !(newhead_may_be_NULL && buf->b_u_newhead == NULL))
+    EMSGN("b_u_newhead invalid: 0x%x", buf->b_u_newhead);
+  if (buf->b_u_curhead != NULL && seen_b_u_curhead == 0)
+    EMSGN("b_u_curhead invalid: 0x%x", buf->b_u_curhead);
+  if (header_count != buf->b_u_numhead) {
     EMSG("b_u_numhead invalid");
     smsg("expected: %" PRId64 ", actual: %" PRId64,
-        (int64_t)header_count, (int64_t)curbuf->b_u_numhead);
+        (int64_t)header_count, (int64_t)buf->b_u_numhead);
   }
 }
 
@@ -357,7 +357,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   }
 
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(curbuf, false);
 #endif
 
   size = bot - top - 1;
@@ -412,7 +412,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
         u_freebranch(curbuf, uhfree, &old_curhead);
       }
 #ifdef U_DEBUG
-      u_check(TRUE);
+      u_check(curbuf, true);
 #endif
     }
 
@@ -582,7 +582,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   undo_undoes = false;
 
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(curbuf, false);
 #endif
   return OK;
 }
@@ -607,15 +607,15 @@ static char_u e_not_open[] = N_("E828: Cannot open undo file for writing: %s");
 /*
  * Compute the hash for the current buffer text into hash[UNDO_HASH_SIZE].
  */
-void u_compute_hash(char_u *hash)
+void u_compute_hash(buf_T *buf, char_u *hash)
 {
   context_sha256_T ctx;
   linenr_T lnum;
   char_u              *p;
 
   sha256_start(&ctx);
-  for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
-    p = ml_get(lnum);
+  for (lnum = 1; lnum <= buf->b_ml.ml_line_count; ++lnum) {
+    p = ml_get_buf(buf, lnum, false);
     sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
   }
   sha256_finish(&ctx, hash);
@@ -1142,7 +1142,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
 
 #ifdef U_DEBUG
   /* Check there is no problem in undo info before writing. */
-  u_check(FALSE);
+  u_check(curbuf, false);
 #endif
 
 #ifdef UNIX

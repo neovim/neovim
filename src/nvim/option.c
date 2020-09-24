@@ -3988,7 +3988,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
         if ((curbuf == save_curbuf
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
             && !curbufIsChanged() && curbuf->b_ml.ml_mfp != NULL) {
-          u_compute_hash(hash);
+          u_compute_hash(bp, hash);
           u_read_undo(NULL, hash, curbuf->b_fname);
         }
       }
