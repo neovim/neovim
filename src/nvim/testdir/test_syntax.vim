@@ -369,7 +369,11 @@ func Test_ownsyntax()
   call setline(1, '#define FOO')
   syntax on
   set filetype=c
+
   ownsyntax perl
+  " this should not crash
+  set
+
   call assert_equal('perlComment', synIDattr(synID(line('.'), col('.'), 1), 'name'))
   call assert_equal('c',    b:current_syntax)
   call assert_equal('perl', w:current_syntax)
