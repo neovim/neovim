@@ -232,6 +232,7 @@ return {
     matchdelete={args={1, 2}},
     matchend={args={2, 4}},
     matchlist={args={2, 4}},
+    matchfuzzy={args={2, 2}},
     matchstr={args={2, 4}},
     matchstrpos={args={2,4}},
     max={args=1},
