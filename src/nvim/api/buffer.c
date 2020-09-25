@@ -1420,7 +1420,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   id = extmark_set(buf, (uint64_t)ns_id, id,
-                   (int)line, (colnr_T)col, line2, col2, decor, kExtmarkUndo);
+                   (int)line, (colnr_T)col, line2, col2, decor, kExtmarkNoUndo);
 
   return (Integer)id;
 
