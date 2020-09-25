@@ -8362,6 +8362,9 @@ static void ex_stopinsert(exarg_T *eap)
 {
   restart_edit = 0;
   stop_insert_mode = true;
+
+  stop_ins_compl();
+
   clearmode();
 }
 

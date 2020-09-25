@@ -3150,6 +3150,12 @@ static void ins_compl_clear(void)
   set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
+void stop_ins_compl(void)
+{
+  ins_compl_clear();
+  ins_compl_free();
+}
+
 /// Check that Insert completion is active.
 bool ins_compl_active(void)
   FUNC_ATTR_PURE
