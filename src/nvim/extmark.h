@@ -100,6 +100,7 @@ typedef struct {
 } DecorationRedrawState;
 
 EXTERN kvec_t(DecorationProvider) decoration_providers INIT(= KV_INITIAL_VALUE);
+EXTERN win_T *redrawn_win INIT(= NULL);  // used for ephemeral extmarks
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.h.generated.h"

@@ -125,8 +125,6 @@ typedef off_t off_T;
 EXTERN int mod_mask INIT(= 0x0);  // current key modifiers
 
 
-EXTERN bool lua_attr_active INIT(= false);
-
 // Cmdline_row is the row where the command line starts, just below the
 // last window.
 // When the cmdline gets longer than the available space the screen gets

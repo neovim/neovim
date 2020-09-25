@@ -171,10 +171,7 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
 {
   Error err = ERROR_INIT;
 
-  // TODO: refactor the entire dynamic scoping thing
-  lua_attr_active = true;
   Object ret = nlua_call_ref(ref, name, args, true, &err);
-  lua_attr_active = false;
 
   if (!ERROR_SET(&err)
       && api_is_truthy(ret, "provider %s retval", default_true, &err)) {
@@ -585,6 +582,8 @@ int update_screen(int type)
 
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    redrawn_win = wp;
+
     if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
       grid_invalidate(&wp->w_grid);
       wp->w_redr_type = NOT_VALID;
@@ -602,6 +601,8 @@ int update_screen(int type)
     if (wp->w_redr_status) {
       win_redr_status(wp);
     }
+
+    redrawn_win = NULL;
   }
 
   end_search_hl();
@@ -697,7 +698,8 @@ void decorations_add_ephemeral(int attr_id,
 {
   kv_push(decorations.active,
           ((HlRange){ start_row, start_col,
-                      end_row, end_col, attr_id, virt_text, true }));
+                      end_row, end_col,
+                      attr_id, virt_text, virt_text != NULL }));
 }
 
 /*

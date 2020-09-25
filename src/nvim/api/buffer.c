@@ -1318,6 +1318,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     return 0;
   }
 
+  bool ephemeral = false;
+
   uint64_t id = 0;
   int line2 = -1, hl_id = 0;
   colnr_T col2 = 0;
@@ -1386,6 +1388,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       if (ERROR_SET(err)) {
         goto error;
       }
+    } else if (strequal("ephemeral", k.data)) {
+      ephemeral = api_is_truthy(*v, "ephemeral", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1410,17 +1417,30 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     col2 = 0;
   }
 
-  Decoration *decor = NULL;
-  if (kv_size(virt_text)) {
-    decor = xcalloc(1, sizeof(*decor));
-    decor->hl_id = hl_id;
-    decor->virt_text = virt_text;
-  } else if (hl_id) {
-    decor = decoration_hl(hl_id);
-  }
+  // TODO: synergize these two branches even more
+  if (ephemeral && redrawn_win && redrawn_win->w_buffer == buf) {
+    int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+    VirtText *vt_allocated = NULL;
+    if (kv_size(virt_text)) {
+      vt_allocated = xmalloc(sizeof *vt_allocated);
+      *vt_allocated = virt_text;
+    }
+    decorations_add_ephemeral(attr_id, (int)line, (colnr_T)col,
+                              (int)line2, (colnr_T)col2, vt_allocated);
+  } else {
+    assert(!ephemeral);  // TODO: HAII
+    Decoration *decor = NULL;
+    if (kv_size(virt_text)) {
+      decor = xcalloc(1, sizeof(*decor));
+      decor->hl_id = hl_id;
+      decor->virt_text = virt_text;
+    } else if (hl_id) {
+      decor = decoration_hl(hl_id);
+    }
 
-  id = extmark_set(buf, (uint64_t)ns_id, id,
-                   (int)line, (colnr_T)col, line2, col2, decor, kExtmarkUndo);
+    id = extmark_set(buf, (uint64_t)ns_id, id,
+                     (int)line, (colnr_T)col, line2, col2, decor, kExtmarkUndo);
+  }
 
   return (Integer)id;
 

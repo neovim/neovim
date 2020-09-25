@@ -160,7 +160,11 @@ function TSHighlighter._on_line(_, _win, buf, line)
     local start_row, start_col, end_row, end_col = node:range()
     local hl = self.hl_cache[capture]
     if hl and end_row >= line then
-      a.nvim__put_attr(start_row, start_col, { end_line = end_row, end_col = end_col, hl_group = hl })
+      a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
+                             { end_line = end_row, end_col = end_col,
+                               hl_group = hl,
+                               ephemeral = true
+                              })
     end
     if start_row > line then
       self.nextrow = start_row
