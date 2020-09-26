@@ -1409,7 +1409,7 @@ func Test_compound_assignment_operators()
     let @/ = ''
 endfunc
 
-func! Test_funccall_garbage_collect()
+func Test_funccall_garbage_collect()
     func Func(x, ...)
         call add(a:x, a:000)
     endfunc

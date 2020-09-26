@@ -2044,14 +2044,19 @@ static int vgetorpeek(bool advance)
              */
             if (mp->m_expr) {
               int save_vgetc_busy = vgetc_busy;
+              const bool save_may_garbage_collect = may_garbage_collect;
 
               vgetc_busy = 0;
+              may_garbage_collect = false;
+
               save_m_keys = vim_strsave(mp->m_keys);
               save_m_str = vim_strsave(mp->m_str);
               s = eval_map_expr(save_m_str, NUL);
               vgetc_busy = save_vgetc_busy;
-            } else
+              may_garbage_collect = save_may_garbage_collect;
+            } else {
               s = mp->m_str;
+            }
 
             /*
              * Insert the 'to' part in the typebuf.tb_buf.

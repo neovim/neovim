@@ -391,6 +391,42 @@ func Test_motionforce_omap()
   delfunc GetCommand
 endfunc
 
+func Test_error_in_map_expr()
+  if !has('terminal') || (has('win32') && has('gui_running'))
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim [CODE]
+  func Func()
+    " fail to create list
+    let x = [
+  endfunc
+  nmap <expr> ! Func()
+  set updatetime=50
+  [CODE]
+  call writefile(lines, 'Xtest.vim')
+
+  let buf = term_start(GetVimCommandClean() .. ' -S Xtest.vim', {'term_rows': 8})
+  let job = term_getjob(buf)
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
+
+  " GC must not run during map-expr processing, which can make Vim crash.
+  call term_sendkeys(buf, '!')
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<CR>")
+  call term_wait(buf, 100)
+  call assert_equal('run', job_status(job))
+
+  call term_sendkeys(buf, ":qall!\<CR>")
+  call WaitFor({-> job_status(job) ==# 'dead'})
+  if has('unix')
+    call assert_equal('', job_info(job).termsig)
+  endif
+
+  call delete('Xtest.vim')
+  exe buf .. 'bwipe!'
+endfunc
+
 " Test for mapping errors
 func Test_map_error()
   call assert_fails('unmap', 'E474:')
