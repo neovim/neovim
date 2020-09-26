@@ -367,7 +367,7 @@ void emsg_funcname(char *ermsg, const char_u *name)
 int
 get_func_tv(
     const char_u *name,     // name of the function
-    int len,                // length of "name"
+    int len,                // length of "name" or -1 to use strlen()
     typval_T *rettv,
     char_u **arg,           // argument, pointing to the '('
     linenr_T firstline,     // first line of range
@@ -1291,7 +1291,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial,
     tv_copy(TV_LIST_ITEM_TV(item), &argv[argc++]);
   });
 
-  r = call_func(name, (int)STRLEN(name), rettv, argc, argv, NULL,
+  r = call_func(name, -1, rettv, argc, argv, NULL,
                 curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                 &dummy, true, partial, selfdict);
 
@@ -1316,7 +1316,7 @@ func_call_skip_call:
 int
 call_func(
     const char_u *funcname,         // name of the function
-    int len,                        // length of "name"
+    int len,                        // length of "name" or -1 to use strlen()
     typval_T *rettv,                // [out] value goes here
     int argcount_in,                // number of "argvars"
     typval_T *argvars_in,           // vars for arguments, must have "argcount"
@@ -1350,6 +1350,9 @@ call_func(
 
   // Make a copy of the name, if it comes from a funcref variable it could
   // be changed or deleted in the called function.
+  if (len <= 0) {
+    len = (int)STRLEN(funcname);
+  }
   name = vim_strnsave(funcname, len);
 
   fname = fname_trans_sid(name, fname_buf, &tofree, &error);
@@ -2853,7 +2856,7 @@ void ex_call(exarg_T *eap)
       curwin->w_cursor.coladd = 0;
     }
     arg = startarg;
-    if (get_func_tv(name, (int)STRLEN(name), &rettv, &arg,
+    if (get_func_tv(name, -1, &rettv, &arg,
                     eap->line1, eap->line2, &doesrange,
                     true, partial, fudi.fd_dict) == FAIL) {
       failed = true;

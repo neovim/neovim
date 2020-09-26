@@ -2483,7 +2483,7 @@ do_mouse (
           typval_T rettv;
           int doesrange;
           (void)call_func((char_u *)tab_page_click_defs[mouse_col].func,
-                          (int)strlen(tab_page_click_defs[mouse_col].func),
+                          -1,
                           &rettv, ARRAY_SIZE(argv), argv, NULL,
                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                           &doesrange, true, NULL, NULL);
