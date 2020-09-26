@@ -1222,16 +1222,16 @@ func Test_reg_executing_and_recording()
 endfunc
 
 func Test_getchar()
-  throw 'skipped: Nvim does not support test_setmouse()'
   call feedkeys('a', '')
   call assert_equal(char2nr('a'), getchar())
 
-  call test_setmouse(1, 3)
-  let v:mouse_win = 9
-  let v:mouse_winid = 9
-  let v:mouse_lnum = 9
-  let v:mouse_col = 9
-  call feedkeys("\<S-LeftMouse>", '')
+  " call test_setmouse(1, 3)
+  " let v:mouse_win = 9
+  " let v:mouse_winid = 9
+  " let v:mouse_lnum = 9
+  " let v:mouse_col = 9
+  " call feedkeys("\<S-LeftMouse>", '')
+  call nvim_input_mouse('left', 'press', 'S', 0, 0, 2)
   call assert_equal("\<S-LeftMouse>", getchar())
   call assert_equal(1, v:mouse_win)
   call assert_equal(win_getid(1), v:mouse_winid)
