@@ -210,7 +210,8 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   if (msg_silent != 0) {
     return;
   }
-  add_quoted_fname((char *)IObuff, IOSIZE - 80, buf, (const char *)name);
+  add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)name);
+  // Avoid an over-long translation to cause trouble.
   xstrlcat((char *)IObuff, (const char *)s, IOSIZE);
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before

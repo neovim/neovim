@@ -1158,10 +1158,10 @@ au BufNewFile,BufRead *.papp,*.pxml,*.pxsl	setf papp
 au BufNewFile,BufRead */etc/passwd,*/etc/passwd-,*/etc/passwd.edit,*/etc/shadow,*/etc/shadow-,*/etc/shadow.edit,*/var/backups/passwd.bak,*/var/backups/shadow.bak setf passwd
 
 " Pascal (also *.p)
-au BufNewFile,BufRead *.pas			setf pascal
+au BufNewFile,BufRead *.pas,*.pp		setf pascal
 
-" Delphi project file
-au BufNewFile,BufRead *.dpr			setf pascal
+" Delphi or Lazarus program file
+au BufNewFile,BufRead *.dpr,*.lpr		setf pascal
 
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
@@ -1732,7 +1732,7 @@ au BufNewFile,BufRead *.texinfo,*.texi,*.txi	setf texinfo
 au BufNewFile,BufRead texmf.cnf			setf texmf
 
 " Tidy config
-au BufNewFile,BufRead .tidyrc,tidyrc		setf tidy
+au BufNewFile,BufRead .tidyrc,tidyrc,tidy.conf	setf tidy
 
 " TF mud client
 au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf

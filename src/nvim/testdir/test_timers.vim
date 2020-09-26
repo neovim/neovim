@@ -233,16 +233,17 @@ func Test_timer_catch_error()
 endfunc
 
 func FeedAndPeek(timer)
-  call test_feedinput('a')
+  " call test_feedinput('a')
+  call nvim_input('a')
   call getchar(1)
 endfunc
 
 func Interrupt(timer)
-  call test_feedinput("\<C-C>")
+  " call test_feedinput("\<C-C>")
+  call nvim_input("\<C-C>")
 endfunc
 
 func Test_peek_and_get_char()
-  throw 'skipped: Nvim does not support test_feedinput()'
   if !has('unix') && !has('gui_running')
     return
   endif
