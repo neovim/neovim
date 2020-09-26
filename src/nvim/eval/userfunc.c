@@ -32,7 +32,11 @@
 #define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
 #define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
 #define FC_SANDBOX  0x40          // function defined in the sandbox
-#define FC_CFUNC    0x80          // C function extension
+#define FC_DEAD     0x80          // function kept only for reference to dfunc
+#define FC_EXPORT   0x100         // "export def Func()"
+#define FC_NOARGS   0x200         // no a: variables in lambda
+#define FC_VIM9     0x400         // defined in vim9 script file
+#define FC_CFUNC    0x800         // C function extension
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "eval/userfunc.c.generated.h"
@@ -246,6 +250,10 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     ((char_u **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
     STRLCPY(p + 7, s, e - s + 1);
+    if (strstr((char *)p + 7, "a:") == NULL) {
+      // No a: variables are used for sure.
+      flags |= FC_NOARGS;
+    }
 
     fp->uf_refcount = 1;
     STRCPY(fp->uf_name, name);
@@ -853,37 +861,42 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     ++selfdict->dv_refcount;
   }
 
-  /*
-   * Init a: variables.
-   * Set a:0 to "argcount".
-   * Set a:000 to a list with room for the "..." arguments.
-   */
+  // Init a: variables, unless none found (in lambda).
+  // Set a:0 to "argcount".
+  // Set a:000 to a list with room for the "..." arguments.
   init_var_dict(&fc->l_avars, &fc->l_avars_var, VAR_SCOPE);
-  add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++], "0",
-             (varnumber_T)(argcount - fp->uf_args.ga_len));
+  if ((fp->uf_flags & FC_NOARGS) == 0) {
+    add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++], "0",
+               (varnumber_T)(argcount - fp->uf_args.ga_len));
+  }
   fc->l_avars.dv_lock = VAR_FIXED;
-  // Use "name" to avoid a warning from some compiler that checks the
-  // destination size.
-  v = (dictitem_T *)&fc->fixvar[fixvar_idx++];
+  if ((fp->uf_flags & FC_NOARGS) == 0) {
+    // Use "name" to avoid a warning from some compiler that checks the
+    // destination size.
+    v = (dictitem_T *)&fc->fixvar[fixvar_idx++];
 #ifndef __clang_analyzer__
-  name = v->di_key;
-  STRCPY(name, "000");
+    name = v->di_key;
+    STRCPY(name, "000");
 #endif
-  v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
-  tv_dict_add(&fc->l_avars, v);
-  v->di_tv.v_type = VAR_LIST;
-  v->di_tv.v_lock = VAR_FIXED;
-  v->di_tv.vval.v_list = &fc->l_varlist;
+    v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+    tv_dict_add(&fc->l_avars, v);
+    v->di_tv.v_type = VAR_LIST;
+    v->di_tv.v_lock = VAR_FIXED;
+    v->di_tv.vval.v_list = &fc->l_varlist;
+  }
   tv_list_init_static(&fc->l_varlist);
   tv_list_set_lock(&fc->l_varlist, VAR_FIXED);
 
   // Set a:firstline to "firstline" and a:lastline to "lastline".
   // Set a:name to named arguments.
   // Set a:N to the "..." arguments.
-  add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++],
-             "firstline", (varnumber_T)firstline);
-  add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++],
-             "lastline", (varnumber_T)lastline);
+  // Skipped when no a: variables used (in lambda).
+  if ((fp->uf_flags & FC_NOARGS) == 0) {
+    add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++],
+               "firstline", (varnumber_T)firstline);
+    add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++],
+               "lastline", (varnumber_T)lastline);
+  }
   for (int i = 0; i < argcount; i++) {
     bool addlocal = false;
 
@@ -895,6 +908,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
         addlocal = true;
       }
     } else {
+      if ((fp->uf_flags & FC_NOARGS) != 0) {
+        // Bail out if no a: arguments used (in lambda).
+        break;
+      }
       // "..." argument a:1, a:2, etc.
       snprintf((char *)numbuf, sizeof(numbuf), "%d", ai + 1);
       name = numbuf;
@@ -1034,9 +1051,19 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   save_did_emsg = did_emsg;
   did_emsg = FALSE;
 
-  // call do_cmdline() to execute the lines
-  do_cmdline(NULL, get_func_line, (void *)fc,
-      DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
+  if (islambda) {
+    char_u *p = *(char_u **)fp->uf_lines.ga_data + 7;
+
+    // A Lambda always has the command "return {expr}".  It is much faster
+    // to evaluate {expr} directly.
+    ex_nesting_level++;
+    eval1(&p, rettv, true);
+    ex_nesting_level--;
+  } else {
+    // call do_cmdline() to execute the lines
+    do_cmdline(NULL, get_func_line, (void *)fc,
+               DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
+  }
 
   --RedrawingDisabled;
 
@@ -1304,6 +1331,36 @@ func_call_skip_call:
   return r;
 }
 
+// Give an error message for the result of a function.
+// Nothing if "error" is FCERR_NONE.
+static void user_func_error(int error, const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (error) {
+    case ERROR_UNKNOWN:
+      emsg_funcname(N_("E117: Unknown function: %s"), name);
+      break;
+    case ERROR_DELETED:
+      emsg_funcname(N_("E933: Function was deleted: %s"), name);
+      break;
+    case ERROR_TOOMANY:
+      emsg_funcname(_(e_toomanyarg), name);
+      break;
+    case ERROR_TOOFEW:
+      emsg_funcname(N_("E119: Not enough arguments for function: %s"),
+          name);
+      break;
+    case ERROR_SCRIPT:
+      emsg_funcname(N_("E120: Using <SID> not in a script context: %s"),
+          name);
+      break;
+    case ERROR_DICT:
+      emsg_funcname(N_("E725: Calling dict function without Dictionary: %s"),
+          name);
+      break;
+  }
+}
+
 /// Call a function with its resolved parameters
 ///
 /// "argv_func", when not NULL, can be used to fill in arguments only when the
@@ -1333,11 +1390,11 @@ call_func(
 {
   int ret = FAIL;
   int error = ERROR_NONE;
-  ufunc_T *fp;
+  ufunc_T *fp = NULL;
   char_u fname_buf[FLEN_FIXED + 1];
   char_u *tofree = NULL;
-  char_u *fname;
-  char_u *name;
+  char_u *fname = NULL;
+  char_u *name = NULL;
   int argcount = argcount_in;
   typval_T *argvars = argvars_in;
   dict_T *selfdict = selfdict_in;
@@ -1348,14 +1405,18 @@ call_func(
   // even when call_func() returns FAIL.
   rettv->v_type = VAR_UNKNOWN;
 
-  // Make a copy of the name, if it comes from a funcref variable it could
-  // be changed or deleted in the called function.
   if (len <= 0) {
     len = (int)STRLEN(funcname);
   }
-  name = vim_strnsave(funcname, len);
-
-  fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+  if (partial != NULL) {
+    fp = partial->pt_func;
+  }
+  if (fp == NULL) {
+    // Make a copy of the name, if it comes from a funcref variable it could
+    // be changed or deleted in the called function.
+    name = vim_strnsave(funcname, len);
+    fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+  }
 
   *doesrange = false;
 
@@ -1387,7 +1448,7 @@ call_func(
     char_u *rfname = fname;
 
     // Ignore "g:" before a function name.
-    if (fname[0] == 'g' && fname[1] == ':') {
+    if (fp == NULL && fname[0] == 'g' && fname[1] == ':') {
       rfname = fname + 2;
     }
 
@@ -1400,11 +1461,9 @@ call_func(
         error = ERROR_NONE;
         nlua_typval_call((const char *)funcname, len, argvars, argcount, rettv);
       }
-    } else if (!builtin_function((const char *)rfname, -1)) {
+    } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
-      if (partial != NULL && partial->pt_func != NULL) {
-        fp = partial->pt_func;
-      } else {
+      if (fp == NULL) {
         fp = find_func(rfname);
       }
 
@@ -1483,29 +1542,7 @@ theend:
   // Report an error unless the argument evaluation or function call has been
   // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
-    switch (error) {
-    case ERROR_UNKNOWN:
-      emsg_funcname(N_("E117: Unknown function: %s"), name);
-      break;
-    case ERROR_DELETED:
-      emsg_funcname(N_("E933: Function was deleted: %s"), name);
-      break;
-    case ERROR_TOOMANY:
-      emsg_funcname(_(e_toomanyarg), name);
-      break;
-    case ERROR_TOOFEW:
-      emsg_funcname(N_("E119: Not enough arguments for function: %s"),
-          name);
-      break;
-    case ERROR_SCRIPT:
-      emsg_funcname(N_("E120: Using <SID> not in a script context: %s"),
-          name);
-      break;
-    case ERROR_DICT:
-      emsg_funcname(N_("E725: Calling dict function without Dictionary: %s"),
-          name);
-      break;
-    }
+    user_func_error(error, (name != NULL) ? name : funcname);
   }
 
   while (argv_clear > 0) {
