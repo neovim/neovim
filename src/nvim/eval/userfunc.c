@@ -3413,12 +3413,13 @@ bool set_ref_in_call_stack(int copyID)
 {
   bool abort = false;
 
-  for (funccall_T *fc = current_funccal; fc != NULL; fc = fc->caller) {
+  for (funccall_T *fc = current_funccal; !abort && fc != NULL;
+       fc = fc->caller) {
     abort = abort || set_ref_in_funccal(fc, copyID);
   }
 
   // Also go through the funccal_stack.
-  for (funccal_entry_T *entry = funccal_stack; entry != NULL;
+  for (funccal_entry_T *entry = funccal_stack; !abort && entry != NULL;
        entry = entry->next) {
     for (funccall_T *fc = entry->top_funccal; !abort && fc != NULL;
          fc = fc->caller) {
