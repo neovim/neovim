@@ -3513,7 +3513,6 @@ static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "getmarklist()" function
 static void f_getmarklist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
