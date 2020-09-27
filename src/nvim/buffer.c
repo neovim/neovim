@@ -837,7 +837,7 @@ static void clear_wininfo(buf_T *buf)
     buf->b_wininfo = wip->wi_next;
     if (wip->wi_optset) {
       clear_winopt(&wip->wi_opt);
-      deleteFoldRecurse(&wip->wi_folds);
+      deleteFoldRecurse(buf, &wip->wi_folds);
     }
     xfree(wip);
   }
@@ -2503,7 +2503,7 @@ void buflist_setfpos(buf_T *const buf, win_T *const win,
     }
     if (copy_options && wip->wi_optset) {
       clear_winopt(&wip->wi_opt);
-      deleteFoldRecurse(&wip->wi_folds);
+      deleteFoldRecurse(buf, &wip->wi_folds);
     }
   }
   if (lnum != 0) {

@@ -119,7 +119,7 @@ static char opchars[][3] =
   { 'r', NUL, OPF_CHANGE },              // OP_REPLACE
   { 'I', NUL, OPF_CHANGE },              // OP_INSERT
   { 'A', NUL, OPF_CHANGE },              // OP_APPEND
-  { 'z', 'f', OPF_LINES },               // OP_FOLD
+  { 'z', 'f', 0         },               // OP_FOLD
   { 'z', 'o', OPF_LINES },               // OP_FOLDOPEN
   { 'z', 'O', OPF_LINES },               // OP_FOLDOPENREC
   { 'z', 'c', OPF_LINES },               // OP_FOLDCLOSE

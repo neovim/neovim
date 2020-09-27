@@ -1977,20 +1977,20 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_FOLD:
       VIsual_reselect = false;          // don't reselect now
-      foldCreate(curwin, oap->start.lnum, oap->end.lnum);
+      foldCreate(curwin, oap->start, oap->end);
       break;
 
     case OP_FOLDOPEN:
     case OP_FOLDOPENREC:
     case OP_FOLDCLOSE:
     case OP_FOLDCLOSEREC:
-      VIsual_reselect = false;          /* don't reselect now */
-      opFoldRange(oap->start.lnum, oap->end.lnum,
-          oap->op_type == OP_FOLDOPEN
-          || oap->op_type == OP_FOLDOPENREC,
-          oap->op_type == OP_FOLDOPENREC
-          || oap->op_type == OP_FOLDCLOSEREC,
-          oap->is_VIsual);
+      VIsual_reselect = false;          // don't reselect now
+      opFoldRange(oap->start, oap->end,
+                  oap->op_type == OP_FOLDOPEN
+                  || oap->op_type == OP_FOLDOPENREC,
+                  oap->op_type == OP_FOLDOPENREC
+                  || oap->op_type == OP_FOLDCLOSEREC,
+                  oap->is_VIsual);
       break;
 
     case OP_FOLDDEL:
@@ -2590,14 +2590,16 @@ do_mouse (
       && !is_drag
       && (jump_flags & (MOUSE_FOLD_CLOSE | MOUSE_FOLD_OPEN))
       && which_button == MOUSE_LEFT) {
-    /* open or close a fold at this line */
-    if (jump_flags & MOUSE_FOLD_OPEN)
-      openFold(curwin->w_cursor.lnum, 1L);
-    else
-      closeFold(curwin->w_cursor.lnum, 1L);
-    /* don't move the cursor if still in the same window */
-    if (curwin == old_curwin)
+    // open or close a fold at this line
+    if (jump_flags & MOUSE_FOLD_OPEN) {
+      openFold(curwin->w_cursor, 1L);
+    } else {
+      closeFold(curwin->w_cursor, 1L);
+    }
+    // don't move the cursor if still in the same window
+    if (curwin == old_curwin) {
       curwin->w_cursor = save_cursor;
+    }
   }
 
 
@@ -4393,51 +4395,55 @@ dozet:
   case 'i':   curwin->w_p_fen = !curwin->w_p_fen;
     break;
 
-  /* "za": open closed fold or close open fold at cursor */
-  case 'a':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
-      openFold(curwin->w_cursor.lnum, cap->count1);
-    else {
-      closeFold(curwin->w_cursor.lnum, cap->count1);
+  // "za": open closed fold or close open fold at cursor
+  case 'a':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
+      openFold(curwin->w_cursor, cap->count1);
+    } else {
+      closeFold(curwin->w_cursor, cap->count1);
       curwin->w_p_fen = true;
     }
     break;
 
-  /* "zA": open fold at cursor recursively */
-  case 'A':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
-      openFoldRecurse(curwin->w_cursor.lnum);
-    else {
-      closeFoldRecurse(curwin->w_cursor.lnum);
+  // "zA": open fold at cursor recursively
+  case 'A':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
+      openFoldRecurse(curwin->w_cursor);
+    } else {
+      closeFoldRecurse(curwin->w_cursor);
       curwin->w_p_fen = true;
     }
     break;
 
-  /* "zo": open fold at cursor or Visual area */
-  case 'o':   if (VIsual_active)
+  // "zo": open fold at cursor or Visual area
+  case 'o':   if (VIsual_active) {
       nv_operator(cap);
-    else
-      openFold(curwin->w_cursor.lnum, cap->count1);
+    } else {
+      openFold(curwin->w_cursor, cap->count1);
+    }
     break;
 
-  /* "zO": open fold recursively */
-  case 'O':   if (VIsual_active)
+  // "zO": open fold recursively
+  case 'O':   if (VIsual_active) {
       nv_operator(cap);
-    else
-      openFoldRecurse(curwin->w_cursor.lnum);
+    } else {
+      openFoldRecurse(curwin->w_cursor);
+    }
     break;
 
-  /* "zc": close fold at cursor or Visual area */
-  case 'c':   if (VIsual_active)
+  // "zc": close fold at cursor or Visual area
+  case 'c':   if (VIsual_active) {
       nv_operator(cap);
-    else
-      closeFold(curwin->w_cursor.lnum, cap->count1);
+              } else {
+      closeFold(curwin->w_cursor, cap->count1);
+    }
     curwin->w_p_fen = true;
     break;
 
-  /* "zC": close fold recursively */
-  case 'C':   if (VIsual_active)
+  // "zC": close fold recursively
+  case 'C':   if (VIsual_active) {
       nv_operator(cap);
-    else
-      closeFoldRecurse(curwin->w_cursor.lnum);
+    } else {
+      closeFoldRecurse(curwin->w_cursor);
+    }
     curwin->w_p_fen = true;
     break;
 
