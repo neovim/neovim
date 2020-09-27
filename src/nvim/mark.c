@@ -1557,23 +1557,14 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 // Add information about mark 'mname' to list 'l'
 static int add_mark(list_T *l, char *mname, pos_T *pos, int bufnr, char *fname)
 {
-  dict_T *d;
-  list_T *lpos;
-
   if (pos->lnum <= 0) {
     return OK;
   }
 
-  d = tv_dict_alloc();
-  if (d == NULL) {
-    return FAIL;
-  }
+  dict_T *d = tv_dict_alloc();
   tv_list_append_dict(l, d);
 
-  lpos = tv_list_alloc(kListLenMayKnow);
-  if (lpos == NULL) {
-    return FAIL;
-  }
+  list_T *lpos = tv_list_alloc(kListLenMayKnow);
 
   tv_list_append_number(lpos, bufnr);
   tv_list_append_number(lpos, pos->lnum);
