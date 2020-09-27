@@ -329,3 +329,17 @@ func RunVimPiped(before, after, arguments, pipecmd)
   endif
   return 1
 endfunc
+
+" Get all messages but drop the maintainer entry.
+func GetMessages()
+  redir => result
+  redraw | messages
+  redir END
+  let msg_list = split(result, "\n")
+  " if msg_list->len() > 0 && msg_list[0] =~ 'Messages maintainer:'
+  "   return msg_list[1:]
+  " endif
+  return msg_list
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
