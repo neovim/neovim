@@ -11332,3 +11332,15 @@ static void f_xor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = tv_get_number_chk(&argvars[0], NULL)
                          ^ tv_get_number_chk(&argvars[1], NULL);
 }
+
+// "matchfuzzy()" function
+void f_matchfuzzy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  do_fuzzymatch(argvars, rettv, false);
+}
+
+// "matchfuzzypos()" function
+void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  do_fuzzymatch(argvars, rettv, true);
+}

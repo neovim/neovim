@@ -877,6 +877,16 @@ static inline bool tv_is_func(const typval_T tv)
   return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
 }
 
+/// Check whether given typval_T contains a dict
+///
+/// @param[in]  tv  Typval to check.
+///
+/// @return True if it is a dict, false otherwise.
+static inline bool tv_is_dict(const typval_T tv)
+{
+  return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
+}
+
 /// Specify that argument needs to be translated
 ///
 /// Used for size_t length arguments to avoid calling gettext() and strlen()
