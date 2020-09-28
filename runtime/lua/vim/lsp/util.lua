@@ -299,9 +299,15 @@ end
 ---
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function sort_completion_items(items)
-  table.sort(items, function(a, b)
-    return (a.sortText or a.label) < (b.sortText or b.label)
-  end)
+  if items[1] and items[1].sortText then
+    table.sort(items, function(a, b)
+      if a.sortText and a.sortText ~= vim.NIL then
+        return a.sortText < b.sortText
+      else
+        return a.label < a.label
+      end
+    end)
+  end
 end
 
 --@private
@@ -309,13 +315,13 @@ end
 --- precedence is as follows: textEdit.newText > insertText > label
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function get_completion_word(item)
-  if item.textEdit ~= nil and item.textEdit.newText ~= nil then
+  if item.textEdit ~= nil and item.textEdit ~= vim.NIL and item.textEdit.newText ~= nil then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)
     end
-  elseif item.insertText ~= nil then
+  elseif item.insertText ~= nil and item.insertText ~= vim.NIL then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.insertText
     else
