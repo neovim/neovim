@@ -162,8 +162,29 @@ func! Test_search_stat()
   let stat = '\[1/2\]'
   call assert_notmatch(pat .. stat, g:a)
 
-  " close the window
+  " normal, n comes from a silent mapping
+  " First test a normal mapping, then a silent mapping
+  call cursor(1,1)
+  nnoremap n n
+  let @/ = 'find this'
+  let pat = '/find this\s\+'
+  let g:a = execute(':unsilent :norm n')
+  let g:b = split(g:a, "\n")[-1]
+  let stat = '\[1/2\]'
+  call assert_match(pat .. stat, g:b)
+  nnoremap <silent> n n
+  call cursor(1,1)
+  let g:a = execute(':unsilent :norm n')
+  let g:b = split(g:a, "\n")[-1]
+  let stat = '\[1/2\]'
+  call assert_notmatch(pat .. stat, g:b)
+  call assert_match(stat, g:b)
+  unmap n
+
+  " Clean up
   set shortmess+=S
+
+  " close the window
   bwipe!
 endfunc
 

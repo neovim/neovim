@@ -1198,7 +1198,7 @@ int do_search(
         // msg_strtrunc() will shorten in the middle.
         if (ui_has(kUIMessages)) {
           len = 0;  // adjusted below
-        } else if (msg_scrolled != 0 || cmd_silent) {
+        } else if (msg_scrolled != 0 && !cmd_silent) {
           // Use all the columns.
           len = (Rows - msg_row) * Columns - 1;
         } else {
