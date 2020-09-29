@@ -1,13 +1,9 @@
 " Tests for search_stats, when "S" is not in 'shortmess'
-"
-" This test is fragile, it might not work interactively, but it works when run
-" as test!
 
-source shared.vim
 source screendump.vim
 source check.vim
 
-func! Test_search_stat()
+func Test_search_stat()
   new
   set shortmess-=S
   " Append 50 lines with text to search for, "foobar" appears 20 times
@@ -179,13 +175,43 @@ func! Test_search_stat()
   let stat = '\[1/2\]'
   call assert_notmatch(pat .. stat, g:b)
   call assert_match(stat, g:b)
+  " Test that the message is not truncated
+  " it would insert '...' into the output.
+  call assert_match('^\s\+' .. stat, g:b)
   unmap n
 
   " Clean up
   set shortmess+=S
-
   " close the window
   bwipe!
+endfunc
+
+func! Test_search_stat_screendump()
+  CheckScreendump
+
+  let lines =<< trim END
+    set shortmess-=S
+    " Append 50 lines with text to search for, "foobar" appears 20 times
+    call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 20))
+    call setline(2, 'find this')
+    call setline(70, 'find this')
+    nnoremap n n
+    let @/ = 'find this'
+    call cursor(1,1)
+    norm n
+  END
+  call writefile(lines, 'Xsearchstat')
+  let buf = RunVimInTerminal('-S Xsearchstat', #{rows: 10})
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstat_1', {})
+
+  call term_sendkeys(buf, ":nnoremap <silent> n n\<cr>")
+  call term_sendkeys(buf, "gg0n")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstat_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xsearchstat')
 endfunc
 
 func Test_searchcount_in_statusline()
