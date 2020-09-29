@@ -1370,7 +1370,10 @@ int do_search(
         && !shortmess(SHM_SEARCHCOUNT)
         && msgbuf != NULL) {
       search_stat(dirc, &pos, show_top_bot_msg, msgbuf,
-                  (count != 1 || has_offset));
+                  (count != 1
+                   || has_offset
+                   || (!(fdo_flags & FDO_SEARCH)
+                       && hasFolding(curwin->w_cursor.lnum, NULL, NULL))));
     }
 
     // The search command can be followed by a ';' to do another search.
