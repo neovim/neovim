@@ -39,7 +39,7 @@ typedef struct {
 static struct luaL_Reg parser_meta[] = {
   { "__gc", parser_gc },
   { "__tostring", parser_tostring },
-  { "parse_buf", parser_parse_buf },
+  { "parse", parser_parse },
   { "edit", parser_edit },
   { "tree", parser_tree },
   { "set_included_ranges", parser_set_ranges },
@@ -306,22 +306,44 @@ static const char *input_cb(void *payload, uint32_t byte_index,
 #undef BUFSIZE
 }
 
-static int parser_parse_buf(lua_State *L)
+static int parser_parse(lua_State *L)
 {
   TSLua_parser *p = parser_check(L);
   if (!p) {
     return 0;
   }
 
-  long bufnr = lua_tointeger(L, 2);
-  buf_T *buf = handle_get_buffer(bufnr);
+  TSTree *new_tree;
+  size_t len;
+  const char *str;
+  long bufnr;
+  buf_T *buf;
+  TSInput input;
 
-  if (!buf) {
-    return luaL_error(L, "invalid buffer handle: %d", bufnr);
+  // This switch is necessary because of the behavior of lua_isstring, that
+  // consider numbers as strings...
+  switch (lua_type(L, 2)) {
+    case LUA_TSTRING:
+      str = lua_tolstring(L, 2, &len);
+      new_tree = ts_parser_parse_string(p->parser, p->tree, str, len);
+      break;
+
+    case LUA_TNUMBER:
+      bufnr = lua_tointeger(L, 2);
+      buf = handle_get_buffer(bufnr);
+
+      if (!buf) {
+        return luaL_error(L, "invalid buffer handle: %d", bufnr);
+      }
+
+      input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8 };
+      new_tree = ts_parser_parse(p->parser, p->tree, input);
+
+      break;
+
+    default:
+      return luaL_error(L, "invalid argument to parser:parse()");
   }
-
-  TSInput input = { (void *)buf, input_cb, TSInputEncodingUTF8 };
-  TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
 
   uint32_t n_ranges = 0;
   TSRange *changed = p->tree ? ts_tree_get_changed_ranges(p->tree, new_tree,

@@ -21,7 +21,9 @@ function Parser:parse()
     return self.tree
   end
   local changes
-  self.tree, changes = self._parser:parse_buf(self.bufnr)
+
+  self.tree, changes = self._parser:parse(self:input_source())
+
   self.valid = true
 
   if not vim.tbl_isempty(changes) then
@@ -31,6 +33,10 @@ function Parser:parse()
   end
 
   return self.tree, changes
+end
+
+function Parser:input_source()
+  return self.bufnr or self.str
 end
 
 function Parser:_on_bytes(bufnr, changed_tick,
@@ -150,6 +156,20 @@ function M.get_parser(bufnr, lang, buf_attach_cbs)
   end
 
   return parsers[id]
+end
+
+function M.get_string_parser(str, lang)
+  vim.validate {
+    str = { str, 'string' },
+    lang = { lang, 'string' }
+  }
+  language.require_language(lang)
+
+  local self = setmetatable({str=str, lang=lang, valid=false}, Parser)
+  self._parser = vim._create_ts_parser(lang)
+  self:parse()
+
+  return self
 end
 
 return M
