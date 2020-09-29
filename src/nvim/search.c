@@ -1155,8 +1155,8 @@ int do_search(
       pat = p;                              /* put pat after search command */
     }
 
-    if ((options & SEARCH_ECHO) && messaging()
-        && !cmd_silent && msg_silent == 0) {
+    if ((options & SEARCH_ECHO) && messaging() && !msg_silent
+        && (!cmd_silent || !shortmess(SHM_SEARCHCOUNT))) {
       char_u      *trunc;
       char_u      off_buf[40];
       size_t      off_len = 0;
@@ -1165,7 +1165,8 @@ int do_search(
       msg_start();
 
       // Get the offset, so we know how long it is.
-      if (spats[0].off.line || spats[0].off.end || spats[0].off.off) {
+      if (!cmd_silent
+          && (spats[0].off.line || spats[0].off.end || spats[0].off.off)) {
         p = off_buf;  // -V507
         *p++ = dirc;
         if (spats[0].off.end) {
@@ -1190,14 +1191,14 @@ int do_search(
         p = searchstr;
       }
 
-      if (!shortmess(SHM_SEARCHCOUNT)) {
+      if (!shortmess(SHM_SEARCHCOUNT) || cmd_silent) {
         // Reserve enough space for the search pattern + offset +
         // search stat.  Use all the space available, so that the
         // search state is right aligned.  If there is not enough space
         // msg_strtrunc() will shorten in the middle.
         if (ui_has(kUIMessages)) {
           len = 0;  // adjusted below
-        } else if (msg_scrolled != 0) {
+        } else if (msg_scrolled != 0 || cmd_silent) {
           // Use all the columns.
           len = (Rows - msg_row) * Columns - 1;
         } else {
@@ -1214,11 +1215,13 @@ int do_search(
 
       xfree(msgbuf);
       msgbuf = xmalloc(len);
-      {
-        memset(msgbuf, ' ', len);
-        msgbuf[0] = dirc;
-        msgbuf[len - 1] = NUL;
+      memset(msgbuf, ' ', len);
+      msgbuf[len - 1] = NUL;
 
+      // do not fill the msgbuf buffer, if cmd_silent is set, leave it
+      // empty for the search_stat feature.
+      if (!cmd_silent) {
+        msgbuf[0] = dirc;
         if (utf_iscomposing(utf_ptr2char(p))) {
           // Use a space to draw the composing char on.
           msgbuf[1] = ' ';
@@ -1362,7 +1365,7 @@ int do_search(
     // Show [1/15] if 'S' is not in 'shortmess'.
     if ((options & SEARCH_ECHO)
         && messaging()
-        && !(cmd_silent + msg_silent)
+        && !msg_silent
         && c != FAIL
         && !shortmess(SHM_SEARCHCOUNT)
         && msgbuf != NULL) {
