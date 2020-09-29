@@ -323,7 +323,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={
-      {content = {{"/line      [1/2] W"}}, kind = "search_count"}
+      {content = {{"/line      W [1/2]"}}, kind = "search_count"}
     }}
 
     feed('n')

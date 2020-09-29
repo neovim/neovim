@@ -43,7 +43,7 @@ func Test_search_stat()
   call assert_match(pat .. stat, g:a)
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[1/>99\] W'
+  let stat = 'W \[1/>99\]'
   call assert_match(pat .. stat, g:a)
 
   " Many matches
@@ -53,7 +53,7 @@ func Test_search_stat()
   call assert_match(pat .. stat, g:a)
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! N')
-  let stat = '\[>99/>99\] W'
+  let stat = 'W \[>99/>99\]'
   call assert_match(pat .. stat, g:a)
 
   " right-left
@@ -85,7 +85,7 @@ func Test_search_stat()
     call cursor('$',1)
     let pat = 'raboof/\s\+'
     let g:a = execute(':unsilent :norm! n')
-    let stat = '\[20/1\]'
+    let stat = 'W \[20/1\]'
     call assert_match(pat .. stat, g:a)
     call assert_match('search hit BOTTOM, continuing at TOP', g:a)
     set norl
@@ -96,10 +96,10 @@ func Test_search_stat()
   let @/ = 'foobar'
   let pat = '?foobar\s\+'
   let g:a = execute(':unsilent :norm! N')
-  let stat = '\[20/20\]'
+  let stat = 'W \[20/20\]'
   call assert_match(pat .. stat, g:a)
   call assert_match('search hit TOP, continuing at BOTTOM', g:a)
-  call assert_match('\[20/20\] W', Screenline(&lines))
+  call assert_match('W \[20/20\]', Screenline(&lines))
 
   " normal, no match
   call cursor(1,1)
