@@ -1798,7 +1798,7 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   os_copy_fullenv(env, env_size);
 
-  for (size_t i = 0; i < env_size; i++) {
+  for (ssize_t i = env_size - 1; i >= 0; i--) {
     const char * str = env[i];
     const char * const end = strchr(str + (str[0] == '=' ? 1 : 0),
                                     '=');
@@ -1806,6 +1806,12 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ptrdiff_t len = end - str;
     assert(len > 0);
     const char * value = str + len + 1;
+    if (tv_dict_find(rettv->vval.v_dict, str, len) != NULL) {
+      // Since we're traversing from the end of the env block to the front, any
+      // duplicate names encountered should be ignored.  This preserves the
+      // semantics of env vars defined later in the env block taking precedence.
+      continue;
+    }
     tv_dict_add_str(rettv->vval.v_dict,
                     str, len,
                     value);
