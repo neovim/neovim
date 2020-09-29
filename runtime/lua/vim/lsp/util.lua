@@ -800,7 +800,8 @@ function M.fancy_floating_markdown(contents, opts)
   local width, height = M._make_floating_popup_size(stripped, opts)
 
   -- Insert blank line separator after code block
-  local insert_separator = opts.separator or true
+  local insert_separator = opts.separator
+  if insert_separator == nil then insert_separator = true end
   if insert_separator then
     for i, h in ipairs(highlights) do
       h.start = h.start + i - 1
