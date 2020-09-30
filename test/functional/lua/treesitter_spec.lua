@@ -660,4 +660,35 @@ static int nlua_schedule(lua_State *const lstate)
       { 10, 5, 10, 20 },
       { 14, 9, 14, 27 } }, res)
   end)
+
+  it("allows to create string parsers", function()
+    local ret = exec_lua [[
+      local parser = vim.treesitter.get_string_parser("int foo = 42;", "c")
+      return { parser:parse():root():range() }
+    ]]
+
+    eq({ 0, 0, 0, 13 }, ret)
+  end)
+
+  it("allows to run queries with string parsers", function()
+    local txt = [[
+      int foo = 42;
+      int bar = 13;
+    ]]
+
+    local ret = exec_lua([[
+    local str = ...
+    local parser = vim.treesitter.get_string_parser(str, "c")
+
+    local nodes = {}
+    local query = vim.treesitter.parse_query("c", '((identifier) @id (eq? @id "foo"))')
+
+    for _, node in query:iter_captures(parser:parse():root(), str, 0, 2) do
+      table.insert(nodes, { node:range() })
+    end
+
+    return nodes]], txt)
+
+    eq({ {0, 10, 0, 13} }, ret)
+  end)
 end)
