@@ -3109,6 +3109,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     for (i = 0; i < y_size; i++) {
       int spaces;
       char shortline;
+      // can just be 0 or 1, needed for blockwise paste beyond the current
+      // buffer end
+      int lines_appended = 0;
 
       bd.startspaces = 0;
       bd.endspaces = 0;
@@ -3122,6 +3125,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           break;
         }
         nr_lines++;
+        lines_appended = 1;
       }
       /* get the old line and advance to the position to insert at */
       oldp = get_cursor_line_ptr();
@@ -3194,7 +3198,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
-                          delcount, (int)totlen, kExtmarkUndo);
+                          delcount, (int)totlen + lines_appended, kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
       if (i == 0)
