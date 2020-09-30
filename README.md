@@ -35,6 +35,7 @@ Features
   JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket, Ruby, Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
+- Remote Procedure Call (RPC) API for controlling NeoVim programmatically
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
 - Compatible with most Vim plugins, including Ruby and Python plugins
