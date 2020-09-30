@@ -3752,7 +3752,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
 // Add an error line to the quickfix buffer.
 static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
-                           char_u *dirname)
+                           char_u *dirname, bool first_bufline)
   FUNC_ATTR_NONNULL_ALL
 {
   int len;
@@ -3767,9 +3767,12 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
     if (qfp->qf_type == 1) {  // :helpgrep
       STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE - 1);
     } else {
-      // shorten the file name if not done already
-      if (errbuf->b_sfname == NULL
-          || path_is_absolute(errbuf->b_sfname)) {
+      // Shorten the file name if not done already.
+      // For optimization, do this only for the first entry in a
+      // buffer.
+      if (first_bufline
+          && (errbuf->b_sfname == NULL
+              || path_is_absolute(errbuf->b_sfname))) {
         if (*dirname == NUL) {
           os_dirname(dirname, MAXPATHL);
         }
@@ -3847,6 +3850,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
   // Check if there is anything to display
   if (qfl != NULL) {
      char_u dirname[MAXPATHL];
+     int prev_bufnr = -1;
 
      *dirname = NUL;
 
@@ -3859,9 +3863,11 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
       lnum = buf->b_ml.ml_line_count;
     }
     while (lnum < qfl->qf_count) {
-      if (qf_buf_add_line(buf, lnum, qfp, dirname) == FAIL) {
+      if (qf_buf_add_line(buf, lnum, qfp, dirname,
+                          prev_bufnr != qfp->qf_fnum) == FAIL) {
         break;
       }
+      prev_bufnr = qfp->qf_fnum;
       lnum++;
       qfp = qfp->qf_next;
       if (qfp == NULL) {
