@@ -802,12 +802,13 @@ function M.fancy_floating_markdown(contents, opts)
   -- Insert blank line separator after code block
   local insert_separator = opts.separator
   if insert_separator == nil then insert_separator = true end
+  local separator_width = math.min(width, opts.wrap_at)
   if insert_separator then
     for i, h in ipairs(highlights) do
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
-        table.insert(stripped, h.finish + 1, string.rep("─", width))
+        table.insert(stripped, h.finish + 1, string.rep("─", separator_width))
         height = height + 1
       end
     end
