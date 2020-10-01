@@ -80,7 +80,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
-/// @return (row, col) tuple
+/// @return (row, byte-offset) tuple
 ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
   FUNC_API_SINCE(1)
 {

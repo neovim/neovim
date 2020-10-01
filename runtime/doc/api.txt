@@ -2140,7 +2140,7 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
                     {window}  Window handle, or 0 for current window
 
                 Return: ~
-                    (row, col) tuple
+                    (row, byte-offset) tuple
 
 nvim_win_get_height({window})                          *nvim_win_get_height()*
                 Gets the window height
