@@ -6,6 +6,8 @@ local feed_command = helpers.feed_command
 local insert = helpers.insert
 local funcs = helpers.funcs
 local meths = helpers.meths
+local source = helpers.source
+local assert_alive = helpers.assert_alive
 
 describe("folded lines", function()
   local screen
@@ -356,5 +358,27 @@ describe("folded lines", function()
     {1:~                                            }|
                                                  |
     ]]}
+  end)
+
+  it('does not crash when foldtext is longer than columns #12988', function()
+    source([[
+      function! MyFoldText() abort
+        return repeat('-', &columns + 100)
+      endfunction
+    ]])
+    command('set foldtext=MyFoldText()')
+    feed("i<cr><esc>")
+    feed("vkzf")
+    screen:expect{grid=[[
+    {5:^---------------------------------------------}|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+    {1:~                                            }|
+                                                 |
+    ]]}
+    assert_alive()
   end)
 end)
