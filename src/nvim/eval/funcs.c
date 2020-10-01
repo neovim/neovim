@@ -9174,7 +9174,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this
   res = call_func((const char_u *)func_name,
-                  (int)STRLEN(func_name),
+                  -1,
                   &rettv, 2, argv, NULL, 0L, 0L, &dummy, true,
                   partial, sortinfo->item_compare_selfdict);
   tv_clear(&argv[0]);

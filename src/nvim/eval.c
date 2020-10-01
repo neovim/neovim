@@ -736,7 +736,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+    if (call_func(s, -1, rettv, argc, argv, NULL,
                   0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
       return FAIL;
     }
@@ -746,7 +746,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+    if (call_func(s, -1, rettv, argc, argv, NULL,
                   0L, 0L, &dummy, true, partial, NULL) == FAIL) {
       return FAIL;
     }
@@ -7270,7 +7270,7 @@ bool callback_call(Callback *const callback, const int argcount_in,
   }
 
   int dummy;
-  return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
+  return call_func(name, -1, rettv, argcount_in, argvars_in,
                    NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                    true, partial, NULL);
 }
@@ -8492,7 +8492,7 @@ handle_subscript(
       } else {
         s = (char_u *)"";
       }
-      ret = get_func_tv(s, lua ? slen : (int)STRLEN(s), rettv, (char_u **)arg,
+      ret = get_func_tv(s, lua ? slen : -1, rettv, (char_u **)arg,
                         curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                         &len, evaluate, pt, selfdict);
 

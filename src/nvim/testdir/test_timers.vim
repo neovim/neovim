@@ -340,6 +340,41 @@ func Test_nocatch_garbage_collect()
   delfunc FeedChar
 endfunc
 
+func Test_error_in_timer_callback()
+  if !has('terminal') || (has('win32') && has('gui_running'))
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim [CODE]
+  func Func(timer)
+    " fail to create list
+    let x = [
+  endfunc
+  set updatetime=50
+  call timer_start(1, 'Func')
+  [CODE]
+  call writefile(lines, 'Xtest.vim')
+
+  let buf = term_start(GetVimCommandClean() .. ' -S Xtest.vim', {'term_rows': 8})
+  let job = term_getjob(buf)
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
+
+  " GC must not run during timer callback, which can make Vim crash.
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<CR>")
+  call term_wait(buf, 100)
+  call assert_equal('run', job_status(job))
+
+  call term_sendkeys(buf, ":qall!\<CR>")
+  call WaitFor({-> job_status(job) ==# 'dead'})
+  if has('unix')
+    call assert_equal('', job_info(job).termsig)
+  endif
+
+  call delete('Xtest.vim')
+  exe buf .. 'bwipe!'
+endfunc
+
 func Test_timer_invalid_callback()
   call assert_fails('call timer_start(0, "0")', 'E921')
 endfunc

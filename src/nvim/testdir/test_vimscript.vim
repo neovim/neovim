@@ -1409,6 +1409,17 @@ func Test_compound_assignment_operators()
     let @/ = ''
 endfunc
 
+func Test_funccall_garbage_collect()
+    func Func(x, ...)
+        call add(a:x, a:000)
+    endfunc
+    call Func([], [])
+    " Must not crash cause by invalid freeing
+    call test_garbagecollect_now()
+    call assert_true(v:true)
+    delfunc Func
+endfunc
+
 func Test_function_defined_line()
     if has('gui_running')
         " Can't catch the output of gvim.
