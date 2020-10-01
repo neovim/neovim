@@ -1,6 +1,7 @@
 " Tests for mappings and abbreviations
 
 source shared.vim
+source check.vim
 
 func Test_abbreviation()
   " abbreviation with 0x80 should work
@@ -391,6 +392,42 @@ func Test_motionforce_omap()
   delfunc GetCommand
 endfunc
 
+func Test_error_in_map_expr()
+  if !has('terminal') || (has('win32') && has('gui_running'))
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim [CODE]
+  func Func()
+    " fail to create list
+    let x = [
+  endfunc
+  nmap <expr> ! Func()
+  set updatetime=50
+  [CODE]
+  call writefile(lines, 'Xtest.vim')
+
+  let buf = term_start(GetVimCommandClean() .. ' -S Xtest.vim', {'term_rows': 8})
+  let job = term_getjob(buf)
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
+
+  " GC must not run during map-expr processing, which can make Vim crash.
+  call term_sendkeys(buf, '!')
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<CR>")
+  call term_wait(buf, 100)
+  call assert_equal('run', job_status(job))
+
+  call term_sendkeys(buf, ":qall!\<CR>")
+  call WaitFor({-> job_status(job) ==# 'dead'})
+  if has('unix')
+    call assert_equal('', job_info(job).termsig)
+  endif
+
+  call delete('Xtest.vim')
+  exe buf .. 'bwipe!'
+endfunc
+
 " Test for mapping errors
 func Test_map_error()
   call assert_fails('unmap', 'E474:')
@@ -461,6 +498,36 @@ func Test_mapcomplete()
 
   call feedkeys(":abbr! \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match("abbr! \x01", @:)
+endfunc
+
+func Test_expr_map_restore_cursor()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['one', 'two', 'three'])
+      2
+      set ls=2
+      hi! link StatusLine ErrorMsg
+      noremap <expr> <C-B> Func()
+      func Func()
+	  let g:on = !get(g:, 'on', 0)
+	  redraws
+	  return ''
+      endfunc
+      func Status()
+	  return get(g:, 'on', 0) ? '[on]' : ''
+      endfunc
+      set stl=%{Status()}
+  END
+  call writefile(lines, 'XtestExprMap')
+  let buf = RunVimInTerminal('-S XtestExprMap', #{rows: 10})
+  call term_wait(buf)
+  call term_sendkeys(buf, "\<C-B>")
+  call VerifyScreenDump(buf, 'Test_map_expr_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestExprMap')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

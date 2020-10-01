@@ -410,7 +410,7 @@ describe('Command-line coloring', function()
   end)
   it('stops executing callback after a number of errors', function()
     set_color_cb('SplittedMultibyteStart')
-    start_prompt('let x = "«»«»«»«»«»"\n')
+    start_prompt('let x = "«»«»«»«»«»"')
     screen:expect([[
       {EOB:~                                       }|
       {EOB:~                                       }|
@@ -419,7 +419,7 @@ describe('Command-line coloring', function()
       :let x = "                              |
       {ERR:E5405: Chunk 0 start 10 splits multibyte}|
       {ERR: character}                              |
-      ^:let x = "«»«»«»«»«»"                   |
+      :let x = "«»«»«»«»«»"^                   |
     ]])
     feed('\n')
     screen:expect([[
@@ -432,6 +432,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
                                               |
     ]])
+    feed('\n')
     eq('let x = "«»«»«»«»«»"', meths.get_var('out'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
     eq(msg:rep(1), funcs.execute('messages'))
@@ -474,14 +475,14 @@ describe('Command-line coloring', function()
     ]])
     feed('\n')
     screen:expect([[
-                                              |
+      ^                                        |
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      ^:echo 42                                |
+      :echo 42                                |
     ]])
     feed('\n')
     eq('echo 42', meths.get_var('out'))
