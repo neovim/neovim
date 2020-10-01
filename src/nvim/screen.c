@@ -2822,6 +2822,16 @@ win_line (
       n_extra = wp->w_p_rl ? (col + 1) : (grid->Columns - col);
     }
 
+    if (draw_state == WL_LINE
+        && foldinfo.fi_level != 0
+        && foldinfo.fi_lines > 0
+        && col >= grid->Columns
+        && n_extra != 0
+        && row == startrow) {
+      // Truncate the folding.
+      n_extra = 0;
+    }
+
     if (draw_state == WL_LINE && (area_highlighting || has_spell)) {
       // handle Visual or match highlighting in this line
       if (vcol == fromcol
