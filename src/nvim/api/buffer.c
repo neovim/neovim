@@ -1531,11 +1531,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  extmark_set(buf, ns_id, 0,
-              (int)line, (colnr_T)col_start,
-              end_line, (colnr_T)col_end,
-              decoration_hl(hl_id), kExtmarkUndo);
-  return src_id;
+  ns_id = extmark_set(buf, ns_id, 0,
+                      (int)line, (colnr_T)col_start,
+                      end_line, (colnr_T)col_end,
+                      decoration_hl(hl_id), kExtmarkUndo);
+  return ns_id;
 }
 
 /// Clears namespaced objects (highlights, extmarks, virtual text) from
