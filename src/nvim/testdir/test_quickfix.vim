@@ -3473,6 +3473,18 @@ func Test_shorten_fname()
   " Displaying the quickfix list should simplify the file path
   silent! clist
   call assert_equal('test_quickfix.vim', bufname('test_quickfix.vim'))
+  " Add a few entries for the same file with different paths and check whether
+  " the buffer name is shortened
+  %bwipe
+  call setqflist([], 'f')
+  call setqflist([{'filename' : 'test_quickfix.vim', 'lnum' : 10},
+        \ {'filename' : '../testdir/test_quickfix.vim', 'lnum' : 20},
+        \ {'filename' : fname, 'lnum' : 30}], ' ')
+  copen
+  call assert_equal(['test_quickfix.vim|10| ',
+        \ 'test_quickfix.vim|20| ',
+        \ 'test_quickfix.vim|30| '], getline(1, '$'))
+  cclose
 endfunc
 
 " Quickfix title tests
