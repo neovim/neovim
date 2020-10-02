@@ -2308,6 +2308,27 @@ static void win_equal_rec(
   }
 }
 
+/// When leaving a prompt window stop Insert mode and perhaps restart
+/// it when entering that window again.
+/// @param win window to leave
+static void leaving_window(win_T *win) {
+  win->w_buffer->b_prompt_insert = restart_edit;
+  restart_edit = NUL;
+
+  // When leaving the window (or closing the window) was done from a
+  // callback we need to break out of the Insert mode loop.
+  if (State & INSERT) {
+    stop_insert_mode = true;
+  }
+}
+
+/// When entering the prompt window may restart Insert mode.
+/// @param win window to enter insert mode in
+static void entering_window(win_T *win) {
+  // When entering the prompt window may restart Insert mode.
+  restart_edit = win->w_buffer->b_prompt_insert;
+}
+
 /// Closes all windows for buffer `buf`.
 ///
 /// @param keep_curwin don't close `curwin`
@@ -2446,6 +2467,8 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
       shell_new_rows();
   }
 
+  entering_window(curwin);
+
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
   apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
@@ -2511,6 +2534,9 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (win == curwin) {
+
+    leaving_window(curwin);
+
     /*
      * Guess which window is going to be the new current window.
      * This may change because of the autocommands (sigh).
@@ -3835,6 +3861,8 @@ int win_new_tabpage(int after, char_u *filename)
     newtp->tp_topframe = topframe;
     last_status(FALSE);
 
+    entering_window(curwin);
+
     redraw_all_later(NOT_VALID);
 
     tabpage_check_windows(tp);
@@ -3995,6 +4023,8 @@ leave_tabpage (
 )
 {
   tabpage_T   *tp = curtab;
+
+  leaving_window(curwin);
 
   reset_VIsual_and_resel();     /* stop Visual mode */
   if (trigger_leave_autocmds) {
@@ -4496,6 +4526,10 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   if (wp == curwin && !curwin_invalid)          /* nothing to do */
     return;
 
+  if (!curwin_invalid) {
+    leaving_window(curwin);
+  }
+
   if (!curwin_invalid && trigger_leave_autocmds) {
     /*
      * Be careful: If autocommands delete the window, return now.
@@ -4574,6 +4608,8 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     XFREE_CLEAR(globaldir);
     shorten_fnames(true);
   }
+
+  entering_window(curwin);
 
   if (trigger_new_autocmds) {
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
