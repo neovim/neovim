@@ -294,7 +294,7 @@ M['window/logMessage'] = function(_, _, result, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_name, "] client has shut down after sending the message")
+    err_message("LSP[", client_name, "] client has shut down after sending the message. Result:\n", message)
   end
   if message_type == protocol.MessageType.Error then
     log.error(message)
