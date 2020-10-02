@@ -1608,16 +1608,16 @@ describe('builtin popupmenu', function()
     ]])
 
     meths.input_mouse('wheel', 'down', '', 0, 6, 15)
-    screen:expect{grid=[[
+    screen:expect([[
       xx                                      |
       choice^                                  |
-      {n:word           }{1:                         }|
-      {s:choice         }{4:                         }|
-      {n:text           }                         |
-      {n:thing          }{1:                         }|
+      {1:~                                       }|
+      {4:[No Name] [+]                           }|
+      xx                                      |
+      choice                                  |
       {3:[No Name] [+]                           }|
-      {2:-- INSERT --}                            |
-    ]], unchanged=true}
+                                              |
+    ]])
   end)
 
   it('with kind, menu and abbr attributes', function()
