@@ -3029,8 +3029,6 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
     curbuf = buf;
     // Args are tricky: this means replace empty range by empty range..
     u_savecommon(0, 1, 1, true);
-    curbuf = save_curbuf;
-
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
@@ -3038,6 +3036,7 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
         abort();
       }
     }
+    curbuf = save_curbuf;
   }
   return uhp;
 }
