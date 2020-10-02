@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import system
 import re
 import os
 
