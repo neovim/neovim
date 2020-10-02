@@ -649,6 +649,17 @@ static int insert_execute(VimState *state, int key)
   InsertState *s = (InsertState *)state;
   s->c = key;
 
+  // Insert mode ended, possibly from a callback.
+  if (stop_insert_mode) {
+    if (key != K_IGNORE && key != K_NOP)
+      vungetc(s->c);
+    s->count = 0;
+    s->nomove = true;
+    s->c = ESC;
+    ins_compl_prep(s->c);
+    insert_handle_key(s);
+  }
+
   // Don't want K_EVENT with cursorhold for the second key, e.g., after CTRL-V.
   if (key != K_EVENT) {
     did_cursorhold = true;
