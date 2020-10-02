@@ -138,8 +138,8 @@ end
 function M.formatting_sync(options, timeout_ms)
   local params = util.make_formatting_params(options)
   local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
-  if not result then return end
-  result = result[1].result
+  if (not result or #result == 0) then return end
+  result = result[#result].result
   if not result then return end
   vim.lsp.util.apply_text_edits(result)
 end
