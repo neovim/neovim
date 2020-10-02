@@ -184,3 +184,21 @@ func Test_scroll_CursorLineNr_update()
   call StopVimInTerminal(buf)
   call delete(filename)
 endfunc
+
+" check a long file name does not result in the hit-enter prompt
+func Test_edit_long_file_name()
+  CheckScreendump
+
+  let longName = 'x'->repeat(&columns)
+  call writefile([], longName)
+  let buf = RunVimInTerminal('-N -u NONE ' .. longName, #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_long_file_name_1', {})
+
+  call term_sendkeys(buf, ":q\<cr>")
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete(longName)
+endfunc
+

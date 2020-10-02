@@ -1999,7 +1999,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
                               || (*s == TAB && msg_col <= 7)
                               || (utf_ptr2cells(s) > 1
                                   && msg_col <= 2))
-                           : (msg_col + t_col >= Columns - 1
+                           : ((*s != '\r' && msg_col + t_col >= Columns - 1)
                               || (*s == TAB
                                   && msg_col + t_col >= ((Columns - 1) & ~7))
                               || (utf_ptr2cells(s) > 1
