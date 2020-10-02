@@ -976,7 +976,7 @@ static int insert_handle_key(InsertState *s)
     // Use Shift-CTRL-W to delete a word.
     if (bt_prompt(curbuf) && (mod_mask & MOD_MASK_SHIFT) == 0) {
       stuffcharReadbuff(Ctrl_W);
-      restart_edit = 'i';
+      restart_edit = 'A';
       s->nomove = true;
       s->count = 0;
       s->c = ESC;

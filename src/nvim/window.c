@@ -2313,6 +2313,10 @@ static void win_equal_rec(
 /// @param win window to leave
 static void leaving_window(win_T *win) {
   win->w_buffer->b_prompt_insert = restart_edit;
+  // unshow mode later
+  if (restart_edit != 0 && mode_displayed) {
+    clear_cmdline = TRUE;
+  }
   restart_edit = NUL;
 
   // When leaving the window (or closing the window) was done from a
