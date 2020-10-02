@@ -722,6 +722,7 @@ func Test_verbosefile()
 endfunc
 
 func Test_verbose_option()
+  " See test/functional/ui/cmdline_spec.lua
   CheckScreendump
 
   let lines =<< trim [SCRIPT]

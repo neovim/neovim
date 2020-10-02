@@ -588,7 +588,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       }
     }
 
-    if (p_verbose >= 15 && sourcing_name != NULL) {
+    if ((p_verbose >= 15 && sourcing_name != NULL) || p_verbose >= 16) {
       msg_verbose_cmd(sourcing_lnum, cmdline_copy);
     }
 
@@ -1279,10 +1279,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   // "#!anything" is handled like a comment.
   if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!') {
     goto doend;
-  }
-
-  if (p_verbose >= 16) {
-    msg_verbose_cmd(0, *cmdlinep);
   }
 
   // 1. Skip comment lines and leading white space and colons.
