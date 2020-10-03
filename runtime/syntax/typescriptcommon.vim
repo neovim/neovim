@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript and TypeScriptReact
-" Maintainer:   Bram Moolenaar
-" Last Change:	2019 Nov 17
+" Maintainer:   Bram Moolenaar, Herrington Darkholme
+" Last Change:	2019 Nov 30
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https:github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -11,14 +11,13 @@ if &cpo =~ 'C'
   set cpo&vim
 endif
 
-" runtime syntax/common.vim
 
 " NOTE: this results in accurate highlighting, but can be slow.
 syntax sync fromstart
 
 "Dollar sign is permitted anywhere in an identifier
 setlocal iskeyword-=$
-if main_syntax == 'typescript' || main_syntax == 'typescript.tsx'
+if main_syntax == 'typescript' || main_syntax == 'typescriptreact'
   setlocal iskeyword+=$
   " syntax cluster htmlJavaScript                 contains=TOP
 endif
@@ -53,7 +52,7 @@ syntax match   typescriptProp contained /\K\k*!\?/
 
 syntax region  typescriptIndexExpr      contained matchgroup=typescriptProperty start=/\[/rs=s+1 end=/]/he=e-1 contains=@typescriptValue nextgroup=@typescriptSymbols,typescriptDotNotation,typescriptFuncCallArg skipwhite skipempty
 
-syntax match   typescriptDotNotation           /\./ nextgroup=typescriptProp skipnl
+syntax match   typescriptDotNotation           /\.\|?\.\|!\./ nextgroup=typescriptProp skipnl
 syntax match   typescriptDotStyleNotation      /\.style\./ nextgroup=typescriptDOMStyle transparent
 " syntax match   typescriptFuncCall              contained /[a-zA-Z]\k*\ze(/ nextgroup=typescriptFuncCallArg
 syntax region  typescriptParenExp              matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptComments,@typescriptValue,typescriptCastKeyword nextgroup=@typescriptSymbols skipwhite skipempty
@@ -143,7 +142,7 @@ syntax match typescriptUnaryOp /[+\-~!]/
  \ nextgroup=@typescriptValue
  \ skipwhite
 
-syntax region typescriptTernary matchgroup=typescriptTernaryOp start=/?/ end=/:/ contained contains=@typescriptValue,@typescriptComments nextgroup=@typescriptValue skipwhite skipempty
+syntax region typescriptTernary matchgroup=typescriptTernaryOp start=/?[.?]\@!/ end=/:/ contained contains=@typescriptValue,@typescriptComments nextgroup=@typescriptValue skipwhite skipempty
 
 syntax match   typescriptAssign  /=/ nextgroup=@typescriptValue
   \ skipwhite skipempty
@@ -177,7 +176,7 @@ syntax match typescriptBinaryOp contained /\*\*=\?/ nextgroup=@typescriptValue
 
 syntax cluster typescriptSymbols               contains=typescriptBinaryOp,typescriptKeywordOp,typescriptTernary,typescriptAssign,typescriptCastKeyword
 
-"" runtime syntax/basic/reserved.vim
+" runtime syntax/basic/reserved.vim
 
 "runtime syntax/basic/keyword.vim
 "Import
@@ -307,6 +306,8 @@ syntax match   typescriptDocNotation           contained /@/ nextgroup=typescrip
 syntax keyword typescriptDocTags               contained constant constructor constructs function ignore inner private public readonly static
 syntax keyword typescriptDocTags               contained const dict expose inheritDoc interface nosideeffects override protected struct internal
 syntax keyword typescriptDocTags               contained example global
+syntax keyword typescriptDocTags               contained alpha beta defaultValue eventProperty experimental label
+syntax keyword typescriptDocTags               contained packageDocumentation privateRemarks remarks sealed typeParam
 
 " syntax keyword typescriptDocTags               contained ngdoc nextgroup=typescriptDocNGDirective
 syntax keyword typescriptDocTags               contained ngdoc scope priority animations
@@ -408,7 +409,8 @@ syntax cluster typescriptPrimaryType contains=
   \ typescriptTupleType,
   \ typescriptTypeQuery,
   \ typescriptStringLiteralType,
-  \ typescriptReadonlyArrayKeyword
+  \ typescriptReadonlyArrayKeyword,
+  \ typescriptAssertType
 
 syntax region  typescriptStringLiteralType contained
   \ start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1\|$/
@@ -447,8 +449,8 @@ syntax cluster typescriptTypeMember contains=
 
 syntax region typescriptTupleType matchgroup=typescriptBraces
   \ start=/\[/ end=/\]/
-  \ contains=@typescriptType
-  \ contained skipwhite oneline
+  \ contains=@typescriptType,@typescriptComments
+  \ contained skipwhite
 
 syntax cluster typescriptTypeOperator
   \ contains=typescriptUnion,typescriptTypeBracket
@@ -483,6 +485,10 @@ syntax keyword typescriptUserDefinedType is
   \ contained nextgroup=@typescriptType skipwhite skipempty
 
 syntax keyword typescriptTypeQuery typeof keyof
+  \ nextgroup=typescriptTypeReference
+  \ contained skipwhite skipnl
+
+syntax keyword typescriptAssertType asserts
   \ nextgroup=typescriptTypeReference
   \ contained skipwhite skipnl
 
@@ -774,11 +780,13 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName clearInterval
   hi def link typescriptNodeGlobal Structure
 
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName describe it test
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName before after
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName beforeEach afterEach
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName beforeAll afterAll
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName expect assert
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName describe
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName it test before
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName after beforeEach
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName afterEach
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName beforeAll
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName afterAll
+  syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName expect assert
 
   "runtime syntax/yats/web.vim
   syntax keyword typescriptBOM containedin=typescriptIdentifierName AbortController
@@ -1894,7 +1902,7 @@ syntax match   typescriptArrowFuncDef          contained /({\_[^}]*}\(:\_[^)]\)\
 " matches `(a) =>` or `([a]) =>` or
 " `(
 "  a) =>`
-syntax match   typescriptArrowFuncDef          contained /(\(\_s*[a-zA-Z\$_\[]\_[^)]*\)*)\s*=>/
+syntax match   typescriptArrowFuncDef          contained /(\(\_s*[a-zA-Z\$_\[.]\_[^)]*\)*)\s*=>/
   \ contains=typescriptArrowFuncArg,typescriptArrowFunc
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty
@@ -1935,7 +1943,7 @@ syntax region typescriptParamImpl matchgroup=typescriptParens
 
 "runtime syntax/basic/decorator.vim
 syntax match typescriptDecorator /@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>/
-  \ nextgroup=typescriptArgumentList
+  \ nextgroup=typescriptArgumentList,typescriptTypeArguments
   \ contains=@_semantic,typescriptDotNotation
 
 " Define the default highlighting.
@@ -1969,6 +1977,7 @@ hi def link typescriptASCII                Special
 hi def link typescriptTemplateSB           Label
 hi def link typescriptRegexpString         String
 hi def link typescriptGlobal               Constant
+hi def link typescriptTestGlobal           Function
 hi def link typescriptPrototype            Type
 hi def link typescriptConditional          Conditional
 hi def link typescriptConditionalElse      Conditional
@@ -2048,6 +2057,7 @@ hi def link typescriptUserDefinedType       Keyword
 hi def link typescriptTypeReference         Identifier
 hi def link typescriptConstructor           Keyword
 hi def link typescriptDecorator             Special
+hi def link typescriptAssertType            Keyword
 
 hi link typeScript             NONE
 

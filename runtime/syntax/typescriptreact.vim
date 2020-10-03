@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript with React (JSX)
 " Maintainer:   Bram Moolenaar
-" Last Change:	2019 Nov 17
+" Last Change:	2019 Nov 30
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https:github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github

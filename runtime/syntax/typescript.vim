@@ -1,10 +1,13 @@
 " Vim syntax file
 " Language:     TypeScript
-" Maintainer:   Bram Moolenaar
-" Last Change:	2019 Nov 17
+" Maintainer:   Bram Moolenaar, Herrington Darkholme
+" Last Change:	2019 Nov 30
 " Based On:     Herrington Darkholme's yats.vim
-" Changes:      See https:github.com/HerringtonDarkholme/yats.vim
-" Credits:      See yats.vim on github
+" Changes:      Go to https:github.com/HerringtonDarkholme/yats.vim for recent changes.
+" Origin:       https://github.com/othree/yajs
+" Credits:      Kao Wei-Ko(othree), Jose Elera Campana, Zhao Yi, Claudio Fleiner, Scott Shattuck
+"               (This file is based on their hard work), gumnos (From the #vim
+"               IRC Channel in Freenode)
 
 " This is the same syntax that is in yats.vim, but:
 " - flattened into one file
