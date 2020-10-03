@@ -981,6 +981,21 @@ func Test_incsearch_substitute()
   call Incsearch_cleanup()
 endfunc
 
+func Test_incsearch_substitute_long_line()
+  throw 'skipped: Nvim does not support test_override()'
+  new
+  call test_override("char_avail", 1)
+  set incsearch
+
+  call repeat('x', 100000)->setline(1)
+  call feedkeys(':s/\%c', 'xt')
+  redraw
+  call feedkeys("\<Esc>", 'xt')
+
+  call Incsearch_cleanup()
+  bwipe!
+endfunc
+
 func Test_search_undefined_behaviour()
   if !has("terminal")
     return

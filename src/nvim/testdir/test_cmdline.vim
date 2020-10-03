@@ -1,5 +1,8 @@
 " Tests for editing the command line.
 
+source check.vim
+source screendump.vim
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")
@@ -716,6 +719,27 @@ func Test_verbosefile()
   let log = readfile('Xlog')
   call assert_match("foo\nbar", join(log, "\n"))
   call delete('Xlog')
+endfunc
+
+func Test_verbose_option()
+  " See test/functional/ui/cmdline_spec.lua
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    command DoSomething echo 'hello' |set ts=4 |let v = '123' |echo v
+    call feedkeys("\r", 't') " for the hit-enter prompt
+    set verbose=20
+  [SCRIPT]
+  call writefile(lines, 'XTest_verbose')
+
+  let buf = RunVimInTerminal('-S XTest_verbose', {'rows': 12})
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, ":DoSomething\<CR>")
+  call VerifyScreenDump(buf, 'Test_verbose_option_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_verbose')
 endfunc
 
 func Test_setcmdpos()

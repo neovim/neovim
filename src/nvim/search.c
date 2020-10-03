@@ -651,6 +651,10 @@ int searchit(
         colnr_T col = at_first_line && (options & SEARCH_COL) ? pos->col : 0;
         nmatched = vim_regexec_multi(&regmatch, win, buf,
                                      lnum, col, tm, timed_out);
+        // vim_regexec_multi() may clear "regprog"
+        if (regmatch.regprog == NULL) {
+          break;
+        }
         // Abort searching on an error (e.g., out of stack).
         if (called_emsg || (timed_out != NULL && *timed_out)) {
           break;
@@ -720,6 +724,10 @@ int searchit(
                                                    lnum, matchcol, tm,
                                                    timed_out)) == 0) {
                 match_ok = false;
+                break;
+              }
+              // vim_regexec_multi() may clear "regprog"
+              if (regmatch.regprog == NULL) {
                 break;
               }
               matchpos = regmatch.startpos[0];
@@ -811,10 +819,13 @@ int searchit(
                   }
                   break;
               }
-
-              /* Need to get the line pointer again, a
-               * multi-line search may have made it invalid. */
-              ptr = ml_get_buf(buf, lnum + matchpos.lnum, FALSE);
+              // vim_regexec_multi() may clear "regprog"
+              if (regmatch.regprog == NULL) {
+                break;
+              }
+              // Need to get the line pointer again, a
+              // multi-line search may have made it invalid.
+              ptr = ml_get_buf(buf, lnum + matchpos.lnum, false);
             }
 
             /*
@@ -890,6 +901,11 @@ int searchit(
           break;                    /* if second loop, stop where started */
       }
       at_first_line = FALSE;
+
+      // vim_regexec_multi() may clear "regprog"
+      if (regmatch.regprog == NULL) {
+        break;
+      }
 
       // Stop the search if wrapscan isn't set, "stop_lnum" is
       // specified, after an interrupt, after a match and after looping
@@ -4243,7 +4259,8 @@ is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direction)
       if (nmatched != 0) {
         break;
       }
-    } while (direction == FORWARD
+    } while (regmatch.regprog != NULL
+             && direction == FORWARD
              ? regmatch.startpos[0].col < pos.col
              : regmatch.startpos[0].col > pos.col);
 
