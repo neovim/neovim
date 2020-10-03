@@ -1,7 +1,7 @@
 " Vim indent file
 " Language: TypeScript
 " Maintainer: See https://github.com/HerringtonDarkholme/yats.vim
-" Last Change: 2019 Jun 06
+" Last Change: 2019 Oct 18
 " Acknowledgement: Based off of vim-ruby maintained by Nikolai Weibull http://vim-ruby.rubyforge.org
 
 " 0. Initialization {{{1
@@ -442,7 +442,7 @@ let &cpo = s:cpo_save
 unlet s:cpo_save
 
 function! Fixedgq(lnum, count)
-    let l:tw = &tw ? &tw : 80;
+    let l:tw = &tw ? &tw : 80
 
     let l:count = a:count
     let l:first_char = indent(a:lnum) + 1
