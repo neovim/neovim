@@ -1,6 +1,9 @@
 #ifndef NVIM_POS_H
 #define NVIM_POS_H
 
+// for INT_MAX, LONG_MAX et al.
+#include <limits.h>
+
 typedef long linenr_T;         // line number type
 /// Format used to print values which have linenr_T type
 #define PRIdLINENR "ld"
@@ -11,9 +14,9 @@ typedef int colnr_T;
 #define PRIdCOLNR "d"
 
 /// Maximal (invalid) line number
-enum { MAXLNUM = 0x7fffffff };
-/// Maximal column number, 31 bits
-enum { MAXCOL = 0x7fffffff };
+#define MAXLNUM LONG_MAX
+/// Maximal column number
+enum { MAXCOL = INT_MAX };
 // Minimum line number
 enum { MINLNUM = 1 };
 // minimum column number

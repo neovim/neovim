@@ -63,7 +63,6 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
 
     // collect buffer contents
 
-    STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
     size_t line_count = (size_t)buf->b_ml.ml_line_count;
 
     if (line_count >= 1) {
@@ -208,7 +207,6 @@ void buf_updates_send_changes(buf_T *buf,
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;
     if (num_added > 0) {
-        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
         linedata.size = (size_t)num_added;
         linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
         buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,

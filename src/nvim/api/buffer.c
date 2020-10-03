@@ -1234,13 +1234,13 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 
   bool reverse = false;
 
-  int l_row;
+  linenr_T l_row;
   colnr_T l_col;
   if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
     return rv;
   }
 
-  int u_row;
+  linenr_T u_row;
   colnr_T u_col;
   if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
     return rv;

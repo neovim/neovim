@@ -9,12 +9,12 @@
 #define MT_BRANCH_FACTOR 10
 
 typedef struct {
-  int32_t row;
+  int64_t row;
   int32_t col;
 } mtpos_t;
 
 typedef struct {
-  int32_t row;
+  int64_t row;
   int32_t col;
   uint64_t id;
   bool right_gravity;

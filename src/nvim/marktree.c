@@ -247,7 +247,8 @@ uint64_t marktree_put_pair(MarkTree *b,
   return id;
 }
 
-void marktree_put_key(MarkTree *b, int row, int col, uint64_t id)
+void marktree_put_key(MarkTree *b, int64_t row, int col, uint64_t id)
+  FUNC_ATTR_NONNULL_ALL
 {
   mtkey_t k = { .pos = { .row = row, .col = col }, .id = id };
 
@@ -296,6 +297,7 @@ void marktree_put_key(MarkTree *b, int row, int col, uint64_t id)
 ///            stuff before this key. Most of the time this is false (the
 ///            recommended strategy is to always iterate forward)
 void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
+  FUNC_ATTR_NONNULL_ALL
 {
   int adjustment = 0;
 
@@ -578,7 +580,8 @@ uint64_t marktree_revise(MarkTree *b, MarkTreeIter *itr)
   return new_id;
 }
 
-void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
+void marktree_move(MarkTree *b, MarkTreeIter *itr, int64_t row, int col)
+  FUNC_ATTR_NONNULL_ALL
 {
   uint64_t old_id = rawkey(itr).id;
   // TODO(bfredl): optimize when moving a mark within a leaf without moving it
@@ -591,7 +594,8 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
 // itr functions
 
 // TODO(bfredl): static inline?
-bool marktree_itr_get(MarkTree *b, int row, int col, MarkTreeIter *itr)
+bool marktree_itr_get(MarkTree *b, int64_t row, int col, MarkTreeIter *itr)
+  FUNC_ATTR_NONNULL_ALL
 {
   return marktree_itr_get_ext(b, (mtpos_t){ row, col },
                               itr, false, false, NULL);
@@ -599,6 +603,7 @@ bool marktree_itr_get(MarkTree *b, int row, int col, MarkTreeIter *itr)
 
 bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr,
                           bool last, bool gravity, mtpos_t *oldbase)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   mtkey_t k = { .pos = p, .id = gravity ? RIGHT_GRAVITY : 0 };
   if (last && !gravity) {
@@ -837,13 +842,13 @@ static void swap_id(uint64_t *id1, uint64_t *id2)
 }
 
 bool marktree_splice(MarkTree *b,
-                     int start_line, int start_col,
-                     int old_extent_line, int old_extent_col,
-                     int new_extent_line, int new_extent_col)
+                     int64_t start_line, int start_col,
+                     int64_t old_extent_line, int old_extent_col,
+                     int64_t new_extent_line, int new_extent_col)
 {
   mtpos_t start = { start_line, start_col };
-  mtpos_t old_extent = { (int)old_extent_line, old_extent_col };
-  mtpos_t new_extent = { (int)new_extent_line, new_extent_col };
+  mtpos_t old_extent = { old_extent_line, old_extent_col };
+  mtpos_t new_extent = { new_extent_line, new_extent_col };
 
   bool may_delete = (old_extent.row != 0 || old_extent.col != 0);
   bool same_line = old_extent.row == 0 && new_extent.row == 0;
@@ -969,7 +974,7 @@ past_continue_same_node:
 
   while (itr->node) {
     unrelative(oldbase[itr->lvl], &rawkey(itr).pos);
-    int realrow = rawkey(itr).pos.row;
+    const int64_t realrow = rawkey(itr).pos.row;
     assert(realrow >= old_extent.row);
     bool done = false;
     if (realrow == old_extent.row) {
@@ -997,9 +1002,9 @@ past_continue_same_node:
 }
 
 void marktree_move_region(MarkTree *b,
-                          int start_row, colnr_T start_col,
-                          int extent_row, colnr_T extent_col,
-                          int new_row, colnr_T new_col)
+                          linenr_T start_row, colnr_T start_col,
+                          linenr_T extent_row, colnr_T extent_col,
+                          linenr_T new_row, colnr_T new_col)
 {
   mtpos_t start = { start_row, start_col }, size = { extent_row, extent_col };
   mtpos_t end = size;
@@ -1183,7 +1188,7 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
   for (int i = 0; i < n->n; i++) {
     mtpos_t p = n->key[i].pos;
     unrelative(off, &p);
-    snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
+    snprintf(buf, sizeof(buf), "%" PRId64 "/%d", p.row, p.col);
     GA_PUT(buf);
     if (n->level) {
       mt_inspect_node(b, ga, n->ptr[i+1], p);

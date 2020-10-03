@@ -3014,6 +3014,7 @@ list_T *u_eval_tree(const u_header_T *const first_uhp)
 // Given the buffer, Return the undo header. If none is set, set one first.
 // NULL will be returned if e.g undolevels = -1 (undo disabled)
 u_header_T *u_force_get_undo_header(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {

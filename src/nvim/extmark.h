@@ -11,9 +11,9 @@ typedef struct
 {
   uint64_t ns_id;
   uint64_t mark_id;
-  int row;
+  linenr_T row;
   colnr_T col;
-  int end_row;
+  linenr_T end_row;
   colnr_T end_col;
   Decoration *decor;
 } ExtmarkInfo;
@@ -53,9 +53,9 @@ typedef struct {
 // extmark was updated
 typedef struct {
   uint64_t mark;  // raw mark id of the marktree
-  int old_row;
+  linenr_T old_row;
   colnr_T old_col;
-  int row;
+  linenr_T row;
   colnr_T col;
 } ExtmarkSavePos;
 
@@ -79,9 +79,9 @@ struct undo_object {
 
 
 typedef struct {
-  int start_row;
+  int64_t start_row;
   int start_col;
-  int end_row;
+  int64_t end_row;
   int end_col;
   int attr_id;
   VirtText *virt_text;

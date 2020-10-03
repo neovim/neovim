@@ -135,7 +135,8 @@ revised:
   return id;
 }
 
-static bool extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col)
+static bool extmark_setraw(buf_T *buf, uint64_t mark, linenr_T row, colnr_T col)
+  FUNC_ATTR_NONNULL_ALL
 {
   MarkTreeIter itr[1] = { 0 };
   mtpos_t pos = marktree_lookup(buf->b_marktree, mark, itr);
@@ -217,7 +218,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
 
   // the value is either zero or the lnum (row+1) if highlight was present.
   static Map(uint64_t, ssize_t) *delete_set = NULL;
-  typedef struct { Decoration *decor; int row1; } DecorItem;
+  typedef struct { Decoration *decor; int64_t row1; } DecorItem;
   static kvec_t(DecorItem) decors;
   if (delete_set == NULL) {
     delete_set = map_new(uint64_t, ssize_t)();
@@ -299,9 +300,10 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
 // dir can be set to control the order of the array
 // amount = amount of marks to find or -1 for all
 ExtmarkInfoArray extmark_get(buf_T *buf, uint64_t ns_id,
-                             int l_row, colnr_T l_col,
-                             int u_row, colnr_T u_col,
+                             linenr_T l_row, colnr_T l_col,
+                             linenr_T u_row, colnr_T u_col,
                              int64_t amount, bool reverse)
+  FUNC_ATTR_NONNULL_ALL
 {
   ExtmarkInfoArray array = KV_INITIAL_VALUE;
   MarkTreeIter itr[1];
@@ -437,8 +439,9 @@ static void u_extmark_set(buf_T *buf, uint64_t mark,
 /// useful when we cannot simply reverse the operation. This will do nothing on
 /// redo, enforces correct position when undo.
 void u_extmark_copy(buf_T *buf,
-                    int l_row, colnr_T l_col,
-                    int u_row, colnr_T u_col)
+                    linenr_T l_row, colnr_T l_col,
+                    linenr_T u_row, colnr_T u_col)
+  FUNC_ATTR_NONNULL_ALL
 {
   u_header_T  *uhp = u_force_get_undo_header(buf);
   if (!uhp) {
@@ -803,7 +806,9 @@ Decoration *decoration_hl(int hl_id)
   return decor;
 }
 
-void decoration_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
+void decoration_redraw(buf_T *buf, int64_t row1, int64_t row2,
+                       const Decoration *decor)
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   if (decor->hl_id && row2 >= row1) {
     redraw_buf_range_later(buf, row1+1, row2+1);

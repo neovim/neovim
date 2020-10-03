@@ -1531,8 +1531,9 @@ bool ns_initialized(uint64_t ns)
 /// @param[out] colnr extmark column
 ///
 /// @return true if the extmark was found, else false
-bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
-                                *row, colnr_T *col, Error *err)
+bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj,
+                                linenr_T *row, colnr_T *col, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Check if it is mark id
   if (obj.type == kObjectTypeInteger) {
@@ -1572,7 +1573,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
     }
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *row = (linenr_T)(pos_row >= 0 ? pos_row  : MAXLNUM);
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {

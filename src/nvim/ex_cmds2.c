@@ -2118,7 +2118,7 @@ void ex_listdo(exarg_T *eap)
         i = (int)eap->line1 - 1;
         if (eap->addr_count <= 0) {
           // Default to all quickfix/location list entries.
-          assert(qf_size < MAXLNUM);
+          assert(qf_size < (uint64_t)MAXLNUM);
           eap->line2 = (linenr_T)qf_size;
         }
       }
