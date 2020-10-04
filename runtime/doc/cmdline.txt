@@ -224,6 +224,10 @@ CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 		present in 'cpoptions', start entered command.
 		Note: If your <Esc> key is hard to hit on your keyboard, train
 		yourself to use CTRL-[.
+						*c_META* *c_ALT*
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have a
+		command-line mode mapping.
 							*c_CTRL-C*
 CTRL-C		quit command-line without executing
 

@@ -1528,6 +1528,17 @@ int vgetc(void)
         c = utf_ptr2char(buf);
       }
 
+      // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
+      // something with a meta- or alt- modifier that was not mapped, interpret
+      // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
+      if (!no_mapping && KeyTyped
+          && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
+        mod_mask = 0;
+        stuffcharReadbuff(c);
+        u_sync(false);
+        c = ESC;
+      }
+
       break;
     }
   }

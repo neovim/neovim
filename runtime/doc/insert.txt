@@ -42,9 +42,9 @@ char		action	~
 		abbreviation.
 		Note: If your <Esc> key is hard to hit, try CTRL-[ instead.
 						*i_META* *i_ALT*
-                ALT (|META|) acts like <Esc> if the chord is not mapped.
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
 		For example <A-x> acts like <Esc>x if <A-x> does not have an
-                insert-mode mapping.
+		insert-mode mapping.
 						*i_CTRL-C*
 CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		abbreviations.  Does not trigger the |InsertLeave| autocommand

@@ -1254,14 +1254,6 @@ check_pum:
 normalchar:
     // Insert a normal character.
 
-    if (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META) {
-      // Unmapped ALT/META chord behaves like ESC+c. #8213
-      stuffcharReadbuff(ESC);
-      stuffcharReadbuff(s->c);
-      u_sync(false);
-      break;
-    }
-
     if (!p_paste) {
       // Trigger InsertCharPre.
       char_u *str = do_insert_char_pre(s->c);
