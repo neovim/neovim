@@ -380,7 +380,7 @@ func Test_undofile_truncated()
   endfor
 
   bwipe!
-"  call delete('Xundofile')
+  call delete('Xundofile')
 endfunc
 
 func Test_rundo_errors()
