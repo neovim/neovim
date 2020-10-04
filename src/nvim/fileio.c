@@ -350,6 +350,7 @@ readfile(
   char_u      *old_b_fname;
   int using_b_ffname;
   int using_b_fname;
+  static char *msg_is_a_directory = N_("is a directory");
 
   au_did_filetype = false;  // reset before triggering any autocommands
 
@@ -444,12 +445,23 @@ readfile(
   else
     msg_scroll = TRUE;          /* don't overwrite previous file message */
 
-  /*
-   * If the name is too long we might crash further on, quit here.
-   */
+  // If the name is too long we might crash further on, quit here.
   if (fname != NULL && *fname != NUL) {
-    if (STRLEN(fname) >= MAXPATHL) {
+    size_t namelen = STRLEN(fname);
+
+    // If the name is too long we might crash further on, quit here.
+    if (namelen >= MAXPATHL) {
       filemess(curbuf, fname, (char_u *)_("Illegal file name"), 0);
+      msg_end();
+      msg_scroll = msg_save;
+      return FAIL;
+    }
+
+    // If the name ends in a path separator, we can't open it.  Check here,
+    // because reading the file may actually work, but then creating the
+    // swap file may destroy it!  Reported on MS-DOS and Win 95.
+    if (after_pathsep((const char *)fname, (const char *)(fname + namelen))) {
+      filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
       msg_end();
       msg_scroll = msg_save;
       return FAIL;
@@ -474,7 +486,7 @@ readfile(
 # endif
         ) {
       if (S_ISDIR(perm)) {
-        filemess(curbuf, fname, (char_u *)_("is a directory"), 0);
+        filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
       } else {
         filemess(curbuf, fname, (char_u *)_("is not a file"), 0);
       }
@@ -544,7 +556,7 @@ readfile(
 #ifndef UNIX
     // On non-unix systems we can't open a directory, check here.
     if (os_isdir(fname)) {
-      filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
+      filemess(curbuf, sfname, (char_u *)_(msg_is_a_directory), 0);
       curbuf->b_p_ro = true;        // must use "w!" now
     } else {
 #endif
