@@ -2052,23 +2052,15 @@ parse_line:
           // Store the info we need later, which depends on the kind of
           // tags we are dealing with.
           if (help_only) {
-# define ML_EXTRA 3
-            // Append the help-heuristic number after the tagname, for
-            // sorting it later.  The heuristic is ignored for
-            // detecting duplicates.
-            // The format is {tagname}@{lang}NUL{heuristic}NUL
+            // The format is {tagname}@{lang}
             *tagp.tagname_end = NUL;
             len = (int)(tagp.tagname_end - tagp.tagname);
-            mfp = xmalloc(sizeof(char_u) + len + 10 + ML_EXTRA + 1);
+            mfp = xmalloc(len + 1 + sizeof(help_lang));
 
             p = mfp;
             STRCPY(p, tagp.tagname);
             p[len] = '@';
             STRCPY(p + len + 1, help_lang);
-            snprintf((char *)p + len + 1 + ML_EXTRA, 10, "%06d",
-                     help_heuristic(tagp.tagname,
-                                    match_re ? matchoff : 0, !match_no_ic)
-                     + help_pri);
 
             *tagp.tagname_end = TAB;
           } else if (name_only)   {

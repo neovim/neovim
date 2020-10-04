@@ -4710,70 +4710,12 @@ char_u *check_help_lang(char_u *arg)
   return NULL;
 }
 
-/*
- * Return a heuristic indicating how well the given string matches.  The
- * smaller the number, the better the match.  This is the order of priorities,
- * from best match to worst match:
- *	- Match with least alpha-numeric characters is better.
- *	- Match with least total characters is better.
- *	- Match towards the start is better.
- *	- Match starting with "+" is worse (feature instead of command)
- * Assumption is made that the matched_string passed has already been found to
- * match some string for which help is requested.  webb.
- */
-int
-help_heuristic(
-    char_u *matched_string,
-    int offset,                             // offset for match
-    int wrong_case                          // no matching case
-)
-{
-  int num_letters;
-  char_u      *p;
-
-  num_letters = 0;
-  for (p = matched_string; *p; p++)
-    if (ASCII_ISALNUM(*p))
-      num_letters++;
-
-  /*
-   * Multiply the number of letters by 100 to give it a much bigger
-   * weighting than the number of characters.
-   * If there only is a match while ignoring case, add 5000.
-   * If the match starts in the middle of a word, add 10000 to put it
-   * somewhere in the last half.
-   * If the match is more than 2 chars from the start, multiply by 200 to
-   * put it after matches at the start.
-   */
-  if (offset > 0
-      && ASCII_ISALNUM(matched_string[offset])
-      && ASCII_ISALNUM(matched_string[offset - 1])) {
-    offset += 10000;
-  } else if (offset > 2) {
-    offset *= 200;
-  }
-  if (wrong_case) {
-    offset += 5000;
-  }
-  // Features are less interesting than the subjects themselves, but "+"
-  // alone is not a feature.
-  if (matched_string[0] == '+' && matched_string[1] != NUL) {
-    offset += 100;
-  }
-  return (int)(100 * num_letters + STRLEN(matched_string) + offset);
-}
-
-/*
- * Compare functions for qsort() below, that checks the help heuristics number
- * that has been put after the tagname by find_tags().
- */
+/// Compare function for qsort() used in find_tags().
 static int help_compare(const void *s1, const void *s2)
 {
-  char    *p1;
-  char    *p2;
+  char *p1 = *(char **)s1;
+  char *p2 = *(char **)s2;
 
-  p1 = *(char **)s1 + strlen(*(char **)s1) + 1;
-  p2 = *(char **)s2 + strlen(*(char **)s2) + 1;
   return strcmp(p1, p2);
 }
 
@@ -4991,13 +4933,11 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
   }
   if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
       && *num_matches > 0) {
-    /* Sort the matches found on the heuristic number that is after the
-     * tag name. */
-    qsort((void *)*matches, (size_t)*num_matches,
-        sizeof(char_u *), help_compare);
-    /* Delete more than TAG_MANY to reduce the size of the listing. */
-    while (*num_matches > TAG_MANY)
+    qsort(*matches, (size_t)(*num_matches), sizeof(char_u *), help_compare);
+    // Delete more than TAG_MANY to reduce the size of the listing.
+    while (*num_matches > TAG_MANY) {
       xfree((*matches)[--*num_matches]);
+    }
   }
   return OK;
 }
