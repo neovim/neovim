@@ -76,6 +76,10 @@ end
 M['textDocument/publishDiagnostics'] = function(_, _, result)
   if not result then return end
   local uri = result.uri
+
+  -- prevent creating/loading bufers for empty diagnostics
+  if vim.tbl_isempty(result.diagnostics) then return end
+
   local bufnr = vim.uri_to_bufnr(uri)
   if not bufnr then
     err_message("LSP.publishDiagnostics: Couldn't find buffer for ", uri)
@@ -89,6 +93,8 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   -- In particular, this stops a ton of spam when first starting a server for current
   -- unloaded buffers.
   if not api.nvim_buf_is_loaded(bufnr) then
+    -- since buffer was loaded by uri_to_bufnr, wipe it out to leave a clean buffer list
+    vim.cmd(string.format('%dbw!', bufnr))
     return
   end
 
