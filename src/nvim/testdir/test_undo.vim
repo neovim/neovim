@@ -392,6 +392,26 @@ func Test_rundo_errors()
   call delete('Xundofile')
 endfunc
 
+func Test_undofile_next()
+  set undofile
+  new Xfoo.txt
+  execute "norm ix\<c-g>uy\<c-g>uz\<Esc>"
+  write
+  bwipe
+
+  next Xfoo.txt
+  call assert_equal('xyz', getline(1))
+  silent undo
+  call assert_equal('xy', getline(1))
+  silent undo
+  call assert_equal('x', getline(1))
+  bwipe!
+
+  call delete('Xfoo.txt')
+  call delete('.Xfoo.txt.un~')
+  set undofile&
+endfunc
+
 " Test for undo working properly when executing commands from a register.
 " Also test this in an empty buffer.
 func Test_cmd_in_reg_undo()

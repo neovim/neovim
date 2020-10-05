@@ -2497,8 +2497,12 @@ int do_ecmd(
       new_name = NULL;
     }
     set_bufref(&bufref, buf);
-    if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-      // Save all the text, so that the reload can be undone.
+
+    // If the buffer was used before, store the current contents so that
+    // the reload can be undone.  Do not do this if the (empty) buffer is
+    // being re-used for another file.
+    if (!(curbuf->b_flags & BF_NEVERLOADED)
+        && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
       u_sync(false);
       if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
