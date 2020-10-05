@@ -968,7 +968,7 @@ EXTERN char_u e_toocompl[] INIT(= N_("E74: Command too complex"));
 EXTERN char_u e_longname[] INIT(= N_("E75: Name too long"));
 EXTERN char_u e_toomsbra[] INIT(= N_("E76: Too many ["));
 EXTERN char_u e_toomany[] INIT(= N_(
-        "E77: Too many file names (use :next instead of :edit with wildcards)"));
+    "E77: Too many file names (use :next instead of :edit with wildcards)"));
 EXTERN char_u e_trailing[] INIT(= N_("E488: Trailing characters"));
 EXTERN char_u e_trailing2[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN char_u e_umark[] INIT(= N_("E78: Unknown mark"));
