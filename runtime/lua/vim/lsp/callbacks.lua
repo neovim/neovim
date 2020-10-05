@@ -74,11 +74,10 @@ end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_publishDiagnostics
 M['textDocument/publishDiagnostics'] = function(_, _, result)
-  if not result then return end
-  local uri = result.uri
-
   -- prevent creating/loading bufers for empty diagnostics
-  if vim.tbl_isempty(result.diagnostics) then return end
+  if not result or not result.diagnostics or vim.tbl_isempty(result.diagnostics) then return end
+
+  local uri = result.uri
 
   local bufnr = vim.uri_to_bufnr(uri)
   if not bufnr then
