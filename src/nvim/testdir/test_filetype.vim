@@ -128,6 +128,7 @@ let s:filename_checks = {
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
+    \ 'debchangelog': ['changelog.Debian', 'changelog.dch', 'NEWS.Debian', 'NEWS.dch', '/debian/changelog'],
     \ 'debcontrol': ['/debian/control'],
     \ 'debsources': ['/etc/apt/sources.list', '/etc/apt/sources.list.d/file.list'],
     \ 'def': ['file.def'],

@@ -1,5 +1,8 @@
 " Tests for tagjump (tags and special searches)
 
+source check.vim
+source screendump.vim
+
 " SEGV occurs in older versions.  (At least 7.4.1748 or older)
 func Test_ptag_with_notagstack()
   set notagstack
@@ -549,6 +552,37 @@ func Test_tag_line_toolong()
   call delete('Xsomewhere')
   set tags&
   let &verbose = old_vbs
+endfunc
+
+" Check that using :tselect does not run into the hit-enter prompt.
+" Requires a terminal to trigger that prompt.
+func Test_tselect()
+  CheckScreendump
+
+  call writefile([
+	\ 'main	Xtest.h	/^void test();$/;"	f',
+	\ 'main	Xtest.c	/^int main()$/;"	f',
+	\ 'main	Xtest.x	/^void test()$/;"	f',
+	\ ], 'Xtags')
+  cal writefile([
+	\ 'int main()',
+	\ 'void test()',
+	\ ], 'Xtest.c')
+
+  let lines =<< trim [SCRIPT]
+    set tags=Xtags
+  [SCRIPT]
+  call writefile(lines, 'XTest_tselect')
+  let buf = RunVimInTerminal('-S XTest_tselect', {'rows': 10, 'cols': 50})
+
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, ":tselect main\<CR>2\<CR>")
+  call VerifyScreenDump(buf, 'Test_tselect_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xtags')
+  call delete('Xtest.c')
+  call delete('XTest_tselect')
 endfunc
 
 func Test_tagline()
