@@ -277,9 +277,13 @@ static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
   xfree(tw);
 }
 
-static bool nlua_wait_condition(lua_State *lstate, int *status,
+static bool nlua_wait_condition(bool is_callable, lua_State *lstate, int *status,
                                 bool *callback_result)
 {
+  if (!is_callable) {
+    return false;
+  }
+
   lua_pushvalue(lstate, 2);
   *status = lua_pcall(lstate, 0, 1, 0);
   if (*status) {
@@ -306,11 +310,6 @@ static int nlua_wait(lua_State *lstate)
   if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
     is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
     lua_pop(lstate, 1);
-  }
-
-  if (!is_function) {
-    lua_pushliteral(lstate, "vim.wait: condition must be a function");
-    return lua_error(lstate);
   }
 
   intptr_t interval = 200;
@@ -347,7 +346,7 @@ static int nlua_wait(lua_State *lstate)
       &main_loop,
       loop_events,
       (int)timeout,
-      nlua_wait_condition(lstate, &pcall_status, &callback_result) || got_int);
+      nlua_wait_condition(is_function, lstate, &pcall_status, &callback_result) || got_int);
 
   // Stop dummy timer
   time_watcher_stop(tw);

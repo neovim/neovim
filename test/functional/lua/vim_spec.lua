@@ -1245,15 +1245,6 @@ describe('lua stdlib', function()
       ]])
     end)
 
-    it('should require functions to be passed', function()
-      local pcall_result = exec_lua [[
-        return {pcall(function() vim.wait(1000, 13) end)}
-      ]]
-
-      eq(pcall_result[1], false)
-      matches('condition must be a function', pcall_result[2])
-    end)
-
     it('should not crash when callback errors', function()
       local pcall_result = exec_lua [[
         return {pcall(function() vim.wait(1000, function() error("As Expected") end) end)}
