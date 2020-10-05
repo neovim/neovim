@@ -1214,6 +1214,23 @@ describe('lua stdlib', function()
       ]])
     end)
 
+    it('should not process non-fast events when commanded', function()
+      eq({wait_result = false}, exec_lua[[
+        start_time = get_time()
+
+        vim.g.timer_result = false
+        timer = vim.loop.new_timer()
+        timer:start(100, 0, vim.schedule_wrap(function()
+          vim.g.timer_result = true
+        end))
+
+        wait_result = vim.wait(300, function() return vim.g.timer_result end, nil, true)
+
+        return {
+          wait_result = wait_result,
+        }
+      ]])
+    end)
     it('should work with vim.defer_fn', function()
       eq({time = true, wait_result = true}, exec_lua[[
         start_time = get_time()
