@@ -8,7 +8,7 @@ TSHighlighter.active = TSHighlighter.active or {}
 
 local ns = a.nvim_create_namespace("treesitter/highlighter")
 
--- These are conventions defined by tree-sitter, though it
+-- These are conventions defined by nvim-treesitter, though it
 -- needs to be user extensible also.
 TSHighlighter.hl_map = {
     ["error"] = "Error",
@@ -72,7 +72,11 @@ function TSHighlighter.new(parser, query)
   a.nvim_buf_set_option(self.buf, "syntax", "")
 
   -- TODO(bfredl): can has multiple highlighters per buffer????
-  TSHighlighter.active[parser.bufnr] = self
+  if not TSHighlighter.active[parser.bufnr] then
+    TSHighlighter.active[parser.bufnr] = {}
+  end
+
+  TSHighlighter.active[parser.bufnr][parser.lang] = self
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
   -- but use synload.vim rather than syntax.vim to not enable
@@ -128,9 +132,13 @@ function TSHighlighter:set_query(query)
   a.nvim__buf_redraw_range(self.parser.bufnr, 0, a.nvim_buf_line_count(self.parser.bufnr))
 end
 
-function TSHighlighter._on_line(_, _win, buf, line)
-  -- on_line is only called when this is non-nil
-  local self = TSHighlighter.active[buf]
+local function iter_active_tshl(buf, fn)
+  for _, hl in pairs(TSHighlighter.active[buf] or {}) do
+    fn(hl)
+  end
+end
+
+local function on_line_impl(self, buf, line)
   if self.root == nil then
     return -- parser bought the farm already
   end
@@ -158,24 +166,38 @@ function TSHighlighter._on_line(_, _win, buf, line)
   end
 end
 
-function TSHighlighter._on_buf(_, buf)
-  local self = TSHighlighter.active[buf]
-  if self then
-    local tree = self.parser:parse()
-    self.root = (tree and tree:root()) or nil
+function TSHighlighter._on_line(_, _win, buf, line, highlighter)
+  -- on_line is only called when this is non-nil
+  if highlighter then
+    on_line_impl(highlighter, buf, line)
+  else
+    iter_active_tshl(buf, function(self)
+      on_line_impl(self, buf, line)
+    end)
   end
 end
 
-function TSHighlighter._on_win(_, _win, buf, _topline, botline)
-  local self = TSHighlighter.active[buf]
-  if not self then
-    return false
-  end
+function TSHighlighter._on_buf(_, buf)
+  iter_active_tshl(buf, function(self)
+    if self then
+      local tree = self.parser:parse()
+      self.root = (tree and tree:root()) or nil
+    end
+  end)
+end
 
-  self.iter = nil
-  self.nextrow = 0
-  self.botline = botline
-  self.redraw_count = self.redraw_count + 1
+function TSHighlighter._on_win(_, _win, buf, _topline, botline)
+  iter_active_tshl(buf, function(self)
+    if not self then
+      return false
+    end
+
+    self.iter = nil
+    self.nextrow = 0
+    self.botline = botline
+    self.redraw_count = self.redraw_count + 1
+    return true
+  end)
   return true
 end
 
