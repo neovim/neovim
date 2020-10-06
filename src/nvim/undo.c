@@ -878,7 +878,12 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0 || len == EOF) {
+    if (len == EOF) {
+      corruption_error("truncated", file_name);
+      u_free_uhp(uhp);
+      return NULL;
+    }
+    if (len == 0) {
       break;
     }
     int what = undo_read_byte(bi);

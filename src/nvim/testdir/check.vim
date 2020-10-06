@@ -25,6 +25,14 @@ func CheckFunction(name)
   endif
 endfunc
 
+" Command to check for the presence of python.  Argument should have been
+" obtained with PythonProg()
+func CheckPython(name)
+  if a:name == ''
+    throw 'Skipped: python command not available'
+  endif
+endfunc
+
 " Command to check for running on MS-Windows
 command CheckMSWindows call CheckMSWindows()
 func CheckMSWindows()

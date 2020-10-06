@@ -364,6 +364,25 @@ func Test_wundo_errors()
   bwipe!
 endfunc
 
+" Check that reading a truncted undo file doesn't hang.
+func Test_undofile_truncated()
+  throw 'skipped: TODO: '
+  new
+  call setline(1, 'hello')
+  set ul=100
+  wundo Xundofile
+  let contents = readfile('Xundofile', 'B')
+
+  " try several sizes
+  for size in range(20, 500, 33)
+    call writefile(contents[0:size], 'Xundofile')
+    call assert_fails('rundo Xundofile', 'E825:')
+  endfor
+
+  bwipe!
+  call delete('Xundofile')
+endfunc
+
 func Test_rundo_errors()
   call assert_fails('rundo XfileDoesNotExist', 'E822:')
 
@@ -371,6 +390,26 @@ func Test_rundo_errors()
   call assert_fails('rundo Xundofile', 'E823:')
 
   call delete('Xundofile')
+endfunc
+
+func Test_undofile_next()
+  set undofile
+  new Xfoo.txt
+  execute "norm ix\<c-g>uy\<c-g>uz\<Esc>"
+  write
+  bwipe
+
+  next Xfoo.txt
+  call assert_equal('xyz', getline(1))
+  silent undo
+  call assert_equal('xy', getline(1))
+  silent undo
+  call assert_equal('x', getline(1))
+  bwipe!
+
+  call delete('Xfoo.txt')
+  call delete('.Xfoo.txt.un~')
+  set undofile&
 endfunc
 
 " Test for undo working properly when executing commands from a register.
