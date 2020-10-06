@@ -12,10 +12,10 @@ local log = {}
 -- Level numbers begin with 'trace' at 0
 log.levels = {
   TRACE = 0;
-  DEBUG = 1;
-  INFO  = 2;
-  WARN  = 3;
-  ERROR = 4;
+  ERROR = 1;
+  WARN  = 2;
+  INFO  = 3;
+  DEBUG = 4;
 }
 
 -- Default log level is warn.
