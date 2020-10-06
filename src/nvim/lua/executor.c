@@ -299,45 +299,66 @@ static int nlua_wait(lua_State *lstate)
     return luaL_error(lstate, "timeout must be > 0");
   }
 
+  int lua_top = lua_gettop(lstate);
+
   // Check if condition can be called.
-  bool is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+  bool is_function = false;
+  if (lua_top >= 2 && !lua_isnil(lstate, 2)) {
+    is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
 
-  // Check if condition is callable table
-  if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
-    is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
-    lua_pop(lstate, 1);
-  }
+    // Check if condition is callable table
+    if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
+      is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+      lua_pop(lstate, 1);
+    }
 
-  if (!is_function) {
-    lua_pushliteral(lstate, "vim.wait: condition must be a function");
-    return lua_error(lstate);
+    if (!is_function) {
+      lua_pushliteral(
+          lstate,
+          "vim.wait: if passed, condition must be a function");
+      return lua_error(lstate);
+    }
   }
 
   intptr_t interval = 200;
-  if (lua_gettop(lstate) >= 3) {
+  if (lua_top >= 3 && !lua_isnil(lstate, 3)) {
     interval = luaL_checkinteger(lstate, 3);
     if (interval < 0) {
       return luaL_error(lstate, "interval must be > 0");
     }
   }
 
+  bool fast_only = false;
+  if (lua_top >= 4) {
+    fast_only =  lua_toboolean(lstate, 4);
+  }
+
+  MultiQueue *loop_events = fast_only || in_fast_callback > 0
+    ? main_loop.fast_events : main_loop.events;
+
   TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
 
   // Start dummy timer.
   time_watcher_init(&main_loop, tw, NULL);
-  tw->events = main_loop.events;
+  tw->events = loop_events;
   tw->blockable = true;
-  time_watcher_start(tw, dummy_timer_due_cb,
-                     (uint64_t)interval, (uint64_t)interval);
+  time_watcher_start(
+      tw,
+      dummy_timer_due_cb,
+      (uint64_t)interval,
+      (uint64_t)interval);
 
   int pcall_status = 0;
   bool callback_result = false;
 
   LOOP_PROCESS_EVENTS_UNTIL(
       &main_loop,
-      main_loop.events,
+      loop_events,
       (int)timeout,
-      nlua_wait_condition(lstate, &pcall_status, &callback_result) || got_int);
+      is_function ? nlua_wait_condition(
+          lstate,
+          &pcall_status,
+          &callback_result) : false || got_int);
 
   // Stop dummy timer
   time_watcher_stop(tw);

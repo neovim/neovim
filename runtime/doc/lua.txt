@@ -737,13 +737,20 @@ vim.defer_fn({fn}, {timeout})                                    *vim.defer_fn*
     Returns: ~
         |vim.loop|.new_timer() object
 
-vim.wait({time}, {callback} [, {interval}])                         *vim.wait()*
+vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
         Wait for {time} in milliseconds until {callback} returns `true`.
 
         Executes {callback} immediately and at approximately {interval}
         milliseconds (default 200). Nvim still processes other events during
         this time.
 
+    Parameters: ~
+        {time}      Number of milliseconds to wait
+        {callback}  Optional callback. Waits until {callback} returns true
+        {interval}  (Approximate) number of milliseconds to wait between polls
+        {fast_only} If true, only |api-fast| events will be processed.
+                        If called from while in an |api-fast| event, will
+                        automatically be set to `true`.
 
     Returns: ~
         If {callback} returns `true` during the {time}:
