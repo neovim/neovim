@@ -337,7 +337,7 @@ return {
   },
   {
     command='caddexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },
@@ -409,7 +409,7 @@ return {
   },
   {
     command='cexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR, BANG),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, BANG),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },
@@ -447,7 +447,7 @@ return {
   },
   {
     command='cgetexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },
@@ -1299,7 +1299,7 @@ return {
   },
   {
     command='laddexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },
@@ -1389,7 +1389,7 @@ return {
   },
   {
     command='lexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR, BANG),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, BANG),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },
@@ -1427,7 +1427,7 @@ return {
   },
   {
     command='lgetexpr',
-    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM, TRLBAR),
+    flags=bit.bor(NEEDARG, WORD1, NOTRLCOM),
     addr_type=ADDR_LINES,
     func='ex_cexpr',
   },

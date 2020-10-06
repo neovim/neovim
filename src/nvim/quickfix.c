@@ -6377,7 +6377,7 @@ void ex_cexpr(exarg_T *eap)
   // Evaluate the expression.  When the result is a string or a list we can
   // use it to fill the errorlist.
   typval_T tv;
-  if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
+  if (eval0(eap->arg, &tv, &eap->nextcmd, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
         || tv.v_type == VAR_LIST) {
       incr_quickfix_busy();

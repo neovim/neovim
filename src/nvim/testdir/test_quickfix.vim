@@ -95,7 +95,7 @@ func XlistTests(cchar)
   " Populate the list and then try
   Xgetexpr ['non-error 1', 'Xtestfile1:1:3:Line1',
 		  \ 'non-error 2', 'Xtestfile2:2:2:Line2',
-		  \ 'non-error 3', 'Xtestfile3:3:1:Line3']
+		  \ 'non-error| 3', 'Xtestfile3:3:1:Line3']
 
   " List only valid entries
   let l = split(execute('Xlist', ''), "\n")
@@ -107,7 +107,7 @@ func XlistTests(cchar)
   let l = split(execute('Xlist!', ''), "\n")
   call assert_equal([' 1: non-error 1', ' 2 Xtestfile1:1 col 3: Line1',
 		   \ ' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2',
-		   \ ' 5: non-error 3', ' 6 Xtestfile3:3 col 1: Line3'], l)
+		   \ ' 5: non-error| 3', ' 6 Xtestfile3:3 col 1: Line3'], l)
 
   " List a range of errors
   let l = split(execute('Xlist 3,6', ''), "\n")
@@ -507,7 +507,7 @@ func Xtest_browse(cchar)
   Xexpr ""
   call assert_equal(0, g:Xgetlist({'idx' : 0}).idx)
   call assert_equal(0, g:Xgetlist({'size' : 0}).size)
-  Xaddexpr ['foo', 'bar', 'baz', 'quux', 'shmoo']
+  Xaddexpr ['foo', 'bar', 'baz', 'quux', 'sh|moo']
   call assert_equal(5, g:Xgetlist({'size' : 0}).size)
   Xlast
   call assert_equal(5, g:Xgetlist({'idx' : 0}).idx)
@@ -4067,13 +4067,13 @@ func Test_search_in_dirstack()
 	      \ "Xfile3:1:X3_L1\n" .
 	      \ "Entering dir c\n" .
 	      \ "Xfile4:2:X4_L2\n" .
-	      \ "Leaving dir c\n" .
-	      \ "Leaving dir Xtestdir\n"
+	      \ "Leaving dir c\n"
   set efm=%DEntering\ dir\ %f,%XLeaving\ dir\ %f,%f:%l:%m
-  cexpr lines
+  cexpr lines .. "Leaving dir Xtestdir|\n" | let next = 1
   call assert_equal(11, getqflist({'size' : 0}).size)
   call assert_equal(4, getqflist({'idx' : 0}).idx)
   call assert_equal('X2_L2', getline('.'))
+  call assert_equal(1, next)
   cnext
   call assert_equal(6, getqflist({'idx' : 0}).idx)
   call assert_equal('X1_L2', getline('.'))
