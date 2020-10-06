@@ -355,7 +355,7 @@ func Test_error_in_timer_callback()
   [CODE]
   call writefile(lines, 'Xtest.vim')
 
-  let buf = term_start(GetVimCommandClean() .. ' -S Xtest.vim', {'term_rows': 8})
+  let buf = term_start(GetVimCommandCleanTerm() .. ' -S Xtest.vim', {'term_rows': 8})
   let job = term_getjob(buf)
   call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
 

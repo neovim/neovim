@@ -294,6 +294,13 @@ func GetVimCommandClean()
   return cmd
 endfunc
 
+" Get the command to run Vim, with --clean, and force to run in terminal so it
+" won't start a new GUI.
+func GetVimCommandCleanTerm()
+  " Add -v to have gvim run in the terminal (if possible)
+  return GetVimCommandClean() .. ' -v '
+endfunc
+
 " Run Vim, using the "vimcmd" file and "-u NORC".
 " "before" is a list of Vim commands to be executed before loading plugins.
 " "after" is a list of Vim commands to be executed after loading plugins.
