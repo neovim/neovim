@@ -470,7 +470,6 @@ readfile(
 
   if (!read_buffer && !read_stdin && !read_fifo) {
     perm = os_getperm((const char *)fname);
-#ifdef UNIX
     // On Unix it is possible to read a directory, so we have to
     // check for it before os_open().
     if (perm >= 0 && !S_ISREG(perm)                 // not a regular file ...
@@ -494,7 +493,6 @@ readfile(
       msg_scroll = msg_save;
       return S_ISDIR(perm) ? NOTDONE : FAIL;
     }
-#endif
   }
 
   /* Set default or forced 'fileformat' and 'binary'. */
@@ -553,13 +551,6 @@ readfile(
 
   if (fd < 0) {                     // cannot open at all
     msg_scroll = msg_save;
-#ifndef UNIX
-    // On non-unix systems we can't open a directory, check here.
-    if (os_isdir(fname)) {
-      filemess(curbuf, sfname, (char_u *)_(msg_is_a_directory), 0);
-      curbuf->b_p_ro = true;        // must use "w!" now
-    } else {
-#endif
     if (!newfile) {
       return FAIL;
     }
@@ -617,9 +608,6 @@ readfile(
 
     return FAIL;
   }
-#ifndef UNIX
-  }
-#endif
 
   /*
    * Only set the 'ro' flag for readonly files the first time they are
