@@ -277,8 +277,8 @@ static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
   xfree(tw);
 }
 
-static bool nlua_wait_condition(bool is_callable, lua_State *lstate, int *status,
-                                bool *callback_result)
+static bool nlua_wait_condition(bool is_callable, lua_State *lstate,
+                                int *status, bool *callback_result)
 {
   if (!is_callable) {
     return false;
@@ -325,7 +325,8 @@ static int nlua_wait(lua_State *lstate)
     fast_only =  lua_toboolean(lstate, 4);
   }
 
-  MultiQueue* loop_events = fast_only || in_fast_callback > 0 ? main_loop.fast_events : main_loop.events;
+  MultiQueue *loop_events = fast_only || in_fast_callback > 0
+    ? main_loop.fast_events : main_loop.events;
 
   TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
 
@@ -346,7 +347,11 @@ static int nlua_wait(lua_State *lstate)
       &main_loop,
       loop_events,
       (int)timeout,
-      nlua_wait_condition(is_function, lstate, &pcall_status, &callback_result) || got_int);
+      nlua_wait_condition(
+          is_function,
+          lstate,
+          &pcall_status,
+          &callback_result) || got_int);
 
   // Stop dummy timer
   time_watcher_stop(tw);
