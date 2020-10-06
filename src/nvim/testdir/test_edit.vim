@@ -1536,10 +1536,8 @@ func Test_edit_noesckeys()
 endfunc
 
 " Test for editing a directory
-" Todo: "is a directory" message is not displayed in Windows.
 func Test_edit_is_a_directory()
   CheckEnglish
-  CheckNotMSWindows
   let dirname = getcwd() . "/Xdir"
   call mkdir(dirname, 'p')
 
