@@ -341,7 +341,7 @@ func Test_nocatch_garbage_collect()
 endfunc
 
 func Test_error_in_timer_callback()
-  if !has('terminal') || (has('win32') && has('gui_running'))
+  if !has('terminal') || has('gui_running')
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
 

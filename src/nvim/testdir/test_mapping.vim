@@ -392,7 +392,7 @@ func Test_motionforce_omap()
 endfunc
 
 func Test_error_in_map_expr()
-  if !has('terminal') || (has('win32') && has('gui_running'))
+  if !has('terminal') || has('gui_running')
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
