@@ -1254,6 +1254,31 @@ describe('lua stdlib', function()
       matches('As Expected', pcall_result[2])
     end)
 
+    it('if callback is passed, it must be a function', function()
+      local pcall_result = exec_lua [[
+        return {pcall(function() vim.wait(1000, 13) end)}
+      ]]
+
+      eq(pcall_result[1], false)
+      matches('if passed, condition must be a function', pcall_result[2])
+    end)
+
+    it('should allow waiting with no callback, explicit', function()
+      eq(true, exec_lua [[
+        local start_time = vim.loop.hrtime()
+        vim.wait(50, nil)
+        return vim.loop.hrtime() - start_time > 25000
+      ]])
+    end)
+
+    it('should allow waiting with no callback, implicit', function()
+      eq(true, exec_lua [[
+        local start_time = vim.loop.hrtime()
+        vim.wait(50)
+        return vim.loop.hrtime() - start_time > 25000
+      ]])
+    end)
+
     it('should call callbacks exactly once if they return true immediately', function()
       eq(true, exec_lua [[
         vim.g.wait_count = 0

@@ -277,13 +277,9 @@ static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
   xfree(tw);
 }
 
-static bool nlua_wait_condition(bool is_callable, lua_State *lstate,
-                                int *status, bool *callback_result)
+static bool nlua_wait_condition(lua_State *lstate, int *status,
+                                bool *callback_result)
 {
-  if (!is_callable) {
-    return false;
-  }
-
   lua_pushvalue(lstate, 2);
   *status = lua_pcall(lstate, 0, 1, 0);
   if (*status) {
@@ -303,17 +299,29 @@ static int nlua_wait(lua_State *lstate)
     return luaL_error(lstate, "timeout must be > 0");
   }
 
-  // Check if condition can be called.
-  bool is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+  int lua_top = lua_gettop(lstate);
 
-  // Check if condition is callable table
-  if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
-    is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
-    lua_pop(lstate, 1);
+  // Check if condition can be called.
+  bool is_function = false;
+  if (lua_top >= 2 && !lua_isnil(lstate, 2)) {
+    is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+
+    // Check if condition is callable table
+    if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
+      is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+      lua_pop(lstate, 1);
+    }
+
+    if (!is_function) {
+      lua_pushliteral(
+          lstate,
+          "vim.wait: if passed, condition must be a function");
+      return lua_error(lstate);
+    }
   }
 
   intptr_t interval = 200;
-  if (lua_gettop(lstate) >= 3 && !lua_isnil(lstate, 3)) {
+  if (lua_top >= 3 && !lua_isnil(lstate, 3)) {
     interval = luaL_checkinteger(lstate, 3);
     if (interval < 0) {
       return luaL_error(lstate, "interval must be > 0");
@@ -321,7 +329,7 @@ static int nlua_wait(lua_State *lstate)
   }
 
   bool fast_only = false;
-  if (lua_gettop(lstate) >= 4) {
+  if (lua_top >= 4) {
     fast_only =  lua_toboolean(lstate, 4);
   }
 
@@ -347,11 +355,10 @@ static int nlua_wait(lua_State *lstate)
       &main_loop,
       loop_events,
       (int)timeout,
-      nlua_wait_condition(
-          is_function,
+      is_function ? nlua_wait_condition(
           lstate,
           &pcall_status,
-          &callback_result) || got_int);
+          &callback_result) : false || got_int);
 
   // Stop dummy timer
   time_watcher_stop(tw);

@@ -747,10 +747,10 @@ vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     Parameters: ~
         {time}      Number of milliseconds to wait
         {callback}  Optional callback. Waits until {callback} returns true
-        {interval}  (Approximate) number of milliseconds to wait between poll.s
+        {interval}  (Approximate) number of milliseconds to wait between polls
         {fast_only} If true, only |api-fast| events will be processed.
                         If called from while in an |api-fast| event, will
-                        automatically default to `true`.
+                        automatically be set to `true`.
 
     Returns: ~
         If {callback} returns `true` during the {time}:
