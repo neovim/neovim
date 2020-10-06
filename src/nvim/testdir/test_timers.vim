@@ -341,7 +341,7 @@ func Test_nocatch_garbage_collect()
 endfunc
 
 func Test_error_in_timer_callback()
-  if !has('terminal') || has('gui_running')
+  if !has('terminal') || (has('win32') && has('gui_running'))
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
@@ -355,7 +355,7 @@ func Test_error_in_timer_callback()
   [CODE]
   call writefile(lines, 'Xtest.vim')
 
-  let buf = term_start(GetVimCommandClean() .. ' -S Xtest.vim', {'term_rows': 8})
+  let buf = term_start(GetVimCommandCleanTerm() .. ' -S Xtest.vim', {'term_rows': 8})
   let job = term_getjob(buf)
   call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
 
