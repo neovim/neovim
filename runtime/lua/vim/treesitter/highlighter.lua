@@ -56,7 +56,7 @@ TSHighlighter.hl_map = {
     ["include"] = "Include",
 }
 
-function TSHighlighter.new(query, bufnr, ft)
+function TSHighlighter.new(bufnr, ft, query)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end

@@ -25,7 +25,6 @@ describe('treesitter API', function()
     eq("Error executing lua: .../language.lua: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
   end)
-
 end)
 
 describe('treesitter API with C parser', function()
@@ -185,6 +184,16 @@ void ui_refresh(void)
     (primitive_type) @type
     (field_expression argument: (identifier) @fieldarg)
   ]]
+
+  it("supports runtime queries", function()
+    if not check_parser() then return end
+
+    local ret = exec_lua [[
+      return require"vim.treesitter.query".get_query("c", "highlights").captures[1]
+    ]]
+
+    eq('variable', ret)
+  end)
 
   it('support query and iter by capture', function()
     if not check_parser() then return end
@@ -422,7 +431,7 @@ static int nlua_schedule(lua_State *const lstate)
     exec_lua([[
       local highlighter = vim.treesitter.highlighter
       local query = ...
-      test_hl = highlighter.new(query, 0, "c")
+      test_hl = highlighter.new(0, "c", query)
     ]], hl_query)
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
