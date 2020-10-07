@@ -3690,7 +3690,7 @@ win_line (
     }
 
     // At end of the text line or just after the last character.
-    if (c == NUL) {
+    if (c == NUL && eol_hl_off == 0) {
       long prevcol = (long)(ptr - line) - 1;
 
       // we're not really at that column when skipping some text
