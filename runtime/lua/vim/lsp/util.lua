@@ -796,7 +796,7 @@ function M.fancy_floating_markdown(contents, opts)
   stripped = M._trim_and_pad(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
-  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  opts.wrap_at = opts.wrap_at or ((vim.wo["wrap"] and 1 or 0) and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(stripped, opts)
 
   -- Insert blank line separator after code block
