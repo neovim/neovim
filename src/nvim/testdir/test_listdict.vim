@@ -280,6 +280,10 @@ func Test_dict_func_remove_in_use()
   call assert_equal(expected, d.func(string(remove(d, 'func'))))
 endfunc
 
+func Test_dict_literal_keys()
+  call assert_equal({'one': 1, 'two2': 2, '3three': 3, '44': 4}, *{one: 1, two2: 2, 3three: 3, 44: 4},)
+endfunc
+
 " Nasty: deepcopy() dict that refers to itself (fails when noref used)
 func Test_dict_deepcopy()
   let d = {1:1, 2:2}
