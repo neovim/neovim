@@ -3802,7 +3802,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
    */
   for (;; ) {
     op = **arg;
-    if ((op != '*' || (*arg)[1] == '{') && op != '/' && op != '%') {
+    if (op != '*' && op != '/' && op != '%') {
       break;
     }
 
@@ -3906,7 +3906,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
 //  (expression) nested expression
 //  [expr, expr] List
 //  {key: val, key: val}  Dictionary
-//  *{key: val, key: val}  Dictionary with literal keys
+//  ~{key: val, key: val}  Dictionary with literal keys
 //
 //  Also handle:
 //  ! in front  logical NOT
@@ -4014,8 +4014,8 @@ static int eval7(
   case '[':   ret = get_list_tv(arg, rettv, evaluate);
     break;
 
-  // Dictionary: *{key: val, key: val}
-  case '*':
+  // Dictionary: ~{key: val, key: val}
+  case '~':
     if ((*arg)[1] == '{') {
       (*arg)++;
       ret = dict_get_tv(arg, rettv, evaluate, true);

@@ -40,7 +40,7 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 		value. |Dictionary|
 		Examples:
 			{'blue': "#0000ff", 'red': "#ff0000"}
-			*{blue: "#0000ff", red: "#ff0000"}
+			~{blue: "#0000ff", red: "#ff0000"}
 
 The Number and String types are converted automatically, depending on how they
 are used.
@@ -441,10 +441,10 @@ entry.  Note that the String '04' and the Number 04 are different, since the
 Number will be converted to the String '4'.  The empty string can also be used
 as a key.
 						*literal-Dict*
-To avoid having to put quotes around every key the *{} form can be used.  This
+To avoid having to put quotes around every key the ~{} form can be used.  This
 does require the key to consist only of ASCII letters, digits, '-' and '_'.
 Example: >
-	let mydict = *{zero: 0, one_key: 1, two-key: 2, 333: 3}
+	let mydict = ~{zero: 0, one_key: 1, two-key: 2, 333: 3}
 Note that 333 here is the string "333".  Empty keys are not possible here.
 
 A value can be any expression.  Using a Dictionary for a value creates a
