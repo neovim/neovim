@@ -1597,6 +1597,24 @@ func Test_long_lines()
   call s:long_lines_tests('l')
 endfunc
 
+func Test_cgetfile_on_long_lines()
+  " Problematic values if the line is longer than 4096 bytes.  Then 1024 bytes
+  " are read at a time.
+  for len in [4078, 4079, 4080, 5102, 5103, 5104, 6126, 6127, 6128, 7150, 7151, 7152]
+    let lines = [
+      \ '/tmp/file1:1:1:aaa',
+      \ '/tmp/file2:1:1:%s',
+      \ '/tmp/file3:1:1:bbb',
+      \ '/tmp/file4:1:1:ccc',
+      \ ]
+    let lines[1] = substitute(lines[1], '%s', repeat('x', len), '')
+    call writefile(lines, 'Xcqetfile.txt')
+    cgetfile Xcqetfile.txt
+    call assert_equal(4, getqflist(#{size: v:true}).size, 'with length ' .. len)
+  endfor
+  call delete('Xcqetfile.txt')
+endfunc
+
 func s:create_test_file(filename)
   let l = []
   for i in range(1, 20)
