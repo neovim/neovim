@@ -3802,8 +3802,9 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
    */
   for (;; ) {
     op = **arg;
-    if (op != '*' && op != '/' && op != '%')
+    if ((op != '*' || (*arg)[1] == '{') && op != '/' && op != '%') {
       break;
+    }
 
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
