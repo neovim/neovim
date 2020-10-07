@@ -281,7 +281,7 @@ func Test_dict_func_remove_in_use()
 endfunc
 
 func Test_dict_literal_keys()
-  call assert_equal({'one': 1, 'two2': 2, '3three': 3, '44': 4}, ~{one: 1, two2: 2, 3three: 3, 44: 4},)
+  call assert_equal({'one': 1, 'two2': 2, '3three': 3, '44': 4}, #{one: 1, two2: 2, 3three: 3, 44: 4},)
 
   " why *{} cannot be used
   let blue = 'blue'
