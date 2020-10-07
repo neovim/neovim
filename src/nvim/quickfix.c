@@ -808,7 +808,7 @@ retry:
         }
         break;
       }
-      if (STRLEN(IObuff) < IOSIZE - 1 || IObuff[IOSIZE - 1] == '\n') {
+      if (STRLEN(IObuff) < IOSIZE - 1 || IObuff[IOSIZE - 2] == '\n') {
         break;
       }
     }

@@ -2,6 +2,7 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
 let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let g:setting = ''
@@ -753,6 +754,52 @@ func Test_popup_and_previewwindow_dump()
   call term_sendkeys(buf, "\<Esc>u")
   call StopVimInTerminal(buf)
   call delete('Xscript')
+endfunc
+
+func Test_balloon_split()
+  CheckFunction balloon_split
+
+  call assert_equal([
+        \ 'tempname: 0x555555e380a0 "/home/mool/.viminfz.tmp"',
+        \ ], balloon_split(
+        \ 'tempname: 0x555555e380a0 "/home/mool/.viminfz.tmp"'))
+  call assert_equal([
+        \ 'one two three four one two three four one two thre',
+        \ 'e four',
+        \ ], balloon_split(
+        \ 'one two three four one two three four one two three four'))
+
+  eval 'struct = {one = 1, two = 2, three = 3}'
+        \ ->balloon_split()
+        \ ->assert_equal([
+        \   'struct = {',
+        \   '  one = 1,',
+        \   '  two = 2,',
+        \   '  three = 3}',
+        \ ])
+
+  call assert_equal([
+        \ 'struct = {',
+        \ '  one = 1,',
+        \ '  nested = {',
+        \ '    n1 = "yes",',
+        \ '    n2 = "no"}',
+        \ '  two = 2}',
+        \ ], balloon_split(
+        \ 'struct = {one = 1, nested = {n1 = "yes", n2 = "no"} two = 2}'))
+  call assert_equal([
+        \ 'struct = 0x234 {',
+        \ '  long = 2343 "\\"some long string that will be wr',
+        \ 'apped in two\\"",',
+        \ '  next = 123}',
+        \ ], balloon_split(
+        \ 'struct = 0x234 {long = 2343 "\\"some long string that will be wrapped in two\\"", next = 123}'))
+  call assert_equal([
+        \ 'Some comment',
+        \ '',
+        \ 'typedef this that;',
+        \ ], balloon_split(
+        \ "Some comment\n\ntypedef this that;"))
 endfunc
 
 func Test_popup_position()
