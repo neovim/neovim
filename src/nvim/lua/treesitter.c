@@ -174,6 +174,14 @@ int tslua_add_language(lua_State *L)
     return luaL_error(L, "Failed to load parser: internal error");
   }
 
+  uint32_t lang_version = ts_language_version(lang);
+  if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION) {
+    return luaL_error(
+        L,
+        "ABI version mismatch : expected %" PRIu32 ", found %" PRIu32,
+        TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, lang_version);
+  }
+
   pmap_put(cstr_t)(langs, xstrdup(lang_name), lang);
 
   lua_pushboolean(L, true);
