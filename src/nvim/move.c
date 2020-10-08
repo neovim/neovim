@@ -943,6 +943,9 @@ void curs_columns(
     redraw_later(SOME_VALID);
   }
 
+  // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
+  curwin->w_valid_leftcol = curwin->w_leftcol;
+
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
 }
 
