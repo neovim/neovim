@@ -641,7 +641,7 @@ void validate_virtcol_win(win_T *wp)
 /*
  * Validate curwin->w_cline_height only.
  */
-static void validate_cheight(void)
+void validate_cheight(void)
 {
   check_cursor_moved(curwin);
   if (!(curwin->w_valid & VALID_CHEIGHT)) {

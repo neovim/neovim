@@ -226,6 +226,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       pum_above = false;
 
       // Leave two lines of context if possible
+      validate_cheight();
       if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
         context_lines = 3;
       } else {

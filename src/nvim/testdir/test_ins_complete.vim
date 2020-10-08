@@ -1,3 +1,5 @@
+source screendump.vim
+source check.vim
 
 " Test for insert expansion
 func Test_ins_complete()
@@ -337,4 +339,28 @@ func Test_compl_in_cmdwin()
   delcom TestCommand
   delcom GetInput
   set wildmenu& wildchar&
+endfunc
+
+func Test_pum_with_folds_two_tabs()
+  CheckScreendump
+
+  let lines =<< trim END
+    set fdm=marker
+    call setline(1, ['" x {{{1', '" a some text'])
+    call setline(3, range(&lines)->map({_, val -> '" a' .. val}))
+    norm! zm
+    tab sp
+    call feedkeys('2Gzv', 'xt')
+    call feedkeys("0fa", 'xt')
+  END
+
+  call writefile(lines, 'Xpumscript')
+  let buf = RunVimInTerminal('-S Xpumscript', #{rows: 10})
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "a\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_with_folds_two_tabs', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xpumscript')
 endfunc
