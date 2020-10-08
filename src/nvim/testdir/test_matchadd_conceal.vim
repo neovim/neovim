@@ -1,9 +1,11 @@
 " Test for matchadd() and conceal feature
-if !has('conceal')
-  finish
-endif
+
+source check.vim
+CheckFeature conceal
 
 source shared.vim
+source term_util.vim
+source view_util.vim
 
 function! Test_simple_matchadd()
   new
@@ -273,3 +275,40 @@ function! Test_matchadd_and_syn_conceal()
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
 endfunction
+
+func Test_cursor_column_in_concealed_line_after_window_scroll()
+  CheckRunVimInTerminal
+
+  " Test for issue #5012 fix.
+  " For a concealed line with cursor, there should be no window's cursor
+  " position invalidation during win_update() after scrolling attempt that is
+  " not successful and no real topline change happens. The invalidation would
+  " cause a window's cursor position recalc outside of win_line() where it's
+  " not possible to take conceal into account.
+  let lines =<< trim END
+    3split
+    let m = matchadd('Conceal', '=')
+    setl conceallevel=2 concealcursor=nc
+    normal gg
+    "==expr==
+  END
+  call writefile(lines, 'Xcolesearch')
+  let buf = RunVimInTerminal('Xcolesearch', {})
+
+  " Jump to something that is beyond the bottom of the window,
+  " so there's a scroll down.
+  call term_sendkeys(buf, ":so %\<CR>")
+  call term_sendkeys(buf, "/expr\<CR>")
+  call term_wait(buf)
+
+  " Are the concealed parts of the current line really hidden?
+  let cursor_row = term_scrape(buf, '.')->map({_, e -> e.chars})->join('')
+  call assert_equal('"expr', cursor_row)
+
+  " BugFix check: Is the window's cursor column properly updated for hidden
+  " parts of the current line?
+  call assert_equal(2, term_getcursor(buf)[1])
+
+  call StopVimInTerminal(buf)
+  call delete('Xcolesearch')
+endfunc
