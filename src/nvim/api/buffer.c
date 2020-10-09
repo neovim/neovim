@@ -953,6 +953,61 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
+#define UNPACK_BOOL_RV(result, v, message, rv) \
+  if (v->type == kObjectTypeBoolean) { \
+    result = v->data.boolean; \
+  } else if (v->type == kObjectTypeInteger) { \
+    result = v->data.integer; \
+  } else { \
+    api_set_error(err, kErrorTypeValidation, message); \
+    return rv; \
+  }
+
+#define UNPACK_BOOL(result, v, message) UNPACK_BOOL_RV(result, v, message, )
+
+/// Deletes the buffer. See |:bwipeout|
+///
+/// @param buffer Buffer handle, or 0 for current buffer
+/// @param opts  Optional parameters. Keys:
+///          - force:  Force deletion and ignore unsaved changes.
+///          - unload: Unloaded only, do not delete. See |:bunload|
+void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  bool force = false;
+  bool unload = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("force", k.data)) {
+      UNPACK_BOOL(force, v, "force must be a boolean")
+    } else if (strequal("unload", k.data)) {
+      UNPACK_BOOL(unload, v, "unload must be a boolean")
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return;
+    }
+  }
+
+  int result = do_buffer(
+      unload ? DOBUF_UNLOAD : DOBUF_WIPE,
+      DOBUF_FIRST,
+      FORWARD,
+      buf->handle,
+      force);
+
+  if (result == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
+    return;
+  }
+}
+
 /// Checks if a buffer is valid.
 ///
 /// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
