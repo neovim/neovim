@@ -641,7 +641,7 @@ void validate_virtcol_win(win_T *wp)
 /*
  * Validate curwin->w_cline_height only.
  */
-static void validate_cheight(void)
+void validate_cheight(void)
 {
   check_cursor_moved(curwin);
   if (!(curwin->w_valid & VALID_CHEIGHT)) {
@@ -942,6 +942,9 @@ void curs_columns(
       && !pum_visible()) {
     redraw_later(SOME_VALID);
   }
+
+  // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
+  curwin->w_valid_leftcol = curwin->w_leftcol;
 
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
 }
