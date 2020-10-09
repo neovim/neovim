@@ -1221,7 +1221,7 @@ static void ts_parser__recover(
     }
   }
 
-  // In the process of attemping to recover, some stack versions may have been created
+  // In the process of attempting to recover, some stack versions may have been created
   // and subsequently halted. Remove those versions.
   for (unsigned i = previous_version_count; i < ts_stack_version_count(self->stack); i++) {
     if (!ts_stack_is_active(self->stack, i)) {
