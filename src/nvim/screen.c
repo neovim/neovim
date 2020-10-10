@@ -637,13 +637,10 @@ int update_screen(int type)
       continue;
     }
 
-    bool active;
     if (p->redraw_end != LUA_NOREF) {
       FIXED_TEMP_ARRAY(args, 1);
       args.items[0] = INTEGER_OBJ(display_tick);
-      active = provider_invoke(p->ns_id, "end", p->redraw_end, args, true);
-    } else {
-      active = true;
+      provider_invoke(p->ns_id, "end", p->redraw_end, args, true);
     }
   }
   kvi_destroy(providers);

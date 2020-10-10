@@ -2628,7 +2628,8 @@ static DecorationProvider *get_provider(NS ns_id, bool force)
 
   for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
     // allocates if needed:
-    kv_a(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
+    (void)kv_a(decoration_providers, (size_t)j+1);
+    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
   }
   DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
   *item = DECORATION_PROVIDER_INIT(ns_id);
