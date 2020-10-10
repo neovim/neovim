@@ -703,7 +703,6 @@ bool win_cursorline_standout(const win_T *wp)
 }
 
 static DecorationRedrawState decorations;
-bool decorations_active = false;
 
 void decorations_add_ephemeral(int attr_id,
                                int start_row, int start_col,
@@ -1308,7 +1307,7 @@ static void win_update(win_T *wp, Providers *providers)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
-  decorations_active = decorations_redraw_reset(buf, &decorations);
+  decorations_redraw_reset(buf, &decorations);
 
   Providers line_providers;
   kvi_init(line_providers);
@@ -1328,7 +1327,6 @@ static void win_update(win_T *wp, Providers *providers)
       args.items[3] = INTEGER_OBJ(knownmax);
       if (provider_invoke(p->ns_id, "win", p->redraw_win, args, true)) {
         kvi_push(line_providers, p);
-        decorations_active = true;
       }
     }
   }
@@ -2171,6 +2169,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
     }
 
+    has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
+                                              &decorations);
+
     for (size_t k = 0; k < kv_size(*providers); k++) {
       DecorationProvider *p = kv_A(*providers, k);
       if (p && p->redraw_line != LUA_NOREF) {
@@ -2179,18 +2180,17 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         args.items[1] = BUFFER_OBJ(buf->handle);
         args.items[2] = INTEGER_OBJ(lnum-1);
         if (provider_invoke(p->ns_id, "line", p->redraw_line, args, true)) {
-          decorations_active = true;
+          has_decorations = true;
         } else {
           // return 'false' or error: skip rest of this window
           kv_A(*providers, k) = NULL;
         }
       }
 
-      has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
-                                                &decorations);
-      if (has_decorations) {
-        extra_check = true;
-      }
+    }
+
+    if (has_decorations) {
+      extra_check = true;
     }
 
     if (provider_first_error) {
