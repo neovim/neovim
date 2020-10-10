@@ -4515,7 +4515,6 @@ func Xqfbuf_test(cchar)
 endfunc
 
 func Test_qfbuf()
-  throw 'skipped: enable after porting patch 8.1.0877'
   call Xqfbuf_test('c')
   call Xqfbuf_test('l')
 endfunc
@@ -5207,16 +5206,14 @@ func Xtest_qftextfunc(cchar)
 
   " Non-existing function
   set quickfixtextfunc=Tabc
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
   call assert_fails("Xwindow", 'E117:')
   Xclose
   set quickfixtextfunc&
 
   " set option to a non-function
   set quickfixtextfunc=[10,\ 20]
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
   call assert_fails("Xwindow", 'E117:')
   Xclose
   set quickfixtextfunc&
@@ -5226,8 +5223,7 @@ func Xtest_qftextfunc(cchar)
     return a:a .. a:b .. a:c
   endfunc
   set quickfixtextfunc=Xqftext
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E119:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E119:')
   call assert_fails("Xwindow", 'E119:')
   Xclose
 
@@ -5236,9 +5232,8 @@ func Xtest_qftextfunc(cchar)
     return ['one', [], 'two']
   endfunc
   set quickfixtextfunc=Xqftext2
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']",
-  "                                                                 \ 'E730:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']",
+                                                                  \ 'E730:')
   call assert_fails('Xwindow', 'E730:')
   call assert_equal(['one', 'F1|20 col 4| blue', 'F1|30 col 6| red'],
         \ getline(1, '$'))
