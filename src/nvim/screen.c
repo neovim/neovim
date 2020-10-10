@@ -2186,7 +2186,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           kv_A(*providers, k) = NULL;
         }
       }
-
     }
 
     if (has_decorations) {
