@@ -5577,7 +5577,8 @@ enum {
   QF_GETLIST_SIZE = 0x80,
   QF_GETLIST_TICK = 0x100,
   QF_GETLIST_FILEWINID = 0x200,
-  QF_GETLIST_ALL = 0x3FF,
+  QF_GETLIST_QFBUFNR = 0x400,
+  QF_GETLIST_ALL = 0x7FF,
 };
 
 /// Parse text from 'di' and return the quickfix list items.
@@ -5632,6 +5633,15 @@ static int qf_winid(qf_info_T *qi)
   return 0;
 }
 
+// Returns the number of the buffer displayed in the quickfix/location list
+// window. If there is no buffer associated with the list, then returns 0.
+static int qf_getprop_qfbufnr(const qf_info_T *qi, dict_T *retdict)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  return tv_dict_add_nr(retdict, S_LEN("qfbufnr"),
+                        (qi == NULL) ? 0 : qi->qf_bufnr);
+}
+
 /// Convert the keys in 'what' to quickfix list property flags.
 static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -5674,6 +5684,9 @@ static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   }
   if (loclist && tv_dict_find(what, S_LEN("filewinid")) != NULL) {
     flags |= QF_GETLIST_FILEWINID;
+  }
+  if (tv_dict_find(what, S_LEN("qfbufnr")) != NULL) {
+    flags |= QF_GETLIST_QFBUFNR;
   }
 
   return flags;
@@ -5765,6 +5778,9 @@ static int qf_getprop_defaults(qf_info_T *qi,
   }
   if ((status == OK) && locstack && (flags & QF_GETLIST_FILEWINID)) {
     status = tv_dict_add_nr(retdict, S_LEN("filewinid"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
 
   return status;
@@ -5899,6 +5915,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
   if ((status == OK) && (wp != NULL) && (flags & QF_GETLIST_FILEWINID)) {
     status = qf_getprop_filewinid(wp, qi, retdict);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
 
   return status;
