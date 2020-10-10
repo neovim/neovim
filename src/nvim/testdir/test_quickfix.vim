@@ -4061,8 +4061,40 @@ func Xqfbuf_test(cchar)
     call assert_match(qfbnum . '  h-  "\[Location List]"', execute('ls'))
     call assert_true(bufloaded(qfbnum))
 
+    " After deleting a location list buffer using ":bdelete", opening the
+    " location list window should mark the buffer as a location list buffer.
+    exe "bdelete " . qfbnum
+    lopen
+    call assert_equal("quickfix", &buftype)
+    call assert_equal(1, getwininfo(win_getid(winnr()))[0].loclist)
+    call assert_equal(wid, getloclist(0, {'filewinid' : 0}).filewinid)
+    call assert_false(&swapfile)
+    lclose
+
+    " When the location list is cleared for the window, the buffer should be
+    " removed
+    call setloclist(0, [], 'f')
+    call assert_false(bufexists(qfbnum))
+
+    " When the location list is freed with the location list window open, the
+    " location list buffer should not be lost. It should be reused when the
+    " location list is again populated.
+    lexpr "F1:10:Line10"
+    lopen
+    let wid = win_getid()
+    let qfbnum = bufnr('')
+    wincmd p
+    call setloclist(0, [], 'f')
+    lexpr "F1:10:Line10"
+    lopen
+    call assert_equal(wid, win_getid())
+    call assert_equal(qfbnum, bufnr(''))
+    lclose
+
+    " When the window with the location list is closed, the buffer should be
+    " removed
     new | only
-    call assert_false(bufloaded(qfbnum))
+    call assert_false(bufexists(qfbnum))
   endif
 endfunc
 
