@@ -1,8 +1,6 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
 
-local inspect = require'vim.inspect'
-
 local command = helpers.command
 local meths = helpers.meths
 local funcs = helpers.funcs
@@ -12,6 +10,7 @@ local fail = helpers.fail
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local deepcopy = helpers.deepcopy
+local expect_events = helpers.expect_events
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -297,20 +296,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     local verify_name = "test1"
     local function check_events(expected)
       local events = exec_lua("return get_events(...)" )
-
-      if not pcall(eq, expected, events) then
-        local msg = 'unexpected byte updates received.\n\n'
-
-        msg = msg .. 'received events:\n'
-        for _, e in ipairs(events) do
-          msg = msg .. '  ' .. inspect(e) .. ';\n'
-        end
-        msg = msg .. '\nexpected events:\n'
-        for _, e in ipairs(expected) do
-          msg = msg .. '  ' .. inspect(e) .. ';\n'
-        end
-        fail(msg)
-      end
+      expect_events(expected, events, "byte updates")
 
       if not verify then
         return

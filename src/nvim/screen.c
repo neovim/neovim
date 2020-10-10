@@ -119,10 +119,12 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lib/kvec.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
 
+typedef kvec_withinit_t(DecorationProvider *, 4) Providers;
 
 // temporary buffer for rendering a single screenline, so it can be
 // compared with previous contents to calculate smallest delta.
@@ -156,12 +158,42 @@ static bool msg_grid_invalid = false;
 
 static bool resizing = false;
 
-static bool do_luahl_line = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
 #define SEARCH_HL_PRIORITY 0
+
+static char * provider_first_error = NULL;
+
+static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
+                            Array args, bool default_true)
+{
+  Error err = ERROR_INIT;
+
+  textlock++;
+  Object ret = nlua_call_ref(ref, name, args, true, &err);
+  textlock--;
+
+  if (!ERROR_SET(&err)
+      && api_is_truthy(ret, "provider %s retval", default_true, &err)) {
+    return true;
+  }
+
+  if (ERROR_SET(&err)) {
+    const char *ns_name = describe_ns(ns_id);
+    ELOG("error in provider %s:%s: %s", ns_name, name, err.msg);
+    bool verbose_errs = true;  // TODO(bfredl):
+    if (verbose_errs && provider_first_error == NULL) {
+      static char errbuf[IOSIZE];
+      snprintf(errbuf, sizeof errbuf, "%s: %s", ns_name, err.msg);
+      provider_first_error = xstrdup(errbuf);
+    }
+  }
+
+  api_free_object(ret);
+  return false;
+}
 
 /*
  * Redraw the current window later, with update_screen(type).
@@ -446,6 +478,29 @@ int update_screen(int type)
 
   ui_comp_set_screen_valid(true);
 
+  Providers providers;
+  kvi_init(providers);
+  for (size_t i = 0; i < kv_size(decoration_providers); i++) {
+    DecorationProvider *p = &kv_A(decoration_providers, i);
+    if (!p->active) {
+      continue;
+    }
+
+    bool active;
+    if (p->redraw_start != LUA_NOREF) {
+      FIXED_TEMP_ARRAY(args, 2);
+      args.items[0] = INTEGER_OBJ(display_tick);
+      args.items[1] = INTEGER_OBJ(type);
+      active = provider_invoke(p->ns_id, "start", p->redraw_start, args, true);
+    } else {
+      active = true;
+    }
+
+    if (active) {
+      kvi_push(providers, p);
+    }
+  }
+
   if (clear_cmdline)            /* going to clear cmdline (done below) */
     check_for_delay(FALSE);
 
@@ -494,30 +549,24 @@ int update_screen(int type)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     update_window_hl(wp, type >= NOT_VALID);
 
-    if (wp->w_buffer->b_mod_set) {
-      win_T       *wwp;
-
-      // Check if we already did this buffer.
-      for (wwp = firstwin; wwp != wp; wwp = wwp->w_next) {
-        if (wwp->w_buffer == wp->w_buffer) {
-          break;
-        }
-      }
-      if (wwp == wp && syntax_present(wp)) {
-        syn_stack_apply_changes(wp->w_buffer);
+    buf_T *buf = wp->w_buffer;
+    if (buf->b_mod_set) {
+      if (buf->b_mod_tick_syn < display_tick
+          && syntax_present(wp)) {
+        syn_stack_apply_changes(buf);
+        buf->b_mod_tick_syn = display_tick;
       }
 
-      buf_T *buf = wp->w_buffer;
-      if (luahl_active && luahl_start != LUA_NOREF) {
-        Error err = ERROR_INIT;
-        FIXED_TEMP_ARRAY(args, 2);
-        args.items[0] = BUFFER_OBJ(buf->handle);
-        args.items[1] = INTEGER_OBJ(display_tick);
-        nlua_call_ref(luahl_start, "start", args, false, &err);
-        if (ERROR_SET(&err)) {
-          ELOG("error in luahl start: %s", err.msg);
-          api_clear_error(&err);
+      if (buf->b_mod_tick_deco < display_tick) {
+        for (size_t i = 0; i < kv_size(providers); i++) {
+          DecorationProvider *p = kv_A(providers, i);
+          if (p && p->redraw_buf != LUA_NOREF) {
+            FIXED_TEMP_ARRAY(args, 1);
+            args.items[0] = BUFFER_OBJ(buf->handle);
+            provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true);
+          }
         }
+        buf->b_mod_tick_deco = display_tick;
       }
     }
   }
@@ -531,6 +580,8 @@ int update_screen(int type)
 
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    redrawn_win = wp;
+
     if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
       grid_invalidate(&wp->w_grid);
       wp->w_redr_type = NOT_VALID;
@@ -541,13 +592,15 @@ int update_screen(int type)
         did_one = TRUE;
         start_search_hl();
       }
-      win_update(wp);
+      win_update(wp, &providers);
     }
 
     /* redraw status line after the window to minimize cursor movement */
     if (wp->w_redr_status) {
       win_redr_status(wp);
     }
+
+    redrawn_win = NULL;
   }
 
   end_search_hl();
@@ -577,6 +630,21 @@ int update_screen(int type)
   if (!did_intro)
     maybe_intro_message();
   did_intro = TRUE;
+
+  for (size_t i = 0; i < kv_size(providers); i++) {
+    DecorationProvider *p = kv_A(providers, i);
+    if (!p->active) {
+      continue;
+    }
+
+    if (p->redraw_end != LUA_NOREF) {
+      FIXED_TEMP_ARRAY(args, 1);
+      args.items[0] = INTEGER_OBJ(display_tick);
+      provider_invoke(p->ns_id, "end", p->redraw_end, args, true);
+    }
+  }
+  kvi_destroy(providers);
+
 
   // either cmdline is cleared, not drawn or mode is last drawn
   cmdline_was_last_drawn = false;
@@ -635,15 +703,15 @@ bool win_cursorline_standout(const win_T *wp)
 }
 
 static DecorationRedrawState decorations;
-bool decorations_active = false;
 
-void decorations_add_luahl_attr(int attr_id,
-                                int start_row, int start_col,
-                                int end_row, int end_col, VirtText *virt_text)
+void decorations_add_ephemeral(int attr_id,
+                               int start_row, int start_col,
+                               int end_row, int end_col, VirtText *virt_text)
 {
   kv_push(decorations.active,
           ((HlRange){ start_row, start_col,
-                      end_row, end_col, attr_id, virt_text, true }));
+                      end_row, end_col,
+                      attr_id, virt_text, virt_text != NULL }));
 }
 
 /*
@@ -673,7 +741,7 @@ void decorations_add_luahl_attr(int attr_id,
  * mid: from mid_start to mid_end (update inversion or changed text)
  * bot: from bot_start to last row (when scrolled up)
  */
-static void win_update(win_T *wp)
+static void win_update(win_T *wp, Providers *providers)
 {
   buf_T       *buf = wp->w_buffer;
   int type;
@@ -1239,33 +1307,27 @@ static void win_update(win_T *wp)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
-  decorations_active = decorations_redraw_reset(buf, &decorations);
+  decorations_redraw_reset(buf, &decorations);
 
-  do_luahl_line = false;
+  Providers line_providers;
+  kvi_init(line_providers);
 
-  if (luahl_win != LUA_NOREF) {
-    Error err = ERROR_INIT;
-    FIXED_TEMP_ARRAY(args, 4);
-    linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
-                         ? wp->w_botline
-                         : (wp->w_topline + wp->w_height_inner));
-    args.items[0] = WINDOW_OBJ(wp->handle);
-    args.items[1] = BUFFER_OBJ(buf->handle);
-    // TODO(bfredl): we are not using this, but should be first drawn line?
-    args.items[2] = INTEGER_OBJ(wp->w_topline-1);
-    args.items[3] = INTEGER_OBJ(knownmax);
-    // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
-    // For now the "start" callback is expected to use nvim__buf_redraw_range.
-    Object ret = nlua_call_ref(luahl_win, "win", args, true, &err);
+  linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
+                       ? wp->w_botline
+                       : (wp->w_topline + wp->w_height_inner));
 
-    if (!ERROR_SET(&err) && api_is_truthy(ret, "luahl_window retval", &err)) {
-      do_luahl_line = true;
-      decorations_active = true;
-    }
-
-    if (ERROR_SET(&err)) {
-      ELOG("error in luahl window: %s", err.msg);
-      api_clear_error(&err);
+  for (size_t k = 0; k < kv_size(*providers); k++) {
+    DecorationProvider *p = kv_A(*providers, k);
+    if (p && p->redraw_win != LUA_NOREF) {
+      FIXED_TEMP_ARRAY(args, 4);
+      args.items[0] = WINDOW_OBJ(wp->handle);
+      args.items[1] = BUFFER_OBJ(buf->handle);
+      // TODO(bfredl): we are not using this, but should be first drawn line?
+      args.items[2] = INTEGER_OBJ(wp->w_topline-1);
+      args.items[3] = INTEGER_OBJ(knownmax);
+      if (provider_invoke(p->ns_id, "win", p->redraw_win, args, true)) {
+        kvi_push(line_providers, p);
+      }
     }
   }
 
@@ -1483,7 +1545,7 @@ static void win_update(win_T *wp)
         // Display one line
         row = win_line(wp, lnum, srow,
                        foldinfo.fi_lines ? srow : wp->w_grid.Rows,
-                       mod_top == 0, false, foldinfo);
+                       mod_top == 0, false, foldinfo, &line_providers);
 
         wp->w_lines[idx].wl_folded = foldinfo.fi_lines != 0;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1519,7 +1581,8 @@ static void win_update(win_T *wp)
         // 'relativenumber' set: The text doesn't need to be drawn, but
         // the number column nearly always does.
         foldinfo_T info = fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true, info);
+        (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
+                       info, &line_providers);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -1615,6 +1678,8 @@ static void win_update(win_T *wp)
                  HLF_EOB);
   }
 
+  kvi_destroy(line_providers);
+
   if (wp->w_redr_type >= REDRAW_TOP) {
     draw_vsep_win(wp, 0);
   }
@@ -1674,7 +1739,7 @@ static void win_update(win_T *wp)
         curbuf->b_mod_set = false;
         j = curbuf->b_mod_xlines;
         curbuf->b_mod_xlines = 0;
-        win_update(curwin);
+        win_update(curwin, providers);
         curbuf->b_mod_set = i;
         curbuf->b_mod_xlines = j;
       }
@@ -1919,28 +1984,23 @@ fill_foldcolumn(
   return MAX(char_counter + (fdc-i), (size_t)fdc);
 }
 
-
 /// Display line "lnum" of window 'wp' on the screen.
-/// Start at row "startrow", stop when "endrow" is reached.
 /// wp->w_virtcol needs to be valid.
 ///
-/// @param lnum line to display
-/// @param endrow stop drawing once reaching this row
-/// @param nochange not updating for changed text
-/// @param number_only only update the number column
-/// @param foldinfo fold info for this line
+/// @param lnum         line to display
+/// @param startrow     first row relative to window grid
+/// @param endrow       last grid row to be redrawn
+/// @param nochange     not updating for changed text
+/// @param number_only  only update the number column
+/// @param foldinfo     fold info for this line
+/// @param[in, out] providers  decoration providers active this line
+///                            items will be disables if they cause errors
+///                            or explicitly return `false`.
 ///
-/// @return the number of last row the line occupies.
-static int
-win_line (
-    win_T *wp,
-    linenr_T lnum,
-    int startrow,
-    int endrow,
-    bool nochange,
-    bool number_only,
-    foldinfo_T foldinfo
-)
+/// @return             the number of last row the line occupies.
+static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
+                    bool nochange, bool number_only, foldinfo_T foldinfo,
+                    Providers *providers)
 {
   int c = 0;                          // init for GCC
   long vcol = 0;                      // virtual column (for tabs)
@@ -2084,7 +2144,7 @@ win_line (
 
   row = startrow;
 
-  char *luatext = NULL;
+  char *err_text = NULL;
 
   buf_T *buf = wp->w_buffer;
 
@@ -2109,30 +2169,33 @@ win_line (
       }
     }
 
-    if (decorations_active) {
-      if (do_luahl_line && luahl_line != LUA_NOREF) {
-        Error err = ERROR_INIT;
+    has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
+                                              &decorations);
+
+    for (size_t k = 0; k < kv_size(*providers); k++) {
+      DecorationProvider *p = kv_A(*providers, k);
+      if (p && p->redraw_line != LUA_NOREF) {
         FIXED_TEMP_ARRAY(args, 3);
         args.items[0] = WINDOW_OBJ(wp->handle);
         args.items[1] = BUFFER_OBJ(buf->handle);
         args.items[2] = INTEGER_OBJ(lnum-1);
-        lua_attr_active = true;
-        extra_check = true;
-        nlua_call_ref(luahl_line, "line", args, false, &err);
-        lua_attr_active = false;
-
-        if (ERROR_SET(&err)) {
-          ELOG("error in luahl line: %s", err.msg);
-          luatext = err.msg;
-          do_virttext = true;
+        if (provider_invoke(p->ns_id, "line", p->redraw_line, args, true)) {
+          has_decorations = true;
+        } else {
+          // return 'false' or error: skip rest of this window
+          kv_A(*providers, k) = NULL;
         }
       }
+    }
 
-      has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
-                                                &decorations);
-      if (has_decorations) {
-        extra_check = true;
-      }
+    if (has_decorations) {
+      extra_check = true;
+    }
+
+    if (provider_first_error) {
+      err_text = provider_first_error;
+      provider_first_error = NULL;
+      do_virttext = true;
     }
 
     // Check for columns to display for 'colorcolumn'.
@@ -3835,8 +3898,10 @@ win_line (
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
       VirtText virt_text = KV_INITIAL_VALUE;
-      if (luatext) {
-        kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
+      if (err_text) {
+        int hl_err = syn_check_group((char_u *)S_LEN("ErrorMsg"));
+        kv_push(virt_text, ((VirtTextChunk){ .text = err_text,
+                                             .hl_id = hl_err }));
         do_virttext = true;
       } else if (has_decorations) {
         VirtText *vp = decorations_redraw_virt_text(wp->w_buffer, &decorations);
@@ -4256,7 +4321,7 @@ win_line (
   }
 
   xfree(p_extra_free);
-  xfree(luatext);
+  xfree(err_text);
   return row;
 }
 

@@ -2604,166 +2604,135 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   return ret;
 }
 
-/// Set attrs in nvim__buf_set_lua_hl callbacks
-///
-/// TODO(bfredl): This is rather pedestrian. The final
-/// interface should probably be derived from a reformed
-/// bufhl/virttext interface with full support for multi-line
-/// ranges etc
-void nvim__put_attr(Integer line, Integer col, Dictionary opts, Error *err)
-  FUNC_API_LUA_ONLY
-{
-  if (!lua_attr_active) {
-    return;
-  }
-  int line2 = -1, hl_id = 0;
-  colnr_T col2 = 0;
-  VirtText virt_text = KV_INITIAL_VALUE;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("end_line", k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_line is not an integer");
-        goto error;
-      }
-      if (v->data.integer < 0) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_line value outside range");
-        goto error;
-      }
-
-      line2 = (int)v->data.integer;
-    } else if (strequal("end_col", k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_col is not an integer");
-        goto error;
-      }
-      if (v->data.integer < 0 || v->data.integer > MAXCOL) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_col value outside range");
-        goto error;
-      }
-
-      col2 = (colnr_T)v->data.integer;
-    } else if (strequal("hl_group", k.data)) {
-      String hl_group;
-      switch (v->type) {
-        case kObjectTypeString:
-          hl_group = v->data.string;
-          hl_id = syn_check_group(
-              (char_u *)(hl_group.data),
-              (int)hl_group.size);
-          break;
-        case kObjectTypeInteger:
-          hl_id = (int)v->data.integer;
-          break;
-        default:
-          api_set_error(err, kErrorTypeValidation,
-                        "hl_group is not valid.");
-          goto error;
-      }
-    } else if (strequal("virt_text", k.data)) {
-      if (v->type != kObjectTypeArray) {
-        api_set_error(err, kErrorTypeValidation,
-                      "virt_text is not an Array");
-        goto error;
-      }
-      virt_text = parse_virt_text(v->data.array, err);
-      if (ERROR_SET(err)) {
-        goto error;
-      }
-    } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      goto error;
-    }
-  }
-  if (col2 && line2 < 0) {
-    line2 = (int)line;
-  }
-
-  int attr = hl_id ? syn_id2attr((int)hl_id) : 0;
-  if (attr == 0 && !kv_size(virt_text)) {
-    return;
-  }
-
-  VirtText *v = xmalloc(sizeof(*v));
-  *v = virt_text;  // LeakSanitizer be sad
-  decorations_add_luahl_attr(attr, (int)line, (colnr_T)col,
-                             (int)line2, (colnr_T)col2, v);
-error:
-  return;
-}
-
 void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
 }
 
-static void clear_luahl(bool force)
+static DecorationProvider *get_provider(NS ns_id, bool force)
 {
-  if (luahl_active || force) {
-    api_free_luaref(luahl_start);
-    api_free_luaref(luahl_win);
-    api_free_luaref(luahl_line);
-    api_free_luaref(luahl_end);
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decoration_providers); i++) {
+    DecorationProvider *item = &kv_A(decoration_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
   }
-  luahl_start = LUA_NOREF;
-  luahl_win = LUA_NOREF;
-  luahl_line = LUA_NOREF;
-  luahl_end = LUA_NOREF;
-  luahl_active = false;
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decoration_providers, (size_t)j+1);
+    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
+  }
+  DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
 }
 
-/// Unstabilized interface for defining syntax hl in lua.
-///
-/// This is not yet safe for general use, lua callbacks will need to
-/// be restricted, like textlock and probably other stuff.
-///
-/// The API on_line/nvim__put_attr is quite raw and not intended to be the
-/// final shape. Ideally this should operate on chunks larger than a single
-/// line to reduce interpreter overhead, and generate annotation objects
-/// (bufhl/virttext) on the fly but using the same representation.
-void nvim__set_luahl(DictionaryOf(LuaRef) opts, Error *err)
-  FUNC_API_LUA_ONLY
+static void clear_provider(DecorationProvider *p)
 {
-  redraw_later(NOT_VALID);
-  clear_luahl(false);
+  NLUA_CLEAR_REF(p->redraw_start);
+  NLUA_CLEAR_REF(p->redraw_buf);
+  NLUA_CLEAR_REF(p->redraw_win);
+  NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_end);
+  p->active = false;
+}
+
+/// Set or change decoration provider for a namespace
+///
+/// This is a very general purpose interface for having lua callbacks
+/// being triggered during the redraw code.
+///
+/// The expected usage is to set extmarks for the currently
+/// redrawn buffer. |nvim_buf_set_extmark| can be called to add marks
+/// on a per-window or per-lines basis. Use the `ephemeral` key to only
+/// use the mark for the current screen redraw (the callback will be called
+/// again for the next redraw ).
+///
+/// Note: this function should not be called often. Rather, the callbacks
+/// themselves can be used to throttle unneeded callbacks. the `on_start`
+/// callback can return `false` to disable the provider until the next redraw.
+/// Similarily, return `false` in `on_win` will skip the `on_lines` calls
+/// for that window (but any extmarks set in `on_win` will still be used).
+/// A plugin managing multiple sources of decorations should ideally only set
+/// one provider, and merge the sources internally. You can use multiple `ns_id`
+/// for the extmarks set/modified inside the callback anyway.
+///
+/// Note: doing anything other than setting extmarks is considered experimental.
+/// Doing things like changing options are not expliticly forbidden, but is
+/// likely to have unexpected consequences (such as 100% CPU consumption).
+/// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
+/// for the moment.
+///
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param opts   Callbacks invoked during redraw:
+///             - on_start: called first on each screen redraw
+///                 ["start", tick]
+///             - on_buf: called for each buffer being redrawn (before window
+///                 callbacks)
+///                 ["buf", bufnr, tick]
+///             - on_win: called when starting to redraw a specific window.
+///                 ["win", winid, bufnr, topline, botline_guess]
+///             - on_line: called for each buffer line being redrawn. (The
+///                 interation with fold lines is subject to change)
+///                 ["win", winid, bufnr, row]
+///             - on_end: called at the end of a redraw cycle
+///                 ["end", tick]
+void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
+                                  Error *err)
+  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
+{
+  DecorationProvider *p = get_provider((NS)ns_id, true);
+  clear_provider(p);
+
+  // regardless of what happens, it seems good idea to redraw
+  redraw_later(NOT_VALID);  // TODO(bfredl): too soon?
+
+  struct {
+    const char *name;
+    LuaRef *dest;
+  } cbs[] = {
+    { "on_start", &p->redraw_start },
+    { "on_buf", &p->redraw_buf },
+    { "on_win", &p->redraw_win },
+    { "on_line", &p->redraw_line },
+    { "on_end", &p->redraw_end },
+    { NULL, NULL },
+  };
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (strequal("on_start", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+    size_t j;
+    for (j = 0; cbs[j].name; j++) {
+      if (strequal(cbs[j].name, k.data)) {
+        if (v->type != kObjectTypeLuaRef) {
+          api_set_error(err, kErrorTypeValidation,
+                        "%s is not a function", cbs[j].name);
+          goto error;
+        }
+        *(cbs[j].dest) = v->data.luaref;
+        v->data.luaref = LUA_NOREF;
+        break;
       }
-      luahl_start = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (strequal("on_win", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      luahl_win = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (strequal("on_line", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      luahl_line = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else {
+    }
+    if (!cbs[j].name) {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
   }
-  luahl_active = true;
+
+  p->active = true;
   return;
 error:
-  clear_luahl(true);
+  clear_provider(p);
 }

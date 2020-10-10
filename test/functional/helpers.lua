@@ -22,6 +22,7 @@ local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local write_file = global_helpers.write_file
+local fail = global_helpers.fail
 
 local module = {
   NIL = mpack.NIL,
@@ -590,6 +591,24 @@ end
 function module.expect_any(contents)
   contents = dedent(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
+end
+
+function module.expect_events(expected, received, kind)
+  local inspect = require'vim.inspect'
+  if not pcall(eq, expected, received) then
+    local msg = 'unexpected '..kind..' received.\n\n'
+
+    msg = msg .. 'received events:\n'
+    for _, e in ipairs(received) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    msg = msg .. '\nexpected events:\n'
+    for _, e in ipairs(expected) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    fail(msg)
+  end
+  return received
 end
 
 -- Checks that the Nvim session did not terminate.

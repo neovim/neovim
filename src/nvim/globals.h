@@ -125,8 +125,6 @@ typedef off_t off_T;
 EXTERN int mod_mask INIT(= 0x0);  // current key modifiers
 
 
-EXTERN bool lua_attr_active INIT(= false);
-
 // Cmdline_row is the row where the command line starts, just below the
 // last window.
 // When the cmdline gets longer than the available space the screen gets
@@ -404,12 +402,6 @@ EXTERN int sys_menu INIT(= false);
 // While redrawing the screen this flag is set.  It means the screen size
 // ('lines' and 'rows') must not be changed.
 EXTERN int updating_screen INIT(= 0);
-
-EXTERN bool luahl_active INIT(= false);
-EXTERN LuaRef luahl_start INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_win INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_line INIT(= LUA_NOREF);
-EXTERN LuaRef luahl_end INIT(= LUA_NOREF);
 
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the

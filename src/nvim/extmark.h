@@ -1,6 +1,7 @@
 #ifndef NVIM_EXTMARK_H
 #define NVIM_EXTMARK_H
 
+#include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/marktree.h"
@@ -98,6 +99,8 @@ typedef struct {
   VirtText *virt_text;
 } DecorationRedrawState;
 
+EXTERN kvec_t(DecorationProvider) decoration_providers INIT(= KV_INITIAL_VALUE);
+EXTERN win_T *redrawn_win INIT(= NULL);  // used for ephemeral extmarks
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.h.generated.h"
