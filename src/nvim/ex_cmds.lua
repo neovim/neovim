@@ -473,7 +473,7 @@ return {
   {
     command='chistory',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_history',
   },
   {
@@ -1441,7 +1441,7 @@ return {
   {
     command='lhistory',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_history',
   },
   {
