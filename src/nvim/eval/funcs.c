@@ -10823,52 +10823,72 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char_u *prev;
   const char_u *p;
   int c1;
+  int dir = 0;
 
   rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
   if (head == NULL) {
-    rettv->vval.v_string = NULL;
     return;
   }
 
   if (argvars[1].v_type == VAR_STRING) {
     mask = (const char_u *)tv_get_string_buf_chk(&argvars[1], buf2);
-  }
-
-  while (*head != NUL) {
-    c1 = PTR2CHAR(head);
-    if (mask == NULL) {
-      if (c1 > ' ' && c1 != 0xa0) {
-        break;
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      bool error = false;
+      // leading or trailing characters to trim
+      dir = (int)tv_get_number_chk(&argvars[2], &error);
+      if (error) {
+        return;
       }
-    } else {
-      for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
-        if (c1 == PTR2CHAR(p)) {
-          break;
-        }
-      }
-      if (*p == NUL) {
-        break;
+      if (dir < 0 || dir > 2) {
+        emsgf(_(e_invarg2), tv_get_string(&argvars[2]));
+        return;
       }
     }
-    MB_PTR_ADV(head);
   }
 
-  for (tail = head + STRLEN(head); tail > head; tail = prev) {
-    prev = tail;
-    MB_PTR_BACK(head, prev);
-    c1 = PTR2CHAR(prev);
-    if (mask == NULL) {
-      if (c1 > ' ' && c1 != 0xa0) {
-        break;
-      }
-    } else {
-      for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
-        if (c1 == PTR2CHAR(p)) {
+  if (dir == 0 || dir == 1) {
+    // Trim leading characters
+    while (*head != NUL) {
+      c1 = PTR2CHAR(head);
+      if (mask == NULL) {
+        if (c1 > ' ' && c1 != 0xa0) {
+          break;
+        }
+      } else {
+        for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
+          if (c1 == PTR2CHAR(p)) {
+            break;
+          }
+        }
+        if (*p == NUL) {
           break;
         }
       }
-      if (*p == NUL) {
-        break;
+      MB_PTR_ADV(head);
+    }
+  }
+
+  tail = head + STRLEN(head);
+  if (dir == 0 || dir == 2) {
+    // Trim trailing characters
+    for (; tail > head; tail = prev) {
+      prev = tail;
+      MB_PTR_BACK(head, prev);
+      c1 = PTR2CHAR(prev);
+      if (mask == NULL) {
+        if (c1 > ' ' && c1 != 0xa0) {
+          break;
+        }
+      } else {
+        for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
+          if (c1 == PTR2CHAR(p)) {
+            break;
+          }
+        }
+        if (*p == NUL) {
+          break;
+        }
       }
     }
   }
