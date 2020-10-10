@@ -6020,6 +6020,15 @@ static int qf_winid(qf_info_T *qi)
   return 0;
 }
 
+// Returns the number of the buffer displayed in the quickfix/location list
+// window. If there is no buffer associated with the list, then returns 0.
+static int qf_getprop_qfbufnr(const qf_info_T *qi, dict_T *retdict)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  return tv_dict_add_nr(retdict, S_LEN("qfbufnr"),
+                        (qi == NULL) ? 0 : qi->qf_bufnr);
+}
+
 /// Convert the keys in 'what' to quickfix list property flags.
 static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -6065,6 +6074,9 @@ static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   }
   if (tv_dict_find(what, S_LEN("quickfixtextfunc")) != NULL) {
     flags |= QF_GETLIST_QFTF;
+  }
+  if (tv_dict_find(what, S_LEN("qfbufnr")) != NULL) {
+    flags |= QF_GETLIST_QFBUFNR;
   }
 
   return flags;
@@ -6156,6 +6168,9 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
   }
   if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
     status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
 
   return status;
@@ -6325,6 +6340,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
   if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
     status = qf_getprop_qftf(qfl, retdict);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
 
   return status;
