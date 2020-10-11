@@ -219,8 +219,8 @@ const TSRange *ts_parser_included_ranges(
  * following three fields:
  * 1. `read`: A function to retrieve a chunk of text at a given byte offset
  *    and (row, column) position. The function should return a pointer to the
- *    text and write its length to the `bytes_read` pointer. The parser does
- *    not take ownership of this buffer; it just borrows it until it has
+ *    text and write its length to the the `bytes_read` pointer. The parser
+ *    does not take ownership of this buffer; it just borrows it until it has
  *    finished reading it. The function should write a zero value to the
  *    `bytes_read` pointer to indicate the end of the document.
  * 2. `payload`: An arbitrary pointer that will be passed to each invocation
@@ -759,7 +759,7 @@ void ts_query_disable_pattern(TSQuery *, uint32_t);
  * to start running a given query on a given syntax node. Then, there are
  * two options for consuming the results of the query:
  * 1. Repeatedly call `ts_query_cursor_next_match` to iterate over all of the
- *    *matches* in the order that they were found. Each match contains the
+ *    the *matches* in the order that they were found. Each match contains the
  *    index of the pattern that matched, and an array of captures. Because
  *    multiple patterns can match the same set of nodes, one match may contain
  *    captures that appear *before* some of the captures from a previous match.
