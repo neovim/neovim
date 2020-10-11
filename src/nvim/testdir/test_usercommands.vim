@@ -276,7 +276,7 @@ func Test_CmdCompletion()
   call assert_equal('"com -nargs=* + 0 1 ?', @:)
 
   call feedkeys(":com -addr=\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"com -addr=arguments buffers lines loaded_buffers quickfix tabs windows', @:)
+  call assert_equal('"com -addr=arguments buffers lines loaded_buffers other quickfix tabs windows', @:)
 
   call feedkeys(":com -complete=co\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"com -complete=color command compiler', @:)
@@ -339,4 +339,203 @@ func Test_use_execute_in_completion()
   call feedkeys(":DoExec \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"DoExec hi', @:)
   delcommand DoExec
+endfunc
+
+func Test_addr_all()
+  throw 'skipped: requires patch v8.1.0341 to pass'
+  command! -addr=lines DoSomething let g:a1 = <line1> | let g:a2 = <line2>
+  %DoSomething
+  call assert_equal(1, g:a1)
+  call assert_equal(line('$'), g:a2)
+
+  command! -addr=arguments DoSomething let g:a1 = <line1> | let g:a2 = <line2>
+  args one two three
+  %DoSomething
+  call assert_equal(1, g:a1)
+  call assert_equal(3, g:a2)
+
+  command! -addr=buffers DoSomething let g:a1 = <line1> | let g:a2 = <line2>
+  %DoSomething
+  for low in range(1, bufnr('$'))
+    if buflisted(low)
+      break
+    endif
+  endfor
+  call assert_equal(low, g:a1)
+  call assert_equal(bufnr('$'), g:a2)
+
+  command! -addr=loaded_buffers DoSomething let g:a1 = <line1> | let g:a2 = <line2>
+  %DoSomething
+  for low in range(1, bufnr('$'))
+    if bufloaded(low)
+      break
+    endif
+  endfor
+  call assert_equal(low, g:a1)
+  for up in range(bufnr('$'), 1, -1)
+    if bufloaded(up)
+      break
+    endif
+  endfor
+  call assert_equal(up, g:a2)
+
+  command! -addr=windows DoSomething  let g:a1 = <line1> | let g:a2 = <line2>
+  new
+  %DoSomething
+  call assert_equal(1, g:a1)
+  call assert_equal(winnr('$'), g:a2)
+  bwipe
+
+  command! -addr=tabs DoSomething  let g:a1 = <line1> | let g:a2 = <line2>
+  tabnew
+  %DoSomething
+  call assert_equal(1, g:a1)
+  call assert_equal(len(gettabinfo()), g:a2)
+  bwipe
+
+  command! -addr=other DoSomething echo 'nothing'
+  DoSomething
+  call assert_fails('%DoSomething')
+
+  delcommand DoSomething
+endfunc
+
+func Test_command_list()
+  command! DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0                        :",
+        \           execute('command DoCmd'))
+
+  " Test with various -range= and -count= argument values.
+  command! -range DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .                   :",
+        \           execute('command DoCmd'))
+  command! -range=% DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    %                   :",
+        \           execute('command! DoCmd'))
+  command! -range=2 DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    2                   :",
+        \           execute('command DoCmd'))
+  command! -count=2 DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    2c                  :",
+        \           execute('command DoCmd'))
+
+  " Test with various -addr= argument values.
+  command! -addr=lines DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .                   :",
+        \           execute('command DoCmd'))
+  command! -addr=arguments DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  arg              :",
+        \           execute('command DoCmd'))
+  command! -addr=buffers DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  buf              :",
+        \           execute('command DoCmd'))
+  command! -addr=loaded_buffers DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  load             :",
+        \           execute('command DoCmd'))
+  command! -addr=windows DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  win              :",
+        \           execute('command DoCmd'))
+  command! -addr=tabs DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  tab              :",
+        \           execute('command DoCmd'))
+  command! -addr=other DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0    .  ?                :",
+        \           execute('command DoCmd'))
+
+  " Test with various -complete= argument values (non-exhaustive list)
+  command! -complete=arglist DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0            arglist     :",
+        \           execute('command DoCmd'))
+  command! -complete=augroup DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0            augroup     :",
+        \           execute('command DoCmd'))
+  command! -complete=custom,CustomComplete DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0            custom      :",
+        \           execute('command DoCmd'))
+  command! -complete=customlist,CustomComplete DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0            customlist  :",
+        \           execute('command DoCmd'))
+
+  " Test with various -narg= argument values.
+  command! -nargs=0 DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0                        :",
+        \           execute('command DoCmd'))
+  command! -nargs=1 DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             1                        :",
+        \           execute('command DoCmd'))
+  command! -nargs=* DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             *                        :",
+        \           execute('command DoCmd'))
+  command! -nargs=? DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             ?                        :",
+        \           execute('command DoCmd'))
+  command! -nargs=+ DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             +                        :",
+        \           execute('command DoCmd'))
+
+  " Test with other arguments.
+  command! -bang DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n!   DoCmd             0                        :",
+        \           execute('command DoCmd'))
+  command! -bar DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n|   DoCmd             0                        :",
+        \           execute('command DoCmd'))
+  command! -register DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n\"   DoCmd             0                        :",
+        \           execute('command DoCmd'))
+  command! -buffer DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\nb   DoCmd             0                        :"
+        \        .. "\n\"   DoCmd             0                        :",
+        \           execute('command DoCmd'))
+  comclear
+
+  " Test with many args.
+  command! -bang -bar -register -buffer -nargs=+ -complete=environment -addr=windows -count=3 DoCmd :
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n!\"b|DoCmd             +    3c win  environment :",
+        \           execute('command DoCmd'))
+  comclear
+
+  " Test with special characters in command definition.
+  command! DoCmd :<cr><tab><c-d>
+  call assert_equal("\n    Name              Args Address Complete    Definition"
+        \        .. "\n    DoCmd             0                        :<CR><Tab><C-D>",
+        \           execute('command DoCmd'))
+
+  " Test output in verbose mode.
+  command! DoCmd :
+  call assert_match("^\n"
+        \        .. "    Name              Args Address Complete    Definition\n"
+        \        .. "    DoCmd             0                        :\n"
+        \        .. "\tLast set from .*/test_usercommands.vim line \\d\\+$",
+        \           execute('verbose command DoCmd'))
+
+  comclear
+  call assert_equal("\nNo user-defined commands found", execute(':command Xxx'))
+  call assert_equal("\nNo user-defined commands found", execute('command'))
 endfunc
