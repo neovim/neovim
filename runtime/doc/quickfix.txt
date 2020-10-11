@@ -43,6 +43,7 @@ A location list is a window-local quickfix list. You get one after commands
 like `:lvimgrep`, `:lgrep`, `:lhelpgrep`, `:lmake`, etc., which create a
 location list instead of a quickfix list as the corresponding `:vimgrep`,
 `:grep`, `:helpgrep`, `:make` do.
+						*location-list-file-window*
 A location list is associated with a window and each window can have a
 separate location list.  A location list can be associated with only one
 window.  The location list is independent of the quickfix list.
@@ -539,6 +540,7 @@ location list.
 			second quickfix window.  If [height] is given the
 			existing window will be resized to it.
 
+							*quickfix-buffer*
 			The window will contain a special buffer, with
 			'buftype' equal to "quickfix".  Don't change this!
 			The window will have the w:quickfix_title variable set
@@ -547,7 +549,11 @@ location list.
 			status line if the value of 'statusline' is adjusted
 			properly. Whenever this buffer is modified by a
 			quickfix command or function, the |b:changedtick|
-			variable is incremented.
+			variable is incremented.  You can get the number of
+			this buffer using the getqflist() and getloclist()
+			functions by passing the 'qfbufnr' item. For a
+			location list, this buffer is wiped out when the
+			location list is removed.
 
 							*:lop* *:lopen*
 :lop[en] [height]	Open a window to show the location list for the
@@ -713,11 +719,20 @@ using these functions are below:
     " get the quickfix list window id
     :echo getqflist({'winid' : 0}).winid
 
+    " get the quickfix list window buffer number
+    :echo getqflist({'qfbufnr' : 0}).qfbufnr
+
     " get the context of the current location list
     :echo getloclist(0, {'context' : 0}).context
 
     " get the location list window id of the third window
     :echo getloclist(3, {'winid' : 0}).winid
+
+    " get the location list window buffer number of the third window
+    :echo getloclist(3, {'qfbufnr' : 0}).qfbufnr
+
+    " get the file window id of a location list window (winnr: 4)
+    :echo getloclist(4, {'filewinid' : 0}).filewinid
 <
 							*setqflist-examples*
 The |setqflist()| and |setloclist()| functions can be used to set the various
@@ -731,6 +746,9 @@ using these functions are below:
 
     " set the title of the current quickfix list
     :call setqflist([], 'a', {'title' : 'Mytitle'})
+
+    " change the current entry in the list specified by an identifier
+    :call setqflist([], 'a', {'id' : qfid, 'idx' : 10})
 
     " set the context of a quickfix list specified by an identifier
     :call setqflist([], 'a', {'id' : qfid, 'context' : {'val' : 100}})

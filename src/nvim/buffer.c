@@ -5397,18 +5397,12 @@ bool buf_hide(const buf_T *const buf)
 char_u *buf_spname(buf_T *buf)
 {
   if (bt_quickfix(buf)) {
-    win_T       *win;
-    tabpage_T   *tp;
-
-    /*
-     * For location list window, w_llist_ref points to the location list.
-     * For quickfix window, w_llist_ref is NULL.
-     */
-    if (find_win_for_buf(buf, &win, &tp) && win->w_llist_ref != NULL) {
-      return (char_u *)_(msg_loclist);
-    } else {
+    // Differentiate between the quickfix and location list buffers using
+    // the buffer number stored in the global quickfix stack.
+    if (buf->b_fnum == qf_stack_get_bufnr()) {
       return (char_u *)_(msg_qflist);
     }
+    return (char_u *)_(msg_loclist);
   }
   // There is no _file_ when 'buftype' is "nofile", b_sfname
   // contains the name as specified by the user.

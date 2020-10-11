@@ -3170,7 +3170,7 @@ complete_info([{what}])
 <
 						*confirm()*
 confirm({msg} [, {choices} [, {default} [, {type}]]])
-		Confirm() offers the user a dialog, from which a choice can be
+		confirm() offers the user a dialog, from which a choice can be
 		made.  It returns the number of the choice.  For the first
 		choice this is 1.
 
@@ -3839,7 +3839,7 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			stuck, waiting for a character to be typed before the
 			script continues.
 			Note that if you manage to call feedkeys() while
-			executing commands, thus calling it recursively, the
+			executing commands, thus calling it recursively, then
 			all typehead will be consumed by the last call.
 		'!'	When used with 'x' will not end Insert mode. Can be
 			used in a test when a timer is set to exit Insert mode
@@ -4639,10 +4639,16 @@ getloclist({nr},[, {what}])				*getloclist()*
 		If the optional {what} dictionary argument is supplied, then
 		returns the items listed in {what} as a dictionary. Refer to
 		|getqflist()| for the supported items in {what}.
-		If {what} contains 'filewinid', then returns the id of the
-		window used to display files from the location list. This
-		field is applicable only when called from a location list
-		window.
+
+		In addition to the items supported by |getqflist()| in {what},
+		the following item is supported by |getloclist()|:
+
+			filewinid 	id of the window used to display files
+					from the location list. This field is
+					applicable only when called from a
+					location list window. See
+					|location-list-file-window| for more
+					details.
 
 getmatches([{win}])					*getmatches()*
 		Returns a |List| with all matches previously defined for the
@@ -4733,7 +4739,9 @@ getqflist([{what}])					*getqflist()*
 			id	get information for the quickfix list with
 				|quickfix-ID|; zero means the id for the
 				current list or the list specified by "nr"
-			idx	index of the current entry in the list
+			idx	index of the current entry in the quickfix
+				list specified by 'id' or 'nr'.
+				See |quickfix-index|
 			items	quickfix list entries
 			lines	parse a list of lines using 'efm' and return
 				the resulting entries.  Only a |List| type is
@@ -4742,6 +4750,9 @@ getqflist([{what}])					*getqflist()*
 			nr	get information for this quickfix list; zero
 				means the current quickfix list and "$" means
 				the last quickfix list
+			qfbufnr number of the buffer displayed in the quickfix
+				window. Returns 0 if the quickfix buffer is
+				not present. See |quickfix-buffer|.
 			size	number of entries in the quickfix list
 			title	get the list title |quickfix-title|
 			winid	get the quickfix |window-ID|
@@ -4770,6 +4781,8 @@ getqflist([{what}])					*getqflist()*
 			items	quickfix list entries. If not present, set to
 				an empty list.
 			nr	quickfix list number. If not present, set to 0
+			qfbufnr	number of the buffer displayed in the quickfix
+				window. If not present, set to 0.
 			size	number of entries in the quickfix list. If not
 				present, set to 0.
 			title	quickfix list title text. If not present, set
@@ -4926,6 +4939,19 @@ getwinpos([{timeout}])					*getwinpos()*
 		{timeout} can be used to specify how long to wait in msec for
 		a response from the terminal.  When omitted 100 msec is used.
 
+		Use a longer time for a remote terminal.
+		When using a value less than 10 and no response is received
+		within that time, a previously reported position is returned,
+		if available.  This can be used to poll for the position and
+		do some work in the meantime: >
+			while 1
+			  let res = getwinpos(1)
+			  if res[0] >= 0
+			    break
+			  endif
+			  " Do some work here
+			endwhile
+<
 							*getwinposx()*
 getwinposx()	The result is a Number, which is the X coordinate in pixels of
 		the left hand side of the GUI Vim window.  The result will be
@@ -6263,6 +6289,7 @@ mode([expr])	Return a string that indicates the current mode.
 		   nov	    Operator-pending (forced charwise |o_v|)
 		   noV	    Operator-pending (forced linewise |o_V|)
 		   noCTRL-V Operator-pending (forced blockwise |o_CTRL-V|)
+				CTRL-V is one character
 		   niI	    Normal using |i_CTRL-O| in |Insert-mode|
 		   niR	    Normal using |i_CTRL-O| in |Replace-mode|
 		   niV	    Normal using |i_CTRL-O| in |Virtual-Replace-mode|
@@ -7622,16 +7649,22 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		    efm		errorformat to use when parsing text from
 				"lines". If this is not present, then the
 				'errorformat' option value is used.
+				See |quickfix-parse|
 		    id		quickfix list identifier |quickfix-ID|
+		    idx		index of the current entry in the quickfix
+				list specified by 'id' or 'nr'. If set to '$',
+				then the last entry in the list is set as the
+				current entry.  See |quickfix-index|
 		    items	list of quickfix entries. Same as the {list}
 				argument.
 		    lines	use 'errorformat' to parse a list of lines and
 				add the resulting entries to the quickfix list
 				{nr} or {id}.  Only a |List| value is supported.
+				See |quickfix-parse|
 		    nr		list number in the quickfix stack; zero
 				means the current quickfix list and "$" means
-				the last quickfix list
-		    title	quickfix list title text
+				the last quickfix list.
+		    title	quickfix list title text. See |quickfix-title|
 		Unsupported keys in {what} are ignored.
 		If the "nr" item is not present, then the current quickfix list
 		is modified. When creating a new quickfix list, "nr" can be
@@ -10356,14 +10389,14 @@ text...
 			commands are skipped.
 			When {pattern} is omitted all errors are caught.
 			Examples: >
-		:catch /^Vim:Interrupt$/	" catch interrupts (CTRL-C)
-		:catch /^Vim\%((\a\+)\)\=:E/	" catch all Vim errors
-		:catch /^Vim\%((\a\+)\)\=:/	" catch errors and interrupts
-		:catch /^Vim(write):/		" catch all errors in :write
-		:catch /^Vim\%((\a\+)\)\=:E123/	" catch error E123
-		:catch /my-exception/		" catch user exception
-		:catch /.*/			" catch everything
-		:catch				" same as /.*/
+		:catch /^Vim:Interrupt$/	 " catch interrupts (CTRL-C)
+		:catch /^Vim\%((\a\+)\)\=:E/	 " catch all Vim errors
+		:catch /^Vim\%((\a\+)\)\=:/	 " catch errors and interrupts
+		:catch /^Vim(write):/		 " catch all errors in :write
+		:catch /^Vim\%((\a\+)\)\=:E123:/ " catch error E123
+		:catch /my-exception/		 " catch user exception
+		:catch /.*/			 " catch everything
+		:catch				 " same as /.*/
 <
 			Another character can be used instead of / around the
 			{pattern}, so long as it does not have a special
