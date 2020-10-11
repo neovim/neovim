@@ -1094,6 +1094,7 @@ qf_init_ext(
 )
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  qf_list_T *qfl;
   qfstate_T state = { 0 };
   qffields_T fields = { 0 };
   qfline_T        *old_last = NULL;
@@ -1117,15 +1118,16 @@ qf_init_ext(
     // make place for a new list
     qf_new_list(qi, qf_title);
     qf_idx = qi->qf_curlist;
+    qfl = qf_get_list(qi, qf_idx);
   } else {
     // Adding to existing list, use last entry.
     adding = true;
-    if (!qf_list_empty(qf_get_list(qi, qf_idx) )) {
-      old_last = qi->qf_lists[qf_idx].qf_last;
+    qfl = qf_get_list(qi, qf_idx);
+    if (!qf_list_empty(qfl)) {
+      old_last = qfl->qf_last;
     }
   }
 
-  qf_list_T *qfl = qf_get_list(qi, qf_idx);
 
   // Use the local value of 'errorformat' if it's set.
   if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
@@ -3528,7 +3530,7 @@ void ex_cwindow(exarg_T *eap)
   // it if we have errors; otherwise, leave it closed.
   if (qf_stack_empty(qi)
       || qfl->qf_nonevalid
-      || qf_list_empty(qf_get_curlist(qi))) {
+      || qf_list_empty(qfl)) {
     if (win != NULL) {
       ex_cclose(eap);
     }
@@ -4991,7 +4993,7 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid,
 
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.
-static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
+static bool vgr_match_buflines(qf_list_T *qfl, char_u *fname, buf_T *buf,
                                regmmatch_T *regmatch, long *tomatch,
                                int duplicate_name, int flags)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
@@ -5005,7 +5007,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
       // Pass the buffer number so that it gets used even for a
       // dummy buffer, unless duplicate_name is set, then the
       // buffer will be wiped out below.
-      if (qf_add_entry(qf_get_curlist(qi),
+      if (qf_add_entry(qfl,
                        NULL,  // dir
                        fname,
                        NULL,
@@ -5198,7 +5200,8 @@ void ex_vimgrep(exarg_T *eap)
     } else {
       // Try for a match in all lines of the buffer.
       // For ":1vimgrep" look for first match only.
-      found_match = vgr_match_buflines(qi, fname, buf, &regmatch, &tomatch,
+      found_match = vgr_match_buflines(qf_get_curlist(qi),
+                                       fname, buf, &regmatch, &tomatch,
                                        duplicate_name, flags);
 
       if (using_dummy) {
@@ -6658,7 +6661,7 @@ static qf_info_T *hgr_get_ll(bool *new_ll)
 
 // Search for a pattern in a help file.
 static void hgr_search_file(
-    qf_info_T *qi,
+    qf_list_T *qfl,
     char_u *fname,
     regmatch_T *p_regmatch)
   FUNC_ATTR_NONNULL_ARG(1, 3)
@@ -6680,7 +6683,7 @@ static void hgr_search_file(
         line[--l] = NUL;
       }
 
-      if (qf_add_entry(qf_get_curlist(qi),
+      if (qf_add_entry(qfl,
                        NULL,   // dir
                        fname,
                        NULL,
@@ -6713,7 +6716,7 @@ static void hgr_search_file(
 // Search for a pattern in all the help files in the doc directory under
 // the given directory.
 static void hgr_search_files_in_dir(
-    qf_info_T *qi,
+    qf_list_T *qfl,
     char_u *dirname,
     regmatch_T *p_regmatch,
     const char_u *lang)
@@ -6738,7 +6741,7 @@ static void hgr_search_files_in_dir(
         continue;
       }
 
-      hgr_search_file(qi, fnames[fi], p_regmatch);
+      hgr_search_file(qfl, fnames[fi], p_regmatch);
     }
     FreeWild(fcount, fnames);
   }
@@ -6748,7 +6751,7 @@ static void hgr_search_files_in_dir(
 // and add the matches to a quickfix list.
 // 'lang' is the language specifier.  If supplied, then only matches in the
 // specified language are found.
-static void hgr_search_in_rtp(qf_info_T *qi, regmatch_T *p_regmatch,
+static void hgr_search_in_rtp(qf_list_T *qfl, regmatch_T *p_regmatch,
                               const char_u *lang)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
@@ -6757,7 +6760,7 @@ static void hgr_search_in_rtp(qf_info_T *qi, regmatch_T *p_regmatch,
   while (*p != NUL && !got_int) {
     copy_option_part(&p, NameBuff, MAXPATHL, ",");
 
-    hgr_search_files_in_dir(qi, NameBuff, p_regmatch, lang);
+    hgr_search_files_in_dir(qfl, NameBuff, p_regmatch, lang);
   }
 }
 
@@ -6799,12 +6802,12 @@ void ex_helpgrep(exarg_T *eap)
   if (regmatch.regprog != NULL) {
     // Create a new quickfix list.
     qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
+    qf_list_T *const qfl = qf_get_curlist(qi);
 
-    hgr_search_in_rtp(qi, &regmatch, lang);
+    hgr_search_in_rtp(qfl, &regmatch, lang);
 
     vim_regfree(regmatch.regprog);
 
-    qf_list_T *qfl = qf_get_curlist(qi);
     qfl->qf_nonevalid = false;
     qfl->qf_ptr = qfl->qf_start;
     qfl->qf_index = 1;
