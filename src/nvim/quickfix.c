@@ -6362,6 +6362,12 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
     return OK;
   }
 
+  // A dict argument cannot be specified with a non-empty list argument
+  if (list != NULL && tv_list_len(list) != 0 && what != NULL) {
+    EMSG2(_(e_invarg2), _("cannot have both a list and a \"what\" argument"));
+    return FAIL;
+  }
+
   incr_quickfix_busy();
 
   if (what != NULL) {

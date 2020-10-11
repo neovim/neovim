@@ -2173,6 +2173,9 @@ func Xproperty_tests(cchar)
     call assert_equal(['Colors'], newl2.context)
     call assert_equal('Line10', newl2.items[0].text)
     call g:Xsetlist([], 'f')
+
+    " Cannot specify both a non-empty list argument and a dict argument
+    call assert_fails("call g:Xsetlist([{}], ' ', {})", 'E475:')
 endfunc
 
 func Test_qf_property()
