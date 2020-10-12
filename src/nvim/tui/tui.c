@@ -316,7 +316,13 @@ static void terminfo_start(UI *ui)
 #ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
 #else
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+    int retry_count = 10;
+    // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
+    // few times. #12322
+    while (uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO) == UV_EINTR
+           && retry_count > 0) {
+      retry_count--;
+    }
 #endif
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
