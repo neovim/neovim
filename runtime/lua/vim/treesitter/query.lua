@@ -8,6 +8,104 @@ Query.__index = Query
 
 local M = {}
 
+-- Filter the runtime query files, the spec is like regular runtime files but in the new `queries`
+-- directory. They resemble ftplugins, that is that you can override queries by adding things in the
+-- `queries` directory, and extend using the `after/queries` directory.
+local function filter_files(file_list)
+  local main = nil
+  local after = {}
+
+  for _, fname in ipairs(file_list) do
+    -- Only get the name of the directory containing the queries directory
+    if vim.fn.fnamemodify(fname, ":p:h:h:h:t") == "after" then
+      table.insert(after, fname)
+    -- The first one is the one with most priority
+    elseif not main then
+      main = fname
+    end
+  end
+
+  return { main, unpack(after) }
+end
+
+local function runtime_query_path(lang, query_name)
+  return string.format('queries/%s/%s.scm', lang, query_name)
+end
+
+local function filtered_runtime_queries(lang, query_name)
+  return filter_files(a.nvim_get_runtime_file(runtime_query_path(lang, query_name), true) or {})
+end
+
+local function get_query_files(lang, query_name, is_included)
+  local lang_files = filtered_runtime_queries(lang, query_name)
+  local query_files = lang_files
+
+  if #query_files == 0 then return {} end
+
+  local base_langs = {}
+
+  -- Now get the base languages by looking at the first line of every file
+  -- The syntax is the folowing :
+  -- ;+ inherits: ({language},)*{language}
+  --
+  -- {language} ::= {lang} | ({lang})
+  local MODELINE_FORMAT = "^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$"
+
+  for _, file in ipairs(query_files) do
+    local modeline = vim.fn.readfile(file, "", 1)
+
+    if #modeline == 1 then
+      local langlist = modeline[1]:match(MODELINE_FORMAT)
+
+      if langlist then
+        for _, incllang in ipairs(vim.split(langlist, ',', true)) do
+          local is_optional = incllang:match("%(.*%)")
+
+          if is_optional then
+            if not is_included then
+              table.insert(base_langs, incllang:sub(2, #incllang - 1))
+            end
+          else
+            table.insert(base_langs, incllang)
+          end
+        end
+      end
+    end
+  end
+
+  for _, base_lang in ipairs(base_langs) do
+    local base_files = get_query_files(base_lang, query_name, true)
+    vim.list_extend(query_files, base_files)
+  end
+
+  return query_files
+end
+
+local function read_query_files(filenames)
+  local contents = {}
+
+  for _,filename in ipairs(filenames) do
+    vim.list_extend(contents, vim.fn.readfile(filename))
+  end
+
+  return table.concat(contents, '\n')
+end
+
+--- Returns the runtime query {query_name} for {lang}.
+--
+-- @param lang The language to use for the query
+-- @param query_name The name of the query (i.e. "highlights")
+--
+-- @return The corresponding query, parsed.
+function M.get_query(lang, query_name)
+  local query_files = get_query_files(lang, query_name)
+  local query_string = read_query_files(query_files)
+
+  if #query_string > 0 then
+    return M.parse_query(lang, query_string)
+  end
+end
+
 --- Parses a query.
 --
 -- @param language The language
