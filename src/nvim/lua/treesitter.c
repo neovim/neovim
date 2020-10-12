@@ -43,6 +43,7 @@ static struct luaL_Reg parser_meta[] = {
   { "edit", parser_edit },
   { "tree", parser_tree },
   { "set_included_ranges", parser_set_ranges },
+  { "included_ranges", parser_get_ranges },
   { NULL, NULL }
 };
 
@@ -314,6 +315,26 @@ static const char *input_cb(void *payload, uint32_t byte_index,
 #undef BUFSIZE
 }
 
+static void push_ranges(lua_State *L,
+                        const TSRange *ranges,
+                        const unsigned int length)
+{
+  lua_createtable(L, length, 0);
+  for (size_t i = 0; i < length; i++) {
+    lua_createtable(L, 4, 0);
+    lua_pushinteger(L, ranges[i].start_point.row);
+    lua_rawseti(L, -2, 1);
+    lua_pushinteger(L, ranges[i].start_point.column);
+    lua_rawseti(L, -2, 2);
+    lua_pushinteger(L, ranges[i].end_point.row);
+    lua_rawseti(L, -2, 3);
+    lua_pushinteger(L, ranges[i].end_point.column);
+    lua_rawseti(L, -2, 4);
+
+    lua_rawseti(L, -2, i+1);
+  }
+}
+
 static int parser_parse(lua_State *L)
 {
   TSLua_parser *p = parser_check(L);
@@ -363,20 +384,8 @@ static int parser_parse(lua_State *L)
 
   tslua_push_tree(L, p->tree);
 
-  lua_createtable(L, n_ranges, 0);
-  for (size_t i = 0; i < n_ranges; i++) {
-    lua_createtable(L, 4, 0);
-    lua_pushinteger(L, changed[i].start_point.row);
-    lua_rawseti(L, -2, 1);
-    lua_pushinteger(L, changed[i].start_point.column);
-    lua_rawseti(L, -2, 2);
-    lua_pushinteger(L, changed[i].end_point.row);
-    lua_rawseti(L, -2, 3);
-    lua_pushinteger(L, changed[i].end_point.column);
-    lua_rawseti(L, -2, 4);
+  push_ranges(L, changed, n_ranges);
 
-    lua_rawseti(L, -2, i+1);
-  }
   xfree(changed);
   return 2;
 }
@@ -472,6 +481,21 @@ static int parser_set_ranges(lua_State *L)
   xfree(ranges);
 
   return 0;
+}
+
+static int parser_get_ranges(lua_State *L)
+{
+  TSLua_parser *p = parser_check(L);
+  if (!p || !p->parser) {
+    return 0;
+  }
+
+  unsigned int len;
+  const TSRange *ranges = ts_parser_included_ranges(p->parser, &len);
+
+  push_ranges(L, ranges, len);
+
+  return 1;
 }
 
 

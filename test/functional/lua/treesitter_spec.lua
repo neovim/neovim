@@ -429,9 +429,10 @@ static int nlua_schedule(lua_State *const lstate)
     ]]}
 
     exec_lua([[
+      local parser = vim.treesitter.get_parser(0, "c")
       local highlighter = vim.treesitter.highlighter
       local query = ...
-      test_hl = highlighter.new(0, "c", query)
+      test_hl = highlighter.new(parser, query)
     ]], hl_query)
     screen:expect{grid=[[
       {2:/// Schedule Lua callback on main loop's event queue}             |
@@ -568,6 +569,72 @@ static int nlua_schedule(lua_State *const lstate)
     ]]}
   end)
 
+  it("supports highlighting with custom parser", function()
+    if not check_parser() then return end
+
+    local screen = Screen.new(65, 18)
+    screen:attach()
+    screen:set_default_attr_ids({ {bold = true, foreground = Screen.colors.SeaGreen4} })
+
+    insert(test_text)
+
+    screen:expect{ grid= [[
+      int width = INT_MAX, height = INT_MAX;                         |
+      bool ext_widgets[kUIExtCount];                                 |
+      for (UIExtension i = 0; (int)i < kUIExtCount; i++) {           |
+        ext_widgets[i] = true;                                       |
+      }                                                              |
+                                                                     |
+      bool inclusive = ui_override();                                |
+      for (size_t i = 0; i < ui_count; i++) {                        |
+        UI *ui = uis[i];                                             |
+        width = MIN(ui->width, width);                               |
+        height = MIN(ui->height, height);                            |
+        foo = BAR(ui->bazaar, bazaar);                               |
+        for (UIExtension j = 0; (int)j < kUIExtCount; j++) {         |
+          ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+        }                                                            |
+      }                                                              |
+    ^}                                                                |
+                                                                     |
+    ]] }
+
+    exec_lua([[
+    parser = vim.treesitter.get_parser(0, "c")
+    query = vim.treesitter.parse_query("c", "(declaration) @decl")
+
+    local nodes = {}
+    for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
+      table.insert(nodes, node)
+    end
+
+    parser:set_included_ranges(nodes)
+
+    local hl = vim.treesitter.highlighter.new(parser, "(identifier) @type")
+    ]])
+
+    screen:expect{ grid = [[
+      int {1:width} = {1:INT_MAX}, {1:height} = {1:INT_MAX};                         |
+      bool {1:ext_widgets}[{1:kUIExtCount}];                                 |
+      for (UIExtension {1:i} = 0; (int)i < kUIExtCount; i++) {           |
+        ext_widgets[i] = true;                                       |
+      }                                                              |
+                                                                     |
+      bool {1:inclusive} = {1:ui_override}();                                |
+      for (size_t {1:i} = 0; i < ui_count; i++) {                        |
+        UI *{1:ui} = {1:uis}[{1:i}];                                             |
+        width = MIN(ui->width, width);                               |
+        height = MIN(ui->height, height);                            |
+        foo = BAR(ui->bazaar, bazaar);                               |
+        for (UIExtension {1:j} = 0; (int)j < kUIExtCount; j++) {         |
+          ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+        }                                                            |
+      }                                                              |
+    ^}                                                                |
+                                                                     |
+    ]] }
+  end)
+
   it('inspects language', function()
     if not check_parser() then return end
 
@@ -613,23 +680,29 @@ static int nlua_schedule(lua_State *const lstate)
 
     insert(test_text)
 
-    local res = exec_lua([[
+    local res = exec_lua [[
     parser = vim.treesitter.get_parser(0, "c")
     return { parser:parse():root():range() }
-    ]])
+    ]]
 
     eq({0, 0, 19, 0}, res)
 
     -- The following sets the included ranges for the current parser
     -- As stated here, this only includes the function (thus the whole buffer, without the last line)
-    local res2 = exec_lua([[
+    local res2 = exec_lua [[
     local root = parser:parse():root()
     parser:set_included_ranges({root:child(0)})
     parser.valid = false
     return { parser:parse():root():range() }
-    ]])
+    ]]
 
     eq({0, 0, 18, 1}, res2)
+
+    local range = exec_lua [[
+      return parser:included_ranges()
+    ]]
+
+    eq(range, { { 0, 0, 18, 1 } })
   end)
   it("allows to set complex ranges", function()
     if not check_parser() then return end
@@ -637,7 +710,7 @@ static int nlua_schedule(lua_State *const lstate)
     insert(test_text)
 
 
-    local res = exec_lua([[
+    local res = exec_lua [[
     parser = vim.treesitter.get_parser(0, "c")
     query = vim.treesitter.parse_query("c", "(declaration) @decl")
 
@@ -655,7 +728,7 @@ static int nlua_schedule(lua_State *const lstate)
       table.insert(res, { root:named_child(i):range() })
     end
     return res
-    ]])
+    ]]
 
     eq({
       { 2, 2, 2, 40 },

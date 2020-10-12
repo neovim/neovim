@@ -59,6 +59,24 @@ function Parser:_on_bytes(bufnr, changed_tick,
   end
 end
 
+--- Registers callbacks for the parser
+-- @param cbs An `nvim_buf_attach`-like table argument with the following keys :
+--  `on_bytes` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
+--  `on_changedtree` : a callback that will be called everytime the tree has syntactical changes.
+--      it will only be passed one argument, that is a table of the ranges (as node ranges) that
+--      changed.
+function Parser:register_cbs(cbs)
+  if not cbs then return end
+
+  if cbs.on_changedtree then
+    table.insert(self.changedtree_cbs, cbs.on_changedtree)
+  end
+
+  if cbs.on_bytes then
+    table.insert(self.bytes_cbs, cbs.on_bytes)
+  end
+end
+
 --- Sets the included ranges for the current parser
 --
 -- @param ranges A table of nodes that will be used as the ranges the parser should include.
@@ -66,6 +84,11 @@ function Parser:set_included_ranges(ranges)
   self._parser:set_included_ranges(ranges)
   -- The buffer will need to be parsed again later
   self.valid = false
+end
+
+--- Gets the included ranges for the parsers
+function Parser:included_ranges()
+  return self._parser:included_ranges()
 end
 
 local M = vim.tbl_extend("error", query, language)
@@ -127,11 +150,7 @@ end
 --
 -- @param bufnr The buffer the parser should be tied to
 -- @param ft The filetype of this parser
--- @param buf_attach_cbs An `nvim_buf_attach`-like table argument with the following keys :
---  `on_lines` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
---  `on_changedtree` : a callback that will be called everytime the tree has syntactical changes.
---      it will only be passed one argument, that is a table of the ranges (as node ranges) that
---      changed.
+-- @param buf_attach_cbs See Parser:register_cbs
 --
 -- @returns The parser
 function M.get_parser(bufnr, lang, buf_attach_cbs)
@@ -147,13 +166,7 @@ function M.get_parser(bufnr, lang, buf_attach_cbs)
     parsers[id] = M._create_parser(bufnr, lang, id)
   end
 
-  if buf_attach_cbs and buf_attach_cbs.on_changedtree then
-    table.insert(parsers[id].changedtree_cbs, buf_attach_cbs.on_changedtree)
-  end
-
-  if buf_attach_cbs and buf_attach_cbs.on_bytes then
-    table.insert(parsers[id].bytes_cbs, buf_attach_cbs.on_bytes)
-  end
+  parsers[id]:register_cbs(buf_attach_cbs)
 
   return parsers[id]
 end
