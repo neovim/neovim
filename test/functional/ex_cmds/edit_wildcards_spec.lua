@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local write_file, command, eval, eq, clear = helpers.write_file,
-    helpers.command, helpers.eval, helpers.eq, helpers.clear
+local write_file, eq, clear = helpers.write_file, helpers.eq, helpers.clear
 local redir_exec = helpers.redir_exec
 
 describe(':edit *[.[*]]', function()
