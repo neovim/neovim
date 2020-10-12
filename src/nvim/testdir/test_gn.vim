@@ -169,6 +169,22 @@ func Test_gN_repeat()
   bwipe!
 endfunc
 
+func Test_gN_then_gn()
+  new
+
+  call setline(1, 'this list is a list with a list of a last.')
+  /l.st
+  normal $gNgNgnx
+  call assert_equal('last', @")
+
+  call setline(1, 'this list is a list with a lust of a last.')
+  /l.st
+  normal $gNgNgNgnx
+  call assert_equal('lust of a last', @")
+
+  bwipe!
+endfunc
+
 func Test_gn_multi_line()
   new
   call setline(1, [
