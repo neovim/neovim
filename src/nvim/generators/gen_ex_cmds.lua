@@ -1,6 +1,10 @@
+local bit = require 'bit'
 local nvimsrcdir = arg[1]
 local includedir = arg[2]
 local autodir = arg[3]
+
+local RANGE      =    0x001
+local DFLALL     =    0x020
 
 if nvimsrcdir == '--help' then
   print ([[
@@ -62,9 +66,24 @@ for _, cmd in ipairs(defs) do
     .cmd_name = (char_u *) "%s",
     .cmd_func = (ex_func_T)&%s,
     .cmd_argt = %uL,
-    .cmd_addr_type = %i
+    .cmd_addr_type = %s
   },
-]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
+  ]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
+  if bit.band(cmd.flags, RANGE) == RANGE then
+    if cmd.addr_type == 'ADDR_NONE' then
+      io.stderr:write(('ex_cmds.lua:%s: Using RANGE with ADDR_NONE\n')
+      :format(cmd.command))
+    end
+  else
+    if cmd.addr_type ~= 'ADDR_NONE' then
+      io.stderr:write(('ex_cmds.lua:%s: Missing ADDR_NONE\n'):format(cmd.command))
+    end
+  end
+  if bit.band(cmd.flags, DFLALL) == DFLALL
+    and (cmd.addr_type == 'ADDR_OTHER' or cmd.addr_type == 'ADDR_NONE') then
+    io.stderr:write(('ex_cmds.lua:%s: Missing misplaced DFLALL\n')
+    :format(cmd.command))
+  end
 end
 for i = #cmds, 1, -1 do
   local cmd = cmds[i]

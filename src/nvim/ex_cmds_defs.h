@@ -51,32 +51,34 @@
 #define NOTRLCOM        0x800   // no trailing comment allowed
 #define ZEROR          0x1000   // zero line number allowed
 #define USECTRLV       0x2000   // do not remove CTRL-V from argument
-#define NOTADR         0x4000   // number before command is not an address
-#define EDITCMD        0x8000   // allow "+command" argument
-#define BUFNAME       0x10000   // accepts buffer name
-#define BUFUNL        0x20000   // accepts unlisted buffer too
-#define ARGOPT        0x40000   // allow "++opt=val" argument
-#define SBOXOK        0x80000   // allowed in the sandbox
-#define CMDWIN       0x100000   // allowed in cmdline window; when missing
+#define EDITCMD        0x4000   // allow "+command" argument
+#define BUFNAME        0x8000   // accepts buffer name
+#define BUFUNL        0x10000   // accepts unlisted buffer too
+#define ARGOPT        0x20000   // allow "++opt=val" argument
+#define SBOXOK        0x40000   // allowed in the sandbox
+#define CMDWIN        0x80000   // allowed in cmdline window; when missing
                                 // disallows editing another buffer when
                                 // curbuf_lock is set
-#define MODIFY       0x200000   // forbidden in non-'modifiable' buffer
-#define EXFLAGS      0x400000   // allow flags after count in argument
-#define RESTRICT     0x800000L  // forbidden in restricted mode
+#define MODIFY       0x100000   // forbidden in non-'modifiable' buffer
+#define EXFLAGS      0x200000   // allow flags after count in argument
+#define RESTRICT     0x400000L  // forbidden in restricted mode
 #define FILES (XFILE | EXTRA)   // multiple extra files allowed
 #define WORD1 (EXTRA | NOSPC)   // one extra word allowed
 #define FILE1 (FILES | NOSPC)   // 1 file allowed, defaults to current file
 
 // values for cmd_addr_type
-#define ADDR_LINES              0
-#define ADDR_WINDOWS            1
-#define ADDR_ARGUMENTS          2
-#define ADDR_LOADED_BUFFERS     3
-#define ADDR_BUFFERS            4
-#define ADDR_TABS               5
-#define ADDR_TABS_RELATIVE      6   // Tab page that only relative
-#define ADDR_QUICKFIX           7
-#define ADDR_OTHER              99
+typedef enum {
+    ADDR_LINES,           // buffer line numbers
+    ADDR_WINDOWS,         // window number
+    ADDR_ARGUMENTS,       // argument number
+    ADDR_LOADED_BUFFERS,  // buffer number of loaded buffer
+    ADDR_BUFFERS,         // buffer number
+    ADDR_TABS,            // tab page number
+    ADDR_TABS_RELATIVE,   // Tab page that only relative
+    ADDR_QUICKFIX,        // quickfix list entry number
+    ADDR_OTHER,           // something else
+    ADDR_NONE             // no range used
+} cmd_addr_T;
 
 typedef struct exarg exarg_T;
 
@@ -91,10 +93,10 @@ typedef char_u *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {
-  char_u *cmd_name;    ///< Name of the command.
-  ex_func_T cmd_func;  ///< Function with implementation of this command.
-  uint32_t cmd_argt;     ///< Relevant flags from the declared above.
-  int cmd_addr_type;     ///< Flag for address type
+  char_u *cmd_name;          ///< Name of the command.
+  ex_func_T cmd_func;        ///< Function with implementation of this command.
+  uint32_t cmd_argt;         ///< Relevant flags from the declared above.
+  cmd_addr_T cmd_addr_type;  ///< Flag for address type
 } CommandDefinition;
 
 // A list used for saving values of "emsg_silent".  Used by ex_try() to save the
@@ -151,7 +153,7 @@ struct exarg {
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
-  int addr_type;                ///< type of the count/range
+  cmd_addr_T addr_type;                ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
