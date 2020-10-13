@@ -1257,8 +1257,11 @@ do
   --- sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
   --- </pre>
   function M.buf_diagnostics_signs(bufnr, diagnostics)
+    -- set the maximum diagnostic sign to prevent being overwritten by other signs
+    -- should be remove when #12655 merged.
+    local diagnostic_sign_priority = vim.g.lsp_diagnositc_sign_priority or 9999999
     for _, diagnostic in ipairs(diagnostics) do
-      vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1),priority=90})
+      vim.fn.sign_place(0, sign_ns, diagnostic_severity_map[diagnostic.severity], bufnr, {lnum=(diagnostic.range.start.line+1),priority=diagnostic_sign_priority})
     end
   end
 end
