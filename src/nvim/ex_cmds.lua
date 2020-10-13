@@ -291,13 +291,13 @@ return {
   {
     command='cNext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='cNfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -315,7 +315,7 @@ return {
   {
     command='cabove',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -357,7 +357,7 @@ return {
   {
     command='cbelow',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -387,7 +387,7 @@ return {
   {
     command='cdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
@@ -413,13 +413,13 @@ return {
   {
     command='cfdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
     command='cfirst',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -485,7 +485,7 @@ return {
   {
     command='clast',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -521,19 +521,19 @@ return {
   {
     command='cnext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='cnewer',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
     command='cnfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -563,7 +563,7 @@ return {
   {
     command='colder',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
@@ -617,7 +617,7 @@ return {
   {
     command='cprevious',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -635,7 +635,7 @@ return {
   {
     command='crewind',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1259,13 +1259,13 @@ return {
   {
     command='lNext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='lNfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1277,7 +1277,7 @@ return {
   {
     command='labove',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -1319,7 +1319,7 @@ return {
   {
     command='lbelow',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -1355,7 +1355,7 @@ return {
   {
     command='ldo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
@@ -1393,13 +1393,13 @@ return {
   {
     command='lfdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
     command='lfirst',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1453,7 +1453,7 @@ return {
   {
     command='llast',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1489,19 +1489,19 @@ return {
   {
     command='lnext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='lnewer',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
     command='lnfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1531,7 +1531,7 @@ return {
   {
     command='lolder',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
@@ -1543,7 +1543,7 @@ return {
   {
     command='lprevious',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1555,7 +1555,7 @@ return {
   {
     command='lrewind',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
