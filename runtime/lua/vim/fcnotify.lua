@@ -34,7 +34,7 @@ end
 local function set_mechanism(option_type, bufnr)
   if option_type == 'global' then
     local option = vim.api.nvim_get_option('filechangenotify')
-    if option:find('watcher') then
+    if vim.tbl_contains(vim.split(option, ','), 'watcher') then
       for _, watcher in pairs(WatcherList) do
         watcher._start_handle = fs_event_start
       end
@@ -51,7 +51,7 @@ local function set_mechanism(option_type, bufnr)
     if not status then
       option = vim.api.nvim_get_option('filechangenotify')
     end
-    if option:find('watcher') then
+    if vim.tbl_contains(vim.split(option, ','), 'watcher') then
       WatcherList[bufnr]._start_handle = fs_event_start
       Watcher.start_notifications = check_handle_start
     else
@@ -68,7 +68,6 @@ local function valid_buf(bufnr)
     return false
   end
 
-  local fname = vim.api.nvim_buf_get_name(bufnr)
   local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
   local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
 
