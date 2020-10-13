@@ -74,8 +74,10 @@ typedef enum {
   ADDR_BUFFERS,         // buffer number
   ADDR_TABS,            // tab page number
   ADDR_TABS_RELATIVE,   // Tab page that only relative
+  ADDR_QUICKFIX_VALID,  // quickfix list valid entry number
   ADDR_QUICKFIX,        // quickfix list entry number
-  ADDR_OTHER,           // something else
+  ADDR_UNSIGNED,        // positive count or zero, defaults to 1
+  ADDR_OTHER,           // something else, use line number for '$', '%', etc.
   ADDR_NONE             // no range used
 } cmd_addr_T;
 

@@ -4269,9 +4269,20 @@ static char_u *get_mef_name(void)
   return name;
 }
 
-/// Returns the number of valid entries in the current quickfix/location list.
+/// Returns the number of entries in the current quickfix/location list.
 size_t qf_get_size(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
+{
+  qf_info_T *qi;
+
+  if ((qi = qf_cmd_get_stack(eap, false)) == NULL) {
+    return 0;
+  }
+  return (size_t)qf_get_curlist(qi)->qf_count;
+}
+
+/// Returns the number of valid entries in the current quickfix/location list.
+size_t qf_get_valid_size(exarg_T *eap)
 {
   qf_info_T *qi;
   qf_list_T *qfl;

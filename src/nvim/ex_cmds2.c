@@ -2113,7 +2113,7 @@ void ex_listdo(exarg_T *eap)
       }
     } else if (eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo
                || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo) {
-      qf_size = qf_get_size(eap);
+      qf_size = qf_get_valid_size(eap);
       assert(eap->line1 >= 0);
       if (qf_size == 0 || (size_t)eap->line1 > qf_size) {
         buf = NULL;

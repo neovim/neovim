@@ -74,7 +74,7 @@ processing a quickfix or location list command, it will be aborted.
 
 							*:cc*
 :cc[!] [nr]		Display error [nr].  If [nr] is omitted, the same
-			error is displayed again.  Without [!] this doesn't
+:[nr]cc[!]		error is displayed again.  Without [!] this doesn't
 			work when jumping to another buffer, the current buffer
 			has been changed, there is the only window for the
 			buffer and both 'hidden' and 'autowrite' are off.
@@ -83,10 +83,13 @@ processing a quickfix or location list command, it will be aborted.
 			there is another window for this buffer.
 			The 'switchbuf' settings are respected when jumping
 			to a buffer.
+			When used in the quickfix window the line number can
+			be used, including "." for the current line and "$"
+			for the last line.
 
 							*:ll*
 :ll[!] [nr]		Same as ":cc", except the location list for the
-			current window is used instead of the quickfix list.
+:[nr]ll[!]		current window is used instead of the quickfix list.
 
 						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that

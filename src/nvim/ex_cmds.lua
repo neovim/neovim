@@ -297,13 +297,13 @@ module.cmds = {
   {
     command='cNext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='cNfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -320,8 +320,8 @@ module.cmds = {
   },
   {
     command='cabove',
-    flags=bit.bor(RANGE, TRLBAR),
-    addr_type='ADDR_OTHER',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -362,8 +362,8 @@ module.cmds = {
   },
   {
     command='cbelow',
-    flags=bit.bor(RANGE, TRLBAR),
-    addr_type='ADDR_OTHER',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -375,7 +375,7 @@ module.cmds = {
   {
     command='cc',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_QUICKFIX',
     func='ex_cc',
   },
   {
@@ -393,7 +393,7 @@ module.cmds = {
   {
     command='cdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
@@ -419,13 +419,13 @@ module.cmds = {
   {
     command='cfdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
     command='cfirst',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -491,7 +491,7 @@ module.cmds = {
   {
     command='clast',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -527,19 +527,19 @@ module.cmds = {
   {
     command='cnext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='cnewer',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
     command='cnfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -569,7 +569,7 @@ module.cmds = {
   {
     command='colder',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
@@ -623,7 +623,7 @@ module.cmds = {
   {
     command='cprevious',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -635,13 +635,13 @@ module.cmds = {
   {
     command='cquit',
     flags=bit.bor(RANGE, COUNT, ZEROR, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cquit',
   },
   {
     command='crewind',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1265,13 +1265,13 @@ module.cmds = {
   {
     command='lNext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='lNfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1282,8 +1282,8 @@ module.cmds = {
   },
   {
     command='labove',
-    flags=bit.bor(RANGE, TRLBAR),
-    addr_type='ADDR_OTHER',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -1324,8 +1324,8 @@ module.cmds = {
   },
   {
     command='lbelow',
-    flags=bit.bor(RANGE, TRLBAR),
-    addr_type='ADDR_OTHER',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='ex_cbelow',
   },
   {
@@ -1361,7 +1361,7 @@ module.cmds = {
   {
     command='ldo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
@@ -1399,13 +1399,13 @@ module.cmds = {
   {
     command='lfdo',
     flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, DFLALL),
-    addr_type='ADDR_QUICKFIX',
+    addr_type='ADDR_QUICKFIX_VALID',
     func='ex_listdo',
   },
   {
     command='lfirst',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1453,13 +1453,13 @@ module.cmds = {
   {
     command='ll',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_QUICKFIX',
     func='ex_cc',
   },
   {
     command='llast',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
@@ -1495,19 +1495,19 @@ module.cmds = {
   {
     command='lnext',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
     command='lnewer',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
     command='lnfile',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1537,7 +1537,7 @@ module.cmds = {
   {
     command='lolder',
     flags=bit.bor(RANGE, COUNT, TRLBAR),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='qf_age',
   },
   {
@@ -1549,7 +1549,7 @@ module.cmds = {
   {
     command='lprevious',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cnext',
   },
   {
@@ -1561,7 +1561,7 @@ module.cmds = {
   {
     command='lrewind',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
-    addr_type='ADDR_OTHER',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cc',
   },
   {
