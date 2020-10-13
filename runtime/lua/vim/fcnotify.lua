@@ -4,7 +4,6 @@
 local uv = vim.loop
 local Watcher = {}
 Watcher.__index = Watcher
-local w = {}
 local WatcherList = {}
 local check_handle = nil
 
@@ -22,7 +21,7 @@ end
 
 local function fs_event_start(bufnr)
   WatcherList[bufnr].handle = uv.new_fs_event()
-  WatcherList[bufnr].handle:start(WatcherList[bufnr].ffname, {}, vim.schedule_wrap(function(...)
+  WatcherList[bufnr].handle:start(WatcherList[bufnr].fpath, {}, vim.schedule_wrap(function(...)
     WatcherList[bufnr]:on_change(...)
   end))
 end
@@ -42,9 +41,9 @@ local function set_mechanism(option_type, bufnr)
       Watcher.start_notifications = check_handle_start
     else
       for _, watcher in pairs(WatcherList) do
-        watcher._start_handle = function(_) end
+        watcher._start_handle = nil
       end
-      Watcher.start_notifications = function(_) end
+      Watcher.start_notifications = nil
     end
   elseif option_type == 'local' then
     bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -56,7 +55,7 @@ local function set_mechanism(option_type, bufnr)
       WatcherList[bufnr]._start_handle = fs_event_start
       Watcher.start_notifications = check_handle_start
     else
-      WatcherList[bufnr]._start_handle = function(_) end
+      WatcherList[bufnr]._start_handle = nil
     end
   end
   Watcher.stop_notifications()
@@ -73,11 +72,7 @@ local function valid_buf(bufnr)
   local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
   local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
 
-  if not buflisted or buftype == 'nofile' or buftype == 'quickfix'
-    or not fname then
-    return false
-  end
-  return true
+  return buflisted or buftype == '' or buftype == 'acwrite'
 end
 
 --- Creates and initializes a new watcher object with the given filename.
@@ -88,10 +83,10 @@ function Watcher:new(bufnr)
   vim.validate{bufnr = {bufnr, 'number', false}}
   -- get full path name for the file
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local ffname = vim.api.nvim_call_function('fnamemodify', {fname, ':p'})
-  w = {bufnr = bufnr, fname = fname, ffname = ffname,
+  local fpath = vim.api.nvim_call_function('fnamemodify', {fname, ':p'})
+  local w = {bufnr = bufnr, fname = fname, fpath = fpath,
        handle = nil, pending_notifs = false}
-  w._start_handle = function(_) end
+  w._start_handle = nil
   setmetatable(w, self)
   return w
 end
@@ -101,7 +96,9 @@ end
 --@param self: (required, table) The watcher which should be started.
 function Watcher:start()
   set_mechanism('local', self.bufnr)
-  self._start_handle(self.bufnr)
+  if self._start_handle then
+    self._start_handle(self.bufnr)
+  end
 end
 
 --- Stops the watcher and closes the handle.
@@ -138,7 +135,7 @@ end
 ---
 --@param err: (string) Error if any occured during the execution of the callback.
 ---
-function Watcher:on_change(err, _, _)
+function Watcher:on_change(err)
   if err ~= nil then
     error(err)
   end
@@ -159,7 +156,7 @@ function Watcher.start_watch(bufnr)
   end
 
   if WatcherList[bufnr] ~= nil then
-    WatcherList[bufnr]:stop()
+    return
   end
 
   WatcherList[bufnr] = Watcher:new(bufnr)
