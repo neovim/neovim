@@ -136,7 +136,7 @@ self[{n}]	Returns the buffer object for the number {n}.  The first number
 
 Methods:
 
-name		Returns the name of the buffer.
+name		Returns the full name of the buffer.
 number		Returns the number of the buffer.
 count		Returns the number of lines.
 length		Returns the number of lines.
@@ -172,6 +172,7 @@ height = {n}	Sets the window height to {n}.
 width		Returns the width of the window.
 width = {n}	Sets the window width to {n}.
 cursor		Returns a [row, col] array for the cursor position.
+		First line number is 1 and first column number is 0.
 cursor = [{row}, {col}]
 		Sets the cursor position to {row} and {col}.
 
