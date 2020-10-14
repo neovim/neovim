@@ -56,6 +56,9 @@ endfunc
 
 " Run "cmd".  Returns the job if using a job.
 func RunCommand(cmd)
+  " Running an external command can occasionally be slow or fail.
+  let g:test_is_flaky = 1
+
   let job = 0
   if has('job')
     let job = job_start(a:cmd, {"stoponexit": "hup"})
