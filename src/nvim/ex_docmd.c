@@ -6929,8 +6929,9 @@ void ex_splitview(exarg_T *eap)
 {
   win_T       *old_curwin = curwin;
   char_u      *fname = NULL;
-
-
+  const bool use_tab = eap->cmdidx == CMD_tabedit
+    || eap->cmdidx == CMD_tabfind
+    || eap->cmdidx == CMD_tabnew;
 
   /* A ":split" in the quickfix window works like ":new".  Don't want two
    * quickfix windows.  But it's OK when doing ":tab split". */
@@ -6952,9 +6953,7 @@ void ex_splitview(exarg_T *eap)
   /*
    * Either open new tab page or split the window.
    */
-  if (eap->cmdidx == CMD_tabedit
-      || eap->cmdidx == CMD_tabfind
-      || eap->cmdidx == CMD_tabnew) {
+  if (use_tab) {
     if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab : eap->addr_count == 0
                         ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
