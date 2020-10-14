@@ -187,12 +187,17 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 							*:cq* *:cquit*
-:[count]cq[uit]		Quit Nvim with an error code, or the code specified in
-			[count].  Useful when Nvim is called from another
-			program: e.g. `git commit` will abort the comitting
-			process, `fc` (built-in for shells like bash and zsh)
-			will not execute the command.
-
+:cq[uit][!]
+:{N}cq[uit][!]
+:cq[uit][!] {N}		Quit Vim with error code {N}.  {N} defaults to one.
+			Useful when Vim is called from another program:
+			e.g., a compiler will not compile the same file again,
+			`git commit` will abort the committing process, `fc`
+			(built-in for shells like bash and zsh) will not
+			execute the command, etc.  will not compile the same
+			file again.
+			{N} can also be zero, in which case Vim exits
+			normally.
 			WARNING: All changes in files are lost.  It works like
 			":qall!" |:qall|, except that Nvim exits non-zero or
 			[count].
