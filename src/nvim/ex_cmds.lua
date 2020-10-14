@@ -628,7 +628,7 @@ return {
   },
   {
     command='cquit',
-    flags=bit.bor(TRLBAR, BANG),
+    flags=bit.bor(RANGE, COUNT, ZEROR, TRLBAR, BANG),
     addr_type='ADDR_NONE',
     func='ex_cquit',
   },
