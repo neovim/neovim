@@ -629,7 +629,7 @@ return {
   {
     command='cquit',
     flags=bit.bor(RANGE, COUNT, ZEROR, TRLBAR, BANG),
-    addr_type='ADDR_NONE',
+    addr_type='ADDR_UNSIGNED',
     func='ex_cquit',
   },
   {
