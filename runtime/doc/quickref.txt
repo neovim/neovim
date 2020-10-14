@@ -292,7 +292,7 @@ moving around:
 |i_CTRL-A|	CTRL-A		  insert previously inserted text
 |i_CTRL-@|	CTRL-@		  insert previously inserted text and stop
 				     Insert mode
-|i_CTRL-R|	CTRL-R {0-9a-z%#:.-="}  insert the contents of a register
+|i_CTRL-R|	CTRL-R {register} insert the contents of a register
 
 |i_CTRL-N|	CTRL-N		  insert next match of identifier before the
 				     cursor
@@ -1014,8 +1014,7 @@ Short explanation of each option:		*option-list*
 				      three digits)
 |c_CTRL-K|	CTRL-K {char1} {char2}
 				   enter digraph (See |Q_di|)
-|c_CTRL-R|	CTRL-R {0-9a-z"%#:-=}
-				   insert the contents of a register
+|c_CTRL-R|	CTRL-R {register}  insert the contents of a register
 
 |c_<Left>|	<Left>/<Right>	   cursor left/right
 |c_<S-Left>|	<S-Left>/<S-Right> cursor one word left/right

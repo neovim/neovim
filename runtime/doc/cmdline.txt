@@ -119,7 +119,7 @@ CTRL-K {char1} {char2}					*c_CTRL-K*
 		enter digraph (see |digraphs|).  When {char1} is a special
 		key, the code for that key is inserted in <> form.
 
-CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
+CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		Insert the contents of a numbered or named register.  Between
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
@@ -178,8 +178,8 @@ CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-R {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		Insert register or object under the cursor.  Works like
 		|c_CTRL-R| but inserts the text literally.  For example, if
 		register a contains "xy^Hz" (where ^H is a backspace),
