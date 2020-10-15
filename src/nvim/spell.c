@@ -396,8 +396,7 @@ size_t spell_check(
   mi.mi_word = ptr;
   mi.mi_fend = ptr;
   if (spell_iswordp(mi.mi_fend, wp)) {
-    int prev_upper;
-    int this_upper;
+    bool this_upper = false;  // init for gcc
 
     if (use_camel_case) {
       c = PTR2CHAR(mi.mi_fend);
@@ -407,7 +406,7 @@ size_t spell_check(
     do {
       MB_PTR_ADV(mi.mi_fend);
       if (use_camel_case) {
-        prev_upper = this_upper;
+        const bool prev_upper = this_upper;
         c = PTR2CHAR(mi.mi_fend);
         this_upper = SPELL_ISUPPER(c);
         camel_case = !prev_upper && this_upper;
