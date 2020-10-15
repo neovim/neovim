@@ -3436,7 +3436,6 @@ current_tagblock(
   pos_T start_pos;
   pos_T end_pos;
   pos_T old_start, old_end;
-  char_u      *spat, *epat;
   char_u      *p;
   char_u      *cp;
   int len;
@@ -3490,9 +3489,9 @@ again:
    */
   for (long n = 0; n < count; n++) {
     if (do_searchpair(
-        (char_u *)"<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
-        (char_u *)"",
-        (char_u *)"</[^>]*>", BACKWARD, NULL, 0,
+        "<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
+        "",
+        "</[^>]*>", BACKWARD, NULL, 0,
         NULL, (linenr_T)0, 0L) <= 0) {
       curwin->w_cursor = old_pos;
       goto theend;
@@ -3514,12 +3513,15 @@ again:
     curwin->w_cursor = old_pos;
     goto theend;
   }
-  spat = xmalloc(len + 31);
-  epat = xmalloc(len + 9);
-  sprintf((char *)spat, "<%.*s\\>\\%%(\\s\\_[^>]\\{-}[^/]>\\|>\\)\\c", len, p);
-  sprintf((char *)epat, "</%.*s>\\c", len, p);
+  const size_t spat_len = len + 39;
+  char *const spat = xmalloc(spat_len);
+  const size_t epat_len = len + 9;
+  char *const epat = xmalloc(epat_len);
+  snprintf(spat, spat_len,
+           "<%.*s\\>\\%%(\\_s\\_[^>]\\{-}\\_[^/]>\\|\\_s\\?>\\)\\c", len, p);
+  snprintf(epat, epat_len, "</%.*s>\\c", len, p);
 
-  const int r = do_searchpair(spat, (char_u *)"", epat, FORWARD, NULL,
+  const int r = do_searchpair(spat, "", epat, FORWARD, NULL,
                               0, NULL, (linenr_T)0, 0L);
 
   xfree(spat);

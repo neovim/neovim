@@ -152,6 +152,36 @@ func Test_string_html_objects()
   normal! dit
   call assert_equal('-<b></b>', getline('.'))
 
+  " copy the tag block from leading indentation before the start tag
+  let t = "    <b>\ntext\n</b>"
+  $put =t
+  normal! 2kvaty
+  call assert_equal("<b>\ntext\n</b>", @")
+
+  " copy the tag block from the end tag
+  let t = "<title>\nwelcome\n</title>"
+  $put =t
+  normal! $vaty
+  call assert_equal("<title>\nwelcome\n</title>", @")
+
+  " copy the outer tag block from a tag without an end tag
+  let t = "<html>\n<title>welcome\n</html>"
+  $put =t
+  normal! k$vaty
+  call assert_equal("<html>\n<title>welcome\n</html>", @")
+
+  " nested tag that has < in a different line from >
+  let t = "<div><div\n></div></div>"
+  $put =t
+  normal! k0vaty
+  call assert_equal("<div><div\n></div></div>", @")
+
+  " nested tag with attribute that has < in a different line from >
+  let t = "<div><div\nattr=\"attr\"\n></div></div>"
+  $put =t
+  normal! 2k0vaty
+  call assert_equal("<div><div\nattr=\"attr\"\n></div></div>", @")
+
   set quoteescape&
   enew!
 endfunc
