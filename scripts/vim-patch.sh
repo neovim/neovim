@@ -597,9 +597,10 @@ list_missing_previous_vimpatches_for_patch() {
   set -u
 
   local -a missing_unique
+  local stat
   while IFS= read -r line; do
     local commit="${line%%:*}"
-    local stat="$(git -C "${VIM_SOURCE_DIR}" show --format= --shortstat "${commit}")"
+    stat="$(git -C "${VIM_SOURCE_DIR}" show --format= --shortstat "${commit}")"
     missing_unique+=("$(printf '%s\n  %s' "$line" "$stat")")
   done < <(printf '%s\n' "${missing_list[@]}" | sort -u)
 
