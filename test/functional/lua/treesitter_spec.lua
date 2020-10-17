@@ -15,14 +15,14 @@ before_each(clear)
 describe('treesitter API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
-    eq("Error executing lua: .../language.lua: no parser for 'borklang' language, see :help treesitter-parsers",
+    eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.get_parser(0, 'borklang')"))
 
     -- actual message depends on platform
     matches("Error executing lua: Failed to load parser: uv_dlopen: .+",
        pcall_err(exec_lua, "parser = vim.treesitter.require_language('borklang', 'borkbork.so')"))
 
-    eq("Error executing lua: .../language.lua: no parser for 'borklang' language, see :help treesitter-parsers",
+    eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
   end)
 end)

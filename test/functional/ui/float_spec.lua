@@ -59,7 +59,7 @@ describe('floatwin', function()
   end)
 
   it('closed immediately by autocmd #11383', function()
-    eq('Error executing lua: [string "<nvim>"]:4: Window was closed immediately',
+    eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
       pcall_err(exec_lua, [[
         local a = vim.api
         local function crashes(contents)

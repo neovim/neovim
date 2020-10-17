@@ -4,13 +4,14 @@ local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
 local meths = helpers.meths
+local dedent = helpers.dedent
 local command = helpers.command
 local clear = helpers.clear
 local eq = helpers.eq
 local ok = helpers.ok
 local eval = helpers.eval
 local feed = helpers.feed
-local pcall_err = helpers.pcall_err
+local pcall_err_withfile = helpers.pcall_err_withfile
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local source = helpers.source
@@ -128,8 +129,8 @@ describe('lua stdlib', function()
     eq(false, funcs.luaeval('vim.startswith("123", "2")'))
     eq(false, funcs.luaeval('vim.startswith("123", "1234")'))
 
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith("123", nil)')))
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith(nil, "123")')))
+    eq("string", type(pcall_err_withfile(funcs.luaeval, 'vim.startswith("123", nil)')))
+    eq("string", type(pcall_err_withfile(funcs.luaeval, 'vim.startswith(nil, "123")')))
   end)
 
   it('vim.endswith', function()
@@ -142,8 +143,8 @@ describe('lua stdlib', function()
     eq(false, funcs.luaeval('vim.endswith("123", "2")'))
     eq(false, funcs.luaeval('vim.endswith("123", "1234")'))
 
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith("123", nil)')))
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith(nil, "123")')))
+    eq("string", type(pcall_err_withfile(funcs.luaeval, 'vim.endswith("123", nil)')))
+    eq("string", type(pcall_err_withfile(funcs.luaeval, 'vim.endswith(nil, "123")')))
   end)
 
   it("vim.str_utfindex/str_byteindex", function()
@@ -182,10 +183,10 @@ describe('lua stdlib', function()
     eq({"yy","xx"}, exec_lua("return test_table"))
 
     -- Validates args.
-    eq('Error executing lua: vim.schedule: expected function',
-      pcall_err(exec_lua, "vim.schedule('stringly')"))
-    eq('Error executing lua: vim.schedule: expected function',
-      pcall_err(exec_lua, "vim.schedule()"))
+    eq('.../helpers.lua:0: Error executing lua: vim.schedule: expected function',
+      pcall_err_withfile(exec_lua, "vim.schedule('stringly')"))
+    eq('.../helpers.lua:0: Error executing lua: vim.schedule: expected function',
+      pcall_err_withfile(exec_lua, "vim.schedule()"))
 
     exec_lua([[
       vim.schedule(function()
@@ -257,17 +258,29 @@ describe('lua stdlib', function()
     }
 
     for _, t in ipairs(loops) do
-      matches(".*Infinite loop detected", pcall_err(split, t[1], t[2]))
+      matches(".*Infinite loop detected", pcall_err_withfile(split, t[1], t[2]))
     end
 
     -- Validates args.
     eq(true, pcall(split, 'string', 'string'))
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
-      pcall_err(split, 1, 'string'))
-    eq('Error executing lua: .../shared.lua: sep: expected string, got number',
-      pcall_err(split, 'string', 1))
-    eq('Error executing lua: .../shared.lua: plain: expected boolean, got number',
-      pcall_err(split, 'string', 'string', 1))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: s: expected string, got number
+        stack traceback:
+            shared.lua:0: in function 'gsplit'
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(split, 1, 'string'))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: sep: expected string, got number
+        stack traceback:
+            shared.lua:0: in function 'gsplit'
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(split, 'string', 1))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: plain: expected boolean, got number
+        stack traceback:
+            shared.lua:0: in function 'gsplit'
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -287,8 +300,11 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
-      pcall_err(trim, 2))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: s: expected string, got number
+        stack traceback:
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(trim, 2))
   end)
 
   it('vim.inspect', function()
@@ -353,8 +369,8 @@ describe('lua stdlib', function()
       return t1.f() ~= t2.f()
     ]]))
 
-    eq('Error executing lua: .../shared.lua: Cannot deepcopy object of type thread',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: Cannot deepcopy object of type thread',
+      pcall_err_withfile(exec_lua, [[
         local thread = coroutine.create(function () return 0 end)
         local t = {thr = thread}
         vim.deepcopy(t)
@@ -366,8 +382,11 @@ describe('lua stdlib', function()
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
-      pcall_err(exec_lua, [[return vim.pesc(2)]]))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: s: expected string, got number
+        stack traceback:
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(exec_lua, [[return vim.pesc(2)]]))
   end)
 
   it('vim.tbl_keys', function()
@@ -491,20 +510,20 @@ describe('lua stdlib', function()
       return c.x.a == 1 and c.x.b == 2 and c.x.c == nil and count == 1
     ]]))
 
-    eq('Error executing lua: .../shared.lua: invalid "behavior": nil',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: invalid "behavior": nil',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_extend()
       ]])
     )
 
-    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 1, expected at least 3)',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_extend("keep")
       ]])
     )
 
-    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 2, expected at least 3)',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_extend("keep", {})
       ]])
     )
@@ -579,20 +598,20 @@ describe('lua stdlib', function()
       return vim.tbl_islist(c) and count == 0
     ]]))
 
-    eq('Error executing lua: .../shared.lua: invalid "behavior": nil',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: invalid "behavior": nil',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_deep_extend()
       ]])
     )
 
-    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 1, expected at least 3)',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_deep_extend("keep")
       ]])
     )
 
-    eq('Error executing lua: .../shared.lua: wrong number of arguments (given 2, expected at least 3)',
-      pcall_err(exec_lua, [[
+    eq('.../helpers.lua:0: Error executing lua: shared.lua:0: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err_withfile(exec_lua, [[
         return vim.tbl_deep_extend("keep", {})
       ]])
     )
@@ -624,8 +643,11 @@ describe('lua stdlib', function()
 
   it('vim.list_extend', function()
     eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
-    eq('Error executing lua: .../shared.lua: src: expected table, got nil',
-      pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: shared.lua:0: src: expected table, got nil
+        stack traceback:
+            shared.lua:0: in function <shared.lua:0>]]),
+      pcall_err_withfile(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
     eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
     eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
     eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1) ]])
@@ -648,8 +670,8 @@ describe('lua stdlib', function()
     assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
     vim.tbl_add_reverse_lookup(a)
     ]]
-    matches('Error executing lua: .../shared.lua: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"',
-      pcall_err(exec_lua, code))
+    matches('.../helpers.lua:0: Error executing lua: shared.lua:0: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"',
+      pcall_err_withfile(exec_lua, code))
   end)
 
   it('vim.call, vim.fn', function()
@@ -820,34 +842,77 @@ describe('lua stdlib', function()
     exec_lua("vim.validate{arg1={{}, 't' }, arg2={ 'foo', 's' }}")
     exec_lua("vim.validate{arg1={2, function(a) return (a % 2) == 0  end, 'even number' }}")
 
-    eq("Error executing lua: .../shared.lua: 1: expected table, got number",
-      pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
-    eq("Error executing lua: .../shared.lua: invalid type name: x",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: 1",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1, 1 }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: nil",
-      pcall_err(exec_lua, "vim.validate{ arg1={ 1 }}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: opt[1]: expected table, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ 1, 'x' }"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: invalid type name: x
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: invalid type name: 1
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ arg1={ 1, 1 }}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: invalid type name: nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ arg1={ 1 }}"))
 
     -- Validated parameters are required by default.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
-      pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's' }}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ arg1={ nil, 's' }}"))
     -- Explicitly required.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
-      pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's', false }}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{ arg1={ nil, 's', false }}"))
 
-    eq("Error executing lua: .../shared.lua: arg1: expected table, got number",
-      pcall_err(exec_lua, "vim.validate{arg1={1, 't'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got number",
-      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
-      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
-      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected even number, got 3",
-      pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected ?, got 3",
-      pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected table, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={1, 't'}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg2: expected string, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg2: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg2: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected even number, got 3
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected ?, got 3
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
+
+    -- Pass an additional message back.
+    eq(dedent([[
+        .../helpers.lua:0: Error executing lua: [string "<nvim>"]:0: arg1: expected ?, got 3. Info: TEST_MSG
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err_withfile(exec_lua, "vim.validate{arg1={3, function(a) return a == 1, 'TEST_MSG' end}}"))
   end)
 
   it('vim.is_callable', function()
@@ -992,10 +1057,10 @@ describe('lua stdlib', function()
     ]]
     eq('', funcs.luaeval "vim.bo.filetype")
     eq(true, funcs.luaeval "vim.bo[BUF].modifiable")
-    matches("^Error executing lua: .*: Invalid option name: 'nosuchopt'$",
-       pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
-    matches("^Error executing lua: .*: Expected lua string$",
-       pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
+    matches("^.../helpers.lua:0: Error executing lua: .*: Invalid option name: 'nosuchopt'$",
+       pcall_err_withfile(exec_lua, 'return vim.bo.nosuchopt'))
+    matches("^.../helpers.lua:0: Error executing lua: .*: Expected lua string$",
+       pcall_err_withfile(exec_lua, 'return vim.bo[0][0].autoread'))
   end)
 
   it('vim.wo', function()
@@ -1011,10 +1076,10 @@ describe('lua stdlib', function()
     eq(0, funcs.luaeval "vim.wo.cole")
     eq(0, funcs.luaeval "vim.wo[0].cole")
     eq(0, funcs.luaeval "vim.wo[1001].cole")
-    matches("^Error executing lua: .*: Invalid option name: 'notanopt'$",
-       pcall_err(exec_lua, 'return vim.wo.notanopt'))
-    matches("^Error executing lua: .*: Expected lua string$",
-       pcall_err(exec_lua, 'return vim.wo[0][0].list'))
+    matches("^.../helpers.lua:0: Error executing lua: .*: Invalid option name: 'notanopt'$",
+       pcall_err_withfile(exec_lua, 'return vim.wo.notanopt'))
+    matches("^.../helpers.lua:0: Error executing lua: .*: Expected lua string$",
+       pcall_err_withfile(exec_lua, 'return vim.wo[0][0].list'))
     eq(2, funcs.luaeval "vim.wo[1000].cole")
     exec_lua [[
     vim.wo[1000].cole = 0

@@ -477,48 +477,77 @@ end
 ---          2. (arg_value, fn, msg)
 ---             - arg_value: argument value
 ---             - fn: any function accepting one argument, returns true if and
----               only if the argument is valid
+---               only if the argument is valid. Can optionally return an additional
+---               informative error message as the second returned value.
 ---             - msg: (optional) error string if validation fails
 function vim.validate(opt) end  -- luacheck: no unused
-vim.validate = (function()
+
+do
   local type_names = {
-    t='table', s='string', n='number', b='boolean', f='function', c='callable',
-    ['table']='table', ['string']='string', ['number']='number',
-    ['boolean']='boolean', ['function']='function', ['callable']='callable',
-    ['nil']='nil', ['thread']='thread', ['userdata']='userdata',
+    ['table']    = 'table',    t = 'table',
+    ['string']   = 'string',   s = 'string',
+    ['number']   = 'number',   n = 'number',
+    ['boolean']  = 'boolean',  b = 'boolean',
+    ['function'] = 'function', f = 'function',
+    ['callable'] = 'callable', c = 'callable',
+    ['nil']      = 'nil',
+    ['thread']   = 'thread',
+    ['userdata'] = 'userdata',
   }
-  local function _type_name(t)
-    local tname = type_names[t]
-    if tname == nil then
-      error(string.format('invalid type name: %s', tostring(t)))
-    end
-    return tname
-  end
+
   local function _is_type(val, t)
     return t == 'callable' and vim.is_callable(val) or type(val) == t
   end
 
-  return function(opt)
-    assert(type(opt) == 'table', string.format('opt: expected table, got %s', type(opt)))
+  local function is_valid(opt)
+    if type(opt) ~= 'table' then
+      return false, string.format('opt: expected table, got %s', type(opt))
+    end
+
     for param_name, spec in pairs(opt) do
-      assert(type(spec) == 'table', string.format('%s: expected table, got %s', param_name, type(spec)))
+      if type(spec) ~= 'table' then
+        return false, string.format('opt[%s]: expected table, got %s', param_name, type(spec))
+      end
 
       local val = spec[1]   -- Argument value.
       local t = spec[2]     -- Type name, or callable.
       local optional = (true == spec[3])
 
-      if not vim.is_callable(t) then  -- Check type name.
-        if (not optional or val ~= nil) and not _is_type(val, _type_name(t)) then
-          error(string.format("%s: expected %s, got %s", param_name, _type_name(t), type(val)))
+      if type(t) == 'string' then
+        local t_name = type_names[t]
+        if not t_name then
+          return false, string.format('invalid type name: %s', t)
         end
-      elseif not t(val) then  -- Check user-provided validation function.
-        error(string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val))
+
+        if (not optional or val ~= nil) and not _is_type(val, t_name) then
+          return false, string.format("%s: expected %s, got %s", param_name, t_name, type(val))
+        end
+      elseif vim.is_callable(t) then
+        -- Check user-provided validation function.
+        local valid, optional_message = t(val)
+        if not valid then
+          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val)
+          if optional_message ~= nil then
+            error_message = error_message .. string.format(". Info: %s", optional_message)
+          end
+
+          return false, error_message
+        end
+      else
+        return false, string.format("invalid type name: %s", tostring(t))
       end
     end
-    return true
-  end
-end)()
 
+    return true, nil
+  end
+
+  function vim.validate(opt)
+    local ok, err_msg = is_valid(opt)
+    if not ok then
+      error(debug.traceback(err_msg, 2), 2)
+    end
+  end
+end
 --- Returns true if object `f` can be called as a function.
 ---
 --@param f Any object
