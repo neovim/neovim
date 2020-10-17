@@ -1804,7 +1804,7 @@ static void decr_quickfix_busy(void)
 void check_quickfix_busy(void)
 {
   if (quickfix_busy != 0) {
-    EMSGN("quickfix_busy not zero on exit: %ld", (long)quickfix_busy);
+    EMSGN("quickfix_busy not zero on exit: %" PRId64, (int64_t)quickfix_busy);
 # ifdef ABORT_ON_INTERNAL_ERROR
     abort();
 # endif
