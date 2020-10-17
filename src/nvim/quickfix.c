@@ -5068,6 +5068,20 @@ static void vgr_jump_to_match(qf_info_T *qi, int forceit, int *redraw_for_dummy,
   }
 }
 
+// Return true if "buf" had an existing swap file, the current swap file does
+// not end in ".swp".
+static bool existing_swapfile(const buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
+    const char_u *const fname = buf->b_ml.ml_mfp->mf_fname;
+    const size_t len = STRLEN(fname);
+
+    return fname[len - 1] != 'p' || fname[len - 2] != 'w';
+  }
+  return false;
+}
+
 // ":vimgrep {pattern} file(s)"
 // ":vimgrepadd {pattern} file(s)"
 // ":lvimgrep {pattern} file(s)"
@@ -5225,7 +5239,9 @@ void ex_vimgrep(exarg_T *eap)
           if (!found_match) {
             wipe_dummy_buffer(buf, dirname_start);
             buf = NULL;
-          } else if (buf != first_match_buf || (flags & VGR_NOJUMP)) {
+          } else if (buf != first_match_buf
+                     || (flags & VGR_NOJUMP)
+                     || existing_swapfile(buf)) {
             unload_dummy_buffer(buf, dirname_start);
             // Keeping the buffer, remove the dummy flag.
             buf->b_flags &= ~BF_DUMMY;

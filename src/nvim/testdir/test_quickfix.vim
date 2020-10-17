@@ -1,8 +1,7 @@
 " Test for the quickfix commands.
 
-if !has('quickfix')
-  finish
-endif
+source check.vim
+CheckFeature quickfix
 
 set encoding=utf-8
 
@@ -2566,6 +2565,41 @@ func Test_vimgrep_incsearch()
 
   call test_override("ALL", 0)
   set noincsearch
+endfunc
+
+" Test vimgrep without swap file
+func Test_vimgrep_without_swap_file()
+  let lines =<< trim [SCRIPT]
+    vimgrep grep test_c*
+    call writefile(['done'], 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -n -S Xscript Xscript')
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
+func Test_vimgrep_existing_swapfile()
+  call writefile(['match apple with apple'], 'Xapple')
+  call writefile(['swapfile'], '.Xapple.swp')
+  let g:foundSwap = 0
+  let g:ignoreSwapExists = 1
+  augroup grep
+    au SwapExists * let foundSwap = 1 | let v:swapchoice = 'e'
+  augroup END
+  vimgrep apple Xapple
+  call assert_equal(1, g:foundSwap)
+  call assert_match('.Xapple.swo', swapname(''))
+
+  call delete('Xapple')
+  call delete('Xapple.swp')
+  augroup grep
+    au! SwapExists
+  augroup END
+  unlet g:ignoreSwapExists
 endfunc
 
 func XfreeTests(cchar)

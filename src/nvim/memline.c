@@ -1360,7 +1360,7 @@ recover_names (
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
-      char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", TRUE);
+      char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", true);
       if (swapname != NULL) {
         if (os_path_exists(swapname)) {
           files = xmalloc(sizeof(char_u *));
@@ -1638,10 +1638,11 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   // May also add the file name with a dot prepended, for swap file in same
   // dir as original file.
   if (prepend_dot) {
-    names[num_names] = (char_u *)modname((char *)path, ".sw?", TRUE);
-    if (names[num_names] == NULL)
+    names[num_names] = (char_u *)modname((char *)path, ".sw?", true);
+    if (names[num_names] == NULL) {
       return num_names;
-    ++num_names;
+    }
+    num_names++;
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
@@ -2422,17 +2423,17 @@ int ml_replace(linenr_T lnum, char_u *line, bool copy)
   return ml_replace_buf(curbuf, lnum, line, copy);
 }
 
-/*
- * Replace line lnum, with buffering, in current buffer.
- *
- * If "copy" is TRUE, make a copy of the line, otherwise the line has been
- * copied to allocated memory already.
- *
- * Check: The caller of this function should probably also call
- * changed_lines(), unless update_screen(NOT_VALID) is used.
- *
- * return FAIL for failure, OK otherwise
- */
+// Replace line "lnum", with buffering, in current buffer.
+//
+// If "copy" is true, make a copy of the line, otherwise the line has been
+// copied to allocated memory already.
+// If "copy" is false the "line" may be freed to add text properties!
+// Do not use it after calling ml_replace().
+//
+// Check: The caller of this function should probably also call
+// changed_lines(), unless update_screen(NOT_VALID) is used.
+//
+// return FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
 {
   if (line == NULL)             /* just checking... */
@@ -3193,6 +3194,12 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   char_u      *fname_res = fname;
 #ifdef HAVE_READLINK
   char_u fname_buf[MAXPATHL];
+
+  // Expand symlink in the file name, so that we put the swap file with the
+  // actual file instead of with the symlink.
+  if (resolve_symlink(fname, fname_buf) == OK) {
+    fname_res = fname_buf;
+  }
 #endif
   int len = (int)STRLEN(dir_name);
 
@@ -3201,19 +3208,13 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
       && len > 1
       && s[-1] == s[-2]) {  // Ends with '//', Use Full path
     r = NULL;
-    if ((s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname)) != NULL) {
-      r = (char_u *)modname((char *)s, ".swp", FALSE);
+    s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
+    if (s != NULL) {
+      r = (char_u *)modname((char *)s, ".swp", false);
       xfree(s);
     }
     return r;
   }
-
-#ifdef HAVE_READLINK
-  /* Expand symlink in the file name, so that we put the swap file with the
-   * actual file instead of with the symlink. */
-  if (resolve_symlink(fname, fname_buf) == OK)
-    fname_res = fname_buf;
-#endif
 
   // Prepend a '.' to the swap file name for the current directory.
   r = (char_u *)modname((char *)fname_res, ".swp",

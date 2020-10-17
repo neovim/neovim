@@ -3593,7 +3593,7 @@ restore_backup:
    * the backup file our 'original' file.
    */
   if (*p_pm && dobackup) {
-    char *org = modname((char *)fname, (char *)p_pm, FALSE);
+    char *const org = modname((char *)fname, (char *)p_pm, false);
 
     if (backup != NULL) {
       /*
