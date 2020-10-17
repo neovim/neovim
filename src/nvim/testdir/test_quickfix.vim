@@ -2568,6 +2568,26 @@ func Test_vimgrep_incsearch()
   set noincsearch
 endfunc
 
+func Test_vimgrep_existing_swapfile()
+  call writefile(['match apple with apple'], 'Xapple')
+  call writefile(['swapfile'], '.Xapple.swp')
+  let g:foundSwap = 0
+  let g:ignoreSwapExists = 1
+  augroup grep
+    au SwapExists * let foundSwap = 1 | let v:swapchoice = 'e'
+  augroup END
+  vimgrep apple Xapple
+  call assert_equal(1, g:foundSwap)
+  call assert_match('.Xapple.swo', swapname(''))
+
+  call delete('Xapple')
+  call delete('Xapple.swp')
+  augroup grep
+    au! SwapExists
+  augroup END
+  unlet g:ignoreSwapExists
+endfunc
+
 func XfreeTests(cchar)
   call s:setup_commands(a:cchar)
 

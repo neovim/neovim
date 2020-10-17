@@ -78,6 +78,9 @@ set encoding=utf-8
 let s:test_script_fname = expand('%')
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
+  if exists('g:ignoreSwapExists')
+    return
+  endif
   " Ignore finding a swap file for the test script (the user might be
   " editing it and do ":make test_name") and the output file.
   " Report finding another swap file and chose 'q' to avoid getting stuck.
