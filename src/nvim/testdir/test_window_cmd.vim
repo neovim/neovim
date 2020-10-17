@@ -879,6 +879,10 @@ func Test_window_resize()
   exe other_winnr .. 'resize 10'
   call assert_equal(10, winheight(other_winnr))
   call assert_equal(&lines - 10 - 3, winheight(0))
+  exe other_winnr .. 'resize +1'
+  exe other_winnr .. 'resize +1'
+  call assert_equal(12, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3 -2, winheight(0))
 
   %bwipe!
 endfunc
