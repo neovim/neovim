@@ -275,6 +275,7 @@ return {
     rpcrequest={args=varargs(2)},
     rpcstart={args={1, 2}},
     rpcstop={args=1},
+    rubyeval={args=1},
     screenattr={args=2},
     screenchar={args=2},
     screencol={},

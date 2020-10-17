@@ -5,6 +5,7 @@ local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local eval = helpers.eval
+local exc_exec = helpers.exc_exec
 local expect = helpers.expect
 local feed = helpers.feed
 local feed_command = helpers.feed_command
@@ -107,5 +108,26 @@ describe('ruby provider', function()
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
     feed_command('help help')
     eq(2, eval('1+1'))  -- Still alive?
+  end)
+end)
+
+describe('rubyeval()', function()
+  it('evaluates ruby objects', function()
+    eq({1, 2, {['key'] = 'val'}}, funcs.rubyeval('[1, 2, {key: "val"}]'))
+  end)
+
+  it('returns nil for empty strings', function()
+    eq(helpers.NIL, funcs.rubyeval(''))
+  end)
+
+  it('errors out when given non-string', function()
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(10)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_dict)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_list)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(0.0)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(function("tr"))'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:true)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:false)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:null)'))
   end)
 end)

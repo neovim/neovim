@@ -4,13 +4,6 @@ if !has('ruby')
   finish
 end
 
-" Helper function as there is no builtin rubyeval() function similar
-" to perleval, luaevel() or pyeval().
-func RubyEval(ruby_expr)
-  let s = split(execute('ruby print ' . a:ruby_expr), "\n")
-  return (len(s) == 0) ? '' : s[-1]
-endfunc
-
 func Test_ruby_change_buffer()
   call setline(line('$'), ['1 line 1'])
   ruby Vim.command("normal /^1\n")
@@ -50,12 +43,12 @@ func Test_set_cursor()
   normal gg
   rubydo $curwin.cursor = [1, 5]
   call assert_equal([1, 6], [line('.'), col('.')])
-  call assert_equal('[1, 5]', RubyEval('$curwin.cursor'))
+  call assert_equal([1, 5], rubyeval('$curwin.cursor'))
 
   " Check that movement after setting cursor position keeps current column.
   normal j
   call assert_equal([2, 6], [line('.'), col('.')])
-  call assert_equal('[2, 5]', RubyEval('$curwin.cursor'))
+  call assert_equal([2, 5], rubyeval('$curwin.cursor'))
 
   " call assert_fails('ruby $curwin.cursor = [1]',
   "      \           'ArgumentError: array length must be 2')
@@ -66,25 +59,25 @@ endfunc
 func Test_buffer_count()
   new
   call setline(1, ['one', 'two', 'three'])
-  call assert_equal('3', RubyEval('$curbuf.count'))
-  call assert_equal('3', RubyEval('$curbuf.length'))
+  call assert_equal(3, rubyeval('$curbuf.count'))
+  call assert_equal(3, rubyeval('$curbuf.length'))
   bwipe!
 endfunc
 
 " Test buffer.name (buffer name)
 func Test_buffer_name()
   new Xfoo
-  call assert_equal(expand('%:p'), RubyEval('$curbuf.name'))
+  call assert_equal(expand('%:p'), rubyeval('$curbuf.name'))
   bwipe
-  call assert_equal('', RubyEval('$curbuf.name'))
+  call assert_equal('',     rubyeval('$curbuf.name'))
 endfunc
 
 " Test buffer.number (number of the buffer).
 func Test_buffer_number()
   new
-  call assert_equal(string(bufnr('%')), RubyEval('$curbuf.number'))
+  call assert_equal(bufnr('%'), rubyeval('$curbuf.number'))
   new
-  call assert_equal(string(bufnr('%')), RubyEval('$curbuf.number'))
+  call assert_equal(bufnr('%'), rubyeval('$curbuf.number'))
 
   %bwipe
 endfunc
@@ -128,7 +121,7 @@ func Test_buffer_line()
   new
   call setline(1, ['one', 'two', 'three'])
   2
-  call assert_equal('two', RubyEval('$curbuf.line'))
+  call assert_equal('two', rubyeval('$curbuf.line'))
 
   ruby $curbuf.line = 'TWO'
   call assert_equal(['one', 'TWO', 'three'], getline(1, '$'))
@@ -141,7 +134,7 @@ func Test_buffer_line_number()
   new
   call setline(1, ['one', 'two', 'three'])
   2
-  call assert_equal('2', RubyEval('$curbuf.line_number'))
+  call assert_equal(2, rubyeval('$curbuf.line_number'))
 
   bwipe!
 endfunc
@@ -149,8 +142,8 @@ endfunc
 func Test_buffer_get()
   new
   call setline(1, ['one', 'two'])
-  call assert_equal('one', RubyEval('$curbuf[1]'))
-  call assert_equal('two', RubyEval('$curbuf[2]'))
+  call assert_equal('one', rubyeval('$curbuf[1]'))
+  call assert_equal('two', rubyeval('$curbuf[2]'))
 
   " call assert_fails('ruby $curbuf[0]',
   "     \           'IndexError: line number 0 out of range')
@@ -184,7 +177,7 @@ func Test_window_height()
   call assert_equal(2, winheight(0))
 
   " Test getting window height
-  call assert_equal('2', RubyEval('$curwin.height'))
+  call assert_equal(2, rubyeval('$curwin.height'))
 
   bwipe
 endfunc
@@ -198,7 +191,7 @@ func Test_window_width()
   call assert_equal(2, winwidth(0))
 
   " Test getting window width
-  call assert_equal('2', RubyEval('$curwin.width'))
+  call assert_equal(2, rubyeval('$curwin.width'))
 
   bwipe
 endfunc
@@ -213,10 +206,10 @@ func Test_window_buffer()
   ruby $b1 = $curwin.buffer
   ruby $w1 = $curwin
 
-  " call assert_equal(RubyEval('$b1'), RubyEval('$w1.buffer'))
-  " call assert_equal(RubyEval('$b2'), RubyEval('$w2.buffer'))
-  call assert_equal(string(bufnr('Xfoo1')), RubyEval('$w1.buffer.number'))
-  call assert_equal(string(bufnr('Xfoo2')), RubyEval('$w2.buffer.number'))
+  " call assert_equal(rubyeval('$b1'), rubyeval('$w1.buffer'))
+  " call assert_equal(rubyeval('$b2'), rubyeval('$w2.buffer'))
+  call assert_equal(bufnr('Xfoo1'), rubyeval('$w1.buffer.number'))
+  call assert_equal(bufnr('Xfoo2'), rubyeval('$w2.buffer.number'))
 
   ruby $b1, $w1, $b2, $w2 = nil
   %bwipe
@@ -224,8 +217,8 @@ endfunc
 
 " Test Vim::Window.current (get current window object)
 func Test_Vim_window_current()
-  let cw = RubyEval('$curwin')
-  " call assert_equal(cw, RubyEval('Vim::Window.current'))
+  let cw = rubyeval('$curwin.to_s')
+  " call assert_equal(cw, rubyeval('Vim::Window.current'))
   call assert_match('^#<Neovim::Window:0x\x\+>$', cw)
 endfunc
 
@@ -234,27 +227,27 @@ func Test_Vim_window_count()
   new Xfoo1
   new Xfoo2
   split
-  call assert_equal('4', RubyEval('Vim::Window.count'))
+  call assert_equal(4, rubyeval('Vim::Window.count'))
   %bwipe
-  call assert_equal('1', RubyEval('Vim::Window.count'))
+  call assert_equal(1, rubyeval('Vim::Window.count'))
 endfunc
 
 " Test Vim::Window[n] (get window object of window n)
 func Test_Vim_window_get()
   new Xfoo1
   new Xfoo2
-  call assert_match('Xfoo2$', RubyEval('Vim::Window[0].buffer.name'))
+  call assert_match('Xfoo2$', rubyeval('Vim::Window[0].buffer.name'))
   wincmd j
-  call assert_match('Xfoo1$', RubyEval('Vim::Window[1].buffer.name'))
+  call assert_match('Xfoo1$', rubyeval('Vim::Window[1].buffer.name'))
   wincmd j
-  call assert_equal('',       RubyEval('Vim::Window[2].buffer.name'))
+  call assert_equal('',       rubyeval('Vim::Window[2].buffer.name'))
   %bwipe
 endfunc
 
 " Test Vim::Buffer.current (return the buffer object of current buffer)
 func Test_Vim_buffer_current()
-  let cb = RubyEval('$curbuf')
-  " call assert_equal(cb, RubyEval('Vim::Buffer.current'))
+  let cb = rubyeval('$curbuf.to_s')
+  " call assert_equal(cb, rubyeval('Vim::Buffer.current'))
   call assert_match('^#<Neovim::Buffer:0x\x\+>$', cb)
 endfunc
 
@@ -262,9 +255,9 @@ endfunc
 func Test_Vim_buffer_count()
   new Xfoo1
   new Xfoo2
-  call assert_equal('3', RubyEval('Vim::Buffer.count'))
+  call assert_equal(3, rubyeval('Vim::Buffer.count'))
   %bwipe
-  call assert_equal('1', RubyEval('Vim::Buffer.count'))
+  call assert_equal(1, rubyeval('Vim::Buffer.count'))
 endfunc
 
 " Test Vim::buffer[n] (return the buffer object of buffer number n)
@@ -273,9 +266,9 @@ func Test_Vim_buffer_get()
   new Xfoo2
 
   " Index of Vim::Buffer[n] goes from 0 to the number of buffers.
-  call assert_equal('',       RubyEval('Vim::Buffer[0].name'))
-  call assert_match('Xfoo1$', RubyEval('Vim::Buffer[1].name'))
-  call assert_match('Xfoo2$', RubyEval('Vim::Buffer[2].name'))
+  call assert_equal('',       rubyeval('Vim::Buffer[0].name'))
+  call assert_match('Xfoo1$', rubyeval('Vim::Buffer[1].name'))
+  call assert_match('Xfoo2$', rubyeval('Vim::Buffer[2].name'))
   call assert_fails('ruby print Vim::Buffer[3].name',
         \           "NoMethodError: undefined method `name' for nil:NilClass")
   %bwipe
@@ -301,33 +294,33 @@ func Test_Vim_set_option()
 endfunc
 
 func Test_Vim_evaluate()
-  call assert_equal('123',      RubyEval('Vim::evaluate("123")'))
+  call assert_equal(123,        rubyeval('Vim::evaluate("123")'))
   " Vim::evaluate("123").class gives Integer or Fixnum depending
   " on versions of Ruby.
-  call assert_match('^Integer\|Fixnum$', RubyEval('Vim::evaluate("123").class'))
+  call assert_match('^Integer\|Fixnum$', rubyeval('Vim::evaluate("123").class'))
 
-  call assert_equal('1.23',     RubyEval('Vim::evaluate("1.23")'))
-  call assert_equal('Float',    RubyEval('Vim::evaluate("1.23").class'))
+  call assert_equal(1.23,       rubyeval('Vim::evaluate("1.23")'))
+  call assert_equal('Float',    rubyeval('Vim::evaluate("1.23").class'))
 
-  call assert_equal('foo',      RubyEval('Vim::evaluate("\"foo\"")'))
-  call assert_equal('String',   RubyEval('Vim::evaluate("\"foo\"").class'))
+  call assert_equal('foo',      rubyeval('Vim::evaluate("\"foo\"")'))
+  call assert_equal('String',   rubyeval('Vim::evaluate("\"foo\"").class'))
 
-  call assert_equal('[1, 2]',   RubyEval('Vim::evaluate("[1, 2]")'))
-  call assert_equal('Array',    RubyEval('Vim::evaluate("[1, 2]").class'))
+  call assert_equal([1, 2],     rubyeval('Vim::evaluate("[1, 2]")'))
+  call assert_equal('Array',    rubyeval('Vim::evaluate("[1, 2]").class'))
 
-  call assert_equal('{"1"=>2}', RubyEval('Vim::evaluate("{1:2}")'))
-  call assert_equal('Hash',     RubyEval('Vim::evaluate("{1:2}").class'))
+  call assert_equal({'1': 2},   rubyeval('Vim::evaluate("{1:2}")'))
+  call assert_equal('Hash',     rubyeval('Vim::evaluate("{1:2}").class'))
 
-  call assert_equal('',         RubyEval('Vim::evaluate("v:null")'))
-  call assert_equal('NilClass', RubyEval('Vim::evaluate("v:null").class'))
+  call assert_equal(v:null,     rubyeval('Vim::evaluate("v:null")'))
+  call assert_equal('NilClass', rubyeval('Vim::evaluate("v:null").class'))
 
-  " call assert_equal('',         RubyEval('Vim::evaluate("v:none")'))
-  " call assert_equal('NilClass', RubyEval('Vim::evaluate("v:none").class'))
+  " call assert_equal(v:null,     rubyeval('Vim::evaluate("v:none")'))
+  " call assert_equal('NilClass', rubyeval('Vim::evaluate("v:none").class'))
 
-  call assert_equal('true',      RubyEval('Vim::evaluate("v:true")'))
-  call assert_equal('TrueClass', RubyEval('Vim::evaluate("v:true").class'))
-  call assert_equal('false',     RubyEval('Vim::evaluate("v:false")'))
-  call assert_equal('FalseClass',RubyEval('Vim::evaluate("v:false").class'))
+  call assert_equal(v:true,      rubyeval('Vim::evaluate("v:true")'))
+  call assert_equal('TrueClass', rubyeval('Vim::evaluate("v:true").class'))
+  call assert_equal(v:false,     rubyeval('Vim::evaluate("v:false")'))
+  call assert_equal('FalseClass',rubyeval('Vim::evaluate("v:false").class'))
 endfunc
 
 func Test_Vim_evaluate_list()
@@ -361,9 +354,22 @@ func Test_Vim_message()
 endfunc
 
 func Test_print()
-  ruby print "Hello World!"
-  let messages = split(execute('message'), "\n")
-  call assert_equal('Hello World!', messages[-1])
+  func RubyPrint(expr)
+    return trim(execute('ruby print ' . a:expr))
+  endfunc
+
+  call assert_equal('123', RubyPrint('123'))
+  call assert_equal('1.23', RubyPrint('1.23'))
+  call assert_equal('Hello World!', RubyPrint('"Hello World!"'))
+  call assert_equal('[1, 2]', RubyPrint('[1, 2]'))
+  call assert_equal('{"k1"=>"v1", "k2"=>"v2"}', RubyPrint('({"k1" => "v1", "k2" => "v2"})'))
+  call assert_equal('true', RubyPrint('true'))
+  call assert_equal('false', RubyPrint('false'))
+  call assert_equal('', RubyPrint('nil'))
+  call assert_match('Vim', RubyPrint('Vim'))
+  call assert_match('Module', RubyPrint('Vim.class'))
+
+  delfunc RubyPrint
 endfunc
 
 func Test_p()
@@ -373,13 +379,13 @@ func Test_p()
 
   " Check return values of p method
 
-  call assert_equal('123', RubyEval('p(123)'))
-  call assert_equal('[1, 2, 3]', RubyEval('p(1, 2, 3)'))
+  call assert_equal(123, rubyeval('p(123)'))
+  call assert_equal([1, 2, 3], rubyeval('p(1, 2, 3)'))
 
   " Avoid the "message maintainer" line.
   let $LANG = ''
   messages clear
-  call assert_equal('true', RubyEval('p() == nil'))
+  call assert_equal(v:true, rubyeval('p() == nil'))
 
   let messages = split(execute('message'), "\n")
   call assert_equal(0, len(messages))

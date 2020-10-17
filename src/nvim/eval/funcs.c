@@ -6381,6 +6381,12 @@ static void f_perleval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   script_host_eval("perl", argvars, rettv);
 }
 
+// "rubyeval()" function
+static void f_rubyeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  script_host_eval("ruby", argvars, rettv);
+}
+
 /*
  * "range()" function
  */
