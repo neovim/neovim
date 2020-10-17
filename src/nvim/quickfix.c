@@ -5073,7 +5073,7 @@ static void vgr_jump_to_match(qf_info_T *qi, int forceit, int *redraw_for_dummy,
 static bool existing_swapfile(const buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (buf->b_ml.ml_mfp != NULL) {
+  if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
     const char_u *const fname = buf->b_ml.ml_mfp->mf_fname;
     const size_t len = STRLEN(fname);
 
