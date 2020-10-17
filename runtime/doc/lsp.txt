@@ -488,8 +488,8 @@ get_active_clients()                            *vim.lsp.get_active_clients()*
                     Table of |vim.lsp.client| objects
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
-                Gets an active client by id, or nil if the id is invalid or
-                the client is not yet initialized.
+		Gets a client by id, or nil if the id is invalid.
+		The returned client may not yet be fully initialized.
 
                 Parameters: ~
                     {client_id}  client id number

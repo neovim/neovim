@@ -397,9 +397,8 @@ end
 --@param trace:  "off" | "messages" | "verbose" | nil passed directly to the language
 --- server in the initialize request. Invalid/empty values will default to "off"
 ---
---@returns Client id. |vim.lsp.get_client_by_id()| Note: client is only
---- available after it has been initialized, which may happen after a small
---- delay (or never if there is an error). Use `on_init` to do any actions once
+--@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
+--- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
   local cleaned_config = validate_client_config(config)
@@ -910,14 +909,14 @@ function lsp.buf_is_attached(bufnr, client_id)
   return (all_buffer_active_clients[bufnr] or {})[client_id] == true
 end
 
---- Gets an active client by id, or nil if the id is invalid or the
---- client is not yet initialized.
----
+--- Gets a client by id, or nil if the id is invalid.
+--- The returned client may not yet be fully initialized.
+--
 --@param client_id client id number
 ---
 --@returns |vim.lsp.client| object, or nil
 function lsp.get_client_by_id(client_id)
-  return active_clients[client_id]
+  return active_clients[client_id] or uninitialized_clients[client_id]
 end
 
 --- Stops a client(s).
