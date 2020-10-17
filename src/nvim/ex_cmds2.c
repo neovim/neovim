@@ -2058,6 +2058,10 @@ void ex_listdo(exarg_T *eap)
     // Don't do syntax HL autocommands.  Skipping the syntax file is a
     // great speed improvement.
     save_ei = au_event_disable(",Syntax");
+
+    FOR_ALL_BUFFERS(buf) {
+      buf->b_flags &= ~BF_SYN_SET;
+    }
   }
 
   if (eap->cmdidx == CMD_windo
@@ -2252,9 +2256,32 @@ void ex_listdo(exarg_T *eap)
   }
 
   if (save_ei != NULL) {
+    buf_T *bnext;
+    aco_save_T aco;
+
     au_event_restore(save_ei);
-    apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
-                   curbuf->b_fname, true, curbuf);
+
+    for (buf_T *buf = firstbuf; buf != NULL; buf = bnext) {
+      bnext = buf->b_next;
+      if (buf->b_nwindows > 0 && (buf->b_flags & BF_SYN_SET)) {
+        buf->b_flags &= ~BF_SYN_SET;
+
+        // buffer was opened while Syntax autocommands were disabled,
+        // need to trigger them now.
+        if (buf == curbuf) {
+          apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
+                         curbuf->b_fname, true, curbuf);
+        } else {
+          aucmd_prepbuf(&aco, buf);
+          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn,
+                         buf->b_fname, true, buf);
+          aucmd_restbuf(&aco);
+        }
+
+        // start over, in case autocommands messed things up.
+        bnext = firstbuf;
+      }
+    }
   }
 }
 

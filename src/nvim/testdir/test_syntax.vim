@@ -475,6 +475,40 @@ func Test_bg_detection()
   hi Normal ctermbg=NONE
 endfunc
 
+func Test_syntax_hangs()
+  if !has('reltime') || !has('float') || !has('syntax')
+    return
+  endif
+
+  " This pattern takes a long time to match, it should timeout.
+  new
+  call setline(1, ['aaa', repeat('abc ', 1000), 'ccc'])
+  let start = reltime()
+  set nolazyredraw redrawtime=101
+  syn match Error /\%#=1a*.*X\@<=b*/
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  " second time syntax HL is disabled
+  let start = reltime()
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed < 0.1)
+
+  " after CTRL-L the timeout flag is reset
+  let start = reltime()
+  exe "normal \<C-L>"
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  set redrawtime&
+  bwipe!
+endfunc
+
 func Test_synstack_synIDtrans()
   new
   setfiletype c
@@ -550,38 +584,42 @@ func Test_syn_wrong_z_one()
   bwipe!
 endfunc
 
-func Test_syntax_hangs()
-  if !has('reltime') || !has('float') || !has('syntax')
-    return
-  endif
+func Test_syntax_after_bufdo()
+  call writefile(['/* aaa comment */'], 'Xaaa.c')
+  call writefile(['/* bbb comment */'], 'Xbbb.c')
+  call writefile(['/* ccc comment */'], 'Xccc.c')
+  call writefile(['/* ddd comment */'], 'Xddd.c')
 
-  " This pattern takes a long time to match, it should timeout.
-  new
-  call setline(1, ['aaa', repeat('abc ', 1000), 'ccc'])
-  let start = reltime()
-  set nolazyredraw redrawtime=101
-  syn match Error /\%#=1a*.*X\@<=b*/
-  redraw
-  let elapsed = reltimefloat(reltime(start))
-  call assert_true(elapsed > 0.1)
-  call assert_true(elapsed < 1.0)
+  let bnr = bufnr('%')
+  new Xaaa.c
+  badd Xbbb.c
+  badd Xccc.c
+  badd Xddd.c
+  exe "bwipe " . bnr
+  let l = []
+  bufdo call add(l, bufnr('%'))
+  call assert_equal(4, len(l))
 
-  " second time syntax HL is disabled
-  let start = reltime()
-  redraw
-  let elapsed = reltimefloat(reltime(start))
-  call assert_true(elapsed < 0.1)
+  syntax on
 
-  " after CTRL-L the timeout flag is reset
-  let start = reltime()
-  exe "normal \<C-L>"
-  redraw
-  let elapsed = reltimefloat(reltime(start))
-  call assert_true(elapsed > 0.1)
-  call assert_true(elapsed < 1.0)
+  " This used to only enable syntax HL in the last buffer.
+  bufdo tab split
+  tabrewind
+  for tab in range(1, 4)
+    norm fm
+    call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+    tabnext
+  endfor
 
-  set redrawtime&
-  bwipe!
+  bwipe! Xaaa.c
+  bwipe! Xbbb.c
+  bwipe! Xccc.c
+  bwipe! Xddd.c
+  syntax off
+  call delete('Xaaa.c')
+  call delete('Xbbb.c')
+  call delete('Xccc.c')
+  call delete('Xddd.c')
 endfunc
 
 func Test_syntax_foldlevel()
