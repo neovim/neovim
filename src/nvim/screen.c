@@ -3634,7 +3634,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             mb_utf8 = false;                    // don't draw as UTF-8
           }
         } else if (c != NUL) {
-          p_extra = transchar(c);
+          p_extra = transchar_buf(wp->w_buffer, c);
           if (n_extra == 0) {
               n_extra = byte2cells(c) - 1;
           }

@@ -135,7 +135,7 @@ void do_ascii(const exarg_T *const eap)
     char buf1[20];
     if (vim_isprintc_strict(c) && (c < ' ' || c > '~')) {
       char_u buf3[7];
-      transchar_nonprint(buf3, c);
+      transchar_nonprint(curbuf, buf3, c);
       vim_snprintf(buf1, sizeof(buf1), "  <%s>", (char *)buf3);
     } else {
       buf1[0] = NUL;
@@ -2240,11 +2240,9 @@ int do_ecmd(
     goto theend;
   }
 
-  /*
-   * if the file was changed we may not be allowed to abandon it
-   * - if we are going to re-edit the same file
-   * - or if we are the only window on this file and if ECMD_HIDE is FALSE
-   */
+  // If the file was changed we may not be allowed to abandon it:
+  // - if we are going to re-edit the same file
+  // - or if we are the only window on this file and if ECMD_HIDE is FALSE
   if (  ((!other_file && !(flags & ECMD_OLDBUF))
          || (curbuf->b_nwindows == 1
              && !(flags & (ECMD_HIDE | ECMD_ADDBUF))))

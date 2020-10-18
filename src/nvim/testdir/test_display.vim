@@ -202,6 +202,30 @@ func Test_edit_long_file_name()
   call delete(longName)
 endfunc
 
+func Test_unprintable_fileformats()
+  CheckScreendump
+
+  call writefile(["unix\r", "two"], 'Xunix.txt')
+  call writefile(["mac\r", "two"], 'Xmac.txt')
+  let lines =<< trim END
+    edit Xunix.txt
+    split Xmac.txt
+    edit ++ff=mac
+  END
+  let filename = 'Xunprintable'
+  call writefile(lines, filename)
+  let buf = RunVimInTerminal('-S '.filename, #{rows: 9, cols: 50})
+  call VerifyScreenDump(buf, 'Test_display_unprintable_01', {})
+  call term_sendkeys(buf, "\<C-W>\<C-W>\<C-L>")
+  call VerifyScreenDump(buf, 'Test_display_unprintable_02', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xunix.txt')
+  call delete('Xmac.txt')
+  call delete(filename)
+endfunc
+
 " Test for scrolling that modifies buffer during visual block
 func Test_visual_block_scroll()
   " See test/functional/legacy/visual_mode_spec.lua

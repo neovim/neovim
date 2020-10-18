@@ -4204,7 +4204,6 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
 {
   char_u      *str = strstart;
   int c;
-  int modifiers;
 
   // :map xx <Nop>
   if (*str == NUL && what == 1) {
@@ -4231,7 +4230,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
      * when they are read back.
      */
     if (c == K_SPECIAL && what != 2) {
-      modifiers = 0x0;
+      int modifiers = 0;
       if (str[1] == KS_MODIFIER) {
         modifiers = str[2];
         str += 3;
