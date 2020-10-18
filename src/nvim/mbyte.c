@@ -512,7 +512,7 @@ int utf_ptr2cells(const char_u *p)
 {
   int c;
 
-  /* Need to convert to a wide character. */
+  // Need to convert to a character number.
   if (*p >= 0x80) {
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
@@ -582,7 +582,7 @@ size_t mb_string2cells_len(const char_u *str, size_t size)
   return clen;
 }
 
-/// Convert a UTF-8 byte sequence to a wide character
+/// Convert a UTF-8 byte sequence to a character number.
 ///
 /// If the sequence is illegal or truncated by a NUL then the first byte is
 /// returned.
