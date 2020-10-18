@@ -116,7 +116,7 @@ if (-not $NoTests) {
   python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
   $env:PATH = "C:\Ruby24\bin;$env:PATH"
-  gem.cmd install neovim
+  gem.cmd install --pre neovim
   Get-Command -CommandType Application neovim-ruby-host.bat
 
   npm.cmd install -g neovim
