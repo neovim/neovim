@@ -1621,7 +1621,7 @@ const char *str2special(const char **const sp, const bool replace_spaces,
 
     // Check for an illegal byte.
     if (MB_BYTE2LEN((uint8_t)(*str)) > len) {
-      transchar_nonprint((char_u *)buf, c);
+      transchar_nonprint(curbuf, (char_u *)buf, c);
       *sp = str + 1;
       return buf;
     }
