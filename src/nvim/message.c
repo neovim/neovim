@@ -1886,6 +1886,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   // wait-return prompt later.  Needed when scrolling, resetting
   // need_wait_return after some prompt, and then outputting something
   // without scrolling
+  // Not needed when only using CR to move the cursor.
   bool overflow = false;
   if (ui_has(kUIMessages)) {
     int count = msg_ext_visible + (msg_ext_overwrite ? 0 : 1);
@@ -1897,7 +1898,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
     overflow = msg_scrolled != 0;
   }
 
-  if (overflow && !msg_scrolled_ign) {
+  if (overflow && !msg_scrolled_ign && strcmp(str, "\r") != 0) {
     need_wait_return = true;
   }
   msg_didany = true;  // remember that something was outputted
@@ -1999,7 +2000,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
                               || (*s == TAB && msg_col <= 7)
                               || (utf_ptr2cells(s) > 1
                                   && msg_col <= 2))
-                           : (msg_col + t_col >= Columns - 1
+                           : ((*s != '\r' && msg_col + t_col >= Columns - 1)
                               || (*s == TAB
                                   && msg_col + t_col >= ((Columns - 1) & ~7))
                               || (utf_ptr2cells(s) > 1
