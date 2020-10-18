@@ -807,7 +807,7 @@ function M.fancy_floating_markdown(contents, opts)
       h.start = h.start + i - 1
       h.finish = h.finish + i - 1
       if h.finish + 1 <= #stripped then
-        table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at)))
+        table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at or width)))
         height = height + 1
       end
     end
