@@ -11,15 +11,20 @@ describe('meta-keys #8226 #13042', function()
   end)
 
   it('ALT/META, normal-mode', function()
-    -- Unmapped ALT-chords behave as ESC+c
+    -- Unmapped ALT-chord behaves as ESC+c.
     insert('hello')
     feed('0<A-x><M-x>')
     expect('llo')
+    -- Unmapped ALT-chord resolves isolated (non-ALT) ESC mapping. #13086 #15869
+    command('nnoremap <ESC> A<lt>ESC><Esc>')
+    command('nnoremap ; A;<Esc>')
+    feed('<A-;><M-;>')
+    expect('llo<ESC>;<ESC>;')
     -- Mapped ALT-chord behaves as mapped.
     command('nnoremap <M-l> Ameta-l<Esc>')
     command('nnoremap <A-j> Aalt-j<Esc>')
     feed('<A-j><M-l>')
-    expect('lloalt-jmeta-l')
+    expect('llo<ESC>;<ESC>;alt-jmeta-l')
   end)
 
   it('ALT/META, visual-mode', function()
@@ -27,11 +32,15 @@ describe('meta-keys #8226 #13042', function()
     insert('peaches')
     feed('viw<A-x>viw<M-x>')
     expect('peach')
+    -- Unmapped ALT-chord resolves isolated (non-ALT) ESC mapping. #13086 #15869
+    command('vnoremap <ESC> A<lt>ESC>')
+    feed('viw<A-;><ESC>viw<M-;><ESC>')
+    expect('peach<ESC>;<ESC>;')
     -- Mapped ALT-chord behaves as mapped.
     command('vnoremap <M-l> Ameta-l<Esc>')
     command('vnoremap <A-j> Aalt-j<Esc>')
     feed('viw<A-j>viw<M-l>')
-    expect('peachalt-jmeta-l')
+    expect('peach<ESC>;<ESC>;alt-jmeta-l')
   end)
 
   it('ALT/META insert-mode', function()
