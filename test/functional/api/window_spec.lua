@@ -3,7 +3,7 @@ local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
   helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -82,7 +82,7 @@ describe('API/win', function()
       insert("epilogue")
       local win = curwin()
       feed('gg')
-      wait() -- let nvim process the 'gg' command
+      poke_eventloop() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       eq({1, 0}, window('get_cursor', win))
@@ -128,7 +128,7 @@ describe('API/win', function()
       insert("second line")
 
       feed('gg')
-      wait() -- let nvim process the 'gg' command
+      poke_eventloop() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       local win = curwin()
@@ -139,7 +139,7 @@ describe('API/win', function()
 
       -- move down a line
       feed('j')
-      wait() -- let nvim process the 'j' command
+      poke_eventloop() -- let nvim process the 'j' command
 
       -- cursor is still in column 5
       eq({2, 5}, window('get_cursor', win))

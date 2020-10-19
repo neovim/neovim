@@ -8,7 +8,7 @@ local lfs = require('lfs')
 
 local eq = helpers.eq
 local neq = helpers.neq
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local funcs = helpers.funcs
 local meths = helpers.meths
 local clear = helpers.clear
@@ -64,7 +64,7 @@ describe("'directory' option", function()
     eq(nil, lfs.attributes('.Xtest1.swp'))
 
     command('edit! Xtest1')
-    wait()
+    poke_eventloop()
     eq('Xtest1', funcs.buffer_name('%'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
@@ -72,7 +72,7 @@ describe("'directory' option", function()
 
     meths.set_option('directory', './Xtest2,.')
     command('edit Xtest1')
-    wait()
+    poke_eventloop()
 
     -- swapfile should no longer exist in CWD.
     eq(nil, lfs.attributes('.Xtest1.swp'))
@@ -82,7 +82,7 @@ describe("'directory' option", function()
     meths.set_option('directory', 'Xtest.je')
     command('edit Xtest2/Xtest3')
     eq(true, curbufmeths.get_option('swapfile'))
-    wait()
+    poke_eventloop()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))
     eq({ "Xtest3.swp" }, ls_dir_sorted("Xtest.je"))

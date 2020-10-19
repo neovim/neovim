@@ -11,7 +11,7 @@ local os_kill = helpers.os_kill
 local retry = helpers.retry
 local meths = helpers.meths
 local NIL = helpers.NIL
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
@@ -428,7 +428,7 @@ describe('jobs', function()
       \ }
       let job = jobstart(['cat', '-'], g:callbacks)
     ]])
-    wait()
+    poke_eventloop()
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction

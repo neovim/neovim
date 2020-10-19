@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
-local feed, wait = helpers.feed, helpers.wait
+local feed, poke_eventloop = helpers.feed, helpers.poke_eventloop
 local ok = helpers.ok
 local eval = helpers.eval
 
@@ -90,7 +90,7 @@ describe(':browse oldfiles', function()
     feed_command('edit testfile2')
     filename2 = buf.get_name()
     feed_command('wshada')
-    wait()
+    poke_eventloop()
     _clear()
 
     -- Ensure nvim is out of "Press ENTER..." prompt.

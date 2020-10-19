@@ -1252,7 +1252,7 @@ describe('API', function()
         {0:~                                       }|
         {1:very fail}                               |
       ]])
-      helpers.wait()
+      helpers.poke_eventloop()
 
       -- shows up to &cmdheight lines
       nvim_async('err_write', 'more fail\ntoo fail\n')

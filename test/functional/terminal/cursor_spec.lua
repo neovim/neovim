@@ -70,7 +70,7 @@ describe(':terminal cursor', function()
         :set number                                       |
       ]])
       feed('i')
-      helpers.wait()
+      helpers.poke_eventloop()
       screen:expect([[
         {7:  1 }tty ready                                     |
         {7:  2 }rows: 6, cols: 46                             |

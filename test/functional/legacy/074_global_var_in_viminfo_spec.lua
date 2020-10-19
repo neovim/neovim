@@ -2,9 +2,9 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local clear, command, eq, neq, eval, wait =
+local clear, command, eq, neq, eval, poke_eventloop =
   helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval,
-  helpers.wait
+  helpers.poke_eventloop
 
 describe('storing global variables in ShaDa files', function()
   local tempname = 'Xtest-functional-legacy-074'
@@ -36,7 +36,7 @@ describe('storing global variables in ShaDa files', function()
     eq(test_list, eval('MY_GLOBAL_LIST'))
 
     command('wsh! ' .. tempname)
-    wait()
+    poke_eventloop()
 
     -- Assert that the shada file exists.
     neq(nil, lfs.attributes(tempname))

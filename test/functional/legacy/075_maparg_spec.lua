@@ -4,7 +4,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('maparg()', function()
   setup(clear)
@@ -25,7 +25,7 @@ describe('maparg()', function()
     command('map abc y<S-char-114>y')
     command([[call append('$', maparg('abc'))]])
     feed('Go<esc>:<cr>')
-    wait()
+    poke_eventloop()
 
     -- Outside of the range, minimum
     command('inoremap <Char-0x1040> a')
