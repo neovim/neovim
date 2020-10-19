@@ -1204,6 +1204,9 @@ struct window_S {
   colnr_T w_skipcol;                // starting column when a single line
                                     // doesn't fit in the window
 
+  linenr_T w_last_topline;          ///< last known value for topline
+  colnr_T w_last_leftcol;           ///< last known value for leftcol
+
   //
   // Layout of the window in the screen.
   // May need to add "msg_scrolled" to "w_winrow" in rare situations.

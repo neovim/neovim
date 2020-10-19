@@ -1193,6 +1193,22 @@ static void normal_check_interrupt(NormalState *s)
   }
 }
 
+static void normal_check_window_scrolled(NormalState *s)
+{
+  // XXX why is has_event necessary?
+
+  // Trigger Scroll if the window moved.
+  if (!finish_op && has_event(EVENT_SCROLL)
+      && (curwin->w_last_topline != curwin->w_topline ||
+          curwin->w_last_leftcol != curwin->w_leftcol)) {
+
+    apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
+
+    curwin->w_last_topline = curwin->w_topline;
+    curwin->w_last_leftcol = curwin->w_leftcol;
+  }
+}
+
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
@@ -1279,6 +1295,7 @@ static void normal_redraw(NormalState *s)
     xfree(p);
   }
 
+
   // show fileinfo after redraw
   if (need_fileinfo && !shortmess(SHM_FILEINFO)) {
     fileinfo(false, true, false);
@@ -1318,6 +1335,7 @@ static int normal_check(VimState *state)
   } else if (do_redraw || stuff_empty()) {
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
+    normal_check_window_scrolled(s);
 
     // Updating diffs from changed() does not always work properly,
     // esp. updating folds.  Do an update just before redrawing if
