@@ -139,7 +139,7 @@ local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c
 --@private
 --- The actual workhorse.
 local function request_parser_loop()
-  local buffer = ''
+  local buffer = '' -- only for header part
   while true do
     -- A message can only be complete if it has a double CRLF and also the full
     -- payload, so first let's check for the CRLFs
@@ -154,17 +154,29 @@ local function request_parser_loop()
       -- TODO(ashkan) I'd like to remove this, but it seems permanent :(
       local buffer_start = buffer:find(header_start_pattern)
       local headers = parse_headers(buffer:sub(buffer_start, start-1))
-      buffer = buffer:sub(finish+1)
       local content_length = headers.content_length
+      -- Use table instead of just string to buffer the message. It prevents
+      -- a ton of strings allocating.
+      -- ref. http://www.lua.org/pil/11.6.html
+      local body_chunks = {buffer:sub(finish+1)}
+      local body_length = #body_chunks[1]
       -- Keep waiting for data until we have enough.
-      while #buffer < content_length do
-        buffer = buffer..(coroutine.yield()
-            or error("Expected more data for the body. The server may have died.")) -- TODO hmm.
+      while body_length < content_length do
+        local chunk = coroutine.yield()
+            or error("Expected more data for the body. The server may have died.") -- TODO hmm.
+        table.insert(body_chunks, chunk)
+        body_length = body_length + #chunk
       end
-      local body = buffer:sub(1, content_length)
-      buffer = buffer:sub(content_length + 1)
+      local last_chunk = body_chunks[#body_chunks]
+
+      body_chunks[#body_chunks] = last_chunk:sub(1, content_length - body_length - 1)
+      local rest = ''
+      if body_length > content_length then
+        rest = last_chunk:sub(content_length - body_length)
+      end
+      local body = table.concat(body_chunks)
       -- Yield our data.
-      buffer = buffer..(coroutine.yield(headers, body)
+      buffer = rest..(coroutine.yield(headers, body)
           or error("Expected more data for the body. The server may have died.")) -- TODO hmm.
     else
       -- Get more data since we don't have enough.
