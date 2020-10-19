@@ -703,6 +703,10 @@ function protocol.make_client_capabilities()
         };
         hierarchicalDocumentSymbolSupport = true;
       };
+      rename = {
+        dynamicRegistration = false;
+        prepareSupport = true;
+      };
     };
     workspace = {
       symbol = {
@@ -914,6 +918,7 @@ function protocol.resolve_capabilities(server_capabilities)
       return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
     end
   end
+  general_properties.completion = server_capabilities.completionProvider ~= nil
   general_properties.hover = server_capabilities.hoverProvider or false
   general_properties.goto_definition = server_capabilities.definitionProvider or false
   general_properties.find_references = server_capabilities.referencesProvider or false
@@ -923,6 +928,15 @@ function protocol.resolve_capabilities(server_capabilities)
   general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
   general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
   general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
+  general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
+
+  if server_capabilities.renameProvider == nil then
+    general_properties.rename = false
+  elseif type(server_capabilities.renameProvider) == 'boolean' then
+    general_properties.rename = server_capabilities.renameProvider
+  else
+    general_properties.rename = true
+  end
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
