@@ -365,6 +365,52 @@ func Test_compl_in_cmdwin()
   set wildmenu& wildchar&
 endfunc
 
+" Test for insert path completion with completeslash option
+func Test_ins_completeslash()
+  if !has('win32')
+    return
+  endif
+  
+  call mkdir('Xdir')
+
+  let orig_shellslash = &shellslash
+  set cpt&
+
+  new
+  
+  set noshellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set shellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+  %bw!
+  call delete('Xdir', 'rf')
+
+  let &shellslash = orig_shellslash
+endfunc
+
 func Test_pum_with_folds_two_tabs()
   CheckScreendump
 

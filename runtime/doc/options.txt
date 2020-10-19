@@ -1386,6 +1386,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'completeslash'* *'csl'*
+'completeslash' 'csl'	string	(default: "")
+			local to buffer
+			{not in Vi}  {only for MS-Windows}
+	When this option is set it overrules 'shellslash' for completion:
+	- When this option is set to "slash", a forward slash is used for path
+	  completion in insert mode. This is useful when editing HTML tag, or
+	  Makefile with 'noshellslash' on Windows.
+	- When this option is set to "backslash", backslash is used. This is
+	  useful when editing a batch file with 'shellslash' set on Windows.
+	- When this option is empty, same character is used as for
+	  'shellslash'.
+	For Insert mode completion the buffer-local value is used.  For
+	command line completion the global value is used.
+
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	string	(default: "menu,preview")
 			global
@@ -5289,7 +5304,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'shellslash' only works when a backslash can be used as a path
 	separator.  To test if this is so use: >
 		if exists('+shellslash')
-<
+<	Also see 'completeslash'.
+
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
 'shelltemp' 'stmp'	boolean	(Vim default on, Vi default off)
 			global
