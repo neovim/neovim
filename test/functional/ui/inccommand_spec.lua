@@ -14,7 +14,7 @@ local neq = helpers.neq
 local ok = helpers.ok
 local retry = helpers.retry
 local source = helpers.source
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local nvim = helpers.nvim
 local sleep = helpers.sleep
 local nvim_dir = helpers.nvim_dir
@@ -114,7 +114,7 @@ describe(":substitute, inccommand=split interactivity", function()
 
   it("no preview if invoked by a script", function()
     source('%s/tw/MO/g')
-    wait()
+    poke_eventloop()
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
@@ -123,10 +123,10 @@ describe(":substitute, inccommand=split interactivity", function()
   it("no preview if invoked by feedkeys()", function()
     -- in a script...
     source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
-    wait()
+    poke_eventloop()
     -- or interactively...
     feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
-    wait()
+    poke_eventloop()
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
@@ -194,7 +194,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
-      wait()
+      poke_eventloop()
       -- Cancel the :substitute.
       feed([[<C-\><C-N>]])
 
@@ -230,7 +230,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
-      wait()
+      poke_eventloop()
       -- Cancel the :substitute.
       feed([[<C-\><C-N>]])
 
@@ -251,7 +251,7 @@ describe(":substitute, 'inccommand' preserves", function()
         some text 1
         some text 2]])
       feed(":%s/e/XXX/")
-      wait()
+      poke_eventloop()
 
       eq(expected_tick, eval("b:changedtick"))
     end)
@@ -1128,15 +1128,15 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw/Xo/g")
     -- Delete and re-type the g a few times.
     feed("<BS>")
-    wait()
+    poke_eventloop()
     feed("g")
-    wait()
+    poke_eventloop()
     feed("<BS>")
-    wait()
+    poke_eventloop()
     feed("g")
-    wait()
+    poke_eventloop()
     feed("<CR>")
-    wait()
+    poke_eventloop()
     feed(":vs tmp<enter>")
     eq(3, helpers.call('bufnr', '$'))
   end)
@@ -1171,7 +1171,7 @@ describe(":substitute, inccommand=split", function()
     feed_command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
     -- Start :substitute with a slow pattern.
     feed([[:%s/B.*N/x]])
-    wait()
+    poke_eventloop()
 
     -- Assert that 'inccommand' is DISABLED in cmdline mode.
     eq("", eval("&inccommand"))
@@ -1360,7 +1360,7 @@ describe("inccommand=nosplit", function()
     feed("<Esc>")
     command("set icm=nosplit")
     feed(":%s/tw/OKOK")
-    wait()
+    poke_eventloop()
     screen:expect([[
       Inc substitution on |
       {12:OKOK}o lines         |
@@ -2592,7 +2592,7 @@ describe(":substitute", function()
 
     feed("<C-c>")
     feed('gg')
-    wait()
+    poke_eventloop()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
       something                     |
@@ -2613,7 +2613,7 @@ describe(":substitute", function()
     ]])
 
     feed([[<C-c>]])
-    wait()
+    poke_eventloop()
     feed([[:%s/some\(thing\)\@=/every/]])
     screen:expect([[
       {12:every}thing                    |
@@ -2634,7 +2634,7 @@ describe(":substitute", function()
     ]])
 
     feed([[<C-c>]])
-    wait()
+    poke_eventloop()
     feed([[:%s/some\(thing\)\@!/every/]])
     screen:expect([[
       something                     |
@@ -2718,7 +2718,7 @@ it(':substitute with inccommand during :terminal activity', function()
     feed('gg')
     feed(':%s/foo/ZZZ')
     sleep(20)  -- Allow some terminal activity.
-    helpers.wait()
+    helpers.poke_eventloop()
     screen:expect_unchanged()
   end)
 end)

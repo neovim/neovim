@@ -554,9 +554,9 @@ function module.curbuf(method, ...)
   return module.buffer(method, 0, ...)
 end
 
-function module.wait()
-  -- Execute 'nvim_eval' (a deferred function) to block
-  -- until all pending input is processed.
+function module.poke_eventloop()
+  -- Execute 'nvim_eval' (a deferred function) to
+  -- force at least one main_loop iteration
   session:request('nvim_eval', '1')
 end
 
@@ -566,7 +566,7 @@ end
 
 --@see buf_lines()
 function module.curbuf_contents()
-  module.wait()  -- Before inspecting the buffer, process all input.
+  module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
 end
 

@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
@@ -13,7 +13,7 @@ describe(':terminal buffer', function()
   before_each(function()
     clear()
     feed_command('set modifiable swapfile undolevels=20')
-    wait()
+    poke_eventloop()
     screen = thelpers.screen_setup()
   end)
 

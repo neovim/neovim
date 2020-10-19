@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, dedent, eq = helpers.command, helpers.dedent, helpers.eq
 local curbuf_contents = helpers.curbuf_contents
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('argument list', function()
   setup(clear)
@@ -17,7 +17,7 @@ describe('argument list', function()
           this is a test
           this is a test
       end of test file Xxx]])
-    wait()
+    poke_eventloop()
 
     command('au BufReadPost Xxx2 next Xxx2 Xxx1')
     command('/^start of')
@@ -30,7 +30,7 @@ describe('argument list', function()
 
     -- Write test file Xxx3
     feed('$r3:.,/end of/w! Xxx3<cr>')
-    wait()
+    poke_eventloop()
 
     -- Redefine arglist; go to Xxx1
     command('next! Xxx1 Xxx2 Xxx3')
@@ -43,7 +43,7 @@ describe('argument list', function()
 
     -- Append contents of last window (Xxx1)
     feed('')
-    wait()
+    poke_eventloop()
     command('%yank A')
 
     -- should now be in Xxx2

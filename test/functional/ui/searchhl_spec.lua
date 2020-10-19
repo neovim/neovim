@@ -158,7 +158,7 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
-    helpers.wait()
+    helpers.poke_eventloop()
     screen:expect_unchanged()
   end)
 

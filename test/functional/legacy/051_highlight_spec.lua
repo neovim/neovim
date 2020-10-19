@@ -5,7 +5,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local expect = helpers.expect
 local eq = helpers.eq
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local exc_exec = helpers.exc_exec
 local feed_command = helpers.feed_command
 
@@ -34,7 +34,7 @@ describe(':highlight', function()
       -- More --^                         |
     ]])
     feed('q')
-    wait() -- wait until we're back to normal
+    poke_eventloop() -- wait until we're back to normal
     feed_command('hi Search')
     feed_command('hi Normal')
 

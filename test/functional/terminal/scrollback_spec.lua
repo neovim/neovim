@@ -6,7 +6,7 @@ local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.fee
 local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
@@ -347,7 +347,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
     feed_command('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
-    wait()
+    poke_eventloop()
     screen:expect([[
       line6                         |
       line7                         |
@@ -423,7 +423,7 @@ describe("'scrollback' option", function()
 
     retry(nil, nil, function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
-    wait()
+    poke_eventloop()
     retry(nil, nil, function() expect_lines(16) end)
     curbufmeths.set_option('scrollback', 10000)
     retry(nil, nil, function() expect_lines(16) end)

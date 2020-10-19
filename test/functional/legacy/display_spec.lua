@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 
@@ -18,7 +18,7 @@ describe('display', function()
     })
 
     feed_command([[call setline(1, repeat('a', 21))]])
-    wait()
+    poke_eventloop()
     feed('O')
     screen:expect([[
       ^                    |

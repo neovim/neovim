@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local exc_exec = helpers.exc_exec
 local dedent = helpers.dedent
 
@@ -71,7 +71,7 @@ describe('eval', function()
     command([[call SetReg('I', 'abcI')]])
 
     feed('Go{{{1 Appending single lines with setreg()<esc>')
-    wait()
+    poke_eventloop()
     command([[call SetReg('A', 'abcAc', 'c')]])
     command([[call SetReg('A', 'abcAl', 'l')]])
     command([[call SetReg('A', 'abcAc2','c')]])
@@ -700,13 +700,13 @@ describe('eval', function()
       start:]])
     command('/^012345678')
     feed('6l')
-    wait()
+    poke_eventloop()
     command('let sp = getcurpos()')
     feed('0')
-    wait()
+    poke_eventloop()
     command("call setpos('.', sp)")
     feed('jyl')
-    wait()
+    poke_eventloop()
     command('$put')
     expect([[
       012345678

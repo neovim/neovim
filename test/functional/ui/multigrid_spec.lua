@@ -4,7 +4,7 @@ local clear = helpers.clear
 local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
 local meths = helpers.meths
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 
 describe('ext_multigrid', function()
@@ -1846,8 +1846,8 @@ describe('ext_multigrid', function()
     meths.input_mouse('left', 'press', '', 1,6, 20)
     -- TODO(bfredl): "batching" input_mouse is formally not supported yet.
     -- Normally it should work fine in async context when nvim is not blocked,
-    -- but add a wait be sure.
-    wait()
+    -- but add a poke_eventloop be sure.
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 4, 20)
     screen:expect{grid=[[
     ## grid 1
@@ -1921,7 +1921,7 @@ describe('ext_multigrid', function()
     ]]}
 
     meths.input_mouse('left', 'press', '', 1,8, 26)
-    wait()
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 6, 30)
     screen:expect{grid=[[
     ## grid 1

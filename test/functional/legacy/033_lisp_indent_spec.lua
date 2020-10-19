@@ -4,7 +4,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('lisp indent', function()
   setup(clear)
@@ -39,7 +39,7 @@ describe('lisp indent', function()
     command('set lisp')
     command('/^(defun')
     feed('=G:/^(defun/,$yank A<cr>')
-    wait()
+    poke_eventloop()
 
     -- Put @a and clean empty line
     command('%d')

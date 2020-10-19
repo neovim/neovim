@@ -4,7 +4,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('test5', function()
   setup(clear)
@@ -34,7 +34,7 @@ describe('test5', function()
     command('bwipe')
     feed('G?this is a<cr>')
     feed('othis is some more text<esc>')
-    wait()
+    poke_eventloop()
 
     -- Append some text to this file.
 
@@ -45,7 +45,7 @@ describe('test5', function()
     command('bwipe!')
     -- Append an extra line to the output register.
     feed('ithis is another test line<esc>:yank A<cr>')
-    wait()
+    poke_eventloop()
 
     -- Output results
     command('%d')

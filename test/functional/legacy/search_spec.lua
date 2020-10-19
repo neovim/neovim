@@ -6,7 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('search cmdline', function()
   local screen
@@ -483,9 +483,9 @@ describe('search cmdline', function()
     -- "interactive".  This mimics Vim's test_override("char_avail").
     -- (See legacy test: test_search.vim)
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -496,11 +496,11 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 ^the first                           |
@@ -511,13 +511,13 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -528,9 +528,9 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 ^the first                           |
@@ -541,11 +541,11 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -556,13 +556,13 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
