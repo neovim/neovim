@@ -4297,7 +4297,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
   if (source ? do_source(eap->arg, false, DOSO_NONE) == FAIL
-             : source_runtime(eap->arg, DIP_ALL) == FAIL) {
+             : source_in_path(p_rtp, eap->arg, DIP_ALL) == FAIL) {
     EMSG2(_(e_notopen), eap->arg);
   }
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;

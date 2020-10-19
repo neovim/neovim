@@ -3364,10 +3364,6 @@ ambw_end:
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
     }
-  } else if (varp == &p_rtp) {  // 'runtimepath'
-    if (!nlua_update_package_path()) {
-      errmsg = (char_u *)N_("E970: Failed to initialize lua interpreter");
-    }
   } else {
     // Options that are a list of flags.
     p = NULL;
