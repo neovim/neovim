@@ -189,7 +189,7 @@ endfunc
 func Test_edit_long_file_name()
   CheckScreendump
 
-  let longName = 'x'->repeat(&columns)
+  let longName = 'x'->repeat(min([&columns, 255]))
   call writefile([], longName)
   let buf = RunVimInTerminal('-N -u NONE ' .. longName, #{rows: 8})
 
