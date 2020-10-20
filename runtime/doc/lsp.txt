@@ -792,6 +792,20 @@ outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
                 cursor in the |quickfix| window. If the symbol can resolve to
                 multiple items, the user can pick one in the |inputlist|.
 
+                                             *vim.lsp.buf.range_code_action()*
+range_code_action({context}, {start_pos}, {end_pos})
+                Performs |vim.lsp.buf.code_action()| for a given range.
+
+                Parameters: ~
+                    {context}    (table, optional) Valid `CodeActionContext`
+                                 object
+                    {start_pos}  ({number, number}, optional) mark-indexed
+                                 position. Defaults to the start of the last
+                                 visual selection.
+                    {end_pos}    ({number, number}, optional) mark-indexed
+                                 position. Defaults to the end of the last
+                                 visual selection.
+
                                               *vim.lsp.buf.range_formatting()*
 range_formatting({options}, {start_pos}, {end_pos})
                 Formats a given range.
@@ -1284,6 +1298,23 @@ make_formatting_params({options})
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+
+                                      *vim.lsp.util.make_given_range_params()*
+make_given_range_params({start_pos}, {end_pos})
+                Using the given range in the current buffer, creates an object
+                that is similar to |vim.lsp.util.make_range_params()|.
+
+                Parameters: ~
+                    {start_pos}  ({number, number}, optional) mark-indexed
+                                 position. Defaults to the start of the last
+                                 visual selection.
+                    {end_pos}    ({number, number}, optional) mark-indexed
+                                 position. Defaults to the end of the last
+                                 visual selection.
+
+                Return: ~
+                    { textDocument = { uri = `current_file_uri` }, range = {
+                    start = `start_position` , end = `end_position` } }
 
 make_position_params()                   *vim.lsp.util.make_position_params()*
                 Creates a `TextDocumentPositionParams` object for the current

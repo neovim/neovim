@@ -1031,6 +1031,9 @@ is_callable({f})                                           *vim.is_callable()*
                 Return: ~
                     true if `f` is callable, else false
 
+is_valid({opt})                                               *vim.is_valid()*
+                TODO: Documentation
+
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like
                 table.
@@ -1286,7 +1289,9 @@ validate({opt})                                               *vim.validate()*
                               • arg_value: argument value
                               • fn: any function accepting one argument,
                                 returns true if and only if the argument is
-                                valid
+                                valid. Can optionally return an additional
+                                informative error message as the second
+                                returned value.
                               • msg: (optional) error string if validation
                                 fails
 
