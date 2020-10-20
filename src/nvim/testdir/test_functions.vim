@@ -214,7 +214,7 @@ func Test_strftime()
   endif
 endfunc
 
-func Test_resolve()
+func Test_resolve_unix()
   if !has('unix')
     return
   endif
@@ -258,6 +258,8 @@ func Test_resolve()
   call assert_equal('Xlink2', resolve('Xlink1'))
   call assert_equal('./Xlink2', resolve('./Xlink1'))
   call delete('Xlink1')
+
+  call assert_equal('/', resolve('/'))
 endfunc
 
 func Test_simplify()

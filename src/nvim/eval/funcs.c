@@ -6936,7 +6936,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     ptrdiff_t len = (ptrdiff_t)strlen(p);
-    if (len > 0 && after_pathsep(p, p + len)) {
+    if (len > 1 && after_pathsep(p, p + len)) {
       has_trailing_pathsep = true;
       p[len - 1] = NUL;  // The trailing slash breaks readlink().
     }
