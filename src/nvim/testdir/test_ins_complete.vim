@@ -414,6 +414,19 @@ func Test_ins_completeslash()
   set completeslash=
 endfunc
 
+func Test_issue_7021()
+  CheckMSWindows
+
+  let orig_shellslash = &shellslash
+  set noshellslash
+
+  set completeslash=slash
+  call assert_false(expand('~') =~ '/')
+
+  let &shellslash = orig_shellslash
+  set completeslash=
+endfunc
+
 func Test_pum_with_folds_two_tabs()
   CheckScreendump
 
