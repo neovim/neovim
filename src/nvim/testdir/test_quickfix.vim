@@ -4151,6 +4151,7 @@ func Xqfbuf_test(cchar)
 endfunc
 
 func Test_qfbuf()
+  throw 'skipped: enable after porting patch 8.1.0877'
   call Xqfbuf_test('c')
   call Xqfbuf_test('l')
 endfunc
