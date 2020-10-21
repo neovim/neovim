@@ -414,7 +414,7 @@ for s:test in sort(s:tests)
 
   " Repeat a flaky test.  Give up when:
   " - it fails again with the same message
-  " - it fails five times (with a different mesage)
+  " - it fails five times (with a different message)
   if len(v:errors) > 0
         \ && (index(s:flaky_tests, s:test) >= 0
         \      || v:errors[0] =~ s:flaky_errors_re)

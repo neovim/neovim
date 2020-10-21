@@ -109,7 +109,7 @@ func Test_define_script_var_with_lock()
     unlet s:x
 endfunc
 
-func Test_descructuring_with_lock()
+func Test_destructuring_with_lock()
     const [a, b, c] = [1, 1.1, 'vim']
 
     call assert_fails('let a = 1', 'E741:')

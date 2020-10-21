@@ -521,7 +521,7 @@ endfunction
 "
 " Create a script that consists of the body of the function a:funcname.
 " Replace any ":return" by a ":finish", any argument variable by a global
-" variable, and and every ":call" by a ":source" for the next following argument
+" variable, and every ":call" by a ":source" for the next following argument
 " in the variable argument list.  This function is useful if similar tests are
 " to be made for a ":return" from a function call or a ":finish" in a script
 " file.

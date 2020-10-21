@@ -1744,7 +1744,7 @@ func Test_switchbuf()
   call assert_equal(1, bufwinnr('Xqftestfile3'))
 
   " If only quickfix window is open in the current tabpage, jumping to an
-  " entry with 'switchubf' set to 'usetab' should search in other tabpages.
+  " entry with 'switchbuf' set to 'usetab' should search in other tabpages.
   enew | only
   set switchbuf=usetab
   tabedit Xqftestfile1
