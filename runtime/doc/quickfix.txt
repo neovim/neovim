@@ -540,7 +540,6 @@ location list.
 			second quickfix window.  If [height] is given the
 			existing window will be resized to it.
 
-							*quickfix-buffer*
 			The window will contain a special buffer, with
 			'buftype' equal to "quickfix".  Don't change this!
 			The window will have the w:quickfix_title variable set
@@ -549,11 +548,7 @@ location list.
 			status line if the value of 'statusline' is adjusted
 			properly. Whenever this buffer is modified by a
 			quickfix command or function, the |b:changedtick|
-			variable is incremented.  You can get the number of
-			this buffer using the getqflist() and getloclist()
-			functions by passing the 'qfbufnr' item. For a
-			location list, this buffer is wiped out when the
-			location list is removed.
+			variable is incremented.
 
 							*:lop* *:lopen*
 :lop[en] [height]	Open a window to show the location list for the
@@ -719,17 +714,11 @@ using these functions are below:
     " get the quickfix list window id
     :echo getqflist({'winid' : 0}).winid
 
-    " get the quickfix list window buffer number
-    :echo getqflist({'qfbufnr' : 0}).qfbufnr
-
     " get the context of the current location list
     :echo getloclist(0, {'context' : 0}).context
 
     " get the location list window id of the third window
     :echo getloclist(3, {'winid' : 0}).winid
-
-    " get the location list window buffer number of the third window
-    :echo getloclist(3, {'qfbufnr' : 0}).qfbufnr
 
     " get the file window id of a location list window (winnr: 4)
     :echo getloclist(4, {'filewinid' : 0}).filewinid
