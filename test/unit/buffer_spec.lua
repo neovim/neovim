@@ -212,7 +212,7 @@ describe('buffer functions', function()
 
   describe('build_stl_str_hl', function()
     local buffer_byte_size = 100
-    local STL_MAX_ITEM = 80
+    local STL_MAX_ITEM = 300
     local output_buffer = ''
 
     -- This function builds the statusline

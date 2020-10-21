@@ -259,7 +259,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
-#define STL_MAX_ITEM 80                 // max nr of %<flag> in statusline
+#define STL_MAX_ITEM 300                // max nr of %<flag> in statusline
 
 #include "nvim/path.h"
 
