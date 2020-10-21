@@ -953,18 +953,6 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
-#define UNPACK_BOOL_RV(result, v, message, rv) \
-  if (v->type == kObjectTypeBoolean) { \
-    result = v->data.boolean; \
-  } else if (v->type == kObjectTypeInteger) { \
-    result = v->data.integer; \
-  } else { \
-    api_set_error(err, kErrorTypeValidation, message); \
-    return rv; \
-  }
-
-#define UNPACK_BOOL(result, v, message) UNPACK_BOOL_RV(result, v, message, )
-
 /// Deletes the buffer. See |:bwipeout|
 ///
 /// @param buffer Buffer handle, or 0 for current buffer
@@ -986,13 +974,17 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     if (strequal("force", k.data)) {
-      UNPACK_BOOL(force, v, "force must be a boolean")
+      force = api_coerce_to_bool(*v, "force", false, err);
     } else if (strequal("unload", k.data)) {
-      UNPACK_BOOL(unload, v, "unload must be a boolean")
+      unload = api_coerce_to_bool(*v, "unload", false, err);
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return;
     }
+  }
+
+  if (ERROR_SET(err)) {
+    return;
   }
 
   int result = do_buffer(
@@ -1449,7 +1441,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
     } else if (strequal("ephemeral", k.data)) {
-      ephemeral = api_is_truthy(*v, "ephemeral", false, err);
+      ephemeral = api_coerce_to_bool(*v, "ephemeral", false, err);
       if (ERROR_SET(err)) {
         goto error;
       }

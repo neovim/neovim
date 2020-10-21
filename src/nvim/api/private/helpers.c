@@ -1619,7 +1619,9 @@ free_exit:
   return virt_text;
 }
 
-bool api_is_truthy(Object obj, const char *what, bool nil_truthy, Error *err)
+/// Force obj to bool.
+/// If it fails, returns false and sets err
+bool api_coerce_to_bool(Object obj, const char *what, bool nil_truthy, Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
