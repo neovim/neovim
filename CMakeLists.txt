@@ -1,11 +1,9 @@
 # CMAKE REFERENCE
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
-
 # Version should match the tested CMAKE_URL in .travis.yml.
 cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
-
 if(POLICY CMP0065)
   cmake_policy(SET CMP0065 NEW)
 endif()
@@ -125,6 +123,7 @@ set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
+
 set(NVIM_API_LEVEL 7)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
