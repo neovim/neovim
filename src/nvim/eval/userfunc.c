@@ -2920,8 +2920,10 @@ void ex_call(exarg_T *eap)
   if (!failed || eap->cstack->cs_trylevel > 0) {
     // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
-      emsg_severe = true;
-      EMSG(_(e_trailing));
+      if (!failed) {
+        emsg_severe = true;
+        EMSG(_(e_trailing));
+      }
     } else {
       eap->nextcmd = check_nextcmd(arg);
     }

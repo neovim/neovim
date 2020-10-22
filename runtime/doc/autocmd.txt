@@ -700,9 +700,14 @@ InsertEnter			Just before starting Insert mode.  Also for
 				The cursor is restored afterwards.  If you do
 				not want that set |v:char| to a non-empty
 				string.
+							*InsertLeavePre*
+InsertLeavePre			Just before leaving Insert mode.  Also when
+				using CTRL-O |i_CTRL-O|.  Be caseful not to
+				change mode or use `:normal`, it will likely
+				cause trouble.
 							*InsertLeave*
-InsertLeave			When leaving Insert mode.  Also when using
-				CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+InsertLeave			Just after leaving Insert mode.  Also when
+				using CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
