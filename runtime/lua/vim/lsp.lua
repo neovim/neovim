@@ -1128,35 +1128,42 @@ function lsp.omnifunc(findstart, base)
 end
 
 --- Implements an LSP `formatexpr`-compatible
---@param start_line 1-indexed line
---@param end_line 1-indexed line
---@param timeout_ms optional
+--@param start_line 1-indexed line, defaults to |v:lnum|
+--@param end_line 1-indexed line, calculated based on {start_line} and |v:count|
+--@param timeout_ms optional, defaults to 500ms
 function lsp.formatexpr(start_line, end_line, timeout_ms)
+  timeout_ms = timeout_ms or 500
+
   if not start_line or not end_line then
     if vim.fn.mode() == 'i' or vim.fn.mode() == 'R' then
-      -- `formatexpr` is also called when exceding
-      -- `textwidth` in insert mode
+      -- `formatexpr` is also called when exceeding `textwidth` in insert mode
       -- fall back to internal formatting
       return 1
     end
     start_line = vim.v.lnum
     end_line = start_line + vim.v.count - 1
   end
+
   if start_line > 0 and end_line > 0 then
     local params = {
-      textDocument = { uri = vim.uri_from_bufnr(0) };
+      textDocument = vim.lsp.util.make_text_document_params();
       range = {
         start = { line = start_line - 1; character = 0; };
         ["end"] = { line = end_line - 1; character = 0; };
       };
     };
-    local result = vim.lsp.buf_request_sync(0, "textDocument/rangeFormatting", params, timeout_ms)
-    if result then
-      result = result[1].result
-      vim.lsp.util.apply_text_edits(result)
+    local client_results = vim.lsp.buf_request_sync(0, "textDocument/rangeFormatting", params, timeout_ms)
+
+    -- Apply the text edits from one and only one of the clients.
+    for _, response in pairs(client_results) do
+      if response.result then
+        vim.lsp.util.apply_text_edits(response.result, 0)
+        return 0
+      end
     end
   end
- -- do not run builtin formatter.
+
+  -- do not run builtin formatter.
   return 0
 end
 
