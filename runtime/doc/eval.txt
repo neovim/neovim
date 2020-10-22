@@ -2336,6 +2336,7 @@ repeat({expr}, {count})		String	repeat {expr} {count} times
 resolve({filename})		String	get filename a shortcut points to
 reverse({list})			List	reverse {list} in-place
 round({expr})			Float	round off {expr}
+rubyeval({expr})		any	evaluate |Ruby| expression
 rpcnotify({channel}, {event}[, {args}...])
 				Sends an |RPC| notification to {channel}
 rpcrequest({channel}, {method}[, {args}...])
@@ -7069,6 +7070,17 @@ rpcstart({prog}[, {argv}])					*rpcstart()*
 			:let id = rpcstart('prog', ['arg1', 'arg2'])
 <		with >
 			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
+
+rubyeval({expr})					*rubyeval()*
+		Evaluate Ruby expression {expr} and return its result
+		converted to Vim data structures.
+		Numbers, floats and strings are returned as they are (strings
+		are copied though).
+		Arrays are represented as Vim |List| type.
+		Hashes are represented as Vim |Dictionary| type.
+		Other objects are represented as strings resulted from their
+		"Object#to_s" method.
+		{only available when compiled with the |+ruby| feature}
 
 screenattr({row}, {col})					*screenattr()*
 		Like |screenchar()|, but return the attribute.  This is a rather

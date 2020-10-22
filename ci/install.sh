@@ -19,7 +19,7 @@ echo "Install neovim module for Python 2."
 CC=cc python2 -m pip -q install --user --upgrade pynvim
 
 echo "Install neovim RubyGem."
-gem install --no-document --version ">= 0.8.0" neovim
+gem install --no-document --pre neovim
 
 echo "Install neovim npm package"
 source ~/.nvm/nvm.sh
