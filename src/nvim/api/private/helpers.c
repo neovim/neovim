@@ -1621,18 +1621,22 @@ free_exit:
 
 /// Force obj to bool.
 /// If it fails, returns false and sets err
-/// @param obj      The object to coerce to a boolean
-/// @param what     The name of the object, used for error message
-/// @param if_nil   What to return if the type is nil.
-/// @param err      Set if there was an error in converting to a bool
-bool api_coerce_to_bool(Object obj, const char *what, bool if_nil, Error *err)
+/// @param obj          The object to coerce to a boolean
+/// @param what         The name of the object, used for error message
+/// @param nil_value    What to return if the type is nil.
+/// @param err          Set if there was an error in converting to a bool
+bool api_coerce_to_bool(
+    Object obj,
+    const char *what,
+    bool nil_value,
+    Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
   } else if (obj.type == kObjectTypeInteger) {
     return obj.data.integer;  // C semantics: non-zero int is true
   } else if (obj.type == kObjectTypeNil) {
-    return if_nil;  // caller decides what NIL (missing retval in lua) means
+    return nil_value;  // caller decides what NIL (missing retval in lua) means
   } else {
     api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
     return false;

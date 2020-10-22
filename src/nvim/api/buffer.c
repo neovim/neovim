@@ -972,11 +972,11 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   bool unload = false;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
+    Object v = opts.items[i].value;
     if (strequal("force", k.data)) {
-      force = api_coerce_to_bool(*v, "force", false, err);
+      force = api_coerce_to_bool(v, "force", false, err);
     } else if (strequal("unload", k.data)) {
-      unload = api_coerce_to_bool(*v, "unload", false, err);
+      unload = api_coerce_to_bool(v, "unload", false, err);
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return;
