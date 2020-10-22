@@ -639,8 +639,11 @@ function protocol.make_client_capabilities()
       completion = {
         dynamicRegistration = false;
         completionItem = {
+          -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
+          -- this should be disabled out of the box.
+          -- However, users can turn this back on if they have a snippet plugin.
+          snippetSupport = false;
 
-          snippetSupport = true;
           commitCharactersSupport = false;
           preselectSupport = false;
           deprecatedSupport = false;
