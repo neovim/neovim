@@ -7691,6 +7691,10 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
     undisplay_dollar();
   }
 
+  if (cmdchar != 'r' && cmdchar != 'v') {
+    ins_apply_autocmds(EVENT_INSERTLEAVEPRE);
+  }
+
   // When an autoindent was removed, curswant stays after the
   // indent
   if (restart_edit == NUL && (colnr_T)temp == curwin->w_cursor.col) {
