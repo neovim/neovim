@@ -1624,6 +1624,146 @@ int utf_head_off(const char_u *base, const char_u *p)
   return (int)(p - q);
 }
 
+// Whether space is NOT allowed before/after 'c'.
+bool utf_eat_space(int cc)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (cc >= 0x2000 && cc <= 0x206F)   // General punctuations
+      || (cc >= 0x2e00 && cc <= 0x2e7f)   // Supplemental punctuations
+      || (cc >= 0x3000 && cc <= 0x303f)   // CJK symbols and punctuations
+      || (cc >= 0xff01 && cc <= 0xff0f)   // Full width ASCII punctuations
+      || (cc >= 0xff1a && cc <= 0xff20)   // ..
+      || (cc >= 0xff3b && cc <= 0xff40)   // ..
+      || (cc >= 0xff5b && cc <= 0xff65);  // ..
+}
+
+// Whether line break is allowed before "cc".
+bool utf_allow_break_before(int cc)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static const int BOL_prohibition_punct[] = {
+    '!',
+    '%',
+    ')',
+    ',',
+    ':',
+    ';',
+    '>',
+    '?',
+    ']',
+    '}',
+    0x2019,  // ’ right single quotation mark
+    0x201d,  // ” right double quotation mark
+    0x2020,  // † dagger
+    0x2021,  // ‡ double dagger
+    0x2026,  // … horizontal ellipsis
+    0x2030,  // ‰ per mille sign
+    0x2031,  // ‱ per then thousand sign
+    0x203c,  // ‼ double exclamation mark
+    0x2047,  // ⁇ double question mark
+    0x2048,  // ⁈ question exclamation mark
+    0x2049,  // ⁉ exclamation question mark
+    0x2103,  // ℃ degree celsius
+    0x2109,  // ℉ degree fahrenheit
+    0x3001,  // 、 ideographic comma
+    0x3002,  // 。 ideographic full stop
+    0x3009,  // 〉 right angle bracket
+    0x300b,  // 》 right double angle bracket
+    0x300d,  // 」 right corner bracket
+    0x300f,  // 』 right white corner bracket
+    0x3011,  // 】 right black lenticular bracket
+    0x3015,  // 〕 right tortoise shell bracket
+    0x3017,  // 〗 right white lenticular bracket
+    0x3019,  // 〙 right white tortoise shell bracket
+    0x301b,  // 〛 right white square bracket
+    0xff01,  // ！ fullwidth exclamation mark
+    0xff09,  // ） fullwidth right parenthesis
+    0xff0c,  // ， fullwidth comma
+    0xff0e,  // ． fullwidth full stop
+    0xff1a,  // ： fullwidth colon
+    0xff1b,  // ； fullwidth semicolon
+    0xff1f,  // ？ fullwidth question mark
+    0xff3d,  // ］ fullwidth right square bracket
+    0xff5d,  // ｝ fullwidth right curly bracket
+  };
+
+  int first = 0;
+  int last = ARRAY_SIZE(BOL_prohibition_punct) - 1;
+
+  while (first < last) {
+    const int mid = (first + last) / 2;
+
+    if (cc == BOL_prohibition_punct[mid]) {
+      return false;
+    } else if (cc > BOL_prohibition_punct[mid]) {
+      first = mid + 1;
+    } else {
+      last = mid - 1;
+    }
+  }
+
+  return cc != BOL_prohibition_punct[first];
+}
+
+// Whether line break is allowed after "cc".
+bool utf_allow_break_after(int cc)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static const int EOL_prohibition_punct[] = {
+    '(',
+    '<',
+    '[',
+    '`',
+    '{',
+    // 0x2014,  // — em dash
+    0x2018,     // ‘ left single quotation mark
+    0x201c,     // “ left double quotation mark
+    // 0x2053,  // ～ swung dash
+    0x3008,     // 〈 left angle bracket
+    0x300a,     // 《 left double angle bracket
+    0x300c,     // 「 left corner bracket
+    0x300e,     // 『 left white corner bracket
+    0x3010,     // 【 left black lenticular bracket
+    0x3014,     // 〔 left tortoise shell bracket
+    0x3016,     // 〖 left white lenticular bracket
+    0x3018,     // 〘 left white tortoise shell bracket
+    0x301a,     // 〚 left white square bracket
+    0xff08,     // （ fullwidth left parenthesis
+    0xff3b,     // ［ fullwidth left square bracket
+    0xff5b,     // ｛ fullwidth left curly bracket
+  };
+
+  int first = 0;
+  int last = ARRAY_SIZE(EOL_prohibition_punct) - 1;
+
+  while (first < last) {
+    const int mid = (first + last)/2;
+
+    if (cc == EOL_prohibition_punct[mid]) {
+      return false;
+    } else if (cc > EOL_prohibition_punct[mid]) {
+      first = mid + 1;
+    } else {
+      last = mid - 1;
+    }
+  }
+
+  return cc != EOL_prohibition_punct[first];
+}
+
+// Whether line break is allowed between "cc" and "ncc".
+bool utf_allow_break(int cc, int ncc)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // don't break between two-letter punctuations
+  if (cc == ncc
+      && (cc == 0x2014         // em dash
+          || cc == 0x2026)) {  // horizontal ellipsis
+    return false;
+  }
+  return utf_allow_break_after(cc) && utf_allow_break_before(ncc);
+}
+
 /// Copy a character, advancing the pointers
 ///
 /// @param[in,out]  fp  Source of the character to copy.

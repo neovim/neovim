@@ -6803,7 +6803,8 @@ static void langmap_set(void)
 
 /// Return true if format option 'x' is in effect.
 /// Take care of no formatting when 'paste' is set.
-int has_format_option(int x)
+bool has_format_option(int x)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (p_paste) {
     return false;

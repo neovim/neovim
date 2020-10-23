@@ -142,7 +142,6 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
                            long xtra)
 {
   int i;
-  int cols;
   pos_T       *p;
   int add;
 
@@ -170,7 +169,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
         if (p->lnum != lnum) {
             add = true;
         } else {
-          cols = comp_textwidth(false);
+          int cols = comp_textwidth(false);
           if (cols == 0) {
               cols = 79;
           }
