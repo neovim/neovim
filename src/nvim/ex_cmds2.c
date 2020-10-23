@@ -53,12 +53,17 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
+typedef enum script_type_E {
+  SCRIPT_STRING, // for sourcing a string
+  SCRIPT_FILE
+} script_type_T;
 
 /// Growarray to store info about already sourced scripts.
 /// Also store the dev/ino, so that we don't have to stat() each
 /// script when going through the list.
 typedef struct scriptitem_S {
   char_u      *sn_name;
+  script_type_T script_type;
   bool file_id_valid;
   FileID file_id;
   bool sn_prof_on;              ///< true when script is/was profiled
@@ -3098,6 +3103,9 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)xstrdup(buf);
 }
 
+static scid_T last_current_SID = 0;
+static int last_current_SID_seq = 0;
+
 /// Executes lines in `src` as Ex commands.
 ///
 /// @see do_source()
@@ -3116,19 +3124,34 @@ int do_source_str(const char *cmd, const char *traceback_name)
   }
   sourcing_lnum = 0;
 
+  funccal_entry_T funccalp_entry;
+  save_funccal(&funccalp_entry);
+
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid = ++last_current_SID;
+  current_sctx.sc_seq = ++last_current_SID_seq;
+  current_sctx.sc_lnum = sourcing_lnum;
+  ga_grow(&script_items, (int)(current_sctx.sc_sid - script_items.ga_len));
+  while (script_items.ga_len < current_sctx.sc_sid) {
+    script_items.ga_len++;
+    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
+    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
+    SCRIPT_ITEM(script_items.ga_len).script_type = SCRIPT_STRING;
+  }
+
+  // Allocate the local script variables to use for this script.
+  new_script_vars(current_sctx.sc_sid);
+
   GetStrLineCookie cookie = {
     .buf = (char_u *)cmd,
     .offset = 0,
   };
-  const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid = SID_STR;
-  current_sctx.sc_seq = 0;
-  current_sctx.sc_lnum = save_sourcing_lnum;
   int retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
   current_sctx = save_current_sctx;
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
+  restore_funccal();
   return retval;
 }
 
@@ -3152,8 +3175,6 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   char_u                  *fname_exp;
   char_u                  *firstline = NULL;
   int retval = FAIL;
-  static scid_T last_current_SID = 0;
-  static int last_current_SID_seq = 0;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
   proftime_T wait_start;
@@ -3460,6 +3481,10 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
   *should_free = false;
 
+  if (SCRIPT_ITEM(last_set.script_ctx.sc_sid).script_type == SCRIPT_STRING)
+  {
+    return (char_u *)_("anonymous :source");
+  }
   switch (last_set.script_ctx.sc_sid) {
     case SID_MODELINE:
       return (char_u *)_("modeline");
@@ -3478,8 +3503,6 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
                    _("API client (channel id %" PRIu64 ")"),
                    last_set.channel_id);
       return IObuff;
-    case SID_STR:
-      return (char_u *)_("anonymous :source");
     default:
       *should_free = true;
       return home_replace_save(NULL,
