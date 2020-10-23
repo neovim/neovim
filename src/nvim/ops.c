@@ -3833,7 +3833,8 @@ int do_join(size_t count,
           && (!has_format_option(FO_MBYTE_JOIN)
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
-              || utf_ptr2char(curr) < 0x100 || endcurr1 < 0x100)
+              || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
+              || (endcurr1 < 0x100 && !utf_eat_space(utf_ptr2char(curr))))
           ) {
         /* don't add a space if the line is ending in a space */
         if (endcurr1 == ' ')
@@ -4158,49 +4159,41 @@ format_lines(
     int avoid_fex                          /* don't use 'formatexpr' */
 )
 {
-  int max_len;
-  int is_not_par;                       /* current line not part of parag. */
-  int next_is_not_par;                  /* next line not part of paragraph */
-  int is_end_par;                       /* at end of paragraph */
-  int prev_is_end_par = FALSE;          /* prev. line not part of parag. */
-  int next_is_start_par = FALSE;
-  int leader_len = 0;                   /* leader len of current line */
-  int next_leader_len;                  /* leader len of next line */
-  char_u      *leader_flags = NULL;     /* flags for leader of current line */
-  char_u      *next_leader_flags;       /* flags for leader of next line */
-  int do_comments;                      /* format comments */
-  int do_comments_list = 0;             /* format comments with 'n' or '2' */
-  int advance = TRUE;
-  int second_indent = -1;               /* indent for second line (comment
-                                         * aware) */
-  int do_second_indent;
-  int do_number_indent;
-  int do_trail_white;
-  int first_par_line = TRUE;
+  bool is_not_par;                  // current line not part of parag.
+  bool next_is_not_par;             // next line not part of paragraph
+  bool is_end_par;                  // at end of paragraph
+  bool prev_is_end_par = false;     // prev. line not part of parag.
+  bool next_is_start_par = false;
+  int leader_len = 0;               // leader len of current line
+  int next_leader_len;              // leader len of next line
+  char_u *leader_flags = NULL;      // flags for leader of current line
+  char_u *next_leader_flags;        // flags for leader of next line
+  bool advance = true;
+  int second_indent = -1;           // indent for second line (comment aware)
+  bool first_par_line = true;
   int smd_save;
   long count;
-  int need_set_indent = TRUE;           /* set indent of next paragraph */
-  int force_format = FALSE;
-  int old_State = State;
+  bool need_set_indent = true;      // set indent of next paragraph
+  bool force_format = false;
+  const int old_State = State;
 
-  /* length of a line to force formatting: 3 * 'tw' */
-  max_len = comp_textwidth(TRUE) * 3;
+  // length of a line to force formatting: 3 * 'tw'
+  const int max_len = comp_textwidth(true) * 3;
 
-  /* check for 'q', '2' and '1' in 'formatoptions' */
-  do_comments = has_format_option(FO_Q_COMS);
-  do_second_indent = has_format_option(FO_Q_SECOND);
-  do_number_indent = has_format_option(FO_Q_NUMBER);
-  do_trail_white = has_format_option(FO_WHITE_PAR);
+  // check for 'q', '2' and '1' in 'formatoptions'
+  const bool do_comments = has_format_option(FO_Q_COMS);  // format comments
+  int do_comments_list = 0;  // format comments with 'n' or '2'
+  const bool do_second_indent = has_format_option(FO_Q_SECOND);
+  const bool do_number_indent = has_format_option(FO_Q_NUMBER);
+  const bool do_trail_white = has_format_option(FO_WHITE_PAR);
 
-  /*
-   * Get info about the previous and current line.
-   */
-  if (curwin->w_cursor.lnum > 1)
-    is_not_par = fmt_check_par(curwin->w_cursor.lnum - 1
-        , &leader_len, &leader_flags, do_comments
-        );
-  else
-    is_not_par = TRUE;
+  // Get info about the previous and current line.
+  if (curwin->w_cursor.lnum > 1) {
+    is_not_par = fmt_check_par(curwin->w_cursor.lnum - 1,
+                               &leader_len, &leader_flags, do_comments);
+  } else {
+    is_not_par = true;
+  }
   next_is_not_par = fmt_check_par(curwin->w_cursor.lnum
       , &next_leader_len, &next_leader_flags, do_comments
       );
@@ -4225,7 +4218,7 @@ format_lines(
      * The last line to be formatted.
      */
     if (count == 1 || curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
-      next_is_not_par = TRUE;
+      next_is_not_par = true;
       next_leader_len = 0;
       next_leader_flags = NULL;
     } else {
@@ -4236,7 +4229,7 @@ format_lines(
         next_is_start_par =
           (get_number_indent(curwin->w_cursor.lnum + 1) > 0);
     }
-    advance = TRUE;
+    advance = true;
     is_end_par = (is_not_par || next_is_not_par || next_is_start_par);
     if (!is_end_par && do_trail_white)
       is_end_par = !ends_in_white(curwin->w_cursor.lnum);
@@ -4287,7 +4280,7 @@ format_lines(
               leader_len, leader_flags,
               next_leader_len, next_leader_flags)
           )
-        is_end_par = TRUE;
+        is_end_par = true;
 
       /*
        * If we have got to the end of a paragraph, or the line is
@@ -4324,9 +4317,9 @@ format_lines(
            * end of the paragraph. */
           if (line_count < 0)
             break;
-          first_par_line = TRUE;
+          first_par_line = true;
         }
-        force_format = FALSE;
+        force_format = false;
       }
 
       /*
@@ -4334,7 +4327,7 @@ format_lines(
        * first delete the leader from the second line.
        */
       if (!is_end_par) {
-        advance = FALSE;
+        advance = false;
         curwin->w_cursor.lnum++;
         curwin->w_cursor.col = 0;
         if (line_count < 0 && u_save_cursor() == FAIL)
@@ -4357,12 +4350,13 @@ format_lines(
           beep_flush();
           break;
         }
-        first_par_line = FALSE;
-        /* If the line is getting long, format it next time */
-        if (STRLEN(get_cursor_line_ptr()) > (size_t)max_len)
-          force_format = TRUE;
-        else
-          force_format = FALSE;
+        first_par_line = false;
+        // If the line is getting long, format it next time
+        if (STRLEN(get_cursor_line_ptr()) > (size_t)max_len) {
+          force_format = true;
+        } else {
+          force_format = false;
+        }
       }
     }
     line_breakcheck();
@@ -4423,11 +4417,10 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 int paragraph_start(linenr_T lnum)
 {
   char_u *p;
-  int leader_len = 0;                   /* leader len of current line */
-  char_u *leader_flags = NULL;          /* flags for leader of current line */
-  int next_leader_len = 0;              /* leader len of next line */
-  char_u *next_leader_flags = NULL;     /* flags for leader of next line */
-  int do_comments;                      /* format comments */
+  int leader_len = 0;                // leader len of current line
+  char_u *leader_flags = NULL;       // flags for leader of current line
+  int next_leader_len = 0;           // leader len of next line
+  char_u *next_leader_flags = NULL;  // flags for leader of next line
 
   if (lnum <= 1)
     return TRUE;                /* start of the file */
@@ -4436,7 +4429,7 @@ int paragraph_start(linenr_T lnum)
   if (*p == NUL)
     return TRUE;                /* after empty line */
 
-  do_comments = has_format_option(FO_Q_COMS);
+  const bool do_comments = has_format_option(FO_Q_COMS);  // format comments
   if (fmt_check_par(lnum - 1, &leader_len, &leader_flags, do_comments)) {
     return true;  // after non-paragraph line
   }
