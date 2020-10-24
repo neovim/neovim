@@ -4558,7 +4558,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     if (os_chdir(new_dir) == 0) {
       if (!p_acd && !strequal(new_dir, cwd)) {
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTab);
+                              ? kCdScopeWindow : kCdScopeTab, true);
       }
       shorten_fnames(true);
     }
@@ -4567,7 +4567,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     // directory: Change to the global directory.
     if (os_chdir((char *)globaldir) == 0) {
       if (!p_acd && !strequal((char *)globaldir, cwd)) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal);
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, true);
       }
     }
     XFREE_CLEAR(globaldir);

@@ -29,15 +29,15 @@ describe('autocmd DirChanged', function()
 
   it('sets v:event', function()
     command('lcd '..dirs[1])
-    eq({cwd=dirs[1], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
     eq(1, eval('g:cdcount'))
 
     command('tcd '..dirs[2])
-    eq({cwd=dirs[2], scope='tab'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='tab', changed_window=false}, eval('g:ev'))
     eq(2, eval('g:cdcount'))
 
     command('cd '..dirs[3])
-    eq({cwd=dirs[3], scope='global'}, eval('g:ev'))
+    eq({cwd=dirs[3], scope='global', changed_window=false}, eval('g:ev'))
     eq(3, eval('g:cdcount'))
   end)
 
@@ -57,7 +57,7 @@ describe('autocmd DirChanged', function()
     -- Set up a _nested_ handler.
     command('autocmd DirChanged * nested lcd '..dirs[3])
     command('lcd '..dirs[1])
-    eq({cwd=dirs[1], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
     eq(1, eval('g:cdcount'))
     -- autocmd changed to dirs[3], but did NOT trigger another DirChanged.
     eq(dirs[3], eval('getcwd()'))
@@ -105,10 +105,10 @@ describe('autocmd DirChanged', function()
     command('set autochdir')
 
     command('split '..dirs[1]..'/foo')
-    eq({cwd=dirs[1], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
 
     command('split '..dirs[2]..'/bar')
-    eq({cwd=dirs[2], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='window', changed_window=false}, eval('g:ev'))
 
     eq(2, eval('g:cdcount'))
   end)
@@ -121,16 +121,16 @@ describe('autocmd DirChanged', function()
     command('lcd '..dirs[1])
 
     command('2wincmd w')                -- window 2
-    eq({cwd=dirs[2], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='window', changed_window=true}, eval('g:ev'))
 
     eq(4, eval('g:cdcount'))
     command('tabnew')                   -- tab 2 (tab-local CWD)
     eq(4, eval('g:cdcount'))            -- same CWD, no DirChanged event
     command('tcd '..dirs[3])
     command('tabnext')                  -- tab 1 (no tab-local CWD)
-    eq({cwd=dirs[2], scope='window'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='window', changed_window=true}, eval('g:ev'))
     command('tabnext')                  -- tab 2
-    eq({cwd=dirs[3], scope='tab'}, eval('g:ev'))
+    eq({cwd=dirs[3], scope='tab', changed_window=true}, eval('g:ev'))
     eq(7, eval('g:cdcount'))
 
     command('tabnext')                  -- tab 1
@@ -142,17 +142,17 @@ describe('autocmd DirChanged', function()
 
   it('is triggered by nvim_set_current_dir()', function()
     request('nvim_set_current_dir', dirs[1])
-    eq({cwd=dirs[1], scope='global'}, eval('g:ev'))
+    eq({cwd=dirs[1], scope='global', changed_window=false}, eval('g:ev'))
 
     request('nvim_set_current_dir', dirs[2])
-    eq({cwd=dirs[2], scope='global'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='global', changed_window=false}, eval('g:ev'))
 
     local status, err = pcall(function()
       request('nvim_set_current_dir', '/doesnotexist')
     end)
     eq(false, status)
     eq('Failed to change directory', string.match(err, ': (.*)'))
-    eq({cwd=dirs[2], scope='global'}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='global', changed_window=false}, eval('g:ev'))
   end)
 
   it('works when local to buffer', function()
