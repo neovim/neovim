@@ -1486,22 +1486,7 @@ static void ins_redraw(
       && (curwin->w_last_topline != curwin->w_topline ||
           curwin->w_last_leftcol != curwin->w_leftcol)) {
 
-    // XXX is the buf changedtick thing necessary?
-    // XXX apply_autocmds vs ins_apply_autocmds?
-    // XXX why can't we re-use normal_check_window_scrolled()?
-
-    aco_save_T aco;
-    varnumber_T tick = buf_get_changedtick(curbuf);
-
-    // save and restore curwin and curbuf, in case the autocmd changes them
-    aucmd_prepbuf(&aco, curbuf);
     apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
-    aucmd_restbuf(&aco);
-    curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
-    if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
-      u_save(curwin->w_cursor.lnum,
-             (linenr_T)(curwin->w_cursor.lnum + 1));
-    }
 
     curwin->w_last_topline = curwin->w_topline;
     curwin->w_last_leftcol = curwin->w_leftcol;

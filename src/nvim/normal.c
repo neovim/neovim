@@ -1195,8 +1195,6 @@ static void normal_check_interrupt(NormalState *s)
 
 static void normal_check_window_scrolled(NormalState *s)
 {
-  // XXX why is has_event necessary?
-
   // Trigger Scroll if the window moved.
   if (!finish_op && has_event(EVENT_SCROLL)
       && (curwin->w_last_topline != curwin->w_topline ||
