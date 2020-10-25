@@ -1197,13 +1197,8 @@ static void normal_check_window_scrolled(NormalState *s)
 {
   // Trigger Scroll if the window moved.
   if (!finish_op && has_event(EVENT_SCROLL)
-      && (curwin->w_last_topline != curwin->w_topline ||
-          curwin->w_last_leftcol != curwin->w_leftcol)) {
-
+      && curwin->w_viewport_invalid) {
     apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
-
-    curwin->w_last_topline = curwin->w_topline;
-    curwin->w_last_leftcol = curwin->w_leftcol;
   }
 }
 
@@ -1292,7 +1287,6 @@ static void normal_redraw(NormalState *s)
     msg_hist_off = false;
     xfree(p);
   }
-
 
   // show fileinfo after redraw
   if (need_fileinfo && !shortmess(SHM_FILEINFO)) {

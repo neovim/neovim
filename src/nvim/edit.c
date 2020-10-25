@@ -1483,13 +1483,8 @@ static void ins_redraw(
   }
 
   if (ready && has_event(EVENT_SCROLL)
-      && (curwin->w_last_topline != curwin->w_topline ||
-          curwin->w_last_leftcol != curwin->w_leftcol)) {
-
+      && curwin->w_viewport_invalid) {
     apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
-
-    curwin->w_last_topline = curwin->w_topline;
-    curwin->w_last_leftcol = curwin->w_leftcol;
   }
 
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
