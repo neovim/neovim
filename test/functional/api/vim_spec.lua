@@ -120,7 +120,7 @@ describe('API', function()
       eq('ahoy! script-scoped varrrrr', nvim('exec', [[
           let s:pirate = 'script-scoped varrrrr'
           func! s:avast_ye_hades(s) abort
-            return s.' '.s:pirate
+            return a:s.' '.s:pirate
           endf
           echo <sid>avast_ye_hades('ahoy!')
         ]], true))
