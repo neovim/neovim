@@ -1029,7 +1029,7 @@ function lsp.buf_request(bufnr, method, params, callback)
   -- error message.
   if not method_supported then
     local unsupported_err = lsp._unsupported_method(method)
-    local cb = callback or lsp.callbacks['method']
+    local cb = callback or lsp.callbacks[method]
     if cb then
       cb(unsupported_err, method, bufnr)
     end
