@@ -1020,7 +1020,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
 /*
  * Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
  */
-void 
+bool 
 scrolldown (
     long line_count,
     int byfold              /* true: count a closed fold as one line */
@@ -1095,17 +1095,21 @@ scrolldown (
     foldAdjustCursor();
     coladvance(curwin->w_curswant);
   }
+  return moved;
 }
 
 /*
  * Scroll the current window up by "line_count" logical lines.  "CTRL-E"
  */
-void 
+bool 
 scrollup (
     long line_count,
     int byfold              /* true: count a closed fold as one line */
 )
 {
+  linenr_T topline = curwin->w_topline;
+  linenr_T botline = curwin->w_botline;
+
   if ((byfold && hasAnyFolding(curwin))
       || curwin->w_p_diff) {
     // count each sequence of folded lines as one logical line
@@ -1148,6 +1152,12 @@ scrollup (
       ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
     coladvance(curwin->w_curswant);
   }
+
+  bool moved = 
+    topline != curwin->w_topline ||
+    botline != curwin->w_botline;
+
+  return moved;
 }
 
 /*

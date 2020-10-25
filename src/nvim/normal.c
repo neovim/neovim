@@ -4117,10 +4117,10 @@ void scroll_redraw(int up, long count)
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (up)
-    scrollup(count, true);
-  else
+  bool moved = up ?
+    scrollup(count, true) :
     scrolldown(count, true);
+
   if (get_scrolloff_value()) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
@@ -4152,7 +4152,9 @@ void scroll_redraw(int up, long count)
   }
   if (curwin->w_cursor.lnum != prev_lnum)
     coladvance(curwin->w_curswant);
-  curwin->w_viewport_invalid = true;
+  // XXX: can `moved` be used to prevent other work here?
+  if (moved)
+    curwin->w_viewport_invalid = true;
   redraw_later(VALID);
 }
 
