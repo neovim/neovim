@@ -4990,7 +4990,7 @@ ExpandFromContext (
     char_u *pat,
     int *num_file,
     char_u ***file,
-    int options              /* EW_ flags */
+    int options              // WILD_ flags
 )
 {
   regmatch_T regmatch;
@@ -5053,7 +5053,7 @@ ExpandFromContext (
     if (free_pat)
       xfree(pat);
 #ifdef BACKSLASH_IN_FILENAME
-    if (p_csl[0] != NUL) {
+    if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
       for (int i = 0; i < *num_file; i++) {
         char_u *ptr = (*file)[i];
         while (*ptr != NUL) {

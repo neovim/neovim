@@ -367,17 +367,15 @@ endfunc
 
 " Test for insert path completion with completeslash option
 func Test_ins_completeslash()
-  if !has('win32')
-    return
-  endif
-  
+  CheckMSWindows
+
   call mkdir('Xdir')
 
   let orig_shellslash = &shellslash
   set cpt&
 
   new
-  
+
   set noshellslash
 
   set completeslash=
@@ -408,7 +406,12 @@ func Test_ins_completeslash()
   %bw!
   call delete('Xdir', 'rf')
 
+  set noshellslash
+  set completeslash=slash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+
   let &shellslash = orig_shellslash
+  set completeslash=
 endfunc
 
 func Test_pum_with_folds_two_tabs()

@@ -4007,7 +4007,7 @@ static void f_glob(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "globpath()" function
 static void f_globpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int flags = 0;  // Flags for globpath.
+  int flags = WILD_IGNORE_COMPLETESLASH;  // Flags for globpath.
   bool error = false;
 
   // Return a string, or a list if the optional third argument is non-zero.
