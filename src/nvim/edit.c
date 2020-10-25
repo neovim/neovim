@@ -5549,13 +5549,11 @@ void insertchar(
     int second_indent                     // indent for second line if >= 0
 )
 {
-  int textwidth;
   char_u      *p;
-  int fo_ins_blank;
   int force_format = flags & INSCHAR_FORMAT;
 
-  textwidth = comp_textwidth(force_format);
-  fo_ins_blank = has_format_option(FO_INS_BLANK);
+  const int textwidth = comp_textwidth(force_format);
+  const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
 
   /*
    * Try to break the line in two or more pieces when:
@@ -5756,10 +5754,11 @@ internal_format (
   int cc;
   int save_char = NUL;
   bool haveto_redraw = false;
-  int fo_ins_blank = has_format_option(FO_INS_BLANK);
-  int fo_multibyte = has_format_option(FO_MBYTE_BREAK);
-  int fo_white_par = has_format_option(FO_WHITE_PAR);
-  int first_line = TRUE;
+  const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
+  const bool fo_multibyte = has_format_option(FO_MBYTE_BREAK);
+  const bool fo_rigor_tw  = has_format_option(FO_RIGOROUS_TW);
+  const bool fo_white_par = has_format_option(FO_WHITE_PAR);
+  bool first_line = true;
   colnr_T leader_len;
   bool no_leader = false;
   int do_comments = (flags & INSCHAR_DO_COM);
@@ -5838,6 +5837,7 @@ internal_format (
 
     curwin->w_cursor.col = startcol;
     foundcol = 0;
+    int skip_pos = 0;
 
     /*
      * Find position to break at.
@@ -5907,7 +5907,11 @@ internal_format (
         foundcol = curwin->w_cursor.col;
         if (curwin->w_cursor.col <= (colnr_T)wantcol)
           break;
-      } else if (cc >= 0x100 && fo_multibyte) {
+      } else if ((cc >= 0x100 || !utf_allow_break_before(cc))
+                 && fo_multibyte) {
+        int ncc;
+        bool allow_break;
+
         // Break after or before a multi-byte character.
         if (curwin->w_cursor.col != startcol) {
           // Don't break until after the comment leader
@@ -5916,8 +5920,11 @@ internal_format (
           }
           col = curwin->w_cursor.col;
           inc_cursor();
-          // Don't change end_foundcol if already set.
-          if (foundcol != curwin->w_cursor.col) {
+          ncc = gchar_cursor();
+          allow_break = utf_allow_break(cc, ncc);
+
+          // If we have already checked this position, skip!
+          if (curwin->w_cursor.col != skip_pos && allow_break) {
             foundcol = curwin->w_cursor.col;
             end_foundcol = foundcol;
             if (curwin->w_cursor.col <= (colnr_T)wantcol)
@@ -5929,6 +5936,7 @@ internal_format (
         if (curwin->w_cursor.col == 0)
           break;
 
+        ncc = cc;
         col = curwin->w_cursor.col;
 
         dec_cursor();
@@ -5937,17 +5945,56 @@ internal_format (
         if (WHITECHAR(cc)) {
           continue;                     // break with space
         }
-        // Don't break until after the comment leader
+        // Don't break until after the comment leader.
         if (curwin->w_cursor.col < leader_len) {
           break;
         }
 
         curwin->w_cursor.col = col;
+        skip_pos = curwin->w_cursor.col;
 
-        foundcol = curwin->w_cursor.col;
-        end_foundcol = foundcol;
-        if (curwin->w_cursor.col <= (colnr_T)wantcol)
-          break;
+        allow_break = utf_allow_break(cc, ncc);
+
+        // Must handle this to respect line break prohibition.
+        if (allow_break) {
+          foundcol = curwin->w_cursor.col;
+          end_foundcol = foundcol;
+        }
+        if (curwin->w_cursor.col <= (colnr_T)wantcol) {
+          const bool ncc_allow_break = utf_allow_break_before(ncc);
+
+          if (allow_break) {
+            break;
+          }
+          if (!ncc_allow_break && !fo_rigor_tw) {
+            // Enable at most 1 punct hang outside of textwidth.
+            if (curwin->w_cursor.col == startcol) {
+              // We are inserting a non-breakable char, postpone
+              // line break check to next insert.
+              end_foundcol = foundcol = 0;
+              break;
+            }
+
+            // Neither cc nor ncc is NUL if we are here, so
+            // it's safe to inc_cursor.
+            col = curwin->w_cursor.col;
+
+            inc_cursor();
+            cc  = ncc;
+            ncc = gchar_cursor();
+            // handle insert
+            ncc = (ncc != NUL) ? ncc : c;
+
+            allow_break = utf_allow_break(cc, ncc);
+
+            if (allow_break) {
+              // Break only when we are not at end of line.
+              end_foundcol = foundcol = ncc == NUL? 0 : curwin->w_cursor.col;
+              break;
+            }
+            curwin->w_cursor.col = col;
+          }
+        }
       }
       if (curwin->w_cursor.col == 0)
         break;
@@ -6049,7 +6096,7 @@ internal_format (
           }
         }
       }
-      first_line = FALSE;
+      first_line = false;
     }
 
     if (State & VREPLACE_FLAG) {
@@ -6236,12 +6283,10 @@ static void check_auto_format(
  *	Set default to window width (maximum 79) for "gq" operator.
  */
 int comp_textwidth(
-    int ff                 // force formatting (for "gq" command)
+    bool ff  // force formatting (for "gq" command)
 )
 {
-  int textwidth;
-
-  textwidth = curbuf->b_p_tw;
+  int textwidth = curbuf->b_p_tw;
   if (textwidth == 0 && curbuf->b_p_wm) {
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.

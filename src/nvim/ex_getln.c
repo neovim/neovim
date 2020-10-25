@@ -5193,7 +5193,7 @@ ExpandFromContext (
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
  */
-void ExpandGeneric(
+static void ExpandGeneric(
     expand_T    *xp,
     regmatch_T  *regmatch,
     int         *num_file,

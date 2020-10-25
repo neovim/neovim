@@ -6317,6 +6317,7 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
 // Populate the quickfix list with the items supplied in the list
 // of dictionaries. "title" will be copied to w:quickfix_title
 // "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
+// When "what" is not NULL then only set some properties.
 int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
                   dict_T *what)
 {

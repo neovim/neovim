@@ -5400,7 +5400,7 @@ invalid_count:
       if (parse_addr_type_arg(val, (int)vallen, argt, addr_type_arg) == FAIL) {
         return FAIL;
       }
-      if (addr_type_arg != ADDR_LINES) {
+      if (*addr_type_arg != ADDR_LINES) {
         *argt |= (ZEROR | NOTADR);
       }
     } else {

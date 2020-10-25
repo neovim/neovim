@@ -450,6 +450,9 @@ Eval:
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
 
+Events:
+  *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
+
 Highlight groups:
   *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
     supports 'winhighlight' window-local highlights.
