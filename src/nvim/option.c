@@ -3192,8 +3192,9 @@ ambw_end:
       completeopt_was_set();
     }
 #ifdef BACKSLASH_IN_FILENAME
-  } else if (varp == &curbuf->b_p_csl) {  // 'completeslash'
-    if (check_opt_strings(p_csl, p_csl_values, false) != OK) {
+  } else if (gvarp == &p_csl) {  // 'completeslash'
+    if (check_opt_strings(p_csl, p_csl_values, false) != OK
+        || check_opt_strings(curbuf->b_p_csl, p_csl_values, false) != OK) {
       errmsg = e_invarg;
     }
 #endif
