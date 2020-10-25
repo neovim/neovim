@@ -53,7 +53,7 @@ Pre-built packages for Windows, macOS, and Linux are found on the
 Install from source
 -------------------
 
-The build is CMake-based, but a Makefile is provided as a convenience.
+The build is CMake-based, but you can access a Makefile as per convenience.
 
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
