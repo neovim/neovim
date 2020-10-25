@@ -301,49 +301,49 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         if (pum_width < p_pw) {
           pum_width = (int)p_pw;
         }
-      }
-    } else if (((cursor_col > p_pw || cursor_col > max_width) && !pum_rl)
-               || (pum_rl && (cursor_col < Columns - p_pw
-                              || cursor_col < Columns - max_width))) {
-      // align pum edge with "cursor_col"
-      if (pum_rl && W_ENDCOL(curwin) < max_width + pum_scrollbar + 1) {
-        pum_col = cursor_col + max_width + pum_scrollbar + 1;
-        if (pum_col >= Columns) {
-          pum_col = Columns - 1;
-        }
-      } else if (!pum_rl) {
-        if (curwin->w_wincol > Columns - max_width - pum_scrollbar
-            && max_width <= p_pw) {
-          // use full width to end of the screen
-          pum_col = cursor_col - max_width - pum_scrollbar;
-          if (pum_col < 0) {
-            pum_col = 0;
+      } else if (((cursor_col > p_pw || cursor_col > max_width) && !pum_rl)
+                 || (pum_rl && (cursor_col < Columns - p_pw
+                                || cursor_col < Columns - max_width))) {
+        // align pum edge with "cursor_col"
+        if (pum_rl && W_ENDCOL(curwin) < max_width + pum_scrollbar + 1) {
+          pum_col = cursor_col + max_width + pum_scrollbar + 1;
+          if (pum_col >= Columns) {
+            pum_col = Columns - 1;
+          }
+        } else if (!pum_rl) {
+          if (curwin->w_wincol > Columns - max_width - pum_scrollbar
+              && max_width <= p_pw) {
+            // use full width to end of the screen
+            pum_col = Columns - max_width - pum_scrollbar;
+            if (pum_col < 0) {
+              pum_col = 0;
+            }
           }
         }
-      }
 
-      if (pum_rl) {
-        pum_width = pum_col - pum_scrollbar + 1;
-      } else {
-        pum_width = Columns - pum_col - pum_scrollbar;
-      }
-
-      if (pum_width < p_pw) {
-        pum_width = (int)p_pw;
         if (pum_rl) {
-          if (pum_width > pum_col) {
-            pum_width = pum_col;
-          }
+          pum_width = pum_col - pum_scrollbar + 1;
         } else {
-          if (pum_width >= Columns - pum_col) {
-            pum_width = Columns - pum_col - 1;
-          }
+          pum_width = Columns - pum_col - pum_scrollbar;
         }
-      } else if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-                 && pum_width > p_pw) {
-        pum_width = max_width + pum_kind_width + pum_extra_width + 1;
+
         if (pum_width < p_pw) {
           pum_width = (int)p_pw;
+          if (pum_rl) {
+            if (pum_width > pum_col) {
+              pum_width = pum_col;
+            }
+          } else {
+            if (pum_width >= Columns - pum_col) {
+              pum_width = Columns - pum_col - 1;
+            }
+          }
+        } else if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
+                   && pum_width > p_pw) {
+          pum_width = max_width + pum_kind_width + pum_extra_width + 1;
+          if (pum_width < p_pw) {
+            pum_width = (int)p_pw;
+          }
         }
       }
     } else if (Columns < def_width) {
