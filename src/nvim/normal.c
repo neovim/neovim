@@ -6841,7 +6841,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     } else {
       if (cap->count1 > 1) {
         // if it fails, let the cursor still move to the last char
-        cursor_down(cap->count1 - 1, false);
+        (void)cursor_down(cap->count1 - 1, false);
       }
       i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
       coladvance((colnr_T)i);
