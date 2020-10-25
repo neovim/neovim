@@ -176,7 +176,7 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   textlock--;
 
   if (!ERROR_SET(&err)
-      && api_is_truthy(ret, "provider %s retval", default_true, &err)) {
+      && api_coerce_to_bool(ret, "provider %s retval", default_true, &err)) {
     return true;
   }
 

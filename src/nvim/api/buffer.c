@@ -953,6 +953,53 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
+/// Deletes the buffer. See |:bwipeout|
+///
+/// @param buffer Buffer handle, or 0 for current buffer
+/// @param opts  Optional parameters. Keys:
+///          - force:  Force deletion and ignore unsaved changes.
+///          - unload: Unloaded only, do not delete. See |:bunload|
+void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  bool force = false;
+  bool unload = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+    if (strequal("force", k.data)) {
+      force = api_coerce_to_bool(v, "force", false, err);
+    } else if (strequal("unload", k.data)) {
+      unload = api_coerce_to_bool(v, "unload", false, err);
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return;
+    }
+  }
+
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  int result = do_buffer(
+      unload ? DOBUF_UNLOAD : DOBUF_WIPE,
+      DOBUF_FIRST,
+      FORWARD,
+      buf->handle,
+      force);
+
+  if (result == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
+    return;
+  }
+}
+
 /// Checks if a buffer is valid.
 ///
 /// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
@@ -1394,7 +1441,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
     } else if (strequal("ephemeral", k.data)) {
-      ephemeral = api_is_truthy(*v, "ephemeral", false, err);
+      ephemeral = api_coerce_to_bool(*v, "ephemeral", false, err);
       if (ERROR_SET(err)) {
         goto error;
       }
