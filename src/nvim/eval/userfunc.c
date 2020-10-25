@@ -1052,7 +1052,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     // A Lambda always has the command "return {expr}".  It is much faster
     // to evaluate {expr} directly.
     ex_nesting_level++;
-    eval1(&p, rettv, true);
+    (void)eval1(&p, rettv, true);
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
