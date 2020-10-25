@@ -323,6 +323,9 @@ describe('LSP', function()
         test_name = "capabilities_for_client_supports_method";
         on_setup = function()
             exec_lua([=[
+              vim.lsp.callbacks['textDocument/hover'] = function(err, method)
+                vim.lsp._last_lsp_callback = { err = err; method = method }
+              end
               vim.lsp._unsupported_method = function(method)
                 vim.lsp._last_unsupported_method = method
                 return 'fake-error'
@@ -334,6 +337,9 @@ describe('LSP', function()
           client.stop()
           local method = exec_lua("return vim.lsp._last_unsupported_method")
           eq("textDocument/hover", method)
+          local lsp_cb_call = exec_lua("return vim.lsp._last_lsp_callback")
+          eq("fake-error", lsp_cb_call.err)
+          eq("textDocument/hover", lsp_cb_call.method)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
