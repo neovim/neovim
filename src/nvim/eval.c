@@ -2994,7 +2994,6 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   static size_t tdone;
   static size_t vidx;
   static hashitem_T   *hi;
-  hashtab_T           *ht;
 
   if (idx == 0) {
     gdone = bdone = wdone = vidx = 0;
@@ -3015,7 +3014,10 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   }
 
   // b: variables
-  ht = &curbuf->b_vars->dv_hashtab;
+  // In cmdwin, the alternative buffer should be used.
+  hashtab_T *ht = (cmdwin_type != 0 && get_cmdline_type() == NUL)
+    ? &prevwin->w_buffer->b_vars->dv_hashtab
+    : &curbuf->b_vars->dv_hashtab;
   if (bdone < ht->ht_used) {
     if (bdone++ == 0)
       hi = ht->ht_array;
@@ -3027,7 +3029,10 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   }
 
   // w: variables
-  ht = &curwin->w_vars->dv_hashtab;
+  // In cmdwin, the alternative window should be used.
+  ht = (cmdwin_type != 0 && get_cmdline_type() == NUL)
+    ? &prevwin->w_vars->dv_hashtab
+    : &curwin->w_vars->dv_hashtab;
   if (wdone < ht->ht_used) {
     if (wdone++ == 0)
       hi = ht->ht_array;

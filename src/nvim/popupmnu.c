@@ -919,11 +919,11 @@ void pum_set_event_info(dict_T *dict)
     r = (double)pum_row;
     c = (double)pum_col;
   }
-  tv_dict_add_float(dict, S_LEN("height"), h);
-  tv_dict_add_float(dict, S_LEN("width"), w);
-  tv_dict_add_float(dict, S_LEN("row"), r);
-  tv_dict_add_float(dict, S_LEN("col"), c);
-  tv_dict_add_nr(dict, S_LEN("size"), pum_size);
-  tv_dict_add_bool(dict, S_LEN("scrollbar"),
-                   pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
+  (void)tv_dict_add_float(dict, S_LEN("height"), h);
+  (void)tv_dict_add_float(dict, S_LEN("width"), w);
+  (void)tv_dict_add_float(dict, S_LEN("row"), r);
+  (void)tv_dict_add_float(dict, S_LEN("col"), c);
+  (void)tv_dict_add_nr(dict, S_LEN("size"), pum_size);
+  (void)tv_dict_add_bool(dict, S_LEN("scrollbar"),
+                         pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
 }
