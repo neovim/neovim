@@ -124,6 +124,20 @@ describe('API', function()
           endf
           echo <sid>avast_ye_hades('ahoy!')
         ]], true))
+
+      eq('script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          func! s:avast_ye_hades() abort
+            return s:pirate
+          endf
+          echo <sid>avast_ye_hades()
+        ]], true))
+
+      eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
+        pcall_err(request, 'nvim_exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          call nvim_exec('echo s:pirate', 1)
+        ]], false))
     end)
 
     it('non-ASCII input', function()
