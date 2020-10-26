@@ -988,6 +988,9 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 		   vim.api.nvim_command('echomsg "test"')
 		 end)
 		 safe()
+		
+		Return: ~
+		    function
 
                 See also: ~
                     |lua-loop-callbacks|
