@@ -54,7 +54,7 @@
 #include "nvim/api/private/defs.h"
 
 typedef enum script_type_E {
-  SCRIPT_STRING, // for sourcing a string
+  SCRIPT_STRING,  // for sourcing a string
   SCRIPT_FILE
 } script_type_T;
 
@@ -3481,8 +3481,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
   *should_free = false;
 
-  if (SCRIPT_ITEM(last_set.script_ctx.sc_sid).script_type == SCRIPT_STRING)
-  {
+  if (SCRIPT_ITEM(last_set.script_ctx.sc_sid).script_type == SCRIPT_STRING) {
     return (char_u *)_("anonymous :source");
   }
   switch (last_set.script_ctx.sc_sid) {
