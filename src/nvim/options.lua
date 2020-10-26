@@ -453,6 +453,15 @@ return {
       defaults={if_true={vi="menu,preview"}}
     },
     {
+      full_name='completeslash', abbreviation='csl',
+      type='string', scope={'buffer'},
+      vi_def=true,
+      vim=true,
+      varname='p_csl',
+      enable_if='BACKSLASH_IN_FILENAME',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='confirm', abbreviation='cf',
       type='bool', scope={'global'},
       vi_def=true,

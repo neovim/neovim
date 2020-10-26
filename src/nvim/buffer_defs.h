@@ -661,6 +661,9 @@ struct file_buffer {
   char_u *b_p_com;              ///< 'comments'
   char_u *b_p_cms;              ///< 'commentstring'
   char_u *b_p_cpt;              ///< 'complete'
+#ifdef BACKSLASH_IN_FILENAME
+  char_u *b_p_csl;              ///< 'completeslash'
+#endif
   char_u *b_p_cfu;              ///< 'completefunc'
   char_u *b_p_ofu;              ///< 'omnifunc'
   char_u *b_p_tfu;              ///< 'tagfunc'

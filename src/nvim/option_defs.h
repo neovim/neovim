@@ -373,6 +373,9 @@ EXTERN long p_columns;          // 'columns'
 EXTERN int p_confirm;           // 'confirm'
 EXTERN int p_cp;                // 'compatible'
 EXTERN char_u   *p_cot;         // 'completeopt'
+# ifdef BACKSLASH_IN_FILENAME
+EXTERN char_u   *p_csl;         // 'completeslash'
+# endif
 EXTERN long p_pb;               // 'pumblend'
 EXTERN long p_ph;               // 'pumheight'
 EXTERN long p_pw;               // 'pumwidth'
@@ -744,6 +747,7 @@ enum {
   , BV_CPT
   , BV_DICT
   , BV_TSR
+  , BV_CSL
   , BV_CFU
   , BV_DEF
   , BV_INC
