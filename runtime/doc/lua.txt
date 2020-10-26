@@ -968,15 +968,31 @@ paste({lines}, {phase})                                          *vim.paste()*
                     |paste|
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
-                Defers callback `cb` until the Nvim API is safe to call.
+                Wraps callback `cb` in a function which will defer the execution
+		of `cb` until the Nvim API is safe to call.
+
+		The user must call the returned function themselves if it is not
+		being used as an argument to a function that will call it for them,
+		such as `vim.fn_defer`.
+
+		Example: Using as an argument >
+
+		 local safe = vim.schedule_wrap(function()
+		   vim.api.nvim_command('echomsg "test"')
+		 end)
+		 vim.defer_fn(safe, 100)
+
+		Example: Using on it's own >
+
+		 local safe = vim.schedule_wrap(function()
+		   vim.api.nvim_command('echomsg "test"')
+		 end)
+		 safe()
 
                 See also: ~
                     |lua-loop-callbacks|
                     |vim.schedule()|
                     |vim.in_fast_event()|
-
-
-
 
 deep_equal({a}, {b})                                        *vim.deep_equal()*
                 TODO: Documentation
