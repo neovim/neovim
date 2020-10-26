@@ -3751,11 +3751,10 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
 /// Return error message or NULL.
 char_u *check_stl_option(char_u *s)
 {
-  int itemcnt = 0;
   int groupdepth = 0;
   static char_u errbuf[80];
 
-  while (*s && itemcnt < STL_MAX_ITEM) {
+  while (*s) {
     // Check for valid keys after % sequences
     while (*s && *s != '%') {
       s++;
@@ -3764,9 +3763,6 @@ char_u *check_stl_option(char_u *s)
       break;
     }
     s++;
-    if (*s != '%' && *s != ')') {
-      itemcnt++;
-    }
     if (*s == '%' || *s == STL_TRUNCMARK || *s == STL_SEPARATE) {
       s++;
       continue;
@@ -3807,9 +3803,6 @@ char_u *check_stl_option(char_u *s)
         return (char_u *)N_("E540: Unclosed expression sequence");
       }
     }
-  }
-  if (itemcnt >= STL_MAX_ITEM) {
-    return (char_u *)N_("E541: too many items");
   }
   if (groupdepth != 0) {
     return (char_u *)N_("E542: unbalanced groups");

@@ -5191,8 +5191,8 @@ win_redr_custom (
   char_u buf[MAXPATHL];
   char_u      *stl;
   char_u      *p;
-  struct      stl_hlrec hltab[STL_MAX_ITEM];
-  StlClickRecord tabtab[STL_MAX_ITEM];
+  stl_hlrec_t *hltab;
+  StlClickRecord *tabtab;
   int use_sandbox = false;
   win_T       *ewp;
   int p_crb_save;
@@ -5270,9 +5270,9 @@ win_redr_custom (
   /* Make a copy, because the statusline may include a function call that
    * might change the option value and free the memory. */
   stl = vim_strsave(stl);
-  width = build_stl_str_hl(ewp, buf, sizeof(buf),
-      stl, use_sandbox,
-      fillchar, maxwidth, hltab, tabtab);
+  width =
+    build_stl_str_hl(ewp, buf, sizeof(buf), stl, use_sandbox,
+                     fillchar, maxwidth, &hltab, &tabtab);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
