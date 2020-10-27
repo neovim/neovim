@@ -973,21 +973,21 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 
                 The user must call the returned function themselves if it is not
                 being used as an argument to a function that will call it for them,
-                such as `vim.fn_defer`.
+                such as |nvim_buf_attach()|.
 
-                Example: Using as an argument >
-
-                 local safe = vim.schedule_wrap(function()
-		   vim.api.nvim_command('echomsg "test"')
-                 end)
-                 vim.defer_fn(safe, 100)
-
-                Example: Using on it's own >
+                Example: using on its own >
 
                  local safe = vim.schedule_wrap(function()
                    vim.api.nvim_command('echomsg "test"')
                  end)
                  safe()
+                 
+                Example: using as an argument >
+
+                 local safe = vim.schedule_wrap(function()
+		   vim.api.nvim_command('echomsg "test"')
+                 end)
+                 vim.api.nvim_buf_attach(0, false, {on_lines=safe})
 		
                 Return: ~
                     function
