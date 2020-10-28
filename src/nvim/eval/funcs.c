@@ -45,6 +45,9 @@
 #include "nvim/option.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/input.h"
+#ifdef WIN32
+# include "nvim/os/pty_conpty_win.h"
+#endif
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
@@ -4244,6 +4247,10 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
       n = eval_has_provider("clipboard");
+#endif
+#ifdef WIN32
+    } else if (STRICMP(name, "conpty") == 0) {
+      n = os_has_conpty_working();
 #endif
     }
   }

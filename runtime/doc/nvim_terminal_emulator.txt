@@ -139,6 +139,20 @@ Use |jobwait()| to check if the terminal job has finished: >
     let running = jobwait([&channel], 0)[0] == -1
 
 ==============================================================================
+MS-Windows
+
+On MS-Windows winpty is used to make it possible to run all kind of commands.
+Obviously, they must be commands that run in a terminal, not open their own
+window.
+
+							*ConPTY*
+On more recent versions of MS-Windows 10 (beginning with the "October 2018
+Update"), winpty is no longer required. On those versions, |:terminal| will use
+Windows' built-in support for hosting terminal applications, "ConPTY".  When
+ConPTY is in use, there may be rendering artifacts regarding ambiguous-width
+characters.
+
+==============================================================================
 :Termdebug plugin				*terminal-debug*
 
 The Terminal debugging plugin can be used to debug a program with gdb and view
