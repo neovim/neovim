@@ -764,20 +764,24 @@ truncerr:
   }
 
   // <LWORDTREE>
-  res = spell_read_tree(fd, &lp->sl_fbyts, &lp->sl_fidxs, false, 0);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_fbyts, &lp->sl_fbyts_len,
+                        &lp->sl_fidxs, false, 0);
+  if (res != 0) {
     goto someerror;
+  }
 
   // <KWORDTREE>
-  res = spell_read_tree(fd, &lp->sl_kbyts, &lp->sl_kidxs, false, 0);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_kbyts, NULL, &lp->sl_kidxs, false, 0);
+  if (res != 0) {
     goto someerror;
+  }
 
   // <PREFIXTREE>
-  res = spell_read_tree(fd, &lp->sl_pbyts, &lp->sl_pidxs, true,
-      lp->sl_prefixcnt);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_pbyts, NULL, &lp->sl_pidxs, true,
+                        lp->sl_prefixcnt);
+  if (res != 0) {
     goto someerror;
+  }
 
   // For a new file link it in the list of spell files.
   if (old_lp == NULL && lang != NULL) {
@@ -920,8 +924,8 @@ void suggest_load_files(void)
 
       // <SUGWORDTREE>: <wordtree>
       // Read the trie with the soundfolded words.
-      if (spell_read_tree(fd, &slang->sl_sbyts, &slang->sl_sidxs,
-              false, 0) != 0) {
+      if (spell_read_tree(fd, &slang->sl_sbyts, NULL, &slang->sl_sidxs,
+                          false, 0) != 0) {
 someerror:
         EMSG2(_("E782: error while reading .sug file: %s"),
             slang->sl_fname);
@@ -1630,10 +1634,12 @@ static int
 spell_read_tree (
     FILE *fd,
     char_u **bytsp,
+    long *bytsp_len,
     idx_T **idxsp,
     bool prefixtree,               // true for the prefix tree
     int prefixcnt                  // when "prefixtree" is true: prefix count
 )
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int idx;
   char_u      *bp;
@@ -1653,6 +1659,9 @@ spell_read_tree (
     // Allocate the byte array.
     bp = xmalloc(len);
     *bytsp = bp;
+    if (bytsp_len != NULL) {
+      *bytsp_len = len;
+    }
 
     // Allocate the index array.
     ip = xcalloc(len, sizeof(*ip));
@@ -4850,10 +4859,10 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         spin->si_blocks_cnt = 0;
 
         // Skip over any other NUL bytes (same word with different
-        // flags).
-        while (byts[n + 1] == 0) {
-          ++n;
-          ++curi[depth];
+        // flags).  But don't go over the end.
+        while (n + 1 < slang->sl_fbyts_len && byts[n + 1] == 0) {
+          n++;
+          curi[depth]++;
         }
       } else {
         // Normal char, go one level deeper.
