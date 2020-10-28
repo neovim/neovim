@@ -145,6 +145,7 @@ CONFIG = {
             'lsp.lua',
             'protocol.lua',
             'buf.lua',
+            'completion.lua',
             'callbacks.lua',
             'log.lua',
             'rpc.lua',
