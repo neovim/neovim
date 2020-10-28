@@ -125,12 +125,12 @@ describe('API', function()
           echo <sid>avast_ye_hades('ahoy!')
         ]], true))
 
-      eq('script-scoped varrrrr', nvim('exec', [[
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
           let s:pirate = 'script-scoped varrrrr'
-          func! s:avast_ye_hades() abort
-            return s:pirate
+          func! Avast_ye_hades(s) abort
+            return a:s.' '.s:pirate
           endf
-          echo <sid>avast_ye_hades()
+          echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
         ]], true))
 
       eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
