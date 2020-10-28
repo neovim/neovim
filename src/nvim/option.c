@@ -312,6 +312,9 @@ static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
 static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
+#ifdef BACKSLASH_IN_FILENAME
+static char *(p_csl_values[]) =       { "slash", "backslash", NULL };
+#endif
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
@@ -3188,6 +3191,13 @@ ambw_end:
     } else {
       completeopt_was_set();
     }
+#ifdef BACKSLASH_IN_FILENAME
+  } else if (gvarp == &p_csl) {  // 'completeslash'
+    if (check_opt_strings(p_csl, p_csl_values, false) != OK
+        || check_opt_strings(curbuf->b_p_csl, p_csl_values, false) != OK) {
+      errmsg = e_invarg;
+    }
+#endif
   } else if (varp == &curwin->w_p_scl) {
     // 'signcolumn'
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
@@ -5866,6 +5876,9 @@ static char_u *get_varp(vimoption_T *p)
   case PV_COM:    return (char_u *)&(curbuf->b_p_com);
   case PV_CMS:    return (char_u *)&(curbuf->b_p_cms);
   case PV_CPT:    return (char_u *)&(curbuf->b_p_cpt);
+# ifdef BACKSLASH_IN_FILENAME
+  case PV_CSL:    return (char_u *)&(curbuf->b_p_csl);
+# endif
   case PV_CFU:    return (char_u *)&(curbuf->b_p_cfu);
   case PV_OFU:    return (char_u *)&(curbuf->b_p_ofu);
   case PV_EOL:    return (char_u *)&(curbuf->b_p_eol);
@@ -6153,6 +6166,9 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inf = p_inf;
       buf->b_p_swf = cmdmod.noswapfile ? false : p_swf;
       buf->b_p_cpt = vim_strsave(p_cpt);
+# ifdef BACKSLASH_IN_FILENAME
+      buf->b_p_csl = vim_strsave(p_csl);
+# endif
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_tfu = vim_strsave(p_tfu);

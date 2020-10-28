@@ -492,7 +492,10 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
   --=== 0`. Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
-  local active_signature = signature_help.activeSignature or 0
+  local active_signature = signature_help.activeSignature
+  if active_signature == vim.NIL or active_signature == nil then
+    active_signature = 0
+  end
   -- If the activeSignature is not inside the valid range, then clip it.
   if active_signature >= #signature_help.signatures then
     active_signature = 0
