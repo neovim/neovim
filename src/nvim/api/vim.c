@@ -970,6 +970,62 @@ Object nvim_get_option(String name, Error *err)
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
 
+Dictionary nvim_get_vimoption_info(Error *err)
+  FUNC_API_SINCE(7)
+{
+  Dictionary retval = ARRAY_DICT_INIT;
+
+  vimoption_T *all_options = get_all_vimoptions();
+
+  int i = 0;
+  vimoption_T opt;
+  while (true) {
+    opt = all_options[i++];
+    if (opt.fullname == NULL) {
+      break;
+    }
+
+    Dictionary opt_dict = ARRAY_DICT_INIT;
+
+    PUT(opt_dict, "fullname", STRING_OBJ(cstr_to_string(opt.fullname)));
+    PUT(opt_dict, "shortname", STRING_OBJ(cstr_to_string(opt.shortname)));
+    PUT(opt_dict, "is_global",  BOOLEAN_OBJ(opt.flags & OPT_GLOBAL));
+    PUT(opt_dict, "is_local",  BOOLEAN_OBJ(opt.flags & OPT_LOCAL));
+    PUT(opt_dict, "flag",  INTEGER_OBJ(opt.flags));
+    PUT(opt_dict, "sourced_sid", INTEGER_OBJ(opt.last_set.script_ctx.sc_sid));
+    PUT(opt_dict, "sourced_lnum", INTEGER_OBJ(opt.last_set.script_ctx.sc_lnum));
+    PUT(opt_dict, "type", STRING_OBJ(get_option_type_string(opt)));
+
+    PUT(retval, opt.fullname, DICTIONARY_OBJ(opt_dict));
+  }
+
+  return retval;
+}
+
+Dictionary nvim_get_option_info(String name, Error *err)
+  FUNC_API_SINCE(7)
+{
+  Dictionary retval = ARRAY_DICT_INIT;
+
+  get_option_from(NULL, SREQ_GLOBAL, name, err);
+  if (ERROR_SET(err)) {
+    return retval;
+  }
+
+  int opt_idx = findoption_len((const char *)name.data, name.size);
+  vimoption_T opt = get_vimoption(opt_idx);
+
+  PUT(retval, "fullname", STRING_OBJ(cstr_to_string(opt.fullname)));
+  PUT(retval, "shortname", STRING_OBJ(cstr_to_string(opt.shortname)));
+  PUT(retval, "is_global",  BOOLEAN_OBJ(opt.flags & OPT_GLOBAL));
+  PUT(retval, "is_local",  BOOLEAN_OBJ(opt.flags & OPT_LOCAL));
+  PUT(retval, "flag",  INTEGER_OBJ(opt.flags));
+  PUT(retval, "sourced_sid", INTEGER_OBJ(opt.last_set.script_ctx.sc_sid));
+  PUT(retval, "sourced_lnum", INTEGER_OBJ(opt.last_set.script_ctx.sc_lnum));
+
+  return retval;
+}
+
 /// Sets an option value.
 ///
 /// @param channel_id

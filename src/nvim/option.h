@@ -21,6 +21,27 @@ typedef enum {
   OPT_NOWIN    = 32,  ///< Don’t set window-local options.
 } OptionFlags;
 
+// WV_ and BV_ values get typecasted to this for the "indir" field
+typedef enum {
+  PV_NONE = 0,
+  PV_MAXVAL = 0xffff      // to avoid warnings for value out of range
+} idopt_T;
+
+typedef struct vimoption {
+  char        *fullname;        // full option name
+  char        *shortname;       // permissible abbreviation
+  uint32_t flags;               // see below
+  char_u      *var;             // global option: pointer to variable;
+                                // window-local option: VAR_WIN;
+                                // buffer-local option: global value
+  idopt_T indir;                // global option: PV_NONE;
+                                // local option: indirect option index
+  char_u      *def_val[2];      // default values for variable (vi and vim)
+  LastSet last_set;             // script in which the option was last set
+# define SCTX_INIT , { 0, 0, 0 }
+} vimoption_T;
+
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif

@@ -102,13 +102,6 @@
 #define OPT_BUF(x)  (idopt_T)(PV_BUF + (int)(x))
 #define OPT_BOTH(x) (idopt_T)(PV_BOTH + (int)(x))
 
-
-// WV_ and BV_ values get typecasted to this for the "indir" field
-typedef enum {
-  PV_NONE = 0,
-  PV_MAXVAL = 0xffff      // to avoid warnings for value out of range
-} idopt_T;
-
 /*
  * Options local to a window have a value local to a buffer and global to all
  * buffers.  Indicate this by setting "var" to VAR_WIN.
@@ -194,20 +187,6 @@ static int p_et_nopaste;
 static long p_sts_nopaste;
 static long p_tw_nopaste;
 static long p_wm_nopaste;
-
-typedef struct vimoption {
-  char        *fullname;        // full option name
-  char        *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
-  char_u      *var;             // global option: pointer to variable;
-                                // window-local option: VAR_WIN;
-                                // buffer-local option: global value
-  idopt_T indir;                // global option: PV_NONE;
-                                // local option: indirect option index
-  char_u      *def_val[2];      // default values for variable (vi and vim)
-  LastSet last_set;             // script in which the option was last set
-# define SCTX_INIT , { 0, 0, 0 }
-} vimoption_T;
 
 #define VI_DEFAULT  0       // def_val[VI_DEFAULT] is Vi default value
 #define VIM_DEFAULT 1       // def_val[VIM_DEFAULT] is Vim default value
@@ -3617,10 +3596,14 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 {
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
-  const LastSet last_set = { .script_ctx =
-    { script_ctx.sc_sid, script_ctx.sc_seq,
-      script_ctx.sc_lnum + sourcing_lnum },
-    current_channel_id };
+  const LastSet last_set = {
+    .script_ctx = {
+      script_ctx.sc_sid,
+      script_ctx.sc_seq,
+      script_ctx.sc_lnum + sourcing_lnum
+    },
+    current_channel_id
+  };
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
@@ -7173,4 +7156,23 @@ long get_scrolloff_value(void)
 long get_sidescrolloff_value(void)
 {
   return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
+}
+
+vimoption_T get_vimoption(int opt_idx)
+{
+  return options[opt_idx];
+}
+
+vimoption_T* get_all_vimoptions(void)
+{
+  return options;
+}
+
+String get_option_type_string(vimoption_T opt)
+{
+  return cstr_to_string(
+          opt.flags & P_BOOL ? "boolean"
+          : opt.flags & P_NUM ? "number"
+          : opt.flags & P_STRING ? "string"
+          : "unknown");
 }
