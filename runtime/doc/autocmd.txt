@@ -800,9 +800,6 @@ RemoteReply			When a reply from a Vim that functions as
 				Note that even if an autocommand is defined,
 				the reply should be read with |remote_read()|
 				to consume it.
-							*Scroll*
-Scroll				After scrolling the viewport.
-
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
@@ -1009,6 +1006,9 @@ WinLeave			Before leaving a window.  If the window to be
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
+							*WinScrolled*
+WinScrolled			After scrolling the viewport.
+
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{pat}*
