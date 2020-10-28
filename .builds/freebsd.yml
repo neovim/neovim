@@ -20,7 +20,7 @@ sources:
 environment:
   SOURCEHUT: 1
   LANG: en_US.UTF-8
-  CMAKE_EXTRA_FLAGS: -DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3
+  CMAKE_FLAGS: -DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3
 
 tasks:
 - build-deps: |
@@ -28,7 +28,7 @@ tasks:
     gmake deps
 - build: |
     cd neovim
-    gmake CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+    gmake CMAKE_BUILD_TYPE=Release CMAKE_FLAGS="${CMAKE_FLAGS}" nvim
 - functionaltest: |
     cd neovim
     gmake functionaltest

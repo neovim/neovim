@@ -26,7 +26,7 @@ Low-level log messages sink to `$NVIM_LOG_FILE`.
 UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+    make CMAKE_FLAGS="-DMIN_LOG_LEVEL=0"
 
 Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
 alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
@@ -54,9 +54,9 @@ Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
 
 Build Nvim with sanitizer instrumentation (choose one):
 
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_MSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_TSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_MSAN=ON"
+    CC=clang make CMAKE_FLAGS="-DCLANG_TSAN=ON"
 
 Create a directory to store logs:
 

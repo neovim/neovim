@@ -303,7 +303,7 @@ create_compile_commands() {(
     (
       cd "$tgt"
 
-      make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+      make -j"$(get_jobs_num)" CMAKE_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
     )
   fi
   find "$tgt/build/src/nvim/auto" -name '*.test-include.c' -delete
