@@ -66,7 +66,7 @@ void msgpack_rpc_helpers_init(void)
 }
 
 HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
-HANDLE_TYPE_CONVERSION_IMPL(Window, window)
+HANDLE_TYPE_CONVERSION_IMPL(NvimWindow, window)
 HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
 
 typedef struct {
@@ -236,8 +236,8 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
             break;
           }
-          case kObjectTypeWindow: {
-            cur.aobj->type = kObjectTypeWindow;
+          case kObjectTypeNvimWindow: {
+            cur.aobj->type = kObjectTypeNvimWindow;
             ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.integer);
             break;
           }
@@ -379,8 +379,8 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   kv_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
   while (kv_size(stack)) {
     APIToMPObjectStackItem cur = kv_last(stack);
-    STATIC_ASSERT(kObjectTypeWindow == kObjectTypeBuffer + 1
-                  && kObjectTypeTabpage == kObjectTypeWindow + 1,
+    STATIC_ASSERT(kObjectTypeNvimWindow == kObjectTypeBuffer + 1
+                  && kObjectTypeTabpage == kObjectTypeNvimWindow + 1,
                   "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
       case kObjectTypeNil:
@@ -411,7 +411,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
         msgpack_rpc_from_buffer(cur.aobj->data.integer, res);
         break;
       }
-      case kObjectTypeWindow: {
+      case kObjectTypeNvimWindow: {
         msgpack_rpc_from_window(cur.aobj->data.integer, res);
         break;
       }
