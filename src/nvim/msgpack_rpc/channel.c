@@ -262,11 +262,9 @@ static void parse_msgpack(Channel *channel)
         call_set_error(channel, buf, ERROR_LOG_LEVEL);
       }
       msgpack_unpacked_destroy(&unpacked);
-      // Bail out from this event loop iteration
-      return;
+    } else {
+      handle_request(channel, &unpacked.data);
     }
-
-    handle_request(channel, &unpacked.data);
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
