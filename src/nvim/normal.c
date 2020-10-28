@@ -1195,10 +1195,10 @@ static void normal_check_interrupt(NormalState *s)
 
 static void normal_check_window_scrolled(NormalState *s)
 {
-  // Trigger Scroll if the window moved.
-  if (!finish_op && has_event(EVENT_SCROLL)
-      && curwin->w_viewport_invalid) {
-    apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
+  // Trigger Scroll if the viewport changed.
+  if (!finish_op && has_event(EVENT_WINSCROLLED)
+      && win_did_scroll(curwin)) {
+    do_autocmd_winscrolled(curwin);
   }
 }
 
@@ -1325,6 +1325,10 @@ static int normal_check(VimState *state)
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
   } else if (do_redraw || stuff_empty()) {
+    // Need to make sure w_topline and w_leftcol are correct before
+    // normal_check_window_scrolled() is called.
+    update_topline();
+
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);

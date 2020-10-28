@@ -1482,9 +1482,10 @@ static void ins_redraw(
     }
   }
 
-  if (ready && has_event(EVENT_SCROLL)
-      && curwin->w_viewport_invalid) {
-    apply_autocmds(EVENT_SCROLL, NULL, NULL, false, curbuf);
+  // Trigger Scroll if viewport changed.
+  if (ready && has_event(EVENT_WINSCROLLED)
+      && win_did_scroll(curwin)) {
+    do_autocmd_winscrolled(curwin);
   }
 
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)

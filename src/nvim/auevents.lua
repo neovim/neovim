@@ -72,7 +72,6 @@ return {
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
     'RemoteReply',            -- upon string reception from a remote vim
-    'Scroll',                 -- after scrolling
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
@@ -113,6 +112,7 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
+    'WinScrolled',            -- after scrolling a window
   },
   aliases = {
     BufCreate = 'BufAdd',
@@ -124,7 +124,6 @@ return {
   -- syntax file
   nvim_specific = {
     DirChanged=true,
-    Scroll=true,
     Signal=true,
     TabClosed=true,
     TabNew=true,
@@ -134,5 +133,6 @@ return {
     UIEnter=true,
     UILeave=true,
     WinClosed=true,
+    WinScrolled=true,
   },
 }
