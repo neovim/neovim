@@ -91,19 +91,19 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
     return 'pbcopy'
-  elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
+  elseif !empty($WAYLAND_DISPLAY) && executable('wl-copy') && executable('wl-paste')
     let s:copy['+'] = ['wl-copy', '--foreground', '--type', 'text/plain']
     let s:paste['+'] = ['wl-paste', '--no-newline']
     let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
-  elseif exists('$DISPLAY') && executable('xclip')
+  elseif !empty($DISPLAY) && executable('xclip')
     let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
     let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
     let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
     let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
     return 'xclip'
-  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
+  elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
     let s:paste['+'] = ['xsel', '-o', '-b']
     let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
@@ -132,7 +132,7 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
-  elseif exists('$TMUX') && executable('tmux')
+  elseif !empty($TMUX) && executable('tmux')
     let s:copy['+'] = ['tmux', 'load-buffer', '-']
     let s:paste['+'] = ['tmux', 'save-buffer', '-']
     let s:copy['*'] = s:copy['+']
