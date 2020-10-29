@@ -727,6 +727,38 @@ describe('TUI', function()
     ]])
   end)
 
+  it('paste: split "start paste" code', function()
+    feed_data('i')
+    -- Send split "start paste" sequence.
+    feed_data('\027[2')
+    feed_data('00~pasted from terminal\027[201~')
+    screen:expect([[
+      pasted from terminal{1: }                             |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('paste: split "stop paste" code', function()
+    feed_data('i')
+    -- Send split "stop paste" sequence.
+    feed_data('\027[200~pasted from terminal\027[20')
+    feed_data('1~')
+    screen:expect([[
+      pasted from terminal{1: }                             |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('allows termguicolors to be set at runtime', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
@@ -1452,15 +1484,22 @@ describe("TUI", function()
 
 end)
 
-it('TUI bg color triggers OptionSet event on terminal-response', function()
-  -- Only single integration test.
-  -- See test/unit/tui_spec.lua for unit tests.
-  clear()
-  local screen = thelpers.screen_setup(0, '["'..nvim_prog
-    ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
-    ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
+describe('TUI bg color', function()
+  local screen
 
-  screen:expect([[
+  local function setup()
+    -- Only single integration test.
+    -- See test/unit/tui_spec.lua for unit tests.
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
+      ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
+  end
+
+  before_each(setup)
+
+  it('triggers OptionSet event on unsplit terminal-response', function()
+    screen:expect([[
     {1: }                                                 |
     {4:~                                                 }|
     {4:~                                                 }|
@@ -1468,10 +1507,97 @@ it('TUI bg color triggers OptionSet event on terminal-response', function()
     {5:[No Name]                       0,0-1          All}|
                                                       |
     {3:-- TERMINAL --}                                    |
-  ]])
-  feed_data('\027]11;rgb:ffff/ffff/ffff\007')
-  screen:expect{any='did OptionSet, yay!'}
+    ]])
+    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
+    screen:expect{any='did OptionSet, yay!'}
 
-  feed_data(':echo "new_bg=".&background\n')
-  screen:expect{any='new_bg=light'}
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=light'}
+
+    setup()
+    screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027]11;rgba:ffff/ffff/ffff/8000\027\\')
+    screen:expect{any='did OptionSet, yay!'}
+
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=light'}
+  end)
+
+  it('triggers OptionSet event with split terminal-response', function()
+    screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+    ]])
+    -- Send a background response with the OSC command part split.
+    feed_data('\027]11;rgb')
+    feed_data(':ffff/ffff/ffff\027\\')
+    screen:expect{any='did OptionSet, yay!'}
+
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=light'}
+
+    setup()
+    screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+    ]])
+    -- Send a background response with the Pt portion split.
+    feed_data('\027]11;rgba:ffff/fff')
+    feed_data('f/ffff/8000\007')
+    screen:expect{any='did OptionSet, yay!'}
+
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=light'}
+  end)
+
+  it('not triggers OptionSet event with invalid terminal-response', function()
+    screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027]11;rgb:ffff/ffff/ffff/8000\027\\')
+    screen:expect_unchanged()
+
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=dark'}
+
+    setup()
+    screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027]11;rgba:ffff/foo/ffff/8000\007')
+    screen:expect_unchanged()
+
+    feed_data(':echo "new_bg=".&background\n')
+    screen:expect{any='new_bg=dark'}
+  end)
 end)
