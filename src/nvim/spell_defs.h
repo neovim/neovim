@@ -119,6 +119,7 @@ struct slang_S {
   bool sl_add;                  // true if it's a .add file.
 
   char_u      *sl_fbyts;        // case-folded word bytes
+  long        sl_fbyts_len;     // length of sl_fbyts
   idx_T       *sl_fidxs;        // case-folded word indexes
   char_u      *sl_kbyts;        // keep-case word bytes
   idx_T       *sl_kidxs;        // keep-case word indexes

@@ -4049,7 +4049,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   prevwin = next_prevwin;
 
   last_status(false);  // status line may appear or disappear
-  (void)win_comp_pos();  // recompute w_winrow for all windows
+  const int row = win_comp_pos();  // recompute w_winrow for all windows
   diff_need_scrollbind = true;
 
   /* The tabpage line may have appeared or disappeared, may need to resize
@@ -4060,11 +4060,20 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
     clear_cmdline = true;
   }
   p_ch = curtab->tp_ch_used;
-  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow
-                                      ))
+
+  // When cmdheight is changed in a tab page with '<C-w>-', cmdline_row is
+  // changed but p_ch and tp_ch_used are not changed. Thus we also need to
+  // check cmdline_row.
+  if ((row < cmdline_row) && (cmdline_row <= Rows - p_ch)) {
+    clear_cmdline = true;
+  }
+
+  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow)) {
     shell_new_rows();
-  if (curtab->tp_old_Columns != Columns && starting == 0)
-    shell_new_columns();        /* update window widths */
+  }
+  if (curtab->tp_old_Columns != Columns && starting == 0) {
+    shell_new_columns();  // update window widths
+  }
 
   lastused_tabpage = old_curtab;
 

@@ -903,6 +903,10 @@ normal_end:
 
   msg_nowait = false;
 
+  if (finish_op) {
+    set_reg_var(get_default_register_name());
+  }
+
   // Reset finish_op, in case it was set
   s->c = finish_op;
   finish_op = false;
