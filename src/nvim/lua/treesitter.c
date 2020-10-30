@@ -58,6 +58,7 @@ static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
   { "__eq", node_eq },
   { "__len", node_child_count },
+  { "id", node_id },
   { "range", node_range },
   { "start", node_start },
   { "end_", node_end },
@@ -618,6 +619,17 @@ static int node_eq(lua_State *L)
   }
   TSNode node2 = *ud;
   lua_pushboolean(L, ts_node_eq(node, node2));
+  return 1;
+}
+
+static int node_id(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  lua_pushlstring(L, (const char *)&node.id, sizeof node.id);
   return 1;
 }
 
