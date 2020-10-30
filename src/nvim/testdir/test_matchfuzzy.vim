@@ -18,7 +18,7 @@ func Test_matchfuzzy()
   call assert_equal(['aabbaa', 'aaabbbaaa', 'aaaabbbbaaaa', 'aba'], matchfuzzy(['aba', 'aabbaa', 'aaabbbaaa', 'aaaabbbbaaaa'], 'aa'))
   call assert_equal(['one'], matchfuzzy(['one', 'two'], 'one'))
   call assert_equal(['oneTwo', 'onetwo'], matchfuzzy(['onetwo', 'oneTwo'], 'oneTwo'))
-  call assert_equal(['one_two', 'onetwo'], matchfuzzy(['onetwo', 'one_two'], 'oneTwo'))
+  call assert_equal(['onetwo', 'one_two'], matchfuzzy(['onetwo', 'one_two'], 'oneTwo'))
   call assert_equal(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], matchfuzzy(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], 'aa'))
   call assert_equal(256, matchfuzzy([repeat('a', 256)], len(repeat('a', 256))[0]))
   call assert_equal([], matchfuzzy([repeat('a', 300)], repeat('a', 257)))
@@ -27,7 +27,11 @@ func Test_matchfuzzy()
   " preference for camel case match
   call assert_equal(['oneTwo', 'onetwo'], matchfuzzy(['onetwo', 'oneTwo'], 'onetwo'))
   " preference for match after a separator (_ or space)
-  call assert_equal(['one_two', 'one two', 'onetwo'], matchfuzzy(['onetwo', 'one_two', 'one two'], 'onetwo'))
+  if has("win32")
+    call assert_equal(['onetwo', 'one two', 'one_two'], matchfuzzy(['onetwo', 'one_two', 'one two'], 'onetwo'))
+  else                                                                                             , 
+    call assert_equal(['onetwo', 'one_two', 'one two'], matchfuzzy(['onetwo', 'one_two', 'one two'], 'onetwo'))
+  endif
   " preference for leading letter match
   call assert_equal(['onetwo', 'xonetwo'], matchfuzzy(['xonetwo', 'onetwo'], 'onetwo'))
   " preference for sequential match
@@ -36,6 +40,8 @@ func Test_matchfuzzy()
   call assert_equal(['xonetwo', 'xxonetwo'], matchfuzzy(['xxonetwo', 'xonetwo'], 'onetwo'))
   " total non-matching letter(s) penalty
   call assert_equal(['one', 'onex', 'onexx'], matchfuzzy(['onexx', 'one', 'onex'], 'one'))
+  " prefer complete matches over separator matches
+  call assert_equal(['.vim/vimrc', '.vim/vimrc_colors', '.vim/v_i_m_r_c'], ['.vim/vimrc', '.vim/vimrc_colors', '.vim/v_i_m_r_c']->matchfuzzy('vimrc'))
 
   %bw!
   eval map(['somebuf', 'anotherone', 'needle', 'yetanotherone'], {_, v -> bufadd(v) + bufload(v)})
@@ -132,10 +138,17 @@ func Test_matchfuzzy_mbyte()
 
   " preference for camel case match
   call assert_equal(['oneĄwo', 'oneąwo'],
-        \ ['oneąwo', 'oneĄwo']->matchfuzzy('oneąwo'))
-  " preference for match after a separator (_ or space)
-  call assert_equal(['ⅠⅡa_bㄟㄠ', 'ⅠⅡa bㄟㄠ', 'ⅠⅡabㄟㄠ'],
-        \ ['ⅠⅡabㄟㄠ', 'ⅠⅡa_bㄟㄠ', 'ⅠⅡa bㄟㄠ']->matchfuzzy('ⅠⅡabㄟㄠ'))
+        \ matchfuzzy(['oneąwo', 'oneĄwo'], 'oneąwo'))
+  " preference for complete match then match after separator (_ or space)
+  if has("win32")
+    " order is different between Windows and Unix :(
+    " It's important that the complete match is first
+    call assert_equal(['ⅠⅡabㄟㄠ', 'ⅠⅡa bㄟㄠ', 'ⅠⅡa_bㄟㄠ'],
+          \ matchfuzzy(['ⅠⅡabㄟㄠ', 'ⅠⅡa_bㄟㄠ', 'ⅠⅡa bㄟㄠ'], 'ⅠⅡabㄟㄠ'))
+  else
+    call assert_equal(['ⅠⅡabㄟㄠ'] + sort(['ⅠⅡa_bㄟㄠ', 'ⅠⅡa bㄟㄠ']),
+          \ matchfuzzy(['ⅠⅡabㄟㄠ', 'ⅠⅡa bㄟㄠ', 'ⅠⅡa_bㄟㄠ'], 'ⅠⅡabㄟㄠ'))
+  endif
   " preference for leading letter match
   call assert_equal(['ŗŝţũŵż', 'xŗŝţũŵż'],
         \ ['xŗŝţũŵż', 'ŗŝţũŵż']->matchfuzzy('ŗŝţũŵż'))
