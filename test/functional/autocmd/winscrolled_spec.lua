@@ -9,18 +9,34 @@ local source = helpers.source
 describe('WinScrolled', function()
   before_each(clear)
 
-  it('is triggered by scrolling in normal/visual mode', function()
+  it('is triggered by scrolling vertically', function()
     source([[
+    set nowrap
     let width = winwidth(0)
-    let lines = [repeat('*', width * 2), repeat('*', width * 2)]
+    let line = '123' . repeat('*', width * 2)
+    let lines = [line, line]
     call nvim_buf_set_lines(0, 0, -1, v:true, lines)
 
     let g:scrolled = 0
     autocmd WinScrolled * let g:scrolled += 1
-    normal! zl
-    normal! <C-e>
+    execute "normal! \<C-e>"
     ]])
-    eq(2, eval('g:scrolled'))
+    eq(1, eval('g:scrolled'))
+  end)
+
+  it('is triggered by scrolling horizontally', function()
+    source([[
+    set nowrap
+    let width = winwidth(0)
+    let line = '123' . repeat('*', width * 2)
+    let lines = [line, line]
+    call nvim_buf_set_lines(0, 0, -1, v:true, lines)
+
+    let g:scrolled = 0
+    autocmd WinScrolled * let g:scrolled += 1
+    execute "normal! zl"
+    ]])
+    eq(1, eval('g:scrolled'))
   end)
 
   it('is triggered when the window scrolls in insert mode', function()
@@ -33,7 +49,7 @@ describe('WinScrolled', function()
     autocmd WinScrolled * let g:scrolled += 1
     call feedkeys("LA\<CR><Esc>", "n")
     ]])
-    eq(1, eval('g:scrolled'))
+    eq(2, eval('g:scrolled'))
   end)
 
   it('is triggered when the window is resized', function()
