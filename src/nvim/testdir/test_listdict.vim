@@ -199,9 +199,9 @@ func Test_dict_big()
   try
     let n = d[1500]
   catch
-    let str=substitute(v:exception, '\v(.{14}).*( \d{4}).*', '\1\2', '')
+    let str = substitute(v:exception, '\v(.{14}).*( "\d{4}").*', '\1\2', '')
   endtry
-  call assert_equal('Vim(let):E716: 1500', str)
+  call assert_equal('Vim(let):E716: "1500"', str)
 
   " lookup each items
   for i in range(1500)
