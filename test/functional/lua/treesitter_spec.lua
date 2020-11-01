@@ -80,13 +80,6 @@ describe('treesitter API with C parser', function()
     eq({1,2,1,12}, exec_lua("return {descendant:range()}"))
     eq("(declaration type: (primitive_type) declarator: (init_declarator declarator: (identifier) value: (number_literal)))", exec_lua("return descendant:sexpr()"))
 
-    eq(true, exec_lua("return child == child"))
-    -- separate lua object, but represents same node
-    eq(true, exec_lua("return child == root:child(0)"))
-    eq(false, exec_lua("return child == descendant2"))
-    eq(false, exec_lua("return child == nil"))
-    eq(false, exec_lua("return child == tree"))
-
     feed("2G7|ay")
     exec_lua([[
       tree2 = parser:parse()
@@ -97,6 +90,21 @@ describe('treesitter API with C parser', function()
     eq(false, exec_lua("return root2 == root"))
     eq("<node declaration>", exec_lua("return tostring(descendant2)"))
     eq({1,2,1,13}, exec_lua("return {descendant2:range()}"))
+
+    eq(true, exec_lua("return child == child"))
+    -- separate lua object, but represents same node
+    eq(true, exec_lua("return child == root:child(0)"))
+    eq(false, exec_lua("return child == descendant2"))
+    eq(false, exec_lua("return child == nil"))
+    eq(false, exec_lua("return child == tree"))
+
+    eq("string", exec_lua("return type(child:id())"))
+    eq(true, exec_lua("return child:id() == child:id()"))
+    -- separate lua object, but represents same node
+    eq(true, exec_lua("return child:id() == root:child(0):id()"))
+    eq(false, exec_lua("return child:id() == descendant2:id()"))
+    eq(false, exec_lua("return child:id() == nil"))
+    eq(false, exec_lua("return child:id() == tree"))
 
     -- orginal tree did not change
     eq({1,2,1,12}, exec_lua("return {descendant:range()}"))

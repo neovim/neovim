@@ -136,6 +136,15 @@ tsnode:has_error()					*tsnode:has_error()*
 tsnode:sexpr()						*tsnode:sexpr()*
 	Get an S-expression representing the node as a string.
 
+tsnode:id()							*tsnode:id()*
+	Get an unique identier for the node inside its own tree.
+
+	No guarantees are made about this identifer's internal representation,
+	except for being a primitive lua type with value equality (so not a table).
+	Presently it is a (non-printable) string.
+
+	NB: the id is not guaranteed to be unique for nodes from different trees.
+
 tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 						*tsnode:descendant_for_range()*
 	Get the smallest node within this node that spans the given range of
