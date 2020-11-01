@@ -2566,7 +2566,7 @@ static bool valid_spellfile(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char_u *s = val; *s != NUL; s++) {
-    if (!vim_isfilec(*s) && *s != ',') {
+    if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
       return false;
     }
   }
