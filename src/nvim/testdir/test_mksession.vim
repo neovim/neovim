@@ -470,4 +470,17 @@ func Test_mkvimrc()
   call delete('Xtestvimrc')
 endfunc
 
+func Test_scrolloff()
+  set sessionoptions+=localoptions
+  setlocal so=1 siso=1
+  mksession! Xtest_mks.out
+  setlocal so=-1 siso=-1
+  source Xtest_mks.out
+  call assert_equal(1, &l:so)
+  call assert_equal(1, &l:siso)
+  call delete('Xtest_mks.out')
+  setlocal so& siso&
+  set sessionoptions&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
