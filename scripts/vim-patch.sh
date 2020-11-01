@@ -211,6 +211,9 @@ preprocess_patch() {
   LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/session\(\.[ch]\)/\1\/ex_session\2/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename test_urls.vim to check_urls.vim
   LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls.vim\)@\1/scripts/check\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
