@@ -632,7 +632,7 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = {};
+            valueSet = vim.tbl_values(protocol.CodeActionKind);
           };
         };
       };
@@ -943,11 +943,9 @@ function protocol.resolve_capabilities(server_capabilities)
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
-  elseif type(server_capabilities.codeActionProvider) == 'boolean' then
+  elseif type(server_capabilities.codeActionProvider) == 'boolean'
+    or type(server_capabilities.codeActionProvider) == 'table' then
     general_properties.code_action = server_capabilities.codeActionProvider
-  elseif type(server_capabilities.codeActionProvider) == 'table' then
-    -- TODO(ashkan) support CodeActionKind
-    general_properties.code_action = false
   else
     error("The server sent invalid codeActionProvider")
   end
