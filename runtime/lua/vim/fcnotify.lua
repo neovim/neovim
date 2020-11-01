@@ -216,6 +216,7 @@ function Watcher.check_option(option_type)
     local bufnr = vim.api.nvim_get_current_buf()
     WatcherList[bufnr]:debounce()
   end
+  vim.api.nvim_command(':runtime plugin/fcnotify.vim')
 end
 
 return Watcher
