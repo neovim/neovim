@@ -10,6 +10,8 @@ local parsers = {}
 local Parser = {}
 Parser.__index = Parser
 
+local NOOP = function() end
+
 --- Parses the buffer if needed and returns a tree.
 --
 -- Calling this will call the on_changedtree callbacks if the tree has changed.
@@ -39,17 +41,22 @@ function Parser:input_source()
   return self.bufnr or self.str
 end
 
+function Parser:invalidate()
+  self.valid = false
+end
+
 function Parser:_on_bytes(bufnr, changed_tick,
                           start_row, start_col, start_byte,
                           old_row, old_col, old_byte,
                           new_row, new_col, new_byte)
   local old_end_col = old_col + ((old_row == 0) and start_col or 0)
   local new_end_col = new_col + ((new_row == 0) and start_col or 0)
+
   self._parser:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
                     start_row, start_col,
                     start_row+old_row, old_end_col,
                     start_row+new_row, new_end_col)
-  self.valid = false
+  self:invalidate()
 
   for _, cb in ipairs(self.bytes_cbs) do
     cb(bufnr, changed_tick,
@@ -83,7 +90,7 @@ end
 function Parser:set_included_ranges(ranges)
   self._parser:set_included_ranges(ranges)
   -- The buffer will need to be parsed again later
-  self.valid = false
+  self:invalidate()
 end
 
 --- Gets the included ranges for the parsers
@@ -113,7 +120,9 @@ setmetatable(M, {
 -- @param bufnr The buffer the parser will be tied to
 -- @param lang The language of the parser.
 -- @param id The id the parser will have
-function M._create_parser(bufnr, lang, id)
+-- @param opts Additional options table
+function M._create_parser(bufnr, lang, id, opts)
+  opts = opts or {}
   language.require_language(lang)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -124,6 +133,7 @@ function M._create_parser(bufnr, lang, id)
   local self = setmetatable({bufnr=bufnr, lang=lang, valid=false}, Parser)
   self._parser = vim._create_ts_parser(lang)
   self.changedtree_cbs = {}
+  self.id = id
   self.bytes_cbs = {}
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
@@ -139,7 +149,10 @@ function M._create_parser(bufnr, lang, id)
       end
     end
   end
-  a.nvim_buf_attach(self.bufnr, false, {on_bytes=bytes_cb, on_detach=detach_cb})
+  a.nvim_buf_attach(self.bufnr, false, {
+    on_bytes = opts.skip_byte_cb and NOOP or bytes_cb,
+    on_detach = detach_cb
+  })
   return self
 end
 
@@ -151,19 +164,24 @@ end
 -- @param bufnr The buffer the parser should be tied to
 -- @param ft The filetype of this parser
 -- @param buf_attach_cbs See Parser:register_cbs
+-- @param opts Additional parser options.
+--   - id: The parser id to use
+--   - skip_byte_cb: Whether to skip the byte updates on the buffer.
+--     This is useful when wanting to manage the byte update manually.
 --
 -- @returns The parser
-function M.get_parser(bufnr, lang, buf_attach_cbs)
+function M.get_parser(bufnr, lang, buf_attach_cbs, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   if lang == nil then
     lang = a.nvim_buf_get_option(bufnr, "filetype")
   end
-  local id = tostring(bufnr)..'_'..lang
+  opts = opts or {}
+  id = opts.id or tostring(bufnr)..'_'..lang
 
   if parsers[id] == nil then
-    parsers[id] = M._create_parser(bufnr, lang, id)
+    parsers[id] = M._create_parser(bufnr, lang, id, opts)
   end
 
   parsers[id]:register_cbs(buf_attach_cbs)
