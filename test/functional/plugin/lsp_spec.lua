@@ -1696,6 +1696,47 @@ describe('LSP', function()
     end)
 
     describe('lsp.buf.rename', function()
+      it('should use <cword> in input if server doesnt support prepareRename', function()
+        local expected_callbacks = {
+          {NIL, "shutdown", {}, 1};
+        }
+        test_rpc_server {
+          test_name = "no_prepare_rename_capabilities";
+          on_setup = function()
+              exec_lua([=[
+                -- write buffer and set cursor on the 'else' word
+                local lines = {'line 1'; 'line 2'; 'what'; 'else'; 'do'; 'you'; 'want'}
+                vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+                vim.fn.cursor(4, 1)
+
+                vim.lsp.callbacks['textDocument/rename'] = function() end
+                vim.lsp._stubs = {}
+                vim.fn.input = function(prompt, suggested_value)
+                  vim.lsp._stubs.input_prompt = prompt
+                  vim.lsp._stubs.suggested_value = suggested_value
+                  return prompt
+                end
+                vim.lsp.buf.rename()
+              ]=])
+          end;
+          on_init = function(client)
+            client.stop()
+            local provided_prompt = exec_lua('return vim.lsp._stubs.input_prompt')
+            local suggested_value = exec_lua('return vim.lsp._stubs.suggested_value')
+            eq('New Name: ', provided_prompt)
+            eq('else', suggested_value)
+          end;
+          on_exit = function(code, signal)
+            eq(0, code, "exit code", fake_lsp_logfile)
+            eq(0, signal, "exit signal", fake_lsp_logfile)
+          end;
+          on_callback = function(...)
+            eq(table.remove(expected_callbacks), {...}, "expected callback")
+          end;
+        }
+      end)
     end)
+
+    -- TODO(fsouza): a test where prepareRename is called (using 'prepare_rename_capabilities')
   end)
 end)

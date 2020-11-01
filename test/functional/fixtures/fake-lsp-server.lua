@@ -145,6 +145,42 @@ function tests.capabilities_for_client_supports_method()
   }
 end
 
+function tests.prepare_rename_capabilities()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.Full;
+          renameProvider = {
+            prepareProvider = true;
+          };
+        }
+      }
+    end;
+    body = function()
+    end;
+  }
+end
+
+function tests.no_prepare_rename_capabilities()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.Full;
+          renameProvider = true;
+        }
+      }
+    end;
+    body = function()
+    end;
+  }
+end
+
 function tests.basic_finish()
   skeleton {
     on_init = function(params)
