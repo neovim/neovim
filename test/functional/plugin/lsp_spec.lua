@@ -94,6 +94,9 @@ local function test_rpc_server(config)
         config.on_callback(unpack(args))
       end
     end
+    if config.on_request then
+      config.on_request(method, args)
+    end
     return NIL
   end
   local function on_notify(method, args)
@@ -1699,14 +1702,23 @@ describe('LSP', function()
       it('should use <cword> in input if server doesnt support prepareRename', function()
         local expected_callbacks = {
           {NIL, "shutdown", {}, 1};
+          {NIL, "finish", {}, 1};
+          {NIL, "start", {}, 1};
         }
         test_rpc_server {
           test_name = "no_prepare_rename_capabilities";
           on_setup = function()
               exec_lua([=[
-                -- write buffer and set cursor on the 'else' word
+                BUFFER = vim.api.nvim_create_buf(false, true)
+
                 local lines = {'line 1'; 'line 2'; 'what'; 'else'; 'do'; 'you'; 'want'}
-                vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+                vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, lines)
+
+                -- attach the buffer to the server
+                assert(vim.lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+
+                -- set the current buffer
+                vim.api.nvim_set_current_buf(BUFFER)
                 vim.fn.cursor(4, 1)
 
                 vim.lsp.callbacks['textDocument/rename'] = function() end
@@ -1735,8 +1747,9 @@ describe('LSP', function()
           end;
         }
       end)
+
+      -- TODO(fsouza): test where server supports prepareRename
     end)
 
-    -- TODO(fsouza): a test where prepareRename is called (using 'prepare_rename_capabilities')
   end)
 end)

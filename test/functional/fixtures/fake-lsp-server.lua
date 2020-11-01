@@ -177,6 +177,17 @@ function tests.no_prepare_rename_capabilities()
       }
     end;
     body = function()
+      notify('start')
+      expect_notification('textDocument/didOpen', {
+        textDocument = {
+          languageId = '';
+          text = table.concat({'line 1'; 'line 2'; 'what'; 'else'; 'do'; 'you'; 'want'}, '\n') .. '\n';
+          uri = 'file://';
+          version = 0;
+        };
+      })
+      expect_notification('finish')
+      notify('finish')
     end;
   }
 end
