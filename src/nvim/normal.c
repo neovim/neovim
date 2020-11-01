@@ -4156,7 +4156,6 @@ void scroll_redraw(int up, long count)
   }
   if (curwin->w_cursor.lnum != prev_lnum)
     coladvance(curwin->w_curswant);
-  // XXX: can `moved` be used to prevent other work here?
   if (moved)
     curwin->w_viewport_invalid = true;
   redraw_later(VALID);
