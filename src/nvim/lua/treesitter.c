@@ -180,7 +180,7 @@ int tslua_add_language(lua_State *L)
       || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
     return luaL_error(
         L,
-        "ABI version mismatch : expected %" PRIu32 ", found %" PRIu32,
+        "ABI version mismatch : expected %d, found %d",
         TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, lang_version);
   }
 
