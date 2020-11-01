@@ -50,10 +50,13 @@ typedef struct {
   LuaRef redraw_win;
   LuaRef redraw_line;
   LuaRef redraw_end;
+  LuaRef hl_def;
+  int hl_valid;
 } DecorationProvider;
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorationProvider) \
                                  { ns_id, false, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, LUA_NOREF, LUA_NOREF }
+                                   LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+                                   LUA_NOREF, -1 }
 
 #endif  // NVIM_EXTMARK_DEFS_H

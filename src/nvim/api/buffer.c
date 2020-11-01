@@ -974,9 +974,9 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     String k = opts.items[i].key;
     Object v = opts.items[i].value;
     if (strequal("force", k.data)) {
-      force = api_coerce_to_bool(v, "force", false, err);
+      force = api_object_to_bool(v, "force", false, err);
     } else if (strequal("unload", k.data)) {
-      unload = api_coerce_to_bool(v, "unload", false, err);
+      unload = api_object_to_bool(v, "unload", false, err);
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return;
@@ -1441,7 +1441,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
     } else if (strequal("ephemeral", k.data)) {
-      ephemeral = api_coerce_to_bool(*v, "ephemeral", false, err);
+      ephemeral = api_object_to_bool(*v, "ephemeral", false, err);
       if (ERROR_SET(err)) {
         goto error;
       }

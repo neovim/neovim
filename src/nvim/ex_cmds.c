@@ -3721,8 +3721,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               update_topline();
               validate_cursor();
               update_screen(SOME_VALID);
-              highlight_match = FALSE;
-              redraw_later(SOME_VALID);
+              highlight_match = false;
+              redraw_later(curwin, SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
               if (msg_row == Rows - 1)
@@ -5751,7 +5751,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   }
   xfree(str);
 
-  redraw_later(SOME_VALID);
+  redraw_later(curwin, SOME_VALID);
   win_enter(save_curwin, false);  // Return to original window
   update_topline();
 

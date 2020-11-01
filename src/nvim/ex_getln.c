@@ -6483,7 +6483,7 @@ static int open_cmdwin(void)
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }
-  redraw_later(SOME_VALID);
+  redraw_later(curwin, SOME_VALID);
 
   // Save the command line info, can be used recursively.
   save_cmdline(&save_ccline);

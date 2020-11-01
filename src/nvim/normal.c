@@ -3605,7 +3605,7 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
           scrolldown(-y, false);
       }
 
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       cursor_correct();
       curwin->w_redr_status = true;
     }
@@ -4147,7 +4147,7 @@ void scroll_redraw(int up, long count)
   if (curwin->w_cursor.lnum != prev_lnum)
     coladvance(curwin->w_curswant);
   curwin->w_viewport_invalid = true;
-  redraw_later(VALID);
+  redraw_later(curwin, VALID);
 }
 
 /*
@@ -4245,7 +4245,7 @@ dozet:
     FALLTHROUGH;
 
   case 't':   scroll_cursor_top(0, true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4254,7 +4254,7 @@ dozet:
   FALLTHROUGH;
 
   case 'z':   scroll_cursor_halfway(true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4275,7 +4275,7 @@ dozet:
     FALLTHROUGH;
 
   case 'b':   scroll_cursor_bot(0, true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4322,7 +4322,7 @@ dozet:
         col = 0;
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
-        redraw_later(NOT_VALID);
+        redraw_later(curwin, NOT_VALID);
       }
   }
     break;
@@ -4341,7 +4341,7 @@ dozet:
       }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
-        redraw_later(NOT_VALID);
+        redraw_later(curwin, NOT_VALID);
       }
   }
     break;
@@ -4694,7 +4694,7 @@ static void nv_clear(cmdarg_T *cap)
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       wp->w_s->b_syn_slow = false;
     }
-    redraw_later(CLEAR);
+    redraw_later(curwin, CLEAR);
   }
 }
 

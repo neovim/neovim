@@ -1623,7 +1623,7 @@ void enter_buffer(buf_T *buf)
   }
   curbuf->b_last_used = time(NULL);
 
-  redraw_later(NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
 }
 
 // Change to the directory of the current buffer.

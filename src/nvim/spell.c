@@ -2258,7 +2258,7 @@ char_u *did_set_spelllang(win_T *wp)
 theend:
   xfree(spl_copy);
   recursive = false;
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
   return ret_msg;
 }
 
@@ -6877,7 +6877,7 @@ void ex_spelldump(exarg_T *eap)
   if (curbuf->b_ml.ml_line_count > 1) {
     ml_delete(curbuf->b_ml.ml_line_count, false);
   }
-  redraw_later(NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
 }
 
 // Go through all possible words and:
