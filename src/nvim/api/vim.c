@@ -741,7 +741,11 @@ Integer nvim_strwidth(String text, Error *err)
 ArrayOf(String) nvim_list_runtime_paths(void)
   FUNC_API_SINCE(1)
 {
+  // TODO(bfredl): this should just work:
+  // return nvim_get_runtime_file(NULL_STRING, true);
+
   Array rv = ARRAY_DICT_INIT;
+
   char_u *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -788,22 +792,29 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim_get_runtime_file(String name, Boolean all)
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
-  if (!name.data) {
+
+  // TODO(bfredl):
+  if (name.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "not yet implemented");
     return rv;
   }
+
   int flags = DIP_START | (all ? DIP_ALL : 0);
-  do_in_runtimepath((char_u *)name.data, flags, find_runtime_cb, &rv);
+  do_in_runtimepath(name.size ? (char_u *)name.data : NULL,
+                    flags, find_runtime_cb, &rv);
   return rv;
 }
 
 static void find_runtime_cb(char_u *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
-  ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  if (fname != NULL) {
+    ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  }
 }
 
 String nvim__get_lib_dir(void)

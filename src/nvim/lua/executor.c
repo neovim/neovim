@@ -549,27 +549,11 @@ static lua_State *nlua_enter(void)
     // stack: (empty)
     lua_getglobal(lstate, "vim");
     // stack: vim
-    lua_getfield(lstate, -1, "_update_package_paths");
-    // stack: vim, vim._update_package_paths
-    if (lua_pcall(lstate, 0, 0, 0)) {
-      // stack: vim, error
-      nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
-      // stack: vim
-    }
-    // stack: vim
     lua_pop(lstate, 1);
     // stack: (empty)
     last_p_rtp = (const void *)p_rtp;
   }
   return lstate;
-}
-
-/// Force an update of lua's package paths if runtime path has changed.
-bool nlua_update_package_path(void)
-{
-  lua_State *const lstate = nlua_enter();
-
-  return !!lstate;
 }
 
 static void nlua_print_event(void **argv)

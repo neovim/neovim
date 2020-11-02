@@ -2363,7 +2363,7 @@ void ex_compiler(exarg_T *eap)
     do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
-    if (source_runtime(buf, DIP_ALL) == FAIL) {
+    if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
     }
     xfree(buf);
@@ -2581,6 +2581,7 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
 /// return FAIL when no file could be sourced, OK otherwise.
 int source_runtime(char_u *name, int flags)
 {
+  flags |= (flags & DIP_NORTP) ? 0 : DIP_START;
   return source_in_path(p_rtp, name, flags);
 }
 
