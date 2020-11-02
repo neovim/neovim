@@ -7,6 +7,7 @@ return {
     'BufFilePre',             -- before renaming a buffer
     'BufHidden',              -- just after buffer becomes hidden
     'BufLeave',               -- before leaving a buffer
+    'BufModified',            -- after the 'modified' state of a buffer changes
     'BufNew',                 -- after creating any buffer
     'BufNewFile',             -- when creating a buffer for a new file
     'BufReadCmd',             -- read buffer using command
@@ -124,6 +125,7 @@ return {
   -- List of nvim-specific events or aliases for the purpose of generating
   -- syntax file
   nvim_specific = {
+    BufModified=true,
     DirChanged=true,
     Signal=true,
     TabClosed=true,

@@ -1488,6 +1488,14 @@ static void ins_redraw(
     do_autocmd_winscrolled(curwin);
   }
 
+  // Trigger BufModified if b_changed_notified is false.
+  if (ready && has_event(EVENT_BUFMODIFIED)
+      && curbuf->b_changed_notified == false
+      && !pum_visible()) {
+    apply_autocmds(EVENT_BUFMODIFIED, NULL, NULL, false, curbuf);
+    curbuf->b_changed_notified = true;
+  }
+
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
       && conceal_cursor_moved) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
