@@ -41,7 +41,7 @@ describe('treesitter API with C parser', function()
   end
 
   it('parses buffer', function()
-    if not check_parser() then return end
+    if helpers.pending_win32(pending) or not check_parser() then return end
 
     insert([[
       int main() {

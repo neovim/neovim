@@ -87,10 +87,6 @@ file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
 
-file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
-file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
-list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
-
 foreach(subdir
         os
         api
@@ -187,13 +183,6 @@ if(NOT MSVC)
     set_source_files_properties(
       eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
-
-  # tree-sitter: inlined external project, we don't maintain it. #10124
-  set(TS_FLAGS "-Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
-  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
-    set(TS_FLAGS "${TS_FLAGS} -Wno-implicit-fallthrough")
-  endif()
-  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${TS_FLAGS}")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -453,6 +442,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${UTF8PROC_LIBRARIES}
+  ${TREESITTER_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -472,7 +462,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -570,7 +560,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -600,7 +590,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
