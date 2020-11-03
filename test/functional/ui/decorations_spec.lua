@@ -5,20 +5,32 @@ local clear = helpers.clear
 local feed = helpers.feed
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
+local exec = helpers.exec
 local expect_events = helpers.expect_events
+local meths = helpers.meths
 
-describe('decorations provider', function()
+describe('decorations providers', function()
   local screen
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-    })
+    screen:set_default_attr_ids {
+      [1] = {bold=true, foreground=Screen.colors.Blue};
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      [3] = {foreground = Screen.colors.Brown};
+      [4] = {foreground = Screen.colors.Blue1};
+      [5] = {foreground = Screen.colors.Magenta};
+      [6] = {bold = true, foreground = Screen.colors.Brown};
+      [7] = {background = Screen.colors.Gray90};
+      [8] = {bold = true, reverse = true};
+      [9] = {reverse = true};
+      [10] = {italic = true, background = Screen.colors.Magenta};
+      [11] = {foreground = Screen.colors.Red, background = tonumber('0x005028')};
+    }
   end)
 
-  local mudholland = [[
+  local mulholland = [[
     // just to see if there was an accident
     // on Mulholland Drive
     try_start();
@@ -28,21 +40,21 @@ describe('decorations provider', function()
     restore_buffer(&save_buf); ]]
 
   local function setup_provider(code)
-    exec_lua ([[
+    return exec_lua ([[
       local a = vim.api
-      test1 = a.nvim_create_namespace "test1"
+      _G.ns1 = a.nvim_create_namespace "ns1"
     ]] .. (code or [[
       beamtrace = {}
-      function on_do(kind, ...)
+      local function on_do(kind, ...)
         table.insert(beamtrace, {kind, ...})
       end
     ]]) .. [[
-      a.nvim_set_decoration_provider(
-        test1, {
+      a.nvim_set_decoration_provider(_G.ns1, {
         on_start = on_do; on_buf = on_do;
         on_win = on_do; on_line = on_do;
         on_end = on_do;
       })
+      return _G.ns1
     ]])
   end
 
@@ -51,8 +63,8 @@ describe('decorations provider', function()
     expect_events(expected, actual, "beam trace")
   end
 
-  it('leaves a trace', function()
-    insert(mudholland)
+  it('leave a trace', function()
+    insert(mulholland)
 
     setup_provider()
 
@@ -99,11 +111,12 @@ describe('decorations provider', function()
     }
   end)
 
-  it('single provider', function()
-    insert(mudholland)
+  it('can have single provider', function()
+    insert(mulholland)
     setup_provider [[
       local hl = a.nvim_get_hl_id_by_name "ErrorMsg"
-      function do_it(event, ...)
+      local test_ns = a.nvim_create_namespace "mulholland"
+      function on_do(event, ...)
         if event == "line" then
           local win, buf, line = ...
           a.nvim_buf_set_extmark(buf, test_ns, line, line,
@@ -114,5 +127,104 @@ describe('decorations provider', function()
         end
       end
     ]]
+
+    screen:expect{grid=[[
+      {2:/}/ just to see if there was an accident |
+      /{2:/} on Mulholland Drive                  |
+      tr{2:y}_start();                            |
+      buf{2:r}ef_T save_buf;                      |
+      swit{2:c}h_buffer(&save_buf, buf);          |
+      posp {2:=} getmark(mark, false);            |
+      restor{2:e}_buffer(&save_buf);^              |
+                                              |
+    ]]}
+  end)
+
+  it('can predefine highlights', function()
+    screen:try_resize(40, 16)
+    insert(mulholland)
+    exec [[
+      3
+      set ft=c
+      syntax on
+      set number cursorline
+      split
+    ]]
+    local ns1 = setup_provider()
+
+    for k,v in pairs {
+      LineNr = {italic=true, bg="Magenta"};
+      Comment = {fg="#FF0000", bg = 80*256+40};
+      CursorLine = {link="ErrorMsg"};
+    } do meths.set_hl(ns1, k, v) end
+
+    screen:expect{grid=[[
+      {3:  1 }{4:// just to see if there was an accid}|
+      {3:    }{4:ent}                                 |
+      {3:  2 }{4:// on Mulholland Drive}              |
+      {6:  3 }{7:^try_start();                        }|
+      {3:  4 }bufref_T save_buf;                  |
+      {3:  5 }switch_buffer(&save_buf, buf);      |
+      {3:  6 }posp = getmark(mark, {5:false});        |
+      {8:[No Name] [+]                           }|
+      {3:  2 }{4:// on Mulholland Drive}              |
+      {6:  3 }{7:try_start();                        }|
+      {3:  4 }bufref_T save_buf;                  |
+      {3:  5 }switch_buffer(&save_buf, buf);      |
+      {3:  6 }posp = getmark(mark, {5:false});        |
+      {3:  7 }restore_buffer(&save_buf);          |
+      {9:[No Name] [+]                           }|
+                                              |
+    ]]}
+
+    meths.set_hl_ns(ns1)
+    screen:expect{grid=[[
+      {10:  1 }{11:// just to see if there was an accid}|
+      {10:    }{11:ent}                                 |
+      {10:  2 }{11:// on Mulholland Drive}              |
+      {6:  3 }{2:^try_start();                        }|
+      {10:  4 }bufref_T save_buf;                  |
+      {10:  5 }switch_buffer(&save_buf, buf);      |
+      {10:  6 }posp = getmark(mark, {5:false});        |
+      {8:[No Name] [+]                           }|
+      {10:  2 }{11:// on Mulholland Drive}              |
+      {6:  3 }{2:try_start();                        }|
+      {10:  4 }bufref_T save_buf;                  |
+      {10:  5 }switch_buffer(&save_buf, buf);      |
+      {10:  6 }posp = getmark(mark, {5:false});        |
+      {10:  7 }restore_buffer(&save_buf);          |
+      {9:[No Name] [+]                           }|
+                                              |
+    ]]}
+
+    exec_lua [[
+      local a = vim.api
+      local thewin = a.nvim_get_current_win()
+      local ns2 = a.nvim_create_namespace 'ns2'
+      a.nvim_set_decoration_provider (ns2, {
+        on_win = function (_, win, buf)
+          a.nvim_set_hl_ns(win == thewin and _G.ns1 or ns2)
+        end;
+      })
+    ]]
+    screen:expect{grid=[[
+      {10:  1 }{11:// just to see if there was an accid}|
+      {10:    }{11:ent}                                 |
+      {10:  2 }{11:// on Mulholland Drive}              |
+      {6:  3 }{2:^try_start();                        }|
+      {10:  4 }bufref_T save_buf;                  |
+      {10:  5 }switch_buffer(&save_buf, buf);      |
+      {10:  6 }posp = getmark(mark, {5:false});        |
+      {8:[No Name] [+]                           }|
+      {3:  2 }{4:// on Mulholland Drive}              |
+      {6:  3 }{7:try_start();                        }|
+      {3:  4 }bufref_T save_buf;                  |
+      {3:  5 }switch_buffer(&save_buf, buf);      |
+      {3:  6 }posp = getmark(mark, {5:false});        |
+      {3:  7 }restore_buffer(&save_buf);          |
+      {9:[No Name] [+]                           }|
+                                              |
+    ]]}
+
   end)
 end)

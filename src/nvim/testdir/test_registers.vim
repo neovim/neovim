@@ -167,6 +167,75 @@ func Test_set_register()
   enew!
 endfunc
 
+func Test_v_register()
+  enew
+  call setline(1, 'nothing')
+
+  func s:Put()
+    let s:register = v:register
+    exec 'normal! "' .. v:register .. 'P'
+  endfunc
+  nnoremap <buffer> <plug>(test) :<c-u>call s:Put()<cr>
+  nmap <buffer> S <plug>(test)
+
+  let @z = "testz\n"
+  let @" = "test@\n"
+
+  let s:register = ''
+  call feedkeys('"_ddS', 'mx')
+  call assert_equal('test@', getline('.'))  " fails before 8.2.0929
+  call assert_equal('"', s:register)        " fails before 8.2.0929
+
+  let s:register = ''
+  call feedkeys('"zS', 'mx')
+  call assert_equal('z', s:register)
+
+  let s:register = ''
+  call feedkeys('"zSS', 'mx')
+  call assert_equal('"', s:register)
+
+  let s:register = ''
+  call feedkeys('"_S', 'mx')
+  call assert_equal('_', s:register)
+
+  let s:register = ''
+  normal "_ddS
+  call assert_equal('"', s:register)        " fails before 8.2.0929
+  call assert_equal('test@', getline('.'))  " fails before 8.2.0929
+
+  let s:register = ''
+  execute 'normal "z:call' "s:Put()\n"
+  call assert_equal('z', s:register)
+  call assert_equal('testz', getline('.'))
+
+  " Test operator and omap
+  let @b = 'testb'
+  func s:OpFunc(...)
+    let s:register2 = v:register
+  endfunc
+  set opfunc=s:OpFunc
+
+  normal "bg@l
+  normal S
+  call assert_equal('"', s:register)        " fails before 8.2.0929
+  call assert_equal('b', s:register2)
+
+  func s:Motion()
+    let s:register1 = v:register
+    normal! l
+  endfunc
+  onoremap <buffer> Q :<c-u>call s:Motion()<cr>
+
+  normal "bg@Q
+  normal S
+  call assert_equal('"', s:register)
+  call assert_equal('b', s:register1)
+  call assert_equal('"', s:register2)
+
+  set opfunc&
+  bwipe!
+endfunc
+
 func Test_ve_blockpaste()
   new
   set ve=all

@@ -16,10 +16,11 @@
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
-#if defined(PATH_MAX) && (PATH_MAX > 1024)
+# define DEFAULT_MAXPATHL 4096
+#if defined(PATH_MAX) && (PATH_MAX > DEFAULT_MAXPATHL)
 # define MAXPATHL PATH_MAX
 #else
-# define MAXPATHL 1024
+# define MAXPATHL DEFAULT_MAXPATHL
 #endif
 
 // Command-processing buffer. Use large buffers for all platforms.

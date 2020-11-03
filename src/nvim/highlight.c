@@ -14,6 +14,7 @@
 #include "nvim/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/lua/executor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight.c.generated.h"
@@ -28,12 +29,16 @@ static Map(int, int) *combine_attr_entries;
 static Map(int, int) *blend_attr_entries;
 static Map(int, int) *blendthrough_attr_entries;
 
+/// highlight entries private to a namespace
+static Map(ColorKey, ColorItem) *ns_hl;
+
 void highlight_init(void)
 {
   attr_entry_ids = map_new(HlEntry, int)();
   combine_attr_entries = map_new(int, int)();
   blend_attr_entries = map_new(int, int)();
   blendthrough_attr_entries = map_new(int, int)();
+  ns_hl = map_new(ColorKey, ColorItem)();
 
   // index 0 is no attribute, add dummy entry:
   kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
@@ -129,19 +134,112 @@ void ui_send_all_hls(UI *ui)
 }
 
 /// Get attribute code for a syntax group.
-int hl_get_syn_attr(int idx, HlAttrs at_en)
+int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 {
   // TODO(bfredl): should we do this unconditionally
   if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
       || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
       || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
-      || at_en.rgb_ae_attr != 0) {
+      || at_en.rgb_ae_attr != 0 || ns_id != 0) {
     return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
-                                     .id1 = idx, .id2 = 0 });
+                                     .id1 = idx, .id2 = ns_id });
   } else {
     // If all the fields are cleared, clear the attr field back to default value
     return 0;
   }
+}
+
+static ColorKey colored_key(NS ns_id, int syn_id)
+{
+  return (ColorKey){ .ns_id = (int)ns_id, .syn_id = syn_id };
+}
+
+void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
+{
+  DecorationProvider *p = get_provider(ns_id, true);
+  int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
+  ColorItem it = { .attr_id = attr_id,
+                   .link_id = link_id,
+                   .version = p->hl_valid };
+  map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
+}
+
+int ns_get_hl(NS ns_id, int hl_id, bool link)
+{
+  static int recursive = 0;
+
+  if (ns_id < 0) {
+    if (ns_hl_active <= 0) {
+      return -1;
+    }
+    ns_id = ns_hl_active;
+  }
+
+  DecorationProvider *p = get_provider(ns_id, true);
+  ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id));
+  // TODO(bfredl): map_ref true even this?
+  bool valid_cache = it.version >= p->hl_valid;
+
+  if (!valid_cache && p->hl_def != LUA_NOREF && !recursive) {
+    FIXED_TEMP_ARRAY(args, 3);
+    args.items[0] = INTEGER_OBJ((Integer)ns_id);
+    args.items[1] = STRING_OBJ(cstr_to_string((char *)syn_id2name(hl_id)));
+    args.items[2] = BOOLEAN_OBJ(link);
+    // TODO(bfredl): preload the "global" attr dict?
+
+    Error err = ERROR_INIT;
+    recursive++;
+    Object ret = nlua_call_ref(p->hl_def, "hl_def", args, true, &err);
+    recursive--;
+
+    // TODO(bfredl): or "inherit", combine with global value?
+    bool fallback = true;
+    int tmp = false;
+    HlAttrs attrs = HLATTRS_INIT;
+    if (ret.type == kObjectTypeDictionary) {
+      Dictionary dict = ret.data.dictionary;
+      fallback = false;
+      attrs = dict2hlattrs(dict, true, &it.link_id, &err);
+      for (size_t i = 0; i < dict.size; i++) {
+        char *key = dict.items[i].key.data;
+        Object val = dict.items[i].value;
+        bool truthy = api_object_to_bool(val, key, false, &err);
+
+        if (strequal(key, "fallback")) {
+          fallback = truthy;
+        } else if (strequal(key, "temp")) {
+          tmp = truthy;
+        }
+      }
+      if (it.link_id >= 0) {
+        fallback = true;
+      }
+    }
+
+    it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
+    it.version = p->hl_valid-tmp;
+    map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
+  }
+
+  if (link) {
+    return it.attr_id >= 0 ? -1 : it.link_id;
+  } else {
+    return it.attr_id;
+  }
+}
+
+
+bool win_check_ns_hl(win_T *wp)
+{
+  if (ns_hl_changed) {
+    highlight_changed();
+    if (wp) {
+      update_window_hl(wp, true);
+    }
+    ns_hl_changed = false;
+    return true;
+  }
+  return false;
 }
 
 /// Get attribute code for a builtin highlight group.
@@ -202,6 +300,17 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, !has_blend);
   } else {
     wp->w_hl_attr_normal = float_win ? HL_ATTR(HLF_NFLOAT) : 0;
+  }
+
+  // NOOOO! You cannot just pretend that "Normal" is just like any other
+  // syntax group! It needs at least 10 layers of special casing! Noooooo!
+  //
+  // haha, theme engine go brrr
+  int normality = syn_check_group((const char_u *)S_LEN("Normal"));
+  int ns_attr = ns_get_hl(-1, normality, false);
+  if (ns_attr > 0) {
+    // TODO(bfredl): hantera NormalNC and so on
+    wp->w_hl_attr_normal = ns_attr;
   }
 
   // if blend= attribute is not set, 'winblend' value overrides it.
@@ -275,6 +384,7 @@ void clear_hl_tables(bool reinit)
     map_free(int, int)(combine_attr_entries);
     map_free(int, int)(blend_attr_entries);
     map_free(int, int)(blendthrough_attr_entries);
+    map_free(ColorKey, ColorItem)(ns_hl);
   }
 }
 
@@ -663,6 +773,103 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   return hl;
 }
 
+HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
+{
+  HlAttrs hlattrs = HLATTRS_INIT;
+
+  int32_t fg = -1, bg = -1, sp = -1;
+  int16_t mask = 0;
+  for (size_t i = 0; i < dict.size; i++) {
+    char *key = dict.items[i].key.data;
+    Object val = dict.items[i].value;
+
+    struct {
+      const char *name;
+      int16_t flag;
+    } flags[] = {
+      { "bold", HL_BOLD },
+      { "standout", HL_STANDOUT },
+      { "underline", HL_UNDERLINE },
+      { "undercurl", HL_UNDERCURL },
+      { "italic", HL_ITALIC },
+      { "reverse", HL_INVERSE },
+      { NULL, 0 },
+    };
+
+    int j;
+    for (j = 0; flags[j].name; j++) {
+      if (strequal(flags[j].name, key)) {
+        if (api_object_to_bool(val, key, false, err)) {
+          mask = mask | flags[j].flag;
+        }
+        break;
+      }
+    }
+
+    struct {
+      const char *name;
+      const char *shortname;
+      int *dest;
+    } colors[] = {
+      { "foreground", "fg", &fg },
+      { "background", "bg", &bg },
+      { "special", "sp", &sp },
+      { NULL, NULL, NULL },
+    };
+
+    int k;
+    for (k = 0; (!flags[j].name) && colors[k].name; k++) {
+      if (strequal(colors[k].name, key) || strequal(colors[k].shortname, key)) {
+        if (val.type == kObjectTypeInteger) {
+          *colors[k].dest = (int)val.data.integer;
+        } else if (val.type == kObjectTypeString) {
+          String str = val.data.string;
+          // TODO(bfredl): be more fancy with "bg", "fg" etc
+          if (str.size) {
+            *colors[k].dest = name_to_color(str.data);
+          }
+        } else {
+          api_set_error(err, kErrorTypeValidation,
+                        "'%s' must be string or integer", key);
+        }
+        break;
+      }
+    }
+
+
+    if (flags[j].name || colors[k].name) {
+      // handled above
+    } else if (link_id && strequal(key, "link")) {
+      if (val.type == kObjectTypeString) {
+        String str = val.data.string;
+        *link_id = syn_check_group((const char_u *)str.data, (int)str.size);
+      } else if (val.type == kObjectTypeInteger) {
+        // TODO(bfredl): validate range?
+        *link_id = (int)val.data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "'link' must be string or integer");
+      }
+    }
+
+    if (ERROR_SET(err)) {
+      return hlattrs;  // error set, caller should not use retval
+    }
+  }
+
+  if (use_rgb) {
+    hlattrs.rgb_ae_attr = mask;
+    hlattrs.rgb_bg_color = bg;
+    hlattrs.rgb_fg_color = fg;
+    hlattrs.rgb_sp_color = sp;
+  } else {
+    hlattrs.cterm_ae_attr = mask;
+    hlattrs.cterm_bg_color = bg == -1 ? cterm_normal_bg_color : bg + 1;
+    hlattrs.cterm_fg_color = fg == -1 ? cterm_normal_fg_color : fg + 1;
+  }
+
+  return hlattrs;
+}
 Array hl_inspect(int attr)
 {
   Array ret = ARRAY_DICT_INIT;

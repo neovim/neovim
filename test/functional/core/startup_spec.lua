@@ -7,6 +7,7 @@ local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
+local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
 local mkdir = helpers.mkdir
@@ -304,6 +305,27 @@ describe('startup', function()
                                '-c', [[echo v:argv[-1:] len(v:argv) > 1]],
                                '+q' })
     eq('[\'+q\'] 1', out)
+  end)
+
+  local function pack_clear(cmd)
+    clear('--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd)
+  end
+
+
+  it("handles &packpath during startup", function()
+    pack_clear [[ let g:x = bar#test() ]]
+    eq(-3, eval 'g:x')
+
+    pack_clear [[ lua _G.y = require'bar'.doit() ]]
+    eq(9003, exec_lua [[ return _G.y ]])
+  end)
+
+  it("handles :packadd during startup", function()
+    pack_clear [[ packadd! bonus | let g:x = bonus#secret() ]]
+    eq('halloj', eval 'g:x')
+
+    pack_clear [[ packadd! bonus | lua _G.y = require'bonus'.launch() ]]
+    eq('CPE 1704 TKS', exec_lua [[ return _G.y ]])
   end)
 end)
 

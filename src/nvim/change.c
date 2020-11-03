@@ -142,7 +142,6 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
                            long xtra)
 {
   int i;
-  int cols;
   pos_T       *p;
   int add;
 
@@ -170,7 +169,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
         if (p->lnum != lnum) {
             add = true;
         } else {
-          cols = comp_textwidth(false);
+          int cols = comp_textwidth(false);
           if (cols == 0) {
               cols = 79;
           }
@@ -295,7 +294,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
       // change.
       if (wp->w_p_rnu
           || (wp->w_p_cul && lnum <= wp->w_last_cursorline)) {
-        redraw_win_later(wp, SOME_VALID);
+        redraw_later(wp, SOME_VALID);
       }
     }
   }
@@ -349,7 +348,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
             changedOneline(wp->w_buffer, wlnum);
@@ -476,7 +475,7 @@ changed_lines(
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,

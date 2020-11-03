@@ -141,9 +141,6 @@ local dump_option = function(i, o)
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   end
-  if o.enable_if then
-    w('#endif')
-  end
   if #o.scope == 1 and o.scope[1] == 'global' then
     w('    .indir=PV_NONE')
   else
@@ -162,6 +159,12 @@ local dump_option = function(i, o)
     end
     defines['PV_' .. varname:sub(3):upper()] = pv_name
     w('    .indir=' .. pv_name)
+  end
+  if o.enable_if then
+    w('#else')
+    w('    .var=NULL')
+    w('    .indir=PV_NONE')
+    w('#endif')
   end
   if o.defaults then
     if o.defaults.condition then

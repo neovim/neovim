@@ -2071,6 +2071,12 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   expand_T xpc;
   bool error = false;
   char_u *result;
+#ifdef BACKSLASH_IN_FILENAME
+  char_u *p_csl_save = p_csl;
+
+  // avoid using 'completeslash' here
+  p_csl = empty_option;
+#endif
 
   rettv->v_type = VAR_STRING;
   if (argvars[1].v_type != VAR_UNKNOWN
@@ -2123,6 +2129,9 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_string = NULL;
     }
   }
+#ifdef BACKSLASH_IN_FILENAME
+  p_csl = p_csl_save;
+#endif
 }
 
 
@@ -4007,7 +4016,7 @@ static void f_glob(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "globpath()" function
 static void f_globpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int flags = 0;  // Flags for globpath.
+  int flags = WILD_IGNORE_COMPLETESLASH;  // Flags for globpath.
   bool error = false;
 
   // Return a string, or a list if the optional third argument is non-zero.
@@ -6381,6 +6390,12 @@ static void f_perleval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   script_host_eval("perl", argvars, rettv);
 }
 
+// "rubyeval()" function
+static void f_rubyeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  script_host_eval("ruby", argvars, rettv);
+}
+
 /*
  * "range()" function
  */
@@ -8141,15 +8156,17 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// Create quickfix/location list from VimL values
 ///
 /// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
-/// list_arg, action_arg and what_arg arguments in which case errors out,
-/// including VAR_UNKNOWN parameters.
+/// args argument in which case errors out, including VAR_UNKNOWN parameters.
 ///
 /// @param[in,out]  wp  Window to create location list for. May be NULL in
 ///                     which case quickfix list will be created.
-/// @param[in]  list_arg  Quickfix list contents.
-/// @param[in]  action_arg  Action to perform: append to an existing list,
-///                         replace its content or create a new one.
-/// @param[in]  title_arg  New list title. Defaults to caller function name.
+/// @param[in]  args  [list, action, what]
+/// @param[in]  args[0]  Quickfix list contents.
+/// @param[in]  args[1]  Optional. Action to perform:
+///                      append to an existing list, replace its content,
+///                      or create a new one.
+/// @param[in]  args[2]  Optional. Quickfix list properties or title.
+///                      Defaults to caller function name.
 /// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
 static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(2, 3)
@@ -8159,7 +8176,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   int action = ' ';
   static int recursive = 0;
   rettv->vval.v_number = -1;
-  dict_T *d = NULL;
+  dict_T *what = NULL;
 
   typval_T *list_arg = &args[0];
   if (list_arg->v_type != VAR_LIST) {
@@ -8187,18 +8204,18 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     return;
   }
 
-  typval_T *title_arg = &args[2];
-  if (title_arg->v_type == VAR_UNKNOWN) {
+  typval_T *const what_arg = &args[2];
+  if (what_arg->v_type == VAR_UNKNOWN) {
     // Option argument was not given.
     goto skip_args;
-  } else if (title_arg->v_type == VAR_STRING) {
-    title = tv_get_string_chk(title_arg);
+  } else if (what_arg->v_type == VAR_STRING) {
+    title = tv_get_string_chk(what_arg);
     if (!title) {
       // Type error. Error already printed by tv_get_string_chk().
       return;
     }
-  } else if (title_arg->v_type == VAR_DICT) {
-    d = title_arg->vval.v_dict;
+  } else if (what_arg->v_type == VAR_DICT && what_arg->vval.v_dict != NULL) {
+    what = what_arg->vval.v_dict;
   } else {
     EMSG(_(e_dictreq));
     return;
@@ -8211,7 +8228,7 @@ skip_args:
 
   recursive++;
   list_T *const l = list_arg->vval.v_list;
-  if (set_errorlist(wp, l, action, (char_u *)title, d) == OK) {
+  if (set_errorlist(wp, l, action, (char_u *)title, what) == OK) {
     rettv->vval.v_number = 0;
   }
   recursive--;

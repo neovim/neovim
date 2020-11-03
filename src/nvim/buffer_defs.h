@@ -361,12 +361,34 @@ struct mapblock {
   sctx_T m_script_ctx;          // SCTX where map was defined
 };
 
-/*
- * Used for highlighting in the status line.
- */
+/// Used for highlighting in the status line.
+typedef struct stl_hlrec stl_hlrec_t;
 struct stl_hlrec {
   char_u      *start;
   int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
+};
+
+/// Used for building the status line.
+typedef struct stl_item stl_item_t;
+struct stl_item {
+  // Where the item starts in the status line output buffer
+  char_u *start;
+  // Function to run for ClickFunc items.
+  char *cmd;
+  // The minimum width of the item
+  int minwid;
+  // The maximum width of the item
+  int maxwid;
+  enum {
+    Normal,
+    Empty,
+    Group,
+    Separate,
+    Highlight,
+    TabPage,
+    ClickFunc,
+    Trunc
+  } type;
 };
 
 // values for b_syn_spell: what to do with toplevel text
@@ -661,6 +683,9 @@ struct file_buffer {
   char_u *b_p_com;              ///< 'comments'
   char_u *b_p_cms;              ///< 'commentstring'
   char_u *b_p_cpt;              ///< 'complete'
+#ifdef BACKSLASH_IN_FILENAME
+  char_u *b_p_csl;              ///< 'completeslash'
+#endif
   char_u *b_p_cfu;              ///< 'completefunc'
   char_u *b_p_ofu;              ///< 'omnifunc'
   char_u *b_p_tfu;              ///< 'tagfunc'
@@ -770,6 +795,7 @@ struct file_buffer {
   int b_ind_cpp_namespace;
   int b_ind_if_for_while;
   int b_ind_cpp_extern_c;
+  int b_ind_pragma;
 
   linenr_T b_no_eol_lnum;       /* non-zero lnum when last line of next binary
                                  * write should not have an end-of-line */

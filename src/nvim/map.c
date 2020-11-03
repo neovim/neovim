@@ -12,6 +12,9 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <lua.h>
+#include <lauxlib.h>
+
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
 #include "nvim/vim.h"
@@ -173,6 +176,20 @@ static inline bool HlEntry_eq(HlEntry ae1, HlEntry ae2)
   return memcmp(&ae1, &ae2, sizeof(ae1)) == 0;
 }
 
+static inline khint_t ColorKey_hash(ColorKey ae)
+{
+  const uint8_t *data = (const uint8_t *)&ae;
+  khint_t h = 0;
+  for (size_t i = 0; i < sizeof(ae); i++) {
+    h = (h << 5) - h + data[i];
+  }
+  return h;
+}
+
+static inline bool ColorKey_eq(ColorKey ae1, ColorKey ae2)
+{
+  return memcmp(&ae1, &ae2, sizeof(ae1)) == 0;
+}
 
 
 MAP_IMPL(int, int, DEFAULT_INITIALIZER)
@@ -191,6 +208,7 @@ MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
 MAP_IMPL(HlEntry, int, DEFAULT_INITIALIZER)
 MAP_IMPL(String, handle_T, 0)
 
+MAP_IMPL(ColorKey, ColorItem, COLOR_ITEM_INITIALIZER)
 
 /// Deletes a key:value pair from a string:pointer map, and frees the
 /// storage of both key and value.

@@ -214,13 +214,16 @@ end
 function M.apply_text_document_edit(text_document_edit)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
-  if text_document.version then
-    -- `VersionedTextDocumentIdentifier`s version may be null https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
-    if text_document.version ~= vim.NIL and M.buf_versions[bufnr] ~= nil and M.buf_versions[bufnr] > text_document.version then
-      print("Buffer ", text_document.uri, " newer than edits.")
-      return
-    end
+
+  -- `VersionedTextDocumentIdentifier`s version may be null
+  --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
+  if text_document.version
+      and M.buf_versions[bufnr]
+      and M.buf_versions[bufnr] > text_document.version then
+    print("Buffer ", text_document.uri, " newer than edits.")
+    return
   end
+
   M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
@@ -532,7 +535,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
       }
       --]=]
       -- TODO highlight parameter
-      if parameter.documentation and parameter.documentation ~= vim.NIL then
+      if parameter.documentation then
         M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end

@@ -4990,7 +4990,7 @@ ExpandFromContext (
     char_u *pat,
     int *num_file,
     char_u ***file,
-    int options              /* EW_ flags */
+    int options              // WILD_ flags
 )
 {
   regmatch_T regmatch;
@@ -5052,6 +5052,21 @@ ExpandFromContext (
     ret = expand_wildcards_eval(&pat, num_file, file, flags);
     if (free_pat)
       xfree(pat);
+#ifdef BACKSLASH_IN_FILENAME
+    if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
+      for (int i = 0; i < *num_file; i++) {
+        char_u *ptr = (*file)[i];
+        while (*ptr != NUL) {
+          if (p_csl[0] == 's' && *ptr == '\\') {
+            *ptr = '/';
+          } else if (p_csl[0] == 'b' && *ptr == '/') {
+            *ptr = '\\';
+          }
+          ptr += utfc_ptr2len(ptr);
+        }
+      }
+    }
+#endif
     return ret;
   }
 
@@ -5193,7 +5208,7 @@ ExpandFromContext (
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
  */
-void ExpandGeneric(
+static void ExpandGeneric(
     expand_T    *xp,
     regmatch_T  *regmatch,
     int         *num_file,
@@ -6468,7 +6483,7 @@ static int open_cmdwin(void)
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }
-  redraw_later(SOME_VALID);
+  redraw_later(curwin, SOME_VALID);
 
   // Save the command line info, can be used recursively.
   save_cmdline(&save_ccline);

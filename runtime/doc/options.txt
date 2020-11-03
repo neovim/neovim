@@ -1386,6 +1386,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'completeslash'* *'csl'*
+'completeslash' 'csl'	string	(default: "")
+			local to buffer
+			{not in Vi}  {only for MS-Windows}
+	When this option is set it overrules 'shellslash' for completion:
+	- When this option is set to "slash", a forward slash is used for path
+	  completion in insert mode. This is useful when editing HTML tag, or
+	  Makefile with 'noshellslash' on Windows.
+	- When this option is set to "backslash", backslash is used. This is
+	  useful when editing a batch file with 'shellslash' set on Windows.
+	- When this option is empty, same character is used as for
+	  'shellslash'.
+	For Insert mode completion the buffer-local value is used.  For
+	command line completion the global value is used.
+
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	string	(default: "menu,preview")
 			global
@@ -2903,6 +2918,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*'go-c'*
 	  'c'	Use console dialogs instead of popup dialogs for simple
 		choices.
+								*'go-d'*
+	  'd'	Use dark theme variant if available.
 								*'go-e'*
 	  'e'	Add tab pages when indicated with 'showtabline'.
 		'guitablabel' can be used to change the text in the labels.
@@ -5289,7 +5306,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'shellslash' only works when a backslash can be used as a path
 	separator.  To test if this is so use: >
 		if exists('+shellslash')
-<
+<	Also see 'completeslash'.
+
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
 'shelltemp' 'stmp'	boolean	(Vim default on, Vi default off)
 			global
@@ -5779,7 +5797,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	normal text.  Each status line item is of the form:
 	  %-0{minwid}.{maxwid}{item}
 	All fields except the {item} are optional.  A single percent sign can
-	be given as "%%".  Up to 80 items can be specified.  *E541*
+	be given as "%%".
 
 	When the option starts with "%!" then it is used as an expression,
 	evaluated and the result is used as the option value.  Example: >

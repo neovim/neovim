@@ -316,7 +316,13 @@ static void terminfo_start(UI *ui)
 #ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
 #else
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+    int retry_count = 10;
+    // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
+    // few times. #12322
+    while (uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO) == UV_EINTR
+           && retry_count > 0) {
+      retry_count--;
+    }
 #endif
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
@@ -1102,6 +1108,15 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 {
   TUIData *data = ui->data;
+#ifdef UNIX
+  // If stdin is not a TTY, the LHS of pipe may change the state of the TTY
+  // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
+  // #13073
+  if (data->is_starting && data->input.in_fd == STDERR_FILENO) {
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_NORMAL);
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+  }
+#endif
   tui_set_mode(ui, (ModeShape)mode_idx);
   data->is_starting = false;  // mode entered, no longer starting
   data->showing_mode = (ModeShape)mode_idx;

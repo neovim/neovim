@@ -58,6 +58,7 @@ static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
   { "__eq", node_eq },
   { "__len", node_child_count },
+  { "id", node_id },
   { "range", node_range },
   { "start", node_start },
   { "end_", node_end },
@@ -176,10 +177,11 @@ int tslua_add_language(lua_State *L)
   }
 
   uint32_t lang_version = ts_language_version(lang);
-  if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION) {
+  if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
+      || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
     return luaL_error(
         L,
-        "ABI version mismatch : expected %" PRIu32 ", found %" PRIu32,
+        "ABI version mismatch : expected %d, found %d",
         TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, lang_version);
   }
 
@@ -246,7 +248,12 @@ int tslua_push_parser(lua_State *L)
   }
 
   TSParser *parser = ts_parser_new();
-  ts_parser_set_language(parser, lang);
+
+  if (!ts_parser_set_language(parser, lang)) {
+    ts_parser_delete(parser);
+    return luaL_error(L, "Failed to load language : %s", lang_name);
+  }
+
   TSLua_parser *p = lua_newuserdata(L, sizeof(TSLua_parser));  // [udata]
   p->parser = parser;
   p->tree = NULL;
@@ -342,7 +349,7 @@ static int parser_parse(lua_State *L)
     return 0;
   }
 
-  TSTree *new_tree;
+  TSTree *new_tree = NULL;
   size_t len;
   const char *str;
   long bufnr;
@@ -372,6 +379,12 @@ static int parser_parse(lua_State *L)
 
     default:
       return luaL_error(L, "invalid argument to parser:parse()");
+  }
+
+  // Sometimes parsing fails (timeout, or wrong parser ABI)
+  // In those case, just return an error.
+  if (!new_tree) {
+    return luaL_error(L, "An error occured when parsing.");
   }
 
   uint32_t n_ranges = 0;
@@ -618,6 +631,17 @@ static int node_eq(lua_State *L)
   }
   TSNode node2 = *ud;
   lua_pushboolean(L, ts_node_eq(node, node2));
+  return 1;
+}
+
+static int node_id(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  lua_pushlstring(L, (const char *)&node.id, sizeof node.id);
   return 1;
 }
 

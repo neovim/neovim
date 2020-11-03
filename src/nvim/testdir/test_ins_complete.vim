@@ -327,7 +327,10 @@ func Test_compl_in_cmdwin()
   set wildmenu wildchar=<Tab>
   com! -nargs=1 -complete=command GetInput let input = <q-args>
   com! -buffer TestCommand echo 'TestCommand'
+  let w:test_winvar = 'winvar'
+  let b:test_bufvar = 'bufvar'
 
+  " User-defined commands
   let input = ''
   call feedkeys("q:iGetInput T\<C-x>\<C-v>\<CR>", 'tx!')
   call assert_equal('TestCommand', input)
@@ -336,9 +339,92 @@ func Test_compl_in_cmdwin()
   call feedkeys("q::GetInput T\<Tab>\<CR>:q\<CR>", 'tx!')
   call assert_equal('T', input)
 
+  com! -nargs=1 -complete=var GetInput let input = <q-args>
+  " Window-local variables
+  let input = ''
+  call feedkeys("q:iGetInput w:test_\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('w:test_winvar', input)
+
+  let input = ''
+  call feedkeys("q::GetInput w:test_\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('w:test_', input)
+
+  " Buffer-local variables
+  let input = ''
+  call feedkeys("q:iGetInput b:test_\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('b:test_bufvar', input)
+
+  let input = ''
+  call feedkeys("q::GetInput b:test_\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('b:test_', input)
+
   delcom TestCommand
   delcom GetInput
+  unlet w:test_winvar
+  unlet b:test_bufvar
   set wildmenu& wildchar&
+endfunc
+
+" Test for insert path completion with completeslash option
+func Test_ins_completeslash()
+  CheckMSWindows
+
+  call mkdir('Xdir')
+
+  let orig_shellslash = &shellslash
+  set cpt&
+
+  new
+
+  set noshellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set shellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+  %bw!
+  call delete('Xdir', 'rf')
+
+  set noshellslash
+  set completeslash=slash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+
+  let &shellslash = orig_shellslash
+  set completeslash=
+endfunc
+
+func Test_issue_7021()
+  CheckMSWindows
+
+  let orig_shellslash = &shellslash
+  set noshellslash
+
+  set completeslash=slash
+  call assert_false(expand('~') =~ '/')
+
+  let &shellslash = orig_shellslash
+  set completeslash=
 endfunc
 
 func Test_pum_with_folds_two_tabs()

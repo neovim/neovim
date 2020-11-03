@@ -25,6 +25,27 @@ local lsp = {
   -- format_rpc_error = lsp_rpc.format_rpc_error;
 }
 
+-- maps request name to the required resolved_capability in the client.
+lsp._request_name_to_capability = {
+  ['textDocument/hover'] = 'hover';
+  ['textDocument/signatureHelp'] = 'signature_help';
+  ['textDocument/definition'] = 'goto_definition';
+  ['textDocument/implementation'] = 'implementation';
+  ['textDocument/declaration'] = 'declaration';
+  ['textDocument/typeDefinition'] = 'type_definition';
+  ['textDocument/documentSymbol'] = 'document_symbol';
+  ['textDocument/workspaceSymbol'] = 'workspace_symbol';
+  ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
+  ['textDocument/rename'] = 'rename';
+  ['textDocument/codeAction'] = 'code_action';
+  ['workspace/executeCommand'] = 'execute_command';
+  ['textDocument/references'] = 'find_references';
+  ['textDocument/rangeFormatting'] = 'document_range_formatting';
+  ['textDocument/formatting'] = 'document_formatting';
+  ['textDocument/completion'] = 'completion';
+  ['textDocument/documentHighlight'] = 'document_highlight';
+}
+
 -- TODO improve handling of scratch buffers with LSP attached.
 
 --@private
@@ -48,6 +69,16 @@ local function resolve_bufnr(bufnr)
     return vim.api.nvim_get_current_buf()
   end
   return bufnr
+end
+
+--@private
+--- callback called by the client when trying to call a method that's not
+--- supported in any of the servers registered for the current buffer.
+--@param method (string) name of the method
+function lsp._unsupported_method(method)
+  local msg = string.format("method %s is not supported by any of the servers registered for the current buffer", method)
+  log.warn(msg)
+  return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
 end
 
 --@private
@@ -397,9 +428,8 @@ end
 --@param trace:  "off" | "messages" | "verbose" | nil passed directly to the language
 --- server in the initialize request. Invalid/empty values will default to "off"
 ---
---@returns Client id. |vim.lsp.get_client_by_id()| Note: client is only
---- available after it has been initialized, which may happen after a small
---- delay (or never if there is an error). Use `on_init` to do any actions once
+--@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
+--- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
 function lsp.start_client(config)
   local cleaned_config = validate_client_config(config)
@@ -576,6 +606,15 @@ function lsp.start_client(config)
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+      client.supports_method = function(method)
+        local required_capability = lsp._request_name_to_capability[method]
+        -- if we don't know about the method, assume that the client supports it.
+        if not required_capability then
+          return true
+        end
+
+        return client.resolved_capabilities[required_capability]
+      end
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
         if not status then
@@ -596,19 +635,6 @@ function lsp.start_client(config)
         end
       end
     end)
-  end
-
-  --@private
-  --- Throws error for a method that is not supported by the current LSP
-  --- server.
-  ---
-  --@param method (string) an LSP method name not supported by the LSP server.
-  --@returns (error) a 'MethodNotFound' JSON-RPC error response.
-  local function unsupported_method(method)
-    local msg = "server doesn't support "..method
-    local _ = log.warn() and log.warn(msg)
-    err_message(msg)
-    return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
   end
 
   --@private
@@ -638,20 +664,6 @@ function lsp.start_client(config)
         or error(string.format("not found: %q request callback for client %q.", method, client.name))
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback, bufnr)
-    -- TODO keep these checks or just let it go anyway?
-    if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
-      or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
-      or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
-      or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
-      or (not client.resolved_capabilities.declaration and method == 'textDocument/declaration')
-      or (not client.resolved_capabilities.type_definition and method == 'textDocument/typeDefinition')
-      or (not client.resolved_capabilities.document_symbol and method == 'textDocument/documentSymbol')
-      or (not client.resolved_capabilities.workspace_symbol and method == 'textDocument/workspaceSymbol')
-      or (not client.resolved_capabilities.call_hierarchy and method == 'textDocument/prepareCallHierarchy')
-    then
-      callback(unsupported_method(method), method, nil, client_id, bufnr)
-      return
-    end
     return rpc.request(method, params, function(err, result)
       callback(err, method, result, client_id, bufnr)
     end)
@@ -910,14 +922,14 @@ function lsp.buf_is_attached(bufnr, client_id)
   return (all_buffer_active_clients[bufnr] or {})[client_id] == true
 end
 
---- Gets an active client by id, or nil if the id is invalid or the
---- client is not yet initialized.
----
+--- Gets a client by id, or nil if the id is invalid.
+--- The returned client may not yet be fully initialized.
+--
 --@param client_id client id number
 ---
 --@returns |vim.lsp.client| object, or nil
 function lsp.get_client_by_id(client_id)
-  return active_clients[client_id]
+  return active_clients[client_id] or uninitialized_clients[client_id]
 end
 
 --- Stops a client(s).
@@ -998,15 +1010,31 @@ function lsp.buf_request(bufnr, method, params, callback)
     callback = { callback, 'f', true };
   }
   local client_request_ids = {}
-  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
-    local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
 
-    -- This could only fail if the client shut down in the time since we looked
-    -- it up and we did the request, which should be rare.
-    if request_success then
-      client_request_ids[client_id] = request_id
+  local method_supported = false
+  for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
+    if client.supports_method(method) then
+      method_supported = true
+      local request_success, request_id = client.request(method, params, callback, resolved_bufnr)
+
+      -- This could only fail if the client shut down in the time since we looked
+      -- it up and we did the request, which should be rare.
+      if request_success then
+        client_request_ids[client_id] = request_id
+      end
     end
   end)
+
+  -- if no clients support the given method, call the callback with the proper
+  -- error message.
+  if not method_supported then
+    local unsupported_err = lsp._unsupported_method(method)
+    local cb = callback or lsp.callbacks[method]
+    if cb then
+      cb(unsupported_err, method, bufnr)
+    end
+    return
+  end
 
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do

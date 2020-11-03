@@ -82,18 +82,6 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
     return
   end
 
-  -- Unloaded buffers should not handle diagnostics.
-  --    When the buffer is loaded, we'll call on_attach, which sends textDocument/didOpen.
-  --    This should trigger another publish of the diagnostics.
-  --
-  -- In particular, this stops a ton of spam when first starting a server for current
-  -- unloaded buffers.
-  if not api.nvim_buf_is_loaded(bufnr) then
-    return
-  end
-
-  util.buf_clear_diagnostics(bufnr)
-
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#diagnostic
   -- The diagnostic's severity. Can be omitted. If omitted it is up to the
   -- client to interpret diagnostics as error, warning, info or hint.
@@ -104,7 +92,23 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
     end
   end
 
+  util.buf_clear_diagnostics(bufnr)
+
+  -- Always save the diagnostics, even if the buf is not loaded.
+  -- Language servers may report compile or build errors via diagnostics
+  -- Users should be able to find these, even if they're in files which
+  -- are not loaded.
   util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
+
+  -- Unloaded buffers should not handle diagnostics.
+  --    When the buffer is loaded, we'll call on_attach, which sends textDocument/didOpen.
+  --    This should trigger another publish of the diagnostics.
+  --
+  -- In particular, this stops a ton of spam when first starting a server for current
+  -- unloaded buffers.
+  if not api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
   util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
   util.buf_diagnostics_signs(bufnr, result.diagnostics)

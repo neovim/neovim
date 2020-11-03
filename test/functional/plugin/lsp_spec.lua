@@ -270,6 +270,76 @@ describe('LSP', function()
         test_name = "basic_check_capabilities";
         on_init = function(client)
           client.stop()
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(...)
+          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+
+    it('client.supports_methods() should validate capabilities', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "capabilities_for_client_supports_method";
+        on_init = function(client)
+          client.stop()
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().completion)
+          eq(true, client.resolved_capabilities().hover)
+          eq(false, client.resolved_capabilities().goto_definition)
+          eq(false, client.resolved_capabilities().rename)
+
+          -- known methods for resolved capabilities
+          eq(true, client.supports_method("textDocument/hover"))
+          eq(false, client.supports_method("textDocument/definition"))
+
+          -- unknown methods are assumed to be supported.
+          eq(true, client.supports_method("unknown-method"))
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(...)
+          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+
+    it('should call unsupported_method when trying to call an unsupported method', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "capabilities_for_client_supports_method";
+        on_setup = function()
+            exec_lua([=[
+              vim.lsp.callbacks['textDocument/hover'] = function(err, method)
+                vim.lsp._last_lsp_callback = { err = err; method = method }
+              end
+              vim.lsp._unsupported_method = function(method)
+                vim.lsp._last_unsupported_method = method
+                return 'fake-error'
+              end
+              vim.lsp.buf.hover()
+            ]=])
+        end;
+        on_init = function(client)
+          client.stop()
+          local method = exec_lua("return vim.lsp._last_unsupported_method")
+          eq("textDocument/hover", method)
+          local lsp_cb_call = exec_lua("return vim.lsp._last_lsp_callback")
+          eq("fake-error", lsp_cb_call.err)
+          eq("textDocument/hover", lsp_cb_call.method)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)

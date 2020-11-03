@@ -3707,7 +3707,7 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curwin->w_cursor.coladd = 0;
   curwin->w_curswant = 0;
   update_topline();              // scroll to show the line
-  redraw_later(VALID);
+  redraw_later(curwin, VALID);
   curwin->w_redr_status = true;  // update ruler
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -6317,6 +6317,7 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
 // Populate the quickfix list with the items supplied in the list
 // of dictionaries. "title" will be copied to w:quickfix_title
 // "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
+// When "what" is not NULL then only set some properties.
 int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
                   dict_T *what)
 {

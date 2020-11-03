@@ -1619,14 +1619,21 @@ free_exit:
   return virt_text;
 }
 
-bool api_is_truthy(Object obj, const char *what, bool nil_truthy, Error *err)
+/// Force obj to bool.
+/// If it fails, returns false and sets err
+/// @param obj          The object to coerce to a boolean
+/// @param what         The name of the object, used for error message
+/// @param nil_value    What to return if the type is nil.
+/// @param err          Set if there was an error in converting to a bool
+bool api_object_to_bool(Object obj, const char *what,
+                        bool nil_value, Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
   } else if (obj.type == kObjectTypeInteger) {
     return obj.data.integer;  // C semantics: non-zero int is true
   } else if (obj.type == kObjectTypeNil) {
-    return nil_truthy;  // caller decides what NIL (missing retval in lua) means
+    return nil_value;  // caller decides what NIL (missing retval in lua) means
   } else {
     api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
     return false;
@@ -1643,4 +1650,31 @@ const char *describe_ns(NS ns_id)
     }
   })
   return "(UNKNOWN PLUGIN)";
+}
+
+DecorationProvider *get_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decoration_providers); i++) {
+    DecorationProvider *item = &kv_A(decoration_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decoration_providers, (size_t)j+1);
+    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
+  }
+  DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
 }

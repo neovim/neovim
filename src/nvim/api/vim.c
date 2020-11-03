@@ -199,6 +199,69 @@ Integer nvim_get_hl_id_by_name(String name)
   return syn_check_group((const char_u *)name.data, (int)name.size);
 }
 
+Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
+{
+  if (ns_id == 0) {
+    return get_global_hl_defs();
+  }
+  abort();
+}
+
+/// Set a highlight group.
+///
+/// @param ns_id number of namespace for this highlight
+/// @param name highlight group name, like ErrorMsg
+/// @param val highlight definiton map, like |nvim_get_hl_by_name|.
+/// @param[out] err Error details, if any
+///
+/// TODO: ns_id = 0, should modify :highlight namespace
+/// TODO val should take update vs reset flag
+void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
+  FUNC_API_SINCE(7)
+{
+  int hl_id = syn_check_group( (char_u *)(name.data), (int)name.size);
+  int link_id = -1;
+
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
+  if (!ERROR_SET(err)) {
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id);
+  }
+}
+
+/// Set active namespace for highlights.
+///
+/// NB: this function can be called from async contexts, but the
+/// semantics are not yet well-defined. To start with
+/// |nvim_set_decoration_provider| on_win and on_line callbacks
+/// are explicitly allowed to change the namespace during a redraw cycle.
+///
+/// @param ns_id the namespace to activate
+/// @param[out] err Error details, if any
+void nvim_set_hl_ns(Integer ns_id, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_FAST
+{
+  if (ns_id >= 0) {
+    ns_hl_active = (NS)ns_id;
+  }
+
+  // TODO(bfredl): this is a little bit hackish.  Eventually we want a standard
+  // event path for redraws caused by "fast" events. This could tie in with
+  // better throttling of async events causing redraws, such as non-batched
+  // nvim_buf_set_extmark calls from async contexts.
+  if (!updating_screen && !ns_hl_changed) {
+    multiqueue_put(main_loop.events, on_redraw_event, 0);
+  }
+  ns_hl_changed = true;
+}
+
+static void on_redraw_event(void **argv)
+  FUNC_API_NOEXPORT
+{
+  redraw_all_later(NOT_VALID);
+}
+
+
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
 /// flags. This is a blocking call, unlike |nvim_input()|.
 ///
@@ -678,7 +741,11 @@ Integer nvim_strwidth(String text, Error *err)
 ArrayOf(String) nvim_list_runtime_paths(void)
   FUNC_API_SINCE(1)
 {
+  // TODO(bfredl): this should just work:
+  // return nvim_get_runtime_file(NULL_STRING, true);
+
   Array rv = ARRAY_DICT_INIT;
+
   char_u *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -725,22 +792,29 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim_get_runtime_file(String name, Boolean all)
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
-  if (!name.data) {
+
+  // TODO(bfredl):
+  if (name.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "not yet implemented");
     return rv;
   }
+
   int flags = DIP_START | (all ? DIP_ALL : 0);
-  do_in_runtimepath((char_u *)name.data, flags, find_runtime_cb, &rv);
+  do_in_runtimepath(name.size ? (char_u *)name.data : NULL,
+                    flags, find_runtime_cb, &rv);
   return rv;
 }
 
 static void find_runtime_cb(char_u *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
-  ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  if (fname != NULL) {
+    ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  }
 }
 
 String nvim__get_lib_dir(void)
@@ -1477,7 +1551,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
-  return name_to_color((char_u *)name.data);
+  return name_to_color(name.data);
 }
 
 /// Returns a map of color names and RGB values.
@@ -2610,33 +2684,6 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
-static DecorationProvider *get_provider(NS ns_id, bool force)
-{
-  ssize_t i;
-  for (i = 0; i < (ssize_t)kv_size(decoration_providers); i++) {
-    DecorationProvider *item = &kv_A(decoration_providers, i);
-    if (item->ns_id == ns_id) {
-      return item;
-    } else if (item->ns_id > ns_id) {
-      break;
-    }
-  }
-
-  if (!force) {
-    return NULL;
-  }
-
-  for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
-    // allocates if needed:
-    (void)kv_a(decoration_providers, (size_t)j+1);
-    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
-  }
-  DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
-  *item = DECORATION_PROVIDER_INIT(ns_id);
-
-  return item;
-}
-
 static void clear_provider(DecorationProvider *p)
 {
   NLUA_CLEAR_REF(p->redraw_start);
@@ -2695,7 +2742,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   clear_provider(p);
 
   // regardless of what happens, it seems good idea to redraw
-  redraw_later(NOT_VALID);  // TODO(bfredl): too soon?
+  redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
 
   struct {
     const char *name;
@@ -2706,6 +2753,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
     { "on_win", &p->redraw_win },
     { "on_line", &p->redraw_line },
     { "on_end", &p->redraw_end },
+    { "_on_hl_def", &p->hl_def },
     { NULL, NULL },
   };
 

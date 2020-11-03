@@ -286,7 +286,7 @@ retnomove:
       check_topfill(curwin, false);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       row = 0;
     } else if (row >= curwin->w_height_inner)   {
       count = 0;
@@ -316,7 +316,7 @@ retnomove:
         }
       }
       check_topfill(curwin, false);
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       row = curwin->w_height_inner - 1;
@@ -450,7 +450,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   // skip line number and fold column in front of the line
   col -= win_col_off(win);
-  if (col < 0) {
+  if (col <= 0) {
     col = 0;
   }
 

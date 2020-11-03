@@ -65,7 +65,8 @@ return {
     'InsertChange',           -- when changing Insert/Replace mode
     'InsertCharPre',          -- before inserting a char
     'InsertEnter',            -- when entering Insert mode
-    'InsertLeave',            -- when leaving Insert mode
+    'InsertLeave',            -- just after leaving Insert mode
+    'InsertLeavePre',         -- just before leaving Insert mode
     'MenuPopup',              -- just before popup menu is displayed
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.

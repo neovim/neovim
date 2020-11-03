@@ -25,7 +25,7 @@ local function filter_files(file_list)
     end
   end
 
-  return { main, unpack(after) }
+  return main and { main, unpack(after) } or after
 end
 
 local function runtime_query_path(lang, query_name)

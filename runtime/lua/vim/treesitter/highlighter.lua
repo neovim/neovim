@@ -157,7 +157,7 @@ local function on_line_impl(self, buf, line)
       a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
                              { end_line = end_row, end_col = end_col,
                                hl_group = hl,
-                               ephemeral = true
+                               ephemeral = true,
                               })
     end
     if start_row > line then

@@ -862,7 +862,7 @@ void foldUpdateAfterInsert(void)
 void foldUpdateAll(win_T *win)
 {
   win->w_foldinvalid = true;
-  redraw_win_later(win, NOT_VALID);
+  redraw_later(win, NOT_VALID);
 }
 
 // foldMoveTo() {{{2

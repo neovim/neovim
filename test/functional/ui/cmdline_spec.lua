@@ -3,7 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
-local feed_command = helpers.feed_command
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -841,36 +840,5 @@ describe('cmdline redraw', function()
     :012345678901234567890123|
     456789^                   |
     ]], unchanged=true}
-  end)
-end)
-
-describe('cmdline', function()
-  before_each(function()
-    clear()
-  end)
-
-  it('prints every executed Ex command if verbose >= 16', function()
-    local screen = Screen.new(50, 12)
-    screen:attach()
-    source([[
-      command DoSomething echo 'hello' |set ts=4 |let v = '123' |echo v
-      call feedkeys("\r", 't') " for the hit-enter prompt
-      set verbose=20
-    ]])
-    feed_command('DoSomething')
-    screen:expect([[
-                                                        |
-      ~                                                 |
-                                                        |
-      Executing: DoSomething                            |
-      Executing: echo 'hello' |set ts=4 |let v = '123' ||
-      echo v                                            |
-      hello                                             |
-      Executing: set ts=4 |let v = '123' |echo v        |
-      Executing: let v = '123' |echo v                  |
-      Executing: echo v                                 |
-      123                                               |
-      Press ENTER or type command to continue^           |
-    ]])
   end)
 end)
