@@ -1068,7 +1068,7 @@ split({s}, {sep}, {plain})                                       *vim.split()*
                 Splits a string at each instance of a separator.
 
                 Examples: >
-                 split(":aa::b:", ":")     --> {'','aa','','bb',''}
+                 split(":aa::b:", ":")     --> {'','aa','','b',''}
                  split("axaby", "ab?")     --> {'','x','y'}
                  split(x*yz*o, "*", true)  --> {'x','yz','o'}
 <
