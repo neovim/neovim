@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local neq = helpers.neq
 local NIL = helpers.NIL
 local feed = helpers.feed
 local clear = helpers.clear
@@ -13,7 +12,6 @@ local iswin = helpers.iswin
 local command = helpers.command
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
-local alter_slashes = helpers.alter_slashes
 local exec_lua = helpers.exec_lua
 
 local screen
