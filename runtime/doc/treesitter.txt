@@ -74,6 +74,9 @@ Tree methods						*lua-treesitter-tree*
 tstree:root()						*tstree:root()*
 	Return the root node of this tree.
 
+tstree:copy()						*tstree:copy()*
+	Returns a copy of the `tstree`.
+
 
 Node methods						*lua-treesitter-node*
 
