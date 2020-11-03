@@ -450,7 +450,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   // skip line number and fold column in front of the line
   col -= win_col_off(win);
-  if (col < 0) {
+  if (col <= 0) {
     col = 0;
   }
 
