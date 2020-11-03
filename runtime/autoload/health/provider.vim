@@ -749,7 +749,7 @@ function! s:check_perl() abort
     call health#report_warn(
           \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
           \ current_cpan, latest_cpan),
-          \ ['Run in shell: cpanm Neovim::Ext'])
+          \ ['Run in shell: cpanm -n Neovim::Ext'])
   else
     call health#report_ok('Latest "Neovim::Ext" cpan module is installed: '. current_cpan)
   endif
