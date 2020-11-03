@@ -3602,6 +3602,10 @@ func Test_lhelpgrep_autocmd()
     au BufEnter * call setqflist([], 'f')
   augroup END
   call assert_fails('helpgrep quickfix', 'E925:')
+  " run the test with a help window already open
+  help
+  wincmd w
+  call assert_fails('helpgrep quickfix', 'E925:')
   augroup QF_Test
     au! BufEnter
   augroup END
