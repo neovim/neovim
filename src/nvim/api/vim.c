@@ -794,6 +794,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 /// @return list of absolute paths to the found files
 ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_FAST
 {
   Array rv = ARRAY_DICT_INIT;
 
