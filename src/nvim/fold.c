@@ -888,6 +888,9 @@ int foldMoveTo(
     // that moves the cursor is used.
     linenr_T lnum_off = 0;
     garray_T *gap = &curwin->w_folds;
+    if (gap->ga_len == 0) {
+      break;
+    }
     bool use_level = false;
     bool maybe_small = false;
     linenr_T lnum_found = curwin->w_cursor.lnum;
