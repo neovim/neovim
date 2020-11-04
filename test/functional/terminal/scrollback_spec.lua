@@ -343,6 +343,8 @@ end)
 
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
+    if helpers.pending_conpty(pending) then return end
+
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
