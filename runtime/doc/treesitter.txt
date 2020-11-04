@@ -164,11 +164,11 @@ Tree-sitter queries are supported, with some limitations. Currently, the only
 supported match predicate is `eq?` (both comparing a capture against a string
 and two captures against each other).
 
-A |query| consists of one or more patterns. A |pattern| is defined over node
-types in the syntax tree.  A |match| corresponds to specific elements of the
+A `query` consists of one or more patterns. A `pattern` is defined over node
+types in the syntax tree.  A `match` corresponds to specific elements of the
 syntax tree which match a pattern. Patterns may optionally define captures
-and predicates. A |capture| allows you to associate names with a specific
-node in a pattern. A |predicate| adds arbitrary metadata and conditional data
+and predicates. A `capture` allows you to associate names with a specific
+node in a pattern. A `predicate` adds arbitrary metadata and conditional data
 to a match.
 
 vim.treesitter.parse_query({lang}, {query})
@@ -176,10 +176,10 @@ vim.treesitter.parse_query({lang}, {query})
 	Parse {query} as a string. (If the query is in a file, the caller
         should read the contents into a string before calling).
 
-	Returns a |Query| object which can be used to search nodes in the
-	syntax tree for the patterns defined in {query} using `iter_*` methods
-	below. Exposes `info` and `captures` with additional information about
-	the {query}.
+	Returns a |lua-treesitter-query| Query object which can be used to
+	search nodes in the syntax tree for the patterns defined in {query}
+	using `iter_*` methods below. Exposes `info` and `captures` with
+	additional information about the {query}.
 	  - `captures` contains the list of unique capture names defined in
 	    {query}.
 	  -` info.captures` also points to `captures`.
