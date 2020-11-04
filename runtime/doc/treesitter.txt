@@ -59,15 +59,16 @@ shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
 a timer to throttle too frequent updates.
 
-tsparser:set_included_ranges({ranges})			*tsparser:set_included_ranges()*
-	Changes the ranges the parser should consider. This is used for
-	language injection.  {ranges} should be of the form (all zero-based): >
+tsparser:set_included_regions({region_list})			*tsparser:set_included_regions()*
+	Changes the regions the parser should consider. This is used for
+	language injection.  {region_list} should be of the form (all zero-based): >
 	{
-		{start_node, end_node},
+		{node1, node2},
 		...
 	}
 <
-	NOTE: `start_node` and `end_node` are both inclusive.
+	`node1` and `node2` are both considered part of the same region and
+	will be parsed together with the parser in the same context.
 
 Tree methods						*lua-treesitter-tree*
 
@@ -253,7 +254,7 @@ Here is a list of built-in predicates :
 	`lua-match?`					*ts-predicate-lua-match?*
 		This will match the same way than |match?| but using lua
 		regexes.
-	
+
 	`contains?`					*ts-predicate-contains?*
 		Will check if any of the following arguments appears in the
 		text corresponding to the node : >
