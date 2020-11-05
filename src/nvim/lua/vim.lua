@@ -36,6 +36,9 @@
 local vim = vim
 assert(vim)
 
+vim.inspect = package.loaded['vim.inspect']
+assert(vim.inspect)
+
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
@@ -107,10 +110,6 @@ for s in  (package.cpath..';'):gmatch('[^;]*;') do
 end
 
 function vim._load_package(name)
-  -- tricky: when debugging this function we must let vim.inspect
-  -- module to be loaded first:
-  --local inspect = (name == "vim.inspect") and tostring or vim.inspect
-
   local basename = name:gsub('%.', '/')
   local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
   for _,path in ipairs(paths) do
@@ -260,10 +259,7 @@ end
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 local function __index(t, key)
-  if key == 'inspect' then
-    t.inspect = require('vim.inspect')
-    return t.inspect
-  elseif key == 'treesitter' then
+  if key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
     return t.treesitter
   elseif require('vim.uri')[key] ~= nil then
