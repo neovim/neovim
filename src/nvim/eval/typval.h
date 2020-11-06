@@ -301,7 +301,8 @@ struct funccall_S {
   int dbg_tick;  ///< Debug_tick when breakpoint was set.
   int level;  ///< Top nesting level of executed function.
   proftime_T prof_child;  ///< Time spent in a child.
-  funccall_T *caller;  ///< Calling function or NULL.
+  funccall_T *caller;  ///< Calling function or NULL; or next funccal in
+                       ///< list pointed to by previous_funccal.
   int fc_refcount;  ///< Number of user functions that reference this funccall.
   int fc_copyID;  ///< CopyID used for garbage collection.
   garray_T fc_funcs;  ///< List of ufunc_T* which keep a reference to "func".
