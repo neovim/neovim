@@ -3398,63 +3398,23 @@ static void f_getftype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FileInfo file_info;
   if (os_fileinfo_link(fname, &file_info)) {
     uint64_t mode = file_info.stat.st_mode;
-#ifdef S_ISREG
-    if (S_ISREG(mode))
+    if (S_ISREG(mode)) {
       t = "file";
-    else if (S_ISDIR(mode))
+    } else if (S_ISDIR(mode)) {
       t = "dir";
-# ifdef S_ISLNK
-    else if (S_ISLNK(mode))
+    } else if (S_ISLNK(mode)) {
       t = "link";
-# endif
-# ifdef S_ISBLK
-    else if (S_ISBLK(mode))
+    } else if (S_ISBLK(mode)) {
       t = "bdev";
-# endif
-# ifdef S_ISCHR
-    else if (S_ISCHR(mode))
+    } else if (S_ISCHR(mode)) {
       t = "cdev";
-# endif
-# ifdef S_ISFIFO
-    else if (S_ISFIFO(mode))
+    } else if (S_ISFIFO(mode)) {
       t = "fifo";
-# endif
-# ifdef S_ISSOCK
-    else if (S_ISSOCK(mode))
+    } else if (S_ISSOCK(mode)) {
       t = "socket";
-# endif
-    else
-      t = "other";
-#else
-# ifdef S_IFMT
-    switch (mode & S_IFMT) {
-    case S_IFREG: t = "file"; break;
-    case S_IFDIR: t = "dir"; break;
-#  ifdef S_IFLNK
-    case S_IFLNK: t = "link"; break;
-#  endif
-#  ifdef S_IFBLK
-    case S_IFBLK: t = "bdev"; break;
-#  endif
-#  ifdef S_IFCHR
-    case S_IFCHR: t = "cdev"; break;
-#  endif
-#  ifdef S_IFIFO
-    case S_IFIFO: t = "fifo"; break;
-#  endif
-#  ifdef S_IFSOCK
-    case S_IFSOCK: t = "socket"; break;
-#  endif
-    default: t = "other";
-    }
-# else
-    if (os_isdir((const char_u *)fname)) {
-      t = "dir";
     } else {
-      t = "file";
+      t = "other";
     }
-# endif
-#endif
     type = vim_strsave((char_u *)t);
   }
   rettv->vval.v_string = type;

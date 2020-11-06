@@ -315,7 +315,8 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #define LOWEST_WIN_ID 1000
 
 // BSD is supposed to cover FreeBSD and similar systems.
-#if (defined(BSD) || defined(__FreeBSD_kernel__)) && defined(S_ISCHR)
+#if (defined(BSD) || defined(__FreeBSD_kernel__)) \
+    && (defined(S_ISCHR) || defined(S_IFCHR))
 # define OPEN_CHR_FILES
 #endif
 
