@@ -1614,6 +1614,8 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 					|CompleteChanged|.
 			scrollbar 	Is |v:true| if popup menu have scrollbar, or
 					|v:false| if not.
+			changed_window 	Is |v:true| if the the event fired
+					while changing window (or tab) on |DirChanged|.
 
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not
