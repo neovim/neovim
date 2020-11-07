@@ -1021,6 +1021,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
 }
 
 /// Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
+///
 /// @param line_count number of lines to scroll
 /// @param byfold if true, count a closed fold as one line
 bool scrolldown(long line_count, int byfold)
@@ -1098,6 +1099,7 @@ bool scrolldown(long line_count, int byfold)
 }
 
 /// Scroll the current window up by "line_count" logical lines.  "CTRL-E"
+///
 /// @param line_count number of lines to scroll
 /// @param byfold if true, count a closed fold as one line
 bool scrollup(long line_count, int byfold)
