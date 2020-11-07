@@ -4,21 +4,7 @@
 #include "nvim/types.h"
 #include "nvim/lib/kvec.h"
 
-typedef struct {
-  char *text;
-  int hl_id;
-} VirtTextChunk;
-
-typedef kvec_t(VirtTextChunk) VirtText;
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
-
-typedef struct
-{
-  int hl_id;  // highlight group
-  VirtText virt_text;
-  // TODO(bfredl): style, signs, etc
-  bool shared;  // shared decoration, don't free
-} Decoration;
+typedef struct Decoration Decoration;
 
 typedef struct
 {
@@ -41,22 +27,5 @@ typedef enum {
   kExtmarkNoUndo,      // Operation should not be reversable
   kExtmarkUndoNoRedo,  // Operation should be undoable, but not redoable
 } ExtmarkOp;
-
-typedef struct {
-  NS ns_id;
-  bool active;
-  LuaRef redraw_start;
-  LuaRef redraw_buf;
-  LuaRef redraw_win;
-  LuaRef redraw_line;
-  LuaRef redraw_end;
-  LuaRef hl_def;
-  int hl_valid;
-} DecorationProvider;
-
-#define DECORATION_PROVIDER_INIT(ns_id) (DecorationProvider) \
-                                 { ns_id, false, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, -1 }
 
 #endif  // NVIM_EXTMARK_DEFS_H

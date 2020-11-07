@@ -156,7 +156,7 @@ static ColorKey colored_key(NS ns_id, int syn_id)
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
-  DecorationProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_provider(ns_id, true);
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
   ColorItem it = { .attr_id = attr_id,
                    .link_id = link_id,
@@ -175,7 +175,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link)
     ns_id = ns_hl_active;
   }
 
-  DecorationProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_provider(ns_id, true);
   ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;

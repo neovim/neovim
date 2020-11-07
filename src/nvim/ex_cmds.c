@@ -41,6 +41,7 @@
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"

@@ -41,7 +41,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
-#include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -2685,7 +2685,7 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
-static void clear_provider(DecorationProvider *p)
+static void clear_provider(DecorProvider *p)
 {
   NLUA_CLEAR_REF(p->redraw_start);
   NLUA_CLEAR_REF(p->redraw_buf);
@@ -2711,7 +2711,7 @@ static void clear_provider(DecorationProvider *p)
 /// callback can return `false` to disable the provider until the next redraw.
 /// Similarily, return `false` in `on_win` will skip the `on_lines` calls
 /// for that window (but any extmarks set in `on_win` will still be used).
-/// A plugin managing multiple sources of decorations should ideally only set
+/// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`
 /// for the extmarks set/modified inside the callback anyway.
 ///
@@ -2739,7 +2739,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
                                   Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
-  DecorationProvider *p = get_provider((NS)ns_id, true);
+  DecorProvider *p = get_provider((NS)ns_id, true);
   clear_provider(p);
 
   // regardless of what happens, it seems good idea to redraw

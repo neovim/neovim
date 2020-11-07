@@ -27,6 +27,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
@@ -1652,11 +1653,11 @@ const char *describe_ns(NS ns_id)
   return "(UNKNOWN PLUGIN)";
 }
 
-DecorationProvider *get_provider(NS ns_id, bool force)
+DecorProvider *get_provider(NS ns_id, bool force)
 {
   ssize_t i;
-  for (i = 0; i < (ssize_t)kv_size(decoration_providers); i++) {
-    DecorationProvider *item = &kv_A(decoration_providers, i);
+  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
     if (item->ns_id == ns_id) {
       return item;
     } else if (item->ns_id > ns_id) {
@@ -1668,12 +1669,12 @@ DecorationProvider *get_provider(NS ns_id, bool force)
     return NULL;
   }
 
-  for (ssize_t j = (ssize_t)kv_size(decoration_providers)-1; j >= i; j++) {
+  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
     // allocates if needed:
-    (void)kv_a(decoration_providers, (size_t)j+1);
-    kv_A(decoration_providers, (size_t)j+1) = kv_A(decoration_providers, j);
+    (void)kv_a(decor_providers, (size_t)j+1);
+    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
   }
-  DecorationProvider *item = &kv_a(decoration_providers, (size_t)i);
+  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
   *item = DECORATION_PROVIDER_INIT(ns_id);
 
   return item;
