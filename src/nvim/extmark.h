@@ -79,29 +79,6 @@ struct undo_object {
 };
 
 
-typedef struct {
-  int start_row;
-  int start_col;
-  int end_row;
-  int end_col;
-  int attr_id;
-  VirtText *virt_text;
-  bool virt_text_owned;
-} HlRange;
-
-typedef struct {
-  MarkTreeIter itr[1];
-  kvec_t(HlRange) active;
-  int top_row;
-  int row;
-  int col_until;
-  int current;
-  VirtText *virt_text;
-} DecorationRedrawState;
-
-EXTERN kvec_t(DecorationProvider) decoration_providers INIT(= KV_INITIAL_VALUE);
-EXTERN win_T *redrawn_win INIT(= NULL);  // used for ephemeral extmarks
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.h.generated.h"
 #endif

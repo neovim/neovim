@@ -28,6 +28,7 @@
 #include "nvim/map.h"
 #include "nvim/mark.h"
 #include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/fileio.h"
 #include "nvim/move.h"
 #include "nvim/syntax.h"
@@ -1470,15 +1471,15 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   // TODO(bfredl): synergize these two branches even more
-  if (ephemeral && redrawn_win && redrawn_win->w_buffer == buf) {
+  if (ephemeral && decor_state.buf == buf) {
     int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
     VirtText *vt_allocated = NULL;
     if (kv_size(virt_text)) {
       vt_allocated = xmalloc(sizeof *vt_allocated);
       *vt_allocated = virt_text;
     }
-    decorations_add_ephemeral(attr_id, (int)line, (colnr_T)col,
-                              (int)line2, (colnr_T)col2, vt_allocated);
+    decor_add_ephemeral(attr_id, (int)line, (colnr_T)col,
+                        (int)line2, (colnr_T)col2, vt_allocated);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
@@ -1490,7 +1491,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       decor->hl_id = hl_id;
       decor->virt_text = virt_text;
     } else if (hl_id) {
-      decor = decoration_hl(hl_id);
+      decor = decor_hl(hl_id);
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
@@ -1609,7 +1610,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   extmark_set(buf, ns_id, 0,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              decoration_hl(hl_id), kExtmarkNoUndo);
+              decor_hl(hl_id), kExtmarkNoUndo);
   return src_id;
 }
 
@@ -1728,7 +1729,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   }
 
 
-  VirtText *existing = extmark_find_virttext(buf, (int)line, ns_id);
+  VirtText *existing = decor_find_virttext(buf, (int)line, ns_id);
 
   if (existing) {
     clear_virttext(existing);
