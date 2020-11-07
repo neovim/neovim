@@ -1011,6 +1011,10 @@ WinLeave			Before leaving a window.  If the window to be
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
+							*WinScrolled*
+WinScrolled			After scrolling the viewport of the current
+				window.
+
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{pat}*

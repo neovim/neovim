@@ -113,6 +113,7 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
+    'WinScrolled',            -- after scrolling a window
   },
   aliases = {
     BufCreate = 'BufAdd',
@@ -133,5 +134,6 @@ return {
     UIEnter=true,
     UILeave=true,
     WinClosed=true,
+    WinScrolled=true,
   },
 }
