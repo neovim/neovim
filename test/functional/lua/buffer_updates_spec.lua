@@ -244,6 +244,23 @@ describe('lua buffer event callbacks: on_lines', function()
     helpers.assert_alive()
   end)
 
+  it('does not SEGFAULT when wiping out', function()
+    exec_lua([[
+      local buf = vim.api.nvim_create_buf(false, true)
+
+      vim.cmd("split")
+      vim.api.nvim_win_set_buf(0, buf)
+
+      vim.api.nvim_buf_attach(buf, false, {
+        on_lines = function(_, buf)
+          vim.api.nvim_buf_delete(buf, {force = true})
+        end
+      })
+    ]])
+    meths.buf_set_lines(0, 0, -1, true, {})
+    helpers.assert_alive()
+  end)
+
   it('#12718 lnume', function()
     meths.buf_set_lines(0, 0, -1, true, {'1', '2', '3'})
     exec_lua([[
@@ -502,5 +519,45 @@ describe('lua: nvim_buf_attach on_bytes', function()
   describe('(without verify) handles', function()
     do_both(false)
   end)
+
+  it('does not SEGFAULT when wiping out', function()
+    exec_lua([[
+      local buf = vim.api.nvim_create_buf(false, true)
+
+      vim.cmd("split")
+      vim.api.nvim_win_set_buf(0, buf)
+
+      vim.api.nvim_buf_attach(buf, false, {
+        on_bytes = function(_, buf)
+          vim.api.nvim_buf_delete(buf, {force = true})
+        end
+      })
+    ]])
+    meths.buf_set_lines(0, 0, -1, true, {})
+    helpers.assert_alive()
+  end)
 end)
 
+describe('lua: nvim_buf_attach on_changedtick', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('does not SEGFAULT when wiping out', function()
+    exec_lua([[
+      local buf = vim.api.nvim_create_buf(false, true)
+
+      vim.cmd("split")
+      vim.api.nvim_win_set_buf(0, buf)
+
+      vim.api.nvim_buf_attach(buf, false, {
+        on_changedtick = function(_, buf)
+          vim.api.nvim_buf_delete(buf, {force = true})
+        end
+      })
+    ]])
+    meths.buf_set_lines(0, 0, -1, true, {})
+    command("undo")
+    helpers.assert_alive()
+  end)
+end)

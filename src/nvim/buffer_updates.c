@@ -234,6 +234,8 @@ void buf_updates_send_changes(buf_T *buf,
 
   // notify each of the active channels
   size_t j = 0;
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
@@ -275,6 +277,9 @@ void buf_updates_send_changes(buf_T *buf,
       }
       api_free_object(res);
     }
+    if (!bufref_valid(&bufref)) {
+      return;
+    }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
     }
@@ -295,6 +300,8 @@ void buf_updates_send_splice(
 
   // notify each of the active callbakcs
   size_t j = 0;
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
@@ -326,6 +333,9 @@ void buf_updates_send_splice(
         keep = false;
       }
     }
+    if (!bufref_valid(&bufref)) {
+      return;
+    }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
     }
@@ -340,6 +350,8 @@ void buf_updates_changedtick(buf_T *buf)
     buf_updates_changedtick_single(buf, channel_id);
   }
   size_t j = 0;
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
@@ -362,6 +374,9 @@ void buf_updates_changedtick(buf_T *buf)
         keep = false;
       }
       api_free_object(res);
+    }
+    if (!bufref_valid(&bufref)) {
+      return;
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);

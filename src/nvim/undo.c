@@ -2317,73 +2317,75 @@ static void u_undoredo(int undo, bool do_buf_event)
     buf_updates_changedtick(curbuf);
   }
 
-  /*
-   * restore marks from before undo/redo
-   */
-  for (i = 0; i < NMARKS; ++i) {
-    if (curhead->uh_namedm[i].mark.lnum != 0) {
-      free_fmark(curbuf->b_namedm[i]);
-      curbuf->b_namedm[i] = curhead->uh_namedm[i];
+  if (curbuf->b_u_curhead != NULL) {
+    /*
+    * restore marks from before undo/redo
+    */
+    for (i = 0; i < NMARKS; ++i) {
+      if (curhead->uh_namedm[i].mark.lnum != 0) {
+        free_fmark(curbuf->b_namedm[i]);
+        curbuf->b_namedm[i] = curhead->uh_namedm[i];
+      }
+      if (namedm[i].mark.lnum != 0) {
+        curhead->uh_namedm[i] = namedm[i];
+      } else {
+        curhead->uh_namedm[i].mark.lnum = 0;
+      }
     }
-    if (namedm[i].mark.lnum != 0) {
-      curhead->uh_namedm[i] = namedm[i];
+    if (curhead->uh_visual.vi_start.lnum != 0) {
+      curbuf->b_visual = curhead->uh_visual;
+      curhead->uh_visual = visualinfo;
+    }
+
+    /*
+    * If the cursor is only off by one line, put it at the same position as
+    * before starting the change (for the "o" command).
+    * Otherwise the cursor should go to the first undone line.
+    */
+    if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
+        && curwin->w_cursor.lnum > 1)
+      --curwin->w_cursor.lnum;
+    if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+      if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
+        curwin->w_cursor.col = curhead->uh_cursor.col;
+        if (virtual_active() && curhead->uh_cursor_vcol >= 0)
+          coladvance((colnr_T)curhead->uh_cursor_vcol);
+        else
+          curwin->w_cursor.coladd = 0;
+      } else
+        beginline(BL_SOL | BL_FIX);
     } else {
-      curhead->uh_namedm[i].mark.lnum = 0;
+      /* We get here with the current cursor line being past the end (eg
+      * after adding lines at the end of the file, and then undoing it).
+      * check_cursor() will move the cursor to the last line.  Move it to
+      * the first column here. */
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
     }
-  }
-  if (curhead->uh_visual.vi_start.lnum != 0) {
-    curbuf->b_visual = curhead->uh_visual;
-    curhead->uh_visual = visualinfo;
-  }
 
-  /*
-   * If the cursor is only off by one line, put it at the same position as
-   * before starting the change (for the "o" command).
-   * Otherwise the cursor should go to the first undone line.
-   */
-  if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
-      && curwin->w_cursor.lnum > 1)
-    --curwin->w_cursor.lnum;
-  if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
-    if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = curhead->uh_cursor.col;
-      if (virtual_active() && curhead->uh_cursor_vcol >= 0)
-        coladvance((colnr_T)curhead->uh_cursor_vcol);
-      else
-        curwin->w_cursor.coladd = 0;
-    } else
-      beginline(BL_SOL | BL_FIX);
-  } else {
-    /* We get here with the current cursor line being past the end (eg
-     * after adding lines at the end of the file, and then undoing it).
-     * check_cursor() will move the cursor to the last line.  Move it to
-     * the first column here. */
-    curwin->w_cursor.col = 0;
-    curwin->w_cursor.coladd = 0;
-  }
+    /* Make sure the cursor is on an existing line and column. */
+    check_cursor();
 
-  /* Make sure the cursor is on an existing line and column. */
-  check_cursor();
-
-  /* Remember where we are for "g-" and ":earlier 10s". */
-  curbuf->b_u_seq_cur = curhead->uh_seq;
-  if (undo)
-    /* We are below the previous undo.  However, to make ":earlier 1s"
-     * work we compute this as being just above the just undone change. */
-    curbuf->b_u_seq_cur = curhead->uh_next.ptr ?
-        curhead->uh_next.ptr->uh_seq : 0;
-
-  /* Remember where we are for ":earlier 1f" and ":later 1f". */
-  if (curhead->uh_save_nr != 0) {
+    /* Remember where we are for "g-" and ":earlier 10s". */
+    curbuf->b_u_seq_cur = curhead->uh_seq;
     if (undo)
-      curbuf->b_u_save_nr_cur = curhead->uh_save_nr - 1;
-    else
-      curbuf->b_u_save_nr_cur = curhead->uh_save_nr;
-  }
+      /* We are below the previous undo.  However, to make ":earlier 1s"
+      * work we compute this as being just above the just undone change. */
+      curbuf->b_u_seq_cur = curhead->uh_next.ptr ?
+          curhead->uh_next.ptr->uh_seq : 0;
 
-  /* The timestamp can be the same for multiple changes, just use the one of
-   * the undone/redone change. */
-  curbuf->b_u_time_cur = curhead->uh_time;
+    /* Remember where we are for ":earlier 1f" and ":later 1f". */
+    if (curhead->uh_save_nr != 0) {
+      if (undo)
+        curbuf->b_u_save_nr_cur = curhead->uh_save_nr - 1;
+      else
+        curbuf->b_u_save_nr_cur = curhead->uh_save_nr;
+    }
+
+    /* The timestamp can be the same for multiple changes, just use the one of
+    * the undone/redone change. */
+    curbuf->b_u_time_cur = curhead->uh_time;
+  }
 
   unblock_autocmds();
 #ifdef U_DEBUG
