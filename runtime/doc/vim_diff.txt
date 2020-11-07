@@ -113,7 +113,6 @@ Working intuitively and consistently is a major goal of Nvim.
 Usability details have been improved where the benefit outweighs any
 backwards-compatibility cost. Some examples:
 
-- |K| in help documents can be used like |CTRL-]|.
 - Directories for 'directory' and 'undodir' are auto-created.
 - Terminal features such as 'guicursor' are enabled where possible.
 
@@ -147,19 +146,15 @@ Command-line highlighting:
 Commands:
   |:autocmd| accepts the `++once` flag
   |:checkhealth|
-  |:cquit| can use [count] to set the exit code
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
-  |:tchdir| tab-local |current-directory|
 
 Events:
-  |DirChanged|
   |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
-  |TextYankPost|
   |UIEnter|
   |UILeave|
   |VimResume|
@@ -173,7 +168,6 @@ Functions:
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
-  |tabpagenr()| "#" argument
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
@@ -182,7 +176,6 @@ Highlight groups:
   |hl-NormalNC| highlights non-current windows
   |hl-MsgArea| highlights messages/cmdline area
   |hl-MsgSeparator| highlights separator for scrolled messages
-  |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
@@ -198,7 +191,6 @@ Input/Mappings:
   ALT behaves like <Esc> if not mapped. |i_ALT| |v_ALT| |c_ALT|
 
 Normal commands:
-  |g<Tab>| goes to the last-accessed tabpage.
   |gO| shows a filetype-defined "outline" of the current buffer.
 
 Options:
@@ -223,7 +215,6 @@ Signs:
   Signs are removed if the associated line is deleted.
 
 Variables:
-  |v:event|
   |v:exiting|
   |v:progpath| is always absolute ("full")
   |v:windowid| is always available (for use by external UIs)
