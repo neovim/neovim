@@ -1230,10 +1230,8 @@ struct window_S {
   colnr_T w_skipcol;                // starting column when a single line
                                     // doesn't fit in the window
 
-  /*
-   * "w_last_topline" and "w_last_leftcol" are used to determine if
-   * a Scroll autocommand should be emitted.
-   */
+  // "w_last_topline" and "w_last_leftcol" are used to determine if
+  // a Scroll autocommand should be emitted.
   linenr_T w_last_topline;          ///< last known value for topline
   colnr_T w_last_leftcol;          ///< last known value for leftcol
   int w_last_width;                 ///< last known value for width

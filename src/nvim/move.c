@@ -1020,16 +1020,12 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
   *ecolp = ecol + coloff;
 }
 
-/*
- * Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
- */
-bool 
-scrolldown (
-    long line_count,
-    int byfold              /* true: count a closed fold as one line */
-)
+/// Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
+/// @param line_count number of lines to scroll
+/// @param byfold if true, count a closed fold as one line
+bool scrolldown(long line_count, int byfold)
 {
-  int done = 0;                /* total # of physical lines done */
+  int done = 0;                // total # of physical lines done
 
   /* Make sure w_topline is at the first of a sequence of folded lines. */
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
@@ -1101,14 +1097,10 @@ scrolldown (
   return moved;
 }
 
-/*
- * Scroll the current window up by "line_count" logical lines.  "CTRL-E"
- */
-bool 
-scrollup (
-    long line_count,
-    int byfold              /* true: count a closed fold as one line */
-)
+/// Scroll the current window up by "line_count" logical lines.  "CTRL-E"
+/// @param line_count number of lines to scroll
+/// @param byfold if true, count a closed fold as one line
+bool scrollup(long line_count, int byfold)
 {
   linenr_T topline = curwin->w_topline;
   linenr_T botline = curwin->w_botline;
@@ -1156,9 +1148,8 @@ scrollup (
     coladvance(curwin->w_curswant);
   }
 
-  bool moved = 
-    topline != curwin->w_topline ||
-    botline != curwin->w_botline;
+  bool moved = topline != curwin->w_topline
+            || botline != curwin->w_botline;
 
   return moved;
 }

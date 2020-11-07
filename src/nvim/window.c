@@ -4975,20 +4975,17 @@ void shell_new_columns(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/*
- * Check if "wp" has scrolled since last time it was checked
- */
+/// Check if "wp" has scrolled since last time it was checked
+/// @param wp the window to check
 bool win_did_scroll(win_T *wp)
 {
-  return (curwin->w_last_topline != curwin->w_topline ||
-          curwin->w_last_leftcol != curwin->w_leftcol ||
-          curwin->w_last_width != curwin->w_width ||
-          curwin->w_last_height != curwin->w_height);
+  return (curwin->w_last_topline != curwin->w_topline
+          || curwin->w_last_leftcol != curwin->w_leftcol
+          || curwin->w_last_width != curwin->w_width
+          || curwin->w_last_height != curwin->w_height);
 }
 
-/*
- * Trigger WinScrolled autocmd
- */
+/// Trigger WinScrolled autocmd
 void do_autocmd_winscrolled(win_T *wp)
 {
   apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, curbuf);

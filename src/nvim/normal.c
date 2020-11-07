@@ -4158,10 +4158,12 @@ void scroll_redraw(int up, long count)
       curwin->w_valid |= VALID_TOPLINE;
     }
   }
-  if (curwin->w_cursor.lnum != prev_lnum)
+  if (curwin->w_cursor.lnum != prev_lnum) {
     coladvance(curwin->w_curswant);
-  if (moved)
+  }
+  if (moved) {
     curwin->w_viewport_invalid = true;
+  }
   redraw_later(curwin, VALID);
 }
 
