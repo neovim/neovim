@@ -4923,7 +4923,7 @@ search_line:
             && curwin != curwin_save && win_valid(curwin_save)) {
           /* Return cursor to where we were */
           validate_cursor();
-          redraw_later(VALID);
+          redraw_later(curwin, VALID);
           win_enter(curwin_save, true);
         }
         break;

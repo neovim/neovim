@@ -91,7 +91,14 @@ if ($compiler -eq 'MINGW') {
   & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -U msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz" ; exitIfFailed
+  # If there are still processes using msys-2.0.dll, after the base system update is finished, it will wait for input from the user.
+  # To prevent this, we will terminate all processes that use msys-2.0.dll.
+  Get-Process | Where-Object { $_.path -like 'C:\msys64*' } | Stop-Process
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {

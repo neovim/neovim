@@ -193,7 +193,7 @@ ex_menu(exarg_T *eap)
   vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
   if (root_menu_ptr == &curwin->w_winbar) {
     // Assume the window toolbar menu will change.
-    redraw_later(NOT_VALID);
+    redraw_later(curwin, NOT_VALID);
   }
 
   if (enable != kNone) {

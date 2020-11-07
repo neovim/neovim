@@ -139,7 +139,9 @@ function module.pcall_err_withfile(fn, ...)
   --    C:/long/path/foo.lua:186: Expected string, got number
   -- to:
   --    .../foo.lua:0: Expected string, got number
-  local errmsg = tostring(rv):gsub('[^%s]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
+  local errmsg = tostring(rv):gsub('([%s<])vim[/\\]([^%s:/\\]+):%d+', '%1\xffvim\xff%2:0')
+                             :gsub('[^%s<]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
+                             :gsub('\xffvim\xff', 'vim/')
   -- Scrub numbers in paths/stacktraces:
   --    shared.lua:0: in function 'gsplit'
   --    shared.lua:0: in function <shared.lua:0>'

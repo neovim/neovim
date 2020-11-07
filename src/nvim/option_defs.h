@@ -188,6 +188,7 @@ enum {
 #define GO_ASELML       'A'             // autoselect modeless selection
 #define GO_BOT          'b'             // use bottom scrollbar
 #define GO_CONDIALOG    'c'             // use console dialog
+#define GO_DARKTHEME    'd'             // use dark theme variant
 #define GO_TABLINE      'e'             // may show tabline
 #define GO_FORG         'f'             // start GUI in foreground
 #define GO_GREY         'g'             // use grey menu items
@@ -205,7 +206,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL          "aAbcefFghilmMprTvk"  // all possible flags for 'go'
+#define GO_ALL "aAbcdefFghilmMprTvk"    // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest

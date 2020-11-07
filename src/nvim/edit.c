@@ -1482,6 +1482,12 @@ static void ins_redraw(
     }
   }
 
+  // Trigger Scroll if viewport changed.
+  if (ready && has_event(EVENT_WINSCROLLED)
+      && win_did_scroll(curwin)) {
+    do_autocmd_winscrolled(curwin);
+  }
+
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
       && conceal_cursor_moved) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
@@ -8571,7 +8577,7 @@ static void ins_up(
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill
         )
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -8619,7 +8625,7 @@ static void ins_down(
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill
         )
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
     start_arrow(&tpos);
     can_cindent = true;
   } else {
@@ -9013,7 +9019,7 @@ static int ins_ctrl_ey(int tc)
       scrolldown_clamp();
     else
       scrollup_clamp();
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
   } else {
     c = ins_copychar(curwin->w_cursor.lnum + (c == Ctrl_Y ? -1 : 1));
     if (c != NUL) {

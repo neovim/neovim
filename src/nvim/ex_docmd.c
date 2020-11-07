@@ -1251,7 +1251,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   char_u              *errormsg = NULL;  // error message
   char_u              *after_modifier = NULL;
   exarg_T ea;
-  int save_msg_scroll = msg_scroll;
+  const int save_msg_scroll = msg_scroll;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
   char_u              *cmd;
@@ -2003,33 +2003,9 @@ doend:
       ? cmdnames[(int)ea.cmdidx].cmd_name
       : (char_u *)NULL);
 
-  if (ea.verbose_save >= 0) {
-    p_verbose = ea.verbose_save;
-  }
-  free_cmdmod();
-
+  undo_cmdmod(&ea, save_msg_scroll);
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
-
-  if (ea.save_msg_silent != -1) {
-    // messages could be enabled for a serious error, need to check if the
-    // counters don't become negative
-    if (!did_emsg || msg_silent > ea.save_msg_silent) {
-      msg_silent = ea.save_msg_silent;
-    }
-    emsg_silent -= ea.did_esilent;
-    if (emsg_silent < 0) {
-      emsg_silent = 0;
-    }
-    // Restore msg_scroll, it's set by file I/O commands, even when no
-    // message is actually displayed.
-    msg_scroll = save_msg_scroll;
-
-    /* "silent reg" or "silent echo x" inside "redir" leaves msg_col
-     * somewhere in the line.  Put it back in the first column. */
-    if (redirecting())
-      msg_col = 0;
-  }
 
   if (ea.did_sandbox) {
     sandbox--;
@@ -2298,9 +2274,14 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
   return OK;
 }
 
-// Free contents of "cmdmod".
-static void free_cmdmod(void)
+// Undo and free contents of "cmdmod".
+static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
+  FUNC_ATTR_NONNULL_ALL
 {
+  if (eap->verbose_save >= 0) {
+    p_verbose = eap->verbose_save;
+  }
+
   if (cmdmod.save_ei != NULL) {
     /* Restore 'eventignore' to the value before ":noautocmd". */
     set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
@@ -2308,8 +2289,27 @@ static void free_cmdmod(void)
     free_string_option(cmdmod.save_ei);
   }
 
-  if (cmdmod.filter_regmatch.regprog != NULL) {
-    vim_regfree(cmdmod.filter_regmatch.regprog);
+  vim_regfree(cmdmod.filter_regmatch.regprog);
+
+  if (eap->save_msg_silent != -1) {
+    // messages could be enabled for a serious error, need to check if the
+    // counters don't become negative
+    if (!did_emsg || msg_silent > eap->save_msg_silent) {
+      msg_silent = eap->save_msg_silent;
+    }
+    emsg_silent -= eap->did_esilent;
+    if (emsg_silent < 0) {
+      emsg_silent = 0;
+    }
+    // Restore msg_scroll, it's set by file I/O commands, even when no
+    // message is actually displayed.
+    msg_scroll = save_msg_scroll;
+
+    // "silent reg" or "silent echo x" inside "redir" leaves msg_col
+    // somewhere in the line.  Put it back in the first column.
+    if (redirecting()) {
+      msg_col = 0;
+    }
   }
 }
 
@@ -4446,6 +4446,9 @@ void separate_nextcmd(exarg_T *eap)
     else if (p[0] == '`' && p[1] == '=' && (eap->argt & XFILE)) {
       p += 2;
       (void)skip_expr(&p);
+      if (*p == NUL) {  // stop at NUL after CTRL-V
+        break;
+      }
     }
     /* Check for '"': start of comment or '|': next command */
     /* :@" does not start a comment!
@@ -7379,7 +7382,7 @@ static void ex_syncbind(exarg_T *eap)
       else
         scrolldown(-y, TRUE);
       curwin->w_scbind_pos = topline;
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       cursor_correct();
       curwin->w_redr_status = TRUE;
     }
@@ -8504,7 +8507,7 @@ static void ex_pedit(exarg_T *eap)
   if (curwin != curwin_save && win_valid(curwin_save)) {
     // Return cursor to where we were
     validate_cursor();
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     win_enter(curwin_save, true);
   }
   g_do_tagpreview = 0;

@@ -74,28 +74,6 @@ typedef int mode_t;
 # define O_NOFOLLOW 0
 #endif
 
-#if !defined(S_ISDIR) && defined(S_IFDIR)
-# define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#endif
-#if !defined(S_ISREG) && defined(S_IFREG)
-# define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif
-#if !defined(S_ISLNK) && defined(S_IFLNK)
-# define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
-#endif
-#if !defined(S_ISBLK) && defined(S_IFBLK)
-# define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
-#endif
-#if !defined(S_ISSOCK) && defined(S_IFSOCK)
-# define S_ISSOCK(m) (((m) & S_IFMT) == S_IFSOCK)
-#endif
-#if !defined(S_ISFIFO) && defined(S_IFIFO)
-# define S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
-#endif
-#if !defined(S_ISCHR) && defined(S_IFCHR)
-# define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
-#endif
-
 #ifndef STDIN_FILENO
 # define STDIN_FILENO 0
 #endif

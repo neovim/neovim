@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local neq = helpers.neq
 local NIL = helpers.NIL
 local feed = helpers.feed
 local clear = helpers.clear
@@ -13,7 +12,6 @@ local iswin = helpers.iswin
 local command = helpers.command
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
-local alter_slashes = helpers.alter_slashes
 local exec_lua = helpers.exec_lua
 
 local screen
@@ -282,119 +280,6 @@ describe('debug.debug', function()
       {0:~                                                    }|
                                                            |
     ]]}
-  end)
-end)
-
-describe('package.path/package.cpath', function()
-  local sl = alter_slashes
-
-  local function get_new_paths(sufs, runtimepaths)
-    runtimepaths = runtimepaths or meths.list_runtime_paths()
-    local new_paths = {}
-    local sep = package.config:sub(1, 1)
-    for _, v in ipairs(runtimepaths) do
-      for _, suf in ipairs(sufs) do
-        new_paths[#new_paths + 1] = v .. sep .. 'lua' .. suf
-      end
-    end
-    return new_paths
-  end
-  local function eval_lua(expr, ...)
-    return meths.exec_lua('return '..expr, {...})
-  end
-  local function set_path(which, value)
-    return exec_lua('package[select(1, ...)] = select(2, ...)', which, value)
-  end
-
-  it('contains directories from &runtimepath on first invocation', function()
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
-
-    local new_cpaths = get_new_paths(iswin() and {'\\?.dll'} or {'/?.so'})
-    local new_cpaths_str = table.concat(new_cpaths, ';')
-    eq(new_cpaths_str, eval_lua('package.cpath'):sub(1, #new_cpaths_str))
-  end)
-  it('puts directories from &runtimepath always at the start', function()
-    meths.set_option('runtimepath', 'a,b')
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a', 'b'})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
-
-    set_path('path', sl'foo/?.lua;foo/?/init.lua;' .. new_paths_str)
-
-    neq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
-
-    command('set runtimepath+=c')
-    new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a', 'b', 'c'})
-    new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
-  end)
-  it('understands uncommon suffixes', function()
-    set_path('cpath', './?/foo/bar/baz/x.nlua')
-    meths.set_option('runtimepath', 'a')
-    local new_paths = get_new_paths({'/?/foo/bar/baz/x.nlua'}, {'a'})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
-
-    set_path('cpath', './yyy?zzz/x')
-    meths.set_option('runtimepath', 'b')
-    new_paths = get_new_paths({'/yyy?zzz/x'}, {'b'})
-    new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
-
-    set_path('cpath', './yyy?zzz/123?ghi/x')
-    meths.set_option('runtimepath', 'b')
-    new_paths = get_new_paths({'/yyy?zzz/123?ghi/x'}, {'b'})
-    new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
-  end)
-  it('preserves empty items', function()
-    local many_empty_path = ';;;;;;'
-    local many_empty_cpath = ';;;;;;./?.luaso'
-    set_path('path', many_empty_path)
-    set_path('cpath', many_empty_cpath)
-    meths.set_option('runtimepath', 'a')
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a'})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str .. ';' .. many_empty_path, eval_lua('package.path'))
-    local new_cpaths = get_new_paths({'/?.luaso'}, {'a'})
-    local new_cpaths_str = table.concat(new_cpaths, ';')
-    eq(new_cpaths_str .. ';' .. many_empty_cpath, eval_lua('package.cpath'))
-  end)
-  it('preserves empty value', function()
-    set_path('path', '')
-    meths.set_option('runtimepath', 'a')
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a'})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str .. ';', eval_lua('package.path'))
-  end)
-  it('purges out all additions if runtimepath is set to empty', function()
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'})
-    local new_paths_str = table.concat(new_paths, ';')
-    local path = eval_lua('package.path')
-    eq(new_paths_str, path:sub(1, #new_paths_str))
-
-    local new_cpaths = get_new_paths(iswin() and {'\\?.dll'} or {'/?.so'})
-    local new_cpaths_str = table.concat(new_cpaths, ';')
-    local cpath = eval_lua('package.cpath')
-    eq(new_cpaths_str, cpath:sub(1, #new_cpaths_str))
-
-    meths.set_option('runtimepath', '')
-    eq(path:sub(#new_paths_str + 2, -1), eval_lua('package.path'))
-    eq(cpath:sub(#new_cpaths_str + 2, -1), eval_lua('package.cpath'))
-  end)
-  it('works with paths with escaped commas', function()
-    meths.set_option('runtimepath', '\\,')
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {','})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
-  end)
-  it('ignores paths with semicolons', function()
-    meths.set_option('runtimepath', 'foo;bar,\\,')
-    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {','})
-    local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
   end)
 end)
 

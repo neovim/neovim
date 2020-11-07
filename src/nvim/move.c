@@ -107,7 +107,7 @@ void redraw_for_cursorline(win_T *wp)
       && !pum_visible()) {
     if (wp->w_p_rnu) {
       // win_line() will redraw the number column only.
-      redraw_win_later(wp, VALID);
+      redraw_later(wp, VALID);
     }
     if (win_cursorline_standout(wp)) {
       if (wp->w_redr_type <= VALID && wp->w_last_cursorline != 0) {
@@ -117,7 +117,7 @@ void redraw_for_cursorline(win_T *wp)
         redrawWinline(wp, wp->w_last_cursorline);
         redrawWinline(wp, wp->w_cursor.lnum);
       } else {
-        redraw_win_later(wp, SOME_VALID);
+        redraw_later(wp, SOME_VALID);
       }
     }
   }
@@ -172,7 +172,7 @@ void update_topline(void)
   // If the buffer is empty, always set topline to 1.
   if (BUFEMPTY()) {             // special case - file is empty
     if (curwin->w_topline != 1) {
-      redraw_later(NOT_VALID);
+      redraw_later(curwin, NOT_VALID);
     }
     curwin->w_topline = 1;
     curwin->w_botline = 2;
@@ -326,12 +326,14 @@ void update_topline(void)
     dollar_vcol = -1;
     if (curwin->w_skipcol != 0) {
       curwin->w_skipcol = 0;
-      redraw_later(NOT_VALID);
-    } else
-      redraw_later(VALID);
-    /* May need to set w_skipcol when cursor in w_topline. */
-    if (curwin->w_cursor.lnum == curwin->w_topline)
+      redraw_later(curwin, NOT_VALID);
+    } else {
+      redraw_later(curwin, VALID);
+    }
+    // May need to set w_skipcol when cursor in w_topline.
+    if (curwin->w_cursor.lnum == curwin->w_topline) {
       validate_cursor();
+    }
   }
 
   *so_ptr = save_so;
@@ -439,7 +441,7 @@ void changed_window_setting_win(win_T *wp)
   wp->w_lines_valid = 0;
   changed_line_abv_curs_win(wp);
   wp->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP|VALID_TOPLINE);
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
 }
 
 /*
@@ -455,8 +457,8 @@ void set_topline(win_T *wp, linenr_T lnum)
   wp->w_topline_was_set = true;
   wp->w_topfill = 0;
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
-  /* Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked. */
-  redraw_later(VALID);
+  // Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked.
+  redraw_later(wp, VALID);
 }
 
 /*
@@ -634,7 +636,7 @@ void validate_virtcol_win(win_T *wp)
     if (wp->w_p_cuc
         && !pum_visible()
         )
-      redraw_win_later(wp, SOME_VALID);
+      redraw_later(wp, SOME_VALID);
   }
 }
 
@@ -830,7 +832,7 @@ void curs_columns(
         curwin->w_leftcol = new_leftcol;
         win_check_anchored_floats(curwin);
         // screen has to be redrawn with new curwin->w_leftcol
-        redraw_later(NOT_VALID);
+        redraw_later(curwin, NOT_VALID);
       }
     }
     curwin->w_wcol -= curwin->w_leftcol;
@@ -934,13 +936,14 @@ void curs_columns(
   } else {
     curwin->w_skipcol = 0;
   }
-  if (prev_skipcol != curwin->w_skipcol)
-    redraw_later(NOT_VALID);
+  if (prev_skipcol != curwin->w_skipcol) {
+    redraw_later(curwin, NOT_VALID);
+  }
 
   /* Redraw when w_virtcol changes and 'cursorcolumn' is set */
   if (curwin->w_p_cuc && (curwin->w_valid & VALID_VIRTCOL) == 0
       && !pum_visible()) {
-    redraw_later(SOME_VALID);
+    redraw_later(curwin, SOME_VALID);
   }
 
   // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
@@ -1017,16 +1020,13 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
   *ecolp = ecol + coloff;
 }
 
-/*
- * Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
- */
-void 
-scrolldown (
-    long line_count,
-    int byfold              /* true: count a closed fold as one line */
-)
+/// Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
+///
+/// @param line_count number of lines to scroll
+/// @param byfold if true, count a closed fold as one line
+bool scrolldown(long line_count, int byfold)
 {
-  int done = 0;                /* total # of physical lines done */
+  int done = 0;                // total # of physical lines done
 
   /* Make sure w_topline is at the first of a sequence of folded lines. */
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
@@ -1095,17 +1095,18 @@ scrolldown (
     foldAdjustCursor();
     coladvance(curwin->w_curswant);
   }
+  return moved;
 }
 
-/*
- * Scroll the current window up by "line_count" logical lines.  "CTRL-E"
- */
-void 
-scrollup (
-    long line_count,
-    int byfold              /* true: count a closed fold as one line */
-)
+/// Scroll the current window up by "line_count" logical lines.  "CTRL-E"
+///
+/// @param line_count number of lines to scroll
+/// @param byfold if true, count a closed fold as one line
+bool scrollup(long line_count, int byfold)
 {
+  linenr_T topline = curwin->w_topline;
+  linenr_T botline = curwin->w_botline;
+
   if ((byfold && hasAnyFolding(curwin))
       || curwin->w_p_diff) {
     // count each sequence of folded lines as one logical line
@@ -1148,6 +1149,11 @@ scrollup (
       ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
     coladvance(curwin->w_curswant);
   }
+
+  bool moved = topline != curwin->w_topline
+            || botline != curwin->w_botline;
+
+  return moved;
 }
 
 /*
@@ -2013,7 +2019,7 @@ int onepage(Direction dir, long count)
     }
   }
 
-  redraw_later(VALID);
+  redraw_later(curwin, VALID);
   return retval;
 }
 
@@ -2199,7 +2205,7 @@ void halfpage(bool flag, linenr_T Prenum)
   check_topfill(curwin, !flag);
   cursor_correct();
   beginline(BL_SOL | BL_FIX);
-  redraw_later(VALID);
+  redraw_later(curwin, VALID);
 }
 
 void do_check_cursorbind(void)
@@ -2247,7 +2253,7 @@ void do_check_cursorbind(void)
       }
       // Correct cursor for multi-byte character.
       mb_adjust_cursor();
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
 
       // Only scroll when 'scrollbind' hasn't done this.
       if (!curwin->w_p_scb) {

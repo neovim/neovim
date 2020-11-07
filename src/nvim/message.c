@@ -1216,7 +1216,7 @@ void wait_return(int redraw)
     ui_refresh();
   } else if (!skip_redraw) {
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
     }
     if (ui_has(kUIMessages)) {
       msg_ext_clear(true);
@@ -2222,7 +2222,7 @@ void msg_scroll_up(bool may_throttle)
 ///
 /// Probably message scrollback storage should reimplented as a file_buffer, and
 /// message scrolling in TUI be reimplemented as a modal floating window. Then
-/// we get throttling "for free" using standard redraw_win_later code paths.
+/// we get throttling "for free" using standard redraw_later code paths.
 void msg_scroll_flush(void)
 {
   if (msg_grid.throttled) {

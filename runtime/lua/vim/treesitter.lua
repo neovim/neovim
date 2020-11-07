@@ -18,11 +18,13 @@ Parser.__index = Parser
 -- @returns If the tree changed with this call, the changed ranges
 function Parser:parse()
   if self.valid then
-    return self.tree
+    return self._tree_immutable
   end
   local changes
 
-  self.tree, changes = self._parser:parse(self:input_source())
+  self._tree, changes = self._parser:parse(self._tree, self:input_source())
+
+  self._tree_immutable = self._tree:copy()
 
   self.valid = true
 
@@ -32,7 +34,7 @@ function Parser:parse()
     end
   end
 
-  return self.tree, changes
+  return self._tree_immutable, changes
 end
 
 function Parser:input_source()
@@ -45,7 +47,7 @@ function Parser:_on_bytes(bufnr, changed_tick,
                           new_row, new_col, new_byte)
   local old_end_col = old_col + ((old_row == 0) and start_col or 0)
   local new_end_col = new_col + ((new_row == 0) and start_col or 0)
-  self._parser:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
+  self._tree:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
                     start_row, start_col,
                     start_row+old_row, old_end_col,
                     start_row+new_row, new_end_col)

@@ -751,6 +751,14 @@ module.curbufmeths = module.create_callindex(module.curbuf)
 module.curwinmeths = module.create_callindex(module.curwin)
 module.curtabmeths = module.create_callindex(module.curtab)
 
+function module.exec(code)
+  return module.meths.exec(code, false)
+end
+
+function module.exec_capture(code)
+  return module.meths.exec(code, true)
+end
+
 function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
 end

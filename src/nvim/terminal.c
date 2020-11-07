@@ -233,7 +233,7 @@ Terminal *terminal_open(TerminalOptions opts)
     snprintf(var, sizeof(var), "terminal_color_%d", i);
     char *name = get_config_string(var);
     if (name) {
-      color_val = name_to_color((uint8_t *)name);
+      color_val = name_to_color(name);
       xfree(name);
 
       if (color_val != -1) {
@@ -1060,7 +1060,7 @@ static bool send_mouse_event(Terminal *term, int c)
     curwin->w_redr_status = true;
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
-    redraw_win_later(mouse_win, NOT_VALID);
+    redraw_later(mouse_win, NOT_VALID);
     invalidate_terminal(term, -1, -1);
     // Only need to exit focus if the scrolled window is the terminal window
     return mouse_win == curwin;

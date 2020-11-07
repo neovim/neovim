@@ -632,15 +632,18 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = {};
+            valueSet = vim.tbl_values(protocol.CodeActionKind);
           };
         };
       };
       completion = {
         dynamicRegistration = false;
         completionItem = {
+          -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
+          -- this should be disabled out of the box.
+          -- However, users can turn this back on if they have a snippet plugin.
+          snippetSupport = false;
 
-          snippetSupport = true;
           commitCharactersSupport = false;
           preselectSupport = false;
           deprecatedSupport = false;
@@ -940,11 +943,9 @@ function protocol.resolve_capabilities(server_capabilities)
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
-  elseif type(server_capabilities.codeActionProvider) == 'boolean' then
+  elseif type(server_capabilities.codeActionProvider) == 'boolean'
+    or type(server_capabilities.codeActionProvider) == 'table' then
     general_properties.code_action = server_capabilities.codeActionProvider
-  elseif type(server_capabilities.codeActionProvider) == 'table' then
-    -- TODO(ashkan) support CodeActionKind
-    general_properties.code_action = false
   else
     error("The server sent invalid codeActionProvider")
   end

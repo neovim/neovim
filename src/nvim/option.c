@@ -2566,7 +2566,7 @@ static bool valid_spellfile(const char_u *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char_u *s = val; *s != NUL; s++) {
-    if (!vim_isfilec(*s) && *s != ',') {
+    if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
       return false;
     }
   }
@@ -3121,7 +3121,7 @@ ambw_end:
     } else {
       if (curwin->w_status_height) {
         curwin->w_redr_status = true;
-        redraw_later(VALID);
+        redraw_later(curwin, VALID);
       }
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();
@@ -3363,10 +3363,6 @@ ambw_end:
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
-    }
-  } else if (varp == &p_rtp) {  // 'runtimepath'
-    if (!nlua_update_package_path()) {
-      errmsg = (char_u *)N_("E970: Failed to initialize lua interpreter");
     }
   } else {
     // Options that are a list of flags.
@@ -3751,11 +3747,10 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
 /// Return error message or NULL.
 char_u *check_stl_option(char_u *s)
 {
-  int itemcnt = 0;
   int groupdepth = 0;
   static char_u errbuf[80];
 
-  while (*s && itemcnt < STL_MAX_ITEM) {
+  while (*s) {
     // Check for valid keys after % sequences
     while (*s && *s != '%') {
       s++;
@@ -3764,9 +3759,6 @@ char_u *check_stl_option(char_u *s)
       break;
     }
     s++;
-    if (*s != '%' && *s != ')') {
-      itemcnt++;
-    }
     if (*s == '%' || *s == STL_TRUNCMARK || *s == STL_SEPARATE) {
       s++;
       continue;
@@ -3807,9 +3799,6 @@ char_u *check_stl_option(char_u *s)
         return (char_u *)N_("E540: Unclosed expression sequence");
       }
     }
-  }
-  if (itemcnt >= STL_MAX_ITEM) {
-    return (char_u *)N_("E541: too many items");
   }
   if (groupdepth != 0) {
     return (char_u *)N_("E542: unbalanced groups");
@@ -4702,7 +4691,7 @@ static void check_redraw(uint32_t flags)
     redraw_curbuf_later(NOT_VALID);
   }
   if (flags & P_RWINONLY) {
-    redraw_later(NOT_VALID);
+    redraw_later(curwin, NOT_VALID);
   }
   if (doclear) {
     redraw_all_later(CLEAR);
@@ -5716,12 +5705,12 @@ void unset_global_local_option(char *name, void *from)
     case PV_LCS:
       clear_string_option(&((win_T *)from)->w_p_lcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
-      redraw_win_later((win_T *)from, NOT_VALID);
+      redraw_later((win_T *)from, NOT_VALID);
       break;
     case PV_FCS:
       clear_string_option(&((win_T *)from)->w_p_fcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
-      redraw_win_later((win_T *)from, NOT_VALID);
+      redraw_later((win_T *)from, NOT_VALID);
       break;
   }
 }

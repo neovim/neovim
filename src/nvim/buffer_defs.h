@@ -361,12 +361,34 @@ struct mapblock {
   sctx_T m_script_ctx;          // SCTX where map was defined
 };
 
-/*
- * Used for highlighting in the status line.
- */
+/// Used for highlighting in the status line.
+typedef struct stl_hlrec stl_hlrec_t;
 struct stl_hlrec {
   char_u      *start;
   int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
+};
+
+/// Used for building the status line.
+typedef struct stl_item stl_item_t;
+struct stl_item {
+  // Where the item starts in the status line output buffer
+  char_u *start;
+  // Function to run for ClickFunc items.
+  char *cmd;
+  // The minimum width of the item
+  int minwid;
+  // The maximum width of the item
+  int maxwid;
+  enum {
+    Normal,
+    Empty,
+    Group,
+    Separate,
+    Highlight,
+    TabPage,
+    ClickFunc,
+    Trunc
+  } type;
 };
 
 // values for b_syn_spell: what to do with toplevel text
@@ -546,7 +568,7 @@ struct file_buffer {
                                 // negative when lines were deleted
   wininfo_T   *b_wininfo;       // list of last used info for each window
   int b_mod_tick_syn;           // last display tick syntax was updated
-  int b_mod_tick_deco;          // last display tick decoration providers
+  int b_mod_tick_decor;         // last display tick decoration providers
                                 // where invoked
 
   long b_mtime;                 // last change time of original file
@@ -773,6 +795,7 @@ struct file_buffer {
   int b_ind_cpp_namespace;
   int b_ind_if_for_while;
   int b_ind_cpp_extern_c;
+  int b_ind_pragma;
 
   linenr_T b_no_eol_lnum;       /* non-zero lnum when last line of next binary
                                  * write should not have an end-of-line */
@@ -1206,6 +1229,13 @@ struct window_S {
                                     // 'wrap' is off
   colnr_T w_skipcol;                // starting column when a single line
                                     // doesn't fit in the window
+
+  // "w_last_topline" and "w_last_leftcol" are used to determine if
+  // a Scroll autocommand should be emitted.
+  linenr_T w_last_topline;          ///< last known value for topline
+  colnr_T w_last_leftcol;          ///< last known value for leftcol
+  int w_last_width;                 ///< last known value for width
+  int w_last_height;                ///< last known value for height
 
   //
   // Layout of the window in the screen.

@@ -374,6 +374,9 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LibLUV 1.30.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
+find_package(Treesitter REQUIRED)
+include_directories(SYSTEM ${TREESITTER_INCLUDE_DIRS})
+
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 

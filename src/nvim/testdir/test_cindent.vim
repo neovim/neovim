@@ -127,4 +127,40 @@ func Test_cindent_case()
   bwipe!
 endfunc
 
+func Test_cindent_pragma()
+  new
+  setl cindent ts=4 sw=4
+  setl cino=Ps
+
+  let code =<< trim [CODE]
+  {
+  #pragma omp parallel
+  {
+  #pragma omp task
+  foo();
+  # pragma omp taskwait
+  }
+  }
+  [CODE]
+
+  call append(0, code)
+  normal gg
+  normal =G
+
+  let expected =<< trim [CODE]
+  {
+	#pragma omp parallel
+	{
+		#pragma omp task
+		foo();
+		# pragma omp taskwait
+	}
+  }
+
+  [CODE]
+
+  call assert_equal(expected, getline(1, '$'))
+  enew! | close
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

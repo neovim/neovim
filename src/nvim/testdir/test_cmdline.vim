@@ -722,7 +722,7 @@ func Test_verbosefile()
 endfunc
 
 func Test_verbose_option()
-  " See test/functional/ui/cmdline_spec.lua
+  " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
 
   let lines =<< trim [SCRIPT]
@@ -840,6 +840,25 @@ func Test_buffers_lastused()
   bwipeout bufa
   bwipeout bufb
   bwipeout bufc
+endfunc
+
+func Test_cmdlineclear_tabenter()
+  " See test/functional/legacy/cmdline_spec.lua
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    call setline(1, range(30))
+  [SCRIPT]
+
+  call writefile(lines, 'XtestCmdlineClearTabenter')
+  let buf = RunVimInTerminal('-S XtestCmdlineClearTabenter', #{rows: 10})
+  call term_wait(buf, 50)
+  " in one tab make the command line higher with CTRL-W -
+  call term_sendkeys(buf, ":tabnew\<cr>\<C-w>-\<C-w>-gtgt")
+  call VerifyScreenDump(buf, 'Test_cmdlineclear_tabenter', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XtestCmdlineClearTabenter')
 endfunc
 
 " test that ";" works to find a match at the start of the first line

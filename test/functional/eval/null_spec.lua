@@ -132,7 +132,7 @@ describe('NULL', function()
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()
-      eq('\nE716: Key not present in Dictionary: test\nE15: Invalid expression: v:_null_dict.test',
+      eq('\nE716: Key not present in Dictionary: "test"\nE15: Invalid expression: v:_null_dict.test',
          redir_exec('echo v:_null_dict.test'))
     end)
     null_expr_test('makes extend error out', 'extend(D, {})', 'E742: Cannot change value of extend() argument', 0)

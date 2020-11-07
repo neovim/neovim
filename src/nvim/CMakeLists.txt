@@ -55,6 +55,7 @@ set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
+set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -86,10 +87,6 @@ file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
-
-file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
-file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
-list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
 
 foreach(subdir
         os
@@ -187,13 +184,6 @@ if(NOT MSVC)
     set_source_files_properties(
       eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
-
-  # tree-sitter: inlined external project, we don't maintain it. #10124
-  set(TS_FLAGS "-Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
-  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
-    set(TS_FLAGS "${TS_FLAGS} -Wno-implicit-fallthrough")
-  endif()
-  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} ${TS_FLAGS}")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -334,10 +324,12 @@ add_custom_command(
   COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
       ${LUA_VIM_MODULE_SOURCE} vim_module
       ${LUA_SHARED_MODULE_SOURCE} shared_module
+      ${LUA_INSPECT_MODULE_SOURCE} inspect_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_VIM_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
+    ${LUA_INSPECT_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -453,6 +445,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${UTF8PROC_LIBRARIES}
+  ${TREESITTER_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -472,7 +465,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -570,7 +563,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -600,7 +593,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

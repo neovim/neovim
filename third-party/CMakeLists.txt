@@ -42,6 +42,7 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
+option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
@@ -198,6 +199,9 @@ set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc891
 set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/6002fcd.tar.gz)
 set(TREESITTER_C_SHA256 46f8d44fa886d9ddb92571bb6fa8b175992c8758eca749cb1217464e512b6e97)
 
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/0.17.3.zip)
+set(TREESITTER_SHA256 19068b6663f5a4cacd5d805fa437419e3c29eb615ed9523e438b400b79f39c20)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
@@ -251,6 +255,10 @@ endif()
 
 if(USE_BUNDLED_TS_PARSERS)
   include(BuildTreesitterParsers)
+endif()
+
+if(USE_BUNDLED_TS)
+  include(BuildTreesitter)
 endif()
 
 if(WIN32)
