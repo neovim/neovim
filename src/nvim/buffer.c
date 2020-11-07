@@ -5416,7 +5416,7 @@ char_u *buf_spname(buf_T *buf)
     return (char_u *)_("[Scratch]");
   }
   if (buf->b_fname == NULL) {
-    return (char_u *)_("[No Name]");
+    return buf_get_fname(buf);
   }
   return NULL;
 }
@@ -5475,6 +5475,16 @@ int buf_signcols(buf_T *buf)
     }
 
     return buf->b_signcols;
+}
+
+// Get "buf->b_fname", use "[No Name]" if it is NULL.
+char_u *buf_get_fname(const buf_T *buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  if (buf->b_fname == NULL) {
+    return (char_u *)_("[No Name]");
+  }
+  return buf->b_fname;
 }
 
 /*

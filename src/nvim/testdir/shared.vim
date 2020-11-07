@@ -243,7 +243,7 @@ func s:feedkeys(timer)
   call feedkeys('x', 'nt')
 endfunc
 
-" Get $VIMPROG to run Vim executable.
+" Get $VIMPROG to run the Vim executable.
 " The Makefile writes it as the first line in the "vimcmd" file.
 " Nvim: uses $NVIM_TEST_ARG0.
 func GetVimProg()

@@ -1358,7 +1358,8 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 
 //{{{2 Alloc/free
 
-/// Allocate an empty dictionary
+/// Allocate an empty dictionary.
+/// Caller should take care of the reference count.
 ///
 /// @return [allocated] new dictionary.
 dict_T *tv_dict_alloc(void)
