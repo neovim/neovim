@@ -38,9 +38,8 @@ end
 
 local function get_query_files(lang, query_name, is_included)
   local lang_files = filtered_runtime_queries(lang, query_name)
-  local query_files = lang_files
 
-  if #query_files == 0 then return {} end
+  if #lang_files == 0 then return {} end
 
   local base_langs = {}
 
@@ -51,7 +50,7 @@ local function get_query_files(lang, query_name, is_included)
   -- {language} ::= {lang} | ({lang})
   local MODELINE_FORMAT = "^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$"
 
-  for _, file in ipairs(query_files) do
+  for _, file in ipairs(lang_files) do
     local modeline = vim.fn.readfile(file, "", 1)
 
     if #modeline == 1 then
@@ -73,10 +72,12 @@ local function get_query_files(lang, query_name, is_included)
     end
   end
 
+  local query_files = {}
   for _, base_lang in ipairs(base_langs) do
     local base_files = get_query_files(base_lang, query_name, true)
     vim.list_extend(query_files, base_files)
   end
+  vim.list_extend(query_files, lang_files)
 
   return query_files
 end
