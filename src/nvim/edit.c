@@ -1489,10 +1489,10 @@ static void ins_redraw(
   }
 
   // Trigger BufModified if b_changed_notified is false.
-  if (ready && has_event(EVENT_BUFMODIFIED)
+  if (ready && has_event(EVENT_BUFMODIFIEDSET)
       && curbuf->b_changed_notified == false
       && !pum_visible()) {
-    apply_autocmds(EVENT_BUFMODIFIED, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
     curbuf->b_changed_notified = true;
   }
 
