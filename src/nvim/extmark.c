@@ -74,6 +74,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      Decoration *decor, ExtmarkOp op)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
+  assert(ns != NULL);
   mtpos_t old_pos;
   uint64_t mark = 0;
 
