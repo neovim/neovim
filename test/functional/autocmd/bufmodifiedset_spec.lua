@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local source = helpers.source
+local request = helpers.request
 
 describe('BufModified', function()
   before_each(clear)
@@ -12,9 +13,9 @@ describe('BufModified', function()
     source([[
     let g:modified = 0
     autocmd BufModifiedSet * let g:modified += 1
-    execute "normal! aa\<Esc>"
-    execute "normal! u"
     ]])
+    request("nvim_command", [[normal! aa\<Esc>]])
+    request("nvim_command", [[normal! u]])
     eq(2, eval('g:modified'))
   end)
 end)
