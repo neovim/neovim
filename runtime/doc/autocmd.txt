@@ -253,6 +253,9 @@ BufLeave			Before leaving to another buffer.  Also when
 				new current window is not for the same buffer.
 
 				Not used for ":qa" or ":q" when exiting Vim.
+							*BufModifiedSet*
+BufModifiedSet			After the `'modified'` value of a buffer has
+				been changed.
 							*BufNew*
 BufNew				Just after creating a new buffer.  Also used
 				just after a buffer has been renamed.  When
