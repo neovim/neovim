@@ -58,6 +58,7 @@ typedef struct {
 
 EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
 EXTERN DecorState decor_state INIT(= { 0 });
+EXTERN bool provider_active INIT(= false);
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
                                  { ns_id, false, LUA_NOREF, LUA_NOREF, \

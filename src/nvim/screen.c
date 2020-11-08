@@ -173,7 +173,9 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   Error err = ERROR_INIT;
 
   textlock++;
+  provider_active = true;
   Object ret = nlua_call_ref(ref, name, args, true, &err);
+  provider_active = false;
   textlock--;
 
   if (!ERROR_SET(&err)
