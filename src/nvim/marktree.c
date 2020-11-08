@@ -326,38 +326,37 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   x->n--;
 
   // 4.
-  if (adjustment) {
-    if (adjustment == 1) {
-      abort();
-    } else {  // adjustment == -1
-      int ilvl = itr->lvl-1;
-      mtnode_t *lnode = x;
-      do {
-        mtnode_t *p = lnode->parent;
-        if (ilvl < 0) {
-          abort();
-        }
-        int i = itr->s[ilvl].i;
-        assert(p->ptr[i] == lnode);
-        if (i > 0) {
-          unrelative(p->key[i-1].pos, &intkey.pos);
-        }
-        lnode = p;
-        ilvl--;
-      } while (lnode != cur);
+  // if (adjustment == 1) {
+  //   abort();
+  // }
+  if (adjustment == -1) {
+    int ilvl = itr->lvl-1;
+    const mtnode_t *lnode = x;
+    do {
+      const mtnode_t *const p = lnode->parent;
+      if (ilvl < 0) {
+        abort();
+      }
+      const int i = itr->s[ilvl].i;
+      assert(p->ptr[i] == lnode);
+      if (i > 0) {
+        unrelative(p->key[i-1].pos, &intkey.pos);
+      }
+      lnode = p;
+      ilvl--;
+    } while (lnode != cur);
 
-      mtkey_t deleted = cur->key[curi];
-      cur->key[curi] = intkey;
-      refkey(b, cur, curi);
-      relative(intkey.pos, &deleted.pos);
-      mtnode_t *y = cur->ptr[curi+1];
-      if (deleted.pos.row || deleted.pos.col) {
-        while (y) {
-          for (int k = 0; k < y->n; k++) {
-            unrelative(deleted.pos, &y->key[k].pos);
-          }
-          y = y->level ? y->ptr[0] : NULL;
+    mtkey_t deleted = cur->key[curi];
+    cur->key[curi] = intkey;
+    refkey(b, cur, curi);
+    relative(intkey.pos, &deleted.pos);
+    mtnode_t *y = cur->ptr[curi+1];
+    if (deleted.pos.row || deleted.pos.col) {
+      while (y) {
+        for (int k = 0; k < y->n; k++) {
+          unrelative(deleted.pos, &y->key[k].pos);
         }
+        y = y->level ? y->ptr[0] : NULL;
       }
     }
   }
@@ -435,9 +434,10 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 
   // BONUS STEP: fix the iterator, so that it points to the key afterwards
   // TODO(bfredl): with "rev" should point before
-  if (adjustment == 1) {
-    abort();
-  } else if (adjustment == -1) {
+  // if (adjustment == 1) {
+  //   abort();
+  // }
+  if (adjustment == -1) {
     // tricky: we stand at the deleted space in the previous leaf node.
     // But the inner key is now the previous key we stole, so we need
     // to skip that one as well.
