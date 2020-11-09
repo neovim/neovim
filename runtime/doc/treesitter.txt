@@ -367,7 +367,7 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
 <
 
 ==============================================================================
-Lua module: vim.treesitter                             *treesitter-treesitter*
+Lua module: vim.treesitter                               *lua-treesitter-core*
 
 bytes_cb({_}, {...})                                              *bytes_cb()*
                 TODO: Documentation

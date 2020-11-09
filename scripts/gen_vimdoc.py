@@ -208,8 +208,8 @@ CONFIG = {
             if name.lower() == 'treesitter'
             else f'Lua module: vim.treesitter.{name.lower()}'),
         'helptag_fmt': lambda name: (
-            '*lua-treesitter*'
-            if name.lower() == 'lua-treesitter-core'
+            '*lua-treesitter-core*'
+            if name.lower() == 'treesitter'
             else f'*treesitter-{name.lower()}*'),
         'fn_helptag_fmt': lambda fstem, name: f'*{name}()*',
         # 'fn_helptag_fmt': lambda fstem, name: (
