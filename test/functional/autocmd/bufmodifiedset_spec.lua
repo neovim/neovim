@@ -15,6 +15,7 @@ describe('BufModified', function()
     autocmd BufModifiedSet * let g:modified += 1
     ]])
     request("nvim_command", [[normal! aa\<Esc>]])
+    eq(1, eval('g:modified'))
     request("nvim_command", [[normal! u]])
     eq(2, eval('g:modified'))
   end)
