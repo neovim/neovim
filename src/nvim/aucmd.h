@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "nvim/buffer.h"
+#include "nvim/fileio.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

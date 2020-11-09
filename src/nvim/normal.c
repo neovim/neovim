@@ -1326,8 +1326,8 @@ static int normal_check(VimState *state)
     update_topline(curwin);
 
     if (!finish_op) {
-      autocmd_check_cursor_moved(curwin);
-      autocmd_check_text_changed(curbuf);
+      autocmd_check_cursor_moved(curwin, EVENT_CURSORMOVED);
+      autocmd_check_text_changed(curbuf, EVENT_TEXTCHANGED);
       autocmd_check_window_scrolled(curwin);
       normal_check_buffer_modified(s);
     }
