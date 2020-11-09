@@ -805,7 +805,7 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   }
 
   int flags = DIP_START | (all ? DIP_ALL : 0);
-  do_in_runtimepath(name.size ? (char_u *)name.data : NULL,
+  do_in_runtimepath((char_u *)name.data,
                     flags, find_runtime_cb, &rv);
   return rv;
 }

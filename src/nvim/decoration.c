@@ -182,7 +182,7 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
     Decoration *decor = item->decor;
 
     if ((!(mark.id&MARKTREE_END_FLAG) && altpos.row < top_row
-         && item && !kv_size(decor->virt_text))
+         && !kv_size(decor->virt_text))
         || ((mark.id&MARKTREE_END_FLAG) && altpos.row >= top_row)) {
       goto next_mark;
     }
@@ -251,7 +251,7 @@ int decor_redraw_col(buf_T *buf, int col, DecorState *state)
 
     if (endpos.row < mark.row
         || (endpos.row == mark.row && endpos.col <= mark.col)) {
-      if (item && !kv_size(decor->virt_text)) {
+      if (!kv_size(decor->virt_text)) {
         goto next_mark;
       }
     }
