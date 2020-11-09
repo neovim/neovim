@@ -16,6 +16,7 @@
 #include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/normal.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
@@ -1201,38 +1202,6 @@ static void normal_check_interrupt(NormalState *s)
   }
 }
 
-static void normal_check_window_scrolled(NormalState *s)
-{
-  // Trigger Scroll if the viewport changed.
-  if (!finish_op && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
-  }
-}
-
-static void normal_check_cursor_moved(NormalState *s)
-{
-  // Trigger CursorMoved if the cursor moved.
-  if (!finish_op && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
-      && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)) {
-    if (has_event(EVENT_CURSORMOVED)) {
-      apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
-    }
-
-    curwin->w_last_cursormoved = curwin->w_cursor;
-  }
-}
-
-static void normal_check_text_changed(NormalState *s)
-{
-  // Trigger TextChanged if changedtick differs.
-  if (!finish_op && has_event(EVENT_TEXTCHANGED)
-      && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)) {
-    apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
-  }
-}
-
 static void normal_check_buffer_modified(NormalState *s)
 {
   // Trigger BufModified if b_modified changed
@@ -1356,10 +1325,12 @@ static int normal_check(VimState *state)
     // normal_check_window_scrolled() is called.
     update_topline(curwin);
 
-    normal_check_cursor_moved(s);
-    normal_check_text_changed(s);
-    normal_check_window_scrolled(s);
-    normal_check_buffer_modified(s);
+    if (!finish_op) {
+      autocmd_check_cursor_moved(curwin);
+      autocmd_check_text_changed(curbuf);
+      autocmd_check_window_scrolled(curwin);
+      normal_check_buffer_modified(s);
+    }
 
     // Updating diffs from changed() does not always work properly,
     // esp. updating folds.  Do an update just before redrawing if
