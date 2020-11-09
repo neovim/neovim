@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local source = helpers.source
+local request = helpers.request
 
 describe('WinScrolled', function()
   before_each(clear)
@@ -58,5 +59,19 @@ describe('WinScrolled', function()
     wincmd v
     ]])
     eq(1, eval('g:scrolled'))
+  end)
+
+  it('is triggered through nvim_win_set(width|height)', function()
+    source([[
+    let g:scrolled = 0
+    vsplit foo
+    split bar
+    autocmd WinScrolled <buffer> let g:scrolled += 1
+    wincmd w
+    ]])
+    request('nvim_win_set_width', 0, eval('winwidth(0) - 1'))
+    eq(1, eval('g:scrolled'))
+    request('nvim_win_set_height', 0, eval('winheight(0) - 1'))
+    eq(2, eval('g:scrolled'))
   end)
 end)

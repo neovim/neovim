@@ -169,6 +169,10 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   win_setheight((int)height);
   curwin = savewin;
   try_end(err);
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    autocmd_check_window_scrolled(wp);
+  }
 }
 
 /// Gets the window width
@@ -214,6 +218,10 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   win_setwidth((int)width);
   curwin = savewin;
   try_end(err);
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    autocmd_check_window_scrolled(wp);
+  }
 }
 
 /// Gets a window-scoped (w:) variable
