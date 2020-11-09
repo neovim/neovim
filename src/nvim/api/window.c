@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include "nvim/ascii.h"
+#include "nvim/aucmd.h"
+#include "nvim/globals.h"
+#include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/executor.h"
@@ -116,6 +120,8 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
+
+  autocmd_check_cursor_moved(win);
 
   redraw_later(win, VALID);
 }
