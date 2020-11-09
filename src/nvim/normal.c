@@ -1233,9 +1233,9 @@ static void normal_check_buffer_modified(NormalState *s)
 {
   // Trigger BufModified if b_modified changed
   if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_notified == false) {
+      && curbuf->b_changed_invalid == true) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_notified = true;
+    curbuf->b_changed_invalid = false;
   }
 }
 

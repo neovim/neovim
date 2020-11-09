@@ -1488,12 +1488,12 @@ static void ins_redraw(
     do_autocmd_winscrolled(curwin);
   }
 
-  // Trigger BufModified if b_changed_notified is false.
+  // Trigger BufModified if b_changed_invalid is set.
   if (ready && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_notified == false
+      && curbuf->b_changed_invalid == true
       && !pum_visible()) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_notified = true;
+    curbuf->b_changed_invalid = false;
   }
 
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
