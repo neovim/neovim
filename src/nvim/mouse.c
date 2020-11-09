@@ -75,6 +75,7 @@ int jump_to_mouse(int flags,
   int grid = mouse_grid;
   int mouse_char;
   int fdc = 0;
+  ScreenGrid *gp = &default_grid;
 
   mouse_past_bottom = false;
   mouse_past_eol = false;
@@ -124,16 +125,6 @@ retnomove:
 
   if (flags & MOUSE_SETPOS)
     goto retnomove;                             // ugly goto...
-
-  // Remember the character under the mouse, might be one of foldclose or
-  // foldopen fillchars in the fold column.
-  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && default_grid.chars != NULL) {
-     mouse_char = utf_ptr2char(default_grid.chars[default_grid.line_offset[row]
-                                                  + (unsigned)col]);
-  } else {
-    mouse_char = ' ';
-  }
 
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;
@@ -331,6 +322,19 @@ retnomove:
         curwin->w_valid &= ~(VALID_TOPLINE);
       }
     }
+  }
+
+  // Remember the character under the mouse, might be one of foldclose or
+  // foldopen fillchars in the fold column.
+  if (ui_has(kUIMultigrid)) {
+    gp = &curwin->w_grid;
+  }
+  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
+      && gp->chars != NULL) {
+    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
+                                        + (unsigned)col]);
+  } else {
+    mouse_char = ' ';
   }
 
   // Check for position outside of the fold column.
