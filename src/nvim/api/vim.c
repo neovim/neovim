@@ -2687,6 +2687,9 @@ void nvim__screenshot(String path)
 
 static void clear_provider(DecorProvider *p)
 {
+  if (p == NULL) {
+    return;
+  }
   NLUA_CLEAR_REF(p->redraw_start);
   NLUA_CLEAR_REF(p->redraw_buf);
   NLUA_CLEAR_REF(p->redraw_win);
