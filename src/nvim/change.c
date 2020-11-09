@@ -129,6 +129,7 @@ void changed(void)
 void changed_internal(void)
 {
   curbuf->b_changed = true;
+  curbuf->b_changed_invalid = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = true;
@@ -502,6 +503,7 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
+    buf->b_changed_invalid = true;
     ml_setflags(buf);
     if (ff) {
       save_file_ff(buf);
