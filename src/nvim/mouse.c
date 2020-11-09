@@ -331,8 +331,8 @@ retnomove:
   }
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
       && gp->chars != NULL) {
-     mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
-                                                  + (unsigned)col]);
+    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
+                                        + (unsigned)col]);
   } else {
     mouse_char = ' ';
   }
