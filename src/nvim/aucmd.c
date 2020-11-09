@@ -101,9 +101,9 @@ static void do_autocmd_focusgained(bool gained)
 /// Checks if cursor has moved and triggers autocommand.
 void autocmd_check_cursor_moved(win_T *win)
 {
-  // Trigger CursorMoved if the cursor moved.
   if ((has_event(EVENT_CURSORMOVED) || win->w_p_cole > 0)
       && !equalpos(win->w_last_cursormoved, win->w_cursor)) {
+
     if (has_event(EVENT_CURSORMOVED)) {
       apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, win->w_buffer);
     }
@@ -115,7 +115,6 @@ void autocmd_check_cursor_moved(win_T *win)
 /// Checks if text has changed and triggers autocommand.
 void autocmd_check_text_changed(buf_T *buf)
 {
-  // Trigger TextChanged if changedtick differs.
   if (has_event(EVENT_TEXTCHANGED)
       && buf->b_last_changedtick != buf_get_changedtick(buf)) {
     apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, buf);
@@ -126,7 +125,6 @@ void autocmd_check_text_changed(buf_T *buf)
 /// Checks if window has scrolled and triggers autocommand.
 void autocmd_check_window_scrolled(win_T *win)
 {
-  // Trigger Scroll if the viewport changed.
   if (has_event(EVENT_WINSCROLLED) && win_did_scroll(win)) {
     do_autocmd_winscrolled(win);
   }
