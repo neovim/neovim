@@ -205,7 +205,9 @@ bool autocmd_check_buffer_modified(buf_T *buf)
       && buf->b_changed_invalid == true) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, buf);
     buf->b_changed_invalid = false;
+    return true;
   }
+  return false;
 }
 
 /// Trigger "event" and take care of fixing undo.
