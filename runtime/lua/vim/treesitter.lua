@@ -25,12 +25,12 @@ setmetatable(M, {
  })
 
 --- Creates a new parser.
---
--- It is not recommended to use this, use vim.treesitter.get_parser() instead.
---
--- @param bufnr The buffer the parser will be tied to
--- @param lang The language of the parser
--- @param opts Options to pass to the language tree
+---
+--- It is not recommended to use this, use vim.treesitter.get_parser() instead.
+---
+--- @param bufnr The buffer the parser will be tied to
+--- @param lang The language of the parser
+--- @param opts Options to pass to the language tree
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
@@ -64,15 +64,15 @@ function M._create_parser(bufnr, lang, opts)
 end
 
 --- Gets the parser for this bufnr / ft combination.
---
--- If needed this will create the parser.
--- Unconditionnally attach the provided callback
---
--- @param bufnr The buffer the parser should be tied to
--- @param ft The filetype of this parser
--- @param opts Options object to pass to the parser
---
--- @returns The parser
+---
+--- If needed this will create the parser.
+--- Unconditionnally attach the provided callback
+---
+--- @param bufnr The buffer the parser should be tied to
+--- @param ft The filetype of this parser
+--- @param opts Options object to pass to the parser
+---
+--- @returns The parser
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -92,6 +92,11 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
+--- Gets a string parser
+---
+--- @param str The string to parse
+--- @param lang The language of this string
+--- @param opts Some options to pass to the parser
 function M.get_string_parser(str, lang, opts)
   vim.validate {
     str = { str, 'string' },

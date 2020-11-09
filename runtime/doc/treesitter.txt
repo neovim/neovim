@@ -364,6 +364,162 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
 
     ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
      (eq? @WarningMsg.left @WarningMsg.right))
+<
+
+==============================================================================
+Lua module: vim.treesitter                             *treesitter-treesitter*
+
+bytes_cb({_}, {...})                                              *bytes_cb()*
+                TODO: Documentation
+
+get_parser({bufnr}, {lang}, {buf_attach_cbs})                   *get_parser()*
+                Gets the parser for this bufnr / ft combination.
+
+                If needed this will create the parser. Unconditionnally attach
+                the provided callback
+
+                Parameters: ~
+                    {bufnr}           The buffer the parser should be tied to
+                    {ft}              The filetype of this parser
+                    {buf_attach_cbs}  See Parser:register_cbs
+
+                Return: ~
+                    The parser
+
+get_string_parser({str}, {lang})                         *get_string_parser()*
+                Hello world, this is the string parser.
+
+Parser:included_ranges({self})                      *Parser:included_ranges()*
+                Gets the included ranges for the parsers
+
+                Parameters: ~
+                    {self}
+
+Parser:input_source({self})                            *Parser:input_source()*
+                Parameters: ~
+                    {self}
+
+Parser:parse({self})                                          *Parser:parse()*
+                Parses the buffer if needed and returns a tree.
+
+                Calling this will call the on_changedtree callbacks if the
+                tree has changed.
+
+                Parameters: ~
+                    {self}
+
+                Return: ~
+                    An up to date tree
+                    If the tree changed with this call, the changed ranges
+
+Parser:register_cbs({self}, {cbs})                     *Parser:register_cbs()*
+                Parameters: ~
+                    {self}
+
+                                                *Parser:set_included_ranges()*
+Parser:set_included_ranges({self}, {ranges})
+                Parameters: ~
+                    {self}
+
+
+==============================================================================
+Lua module: vim.treesitter.language                      *treesitter-language*
+
+inspect_language({lang})                                  *inspect_language()*
+                TODO: Documentation
+
+require_language({lang}, {path})                          *require_language()*
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.treesitter.query                            *treesitter-query*
+
+add_predicate({name}, {handler}, {force})                    *add_predicate()*
+                TODO: Documentation
+
+check_magic({str})                                             *check_magic()*
+                TODO: Documentation
+
+filter_files({file_list})                                     *filter_files()*
+                TODO: Documentation
+
+                                                  *filtered_runtime_queries()*
+filtered_runtime_queries({lang}, {query_name})
+                TODO: Documentation
+
+get_node_text({node}, {source})                              *get_node_text()*
+                TODO: Documentation
+
+get_query({lang}, {query_name})                                  *get_query()*
+                TODO: Documentation
+
+                                                           *get_query_files()*
+get_query_files({lang}, {query_name}, {is_included})
+                TODO: Documentation
+
+iter()                                                                *iter()*
+                TODO: Documentation
+
+list_predicates()                                          *list_predicates()*
+                TODO: Documentation
+
+parse_query({lang}, {query})                                   *parse_query()*
+                TODO: Documentation
+
+                                                       *Query:iter_captures()*
+Query:iter_captures({self}, {node}, {source}, {start}, {stop})
+                Parameters: ~
+                    {self}
+
+                                                        *Query:iter_matches()*
+Query:iter_matches({self}, {node}, {source}, {start}, {stop})
+                Parameters: ~
+                    {self}
+
+                                                         *Query:match_preds()*
+Query:match_preds({self}, {match}, {pattern}, {source})
+                Parameters: ~
+                    {self}
+
+read_query_files({filenames})                             *read_query_files()*
+                TODO: Documentation
+
+runtime_query_path({lang}, {query_name})                *runtime_query_path()*
+                TODO: Documentation
+
+xor({x}, {y})                                                          *xor()*
+                TODO: Documentation
+
+
+==============================================================================
+Lua module: vim.treesitter.highlighter                *treesitter-highlighter*
+
+is_highlight_name({capture_name})                        *is_highlight_name()*
+                TODO: Documentation
+
+iter_active_tshl({buf}, {fn})                             *iter_active_tshl()*
+                TODO: Documentation
+
+new({parser}, {query})                                                 *new()*
+                TODO: Documentation
+
+on_line_impl({self}, {buf}, {line})                           *on_line_impl()*
+                TODO: Documentation
+
+                                         *TSHighlighter:get_hl_from_capture()*
+TSHighlighter:get_hl_from_capture({self}, {capture})
+                Parameters: ~
+                    {self}
+
+                                              *TSHighlighter:on_changedtree()*
+TSHighlighter:on_changedtree({self}, {changes})
+                Parameters: ~
+                    {self}
+
+TSHighlighter:set_query({self}, {query})           *TSHighlighter:set_query()*
+                Parameters: ~
+                    {self}
 
 Treesitter language injection (WIP)		*lua-treesitter-language-injection*
 
