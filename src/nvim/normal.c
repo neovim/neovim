@@ -1202,16 +1202,6 @@ static void normal_check_interrupt(NormalState *s)
   }
 }
 
-static void normal_check_buffer_modified(NormalState *s)
-{
-  // Trigger BufModified if b_modified changed
-  if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
-  }
-}
-
 static void normal_check_folds(NormalState *s)
 {
   // Include a closed fold completely in the Visual area.
@@ -1329,7 +1319,7 @@ static int normal_check(VimState *state)
       autocmd_check_cursor_moved(curwin, EVENT_CURSORMOVED);
       autocmd_check_text_changed(curbuf, EVENT_TEXTCHANGED);
       autocmd_check_window_scrolled(curwin);
-      normal_check_buffer_modified(s);
+      autocmd_check_buffer_modified(curbuf);
     }
 
     // Updating diffs from changed() does not always work properly,

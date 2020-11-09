@@ -1438,19 +1438,12 @@ static void ins_redraw(
       conceal_cursor_moved =
         autocmd_check_cursor_moved(curwin, EVENT_CURSORMOVEDI);
     }
+    event_T text_changed_event =
+      pum_visible() ? EVENT_TEXTCHANGEDP : EVENT_TEXTCHANGEDI;
 
-    autocmd_check_text_changed(curbuf,
-        pum_visible() ?  EVENT_TEXTCHANGEDP : EVENT_TEXTCHANGEDI);
-
+    autocmd_check_text_changed(curbuf, text_changed_event);
     autocmd_check_window_scrolled(curwin);
-  }
-
-  // Trigger BufModified if b_changed_invalid is set.
-  if (ready && has_event(EVENT_BUFMODIFIEDSET)
-      && curbuf->b_changed_invalid == true
-      && !pum_visible()) {
-    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
-    curbuf->b_changed_invalid = false;
+    autocmd_check_buffer_modified(curbuf);
   }
 
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)

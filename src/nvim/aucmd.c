@@ -197,6 +197,17 @@ bool autocmd_check_window_scrolled(win_T *win)
   return false;
 }
 
+/// Checks if buffer &modified has been modified and triggers autocommand.
+bool autocmd_check_buffer_modified(buf_T *buf)
+{
+  // Trigger BufModified if b_modified changed
+  if (has_event(EVENT_BUFMODIFIEDSET)
+      && buf->b_changed_invalid == true) {
+    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, buf);
+    buf->b_changed_invalid = false;
+  }
+}
+
 /// Trigger "event" and take care of fixing undo.
 bool apply_autocmds_save_undo(win_T *win, event_T event)
 {
