@@ -1363,6 +1363,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   // Send the window positions to the UI
   oldwin->w_pos_changed = true;
 
+  FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
+    autocmd_check_window_scrolled(wpp);
+  }
+
   return OK;
 }
 

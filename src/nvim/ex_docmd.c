@@ -7079,10 +7079,6 @@ void ex_splitview(exarg_T *eap)
     do_exedit(eap, old_curwin);
   }
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    autocmd_check_window_scrolled(wp);
-  }
-
 theend:
   xfree(fname);
 }
