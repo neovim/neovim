@@ -4873,13 +4873,13 @@ bool win_did_scroll(win_T *wp)
 /// Trigger WinScrolled autocmd
 void do_autocmd_winscrolled(win_T *wp)
 {
-  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, wp->w_buffer);
-
   wp->w_last_topline = wp->w_topline;
   wp->w_last_leftcol = wp->w_leftcol;
   wp->w_last_width = wp->w_width;
   wp->w_last_height = wp->w_height;
   wp->w_last_buffer = wp->w_buffer->handle;
+
+  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, wp->w_buffer);
 }
 
 /*
