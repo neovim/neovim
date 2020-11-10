@@ -346,7 +346,7 @@ patch_sources() {(
   if test "$only_build" != "--only-build" ; then
     find \
       src/nvim test/functional/fixtures test/unit/fixtures \
-      -name '*.c' \
+      \( -name '*.c' -a '!' -path '*xdiff*' \) \
       -exec /bin/sh -c "$sh_script" - '{}' \;
   fi
 
@@ -373,6 +373,7 @@ run_analysis() {(
     analyze \
       --lic-file PVS-Studio.lic \
       --threads "$(get_jobs_num)" \
+      --exclude-path src/nvim/xdiff \
       --output-file PVS-studio.log \
       --file build/compile_commands.json \
       --sourcetree-root . || true
