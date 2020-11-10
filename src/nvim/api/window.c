@@ -427,6 +427,8 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     win_set_minimal_style(win);
     didset_window_options(win);
   }
+
+  autocmd_check_window_scrolled(win);
 }
 
 /// Gets window configuration.
