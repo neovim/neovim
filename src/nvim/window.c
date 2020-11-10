@@ -9,6 +9,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/window.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -2570,6 +2571,11 @@ int win_close(win_T *win, bool free_buf)
 
   curwin->w_pos_changed = true;
   redraw_all_later(NOT_VALID);
+
+  FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
+    autocmd_check_window_scrolled(wpp);
+  }
+
   return OK;
 }
 
@@ -2611,6 +2617,9 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   do_autocmd_winclosed(win);
   // autocmd may have freed the window already.
   if (!win_valid_any_tab(win)) {
+    FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
+      autocmd_check_window_scrolled(wpp);
+    }
     return;
   }
 
@@ -2670,8 +2679,13 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   /* Free the memory used for the window. */
   win_free_mem(win, &dir, tp);
 
-  if (free_tp)
+  if (free_tp) {
     free_tabpage(tp);
+  } else {
+    FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
+      autocmd_check_window_scrolled(wpp);
+    }
+  }
 }
 
 // Free the memory used for a window.
