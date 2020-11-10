@@ -2524,6 +2524,8 @@ int do_ecmd(
           curbuf = buf;
           ++curbuf->b_nwindows;
 
+          win_update_last_scroll(curwin);
+
           /* Set 'fileformat', 'binary' and 'fenc' when forced. */
           if (!oldbuf && eap != NULL) {
             set_file_options(TRUE, eap);

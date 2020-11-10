@@ -645,6 +645,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
 
   win_config_float(wp, fconfig);
   win_set_inner_size(wp);
+  win_update_last_scroll(wp);
   wp->w_pos_changed = true;
   redraw_later(wp, VALID);
   return wp;
@@ -3558,6 +3559,8 @@ static int win_alloc_firstwin(win_T *oldwin)
     RESET_BINDING(curwin);
   }
 
+  win_update_last_scroll(curwin);
+
   new_frame(curwin);
   topframe = curwin->w_frame;
   topframe->fr_width = Columns;
@@ -4567,6 +4570,11 @@ static win_T *win_alloc(win_T *after, int hidden)
 
   new_wp->w_wincol = 0;
   new_wp->w_width = Columns;
+  new_wp->w_height =
+    Rows
+    - (first_tabpage ? tabline_height() : (p_stal == 2 ? 1 : 0))
+    - (p_ls == 2 ? 1 : 0)
+    - (p_ch);
 
   /* position the display and the cursor at the top of the file. */
   new_wp->w_topline = 1;
@@ -4866,19 +4874,22 @@ bool win_did_scroll(win_T *wp)
   return (wp->w_last_topline != wp->w_topline
           || wp->w_last_leftcol != wp->w_leftcol
           || wp->w_last_width != wp->w_width
-          || wp->w_last_height != wp->w_height
-          || wp->w_last_buffer != wp->w_buffer->handle);
+          || wp->w_last_height != wp->w_height);
 }
 
-/// Trigger WinScrolled autocmd
-void do_autocmd_winscrolled(win_T *wp)
+/// Update saved fields for WinScrolled autocmd
+void win_update_last_scroll(win_T *wp)
 {
   wp->w_last_topline = wp->w_topline;
   wp->w_last_leftcol = wp->w_leftcol;
   wp->w_last_width = wp->w_width;
   wp->w_last_height = wp->w_height;
-  wp->w_last_buffer = wp->w_buffer->handle;
+}
 
+/// Trigger WinScrolled autocmd
+void do_autocmd_winscrolled(win_T *wp)
+{
+  win_update_last_scroll(wp);
   apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, wp->w_buffer);
 }
 
