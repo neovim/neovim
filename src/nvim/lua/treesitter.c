@@ -180,7 +180,8 @@ int tslua_add_language(lua_State *L)
     return luaL_error(
         L,
         "ABI version mismatch : supported between %d and %d, found %d",
-        TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, TREE_SITTER_LANGUAGE_VERSION, lang_version);
+        TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
+        TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }
 
   pmap_put(cstr_t)(langs, xstrdup(lang_name), lang);
@@ -433,6 +434,72 @@ static int tree_edit(lua_State *L)
   return 0;
 }
 
+// Use the top of the stack (without popping it) to create a TSRange, it can be
+// either a lua table or a TSNode
+static void range_from_lua(lua_State *L, TSRange *range)
+{
+  TSNode node;
+
+  if (lua_istable(L, -1)) {
+    // should be a table of 6 elements
+    if (lua_objlen(L, -1) != 6) {
+      goto error;
+    }
+
+    uint32_t start_row, start_col, start_byte, end_row, end_col, end_byte;
+    lua_rawgeti(L, -1, 1);  // [ range, start_row]
+    start_row = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 2);  // [ range, start_col]
+    start_col = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 3);  // [ range, start_byte]
+    start_byte = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 4);  // [ range, end_row]
+    end_row = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 5);  // [ range, end_col]
+    end_col = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_rawgeti(L, -1, 6);  // [ range, end_byte]
+    end_byte = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);  // [ range ]
+
+    *range = (TSRange) {
+      .start_point = (TSPoint) {
+        .row = start_row,
+        .column = start_col
+      },
+      .end_point = (TSPoint) {
+        .row = end_row,
+        .column = end_col
+      },
+      .start_byte = start_byte,
+      .end_byte = end_byte,
+    };
+  } else if (node_check(L, -1, &node)) {
+    *range = (TSRange) {
+      .start_point = ts_node_start_point(node),
+      .end_point = ts_node_end_point(node),
+      .start_byte = ts_node_start_byte(node),
+      .end_byte = ts_node_end_byte(node)
+    };
+  } else {
+    goto error;
+  }
+  return;
+error:
+  luaL_error(
+      L,
+      "Ranges can only be made from 6 element long tables or nodes.");
+}
+
 static int parser_set_ranges(lua_State *L)
 {
   if (lua_gettop(L) < 2) {
@@ -459,22 +526,8 @@ static int parser_set_ranges(lua_State *L)
   // [ parser, ranges ]
   for (size_t index = 0; index < tbl_len; index++) {
     lua_rawgeti(L, 2, index + 1);  // [ parser, ranges, range ]
-
-    TSNode node;
-    if (!node_check(L, -1, &node)) {
-      xfree(ranges);
-      return luaL_error(
-          L,
-          "ranges should be tables of nodes.");
-    }
-    lua_pop(L, 1);  // [ parser, ranges ]
-
-    ranges[index] = (TSRange) {
-      .start_point = ts_node_start_point(node),
-      .end_point = ts_node_end_point(node),
-      .start_byte = ts_node_start_byte(node),
-      .end_byte = ts_node_end_byte(node)
-    };
+    range_from_lua(L, ranges + index);
+    lua_pop(L, 1);
   }
 
   // This memcpies ranges, thus we can free it afterwards
