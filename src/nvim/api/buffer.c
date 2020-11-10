@@ -15,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
+#include "nvim/aucmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
@@ -521,6 +522,15 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
+
+  autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
+  autocmd_check_buffer_modified(buf);
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf) {
+      autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
+      autocmd_check_window_scrolled(wp);
+    }
+  }
 
 end:
   for (size_t i = 0; i < new_len; i++) {
@@ -1931,6 +1941,15 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 
   Array args = ARRAY_DICT_INIT;
   Object res = nlua_call_ref(fun, NULL, args, true, err);
+
+  autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
+  autocmd_check_buffer_modified(buf);
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf) {
+      autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
+      autocmd_check_window_scrolled(wp);
+    }
+  }
 
   aucmd_restbuf(&aco);
   try_end(err);

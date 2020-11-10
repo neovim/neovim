@@ -314,6 +314,9 @@ void nvim_win_set_option(uint64_t channel_id, Window window,
   }
 
   set_option_to(channel_id, win, SREQ_WIN, name, value, err);
+
+  if (strequal(name.data, "wrap"))
+    autocmd_check_cursor_moved(win, EVENT_CURSORMOVED);
 }
 
 /// Gets the window position in display cells. First position is zero.

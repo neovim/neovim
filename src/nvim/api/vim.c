@@ -20,6 +20,7 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
+#include "nvim/aucmd.h"
 #include "nvim/buffer.h"
 #include "nvim/context.h"
 #include "nvim/file_search.h"
@@ -1018,6 +1019,12 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
+
+  if (strequal(name.data, "wrap")) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      autocmd_check_window_scrolled(wp);
+    }
+  }
 }
 
 /// Echo a message.
