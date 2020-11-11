@@ -492,9 +492,6 @@ EXTERN int stdout_isatty INIT(= true);
 // volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
 
-// When started in restricted mode (-Z).
-EXTERN int restricted INIT(= false);
-
 /// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
 /// .vimrc in current directory.
 EXTERN int secure INIT(= false);

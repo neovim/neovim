@@ -1091,8 +1091,9 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
 {
   char_u *buffer = NULL;
 
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return NULL;
+  }
 
   // get a name for the temp file
   char_u *tempname = vim_tempname();

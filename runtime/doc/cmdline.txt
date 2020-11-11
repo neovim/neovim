@@ -973,7 +973,7 @@ name).  This is included for backwards compatibility with version 3.0, the
 
 Note: Where a file name is expected wildcards expansion is done.  On Unix the
 shell is used for this, unless it can be done internally (for speed).
-Unless in |restricted-mode|, backticks work also, like in >
+Backticks work also, like in >
 	:n `echo *.c`
 But expansion is only done if there are any wildcards before expanding the
 '%', '#', etc..  This avoids expanding wildcards inside a file name.  If you

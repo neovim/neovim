@@ -1503,10 +1503,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_(e_sandbox);
       goto doend;
     }
-    if (restricted != 0 && (ea.argt & RESTRICT)) {
-      errormsg = (char_u *)_("E981: Command not allowed in restricted mode");
-      goto doend;
-    }
     if (!MODIFIABLE(curbuf) && (ea.argt & MODIFY)
         // allow :put in terminals
         && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
@@ -6624,25 +6620,22 @@ static void ex_hide(exarg_T *eap)
 /// ":stop" and ":suspend": Suspend Vim.
 static void ex_stop(exarg_T *eap)
 {
-  // Disallow suspending in restricted mode (-Z)
-  if (!check_restricted()) {
-    if (!eap->forceit) {
-      autowrite_all();
-    }
-    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
-
-    // TODO(bfredl): the TUI should do this on suspend
-    ui_cursor_goto(Rows - 1, 0);
-    ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
-    ui_flush();
-    ui_call_suspend();  // call machine specific function
-
-    ui_flush();
-    maketitle();
-    resettitle();  // force updating the title
-    ui_refresh();  // may have resized window
-    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  if (!eap->forceit) {
+    autowrite_all();
   }
+  apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+
+  // TODO(bfredl): the TUI should do this on suspend
+  ui_cursor_goto(Rows - 1, 0);
+  ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
+  ui_flush();
+  ui_call_suspend();  // call machine specific function
+
+  ui_flush();
+  maketitle();
+  resettitle();  // force updating the title
+  ui_refresh();  // may have resized window
+  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
 // ":exit", ":xit" and ":wq": Write file and quite the current window.

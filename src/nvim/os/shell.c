@@ -150,11 +150,11 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     return FAIL;
   }
 
-  // Don't allow the use of backticks in secure and restricted mode.
-  if (secure || restricted) {
+  // Don't allow the use of backticks in secure.
+  if (secure) {
     for (i = 0; i < num_pat; i++) {
       if (vim_strchr(pat[i], '`') != NULL
-          && (check_restricted() || check_secure())) {
+          && (check_secure())) {
         return FAIL;
       }
     }

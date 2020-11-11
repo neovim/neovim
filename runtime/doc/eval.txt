@@ -5698,7 +5698,6 @@ libcall({libname}, {funcname}, {argument})
 		If {argument} is a number, it is passed to the function as an
 		int; if {argument} is a string, it is passed as a
 		null-terminated string.
-		This function will fail in |restricted-mode|.
 
 		libcall() allows you to write your own 'plug-in' extensions to
 		Vim without having to recompile the program.  It is NOT a
@@ -8804,7 +8803,6 @@ system({cmd} [, {input}])				*system()* *E677*
 		{cmd} is a string: 'shell' 'shellcmdflag' {cmd}
 
 		The resulting error code can be found in |v:shell_error|.
-		This function will fail in |restricted-mode|.
 
 		Note that any wrong value in the options mentioned above may
 		make the function fail.  It has also been reported to fail
