@@ -250,7 +250,7 @@ for i = 1, #functions do
         end
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, \
-          "Wrong type for argument '..j..', expecting '..param[1]..'");')
+          "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
