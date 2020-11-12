@@ -910,20 +910,18 @@ retry:
 
     /* "ucs-bom" means we need to check the first bytes of the file
      * for a BOM. */
-    if (STRCMP(fenc, ENC_UCSBOM) == 0)
+    if (STRCMP(fenc, ENC_UCSBOM) == 0) {
       fio_flags = FIO_UCSBOM;
-
-    /*
-     * Check if UCS-2/4 or Latin1 to UTF-8 conversion needs to be
-     * done.  This is handled below after read().  Prepare the
-     * fio_flags to avoid having to parse the string each time.
-     * Also check for Unicode to Latin1 conversion, because iconv()
-     * appears not to handle this correctly.  This works just like
-     * conversion to UTF-8 except how the resulting character is put in
-     * the buffer.
-     */
-    else if (enc_utf8 || STRCMP(p_enc, "latin1") == 0)
+    } else {
+      // Check if UCS-2/4 or Latin1 to UTF-8 conversion needs to be
+      // done.  This is handled below after read().  Prepare the
+      // fio_flags to avoid having to parse the string each time.
+      // Also check for Unicode to Latin1 conversion, because iconv()
+      // appears not to handle this correctly.  This works just like
+      // conversion to UTF-8 except how the resulting character is put in
+      // the buffer.
       fio_flags = get_fio_flags(fenc);
+    }
 
 
 
@@ -932,8 +930,7 @@ retry:
     if (fio_flags == 0
         && !did_iconv
         ) {
-      iconv_fd = (iconv_t)my_iconv_open(
-          enc_utf8 ? (char_u *)"utf-8" : p_enc, fenc);
+      iconv_fd = (iconv_t)my_iconv_open((char_u *)"utf-8", fenc);
     }
 # endif
 
@@ -1202,7 +1199,7 @@ retry:
           && (fio_flags == FIO_UCSBOM
               || (!curbuf->b_p_bomb
                   && tmpname == NULL
-                  && (*fenc == 'u' || (*fenc == NUL && enc_utf8))))) {
+                  && (*fenc == 'u' || *fenc == NUL)))) {
         char_u  *ccname;
         int blen;
 
@@ -1468,8 +1465,8 @@ retry:
         memmove(line_start, buffer, (size_t)linerest);
         size = (long)((ptr + real_size) - dest);
         ptr = dest;
-      } else if (enc_utf8 && !curbuf->b_p_bin) {
-        int incomplete_tail = FALSE;
+      } else if (!curbuf->b_p_bin) {
+        bool incomplete_tail = false;
 
         // Reading UTF-8: Check if the bytes are valid UTF-8.
         for (p = ptr;; p++) {
@@ -1486,15 +1483,16 @@ retry:
             // then.
             l = utf_ptr2len_len(p, todo);
             if (l > todo && !incomplete_tail) {
-              /* Avoid retrying with a different encoding when
-               * a truncated file is more likely, or attempting
-               * to read the rest of an incomplete sequence when
-               * we have already done so. */
-              if (p > ptr || filesize > 0)
-                incomplete_tail = TRUE;
-              /* Incomplete byte sequence, move it to conv_rest[]
-               * and try to read the rest of it, unless we've
-               * already done so. */
+              // Avoid retrying with a different encoding when
+              // a truncated file is more likely, or attempting
+              // to read the rest of an incomplete sequence when
+              // we have already done so.
+              if (p > ptr || filesize > 0) {
+                incomplete_tail = true;
+              }
+              // Incomplete byte sequence, move it to conv_rest[]
+              // and try to read the rest of it, unless we've
+              // already done so.
               if (p > ptr) {
                 conv_restlen = todo;
                 memmove(conv_rest, p, conv_restlen);
@@ -2165,8 +2163,8 @@ readfile_charconvert (
   else {
     close(*fdp);                /* close the input file, ignore errors */
     *fdp = -1;
-    if (eval_charconvert((char *) fenc, enc_utf8 ? "utf-8" : (char *) p_enc,
-                         (char *) fname, (char *) tmpname) == FAIL) {
+    if (eval_charconvert((char *)fenc, "utf-8",
+                         (char *)fname, (char *)tmpname) == FAIL) {
       errmsg = (char_u *)_("Conversion with 'charconvert' failed");
     }
     if (errmsg == NULL && (*fdp = os_open((char *)tmpname, O_RDONLY, 0)) < 0) {
@@ -3067,7 +3065,7 @@ nobackup:
   // Check if UTF-8 to UCS-2/4 or Latin1 conversion needs to be done.  Or
   // Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
   // Prepare the flags for it and allocate bw_conv_buf when needed.
-  if (converted && (enc_utf8 || STRCMP(p_enc, "latin1") == 0)) {
+  if (converted) {
     wb_flags = get_fio_flags(fenc);
     if (wb_flags & (FIO_UCS2 | FIO_UCS4 | FIO_UTF16 | FIO_UTF8)) {
       // Need to allocate a buffer to translate into.
@@ -3089,8 +3087,7 @@ nobackup:
 #  ifdef HAVE_ICONV
     // Use iconv() conversion when conversion is needed and it's not done
     // internally.
-    write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc,
-        enc_utf8 ? (char_u *)"utf-8" : p_enc);
+    write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc, (char_u *)"utf-8");
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
       /* We're going to use iconv(), allocate a buffer to convert in. */
       write_info.bw_conv_buflen = bufsize * ICONV_MULT;
@@ -3433,7 +3430,7 @@ restore_backup:
       // The file was written to a temp file, now it needs to be converted
       // with 'charconvert' to (overwrite) the output file.
       if (end != 0) {
-        if (eval_charconvert(enc_utf8 ? "utf-8" : (char *)p_enc, (char *)fenc,
+        if (eval_charconvert("utf-8", (char *)fenc,
                              (char *)wfname, (char *)fname) == FAIL) {
           write_info.bw_conv_error = true;
           end = 0;
@@ -4189,7 +4186,7 @@ static bool need_conversion(const char_u *fenc)
 
   /* Encodings differ.  However, conversion is not needed when 'enc' is any
    * Unicode encoding and the file is UTF-8. */
-  return !(enc_utf8 && fenc_flags == FIO_UTF8);
+  return !(fenc_flags == FIO_UTF8);
 }
 
 /// Return the FIO_ flags needed for the internal conversion if 'name' was

@@ -2096,7 +2096,7 @@ static int command_line_handle_key(CommandLineState *s)
     s->do_abbr = false;                   // don't do abbreviation now
     ccline.special_char = NUL;
     // may need to remove ^ when composing char was typed
-    if (enc_utf8 && utf_iscomposing(s->c) && !cmd_silent) {
+    if (utf_iscomposing(s->c) && !cmd_silent) {
       if (ui_has(kUICmdline)) {
         // TODO(bfredl): why not make unputcmdline also work with true?
         unputcmdline();
@@ -2143,9 +2143,8 @@ static int command_line_handle_key(CommandLineState *s)
   if (s->do_abbr && (IS_SPECIAL(s->c) || !vim_iswordc(s->c))
       // Add ABBR_OFF for characters above 0x100, this is
       // what check_abbr() expects.
-      && (ccheck_abbr((has_mbyte && s->c >= 0x100) ?
-          (s->c + ABBR_OFF) : s->c)
-        || s->c == Ctrl_RSB)) {
+      && (ccheck_abbr((s->c >= 0x100) ? (s->c + ABBR_OFF) : s->c)
+          || s->c == Ctrl_RSB)) {
     return command_line_changed(s);
   }
 
@@ -2254,7 +2253,7 @@ static int command_line_changed(CommandLineState *s)
     may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
   }
 
-  if (cmdmsg_rl || (p_arshape && !p_tbidi && enc_utf8)) {
+  if (cmdmsg_rl || (p_arshape && !p_tbidi)) {
     // Always redraw the whole command line to fix shaping and
     // right-left typing.  Not efficient, but it works.
     // Do it only when there are no characters left to read
@@ -3139,11 +3138,9 @@ static void draw_cmdline(int start, int len)
   if (cmdline_star > 0) {
     for (int i = 0; i < len; i++) {
       msg_putchar('*');
-      if (has_mbyte) {
-        i += (*mb_ptr2len)(ccline.cmdbuff + start + i) - 1;
-      }
+      i += utfc_ptr2len(ccline.cmdbuff + start + i) - 1;
     }
-  } else if (p_arshape && !p_tbidi && enc_utf8 && len > 0) {
+  } else if (p_arshape && !p_tbidi && len > 0) {
     bool do_arabicshape = false;
     int mb_l;
     for (int i = start; i < start + len; i += mb_l) {
@@ -3439,32 +3436,31 @@ void put_on_cmdline(char_u *str, int len, int redraw)
         (size_t)(ccline.cmdlen - ccline.cmdpos));
     ccline.cmdlen += len;
   } else {
-    if (has_mbyte) {
-      /* Count nr of characters in the new string. */
-      m = 0;
-      for (i = 0; i < len; i += (*mb_ptr2len)(str + i))
-        ++m;
-      /* Count nr of bytes in cmdline that are overwritten by these
-       * characters. */
-      for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
-           i += (*mb_ptr2len)(ccline.cmdbuff + i))
-        --m;
-      if (i < ccline.cmdlen) {
-        memmove(ccline.cmdbuff + ccline.cmdpos + len,
-            ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
-        ccline.cmdlen += ccline.cmdpos + len - i;
-      } else
-        ccline.cmdlen = ccline.cmdpos + len;
-    } else if (ccline.cmdpos + len > ccline.cmdlen)
+    // Count nr of characters in the new string.
+    m = 0;
+    for (i = 0; i < len; i += utfc_ptr2len(str + i)) {
+      m++;
+    }
+    // Count nr of bytes in cmdline that are overwritten by these
+    // characters.
+    for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
+         i += utfc_ptr2len(ccline.cmdbuff + i)) {
+      m--;
+    }
+    if (i < ccline.cmdlen) {
+      memmove(ccline.cmdbuff + ccline.cmdpos + len,
+              ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
+      ccline.cmdlen += ccline.cmdpos + len - i;
+    } else {
       ccline.cmdlen = ccline.cmdpos + len;
+    }
   }
   memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
 
-  if (enc_utf8) {
-    /* When the inserted text starts with a composing character,
-     * backup to the character before it.  There could be two of them.
-     */
+  {
+    // When the inserted text starts with a composing character,
+    // backup to the character before it.  There could be two of them.
     i = 0;
     c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
     while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
@@ -3515,23 +3511,19 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   for (i = 0; i < len; i++) {
     c = cmdline_charsize(ccline.cmdpos);
     // count ">" for a double-wide char that doesn't fit.
-    if (has_mbyte) {
-      correct_screencol(ccline.cmdpos, c, &ccline.cmdspos);
-    }
+    correct_screencol(ccline.cmdpos, c, &ccline.cmdspos);
     // Stop cursor at the end of the screen, but do increment the
     // insert position, so that entering a very long command
     // works, even though you can't see it.
     if (ccline.cmdspos + c < m) {
       ccline.cmdspos += c;
     }
-    if (has_mbyte) {
-      c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
-      if (c > len - i - 1) {
-        c = len - i - 1;
-      }
-      ccline.cmdpos += c;
-      i += c;
+    c = utfc_ptr2len(ccline.cmdbuff + ccline.cmdpos) - 1;
+    if (c > len - i - 1) {
+      c = len - i - 1;
     }
+    ccline.cmdpos += c;
+    i += c;
     ccline.cmdpos++;
   }
 
@@ -3676,11 +3668,7 @@ void cmdline_paste_str(char_u *s, int literally)
       if (cv == Ctrl_V && s[1]) {
         s++;
       }
-      if (has_mbyte) {
-        c = mb_cptr2char_adv((const char_u **)&s);
-      } else {
-        c = *s++;
-      }
+      c = mb_cptr2char_adv((const char_u **)&s);
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
           || (c == Ctrl_BSL && *s == Ctrl_N)) {
