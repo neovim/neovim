@@ -30,7 +30,7 @@ env:
     # Nvim log file.
     - NVIM_LOG_FILE="$BUILD_DIR/.nvimlog"
     # Default CMake flags.
-    - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
+    - CMAKE_FLAGS="-DCI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DBUSTED_OUTPUT_TYPE=nvim
