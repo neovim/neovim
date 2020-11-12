@@ -1725,14 +1725,15 @@ int do_set(
 #endif
                     )
                   arg++;                        // remove backslash
-                if (has_mbyte
-                    && (i = (*mb_ptr2len)(arg)) > 1) {
+                i = utfc_ptr2len(arg);
+                if (i > 1) {
                   // copy multibyte char
                   memmove(s, arg, (size_t)i);
                   arg += i;
                   s += i;
-                } else
+                } else {
                   *s++ = *arg++;
+                }
               }
               *s = NUL;
 
@@ -2864,39 +2865,26 @@ ambw_end:
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_mps) {  // 'matchpairs'
-    if (has_mbyte) {
-      for (p = *varp; *p != NUL; p++) {
-        int x2 = -1;
-        int x3 = -1;
+    for (p = *varp; *p != NUL; p++) {
+      int x2 = -1;
+      int x3 = -1;
 
-        if (*p != NUL) {
-          p += mb_ptr2len(p);
-        }
-        if (*p != NUL) {
-          x2 = *p++;
-        }
-        if (*p != NUL) {
-          x3 = utf_ptr2char(p);
-          p += mb_ptr2len(p);
-        }
-        if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
-          errmsg = e_invarg;
-          break;
-        }
-        if (*p == NUL) {
-          break;
-        }
+      if (*p != NUL) {
+        p += utfc_ptr2len(p);
       }
-    } else {
-      // Check for "x:y,x:y"
-      for (p = *varp; *p != NUL; p += 4) {
-        if (p[1] != ':' || p[2] == NUL || (p[3] != NUL && p[3] != ',')) {
-          errmsg = e_invarg;
-          break;
-        }
-        if (p[3] == NUL) {
-          break;
-        }
+      if (*p != NUL) {
+        x2 = *p++;
+      }
+      if (*p != NUL) {
+        x3 = utf_ptr2char(p);
+        p += utfc_ptr2len(p);
+      }
+      if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
+        errmsg = e_invarg;
+        break;
+      }
+      if (*p == NUL) {
+        break;
       }
     }
   } else if (gvarp == &p_com) {  // 'comments'

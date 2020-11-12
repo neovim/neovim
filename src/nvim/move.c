@@ -717,11 +717,9 @@ int curwin_col_off2(void)
   return win_col_off2(curwin);
 }
 
-/*
- * compute curwin->w_wcol and curwin->w_virtcol.
- * Also updates curwin->w_wrow and curwin->w_cline_row.
- * Also updates curwin->w_leftcol.
- */
+// Compute curwin->w_wcol and curwin->w_virtcol.
+// Also updates curwin->w_wrow and curwin->w_cline_row.
+// Also updates curwin->w_leftcol.
 void curs_columns(
     int may_scroll                 /* when true, may scroll horizontally */
 )

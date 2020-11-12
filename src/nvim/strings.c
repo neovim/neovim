@@ -94,8 +94,8 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars,
    */
   size_t length = 1;                    // count the trailing NUL
   for (const char_u *p = string; *p; p++) {
-    size_t l;
-    if (has_mbyte && (l = (size_t)(*mb_ptr2len)(p)) > 1) {
+    const size_t l = (size_t)(utfc_ptr2len(p));
+    if (l > 1) {
       length += l;                      // count a multibyte char
       p += l - 1;
       continue;
@@ -108,8 +108,8 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars,
   char_u *escaped_string = xmalloc(length);
   char_u *p2 = escaped_string;
   for (const char_u *p = string; *p; p++) {
-    size_t l;
-    if (has_mbyte && (l = (size_t)(*mb_ptr2len)(p)) > 1) {
+    const size_t l = (size_t)(utfc_ptr2len(p));
+    if (l > 1) {
       memcpy(p2, p, l);
       p2 += l;
       p += l - 1;                     /* skip multibyte char  */
@@ -349,7 +349,7 @@ char *strcase_save(const char *const orig, bool upper)
     // thus it's OK to do another malloc()/free().
     int newl = utf_char2len(uc);
     if (newl != l) {
-      // TODO(philix): use xrealloc() in strup_save()
+      // TODO(philix): use xrealloc() in strcase_save()
       char *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
       memcpy(s, res, (size_t)(p - res));
       STRCPY(s + (p - res) + newl, p + l);
