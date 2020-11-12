@@ -103,7 +103,16 @@ function TSHighlighter:get_hl_from_capture(capture)
   else
     -- Default to false to avoid recomputing
     local hl = TSHighlighter.hl_map[name]
-    return hl and a.nvim_get_hl_id_by_name(hl) or 0
+
+    if not hl then return 0 end
+
+    local scoped_hl = vim.fn.hlID(self.parser.lang .. hl)
+
+    if scoped_hl ~= 0 then
+      return scoped_hl
+    else
+      return a.nvim_get_hl_id_by_name(hl)
+    end
   end
 end
 

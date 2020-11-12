@@ -643,6 +643,54 @@ static int nlua_schedule(lua_State *const lstate)
     ]] }
   end)
 
+  it("supports highlighting with custom highlight groups", function()
+    if not check_parser() then return end
+
+    local screen = Screen.new(65, 18)
+    screen:attach()
+    screen:set_default_attr_ids({ {bold = true, foreground = Screen.colors.SeaGreen4} })
+
+    insert(test_text)
+
+    screen:expect{ grid= [[
+      int width = INT_MAX, height = INT_MAX;                         |
+      bool ext_widgets[kUIExtCount];                                 |
+      for (UIExtension i = 0; (int)i < kUIExtCount; i++) {           |
+        ext_widgets[i] = true;                                       |
+      }                                                              |
+                                                                     |
+      bool inclusive = ui_override();                                |
+      for (size_t i = 0; i < ui_count; i++) {                        |
+        UI *ui = uis[i];                                             |
+        width = MIN(ui->width, width);                               |
+        height = MIN(ui->height, height);                            |
+        foo = BAR(ui->bazaar, bazaar);                               |
+        for (UIExtension j = 0; (int)j < kUIExtCount; j++) {         |
+          ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+        }                                                            |
+      }                                                              |
+    ^}                                                                |
+                                                                     |
+    ]] }
+
+    exec_lua([[
+    vim.cmd("highlight link cType Normal")
+    parser = vim.treesitter.get_parser(0, "c")
+    query = vim.treesitter.parse_query("c", "(declaration) @decl")
+
+    local nodes = {}
+    for _, node in query:iter_captures(parser:parse():root(), 0, 0, 19) do
+      table.insert(nodes, node)
+    end
+
+    parser:set_included_ranges(nodes)
+
+    local hl = vim.treesitter.highlighter.new(parser, "(identifier) @type")
+    ]])
+
+    screen:expect{ unchanged=true }
+  end)
+
   it('inspects language', function()
     if not check_parser() then return end
 
