@@ -616,7 +616,11 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
         break;
       }
     }
-    i = (int)(fp - (fold_T *)gap->ga_data);
+    if (gap->ga_len == 0) {
+      i = 0;
+    } else {
+      i = (int)(fp - (fold_T *)gap->ga_data);
+    }
   }
 
   ga_grow(gap, 1);

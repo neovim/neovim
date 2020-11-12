@@ -1970,10 +1970,20 @@ bool has_nvim_version(const char *const version_str)
 ///
 /// @return true if patch `n` has been included.
 bool has_vim_patch(int n)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (int i = 0; included_patches[i] != 0; i++) {
-    if (included_patches[i] == n) {
+  // Perform a binary search.
+  int l = 0;
+  int h = (int)(ARRAY_SIZE(included_patches)) - 1;
+  while (l < h) {
+    const int m = (l + h) / 2;
+    if (included_patches[m] == n) {
       return true;
+    }
+    if (included_patches[m] < n) {
+      h = m;
+    } else {
+      l = m + 1;
     }
   }
   return false;
