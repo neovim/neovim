@@ -1053,7 +1053,7 @@ func Test_search_Ctrl_L_combining()
     " ' ̇' U+0307 Dec:775 COMBINING DOT ABOVE &#x307; /\%u307\Z "\u0307"
     " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323" 
   " Those should also appear on the commandline
-  if !has('multi_byte') || !exists('+incsearch')
+  if !exists('+incsearch')
     return
   endif
   call Cmdline3_prep()

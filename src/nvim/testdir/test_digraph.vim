@@ -479,9 +479,6 @@ endfunc
 
 func Test_show_digraph_cp1251()
   throw 'skipped: Nvim supports ''utf8'' encoding only'
-  if !has('multi_byte')
-    return
-  endif
   new
   set encoding=cp1251
   call Put_Dig("='")
