@@ -563,9 +563,7 @@ void AppendToRedobuffLit(const char_u *str, int len)
 
     // Handle a special or multibyte character.
     // Composing chars separately are handled separately.
-    const int c = (has_mbyte
-                   ? mb_cptr2char_adv((const char_u **)&s)
-                   : (uint8_t)(*s++));
+    const int c = mb_cptr2char_adv((const char_u **)&s);
     if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
     }
@@ -684,15 +682,16 @@ static int read_redo(bool init, bool old_redo)
   if ((c = *p) == NUL) {
     return c;
   }
-  /* Reverse the conversion done by add_char_buff() */
-  /* For a multi-byte character get all the bytes and return the
-   * converted character. */
-  if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
+  // Reverse the conversion done by add_char_buff() */
+  // For a multi-byte character get all the bytes and return the
+  // converted character.
+  if (c != K_SPECIAL || p[1] == KS_SPECIAL) {
     n = MB_BYTE2LEN_CHECK(c);
-  else
+  } else {
     n = 1;
-  for (i = 0;; ++i) {
-    if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
+  }
+  for (i = 0;; i++) {
+    if (c == K_SPECIAL) {  // special key or escaped K_SPECIAL
       c = TO_SPECIAL(p[1], p[2]);
       p += 2;
     }
@@ -2161,14 +2160,11 @@ static int vgetorpeek(bool advance)
                 col = vcol = curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
                 while (col < curwin->w_cursor.col) {
-                  if (!ascii_iswhite(ptr[col]))
+                  if (!ascii_iswhite(ptr[col])) {
                     curwin->w_wcol = vcol;
-                  vcol += lbr_chartabsize(ptr, ptr + col,
-                      (colnr_T)vcol);
-                  if (has_mbyte)
-                    col += (*mb_ptr2len)(ptr + col);
-                  else
-                    ++col;
+                  }
+                  vcol += lbr_chartabsize(ptr, ptr + col, (colnr_T)vcol);
+                  col += utfc_ptr2len(ptr + col);
                 }
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
@@ -2813,33 +2809,23 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
       // Otherwise we won't be able to find the start of it in a
       // vi-compatible way.
       //
-      if (has_mbyte) {
-        int first, last;
-        int same = -1;
+      int same = -1;
 
-        first = vim_iswordp(lhs);
-        last = first;
-        p = lhs + (*mb_ptr2len)(lhs);
-        n = 1;
-        while (p < lhs + len) {
-          n++;                                  // nr of (multi-byte) chars
-          last = vim_iswordp(p);                // type of last char
-          if (same == -1 && last != first) {
-            same = n - 1;                       // count of same char type
-          }
-          p += (*mb_ptr2len)(p);
+      const int first = vim_iswordp(lhs);
+      int last = first;
+      p = lhs + utfc_ptr2len(lhs);
+      n = 1;
+      while (p < lhs + len) {
+        n++;                                  // nr of (multi-byte) chars
+        last = vim_iswordp(p);                // type of last char
+        if (same == -1 && last != first) {
+          same = n - 1;                       // count of same char type
         }
-        if (last && n > 2 && same >= 0 && same < n - 1) {
-          retval = 1;
-          goto theend;
-        }
-      } else if (vim_iswordc(lhs[len - 1])) {  // ends in keyword char
-        for (n = 0; n < len - 2; n++) {
-          if (vim_iswordc(lhs[n]) != vim_iswordc(lhs[len - 2])) {
-            retval = 1;
-            goto theend;
-          }
-        }  // for
+        p += (*mb_ptr2len)(p);
+      }
+      if (last && n > 2 && same >= 0 && same < n - 1) {
+        retval = 1;
+        goto theend;
       }
       // An abbreviation cannot contain white space.
       for (n = 0; n < len; n++) {
@@ -3700,25 +3686,23 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   return count == 0 ? FAIL : OK;
 }
 
-/*
- * Check for an abbreviation.
- * Cursor is at ptr[col].
- * When inserting, mincol is where insert started.
- * For the command line, mincol is what is to be skipped over.
- * "c" is the character typed before check_abbr was called.  It may have
- * ABBR_OFF added to avoid prepending a CTRL-V to it.
- *
- * Historic vi practice: The last character of an abbreviation must be an id
- * character ([a-zA-Z0-9_]). The characters in front of it must be all id
- * characters or all non-id characters. This allows for abbr. "#i" to
- * "#include".
- *
- * Vim addition: Allow for abbreviations that end in a non-keyword character.
- * Then there must be white space before the abbr.
- *
- * return TRUE if there is an abbreviation, FALSE if not
- */
-int check_abbr(int c, char_u *ptr, int col, int mincol)
+// Check for an abbreviation.
+// Cursor is at ptr[col].
+// When inserting, mincol is where insert started.
+// For the command line, mincol is what is to be skipped over.
+// "c" is the character typed before check_abbr was called.  It may have
+// ABBR_OFF added to avoid prepending a CTRL-V to it.
+//
+// Historic vi practice: The last character of an abbreviation must be an id
+// character ([a-zA-Z0-9_]). The characters in front of it must be all id
+// characters or all non-id characters. This allows for abbr. "#i" to
+// "#include".
+//
+// Vim addition: Allow for abbreviations that end in a non-keyword character.
+// Then there must be white space before the abbr.
+//
+// Return true if there is an abbreviation, false if not.
+bool check_abbr(int c, char_u *ptr, int col, int mincol)
 {
   int len;
   int scol;                     /* starting column of the abbr. */
@@ -3727,36 +3711,36 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
   char_u tb[MB_MAXBYTES + 4];
   mapblock_T  *mp;
   mapblock_T  *mp2;
-  int clen = 0;                 /* length in characters */
-  int is_id = TRUE;
-  int vim_abbr;
+  int clen = 0;                 // length in characters
+  bool is_id = true;
 
-  if (typebuf.tb_no_abbr_cnt)   /* abbrev. are not recursive */
-    return FALSE;
+  if (typebuf.tb_no_abbr_cnt) {  // abbrev. are not recursive
+    return false;
+  }
 
-  /* no remapping implies no abbreviation, except for CTRL-] */
-  if ((KeyNoremap & (RM_NONE|RM_SCRIPT)) != 0 && c != Ctrl_RSB)
-    return FALSE;
+  // no remapping implies no abbreviation, except for CTRL-]
+  if ((KeyNoremap & (RM_NONE|RM_SCRIPT)) != 0 && c != Ctrl_RSB) {
+    return false;
+  }
 
-  /*
-   * Check for word before the cursor: If it ends in a keyword char all
-   * chars before it must be keyword chars or non-keyword chars, but not
-   * white space. If it ends in a non-keyword char we accept any characters
-   * before it except white space.
-   */
-  if (col == 0)                                 /* cannot be an abbr. */
-    return FALSE;
+  // Check for word before the cursor: If it ends in a keyword char all
+  // chars before it must be keyword chars or non-keyword chars, but not
+  // white space. If it ends in a non-keyword char we accept any characters
+  // before it except white space.
+  if (col == 0) {  // cannot be an abbr.
+    return false;
+  }
 
-  if (has_mbyte) {
-    char_u *p;
-
-    p = mb_prevptr(ptr, ptr + col);
-    if (!vim_iswordp(p))
-      vim_abbr = TRUE;                          /* Vim added abbr. */
-    else {
-      vim_abbr = FALSE;                         /* vi compatible abbr. */
-      if (p > ptr)
+  {
+    bool vim_abbr;
+    char_u *p = mb_prevptr(ptr, ptr + col);
+    if (!vim_iswordp(p)) {
+      vim_abbr = true;    // Vim added abbr.
+    } else {
+      vim_abbr = false;   // vi compatible abbr.
+      if (p > ptr) {
         is_id = vim_iswordp(mb_prevptr(ptr, p));
+      }
     }
     clen = 1;
     while (p > ptr + mincol) {
@@ -3768,17 +3752,6 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       ++clen;
     }
     scol = (int)(p - ptr);
-  } else {
-    if (!vim_iswordc(ptr[col - 1]))
-      vim_abbr = TRUE;                          /* Vim added abbr. */
-    else {
-      vim_abbr = FALSE;                         /* vi compatible abbr. */
-      if (col > 1)
-        is_id = vim_iswordc(ptr[col - 2]);
-    }
-    for (scol = col - 1; scol > 0 && !ascii_isspace(ptr[scol - 1])
-         && (vim_abbr || is_id == vim_iswordc(ptr[scol - 1])); --scol)
-      ;
   }
 
   if (scol < mincol)
@@ -3866,14 +3839,14 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
 
       tb[0] = Ctrl_H;
       tb[1] = NUL;
-      if (has_mbyte)
-        len = clen;             /* Delete characters instead of bytes */
-      while (len-- > 0)                 /* delete the from string */
-        (void)ins_typebuf(tb, 1, 0, TRUE, mp->m_silent);
-      return TRUE;
+      len = clen;  // Delete characters instead of bytes
+      while (len-- > 0) {  // delete the from string
+        (void)ins_typebuf(tb, 1, 0, true, mp->m_silent);
+      }
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*

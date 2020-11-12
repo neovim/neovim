@@ -6151,11 +6151,7 @@ file_name_in_line (
       // Skip over the "\" in "\ ".
       ++len;
     }
-    if (has_mbyte) {
-      len += (size_t)(*mb_ptr2len)(ptr + len);
-    } else {
-      ++len;
-    }
+    len += (size_t)(utfc_ptr2len(ptr + len));
   }
 
   /*
