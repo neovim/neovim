@@ -797,8 +797,7 @@ static int get_equi_class(char_u **pp)
  */
 static void reg_equi_class(int c)
 {
-  if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
-      || STRCMP(p_enc, "iso-8859-15") == 0) {
+  {
     switch (c) {
       // Do not use '\300' style, it results in a negative number.
     case 'A': case 0xc0: case 0xc1: case 0xc2:
@@ -1141,7 +1140,7 @@ static char_u *skip_anyof(char_u *p)
   if (*p == ']' || *p == '-')
     ++p;
   while (*p != NUL && *p != ']') {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
+    if ((l = (*mb_ptr2len)(p)) > 1) {
       p += l;
     } else if (*p == '-')  {
       p++;
@@ -1876,7 +1875,7 @@ static char_u *regatom(int *flagp)
       EMSG_RET_NULL(_("E63: invalid use of \\_"));
     /* When '.' is followed by a composing char ignore the dot, so that
      * the composing char is matched here. */
-    if (enc_utf8 && c == Magic('.') && utf_iscomposing(peekchr())) {
+    if (c == Magic('.') && utf_iscomposing(peekchr())) {
       c = getchr();
       goto do_multibyte;
     }
@@ -2242,11 +2241,7 @@ collection:
               if (*regparse == '[')
                 endc = get_coll_element(&regparse);
               if (endc == 0) {
-                if (has_mbyte) {
-                  endc = mb_ptr2char_adv((const char_u **)&regparse);
-                } else {
-                  endc = *regparse++;
-                }
+                endc = mb_ptr2char_adv((const char_u **)&regparse);
               }
 
               /* Handle \o40, \x20 and \u20AC style sequences */
@@ -2256,8 +2251,8 @@ collection:
               if (startc > endc) {
                 EMSG_RET_NULL(_(e_reverse_range));
               }
-              if (has_mbyte && ((*mb_char2len)(startc) > 1
-                                || (*mb_char2len)(endc) > 1)) {
+              if ((*mb_char2len)(startc) > 1
+                  || (*mb_char2len)(endc) > 1) {
                 // Limit to a range of 256 chars
                 if (endc > startc + 256) {
                   EMSG_RET_NULL(_(e_large_class));
@@ -2502,9 +2497,9 @@ do_multibyte:
                                    && !one_exactly
                                    && !is_Magic(c))); ++len) {
       c = no_Magic(c);
-      if (has_mbyte) {
+      {
         regmbc(c);
-        if (enc_utf8) {
+        {
           int l;
 
           /* Need to get composing character too. */
@@ -2516,8 +2511,7 @@ do_multibyte:
             skipchr();
           }
         }
-      } else
-        regc(c);
+      }
       c = getchr();
     }
     ungetchr();
@@ -4248,15 +4242,13 @@ static bool regmatch(
           opnd = OPERAND(scan);
           // Inline the first byte, for speed.
           if (*opnd != *rex.input
-              && (!rex.reg_ic
-                  || (!enc_utf8
-                      && mb_tolower(*opnd) != mb_tolower(*rex.input)))) {
+              && (!rex.reg_ic)) {
             status = RA_NOMATCH;
           } else if (*opnd == NUL) {
             // match empty string always works; happens when "~" is
             // empty.
           } else {
-            if (opnd[1] == NUL && !(enc_utf8 && rex.reg_ic)) {
+            if (opnd[1] == NUL && !rex.reg_ic) {
               len = 1;  // matched a single byte above
             } else {
               // Need to match first byte again for multi-byte.
@@ -4267,7 +4259,7 @@ static bool regmatch(
             }
             // Check for following composing character, unless %C
             // follows (skips over all composing chars).
-            if (status != RA_NOMATCH && enc_utf8
+            if (status != RA_NOMATCH
                 && UTF_COMPOSINGLIKE(rex.input, rex.input + len)
                 && !rex.reg_icombine
                 && OP(next) != RE_COMPOSING) {
@@ -4336,7 +4328,7 @@ static bool regmatch(
           break;
 
         case RE_COMPOSING:
-          if (enc_utf8) {
+          {
             // Skip composing characters.
             while (utf_iscomposing(utf_ptr2char(rex.input))) {
               MB_CPTR_ADV(rex.input);
@@ -5366,9 +5358,10 @@ do_class:
         if (got_int) {
           break;
         }
-      } else if (has_mbyte && (l = (*mb_ptr2len)(scan)) > 1) {
-        if (testval != 0)
+      } else if ((l = (*mb_ptr2len)(scan)) > 1) {
+        if (testval != 0) {
           break;
+        }
         scan += l;
       } else if ((class_tab[*scan] & mask) == testval) {
         scan++;
@@ -5481,7 +5474,7 @@ do_class:
     /* Safety check (just in case 'encoding' was changed since
      * compiling the program). */
     if ((len = (*mb_ptr2len)(opnd)) > 1) {
-      if (rex.reg_ic && enc_utf8) {
+      if (rex.reg_ic) {
         cf = utf_fold(utf_ptr2char(opnd));
       }
       while (count < maxcount && (*mb_ptr2len)(scan) >= len) {
@@ -5490,7 +5483,7 @@ do_class:
             break;
           }
         }
-        if (i < len && (!rex.reg_ic || !enc_utf8
+        if (i < len && (!rex.reg_ic
                         || utf_fold(utf_ptr2char(scan)) != cf)) {
           break;
         }
@@ -6383,7 +6376,7 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
   }
 
   // if it failed and it's utf8 and we want to combineignore:
-  if (result != 0 && enc_utf8 && rex.reg_icombine) {
+  if (result != 0 && rex.reg_icombine) {
     char_u  *str1, *str2;
     int c1, c2, c11, c12;
     int junk;
@@ -6501,10 +6494,10 @@ char_u *regtilde(char_u *source, int magic)
         STRMOVE(p, p + 2);              /* remove '\~' */
       --p;
     } else {
-      if (*p == '\\' && p[1])                   /* skip escaped characters */
-        ++p;
-      if (has_mbyte)
-        p += (*mb_ptr2len)(p) - 1;
+      if (*p == '\\' && p[1]) {         // skip escaped characters
+        p++;
+      }
+      p += (*mb_ptr2len)(p) - 1;
     }
   }
 
@@ -6940,7 +6933,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                 else             /* just copy */
                   cc = c;
 
-                if (has_mbyte) {
+                {
                   int l;
 
                   // Copy composing characters separately, one
@@ -6953,8 +6946,6 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                     utf_char2bytes(cc, dst);
                   }
                   dst += utf_char2len(cc) - 1;
-                } else if (copy) {
-                  *dst = cc;
                 }
                 dst++;
               }
