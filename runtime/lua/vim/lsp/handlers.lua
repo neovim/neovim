@@ -17,6 +17,20 @@ local function err_message(...)
   api.nvim_command("redraw")
 end
 
+--@private
+--- Do quickfix behavior from a configuratin
+--@param config (table)
+--    - copen_cmd (string):
+--        - Command to open the quickfix window
+--    - enter (boolean):
+--        - Enter the previous window after copen_cmd
+local function _handle_quickfix_config(config)
+  api.nvim_command(config.copen_cmd)
+  if config.enter then
+    api.nvim_command("wincmd p")
+  end
+end
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 M['workspace/executeCommand'] = function(err, _)
   if err then
@@ -76,27 +90,46 @@ M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end
 
+--- LSP method textDocument/references
+--@param result (list of Symbols) LSP method name
+--@param config (table)
+--    - copen_cmd (string):
+--        - Command to open the quickfix window
+--    - enter (boolean):
+--        - Enter the previous window after copen_cmd
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = function(_, _, result)
+M['textDocument/references'] = function(_, _, result, _, _, config)
+  config = vim.lsp._with_extend('vim.lsp.handlers["textDocument/references"]', {
+    enter = true,
+    copen_cmd = 'botright copen',
+  }, config)
+
   if not result then return end
   util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+  _handle_quickfix_config(config)
 end
 
 --@private
 --- Prints given list of symbols to the quickfix list.
---@param _ (not used)
---@param _ (not used)
 --@param result (list of Symbols) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local symbol_handler = function(_, _, result, _, bufnr)
+--@param bufnr (integer) buffer id
+--@param config (table)
+--    - copen_cmd (string):
+--        - Command to open the quickfix window
+--    - enter (boolean):
+--        - Enter the previous window after copen_cmd
+local symbol_handler = function(_, _, result, _, bufnr, _, config)
+  config = vim.lsp._with_extend('vim.lsp.handlers.symbol_handler', {
+    enter = true,
+    copen_cmd = 'botright copen',
+  }, config)
+
   if not result or vim.tbl_isempty(result) then return end
 
   util.set_qflist(util.symbols_to_items(result, bufnr))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+  _handle_quickfix_config(config)
 end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
 M['textDocument/documentSymbol'] = symbol_handler
@@ -157,11 +190,20 @@ end
 
 --@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
---@param _ (not used)
 --@param method (string) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local function location_handler(_, method, result)
+--@param config (table)
+--    - copen_cmd (string):
+--        - Command to open the quickfix window
+--    - enter (boolean):
+--        - Enter the previous window after copen_cmd
+local function location_handler(_, method, result, _, _, config)
+  config = vim.lsp._with_extend('vim.lsp.handlers.location_handler', {
+    enter = true,
+    copen_cmd = 'botright copen',
+  }, config)
+
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(method, 'No location found')
     return nil
@@ -175,8 +217,7 @@ local function location_handler(_, method, result)
 
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
-      api.nvim_command("copen")
-      api.nvim_command("wincmd p")
+      _handle_quickfix_config(config)
     end
   else
     util.jump_to_location(result)
@@ -226,7 +267,12 @@ end
 --@returns `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
 --@returns `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
 local make_call_hierarchy_handler = function(direction)
-  return function(_, _, result)
+  return function(_, _, result, _, _, config)
+    config = vim.lsp._with_extend('vim.lsp.handlers.hierarchy_handler', {
+      enter = true,
+      copen_cmd = 'botright copen',
+    }, config)
+
     if not result then return end
     local items = {}
     for _, call_hierarchy_call in pairs(result) do
@@ -241,8 +287,7 @@ local make_call_hierarchy_handler = function(direction)
       end
     end
     util.set_qflist(items)
-    api.nvim_command("copen")
-    api.nvim_command("wincmd p")
+    _handle_quickfix_config(config)
   end
 end
 
