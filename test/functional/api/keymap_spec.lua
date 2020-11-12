@@ -751,7 +751,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   end
 
   it('rejects negative bufnr values', function()
-    eq('Wrong type for argument 1, expecting Buffer',
+    eq('Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
       pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {}))
   end)
 
