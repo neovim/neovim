@@ -36,7 +36,7 @@
 #define PERTURB_SHIFT 5
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "hashtab.c.generated.h"
+#include "hashtab.c.generated.h"
 #endif
 
 char hash_removed;
@@ -102,7 +102,8 @@ hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
 ///
 ///         @warning Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key,
+hashitem_T *hash_find_len(const hashtab_T *const ht,
+                          const char *const key,
                           const size_t len)
 {
   return hash_lookup(ht, key, len, hash_hash_len(key, len));
@@ -120,7 +121,8 @@ hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key,
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
 hashitem_T *hash_lookup(const hashtab_T *const ht,
-                        const char *const key, const size_t key_len,
+                        const char *const key,
+                        const size_t key_len,
                         const hash_T hash)
 {
 #ifdef HT_DEBUG
@@ -141,8 +143,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht,
   hashitem_T *freeitem = NULL;
   if (hi->hi_key == HI_KEY_REMOVED) {
     freeitem = hi;
-  } else if ((hi->hi_hash == hash)
-             && (STRNCMP(hi->hi_key, key, key_len) == 0)
+  } else if ((hi->hi_hash == hash) && (STRNCMP(hi->hi_key, key, key_len) == 0)
              && hi->hi_key[key_len] == NUL) {
     return hi;
   }
@@ -166,8 +167,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht,
       return freeitem == NULL ? hi : freeitem;
     }
 
-    if ((hi->hi_hash == hash)
-        && (hi->hi_key != HI_KEY_REMOVED)
+    if ((hi->hi_hash == hash) && (hi->hi_key != HI_KEY_REMOVED)
         && (STRNCMP(hi->hi_key, key, key_len) == 0)
         && hi->hi_key[key_len] == NUL) {
       return hi;
@@ -335,18 +335,17 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   }
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
-  bool keep_smallarray = newarray_is_small
-    && ht->ht_array == ht->ht_smallarray;
+  bool keep_smallarray = newarray_is_small && ht->ht_array == ht->ht_smallarray;
 
   // Make sure that oldarray and newarray do not overlap,
   // so that copying is possible.
   hashitem_T temparray[HT_INIT_SIZE];
-  hashitem_T *oldarray = keep_smallarray
-    ? memcpy(temparray, ht->ht_smallarray, sizeof(temparray))
-    : ht->ht_array;
+  hashitem_T *oldarray = keep_smallarray ? memcpy(temparray, ht->ht_smallarray,
+                                                  sizeof(temparray))
+                                         : ht->ht_array;
   hashitem_T *newarray = newarray_is_small
-    ? ht->ht_smallarray
-    : xmalloc(sizeof(hashitem_T) * newsize);
+                             ? ht->ht_smallarray
+                             : xmalloc(sizeof(hashitem_T) * newsize);
 
   memset(newarray, 0, sizeof(hashitem_T) * newsize);
 
@@ -386,8 +385,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_filled = ht->ht_used;
 }
 
-#define HASH_CYCLE_BODY(hash, p) \
-    hash = hash * 101 + *p++
+#define HASH_CYCLE_BODY(hash, p) hash = hash * 101 + *p++
 
 /// Get the hash number for a key.
 ///
@@ -423,7 +421,7 @@ hash_T hash_hash(const char_u *key)
 ///
 /// @return Key hash.
 hash_T hash_hash_len(const char *key, const size_t len)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (len == 0) {
     return 0;
@@ -447,7 +445,7 @@ hash_T hash_hash_len(const char *key, const size_t len)
 /// Used for testing because luajit ffi does not allow getting addresses of
 /// globals.
 const char_u *_hash_key_removed(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return HI_KEY_REMOVED;
 }

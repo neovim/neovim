@@ -17,20 +17,20 @@
 #include "nvim/lua/executor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.c.generated.h"
+#include "highlight.c.generated.h"
 #endif
 
 static bool hlstate_active = false;
 
 static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
 
-static Map(HlEntry, int) *attr_entry_ids;
-static Map(int, int) *combine_attr_entries;
-static Map(int, int) *blend_attr_entries;
-static Map(int, int) *blendthrough_attr_entries;
+static Map(HlEntry, int) * attr_entry_ids;
+static Map(int, int) * combine_attr_entries;
+static Map(int, int) * blend_attr_entries;
+static Map(int, int) * blendthrough_attr_entries;
 
 /// highlight entries private to a namespace
-static Map(ColorKey, ColorItem) *ns_hl;
+static Map(ColorKey, ColorItem) * ns_hl;
 
 void highlight_init(void)
 {
@@ -41,8 +41,9 @@ void highlight_init(void)
   ns_hl = map_new(ColorKey, ColorItem)();
 
   // index 0 is no attribute, add dummy entry:
-  kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
-                                    .id1 = 0, .id2 = 0 }));
+  kv_push(attr_entries,
+          ((HlEntry){
+              .attr = HLATTRS_INIT, .kind = kHlUnknown, .id1 = 0, .id2 = 0}));
 }
 
 /// @return TRUE if hl table was reset
@@ -141,8 +142,8 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
       || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
       || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
       || at_en.rgb_ae_attr != 0 || ns_id != 0) {
-    return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
-                                     .id1 = idx, .id2 = ns_id });
+    return get_attr_entry(
+        (HlEntry){.attr = at_en, .kind = kHlSyntax, .id1 = idx, .id2 = ns_id});
   } else {
     // If all the fields are cleared, clear the attr field back to default value
     return 0;
@@ -151,16 +152,15 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 
 static ColorKey colored_key(NS ns_id, int syn_id)
 {
-  return (ColorKey){ .ns_id = (int)ns_id, .syn_id = syn_id };
+  return (ColorKey){.ns_id = (int)ns_id, .syn_id = syn_id};
 }
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
   DecorProvider *p = get_provider(ns_id, true);
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
-  ColorItem it = { .attr_id = attr_id,
-                   .link_id = link_id,
-                   .version = p->hl_valid };
+  ColorItem it
+      = {.attr_id = attr_id, .link_id = link_id, .version = p->hl_valid};
   map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
 }
 
@@ -217,7 +217,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link)
     }
 
     it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
-    it.version = p->hl_valid-tmp;
+    it.version = p->hl_valid - tmp;
     map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
   }
 
@@ -227,7 +227,6 @@ int ns_get_hl(NS ns_id, int hl_id, bool link)
     return it.attr_id;
   }
 }
-
 
 bool win_check_ns_hl(win_T *wp)
 {
@@ -272,8 +271,8 @@ int hl_get_ui_attr(int idx, int final_id, bool optional)
   if (optional && !available) {
     return 0;
   }
-  return get_attr_entry((HlEntry){ .attr = attrs, .kind = kHlUI,
-                                   .id1 = idx, .id2 = final_id });
+  return get_attr_entry(
+      (HlEntry){.attr = attrs, .kind = kHlUI, .id1 = idx, .id2 = final_id});
 }
 
 void update_window_hl(win_T *wp, bool invalid)
@@ -290,12 +289,11 @@ void update_window_hl(win_T *wp, bool invalid)
   // determine window specific background set in 'winhighlight'
   bool float_win = wp->w_floating && !wp->w_float_config.external;
   if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] != 0) {
-    wp->w_hl_attr_normal = hl_get_ui_attr(HLF_INACTIVE,
-                                          wp->w_hl_ids[HLF_INACTIVE],
-                                          !has_blend);
+    wp->w_hl_attr_normal
+        = hl_get_ui_attr(HLF_INACTIVE, wp->w_hl_ids[HLF_INACTIVE], !has_blend);
   } else if (float_win && wp->w_hl_ids[HLF_NFLOAT] != 0) {
-    wp->w_hl_attr_normal = hl_get_ui_attr(HLF_NFLOAT,
-                                          wp->w_hl_ids[HLF_NFLOAT], !has_blend);
+    wp->w_hl_attr_normal
+        = hl_get_ui_attr(HLF_NFLOAT, wp->w_hl_ids[HLF_NFLOAT], !has_blend);
   } else if (wp->w_hl_id_normal != 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, !has_blend);
   } else {
@@ -323,8 +321,8 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] == 0) {
-    wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
-                                           wp->w_hl_attr_normal);
+    wp->w_hl_attr_normal
+        = hl_combine_attr(HL_ATTR(HLF_INACTIVE), wp->w_hl_attr_normal);
   }
 
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
@@ -361,8 +359,8 @@ int hl_get_underline(void)
 /// Get attribute code for forwarded :terminal highlights.
 int hl_get_term_attr(HlAttrs *aep)
 {
-  return get_attr_entry((HlEntry){ .attr= *aep, .kind = kHlTerminal,
-                                   .id1 = 0, .id2 = 0 });
+  return get_attr_entry(
+      (HlEntry){.attr = *aep, .kind = kHlTerminal, .id1 = 0, .id2 = 0});
 }
 
 /// Clear all highlight tables.
@@ -436,26 +434,26 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (spell_aep.cterm_fg_color > 0) {
     new_en.cterm_fg_color = spell_aep.cterm_fg_color;
-    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+    new_en.rgb_ae_attr
+        &= ((~HL_FG_INDEXED) | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.cterm_bg_color > 0) {
     new_en.cterm_bg_color = spell_aep.cterm_bg_color;
-    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+    new_en.rgb_ae_attr
+        &= ((~HL_BG_INDEXED) | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_fg_color >= 0) {
     new_en.rgb_fg_color = spell_aep.rgb_fg_color;
-    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+    new_en.rgb_ae_attr
+        &= ((~HL_FG_INDEXED) | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.rgb_bg_color >= 0) {
     new_en.rgb_bg_color = spell_aep.rgb_bg_color;
-    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+    new_en.rgb_ae_attr
+        &= ((~HL_BG_INDEXED) | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_sp_color >= 0) {
@@ -466,8 +464,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.hl_blend = spell_aep.hl_blend;
   }
 
-  id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
-                                 .id1 = char_attr, .id2 = prim_attr });
+  id = get_attr_entry((HlEntry){
+      .attr = new_en, .kind = kHlCombine, .id1 = char_attr, .id2 = prim_attr});
   if (id > 0) {
     map_put(int, int)(combine_attr_entries, combine_tag, id);
   }
@@ -520,9 +518,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   }
 
   int combine_tag = (back_attr << 16) + front_attr;
-  Map(int, int) *map = (*through
-                        ? blendthrough_attr_entries
-                        : blend_attr_entries);
+  Map(int, int) *map
+      = (*through ? blendthrough_attr_entries : blend_attr_entries);
   int id = map_get(int, int)(map, combine_tag);
   if (id > 0) {
     return id;
@@ -533,43 +530,43 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
   if (*through) {
     cattrs = battrs;
-    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
-                                    fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
-                                      fattrs.rgb_bg_color);
+    cattrs.rgb_fg_color
+        = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
+      cattrs.rgb_sp_color
+          = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
 
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
-    cattrs.cterm_fg_color = cterm_blend(ratio, battrs.cterm_fg_color,
-                                        fattrs.cterm_bg_color);
+    cattrs.cterm_fg_color
+        = cterm_blend(ratio, battrs.cterm_fg_color, fattrs.cterm_bg_color);
     cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
     if (ratio >= 50) {
       cattrs.rgb_ae_attr |= battrs.rgb_ae_attr;
     }
-    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
-                                    fattrs.rgb_fg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
-                                      fattrs.rgb_sp_color);
+    cattrs.rgb_fg_color
+        = rgb_blend(ratio / 2, battrs.rgb_fg_color, fattrs.rgb_fg_color);
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
+      cattrs.rgb_sp_color
+          = rgb_blend(ratio / 2, battrs.rgb_bg_color, fattrs.rgb_sp_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
 
     cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
-  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
-                                  fattrs.rgb_bg_color);
+  cattrs.rgb_bg_color
+      = rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
 
   cattrs.hl_blend = -1;  // blend property was consumed
 
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
-  id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
-                                 .id1 = back_attr, .id2 = front_attr });
+  id = get_attr_entry((HlEntry){
+      .attr = cattrs, .kind = kind, .id1 = back_attr, .id2 = front_attr});
   if (id > 0) {
     map_put(int, int)(map, combine_tag, id);
   }
@@ -578,16 +575,16 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
 static int rgb_blend(int ratio, int rgb1, int rgb2)
 {
-  int a = ratio, b = 100-ratio;
+  int a = ratio, b = 100 - ratio;
   int r1 = (rgb1 & 0xFF0000) >> 16;
   int g1 = (rgb1 & 0x00FF00) >> 8;
   int b1 = (rgb1 & 0x0000FF) >> 0;
   int r2 = (rgb2 & 0xFF0000) >> 16;
   int g2 = (rgb2 & 0x00FF00) >> 8;
   int b2 = (rgb2 & 0x0000FF) >> 0;
-  int mr = (a * r1 + b * r2)/100;
-  int mg = (a * g1 + b * g2)/100;
-  int mb = (a * b1 + b * b2)/100;
+  int mr = (a * r1 + b * r2) / 100;
+  int mg = (a * g1 + b * g2) / 100;
+  int mb = (a * b1 + b * b2) / 100;
   return (mr << 16) + (mg << 8) + mb;
 }
 
@@ -616,32 +613,29 @@ static int hl_rgb2cterm_color(int rgb)
 /// This is compatible with xterm.
 static int hl_cterm2rgb_color(int nr)
 {
-  static int cube_value[] = {
-    0x00, 0x5F, 0x87, 0xAF, 0xD7, 0xFF
-  };
-  static int grey_ramp[] = {
-    0x08, 0x12, 0x1C, 0x26, 0x30, 0x3A, 0x44, 0x4E, 0x58, 0x62, 0x6C, 0x76,
-    0x80, 0x8A, 0x94, 0x9E, 0xA8, 0xB2, 0xBC, 0xC6, 0xD0, 0xDA, 0xE4, 0xEE
-  };
+  static int cube_value[] = {0x00, 0x5F, 0x87, 0xAF, 0xD7, 0xFF};
+  static int grey_ramp[] = {0x08, 0x12, 0x1C, 0x26, 0x30, 0x3A, 0x44, 0x4E,
+                            0x58, 0x62, 0x6C, 0x76, 0x80, 0x8A, 0x94, 0x9E,
+                            0xA8, 0xB2, 0xBC, 0xC6, 0xD0, 0xDA, 0xE4, 0xEE};
   static char_u ansi_table[16][4] = {
-    //  R    G    B   idx
-    {   0,   0,   0,  1 } ,  // black
-    { 224,   0,   0,  2 } ,  // dark red
-    {   0, 224,   0,  3 } ,  // dark green
-    { 224, 224,   0,  4 } ,  // dark yellow / brown
-    {   0,   0, 224,  5 } ,  // dark blue
-    { 224,   0, 224,  6 } ,  // dark magenta
-    {   0, 224, 224,  7 } ,  // dark cyan
-    { 224, 224, 224,  8 } ,  // light grey
+      //  R    G    B   idx
+      {0, 0, 0, 1},        // black
+      {224, 0, 0, 2},      // dark red
+      {0, 224, 0, 3},      // dark green
+      {224, 224, 0, 4},    // dark yellow / brown
+      {0, 0, 224, 5},      // dark blue
+      {224, 0, 224, 6},    // dark magenta
+      {0, 224, 224, 7},    // dark cyan
+      {224, 224, 224, 8},  // light grey
 
-    { 128, 128, 128,  9 } ,  // dark grey
-    { 255,  64,  64, 10 } ,  // light red
-    {  64, 255,  64, 11 } ,  // light green
-    { 255, 255,  64, 12 } ,  // yellow
-    {  64,  64, 255, 13 } ,  // light blue
-    { 255,  64, 255, 14 } ,  // light magenta
-    {  64, 255, 255, 15 } ,  // light cyan
-    { 255, 255, 255, 16 } ,  // white
+      {128, 128, 128, 9},   // dark grey
+      {255, 64, 64, 10},    // light red
+      {64, 255, 64, 11},    // light green
+      {255, 255, 64, 12},   // yellow
+      {64, 64, 255, 13},    // light blue
+      {255, 64, 255, 14},   // light magenta
+      {64, 255, 255, 15},   // light cyan
+      {255, 255, 255, 16},  // white
   };
 
   int r = 0;
@@ -658,8 +652,8 @@ static int hl_cterm2rgb_color(int nr)
   } else if (nr < 232) {  // 216 color-cube
     idx = nr - 16;
     r = cube_value[idx / 36 % 6];
-    g = cube_value[idx / 6  % 6];
-    b = cube_value[idx      % 6];
+    g = cube_value[idx / 6 % 6];
+    b = cube_value[idx % 6];
     // *ansi_idx = -1;
   } else if (nr < 256) {  // 24 greyscale ramp
     idx = nr - 232;
@@ -691,8 +685,8 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
   }
 
   if (attr_id <= 0 || attr_id >= (int)kv_size(attr_entries)) {
-    api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id: %" PRId64, attr_id);
+    api_set_error(err, kErrorTypeException, "Invalid attribute id: %" PRId64,
+                  attr_id);
     return dic;
   }
 
@@ -706,7 +700,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
 Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
 {
   Dictionary hl = ARRAY_DICT_INIT;
-  int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
+  int mask = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
   if (mask & HL_BOLD) {
     PUT(hl, "bold", BOOLEAN_OBJ(true));
@@ -767,7 +761,7 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   }
 
   if (ae.hl_blend > -1) {
-      PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
+    PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
   return hl;
@@ -787,13 +781,13 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       const char *name;
       int16_t flag;
     } flags[] = {
-      { "bold", HL_BOLD },
-      { "standout", HL_STANDOUT },
-      { "underline", HL_UNDERLINE },
-      { "undercurl", HL_UNDERCURL },
-      { "italic", HL_ITALIC },
-      { "reverse", HL_INVERSE },
-      { NULL, 0 },
+        {"bold", HL_BOLD},
+        {"standout", HL_STANDOUT},
+        {"underline", HL_UNDERLINE},
+        {"undercurl", HL_UNDERCURL},
+        {"italic", HL_ITALIC},
+        {"reverse", HL_INVERSE},
+        {NULL, 0},
     };
 
     int j;
@@ -811,10 +805,10 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       const char *shortname;
       int *dest;
     } colors[] = {
-      { "foreground", "fg", &fg },
-      { "background", "bg", &bg },
-      { "special", "sp", &sp },
-      { NULL, NULL, NULL },
+        {"foreground", "fg", &fg},
+        {"background", "bg", &bg},
+        {"special", "sp", &sp},
+        {NULL, NULL, NULL},
     };
 
     int k;
@@ -835,7 +829,6 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
         break;
       }
     }
-
 
     if (flags[j].name || colors[k].name) {
       // handled above
@@ -914,7 +907,7 @@ static void hl_inspect_impl(Array *arr, int attr)
       hl_inspect_impl(arr, e.id2);
       return;
 
-     case kHlUnknown:
+    case kHlUnknown:
       return;
   }
   PUT(item, "id", INTEGER_OBJ(attr));

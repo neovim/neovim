@@ -6,9 +6,9 @@
 
 ///< Structure used by trans_function_name()
 typedef struct {
-  dict_T *fd_dict;  ///< Dictionary used.
+  dict_T *fd_dict;    ///< Dictionary used.
   char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
-  dictitem_T  *fd_di;  ///< Dictionary item used.
+  dictitem_T *fd_di;  ///< Dictionary item used.
 } funcdict_T;
 
 typedef struct funccal_entry funccal_entry_T;
@@ -30,13 +30,15 @@ typedef enum {
   ERROR_DELETED,
 } FnameTransError;
 
-typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
+typedef int (*ArgvFunc)(int current_argcount,
+                        typval_T *argv,
+                        int argskip,
                         int called_func_argcount);
 
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
+#define FUNCARG(fp, j) ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/userfunc.h.generated.h"
+#include "eval/userfunc.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_USERFUNC_H

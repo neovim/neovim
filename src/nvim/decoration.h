@@ -15,8 +15,7 @@ typedef struct {
 typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
-struct Decoration
-{
+struct Decoration {
   int hl_id;  // highlight group
   VirtText virt_text;
   // TODO(bfredl): style, signs, etc
@@ -57,15 +56,17 @@ typedef struct {
 } DecorProvider;
 
 EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
-EXTERN DecorState decor_state INIT(= { 0 });
+EXTERN DecorState decor_state INIT(= {0});
 
-#define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-                                 { ns_id, false, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, -1 }
+#define DECORATION_PROVIDER_INIT(ns_id)                                        \
+  (DecorProvider)                                                              \
+  {                                                                            \
+    ns_id, false, LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF,       \
+        LUA_NOREF, -1                                                          \
+  }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.h.generated.h"
+#include "decoration.h.generated.h"
 #endif
 
 #endif  // NVIM_DECORATION_H

@@ -9,6 +9,6 @@
 #include "nvim/globals.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/decode.h.generated.h"
+#include "eval/decode.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_DECODE_H

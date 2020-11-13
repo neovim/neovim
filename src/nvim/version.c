@@ -29,12 +29,11 @@
 
 // for ":version", ":intro", and "nvim --version"
 #ifndef NVIM_VERSION_MEDIUM
-#define NVIM_VERSION_MEDIUM "v" STR(NVIM_VERSION_MAJOR)\
-"." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH)\
-NVIM_VERSION_PRERELEASE
+#define NVIM_VERSION_MEDIUM                                                    \
+  "v" STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR) "." STR(             \
+      NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE
 #endif
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
-
 
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
@@ -42,29 +41,28 @@ char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "version.c.generated.h"
+#include "version.c.generated.h"
 #endif
 
 static char *features[] = {
 #ifdef HAVE_ACL
-"+acl",
+    "+acl",
 #else
-"-acl",
+    "-acl",
 #endif
 
 #if defined(HAVE_ICONV)
-"+iconv",
+    "+iconv",
 #else
-"-iconv",
+    "-iconv",
 #endif
 
 #ifdef FEAT_TUI
-"+tui",
+    "+tui",
 #else
-"-tui",
+    "-tui",
 #endif
-NULL
-};
+    NULL};
 
 // clang-format off
 static const int included_patches[] = {
@@ -1928,7 +1926,7 @@ static const int included_patches[] = {
 ///
 /// @return true if Nvim is at or above the version.
 bool has_nvim_version(const char *const version_str)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char *p = version_str;
   int major = 0;
@@ -1969,8 +1967,7 @@ bool has_nvim_version(const char *const version_str)
 /// @param n Patch number.
 ///
 /// @return true if patch `n` has been included.
-bool has_vim_patch(int n)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+bool has_vim_patch(int n) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Perform a binary search.
   int l = 0;
@@ -1989,7 +1986,8 @@ bool has_vim_patch(int n)
   return false;
 }
 
-Dictionary version_dict(void) {
+Dictionary version_dict(void)
+{
   Dictionary d = ARRAY_DICT_INIT;
   PUT(d, "major", INTEGER_OBJ(NVIM_VERSION_MAJOR));
   PUT(d, "minor", INTEGER_OBJ(NVIM_VERSION_MINOR));
@@ -2018,9 +2016,7 @@ static void version_msg_wrap(char_u *s, int wrap)
 {
   int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
 
-  if (!got_int
-      && (len < Columns)
-      && (msg_col + len >= Columns)
+  if (!got_int && (len < Columns) && (msg_col + len >= Columns)
       && (*s != '\n')) {
     msg_putchar('\n');
   }
@@ -2049,7 +2045,7 @@ static void list_features(void)
   version_msg(_("\n\nFeatures: "));
   for (int i = 0; features[i] != NULL; i++) {
     version_msg(features[i]);
-    if (features[i+1] != NULL) {
+    if (features[i + 1] != NULL) {
       version_msg(" ");
     }
   }
@@ -2187,13 +2183,10 @@ void list_version(void)
   version_msg("\nRun :checkhealth for more info");
 }
 
-
 /// Show the intro message when not editing a file.
 void maybe_intro_message(void)
 {
-  if (BUFEMPTY()
-      && (curbuf->b_fname == NULL)
-      && (firstwin->w_next == NULL)
+  if (BUFEMPTY() && (curbuf->b_fname == NULL) && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
     intro_message(FALSE);
   }
@@ -2212,18 +2205,18 @@ void intro_message(int colon)
   int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_(NVIM_VERSION_LONG),
-    "",
-    N_("Nvim is open source and freely distributable"),
-    N_("https://neovim.io/#chat"),
-    "",
-    N_("type  :help nvim<Enter>       if you are new! "),
-    N_("type  :checkhealth<Enter>     to optimize Nvim"),
-    N_("type  :q<Enter>               to exit         "),
-    N_("type  :help<Enter>            for help        "),
-    "",
-    N_("Help poor children in Uganda!"),
-    N_("type  :help iccf<Enter>       for information "),
+      N_(NVIM_VERSION_LONG),
+      "",
+      N_("Nvim is open source and freely distributable"),
+      N_("https://neovim.io/#chat"),
+      "",
+      N_("type  :help nvim<Enter>       if you are new! "),
+      N_("type  :checkhealth<Enter>     to optimize Nvim"),
+      N_("type  :q<Enter>               to exit         "),
+      N_("type  :help<Enter>            for help        "),
+      "",
+      N_("Help poor children in Uganda!"),
+      N_("type  :help iccf<Enter>       for information "),
   };
 
   // blanklines = screen height - # message lines
@@ -2255,13 +2248,12 @@ void intro_message(int colon)
 
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
-          p = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
+          p = sponsor < 0 ? N_("Sponsor Vim development!")
+                          : N_("Become a registered Vim user!");
         } else if (strstr(p, "iccf") != NULL) {
           p = sponsor < 0
-              ? N_("type  :help sponsor<Enter>    for information ")
-              : N_("type  :help register<Enter>   for information ");
+                  ? N_("type  :help sponsor<Enter>    for information ")
+                  : N_("type  :help register<Enter>   for information ");
         } else if (strstr(p, "Orphans") != NULL) {
           p = N_("menu  Help->Sponsor/Register  for information    ");
         }
@@ -2301,8 +2293,8 @@ static void do_intro_line(long row, char_u *mesg, int attr)
   for (p = mesg; *p != NUL; p += l) {
     clen = 0;
 
-    for (l = 0; p[l] != NUL
-         && (l == 0 || (p[l] != '<' && p[l - 1] != '>')); ++l) {
+    for (l = 0; p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
+         ++l) {
       if (has_mbyte) {
         clen += ptr2cells(p + l);
         l += (*mb_ptr2len)(p + l) - 1;
@@ -2326,4 +2318,3 @@ void ex_intro(exarg_T *eap)
   intro_message(TRUE);
   wait_return(TRUE);
 }
-

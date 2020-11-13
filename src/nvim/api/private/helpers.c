@@ -42,9 +42,9 @@ typedef struct {
 } EncodedData;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/helpers.c.generated.h"
-# include "api/private/funcs_metadata.generated.h"
-# include "api/private/ui_events_metadata.generated.h"
+#include "api/private/helpers.c.generated.h"
+#include "api/private/funcs_metadata.generated.h"
+#include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause VimL exceptions while evaluating another code
@@ -58,14 +58,14 @@ void try_enter(TryState *const tstate)
   // TODO(ZyX-I): Check whether try_enter()/try_leave() may use
   //              enter_cleanup()/leave_cleanup(). Or
   //              save_dbg_stuff()/restore_dbg_stuff().
-  *tstate = (TryState) {
-    .current_exception = current_exception,
-    .msg_list = (const struct msglist *const *)msg_list,
-    .private_msg_list = NULL,
-    .trylevel = trylevel,
-    .got_int = got_int,
-    .need_rethrow = need_rethrow,
-    .did_emsg = did_emsg,
+  *tstate = (TryState){
+      .current_exception = current_exception,
+      .msg_list = (const struct msglist *const *)msg_list,
+      .private_msg_list = NULL,
+      .trylevel = trylevel,
+      .got_int = got_int,
+      .need_rethrow = need_rethrow,
+      .did_emsg = did_emsg,
   };
   msg_list = &tstate->private_msg_list;
   current_exception = NULL;
@@ -85,7 +85,7 @@ void try_enter(TryState *const tstate)
 ///
 /// @return false if error occurred, true otherwise.
 bool try_leave(const TryState *const tstate, Error *const err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const bool ret = !try_end(err);
   assert(trylevel == 0);
@@ -142,10 +142,8 @@ bool try_end(Error *err)
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
-    char *msg = (char *)get_exception_string(*msg_list,
-                                             ET_ERROR,
-                                             NULL,
-                                             &should_free);
+    char *msg
+        = (char *)get_exception_string(*msg_list, ET_ERROR, NULL, &should_free);
     api_set_error(err, kErrorTypeException, "%s", msg);
     free_global_msglist();
 
@@ -188,8 +186,12 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 /// @param retval If true the old value will be converted and returned.
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value if `retval` is true and the key was present, else NIL
-Object dict_set_var(dict_T *dict, String key, Object value, bool del,
-                    bool retval, Error *err)
+Object dict_set_var(dict_T *dict,
+                    String key,
+                    Object value,
+                    bool del,
+                    bool retval,
+                    Error *err)
 {
   Object rv = OBJECT_INIT;
   dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
@@ -220,8 +222,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
-                    key.data);
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     } else {
       // Return the old value
       if (retval) {
@@ -280,8 +281,8 @@ Object get_option_from(void *from, int type, String name, Error *err)
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  int flags = get_option_value_strict(name.data, &numval, &stringval,
-                                      type, from);
+  int flags
+      = get_option_value_strict(name.data, &numval, &stringval, type, from);
 
   if (!flags) {
     api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
@@ -302,13 +303,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.size = strlen(stringval);
     } else {
       api_set_error(err, kErrorTypeException,
-                    "Failed to get value for option '%s'",
-                    name.data);
+                    "Failed to get value for option '%s'", name.data);
     }
   } else {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Unknown type for option '%s'",
+    api_set_error(err, kErrorTypeException, "Unknown type for option '%s'",
                   name.data);
   }
 
@@ -322,8 +320,12 @@ Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(uint64_t channel_id, void *to, int type,
-                   String name, Object value, Error *err)
+void set_option_to(uint64_t channel_id,
+                   void *to,
+                   int type,
+                   String name,
+                   Object value,
+                   Error *err)
 {
   if (name.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Empty option name");
@@ -344,8 +346,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
                     name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
-      api_set_error(err,
-                    kErrorTypeException,
+      api_set_error(err, kErrorTypeException,
                     "Cannot unset option '%s' "
                     "because it doesn't have a global value",
                     name.data);
@@ -361,10 +362,8 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option '%s' requires a Boolean value",
-                    name.data);
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires a Boolean value", name.data);
       return;
     }
 
@@ -372,15 +371,13 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
       api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires an integer value",
-                    name.data);
+                    "Option '%s' requires an integer value", name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
       api_set_error(err, kErrorTypeValidation,
-                    "Value for option '%s' is out of range",
-                    name.data);
+                    "Value for option '%s' is out of range", name.data);
       return;
     }
 
@@ -388,8 +385,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   } else {
     if (value.type != kObjectTypeString) {
       api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires a string value",
-                    name.data);
+                    "Option '%s' requires a string value", name.data);
       return;
     }
 
@@ -397,87 +393,86 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   }
 
   const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid =
-    channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  current_sctx.sc_sid
+      = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
   current_sctx.sc_lnum = 0;
   current_channel_id = channel_id;
 
-  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
-                        ? 0 : (type == SREQ_GLOBAL)
-                              ? OPT_GLOBAL : OPT_LOCAL;
-  set_option_value_for(name.data, numval, stringval,
-                       opt_flags, type, to, err);
+  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL)) ? 0
+                        : (type == SREQ_GLOBAL) ? OPT_GLOBAL
+                                                : OPT_LOCAL;
+  set_option_value_for(name.data, numval, stringval, opt_flags, type, to, err);
 
   current_sctx = save_current_sctx;
 }
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-#define TYPVAL_ENCODE_CONV_NIL(tv) \
-    kv_push(edata->stack, NIL)
+#define TYPVAL_ENCODE_CONV_NIL(tv) kv_push(edata->stack, NIL)
 
-#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num)                                       \
+  kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
-#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num)                                     \
+  kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
-#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    kv_push(edata->stack, FLOAT_OBJ((Float)(flt)))
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt)                                      \
+  kv_push(edata->stack, FLOAT_OBJ((Float)(flt)))
 
-#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
-    do { \
-      const size_t len_ = (size_t)(len); \
-      const char *const str_ = (const char *)(str); \
-      assert(len_ == 0 || str_ != NULL); \
-      kv_push(edata->stack, STRING_OBJ(((String) { \
-        .data = xmemdupz((len_?str_:""), len_), \
-        .size = len_ \
-      }))); \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len)                                \
+  do {                                                                         \
+    const size_t len_ = (size_t)(len);                                         \
+    const char *const str_ = (const char *)(str);                              \
+    assert(len_ == 0 || str_ != NULL);                                         \
+    kv_push(edata->stack,                                                      \
+            STRING_OBJ(((String){.data = xmemdupz((len_ ? str_ : ""), len_),   \
+                                 .size = len_})));                             \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL(tv)
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type)                      \
+  TYPVAL_ENCODE_CONV_NIL(tv)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    do { \
-      TYPVAL_ENCODE_CONV_NIL(tv); \
-      goto typval_encode_stop_converting_one_item; \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun)                                 \
+  do {                                                                         \
+    TYPVAL_ENCODE_CONV_NIL(tv);                                                \
+    goto typval_encode_stop_converting_one_item;                               \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv)                                      \
+  kv_push(edata->stack, ARRAY_OBJ(((Array){.capacity = 0, .size = 0})))
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    kv_push(edata->stack, \
-            DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict)                                \
+  kv_push(edata->stack,                                                        \
+          DICTIONARY_OBJ(((Dictionary){.capacity = 0, .size = 0})))
 
 static inline void typval_encode_list_start(EncodedData *const edata,
                                             const size_t len)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
-  kv_push(edata->stack, ARRAY_OBJ(((Array) {
-    .capacity = len,
-    .size = 0,
-    .items = xmalloc(len * sizeof(*((Object)OBJECT_INIT).data.array.items)),
-  })));
+  kv_push(edata->stack,
+          ARRAY_OBJ(((Array){
+              .capacity = len,
+              .size = 0,
+              .items
+              = xmalloc(len * sizeof(*((Object)OBJECT_INIT).data.array.items)),
+          })));
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
-    typval_encode_list_start(edata, (size_t)(len))
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len)                                 \
+  typval_encode_list_start(edata, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
 
 static inline void typval_encode_between_list_items(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object item = kv_pop(edata->stack);
   Object *const list = &kv_last(edata->stack);
@@ -486,11 +481,11 @@ static inline void typval_encode_between_list_items(EncodedData *const edata)
   list->data.array.items[list->data.array.size++] = item;
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
-    typval_encode_between_list_items(edata)
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)                              \
+  typval_encode_between_list_items(edata)
 
 static inline void typval_encode_list_end(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   typval_encode_between_list_items(edata);
 #ifndef NDEBUG
@@ -499,30 +494,30 @@ static inline void typval_encode_list_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
-    typval_encode_list_end(edata)
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) typval_encode_list_end(edata)
 
 static inline void typval_encode_dict_start(EncodedData *const edata,
                                             const size_t len)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
-  kv_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
-    .capacity = len,
-    .size = 0,
-    .items = xmalloc(len * sizeof(
-        *((Object)OBJECT_INIT).data.dictionary.items)),
-  })));
+  kv_push(edata->stack,
+          DICTIONARY_OBJ(((Dictionary){
+              .capacity = len,
+              .size = 0,
+              .items = xmalloc(
+                  len * sizeof(*((Object)OBJECT_INIT).data.dictionary.items)),
+          })));
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
-    typval_encode_dict_start(edata, (size_t)(len))
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)                           \
+  typval_encode_dict_start(edata, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
 
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
 static inline void typval_encode_after_key(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object key = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
@@ -538,11 +533,11 @@ static inline void typval_encode_after_key(EncodedData *const edata)
   }
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
-    typval_encode_after_key(edata)
+#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)                            \
+  typval_encode_after_key(edata)
 
 static inline void typval_encode_between_dict_items(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   Object val = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
@@ -551,11 +546,11 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
   dict->data.dictionary.items[dict->data.dictionary.size++].value = val;
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
-    typval_encode_between_dict_items(edata)
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)                        \
+  typval_encode_between_dict_items(edata)
 
 static inline void typval_encode_dict_end(EncodedData *const edata)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   typval_encode_between_dict_items(edata);
 #ifndef NDEBUG
@@ -564,11 +559,9 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #endif
 }
 
-#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-    typval_encode_dict_end(edata)
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) typval_encode_dict_end(edata)
 
-#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    TYPVAL_ENCODE_CONV_NIL(val)
+#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) TYPVAL_ENCODE_CONV_NIL(val)
 
 #define TYPVAL_ENCODE_SCOPE static
 #define TYPVAL_ENCODE_NAME object
@@ -614,9 +607,9 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 /// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
-  EncodedData edata = { .stack = KV_INITIAL_VALUE };
-  const int evo_ret = encode_vim_to_object(&edata, obj,
-                                           "vim_to_object argument");
+  EncodedData edata = {.stack = KV_INITIAL_VALUE};
+  const int evo_ret
+      = encode_vim_to_object(&edata, obj, "vim_to_object argument");
   (void)evo_ret;
   assert(evo_ret == OK);
   Object ret = kv_A(edata.stack, 0);
@@ -679,11 +672,8 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 ///         empty String is returned
 String cchar_to_string(char c)
 {
-  char buf[] = { c, NUL };
-  return (String){
-    .data = xmemdupz(buf, 1),
-    .size = (c != NUL) ? 1 : 0
-  };
+  char buf[] = {c, NUL};
+  return (String){.data = xmemdupz(buf, 1), .size = (c != NUL) ? 1 : 0};
 }
 
 /// Copies a C string into a String (binary safe string, characters + length).
@@ -695,15 +685,15 @@ String cchar_to_string(char c)
 ///         empty String is returned
 String cstr_to_string(const char *str)
 {
-    if (str == NULL) {
-      return (String)STRING_INIT;
-    }
+  if (str == NULL) {
+    return (String)STRING_INIT;
+  }
 
-    size_t len = strlen(str);
-    return (String){
+  size_t len = strlen(str);
+  return (String){
       .data = xmemdupz(str, len),
       .size = len,
-    };
+  };
 }
 
 /// Copies buffer to an allocated String.
@@ -714,17 +704,12 @@ String cstr_to_string(const char *str)
 /// @param size length of the buffer
 /// @return the resulting String, if the input string was NULL, an
 ///         empty String is returned
-String cbuf_to_string(const char *buf, size_t size)
-  FUNC_ATTR_NONNULL_ALL
+String cbuf_to_string(const char *buf, size_t size) FUNC_ATTR_NONNULL_ALL
 {
-  return (String){
-    .data = xmemdupz(buf, size),
-    .size = size
-  };
+  return (String){.data = xmemdupz(buf, size), .size = size};
 }
 
-String cstrn_to_string(const char *str, size_t maxsize)
-  FUNC_ATTR_NONNULL_ALL
+String cstrn_to_string(const char *str, size_t maxsize) FUNC_ATTR_NONNULL_ALL
 {
   return cbuf_to_string(str, strnlen(str, maxsize));
 }
@@ -740,7 +725,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
   if (str == NULL) {
     return (String)STRING_INIT;
   }
-  return (String){ .data = str, .size = strlen(str) };
+  return (String){.data = str, .size = strlen(str)};
 }
 
 /// Return the owned memory of a ga as a String
@@ -748,7 +733,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
 /// Reinitializes the ga to a valid empty state.
 String ga_take_string(garray_T *ga)
 {
-  String str = { .data = (char *)ga->ga_data, .size = (size_t)ga->ga_len };
+  String str = {.data = (char *)ga->ga_data, .size = (size_t)ga->ga_len};
   ga->ga_data = NULL;
   ga->ga_len = 0;
   ga->ga_maxlen = 0;
@@ -782,8 +767,8 @@ Array string_to_array(const String input, bool crlf)
       i += 1;  // Advance past CRLF.
     }
     String s = {
-      .size = line_len,
-      .data = xmemdupz(start, line_len),
+        .size = line_len,
+        .data = xmemdupz(start, line_len),
     };
     memchrsub(s.data, NUL, NL, line_len);
     ADD(ret, STRING_OBJ(s));
@@ -804,8 +789,13 @@ Array string_to_array(const String input, bool crlf)
 /// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
 ///                   buffer, or -1 to signify global behavior ("all buffers")
 /// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
-                   String rhs, Dictionary opts, Error *err)
+void modify_keymap(Buffer buffer,
+                   bool is_unmap,
+                   String mode,
+                   String lhs,
+                   String rhs,
+                   Dictionary opts,
+                   Error *err)
 {
   char *err_msg = NULL;  // the error message to report, if any
   char *err_arg = NULL;  // argument for the error message format string
@@ -827,8 +817,7 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
   }
   parsed_args.buffer = !global;
 
-  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
-                     (char_u *)rhs.data, rhs.size,
+  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size, (char_u *)rhs.data, rhs.size,
                      CPO_TO_CPO_FLAGS, &parsed_args);
 
   if (parsed_args.lhs_len > MAXMAPLEN) {
@@ -1033,8 +1022,12 @@ fail_with_message:
 /// @param[out] l Lines are copied here
 /// @param err[out] Error, if any
 /// @return true unless `err` was set
-bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl,
-                       Array *l, Error *err)
+bool buf_collect_lines(buf_T *buf,
+                       size_t n,
+                       int64_t start,
+                       bool replace_nl,
+                       Array *l,
+                       Error *err)
 {
   for (size_t i = 0; i < n; i++) {
     int64_t lnum = start + (int64_t)i;
@@ -1079,7 +1072,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
     case kObjectTypeBoolean:
       tv->v_type = VAR_BOOL;
-      tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
+      tv->vval.v_bool = obj.data.boolean ? kBoolVarTrue : kBoolVarFalse;
       break;
 
     case kObjectTypeBuffer:
@@ -1102,8 +1095,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       if (obj.data.string.data == NULL) {
         tv->vval.v_string = NULL;
       } else {
-        tv->vval.v_string = xmemdupz(obj.data.string.data,
-                                     obj.data.string.size);
+        tv->vval.v_string
+            = xmemdupz(obj.data.string.data, obj.data.string.size);
       }
       break;
 
@@ -1228,8 +1221,7 @@ void api_free_dictionary(Dictionary value)
   xfree(value.items);
 }
 
-void api_clear_error(Error *value)
-  FUNC_ATTR_NONNULL_ALL
+void api_clear_error(Error *value) FUNC_ATTR_NONNULL_ALL
 {
   if (!ERROR_SET(value)) {
     return;
@@ -1258,10 +1250,9 @@ static void init_function_metadata(Dictionary *metadata)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)funcs_metadata,
-                          sizeof(funcs_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+  if (msgpack_unpack_next(&unpacked, (const char *)funcs_metadata,
+                          sizeof(funcs_metadata), NULL)
+      != MSGPACK_UNPACK_SUCCESS) {
     abort();
   }
   Object functions;
@@ -1274,10 +1265,9 @@ static void init_ui_event_metadata(Dictionary *metadata)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)ui_events_metadata,
-                          sizeof(ui_events_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+  if (msgpack_unpack_next(&unpacked, (const char *)ui_events_metadata,
+                          sizeof(ui_events_metadata), NULL)
+      != MSGPACK_UNPACK_SUCCESS) {
     abort();
   }
   Object ui_events;
@@ -1339,7 +1329,7 @@ static void init_type_metadata(Dictionary *metadata)
 String copy_string(String str)
 {
   if (str.data != NULL) {
-    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+    return (String){.data = xmemdupz(str.data, str.size), .size = str.size};
   } else {
     return (String)STRING_INIT;
   }
@@ -1404,17 +1394,15 @@ static void set_option_value_for(char *key,
   aco_save_T aco;
 
   try_start();
-  switch (opt_type)
-  {
+  switch (opt_type) {
     case SREQ_WIN:
       if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
-            win_find_tabpage((win_T *)from), false) == FAIL)
-      {
+                     win_find_tabpage((win_T *)from), false)
+          == FAIL) {
         if (try_end(err)) {
           return;
         }
-        api_set_error(err,
-                      kErrorTypeException,
+        api_set_error(err, kErrorTypeException,
                       "Problem while switching windows");
         return;
       }
@@ -1438,7 +1426,6 @@ static void set_option_value_for(char *key,
   try_end(err);
 }
 
-
 static void set_option_value_err(char *key,
                                  int numval,
                                  char *stringval,
@@ -1457,7 +1444,7 @@ static void set_option_value_err(char *key,
 }
 
 void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;
@@ -1497,13 +1484,12 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 
   for (int i = 0; i < MAX_MAPHASH; i++) {
     for (const mapblock_T *current_maphash = get_maphash(i, buf);
-         current_maphash;
-         current_maphash = current_maphash->m_next) {
+         current_maphash; current_maphash = current_maphash->m_next) {
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        ADD(mappings, vim_to_object(
-            (typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
+        ADD(mappings, vim_to_object((typval_T[]){
+                          {.v_type = VAR_DICT, .vval.v_dict = dict}}));
 
         tv_dict_clear(dict);
       }
@@ -1532,20 +1518,24 @@ bool ns_initialized(uint64_t ns)
 /// @param[out] colnr extmark column
 ///
 /// @return true if the extmark was found, else false
-bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
-                                *row, colnr_T *col, Error *err)
+bool extmark_get_index_from_obj(buf_T *buf,
+                                Integer ns_id,
+                                Object obj,
+                                int *row,
+                                colnr_T *col,
+                                Error *err)
 {
   // Check if it is mark id
   if (obj.type == kObjectTypeInteger) {
     Integer id = obj.data.integer;
     if (id == 0) {
-        *row = 0;
-        *col = 0;
-        return true;
+      *row = 0;
+      *col = 0;
+      return true;
     } else if (id == -1) {
-        *row = MAXLNUM;
-        *col = MAXCOL;
-        return true;
+      *row = MAXLNUM;
+      *col = MAXCOL;
+      return true;
     } else if (id < 0) {
       api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
       return false;
@@ -1561,11 +1551,10 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
       return false;
     }
 
-  // Check if it is a position
+    // Check if it is a position
   } else if (obj.type == kObjectTypeArray) {
     Array pos = obj.data.array;
-    if (pos.size != 2
-        || pos.items[0].type != kObjectTypeInteger
+    if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
         || pos.items[1].type != kObjectTypeInteger) {
       api_set_error(err, kErrorTypeValidation,
                     "Position must have 2 integer elements");
@@ -1573,7 +1562,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
     }
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {
@@ -1610,7 +1599,7 @@ VirtText parse_virt_text(Array chunks, Error *err)
         hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
       }
     }
-    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+    kv_push(virt_text, ((VirtTextChunk){.text = text, .hl_id = hl_id}));
   }
 
   return virt_text;
@@ -1626,8 +1615,10 @@ free_exit:
 /// @param what         The name of the object, used for error message
 /// @param nil_value    What to return if the type is nil.
 /// @param err          Set if there was an error in converting to a bool
-bool api_object_to_bool(Object obj, const char *what,
-                        bool nil_value, Error *err)
+bool api_object_to_bool(Object obj,
+                        const char *what,
+                        bool nil_value,
+                        Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
@@ -1649,8 +1640,7 @@ const char *describe_ns(NS ns_id)
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }
-  })
-  return "(UNKNOWN PLUGIN)";
+  }) return "(UNKNOWN PLUGIN)";
 }
 
 DecorProvider *get_provider(NS ns_id, bool force)
@@ -1669,10 +1659,10 @@ DecorProvider *get_provider(NS ns_id, bool force)
     return NULL;
   }
 
-  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
+  for (ssize_t j = (ssize_t)kv_size(decor_providers) - 1; j >= i; j++) {
     // allocates if needed:
-    (void)kv_a(decor_providers, (size_t)j+1);
-    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+    (void)kv_a(decor_providers, (size_t)j + 1);
+    kv_A(decor_providers, (size_t)j + 1) = kv_A(decor_providers, j);
   }
   DecorProvider *item = &kv_a(decor_providers, (size_t)i);
   *item = DECORATION_PROVIDER_INIT(ns_id);

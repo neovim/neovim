@@ -11,9 +11,8 @@
 #include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/loop.c.generated.h"
+#include "event/loop.c.generated.h"
 #endif
-
 
 void loop_init(Loop *loop, void *data)
 {

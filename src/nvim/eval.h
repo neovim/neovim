@@ -3,10 +3,10 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
-#include "nvim/eval/funcs.h" // For FunPtr
-#include "nvim/event/time.h"  // For TimeWatcher
-#include "nvim/ex_cmds_defs.h"  // For exarg_T
-#include "nvim/os/fileio.h"  // For FileDescriptor
+#include "nvim/eval/funcs.h"        // For FunPtr
+#include "nvim/event/time.h"        // For TimeWatcher
+#include "nvim/ex_cmds_defs.h"      // For exarg_T
+#include "nvim/os/fileio.h"         // For FileDescriptor
 #include "nvim/os/stdpaths_defs.h"  // For XDGVarType
 
 #define COPYID_INC 2
@@ -18,8 +18,8 @@ extern hashtab_T func_hashtab;
 // From user function to hashitem and back.
 EXTERN ufunc_T dumuf;
 #define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
-#define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
+#define HIKEY2UF(p) ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
+#define HI2UF(hi) HIKEY2UF((hi)->hi_key)
 
 /*
  * Structure returned by get_lval() and used by set_var_lval().
@@ -49,117 +49,117 @@ EXTERN ufunc_T dumuf;
  *	"newkey"    is the key for the new item.
  */
 typedef struct lval_S {
-    const char *ll_name;  ///< Start of variable name (can be NULL).
-    size_t ll_name_len;   ///< Length of the .ll_name.
-    char *ll_exp_name;    ///< NULL or expanded name in allocated memory.
-    typval_T *ll_tv;      ///< Typeval of item being used.  If "newkey"
-    ///< isn't NULL it's the Dict to which to add the item.
-    listitem_T *ll_li;  ///< The list item or NULL.
-    list_T *ll_list;    ///< The list or NULL.
-    int ll_range;       ///< TRUE when a [i:j] range was used.
-    long ll_n1;         ///< First index for list.
-    long ll_n2;         ///< Second index for list range.
-    int ll_empty2;      ///< Second index is empty: [i:].
-    dict_T *ll_dict;    ///< The Dictionary or NULL.
-    dictitem_T *ll_di;  ///< The dictitem or NULL.
-    char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
+  const char *ll_name;  ///< Start of variable name (can be NULL).
+  size_t ll_name_len;   ///< Length of the .ll_name.
+  char *ll_exp_name;    ///< NULL or expanded name in allocated memory.
+  typval_T *ll_tv;      ///< Typeval of item being used.  If "newkey"
+  ///< isn't NULL it's the Dict to which to add the item.
+  listitem_T *ll_li;  ///< The list item or NULL.
+  list_T *ll_list;    ///< The list or NULL.
+  int ll_range;       ///< TRUE when a [i:j] range was used.
+  long ll_n1;         ///< First index for list.
+  long ll_n2;         ///< Second index for list range.
+  int ll_empty2;      ///< Second index is empty: [i:].
+  dict_T *ll_dict;    ///< The Dictionary or NULL.
+  dictitem_T *ll_di;  ///< The dictitem or NULL.
+  char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
 } lval_T;
 
 /// enum used by var_flavour()
 typedef enum {
-  VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
-  VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
-  VAR_FLAVOUR_SHADA   = 4    // all uppercase
+  VAR_FLAVOUR_DEFAULT = 1,  // doesn't start with uppercase
+  VAR_FLAVOUR_SESSION = 2,  // starts with uppercase, some lower
+  VAR_FLAVOUR_SHADA = 4     // all uppercase
 } var_flavour_T;
 
 /// Defines for Vim variables
 typedef enum {
-    VV_COUNT,
-    VV_COUNT1,
-    VV_PREVCOUNT,
-    VV_ERRMSG,
-    VV_WARNINGMSG,
-    VV_STATUSMSG,
-    VV_SHELL_ERROR,
-    VV_THIS_SESSION,
-    VV_VERSION,
-    VV_LNUM,
-    VV_TERMRESPONSE,
-    VV_FNAME,
-    VV_LANG,
-    VV_LC_TIME,
-    VV_CTYPE,
-    VV_CC_FROM,
-    VV_CC_TO,
-    VV_FNAME_IN,
-    VV_FNAME_OUT,
-    VV_FNAME_NEW,
-    VV_FNAME_DIFF,
-    VV_CMDARG,
-    VV_FOLDSTART,
-    VV_FOLDEND,
-    VV_FOLDDASHES,
-    VV_FOLDLEVEL,
-    VV_PROGNAME,
-    VV_SEND_SERVER,
-    VV_DYING,
-    VV_EXCEPTION,
-    VV_THROWPOINT,
-    VV_STDERR,
-    VV_REG,
-    VV_CMDBANG,
-    VV_INSERTMODE,
-    VV_VAL,
-    VV_KEY,
-    VV_PROFILING,
-    VV_FCS_REASON,
-    VV_FCS_CHOICE,
-    VV_BEVAL_BUFNR,
-    VV_BEVAL_WINNR,
-    VV_BEVAL_WINID,
-    VV_BEVAL_LNUM,
-    VV_BEVAL_COL,
-    VV_BEVAL_TEXT,
-    VV_SCROLLSTART,
-    VV_SWAPNAME,
-    VV_SWAPCHOICE,
-    VV_SWAPCOMMAND,
-    VV_CHAR,
-    VV_MOUSE_WIN,
-    VV_MOUSE_WINID,
-    VV_MOUSE_LNUM,
-    VV_MOUSE_COL,
-    VV_OP,
-    VV_SEARCHFORWARD,
-    VV_HLSEARCH,
-    VV_OLDFILES,
-    VV_WINDOWID,
-    VV_PROGPATH,
-    VV_COMPLETED_ITEM,
-    VV_OPTION_NEW,
-    VV_OPTION_OLD,
-    VV_OPTION_TYPE,
-    VV_ERRORS,
-    VV_MSGPACK_TYPES,
-    VV_EVENT,
-    VV_FALSE,
-    VV_TRUE,
-    VV_NULL,
-    VV__NULL_LIST,  // List with NULL value. For test purposes only.
-    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
-    VV_VIM_DID_ENTER,
-    VV_TESTING,
-    VV_TYPE_NUMBER,
-    VV_TYPE_STRING,
-    VV_TYPE_FUNC,
-    VV_TYPE_LIST,
-    VV_TYPE_DICT,
-    VV_TYPE_FLOAT,
-    VV_TYPE_BOOL,
-    VV_ECHOSPACE,
-    VV_EXITING,
-    VV_LUA,
-    VV_ARGV,
+  VV_COUNT,
+  VV_COUNT1,
+  VV_PREVCOUNT,
+  VV_ERRMSG,
+  VV_WARNINGMSG,
+  VV_STATUSMSG,
+  VV_SHELL_ERROR,
+  VV_THIS_SESSION,
+  VV_VERSION,
+  VV_LNUM,
+  VV_TERMRESPONSE,
+  VV_FNAME,
+  VV_LANG,
+  VV_LC_TIME,
+  VV_CTYPE,
+  VV_CC_FROM,
+  VV_CC_TO,
+  VV_FNAME_IN,
+  VV_FNAME_OUT,
+  VV_FNAME_NEW,
+  VV_FNAME_DIFF,
+  VV_CMDARG,
+  VV_FOLDSTART,
+  VV_FOLDEND,
+  VV_FOLDDASHES,
+  VV_FOLDLEVEL,
+  VV_PROGNAME,
+  VV_SEND_SERVER,
+  VV_DYING,
+  VV_EXCEPTION,
+  VV_THROWPOINT,
+  VV_STDERR,
+  VV_REG,
+  VV_CMDBANG,
+  VV_INSERTMODE,
+  VV_VAL,
+  VV_KEY,
+  VV_PROFILING,
+  VV_FCS_REASON,
+  VV_FCS_CHOICE,
+  VV_BEVAL_BUFNR,
+  VV_BEVAL_WINNR,
+  VV_BEVAL_WINID,
+  VV_BEVAL_LNUM,
+  VV_BEVAL_COL,
+  VV_BEVAL_TEXT,
+  VV_SCROLLSTART,
+  VV_SWAPNAME,
+  VV_SWAPCHOICE,
+  VV_SWAPCOMMAND,
+  VV_CHAR,
+  VV_MOUSE_WIN,
+  VV_MOUSE_WINID,
+  VV_MOUSE_LNUM,
+  VV_MOUSE_COL,
+  VV_OP,
+  VV_SEARCHFORWARD,
+  VV_HLSEARCH,
+  VV_OLDFILES,
+  VV_WINDOWID,
+  VV_PROGPATH,
+  VV_COMPLETED_ITEM,
+  VV_OPTION_NEW,
+  VV_OPTION_OLD,
+  VV_OPTION_TYPE,
+  VV_ERRORS,
+  VV_MSGPACK_TYPES,
+  VV_EVENT,
+  VV_FALSE,
+  VV_TRUE,
+  VV_NULL,
+  VV__NULL_LIST,  // List with NULL value. For test purposes only.
+  VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+  VV_VIM_DID_ENTER,
+  VV_TESTING,
+  VV_TYPE_NUMBER,
+  VV_TYPE_STRING,
+  VV_TYPE_FUNC,
+  VV_TYPE_LIST,
+  VV_TYPE_DICT,
+  VV_TYPE_FLOAT,
+  VV_TYPE_BOOL,
+  VV_ECHOSPACE,
+  VV_EXITING,
+  VV_LUA,
+  VV_ARGV,
 } VimVarIndex;
 
 /// All recognized msgpack types
@@ -183,25 +183,26 @@ extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
 
 /// trans_function_name() flags
 typedef enum {
-  TFN_INT = 1,  ///< May use internal function name
-  TFN_QUIET = 2,  ///< Do not emit error messages.
+  TFN_INT = 1,          ///< May use internal function name
+  TFN_QUIET = 2,        ///< Do not emit error messages.
   TFN_NO_AUTOLOAD = 4,  ///< Do not use script autoloading.
-  TFN_NO_DEREF = 8,  ///< Do not dereference a Funcref.
-  TFN_READ_ONLY = 16,  ///< Will not change the variable.
+  TFN_NO_DEREF = 8,     ///< Do not dereference a Funcref.
+  TFN_READ_ONLY = 16,   ///< Will not change the variable.
 } TransFunctionNameFlags;
 
 /// get_lval() flags
 typedef enum {
-  GLV_QUIET = TFN_QUIET,  ///< Do not emit error messages.
+  GLV_QUIET = TFN_QUIET,              ///< Do not emit error messages.
   GLV_NO_AUTOLOAD = TFN_NO_AUTOLOAD,  ///< Do not use script autoloading.
-  GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
-                                  ///< the value (prevents error message).
+  GLV_READ_ONLY = TFN_READ_ONLY,      ///< Indicates that caller will not change
+                                      ///< the value (prevents error message).
 } GetLvalFlags;
 
 /// flags for find_name_end()
-#define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
-#define FNE_CHECK_START 2       /* find_name_end(): check name starts with
-                                   valid character */
+#define FNE_INCL_BR 1 /* find_name_end(): include [] in name */
+#define FNE_CHECK_START                                                        \
+  2 /* find_name_end(): check name starts with                                 \
+       valid character */
 
 typedef struct {
   TimeWatcher tw;
@@ -216,8 +217,7 @@ typedef struct {
 } timer_T;
 
 /// Type of assert_* check being performed
-typedef enum
-{
+typedef enum {
   ASSERT_EQUAL,
   ASSERT_NOTEQUAL,
   ASSERT_MATCH,
@@ -228,15 +228,15 @@ typedef enum
 
 /// Type for dict_list function
 typedef enum {
-  kDictListKeys,  ///< List dictionary keys.
+  kDictListKeys,    ///< List dictionary keys.
   kDictListValues,  ///< List dictionary values.
-  kDictListItems,  ///< List dictionary contents: [keys, values].
+  kDictListItems,   ///< List dictionary contents: [keys, values].
 } DictListType;
 
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.h.generated.h"
+#include "eval.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_H

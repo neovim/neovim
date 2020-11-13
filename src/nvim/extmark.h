@@ -8,8 +8,7 @@
 
 EXTERN int extmark_splice_pending INIT(= 0);
 
-typedef struct
-{
+typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
   int row;
@@ -23,7 +22,6 @@ typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;
 
 // TODO(bfredl): good enough name for now.
 typedef ptrdiff_t bcount_t;
-
 
 // delete the columns between mincol and endcol
 typedef struct {
@@ -78,9 +76,8 @@ struct undo_object {
   } data;
 };
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "extmark.h.generated.h"
+#include "extmark.h.generated.h"
 #endif
 
 #endif  // NVIM_EXTMARK_H

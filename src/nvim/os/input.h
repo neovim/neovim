@@ -8,6 +8,6 @@
 #include "nvim/event/multiqueue.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/input.h.generated.h"
+#include "os/input.h.generated.h"
 #endif
 #endif  // NVIM_OS_INPUT_H

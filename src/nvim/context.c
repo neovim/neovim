@@ -12,11 +12,11 @@
 #include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "context.c.generated.h"
+#include "context.c.generated.h"
 #endif
 
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs
-               | kCtxFuncs);
+int kCtxAll
+    = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
@@ -48,8 +48,7 @@ Context *ctx_get(size_t index)
 /// Free resources used by Context object.
 ///
 /// param[in]  ctx  pointer to Context object to free.
-void ctx_free(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+void ctx_free(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   if (ctx->regs.data) {
     msgpack_sbuffer_destroy(&ctx->regs);
@@ -162,8 +161,7 @@ bool ctx_restore(Context *ctx, const int flags)
 /// Saves the global registers to a context.
 ///
 /// @param  ctx    Save to this context.
-static inline void ctx_save_regs(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_save_regs(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer_init(&ctx->regs);
   shada_encode_regs(&ctx->regs);
@@ -172,8 +170,7 @@ static inline void ctx_save_regs(Context *ctx)
 /// Restores the global registers from a context.
 ///
 /// @param  ctx   Restore from this context.
-static inline void ctx_restore_regs(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_restore_regs(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->regs, kShaDaWantInfo | kShaDaForceit);
 }
@@ -181,8 +178,7 @@ static inline void ctx_restore_regs(Context *ctx)
 /// Saves the jumplist to a context.
 ///
 /// @param  ctx  Save to this context.
-static inline void ctx_save_jumps(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_save_jumps(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer_init(&ctx->jumps);
   shada_encode_jumps(&ctx->jumps);
@@ -191,8 +187,7 @@ static inline void ctx_save_jumps(Context *ctx)
 /// Restores the jumplist from a context.
 ///
 /// @param  ctx  Restore from this context.
-static inline void ctx_restore_jumps(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_restore_jumps(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->jumps, kShaDaWantInfo | kShaDaForceit);
 }
@@ -200,8 +195,7 @@ static inline void ctx_restore_jumps(Context *ctx)
 /// Saves the buffer list to a context.
 ///
 /// @param  ctx  Save to this context.
-static inline void ctx_save_bufs(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_save_bufs(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer_init(&ctx->bufs);
   shada_encode_buflist(&ctx->bufs);
@@ -210,8 +204,7 @@ static inline void ctx_save_bufs(Context *ctx)
 /// Restores the buffer list from a context.
 ///
 /// @param  ctx  Restore from this context.
-static inline void ctx_restore_bufs(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_restore_bufs(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->bufs, kShaDaWantInfo | kShaDaForceit);
 }
@@ -219,8 +212,7 @@ static inline void ctx_restore_bufs(Context *ctx)
 /// Saves global variables to a context.
 ///
 /// @param  ctx  Save to this context.
-static inline void ctx_save_gvars(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_save_gvars(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer_init(&ctx->gvars);
   shada_encode_gvars(&ctx->gvars);
@@ -229,8 +221,7 @@ static inline void ctx_save_gvars(Context *ctx)
 /// Restores global variables from a context.
 ///
 /// @param  ctx  Restore from this context.
-static inline void ctx_restore_gvars(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_restore_gvars(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->gvars, kShaDaWantInfo | kShaDaForceit);
 }
@@ -239,8 +230,8 @@ static inline void ctx_restore_gvars(Context *ctx)
 ///
 /// @param  ctx         Save to this context.
 /// @param  scriptonly  Save script-local (s:) functions only.
-static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_save_funcs(Context *ctx,
+                                  bool scriptonly) FUNC_ATTR_NONNULL_ALL
 {
   ctx->funcs = (Array)ARRAY_DICT_INIT;
   Error err = ERROR_INIT;
@@ -267,8 +258,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 /// Restores functions from a context.
 ///
 /// @param  ctx  Restore from this context.
-static inline void ctx_restore_funcs(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+static inline void ctx_restore_funcs(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   for (size_t i = 0; i < ctx->funcs.size; i++) {
     do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
@@ -288,11 +278,8 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
     encode_list_write(list, sbuf.data, sbuf.size);
   }
 
-  typval_T list_tv = (typval_T) {
-    .v_lock = VAR_UNLOCKED,
-    .v_type = VAR_LIST,
-    .vval.v_list = list
-  };
+  typval_T list_tv = (typval_T){
+      .v_lock = VAR_UNLOCKED, .v_type = VAR_LIST, .vval.v_list = list};
 
   Array array = vim_to_object(&list_tv).data.array;
   tv_clear(&list_tv);
@@ -328,8 +315,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array)
 /// @param[in]  ctx  Context to convert.
 ///
 /// @return Dictionary representing "ctx".
-Dictionary ctx_to_dict(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+Dictionary ctx_to_dict(Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 
@@ -350,8 +336,7 @@ Dictionary ctx_to_dict(Context *ctx)
 /// @param[out]  ctx   Context object to store conversion result into.
 ///
 /// @return types of included context items.
-int ctx_from_dict(Dictionary dict, Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+int ctx_from_dict(Dictionary dict, Context *ctx) FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 

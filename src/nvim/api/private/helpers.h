@@ -13,69 +13,48 @@
 
 #define OBJECT_OBJ(o) o
 
-#define BOOLEAN_OBJ(b) ((Object) { \
-    .type = kObjectTypeBoolean, \
-    .data.boolean = b })
+#define BOOLEAN_OBJ(b) ((Object){.type = kObjectTypeBoolean, .data.boolean = b})
 
-#define INTEGER_OBJ(i) ((Object) { \
-    .type = kObjectTypeInteger, \
-    .data.integer = i })
+#define INTEGER_OBJ(i) ((Object){.type = kObjectTypeInteger, .data.integer = i})
 
-#define FLOAT_OBJ(f) ((Object) { \
-    .type = kObjectTypeFloat, \
-    .data.floating = f })
+#define FLOAT_OBJ(f) ((Object){.type = kObjectTypeFloat, .data.floating = f})
 
-#define STRING_OBJ(s) ((Object) { \
-    .type = kObjectTypeString, \
-    .data.string = s })
+#define STRING_OBJ(s) ((Object){.type = kObjectTypeString, .data.string = s})
 
-#define BUFFER_OBJ(s) ((Object) { \
-    .type = kObjectTypeBuffer, \
-    .data.integer = s })
+#define BUFFER_OBJ(s) ((Object){.type = kObjectTypeBuffer, .data.integer = s})
 
-#define WINDOW_OBJ(s) ((Object) { \
-    .type = kObjectTypeWindow, \
-    .data.integer = s })
+#define WINDOW_OBJ(s) ((Object){.type = kObjectTypeWindow, .data.integer = s})
 
-#define TABPAGE_OBJ(s) ((Object) { \
-    .type = kObjectTypeTabpage, \
-    .data.integer = s })
+#define TABPAGE_OBJ(s) ((Object){.type = kObjectTypeTabpage, .data.integer = s})
 
-#define ARRAY_OBJ(a) ((Object) { \
-    .type = kObjectTypeArray, \
-    .data.array = a })
+#define ARRAY_OBJ(a) ((Object){.type = kObjectTypeArray, .data.array = a})
 
-#define DICTIONARY_OBJ(d) ((Object) { \
-    .type = kObjectTypeDictionary, \
-    .data.dictionary = d })
+#define DICTIONARY_OBJ(d)                                                      \
+  ((Object){.type = kObjectTypeDictionary, .data.dictionary = d})
 
-#define LUAREF_OBJ(r) ((Object) { \
-    .type = kObjectTypeLuaRef, \
-    .data.luaref = r })
+#define LUAREF_OBJ(r) ((Object){.type = kObjectTypeLuaRef, .data.luaref = r})
 
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 
-#define PUT(dict, k, v) \
-  kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
+#define PUT(dict, k, v)                                                        \
+  kv_push(dict, ((KeyValuePair){.key = cstr_to_string(k), .value = v}))
 
-#define ADD(array, item) \
-  kv_push(array, item)
+#define ADD(array, item) kv_push(array, item)
 
-#define FIXED_TEMP_ARRAY(name, fixsize) \
-  Array name = ARRAY_DICT_INIT; \
-  Object name##__items[fixsize]; \
-  name.size = fixsize; \
-  name.items = name##__items; \
+#define FIXED_TEMP_ARRAY(name, fixsize)                                        \
+  Array name = ARRAY_DICT_INIT;                                                \
+  Object name##__items[fixsize];                                               \
+  name.size = fixsize;                                                         \
+  name.items = name##__items;
 
-#define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+#define STATIC_CSTR_AS_STRING(s) ((String){.data = s, .size = sizeof(s) - 1})
 
 /// Create a new String instance, putting data in allocated memory
 ///
 /// @param[in]  s  String to work with. Must be a string literal.
-#define STATIC_CSTR_TO_STRING(s) ((String){ \
-    .data = xmemdupz(s, sizeof(s) - 1), \
-    .size = sizeof(s) - 1 })
+#define STATIC_CSTR_TO_STRING(s)                                               \
+  ((String){.data = xmemdupz(s, sizeof(s) - 1), .size = sizeof(s) - 1})
 
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
@@ -114,17 +93,16 @@ typedef struct {
 // which would otherwise be ignored.  This pattern is from do_cmdline().
 //
 // TODO(bfredl): prepare error-handling at "top level" (nv_event).
-#define TRY_WRAP(code) \
-  do { \
-    struct msglist **saved_msg_list = msg_list; \
-    struct msglist *private_msg_list; \
-    msg_list = &private_msg_list; \
-    private_msg_list = NULL; \
-    code \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+#define TRY_WRAP(code)                                                         \
+  do {                                                                         \
+    struct msglist **saved_msg_list = msg_list;                                \
+    struct msglist *private_msg_list;                                          \
+    msg_list = &private_msg_list;                                              \
+    private_msg_list = NULL;                                                   \
+    code msg_list = saved_msg_list; /* Restore the exception context. */       \
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/helpers.h.generated.h"
+#include "api/private/helpers.h.generated.h"
 #endif
 #endif  // NVIM_API_PRIVATE_HELPERS_H

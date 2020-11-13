@@ -6,6 +6,6 @@
 #include "nvim/api/private/defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/ui.h.generated.h"
+#include "api/ui.h.generated.h"
 #endif
 #endif  // NVIM_API_UI_H

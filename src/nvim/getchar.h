@@ -11,10 +11,10 @@
 ///
 /// Also used for map->m_noremap and menu->noremap[].
 enum RemapValues {
-  REMAP_YES = 0,  ///< Allow remapping.
-  REMAP_NONE = -1,  ///< No remapping.
+  REMAP_YES = 0,      ///< Allow remapping.
+  REMAP_NONE = -1,    ///< No remapping.
   REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
-  REMAP_SKIP = -3,  ///< No remapping for first char.
+  REMAP_SKIP = -3,    ///< No remapping for first char.
 };
 
 // Argument for flush_buffers().
@@ -67,6 +67,6 @@ enum { NSCRIPT = 15 };
 extern FileDescriptor *scriptin[NSCRIPT];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.h.generated.h"
+#include "getchar.h.generated.h"
 #endif
 #endif  // NVIM_GETCHAR_H
