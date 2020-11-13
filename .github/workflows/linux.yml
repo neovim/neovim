@@ -72,7 +72,7 @@ jobs:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles(format('{0}/**', env.CACHE_NVIM_DEPS_DIR)) }}-${{ github.base_ref }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: Build third-party
         run: ./ci/before_script.sh
@@ -128,7 +128,7 @@ jobs:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles(format('{0}/**', env.CACHE_NVIM_DEPS_DIR)) }}-${{ github.base_ref }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: Build third-party
         run: ./ci/before_script.sh
