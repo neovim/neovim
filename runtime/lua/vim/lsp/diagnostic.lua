@@ -583,10 +583,10 @@ end
 --- Sign characters can be customized with the following commands:
 ---
 --- <pre>
---- sign define LspDiagnosticsErrorSign text=E texthl=LspDiagnosticsError linehl= numhl=
---- sign define LspDiagnosticsWarningSign text=W texthl=LspDiagnosticsWarning linehl= numhl=
---- sign define LspDiagnosticsInformationSign text=I texthl=LspDiagnosticsInformation linehl= numhl=
---- sign define LspDiagnosticsHintSign text=H texthl=LspDiagnosticsHint linehl= numhl=
+--- sign define LspDiagnosticsSignError text=E texthl=LspDiagnosticsSignError linehl= numhl=
+--- sign define LspDiagnosticsSignWarning text=W texthl=LspDiagnosticsSignWarning linehl= numhl=
+--- sign define LspDiagnosticsSignInformation text=I texthl=LspDiagnosticsSignInformation linehl= numhl=
+--- sign define LspDiagnosticsSignHint text=H texthl=LspDiagnosticsSignHint linehl= numhl=
 --- </pre>
 ---@param diagnostics Diagnostic[]
 ---@param bufnr number The buffer number
