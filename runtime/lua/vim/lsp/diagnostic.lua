@@ -739,13 +739,14 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   end
   local last = line_diags[#line_diags]
 
-  -- TODO(tjdevries): Allow different servers to be shown first somehow?
-  -- TODO(tjdevries): Display server name associated with these?
   if last.message then
+    -- get server name
+    local server_name = vim.lsp.get_active_clients()[1].config.cmd[1]:match('[^\\/]+$')
     table.insert(
       virt_texts,
       {
-        string.format("%s %s", prefix, last.message:gsub("\r", ""):gsub("\n", "  ")),
+        -- Virtual text format: prefix servername: message
+        string.format("%s %s: %s", prefix,server_name, last.message:gsub("\r", ""):gsub("\n", "  ")),
         virtual_text_highlight_map[last.severity]
       }
     )
