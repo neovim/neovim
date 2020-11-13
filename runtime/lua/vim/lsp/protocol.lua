@@ -1,17 +1,8 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
+local if_nil = vim.F.if_nil
+
 local protocol = {}
-
---@private
---- Returns {a} if it is not nil, otherwise returns {b}.
----
---@param a
---@param b
-local function ifnil(a, b)
-  if a == nil then return b end
-  return a
-end
-
 
 --[=[
 --@private
@@ -909,12 +900,12 @@ function protocol.resolve_capabilities(server_capabilities)
       }
     elseif type(textDocumentSync) == 'table' then
       text_document_sync_properties = {
-        text_document_open_close = ifnil(textDocumentSync.openClose, false);
-        text_document_did_change = ifnil(textDocumentSync.change, TextDocumentSyncKind.None);
-        text_document_will_save = ifnil(textDocumentSync.willSave, false);
-        text_document_will_save_wait_until = ifnil(textDocumentSync.willSaveWaitUntil, false);
-        text_document_save = ifnil(textDocumentSync.save, false);
-        text_document_save_include_text = ifnil(type(textDocumentSync.save) == 'table'
+        text_document_open_close = if_nil(textDocumentSync.openClose, false);
+        text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None);
+        text_document_will_save = if_nil(textDocumentSync.willSave, false);
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false);
+        text_document_save = if_nil(textDocumentSync.save, false);
+        text_document_save_include_text = if_nil(type(textDocumentSync.save) == 'table'
                                                 and textDocumentSync.save.includeText, false);
       }
     else

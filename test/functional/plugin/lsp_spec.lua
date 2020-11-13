@@ -323,7 +323,7 @@ describe('LSP', function()
         test_name = "capabilities_for_client_supports_method";
         on_setup = function()
             exec_lua([=[
-              vim.lsp.callbacks['textDocument/hover'] = function(err, method)
+              vim.lsp.handlers['textDocument/hover'] = function(err, method)
                 vim.lsp._last_lsp_callback = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
@@ -847,25 +847,28 @@ describe('LSP', function()
   end
 
   it('highlight groups', function()
-    eq({'LspDiagnosticsError',
-        'LspDiagnosticsErrorFloating',
-        'LspDiagnosticsErrorSign',
-        'LspDiagnosticsHint',
-        'LspDiagnosticsHintFloating',
-        'LspDiagnosticsHintSign',
-        'LspDiagnosticsInformation',
-        'LspDiagnosticsInformationFloating',
-        'LspDiagnosticsInformationSign',
-        'LspDiagnosticsUnderline',
-        'LspDiagnosticsUnderlineError',
-        'LspDiagnosticsUnderlineHint',
-        'LspDiagnosticsUnderlineInformation',
-        'LspDiagnosticsUnderlineWarning',
-        'LspDiagnosticsWarning',
-        'LspDiagnosticsWarningFloating',
-        'LspDiagnosticsWarningSign',
-      },
-      exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
+    eq({
+      'LspDiagnosticsDefaultError',
+      'LspDiagnosticsDefaultHint',
+      'LspDiagnosticsDefaultInformation',
+      'LspDiagnosticsDefaultWarning',
+      'LspDiagnosticsFloatingError',
+      'LspDiagnosticsFloatingHint',
+      'LspDiagnosticsFloatingInformation',
+      'LspDiagnosticsFloatingWarning',
+      'LspDiagnosticsSignError',
+      'LspDiagnosticsSignHint',
+      'LspDiagnosticsSignInformation',
+      'LspDiagnosticsSignWarning',
+      'LspDiagnosticsUnderlineError',
+      'LspDiagnosticsUnderlineHint',
+      'LspDiagnosticsUnderlineInformation',
+      'LspDiagnosticsUnderlineWarning',
+      'LspDiagnosticsVirtualTextError',
+      'LspDiagnosticsVirtualTextHint',
+      'LspDiagnosticsVirtualTextInformation',
+      'LspDiagnosticsVirtualTextWarning',
+    }, exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
   end)
 
   describe('apply_text_edits', function()
@@ -1037,7 +1040,7 @@ describe('LSP', function()
           label = nil;
           edit = {};
         }
-        return vim.lsp.callbacks['workspace/applyEdit'](nil, nil, apply_edit)
+        return vim.lsp.handlers['workspace/applyEdit'](nil, nil, apply_edit)
       ]])
     end)
   end)
@@ -1084,47 +1087,7 @@ describe('LSP', function()
       eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
     end)
   end)
-  describe('buf_diagnostics_save_positions', function()
-    it('stores the diagnostics in diagnostics_by_buf', function ()
-      local diagnostics = {
-        { range = {}; message = "diag1" },
-        { range = {}; message = "diag2" },
-      }
-      exec_lua([[
-        vim.lsp.util.buf_diagnostics_save_positions(...)]], 0, diagnostics)
-      eq(1, exec_lua [[ return #vim.lsp.util.diagnostics_by_buf ]])
-      eq(diagnostics, exec_lua [[
-        for _, diagnostics in pairs(vim.lsp.util.diagnostics_by_buf) do
-          return diagnostics
-        end
-      ]])
-    end)
-  end)
-  describe('lsp.util.show_line_diagnostics', function()
-    it('creates floating window and returns popup bufnr and winnr if current line contains diagnostics', function()
-      eq(3, exec_lua [[
-        local buffer = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
-          "testing";
-          "123";
-        })
-        local diagnostics = {
-          {
-            range = {
-              start = { line = 0; character = 1; };
-              ["end"] = { line = 0; character = 3; };
-            };
-            severity = vim.lsp.protocol.DiagnosticSeverity.Error;
-            message = "Syntax error";
-          },
-        }
-        vim.api.nvim_win_set_buf(0, buffer)
-        vim.lsp.util.buf_diagnostics_save_positions(vim.fn.bufnr(buffer), diagnostics)
-        local popup_bufnr, winnr = vim.lsp.util.show_line_diagnostics()
-        return popup_bufnr
-      ]])
-    end)
-  end)
+
   describe('lsp.util.locations_to_items', function()
     it('Convert Location[] to items', function()
       local expected = {
@@ -1556,7 +1519,7 @@ describe('LSP', function()
   describe('vim.lsp.buf.outgoing_calls', function()
     it('does nothing for an empty response', function()
       local qflist_count = exec_lua([=[
-        require'vim.lsp.callbacks'['callHierarchy/outgoingCalls']()
+        require'vim.lsp.handlers'['callHierarchy/outgoingCalls']()
         return #vim.fn.getqflist()
       ]=])
       eq(0, qflist_count)
@@ -1602,7 +1565,7 @@ describe('LSP', function()
             uri = "file:///src/main.rs"
           }
         } }
-        local callback = require'vim.lsp.callbacks'['callHierarchy/outgoingCalls']
+        local callback = require'vim.lsp.handlers'['callHierarchy/outgoingCalls']
         callback(nil, nil, rust_analyzer_response)
         return vim.fn.getqflist()
       ]=])
@@ -1627,7 +1590,7 @@ describe('LSP', function()
   describe('vim.lsp.buf.incoming_calls', function()
     it('does nothing for an empty response', function()
       local qflist_count = exec_lua([=[
-        require'vim.lsp.callbacks'['callHierarchy/incomingCalls']()
+        require'vim.lsp.handlers'['callHierarchy/incomingCalls']()
         return #vim.fn.getqflist()
       ]=])
       eq(0, qflist_count)
@@ -1674,7 +1637,7 @@ describe('LSP', function()
           } }
         } }
 
-        local callback = require'vim.lsp.callbacks'['callHierarchy/incomingCalls']
+        local callback = require'vim.lsp.handlers'['callHierarchy/incomingCalls']
         callback(nil, nil, rust_analyzer_response)
         return vim.fn.getqflist()
       ]=])

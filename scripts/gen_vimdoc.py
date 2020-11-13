@@ -143,12 +143,13 @@ CONFIG = {
         'section_start_token': '*lsp-core*',
         'section_order': [
             'lsp.lua',
-            'protocol.lua',
             'buf.lua',
-            'callbacks.lua',
+            'diagnostic.lua',
+            'handlers.lua',
+            'util.lua',
             'log.lua',
             'rpc.lua',
-            'util.lua'
+            'protocol.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'runtime/lua/vim/lsp'),
@@ -447,7 +448,7 @@ def render_node(n, text, prefix='', indent='', width=62):
                                               indent=indent, width=width))
             i = i + 1
     elif n.nodeName == 'simplesect' and 'note' == n.getAttribute('kind'):
-        text += 'Note:\n    '
+        text += '\nNote:\n    '
         for c in n.childNodes:
             text += render_node(c, text, indent='    ', width=width)
         text += '\n'
@@ -461,6 +462,8 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ind('    ')
         for c in n.childNodes:
             text += render_node(c, text, indent='    ', width=width)
+    elif n.nodeName == 'computeroutput':
+        return get_text(n)
     else:
         raise RuntimeError('unhandled node type: {}\n{}'.format(
             n.nodeName, n.toprettyxml(indent='  ', newl='\n')))
@@ -526,6 +529,7 @@ def para_as_map(parent, indent='', width=62):
                         and is_inline(self_or_child(prev))
                         and is_inline(self_or_child(child))
                         and '' != get_text(self_or_child(child)).strip()
+                        and text
                         and ' ' != text[-1]):
                     text += ' '
 
@@ -705,7 +709,7 @@ def extract_from_xml(filename, target, width):
 
             if len(prefix) + len(suffix) > lhs:
                 signature = vimtag.rjust(width) + '\n'
-                signature += doc_wrap(suffix, width=width-8, prefix=prefix,
+                signature += doc_wrap(suffix, width=width, prefix=prefix,
                                       func=True)
             else:
                 signature = prefix + suffix

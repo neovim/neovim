@@ -30,9 +30,7 @@ end
 ---
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param callback (optional, functionnil) Handler
---  `function(err, method, params, client_id)` for this request. Defaults
---  to the client callback in `client.callbacks`. See |lsp-callbacks|.
+--@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 --@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
@@ -40,12 +38,12 @@ end
 ---    iterate all clients and call their `cancel_request()` methods.
 ---
 --@see |vim.lsp.buf_request()|
-local function request(method, params, callback)
+local function request(method, params, handler)
   validate {
     method = {method, 's'};
-    callback = {callback, 'f', true};
+    handler = {handler, 'f', true};
   }
-  return vim.lsp.buf_request(0, method, params, callback)
+  return vim.lsp.buf_request(0, method, params, handler)
 end
 
 --- Checks whether the language servers attached to the current buffer are
@@ -64,6 +62,7 @@ function M.hover()
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
+--@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
 function M.declaration()
   local params = util.make_position_params()
@@ -279,7 +278,7 @@ end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(context)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = util.get_line_diagnostics() }
+  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_range_params()
   params.context = context
   request('textDocument/codeAction', params)
@@ -294,7 +293,7 @@ end
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = util.get_line_diagnostics() }
+  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
   request('textDocument/codeAction', params)
