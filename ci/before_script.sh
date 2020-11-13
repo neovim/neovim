@@ -3,10 +3,6 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  exit
-fi
-
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 
