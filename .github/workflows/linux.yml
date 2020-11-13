@@ -23,6 +23,8 @@ jobs:
 
       - name: Setup commom environment variables
         run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
           echo "CI_BUILD_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
           echo "BUILD_DIR=$GITHUB_WORKSPACE/build" >> $GITHUB_ENV
           echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
@@ -85,6 +87,8 @@ jobs:
 
       - name: Setup commom environment variables
         run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
           echo "CI_BUILD_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
           echo "BUILD_DIR=$GITHUB_WORKSPACE/build" >> $GITHUB_ENV
           echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
