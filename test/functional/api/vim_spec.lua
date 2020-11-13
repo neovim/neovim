@@ -168,7 +168,7 @@ describe('API', function()
       os.remove(fname)
     end)
 
-    it('traceback', function()
+    pending('traceback', function()
       local fname = tmpname()
       write_file(fname, 'echo "hello"\n')
       local sourcing_fname = tmpname()
@@ -1904,6 +1904,37 @@ describe('API', function()
       eq(1, #val)
       ok(endswith(val[1], p("autoload/remote/define.vim"))
          or endswith(val[1], p("autoload/remote/host.vim")))
+    end)
+  end)
+
+  describe('nvim_ex_call_luaref', function()
+    it('should return values when no configuration is passed', function()
+      eq(true, meths.exec_lua("return vim.api.nvim_ex_call_luaref({}, function() return true end, {})", {}))
+    end)
+
+    it('should disable autocmds when passed', function()
+      eq(true, meths.exec_lua("return vim.api.nvim_ex_call_luaref({autocmd = false}, function() return true end, {})", {}))
+
+      eq(1, meths.exec_lua([[
+        vim.g.autocmd_count = 0
+        vim.cmd [=[autocmd FileType * let g:autocmd_count = g:autocmd_count + 1]=]
+
+        local autocmd_incrementer = function() vim.cmd [=[doautocmd FileType]=] end
+
+        vim.api.nvim_ex_call_luaref({autocmd = true}, autocmd_incrementer, {})
+        vim.api.nvim_ex_call_luaref({autocmd = false}, autocmd_incrementer, {})
+
+        return vim.g.autocmd_count
+      ]], {}))
+    end)
+
+    it('should ignore errors when silent is passed', function()
+      eq({'Begin', nil}, meths.exec_lua([[
+        return {
+          vim.api.nvim_ex_call_luaref({silent = true}, function() return 'Begin' end, {}),
+          vim.api.nvim_ex_call_luaref({silent = true}, function() error("HELLO?") end, {})
+        }
+      ]], {}))
     end)
   end)
 end)

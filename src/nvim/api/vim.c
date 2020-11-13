@@ -634,6 +634,62 @@ Object nvim_call_function(String fn, Array args, Error *err)
   return _call_function(fn, args, NULL, err);
 }
 
+/// nvim_ex_call_function({noautocmd = true}, my_lua_cb, x, y, z)
+///
+/// local callable = vim.ex_wrap({autocmd = false}, my_lua_cb)
+/// callable(x, y, z)
+/// local wrapped = vim.
+//
+// nvim_ex_call_function({bufdo = {1, 3, 7, 8}}, my_lua_cb, ...)
+Object nvim_ex_call_luaref(Dictionary opts, LuaRef cb, Array args, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
+{
+  bool do_autocmds = true;
+  bool silent = false;
+
+  // TODO(tjdevries): Use the cool macro I made in the other PR
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+
+    if (strequal("autocmd", k.data)) {
+      do_autocmds = api_object_to_bool(v, "autocmd", true, err);
+    } else if (strequal("silent", k.data)) {
+      silent = api_object_to_bool(v, "silent", false, err);
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Invalid key: %s", k.data);
+    }
+  }
+
+  char_u *save_eventignore;
+  if (!do_autocmds) {
+    save_eventignore = vim_strsave(p_ei);
+    set_string_option_direct(
+        (char_u *)"eventignore", -1, (char_u *)"all", OPT_FREE, SID_NONE);
+  }
+
+  bool save_silent;
+  if (silent) {
+    save_silent = emsg_silent;
+    emsg_silent = true;
+  }
+
+  // Undefined behavior if you call vim.wait inside of here?...
+  Object rv = nlua_call_ref(cb, NULL, args, true, err);
+
+  if (!do_autocmds) {
+    set_string_option_direct(
+        (char_u *)"eventignore", -1, save_eventignore, OPT_FREE, SID_NONE);
+    free_string_option(save_eventignore);
+  }
+
+  if (silent) {
+    emsg_silent = save_silent;
+  }
+
+  return rv;
+}
+
 /// Calls a VimL |Dictionary-function| with the given arguments.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
