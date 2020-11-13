@@ -525,7 +525,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
   autocmd_check_buffer_modified(buf);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
       autocmd_check_window_scrolled(wp);
@@ -1944,7 +1944,7 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 
   autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
   autocmd_check_buffer_modified(buf);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
       autocmd_check_window_scrolled(wp);

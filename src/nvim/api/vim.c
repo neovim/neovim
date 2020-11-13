@@ -1021,7 +1021,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 
   if (strequal(name.data, "wrap")) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
       autocmd_check_window_scrolled(wp);
     }
   }
