@@ -1350,7 +1350,7 @@ describe('API', function()
       eq({info=info}, meths.get_var("info_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
 
-      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer",
+      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
          pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
@@ -1512,7 +1512,7 @@ describe('API', function()
   it("does not leak memory on incorrect argument types", function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
-    ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+    ok(err:match(': Wrong type for argument 1 when calling nvim_set_current_dir, expecting String') ~= nil)
   end)
 
   describe('nvim_parse_expression', function()
