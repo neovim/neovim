@@ -67,6 +67,22 @@ describe('vim.lsp.diagnostic', function()
 
   describe('vim.lsp.diagnostic', function()
     describe('handle_publish_diagnostics', function()
+      it('should be able to retrieve diagnostics from all buffers and clients', function()
+        eq(3, exec_lua [[
+          vim.lsp.diagnostic.save(
+            {
+              make_error('Diagnostic #1', 1, 1, 1, 1),
+              make_error('Diagnostic #2', 2, 1, 2, 1),
+            }, 0, 1
+          )
+          vim.lsp.diagnostic.save(
+            {
+              make_error('Diagnostic #3', 3, 1, 3, 1),
+            }, 1, 2
+          )
+          return #vim.lsp.diagnostic.get_all()
+        ]])
+      end)
       it('should be able to save and count a single client error', function()
         eq(1, exec_lua [[
           vim.lsp.diagnostic.save(

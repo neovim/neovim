@@ -305,6 +305,20 @@ end
 -- }}}
 -- Diagnostic Retrieval {{{
 
+
+--- Get all diagnostics for all clients
+---
+---@return Diagnostic[]
+function M.get_all()
+  local all_diagnostics = {}
+  for _, buf_diagnostics in pairs(diagnostic_cache) do
+    for _, client_diagnostics in pairs(buf_diagnostics) do
+      vim.list_extend(all_diagnostics, client_diagnostics)
+    end
+  end
+  return all_diagnostics
+end
+
 --- Return associated diagnostics for bufnr
 ---
 ---@param bufnr number
