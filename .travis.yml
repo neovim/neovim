@@ -30,7 +30,7 @@ env:
     # Nvim log file.
     - NVIM_LOG_FILE="$BUILD_DIR/.nvimlog"
     # Default CMake flags.
-    - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
+    - CMAKE_FLAGS="-DCI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DBUSTED_OUTPUT_TYPE=nvim
@@ -45,7 +45,7 @@ env:
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
     - CACHE_NVIM_DEPS_DIR="$HOME/.cache/nvim-deps"
     # If this file exists, the cache is valid (compile was successful).
-    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.travis_cache_marker"
+    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.ci_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests

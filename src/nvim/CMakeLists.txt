@@ -617,14 +617,14 @@ if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
   if(SANITIZE_RECOVER_ALL)
-    if(TRAVIS_CI_BUILD)
+    if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
       set(SANITIZE_RECOVER -fsanitize-recover=all)     # Clang 3.6+
     else()
       set(SANITIZE_RECOVER -fno-sanitize-recover=all)  # Clang 3.6+
     endif()
   else()
-    if(TRAVIS_CI_BUILD)
+    if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
       set(SANITIZE_RECOVER -fsanitize-recover)         # Clang 3.5-
     else()
