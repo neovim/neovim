@@ -66,7 +66,7 @@ main() {(
     fi
   fi
   if test "$FAILED" = 1 ; then
-    travis_fold start "$NVIM_TEST_CURRENT_SUITE/$test_name"
+    ci_fold start "$NVIM_TEST_CURRENT_SUITE/$test_name"
   fi
   valgrind_check .
   if test -n "$LOG_DIR" ; then
@@ -78,7 +78,7 @@ main() {(
   fi
   rm -f "$tlog"
   if test "$FAILED" = 1 ; then
-    travis_fold end "$NVIM_TEST_CURRENT_SUITE/$test_name"
+    ci_fold end "$NVIM_TEST_CURRENT_SUITE/$test_name"
   fi
   if test "$FAILED" = 1 ; then
     echo "Test $test_name failed, see output above and summary for more details" >> test.log
