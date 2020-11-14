@@ -530,12 +530,8 @@ void ins_bytes_len(char_u *p, size_t len)
 {
   size_t n;
   for (size_t i = 0; i < len; i += n) {
-    if (enc_utf8) {
-      // avoid reading past p[len]
-      n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
-    } else {
-      n = (size_t)(*mb_ptr2len)(p + i);
-    }
+    // avoid reading past p[len]
+    n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
     ins_char_bytes(p + i, n);
   }
 }
@@ -761,7 +757,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
-  if (p_deco && use_delcombine && enc_utf8
+  if (p_deco && use_delcombine
       && utfc_ptr2len(oldp + col) >= count) {
     int cc[MAX_MCO];
     int n;
