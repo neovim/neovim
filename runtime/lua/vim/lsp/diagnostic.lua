@@ -305,6 +305,20 @@ end
 -- }}}
 -- Diagnostic Retrieval {{{
 
+
+--- Get all diagnostics for all clients
+---
+---@return Diagnostic[]
+function M.get_all()
+  local all_diagnostics = {}
+  for _, buf_diagnostics in pairs(diagnostic_cache) do
+    for _, client_diagnostics in pairs(buf_diagnostics) do
+      vim.list_extend(all_diagnostics, client_diagnostics)
+    end
+  end
+  return all_diagnostics
+end
+
 --- Return associated diagnostics for bufnr
 ---
 ---@param bufnr number
@@ -990,10 +1004,6 @@ function M.display(diagnostics, bufnr, client_id, config)
     update_in_insert = false,
   }, config)
 
-  if diagnostics == nil then
-    diagnostics = M.get(bufnr, client_id)
-  end
-
   -- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
   --    It seems like we would probably want to do this more often as we expose more of them.
   --    It provides a very nice functional interface for people to override configuration.
@@ -1031,7 +1041,7 @@ function M.display(diagnostics, bufnr, client_id, config)
 
   M.clear(bufnr, client_id)
 
-  diagnostics = diagnostics or diagnostic_cache[bufnr][client_id]
+  diagnostics = diagnostics or M.get(bufnr, client_id)
 
   if not diagnostics or vim.tbl_isempty(diagnostics) then
     return

@@ -1032,6 +1032,12 @@ get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
                                  diagnostics. Else, return just the
                                  diagnostics associated with the client_id.
 
+get_all()                                       *vim.lsp.diagnostic.get_all()*
+                Get all diagnostics for all clients
+
+                Return: ~
+                    Diagnostic[]
+
                                               *vim.lsp.diagnostic.get_count()*
 get_count({bufnr}, {severity}, {client_id})
                 Get the counts for a particular severity
