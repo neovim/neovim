@@ -281,20 +281,16 @@ function M.remove_workspace_folder(workspace_folder)
   vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
-  local removed = false;
   for _, client in ipairs(vim.lsp.buf_get_clients()) do
     for idx, folder in ipairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
         vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
         client.workspaceFolders[idx] = nil
-        removed = true;
         return
       end
     end
   end
-  if not removed then
-    print(workspace_folder,  "is not currently part of the workspace")
-  end
+  print(workspace_folder,  "is not currently part of the workspace")
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
