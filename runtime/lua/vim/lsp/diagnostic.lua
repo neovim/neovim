@@ -731,6 +731,8 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   local prefix = opts.prefix or "■"
   local spacing = opts.spacing or 4
   local show_server_name = opts.show_server_name or false
+  local server_name_left = opts.server_name_left or '«'
+  local server_name_right = opts.server_name_left or '»'
 
   -- Create a little more space between virtual text and contents
   local virt_texts = {{string.rep(" ", spacing)}}
@@ -758,10 +760,13 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
       virt_texts,
       {
         -- Virtual text format: prefix  message server_name
-        string.format("%s %s %s", prefix,last.message:gsub("\r", ""):gsub("\n", "  "),server_name),
+        string.format("%s %s", prefix,last.message:gsub("\r", ""):gsub("\n", "  ")),
         virtual_text_highlight_map[last.severity]
       }
     )
+
+    table.insert(virt_texts,{string.format("%s%s%s",server_name_left,server_name,server_name_right),
+        'LspDiagnosticsVirtualTextServerName'})
 
     return virt_texts
   end
