@@ -163,7 +163,7 @@ describe("folded lines", function()
           {1:~                                            }|
                                                        |
         ]]}
-      end
+        end
     end)
 
     it("works with multibyte fillchars", function()
