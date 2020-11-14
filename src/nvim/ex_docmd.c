@@ -2505,12 +2505,8 @@ static void append_command(char_u *cmd)
   STRCAT(IObuff, ": ");
   d = IObuff + STRLEN(IObuff);
   while (*s != NUL && d - IObuff < IOSIZE - 7) {
-    if (
-      enc_utf8 ? (s[0] == 0xc2 && s[1] == 0xa0) :
-      *s == 0xa0) {
-      s +=
-        enc_utf8 ? 2 :
-        1;
+    if (s[0] == 0xc2 && s[1] == 0xa0) {
+      s += 2;
       STRCPY(d, "<a0>");
       d += 4;
     } else
@@ -5564,7 +5560,8 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
         break;
       len += 3;       /* "," */
     } else {
-      int charlen = (*mb_ptr2len)(p);
+      const int charlen = utfc_ptr2len(p);
+
       len += charlen;
       p += charlen;
     }
@@ -8266,12 +8263,10 @@ static void ex_normal(exarg_T *eap)
     return;
   }
 
-  /*
-   * vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
-   * this for the K_SPECIAL leading byte, otherwise special keys will not
-   * work.
-   */
-  if (has_mbyte) {
+  // vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
+  // this for the K_SPECIAL leading byte, otherwise special keys will not
+  // work.
+  {
     int len = 0;
 
     /* Count the number of characters to be escaped. */
@@ -8310,9 +8305,8 @@ static void ex_normal(exarg_T *eap)
         check_cursor_moved(curwin);
       }
 
-      exec_normal_cmd(
-          arg != NULL ? arg :
-          eap->arg, eap->forceit ? REMAP_NONE : REMAP_YES, FALSE);
+      exec_normal_cmd(arg != NULL ? arg : eap->arg,
+                      eap->forceit ? REMAP_NONE : REMAP_YES, false);
     } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
   }
 

@@ -400,12 +400,12 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
     }
     len += n;
     buf[e] = s[e];
-    if (has_mbyte)
-      for (n = (*mb_ptr2len)(s + e); --n > 0; ) {
-        if (++e == buflen)
-          break;
-        buf[e] = s[e];
+    for (n = utfc_ptr2len(s + e); --n > 0; ) {
+      if (++e == buflen) {
+        break;
       }
+      buf[e] = s[e];
+    }
   }
 
   // Last part: End of the string.
@@ -873,19 +873,17 @@ char_u *msg_may_trunc(int force, char_u *s)
   room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (n = (int)STRLEN(s) - room) > 0) {
-    if (has_mbyte) {
-      int size = vim_strsize(s);
+    int size = vim_strsize(s);
 
-      /* There may be room anyway when there are multibyte chars. */
-      if (size <= room)
-        return s;
-
-      for (n = 0; size >= room; ) {
-        size -= utf_ptr2cells(s + n);
-        n += utfc_ptr2len(s + n);
-      }
-      --n;
+    // There may be room anyway when there are multibyte chars.
+    if (size <= room) {
+      return s;
     }
+    for (n = 0; size >= room; ) {
+      size -= utf_ptr2cells(s + n);
+      n += utfc_ptr2len(s + n);
+    }
+    n--;
     s += n;
     *s = '<';
   }
@@ -1430,7 +1428,7 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
 
   // If the string starts with a composing character first draw a space on
   // which the composing char can be drawn.
-  if (enc_utf8 && utf_iscomposing(utf_ptr2char(msgstr))) {
+  if (utf_iscomposing(utf_ptr2char(msgstr))) {
     msg_puts_attr(" ", attr);
   }
 
@@ -2489,8 +2487,9 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   *t_col = 0;
   /* If the string starts with a composing character don't increment the
    * column position for it. */
-  if (enc_utf8 && utf_iscomposing(utf_ptr2char(t_s)))
-    --msg_col;
+  if (utf_iscomposing(utf_ptr2char(t_s))) {
+    msg_col--;
+  }
   if (msg_col >= Columns) {
     msg_col = 0;
     ++msg_row;
@@ -3391,12 +3390,12 @@ do_dialog (
  * Copy one character from "*from" to "*to", taking care of multi-byte
  * characters.  Return the length of the character in bytes.
  */
-static int
-copy_char (
-    char_u *from,
+static int copy_char(
+    const char_u *from,
     char_u *to,
-    int lowercase                  /* make character lower case */
+    bool lowercase  // make character lower case
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lowercase) {
     int c = mb_tolower(utf_ptr2char(from));
@@ -3408,7 +3407,7 @@ copy_char (
 }
 
 #define HAS_HOTKEY_LEN 30
-#define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
+#define HOTK_LEN MB_MAXBYTES
 
 /// Allocates memory for dialog string & for storing hotkeys
 ///
@@ -3512,7 +3511,7 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
 
   // Define first default hotkey. Keep the hotkey string NUL
   // terminated to avoid reading past the end.
-  hotkeys_ptr[copy_char(buttons, hotkeys_ptr, TRUE)] = NUL;
+  hotkeys_ptr[copy_char(buttons, hotkeys_ptr, true)] = NUL;
 
   // Remember where the choices start, displaying starts here when
   // "hotkeys_ptr" typed at the more prompt.
@@ -3532,8 +3531,8 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
       *msgp++ = ' ';                    // '\n' -> ', '
 
       // Advance to next hotkey and set default hotkey
-      hotkeys_ptr += (has_mbyte) ? STRLEN(hotkeys_ptr): 1;
-      hotkeys_ptr[copy_char(r + 1, hotkeys_ptr, TRUE)] = NUL;
+      hotkeys_ptr += STRLEN(hotkeys_ptr);
+      hotkeys_ptr[copy_char(r + 1, hotkeys_ptr, true)] = NUL;
 
       if (default_button_idx) {
         default_button_idx--;
@@ -3555,15 +3554,15 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
       } else {
         // '&a' -> '[a]'
         *msgp++ = (default_button_idx == 1) ? '[' : '(';
-        msgp += copy_char(r, msgp, FALSE);
+        msgp += copy_char(r, msgp, false);
         *msgp++ = (default_button_idx == 1) ? ']' : ')';
 
         // redefine hotkey
-        hotkeys_ptr[copy_char(r, hotkeys_ptr, TRUE)] = NUL;
+        hotkeys_ptr[copy_char(r, hotkeys_ptr, true)] = NUL;
       }
     } else {
       // everything else copy literally
-      msgp += copy_char(r, msgp, FALSE);
+      msgp += copy_char(r, msgp, false);
     }
 
     // advance to the next character

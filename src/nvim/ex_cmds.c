@@ -795,10 +795,7 @@ void ex_retab(exarg_T *eap)
       if (ptr[col] == NUL)
         break;
       vcol += chartabsize(ptr + col, (colnr_T)vcol);
-      if (has_mbyte)
-        col += (*mb_ptr2len)(ptr + col);
-      else
-        ++col;
+      col += utfc_ptr2len(ptr + col);
     }
     if (new_line == NULL)                   /* out of memory */
       break;
@@ -3465,7 +3462,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
       int lastone;
       long nmatch_tl = 0;               // nr of lines matched below lnum
       int do_again;                     // do it again after joining lines
-      int skip_match = false;
+      bool skip_match = false;
       linenr_T sub_firstlnum;           // nr of first sub line
 
       /*
@@ -3576,16 +3573,13 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         if (matchcol == prev_matchcol
             && regmatch.endpos[0].lnum == 0
             && matchcol == regmatch.endpos[0].col) {
-          if (sub_firstline[matchcol] == NUL)
-            /* We already were at the end of the line.  Don't look
-             * for a match in this line again. */
-            skip_match = TRUE;
-          else {
-            /* search for a match at next column */
-            if (has_mbyte)
-              matchcol += mb_ptr2len(sub_firstline + matchcol);
-            else
-              ++matchcol;
+          if (sub_firstline[matchcol] == NUL) {
+            // We already were at the end of the line.  Don't look
+            // for a match in this line again.
+            skip_match = true;
+          } else {
+            // search for a match at next column
+            matchcol += mb_ptr2len(sub_firstline + matchcol);
           }
           // match will be pushed to preview_lines, bring it into a proper state
           current_match.start.col = matchcol;
@@ -3609,7 +3603,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           if (nmatch > 1) {
             matchcol = (colnr_T)STRLEN(sub_firstline);
             nmatch = 1;
-            skip_match = TRUE;
+            skip_match = true;
           }
           sub_nsubs++;
           did_sub = TRUE;
@@ -3779,7 +3773,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
              * get stuck when pressing 'n'. */
             if (nmatch > 1) {
               matchcol = (colnr_T)STRLEN(sub_firstline);
-              skip_match = TRUE;
+              skip_match = true;
             }
             goto skip;
           }
@@ -3956,8 +3950,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 STRMOVE(new_start, p1 + 1);
                 p1 = new_start - 1;
               }
-            } else if (has_mbyte) {
-              p1 += (*mb_ptr2len)(p1) - 1;
+            } else {
+              p1 += utfc_ptr2len(p1) - 1;
             }
           }
           size_t new_endcol = STRLEN(new_start);

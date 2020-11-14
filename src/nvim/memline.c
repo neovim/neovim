@@ -4152,9 +4152,7 @@ void goto_byte(long cnt)
   check_cursor();
 
   // Make sure the cursor is on the first byte of a multi-byte char.
-  if (has_mbyte) {
-    mb_adjust_cursor();
-  }
+  mb_adjust_cursor();
 }
 
 /// Increment the line pointer "lp" crossing line boundaries as necessary.

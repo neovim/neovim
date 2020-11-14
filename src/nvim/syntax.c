@@ -2960,11 +2960,7 @@ static int check_keyword_id(
   char_u *const kwp = line + startcol;
   int kwlen = 0;
   do {
-    if (has_mbyte) {
-      kwlen += (*mb_ptr2len)(kwp + kwlen);
-    } else {
-      kwlen++;
-    }
+    kwlen += utfc_ptr2len(kwp + kwlen);
   } while (vim_iswordp_buf(kwp + kwlen, syn_buf));
 
   if (kwlen > MAXKEYWLEN) {

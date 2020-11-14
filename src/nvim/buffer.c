@@ -3334,9 +3334,7 @@ void maketitle(void)
       len = (int)STRLEN(buf_p);
       if (len > 100) {
         len -= 100;
-        if (has_mbyte) {
-          len += (*mb_tail_off)(buf_p, buf_p + len) + 1;
-        }
+        len += (*mb_tail_off)(buf_p, buf_p + len) + 1;
         buf_p += len;
       }
       STRCPY(icon_str, buf_p);
@@ -3661,17 +3659,12 @@ int build_stl_str_hl(
       // truncate by removing bytes from the start of the group text.
       if (group_len > stl_items[stl_groupitems[groupdepth]].maxwid) {
         // { Determine the number of bytes to remove
-        long n;
-        if (has_mbyte) {
-          // Find the first character that should be included.
-          n = 0;
-          while (group_len >= stl_items[stl_groupitems[groupdepth]].maxwid) {
-            group_len -= ptr2cells(t + n);
-            n += (*mb_ptr2len)(t + n);
-          }
-        } else {
-          n = (long)(out_p - t)
-            - stl_items[stl_groupitems[groupdepth]].maxwid + 1;
+
+        // Find the first character that should be included.
+        long n = 0;
+        while (group_len >= stl_items[stl_groupitems[groupdepth]].maxwid) {
+          group_len -= ptr2cells(t + n);
+          n += (*mb_ptr2len)(t + n);
         }
         // }
 
@@ -4183,13 +4176,10 @@ int build_stl_str_hl(
 
       // If the item is too wide, truncate it from the beginning
       if (l > maxwid) {
-        while (l >= maxwid)
-          if (has_mbyte) {
-            l -= ptr2cells(t);
-            t += (*mb_ptr2len)(t);
-          } else {
-            l -= byte2cells(*t++);
-          }
+        while (l >= maxwid) {
+          l -= ptr2cells(t);
+          t += utfc_ptr2len(t);
+        }
 
         // Early out if there isn't enough room for the truncation marker
         if (out_p >= out_end_p) {
@@ -4372,26 +4362,19 @@ int build_stl_str_hl(
     // If the truncation point we found is beyond the maximum
     // length of the string, truncate the end of the string.
     if (width - vim_strsize(trunc_p) >= maxwidth) {
-      // If we are using a multi-byte encoding, walk from the beginning of the
+      // Walk from the beginning of the
       // string to find the last character that will fit.
-      if (has_mbyte) {
-        trunc_p = out;
-        width = 0;
-        for (;; ) {
-          width += ptr2cells(trunc_p);
-          if (width >= maxwidth) {
-            break;
-          }
-
-          // Note: Only advance the pointer if the next
-          //       character will fit in the available output space
-          trunc_p += (*mb_ptr2len)(trunc_p);
+      trunc_p = out;
+      width = 0;
+      for (;; ) {
+        width += ptr2cells(trunc_p);
+        if (width >= maxwidth) {
+          break;
         }
 
-      // Otherwise put the truncation point at the end, leaving enough room
-      // for a single-character truncation marker
-      } else {
-        trunc_p = out + maxwidth - 1;
+        // Note: Only advance the pointer if the next
+        //       character will fit in the available output space
+        trunc_p += utfc_ptr2len(trunc_p);
       }
 
       // Ignore any items in the statusline that occur after
@@ -4410,16 +4393,10 @@ int build_stl_str_hl(
     // Truncate at the truncation point we found
     } else {
       // { Determine how many bytes to remove
-      long trunc_len;
-      if (has_mbyte) {
-        trunc_len = 0;
-        while (width >= maxwidth) {
-          width     -= ptr2cells(trunc_p + trunc_len);
-          trunc_len += (*mb_ptr2len)(trunc_p + trunc_len);
-        }
-      } else {
-        // Truncate an extra character so we can insert our `<`.
-        trunc_len = (width - maxwidth) + 1;
+      long trunc_len = 0;
+      while (width >= maxwidth) {
+        width     -= ptr2cells(trunc_p + trunc_len);
+        trunc_len += utfc_ptr2len(trunc_p + trunc_len);
       }
       // }
 

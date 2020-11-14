@@ -242,9 +242,7 @@ static int coladvance2(
   }
 
   // Prevent from moving onto a trail byte.
-  if (has_mbyte) {
-    mark_mb_adjustpos(curbuf, pos);
-  }
+  mark_mb_adjustpos(curbuf, pos);
 
   if (wcol < 0 || col < wcol) {
     return FAIL;
@@ -378,9 +376,7 @@ void check_cursor_col_win(win_T *win)
     } else {
       win->w_cursor.col = len - 1;
       // Move the cursor to the head byte.
-      if (has_mbyte) {
-        mark_mb_adjustpos(win->w_buffer, &win->w_cursor);
-      }
+      mark_mb_adjustpos(win->w_buffer, &win->w_cursor);
     }
   } else if (win->w_cursor.col < 0) {
     win->w_cursor.col = 0;

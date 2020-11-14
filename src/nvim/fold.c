@@ -1037,11 +1037,11 @@ void foldAdjustVisual(void)
   if (hasFolding(end->lnum, NULL, &end->lnum)) {
     ptr = ml_get(end->lnum);
     end->col = (colnr_T)STRLEN(ptr);
-    if (end->col > 0 && *p_sel == 'o')
-      --end->col;
-    /* prevent cursor from moving on the trail byte */
-    if (has_mbyte)
-      mb_adjust_cursor();
+    if (end->col > 0 && *p_sel == 'o') {
+      end->col--;
+    }
+    // prevent cursor from moving on the trail byte
+    mb_adjust_cursor();
   }
 }
 

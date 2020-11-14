@@ -426,9 +426,9 @@ static void insert_enter(InsertState *s)
          || curwin->w_curswant > curwin->w_virtcol)
         && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
       if (s->ptr[1] == NUL) {
-        ++curwin->w_cursor.col;
-      } else if (has_mbyte) {
-        s->i = (*mb_ptr2len)(s->ptr);
+        curwin->w_cursor.col++;
+      } else {
+        s->i = utfc_ptr2len(s->ptr);
         if (s->ptr[s->i] == NUL) {
           curwin->w_cursor.col += s->i;
         }
@@ -1299,11 +1299,10 @@ normalchar:
     // special character.  Let CTRL-] expand abbreviations without
     // inserting it.
     if (vim_iswordc(s->c)
-        || (!echeck_abbr(
           // Add ABBR_OFF for characters above 0x100, this is
           // what check_abbr() expects.
-          (has_mbyte && s->c >= 0x100) ? (s->c + ABBR_OFF) : s->c)
-          && s->c != Ctrl_RSB)) {
+        || (!echeck_abbr((s->c >= 0x100) ? (s->c + ABBR_OFF) : s->c)
+            && s->c != Ctrl_RSB)) {
       insert_special(s->c, false, false);
       revins_legal++;
       revins_chars++;
@@ -1574,14 +1573,12 @@ void edit_putchar(int c, bool highlight)
     pc_status = PC_STATUS_UNSET;
     if (curwin->w_p_rl) {
       pc_col += curwin->w_grid.Columns - 1 - curwin->w_wcol;
-      if (has_mbyte) {
-        int fix_col = grid_fix_col(&curwin->w_grid, pc_col, pc_row);
+      const int fix_col = grid_fix_col(&curwin->w_grid, pc_col, pc_row);
 
-        if (fix_col != pc_col) {
-          grid_putchar(&curwin->w_grid, ' ', pc_row, fix_col, attr);
-          curwin->w_wcol--;
-          pc_status = PC_STATUS_RIGHT;
-        }
+      if (fix_col != pc_col) {
+        grid_putchar(&curwin->w_grid, ' ', pc_row, fix_col, attr);
+        curwin->w_wcol--;
+        pc_status = PC_STATUS_RIGHT;
       }
     } else {
       pc_col += curwin->w_wcol;
@@ -1817,10 +1814,11 @@ change_indent (
     ptr = get_cursor_line_ptr();
     while (vcol <= (int)curwin->w_virtcol) {
       last_vcol = vcol;
-      if (has_mbyte && new_cursor_col >= 0)
-        new_cursor_col += (*mb_ptr2len)(ptr + new_cursor_col);
-      else
-        ++new_cursor_col;
+      if (new_cursor_col >= 0) {
+        new_cursor_col += utfc_ptr2len(ptr + new_cursor_col);
+      } else {
+        new_cursor_col++;
+      }
       vcol += lbr_chartabsize(ptr, ptr + new_cursor_col, (colnr_T)vcol);
     }
     vcol = last_vcol;
@@ -1975,7 +1973,7 @@ void backspace_until_column(int col)
 /// @return true when something was deleted.
 static bool del_char_after_col(int limit_col)
 {
-  if (enc_utf8 && limit_col >= 0) {
+  if (limit_col >= 0) {
     colnr_T ecol = curwin->w_cursor.col + 1;
 
     // Make sure the cursor is at the start of a character, but
@@ -2174,15 +2172,14 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     // Infer case of completed part.
 
     // Find actual length of completion.
-    if (has_mbyte) {
+    {
       const char_u *p = str;
       actual_len = 0;
       while (*p != NUL) {
         MB_PTR_ADV(p);
         actual_len++;
       }
-    } else
-      actual_len = len;
+    }
 
     // Find actual length of original text.
     {
@@ -2204,11 +2201,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     {
       const char_u *p = str;
       for (i = 0; i < actual_len; i++) {
-        if (has_mbyte) {
-          wca[i] = mb_ptr2char_adv(&p);
-        } else {
-          wca[i] = *(p++);
-        }
+        wca[i] = mb_ptr2char_adv(&p);
       }
     }
 
@@ -2216,11 +2209,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     {
       const char_u *p = compl_orig_text;
       for (i = 0; i < min_len; i++) {
-        if (has_mbyte) {
-          c = mb_ptr2char_adv(&p);
-        } else {
-          c = *(p++);
-        }
+        c = mb_ptr2char_adv(&p);
         if (mb_islower(c)) {
           has_lower = true;
           if (mb_isupper(wca[i])) {
@@ -2241,11 +2230,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     if (!has_lower) {
       const char_u *p = compl_orig_text;
       for (i = 0; i < min_len; i++) {
-        if (has_mbyte) {
-          c = mb_ptr2char_adv(&p);
-        } else {
-          c = *(p++);
-        }
+        c = mb_ptr2char_adv(&p);
         if (was_letter && mb_isupper(c) && mb_islower(wca[i])) {
           // Rule 2 is satisfied.
           for (i = actual_compl_length; i < actual_len; i++) {
@@ -2261,11 +2246,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     {
       const char_u *p = compl_orig_text;
       for (i = 0; i < min_len; i++) {
-        if (has_mbyte) {
-          c = mb_ptr2char_adv(&p);
-        } else {
-          c = *(p++);
-        }
+        c = mb_ptr2char_adv(&p);
         if (mb_islower(c)) {
           wca[i] = mb_tolower(wca[i]);
         } else if (mb_isupper(c)) {
@@ -3059,12 +3040,9 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
  */
 char_u *find_word_start(char_u *ptr)
 {
-  if (has_mbyte)
-    while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1)
-      ptr += (*mb_ptr2len)(ptr);
-  else
-    while (*ptr != NUL && *ptr != '\n' && !vim_iswordc(*ptr))
-      ++ptr;
+  while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1) {
+    ptr += utfc_ptr2len(ptr);
+  }
   return ptr;
 }
 
@@ -3074,19 +3052,15 @@ char_u *find_word_start(char_u *ptr)
  */
 char_u *find_word_end(char_u *ptr)
 {
-  int start_class;
-
-  if (has_mbyte) {
-    start_class = mb_get_class(ptr);
-    if (start_class > 1)
-      while (*ptr != NUL) {
-        ptr += (*mb_ptr2len)(ptr);
-        if (mb_get_class(ptr) != start_class)
-          break;
+  const int start_class = mb_get_class(ptr);
+  if (start_class > 1) {
+    while (*ptr != NUL) {
+      ptr += utfc_ptr2len(ptr);
+      if (mb_get_class(ptr) != start_class) {
+        break;
       }
-  } else
-    while (vim_iswordc(*ptr))
-      ++ptr;
+    }
+  }
   return ptr;
 }
 
@@ -5557,10 +5531,9 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
  */
 # define ISSPECIAL(c)   ((c) < ' ' || (c) >= DEL || (c) == '0' || (c) == '^')
 
-# define WHITECHAR(cc) (ascii_iswhite(cc) && \
-                        (!enc_utf8 || \
-                         !utf_iscomposing( \
-                           utf_ptr2char(get_cursor_pos_ptr() + 1))))
+#define WHITECHAR(cc) ( \
+    ascii_iswhite(cc) \
+    && !utf_iscomposing(utf_ptr2char(get_cursor_pos_ptr() + 1)))
 
 /*
  * "flags": INSCHAR_FORMAT - force formatting
@@ -5697,7 +5670,7 @@ void insertchar(
   // Do the check for InsertCharPre before the call to vpeekc() because the
   // InsertCharPre autocommand could change the input buffer.
   if (!ISSPECIAL(c)
-      && (!has_mbyte || (*mb_char2len)(c) == 1)
+      && (utf_char2len(c) == 1)
       && !has_event(EVENT_INSERTCHARPRE)
       && vpeekc() != NUL
       && !(State & REPLACE_FLAG)
@@ -7175,16 +7148,11 @@ static void replace_do_bs(int limit_col)
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
       orig_vcols = chartabsize(get_cursor_pos_ptr(), start_vcol);
     }
-    if (has_mbyte) {
-      (void)del_char_after_col(limit_col);
-      if (l_State & VREPLACE_FLAG)
-        orig_len = (int)STRLEN(get_cursor_pos_ptr());
-      replace_push(cc);
-    } else {
-      pchar_cursor(cc);
-      if (l_State & VREPLACE_FLAG)
-        orig_len = (int)STRLEN(get_cursor_pos_ptr()) - 1;
+    (void)del_char_after_col(limit_col);
+    if (l_State & VREPLACE_FLAG) {
+      orig_len = (int)STRLEN(get_cursor_pos_ptr());
     }
+    replace_push(cc);
     replace_pop_ins();
 
     if (l_State & VREPLACE_FLAG) {
@@ -7403,23 +7371,17 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         bool match = false;
 
         if (keytyped == KEY_COMPLETE) {
-          char_u      *s;
+          char_u *n, *s;
 
           /* Just completed a word, check if it starts with "look".
            * search back for the start of a word. */
           line = get_cursor_line_ptr();
-          if (has_mbyte) {
-            char_u  *n;
-
-            for (s = line + curwin->w_cursor.col; s > line; s = n) {
-              n = mb_prevptr(line, s);
-              if (!vim_iswordp(n))
-                break;
+          for (s = line + curwin->w_cursor.col; s > line; s = n) {
+            n = mb_prevptr(line, s);
+            if (!vim_iswordp(n)) {
+              break;
             }
-          } else
-            for (s = line + curwin->w_cursor.col; s > line; --s)
-              if (!vim_iswordc(s[-1]))
-                break;
+          }
           assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
           if (s + (p - look) <= line + curwin->w_cursor.col
               && (icase
@@ -8255,10 +8217,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         }
         cc = gchar_cursor();
         // look multi-byte character class
-        if (has_mbyte) {
-          prev_cclass = cclass;
-          cclass = mb_get_class(get_cursor_pos_ptr());
-        }
+        prev_cclass = cclass;
+        cclass = mb_get_class(get_cursor_pos_ptr());
         if (mode == BACKSPACE_WORD && !ascii_isspace(cc)) {   // start of word?
           mode = BACKSPACE_WORD_NOT_SPACE;
           temp = vim_iswordc(cc);
@@ -8272,19 +8232,18 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           }
           break;
         }
-        if (State & REPLACE_FLAG)
+        if (State & REPLACE_FLAG) {
           replace_do_bs(-1);
-        else {
-          const bool l_enc_utf8 = enc_utf8;
+        } else {
           const int l_p_deco = p_deco;
-          if (l_enc_utf8 && l_p_deco) {
+          if (l_p_deco) {
             (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
           }
           (void)del_char(false);
           // If there are combining characters and 'delcombine' is set
           // move the cursor back.  Don't back up before the base
           // character.
-          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL) {
+          if (l_p_deco && cpc[0] != NUL) {
             inc_cursor();
           }
           if (revins_chars) {
@@ -8522,13 +8481,10 @@ static void ins_right(void)
       AppendCharToRedobuff(K_RIGHT);
     }
     curwin->w_set_curswant = true;
-    if (virtual_active())
+    if (virtual_active()) {
       oneright();
-    else {
-      if (has_mbyte)
-        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
-      else
-        ++curwin->w_cursor.col;
+    } else {
+      curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
     }
 
     revins_legal++;
