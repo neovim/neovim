@@ -252,7 +252,7 @@ end
 --- Add a workspace folder.
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
-  api.nvim_command("redraw")
+  vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then
     print(workspace_folder, " is not a valid directory")
@@ -261,7 +261,7 @@ function M.add_workspace_folder(workspace_folder)
   local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
   for _, client in ipairs(vim.lsp.buf_get_clients()) do
     local found = false
-    for idx, folder in ipairs(client.workspaceFolders) do
+    for _, folder in ipairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
         found = true
         print(workspace_folder, "is already part of this workspace")
@@ -278,7 +278,7 @@ end
 --- Remove a workspace folder.
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
-  api.nvim_command("redraw")
+  vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
   local removed = false;

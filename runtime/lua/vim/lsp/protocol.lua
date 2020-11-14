@@ -976,6 +976,7 @@ function protocol.resolve_capabilities(server_capabilities)
   end
 
   local workspace = server_capabilities.workspace
+  local workspace_properties = {}
   if workspace == nil or workspace.workspaceFolders == nil then
     -- Defaults if omitted.
     workspace_properties = {
