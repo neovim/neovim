@@ -2301,14 +2301,11 @@ static void do_intro_line(long row, char_u *mesg, int attr)
   for (p = mesg; *p != NUL; p += l) {
     clen = 0;
 
-    for (l = 0; p[l] != NUL
-         && (l == 0 || (p[l] != '<' && p[l - 1] != '>')); ++l) {
-      if (has_mbyte) {
-        clen += ptr2cells(p + l);
-        l += (*mb_ptr2len)(p + l) - 1;
-      } else {
-        clen += byte2cells(p[l]);
-      }
+    for (l = 0;
+         p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
+         l++) {
+      clen += ptr2cells(p + l);
+      l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
     grid_puts_len(&default_grid, p, l, (int)row, (int)col,

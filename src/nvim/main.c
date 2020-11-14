@@ -188,9 +188,6 @@ void early_init(mparm_T *paramp)
   global_alist.id = 0;
 
   // Set the default values for the options.
-  // NOTE: Non-latin1 translated messages are working only after this,
-  // because this is where "has_mbyte" will be set, which is used by
-  // msg_outtrans_len_attr().
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
   set_init_1(paramp != NULL ? paramp->clean : false);

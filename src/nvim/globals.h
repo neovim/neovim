@@ -602,7 +602,6 @@ EXTERN int inhibit_delete_count INIT(= 0);
 // 'encoding' is always "utf-8". Code that use them can be refactored to
 // remove dead code.
 #define enc_utf8 true
-#define has_mbyte true
 
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
