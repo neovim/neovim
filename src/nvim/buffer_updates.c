@@ -11,14 +11,16 @@
 #include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer_updates.c.generated.h"
+#include "buffer_updates.c.generated.h"
 #endif
 
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool buf_updates_register(buf_T *buf, uint64_t channel_id,
-                          BufUpdateCallbacks cb, bool send_buffer)
+bool buf_updates_register(buf_T *buf,
+                          uint64_t channel_id,
+                          BufUpdateCallbacks cb,
+                          bool send_buffer)
 {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
@@ -86,16 +88,16 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
 
 bool buf_updates_active(buf_T *buf)
 {
-    return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
+  return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
 }
 
 void buf_updates_send_end(buf_T *buf, uint64_t channelid)
 {
-    Array args = ARRAY_DICT_INIT;
-    args.size = 1;
-    args.items = xcalloc(sizeof(Object), args.size);
-    args.items[0] = BUFFER_OBJ(buf->handle);
-    rpc_send_event(channelid, "nvim_buf_detach_event", args);
+  Array args = ARRAY_DICT_INIT;
+  args.size = 1;
+  args.items = xcalloc(sizeof(Object), args.size);
+  args.items[0] = BUFFER_OBJ(buf->handle);
+  rpc_send_event(channelid, "nvim_buf_detach_event", args);
 }
 
 void buf_updates_unregister(buf_T *buf, uint64_t channelid)
@@ -174,8 +176,8 @@ void buf_updates_send_changes(buf_T *buf,
                               bool send_tick)
 {
   size_t deleted_codepoints, deleted_codeunits;
-  size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints,
-                                                &deleted_codeunits);
+  size_t deleted_bytes
+      = ml_flush_deleted_bytes(buf, &deleted_codepoints, &deleted_codeunits);
 
   if (!buf_updates_active(buf)) {
     return;
@@ -208,11 +210,11 @@ void buf_updates_send_changes(buf_T *buf,
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;
     if (num_added > 0) {
-        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
-        linedata.size = (size_t)num_added;
-        linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
-        buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
-                          NULL);
+      STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
+      linedata.size = (size_t)num_added;
+      linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
+      buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
+                        NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);
     args.items[5] = BOOLEAN_OBJ(false);
@@ -228,7 +230,7 @@ void buf_updates_send_changes(buf_T *buf,
   // change notifications are so frequent that many dead channels will be
   // cleared up quickly.
   if (badchannelid != 0) {
-    ELOG("Disabling buffer updates for dead channel %"PRIu64, badchannelid);
+    ELOG("Disabling buffer updates for dead channel %" PRIu64, badchannelid);
     buf_updates_unregister(buf, badchannelid);
   }
 
@@ -282,14 +284,18 @@ void buf_updates_send_changes(buf_T *buf,
   kv_size(buf->update_callbacks) = j;
 }
 
-void buf_updates_send_splice(
-    buf_T *buf,
-    int start_row, colnr_T start_col, bcount_t start_byte,
-    int old_row, colnr_T old_col, bcount_t old_byte,
-    int new_row, colnr_T new_col, bcount_t new_byte)
+void buf_updates_send_splice(buf_T *buf,
+                             int start_row,
+                             colnr_T start_col,
+                             bcount_t start_byte,
+                             int old_row,
+                             colnr_T old_col,
+                             bcount_t old_byte,
+                             int new_row,
+                             colnr_T new_col,
+                             bcount_t new_byte)
 {
-  if (!buf_updates_active(buf)
-      || (old_byte == 0 && new_byte == 0)) {
+  if (!buf_updates_active(buf) || (old_byte == 0 && new_byte == 0)) {
     return;
   }
 
@@ -353,8 +359,8 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
-                                 args, true, NULL);
+      Object res
+          = nlua_call_ref(cb.on_changedtick, "changedtick", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -372,18 +378,18 @@ void buf_updates_changedtick(buf_T *buf)
 
 void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 {
-    Array args = ARRAY_DICT_INIT;
-    args.size = 2;
-    args.items = xcalloc(sizeof(Object), args.size);
+  Array args = ARRAY_DICT_INIT;
+  args.size = 2;
+  args.items = xcalloc(sizeof(Object), args.size);
 
-    // the first argument is always the buffer handle
-    args.items[0] = BUFFER_OBJ(buf->handle);
+  // the first argument is always the buffer handle
+  args.items[0] = BUFFER_OBJ(buf->handle);
 
-    // next argument is b:changedtick
-    args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+  // next argument is b:changedtick
+  args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
-    // don't try and clean up dead channels here
-    rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
+  // don't try and clean up dead channels here
+  rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
 }
 
 static void free_update_callbacks(BufUpdateCallbacks cb)

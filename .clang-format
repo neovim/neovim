@@ -18,3 +18,4 @@ BinPackParameters: false
 BreakBeforeBinaryOperators: true
 BreakBeforeTernaryOperators: true
 ContinuationIndentWidth: 4
+SortIncludes:    false

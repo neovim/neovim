@@ -28,7 +28,7 @@ typedef struct term_input {
 } TermInput;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.h.generated.h"
+#include "tui/input.h.generated.h"
 #endif
 
 #ifdef UNIT_TESTING

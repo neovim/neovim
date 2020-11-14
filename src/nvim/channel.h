@@ -28,7 +28,6 @@ typedef enum {
   kChannelPartAll
 } ChannelPart;
 
-
 typedef struct {
   Stream in;
   Stream out;
@@ -47,11 +46,12 @@ typedef struct {
   const char *type;
 } CallbackReader;
 
-#define CALLBACK_READER_INIT ((CallbackReader){ .cb = CALLBACK_NONE, \
-                                                .self = NULL, \
-                                                .buffer = GA_EMPTY_INIT_VALUE, \
-                                                .buffered = false, \
-                                                .type = NULL })
+#define CALLBACK_READER_INIT                                                   \
+  ((CallbackReader){.cb = CALLBACK_NONE,                                       \
+                    .self = NULL,                                              \
+                    .buffer = GA_EMPTY_INIT_VALUE,                             \
+                    .buffered = false,                                         \
+                    .type = NULL})
 static inline bool callback_reader_set(CallbackReader reader)
 {
   return reader.cb.type != kCallbackNone || reader.self;
@@ -85,10 +85,10 @@ struct Channel {
   bool callback_scheduled;
 };
 
-EXTERN PMap(uint64_t) *channels INIT(= NULL);
+EXTERN PMap(uint64_t) * channels INIT(= NULL);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.h.generated.h"
+#include "channel.h.generated.h"
 #endif
 
 /// @returns Channel with the id or NULL if not found
@@ -97,8 +97,7 @@ static inline Channel *find_channel(uint64_t id)
   return pmap_get(uint64_t)(channels, id);
 }
 
-static inline Stream *channel_instream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+static inline Stream *channel_instream(Channel *chan) FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
     case kChannelStreamProc:
@@ -117,8 +116,7 @@ static inline Stream *channel_instream(Channel *chan)
   abort();
 }
 
-static inline Stream *channel_outstream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+static inline Stream *channel_outstream(Channel *chan) FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
     case kChannelStreamProc:
@@ -136,6 +134,5 @@ static inline Stream *channel_outstream(Channel *chan)
   }
   abort();
 }
-
 
 #endif  // NVIM_CHANNEL_H

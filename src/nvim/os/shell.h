@@ -17,6 +17,6 @@ typedef enum {
 } ShellOpts;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/shell.h.generated.h"
+#include "os/shell.h.generated.h"
 #endif
 #endif  // NVIM_OS_SHELL_H

@@ -6,7 +6,7 @@
 
 #include <uv.h>
 #ifndef WIN32
-# include <signal.h>  // for sigset_t
+#include <signal.h>  // for sigset_t
 #endif
 
 #include "nvim/ascii.h"
@@ -31,7 +31,7 @@ static SignalWatcher spwr;
 static bool rejecting_deadly;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/signal.c.generated.h"
+#include "os/signal.c.generated.h"
 #endif
 
 void signal_init(void)
@@ -120,7 +120,7 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-static char * signal_name(int signum)
+static char *signal_name(int signum)
 {
   switch (signum) {
 #ifdef SIGPWR

@@ -12,7 +12,7 @@
 #include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "aucmd.c.generated.h"
+#include "aucmd.c.generated.h"
 #endif
 
 void do_autocmd_uienter(uint64_t chanid, bool attached)
@@ -28,8 +28,8 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   assert(chanid < VARNUMBER_MAX);
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
-  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE,
-                 NULL, NULL, false, curbuf);
+  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false,
+                 curbuf);
   tv_dict_clear(dict);
 
   recursive = false;

@@ -5,6 +5,6 @@
 #include "nvim/os/shell.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os_unix.h.generated.h"
+#include "os_unix.h.generated.h"
 #endif
 #endif  // NVIM_OS_UNIX_H

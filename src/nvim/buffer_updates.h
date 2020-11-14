@@ -5,7 +5,7 @@
 #include "nvim/extmark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer_updates.h.generated.h"
+#include "buffer_updates.h.generated.h"
 #endif
 
 #endif  // NVIM_BUFFER_UPDATES_H

@@ -25,7 +25,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_unix.h.generated.h"
+#include "os/pty_process_unix.h.generated.h"
 #endif
 
 #endif  // NVIM_OS_PTY_PROCESS_UNIX_H

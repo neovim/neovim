@@ -35,7 +35,6 @@ typedef struct {
   iterstate_t s[MT_MAX_DEPTH];
 } MarkTreeIter;
 
-
 // Internal storage
 //
 // NB: actual marks have id > 0, so we can use (row,col,0) pseudo-key for
@@ -63,12 +62,11 @@ typedef struct {
   uint64_t next_id;
   // TODO(bfredl): the pointer to node could be part of the larger
   // Map(uint64_t, ExtmarkItem) essentially;
-  PMap(uint64_t) *id2node;
+  PMap(uint64_t) * id2node;
 } MarkTree;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "marktree.h.generated.h"
+#include "marktree.h.generated.h"
 #endif
 
 #define MARKTREE_PAIRED_FLAG (((uint64_t)1) << 1)

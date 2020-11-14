@@ -8,10 +8,7 @@
 #include "nvim/lib/queue.h"
 #include "nvim/os/pty_conpty_win.h"
 
-typedef enum {
-  kWinpty,
-  kConpty
-} PtyType;
+typedef enum { kWinpty, kConpty } PtyType;
 
 typedef struct pty_process {
   Process process;
@@ -29,7 +26,7 @@ typedef struct pty_process {
 
 // Structure used by build_cmd_line()
 typedef struct arg_node {
-  char *arg;  // pointer to argument.
+  char *arg;   // pointer to argument.
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
@@ -48,7 +45,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_win.h.generated.h"
+#include "os/pty_process_win.h.generated.h"
 #endif
 
 #endif  // NVIM_OS_PTY_PROCESS_WIN_H

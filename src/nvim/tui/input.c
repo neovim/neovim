@@ -1,7 +1,6 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
 #include "nvim/api/vim.h"
@@ -15,14 +14,14 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #ifdef WIN32
-# include "nvim/os/os_win_console.h"
+#include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/event/rstream.h"
 
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.c.generated.h"
+#include "tui/input.c.generated.h"
 #endif
 
 void tinput_init(TermInput *input, Loop *loop)
@@ -44,7 +43,7 @@ void tinput_init(TermInput *input, Loop *loop)
   //    ls *.md | xargs nvim
 #ifdef WIN32
   if (!os_isatty(input->in_fd)) {
-      input->in_fd = os_get_conin_fd();
+    input->in_fd = os_get_conin_fd();
   }
 #else
   if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
@@ -59,8 +58,8 @@ void tinput_init(TermInput *input, Loop *loop)
   }
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
-  input->tk = termkey_new_abstract(term,
-                                   TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
+  input->tk
+      = termkey_new_abstract(term, TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
   termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
   termkey_start(input->tk);
 #else
@@ -105,12 +104,13 @@ static void tinput_done_event(void **argv)
 static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
-  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    const String keys = { .data = buf, .size = len };
+  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len)
+  {
+    const String keys = {.data = buf, .size = len};
     if (input->paste) {
       String copy = copy_string(keys);
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     copy.data, copy.size, (intptr_t)input->paste);
+      multiqueue_put(main_loop.events, tinput_paste_event, 3, copy.data,
+                     copy.size, (intptr_t)input->paste);
       if (input->paste == 1) {
         // Paste phase: "continue"
         input->paste = 2;
@@ -136,7 +136,7 @@ static void tinput_wait_enqueue(void **argv)
 
 static void tinput_paste_event(void **argv)
 {
-  String keys = { .data = argv[0], .size = (size_t)argv[1] };
+  String keys = {.data = argv[0], .size = (size_t)argv[1]};
   intptr_t phase = (intptr_t)argv[2];
 
   Error err = ERROR_INIT;
@@ -165,8 +165,8 @@ static void tinput_flush(TermInput *input, bool wait_until_empty)
 
 static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 {
-  if (rbuffer_size(input->key_buffer) >
-      rbuffer_capacity(input->key_buffer) - 0xff) {
+  if (rbuffer_size(input->key_buffer)
+      > rbuffer_capacity(input->key_buffer) - 0xff) {
     // don't ever let the buffer get too full or we risk putting incomplete keys
     // into it
     tinput_flush(input, false);
@@ -197,11 +197,10 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
   size_t len;
   char buf[64];
 
-  if (key->type == TERMKEY_TYPE_KEYSYM
-      && key->code.sym == TERMKEY_SYM_ESCAPE) {
+  if (key->type == TERMKEY_TYPE_KEYSYM && key->code.sym == TERMKEY_SYM_ESCAPE) {
     len = (size_t)snprintf(buf, sizeof(buf), "<Esc>");
   } else if (key->type == TERMKEY_TYPE_KEYSYM
-      && key->code.sym == TERMKEY_SYM_SUSPEND) {
+             && key->code.sym == TERMKEY_SYM_SUSPEND) {
     len = (size_t)snprintf(buf, sizeof(buf), "<C-Z>");
   } else {
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
@@ -228,12 +227,14 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     button = last_pressed_button;
   }
 
-  if (button == 0 || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
-                      && ev != TERMKEY_MOUSE_RELEASE)) {
+  if (button == 0
+      || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
+          && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
   }
 
-  row--; col--;  // Termkey uses 1-based coordinates
+  row--;
+  col--;  // Termkey uses 1-based coordinates
   buf[len++] = '<';
 
   if (key->modifiers & TERMKEY_KEYMOD_SHIFT) {
@@ -390,8 +391,8 @@ static bool handle_forced_escape(TermInput *input)
       && !rbuffer_cmp(input->read_stream.buffer, "\x1b\x00", 2)) {
     // skip the ESC and NUL and push one <esc> to the input buffer
     size_t rcnt;
-    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
-          &rcnt), 1);
+    termkey_push_bytes(input->tk,
+                       rbuffer_read_ptr(input->read_stream.buffer, &rcnt), 1);
     rbuffer_consumed(input->read_stream.buffer, 2);
     tk_getkeys(input, true);
     return true;
@@ -407,8 +408,8 @@ static void set_bg_deferred(void **argv)
     if (starting) {
       // Wait until after startup, so OptionSet is triggered.
       do_cmdline_cmd((bgvalue[0] == 'l')
-                     ? "autocmd VimEnter * ++once ++nested set bg=light"
-                     : "autocmd VimEnter * ++once ++nested set bg=dark");
+                         ? "autocmd VimEnter * ++once ++nested set bg=light"
+                         : "autocmd VimEnter * ++once ++nested set bg=dark");
     } else {
       set_option_value("bg", 0L, bgvalue, 0);
       reset_option_was_set("bg");
@@ -436,8 +437,8 @@ static bool handle_background_color(TermInput *input)
   size_t component = 0;
   size_t header_size = 0;
   size_t num_components = 0;
-  uint16_t rgb[] = { 0, 0, 0 };
-  uint16_t rgb_max[] = { 0, 0, 0 };
+  uint16_t rgb[] = {0, 0, 0};
+  uint16_t rgb_max[] = {0, 0, 0};
   bool eat_backslash = false;
   bool done = false;
   bool bad = false;
@@ -458,7 +459,8 @@ static bool handle_background_color(TermInput *input)
   }
   input->waiting_for_bg_response = 0;
   rbuffer_consumed(input->read_stream.buffer, header_size);
-  RBUFFER_EACH(input->read_stream.buffer, c, i) {
+  RBUFFER_EACH(input->read_stream.buffer, c, i)
+  {
     count = i + 1;
     if (eat_backslash) {
       done = true;
@@ -504,8 +506,11 @@ bool ut_handle_background_color(TermInput *input)
 }
 #endif
 
-static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
-                           void *data, bool eof)
+static void tinput_read_cb(Stream *stream,
+                           RBuffer *buf,
+                           size_t count_,
+                           void *data,
+                           bool eof)
 {
   TermInput *input = data;
 
@@ -515,10 +520,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
   }
 
   do {
-    if (handle_focus_event(input)
-        || handle_bracketed_paste(input)
-        || handle_forced_escape(input)
-        || handle_background_color(input)) {
+    if (handle_focus_event(input) || handle_bracketed_paste(input)
+        || handle_forced_escape(input) || handle_background_color(input)) {
       continue;
     }
 
@@ -528,7 +531,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
     // calls (above) depend on this.
     //
     size_t count = 0;
-    RBUFFER_EACH(input->read_stream.buffer, c, i) {
+    RBUFFER_EACH(input->read_stream.buffer, c, i)
+    {
       count = i + 1;
       if (c == '\x1b' && count > 1) {
         count--;
@@ -537,7 +541,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
     }
     // Push bytes directly (paste).
     if (input->paste) {
-      RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
+      RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len)
+      {
         size_t consumed = MIN(count, len);
         assert(consumed <= input->read_stream.buffer->size);
         tinput_enqueue(input, ptr, consumed);
@@ -549,7 +554,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
       continue;
     }
     // Push through libtermkey (translates to "<keycode>" strings, etc.).
-    RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
+    RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len)
+    {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
       // termkey_push_bytes can return (size_t)-1, so it is possible that
       // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is

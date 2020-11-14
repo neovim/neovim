@@ -11,18 +11,17 @@
 #include "nvim/memory.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
-# include <pwd.h>
+#include <pwd.h>
 #endif
 #ifdef WIN32
-# include <lm.h>
+#include <lm.h>
 #endif
 
 // Add a user name to the list of users in garray_T *users.
 // Do nothing if user name is NULL or empty.
 static void add_user(garray_T *users, char *user, bool need_copy)
 {
-  char *user_copy = (user != NULL && need_copy)
-    ? xstrdup(user) : user;
+  char *user_copy = (user != NULL && need_copy) ? xstrdup(user) : user;
 
   if (user_copy == NULL || *user_copy == NUL) {
     if (need_copy) {
@@ -42,7 +41,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-# if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
   {
     struct passwd *pw;
 
@@ -52,13 +51,14 @@ int os_get_usernames(garray_T *users)
     }
     endpwent();
   }
-# elif defined(WIN32)
+#elif defined(WIN32)
   {
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;
 
-    if (NetUserEnum(NULL, 0, 0, (LPBYTE *)&uinfo, MAX_PREFERRED_LENGTH,
-                    &nusers, &ntotal, NULL) == NERR_Success) {
+    if (NetUserEnum(NULL, 0, 0, (LPBYTE *)&uinfo, MAX_PREFERRED_LENGTH, &nusers,
+                    &ntotal, NULL)
+        == NERR_Success) {
       for (i = 0; i < nusers; i++) {
         char *user;
         int conversion_result = utf16_to_utf8(uinfo[i].usri0_name, -1, &user);
@@ -72,8 +72,8 @@ int os_get_usernames(garray_T *users)
       NetApiBufferFree(uinfo);
     }
   }
-# endif
-# if defined(HAVE_GETPWNAM)
+#endif
+#if defined(HAVE_GETPWNAM)
   {
     const char *user_env = os_getenv("USER");
 
@@ -103,7 +103,7 @@ int os_get_usernames(garray_T *users)
       }
     }
   }
-# endif
+#endif
 
   return OK;
 }
@@ -155,4 +155,3 @@ char *os_get_user_directory(const char *name)
 #endif
   return NULL;
 }
-

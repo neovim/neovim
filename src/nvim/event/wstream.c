@@ -23,18 +23,18 @@ typedef struct {
 } WRequest;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/wstream.c.generated.h"
+#include "event/wstream.c.generated.h"
 #endif
 
 void wstream_init_fd(Loop *loop, Stream *stream, int fd, size_t maxmem)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+    FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   stream_init(loop, stream, fd, NULL);
   wstream_init(stream, maxmem);
 }
 
 void wstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t maxmem)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+    FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   stream_init(NULL, stream, -1, uvstream);
   wstream_init(stream, maxmem);
@@ -57,7 +57,7 @@ void wstream_init(Stream *stream, size_t maxmem)
 /// @param stream The `Stream` instance
 /// @param cb The callback
 void wstream_set_write_cb(Stream *stream, stream_write_cb cb, void *data)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+    FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream->write_cb = cb;
   stream->cb_data = data;
@@ -70,8 +70,7 @@ void wstream_set_write_cb(Stream *stream, stream_write_cb cb, void *data)
 /// @param stream The `Stream` instance
 /// @param buffer The buffer which contains data to be written
 /// @return false if the write failed
-bool wstream_write(Stream *stream, WBuffer *buffer)
-  FUNC_ATTR_NONNULL_ALL
+bool wstream_write(Stream *stream, WBuffer *buffer) FUNC_ATTR_NONNULL_ALL
 {
   assert(stream->maxmem);
   // This should not be called after a stream was freed
@@ -120,8 +119,7 @@ err:
 WBuffer *wstream_new_buffer(char *data,
                             size_t size,
                             size_t refcount,
-                            wbuffer_data_finalizer cb)
-  FUNC_ATTR_NONNULL_ARG(1)
+                            wbuffer_data_finalizer cb) FUNC_ATTR_NONNULL_ARG(1)
 {
   WBuffer *rv = xmalloc(sizeof(WBuffer));
   rv->size = size;
@@ -154,8 +152,7 @@ static void write_cb(uv_write_t *req, int status)
   xfree(data);
 }
 
-void wstream_release_wbuffer(WBuffer *buffer)
-  FUNC_ATTR_NONNULL_ALL
+void wstream_release_wbuffer(WBuffer *buffer) FUNC_ATTR_NONNULL_ALL
 {
   if (!--buffer->refcount) {
     if (buffer->cb) {

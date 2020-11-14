@@ -21,15 +21,15 @@
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/ui.c.generated.h"
-# include "ui_events_remote.generated.h"
+#include "api/ui.c.generated.h"
+#include "ui_events_remote.generated.h"
 #endif
 
 typedef struct {
   uint64_t channel_id;
   Array buffer;
 
-  int hl_id;  // Current highlight for legacy put event.
+  int hl_id;                       // Current highlight for legacy put event.
   Integer cursor_row, cursor_col;  // Intended visible cursor position.
 
   // Position of legacy cursor, used both for drawing and visible user cursor.
@@ -39,14 +39,12 @@ typedef struct {
 
 static PMap(uint64_t) *connected_uis = NULL;
 
-void remote_ui_init(void)
-  FUNC_API_NOEXPORT
+void remote_ui_init(void) FUNC_API_NOEXPORT
 {
   connected_uis = pmap_new(uint64_t)();
 }
 
-void remote_ui_disconnect(uint64_t channel_id)
-  FUNC_API_NOEXPORT
+void remote_ui_disconnect(uint64_t channel_id) FUNC_API_NOEXPORT
 {
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
   if (!ui) {
@@ -62,8 +60,7 @@ void remote_ui_disconnect(uint64_t channel_id)
 }
 
 /// Wait until ui has connected on stdio channel.
-void remote_ui_wait_for_attach(void)
-  FUNC_API_NOEXPORT
+void remote_ui_wait_for_attach(void) FUNC_API_NOEXPORT
 {
   Channel *channel = find_channel(CHAN_STDIO);
   if (!channel) {
@@ -91,9 +88,11 @@ void remote_ui_wait_for_attach(void)
 /// @param height  Requested screen rows
 /// @param options  |ui-option| map
 /// @param[out] err Error details, if any
-void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
-                    Dictionary options, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+void nvim_ui_attach(uint64_t channel_id,
+                    Integer width,
+                    Integer height,
+                    Dictionary options,
+                    Error *err) FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -177,8 +176,11 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 }
 
 /// @deprecated
-void ui_attach(uint64_t channel_id, Integer width, Integer height,
-               Boolean enable_rgb, Error *err)
+void ui_attach(uint64_t channel_id,
+               Integer width,
+               Integer height,
+               Boolean enable_rgb,
+               Error *err)
 {
   Dictionary opts = ARRAY_DICT_INIT;
   PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
@@ -193,7 +195,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
 /// @param channel_id
 /// @param[out] err Error details, if any
 void nvim_ui_detach(uint64_t channel_id, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -203,10 +205,10 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id);
 }
 
-
-void nvim_ui_try_resize(uint64_t channel_id, Integer width,
-                        Integer height, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+void nvim_ui_try_resize(uint64_t channel_id,
+                        Integer width,
+                        Integer height,
+                        Error *err) FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -226,9 +228,10 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
   ui_refresh();
 }
 
-void nvim_ui_set_option(uint64_t channel_id, String name,
-                        Object value, Error *error)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+void nvim_ui_set_option(uint64_t channel_id,
+                        String name,
+                        Object value,
+                        Error *error) FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, kErrorTypeException,
@@ -240,7 +243,10 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   ui_set_option(ui, false, name, value, error);
 }
 
-static void ui_set_option(UI *ui, bool init, String name, Object value,
+static void ui_set_option(UI *ui,
+                          bool init,
+                          String name,
+                          Object value,
                           Error *error)
 {
   if (strequal(name.data, "override")) {
@@ -306,9 +312,11 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
 /// @param width   The new requested width.
 /// @param height  The new requested height.
 /// @param[out] err Error details, if any
-void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
-                             Integer height, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+void nvim_ui_try_resize_grid(uint64_t channel_id,
+                             Integer grid,
+                             Integer width,
+                             Integer height,
+                             Error *err) FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -326,7 +334,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
 /// @param height  Popupmenu height, must be greater than zero.
 /// @param[out] err Error details, if any
 void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+    FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -365,9 +373,12 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
 /// @param row     Popupmenu row.
 /// @param col     Popupmenu height.
 /// @param[out] err Error details, if any.
-void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height,
-                            Float row, Float col, Error *err)
-  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
+void nvim_ui_pum_set_bounds(uint64_t channel_id,
+                            Float width,
+                            Float height,
+                            Float row,
+                            Float col,
+                            Error *err) FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
@@ -430,8 +441,10 @@ static void remote_ui_grid_clear(UI *ui, Integer grid)
   push_call(ui, name, args);
 }
 
-static void remote_ui_grid_resize(UI *ui, Integer grid,
-                                  Integer width, Integer height)
+static void remote_ui_grid_resize(UI *ui,
+                                  Integer grid,
+                                  Integer width,
+                                  Integer height)
 {
   Array args = ARRAY_DICT_INIT;
   if (ui->ui_ext[kUILinegrid]) {
@@ -443,9 +456,14 @@ static void remote_ui_grid_resize(UI *ui, Integer grid,
   push_call(ui, name, args);
 }
 
-static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
-                                  Integer bot, Integer left, Integer right,
-                                  Integer rows, Integer cols)
+static void remote_ui_grid_scroll(UI *ui,
+                                  Integer grid,
+                                  Integer top,
+                                  Integer bot,
+                                  Integer left,
+                                  Integer right,
+                                  Integer rows,
+                                  Integer cols)
 {
   if (ui->ui_ext[kUILinegrid]) {
     Array args = ARRAY_DICT_INIT;
@@ -460,9 +478,9 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
   } else {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(top));
-    ADD(args, INTEGER_OBJ(bot-1));
+    ADD(args, INTEGER_OBJ(bot - 1));
     ADD(args, INTEGER_OBJ(left));
-    ADD(args, INTEGER_OBJ(right-1));
+    ADD(args, INTEGER_OBJ(right - 1));
     push_call(ui, "set_scroll_region", args);
 
     args = (Array)ARRAY_DICT_INIT;
@@ -473,16 +491,19 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
     // so reset it.
     args = (Array)ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(0));
-    ADD(args, INTEGER_OBJ(ui->height-1));
+    ADD(args, INTEGER_OBJ(ui->height - 1));
     ADD(args, INTEGER_OBJ(0));
-    ADD(args, INTEGER_OBJ(ui->width-1));
+    ADD(args, INTEGER_OBJ(ui->width - 1));
     push_call(ui, "set_scroll_region", args);
   }
 }
 
-static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
-                                         Integer rgb_bg, Integer rgb_sp,
-                                         Integer cterm_fg, Integer cterm_bg)
+static void remote_ui_default_colors_set(UI *ui,
+                                         Integer rgb_fg,
+                                         Integer rgb_bg,
+                                         Integer rgb_sp,
+                                         Integer cterm_fg,
+                                         Integer cterm_bg)
 {
   if (!ui->ui_ext[kUITermColors]) {
     HL_SET_DEFAULT_COLORS(rgb_fg, rgb_bg, rgb_sp);
@@ -511,8 +532,11 @@ static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
   }
 }
 
-static void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs,
-                                     HlAttrs cterm_attrs, Array info)
+static void remote_ui_hl_attr_define(UI *ui,
+                                     Integer id,
+                                     HlAttrs rgb_attrs,
+                                     HlAttrs cterm_attrs,
+                                     Array info)
 {
   if (!ui->ui_ext[kUILinegrid]) {
     return;
@@ -537,7 +561,6 @@ static void remote_ui_highlight_set(UI *ui, int id)
   Array args = ARRAY_DICT_INIT;
   UIData *data = ui->data;
 
-
   if (data->hl_id == id) {
     return;
   }
@@ -549,7 +572,9 @@ static void remote_ui_highlight_set(UI *ui, int id)
 }
 
 /// "true" cursor used only for input focus
-static void remote_ui_grid_cursor_goto(UI *ui, Integer grid, Integer row,
+static void remote_ui_grid_cursor_goto(UI *ui,
+                                       Integer grid,
+                                       Integer row,
                                        Integer col)
 {
   if (ui->ui_ext[kUILinegrid]) {
@@ -590,10 +615,15 @@ static void remote_ui_put(UI *ui, const char *cell)
   push_call(ui, "put", args);
 }
 
-static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
-                               Integer startcol, Integer endcol,
-                               Integer clearcol, Integer clearattr,
-                               LineFlags flags, const schar_T *chunk,
+static void remote_ui_raw_line(UI *ui,
+                               Integer grid,
+                               Integer row,
+                               Integer startcol,
+                               Integer endcol,
+                               Integer clearcol,
+                               Integer clearattr,
+                               LineFlags flags,
+                               const schar_T *chunk,
                                const sattr_T *attrs)
 {
   UIData *data = ui->data;
@@ -604,12 +634,12 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
     ADD(args, INTEGER_OBJ(startcol));
     Array cells = ARRAY_DICT_INIT;
     int repeat = 0;
-    size_t ncells = (size_t)(endcol-startcol);
+    size_t ncells = (size_t)(endcol - startcol);
     int last_hl = -1;
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
-      if (i == ncells-1 || attrs[i] != attrs[i+1]
-          || STRCMP(chunk[i], chunk[i+1])) {
+      if (i == ncells - 1 || attrs[i] != attrs[i + 1]
+          || STRCMP(chunk[i], chunk[i + 1])) {
         Array cell = ARRAY_DICT_INIT;
         ADD(cell, STRING_OBJ(cstr_to_string((const char *)chunk[i])));
         if (attrs[i] != last_hl || repeat > 1) {
@@ -627,15 +657,15 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
       Array cell = ARRAY_DICT_INIT;
       ADD(cell, STRING_OBJ(cstr_to_string(" ")));
       ADD(cell, INTEGER_OBJ(clearattr));
-      ADD(cell, INTEGER_OBJ(clearcol-endcol));
+      ADD(cell, INTEGER_OBJ(clearcol - endcol));
       ADD(cells, ARRAY_OBJ(cell));
     }
     ADD(args, ARRAY_OBJ(cells));
 
     push_call(ui, "grid_line", args);
   } else {
-    for (int i = 0; i < endcol-startcol; i++) {
-      remote_ui_cursor_goto(ui, row, startcol+i);
+    for (int i = 0; i < endcol - startcol; i++) {
+      remote_ui_cursor_goto(ui, row, startcol + i);
       remote_ui_highlight_set(ui, attrs[i]);
       remote_ui_put(ui, (const char *)chunk[i]);
       if (utf_ambiguous_width(utf_ptr2char(chunk[i]))) {
@@ -734,8 +764,8 @@ static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
   // Back-compat: translate popupmenu_xx to legacy wildmenu_xx.
   if (ui->ui_ext[kUIWildmenu]) {
     if (strequal(name, "popupmenu_show")) {
-      data->wildmenu_active = (args.items[4].data.integer == -1)
-                            || !ui->ui_ext[kUIPopupmenu];
+      data->wildmenu_active
+          = (args.items[4].data.integer == -1) || !ui->ui_ext[kUIPopupmenu];
       if (data->wildmenu_active) {
         Array new_args = ARRAY_DICT_INIT;
         Array items = args.items[0].data.array;
@@ -762,7 +792,6 @@ static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
       }
     }
   }
-
 
   Array my_args = ARRAY_DICT_INIT;
   // Objects are currently single-reference
