@@ -3975,11 +3975,15 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
      *dirname = NUL;
 
     // Add one line for each error
-    if (old_last == NULL || old_last->qf_next == NULL) {
+    if (old_last == NULL) {
       qfp = qfl->qf_start;
       lnum = 0;
     } else {
-      qfp = old_last->qf_next;
+      if (old_last->qf_next != NULL) {
+        qfp = old_last->qf_next;
+      } else {
+        qfp = old_last;
+      }
       lnum = buf->b_ml.ml_line_count;
     }
     while (lnum < qfl->qf_count) {

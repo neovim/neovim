@@ -4410,4 +4410,17 @@ func Test_search_in_dirstack()
   call delete('Xtestdir', 'rf')
 endfunc
 
+" Test for adding an invalid entry with the quickfix window open and making
+" sure that the window contents are not changed
+func Test_add_invalid_entry_with_qf_window()
+  call setqflist([], 'f')
+  cexpr "Xfile1:10:aa"
+  copen
+  call setqflist(['bb'], 'a')
+  call assert_equal(1, line('$'))
+  call assert_equal(['Xfile1|10| aa'], getline(1, '$'))
+  call assert_equal([{'lnum': 10, 'bufnr': bufnr('Xfile1'), 'col': 0, 'pattern': '', 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'module': '', 'text': 'aa'}], getqflist())
+  cclose
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
