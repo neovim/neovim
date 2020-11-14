@@ -730,6 +730,7 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   opts = opts or {}
   local prefix = opts.prefix or "■"
   local spacing = opts.spacing or 4
+  local show_server_name = opts.show_server_name or false
 
   -- Create a little more space between virtual text and contents
   local virt_texts = {{string.rep(" ", spacing)}}
@@ -740,8 +741,25 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   local last = line_diags[#line_diags]
 
   if last.message then
-    -- get server name
-    local server_name = vim.lsp.get_active_clients()[1].config.cmd[1]:match('[^\\/]+$')
+    local server_name = ''
+
+    if show_server_name then
+      -- get server name
+      local get_server_name = function()
+        local active_clients = vim.lsp.get_active_clients()
+        if not vim.tbl_isempty(active_clients) then
+          for _,client in ipairs(active_clients) do
+            if diagnostic_cache_lines[bufnr][client.id][line] ~= nil then
+              server_name = client.config.cmd[1]:match('[^\\/]+$')
+            end
+          end
+        end
+        return server_name
+      end
+
+      server_name = get_server_name()
+    end
+
     table.insert(
       virt_texts,
       {
