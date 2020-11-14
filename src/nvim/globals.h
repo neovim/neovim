@@ -435,6 +435,10 @@ EXTERN win_T    *prevwin INIT(= NULL);  // previous window
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
+# define FOR_ALL_WINDOWS(wp) \
+  FOR_ALL_TABS(__tp) \
+    FOR_ALL_WINDOWS_IN_TAB(wp, __tp)
+
 EXTERN win_T    *curwin;        // currently active window
 
 EXTERN win_T    *aucmd_win;     // window used in aucmd_prepbuf()
