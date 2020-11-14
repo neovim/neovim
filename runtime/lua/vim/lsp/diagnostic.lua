@@ -745,8 +745,8 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
     table.insert(
       virt_texts,
       {
-        -- Virtual text format: prefix servername: message
-        string.format("%s %s: %s", prefix,server_name, last.message:gsub("\r", ""):gsub("\n", "  ")),
+        -- Virtual text format: prefix  message server_name
+        string.format("%s %s %s", prefix,last.message:gsub("\r", ""):gsub("\n", "  "),server_name),
         virtual_text_highlight_map[last.severity]
       }
     )
