@@ -988,8 +988,8 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(workspace.workspaceFolders) == 'table' then
     workspace_properties = {
       workspace_folder_properties = {
-        supported = ifnil(workspace.workspaceFolders.supported, false);
-        changeNotifications = ifnil(workspace.workspaceFolders.changeNotifications, false);
+        supported = vim.F.ifnil(workspace.workspaceFolders.supported, false);
+        changeNotifications = vim.F.ifnil(workspace.workspaceFolders.changeNotifications, false);
 
       }
     }
