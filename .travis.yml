@@ -17,6 +17,7 @@ env:
     #   4. Undo changes to .travis.yml
     - secure: hd0qn2u8ABbJg5Bx4pBRcUQbKYFmcSHoecyHIPTCnGJT+NI41Bvm/IkN/N5DhBF+LbD3Q2nmR/dzI5H/dqS7RxMFvEx1DuFLendFHHX3MYf0AuKpXYY3gwgMTmqx8p/v6srlU7RBGWNGzHCWqksAem+EIWCe3I7WvfdKo1/DV/Y=
 
+    - PATH="$HOME/.local/bin:$PATH"
     # Set "false" to force rebuild of third-party dependencies.
     - CACHE_ENABLE=true
     # Build directory for Neovim.
