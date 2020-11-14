@@ -312,6 +312,9 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
 static void compose_line(Integer row, Integer startcol, Integer endcol,
                          LineFlags flags)
 {
+  // If rightleft is set, startcol may be -1. In such cases, the assertions
+  // will fail because no overlap is found. Adjust startcol to prevent it.
+  startcol = MAX(startcol, 0);
   // in case we start on the right half of a double-width char, we need to
   // check the left half. But skip it in output if it wasn't doublewidth.
   int skipstart = 0, skipend = 0;
