@@ -1220,9 +1220,23 @@ end
 --- Function to manage overriding defaults for LSP handlers.
 --@param handler (function) See |lsp-handler|
 --@param override_config (table) Table containing the keys to override behavior of the {handler}
-function lsp.with(handler, override_config)
+function lsp.with(handler, override_config, subscriptions)
+  subscriptions = subscriptions or {}
+
   return function(err, method, params, client_id, bufnr, config)
-    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+    config = vim.tbl_deep_extend("force", config or {}, override_config)
+
+    if subscriptions.pre then
+      subscriptions.pre(err, method, params, client_id, bufnr, config)
+    end
+
+    local result = handler(err, method, params, client_id, bufnr, )
+
+    if subscriptions.post then
+      subscriptions.post(err, method, params, client_id, bufnr, config)
+    end
+
+    return result
   end
 end
 
