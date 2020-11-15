@@ -17,6 +17,7 @@ env:
     #   4. Undo changes to .travis.yml
     - secure: hd0qn2u8ABbJg5Bx4pBRcUQbKYFmcSHoecyHIPTCnGJT+NI41Bvm/IkN/N5DhBF+LbD3Q2nmR/dzI5H/dqS7RxMFvEx1DuFLendFHHX3MYf0AuKpXYY3gwgMTmqx8p/v6srlU7RBGWNGzHCWqksAem+EIWCe3I7WvfdKo1/DV/Y=
 
+    - PATH="$HOME/.local/bin:$PATH"
     # Set "false" to force rebuild of third-party dependencies.
     - CACHE_ENABLE=true
     # Build directory for Neovim.
@@ -53,8 +54,6 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_SLOPPINESS=time_macros,file_macro
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
-    # Default since 3.3, but Travis (Xenial) has 3.2.4; required with newer gcc/clang.
-    - CCACHE_CPP2=1
 
 anchors:
   envs: &common-job-env
