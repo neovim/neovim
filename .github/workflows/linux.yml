@@ -1,17 +1,5 @@
 name: Linux CI
 on: [push, pull_request]
-env:
-  # Set "false" to force rebuild of third-party dependencies.
-  CACHE_ENABLE: true
-  DEPS_CMAKE_FLAGS: "-DUSE_BUNDLED_GPERF=OFF"
-  # default target name for functional tests
-  FUNCTIONALTEST: functionaltest
-  CI_TARGET: tests
-  # Environment variables for ccache
-  CCACHE_COMPRESS: 1
-  CCACHE_SLOPPINESS: "time_macros,file_macro"
-  # Default since 3.3; required with newer gcc/clang.
-  CCACHE_CPP2: 1
 
 jobs:
   ASAN:
@@ -22,23 +10,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup commom environment variables
-        run: |
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-          echo "CI_BUILD_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "BUILD_DIR=$GITHUB_WORKSPACE/build" >> $GITHUB_ENV
-          echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-          echo "INSTALL_PREFIX=$HOME/nvim-install" >> $GITHUB_ENV
-          echo "LOG_DIR=$GITHUB_WORKSPACE/build/log" >> $GITHUB_ENV
-          echo "NVIM_LOG_FILE=$GITHUB_WORKSPACE/build/.nvimlog" >> $GITHUB_ENV
-          echo "CMAKE_FLAGS=-DCI_BUILD=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=$HOME/nvim-install -DBUSTED_OUTPUT_TYPE=nvim -DDEPS_PREFIX=$HOME/nvim-deps/usr -DMIN_LOG_LEVEL=3" >> $GITHUB_ENV
-          echo "ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan" >> $GITHUB_ENV
-          echo "TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan" >> $GITHUB_ENV
-          echo "UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan" >> $GITHUB_ENV
-          echo "VALGRIND_LOG=$GITHUB_WORKSPACE/build/log/valgrind-%p.log" >> $GITHUB_ENV
-          echo "CACHE_NVIM_DEPS_DIR=$HOME/.cache/nvim-deps" >> $GITHUB_ENV
-          echo "CACHE_MARKER=$HOME/.cache/nvim-deps/.ci_cache_marker" >> $GITHUB_ENV
-          echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+        run: ./.github/workflows/env.sh asan
 
       - name: Setup clang repository
         run: |
@@ -52,12 +24,6 @@ jobs:
 
       - name: Install new clang
         run: sudo apt-get install -y clang-11
-
-      - name: Set ASAN env vars
-        run: |
-          echo "CLANG_SANITIZER=ASAN_UBSAN" >> $GITHUB_ENV
-          echo "CMAKE_FLAGS=-DCI_BUILD=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=$HOME/nvim-install -DBUSTED_OUTPUT_TYPE=nvim -DDEPS_PREFIX=$HOME/nvim-deps/usr -DMIN_LOG_LEVEL=3 -DPREFER_LUA=ON" >> $GITHUB_ENV
-          echo "SYMBOLIZER=asan_symbolize-11" >> $GITHUB_ENV
 
       - name: Setup interpreter packages
         run: |
@@ -86,29 +52,11 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    env:
-      CI_TARGET: lint
     steps:
       - uses: actions/checkout@v2
 
       - name: Setup commom environment variables
-        run: |
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-          echo "CI_BUILD_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "BUILD_DIR=$GITHUB_WORKSPACE/build" >> $GITHUB_ENV
-          echo "DEPS_BUILD_DIR=$HOME/nvim-deps" >> $GITHUB_ENV
-          echo "INSTALL_PREFIX=$HOME/nvim-install" >> $GITHUB_ENV
-          echo "LOG_DIR=$GITHUB_WORKSPACE/build/log" >> $GITHUB_ENV
-          echo "NVIM_LOG_FILE=$GITHUB_WORKSPACE/build/.nvimlog" >> $GITHUB_ENV
-          echo "CMAKE_FLAGS=-DCI_BUILD=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=$HOME/nvim-install -DBUSTED_OUTPUT_TYPE=nvim -DDEPS_PREFIX=$HOME/nvim-deps/usr -DMIN_LOG_LEVEL=3" >> $GITHUB_ENV
-          echo "ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan" >> $GITHUB_ENV
-          echo "TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan" >> $GITHUB_ENV
-          echo "UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan" >> $GITHUB_ENV
-          echo "VALGRIND_LOG=$GITHUB_WORKSPACE/build/log/valgrind-%p.log" >> $GITHUB_ENV
-          echo "CACHE_NVIM_DEPS_DIR=$HOME/.cache/nvim-deps" >> $GITHUB_ENV
-          echo "CACHE_MARKER=$HOME/.cache/nvim-deps/.ci_cache_marker" >> $GITHUB_ENV
-          echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+        run: ./.github/workflows/env.sh lint
 
       - name: Install apt packages
         run: |
