@@ -59,7 +59,9 @@ local function set_mechanism(option_type, bufnr)
     end
   end
   Watcher.stop_notifications()
-  Watcher.start_notifications()
+  if Watcher.start_notifications ~= nil then
+    Watcher.start_notifications()
+  end
 end
 
 -- Checks if a buffer should have a watcher attached to it.
