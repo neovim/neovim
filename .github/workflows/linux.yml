@@ -12,6 +12,8 @@ jobs:
             cc: clang-11
           - flavor: lint
             cc: gcc
+          - flavor: tsan
+            cc: clang-11
     env:
       CC: ${{ matrix.cc }}
     steps:
@@ -21,7 +23,7 @@ jobs:
         run: ./.github/workflows/env.sh ${{ matrix.flavor }}
 
       - name: Setup clang repository
-        if: matrix.flavor == 'asan'
+        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
           sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
@@ -32,7 +34,7 @@ jobs:
           sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python python-pip python-setuptools python3 python3-pip python3-setuptools unzip valgrind xclip
 
       - name: Install new clang
-        if: matrix.flavor == 'asan'
+        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: sudo apt-get install -y clang-11
 
       - name: Setup interpreter packages
