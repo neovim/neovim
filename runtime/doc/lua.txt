@@ -112,7 +112,7 @@ Lua functions can be called in multiple ways. Consider the function: >
 
 
 The first way to call a function is: >
-    
+
     example_func(1, 2)
     -- ==== Result ====
     -- A is: 1
