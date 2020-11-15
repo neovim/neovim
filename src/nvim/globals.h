@@ -585,8 +585,8 @@ EXTERN int vr_lines_changed INIT(= 0);      // #Lines changed by "gR" so far
 EXTERN int inhibit_delete_count INIT(= 0);
 
 // These flags are set based upon 'fileencoding'.
-// Note that "enc_utf8" is also set for "unicode", because the characters are
-// internally stored as UTF-8 (to avoid trouble with NUL bytes).
+// The characters are internally stored as UTF-8
+// to avoid trouble with NUL bytes.
 # define DBCS_JPN       932     // japan
 # define DBCS_JPNU      9932    // euc-jp
 # define DBCS_KOR       949     // korea
@@ -597,12 +597,6 @@ EXTERN int inhibit_delete_count INIT(= 0);
 # define DBCS_CHTU      9950    // euc-tw
 # define DBCS_2BYTE     1       // 2byte-
 # define DBCS_DEBUG     -1
-
-// mbyte flags that used to depend on 'encoding'. These are now deprecated, as
-// 'encoding' is always "utf-8". Code that use them can be refactored to
-// remove dead code.
-#define enc_utf8 true
-#define has_mbyte true
 
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);

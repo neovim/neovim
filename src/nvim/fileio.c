@@ -1310,14 +1310,11 @@ retry:
         char_u  *dest;
         char_u  *tail = NULL;
 
-        /*
-         * "enc_utf8" set: Convert Unicode or Latin1 to UTF-8.
-         * "enc_utf8" not set: Convert Unicode to Latin1.
-         * Go from end to start through the buffer, because the number
-         * of bytes may increase.
-         * "dest" points to after where the UTF-8 bytes go, "p" points
-         * to after the next character to convert.
-         */
+        // Convert Unicode or Latin1 to UTF-8.
+        // Go from end to start through the buffer, because the number
+        // of bytes may increase.
+        // "dest" points to after where the UTF-8 bytes go, "p" points
+        // to after the next character to convert.
         dest = ptr + real_size;
         if (fio_flags == FIO_LATIN1 || fio_flags == FIO_UTF8) {
           p = ptr + size;
