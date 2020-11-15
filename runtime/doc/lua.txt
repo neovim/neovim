@@ -268,15 +268,18 @@ arguments separated by " " (space) instead of "\t" (tab).
                         >
                             function! CurrentLineInfo()
                             lua << EOF
-                            local linenr = vim.api.nvim_win_get_cursor(0)[1]
-                            local curline = vim.api.nvim_buf_get_lines(
-                                    0, linenr, linenr + 1, false)[1]
-                            print(string.format("Current line [%d] has %d bytes",
-                                    linenr, #curline))
+                            local linenr, curline, formatstr
+                            linenr = vim.api.nvim_win_get_cursor(0)[1]
+                            curline = vim.api.nvim_buf_get_lines(0,
+                                                                 linenr,
+                                                                 linenr + 1,
+                                                                 false)[1]
+                            formatstr = "Current line [%d] has %d bytes"
+                            print(string.format(output, linenr, #curline))
                             EOF
                             endfunction
 
-<                        Note that the `local` variables will disappear when
+<                       Note that the `local` variables will disappear when
                         the block finishes. But not globals.
 
                                                                       *:luado*
