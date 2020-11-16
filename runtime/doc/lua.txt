@@ -589,9 +589,11 @@ vim.highlight.range({bufnr}, {ns}, {higroup},          *vim.highlight.range()*
                     {start}, {finish},
                     {rtype}, {inclusive})
 
-        Highlights the range between {start} and {finish} (tuples of {line,col})
-        in buffer {bufnr} with the highlight group {higroup} using the namespace
-        {ns}. Optional arguments are the type of range (characterwise, linewise,
+        Highlights the range between {start} and {finish} (tuples of
+        {line,col}) in buffer {bufnr} with the highlight group {higroup}
+        using the namespace {ns}.
+
+        Optional arguments are the type of range (characterwise, linewise,
         or blockwise, see |setreg|; default to characterwise) and whether the
         range is inclusive (default false).
 
