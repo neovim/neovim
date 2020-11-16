@@ -83,6 +83,50 @@ describe('floatwin', function()
     assert_alive()
   end)
 
+  it('opened with correct height', function()
+    local height = exec_lua([[
+      vim.api.nvim_set_option("winheight", 20)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        height = 10,
+        col = 5,
+        row = 1,
+        relative = 'editor',
+        style = 'minimal',
+        width = 15
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+
+      return vim.api.nvim_win_get_height(win_id)
+    ]])
+
+    eq(10, height)
+  end)
+
+  it('opened with correct width', function()
+    local width = exec_lua([[
+      vim.api.nvim_set_option("winwidth", 20)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        height = 10,
+        col = 5,
+        row = 1,
+        relative = 'editor',
+        style = 'minimal',
+        width = 10
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+
+      return vim.api.nvim_win_get_width(win_id)
+    ]])
+
+    eq(10, width)
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
