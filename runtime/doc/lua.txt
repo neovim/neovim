@@ -264,8 +264,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                         can omit [endmarker] after the "<<" and use a dot "."
                         after {script} (similar to |:append|, |:insert|).
 
-                        Example:
-                        >
+                        Example: >
                             function! CurrentLineInfo()
                             lua << EOF
                             local linenr, curline, formatstr
@@ -290,8 +289,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                         that becomes the text of the corresponding buffer
                         line. Default [range] is the whole file: "1,$".
 
-                        Examples:
-                        >
+                        Examples: >
                             :luado return string.format("%s\t%d", line:reverse(), #line)
 
                             :lua require"lpeg"
@@ -305,8 +303,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                         Execute Lua script in {file}.
                         The whole argument is used as a single file name.
 
-                        Examples:
-                        >
+                        Examples: >
                             :luafile script.lua
                             :luafile %
 <
