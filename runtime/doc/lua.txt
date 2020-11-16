@@ -685,8 +685,9 @@ vim.register_keystroke_callback({fn}, {ns_id})
                     If {fn} is `nil`, it removes the callback for the
                     associated {ns_id}.
 
-            {ns_id}: (number)  Namespace ID. If not passed or 0, will generate
-                     and return a new namespace ID from |nvim_create_namespace()|
+            {ns_id}: (number): Namespace ID.
+                     If not passed or 0, will generate and return a new
+                     namespace ID from |nvim_create_namespace()|
 
         Return: ~
             (number) Namespace ID associated with {fn}
