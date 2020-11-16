@@ -297,7 +297,7 @@ To configure the behavior of a builtin |lsp-handler|, the conenvience method
 <
   or if using 'nvim-lspconfig', you can use the {handlers} key of `setup()`: >
 
-   require'lspconfig'.rust_analyzer.setup {
+   require('lspconfig').rust_analyzer.setup {
      handlers = {
        ["textDocument/publishDiagnostics"] = vim.lsp.with(
          vim.lsp.diagnostic.on_publish_diagnostics, {
