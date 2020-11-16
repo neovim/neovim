@@ -15,7 +15,7 @@ labels: bug, lsp
 <details>
 <summary>nvim -c ":checkhealth nvim lspconfig"</summary>
 
-<!-- Paste the results from `nvim -c ":checkhealth nvim nvim_lsp"` here. -->
+<!-- Paste the results from `nvim -c ":checkhealth nvim lspconfig"` here. -->
 
 </details>
 
