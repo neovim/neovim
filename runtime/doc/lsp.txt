@@ -30,7 +30,7 @@ Follow these steps to get LSP features:
   2. Install a language server.  Try ":LspInstall <tab>" or use your system
      package manager to install the relevant language server:
      https://microsoft.github.io/language-server-protocol/implementors/servers/
-  3. Add `lua require('nvim_lsp').xx.setup{…}` to your init.vim, where "xx" is
+  3. Add `lua require('lspconfig').xx.setup{…}` to your init.vim, where "xx" is
      the name of the relevant config. See the nvim-lspconfig README for details.
      NOTE: Make sure to restart nvim after installing and configuring.
   4. Check that an LSP client has attached to the current buffer:  >
@@ -68,7 +68,7 @@ Example config (in init.vim): >
     -- An example of configuring for `sumneko_lua`,
     --  a language server for Lua.
     -- First, you must run `:LspInstall sumneko_lua` for this to work.
-    require('nvim_lsp').sumneko_lua.setup({
+    require('lspconfig').sumneko_lua.setup({
       -- An example of settings for an LSP server.
       --    For more options, see nvim-lspconfig
       settings = {
@@ -297,7 +297,7 @@ To configure the behavior of a builtin |lsp-handler|, the conenvience method
 <
   or if using 'nvim-lspconfig', you can use the {handlers} key of `setup()`: >
 
-   nvim_lsp.rust_analyzer.setup {
+   require('lspconfig').rust_analyzer.setup {
      handlers = {
        ["textDocument/publishDiagnostics"] = vim.lsp.with(
          vim.lsp.diagnostic.on_publish_diagnostics, {
