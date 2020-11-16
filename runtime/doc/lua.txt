@@ -935,10 +935,8 @@ vim.env                                                              *vim.env*
             vim.env.FOO = 'bar'
             print(vim.env.TERM)
 <
-
-                                                             *lua-vim-options*
-From Lua you can work with editor |options| by reading and setting items in
-these Lua tables:
+From Lua you can work with editor |options| by               *lua-vim-options*
+reading and setting items in these Lua tables:
 
 vim.o                                                                  *vim.o*
 
