@@ -54,6 +54,7 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_SLOPPINESS=time_macros,file_macro
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
+    - CI_OS_NAME="$TRAVIS_OS_NAME"
 
 anchors:
   envs: &common-job-env
