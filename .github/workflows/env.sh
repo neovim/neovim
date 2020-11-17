@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -u
 
-FLAVOR=$1
+FLAVOR=${1:-}
 
 cat <<EOF >> "$GITHUB_PATH"
 $HOME/.local/bin
