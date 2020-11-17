@@ -48,6 +48,13 @@ jobs:
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: sudo apt-get install -y clang-11
 
+      - name: Install brew packages
+        if: matrix.os == 'osx'
+        run: |
+          brew update >/dev/null
+          brew install automake ccache cpanminus ninja
+          brew upgrade
+
       - name: Setup interpreter packages
         run: |
           ./ci/before_install.sh
