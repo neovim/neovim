@@ -3198,7 +3198,7 @@ void maketitle(void)
         int use_sandbox = false;
         int save_called_emsg = called_emsg;
 
-        use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
+        use_sandbox = was_set_insecurely(curwin, (char_u *)"titlestring", 0);
         called_emsg = false;
         build_stl_str_hl(curwin, (char_u *)buf, sizeof(buf),
                          p_titlestring, use_sandbox,
@@ -3309,7 +3309,7 @@ void maketitle(void)
         int use_sandbox = false;
         int save_called_emsg = called_emsg;
 
-        use_sandbox = was_set_insecurely((char_u *)"iconstring", 0);
+        use_sandbox = was_set_insecurely(curwin, (char_u *)"iconstring", 0);
         called_emsg = false;
         build_stl_str_hl(curwin, icon_str, sizeof(buf),
                          p_iconstring, use_sandbox,

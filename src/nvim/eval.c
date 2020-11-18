@@ -1178,8 +1178,7 @@ int eval_foldexpr(char_u *arg, int *cp)
 {
   typval_T tv;
   varnumber_T retval;
-  int use_sandbox = was_set_insecurely((char_u *)"foldexpr",
-      OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, (char_u *)"foldexpr", OPT_LOCAL);
 
   ++emsg_off;
   if (use_sandbox)

@@ -945,7 +945,7 @@ set_option_default(
     }
 
     // The default value is not insecure.
-    uint32_t *flagsp = insecure_flag(opt_idx, opt_flags);
+    uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
     *flagsp = *flagsp & ~P_INSECURE;
   }
 
@@ -1880,7 +1880,7 @@ int do_set(
             saved_newval = (newval != NULL) ? xstrdup((char *)newval) : 0;
 
             {
-              uint32_t *p = insecure_flag(opt_idx, opt_flags);
+              uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
               const int secure_saved = secure;
 
               // When an option is set in the sandbox, from a
@@ -2007,7 +2007,7 @@ static void did_set_option(
   /* When an option is set in the sandbox, from a modeline or in secure mode
    * set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
    * flag. */
-  uint32_t *p = insecure_flag(opt_idx, opt_flags);
+  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
   if (!value_checked && (secure
                          || sandbox != 0
                          || (opt_flags & OPT_MODELINE))) {
@@ -2346,12 +2346,12 @@ static void check_string_option(char_u **pp)
 /// Return true when option "opt" was set from a modeline or in secure mode.
 /// Return false when it wasn't.
 /// Return -1 for an unknown option.
-int was_set_insecurely(char_u *opt, int opt_flags)
+int was_set_insecurely(win_T *const wp, char_u *opt, int opt_flags)
 {
   int idx = findoption((const char *)opt);
 
   if (idx >= 0) {
-    uint32_t *flagp = insecure_flag(idx, opt_flags);
+    uint32_t *flagp = insecure_flag(wp, idx, opt_flags);
     return (*flagp & P_INSECURE) != 0;
   }
   internal_error("was_set_insecurely()");
@@ -2360,16 +2360,16 @@ int was_set_insecurely(char_u *opt, int opt_flags)
 
 /// Get a pointer to the flags used for the P_INSECURE flag of option
 /// "opt_idx".  For some local options a local flags field is used.
-static uint32_t *insecure_flag(int opt_idx, int opt_flags)
+static uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL)
     switch ((int)options[opt_idx].indir) {
-    case PV_STL:        return &curwin->w_p_stl_flags;
-    case PV_FDE:        return &curwin->w_p_fde_flags;
-    case PV_FDT:        return &curwin->w_p_fdt_flags;
-    case PV_INDE:       return &curbuf->b_p_inde_flags;
-    case PV_FEX:        return &curbuf->b_p_fex_flags;
-    case PV_INEX:       return &curbuf->b_p_inex_flags;
+    case PV_STL:        return &wp->w_p_stl_flags;
+    case PV_FDE:        return &wp->w_p_fde_flags;
+    case PV_FDT:        return &wp->w_p_fdt_flags;
+    case PV_INDE:       return &wp->w_buffer->b_p_inde_flags;
+    case PV_FEX:        return &wp->w_buffer->b_p_fex_flags;
+    case PV_INEX:       return &wp->w_buffer->b_p_inex_flags;
     }
 
   // Nothing special, return global flags field.

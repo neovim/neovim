@@ -4117,8 +4117,8 @@ fex_format(
     int c                  /* character to be inserted */
 )
 {
-  int use_sandbox = was_set_insecurely((char_u *)"formatexpr",
-      OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(
+      curwin, (char_u *)"formatexpr", OPT_LOCAL);
   int r;
   char_u *fex;
 

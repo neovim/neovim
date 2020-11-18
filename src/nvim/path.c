@@ -1610,10 +1610,10 @@ void simplify_filename(char_u *filename)
 
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
-  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t) len);
-  char *res = (char *) eval_to_string_safe(
-      curbuf->b_p_inex, NULL, was_set_insecurely((char_u *)"includeexpr",
-                                                 OPT_LOCAL));
+  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
+  char *res = (char *)eval_to_string_safe(
+      curbuf->b_p_inex, NULL,
+      was_set_insecurely(curwin, (char_u *)"includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
 }
