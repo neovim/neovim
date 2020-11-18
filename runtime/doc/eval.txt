@@ -15,7 +15,7 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 
 1.1 Variable types ~
 							*E712*
-There are six types of variables:
+There are seven types of variables:
 
 							*Number* *Integer*
 Number		A 32 or 64 bit signed number.  |expr-number|
@@ -42,6 +42,10 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 		Examples:
 			{'blue': "#0000ff", 'red': "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
+
+Blob		Binary Large Object. Stores any sequence of bytes. *Blob*
+		Example: 0zFF00ED015DAF
+		0z is an empty Blob.
 
 The Number and String types are converted automatically, depending on how they
 are used.
@@ -97,6 +101,7 @@ Note that " " and "0" are also non-empty strings, thus considered to be TRUE.
 A List, Dictionary or Float is not a Number or String, thus evaluate to FALSE.
 
 				*E745* *E728* *E703* *E729* *E730* *E731*
+				*E974* *E975* *E976*
 |List|, |Dictionary|, |Funcref|, and |Blob| types are not automatically
 converted.
 
@@ -1012,6 +1017,12 @@ just above. Also see |sublist| below.  Examples: >
 	:let l = mylist[4:4]		" List with one item
 	:let l = mylist[:]		" shallow copy of a List
 
+If expr8 is a |Blob| this results in a new |Blob| with the bytes in the
+indexes expr1a and expr1b, inclusive.  Examples: >
+	:let b = 0zDEADBEEF
+	:let bs = b[1:2]		" 0zADBE
+	:let bs = b[]			" copy of 0zDEADBEEF
+
 Using expr8[expr1] or expr8[expr1a : expr1b] on a |Funcref| results in an
 error.
 
@@ -1178,6 +1189,14 @@ Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
 
 Note that "\000" and "\x00" force the end of the string.
+
+
+blob-literal				*blob-literal* *E973* *E977* *E978*
+------------
+
+Hexadecimal starting with 0z or 0Z, with an arbitrary number of bytes.
+The sequence must be an even number of hex characters.  Example: >
+	:let b = 0zFF00ED015DAF
 
 
 literal-string						*literal-string* *E115*
@@ -2020,6 +2039,8 @@ v:t_list	Value of List type.  Read-only.  See: |type()|
 v:t_number	Value of Number type.  Read-only.  See: |type()|
 					*v:t_string* *t_string-variable*
 v:t_string	Value of String type.  Read-only.  See: |type()|
+					*v:t_blob* *t_blob-variable*
+v:t_blob	Value of Blob type.  Read-only.  See: |type()|
 
 				*v:termresponse* *termresponse-variable*
 v:termresponse	The escape sequence returned by the terminal for the DA
@@ -2315,8 +2336,8 @@ hlID({name})			Number	syntax ID of highlight group {name}
 hostname()			String	name of the machine Vim is running on
 iconv({expr}, {from}, {to})	String	convert encoding of {expr}
 indent({lnum})			Number	indent of line {lnum}
-index({list}, {expr} [, {start} [, {ic}]])
-				Number	index in {list} where {expr} appears
+index({object}, {expr} [, {start} [, {ic}]])
+				Number	index in {object} where {expr} appears
 input({prompt} [, {text} [, {completion}]])
 				String	get input from the user
 inputlist({textlist})		Number	let the user pick from a choice list
@@ -2324,8 +2345,8 @@ inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
 inputsecret({prompt} [, {text}])
 				String  like input() but hiding the text
-insert({list}, {item} [, {idx}])
-				List	insert {item} in {list} [before {idx}]
+insert({object}, {item} [, {idx}])
+				List	insert {item} in {object} [before {idx}]
 interrupt()			none	interrupt script execution
 invert({expr})			Number  bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
@@ -2407,7 +2428,7 @@ pyxeval({expr})			any	evaluate |python_x| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
-readfile({fname} [, {binary} [, {max}]])
+readfile({fname} [, {type} [, {max}]])
 				List	get list of lines from file {fname}
 reg_executing()			String	get the executing register name
 reg_recording()			String	get the recording register name
@@ -2612,8 +2633,8 @@ winrestview({dict})		none	restore view of current window
 winsaveview()			Dict	save view of current window
 winwidth({nr})			Number	width of window {nr}
 wordcount()			Dict	get byte/char/word statistics
-writefile({list}, {fname} [, {flags}])
-				Number	write list of lines to file {fname}
+writefile({object}, {fname} [, {flags}])
+				Number	write |Blob| or |List| of lines to file
 xor({expr}, {expr})		Number	bitwise XOR
 
 
@@ -5548,17 +5569,21 @@ indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 		When {lnum} is invalid -1 is returned.
 
 
-index({list}, {expr} [, {start} [, {ic}]])			*index()*
-		Return the lowest index in |List| {list} where the item has a
-		value equal to {expr}.  There is no automatic conversion, so
-		the String "4" is different from the Number 4.  And the number
-		4 is different from the Float 4.0.  The value of 'ignorecase'
-		is not used here, case always matters.
+index({object}, {expr} [, {start} [, {ic}]])			*index()*
+		If {object} is a |List| return the lowest index where the item
+		has a value equal to {expr}.  There is no automatic
+		conversion, so the String "4" is different from the Number 4.
+		And the number 4 is different from the Float 4.0.  The value
+		of 'ignorecase' is not used here, case always matters.
+
+		If {object} is |Blob| return the lowest index where the byte
+		value is equal to {expr}.
+
 		If {start} is given then start looking at the item with index
 		{start} (may be negative for an item relative to the end).
 		When {ic} is given and it is |TRUE|, ignore case.  Otherwise
 		case must match.
-		-1 is returned when {expr} is not found in {list}.
+		-1 is returned when {expr} is not found in {object}.
 		Example: >
 			:let idx = index(words, "the")
 			:if index(numbers, 123) >= 0
@@ -5717,13 +5742,16 @@ inputsecret({prompt} [, {text}])			*inputsecret()*
 		typed on the command-line in response to the issued prompt.
 		NOTE: Command-line completion is not supported.
 
-insert({list}, {item} [, {idx}])			*insert()*
-		Insert {item} at the start of |List| {list}.
+insert({object}, {item} [, {idx}])			*insert()*
+		When {object} is a |List| or a |Blob| insert {item} at the start
+		of it.
+
 		If {idx} is specified insert {item} before the item with index
 		{idx}.  If {idx} is zero it goes before the first item, just
 		like omitting {idx}.  A negative {idx} is also possible, see
 		|list-index|.  -1 inserts just before the last item.
-		Returns the resulting |List|.  Examples: >
+
+		Returns the resulting |List| or |Blob|.  Examples: >
 			:let mylist = insert([2, 3, 5], 1)
 			:call insert(mylist, 4, -1)
 			:call insert(mylist, 6, len(mylist))
@@ -5787,16 +5815,16 @@ islocked({expr})					*islocked()* *E786*
 
 id({expr})						*id()*
 		Returns a |String| which is a unique identifier of the
-		container type (|List|, |Dict| and |Partial|). It is
+		container type (|List|, |Dict|, |Blob| and |Partial|). It is
 		guaranteed that for the mentioned types `id(v1) ==# id(v2)`
 		returns true iff `type(v1) == type(v2) && v1 is v2`.
-		Note that |v:_null_string|, |v:_null_list|, and |v:_null_dict|
-		have the same `id()` with different types because they are
-		internally represented as a NULL pointers.  `id()` returns a
-		hexadecimal representanion of the pointers to the containers
-		(i.e. like `0x994a40`), same as `printf("%p", {expr})`,
-		but it is advised against counting on the exact format of
-		return value.
+		Note that |v:_null_string|, |v:_null_list|, |v:_null_dict| and
+		|v:_null_blob| have the same `id()` with different types
+		because they are internally represented as NULL pointers.
+		`id()` returns a hexadecimal representanion of the pointers to
+		the containers (i.e. like `0x994a40`), same as `printf("%p",
+		{expr})`, but it is advised against counting on the exact
+		format of the return value.
 
 		It is not guaranteed that `id(no_longer_existing_container)`
 		will not be equal to some other `id()`: new containers may
@@ -7168,16 +7196,18 @@ readdir({directory} [, {expr}])
                   echo s:tree(".")
 <
 							*readfile()*
-readfile({fname} [, {binary} [, {max}]])
+readfile({fname} [, {type} [, {max}]])
 		Read file {fname} and return a |List|, each line of the file
 		as an item.  Lines are broken at NL characters.  Macintosh
 		files separated with CR will result in a single long line
 		(unless a NL appears somewhere).
 		All NUL characters are replaced with a NL character.
-		When {binary} contains "b" binary mode is used:
+		When {type} contains "b" binary mode is used:
 		- When the last line ends in a NL an extra empty list item is
 		  added.
 		- No CR characters are removed.
+		When {type} contains "B" a |Blob| is returned with the binary
+		data of the file unmodified.
 		Otherwise:
 		- CR characters that appear before a NL are removed.
 		- Whether the last line ends in a NL or not does not matter.
@@ -7357,6 +7387,17 @@ remove({list}, {idx} [, {end}])				*remove()*
 <		Can also be used as a |method|: >
 			mylist->remove(idx)
 
+remove({blob}, {idx} [, {end}])
+		Without {end}: Remove the byte at {idx} from |Blob| {blob} and
+		return the byte.
+		With {end}: Remove bytes from {idx} to {end} (inclusive) and
+		return a |Blob| with these bytes.  When {idx} points to the same
+		byte as {end} a |Blob| with one byte is returned.  When {end}
+		points to a byte before {idx} this is an error.
+		Example: >
+			:echo "last byte: " . remove(myblob, -1)
+			:call remove(mylist, 0, 9)
+
 remove({dict}, {key})
 		Remove the entry from {dict} with key {key} and return it.
 		Example: >
@@ -7400,9 +7441,11 @@ resolve({filename})					*resolve()* *E655*
 		path name) and also keeps a trailing path separator.
 
 							*reverse()*
-reverse({list})	Reverse the order of items in {list} in-place.  Returns
-		{list}.
-		If you want a list to remain unmodified make a copy first: >
+reverse({object})
+		Reverse the order of items in {object} in-place.
+		{object} can be a |List| or a |Blob|.
+		Returns {object}.
+		If you want an object to remain unmodified make a copy first: >
 			:let revlist = reverse(copy(mylist))
 <		Can also be used as a |method|: >
 			mylist->reverse()
@@ -9483,6 +9526,7 @@ type({expr})							*type()*
 			Float:      5 (|v:t_float|)
 			Boolean:    6 (|v:true| and |v:false|)
 			Null:       7 (|v:null|)
+			Blob:      10 (|v:t_blob|)
 		For backward compatibility, this method can be used: >
 			:if type(myvar) == type(0)
 			:if type(myvar) == type("")
@@ -9927,13 +9971,16 @@ wordcount()						*wordcount()*
 
 
 							*writefile()*
-writefile({list}, {fname} [, {flags}])
-		Write |List| {list} to file {fname}.  Each list item is
-		separated with a NL.  Each list item must be a String or
-		Number.
+writefile({object}, {fname} [, {flags}])
+		When {object} is a |List| write it to file {fname}.  Each list
+		item is separated with a NL.  Each list item must be a String
+		or Number.
 		When {flags} contains "b" then binary mode is used: There will
 		not be a NL after the last list item.  An empty item at the
 		end does cause the last line in the file to end in a NL.
+
+		When {object} is a |Blob| write the bytes to file {fname}
+		unmodified.
 
 		When {flags} contains "a" then append mode is used, lines are
 		appended to the file: >
@@ -10450,7 +10497,10 @@ This does NOT work: >
 			This cannot be used to set a byte in a String.  You
 			can do that like this: >
 				:let var = var[0:2] . 'X' . var[4:]
-<
+<			When {var-name} is a |Blob| then {idx} can be the
+			length of the blob, in which case one byte is
+			appended.
+
 							*E711* *E719*
 :let {var-name}[{idx1}:{idx2}] = {expr1}		*E708* *E709* *E710*
 			Set a sequence of items in a |List| to the result of

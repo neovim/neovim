@@ -321,6 +321,13 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       tv_list_append_tv(l, &argvars[1]);
       tv_copy(&argvars[0], rettv);
     }
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+    if (b != NULL
+        && !var_check_lock(b->bv_lock, N_("add() argument"), TV_TRANSLATE)) {
+      ga_append(&b->bv_ga, (char_u)tv_get_number(&argvars[1]));
+      tv_copy(&argvars[0], rettv);
+    }
   } else {
     EMSG(_(e_listreq));
   }
@@ -1874,6 +1881,10 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = argvars[0].vval.v_special == kSpecialVarNull;
       break;
     }
+    case VAR_BLOB: {
+      n = (tv_blob_len(argvars[0].vval.v_blob) == 0);
+      break;
+    }
     case VAR_UNKNOWN: {
       internal_error("f_empty(UNKNOWN)");
       break;
@@ -2791,7 +2802,19 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   typval_T    *tv = NULL;
   bool what_is_dict = false;
 
-  if (argvars[0].v_type == VAR_LIST) {
+  if (argvars[0].v_type == VAR_BLOB) {
+    bool error = false;
+    const int idx = tv_get_number_chk(&argvars[1], &error);
+
+    if (!error) {
+      rettv->v_type = VAR_NUMBER;
+      if (idx >= tv_blob_len(argvars[0].vval.v_blob)) {
+        EMSGN(_(e_blobidx), idx);
+      } else {
+        rettv->vval.v_number = tv_blob_get(argvars[0].vval.v_blob, idx);
+      }
+    }
+  } else if (argvars[0].v_type == VAR_LIST) {
     if ((l = argvars[0].vval.v_list) != NULL) {
       bool error = false;
 
@@ -4790,7 +4813,31 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool ic = false;
 
   rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_LIST) {
+  if (argvars[0].v_type == VAR_BLOB) {
+    bool error = false;
+    int start = 0;
+
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      start = tv_get_number_chk(&argvars[2], &error);
+      if (error) {
+        return;
+      }
+    }
+    blob_T *const b = argvars[0].vval.v_blob;
+    if (b == NULL) {
+      return;
+    }
+    for (idx = start; idx < tv_blob_len(b); idx++) {
+      typval_T tv;
+      tv.v_type = VAR_NUMBER;
+      tv.vval.v_number = tv_blob_get(b, idx);
+      if (tv_equal(&tv, &argvars[1], ic, false)) {
+        rettv->vval.v_number = idx;
+        return;
+      }
+    }
+    return;
+  } else if (argvars[0].v_type != VAR_LIST) {
     EMSG(_(e_listreq));
     return;
   }
@@ -4920,7 +4967,37 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   list_T *l;
   bool error = false;
 
-  if (argvars[0].v_type != VAR_LIST) {
+  if (argvars[0].v_type == VAR_BLOB) {
+    long before = 0;
+    const int len = tv_blob_len(argvars[0].vval.v_blob);
+
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      before = (long)tv_get_number_chk(&argvars[2], &error);
+      if (error) {
+        return;  // type error; errmsg already given
+      }
+      if (before < 0 || before > len) {
+        EMSG2(_(e_invarg2), tv_get_string(&argvars[2]));
+        return;
+      }
+    }
+    const int val = tv_get_number_chk(&argvars[1], &error);
+    if (error) {
+      return;
+    }
+    if (val < 0 || val > 255) {
+      EMSG2(_(e_invarg2), tv_get_string(&argvars[1]));
+      return;
+    }
+
+    ga_grow(&argvars[0].vval.v_blob->bv_ga, 1);
+    char_u *const p = (char_u *)argvars[0].vval.v_blob->bv_ga.ga_data;
+    memmove(p + before + 1, p + before, (size_t)len - before);
+    *(p + before) = val;
+    argvars[0].vval.v_blob->bv_ga.ga_len++;
+
+    tv_copy(&argvars[0], rettv);
+  } else if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "insert()");
   } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                              N_("insert() argument"), TV_TRANSLATE)) {
@@ -5579,6 +5656,10 @@ static void f_len(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     case VAR_NUMBER: {
       rettv->vval.v_number = (varnumber_T)strlen(
           tv_get_string(&argvars[0]));
+      break;
+    }
+    case VAR_BLOB: {
+      rettv->vval.v_number = tv_blob_len(argvars[0].vval.v_blob);
       break;
     }
     case VAR_LIST: {
@@ -6894,6 +6975,7 @@ static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   bool binary = false;
+  bool blob = false;
   FILE        *fd;
   char_u buf[(IOSIZE/256) * 256];       // rounded to avoid odd + 1
   int io_size = sizeof(buf);
@@ -6906,13 +6988,13 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
       binary = true;
+    } else if (strcmp(tv_get_string(&argvars[1]), "B") == 0) {
+      blob = true;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
       maxline = tv_get_number(&argvars[2]);
     }
   }
-
-  list_T *const l = tv_list_alloc_ret(rettv, kListLenUnknown);
 
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
@@ -6921,6 +7003,18 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     EMSG2(_(e_notopen), *fname == NUL ? _("<empty>") : fname);
     return;
   }
+
+  if (blob) {
+    tv_blob_alloc_ret(rettv);
+    if (!read_blob(fd, rettv->vval.v_blob)) {
+      EMSG("cannot read file");
+      tv_blob_free(rettv->vval.v_blob);
+    }
+    fclose(fd);
+    return;
+  }
+
+  list_T *const l = tv_list_alloc_ret(rettv, kListLenUnknown);
 
   while (maxline < 0 || tv_list_len(l) < maxline) {
     readlen = (int)fread(buf, 1, io_size, fd);
@@ -7188,6 +7282,55 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             tv_dict_watcher_notify(d, key, NULL, rettv);
           }
         }
+      }
+    }
+  } else if (argvars[0].v_type == VAR_BLOB) {
+    bool error = false;
+    idx = (long)tv_get_number_chk(&argvars[1], &error);
+
+    if (!error) {
+      blob_T *const b = argvars[0].vval.v_blob;
+      const int len = tv_blob_len(b);
+
+      if (idx < 0) {
+        // count from the end
+        idx = len + idx;
+      }
+      if (idx < 0 || idx >= len) {
+        EMSGN(_(e_blobidx), idx);
+        return;
+      }
+      if (argvars[2].v_type == VAR_UNKNOWN) {
+        // Remove one item, return its value.
+        char_u *const p = (char_u *)b->bv_ga.ga_data;
+        rettv->vval.v_number = (varnumber_T)(*(p + idx));
+        memmove(p + idx, p + idx + 1, (size_t)len - idx - 1);
+        b->bv_ga.ga_len--;
+      } else {
+        // Remove range of items, return list with values.
+        end = (long)tv_get_number_chk(&argvars[2], &error);
+        if (error) {
+          return;
+        }
+        if (end < 0) {
+          // count from the end
+          end = len + end;
+        }
+        if (end >= len || idx > end) {
+          EMSGN(_(e_blobidx), end);
+          return;
+        }
+        blob_T *const blob = tv_blob_alloc();
+        blob->bv_ga.ga_len = end - idx + 1;
+        ga_grow(&blob->bv_ga, end - idx + 1);
+
+        char_u *const p = (char_u *)b->bv_ga.ga_data;
+        memmove((char_u *)blob->bv_ga.ga_data, p + idx,
+                (size_t)(end - idx + 1));
+        tv_blob_set_ret(rettv, blob);
+
+        memmove(p + idx, p + end + 1, (size_t)(len - end));
+        b->bv_ga.ga_len -= end - idx + 1;
       }
     }
   } else if (argvars[0].v_type != VAR_LIST) {
@@ -7465,13 +7608,25 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  list_T *l;
-  if (argvars[0].v_type != VAR_LIST) {
+  if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+    const int len = tv_blob_len(b);
+
+    for (int i = 0; i < len / 2; i++) {
+      const char_u tmp = tv_blob_get(b, i);
+      tv_blob_set(b, i, tv_blob_get(b, len - i - 1));
+      tv_blob_set(b, len - i - 1, tmp);
+    }
+    tv_blob_set_ret(rettv, b);
+  } else if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "reverse()");
-  } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                             N_("reverse() argument"), TV_TRANSLATE)) {
-    tv_list_reverse(l);
-    tv_list_set_ret(rettv, l);
+  } else {
+    list_T *const l = argvars[0].vval.v_list;
+    if (!var_check_lock(tv_list_locked(l), N_("reverse() argument"),
+                        TV_TRANSLATE)) {
+      tv_list_reverse(l);
+      tv_list_set_ret(rettv, l);
+    }
   }
 }
 
@@ -11291,15 +11446,16 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int n = -1;
 
   switch (argvars[0].v_type) {
-    case VAR_NUMBER: n = VAR_TYPE_NUMBER; break;
-    case VAR_STRING: n = VAR_TYPE_STRING; break;
+    case VAR_NUMBER:  n = VAR_TYPE_NUMBER; break;
+    case VAR_STRING:  n = VAR_TYPE_STRING; break;
     case VAR_PARTIAL:
-    case VAR_FUNC:   n = VAR_TYPE_FUNC; break;
-    case VAR_LIST:   n = VAR_TYPE_LIST; break;
-    case VAR_DICT:   n = VAR_TYPE_DICT; break;
-    case VAR_FLOAT:  n = VAR_TYPE_FLOAT; break;
-    case VAR_BOOL:   n = VAR_TYPE_BOOL; break;
-    case VAR_SPECIAL:n = VAR_TYPE_SPECIAL; break;
+    case VAR_FUNC:    n = VAR_TYPE_FUNC; break;
+    case VAR_LIST:    n = VAR_TYPE_LIST; break;
+    case VAR_DICT:    n = VAR_TYPE_DICT; break;
+    case VAR_FLOAT:   n = VAR_TYPE_FLOAT; break;
+    case VAR_BOOL:    n = VAR_TYPE_BOOL; break;
+    case VAR_SPECIAL: n = VAR_TYPE_SPECIAL; break;
+    case VAR_BLOB:    n = VAR_TYPE_BLOB; break;
     case VAR_UNKNOWN: {
       internal_error("f_type(UNKNOWN)");
       break;
@@ -11678,16 +11834,16 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "writefile()");
+  if (argvars[0].v_type == VAR_LIST) {
+    TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+      if (!tv_check_str_or_nr(TV_LIST_ITEM_TV(li))) {
+        return;
+      }
+    });
+  } else if (argvars[0].v_type != VAR_BLOB) {
+    EMSG2(_(e_invarg2), "writefile()");
     return;
   }
-  const list_T *const list = argvars[0].vval.v_list;
-  TV_LIST_ITER_CONST(list, li, {
-    if (!tv_check_str_or_nr(TV_LIST_ITEM_TV(li))) {
-      return;
-    }
-  });
 
   bool binary = false;
   bool append = false;
@@ -11727,7 +11883,13 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsgf(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
   } else {
-    if (write_list(&fp, list, binary)) {
+    bool write_ok;
+    if (argvars[0].v_type == VAR_BLOB) {
+      write_ok = write_blob(&fp, argvars[0].vval.v_blob);
+    } else {
+      write_ok = write_list(&fp, argvars[0].vval.v_list, binary);
+    }
+    if (write_ok) {
       rettv->vval.v_number = 0;
     }
     if ((error = file_close(&fp, do_fsync)) != 0) {

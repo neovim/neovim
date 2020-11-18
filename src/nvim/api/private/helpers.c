@@ -444,6 +444,9 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
     TYPVAL_ENCODE_CONV_NIL(tv)
 
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+  abort() /* TODO(seandewar) */ \
+
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
@@ -584,6 +587,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START

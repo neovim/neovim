@@ -64,6 +64,7 @@ enum ListLenSpecials {
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;
 typedef struct partial_S partial_T;
+typedef struct blobvar_S blob_T;
 
 typedef struct ufunc ufunc_T;
 
@@ -123,6 +124,7 @@ typedef enum {
   VAR_SPECIAL,      ///< Special value (null), .v_special
                     ///< is used.
   VAR_PARTIAL,      ///< Partial, .v_partial is used.
+  VAR_BLOB,         ///< Blob, .v_blob is used.
 } VarType;
 
 /// Structure that holds an internal variable value
@@ -138,6 +140,7 @@ typedef struct {
     list_T *v_list;  ///< List for VAR_LIST, can be NULL.
     dict_T *v_dict;  ///< Dictionary for VAR_DICT, can be NULL.
     partial_T *v_partial;  ///< Closure: function with args.
+    blob_T *v_blob;  ///< Blob for VAR_BLOB, can be NULL.
   }           vval;  ///< Actual value.
 } typval_T;
 
@@ -250,6 +253,13 @@ struct dictvar_S {
   QUEUE watchers;         ///< Dictionary key watchers set by user code.
 
   LuaRef lua_table_ref;
+};
+
+/// Structure to hold info about a Blob
+struct blobvar_S {
+  garray_T bv_ga;         ///< Growarray with the data.
+  int bv_refcount;        ///< Reference count.
+  VarLockStatus bv_lock;  ///< VAR_UNLOCKED, VAR_LOCKED, VAR_FIXED.
 };
 
 /// Type used for script ID
@@ -709,6 +719,65 @@ static inline bool tv_dict_is_watched(const dict_T *const d)
 static inline bool tv_dict_is_watched(const dict_T *const d)
 {
   return d && !QUEUE_EMPTY(&d->watchers);
+}
+
+static inline void tv_blob_set_ret(typval_T *const tv, blob_T *const b)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a blob as the return value.
+///
+/// Increments the reference count.
+///
+/// @param[out]  tv  Object to receive the blob.
+/// @param[in,out]  b  Blob to pass to the object.
+static inline void tv_blob_set_ret(typval_T *const tv, blob_T *const b)
+{
+  tv->v_type = VAR_BLOB;
+  tv->vval.v_blob = b;
+  if (b != NULL) {
+    b->bv_refcount++;
+  }
+}
+
+static inline int tv_blob_len(const blob_T *const b)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get the length of the data in the blob, in bytes.
+///
+/// @param[in]  b  Blob to check.
+static inline int tv_blob_len(const blob_T *const b)
+{
+  if (b == NULL) {
+    return 0;
+  }
+  return b->bv_ga.ga_len;
+}
+
+static inline char_u tv_blob_get(const blob_T *const b, int idx)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get the byte at index `idx` in the blob.
+///
+/// @param[in]  b  Blob to index. Cannot be NULL.
+/// @param[in]  idx  Index in a blob. Must be valid.
+///
+/// @return Byte value at the given index.
+static inline char_u tv_blob_get(const blob_T *const b, int idx)
+{
+  return ((char_u *)b->bv_ga.ga_data)[idx];
+}
+
+static inline void tv_blob_set(blob_T *const b, int idx, char_u c)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
+
+/// Store the byte `c` at index `idx` in the blob.
+///
+/// @param[in]  b  Blob to index. Cannot be NULL.
+/// @param[in]  idx  Index in a blob. Must be valid.
+/// @param[in]  c  Value to store.
+static inline void tv_blob_set(blob_T *const b, int idx, char_u c)
+{
+  ((char_u *)b->bv_ga.ga_data)[idx] = c;
 }
 
 /// Initialize VimL object

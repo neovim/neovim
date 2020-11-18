@@ -319,6 +319,28 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
 
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      const blob_T *const blob_ = (blob); \
+      const int len_ = (len); \
+      if (len_ == 0) { \
+        ga_concat(gap, "[]"); \
+      } else { \
+        ga_grow(gap, 1 + len_ * 5); \
+        ga_append(gap, '['); \
+        char numbuf[NUMBUFLEN]; \
+        for (int i_ = 0; i_ < len_; i_++) { \
+          if (i_ > 0) { \
+            ga_append(gap, ','); \
+          } \
+          vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "0x%02X", \
+                       (int)tv_blob_get(blob_, i_)); \
+          ga_concat(gap, numbuf); \
+        } \
+        ga_append(gap, ']'); \
+      } \
+    } while (0)
+
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     do { \
       char numbuf[NUMBUFLEN]; \
@@ -705,6 +727,10 @@ static inline int convert_to_json_string(garray_T *const gap,
       return FAIL; \
     } while (0)
 
+#undef TYPVAL_ENCODE_CONV_BLOB
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    abort() /* TODO(seandewar) */ \
+
 #undef TYPVAL_ENCODE_CONV_FUNC_START
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
@@ -770,6 +796,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START
@@ -904,6 +931,9 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    abort() /* TODO(seandewar) */ \
+
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     msgpack_pack_int64(packer, (int64_t)(num))
 
@@ -982,6 +1012,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START

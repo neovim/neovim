@@ -44,7 +44,7 @@ describe('NULL', function()
     -- Incorrect behaviour
     -- FIXME Should error out with different message
     null_test('makes :unlet act as if it is not a list', ':unlet L[0]',
-              'Vim(unlet):E689: Can only index a List or Dictionary')
+              'Vim(unlet):E689: Can only index a List, Dictionary or Blob')
 
     -- Subjectable behaviour
 
