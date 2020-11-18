@@ -3505,12 +3505,16 @@ syn_cmd_list(
       syn_match_msg();
       return;
     } else if (!(curwin->w_s->b_syn_sync_flags & SF_MATCH))   {
-      if (curwin->w_s->b_syn_sync_minlines == 0)
+      if (curwin->w_s->b_syn_sync_minlines == 0) {
         MSG_PUTS(_("no syncing"));
-      else {
-        MSG_PUTS(_("syncing starts "));
-        msg_outnum(curwin->w_s->b_syn_sync_minlines);
-        MSG_PUTS(_(" lines before top line"));
+      } else {
+        if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
+          MSG_PUTS(_("syncing starts at the first line"));
+        } else {
+          MSG_PUTS(_("syncing starts "));
+          msg_outnum(curwin->w_s->b_syn_sync_minlines);
+          MSG_PUTS(_(" lines before top line"));
+        }
         syn_match_msg();
       }
       return;
@@ -3566,17 +3570,22 @@ static void syn_lines_msg(void)
   if (curwin->w_s->b_syn_sync_maxlines > 0
       || curwin->w_s->b_syn_sync_minlines > 0) {
     MSG_PUTS("; ");
-    if (curwin->w_s->b_syn_sync_minlines > 0) {
-      MSG_PUTS(_("minimal "));
-      msg_outnum(curwin->w_s->b_syn_sync_minlines);
-      if (curwin->w_s->b_syn_sync_maxlines)
-        MSG_PUTS(", ");
+    if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
+      MSG_PUTS(_("from the first line"));
+    } else {
+      if (curwin->w_s->b_syn_sync_minlines > 0) {
+        MSG_PUTS(_("minimal "));
+        msg_outnum(curwin->w_s->b_syn_sync_minlines);
+        if (curwin->w_s->b_syn_sync_maxlines) {
+          MSG_PUTS(", ");
+        }
+      }
+      if (curwin->w_s->b_syn_sync_maxlines > 0) {
+        MSG_PUTS(_("maximal "));
+        msg_outnum(curwin->w_s->b_syn_sync_maxlines);
+      }
+      MSG_PUTS(_(" lines before top line"));
     }
-    if (curwin->w_s->b_syn_sync_maxlines > 0) {
-      MSG_PUTS(_("maximal "));
-      msg_outnum(curwin->w_s->b_syn_sync_maxlines);
-    }
-    MSG_PUTS(_(" lines before top line"));
   }
 }
 
