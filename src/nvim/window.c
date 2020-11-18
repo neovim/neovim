@@ -4590,7 +4590,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_width = Columns;
   new_wp->w_height =
     Rows
-    - (first_tabpage ? tabline_height() : (p_stal == 2 ? 1 : 0))
+    - tabline_height()
     - (p_ls == 2 ? 1 : 0)
     - (p_ch);
 
@@ -6194,10 +6194,9 @@ int tabline_height(void)
   if (ui_has(kUITabline)) {
     return 0;
   }
-  assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;
-  case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
+  case 1: return (first_tabpage && first_tabpage->tp_next == NULL) ? 0 : 1;
   }
   return 1;
 }
