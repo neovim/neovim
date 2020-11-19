@@ -5533,6 +5533,7 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
+  // TODO(bfredl): this is bullshit, exandpath should not reinvent path logic.
   for (int i = 0; dirnames[i] != NULL; i++) {
     size_t size = STRLEN(dirnames[i]) + pat_len + 7;
     char_u *s = xmalloc(size);
@@ -5549,6 +5550,14 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       globpath(p_pp, s, &ga, 0);
       xfree(s);
     }
+
+    for (int i = 0; dirnames[i] != NULL; i++) {
+      size_t size = STRLEN(dirnames[i]) + pat_len + 22;
+      char_u *s = xmalloc(size);
+      snprintf((char *)s, size, "start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
+      globpath(p_pp, s, &ga, 0);
+      xfree(s);
+    }
   }
 
   if (flags & DIP_OPT) {
@@ -5556,6 +5565,14 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       size_t size = STRLEN(dirnames[i]) + pat_len + 20;
       char_u *s = xmalloc(size);
       snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
+      globpath(p_pp, s, &ga, 0);
+      xfree(s);
+    }
+
+    for (int i = 0; dirnames[i] != NULL; i++) {
+      size_t size = STRLEN(dirnames[i]) + pat_len + 20;
+      char_u *s = xmalloc(size);
+      snprintf((char *)s, size, "opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
       xfree(s);
     }
@@ -5605,6 +5622,8 @@ static int ExpandPackAddDir(char_u *pat, int *num_file, char_u ***file)
   size_t buflen = pat_len + 26;
   char_u *s = xmalloc(buflen);
   snprintf((char *)s, buflen, "pack/*/opt/%s*", pat);  // NOLINT
+  globpath(p_pp, s, &ga, 0);
+  snprintf((char *)s, buflen, "opt/%s*", pat);  // NOLINT
   globpath(p_pp, s, &ga, 0);
   xfree(s);
 

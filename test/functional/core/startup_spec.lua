@@ -313,14 +313,33 @@ describe('startup', function()
 
 
   it("handles &packpath during startup", function()
-    pack_clear [[ let g:x = bar#test() ]]
+    pack_clear [[
+      let g:x = bar#test()
+      let g:y = leftpad#pad("heyya")
+    ]]
     eq(-3, eval 'g:x')
+    eq("  heyya", eval 'g:y')
 
-    pack_clear [[ lua _G.y = require'bar'.doit() ]]
-    eq(9003, exec_lua [[ return _G.y ]])
+    pack_clear [[ lua _G.y = require'bar'.doit() _G.z = require'leftpad''howdy' ]]
+    eq({9003, '\thowdy'}, exec_lua [[ return { _G.y, _G.z } ]])
   end)
 
   it("handles :packadd during startup", function()
+    -- control group: opt/bonus is not availabe by default
+    pack_clear [[
+      try
+        let g:x = bonus#secret()
+      catch
+        let g:err = v:exception
+      endtry
+    ]]
+    eq('Vim(let):E117: Unknown function: bonus#secret', eval 'g:err')
+
+    pack_clear [[ lua _G.test = {pcall(function() require'bonus'.launch() end)} ]]
+    eq({false, [[[string ":lua"]:1: module 'bonus' not found:]]},
+       exec_lua [[ _G.test[2] = string.gsub(_G.test[2], '[\r\n].*', '') return _G.test ]])
+
+    -- ok, time to launch the nukes:
     pack_clear [[ packadd! bonus | let g:x = bonus#secret() ]]
     eq('halloj', eval 'g:x')
 

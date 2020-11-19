@@ -2551,6 +2551,17 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
     done = do_in_path(p_pp, s, flags, callback, cookie);
 
     xfree(s);
+
+    if (done == FAIL|| (flags & DIP_ALL)) {
+      start_dir = "start/*/%s";  // NOLINT
+      len = STRLEN(start_dir) + STRLEN(name);
+      s = xmallocz(len);
+
+      vim_snprintf((char *)s, len, start_dir, name);
+      done = do_in_path(p_pp, s, flags, callback, cookie);
+
+      xfree(s);
+    }
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
@@ -2562,6 +2573,17 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
     done = do_in_path(p_pp, s, flags, callback, cookie);
 
     xfree(s);
+
+    if (done == FAIL || (flags & DIP_ALL)) {
+      opt_dir = "opt/*/%s";  // NOLINT
+      len = STRLEN(opt_dir) + STRLEN(name);
+      s = xmallocz(len);
+
+      vim_snprintf((char *)s, len, opt_dir, name);
+      done = do_in_path(p_pp, s, flags, callback, cookie);
+
+      xfree(s);
+    }
   }
 
   return done;
@@ -2822,6 +2844,8 @@ void add_pack_start_dirs(void)
 {
   do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_pack_plugin, &APP_ADD_DIR);
+  do_in_path(p_pp, (char_u *)"start/*", DIP_ALL + DIP_DIR,  // NOLINT
+             add_pack_plugin, &APP_ADD_DIR);
 }
 
 /// Load plugins from all packages in the "start" directory.
@@ -2829,6 +2853,8 @@ void load_start_packages(void)
 {
   did_source_packages = true;
   do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
+             add_pack_plugin, &APP_LOAD);
+  do_in_path(p_pp, (char_u *)"start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_pack_plugin, &APP_LOAD);
 }
 
