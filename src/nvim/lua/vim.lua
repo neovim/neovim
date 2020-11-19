@@ -359,7 +359,9 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   local bufline
   if regtype:byte() == 22 then
     bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
-    pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    if pos1[2] < #bufline then
+      pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    end
   end
 
   local region = {}
