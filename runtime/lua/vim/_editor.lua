@@ -416,11 +416,19 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
 
   if type(pos1) == 'string' then
     local pos = vim.fn.getpos(pos1)
-    pos1 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    if regtype == 'V' then
+      pos1 = { pos[2] - 1, pos[3] - 1 }
+    else
+      pos1 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    end
   end
   if type(pos2) == 'string' then
     local pos = vim.fn.getpos(pos2)
-    pos2 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    if regtype == 'V' then
+      pos2 = { pos[2] - 1, pos[3] - 1 }
+    else
+      pos2 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    end
   end
 
   if pos1[1] > pos2[1] or (pos1[1] == pos2[1] and pos1[2] > pos2[2]) then
@@ -442,7 +450,9 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   local bufline
   if regtype:byte() == 22 then
     bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
-    pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    if pos1[2] < #bufline then
+      pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    end
   end
 
   local region = {}
