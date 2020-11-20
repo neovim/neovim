@@ -308,6 +308,8 @@ func Test_syntax_arg_skipped()
     syn sync ccomment
   endif
   call assert_notmatch('on C-style comments', execute('syntax sync'))
+  syn sync fromstart
+  call assert_match('syncing starts at the first line', execute('syntax sync'))
 
   syn clear
 endfunc
@@ -669,6 +671,7 @@ func Test_syntax_foldlevel()
   redir END
   call assert_equal("\nsyntax foldlevel start", @c)
   syn sync fromstart
+  call assert_match('from the first line$', execute('syn sync'))
   let a = map(range(3,9), 'foldclosed(v:val)')
   call assert_equal([3,3,3,3,3,3,3], a) " attached cascade folds together
   let a = map(range(10,15), 'foldclosed(v:val)')
