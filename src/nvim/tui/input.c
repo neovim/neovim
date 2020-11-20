@@ -9,6 +9,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/main.h"
+#include "nvim/macros.h"
 #include "nvim/aucmd.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
@@ -198,13 +199,26 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
   char buf[64];
 
   if (key->type == TERMKEY_TYPE_KEYSYM
-      && key->code.sym == TERMKEY_SYM_ESCAPE) {
-    len = (size_t)snprintf(buf, sizeof(buf), "<Esc>");
-  } else if (key->type == TERMKEY_TYPE_KEYSYM
       && key->code.sym == TERMKEY_SYM_SUSPEND) {
     len = (size_t)snprintf(buf, sizeof(buf), "<C-Z>");
-  } else {
+  } else if (key->type != TERMKEY_TYPE_UNICODE) {
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+  } else {
+    assert(key->modifiers);
+    // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
+    // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
+    // treats <C-L> and <C-l> the same, requiring the S- modifier.
+    len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+    if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
+        && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
+        && ASCII_ISUPPER(key->code.codepoint)) {
+      assert(len <= 62);
+      // Make remove for the S-
+      memmove(buf + 3, buf + 1, len - 1);
+      buf[1] = 'S';
+      buf[2] = '-';
+      len += 2;
+    }
   }
 
   tinput_enqueue(input, buf, len);
