@@ -725,7 +725,7 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   list_T *l;
 
   tv->v_type = VAR_LIST;
-
+  tv->v_lock = VAR_UNLOCKED;
   if (l1 == NULL && l2 == NULL) {
     l = NULL;
   } else if (l1 == NULL) {
