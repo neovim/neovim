@@ -2601,11 +2601,6 @@ do_mouse (
                              oap == NULL ? NULL : &(oap->inclusive),
                              which_button);
 
-  // A click in the window toolbar has no side effects.
-  if (jump_flags & MOUSE_WINBAR) {
-    return false;
-  }
-
   moved = (jump_flags & CURSOR_MOVED);
   in_status_line = (jump_flags & IN_STATUS_LINE);
   in_sep_line = (jump_flags & IN_SEP_LINE);
