@@ -939,8 +939,36 @@ static int node_parent(lua_State *L)
 static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
 {
   for (int i = 0; i < match->capture_count; i++) {
-    push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, match->captures[i].index+1);
+    // there could be multiple nodes captured for a single capture (each
+    // capture identified by the capture index)
+    //
+    // in case we see only single node per capture - we store it directly,
+    // otherwise we store a table with all nodes captured
+    int capidx = match->captures[i].index+1;
+    lua_rawgeti(L, -1, capidx);  // [captures | prevnode | nil]
+
+    if (lua_isnil(L, -1)) {
+      // first time we see this capture, store node
+      lua_pop(L, 1);  // []
+      push_node(L, match->captures[i].node, nodeidx);  // [node]
+      lua_rawseti(L, -2, capidx);  // []
+    } else if (lua_isuserdata(L, -1)) {
+      // second time we see this capture, replace node with table with two nodes
+      lua_pushvalue(L, -2);  // [prevnode, match]
+      lua_newtable(L);  // [prevnode, match, captures]
+      lua_pushvalue(L, -3);  // [prevnode, match, captures, prevnode]
+      lua_rawseti(L, -2, 1);  // [prevnode, match, captures]
+      push_node(L, match->captures[i].node, nodeidx);  // [prevnode, match, captures, node]
+      lua_rawseti(L, -2, 2);  // [prevnode, match, captures]
+      lua_rawseti(L, -2, capidx);  // [prevnode, match]
+      lua_pop(L, 2);  // []
+    } else {
+      // >2 time we see this capture, push new node to the table
+      int size = lua_objlen(L, -1);
+      push_node(L, match->captures[i].node, nodeidx);  // [captures, node]
+      lua_rawseti(L, -2, size + 1);  // [captures]
+      lua_rawseti(L, -2, capidx);  // []
+    }
   }
 }
 
@@ -949,11 +977,10 @@ static int query_next_match(lua_State *L)
   TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
   TSQueryCursor *cursor = ud->cursor;
 
-  TSQuery *query = query_check(L, lua_upvalueindex(3));
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
     lua_pushinteger(L, match.pattern_index+1);  // [index]
-    lua_createtable(L, ts_query_capture_count(query), 2);  // [index, match]
+    lua_newtable(L); // [index, match]
     set_match(L, &match, lua_upvalueindex(2));
     return 2;
   }
