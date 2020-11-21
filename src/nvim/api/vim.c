@@ -212,6 +212,9 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 /// @param ns_id number of namespace for this highlight
 /// @param name highlight group name, like ErrorMsg
 /// @param val highlight definiton map, like |nvim_get_hl_by_name|.
+///            in addition the following keys are also recognized:
+///              `default`: don't override existing definition,
+///                         like `hi default`
 /// @param[out] err Error details, if any
 ///
 /// TODO: ns_id = 0, should modify :highlight namespace
@@ -249,7 +252,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
   // event path for redraws caused by "fast" events. This could tie in with
   // better throttling of async events causing redraws, such as non-batched
   // nvim_buf_set_extmark calls from async contexts.
-  if (!updating_screen && !ns_hl_changed) {
+  if (!provider_active && !ns_hl_changed) {
     multiqueue_put(main_loop.events, on_redraw_event, 0);
   }
   ns_hl_changed = true;

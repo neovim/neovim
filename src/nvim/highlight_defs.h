@@ -22,6 +22,8 @@ typedef enum {
   HL_NOCOMBINE       = 0x80,
   HL_BG_INDEXED    = 0x0100,
   HL_FG_INDEXED    = 0x0200,
+  HL_DEFAULT       = 0x0400,
+  HL_GLOBAL        = 0x0800,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes
@@ -188,13 +190,16 @@ typedef struct {
   int ns_id;
   int syn_id;
 } ColorKey;
+#define ColorKey(n, s) (ColorKey) { .ns_id = (int)(n), .syn_id = (s) }
 
 typedef struct {
   int attr_id;
   int link_id;
   int version;
+  bool is_default;
 } ColorItem;
-#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1 }
+#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, \
+                                 .version = -1, .is_default = false }
 
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

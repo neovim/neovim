@@ -27,6 +27,7 @@ describe('decorations providers', function()
       [9] = {reverse = true};
       [10] = {italic = true, background = Screen.colors.Magenta};
       [11] = {foreground = Screen.colors.Red, background = tonumber('0x005028')};
+      [12] = {foreground = tonumber('0x990000')};
     }
   end)
 
@@ -226,5 +227,78 @@ describe('decorations providers', function()
                                               |
     ]]}
 
+  end)
+
+  it('can break an existing link', function()
+    insert(mulholland)
+    local ns1 = setup_provider()
+
+    exec [[
+      highlight OriginalGroup guifg='#990000'
+      highlight link LinkGroup OriginalGroup
+    ]]
+
+    meths.buf_set_virtual_text(0, 0, 2, {{'- not red', 'LinkGroup'}}, {})
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive                  |
+      try_start(); {12:- not red}                  |
+      bufref_T save_buf;                      |
+      switch_buffer(&save_buf, buf);          |
+      posp = getmark(mark, false);            |
+      restore_buffer(&save_buf);^              |
+                                              |
+    ]]}
+
+    meths.set_hl(ns1, 'LinkGroup', {fg = 'Blue'})
+    meths.set_hl_ns(ns1)
+
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive                  |
+      try_start(); {4:- not red}                  |
+      bufref_T save_buf;                      |
+      switch_buffer(&save_buf, buf);          |
+      posp = getmark(mark, false);            |
+      restore_buffer(&save_buf);^              |
+                                              |
+    ]]}
+  end)
+
+  it("with 'default': do not break an existing link", function()
+    insert(mulholland)
+    local ns1 = setup_provider()
+
+    exec [[
+      highlight OriginalGroup guifg='#990000'
+      highlight link LinkGroup OriginalGroup
+    ]]
+
+    meths.buf_set_virtual_text(0, 0, 2, {{'- not red', 'LinkGroup'}}, {})
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive                  |
+      try_start(); {12:- not red}                  |
+      bufref_T save_buf;                      |
+      switch_buffer(&save_buf, buf);          |
+      posp = getmark(mark, false);            |
+      restore_buffer(&save_buf);^              |
+                                              |
+    ]]}
+
+    meths.set_hl(ns1, 'LinkGroup', {fg = 'Blue', default=true})
+    meths.set_hl_ns(ns1)
+    feed 'k'
+
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive                  |
+      try_start(); {12:- not red}                  |
+      bufref_T save_buf;                      |
+      switch_buffer(&save_buf, buf);          |
+      posp = getmark(mark, false^);            |
+      restore_buffer(&save_buf);              |
+                                              |
+    ]]}
   end)
 end)
