@@ -1971,7 +1971,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
   typval_T var2;
   int empty1 = FALSE;
   listitem_T  *ni;
-  hashtab_T   *ht;
+  hashtab_T *ht = NULL;
   int quiet = flags & GLV_QUIET;
 
   // Clear everything in "lp".
