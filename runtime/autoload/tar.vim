@@ -170,6 +170,8 @@ fun! tar#Browse(tarfile)
   elseif tarfile =~# '\.\(xz\|txz\)$'
 "   call Decho("3: exe silent r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+  elseif tarfile =~# '\.\(zst\|tzs\)$'
+   exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   else
    if tarfile =~ '^\s*-'
     " A file name starting with a dash is taken as an option.  Prepend ./ to avoid that.
@@ -275,6 +277,9 @@ fun! tar#Read(fname,mode)
    let doro = 1
   elseif  fname =~ '\.xz$' && executable("xzcat")
    let decmp= "|xzcat"
+   let doro = 1
+  elseif  fname =~ '\.zst$' && executable("zstdcat")
+   let decmp= "|zstdcat"
    let doro = 1
   else
    let decmp=""
@@ -417,6 +422,10 @@ fun! tar#Write(fname)
    let tarfile = substitute(tarfile,'\.xz','','e')
    let compress= "xz -- ".shellescape(tarfile,0)
 "   call Decho("compress<".compress.">")
+  elseif tarfile =~# '\.zst'
+   call system("zstd --decompress -- ".shellescape(tarfile,0))
+   let tarfile = substitute(tarfile,'\.zst','','e')
+   let compress= "zstd -- ".shellescape(tarfile,0)
   elseif tarfile =~# '\.lzma'
    call system("lzma -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.lzma','','e')
@@ -640,12 +649,18 @@ func s:get_gzip_command(file)
     if filetype =~ 'XZ compressed' && executable('xz')
       return 'xz'
     endif
+    if filetype =~ 'Zstandard compressed' && executable('zstd')
+      return 'zstd'
+    endif
   endif
   if a:file =~# 'bz2$'
     return 'bzip2'
   endif
   if a:file =~# 'xz$'
     return 'xz'
+  endif
+  if a:file =~# 'zst$'
+    return 'zstd'
   endif
   return 'gzip'
 endfunc
