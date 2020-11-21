@@ -416,8 +416,8 @@ Aliases:
   gvimdiff  (GUI)
   rgview    (GUI)
   rgvim     (GUI)
-  rview     (alias for "nvim -RZ")
-  rvim      (alias for "nvim -Z")
+  rview
+  rvim
   view      (alias for "nvim -R")
   vimdiff   (alias for "nvim -d" |diff-mode|)
 
@@ -496,6 +496,7 @@ Startup:
   --literal (file args are always literal; to expand wildcards on Windows, use
     |:n| e.g. `nvim +"n *"`)
   Easy mode: eview, evim, nvim -y
+  Restricted mode: rview, rvim, nvim -Z
   Vi mode: nvim -v
 
 Test functions:
