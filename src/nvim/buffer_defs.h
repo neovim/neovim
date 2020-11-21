@@ -1132,12 +1132,6 @@ struct VimMenu {
   vimmenu_T   *next;                 ///< Next item in menu
 };
 
-typedef struct {
-  int wb_startcol;
-  int wb_endcol;
-  vimmenu_T *wb_menu;
-} winbar_item_T;
-
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1354,10 +1348,6 @@ struct window_S {
 
   char_u      *w_localdir;          /* absolute path of local directory or
                                        NULL */
-  vimmenu_T *w_winbar;            // The root of the WinBar menu hierarchy.
-  winbar_item_T *w_winbar_items;  // list of items in the WinBar
-  int w_winbar_height;            // 1 if there is a window toolbar
-
   // Options local to a window.
   // They are local because they influence the layout of the window or
   // depend on the window layout.

@@ -60,7 +60,6 @@ int jump_to_mouse(int flags,
 {
   static int on_status_line = 0;        // #lines below bottom of window
   static int on_sep_line = 0;           // on separator right of window
-  static bool in_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
   static win_T *dragwin = NULL;         // window being dragged
@@ -101,18 +100,6 @@ retnomove:
     if (on_sep_line) {
       return IN_SEP_LINE;
     }
-    if (in_winbar) {
-      // A quick second click may arrive as a double-click, but we use it
-      // as a second click in the WinBar.
-      if ((mod_mask & MOD_MASK_MULTI_CLICK) && !(flags & MOUSE_RELEASED)) {
-        wp = mouse_find_win(&grid, &row, &col);
-        if (wp == NULL) {
-          return IN_UNKNOWN;
-        }
-        winbar_click(wp, col);
-      }
-      return IN_OTHER_WIN | MOUSE_WINBAR;
-    }
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -142,13 +129,8 @@ retnomove:
     dragwin = NULL;
 
     if (row == -1) {
-      // A click in the window toolbar does not enter another window or
-      // change Visual highlighting.
-      winbar_click(wp, col);
-      in_winbar = true;
-      return IN_OTHER_WIN | MOUSE_WINBAR;
+      return IN_OTHER_WIN;
     }
-    in_winbar = false;
 
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
@@ -239,9 +221,6 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         // Cursor didn't move
-  } else if (in_winbar) {
-    // After a click on the window toolbar don't start Visual mode.
-    return IN_OTHER_WIN | MOUSE_WINBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode
@@ -503,7 +482,6 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
-      *rowp -= wp->w_winbar_height;
       return wp;
     }
   }
