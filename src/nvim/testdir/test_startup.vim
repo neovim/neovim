@@ -2,6 +2,7 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
 " Check that loading startup.vim works.
 func Test_startup_script()
@@ -280,6 +281,8 @@ endfunc
 
 " Test the '-q [errorfile]' argument.
 func Test_q_arg()
+  CheckFeature quickfix
+
   let source_file = has('win32') ? '..\memfile.c' : '../memfile.c'
   let after = [
 	\ 'call writefile([&errorfile, string(getpos("."))], "Xtestout")',
@@ -455,13 +458,15 @@ func Test_invalid_args()
   let out = split(system(GetVimCommand() .. ' - xxx -cq'), "\n")
   call assert_equal(0, v:shell_error)
 
-  " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
-  for opt in ['-t', '-q']
-    let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
-    call assert_equal(1, v:shell_error)
-    call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
-    call assert_equal('More info with "nvim -h"',                       out[1])
-  endfor
+  if has('quickfix')
+    " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+    for opt in ['-t', '-q']
+      let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
+      call assert_equal('More info with "nvim -h"',                       out[1])
+    endfor
+  endif
 
   for opt in [' -cq', ' --cmd q', ' +', ' -S foo']
     let out = split(system(GetVimCommand() .. repeat(opt, 11)), "\n")
