@@ -2,6 +2,8 @@
 
 source shared.vim
 source screendump.vim
+source term_util.vim
+source check.vim
 
 " Check that loading startup.vim works.
 func Test_startup_script()
@@ -278,6 +280,68 @@ func Test_V_arg()
    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
+" Test the '-q [errorfile]' argument.
+func Test_q_arg()
+  CheckFeature quickfix
+
+  let lines =<< trim END
+    /* some file with an error */
+    main() {
+      functionCall(arg; arg, arg);
+      return 666
+    }
+  END
+  call writefile(lines, 'Xbadfile.c')
+
+  let after =<< trim [CODE]
+    call writefile([&errorfile, string(getpos("."))], "Xtestout")
+    copen
+    w >> Xtestout
+    qall
+  [CODE]
+
+  " Test with default argument '-q'.
+  call assert_equal('errors.err', &errorfile)
+  call writefile(["Xbadfile.c:4:12: error: expected ';' before '}' token"], 'errors.err')
+  if RunVim([], after, '-q')
+    let lines = readfile('Xtestout')
+    call assert_equal(['errors.err',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+  call delete('errors.err')
+
+  " Test with explicit argument '-q Xerrors' (with space).
+  call writefile(["Xbadfile.c:4:12: error: expected ';' before '}' token"], 'Xerrors')
+  if RunVim([], after, '-q Xerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+
+  " Test with explicit argument '-qXerrors' (without space).
+  if RunVim([], after, '-qXerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+
+  " Test with a non-existing error file (exits with value 3)
+  let out = system(GetVimCommand() .. ' -q xyz.err')
+  call assert_equal(3, v:shell_error)
+
+  call delete('Xbadfile.c')
+  call delete('Xtestout')
+  call delete('Xerrors')
+endfunc
+
 " Test the -V[N]{filename} argument to set the 'verbose' option to N
 " and set 'verbosefile' to filename.
 func Test_V_file_arg()
@@ -408,13 +472,15 @@ func Test_invalid_args()
   let out = split(system(GetVimCommand() .. ' - xxx -cq'), "\n")
   call assert_equal(0, v:shell_error)
 
-  " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
-  for opt in ['-t', '-q']
-    let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
-    call assert_equal(1, v:shell_error)
-    call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
-    call assert_equal('More info with "nvim -h"',                       out[1])
-  endfor
+  if has('quickfix')
+    " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+    for opt in ['-t', '-q']
+      let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
+      call assert_equal('More info with "nvim -h"',                       out[1])
+    endfor
+  endif
 
   for opt in [' -cq', ' --cmd q', ' +', ' -S foo']
     let out = split(system(GetVimCommand() .. repeat(opt, 11)), "\n")
