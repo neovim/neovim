@@ -7044,7 +7044,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     xfree(buf);
   }
 # else
-  rettv->vval.v_string = (char_u *)xstrdup(p);
+  rettv->vval.v_string = (char_u *)xstrdup(fname);
 # endif
 #endif
 
