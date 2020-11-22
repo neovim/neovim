@@ -2,6 +2,7 @@
 
 source shared.vim
 source screendump.vim
+source term_util.vim
 source check.vim
 
 " Check that loading startup.vim works.
@@ -323,6 +324,10 @@ func Test_q_arg()
 	\              source_file . "|1482 col 5| error: expected ';' before '}' token"],
 	\             lines)
   endif
+
+  " Test with a non-existing error file (exits with value 3)
+  let out = system(GetVimCommand() .. ' -q xyz.err')
+  call assert_equal(3, v:shell_error)
 
   call delete('Xtestout')
   call delete('Xerrors')
