@@ -1194,10 +1194,6 @@ msgstr ""
 msgid "E144: non-numeric argument to :z"
 msgstr ""
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr ""
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Regular expressions cannot be delimited by letters"

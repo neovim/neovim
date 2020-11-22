@@ -32,8 +32,8 @@
 #   So please change [行"] to [行 "]
 #
 # Q. How to use UTF8 mode on Win32?
-# A. A simple configuration: 
-#   set encoding=utf-8; let $LANG='zh_TW.UTF-8'; 
+# A. A simple configuration:
+#   set encoding=utf-8; let $LANG='zh_TW.UTF-8';
 #   (set langmenu=none or ..)
 #   set fileencodings=ucs-bom,utf-8,japan,taiwan,prc
 #   set fileencoding=taiwan (or utf-8)
@@ -1261,10 +1261,6 @@ msgstr "E143: Autocommands 意外地刪除新緩衝區 %s"
 #: ../ex_cmds.c:3313
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z 不接受非數字的參數"
-
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvim 中禁止使用 shell 命令"
 
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"

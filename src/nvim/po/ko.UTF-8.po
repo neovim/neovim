@@ -1215,10 +1215,6 @@ msgstr "E143: Autocommand가 뜻 밖에 새 버퍼 %s을(를) 지웠습니다"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: 숫자가 아닌 인자가 :z에 주어졌습니다"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvim에서는 쉘 명령을 사용할 수 없습니다"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: 정규표현식은 글자로 구분될 수 없습니다"

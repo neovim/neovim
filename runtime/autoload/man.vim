@@ -13,8 +13,6 @@ function! man#init() abort
   try
     " Check for -l support.
     call s:get_page(s:get_path('', 'man'))
-  catch /E145:/
-    " Ignore the error in restricted mode
   catch /command error .*/
     let s:localfile_arg = v:false
   endtry

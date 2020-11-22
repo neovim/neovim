@@ -3,7 +3,7 @@
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
 #
-# Previous-Translator(s): 
+# Previous-Translator(s):
 # Johannes Zellner <johannes@zellner.org>
 # Gerfried Fuchs <alfie@ist.org>
 msgid ""
@@ -658,10 +658,6 @@ msgstr "E143: Autokommandos löschten unerwartet neuen Puffer %s"
 #: ../ex_cmds.c:3307
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: Nicht-numerisches Argument für :z"
-
-#: ../ex_cmds.c:3398
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Shell-Befehle sind in rvim nicht erlaubt"
 
 #: ../ex_cmds.c:3492
 msgid "E146: Regular expressions can't be delimited by letters"

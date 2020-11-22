@@ -1229,10 +1229,6 @@ msgstr "E143: Các lệnh tự động xóa bộ đệm mới ngoài ý muốn %
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: Tham số của lệnh :z phải là số"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Không cho phép sử dụng lệnh shell trong rvim."
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Không thể phân cách biểu thức chính quy bằng chữ cái"
