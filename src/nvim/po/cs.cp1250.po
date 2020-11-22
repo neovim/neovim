@@ -1249,10 +1249,6 @@ msgstr "E143: Automatické pøíkazy neoèekávanì smazaly nový buffer %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: neèíselný argument pro :z"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvim nepovoluje použití pøíkazù shellu"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Regulární výrazy nesmí být oddìleny písmeny"

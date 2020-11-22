@@ -1459,10 +1459,6 @@ msgstr "E143: Автокоманди несподівано знищили но�
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: нечисловий аргумент для :z"
 
-msgid ""
-"E145: Shell commands and some functionality not allowed in restricted mode"
-msgstr "E145: У обмеженому режимі не дозволені команди оболонки і деяка функіональність"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Регулярні вирази не можна розділяти літерами"
 

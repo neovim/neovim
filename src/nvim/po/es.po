@@ -1234,10 +1234,6 @@ msgstr "E143: Las auto-órdenes han eliminado al nuevo búfer %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: Argumento no numérico para \":z\""
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: No se permiten órdenes de consola en rvim"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Las expresiones regulares no se pueden delimitar con letras"
