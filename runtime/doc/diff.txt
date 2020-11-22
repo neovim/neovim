@@ -20,8 +20,7 @@ additionally sets up for viewing the differences between the arguments. >
 
 	nvim -d file1 file2 [file3 [file4]]
 
-In addition to the |-d| argument, |-R| may be used for readonly mode
-respectively.
+In addition to the |-d| argument, |-R| may be used for readonly mode.
 
 The second and following arguments may also be a directory name.  Vim will
 then append the file name of the first argument to the directory name to find
