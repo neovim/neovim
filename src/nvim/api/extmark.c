@@ -308,6 +308,10 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// If `end` is less than `start`, traversal works backwards. (Useful
 /// with `limit`, to get the first marks prior to a given position.)
 ///
+/// Note: when using extmark ranges (marks with a end_row/end_col position)
+/// the `overlap` option might be useful. Otherwise only the start position
+/// of an extmark will be considered.
+///
 /// Example:
 /// <pre>lua
 ///   local api = vim.api
@@ -334,11 +338,13 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///          - limit:  Maximum number of marks to return
 ///          - details: Whether to include the details dict
 ///          - hl_name: Whether to include highlight group name instead of id, true if omitted
+///          - overlap: Also include marks which overlap the range, even if
+///                     their start position is less than `start`
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end, Dictionary opts,
-                            Error *err)
+Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
+                            Dict(get_extmarks) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -348,62 +354,31 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     return rv;
   }
 
-  bool all_ns;
-  if (ns_id == -1) {
-    all_ns = true;
-  } else {
-    VALIDATE_INT(ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
-      return rv;
-    });
-    all_ns = false;
-  }
+  VALIDATE_INT(ns_id == -1 || ns_initialized((uint32_t)ns_id), "ns_id", ns_id, {
+    return rv;
+  });
 
-  Integer limit = -1;
-  bool details = false;
-  bool hl_name = true;
+  bool details = opts->details;
+  bool hl_name = GET_BOOL_OR_TRUE(opts, get_extmarks, hl_name);
+
   ExtmarkType type = kExtmarkNone;
-
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("limit", k.data)) {
-      VALIDATE_T("limit", kObjectTypeInteger, v->type, {
-        return rv;
-      });
-      limit = v->data.integer;
-    } else if (strequal("details", k.data)) {
-      details = api_object_to_bool(*v, "details", false, err);
-      if (ERROR_SET(err)) {
-        return rv;
-      }
-    } else if (strequal("hl_name", k.data)) {
-      hl_name = api_object_to_bool(*v, "hl_name", false, err);
-      if (ERROR_SET(err)) {
-        return rv;
-      }
-    } else if (strequal("type", k.data)) {
-      VALIDATE_EXP(v->type == kObjectTypeString, "type", "String", api_typename(v->type), {
-        return rv;
-      });
-      if (strequal(v->data.string.data, "sign")) {
-        type = kExtmarkSign;
-      } else if (strequal(v->data.string.data, "virt_text")) {
-        type = kExtmarkVirtText;
-      } else if (strequal(v->data.string.data, "virt_lines")) {
-        type = kExtmarkVirtLines;
-      } else if (strequal(v->data.string.data, "highlight")) {
-        type = kExtmarkHighlight;
-      } else {
-        VALIDATE_EXP(false, "type", "sign, virt_text, virt_lines or highlight", v->data.string.data, {
-          return rv;
-        });
-      }
+  if (HAS_KEY(opts, get_extmarks, type)) {
+    if (strequal(opts->type.data, "sign")) {
+      type = kExtmarkSign;
+    } else if (strequal(opts->type.data, "virt_text")) {
+      type = kExtmarkVirtText;
+    } else if (strequal(opts->type.data, "virt_lines")) {
+      type = kExtmarkVirtLines;
+    } else if (strequal(opts->type.data, "highlight")) {
+      type = kExtmarkHighlight;
     } else {
-      VALIDATE_S(false, "'opts' key", k.data, {
+      VALIDATE_EXP(false, "type", "sign, virt_text, virt_lines or highlight", opts->type.data, {
         return rv;
       });
     }
   }
+
+  Integer limit = HAS_KEY(opts, get_extmarks, limit) ? opts->limit : -1;
 
   if (limit == 0) {
     return rv;
@@ -429,11 +404,12 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     reverse = true;
   }
 
+  // note: ns_id=-1 allowed, represented as UINT32_MAX
   ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row,
-                                       u_col, (int64_t)limit, reverse, all_ns, type);
+                                       u_col, (int64_t)limit, reverse, type, opts->overlap);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details, hl_name)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, details, hl_name)));
   }
 
   kv_destroy(marks);
@@ -450,6 +426,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///
 /// Using the optional arguments, it is possible to use this to highlight
 /// a range of text, and also to associate virtual text to the mark.
+///
+/// If present, the position defined by `end_col` and `end_row` should be after
+/// the start position in order for the extmark to cover a range.
+/// An earlier end position is not an error, but then it behaves like an empty
+/// range (no highlighting).
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
@@ -1229,4 +1210,15 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
 free_exit:
   clear_virttext(&virt_text);
   return virt_text;
+}
+
+String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NULL_STRING;
+  }
+
+  return mt_inspect(buf->b_marktree, keys, dot);
 }

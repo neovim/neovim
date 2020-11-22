@@ -630,6 +630,7 @@ EXTERN unsigned rdb_flags;
 #define RDB_NODELTA            0x008
 #define RDB_LINE               0x010
 #define RDB_FLUSH              0x020
+#define RDB_INTERSECT          0x040
 
 EXTERN long p_rdt;            // 'redrawtime'
 EXTERN long p_re;             // 'regexpengine'

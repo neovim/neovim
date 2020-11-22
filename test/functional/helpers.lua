@@ -857,6 +857,11 @@ function module.testprg(name)
   return ('%s/%s%s'):format(module.nvim_dir, name, ext)
 end
 
+function module.is_asan()
+  local version = module.eval('execute("verbose version")')
+  return version:match('-fsanitize=[a-z,]*address')
+end
+
 -- Returns a valid, platform-independent Nvim listen address.
 -- Useful for communicating with child instances.
 function module.new_pipename()

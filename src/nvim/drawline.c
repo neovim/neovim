@@ -2889,15 +2889,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && !wp->w_p_wrap
         && wlv.filler_todo <= 0
         && (wp->w_p_rl ? wlv.col == 0 : wlv.col == grid->cols - 1)
-        && !has_fold
-        && (*ptr != NUL
-            || lcs_eol_one > 0
-            || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
-            || wlv.more_virt_inline_chunks)) {
-      c = wp->w_p_lcs_chars.ext;
-      wlv.char_attr = win_hl_attr(wp, HLF_AT);
-      mb_c = c;
-      mb_utf8 = check_mb_utf8(&c, u8cc);
+        && !has_fold) {
+      if (*ptr == NUL && lcs_eol_one == 0 && has_decor) {
+        // Tricky: there might be a virtual text just _after_ the last char
+        decor_redraw_col(wp, (colnr_T)v, wlv.off, false, &decor_state);
+        handle_inline_virtual_text(wp, &wlv, v);
+      }
+      if (*ptr != NUL
+          || lcs_eol_one > 0
+          || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
+          || wlv.more_virt_inline_chunks) {
+        c = wp->w_p_lcs_chars.ext;
+        wlv.char_attr = win_hl_attr(wp, HLF_AT);
+        mb_c = c;
+        mb_utf8 = check_mb_utf8(&c, u8cc);
+      }
     }
 
     // advance to the next 'colorcolumn'
@@ -3077,6 +3083,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     // restore attributes after last 'listchars' or 'number' char
     if (wlv.n_attr > 0 && wlv.draw_state == WL_LINE && --wlv.n_attr == 0) {
       wlv.char_attr = saved_attr2;
+    }
+
+    if ((wp->w_p_rl ? (wlv.col < 0) : (wlv.col >= grid->cols)) && has_decor) {
+      // At the end of screen line: might need to peek for decorations just after
+      // this position. Without wrapping, we might need to display win_pos overlays
+      // from the entire text line.
+      colnr_T nextpos = wp->w_p_wrap ? (colnr_T)(ptr - line) : (colnr_T)strlen(line);
+      decor_redraw_col(wp, nextpos, wlv.off, true, &decor_state);
+      handle_inline_virtual_text(wp, &wlv, v);
     }
 
     // At end of screen line and there is more to come: Display the line

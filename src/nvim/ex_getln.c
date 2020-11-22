@@ -2410,6 +2410,9 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
 
     buf->b_changed = cp_bufinfo.save_b_changed;
 
+    // Clear preview highlights.
+    extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+
     if (buf->b_u_seq_cur != cp_bufinfo.undo_info.save_b_u_seq_cur) {
       int count = 0;
 
@@ -2439,9 +2442,6 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     }
 
     buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
-
-    // Clear preview highlights.
-    extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
   }
 
   for (size_t i = 0; i < cpinfo->win_info.size; i++) {

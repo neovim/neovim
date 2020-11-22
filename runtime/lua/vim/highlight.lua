@@ -55,6 +55,9 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
 
+  -- TODO: in case of 'v', 'V' (not block), this should calculate equivalent
+  -- bounds (row, col, end_row, end_col) as multiline regions are natively
+  -- supported now
   local region = vim.region(bufnr, start, finish, regtype, inclusive)
   for linenr, cols in pairs(region) do
     local end_row
