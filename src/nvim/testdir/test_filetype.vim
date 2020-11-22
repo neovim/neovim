@@ -86,6 +86,8 @@ let s:filename_checks = {
     \ 'bzr': ['bzr_log.any'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c'],
     \ 'cabal': ['file.cabal'],
+    \ 'cabalconfig': ['cabal.config'],
+    \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
     \ 'calendar': ['calendar'],
     \ 'catalog': ['catalog', 'sgml.catalogfile'],
     \ 'cdl': ['file.cdl'],
