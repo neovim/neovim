@@ -278,6 +278,53 @@ func Test_V_arg()
    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
+" Test the '-q [errorfile]' argument.
+func Test_q_arg()
+  let source_file = has('win32') ? '..\memfile.c' : '../memfile.c'
+  let after = [
+	\ 'call writefile([&errorfile, string(getpos("."))], "Xtestout")',
+	\ 'copen',
+	\ 'w >> Xtestout',
+	\ 'qall'
+	\ ]
+
+  " Test with default argument '-q'.
+  call assert_equal('errors.err', &errorfile)
+  call writefile(["../memfile.c:1482:5: error: expected ';' before '}' token"], 'errors.err')
+  if RunVim([], after, '-q')
+    let lines = readfile('Xtestout')
+    call assert_equal(['errors.err',
+	\              '[0, 1482, 5, 0]',
+	\              source_file . "|1482 col 5| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+  call delete('errors.err')
+
+  " Test with explicit argument '-q Xerrors' (with space).
+  call writefile(["../memfile.c:1482:5: error: expected ';' before '}' token"], 'Xerrors')
+  if RunVim([], after, '-q Xerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 1482, 5, 0]',
+	\              source_file . "|1482 col 5| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+
+  " Test with explicit argument '-qXerrors' (without space).
+  if RunVim([], after, '-qXerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 1482, 5, 0]',
+	\              source_file . "|1482 col 5| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+
+  call delete('Xtestout')
+  call delete('Xerrors')
+endfunc
+
 " Test the -V[N]{filename} argument to set the 'verbose' option to N
 " and set 'verbosefile' to filename.
 func Test_V_file_arg()
