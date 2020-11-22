@@ -133,7 +133,7 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T 
 
   if (cts->cts_row >= 0 && wp->w_buffer->b_virt_text_inline > 0) {
     marktree_itr_get(wp->w_buffer->b_marktree, cts->cts_row, 0, cts->cts_iter);
-    mtkey_t mark = marktree_itr_current(cts->cts_iter);
+    MTKey mark = marktree_itr_current(cts->cts_iter);
     if (mark.pos.row == cts->cts_row) {
       cts->cts_has_virt_text = true;
     }
@@ -222,7 +222,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     int tab_size = size;
     int col = (int)(s - line);
     while (true) {
-      mtkey_t mark = marktree_itr_current(cts->cts_iter);
+      MTKey mark = marktree_itr_current(cts->cts_iter);
       if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
         break;
       } else if (mark.pos.col == col) {

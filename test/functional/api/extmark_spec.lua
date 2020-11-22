@@ -753,7 +753,14 @@ describe('API/extmarks', function()
       })
     end)
 
-    -- TODO(bfredl): add more tests!
+    it('can get overlapping extmarks', function()
+      set_extmark(ns, 1, 0, 0, {end_row = 5, end_col=0})
+      set_extmark(ns, 2, 2, 5, {end_row = 2, end_col=30})
+      set_extmark(ns, 3, 0, 5, {end_row = 2, end_col=10})
+      set_extmark(ns, 4, 0, 0, {end_row = 1, end_col=0})
+      eq({{ 2, 2, 5 }}, get_extmarks(ns, {2, 0}, {2, -1}, { overlap=false }))
+      eq({{ 1, 0, 0 }, { 3, 0, 5}, {2, 2, 5}}, get_extmarks(ns, {2, 0}, {2, -1}, { overlap=true }))
+    end)
   end)
 
   it('replace works', function()

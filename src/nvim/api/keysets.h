@@ -51,6 +51,15 @@ typedef struct {
 } Dict(set_extmark);
 
 typedef struct {
+  OptionalKeys is_set__get_extmarks_;
+  Integer limit;
+  Boolean details;
+  Boolean hl_name;
+  Boolean overlap;
+  String type;
+} Dict(get_extmarks);
+
+typedef struct {
   OptionalKeys is_set__keymap_;
   Boolean noremap;
   Boolean nowait;

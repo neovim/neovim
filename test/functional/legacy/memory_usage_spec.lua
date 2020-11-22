@@ -11,14 +11,10 @@ local load_adjust = helpers.load_adjust
 local write_file = helpers.write_file
 local is_os = helpers.is_os
 local is_ci = helpers.is_ci
-
-local function isasan()
-  local version = eval('execute("verbose version")')
-  return version:match('-fsanitize=[a-z,]*address')
-end
+local is_asan = helpers.is_asan
 
 clear()
-if isasan() then
+if is_asan() then
   pending('ASAN build is difficult to estimate memory usage', function() end)
   return
 elseif is_os('win') then

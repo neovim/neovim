@@ -41,3 +41,4 @@ Checks: >
   -readability-redundant-declaration,
   -readability-redundant-function-ptr-dereference,
   -readability-suspicious-call-argument,
+  -readability-non-const-parameter,

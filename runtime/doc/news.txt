@@ -221,6 +221,15 @@ The following changes to existing APIs or features add new behavior.
   "virtual_text" table, which gives users more control over how diagnostic
   virtual text is displayed.
 
+• Extmarks now fully support multi-line ranges, and a single extmark can be
+  used to highlight a range of arbitrary length. The |nvim_buf_set_extmark()|
+  API function already allowed you to define such ranges, but highlight regions
+  were not rendered consistently for a range that covers more than one line break.
+  This has now been fixed. Signs defined as part of a multi-line extmark also
+  apply to every line in the range, not just the first.
+  In addition, |nvim_buf_get_extmarks()| has gained an "overlap" option to
+  return such ranges even if they started before the specified position.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
