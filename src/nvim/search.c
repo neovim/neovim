@@ -1658,6 +1658,48 @@ static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
   return found;
 }
 
+/// Check matchpairs option for "*initc".
+/// If there is a match set "*initc" to the matching character and "*findc" to
+/// the opposite character.  Set "*backwards" to the direction.
+/// When "switchit" is true swap the direction.
+static void find_mps_values(int *initc, int *findc, bool *backwards,
+                            bool switchit)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char_u *ptr = curbuf->b_p_mps;
+
+  while (*ptr != NUL) {
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = true;
+      } else {
+        *findc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = false;
+      }
+      return;
+    }
+    char_u *prev = ptr;
+    ptr += utfc_ptr2len(ptr) + 1;
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(prev);
+        *backwards = false;
+      } else {
+        *findc = utf_ptr2char(prev);
+        *backwards = true;
+      }
+      return;
+    }
+    ptr += utfc_ptr2len(ptr);
+    if (*ptr == ',') {
+      ptr++;
+    }
+  }
+}
+
 /*
  * findmatchlimit -- find the matching paren or brace, if it exists within
  * maxtravel lines of the cursor.  A maxtravel of 0 means search until falling
@@ -1684,7 +1726,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   static pos_T pos;                     // current search position
   int findc = 0;                        // matching brace
   int count = 0;                        // cumulative number of braces
-  int backwards = false;                // init for gcc
+  bool backwards = false;               // init for gcc
   bool raw_string = false;              // search for raw string
   bool inquote = false;                 // true when inside quotes
   char_u      *ptr;
@@ -1729,9 +1771,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     raw_string = (initc == 'R');
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
-    find_mps_values(&initc, &findc, &backwards, TRUE);
-    if (findc == NUL)
+    find_mps_values(&initc, &findc, &backwards, true);
+    if (findc == NUL) {
       return NULL;
+    }
   } else {
     /*
      * Either initc is '#', or no initc was given and we need to look
@@ -1759,20 +1802,20 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         else if (linep[pos.col] == '/') {
           if (linep[pos.col + 1] == '*') {
             comment_dir = FORWARD;
-            backwards = FALSE;
+            backwards = false;
             pos.col++;
           } else if (pos.col > 0 && linep[pos.col - 1] == '*') {
             comment_dir = BACKWARD;
-            backwards = TRUE;
+            backwards = true;
             pos.col--;
           }
         } else if (linep[pos.col] == '*') {
           if (linep[pos.col + 1] == '/') {
             comment_dir = BACKWARD;
-            backwards = TRUE;
+            backwards = true;
           } else if (pos.col > 0 && linep[pos.col - 1] == '/') {
             comment_dir = FORWARD;
-            backwards = FALSE;
+            backwards = false;
           }
         }
       }
@@ -1794,9 +1837,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           if (initc == NUL)
             break;
 
-          find_mps_values(&initc, &findc, &backwards, FALSE);
-          if (findc)
+          find_mps_values(&initc, &findc, &backwards, false);
+          if (findc) {
             break;
+          }
           pos.col += utfc_ptr2len(linep + pos.col);
         }
         if (!findc) {
