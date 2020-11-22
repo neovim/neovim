@@ -2,8 +2,9 @@
 " Maintainer: Christian Brabandt <cb@256bit.org>
 " Repository: https://github.com/chrisbra/vim-xml-ftplugin
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Changed: 2019 Oct 24
+" Last Changed: 2019 Dec 02
 " Last Change:
+" 20191202 - Handle docbk filetype
 " 20190726 - Correctly handle non-tagged data
 " 20190204 - correctly handle wrap tags
 "            https://github.com/chrisbra/vim-xml-ftplugin/issues/5
@@ -134,7 +135,7 @@ fun! XmlIndentGet(lnum, use_syntax_check)
 
     if syn_name_end =~ 'Comment' && syn_name_start =~ 'Comment'
         return <SID>XmlIndentComment(a:lnum)
-    elseif empty(syn_name_start) && empty(syn_name_end)
+    elseif empty(syn_name_start) && empty(syn_name_end) && a:use_syntax_check
         " non-xml tag content: use indent from 'autoindent'
         return pind + shiftwidth()
     endif
@@ -148,7 +149,7 @@ endfun
 
 func! <SID>IsXMLContinuation(line)
     " Checks, whether or not the line matches a start-of-tag
-    return a:line !~ '^\s*<'
+    return a:line !~ '^\s*<' && &ft is# 'xml'
 endfunc
 
 func! <SID>HasNoTagEnd(line)
