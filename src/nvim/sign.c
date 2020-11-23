@@ -173,13 +173,15 @@ static void insert_sign(
     const char_u *group,    // sign group; NULL for global group
     int prio,               // sign priority
     linenr_T lnum,          // line number which gets the mark
-    int typenr              // typenr of sign we are adding
+    int typenr,             // typenr of sign we are adding
+    bool has_text_or_icon   // sign has text or icon
 )
 {
   signlist_T *newsign = xmalloc(sizeof(signlist_T));
   newsign->id = id;
   newsign->lnum = lnum;
   newsign->typenr = typenr;
+  newsign->has_text_or_icon = has_text_or_icon;
   if (group != NULL) {
     newsign->group = sign_group_ref(group);
   } else {
@@ -210,13 +212,14 @@ static void insert_sign(
 
 /// Insert a new sign sorted by line number and sign priority.
 static void insert_sign_by_lnum_prio(
-    buf_T *buf,           // buffer to store sign in
-    signlist_T *prev,     // previous sign entry
-    int id,               // sign ID
-    const char_u *group,  // sign group; NULL for global group
-    int prio,             // sign priority
-    linenr_T lnum,        // line number which gets the mark
-    int typenr            // typenr of sign we are adding
+    buf_T *buf,            // buffer to store sign in
+    signlist_T *prev,      // previous sign entry
+    int id,                // sign ID
+    const char_u *group,   // sign group; NULL for global group
+    int prio,              // sign priority
+    linenr_T lnum,         // line number which gets the mark
+    int typenr,            // typenr of sign we are adding
+    bool has_text_or_icon  // sign has text or icon
 )
 {
   signlist_T  *sign;
@@ -234,7 +237,7 @@ static void insert_sign_by_lnum_prio(
     sign = prev->next;
   }
 
-  insert_sign(buf, prev, sign, id, group, prio, lnum, typenr);
+  insert_sign(buf, prev, sign, id, group, prio, lnum, typenr, has_text_or_icon);
 }
 
 /// Get the name of a sign by its typenr.
@@ -342,12 +345,13 @@ static void sign_sort_by_prio_on_line(buf_T *buf, signlist_T *sign)
 
 /// Add the sign into the signlist. Find the right spot to do it though.
 void buf_addsign(
-    buf_T *buf,     // buffer to store sign in
-    int id,         // sign ID
+    buf_T *buf,               // buffer to store sign in
+    int id,                   // sign ID
     const char_u *groupname,  // sign group
-    int prio,       // sign priority
-    linenr_T lnum,  // line number which gets the mark
-    int typenr      // typenr of sign we are adding
+    int prio,                 // sign priority
+    linenr_T lnum,            // line number which gets the mark
+    int typenr,               // typenr of sign we are adding
+    bool has_text_or_icon     // sign has text or icon
 )
 {
   signlist_T *sign;    // a sign in the signlist
@@ -363,13 +367,29 @@ void buf_addsign(
       sign_sort_by_prio_on_line(buf, sign);
       return;
     } else if (lnum < sign->lnum) {
-      insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
+      insert_sign_by_lnum_prio(
+          buf,
+          prev,
+          id,
+          groupname,
+          prio,
+          lnum,
+          typenr,
+          has_text_or_icon);
       return;
     }
     prev = sign;
   }
 
-  insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
+  insert_sign_by_lnum_prio(
+      buf,
+      prev,
+      id,
+      groupname,
+      prio,
+      lnum,
+      typenr,
+      has_text_or_icon);
 }
 
 // For an existing, placed sign "markId" change the type to "typenr".
@@ -786,10 +806,14 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
     }
     cells += utf_ptr2cells(s);
   }
-  // Currently must be one or two display cells
-  if (s != endp || cells < 1 || cells > 2) {
+  // Currently must be empty, one or two display cells
+  if (s != endp || cells > 2) {
     EMSG2(_("E239: Invalid sign text: %s"), text);
     return FAIL;
+  }
+  if (cells < 1) {
+    sp->sn_text = NULL;
+    return OK;
   }
 
   xfree(sp->sn_text);
@@ -939,7 +963,15 @@ int sign_place(
   if (lnum > 0) {
     // ":sign place {id} line={lnum} name={name} file={fname}":
     // place a sign
-    buf_addsign(buf, *sign_id, sign_group, prio, lnum, sp->sn_typenr);
+    bool has_text_or_icon = sp->sn_text != NULL || sp->sn_icon != NULL;
+    buf_addsign(
+        buf,
+        *sign_id,
+        sign_group,
+        prio,
+        lnum,
+        sp->sn_typenr,
+        has_text_or_icon);
   } else {
     // ":sign place {id} file={fname}": change sign type
     lnum = buf_change_sign_type(buf, *sign_id, sign_group, sp->sn_typenr);
