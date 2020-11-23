@@ -329,6 +329,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
                         ArrayOf(String) replacement,
                         Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -779,6 +780,7 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 ///          - unload: Unloaded only, do not delete. See |:bunload|
 void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 

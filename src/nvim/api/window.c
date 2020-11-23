@@ -44,6 +44,7 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -500,6 +501,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
