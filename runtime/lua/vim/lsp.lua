@@ -858,8 +858,8 @@ function lsp._text_document_did_save_handler(bufnr)
       client.notify('textDocument/didSave', {
         textDocument = {
           uri = uri;
-          text = included_text;
-        }
+        };
+        text = included_text;
       })
     end
   end)
