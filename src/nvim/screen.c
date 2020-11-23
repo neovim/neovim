@@ -2196,6 +2196,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (wp->w_p_spell
+        && foldinfo.fi_lines == 0
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
         && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
