@@ -857,6 +857,7 @@ function lsp._text_document_did_save_handler(bufnr)
       end
       client.notify('textDocument/didSave', {
         textDocument = {
+          version = 0;
           uri = uri;
           text = included_text;
         }
