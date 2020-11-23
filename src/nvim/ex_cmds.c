@@ -1182,6 +1182,7 @@ static void do_filter(
   char_u      *cmd_buf;
   buf_T       *old_curbuf = curbuf;
   int shell_flags = 0;
+  const int stmp = p_stmp;
 
   if (*cmd == NUL)          /* no filter command */
     return;
@@ -1210,16 +1211,16 @@ static void do_filter(
   if (do_out)
     shell_flags |= kShellOptDoOut;
 
-  if (!do_in && do_out && !p_stmp) {
+  if (!do_in && do_out && !stmp) {
     // Use a pipe to fetch stdout of the command, do not use a temp file.
     shell_flags |= kShellOptRead;
     curwin->w_cursor.lnum = line2;
-  } else if (do_in && !do_out && !p_stmp) {
+  } else if (do_in && !do_out && !stmp) {
     // Use a pipe to write stdin of the command, do not use a temp file.
     shell_flags |= kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
     curbuf->b_op_end.lnum = line2;
-  } else if (do_in && do_out && !p_stmp) {
+  } else if (do_in && do_out && !stmp) {
     // Use a pipe to write stdin and fetch stdout of the command, do not
     // use a temp file.
     shell_flags |= kShellOptRead | kShellOptWrite;
