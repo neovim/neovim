@@ -781,6 +781,14 @@ local hl_query = [[
     ]]
 
     eq(range, { { 0, 0, 18, 1 } })
+
+    local range_tbl = exec_lua [[
+      parser:set_included_regions { { { 0, 0, 17, 1 } } }
+      parser:parse()
+      return parser:included_regions()
+    ]]
+
+    eq(range_tbl, { { { 0, 0, 0, 17, 1, 508 } } })
   end)
   it("allows to set complex ranges", function()
     if not check_parser() then return end
