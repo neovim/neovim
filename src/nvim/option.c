@@ -7173,46 +7173,6 @@ int get_sts_value(void)
   return (int)result;
 }
 
-/// Check matchpairs option for "*initc".
-/// If there is a match set "*initc" to the matching character and "*findc" to
-/// the opposite character.  Set "*backwards" to the direction.
-/// When "switchit" is true swap the direction.
-void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
-{
-  char_u *ptr = curbuf->b_p_mps;
-
-  while (*ptr != NUL) {
-    if (utf_ptr2char(ptr) == *initc) {
-      if (switchit) {
-        *findc = *initc;
-        *initc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
-        *backwards = true;
-      } else {
-        *findc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
-        *backwards = false;
-      }
-      return;
-    }
-    char_u *prev = ptr;
-    ptr += utfc_ptr2len(ptr) + 1;
-    if (utf_ptr2char(ptr) == *initc) {
-      if (switchit) {
-        *findc = *initc;
-        *initc = utf_ptr2char(prev);
-        *backwards = false;
-      } else {
-        *findc = utf_ptr2char(prev);
-        *backwards = true;
-      }
-      return;
-    }
-    ptr += utfc_ptr2len(ptr);
-    if (*ptr == ',') {
-      ptr++;
-    }
-  }
-}
-
 /// This is called when 'breakindentopt' is changed and when a window is
 /// initialized
 static bool briopt_check(win_T *wp)
