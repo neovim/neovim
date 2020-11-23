@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   linux:
     name: ${{ matrix.flavor }} (cc=${{ matrix.cc }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         include:
@@ -26,12 +26,12 @@ jobs:
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-          sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
 
       - name: Install apt packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python python-pip python-setuptools python3 python3-pip python3-setuptools unzip valgrind xclip
+          sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
 
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
