@@ -516,7 +516,7 @@ func Test_termguicolors()
   if !exists('+termguicolors')
     return
   endif
-  if has('vtp') && !has('vcon')
+  if has('vtp') && !has('vcon') && !has('gui_running')
     " Win32: 'guicolors' doesn't work without virtual console.
     call assert_fails('set termguicolors', 'E954:')
     return

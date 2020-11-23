@@ -652,7 +652,14 @@ void set_init_1(bool clean_arg)
   {
     const char *shell = os_getenv("SHELL");
     if (shell != NULL) {
-      set_string_default("sh", (char *) shell, false);
+      if (vim_strchr((const char_u *)shell, ' ') != NULL) {
+        const size_t len = strlen(shell) + 3;  // two quotes and a trailing NUL
+        char *const cmd = xmalloc(len);
+        snprintf(cmd, len, "\"%s\"", shell);
+        set_string_default("sh", cmd, true);
+      } else {
+        set_string_default("sh", (char *)shell, false);
+      }
     }
   }
 
@@ -987,10 +994,9 @@ static void set_string_default(const char *name, char *val, bool allocated)
       xfree(options[opt_idx].def_val[VI_DEFAULT]);
     }
 
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) (
-        allocated
-        ? (char_u *) val
-        : (char_u *) xstrdup(val));
+    options[opt_idx].def_val[VI_DEFAULT] = allocated
+        ? (char_u *)val
+        : (char_u *)xstrdup(val);
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
