@@ -12,6 +12,10 @@ describe('executable()', function()
     eq(1, call('executable', exe))
   end)
 
+  it('returns 0 for empty string', function()
+    eq(0, call('executable', ''))
+  end)
+
   it('returns 0 for non-existent files', function()
     eq(0, call('executable', 'no_such_file_exists_209ufq23f'))
   end)
