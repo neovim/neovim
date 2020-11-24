@@ -197,11 +197,11 @@ query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
 	as the node, i e to get syntax highlight matches in the current
 	viewport)
 
-	The iterator returns two values, a numeric id identifying the capture
-	and the captured node. The following example shows how to get captures
-	by name:
+	The iterator returns three values, a numeric id identifying the capture,
+	the captured node, and metadata from any directives processing the match.
+	The following example shows how to get captures by name:
 >
-	for id, node in query:iter_captures(tree:root(), bufnr, first, last) do
+	for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
 	  local name = query.captures[id] -- name of the capture in the query
 	  -- typically useful info about the node:
 	  local type = node:type() -- type of the captured node
@@ -213,16 +213,19 @@ query:iter_matches({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_matches()*
 	Iterate over all matches within a node. The arguments are the same as
 	for |query:iter_captures()| but the iterated values are different:
-	an (1-based) index of the pattern in the query, and a table mapping
-	capture indices to nodes. If the query has more than one pattern
-	the capture table might be sparse, and e.g. `pairs` should be used and not
-	`ipairs`. Here an example iterating over all captures in
-	every match:
+	an (1-based) index of the pattern in the query, a table mapping
+	capture indices to nodes, and metadata from any directives processing the match.
+	If the query has more than one pattern the capture table might be sparse,
+	and e.g. `pairs()` method should be used over `ipairs`.
+	Here an example iterating over all captures in every match:
 >
-	for pattern, match in cquery:iter_matches(tree:root(), bufnr, first, last) do
-	  for id,node in pairs(match) do
+	for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
+	  for id, node in pairs(match) do
 	    local name = query.captures[id]
 	    -- `node` was captured by the `name` capture in the match
+
+	    local node_data = metadata[id] -- Node level metadata
+
 	    ... use the info here ...
 	  end
 	end
@@ -265,6 +268,29 @@ Here is a list of built-in predicates :
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
+Treesitter Query Directive				*lua-treesitter-directives*
+
+Treesitter queries can also contain `directives`. Directives store metadata for a node
+or match and perform side effects. for example, the |set!| predicate sets metadata on
+the match or node : >
+	((identifier) @foo (#set! "type" "parameter"))
+
+Here is a list of built-in directives:
+
+	`set!`						*ts-directive-set!*
+		Sets key/value metadata for a specific node or match : >
+			((identifier) @foo (#set! @foo "kind" "parameter"))
+			((node1) @left (node2) @right (#set! "type" "pair"))
+<
+	`offset!`					*ts-predicate-offset!*
+		Takes the range of the captured node and applies the offsets
+		to it's range : >
+			((idenfitier) @constant (#offset! @constant 0 1 0 -1))
+<		This will generate a range object for the captured node with the
+		offsets applied. The arguments are
+		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
+		The default key is "offset".
+
 					*vim.treesitter.query.add_predicate()*
 vim.treesitter.query.add_predicate({name}, {handler})
 
@@ -276,6 +302,16 @@ This adds a predicate with the name {name} to be used in queries.
 vim.treesitter.query.list_predicates()
 
 This lists the currently available predicates to use in queries.
+
+					*vim.treesitter.query.add_directive()*
+vim.treesitter.query.add_directive({name}, {handler})
+
+This adds a directive with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate, metadata)
+Handlers can set match level data by setting directly on the metadata object `metadata.key = value`
+Handlers can set node level data by using the capture id on the metadata table
+`metadata[capture_id].key = value`
 
 Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 
