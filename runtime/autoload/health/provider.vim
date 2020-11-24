@@ -487,7 +487,7 @@ endfunction
 
 " Resolves Python executable path by invoking and checking `sys.executable`.
 function! s:python_exepath(invocation) abort
-  return s:normalize_path(system(a:invocation
+  return s:normalize_path(system(fnameescape(a:invocation)
     \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
 endfunction
 
