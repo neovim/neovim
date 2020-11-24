@@ -242,6 +242,7 @@ static struct vimvar {
   VV(VV__NULL_STRING,   "_null_string",     VAR_STRING, VV_RO),
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
+  VV(VV__NULL_BLOB,     "_null_blob",       VAR_BLOB, VV_RO),
   VV(VV_LUA,            "lua",              VAR_PARTIAL, VV_RO),
 };
 #undef VV
@@ -2125,8 +2126,8 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
           return NULL;
         }
         if (rettv != NULL
-            && !(rettv->v_type == VAR_LIST || rettv->vval.v_list != NULL)
-            && !(rettv->v_type == VAR_BLOB || rettv->vval.v_blob != NULL)) {
+            && !(rettv->v_type == VAR_LIST && rettv->vval.v_list != NULL)
+            && !(rettv->v_type == VAR_BLOB && rettv->vval.v_blob != NULL)) {
           if (!quiet) {
             EMSG(_("E709: [:] requires a List or Blob value"));
           }
@@ -2252,15 +2253,24 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
       }
       tv_clear(&var1);
 
-      if (lp->ll_n1 < 0 || lp->ll_n1 > tv_blob_len(lp->ll_tv->vval.v_blob)) {
+      const int bloblen = tv_blob_len(lp->ll_tv->vval.v_blob);
+      if (lp->ll_n1 < 0 || lp->ll_n1 > bloblen
+          || (lp->ll_range && lp->ll_n1 == bloblen)) {
         if (!quiet) {
-          EMSGN(_(e_listidx), lp->ll_n1);
+          EMSGN(_(e_blobidx), lp->ll_n1);
         }
+        tv_clear(&var2);
         return NULL;
       }
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);
         tv_clear(&var2);
+        if (lp->ll_n2 < 0 || lp->ll_n2 >= bloblen || lp->ll_n2 < lp->ll_n1) {
+          if (!quiet) {
+            EMSGN(_(e_blobidx), lp->ll_n2);
+          }
+          return NULL;
+        }
       }
       lp->ll_blob = lp->ll_tv->vval.v_blob;
       lp->ll_tv = NULL;
@@ -2364,13 +2374,20 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       }
 
       if (lp->ll_range && rettv->v_type == VAR_BLOB) {
-        if (tv_blob_len(rettv->vval.v_blob) != tv_blob_len(lp->ll_blob)) {
-          EMSG(_("E972: Blob value has more items than target"));
-          return;
+        if (lp->ll_empty2) {
+          lp->ll_n2 = tv_blob_len(lp->ll_blob) - 1;
         }
 
-        for (int i = lp->ll_n1; i <= lp->ll_n2; i++) {
-          tv_blob_set(lp->ll_blob, i, tv_blob_get(rettv->vval.v_blob, i));
+        if (lp->ll_n2 - lp->ll_n1 + 1 != tv_blob_len(rettv->vval.v_blob)) {
+          EMSG(_("E972: Blob value does not have the right number of bytes"));
+          return;
+        }
+        if (lp->ll_empty2) {
+          lp->ll_n2 = tv_blob_len(lp->ll_blob);
+        }
+
+        for (int il = lp->ll_n1, ir = 0; il <= lp->ll_n2; il++) {
+          tv_blob_set(lp->ll_blob, il, tv_blob_get(rettv->vval.v_blob, ir++));
         }
       } else {
         bool error = false;
@@ -2386,9 +2403,8 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
             if (lp->ll_n1 == gap->ga_len) {
               gap->ga_len++;
             }
-          } else {
-            EMSG(_(e_invrange));
           }
+          // error for invalid range was already given in get_lval()
         }
       }
     } else if (op != NULL && *op != '=') {
@@ -4591,7 +4607,7 @@ eval_index(
       case VAR_BLOB: {
         len = tv_blob_len(rettv->vval.v_blob);
         if (range) {
-          // The resulting variable is a substring.  If the indexes
+          // The resulting variable is a sub-blob.  If the indexes
           // are out of range the result is empty.
           if (n1 < 0) {
             n1 = len + n1;

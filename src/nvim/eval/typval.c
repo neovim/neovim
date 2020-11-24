@@ -2174,13 +2174,17 @@ void tv_blob_unref(blob_T *const b)
 bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (b1 == NULL || b2 == NULL) {
-    return false;
+  const int len1 = tv_blob_len(b1);
+  const int len2 = tv_blob_len(b2);
+
+  // empty and NULL are considered the same
+  if (len1 == 0 && len2 == 0) {
+    return true;
   }
   if (b1 == b2) {
     return true;
   }
-  if (tv_blob_len(b1) != tv_blob_len(b2)) {
+  if (len1 != len2) {
     return false;
   }
 

@@ -21,6 +21,12 @@ func Test_blob_create()
   call assert_equal(0xDE, get(b, 0))
   call assert_equal(0xEF, get(b, 3))
   call assert_fails('let x = get(b, 4)')
+
+  call assert_fails('let b = 0z1', 'E973:')
+  call assert_fails('let b = 0z1x', 'E973:')
+  call assert_fails('let b = 0z12345', 'E973:')
+
+  call assert_equal(0z, v:_null_blob)
 endfunc
 
 " assignment to a blob
@@ -32,6 +38,45 @@ func Test_blob_assign()
   let bcopy = b[:]
   call assert_equal(b, bcopy)
   call assert_false(b is bcopy)
+
+  let b = 0zDEADBEEF
+  let b2 = b
+  call assert_true(b is b2)
+  let b[:] = 0z11223344
+  call assert_equal(0z11223344, b)
+  call assert_equal(0z11223344, b2)
+  call assert_true(b is b2)
+
+  let b = 0zDEADBEEF
+  let b[3:] = 0z66
+  call assert_equal(0zDEADBE66, b)
+  let b[:1] = 0z8899
+  call assert_equal(0z8899BE66, b)
+
+  call assert_fails('let b[2:3] = 0z112233', 'E972:')
+  call assert_fails('let b[2:3] = 0z11', 'E972:')
+  call assert_fails('let b[3:2] = 0z', 'E979:')
+
+  let b = 0zDEADBEEF
+  let b += 0z99
+  call assert_equal(0zDEADBEEF99, b)
+
+  call assert_fails('let b .= 0z33', 'E734:')
+  call assert_fails('let b .= "xx"', 'E734:')
+  call assert_fails('let b += "xx"', 'E734:')
+  call assert_fails('let b[1:1] .= 0z55', 'E734:')
+endfunc
+
+func Test_blob_get_range()
+  let b = 0z0011223344
+  call assert_equal(0z2233, b[2:3])
+  call assert_equal(0z223344, b[2:-1])
+  call assert_equal(0z00, b[0:-5])
+  call assert_equal(0z, b[0:-11])
+  call assert_equal(0z44, b[-1:])
+  call assert_equal(0z0011223344, b[:])
+  call assert_equal(0z0011223344, b[:-1])
+  call assert_equal(0z, b[5:6])
 endfunc
 
 func Test_blob_to_string()
@@ -44,8 +89,12 @@ endfunc
 func Test_blob_compare()
   let b1 = 0z0011
   let b2 = 0z1100
+  let b3 = 0z001122
+  call assert_true(b1 == b1)
   call assert_false(b1 == b2)
+  call assert_false(b1 == b3)
   call assert_true(b1 != b2)
+  call assert_true(b1 != b3)
   call assert_true(b1 == 0z0011)
 
   call assert_false(b1 is b2)
@@ -65,7 +114,7 @@ func Test_blob_range_assign()
   let b[1] = 0x11
   let b[2] = 0x22
   call assert_equal(0z001122, b)
-  call assert_fails('let b[4] = 0x33')
+  call assert_fails('let b[4] = 0x33', 'E979:')
 endfunc
 
 func Test_blob_for_loop()
@@ -171,6 +220,18 @@ func Test_blob_reverse()
   call assert_equal(0zBEADDE, reverse(0zDEADBE))
   call assert_equal(0zADDE, reverse(0zDEAD))
   call assert_equal(0zDE, reverse(0zDE))
+endfunc
+
+func Test_blob_lock()
+  let b = 0z112233
+  lockvar b
+  call assert_fails('let b = 0z44', 'E741:')
+  unlockvar b
+  let b = 0z44
+endfunc
+
+func Test_blob_sort()
+  call assert_fails('call sort([1.0, 0z11], "f")', 'E975:')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

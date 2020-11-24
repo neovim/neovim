@@ -167,6 +167,7 @@ typedef enum {
     VV__NULL_STRING,  // String with NULL value. For test purposes only.
     VV__NULL_LIST,  // List with NULL value. For test purposes only.
     VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV__NULL_BLOB,  // Blob with NULL value. For test purposes only.
     VV_LUA,
 } VimVarIndex;
 
