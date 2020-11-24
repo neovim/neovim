@@ -1446,7 +1446,7 @@ static void read_stdin(void)
   set_buflisted(true);
   // Create memfile and read from stdin.
   (void)open_buffer(true, NULL, 0);
-  if (BUFEMPTY(curbuf) && curbuf->b_next != NULL) {
+  if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
     // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
     do_cmdline_cmd("silent! bnext");
     // Delete the empty stdin buffer.

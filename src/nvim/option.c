@@ -880,7 +880,7 @@ void set_init_3(void)
     xfree(p);
   }
 
-  if (BUFEMPTY(curbuf)) {
+  if (buf_is_empty(curbuf)) {
     int idx_ffs = findoption_len(S_LEN("ffs"));
 
     // Apply the first entry of 'fileformats' to the initial buffer.

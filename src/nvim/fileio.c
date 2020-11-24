@@ -5027,7 +5027,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   // buffer contents.  But if reading the file fails we should keep
   // the old contents.  Can't use memory only, the file might be
   // too big.  Use a hidden buffer to move the buffer contents to.
-  if (BUFEMPTY(curbuf) || saved == FAIL) {
+  if (buf_is_empty(curbuf) || saved == FAIL) {
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
@@ -5060,7 +5060,7 @@ void buf_reload(buf_T *buf, int orig_mode)
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
         // Put the text back from the save buffer.  First
         // delete any lines that readfile() added.
-        while (!BUFEMPTY(curbuf)) {
+        while (!buf_is_empty(curbuf)) {
           if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
           }

@@ -2669,7 +2669,7 @@ void ex_diffgetput(exarg_T *eap)
         }
       }
 
-      buf_empty = BUFEMPTY(curbuf);
+      buf_empty = buf_is_empty(curbuf);
       added = 0;
 
       for (i = 0; i < count; ++i) {

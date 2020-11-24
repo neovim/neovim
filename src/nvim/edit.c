@@ -8047,7 +8047,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // can't backup past first character in buffer
   // can't backup past starting point unless 'backspace' > 1
   // can backup to a previous line if 'backspace' == 0
-  if (BUFEMPTY(curbuf)
+  if (buf_is_empty(curbuf)
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
