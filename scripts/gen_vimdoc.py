@@ -186,6 +186,7 @@ param_exclude = (
 # Annotations are displayed as line items after API function descriptions.
 annotation_map = {
     'FUNC_API_FAST': '{fast}',
+    'FUNC_API_CHECK_TEXTLOCK': 'not allowed when |textlock| is active',
 }
 
 
