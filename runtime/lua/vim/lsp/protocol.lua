@@ -728,6 +728,9 @@ function protocol.make_client_capabilities()
       dynamicRegistration = false;
     };
     experimental = nil;
+    window = {
+      workDoneProgress = true;
+    }
   }
 end
 

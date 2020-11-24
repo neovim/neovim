@@ -569,6 +569,8 @@ function lsp.start_client(config)
     -- TODO(remove-callbacks)
     callbacks = handlers;
     handlers = handlers;
+    -- for $/progress report
+    messages = { name = name, messages = {}, progress = {}, status = {} }
   }
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
