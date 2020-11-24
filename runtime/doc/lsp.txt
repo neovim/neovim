@@ -715,6 +715,15 @@ start_client({config})                                *vim.lsp.start_client()*
 
                 The following parameters describe fields in the {config}
                 table.
+>
+
+    -- In attach function for the client, you can do:
+    local custom_attach = function(client)
+      if client.config.flags then
+        client.config.flags.allow_incremental_sync = true
+      end
+    end
+<
 
                 Parameters: ~
                     {root_dir}         (required, string) Directory where the
@@ -796,6 +805,11 @@ start_client({config})                                *vim.lsp.start_client()*
                                        in the initialize request.
                                        Invalid/empty values will default to
                                        "off"
+                    {flags}            A table with flags for the client. The
+                                       current (experimental) flags are:
+                                       • allow_incremental_sync (bool, default
+                                         false): Allow using on_line callbacks
+                                         for lsp
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
@@ -832,6 +846,12 @@ with({handler}, {override_config})                            *vim.lsp.with()*
 
 ==============================================================================
 Lua module: vim.lsp.buf                                              *lsp-buf*
+
+                                          *vim.lsp.buf.add_workspace_folder()*
+add_workspace_folder({workspace_folder})
+                Add the folder at path to the workspace folders. If {path} is
+                not provided, the user will be prompted for a path using
+                |input()|.
 
 clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
@@ -935,6 +955,9 @@ incoming_calls()                                *vim.lsp.buf.incoming_calls()*
                 |quickfix| window. If the symbol can resolve to multiple
                 items, the user can pick one in the |inputlist|.
 
+list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
+                List workspace folders.
+
 outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
                 Lists all the items that are called by the symbol under the
                 cursor in the |quickfix| window. If the symbol can resolve to
@@ -974,6 +997,12 @@ references({context})                               *vim.lsp.buf.references()*
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 
+                                       *vim.lsp.buf.remove_workspace_folder()*
+remove_workspace_folder({workspace_folder})
+                Remove the folder at path from the workspace folders. If
+                {path} is not provided, the user will be prompted for a path
+                using |input()|.
+
 rename({new_name})                                      *vim.lsp.buf.rename()*
                 Renames all references to the symbol under the cursor.
 
@@ -995,19 +1024,6 @@ signature_help()                                *vim.lsp.buf.signature_help()*
 type_definition()                              *vim.lsp.buf.type_definition()*
                 Jumps to the definition of the type of the symbol under the
                 cursor.
-
-add_workspace_folder({path})              *vim.lsp.buf.add_workspace_folder()*
-                Add the folder at path to the workspace folders. If {path} is
-                not provided, the user will be prompted for a path using
-                |input()|.
-
-remove_workspace_folder({path})        *vim.lsp.buf.remove_workspace_folder()*
-                Remove the folder at path from the workspace folders. If 
-                {path} is not provided, the user will be prompted for 
-                a path using |input()|.
-
-list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
-                List all folders in the workspace.
 
 workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
@@ -1062,9 +1078,9 @@ get_count({bufnr}, {severity}, {client_id})
       let sl = ''
       if luaeval('not vim.tbl_isempty(vim.lsp.buf_get_clients(0))')
         let sl.='%#MyStatuslineLSP#E:'
-        let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.diagnostic.get_count(vim.fn.bufnr('%'), [[Error]])")}'
+        let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Error]])")}'
         let sl.='%#MyStatuslineLSP# W:'
-        let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.diagnostic.get_count(vim.fn.bufnr('%'), [[Warning]])")}'
+        let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Warning]])")}'
       else
           let sl.='%#MyStatuslineLSPErrors#off'
       endif
@@ -1653,6 +1669,14 @@ make_text_document_params()         *vim.lsp.util.make_text_document_params()*
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
+
+                                        *vim.lsp.util.make_workspace_params()*
+make_workspace_params({added}, {removed})
+                Create the workspace params
+
+                Parameters: ~
+                    {added}    
+                    {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
 open_floating_preview({contents}, {filetype}, {opts})

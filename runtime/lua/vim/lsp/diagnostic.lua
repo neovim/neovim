@@ -400,9 +400,9 @@ end
 ---   let sl = ''
 ---   if luaeval('not vim.tbl_isempty(vim.lsp.buf_get_clients(0))')
 ---     let sl.='%#MyStatuslineLSP#E:'
----     let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.diagnostic.get_count([[Error]])")}'
+---     let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Error]])")}'
 ---     let sl.='%#MyStatuslineLSP# W:'
----     let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.diagnostic.get_count([[Warning]])")}'
+---     let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Warning]])")}'
 ---   else
 ---       let sl.='%#MyStatuslineLSPErrors#off'
 ---   endif

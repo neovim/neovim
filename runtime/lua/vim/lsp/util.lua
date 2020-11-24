@@ -1315,6 +1315,9 @@ function M.make_text_document_params()
   return { uri = vim.uri_from_bufnr(0) }
 end
 
+--- Create the workspace params
+--@param added
+--@param removed
 function M.make_workspace_params(added, removed)
   return { event = { added = added; removed = removed; } }
 end
