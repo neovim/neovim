@@ -273,12 +273,13 @@ local function text_document_did_open_handler(bufnr, client)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
+  local filetype = nvim_buf_get_option(bufnr, 'filetype')
+  local languageId = client.config.language_id and client.config.language_id(bufnr, filetype) or filetype
   local params = {
     textDocument = {
       version = 0;
       uri = vim.uri_from_bufnr(bufnr);
-      -- TODO make sure our filetypes are compatible with languageId names.
-      languageId = nvim_buf_get_option(bufnr, 'filetype');
+      languageId = languageId;
       text = buf_get_full_text(bufnr);
     }
   }
