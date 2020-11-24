@@ -788,9 +788,14 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 ///
 /// 'name' can contain wildcards. For example
 /// nvim_get_runtime_file("colors/*.vim", true) will return all color
-/// scheme files.
+/// scheme files. Always use forward slashes (/) in the search pattern for
+/// subdirectories regardless of platform.
 ///
 /// It is not an error to not find any files. An empty array is returned then.
+///
+/// To find a directory, `name` must end with a forward slash, like
+/// "rplugin/python/". Without the slash it would instead look for an ordinary
+/// file called "rplugin/python".
 ///
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
@@ -801,14 +806,13 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  // TODO(bfredl):
-  if (name.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "not yet implemented");
-    return rv;
+  int flags = DIP_START | (all ? DIP_ALL : 0);
+
+  if (name.size == 0 || name.data[name.size-1] == '/') {
+    flags |= DIP_DIR;
   }
 
-  int flags = DIP_START | (all ? DIP_ALL : 0);
-  do_in_runtimepath((char_u *)name.data,
+  do_in_runtimepath((char_u *)(name.size ? name.data : ""),
                     flags, find_runtime_cb, &rv);
   return rv;
 }
