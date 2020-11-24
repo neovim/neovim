@@ -325,8 +325,13 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     blob_T *const b = argvars[0].vval.v_blob;
     if (b != NULL
         && !var_check_lock(b->bv_lock, N_("add() argument"), TV_TRANSLATE)) {
-      ga_append(&b->bv_ga, (char_u)tv_get_number(&argvars[1]));
-      tv_copy(&argvars[0], rettv);
+      bool error = false;
+      const varnumber_T n = tv_get_number_chk(&argvars[1], &error);
+
+      if (!error) {
+        ga_append(&b->bv_ga, (int)n);
+        tv_copy(&argvars[0], rettv);
+      }
     }
   } else {
     EMSG(_(e_listreq));
@@ -4826,6 +4831,12 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     blob_T *const b = argvars[0].vval.v_blob;
     if (b == NULL) {
       return;
+    }
+    if (start < 0) {
+      start = tv_blob_len(b) + start;
+      if (start < 0) {
+        start = 0;
+      }
     }
     for (idx = start; idx < tv_blob_len(b); idx++) {
       typval_T tv;

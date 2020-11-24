@@ -96,6 +96,8 @@ func Test_blob_compare()
   call assert_true(b1 != b2)
   call assert_true(b1 != b3)
   call assert_true(b1 == 0z0011)
+  call assert_fails('echo b1 == 9', 'E977:')
+  call assert_fails('echo b1 != 9', 'E977:')
 
   call assert_false(b1 is b2)
   let b2 = b1
@@ -143,6 +145,22 @@ func Test_blob_concatenate()
 
   let b = 0zDEAD + 0zBEEF
   call assert_equal(0zDEADBEEF, b)
+endfunc
+
+func Test_blob_add()
+  let b = 0z0011
+  call add(b, 0x22)
+  call assert_equal(0z001122, b)
+  call add(b, '51')
+  call assert_equal(0z00112233, b)
+
+  call assert_fails('call add(b, [9])', 'E745:')
+endfunc
+
+func Test_blob_empty()
+  call assert_false(empty(0z001122))
+  call assert_true(empty(0z))
+  call assert_true(empty(v:_null_blob))
 endfunc
 
 " Test removing items in blob
@@ -198,11 +216,19 @@ func Test_blob_map()
   let b = 0zDEADBEEF
   call map(b, 'v:val + 1')
   call assert_equal(0zDFAEBFF0, b)
+
+  call assert_fails("call map(b, '[9]')", 'E978:')
 endfunc
 
 func Test_blob_index()
   call assert_equal(2, index(0zDEADBEEF, 0xBE))
   call assert_equal(-1, index(0zDEADBEEF, 0))
+  call assert_equal(2, index(0z11111111, 0x11, 2))
+  call assert_equal(3, index(0z11110111, 0x11, 2))
+  call assert_equal(2, index(0z11111111, 0x11, -2))
+  call assert_equal(3, index(0z11110111, 0x11, -2))
+
+  call assert_fails('call index("asdf", 0)', 'E714:')
 endfunc
 
 func Test_blob_insert()
@@ -213,6 +239,10 @@ func Test_blob_insert()
   let b = 0zDEADBEEF
   call insert(b, 0x33, 2)
   call assert_equal(0zDEAD33BEEF, b)
+
+  call assert_fails('call insert(b, -1)', 'E475:')
+  call assert_fails('call insert(b, 257)', 'E475:')
+  call assert_fails('call insert(b, 0, [9])', 'E745:')
 endfunc
 
 func Test_blob_reverse()
