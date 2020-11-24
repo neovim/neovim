@@ -434,8 +434,11 @@ function! man#goto_tag(pattern, flags, info) abort
   let l:structured = []
 
   for l:path in l:paths
-    let l:n = s:extract_sect_and_name_path(l:path)[1]
-    let l:structured += [{ 'name': l:n, 'path': l:path }]
+    let [l:sect, l:name] = s:extract_sect_and_name_path(l:path)
+    let l:structured += [{
+          \ 'name': l:name,
+          \ 'title': l:name . '(' . l:sect . ')'
+          \ }]
   endfor
 
   if &cscopetag
@@ -446,7 +449,7 @@ function! man#goto_tag(pattern, flags, info) abort
   return map(l:structured, {
   \  _, entry -> {
   \      'name': entry.name,
-  \      'filename': 'man://' . entry.path,
+  \      'filename': 'man://' . entry.title,
   \      'cmd': '1'
   \    }
   \  })
