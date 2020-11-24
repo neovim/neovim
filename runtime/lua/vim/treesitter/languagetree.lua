@@ -104,12 +104,14 @@ function LanguageTree:parse()
       parser:set_included_ranges(ranges)
 
       local tree, tree_changes = parser:parse(old_tree, self._source)
+      self:_do_callback('changedtree', tree_changes, tree)
 
       table.insert(self._trees, tree)
       vim.list_extend(changes, tree_changes)
     end
   else
     local tree, tree_changes = parser:parse(old_trees[1], self._source)
+    self:_do_callback('changedtree', tree_changes, tree)
 
     table.insert(self._trees, tree)
     vim.list_extend(changes, tree_changes)
@@ -146,7 +148,6 @@ function LanguageTree:parse()
 
   self._valid = true
 
-  self:_do_callback('changedtree', changes)
   return self._trees, changes
 end
 
@@ -432,7 +433,7 @@ local function region_contains(region, range)
 end
 
 function LanguageTree:contains(range)
-  for _, region in pairs(self._region) do
+  for _, region in pairs(self._regions) do
     if region_contains(region, range) then
       return true
     end
