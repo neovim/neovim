@@ -3608,11 +3608,15 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   }
   if (qf_buf != NULL) {
     // Use the existing quickfix buffer
-    (void)do_ecmd(qf_buf->b_fnum, NULL, NULL, NULL, ECMD_ONE,
-                  ECMD_HIDE + ECMD_OLDBUF, oldwin);
+    if (do_ecmd(qf_buf->b_fnum, NULL, NULL, NULL, ECMD_ONE,
+                ECMD_HIDE + ECMD_OLDBUF, oldwin) == FAIL) {
+      return FAIL;
+    }
   } else {
     // Create a new quickfix buffer
-    (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin);
+    if (do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin) == FAIL) {
+      return FAIL;
+    }
   }
 
   // Set the options for the quickfix buffer/window (if not already done)

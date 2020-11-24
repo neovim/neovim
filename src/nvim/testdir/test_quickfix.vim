@@ -4423,4 +4423,39 @@ func Test_add_invalid_entry_with_qf_window()
   cclose
 endfunc
 
+" Test for very weird problem: autocommand causes a failure, resulting opening
+" the quickfix window to fail. This still splits the window, but otherwise
+" should not mess up buffers.
+func Test_quickfix_window_fails_to_open()
+  CheckScreendump
+
+  let lines =<< trim END
+      anything
+      try
+        anything
+      endtry
+  END
+  call writefile(lines, 'XquickfixFails')
+
+  let lines =<< trim END
+      split XquickfixFails
+      silent vimgrep anything %
+      normal o
+      au BufLeave * ++once source XquickfixFails
+      " This will trigger the autocommand, which causes an error, what follows
+      " is aborted but the window was already split.
+      silent! cwindow
+  END
+  call writefile(lines, 'XtestWinFails')
+  let buf = RunVimInTerminal('-S XtestWinFails', #{rows: 13})
+  call VerifyScreenDump(buf, 'Test_quickfix_window_fails', {})
+
+  " clean up
+  call term_sendkeys(buf, ":bwipe!\<CR>")
+  call term_wait(buf)
+  call StopVimInTerminal(buf)
+  call delete('XtestWinFails')
+  call delete('XquickfixFails')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
