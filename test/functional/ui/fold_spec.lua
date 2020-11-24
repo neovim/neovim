@@ -117,6 +117,33 @@ describe("folded lines", function()
       end
     end)
 
+    it("work with spell", function()
+      command("set spell")
+      insert([[
+        This is a
+        valid English
+        sentence composed by
+        an exhausted developer
+        in his cave.
+        ]])
+
+      feed("gg")
+      feed("zf3j")
+      if not multigrid then
+        -- screen:snapshot_util()
+        screen:expect{grid=[[
+          {5:^+--  4 lines: This is a······················}|
+          in his cave.                                 |
+                                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]]}
+      end
+    end)
+
     it("works with multibyte fillchars", function()
       insert([[
         aa

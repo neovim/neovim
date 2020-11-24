@@ -453,7 +453,8 @@ int get_expr_indent(void)
   colnr_T save_curswant;
   int save_set_curswant;
   int save_State;
-  int use_sandbox = was_set_insecurely((char_u *)"indentexpr", OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(
+      curwin, (char_u *)"indentexpr", OPT_LOCAL);
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.

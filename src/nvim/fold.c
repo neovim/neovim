@@ -1835,10 +1835,11 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
       curwin = wp;
       curbuf = wp->w_buffer;
 
-      ++emsg_silent;       /* handle exceptions, but don't display errors */
-      text = eval_to_string_safe(wp->w_p_fdt, NULL,
-          was_set_insecurely((char_u *)"foldtext", OPT_LOCAL));
-      --emsg_silent;
+      emsg_silent++;       // handle exceptions, but don't display errors
+      text = eval_to_string_safe(
+          wp->w_p_fdt, NULL,
+          was_set_insecurely(wp, (char_u *)"foldtext", OPT_LOCAL));
+      emsg_silent--;
 
       if (text == NULL || did_emsg)
         got_fdt_error = TRUE;
