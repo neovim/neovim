@@ -3640,6 +3640,11 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_lua:
+    xp->xp_context = EXPAND_LUA;
+    xp->xp_pattern = (char_u *)arg;
+    break;
+
   default:
     break;
   }
@@ -5096,6 +5101,7 @@ static const char *command_complete[] =
 #ifdef HAVE_WORKING_LIBINTL
   [EXPAND_LOCALES] = "locale",
 #endif
+  [EXPAND_LUA] = "lua",
   [EXPAND_MAPCLEAR] = "mapclear",
   [EXPAND_MAPPINGS] = "mapping",
   [EXPAND_MENUS] = "menu",

@@ -1277,6 +1277,67 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
 
+int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
+{
+  lua_State *const lstate = nlua_enter();
+  int ret = OK;
+
+  // [ vim ]
+  lua_getglobal(lstate, "vim");
+
+  // [ vim, vim._expand_pat ]
+  lua_getfield(lstate, -1, "_expand_pat");
+  luaL_checktype(lstate, -1, LUA_TFUNCTION);
+
+  // [ vim, vim._log_keystroke, buf ]
+  lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
+
+  if (lua_pcall(lstate, 1, 1, 0)) {
+    nlua_error(
+        lstate,
+        _("Error executing vim._expand_pat: %.*s"));
+  }
+
+  Error err = ERROR_INIT;
+
+  *num_results = 0;
+  *results = NULL;
+
+  Array completions = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    ret = FAIL;
+    goto cleanup;
+  }
+
+  garray_T result_array;
+  ga_init(&result_array, (int)sizeof(char *), 80);
+  for (size_t i = 0; i < completions.size; i++) {
+    Object v = completions.items[i];
+
+    if (v.type != kObjectTypeString) {
+      ret = FAIL;
+      goto cleanup;
+    }
+
+    GA_APPEND(
+        char_u *,
+        &result_array,
+        vim_strsave((char_u *)v.data.string.data));
+  }
+
+  *results = result_array.ga_data;
+  *num_results = result_array.ga_len;
+
+cleanup:
+  api_free_array(completions);
+
+  if (ret == FAIL) {
+    ga_clear(&result_array);
+  }
+
+  return ret;
+}
+
 static int nlua_regex(lua_State *lstate)
 {
   Error err = ERROR_INIT;

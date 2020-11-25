@@ -525,4 +525,143 @@ function vim._log_keystroke(char)
   end
 end
 
+--- Generate a list of possible completions for the string.
+--- String starts with ^ and then has the pattern.
+---
+---     1. Can we get it to just return things in the global namespace with that name prefix
+---     2. Can we get it to return things from global namespace even with `print(` in front.
+function vim._expand_pat(pat, env)
+  env = env or _G
+
+  pat = string.sub(pat, 2, #pat)
+
+  if pat == '' then
+    local result = vim.tbl_keys(env)
+    table.sort(result)
+    return result
+  end
+
+  -- TODO: We can handle spaces in [] ONLY.
+  --    We should probably do that at some point, just for cooler completion.
+  -- TODO: We can suggest the variable names to go in []
+  --    This would be difficult as well.
+  --    Probably just need to do a smarter match than just `:match`
+
+  -- Get the last part of the pattern
+  local last_part = pat:match("[%w.:_%[%]'\"]+$")
+  if not last_part then return {} end
+
+  local parts, search_index = vim._expand_pat_get_parts(last_part)
+
+  local match_pat = '^' .. string.sub(last_part, search_index, #last_part)
+  local prefix_match_pat = string.sub(pat, 1, #pat - #match_pat + 1) or ''
+
+  local final_env = env
+  for _, part in ipairs(parts) do
+    if type(final_env) ~= 'table' then
+      return {}
+    end
+
+    -- Normally, we just have a string
+    --  Just attempt to get the string directly from the environment
+    if type(part) == "string" then
+      final_env = rawget(final_env, part)
+    else
+      -- However, sometimes you want to use a variable, and complete on it
+      --    With this, you have the power.
+
+      -- MY_VAR = "api"
+      -- vim[MY_VAR]
+      -- -> _G[MY_VAR] -> "api"
+      local result_key = part[1]
+      if not result_key then
+        return {}
+      end
+
+      local result = rawget(env, result_key)
+
+      if result == nil then
+        return {}
+      end
+
+      final_env = rawget(final_env, result)
+    end
+
+    if not final_env then
+      return {}
+    end
+  end
+
+  local result = vim.tbl_map(function(v)
+    return prefix_match_pat .. v
+  end, vim.tbl_filter(function(name)
+    return string.find(name, match_pat) ~= nil
+  end, vim.tbl_keys(final_env)))
+
+  table.sort(result)
+
+  return result
+end
+
+vim._expand_pat_get_parts = function(lua_string)
+  local parts = {}
+
+  local accumulator, search_index = '', 1
+  local in_brackets, bracket_end = false, -1
+  local string_char = nil
+  for idx = 1, #lua_string do
+    local s = lua_string:sub(idx, idx)
+
+    if not in_brackets and (s == "." or s == ":") then
+      table.insert(parts, accumulator)
+      accumulator = ''
+
+      search_index = idx + 1
+    elseif s == "[" then
+      in_brackets = true
+
+      table.insert(parts, accumulator)
+      accumulator = ''
+
+      search_index = idx + 1
+    elseif in_brackets then
+      if idx == bracket_end then
+        in_brackets = false
+        search_index = idx + 1
+
+        if string_char == "VAR" then
+          table.insert(parts, { accumulator })
+          accumulator = ''
+
+          string_char = nil
+        end
+      elseif not string_char then
+        bracket_end = string.find(lua_string, ']', idx, true)
+
+        if s == '"' or s == "'" then
+          string_char = s
+        elseif s ~= ' ' then
+          string_char = "VAR"
+          accumulator = s
+        end
+      elseif string_char then
+        if string_char ~= s then
+          accumulator = accumulator .. s
+        else
+          table.insert(parts, accumulator)
+          accumulator = ''
+
+          string_char = nil
+        end
+      end
+    else
+      accumulator = accumulator .. s
+    end
+  end
+
+  parts = vim.tbl_filter(function(val) return #val > 0 end, parts)
+
+  return parts, search_index
+end
+
 return module
