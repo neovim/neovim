@@ -7015,6 +7015,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
+
+  if (os_isdir((const char_u *)fname)) {
+    EMSG2(_(e_isadir2), fname);
+    return;
+  }
   if (*fname == NUL || (fd = os_fopen(fname, READBIN)) == NULL) {
     EMSG2(_(e_notopen), *fname == NUL ? _("<empty>") : fname);
     return;
@@ -7023,8 +7028,10 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (blob) {
     tv_blob_alloc_ret(rettv);
     if (!read_blob(fd, rettv->vval.v_blob)) {
-      EMSG("cannot read file");
+      EMSG2(_(e_notread), fname);
+      // An empty blob is returned on error.
       tv_blob_free(rettv->vval.v_blob);
+      rettv->vval.v_blob = NULL;
     }
     fclose(fd);
     return;

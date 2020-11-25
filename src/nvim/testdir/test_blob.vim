@@ -256,6 +256,9 @@ func Test_blob_read_write()
   let br = readfile('Xblob', 'B')
   call assert_equal(b, br)
   call delete('Xblob')
+
+  " This was crashing when calling readfile() with a directory.
+  call assert_fails("call readfile('.', 'B')", 'E17: "." is a directory')
 endfunc
 
 " filter() item in blob
