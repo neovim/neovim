@@ -996,6 +996,19 @@ type_definition()                              *vim.lsp.buf.type_definition()*
                 Jumps to the definition of the type of the symbol under the
                 cursor.
 
+add_workspace_folder({path})              *vim.lsp.buf.add_workspace_folder()*
+                Add the folder at path to the workspace folders. If {path} is
+                not provided, the user will be prompted for a path using
+                |input()|.
+
+remove_workspace_folder({path})        *vim.lsp.buf.remove_workspace_folder()*
+                Remove the folder at path from the workspace folders. If 
+                {path} is not provided, the user will be prompted for 
+                a path using |input()|.
+
+list_workspace_folders()                *vim.lsp.buf.list_workspace_folders()*
+                List all folders in the workspace.
+
 workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
                 window.

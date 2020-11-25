@@ -597,7 +597,10 @@ function lsp.start_client(config)
       --  -- workspace folder in the user interface.
       --  name
       -- }
-      workspaceFolders = nil;
+      workspaceFolders = {{
+        uri = vim.uri_from_fname(config.root_dir);
+        name = string.format("%s", config.root_dir);
+      }};
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
@@ -610,6 +613,7 @@ function lsp.start_client(config)
       rpc.notify('initialized', {[vim.type_idx]=vim.types.dictionary})
       client.initialized = true
       uninitialized_clients[client_id] = nil
+      client.workspaceFolders = initialize_params.workspaceFolders
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.

@@ -716,6 +716,7 @@ function protocol.make_client_capabilities()
         };
         hierarchicalWorkspaceSymbolSupport = true;
       };
+      workspaceFolders = true;
       applyEdit = true;
     };
     callHierarchy = {
@@ -974,6 +975,28 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid implementationProvider")
   end
 
+  local workspace = server_capabilities.workspace
+  local workspace_properties = {}
+  if workspace == nil or workspace.workspaceFolders == nil then
+    -- Defaults if omitted.
+    workspace_properties = {
+      workspace_folder_properties =  {
+        supported = false;
+        changeNotifications=false;
+      }
+    }
+  elseif type(workspace.workspaceFolders) == 'table' then
+    workspace_properties = {
+      workspace_folder_properties = {
+        supported = vim.F.ifnil(workspace.workspaceFolders.supported, false);
+        changeNotifications = vim.F.ifnil(workspace.workspaceFolders.changeNotifications, false);
+
+      }
+    }
+  else
+    error("The server sent invalid workspace")
+  end
+
   local signature_help_properties
   if server_capabilities.signatureHelpProvider == nil then
     signature_help_properties = {
@@ -993,6 +1016,7 @@ function protocol.resolve_capabilities(server_capabilities)
   return vim.tbl_extend("error"
       , text_document_sync_properties
       , signature_help_properties
+      , workspace_properties
       , general_properties
       )
 end
