@@ -1862,6 +1862,9 @@ func LogACmd()
 endfunc
 
 func Test_TermChanged()
+  throw 'skipped: Nvim does not support TermChanged event'
+  CheckNotGui
+
   enew!
   tabnew
   call setline(1, ['a', 'b', 'c', 'd'])
