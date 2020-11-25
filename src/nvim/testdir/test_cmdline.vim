@@ -806,12 +806,14 @@ func Test_cmdwin_cedit()
   let g:cmd_wintype = ''
   func CmdWinType()
       let g:cmd_wintype = getcmdwintype()
+      let g:wintype = win_gettype()
       return ''
   endfunc
 
   call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
   echo input('')
   call assert_equal('@', g:cmd_wintype)
+  call assert_equal('command', g:wintype)
 
   set cedit&vim
   delfunc CmdWinType
