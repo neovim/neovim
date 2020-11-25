@@ -696,6 +696,7 @@ func Test_OptionSet_diffmode_close()
   call setline(1, ['buffer 2', 'line 2', 'line 3', 'line4'])
   call assert_fails(':diffthis', 'E788')
   call assert_equal(1, &diff)
+  set diffopt-=closeoff
   bw!
   call assert_fails(':diffoff!', 'E788')
   bw!
