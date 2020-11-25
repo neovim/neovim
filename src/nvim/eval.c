@@ -9700,7 +9700,6 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_PARTIAL:
   case VAR_BOOL:
   case VAR_SPECIAL:
-  case VAR_BLOB:
     tv_copy(from, to);
     break;
   case VAR_STRING:
@@ -9732,6 +9731,19 @@ int var_item_copy(const vimconv_T *const conv,
     }
     if (to->vval.v_list == NULL && from->vval.v_list != NULL) {
       ret = FAIL;
+    }
+    break;
+  case VAR_BLOB:
+    to->v_type = VAR_BLOB;
+    if (from->vval.v_blob == NULL) {
+      to->vval.v_blob = NULL;
+    } else {
+      tv_blob_alloc_ret(to);
+      const int len = from->vval.v_blob->bv_ga.ga_len;
+
+      to->vval.v_blob->bv_ga.ga_data
+          = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
+      to->vval.v_blob->bv_ga.ga_len = len;
     }
     break;
   case VAR_DICT:
