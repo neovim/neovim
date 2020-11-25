@@ -2836,9 +2836,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
            * required when 'linebreak' is also set. */
           if (tocol == vcol)
             tocol += n_extra;
-          /* combine 'showbreak' with 'cursorline' */
+          // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-            char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
+            char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), char_attr);
           }
         }
       }
