@@ -68,8 +68,6 @@
 #define UV_FS_COPYFILE_FICLONE 0
 #endif
 
-static bool notified_diff = false;
-
 #define HAS_BW_FLAGS
 #define FIO_LATIN1     0x01    /* convert Latin1 */
 #define FIO_UTF8       0x02    /* convert UTF-8 */
@@ -116,6 +114,7 @@ struct bw_info {
 # include "fileio.c.generated.h"
 #endif
 
+static bool notified_diff = false;
 static char *e_auchangedbuf = N_(
     "E812: Autocommands changed buffer or buffer name");
 
@@ -4773,6 +4772,22 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
+// Create a diff split for the given buffer.
+static void create_buf_diff_split(buf_T *buf)
+{
+  tabpage_new();
+  win_split(0, WSP_VERT);
+  do_cmdline((char_u *)"set buftype=nofile", NULL, NULL, 0);
+  readfile(buf->b_ffname, buf->b_fname, (linenr_T)1, (linenr_T)0,
+           (linenr_T)MAXLNUM, NULL, 0);
+  do_cmdline((char_u *)"0d_", NULL, NULL, 0);
+  do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+  do_window('r', 0, NUL);
+  do_window('p', 0, NUL);
+  do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->handle, false);
+  do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+}
+
 /*
  * Check if buffer "buf" has been changed.
  * Also check if the file for a new buffer unexpectedly appeared.
@@ -4946,17 +4961,7 @@ int buf_check_timestamp(buf_T *buf)
                              (char_u *)_("&OK\n&Show diff\n&Load File"),
                              1, NULL, true);
       if (choice == 2) {
-        tabpage_new();
-        win_split(0, WSP_VERT);
-        do_cmdline((char_u *)"set buftype=nofile", NULL, NULL, 0);
-        readfile(buf->b_ffname, buf->b_fname, (linenr_T)1, (linenr_T)0,
-                 (linenr_T)MAXLNUM, NULL, 0);
-        do_cmdline((char_u *)"0d_", NULL, NULL, 0);
-        do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
-        do_window('r', 0, NUL);
-        do_window('p', 0, NUL);
-        do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->handle, false);
-        do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+        create_buf_diff_split(buf);
         notified_diff = true;
       } else if (choice == 3) {
         reload = true;
