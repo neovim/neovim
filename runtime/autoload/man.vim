@@ -18,7 +18,7 @@ function! man#init() abort
   endtry
 endfunction
 
-function! man#open_page(count, count1, mods, ...) abort
+function! man#open_page(count, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -39,9 +39,7 @@ function! man#open_page(count, count1, mods, ...) abort
   endif
   try
     let [sect, name] = s:extract_sect_and_name_ref(ref)
-    if a:count ==# a:count1
-      " v:count defaults to 0 which is a valid section, and v:count1 defaults to
-      " 1, also a valid section. If they are equal, count explicitly set.
+    if a:count >= 0
       let sect = string(a:count)
     endif
     let path = s:verify_exists(sect, name)
