@@ -51,17 +51,17 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
 
-  let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
+  let [bufnr, save_tfu] = [bufnr(), &tagfunc]
   try
     set tagfunc=man#goto_tag
-    let l:target = l:name . '(' . l:sect . ')'
+    let target = name . '(' . sect . ')'
     if a:mods !~# 'tab' && s:find_man()
-      execute 'silent keepalt tag' l:target
+      execute 'silent keepalt tag' target
     else
-      execute 'silent keepalt' a:mods 'stag' l:target
+      execute 'silent keepalt' a:mods 'stag' target
     endif
   finally
-    call setbufvar(l:buf, '&tagfunc', l:save_tfu)
+    call setbufvar(bufnr, '&tagfunc', save_tfu)
   endtry
 
   let b:man_sect = sect
@@ -282,14 +282,14 @@ function! s:extract_sect_and_name_path(path) abort
 endfunction
 
 function! s:find_man() abort
-  let l:win = 1
-  while l:win <= winnr('$')
-    let l:buf = winbufnr(l:win)
-    if getbufvar(l:buf, '&filetype', '') ==# 'man'
-      execute l:win.'wincmd w'
+  let winnr = 1
+  while winnr <= winnr('$')
+    let bufnr = winbufnr(winnr)
+    if getbufvar(bufnr, '&filetype', '') ==# 'man'
+      execute winnr.'wincmd w'
       return 1
     endif
-    let l:win += 1
+    let winnr += 1
   endwhile
   return 0
 endfunction
@@ -428,25 +428,25 @@ function! man#init_pager() abort
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort
-  let [l:sect, l:name] = s:extract_sect_and_name_ref(a:pattern)
+  let [sect, name] = s:extract_sect_and_name_ref(a:pattern)
 
-  let l:paths = s:get_paths(l:sect, l:name, v:true)
-  let l:structured = []
+  let paths = s:get_paths(sect, name, v:true)
+  let structured = []
 
-  for l:path in l:paths
-    let [l:sect, l:name] = s:extract_sect_and_name_path(l:path)
-    let l:structured += [{
-          \ 'name': l:name,
-          \ 'title': l:name . '(' . l:sect . ')'
+  for path in paths
+    let [sect, name] = s:extract_sect_and_name_path(path)
+    let structured += [{
+          \ 'name': name,
+          \ 'title': name . '(' . sect . ')'
           \ }]
   endfor
 
   if &cscopetag
     " return only a single entry so we work well with :cstag (#11675)
-    let l:structured = l:structured[:0]
+    let structured = structured[:0]
   endif
 
-  return map(l:structured, {
+  return map(structured, {
   \  _, entry -> {
   \      'name': entry.name,
   \      'filename': 'man://' . entry.title,
