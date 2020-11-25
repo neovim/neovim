@@ -69,6 +69,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/expressions.h"
 
@@ -5105,6 +5106,10 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, num_file, file);
+  }
+  if (xp->xp_context == EXPAND_LUA) {
+    ILOG("PAT %s", pat);
+    return nlua_expand_pat(pat, num_file, file);
   }
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
