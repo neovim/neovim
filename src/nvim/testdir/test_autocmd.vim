@@ -1947,7 +1947,7 @@ func Test_autocmd_window()
   augroup END
 
   doautoall BufEnter
-  call assert_equal([['one.txt', 'aucmdwin'], ['two.txt', '']], g:blist)
+  call assert_equal([['one.txt', 'autocmd'], ['two.txt', '']], g:blist)
 
   augroup aucmd_win_test
     au!

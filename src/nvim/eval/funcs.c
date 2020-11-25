@@ -11007,7 +11007,7 @@ static void f_win_gettype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (wp == aucmd_win) {
-    rettv->vval.v_string = vim_strsave((char_u *)"aucmdwin");
+    rettv->vval.v_string = vim_strsave((char_u *)"autocmd");
   } else if (wp->w_p_pvw) {
     rettv->vval.v_string = vim_strsave((char_u *)"preview");
   } else if (wp->w_floating) {
