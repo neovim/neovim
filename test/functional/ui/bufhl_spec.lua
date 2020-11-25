@@ -534,6 +534,62 @@ describe('Buffer highlighting', function()
     ]]}
   end)
 
+  it('respects priority', function()
+    local set_extmark = curbufmeths.set_extmark
+    local id = meths.create_namespace('')
+    insert [[foobar]]
+
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 5,
+      hl_group = "Statement",
+      priority = 100
+    })
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 6,
+      hl_group = "String",
+      priority = 1
+    })
+
+    screen:expect [[
+      {3:fooba}{2:^r}                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]
+
+    clear_namespace(id, 0, -1)
+
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 6,
+      hl_group = "String",
+      priority = 1
+    })
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 5,
+      hl_group = "Statement",
+      priority = 100
+    })
+
+    screen:expect [[
+      {3:fooba}{2:^r}                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]
+  end)
+
   it('works with multibyte text', function()
     insert([[
       Ta båten över sjön!]])
@@ -699,12 +755,12 @@ describe('Buffer highlighting', function()
       -- TODO: only a virtual text from the same ns curretly overrides
       -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
-      eq({{1, 0, 0, {virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
+      eq({{1, 0, 0, { priority = 0, virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
 
       -- TODO: is this really valid? shouldn't the max be line_count()-1?
       local lastline = line_count()
       set_virtual_text(id1, line_count(), s2, {})
-      eq({{3, lastline, 0, {virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
+      eq({{3, lastline, 0, { priority = 0, virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
 
       eq({}, get_extmarks(id1, {lastline+9000,0}, {lastline+9000, -1}, {}))
     end)

@@ -43,6 +43,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
   colnr_T hl_end = 0;
   Decoration *decor = decor_hl(hl_id);
 
+  decor->priority = DECOR_PRIORITY_BASE;
   // TODO(bfredl): if decoration had blocky mode, we could avoid this loop
   for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
     int end_off = 0;
@@ -84,6 +85,7 @@ Decoration *decor_hl(int hl_id)
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->hl_id = hl_id;
   decor->shared = true;
+  decor->priority = DECOR_PRIORITY_BASE;
   *dp = decor;
   return decor;
 }
@@ -191,12 +193,12 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
     HlRange range;
     if (mark.id&MARKTREE_END_FLAG) {
       range = (HlRange){ altpos.row, altpos.col, mark.row, mark.col,
-                         attr_id, vt, false };
+                         attr_id, decor->priority, vt, false };
     } else {
       range = (HlRange){ mark.row, mark.col, altpos.row,
-                         altpos.col, attr_id, vt, false };
+                         altpos.col, attr_id, decor->priority, vt, false };
     }
-    kv_push(state->active, range);
+    hlrange_activate(range, state);
 
 next_mark:
     if (marktree_itr_node_done(state->itr)) {
@@ -216,6 +218,34 @@ bool decor_redraw_line(buf_T *buf, int row, DecorState *state)
   state->row = row;
   state->col_until = -1;
   return true;  // TODO(bfredl): be more precise
+}
+
+static void hlrange_activate(HlRange range, DecorState *state)
+{
+  // Get size before preparing the push, to have the number of elements
+  size_t s = kv_size(state->active);
+
+  kv_pushp(state->active);
+
+  size_t dest_index = 0;
+
+  // Determine insertion dest_index
+  while (dest_index < s) {
+    HlRange item = kv_A(state->active, dest_index);
+    if (item.priority > range.priority) {
+      break;
+    }
+
+    dest_index++;
+  }
+
+  // Splice
+  for (size_t index = s; index > dest_index; index--) {
+    kv_A(state->active, index) = kv_A(state->active, index-1);
+  }
+
+  // Insert
+  kv_A(state->active, dest_index) = range;
 }
 
 int decor_redraw_col(buf_T *buf, int col, DecorState *state)
@@ -257,9 +287,10 @@ int decor_redraw_col(buf_T *buf, int col, DecorState *state)
 
     int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
     VirtText *vt = kv_size(decor->virt_text) ? &decor->virt_text : NULL;
-    kv_push(state->active, ((HlRange){ mark.row, mark.col,
-                                       endpos.row, endpos.col,
-                                       attr_id, vt, false }));
+    hlrange_activate((HlRange){ mark.row, mark.col,
+                                endpos.row, endpos.col,
+                                attr_id, decor->priority,
+                                vt, false }, state);
 
 next_mark:
     marktree_itr_next(buf->b_marktree, state->itr);
@@ -321,10 +352,10 @@ VirtText *decor_redraw_virt_text(buf_T *buf, DecorState *state)
 }
 
 void decor_add_ephemeral(int attr_id, int start_row, int start_col,
-                         int end_row, int end_col, VirtText *virt_text)
+                         int end_row, int end_col, DecorPriority priority,
+                         VirtText *virt_text)
 {
-  kv_push(decor_state.active,
-          ((HlRange){ start_row, start_col,
-                      end_row, end_col,
-                      attr_id, virt_text, virt_text != NULL }));
+hlrange_activate(((HlRange){ start_row, start_col, end_row, end_col, attr_id,
+                             priority, virt_text, virt_text != NULL }),
+                 &decor_state);
 }

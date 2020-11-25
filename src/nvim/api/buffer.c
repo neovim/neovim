@@ -1122,6 +1122,8 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
         }
         PUT(dict, "virt_text", ARRAY_OBJ(chunks));
       }
+
+      PUT(dict, "priority", INTEGER_OBJ(decor->priority));
     }
 
     if (dict.size) {
@@ -1375,6 +1377,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 
   uint64_t id = 0;
   int line2 = -1, hl_id = 0;
+  DecorPriority priority = DECOR_PRIORITY_BASE;
   colnr_T col2 = 0;
   VirtText virt_text = KV_INITIAL_VALUE;
   for (size_t i = 0; i < opts.size; i++) {
@@ -1446,6 +1449,19 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       if (ERROR_SET(err)) {
         goto error;
       }
+    } else if (strequal("priority",  k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "priority is not a Number of the correct size");
+        goto error;
+      }
+
+      if (v->data.integer < 0 || v->data.integer > UINT16_MAX) {
+        api_set_error(err, kErrorTypeValidation,
+                      "priority is not a valid value");
+        goto error;
+      }
+      priority = (DecorPriority)v->data.integer;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1479,7 +1495,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       *vt_allocated = virt_text;
     }
     decor_add_ephemeral(attr_id, (int)line, (colnr_T)col,
-                        (int)line2, (colnr_T)col2, vt_allocated);
+                        (int)line2, (colnr_T)col2, priority, vt_allocated);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
@@ -1492,6 +1508,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       decor->virt_text = virt_text;
     } else if (hl_id) {
       decor = decor_hl(hl_id);
+      decor->priority = priority;
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
