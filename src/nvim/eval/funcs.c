@@ -2809,14 +2809,18 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type == VAR_BLOB) {
     bool error = false;
-    const int idx = tv_get_number_chk(&argvars[1], &error);
+    int idx = tv_get_number_chk(&argvars[1], &error);
 
     if (!error) {
       rettv->v_type = VAR_NUMBER;
-      if (idx >= tv_blob_len(argvars[0].vval.v_blob)) {
-        EMSGN(_(e_blobidx), idx);
+      if (idx < 0) {
+        idx = tv_blob_len(argvars[0].vval.v_blob) + idx;
+      }
+      if (idx < 0 || idx >= tv_blob_len(argvars[0].vval.v_blob)) {
+        rettv->vval.v_number = -1;
       } else {
         rettv->vval.v_number = tv_blob_get(argvars[0].vval.v_blob, idx);
+        tv = rettv;
       }
     }
   } else if (argvars[0].v_type == VAR_LIST) {
