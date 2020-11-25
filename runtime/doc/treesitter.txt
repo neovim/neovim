@@ -47,7 +47,7 @@ Whenever you need to access the current syntax tree, parse the buffer: >
 
     tstree = parser:parse()
 
-<This will return an immutable tree that represents the current state of the
+<This will return a table of immutable trees that represent the current state of the
 buffer. When the plugin wants to access the state after a (possible) edit
 it should call `parse()` again. If the buffer wasn't edited, the same tree will
 be returned again without extra work. If the buffer was parsed before,
