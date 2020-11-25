@@ -11006,7 +11006,11 @@ static void f_win_gettype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
   }
-  if (wp->w_floating) {
+  if (wp == aucmd_win) {
+    rettv->vval.v_string = vim_strsave((char_u *)"aucmdwin");
+  } else if (wp->w_p_pvw) {
+    rettv->vval.v_string = vim_strsave((char_u *)"preview");
+  } else if (wp->w_floating) {
     rettv->vval.v_string = vim_strsave((char_u *)"popup");
   } else if (wp == curwin && cmdwin_type != 0) {
     rettv->vval.v_string = vim_strsave((char_u *)"command");

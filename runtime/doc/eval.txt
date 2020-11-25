@@ -9280,7 +9280,10 @@ win_getid([{win} [, {tab}]])				*win_getid()*
 
 win_gettype([{nr}])					*win_gettype()*
 		Return the type of the window:
+			"aucmdwin"	autocommand window. Temporary window
+					used to execute autocommands.
 			"popup"		popup window |popup|
+			"preview"	preview window |preview-window|
 			"command"	command-line window |cmdwin|
 			(empty)		normal window
 			"unknown"	window {nr} not found
