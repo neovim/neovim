@@ -1,5 +1,5 @@
 _stat() {
-  if test "${TRAVIS_OS_NAME}" = osx ; then
+  if test "${CI_OS_NAME}" = osx ; then
     stat -f %Sm "${@}"
   else
     stat -c %y "${@}"

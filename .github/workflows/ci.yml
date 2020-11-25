@@ -1,21 +1,31 @@
-name: Linux CI
+name: CI
 on: [push, pull_request]
 
 jobs:
-  linux:
-    name: ${{ matrix.flavor }} (cc=${{ matrix.cc }})
-    runs-on: ubuntu-20.04
+  build:
+    name: ${{ matrix.os }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
       matrix:
         include:
           - flavor: asan
             cc: clang-11
+            runner: ubuntu-20.04
+            os: linux
           - flavor: lint
             cc: gcc
+            runner: ubuntu-20.04
+            os: linux
           - flavor: tsan
             cc: clang-11
+            runner: ubuntu-20.04
+            os: linux
+          - cc: clang
+            runner: macos-10.15
+            os: osx
+    runs-on: ${{ matrix.runner }}
     env:
       CC: ${{ matrix.cc }}
+      CI_OS_NAME: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
 
@@ -29,6 +39,7 @@ jobs:
           sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
 
       - name: Install apt packages
+        if: matrix.os == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
@@ -36,6 +47,13 @@ jobs:
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: sudo apt-get install -y clang-11
+
+      - name: Install brew packages
+        if: matrix.os == 'osx'
+        run: |
+          brew update >/dev/null
+          brew install automake ccache cpanminus ninja
+          brew upgrade
 
       - name: Setup interpreter packages
         run: |
