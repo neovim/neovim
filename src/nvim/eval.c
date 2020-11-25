@@ -6449,7 +6449,8 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
       for (int i = 0; i < b->bv_ga.ga_len; i++) {
         typval_T tv;
         tv.v_type = VAR_NUMBER;
-        tv.vval.v_number = tv_blob_get(b, i);
+        const varnumber_T val = tv_blob_get(b, i);
+        tv.vval.v_number = val;
         vimvars[VV_KEY].vv_nr = idx;
         if (filter_map_one(&tv, expr, map, &rem) == FAIL || did_emsg) {
           break;
@@ -6458,14 +6459,17 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
           EMSG(_(e_invalblob));
           return;
         }
-        tv.v_type = VAR_NUMBER;
-        tv_blob_set(b, i, tv.vval.v_number);
-        if (!map && rem) {
+        if (map) {
+          if (tv.vval.v_number != val) {
+            tv_blob_set(b, i, tv.vval.v_number);
+          }
+        } else if (rem) {
           char_u *const p = (char_u *)argvars[0].vval.v_blob->bv_ga.ga_data;
-          memmove(p + idx, p + i + 1, (size_t)b->bv_ga.ga_len - i - 1);
+          memmove(p + i, p + i + 1, (size_t)b->bv_ga.ga_len - i - 1);
           b->bv_ga.ga_len--;
           i--;
         }
+        idx++;
       }
     } else {
       assert(argvars[0].v_type == VAR_LIST);

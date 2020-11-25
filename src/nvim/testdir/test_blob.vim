@@ -260,18 +260,22 @@ endfunc
 
 " filter() item in blob
 func Test_blob_filter()
-  let b = 0zDEADBEEF
-  call filter(b, 'v:val != 0xEF')
-  call assert_equal(0zDEADBE, b)
+  call assert_equal(0z, filter(0zDEADBEEF, '0'))
+  call assert_equal(0zADBEEF, filter(0zDEADBEEF, 'v:val != 0xDE'))
+  call assert_equal(0zDEADEF, filter(0zDEADBEEF, 'v:val != 0xBE'))
+  call assert_equal(0zDEADBE, filter(0zDEADBEEF, 'v:val != 0xEF'))
+  call assert_equal(0zDEADBEEF, filter(0zDEADBEEF, '1'))
+  call assert_equal(0z01030103, filter(0z010203010203, 'v:val != 0x02'))
+  call assert_equal(0zADEF, filter(0zDEADBEEF, 'v:key % 2'))
 endfunc
 
 " map() item in blob
 func Test_blob_map()
-  let b = 0zDEADBEEF
-  call map(b, 'v:val + 1')
-  call assert_equal(0zDFAEBFF0, b)
+  call assert_equal(0zDFAEBFF0, map(0zDEADBEEF, 'v:val + 1'))
+  call assert_equal(0z00010203, map(0zDEADBEEF, 'v:key'))
+  call assert_equal(0zDEAEC0F2, map(0zDEADBEEF, 'v:key + v:val'))
 
-  call assert_fails("call map(b, '[9]')", 'E978:')
+  call assert_fails("call map(0z00, '[9]')", 'E978:')
 endfunc
 
 func Test_blob_index()
