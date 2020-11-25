@@ -23,7 +23,7 @@ setlocal foldcolumn=0 colorcolumn=0 nolist nofoldenable
 
 setlocal tagfunc=man#goto_tag
 
-if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
+if !get(g:, 'no_plugin_maps', 0) && !get(g:, 'no_man_maps', 0)
   nnoremap <silent> <buffer> j          gj
   nnoremap <silent> <buffer> k          gk
   nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
@@ -41,4 +41,4 @@ if get(g:, 'ft_man_folding_enable', 0)
 endif
 
 let b:undo_ftplugin = ''
-" vim: set sw=2:
+" vim: set et sw=2:
