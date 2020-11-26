@@ -120,9 +120,7 @@ local function get_line_byte_from_position(bufnr, position)
   return col
 end
 
---- Applies a list of text edits to a buffer.
---@param text_edits (table) list of `TextEdit` objects
---@param buf_nr (number) Buffer id
+--- Process and return progress reports from lsp server
 function M.get_progress_messages()
 
   local new_messages = {}
