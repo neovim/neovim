@@ -796,6 +796,29 @@ func Test_cmdwin_feedkeys()
   call feedkeys("q:\<CR>", 'x')
 endfunc
 
+" Tests for the issues fixed in 7.4.441.
+" When 'cedit' is set to Ctrl-C, opening the command window hangs Vim
+func Test_cmdwin_cedit()
+  exe "set cedit=\<C-c>"
+  normal! :
+  call assert_equal(1, winnr('$'))
+
+  let g:cmd_wintype = ''
+  func CmdWinType()
+      let g:cmd_wintype = getcmdwintype()
+      let g:wintype = win_gettype()
+      return ''
+  endfunc
+
+  call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
+  echo input('')
+  call assert_equal('@', g:cmd_wintype)
+  call assert_equal('command', g:wintype)
+
+  set cedit&vim
+  delfunc CmdWinType
+endfunc
+
 func Test_buffers_lastused()
   " check that buffers are sorted by time when wildmode has lastused
   edit bufc " oldest

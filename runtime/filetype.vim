@@ -693,15 +693,9 @@ au BufNewFile,BufRead *.haml			setf haml
 
 " Hamster Classic | Playground files
 au BufNewFile,BufRead *.hsm	  		setf hamster
-au BufNewFile,BufRead *.hsc
-	\ if match(join(getline(1,10), "\n"), '\%(^\|\n\)\s*\%({-#\_s*LANGUAGE\>\|\<module\>\)') != -1 |
-	\   setf haskell |
-	\ else |
-	\   setf hamster |
-	\ endif
 
 " Haskell
-au BufNewFile,BufRead *.hs,*.hs-boot		setf haskell
+au BufNewFile,BufRead *.hs,*.hsc,*.hs-boot	setf haskell
 au BufNewFile,BufRead *.lhs			setf lhaskell
 au BufNewFile,BufRead *.chs			setf chaskell
 au BufNewFile,BufRead cabal.project		setf cabalproject

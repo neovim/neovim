@@ -442,4 +442,302 @@ func Test_visual_put_in_block()
   bwipe!
 endfunc
 
+" Visual modes (v V CTRL-V) followed by an operator; count; repeating
+func Test_visual_mode_op()
+  new
+  call append(0, '')
+
+  call setline(1, 'apple banana cherry')
+  call cursor(1, 1)
+  normal lvld.l3vd.
+  call assert_equal('a y', getline(1))
+
+  call setline(1, ['line 1 line 1', 'line 2 line 2', 'line 3 line 3',
+        \ 'line 4 line 4', 'line 5 line 5', 'line 6 line 6'])
+  call cursor(1, 1)
+  exe "normal Vcnewline\<Esc>j.j2Vd."
+  call assert_equal(['newline', 'newline'], getline(1, '$'))
+
+  call deletebufline('', 1, '$')
+  call setline(1, ['xxxxxxxxxxxxx', 'xxxxxxxxxxxxx', 'xxxxxxxxxxxxx',
+        \ 'xxxxxxxxxxxxx'])
+  exe "normal \<C-V>jlc  \<Esc>l.l2\<C-V>c----\<Esc>l."
+  call assert_equal(['    --------x',
+        \ '    --------x',
+        \ 'xxxx--------x',
+        \ 'xxxx--------x'], getline(1, '$'))
+
+  bwipe!
+endfunc
+
+" Visual mode maps (movement and text object)
+" Visual mode maps; count; repeating
+"   - Simple
+"   - With an Ex command (custom text object)
+func Test_visual_mode_maps()
+  new
+  call append(0, '')
+
+  func SelectInCaps()
+    let [line1, col1] = searchpos('\u', 'bcnW')
+    let [line2, col2] = searchpos('.\u', 'nW')
+    call setpos("'<", [0, line1, col1, 0])
+    call setpos("'>", [0, line2, col2, 0])
+    normal! gv
+  endfunction
+
+  vnoremap W /\u/s-1<CR>
+  vnoremap iW :<C-U>call SelectInCaps()<CR>
+
+  call setline(1, 'KiwiRaspberryDateWatermelonPeach')
+  call cursor(1, 1)
+  exe "normal vWcNo\<Esc>l.fD2vd."
+  call assert_equal('NoNoberryach', getline(1))
+
+  call setline(1, 'JambuRambutanBananaTangerineMango')
+  call cursor(1, 1)
+  exe "normal llviWc-\<Esc>l.l2vdl."
+  call assert_equal('--ago', getline(1))
+
+  vunmap W
+  vunmap iW
+  bwipe!
+  delfunc SelectInCaps
+endfunc
+
+" Operator-pending mode maps (movement and text object)
+"   - Simple
+"   - With Ex command moving the cursor
+"   - With Ex command and Visual selection (custom text object)
+func Test_visual_oper_pending_mode_maps()
+  new
+  call append(0, '')
+
+  func MoveToCap()
+    call search('\u', 'W')
+  endfunction
+
+  func SelectInCaps()
+    let [line1, col1] = searchpos('\u', 'bcnW')
+    let [line2, col2] = searchpos('.\u', 'nW')
+    call setpos("'<", [0, line1, col1, 0])
+    call setpos("'>", [0, line2, col2, 0])
+    normal! gv
+  endfunction
+
+  onoremap W /\u/<CR>
+  onoremap <Leader>W :<C-U>call MoveToCap()<CR>
+  onoremap iW :<C-U>call SelectInCaps()<CR>
+
+  call setline(1, 'PineappleQuinceLoganberryOrangeGrapefruitKiwiZ')
+  call cursor(1, 1)
+  exe "normal cW-\<Esc>l.l2.l."
+  call assert_equal('----Z', getline(1))
+
+  call setline(1, 'JuniperDurianZ')
+  call cursor(1, 1)
+  exe "normal g?\WfD."
+  call assert_equal('WhavcreQhevnaZ', getline(1))
+
+  call setline(1, 'LemonNectarineZ')
+  call cursor(1, 1)
+  exe "normal yiWPlciWNew\<Esc>fr."
+  call assert_equal('LemonNewNewZ', getline(1))
+
+  ounmap W
+  ounmap <Leader>W
+  ounmap iW
+  bwipe!
+  delfunc MoveToCap
+  delfunc SelectInCaps
+endfunc
+
+" Patch 7.3.879: Properly abort Operator-pending mode for "dv:<Esc>" etc.
+func Test_op_pend_mode_abort()
+  new
+  call append(0, '')
+
+  call setline(1, ['zzzz', 'zzzz'])
+  call cursor(1, 1)
+
+  exe "normal dV:\<CR>dv:\<CR>"
+  call assert_equal(['zzz'], getline(1, 2))
+  set nomodifiable
+  call assert_fails('exe "normal d:\<CR>"', 'E21:')
+  set modifiable
+  call feedkeys("dv:\<Esc>dV:\<Esc>", 'xt')
+  call assert_equal(['zzz'], getline(1, 2))
+  set nomodifiable
+  let v:errmsg = ''
+  call feedkeys("d:\<Esc>", 'xt')
+  call assert_true(v:errmsg !~# '^E21:')
+  set modifiable
+
+  bwipe!
+endfunc
+
+func Test_characterwise_visual_mode()
+  new
+
+  " characterwise visual mode: replace last line
+  $put ='a'
+  let @" = 'x'
+  normal v$p
+  call assert_equal('x', getline('$'))
+
+  " characterwise visual mode: delete middle line
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  normal G
+  normal kkv$d
+  call assert_equal(['', 'b', 'c'], getline(1, '$'))
+
+  " characterwise visual mode: delete middle two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  normal Gkkvj$d
+  call assert_equal(['', 'c'], getline(1, '$'))
+
+  " characterwise visual mode: delete last line
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  normal Gv$d
+  call assert_equal(['', 'a', 'b', ''], getline(1, '$'))
+
+  " characterwise visual mode: delete last two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  normal Gkvj$d
+  call assert_equal(['', 'a', ''], getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_characterwise_select_mode()
+  new
+
+  " Select mode maps
+  snoremap <lt>End> <End>
+  snoremap <lt>Down> <Down>
+  snoremap <lt>Del> <Del>
+
+  " characterwise select mode: delete middle line
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal Gkkgh\<End>\<Del>"
+  call assert_equal(['', 'b', 'c'], getline(1, '$'))
+
+  " characterwise select mode: delete middle two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal Gkkgh\<Down>\<End>\<Del>"
+  call assert_equal(['', 'c'], getline(1, '$'))
+
+  " characterwise select mode: delete last line
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal Ggh\<End>\<Del>"
+  call assert_equal(['', 'a', 'b', ''], getline(1, '$'))
+
+  " characterwise select mode: delete last two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal Gkgh\<Down>\<End>\<Del>"
+  call assert_equal(['', 'a', ''], getline(1, '$'))
+
+  sunmap <lt>End>
+  sunmap <lt>Down>
+  sunmap <lt>Del>
+  bwipe!
+endfunc
+
+func Test_linewise_select_mode()
+  new
+
+  " linewise select mode: delete middle line
+  call append('$', ['a', 'b', 'c'])
+  exe "normal GkkgH\<Del>"
+  call assert_equal(['', 'b', 'c'], getline(1, '$'))
+
+
+  " linewise select mode: delete middle two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal GkkgH\<Down>\<Del>"
+  call assert_equal(['', 'c'], getline(1, '$'))
+
+  " linewise select mode: delete last line
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal GgH\<Del>"
+  call assert_equal(['', 'a', 'b'], getline(1, '$'))
+
+  " linewise select mode: delete last two lines
+  call deletebufline('', 1, '$')
+  call append('$', ['a', 'b', 'c'])
+  exe "normal GkgH\<Down>\<Del>"
+  call assert_equal(['', 'a'], getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_visual_mode_put()
+  new
+
+  " v_p: replace last character with line register at middle line
+  call append('$', ['aaa', 'bbb', 'ccc'])
+  normal G
+  -2yank
+  normal k$vp
+  call assert_equal(['', 'aaa', 'bb', 'aaa', '', 'ccc'], getline(1, '$'))
+
+  " v_p: replace last character with line register at middle line selecting
+  " newline
+  call deletebufline('', 1, '$')
+  call append('$', ['aaa', 'bbb', 'ccc'])
+  normal G
+  -2yank
+  normal k$v$p
+  call assert_equal(['', 'aaa', 'bb', 'aaa', 'ccc'], getline(1, '$'))
+
+  " v_p: replace last character with line register at last line
+  call deletebufline('', 1, '$')
+  call append('$', ['aaa', 'bbb', 'ccc'])
+  normal G
+  -2yank
+  normal $vp
+  call assert_equal(['', 'aaa', 'bbb', 'cc', 'aaa', ''], getline(1, '$'))
+
+  " v_p: replace last character with line register at last line selecting
+  " newline
+  call deletebufline('', 1, '$')
+  call append('$', ['aaa', 'bbb', 'ccc'])
+  normal G
+  -2yank
+  normal $v$p
+  call assert_equal(['', 'aaa', 'bbb', 'cc', 'aaa', ''], getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_select_mode_gv()
+  new
+
+  " gv in exclusive select mode after operation
+  call append('$', ['zzz ', 'Ã¤Ã '])
+  set selection=exclusive
+  normal Gkv3lyjv3lpgvcxxx
+  call assert_equal(['', 'zzz ', 'xxx '], getline(1, '$'))
+
+  " gv in exclusive select mode without operation
+  call deletebufline('', 1, '$')
+  call append('$', 'zzz ')
+  set selection=exclusive
+  exe "normal G0v3l\<Esc>gvcxxx"
+  call assert_equal(['', 'xxx '], getline(1, '$'))
+
+  set selection&vim
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

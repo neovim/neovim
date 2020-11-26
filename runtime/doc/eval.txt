@@ -2487,6 +2487,7 @@ wait({timeout}, {condition}[, {interval}])
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_findbuf({bufnr})		List	find windows containing {bufnr}
 win_getid([{win} [, {tab}]])	Number	get |window-ID| for {win} in {tab}
+win_gettype([{nr}])		String	type of window {nr}
 win_gotoid({expr})		Number	go to |window-ID| {expr}
 win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
 win_id2win({expr})		Number	get window nr from |window-ID|
@@ -9276,6 +9277,24 @@ win_getid([{win} [, {tab}]])				*win_getid()*
 		Without {tab} use the current tab, otherwise the tab with
 		number {tab}.  The first tab has number one.
 		Return zero if the window cannot be found.
+
+win_gettype([{nr}])					*win_gettype()*
+		Return the type of the window:
+			"autocmd"	autocommand window. Temporary window
+					used to execute autocommands.
+			"popup"		popup window |popup|
+			"preview"	preview window |preview-window|
+			"command"	command-line window |cmdwin|
+			(empty)		normal window
+			"unknown"	window {nr} not found
+
+		When {nr} is omitted return the type of the current window.
+		When {nr} is given return the type of this window by number or
+		|window-ID|.
+
+		Also see the 'buftype' option.  When running a terminal in a
+		popup window then 'buftype' is "terminal" and win_gettype()
+		returns "popup".
 
 win_gotoid({expr})					*win_gotoid()*
 		Go to window with ID {expr}.  This may also change the current

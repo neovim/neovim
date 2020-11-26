@@ -696,6 +696,7 @@ func Test_OptionSet_diffmode_close()
   call setline(1, ['buffer 2', 'line 2', 'line 3', 'line4'])
   call assert_fails(':diffthis', 'E788')
   call assert_equal(1, &diff)
+  set diffopt-=closeoff
   bw!
   call assert_fails(':diffoff!', 'E788')
   bw!
@@ -1856,6 +1857,29 @@ func Test_FileChangedShell_reload()
   call delete('Xchanged')
 endfunc
 
+func LogACmd()
+  call add(g:logged, line('$'))
+endfunc
+
+func Test_TermChanged()
+  throw 'skipped: Nvim does not support TermChanged event'
+  CheckNotGui
+
+  enew!
+  tabnew
+  call setline(1, ['a', 'b', 'c', 'd'])
+  $
+  au TermChanged * call LogACmd()
+  let g:logged = []
+  let term_save = &term
+  set term=xterm
+  call assert_equal([1, 4], g:logged)
+
+  au! TermChanged
+  let &term = term_save
+  bwipe!
+endfunc
+
 " Test for FileReadCmd autocmd
 func Test_autocmd_FileReadCmd()
   func ReadFileCmd()
@@ -1908,6 +1932,28 @@ func Test_autocmd_sigusr1()
 
   au! Signal
   unlet g:sigusr1_passed
+endfunc
+
+" Test for the temporary internal window used to execute autocmds
+func Test_autocmd_window()
+  %bw!
+  edit one.txt
+  tabnew two.txt
+  let g:blist = []
+  augroup aucmd_win_test
+    au!
+    au BufEnter * call add(g:blist, [expand('<afile>'),
+          \ win_gettype(bufwinnr(expand('<afile>')))])
+  augroup END
+
+  doautoall BufEnter
+  call assert_equal([['one.txt', 'autocmd'], ['two.txt', '']], g:blist)
+
+  augroup aucmd_win_test
+    au!
+  augroup END
+  augroup! aucmd_win_test
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
