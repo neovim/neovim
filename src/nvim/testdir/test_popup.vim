@@ -735,20 +735,25 @@ func Test_popup_and_preview_autocommand()
 endfunc
 
 func Test_popup_and_previewwindow_dump()
-  if !CanRunVimInTerminal()
-    return
-  endif
-  call writefile([
-    \ 'set previewheight=9',
-    \ 'silent! pedit',
-    \ 'call setline(1, map(repeat(["ab"], 10), "v:val. v:key"))',
-    \ 'exec "norm! G\<C-E>\<C-E>"',
-	\ ], 'Xscript')
+  CheckScreendump
+  CheckFeature quickfix
+
+  let lines =<< trim END
+    set previewheight=9
+    silent! pedit
+    call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+    exec "norm! G\<C-E>\<C-E>"
+  END
+  call writefile(lines, 'Xscript')
   let buf = RunVimInTerminal('-S Xscript', {})
 
+  " wait for the script to finish
+  call term_wait(buf)
+
   " Test that popup and previewwindow do not overlap.
-  call term_sendkeys(buf, "o\<C-X>\<C-N>")
-  sleep 100m
+  call term_sendkeys(buf, "o")
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
   call VerifyScreenDump(buf, 'Test_popup_and_previewwindow_01', {})
 
   call term_sendkeys(buf, "\<Esc>u")
