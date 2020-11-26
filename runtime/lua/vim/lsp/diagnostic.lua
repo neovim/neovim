@@ -509,7 +509,7 @@ end
 
 --- Get the previous diagnostic closest to the cursor_position
 ---
----@param opts table See |vim.lsp.diagnostics.goto_next()|
+---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Previous diagnostic
 function M.get_prev(opts)
   opts = opts or {}
@@ -522,7 +522,7 @@ function M.get_prev(opts)
 end
 
 --- Return the pos, {row, col}, for the prev diagnostic in the current buffer.
----@param opts table See |vim.lsp.diagnostics.goto_next()|
+---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Previous diagnostic position
 function M.get_prev_pos(opts)
   return _iter_diagnostic_lines_pos(
@@ -532,7 +532,7 @@ function M.get_prev_pos(opts)
 end
 
 --- Move to the previous diagnostic
----@param opts table See |vim.lsp.diagnostics.goto_next()|
+---@param opts table See |vim.lsp.diagnostic.goto_next()|
 function M.goto_prev(opts)
   return _iter_diagnostic_move_pos(
     "DiagnosticPrevious",
@@ -542,7 +542,7 @@ function M.goto_prev(opts)
 end
 
 --- Get the previous diagnostic closest to the cursor_position
----@param opts table See |vim.lsp.diagnostics.goto_next()|
+---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Next diagnostic
 function M.get_next(opts)
   opts = opts or {}
@@ -555,7 +555,7 @@ function M.get_next(opts)
 end
 
 --- Return the pos, {row, col}, for the next diagnostic in the current buffer.
----@param opts table See |vim.lsp.diagnostics.goto_next()|
+---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Next diagnostic position
 function M.get_next_pos(opts)
   return _iter_diagnostic_lines_pos(
