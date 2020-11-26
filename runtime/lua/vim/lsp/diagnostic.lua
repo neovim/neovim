@@ -626,15 +626,15 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   bufnr = get_bufnr(bufnr)
 
   -- render diagnostic sign
-  local render_sign = function(severity,priority,diagnostic_lnum)
+  local render_sign = function(severity,diag_priority,diag_lnum)
     local status,_ = pcall(vim.fn.sign_place,
       0,
       sign_ns,
       sign_highlight_map[severity],
       bufnr,
       {
-        priority = priority,
-        lnum = diagnostic_lnum
+        priority = diag_priority,
+        lnum = diag_lnum
       }
     )
     return status
@@ -642,11 +642,11 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
 
   local ok = true
   for _, diagnostic in ipairs(diagnostics) do
-    local diagnostic_lnum = diagnostic.range.start.line + 1
+    local diag_lnum = diagnostic.range.start.line + 1
     if severity_limit then
-      ok = render_sign(severity_limit,priority,diagnostic_lnum)
+      ok = render_sign(severity_limit,priority,diag_lnum)
     else
-      ok = render_sign(diagnostic.severity,priority,diagnostic_lnum)
+      ok = render_sign(diagnostic.severity,priority,diag_lnum)
     end
   end
 
