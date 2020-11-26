@@ -744,12 +744,17 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   opts = opts or {}
   local prefix = opts.prefix or "■"
   local spacing = opts.spacing or 4
+  local severity_level = opts.severity_level or nil
 
   -- Create a little more space between virtual text and contents
   local virt_texts = {{string.rep(" ", spacing)}}
 
   for i = 1, #line_diags - 1 do
-    table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
+    if severity == nil then
+      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
+    else
+      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i][severity_level]]})
+    end
   end
   local last = line_diags[#line_diags]
 
