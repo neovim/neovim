@@ -542,7 +542,7 @@ completion.
 Command modifiers may be used.  For example, to open in a vertical split: >
 	:vertical Man printf
 
-|:Man| also generates tags for man pages with prefixes matching {name} within
+`:Man` also generates tags for man pages with prefixes matching {name} within
 a section.  You can use tag commands like |:tselect| to easily access these
 other man pages. |tagsrch.txt|
 
@@ -576,15 +576,15 @@ g:no_man_maps		Disable local mappings for man buffers.
 To use Neovim as a man pager put this in your environment: >
 	export MANPAGER='nvim +Man!'
 
-Note that man will pre-format the text using groff.  Therefore Neovim will
-inevitably display the manual page as it was passed to it from stdin:
-hard-wrapped.  If you prefer soft-wrapping, you can try setting MANWIDTH to a
-very large number, e.g.: >
+Note that man will pre-format the text using groff.  Therefore the MANPAGER
+(Neovim here) will inevitably display the manual page as it was passed to it
+from stdin: hard-wrapped to the number of columns specified by MANWIDTH or to
+the width of the terminal if MANWIDTH is empty.  If you prefer soft-wrapping,
+you can try setting MANWIDTH to a very large number, e.g.: >
 	export MANWIDTH=999
-and setting 'wrap', so that groff's pre-formatted output looks generally
-closer to soft-wrapping (unless a paragraph is more than 999 characters
-long!).  Take into account that the top heading of the man page will then
-expand several lines.
+so that groff's pre-formatted output looks the same as when using `:Man` with
+"g:man_hardwrap" set to false.  Take into account that the top heading of
+the man page will then expand several lines.
 
 
 PDF							*ft-pdf-plugin*
