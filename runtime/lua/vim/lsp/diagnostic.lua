@@ -610,6 +610,9 @@ end
 ---             - priority: Set the priority of the signs.
 function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   opts = opts or {}
+  local severity_limit = opts.severity_limit
+  local priority = opts.priority
+
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
 
   if not diagnostics then
@@ -622,18 +625,29 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
 
   bufnr = get_bufnr(bufnr)
 
-  local ok = true
-  for _, diagnostic in ipairs(diagnostics) do
-    ok = ok and pcall(vim.fn.sign_place,
+  -- render diagnostic sign
+  local render_sign = function(severity,priority,diagnostic_lnum)
+    local status,_ = pcall(vim.fn.sign_place,
       0,
       sign_ns,
-      sign_highlight_map[diagnostic.severity],
+      sign_highlight_map[severity],
       bufnr,
       {
-        priority = opts.priority,
-        lnum = diagnostic.range.start.line + 1
+        priority = priority,
+        lnum = diagnostic_lnum
       }
     )
+    return status
+  end
+
+  local ok = true
+  for _, diagnostic in ipairs(diagnostics) do
+    local diagnostic_lnum = diagnostic.range.start.line + 1
+    if severity_limit then
+      ok = render_sign(severity_limit,priority,diagnostic_lnum)
+    else
+      ok = render_sign(diagnostic.severity,priority,diagnostic_lnum)
+    end
   end
 
   if not ok then
@@ -750,10 +764,10 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   local virt_texts = {{string.rep(" ", spacing)}}
 
   for i = 1, #line_diags - 1 do
-    if not severity_limit then
-      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
+    if severity_limit then
+      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i][severity_limit]]})
     else
-      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i][severity_level]]})
+      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
     end
   end
   local last = line_diags[#line_diags]
