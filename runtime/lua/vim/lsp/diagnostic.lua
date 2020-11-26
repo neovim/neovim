@@ -750,7 +750,7 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   local virt_texts = {{string.rep(" ", spacing)}}
 
   for i = 1, #line_diags - 1 do
-    if severity == nil then
+    if severity_level == nil then
       table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
     else
       table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i][severity_level]]})
