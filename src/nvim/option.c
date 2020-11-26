@@ -3071,6 +3071,13 @@ ambw_end:
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
     }
+  } else if (varp == &p_tst) {  // 'treesitter'
+    Error err = ERROR_INIT;
+    nlua_exec(cstr_as_string("vim.treesitter.parse_option()"),
+              (Array)ARRAY_DICT_INIT, &err);
+    if (ERROR_SET(&err)) {
+      errmsg = (char_u *)err.msg;
+    }
   } else {
     // Options that are a list of flags.
     p = NULL;

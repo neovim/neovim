@@ -2909,6 +2909,14 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='treesitter',
+      short_desc=N_("control which tree-sitter features to enable"),
+      type='string', list='onecomma', scope = { 'global' },
+      redraw={'current_window'},
+      varname='p_tst',
+      defaults={if_true={vi="hl"}}
+    },
+    {
       full_name='ttimeout',
       short_desc=N_("out on mappings"),
       type='bool', scope={'global'},
