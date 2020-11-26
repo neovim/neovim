@@ -9399,7 +9399,7 @@ static void ex_match(exarg_T *eap)
 
 static void ex_fold(exarg_T *eap)
 {
-  if (foldManualAllowed(true)) {
+  if (foldManualAllowed(curwin, true)) {
     pos_T start = { eap->line1, 1, 0 };
     pos_T end = { eap->line2, 1, 0 };
     foldCreate(curwin, start, end);

@@ -4376,7 +4376,7 @@ dozet:
   /* "zF": create fold command */
   /* "zf": create fold operator */
   case 'F':
-  case 'f':   if (foldManualAllowed(true)) {
+  case 'f':   if (foldManualAllowed(curwin, true)) {
       cap->nchar = 'f';
       nv_operator(cap);
       curwin->w_p_fen = true;
@@ -4393,7 +4393,7 @@ dozet:
   /* "zd": delete fold at cursor */
   /* "zD": delete fold at cursor recursively */
   case 'd':
-  case 'D':   if (foldManualAllowed(false)) {
+  case 'D':   if (foldManualAllowed(curwin, false)) {
       if (VIsual_active) {
         nv_operator(cap);
       } else {

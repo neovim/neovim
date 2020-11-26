@@ -748,12 +748,18 @@ void curs_columns(
     curs_rows(wp);
   }
 
-  /*
-   * Compute the number of virtual columns.
-   */
-  if (wp->w_cline_folded) {
+  // Compute the number of virtual columns.
+  if (curwin->w_cline_folded) {
+    fold_T *fp = NULL;                    ///< current fold when found
+    linenr_T lnum = curwin->w_valid_cursor.lnum;
+
     // In a folded line the cursor is always in the first column
-    startcol = wp->w_virtcol = endcol = wp->w_leftcol;
+    // use virtcol or if inside the fold, use the start of the fold
+    // assume w_valid_cursor.lnum is valid, TODO store it instead
+    bool fold_found = foldFind(&curwin->w_folds, lnum, &fp);
+    // TODO use fp->fd_startcol
+
+    startcol = curwin->w_virtcol = endcol = curwin->w_leftcol;
   } else {
     getvvcol(wp, &wp->w_cursor, &startcol, &(wp->w_virtcol), &endcol);
   }

@@ -309,6 +309,7 @@ static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
 static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
+static char *(p_fds_values[]) =       { "inline", "syntax", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
@@ -2989,6 +2990,16 @@ ambw_end:
         newFoldLevel();
       }
     }
+  } else if (gvarp == &curwin->w_allbuf_opt.wo_fds) {  // 'foldsettings'
+    if (check_opt_strings(*varp, p_fds_values, false) != OK
+        || *curwin->w_p_fds == NUL) {
+      errmsg = e_invarg;
+    } else {
+    //   foldUpdateAll(curwin);
+    //   if (foldmethodIsDiff(curwin)) {
+    //     newFoldLevel();
+    //   }
+    }
   } else if (varp == &curwin->w_p_fde) {  // 'foldexpr'
     if (foldmethodIsExpr(curwin)) {
       foldUpdateAll(curwin);
@@ -5158,19 +5169,19 @@ int makeset(FILE *fd, int opt_flags, int local_only)
 
 /// Generate set commands for the local fold options only.  Used when
 /// 'sessionoptions' or 'viewoptions' contains "folds" but not "options".
-int makefoldset(FILE *fd)
+int makefoldset(FILE *fd, win_T *const wp)
 {
-  if (put_setstring(fd, "setlocal", "fdm", &curwin->w_p_fdm, 0) == FAIL
-      || put_setstring(fd, "setlocal", "fde", &curwin->w_p_fde, 0)
+  if (put_setstring(fd, "setlocal", "fdm", &wp->w_p_fdm, 0) == FAIL
+      || put_setstring(fd, "setlocal", "fde", &wp->w_p_fde, 0)
       == FAIL
-      || put_setstring(fd, "setlocal", "fmr", &curwin->w_p_fmr, 0)
+      || put_setstring(fd, "setlocal", "fmr", &wp->w_p_fmr, 0)
       == FAIL
-      || put_setstring(fd, "setlocal", "fdi", &curwin->w_p_fdi, 0)
+      || put_setstring(fd, "setlocal", "fdi", &wp->w_p_fdi, 0)
       == FAIL
-      || put_setnum(fd, "setlocal", "fdl", &curwin->w_p_fdl) == FAIL
-      || put_setnum(fd, "setlocal", "fml", &curwin->w_p_fml) == FAIL
-      || put_setnum(fd, "setlocal", "fdn", &curwin->w_p_fdn) == FAIL
-      || put_setbool(fd, "setlocal", "fen", curwin->w_p_fen) == FAIL
+      || put_setnum(fd, "setlocal", "fdl", &wp->w_p_fdl) == FAIL
+      || put_setnum(fd, "setlocal", "fml", &wp->w_p_fml) == FAIL
+      || put_setnum(fd, "setlocal", "fdn", &wp->w_p_fdn) == FAIL
+      || put_setbool(fd, "setlocal", "fen", wp->w_p_fen) == FAIL
       ) {
     return FAIL;
   }
@@ -5537,6 +5548,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_FDI:    return (char_u *)&(curwin->w_p_fdi);
   case PV_FDL:    return (char_u *)&(curwin->w_p_fdl);
   case PV_FDM:    return (char_u *)&(curwin->w_p_fdm);
+  case PV_FDS:    return (char_u *)&(curwin->w_p_fds);
   case PV_FML:    return (char_u *)&(curwin->w_p_fml);
   case PV_FDN:    return (char_u *)&(curwin->w_p_fdn);
   case PV_FDE:    return (char_u *)&(curwin->w_p_fde);
@@ -5719,6 +5731,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fdi);
   check_string_option(&wop->wo_fdm);
   check_string_option(&wop->wo_fdm_save);
+  check_string_option(&wop->wo_fds);
   check_string_option(&wop->wo_fde);
   check_string_option(&wop->wo_fdt);
   check_string_option(&wop->wo_fmr);
@@ -5741,6 +5754,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fdi);
   clear_string_option(&wop->wo_fdm);
   clear_string_option(&wop->wo_fdm_save);
+  clear_string_option(&wop->wo_fds);
   clear_string_option(&wop->wo_fde);
   clear_string_option(&wop->wo_fdt);
   clear_string_option(&wop->wo_fmr);

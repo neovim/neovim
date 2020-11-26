@@ -2481,6 +2481,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	lines.  White space is skipped before checking for this character.
 	The default "#" works well for C programs.  See |fold-indent|.
 
+						*'foldinline'* *'fin'*
+'foldsettings' 'fst'	boolean (default on)
+			local to window
+
 						*'foldlevel'* *'fdl'*
 'foldlevel' 'fdl'	number (default: 0)
 			local to window

@@ -38,7 +38,7 @@
 #include "nvim/undo.h"
 #include "nvim/ops.h"
 
-/* local declarations. {{{1 */
+// local declarations. {{{1
 
 #define FD_OPEN         0       /* fold is open (nested ones can be closed) */
 #define FD_CLOSED       1       /* fold is closed */
@@ -124,29 +124,6 @@ int hasAnyFolding(win_T *win)
          && (!foldmethodIsManual(win) || !GA_EMPTY(&win->w_folds));
 }
 
-
-///// Return all folds that contain a specific line
-/////
-///// @param[in] gap array to search for matching folds
-///// @param lnum line whose folds we are looking for
-///// @param[out] out array of folds that contain the line 'lnum'
-//void getFolds(garray_T *gap, linenr_T lnum, garray_T *out) {
-//  fold_T *fp;
-//  int level = 0;
-//  linenr_T lnum_rel = lnum;
-//  // Recursively search for a fold that contains "lnum".
-//  while (true) {
-//    if (!foldFind(gap, lnum_rel, &fp)) {
-//      break;
-//    }
-//    assert(fp != 0);
-//    GA_APPEND(fold_T *, out, fp);
-//    // this is tricky ?!
-//    gap = &fp->fd_nested;
-//    lnum_rel -= fp->fd_top;
-//    level++;
-//  }
-//}
 
 /* hasFolding() {{{2 */
 /*
@@ -271,7 +248,6 @@ bool hasFoldingWin(
     infop->fi_lnum = first;
     infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
     infop->fi_startcol = startcol;
-    // TODO set endcol
     infop->fi_endcol = endcol;
   }
   return true;
@@ -561,14 +537,16 @@ static int checkCloseRec(garray_T *gap, linenr_T lnum, int level)
  * Return TRUE if it's allowed to manually create or delete a fold.
  * Give an error message and return FALSE if not.
  */
-int foldManualAllowed(int create)
+int foldManualAllowed(win_T *wp, int create)
 {
-  if (foldmethodIsManual(curwin) || foldmethodIsMarker(curwin))
-    return TRUE;
-  if (create)
+  if (foldmethodIsManual(wp) || foldmethodIsMarker(wp)) {
+    return true;
+  }
+  if (create) {
     EMSG(_("E350: Cannot create fold with current 'foldmethod'"));
-  else
+  } else {
     EMSG(_("E351: Cannot delete fold with current 'foldmethod'"));
+  }
   return FALSE;
 }
 
@@ -684,8 +662,8 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
     /* insert new fold */
     fp->fd_nested = fold_ga;
     fp->fd_top = start_rel.lnum;
-    fp->fd_startcol = start_rel.col; // just for test
-    fp->fd_endcol = end_rel.col; // just for test
+    fp->fd_startcol = start_rel.col;
+    fp->fd_endcol = end_rel.col;
     fp->fd_len = end_rel.lnum - start_rel.lnum + 1;
     ILOG("Insert new fold relnum=%ld startcol=%d endcol=%d",
          fp->fd_top, fp->fd_startcol, fp->fd_endcol);
@@ -1108,7 +1086,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
   }
 }
 
-/* foldFind() {{{2 */
+// foldFind() {{{2
 /// Search for line "lnum" in folds of growarray "gap".
 /// Set *fpp to the fold struct for the fold that contains "lnum" or
 /// the first fold below it (careful: it can be beyond the end of the array!).
@@ -1694,6 +1672,7 @@ static void foldAddMarker(
   char_u      *line;
   char_u      *newline;
   char_u      *p = (char_u *)strstr((char *)buf->b_p_cms, "%s");
+  size_t      ins_offset;     // insert offset from start of line
   bool line_is_comment = false;
   linenr_T lnum = pos.lnum;
 
@@ -1706,17 +1685,24 @@ static void foldAddMarker(
     // Check if the line ends with an unclosed comment
     skip_comment(line, false, false, &line_is_comment);
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
-    STRCPY(newline, line);
+    ins_offset = (size_t)pos.col;   // todo invalid for multibyte language
+    memcpy(newline, line, ins_offset);
     // Append the marker to the end of the line
     if (p == NULL || line_is_comment) {
-      STRLCPY(newline + line_len, marker, markerlen + 1);
+      memcpy(&newline[ins_offset], marker, markerlen);
+      // STRNCPY(newline + ins_offset, marker, markerlen + 1);
+      STRLCPY(newline + line_len + markerlen + 1, line + ins_offset,
+              line_len - ins_offset);
       added = markerlen;
     } else {
+      ILOG("TODO line is not a comment");
+      // todo fix all that
       STRCPY(newline + line_len, cms);
       memcpy(newline + line_len + (p - cms), marker, markerlen);
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
       added = markerlen + STRLEN(cms)-2;
     }
+    ILOG("Replacing with newline %s", newline);
     ml_replace_buf(buf, lnum, newline, false);
     if (added) {
       extmark_splice_cols(buf, (int)lnum-1, (int)line_len,
@@ -3248,12 +3234,13 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
     /* Do nested folds first, they will be created closed. */
     if (put_folds_recurse(fd, &fp->fd_nested, off + fp->fd_top) == FAIL)
       return FAIL;
-    if (fprintf(fd, "%" PRId64 ",%" PRId64 "fold",
-                (int64_t)(fp->fd_top + off),
-                (int64_t)(fp->fd_top + off + fp->fd_len - 1)) < 0
-        || put_eol(fd) == FAIL)
+    if (fprintf(fd, "%" PRId64 ".%d,%" PRId64 ".%dfold",
+                (int64_t)(fp->fd_top + off), fp->fd_startcol,
+                (int64_t)(fp->fd_top + off + fp->fd_len - 1), fp->fd_endcol) < 0
+        || put_eol(fd) == FAIL) {
       return FAIL;
-    ++fp;
+    }
+    fp++;
   }
   return OK;
 }
@@ -3319,4 +3306,4 @@ static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off)
   return OK;
 }
 
-/* }}}1 */
+// }}}1

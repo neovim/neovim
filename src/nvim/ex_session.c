@@ -406,7 +406,7 @@ static int put_view(
     f = makeset(fd, OPT_LOCAL,
                 flagp == &vop_flags || !(*flagp & SSOP_OPTIONS));
   } else if (*flagp & SSOP_FOLDS) {
-    f = makefoldset(fd);
+    f = makefoldset(fd, curwin);
   } else {
     f = OK;
   }
