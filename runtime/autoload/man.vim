@@ -79,43 +79,61 @@ function! man#read_page(ref) abort
   call s:put_page(page)
 endfunction
 
-" Handler for s:system() function.
-function! s:system_handler(jobid, data, event) dict abort
-  if a:event is# 'stdout' || a:event is# 'stderr'
-    let self[a:event] .= join(a:data, "\n")
-  else
-    let self.exit_code = a:data
+" Run man and timeout after 30 seconds.
+"    term          : Term to search.
+"    first vararg  : List of extra arguments to pass to man.
+"    second vararg : Dictionary of environment variables.
+function! s:run_man(term, ...) abort
+  if a:0 > 2
+    throw 'Too many arguments'
   endif
-endfunction
 
-" Run a system command and timeout after 30 seconds.
-function! s:system(cmd, ...) abort
+  let args = get(a:000, 0, [])
+  let env  = get(a:000, 1, {})
+
+  let cmd = ['man'] + args
+  if !empty(a:term)
+    let cmd += ['--', a:term]
+  endif
+
+  function! s:OnManOutput(jobid, data, event) dict abort
+    let self[a:event] = join(a:data, "\n")
+  endfunction
+
+  function! s:OnManExit(jobid, data, event) dict abort
+    let self.exit_code = a:data
+  endfunction
+
   let opts = {
+        \ 'env': env,
         \ 'stdout': '',
         \ 'stderr': '',
         \ 'exit_code': 0,
-        \ 'on_stdout': function('s:system_handler'),
-        \ 'on_stderr': function('s:system_handler'),
-        \ 'on_exit': function('s:system_handler'),
+        \ 'on_stdout': 's:OnManOutput',
+        \ 'on_stderr': 's:OnManOutput',
+        \ 'on_exit': 's:OnManExit',
+        \ 'stdout_buffered': 1,
+        \ 'stderr_buffered': 1,
         \ }
-  let jobid = jobstart(a:cmd, opts)
+
+  let jobid = jobstart(cmd, opts)
 
   if jobid < 1
-    throw printf('command error %d: %s', jobid, join(a:cmd))
+    throw printf('command error %d: %s', jobid, join(cmd))
   endif
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
     try
       call jobstop(jobid)
-      throw printf('command timed out: %s', join(a:cmd))
+      throw printf('command timed out: %s', join(cmd))
     catch /^Vim(call):E900:/
     endtry
   elseif res[0] == -2
-    throw printf('command interrupted: %s', join(a:cmd))
+    throw printf('command interrupted: %s', join(cmd))
   endif
   if opts.exit_code != 0
-    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), substitute(opts.stderr, '\_s\+$', '', &gdefault ? '' : 'g'))
+    throw printf("command error (%d) %s: %s", jobid, join(cmd), substitute(opts.stderr, '\_s\+$', '', &gdefault ? '' : 'g'))
   endif
 
   return opts.stdout
@@ -129,8 +147,11 @@ function! s:get_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
-  let cmd = ['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'MAN_KEEP_FORMATTING=1', 'man']
-  return s:system(cmd + (s:localfile_arg ? ['-l', a:path] : [a:path]))
+  return s:run_man(a:path, s:localfile_arg ? ['-l'] : [], {
+        \ 'MANPAGER': 'cat',
+        \ 'MANWIDTH': manwidth,
+        \ 'MAN_KEEP_FORMATTING': 1
+        \ })
 endfunction
 
 function! s:put_page(page) abort
@@ -181,36 +202,28 @@ endfunction
 " attempt to extract the name and sect out of 'name(sect)'
 " otherwise just return the largest string of valid characters in ref
 function! s:extract_sect_and_name_ref(ref) abort
-  if a:ref[0] ==# '-' " try ':Man -pandoc' with this disabled.
-    throw 'manpage name cannot start with ''-'''
+  if empty(a:ref)
+    throw 'Empty argument.'
   endif
-  let ref = matchstr(a:ref, '[^()]\+([^()]\+)')
-  if empty(ref)
-    let name = matchstr(a:ref, '[^()]\+')
-    if empty(name)
-      throw 'manpage reference cannot contain only parentheses'
-    endif
-    return ['', name]
-  endif
-  let left = split(ref, '(')
+
+  let ml = matchlist(a:ref, '^\(.\{-1,}\)\((\(.\{-1,}\))\|\.\([^.]\{-1,}\)\)\?$')
+  let ref_name = ml[1]
+  let ref_section = empty(ml[3]) ? ml[4] : ml[3]
+
   " see ':Man 3X curses' on why tolower.
   " TODO(nhooyr) Not sure if this is portable across OSs
   " but I have not seen a single uppercase section.
-  return [tolower(split(left[1], ')')[0]), left[0]]
+  return [tolower(ref_section), ref_name]
 endfunction
 
 function! s:get_path(sect, name) abort
   " Some man implementations (OpenBSD) return all available paths from the
   " search command, so we get() the first one. #8341
+  let man_args = [s:find_arg, s:section_arg, a:sect]
   if empty(a:sect)
-    return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
+    let man_args = [s:find_arg]
   endif
-  " '-s' flag handles:
-  "   - tokens like 'printf(echo)'
-  "   - sections starting with '-'
-  "   - 3pcap section (found on macOS)
-  "   - commas between sections (for section priority)
-  return substitute(get(split(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])), 0, ''), '\n\+$', '', '')
+  return substitute(get(split(s:run_man(a:name, man_args)), 0, ''), '\n\+$', '', '')
 endfunction
 
 " s:verify_exists attempts to find the path to a manpage
@@ -355,7 +368,7 @@ endfunction
 function! s:get_paths(sect, name, do_fallback) abort
   " callers must try-catch this, as some `man` implementations don't support `s:find_arg`
   try
-    let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
+    let mandirs = join(split(s:run_man('', [s:find_arg]), ':\|\n'), ',')
     let paths = globpath(mandirs, 'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
     try
       " Prioritize the result from verify_exists as it obeys b:man_default_sects.
