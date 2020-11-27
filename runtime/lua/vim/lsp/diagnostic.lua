@@ -610,7 +610,7 @@ end
 ---             - priority: Set the priority of the signs.
 function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   opts = opts or {}
-  local severity_limit = opts.severity_limit
+  local severity_limit = to_severity(opts.severity_limit)
   local priority = opts.priority
 
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
@@ -644,7 +644,9 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   for _, diagnostic in ipairs(diagnostics) do
     local diag_lnum = diagnostic.range.start.line + 1
     if severity_limit then
-      ok = render_sign(severity_limit,priority,diag_lnum)
+      if diagnostic.severity > severity_limit then
+        ok = render_sign(diagnostic.severity,priority,diag_lnum)
+      end
     else
       ok = render_sign(diagnostic.severity,priority,diag_lnum)
     end
@@ -758,14 +760,17 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   opts = opts or {}
   local prefix = opts.prefix or "■"
   local spacing = opts.spacing or 4
-  local severity_limit = opts.severity_limit
+  local severity_limit = to_severity(opts.severity_limit)
 
   -- Create a little more space between virtual text and contents
   local virt_texts = {{string.rep(" ", spacing)}}
 
   for i = 1, #line_diags - 1 do
+    local diag_severity = line_diags[i].severity
     if severity_limit then
-      table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i][severity_limit]]})
+      if diag_severity < severity_limit then
+        table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
+      end
     else
       table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
     end
@@ -1020,6 +1025,7 @@ function M.display(diagnostics, bufnr, client_id, config)
     signs = true,
     underline = true,
     virtual_text = true,
+    severity_limit = true,
     update_in_insert = false,
   }, config)
 
