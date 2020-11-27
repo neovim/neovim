@@ -2550,7 +2550,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
    */
   cur = wp->w_match_head;
   shl_flag = false;
-  while ((cur != NULL || !shl_flag) && !number_only) {
+  while ((cur != NULL || !shl_flag) && !number_only
+         && foldinfo.fi_lines == 0
+         ) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;

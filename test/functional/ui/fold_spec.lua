@@ -9,6 +9,15 @@ local meths = helpers.meths
 local source = helpers.source
 local assert_alive = helpers.assert_alive
 
+
+local content1 = [[
+        This is a
+        valid English
+        sentence composed by
+        an exhausted developer
+        in his cave.
+        ]]
+
 describe("folded lines", function()
   before_each(function()
     clear()
@@ -119,18 +128,31 @@ describe("folded lines", function()
 
     it("work with spell", function()
       command("set spell")
-      insert([[
-        This is a
-        valid English
-        sentence composed by
-        an exhausted developer
-        in his cave.
-        ]])
+      insert(content1)
 
       feed("gg")
       feed("zf3j")
       if not multigrid then
-        -- screen:snapshot_util()
+        screen:expect{grid=[[
+          {5:^+--  4 lines: This is a······················}|
+          in his cave.                                 |
+                                                       |
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+          {1:~                                            }|
+                                                       |
+        ]]}
+      end
+    end)
+
+    it("work with matches", function()
+      insert(content1)
+      command("highlight MyWord gui=bold guibg=red   guifg=white")
+      command("call matchadd('MyWord', '\\V' . 'test', -1)")
+      feed("gg")
+      feed("zf3j")
+      if not multigrid then
         screen:expect{grid=[[
           {5:^+--  4 lines: This is a······················}|
           in his cave.                                 |
