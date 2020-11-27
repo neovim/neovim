@@ -2372,9 +2372,16 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     line_attr = sign_get_attr((int)v, SIGN_LINEHL);
   }
 
-  // Highlight the current line in the quickfix window.
+  // Highlight QuickFixLine, but allow contained elements such as line numbers
+  // and errors to override QuickFixLine for reability.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
-    line_attr = win_hl_attr(wp, HLF_QFL);
+    line_attr_lowprio = win_hl_attr(wp, HLF_QFL);
+
+    // Do not override CursorLine's bg when QuickFixLine's bg is NONE.
+    if (wp->w_p_cul && lnum == curwin->w_cursor.lnum) {
+      line_attr_lowprio = hl_combine_attr(win_hl_attr(wp, HLF_CUL),
+                                          line_attr_lowprio);
+    }
   }
 
   if (line_attr_lowprio || line_attr) {

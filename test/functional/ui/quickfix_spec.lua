@@ -25,29 +25,31 @@ describe('quickfix selection highlight', function()
       [10] = {foreground = Screen.colors.Red, background = Screen.colors.Fuchsia},
       [11] = {foreground = Screen.colors.Red},
       [12] = {foreground = Screen.colors.Brown, background = Screen.colors.Fuchsia},
+      [13] = {foreground = Screen.colors.White, background = Screen.colors.Red},
+      [14] = {foreground = Screen.colors.Blue, background = Screen.colors.Yellow},
     })
 
-    meths.set_option('errorformat', '%m %l')
+    meths.set_option('errorformat', '%m %l.%t%n')
     command('syntax on')
     command('highlight Search guibg=Green')
 
     insert([[
-    Line 1
-    Line 2
-    Line 3
-    Line 4
-    Line 5
+    Line 1.E12
+    Line 2.W3
+    Line 3.W112
+    Line 4.E145
+    Line 5.I20
     ]])
 
     command('cad')
     feed('gg')
 
     screen:expect([[
-      ^Line 1                   |
-      Line 2                   |
-      Line 3                   |
-      Line 4                   |
-      Line 5                   |
+      ^Line 1.E12               |
+      Line 2.W3                |
+      Line 3.W112              |
+      Line 4.E145              |
+      Line 5.I20               |
                                |
       {1:~                        }|
       {1:~                        }|
@@ -60,13 +62,13 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      Line 1                   |
+      Line 1.E12               |
       {2:[No Name] [+]            }|
-      {5:^|}{6:1}{5:| Line                 }|
-      |{3:2}| Line                 |
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {5:^|}{6:1 }{13:error}{6:  12}{5:| Line       }|
+      |{3:2 warning   3}| Line     |
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -75,13 +77,13 @@ describe('quickfix selection highlight', function()
     command('cnext')
 
     screen:expect([[
-      Line 1                   |
+      Line 1.E12               |
       {2:[No Name] [+]            }|
-      |{3:1}| Line                 |
-      {5:^|}{6:2}{5:| Line                 }|
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      |{3:1 }{13:error}{3:  12}| Line       |
+      {5:^|}{6:2 warning   3}{5:| Line     }|
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -94,13 +96,13 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      Line 1                   |
+      Line 1.E12               |
       {2:[No Name] [+]            }|
-      {7:^|}{8:1}{7:| Line                 }|
-      |{3:2}| Line                 |
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {7:^|}{8:1 }{13:error}{8:  12}{7:| Line       }|
+      |{3:2 warning   3}| Line     |
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -109,13 +111,13 @@ describe('quickfix selection highlight', function()
     command('cnext')
 
     screen:expect([[
-      Line 1                   |
+      Line 1.E12               |
       {2:[No Name] [+]            }|
-      |{3:1}| Line                 |
-      {7:^|}{8:2}{7:| Line                 }|
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      |{3:1 }{13:error}{3:  12}| Line       |
+      {7:^|}{8:2 warning   3}{7:| Line     }|
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -130,13 +132,13 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {9:Line 1.E12               }|
       {2:[No Name] [+]            }|
-      {10:^|1| Line                 }|
-      |{3:2}| Line                 |
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {10:^|}{12:1 }{13:error}{12:  12}{10:| Line       }|
+      |{3:2 warning   3}| Line     |
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -145,13 +147,13 @@ describe('quickfix selection highlight', function()
     feed('j')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {9:Line 1.E12               }|
       {2:[No Name] [+]            }|
-      {11:|1| Line                 }|
-      {9:^|}{12:2}{9:| Line                 }|
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {11:|}{3:1 }{13:error}{3:  12}{11:| Line       }|
+      {9:^|}{12:2 warning   3}{9:| Line     }|
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -166,13 +168,13 @@ describe('quickfix selection highlight', function()
     command('copen')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {9:Line 1.E12               }|
       {2:[No Name] [+]            }|
-      {7:^|}{8:1}{7:| Line                 }|
-      |{3:2}| Line                 |
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {7:^|}{8:1 }{13:error}{8:  12}{7:| Line       }|
+      |{3:2 warning   3}| Line     |
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
@@ -181,13 +183,47 @@ describe('quickfix selection highlight', function()
     feed('j')
 
     screen:expect([[
-      {9:Line 1                   }|
+      {9:Line 1.E12               }|
       {2:[No Name] [+]            }|
-      {7:|}{8:1}{7:| Line                 }|
-      {9:^|}{12:2}{9:| Line                 }|
-      |{3:3}| Line                 |
-      |{3:4}| Line                 |
-      |{3:5}| Line                 |
+      {7:|}{8:1 }{13:error}{8:  12}{7:| Line       }|
+      {9:^|}{12:2 warning   3}{9:| Line     }|
+      |{3:3 warning 112}| Line     |
+      |{3:4 }{13:error}{3: 145}| Line       |
+      |{3:5 info  20}| Line        |
+      ||                       |
+      {4:[Quickfix List]          }|
+                               |
+    ]])
+  end)
+
+  it('Line numbers and errors take precedence over QuickFixLine', function()
+    command('highlight LineNr guifg=Brown guibg=Fuchsia')
+
+    command('copen')
+
+    screen:expect([[
+      Line 1.E12               |
+      {2:[No Name] [+]            }|
+      {5:^|}{12:1 }{13:error}{12:  12}{5:| Line       }|
+      |{12:2 warning   3}| Line     |
+      |{12:3 warning 112}| Line     |
+      |{12:4 }{13:error}{12: 145}| Line       |
+      |{12:5 info  20}| Line        |
+      ||                       |
+      {4:[Quickfix List]          }|
+                               |
+    ]])
+
+    command('highlight QuickFixLine guifg=Blue guibg=Yellow')
+
+    screen:expect([[
+      Line 1.E12               |
+      {2:[No Name] [+]            }|
+      {14:^|}{12:1 }{13:error}{12:  12}{14:| Line       }|
+      |{12:2 warning   3}| Line     |
+      |{12:3 warning 112}| Line     |
+      |{12:4 }{13:error}{12: 145}| Line       |
+      |{12:5 info  20}| Line        |
       ||                       |
       {4:[Quickfix List]          }|
                                |
