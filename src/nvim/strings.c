@@ -900,6 +900,7 @@ int vim_vsnprintf_typval(
       }
 
       switch (fmt_spec) {
+        case 'b': case 'B':
         case 'd': case 'u': case 'o': case 'x': case 'X':
           if (tvs && length_modifier == '\0') {
             length_modifier = '2';
