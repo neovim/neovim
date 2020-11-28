@@ -3,6 +3,8 @@
 source check.vim
 CheckFeature quickfix
 
+source screendump.vim
+
 set encoding=utf-8
 
 func s:setup_commands(cchar)
@@ -4408,6 +4410,31 @@ func Test_search_in_dirstack()
   set efm&
   exe 'cd ' . save_cwd
   call delete('Xtestdir', 'rf')
+endfunc
+
+" Test for :cquit
+func Test_cquit()
+  " Exit Vim with a non-zero value
+  if RunVim([], ["cquit 7"], '')
+    call assert_equal(7, v:shell_error)
+  endif
+
+  if RunVim([], ["50cquit"], '')
+    call assert_equal(50, v:shell_error)
+  endif
+
+  " Exit Vim with default value
+  if RunVim([], ["cquit"], '')
+    call assert_equal(1, v:shell_error)
+  endif
+
+  " Exit Vim with zero value
+  if RunVim([], ["cquit 0"], '')
+    call assert_equal(0, v:shell_error)
+  endif
+
+  " Exit Vim with negative value
+  call assert_fails('-3cquit', 'E16:')
 endfunc
 
 " Test for adding an invalid entry with the quickfix window open and making

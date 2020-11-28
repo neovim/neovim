@@ -6317,17 +6317,14 @@ static void ex_quit(exarg_T *eap)
   }
 }
 
-/*
- * ":cquit".
- */
+/// ":cquit".
 static void ex_cquit(exarg_T *eap)
 {
+  // this does not always pass on the exit code to the Manx compiler. why?
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
-/*
- * ":qall": try to quit all windows
- */
+/// ":qall": try to quit all windows
 static void ex_quit_all(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
