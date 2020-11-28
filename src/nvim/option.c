@@ -342,6 +342,10 @@ static char_u SHM_ALL[] = {
 ///
 /// Called only once from main(), just after creating the first buffer.
 /// If "clean_arg" is true, Nvim was started with --clean.
+///
+/// NOTE: ELOG() etc calls are not allowed here, as log location depends on
+/// env var expansion which depends on expression evaluation and other
+/// editor state initialized here. Do logging in set_init_2 or later.
 void set_init_1(bool clean_arg)
 {
   int opt_idx;
@@ -494,7 +498,6 @@ void set_init_1(bool clean_arg)
   // this function.
   char *rtp = runtimepath_default(clean_arg);
   if (rtp) {
-    ILOG("startup runtimepart/packpath value: %s", rtp);
     set_string_default("runtimepath", rtp, true);
     // Make a copy of 'rtp' for 'packpath'
     set_string_default("packpath", rtp, false);
@@ -751,6 +754,9 @@ void free_all_options(void)
 /// Initialize the options, part two: After getting Rows and Columns.
 void set_init_2(bool headless)
 {
+  // set in set_init_1 but logging is not allowed there
+  ILOG("startup runtimepath/packpath value: %s", p_rtp);
+
   int idx;
 
   // 'scroll' defaults to half the window height. The stored default is zero,
