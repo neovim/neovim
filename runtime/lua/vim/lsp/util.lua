@@ -397,6 +397,13 @@ function M._get_completion_item_kind_name(completion_item_kind)
   return protocol.CompletionItemKind[completion_item_kind] or "Unknown"
 end
 
+--@private
+--- Get the details of the completion item
+local function get_completion_item_resolve(completion_item)
+  local bufnr = api.nvim_get_current_buf()
+  return vim.lsp.buf_request_sync(bufnr, 'completionItem/resolve', completion_item)
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -431,6 +438,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
     end
 
     local word = get_completion_word(completion_item)
+    local lsp_completion_item = get_completion_item_resolve(completion_item) or completion_item
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
@@ -443,7 +451,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       user_data = {
         nvim = {
           lsp = {
-            completion_item = completion_item
+            completion_item = lsp_completion_item
           }
         }
       },
