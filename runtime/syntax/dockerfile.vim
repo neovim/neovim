@@ -1,6 +1,6 @@
 " dockerfile.vim - Syntax highlighting for Dockerfiles
 " Maintainer:   Honza Pokorny <https://honza.ca>
-" Last Change:  2020 Jan 27
+" Last Change:  2020 Feb 11
 " License:      BSD
 
 " https://docs.docker.com/engine/reference/builder/
@@ -22,12 +22,12 @@ syntax region dockerfileFrom matchgroup=dockerfileKeyword start=/\v^\s*(FROM)\ze
 syntax keyword dockerfileKeyword contained ADD ARG CMD COPY ENTRYPOINT ENV EXPOSE HEALTHCHECK LABEL MAINTAINER ONBUILD RUN SHELL STOPSIGNAL USER VOLUME WORKDIR
 syntax match dockerfileOption contained /\v(^|\s)\zs--\S+/
 
-syntax match dockerfileInstruction contained /\v(\S+)(\s+--\S+)*/             contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileValue
-syntax match dockerfileInstruction contained /\v(ADD|COPY)(\s+--\S+)*/        contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileJSON
-syntax match dockerfileInstruction contained /\v(HEALTHCHECK)(\s+--\S+)*/     contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileInstruction
-syntax match dockerfileInstruction contained /\v(CMD|ENTRYPOINT|RUN)/         contains=dockerfileKeyword skipwhite nextgroup=dockerfileShell
-syntax match dockerfileInstruction contained /\v(CMD|ENTRYPOINT|RUN)\ze\s+\[/ contains=dockerfileKeyword skipwhite nextgroup=dockerfileJSON
-syntax match dockerfileInstruction contained /\v(SHELL|VOLUME)/               contains=dockerfileKeyword skipwhite nextgroup=dockerfileJSON
+syntax match dockerfileInstruction contained /\v<(\S+)>(\s+--\S+)*/             contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileValue
+syntax match dockerfileInstruction contained /\v<(ADD|COPY)>(\s+--\S+)*/        contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileJSON
+syntax match dockerfileInstruction contained /\v<(HEALTHCHECK)>(\s+--\S+)*/     contains=dockerfileKeyword,dockerfileOption skipwhite nextgroup=dockerfileInstruction
+syntax match dockerfileInstruction contained /\v<(CMD|ENTRYPOINT|RUN)>/         contains=dockerfileKeyword skipwhite nextgroup=dockerfileShell
+syntax match dockerfileInstruction contained /\v<(CMD|ENTRYPOINT|RUN)>\ze\s+\[/ contains=dockerfileKeyword skipwhite nextgroup=dockerfileJSON
+syntax match dockerfileInstruction contained /\v<(SHELL|VOLUME)>/               contains=dockerfileKeyword skipwhite nextgroup=dockerfileJSON
 
 syntax region dockerfileString contained start=/\v"/ skip=/\v\\./ end=/\v"/
 syntax region dockerfileJSON   contained keepend start=/\v\[/ skip=/\v\\\_./ end=/\v$/ contains=@JSON
