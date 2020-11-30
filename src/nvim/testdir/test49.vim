@@ -318,7 +318,7 @@ let ExtraVimCount = 0
 let ExtraVimBase = expand("<sfile>")
 let ExtraVimTestEnv = ""
 "
-function! ExtraVim(...)
+function ExtraVim(...)
     " Count how often this function is called.
     let g:ExtraVimCount = g:ExtraVimCount + 1
 
@@ -500,7 +500,7 @@ endfunction
 " an ExtraVim script as passed by ExtraVim() in ExtraVimBegin.
 "
 " EXTRA_VIM_START - do not change or remove this line.
-function! ExtraVimThrowpoint()
+function ExtraVimThrowpoint()
     if !exists("g:ExtraVimBegin")
 	Xout "ExtraVimThrowpoint() used outside ExtraVim() script."
 	return v:throwpoint
@@ -530,7 +530,7 @@ endfunction
 " as a script file, use ExecAsScript below.
 "
 " EXTRA_VIM_START - do not change or remove this line.
-function! MakeScript(funcname, ...)
+function MakeScript(funcname, ...)
     let script = tempname()
     execute "redir! >" . script
     execute "function" a:funcname
@@ -568,7 +568,7 @@ endfunction
 " location specified in the function.
 "
 " EXTRA_VIM_START - do not change or remove this line.
-function! ExecAsScript(funcname)
+function ExecAsScript(funcname)
     " Make a script from the function passed as argument.
     let script = MakeScript(a:funcname)
 
@@ -8548,7 +8548,7 @@ endfunction
 
 " Remove the autocommands for the events specified as arguments in all used
 " autogroups.
-function! Delete_autocommands(...)
+function Delete_autocommands(...)
     let augfile = tempname()
     while 1
 	try

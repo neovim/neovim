@@ -1,6 +1,6 @@
 " Test for options
 
-function! Test_whichwrap()
+func Test_whichwrap()
   set whichwrap=b,s
   call assert_equal('b,s', &whichwrap)
 

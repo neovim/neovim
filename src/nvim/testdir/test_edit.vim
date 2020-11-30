@@ -11,7 +11,7 @@ source view_util.vim
 
 " Needs to come first until the bug in getchar() is
 " fixed: https://groups.google.com/d/msg/vim_dev/fXL9yme4H4c/bOR-U6_bAQAJ
-func! Test_edit_00b()
+func Test_edit_00b()
   new
   call setline(1, ['abc '])
   inoreabbr <buffer> h here some more
@@ -23,7 +23,7 @@ func! Test_edit_00b()
   bw!
 endfunc
 
-func! Test_edit_01()
+func Test_edit_01()
   " set for Travis CI?
   "  set nocp noesckeys
   new
@@ -61,7 +61,7 @@ func! Test_edit_01()
   bw!
 endfunc
 
-func! Test_edit_02()
+func Test_edit_02()
   " Change cursor position in InsertCharPre command
   new
   call setline(1, 'abc')
@@ -101,7 +101,7 @@ func! Test_edit_02()
   bw!
 endfunc
 
-func! Test_edit_03()
+func Test_edit_03()
   " Change cursor after <c-o> command to end of line
   new
   call setline(1, 'abc')
@@ -120,7 +120,7 @@ func! Test_edit_03()
   bw!
 endfunc
 
-func! Test_edit_04()
+func Test_edit_04()
   " test for :stopinsert
   new
   call setline(1, 'abc')
@@ -132,7 +132,7 @@ func! Test_edit_04()
   bw!
 endfunc
 
-func! Test_edit_05()
+func Test_edit_05()
   " test for folds being opened
   new
   call setline(1, ['abcX', 'abcX', 'zzzZ'])
@@ -154,7 +154,7 @@ func! Test_edit_05()
   bw!
 endfunc
 
-func! Test_edit_06()
+func Test_edit_06()
   " Test in diff mode
   if !has("diff") || !executable("diff")
     return
@@ -176,7 +176,7 @@ func! Test_edit_06()
   bw!
 endfunc
 
-func! Test_edit_07()
+func Test_edit_07()
   " 1) Test with completion <c-l> when popupmenu is visible
   new
   call setline(1, 'J')
@@ -228,7 +228,7 @@ func! Test_edit_08()
   unlet g:bufnr
 endfunc
 
-func! Test_edit_09()
+func Test_edit_09()
   " test i_CTRL-\ combinations
   new
   call setline(1, ['abc', 'def', 'ghi'])
@@ -258,7 +258,7 @@ func! Test_edit_09()
   bw!
 endfunc
 
-func! Test_edit_10()
+func Test_edit_10()
   " Test for starting selectmode
   new
   set selectmode=key keymodel=startsel
@@ -270,7 +270,7 @@ func! Test_edit_10()
   bw!
 endfunc
 
-func! Test_edit_11()
+func Test_edit_11()
   " Test that indenting kicks in
   new
   set cindent
@@ -314,7 +314,7 @@ func! Test_edit_11()
   bw!
 endfunc
 
-func! Test_edit_11_indentexpr()
+func Test_edit_11_indentexpr()
   " Test that indenting kicks in
   new
   " Use indentexpr instead of cindenting
@@ -341,7 +341,7 @@ func! Test_edit_11_indentexpr()
   bw!
 endfunc
 
-func! Test_edit_12()
+func Test_edit_12()
   " Test changing indent in replace mode
   new
   call setline(1, ["\tabc", "\tdef"])
@@ -393,7 +393,7 @@ func! Test_edit_12()
   bw!
 endfunc
 
-func! Test_edit_13()
+func Test_edit_13()
   " Test smartindenting
   if exists("+smartindent")
     new
@@ -481,7 +481,7 @@ func! Test_edit_CTRL_()
 endfunc
 
 " needs to come first, to have the @. register empty
-func! Test_edit_00a_CTRL_A()
+func Test_edit_00a_CTRL_A()
   " Test pressing CTRL-A
   new
   call setline(1, repeat([''], 5))
@@ -501,7 +501,7 @@ func! Test_edit_00a_CTRL_A()
   bw!
 endfunc
 
-func! Test_edit_CTRL_EY()
+func Test_edit_CTRL_EY()
   " Ctrl-E/ Ctrl-Y in insert mode completion to scroll
   10new
   call setline(1, range(1, 100))
@@ -517,7 +517,7 @@ func! Test_edit_CTRL_EY()
   bw!
 endfunc
 
-func! Test_edit_CTRL_G()
+func Test_edit_CTRL_G()
   new
   call setline(1, ['foobar', 'foobar', 'foobar'])
   call cursor(2, 4)
@@ -535,7 +535,7 @@ func! Test_edit_CTRL_G()
   bw!
 endfunc
 
-func! Test_edit_CTRL_I()
+func Test_edit_CTRL_I()
   " Tab in completion mode
   let path=expand("%:p:h")
   new
@@ -559,7 +559,7 @@ func! Test_edit_CTRL_I()
   bw!
 endfunc
 
-func! Test_edit_CTRL_K()
+func Test_edit_CTRL_K()
   " Test pressing CTRL-K (basically only dictionary completion and digraphs
   " the rest is already covered
   call writefile(['A', 'AA', 'AAA', 'AAAA'], 'Xdictionary.txt')
@@ -632,7 +632,7 @@ func! Test_edit_CTRL_K()
   bw!
 endfunc
 
-func! Test_edit_CTRL_L()
+func Test_edit_CTRL_L()
   " Test Ctrl-X Ctrl-L (line completion)
   new
   set complete=.
@@ -688,7 +688,7 @@ func! Test_edit_CTRL_L()
   bw!
 endfunc
 
-func! Test_edit_CTRL_N()
+func Test_edit_CTRL_N()
   " Check keyword completion
   new
   set complete=.
@@ -709,7 +709,7 @@ func! Test_edit_CTRL_N()
   bw!
 endfunc
 
-func! Test_edit_CTRL_O()
+func Test_edit_CTRL_O()
   " Check for CTRL-O in insert mode
   new
   inoreabbr <buffer> h here some more
@@ -749,7 +749,7 @@ func! Test_edit_CTRL_R()
   bw!
 endfunc
 
-func! Test_edit_CTRL_S()
+func Test_edit_CTRL_S()
   " Test pressing CTRL-S (basically only spellfile completion)
   " the rest is already covered
   new
@@ -793,7 +793,7 @@ func! Test_edit_CTRL_S()
   bw!
 endfunc
 
-func! Test_edit_CTRL_T()
+func Test_edit_CTRL_T()
   " Check for CTRL-T and CTRL-X CTRL-T in insert mode
   " 1) increase indent
   new
@@ -870,7 +870,7 @@ func! Test_edit_CTRL_T()
   bw!
 endfunc
 
-func! Test_edit_CTRL_U()
+func Test_edit_CTRL_U()
   " Test 'completefunc'
   new
   " -1, -2 and -3 are special return values
@@ -929,7 +929,7 @@ func! Test_edit_CTRL_U()
   bw!
 endfunc
 
-func! Test_edit_CTRL_Z()
+func Test_edit_CTRL_Z()
   " Ctrl-Z when insertmode is not set inserts it literally
   new
   call setline(1, 'abc')
@@ -939,7 +939,7 @@ func! Test_edit_CTRL_Z()
   " TODO: How to Test Ctrl-Z in insert mode, e.g. suspend?
 endfunc
 
-func! Test_edit_DROP()
+func Test_edit_DROP()
   if !has("dnd")
     return
   endif
@@ -955,7 +955,7 @@ func! Test_edit_DROP()
   bw!
 endfunc
 
-func! Test_edit_CTRL_V()
+func Test_edit_CTRL_V()
   if has("ebcdic")
     return
   endif
@@ -983,7 +983,7 @@ func! Test_edit_CTRL_V()
   bw!
 endfunc
 
-func! Test_edit_F1()
+func Test_edit_F1()
   " Pressing <f1>
   new
   call feedkeys(":set im\<cr>\<f1>\<c-l>", 'tnix')
@@ -993,7 +993,7 @@ func! Test_edit_F1()
   bw
 endfunc
 
-func! Test_edit_F21()
+func Test_edit_F21()
   " Pressing <f21>
   " sends a netbeans command
   if has("netbeans_intg")
@@ -1004,7 +1004,7 @@ func! Test_edit_F21()
   endif
 endfunc
 
-func! Test_edit_HOME_END()
+func Test_edit_HOME_END()
   " Test Home/End Keys
   new
   set foldopen+=hor
@@ -1019,7 +1019,7 @@ func! Test_edit_HOME_END()
   bw!
 endfunc
 
-func! Test_edit_INS()
+func Test_edit_INS()
   " Test for Pressing <Insert>
   new
   call setline(1, ['abc', 'def'])
@@ -1033,7 +1033,7 @@ func! Test_edit_INS()
   bw!
 endfunc
 
-func! Test_edit_LEFT_RIGHT()
+func Test_edit_LEFT_RIGHT()
   " Left, Shift-Left, Right, Shift-Right
   new
   call setline(1, ['abc def ghi', 'ABC DEF GHI', 'ZZZ YYY XXX'])
@@ -1080,7 +1080,7 @@ func! Test_edit_LEFT_RIGHT()
   bw!
 endfunc
 
-func! Test_edit_MOUSE()
+func Test_edit_MOUSE()
   " This is a simple test, since we not really using the mouse here
   if !has("mouse")
     return
@@ -1135,7 +1135,7 @@ func! Test_edit_MOUSE()
   bw!
 endfunc
 
-func! Test_edit_PAGEUP_PAGEDOWN()
+func Test_edit_PAGEUP_PAGEDOWN()
   10new
   call setline(1, repeat(['abc def ghi'], 30))
   call cursor(1, 1)
@@ -1234,7 +1234,7 @@ func! Test_edit_PAGEUP_PAGEDOWN()
   bw!
 endfunc
 
-func! Test_edit_forbidden()
+func Test_edit_forbidden()
   new
   " 1) edit in the sandbox is not allowed
   call setline(1, 'a')
@@ -1294,7 +1294,7 @@ func! Test_edit_forbidden()
   bw!
 endfunc
 
-func! Test_edit_rightleft()
+func Test_edit_rightleft()
   " Cursor in rightleft mode moves differently
   if !exists("+rightleft")
     return

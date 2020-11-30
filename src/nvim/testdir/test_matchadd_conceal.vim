@@ -27,9 +27,9 @@ function! Test_simple_matchadd()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc
 
-function! Test_simple_matchadd_and_conceal()
+func Test_simple_matchadd_and_conceal()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -49,9 +49,9 @@ function! Test_simple_matchadd_and_conceal()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_and_conceallevel_3()
+func Test_matchadd_and_conceallevel_3()
   new
 
   setlocal conceallevel=3
@@ -90,9 +90,9 @@ function! Test_matchadd_and_conceallevel_3()
 
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_default_conceal_char()
+func Test_default_conceal_char()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -126,9 +126,9 @@ function! Test_default_conceal_char()
 
   let &listchars = listchars_save
   quit!
-endfunction
+endfunc
 
-function! Test_syn_and_match_conceal()
+func Test_syn_and_match_conceal()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -162,9 +162,9 @@ function! Test_syn_and_match_conceal()
 
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_clearmatches()
+func Test_clearmatches()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -201,9 +201,9 @@ function! Test_clearmatches()
   call assert_equal({'group': 'Conceal', 'pattern': '\%2l ', 'priority': 10, 'id': a[0].id, 'conceal': 'Z'}, a[0])
 
   quit!
-endfunction
+endfunc
 
-function! Test_using_matchaddpos()
+func Test_using_matchaddpos()
   new
   setlocal concealcursor=n conceallevel=1
   " set filetype and :syntax on to change screenattr()
@@ -232,9 +232,9 @@ function! Test_using_matchaddpos()
 
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_repeat_conceal_with_syntax_off()
+func Test_matchadd_repeat_conceal_with_syntax_off()
   new
 
   " To test targets in the same line string is replaced with conceal char
@@ -251,9 +251,9 @@ function! Test_matchadd_repeat_conceal_with_syntax_off()
   call assert_equal('t_tt', Screenline(2))
 
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_and_syn_conceal()
+func Test_matchadd_and_syn_conceal()
   new
   let cnt='Inductive bool : Type := | true : bool | false : bool.'
   let expect = 'Inductive - : Type := | true : - | false : -.'
