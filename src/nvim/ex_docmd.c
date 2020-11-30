@@ -3682,7 +3682,6 @@ const char * set_one_cmd_context(
 
   case CMD_lua:
     xp->xp_context = EXPAND_LUA;
-    xp->xp_pattern = (char_u *)arg;
     break;
 
   default:

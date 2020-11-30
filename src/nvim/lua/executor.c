@@ -1292,7 +1292,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
 
-int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
+int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***results)
 {
   lua_State *const lstate = nlua_enter();
   int ret = OK;
@@ -1307,10 +1307,11 @@ int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
   // [ vim, vim._log_keystroke, buf ]
   lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
 
-  if (lua_pcall(lstate, 1, 1, 0)) {
+  if (lua_pcall(lstate, 1, 2, 0) != 0) {
     nlua_error(
         lstate,
         _("Error executing vim._expand_pat: %.*s"));
+    return FAIL;
   }
 
   Error err = ERROR_INIT;
@@ -1318,10 +1319,16 @@ int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
   *num_results = 0;
   *results = NULL;
 
-  Array completions = nlua_pop_Array(lstate, &err);
+  int prefix_len = (int)nlua_pop_Integer(lstate, &err);
   if (ERROR_SET(&err)) {
     ret = FAIL;
     goto cleanup;
+  }
+
+  Array completions = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    ret = FAIL;
+    goto cleanup_array;
   }
 
   garray_T result_array;
@@ -1331,7 +1338,7 @@ int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
 
     if (v.type != kObjectTypeString) {
       ret = FAIL;
-      goto cleanup;
+      goto cleanup_array;
     }
 
     GA_APPEND(
@@ -1340,11 +1347,14 @@ int nlua_expand_pat(char_u *pat, int *num_results, char_u ***results)
         vim_strsave((char_u *)v.data.string.data));
   }
 
+  xp->xp_pattern += prefix_len;
   *results = result_array.ga_data;
   *num_results = result_array.ga_len;
 
-cleanup:
+cleanup_array:
   api_free_array(completions);
+
+cleanup:
 
   if (ret == FAIL) {
     ga_clear(&result_array);

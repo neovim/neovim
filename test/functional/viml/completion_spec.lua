@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local funcs = helpers.funcs
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local meths = helpers.meths
@@ -929,10 +930,10 @@ describe('completion', function()
     end)
 
     it('provides completion from `getcompletion()`', function()
-      eq({'vim'}, meths.call_function('getcompletion', {'vi', 'lua'}))
-      eq({'vim.api'}, meths.call_function('getcompletion', {'vim.ap', 'lua'}))
-      eq({'vim.tbl_filter'}, meths.call_function('getcompletion', {'vim.tbl_fil', 'lua'}))
-      eq({'print(vim'}, meths.call_function('getcompletion', {'print(vi', 'lua'}))
+      eq({'vim'}, funcs.getcompletion('vi', 'lua'))
+      eq({'api'}, funcs.getcompletion('vim.ap', 'lua'))
+      eq({'tbl_filter'}, funcs.getcompletion('vim.tbl_fil', 'lua'))
+      eq({'vim'}, funcs.getcompletion('print(vi', 'lua'))
     end)
   end)
 

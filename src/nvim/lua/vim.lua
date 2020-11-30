@@ -547,7 +547,7 @@ function vim._expand_pat(pat, env)
   if pat == '' then
     local result = vim.tbl_keys(env)
     table.sort(result)
-    return result
+    return result, 0
   end
 
   -- TODO: We can handle spaces in [] ONLY.
@@ -558,7 +558,7 @@ function vim._expand_pat(pat, env)
 
   -- Get the last part of the pattern
   local last_part = pat:match("[%w.:_%[%]'\"]+$")
-  if not last_part then return {} end
+  if not last_part then return {}, 0 end
 
   local parts, search_index = vim._expand_pat_get_parts(last_part)
 
@@ -568,11 +568,11 @@ function vim._expand_pat(pat, env)
   local final_env = env
   for _, part in ipairs(parts) do
     if type(final_env) ~= 'table' then
-      return {}
+      return {}, 0
     end
 
     -- Normally, we just have a string
-    --  Just attempt to get the string directly from the environment
+    -- Just attempt to get the string directly from the environment
     if type(part) == "string" then
       final_env = rawget(final_env, part)
     else
@@ -584,32 +584,32 @@ function vim._expand_pat(pat, env)
       -- -> _G[MY_VAR] -> "api"
       local result_key = part[1]
       if not result_key then
-        return {}
+        return {}, 0
       end
 
       local result = rawget(env, result_key)
 
       if result == nil then
-        return {}
+        return {}, 0
       end
 
       final_env = rawget(final_env, result)
     end
 
     if not final_env then
-      return {}
+      return {}, 0
     end
   end
 
   local result = vim.tbl_map(function(v)
-    return prefix_match_pat .. v
+    return v
   end, vim.tbl_filter(function(name)
     return string.find(name, match_pat) ~= nil
   end, vim.tbl_keys(final_env)))
 
   table.sort(result)
 
-  return result
+  return result, #prefix_match_pat
 end
 
 vim._expand_pat_get_parts = function(lua_string)

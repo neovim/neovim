@@ -6,33 +6,34 @@ local funcs = helpers.funcs
 local exec_lua = helpers.exec_lua
 
 local get_completions = function(input, env)
-  return exec_lua("return vim._expand_pat(...)", '^' .. input, env)
+  return exec_lua("return {vim._expand_pat(...)}", '^' .. input, env)
 end
 
 local get_compl_parts = function(parts)
-  return funcs.luaeval("{vim._expand_pat_get_parts(_A)}", parts)
+  return exec_lua("return {vim._expand_pat_get_parts(...)}", parts)
 end
 
 before_each(clear)
 
 describe('nlua_expand_pat', function()
   it('should complete exact matches', function()
-    eq({'exact'}, get_completions('exact', { exact = true }))
+    eq({{'exact'}, 0}, get_completions('exact', { exact = true }))
   end)
 
   it('should return empty table when nothing matches', function()
-    eq({}, get_completions('foo', { bar = true }))
+    eq({{}, 0}, get_completions('foo', { bar = true }))
   end)
 
   it('should return nice completions with function call prefix', function()
-    eq({'print(FOO'}, get_completions('print(F', { FOO = true, bawr = true }))
+    eq({{'FOO'}, 6}, get_completions('print(F', { FOO = true, bawr = true }))
   end)
 
   it('should return keys for nested dictionaries', function()
     eq(
-      {
-        'vim.api.nvim_buf_set_lines',
-        'vim.api.nvim_buf_set_option'
+      {{
+        'nvim_buf_set_lines',
+        'nvim_buf_set_option'
+       }, 8
       },
       get_completions('vim.api.nvim_buf_', {
         vim = {
@@ -49,9 +50,10 @@ describe('nlua_expand_pat', function()
 
   it('it should work with colons', function()
     eq(
-      {
-        'MyClass:bawr',
-        'MyClass:baz',
+      {{
+        'bawr',
+        'baz',
+       }, 8
       },
       get_completions('MyClass:b', {
         MyClass = {
@@ -65,9 +67,10 @@ describe('nlua_expand_pat', function()
 
   it('should return keys for string reffed dictionaries', function()
     eq(
-      {
-        'vim["api"].nvim_buf_set_lines',
-        'vim["api"].nvim_buf_set_option'
+      {{
+        'nvim_buf_set_lines',
+        'nvim_buf_set_option'
+       }, 11
       },
       get_completions('vim["api"].nvim_buf_', {
         vim = {
@@ -84,9 +87,10 @@ describe('nlua_expand_pat', function()
 
   it('should return keys for string reffed dictionaries', function()
     eq(
-      {
-        'vim["nested"]["api"].nvim_buf_set_lines',
-        'vim["nested"]["api"].nvim_buf_set_option'
+      {{
+        'nvim_buf_set_lines',
+        'nvim_buf_set_option'
+       }, 21
       },
       get_completions('vim["nested"]["api"].nvim_buf_', {
         vim = {
@@ -105,9 +109,10 @@ describe('nlua_expand_pat', function()
 
   it('should be able to interpolate globals', function()
     eq(
-      {
-        'vim[MY_VAR].nvim_buf_set_lines',
-        'vim[MY_VAR].nvim_buf_set_option'
+      {{
+        'nvim_buf_set_lines',
+        'nvim_buf_set_option'
+       }, 12
       },
       get_completions('vim[MY_VAR].nvim_buf_', {
         MY_VAR = "api",
@@ -124,7 +129,7 @@ describe('nlua_expand_pat', function()
   end)
 
   it('should return everything if the input is of length 0', function()
-    eq({"other", "vim"}, get_completions('', { vim = true, other = true }))
+    eq({{"other", "vim"}, 0}, get_completions('', { vim = true, other = true }))
   end)
 
   describe('get_parts', function()

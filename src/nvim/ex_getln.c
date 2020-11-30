@@ -3946,6 +3946,12 @@ nextwild (
     p2 = ExpandOne(xp, p1, vim_strnsave(&ccline.cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
+
+    // xp->xp_pattern might have been modified by ExpandOne (for example,
+    // in lua completion), so recompute the pattern index and length
+    i = (int)(xp->xp_pattern - ccline.cmdbuff);
+    xp->xp_pattern_len = (size_t)ccline.cmdpos - (size_t)i;
+
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
       for (j = 0; (size_t)j < xp->xp_pattern_len; j++) {
@@ -3961,7 +3967,7 @@ nextwild (
   }
 
   if (p2 != NULL && !got_int) {
-    difflen = (int)STRLEN(p2) - (int)xp->xp_pattern_len;
+    difflen = (int)STRLEN(p2) - (int)(xp->xp_pattern_len);
     if (ccline.cmdlen + difflen + 4 > ccline.cmdbufflen) {
       realloc_cmdbuff(ccline.cmdlen + difflen + 4);
       xp->xp_pattern = ccline.cmdbuff + i;
@@ -5109,7 +5115,7 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_LUA) {
     ILOG("PAT %s", pat);
-    return nlua_expand_pat(pat, num_file, file);
+    return nlua_expand_pat(xp, pat, num_file, file);
   }
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
