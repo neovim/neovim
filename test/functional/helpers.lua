@@ -442,6 +442,7 @@ function module.new_argv(...)
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
+        'XDG_DATA_DIRS',
         'TMPDIR',
       }) do
         if not env_tbl[k] then

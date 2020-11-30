@@ -215,6 +215,9 @@ CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
+							*c_CTRL-Z*
+CTRL-Z		Trigger 'wildmode'. Same as 'wildcharm', but always available.
+
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
 

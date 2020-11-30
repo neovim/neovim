@@ -1024,7 +1024,7 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // free expanded names when finished walking through matches
-  if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
+  if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
     if (compl_match_array) {
@@ -1328,7 +1328,8 @@ static int command_line_execute(VimState *state, int key)
   // - hitting <ESC> twice means: abandon command line.
   // - wildcard expansion is only done when the 'wildchar' key is really
   //   typed, not when it comes from a macro
-  if ((s->c == p_wc && !s->gotesc && KeyTyped) || s->c == p_wcm) {
+  if ((s->c == p_wc && !s->gotesc && KeyTyped) || s->c == p_wcm
+      || s->c == Ctrl_Z) {
     int options = WILD_NO_BEEP;
     if (wim_flags[s->wim_index] & WIM_BUFLASTUSED) {
       options |= WILD_BUFLASTUSED;
