@@ -5115,7 +5115,7 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_LUA) {
     ILOG("PAT %s", pat);
-    return nlua_expand_pat(pat, num_file, file);
+    return nlua_expand_pat(xp, pat, num_file, file);
   }
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);

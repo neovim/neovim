@@ -594,6 +594,7 @@ function vim._expand_pat(pat, env)
 
   local result = vim.tbl_map(function(v)
     return prefix_match_pat .. v
+    -- return v
   end, vim.tbl_filter(function(name)
     return string.find(name, match_pat) ~= nil
   end, vim.tbl_keys(final_env)))
