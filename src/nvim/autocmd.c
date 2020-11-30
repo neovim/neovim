@@ -193,15 +193,13 @@ static void au_del_cmd(AutoCmd *ac)
 static void au_cleanup(void)
 {
   AutoPat *ap, **prev_ap;
-  event_T event;
 
   if (autocmd_busy || !au_need_clean) {
     return;
   }
 
   // Loop over all events.
-  for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
-       event = (event_T)((int)event + 1)) {
+  FOR_ALL_AUEVENTS(event) {
     // Loop over all autocommand patterns.
     prev_ap = &(first_autopat[(int)event]);
     for (ap = *prev_ap; ap != NULL; ap = *prev_ap) {
@@ -251,12 +249,15 @@ static void au_cleanup(void)
   au_need_clean = false;
 }
 
+AutoPat* au_get_autopat_for_event(event_T event)
+{
+  return first_autopat[(int)event];
+}
+
 // Called when buffer is freed, to remove/invalidate related buffer-local
 // autocmds.
 void aubuflocal_remove(buf_T *buf)
 {
-  AutoPat *ap;
-  event_T event;
   AutoPatCmd *apc;
 
   // invalidate currently executing autocommands
@@ -267,10 +268,8 @@ void aubuflocal_remove(buf_T *buf)
   }
 
   // invalidate buflocals looping through events
-  for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
-       event = (event_T)((int)event + 1)) {
-    // loop over all autocommand patterns
-    for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
+  FOR_ALL_AUEVENTS(event) {
+    FOR_ALL_AUPATS(event, ap) {
       if (ap->buflocal_nr == buf->b_fnum) {
         au_remove_pat(ap);
         if (p_verbose >= 6) {

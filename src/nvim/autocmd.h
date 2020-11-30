@@ -60,6 +60,14 @@ typedef struct AutoPatCmd {
   struct AutoPatCmd   *next;    // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 
+// Iterates over all the events for auto commands
+#define FOR_ALL_AUEVENTS(event) \
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1)) // NOLINT
+
+// Iterates over all the AutoPats for a particular event_T
+#define FOR_ALL_AUPATS(event, ap) \
+  for (AutoPat *ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) // NOLINT
+
 
 // Set by the apply_autocmds_group function if the given event is equal to
 // EVENT_FILETYPE. Used by the readfile function in order to determine if

@@ -14,11 +14,15 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
+// NEW API FILES MUST GO HERE.
+//  When creating a new API file, you must include it here,
+//  so that the dispatcher can find the C functions that you are creating!
 #include "nvim/api/buffer.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/window.h"
+#include "nvim/api/autocmd.h"
 
 static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 
