@@ -3694,7 +3694,7 @@ endif
 if ExtraVim(msgfile)
     try
 	Xpath 4194304				" X: 4194304
-	let x = novar	" error E121/E15; exception: E121
+	let x = novar	" error E121; exception: E121
     catch /E15:/	" should not catch
 	Xpath 8388608				" X: 0
     endtry
@@ -3702,7 +3702,7 @@ if ExtraVim(msgfile)
 endif
 
 Xpath 33554432					" X: 33554432
-if !MESSAGES('E121', "Undefined variable", 'E15', "Invalid expression")
+if !MESSAGES('E121', "Undefined variable")
     Xpath 67108864				" X: 0
 endif
 

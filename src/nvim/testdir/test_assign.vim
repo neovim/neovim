@@ -25,11 +25,11 @@ func Test_let_termcap()
     let &t_k1 = old_t_k1
   endif
 
-  call assert_fails('let x = &t_xx', 'E15')
+  call assert_fails('let x = &t_xx', 'E113')
   let &t_xx = "yes"
   call assert_equal("yes", &t_xx)
   let &t_xx = ""
-  call assert_fails('let x = &t_xx', 'E15')
+  call assert_fails('let x = &t_xx', 'E113')
 endfunc
 
 func Test_let_option_error()
@@ -44,4 +44,12 @@ func Test_let_option_error()
   call assert_fails('let &fillchars += "diff:-"', 'E734')
   call assert_equal("vert:|", &fillchars)
   let &fillchars = _w
+endfunc
+
+func Test_let_errors()
+  let s = 'abcd'
+  call assert_fails('let s[1] = 5', 'E689:')
+
+  let l = [1, 2, 3]
+  call assert_fails('let l[:] = 5', 'E709:')
 endfunc
