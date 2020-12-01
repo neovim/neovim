@@ -1359,7 +1359,7 @@ func Test_ChangedP()
 endfunc
 
 let g:setline_handled = v:false
-func! SetLineOne()
+func SetLineOne()
   if !g:setline_handled
     call setline(1, "(x)")
     let g:setline_handled = v:true

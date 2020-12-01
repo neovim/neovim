@@ -5,11 +5,11 @@
 " Test environment							    {{{1
 "-------------------------------------------------------------------------------
 
-com!               XpathINIT  let g:Xpath = ''
+com!		   XpathINIT  let g:Xpath = ''
 com! -nargs=1 -bar Xpath      let g:Xpath = g:Xpath . <args>
 
 " Append a message to the "messages" file
-func! Xout(text)
+func Xout(text)
     split messages
     $put =a:text
     wq
@@ -50,7 +50,7 @@ function! MakeScript(funcname, ...)
     write
     bwipeout
     return script
-endfunction
+endfunc
 
 " ExecAsScript - Source a temporary script made from a function.	    {{{2
 "
@@ -301,9 +301,9 @@ XpathINIT
 "
 let calls = ""
 com! -nargs=1 CALL
-    	\ if !exists("calls") && !exists("outer") |
-    	\ let g:calls = g:calls . <args> |
-    	\ endif
+	    \ if !exists("calls") && !exists("outer") |
+	    \ let g:calls = g:calls . <args> |
+	    \ endif
 
 let i = 0
 while i < 3
@@ -357,7 +357,7 @@ endif
 if exists("*F1")
     call F1("F1")
     if exists("*G1")
-        call G1("G1")
+       call G1("G1")
     endif
 endif
 
@@ -367,13 +367,13 @@ endif
 if exists("*F2")
     call F2(2, "F2")
     if exists("*G21")
-        call G21("G21")
+       call G21("G21")
     endif
     if exists("*G22")
-        call G22("G22")
+       call G22("G22")
     endif
     if exists("*G23")
-        call G23("G23")
+       call G23("G23")
     endif
 endif
 
@@ -383,13 +383,13 @@ endif
 if exists("*F3")
     call F3(3, "F3")
     if exists("*G31")
-        call G31("G31")
+       call G31("G31")
     endif
     if exists("*G32")
-        call G32("G32")
+       call G32("G32")
     endif
     if exists("*G33")
-        call G33("G33")
+       call G33("G33")
     endif
 endif
 
@@ -640,7 +640,7 @@ function! MSG(enr, emsg)
 	endif
     endif
     return match
-endfunction
+endfunc
 
 if 1 || strlen("\"") | Xpath 'a'
     Xpath 'b'
@@ -1099,70 +1099,70 @@ endfunction
 func Test_script_lines()
     " :append
     try
-        call DefineFunction('T_Append', [
-                    \ 'append',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Append', [
+		    \ 'append',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Append', [
-                    \ 'append',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Append', [
+		    \ 'append',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 
     " :change
     try
-        call DefineFunction('T_Change', [
-                    \ 'change',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Change', [
+		    \ 'change',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Change', [
-                    \ 'change',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Change', [
+		    \ 'change',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 
     " :insert
     try
-        call DefineFunction('T_Insert', [
-                    \ 'insert',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Insert', [
+		    \ 'insert',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Insert', [
-                    \ 'insert',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Insert', [
+		    \ 'insert',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 endfunc
 
 "-------------------------------------------------------------------------------
 " Test 96:  line continuation						    {{{1
 "
-"           Undefined behavior was detected by ubsan with line continuation
-"           after an empty line.
+"	    Undefined behavior was detected by ubsan with line continuation
+"	    after an empty line.
 "-------------------------------------------------------------------------------
 func Test_script_emty_line_continuation()
 

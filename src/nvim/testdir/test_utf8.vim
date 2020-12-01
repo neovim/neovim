@@ -22,17 +22,17 @@ func Test_strchars()
 endfunc
 
 " Test for customlist completion
-function! CustomComplete1(lead, line, pos)
+func CustomComplete1(lead, line, pos)
 	return ['あ', 'い']
-endfunction
+endfunc
 
-function! CustomComplete2(lead, line, pos)
+func CustomComplete2(lead, line, pos)
 	return ['あたし', 'あたま', 'あたりめ']
-endfunction
+endfunc
 
-function! CustomComplete3(lead, line, pos)
+func CustomComplete3(lead, line, pos)
 	return ['Nこ', 'Nん', 'Nぶ']
-endfunction
+endfunc
 
 func Test_customlist_completion()
   command -nargs=1 -complete=customlist,CustomComplete1 Test1 echo

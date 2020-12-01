@@ -6155,7 +6155,7 @@ static int qf_setprop_items_from_lines(
     qf_free_items(&qi->qf_lists[qf_idx]);
   }
   if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
-                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) >= 0) {
     retval = OK;
   }
 
@@ -6256,8 +6256,11 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
     retval = qf_setprop_curidx(qi, qfl, di);
   }
 
-  if (retval == OK) {
+  if (newlist || retval == OK) {
     qf_list_changed(qfl);
+  }
+  if (newlist) {
+    qf_update_buffer(qi, NULL);
   }
 
   return retval;

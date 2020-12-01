@@ -1,5 +1,5 @@
 
-function! Test_charsearch()
+func Test_charsearch()
   enew!
   call append(0, ['Xabcdefghijkemnopqretuvwxyz',
 	      \ 'Yabcdefghijkemnopqretuvwxyz',
@@ -29,10 +29,10 @@ function! Test_charsearch()
   normal! ;;p
   call assert_equal('ZabcdeZfghijkZZemnokqretkZvwxyz', getline(3))
   enew!
-endfunction
+endfunc
 
 " Test for t,f,F,T movement commands and 'cpo-;' setting
-function! Test_search_cmds()
+func Test_search_cmds()
   enew!
   call append(0, ["aaa two three four", "    zzz", "yyy   ",
 	      \ "bbb yee yoo four", "ccc two three four",
@@ -59,4 +59,4 @@ function! Test_search_cmds()
   call assert_equal('ccc', getline(5))
   call assert_equal('ddd yee y', getline(6))
   enew!
-endfunction
+endfunc
