@@ -7,6 +7,7 @@ return {
     'BufFilePre',             -- before renaming a buffer
     'BufHidden',              -- just after buffer becomes hidden
     'BufLeave',               -- before leaving a buffer
+    'BufModifiedSet',         -- after the 'modified' state of a buffer changes
     'BufNew',                 -- after creating any buffer
     'BufNewFile',             -- when creating a buffer for a new file
     'BufReadCmd',             -- read buffer using command
@@ -113,6 +114,7 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
+    'WinScrolled',            -- after scrolling a window
   },
   aliases = {
     BufCreate = 'BufAdd',
@@ -123,6 +125,7 @@ return {
   -- List of nvim-specific events or aliases for the purpose of generating
   -- syntax file
   nvim_specific = {
+    BufModifiedSet=true,
     DirChanged=true,
     Signal=true,
     TabClosed=true,
@@ -133,5 +136,6 @@ return {
     UIEnter=true,
     UILeave=true,
     WinClosed=true,
+    WinScrolled=true,
   },
 }

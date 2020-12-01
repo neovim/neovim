@@ -704,8 +704,7 @@ static void nfa_emit_equi_class(int c)
 #define EMIT2(c)   EMIT(c); EMIT(NFA_CONCAT);
 #define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
 
-  if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
-      || STRCMP(p_enc, "iso-8859-15") == 0) {
+  {
 #define A_grave 0xc0
 #define A_acute 0xc1
 #define A_circumflex 0xc2
@@ -1246,7 +1245,7 @@ static int nfa_regatom(void)
     }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
-    if (enc_utf8 && c == Magic('.') && utf_iscomposing(peekchr())) {
+    if (c == Magic('.') && utf_iscomposing(peekchr())) {
       old_regparse = regparse;
       c = getchr();
       goto nfa_do_multibyte;
@@ -1737,11 +1736,10 @@ collection:
             EMIT(endc);
             EMIT(NFA_RANGE);
             EMIT(NFA_CONCAT);
-          } else if (has_mbyte && ((*mb_char2len)(startc) > 1
-                                   || (*mb_char2len)(endc) > 1)) {
-            /* Emit the characters in the range.
-             * "startc" was already emitted, so skip it.
-             * */
+          } else if ((*mb_char2len)(startc) > 1
+                     || (*mb_char2len)(endc) > 1) {
+            // Emit the characters in the range.
+            // "startc" was already emitted, so skip it.
             for (c = startc + 1; c <= endc; c++) {
               EMIT(c);
               EMIT(NFA_CONCAT);
@@ -1819,9 +1817,8 @@ collection:
 
 nfa_do_multibyte:
     // plen is length of current char with composing chars
-    if (enc_utf8 && ((*mb_char2len)(c)
-                     != (plen = utfc_ptr2len(old_regparse))
-                     || utf_iscomposing(c))) {
+    if ((*mb_char2len)(c) != (plen = utfc_ptr2len(old_regparse))
+        || utf_iscomposing(c)) {
       int i = 0;
 
       /* A base character plus composing characters, or just one
@@ -4995,7 +4992,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     }
     if (match
         // check that no composing char follows
-        && !(enc_utf8 && utf_iscomposing(PTR2CHAR(s2)))) {
+        && !utf_iscomposing(PTR2CHAR(s2))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         rex.reg_startpos[0].lnum = rex.lnum;
@@ -5248,7 +5245,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       {
         // If the match ends before a composing characters and
         // rex.reg_icombine is not set, that is not really a match.
-        if (enc_utf8 && !rex.reg_icombine && utf_iscomposing(curc)) {
+        if (!rex.reg_icombine && utf_iscomposing(curc)) {
           break;
         }
         nfa_match = true;
@@ -5747,7 +5744,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       case NFA_ANY_COMPOSING:
         // On a composing character skip over it.  Otherwise do
         // nothing.  Always matches.
-        if (enc_utf8 && utf_iscomposing(curc)) {
+        if (utf_iscomposing(curc)) {
           add_off = clen;
         } else {
           add_here = true;
@@ -6019,7 +6016,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
           // Bail out quickly when there can't be a match, avoid the overhead of
           // win_linetabsize() on long lines.
-          if (op != 1 && col > t->state->val * (has_mbyte ? MB_MAXBYTES : 1)) {
+          if (op != 1 && col > t->state->val * MB_MAXBYTES) {
             break;
           }
 
@@ -6132,7 +6129,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
         // If rex.reg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
-        if (result && enc_utf8 && !rex.reg_icombine) {
+        if (result && !rex.reg_icombine) {
           clen = utf_ptr2len(rex.input);
         }
 

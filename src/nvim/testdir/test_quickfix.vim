@@ -3,6 +3,8 @@
 source check.vim
 CheckFeature quickfix
 
+source screendump.vim
+
 set encoding=utf-8
 
 func s:setup_commands(cchar)
@@ -3602,6 +3604,10 @@ func Test_lhelpgrep_autocmd()
     au BufEnter * call setqflist([], 'f')
   augroup END
   call assert_fails('helpgrep quickfix', 'E925:')
+  " run the test with a help window already open
+  help
+  wincmd w
+  call assert_fails('helpgrep quickfix', 'E925:')
   augroup QF_Test
     au! BufEnter
   augroup END
@@ -4404,6 +4410,137 @@ func Test_search_in_dirstack()
   set efm&
   exe 'cd ' . save_cwd
   call delete('Xtestdir', 'rf')
+endfunc
+
+" Test for :cquit
+func Test_cquit()
+  " Exit Vim with a non-zero value
+  if RunVim([], ["cquit 7"], '')
+    call assert_equal(7, v:shell_error)
+  endif
+
+  if RunVim([], ["50cquit"], '')
+    call assert_equal(50, v:shell_error)
+  endif
+
+  " Exit Vim with default value
+  if RunVim([], ["cquit"], '')
+    call assert_equal(1, v:shell_error)
+  endif
+
+  " Exit Vim with zero value
+  if RunVim([], ["cquit 0"], '')
+    call assert_equal(0, v:shell_error)
+  endif
+
+  " Exit Vim with negative value
+  call assert_fails('-3cquit', 'E16:')
+endfunc
+
+" Test for adding an invalid entry with the quickfix window open and making
+" sure that the window contents are not changed
+func Test_add_invalid_entry_with_qf_window()
+  call setqflist([], 'f')
+  cexpr "Xfile1:10:aa"
+  copen
+  call setqflist(['bb'], 'a')
+  call assert_equal(1, line('$'))
+  call assert_equal(['Xfile1|10| aa'], getline(1, '$'))
+  call assert_equal([{'lnum': 10, 'bufnr': bufnr('Xfile1'), 'col': 0, 'pattern': '', 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'module': '', 'text': 'aa'}], getqflist())
+  cclose
+endfunc
+
+" Test for very weird problem: autocommand causes a failure, resulting opening
+" the quickfix window to fail. This still splits the window, but otherwise
+" should not mess up buffers.
+func Test_quickfix_window_fails_to_open()
+  CheckScreendump
+
+  let lines =<< trim END
+      anything
+      try
+        anything
+      endtry
+  END
+  call writefile(lines, 'XquickfixFails')
+
+  let lines =<< trim END
+      split XquickfixFails
+      silent vimgrep anything %
+      normal o
+      au BufLeave * ++once source XquickfixFails
+      " This will trigger the autocommand, which causes an error, what follows
+      " is aborted but the window was already split.
+      silent! cwindow
+  END
+  call writefile(lines, 'XtestWinFails')
+  let buf = RunVimInTerminal('-S XtestWinFails', #{rows: 13})
+  call VerifyScreenDump(buf, 'Test_quickfix_window_fails', {})
+
+  " clean up
+  call term_sendkeys(buf, ":bwipe!\<CR>")
+  call term_wait(buf)
+  call StopVimInTerminal(buf)
+  call delete('XtestWinFails')
+  call delete('XquickfixFails')
+endfunc
+
+" Test for updating the quickfix buffer whenever the assocaited quickfix list
+" is changed.
+func Xqfbuf_update(cchar)
+  call s:setup_commands(a:cchar)
+
+  Xexpr "F1:1:line1"
+  Xopen
+  call assert_equal(['F1|1| line1'], getline(1, '$'))
+  call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
+
+  " Test setqflist() using the 'lines' key in 'what'
+  " add a new entry
+  call g:Xsetlist([], 'a', {'lines' : ['F2:2: line2']})
+  call assert_equal(['F1|1| line1', 'F2|2| line2'], getline(1, '$'))
+  call assert_equal(2, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " replace all the entries with a single entry
+  call g:Xsetlist([], 'r', {'lines' : ['F3:3: line3']})
+  call assert_equal(['F3|3| line3'], getline(1, '$'))
+  call assert_equal(3, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " remove all the entries
+  call g:Xsetlist([], 'r', {'lines' : []})
+  call assert_equal([''], getline(1, '$'))
+  call assert_equal(4, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " add a new list
+  call g:Xsetlist([], ' ', {'lines' : ['F4:4: line4']})
+  call assert_equal(['F4|4| line4'], getline(1, '$'))
+  call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
+
+  " Test setqflist() using the 'items' key in 'what'
+  " add a new entry
+  call g:Xsetlist([], 'a', {'items' : [{'filename' : 'F5', 'lnum' : 5, 'text' : 'line5'}]})
+  call assert_equal(['F4|4| line4', 'F5|5| line5'], getline(1, '$'))
+  call assert_equal(2, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " replace all the entries with a single entry
+  call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F6', 'lnum' : 6, 'text' : 'line6'}]})
+  call assert_equal(['F6|6| line6'], getline(1, '$'))
+  call assert_equal(3, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " remove all the entries
+  call g:Xsetlist([], 'r', {'items' : []})
+  call assert_equal([''], getline(1, '$'))
+  call assert_equal(4, g:Xgetlist({'changedtick' : 0}).changedtick)
+  " add a new list
+  call g:Xsetlist([], ' ', {'items' : [{'filename' : 'F7', 'lnum' : 7, 'text' : 'line7'}]})
+  call assert_equal(['F7|7| line7'], getline(1, '$'))
+  call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
+
+  call g:Xsetlist([], ' ', {})
+  call assert_equal([''], getline(1, '$'))
+  call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
+
+  Xclose
+endfunc
+
+func Test_qfbuf_update()
+  call Xqfbuf_update('c')
+  call Xqfbuf_update('l')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

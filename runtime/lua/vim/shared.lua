@@ -96,7 +96,7 @@ end
 ---
 --- Examples:
 --- <pre>
----  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+---  split(":aa::b:", ":")     --> {'','aa','','b',''}
 ---  split("axaby", "ab?")     --> {'','x','y'}
 ---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
 --- </pre>
@@ -496,7 +496,7 @@ do
   }
 
   local function _is_type(val, t)
-    return t == 'callable' and vim.is_callable(val) or type(val) == t
+    return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
   local function is_valid(opt)

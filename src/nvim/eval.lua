@@ -385,6 +385,7 @@ return {
     wildmenumode={},
     win_findbuf={args=1},
     win_getid={args={0,2}},
+    win_gettype={args={0,1}},
     win_gotoid={args=1},
     win_id2tabwin={args=1},
     win_id2win={args=1},

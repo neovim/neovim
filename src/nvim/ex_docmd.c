@@ -1251,7 +1251,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   char_u              *errormsg = NULL;  // error message
   char_u              *after_modifier = NULL;
   exarg_T ea;
-  int save_msg_scroll = msg_scroll;
+  const int save_msg_scroll = msg_scroll;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
   char_u              *cmd;
@@ -1501,10 +1501,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (sandbox != 0 && !(ea.argt & SBOXOK)) {
       // Command not allowed in sandbox.
       errormsg = (char_u *)_(e_sandbox);
-      goto doend;
-    }
-    if (restricted != 0 && (ea.argt & RESTRICT)) {
-      errormsg = (char_u *)_("E981: Command not allowed in restricted mode");
       goto doend;
     }
     if (!MODIFIABLE(curbuf) && (ea.argt & MODIFY)
@@ -1877,8 +1873,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_python3:
     case CMD_pythonx:
     case CMD_pyx:
-    case CMD_pyxdo:
-    case CMD_pyxfile:
     case CMD_return:
     case CMD_rightbelow:
     case CMD_ruby:
@@ -2003,33 +1997,9 @@ doend:
       ? cmdnames[(int)ea.cmdidx].cmd_name
       : (char_u *)NULL);
 
-  if (ea.verbose_save >= 0) {
-    p_verbose = ea.verbose_save;
-  }
-  free_cmdmod();
-
+  undo_cmdmod(&ea, save_msg_scroll);
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
-
-  if (ea.save_msg_silent != -1) {
-    // messages could be enabled for a serious error, need to check if the
-    // counters don't become negative
-    if (!did_emsg || msg_silent > ea.save_msg_silent) {
-      msg_silent = ea.save_msg_silent;
-    }
-    emsg_silent -= ea.did_esilent;
-    if (emsg_silent < 0) {
-      emsg_silent = 0;
-    }
-    // Restore msg_scroll, it's set by file I/O commands, even when no
-    // message is actually displayed.
-    msg_scroll = save_msg_scroll;
-
-    /* "silent reg" or "silent echo x" inside "redir" leaves msg_col
-     * somewhere in the line.  Put it back in the first column. */
-    if (redirecting())
-      msg_col = 0;
-  }
 
   if (ea.did_sandbox) {
     sandbox--;
@@ -2298,9 +2268,14 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
   return OK;
 }
 
-// Free contents of "cmdmod".
-static void free_cmdmod(void)
+// Undo and free contents of "cmdmod".
+static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
+  FUNC_ATTR_NONNULL_ALL
 {
+  if (eap->verbose_save >= 0) {
+    p_verbose = eap->verbose_save;
+  }
+
   if (cmdmod.save_ei != NULL) {
     /* Restore 'eventignore' to the value before ":noautocmd". */
     set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
@@ -2308,8 +2283,27 @@ static void free_cmdmod(void)
     free_string_option(cmdmod.save_ei);
   }
 
-  if (cmdmod.filter_regmatch.regprog != NULL) {
-    vim_regfree(cmdmod.filter_regmatch.regprog);
+  vim_regfree(cmdmod.filter_regmatch.regprog);
+
+  if (eap->save_msg_silent != -1) {
+    // messages could be enabled for a serious error, need to check if the
+    // counters don't become negative
+    if (!did_emsg || msg_silent > eap->save_msg_silent) {
+      msg_silent = eap->save_msg_silent;
+    }
+    emsg_silent -= eap->did_esilent;
+    if (emsg_silent < 0) {
+      emsg_silent = 0;
+    }
+    // Restore msg_scroll, it's set by file I/O commands, even when no
+    // message is actually displayed.
+    msg_scroll = save_msg_scroll;
+
+    // "silent reg" or "silent echo x" inside "redir" leaves msg_col
+    // somewhere in the line.  Put it back in the first column.
+    if (redirecting()) {
+      msg_col = 0;
+    }
   }
 }
 
@@ -2509,12 +2503,8 @@ static void append_command(char_u *cmd)
   STRCAT(IObuff, ": ");
   d = IObuff + STRLEN(IObuff);
   while (*s != NUL && d - IObuff < IOSIZE - 7) {
-    if (
-      enc_utf8 ? (s[0] == 0xc2 && s[1] == 0xa0) :
-      *s == 0xa0) {
-      s +=
-        enc_utf8 ? 2 :
-        1;
+    if (s[0] == 0xc2 && s[1] == 0xa0) {
+      s += 2;
       STRCPY(d, "<a0>");
       d += 4;
     } else
@@ -4446,6 +4436,9 @@ void separate_nextcmd(exarg_T *eap)
     else if (p[0] == '`' && p[1] == '=' && (eap->argt & XFILE)) {
       p += 2;
       (void)skip_expr(&p);
+      if (*p == NUL) {  // stop at NUL after CTRL-V
+        break;
+      }
     }
     /* Check for '"': start of comment or '|': next command */
     /* :@" does not start a comment!
@@ -5565,7 +5558,8 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
         break;
       len += 3;       /* "," */
     } else {
-      int charlen = (*mb_ptr2len)(p);
+      const int charlen = utfc_ptr2len(p);
+
       len += charlen;
       p += charlen;
     }
@@ -6323,17 +6317,14 @@ static void ex_quit(exarg_T *eap)
   }
 }
 
-/*
- * ":cquit".
- */
+/// ":cquit".
 static void ex_cquit(exarg_T *eap)
 {
+  // this does not always pass on the exit code to the Manx compiler. why?
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
-/*
- * ":qall": try to quit all windows
- */
+/// ":qall": try to quit all windows
 static void ex_quit_all(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
@@ -6621,25 +6612,22 @@ static void ex_hide(exarg_T *eap)
 /// ":stop" and ":suspend": Suspend Vim.
 static void ex_stop(exarg_T *eap)
 {
-  // Disallow suspending in restricted mode (-Z)
-  if (!check_restricted()) {
-    if (!eap->forceit) {
-      autowrite_all();
-    }
-    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
-
-    // TODO(bfredl): the TUI should do this on suspend
-    ui_cursor_goto(Rows - 1, 0);
-    ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
-    ui_flush();
-    ui_call_suspend();  // call machine specific function
-
-    ui_flush();
-    maketitle();
-    resettitle();  // force updating the title
-    ui_refresh();  // may have resized window
-    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  if (!eap->forceit) {
+    autowrite_all();
   }
+  apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+
+  // TODO(bfredl): the TUI should do this on suspend
+  ui_cursor_goto(Rows - 1, 0);
+  ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
+  ui_flush();
+  ui_call_suspend();  // call machine specific function
+
+  ui_flush();
+  maketitle();
+  resettitle();  // force updating the title
+  ui_refresh();  // may have resized window
+  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
 // ":exit", ":xit" and ":wq": Write file and quite the current window.
@@ -7379,7 +7367,7 @@ static void ex_syncbind(exarg_T *eap)
       else
         scrolldown(-y, TRUE);
       curwin->w_scbind_pos = topline;
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       cursor_correct();
       curwin->w_redr_status = TRUE;
     }
@@ -7503,7 +7491,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   shorten_fnames(true);
 
   if (trigger_dirchanged) {
-    do_autocmd_dirchanged(cwd, scope);
+    do_autocmd_dirchanged(cwd, scope, false);
   }
 }
 
@@ -8270,12 +8258,10 @@ static void ex_normal(exarg_T *eap)
     return;
   }
 
-  /*
-   * vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
-   * this for the K_SPECIAL leading byte, otherwise special keys will not
-   * work.
-   */
-  if (has_mbyte) {
+  // vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
+  // this for the K_SPECIAL leading byte, otherwise special keys will not
+  // work.
+  {
     int len = 0;
 
     /* Count the number of characters to be escaped. */
@@ -8314,9 +8300,8 @@ static void ex_normal(exarg_T *eap)
         check_cursor_moved(curwin);
       }
 
-      exec_normal_cmd(
-          arg != NULL ? arg :
-          eap->arg, eap->forceit ? REMAP_NONE : REMAP_YES, FALSE);
+      exec_normal_cmd(arg != NULL ? arg : eap->arg,
+                      eap->forceit ? REMAP_NONE : REMAP_YES, false);
     } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
   }
 
@@ -8504,7 +8489,7 @@ static void ex_pedit(exarg_T *eap)
   if (curwin != curwin_save && win_valid(curwin_save)) {
     // Return cursor to where we were
     validate_cursor();
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     win_enter(curwin_save, true);
   }
   g_do_tagpreview = 0;

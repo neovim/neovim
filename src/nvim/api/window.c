@@ -142,7 +142,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  redraw_win_later(win, VALID);
+  redraw_later(win, VALID);
 }
 
 /// Gets the window height
@@ -471,7 +471,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     if (!win_new_float(win, fconfig, err)) {
       return;
     }
-    redraw_later(NOT_VALID);
+    redraw_later(win, NOT_VALID);
   } else {
     win_config_float(win, fconfig);
     win->w_pos_changed = true;

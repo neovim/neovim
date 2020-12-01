@@ -2652,7 +2652,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     xfree(reg->y_array);
   }
   if (curwin->w_p_rnu) {
-    redraw_later(SOME_VALID);  // cursor moved to start
+    redraw_later(curwin, SOME_VALID);  // cursor moved to start
   }
   if (message) {  // Display message about yank?
     if (yank_type == kMTCharWise && yanklines == 1) {
@@ -4117,8 +4117,8 @@ fex_format(
     int c                  /* character to be inserted */
 )
 {
-  int use_sandbox = was_set_insecurely((char_u *)"formatexpr",
-      OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(
+      curwin, (char_u *)"formatexpr", OPT_LOCAL);
   int r;
   char_u *fex;
 

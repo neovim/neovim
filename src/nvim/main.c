@@ -23,7 +23,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -163,7 +163,7 @@ void early_init(mparm_T *paramp)
   env_init();
   fs_init();
   handle_init();
-  extmark_init();
+  decor_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
@@ -188,9 +188,6 @@ void early_init(mparm_T *paramp)
   global_alist.id = 0;
 
   // Set the default values for the options.
-  // NOTE: Non-latin1 translated messages are working only after this,
-  // because this is where "has_mbyte" will be set, which is used by
-  // msg_outtrans_len_attr().
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
   set_init_1(paramp != NULL ? paramp->clean : false);
@@ -446,7 +443,7 @@ int main(int argc, char **argv)
   if (exmode_active || use_remote_ui || use_builtin_ui) {
     // Don't clear the screen when starting in Ex mode, or when a UI might have
     // displayed messages.
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");
@@ -1012,10 +1009,6 @@ static void command_line_scan(mparm_T *parmp)
           want_argument = true;
           break;
         }
-        case 'Z': {  // "-Z" restricted mode
-          restricted = true;
-          break;
-        }
 
         case 'c': {  // "-c{command}" or "-c {command}" exec command
           if (argv[0][argv_idx] != NUL) {
@@ -1340,6 +1333,7 @@ static void load_plugins(void)
 {
   if (p_lpl) {
     char_u *rtp_copy = NULL;
+    char_u *const plugin_pattern = (char_u *)"plugin/**/*.vim";  // NOLINT
 
     // First add all package directories to 'runtimepath', so that their
     // autoload directories can be found.  Only if not done already with a
@@ -1352,7 +1346,7 @@ static void load_plugins(void)
     }
 
     source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
-                   (char_u *)"plugin/**/*.vim",  // NOLINT
+                   plugin_pattern,
                    DIP_ALL | DIP_NOAFTER);
     TIME_MSG("loading plugins");
     xfree(rtp_copy);
@@ -1364,7 +1358,7 @@ static void load_plugins(void)
     }
     TIME_MSG("loading packages");
 
-    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_AFTER);
+    source_runtime(plugin_pattern, DIP_ALL | DIP_AFTER);
     TIME_MSG("loading after plugins");
   }
 }

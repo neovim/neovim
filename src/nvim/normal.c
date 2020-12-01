@@ -903,6 +903,10 @@ normal_end:
 
   msg_nowait = false;
 
+  if (finish_op) {
+    set_reg_var(get_default_register_name());
+  }
+
   // Reset finish_op, in case it was set
   s->c = finish_op;
   finish_op = false;
@@ -1193,6 +1197,15 @@ static void normal_check_interrupt(NormalState *s)
   }
 }
 
+static void normal_check_window_scrolled(NormalState *s)
+{
+  // Trigger Scroll if the viewport changed.
+  if (!finish_op && has_event(EVENT_WINSCROLLED)
+      && win_did_scroll(curwin)) {
+    do_autocmd_winscrolled(curwin);
+  }
+}
+
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
@@ -1213,6 +1226,16 @@ static void normal_check_text_changed(NormalState *s)
       && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)) {
     apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
     curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+  }
+}
+
+static void normal_check_buffer_modified(NormalState *s)
+{
+  // Trigger BufModified if b_modified changed
+  if (!finish_op && has_event(EVENT_BUFMODIFIEDSET)
+      && curbuf->b_changed_invalid == true) {
+    apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
+    curbuf->b_changed_invalid = false;
   }
 }
 
@@ -1316,8 +1339,14 @@ static int normal_check(VimState *state)
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
   } else if (do_redraw || stuff_empty()) {
+    // Need to make sure w_topline and w_leftcol are correct before
+    // normal_check_window_scrolled() is called.
+    update_topline();
+
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
+    normal_check_window_scrolled(s);
+    normal_check_buffer_modified(s);
 
     // Updating diffs from changed() does not always work properly,
     // esp. updating folds.  Do an update just before redrawing if
@@ -1456,7 +1485,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if ((redo_yank || oap->op_type != OP_YANK)
         && ((!VIsual_active || oap->motion_force)
             // Also redo Operator-pending Visual mode mappings.
-            || (cap->cmdchar == ':' && oap->op_type != OP_COLON))
+            || ((cap->cmdchar == ':' || cap->cmdchar == K_COMMAND)
+                && oap->op_type != OP_COLON))
         && cap->cmdchar != 'D'
         && oap->op_type != OP_FOLD
         && oap->op_type != OP_FOLDOPEN
@@ -1649,7 +1679,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           prep_redo(oap->regname, cap->count0,
                     get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
                     oap->motion_force, cap->cmdchar, cap->nchar);
-        } else if (cap->cmdchar != ':') {
+        } else if (cap->cmdchar != ':' && cap->cmdchar != K_COMMAND) {
           int nchar = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
 
           // reverse what nv_replace() did
@@ -1817,13 +1847,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         (void)op_delete(oap);
-        if (oap->motion_type == kMTLineWise && has_format_option(FO_AUTO)) {
-          // cursor line wasn't saved yet
-          if (u_save_cursor() == FAIL) {
-            break;
-          }
+        // save cursor line for undo if it wasn't saved yet
+        if (oap->motion_type == kMTLineWise
+            && has_format_option(FO_AUTO)
+            && u_save_cursor() == OK) {
+          auto_format(false, true);
         }
-        auto_format(false, true);
       }
       break;
 
@@ -2570,11 +2599,6 @@ do_mouse (
   jump_flags = jump_to_mouse(jump_flags,
                              oap == NULL ? NULL : &(oap->inclusive),
                              which_button);
-
-  // A click in the window toolbar has no side effects.
-  if (jump_flags & MOUSE_WINBAR) {
-    return false;
-  }
 
   moved = (jump_flags & CURSOR_MOVED);
   in_status_line = (jump_flags & IN_STATUS_LINE);
@@ -3601,7 +3625,7 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
           scrolldown(-y, false);
       }
 
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       cursor_correct();
       curwin->w_redr_status = true;
     }
@@ -4107,10 +4131,10 @@ void scroll_redraw(int up, long count)
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (up)
-    scrollup(count, true);
-  else
+  bool moved = up ?
+    scrollup(count, true) :
     scrolldown(count, true);
+
   if (get_scrolloff_value()) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
@@ -4140,10 +4164,13 @@ void scroll_redraw(int up, long count)
       curwin->w_valid |= VALID_TOPLINE;
     }
   }
-  if (curwin->w_cursor.lnum != prev_lnum)
+  if (curwin->w_cursor.lnum != prev_lnum) {
     coladvance(curwin->w_curswant);
-  curwin->w_viewport_invalid = true;
-  redraw_later(VALID);
+  }
+  if (moved) {
+    curwin->w_viewport_invalid = true;
+  }
+  redraw_later(curwin, VALID);
 }
 
 /*
@@ -4241,7 +4268,7 @@ dozet:
     FALLTHROUGH;
 
   case 't':   scroll_cursor_top(0, true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4250,7 +4277,7 @@ dozet:
   FALLTHROUGH;
 
   case 'z':   scroll_cursor_halfway(true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4271,7 +4298,7 @@ dozet:
     FALLTHROUGH;
 
   case 'b':   scroll_cursor_bot(0, true);
-    redraw_later(VALID);
+    redraw_later(curwin, VALID);
     set_fraction(curwin);
     break;
 
@@ -4318,7 +4345,7 @@ dozet:
         col = 0;
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
-        redraw_later(NOT_VALID);
+        redraw_later(curwin, NOT_VALID);
       }
   }
     break;
@@ -4337,7 +4364,7 @@ dozet:
       }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
-        redraw_later(NOT_VALID);
+        redraw_later(curwin, NOT_VALID);
       }
   }
     break;
@@ -4690,7 +4717,7 @@ static void nv_clear(cmdarg_T *cap)
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       wp->w_s->b_syn_slow = false;
     }
-    redraw_later(CLEAR);
+    redraw_later(curwin, CLEAR);
   }
 }
 

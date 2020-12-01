@@ -851,7 +851,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     tv_dict_add(&fc->l_vars, v);
     v->di_tv.v_type = VAR_DICT;
-    v->di_tv.v_lock = 0;
+    v->di_tv.v_lock = VAR_UNLOCKED;
     v->di_tv.vval.v_dict = selfdict;
     ++selfdict->dv_refcount;
   }

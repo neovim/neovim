@@ -1201,10 +1201,6 @@ msgstr "E143: Autokomendy nieoczekiwanie skasowały nowy bufor %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nienumeryczny argument dla :z"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Komendy powłoki są niedozwolone w rvim"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Wzorce regularne nie mogą być rozgraniczane literami"

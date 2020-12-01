@@ -57,7 +57,7 @@ describe('API: highlight',function()
     -- Test nil argument.
     err, emsg = pcall(meths.get_hl_by_id, { nil }, false)
     eq(false, err)
-    eq('Wrong type for argument 1, expecting Integer',
+    eq('Wrong type for argument 1 when calling nvim_get_hl_by_id, expecting Integer',
        string.match(emsg, 'Wrong.*'))
 
     -- Test 0 argument.
@@ -112,7 +112,7 @@ describe('API: highlight',function()
     -- Test nil argument.
     err, emsg = pcall(meths.get_hl_by_name , { nil }, false)
     eq(false, err)
-    eq('Wrong type for argument 1, expecting String',
+    eq('Wrong type for argument 1 when calling nvim_get_hl_by_name, expecting String',
        string.match(emsg, 'Wrong.*'))
 
     -- Test empty string argument.

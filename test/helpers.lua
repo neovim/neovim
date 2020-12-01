@@ -139,7 +139,9 @@ function module.pcall_err_withfile(fn, ...)
   --    C:/long/path/foo.lua:186: Expected string, got number
   -- to:
   --    .../foo.lua:0: Expected string, got number
-  local errmsg = tostring(rv):gsub('[^%s]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
+  local errmsg = tostring(rv):gsub('([%s<])vim[/\\]([^%s:/\\]+):%d+', '%1\xffvim\xff%2:0')
+                             :gsub('[^%s<]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
+                             :gsub('\xffvim\xff', 'vim/')
   -- Scrub numbers in paths/stacktraces:
   --    shared.lua:0: in function 'gsplit'
   --    shared.lua:0: in function <shared.lua:0>'
@@ -775,11 +777,12 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut')
+  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut' or name == 'github')
   local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
   local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
   local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
-  return tr or av or sh
+  local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
+  return tr or av or sh or gh
 
 end
 

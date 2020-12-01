@@ -1350,7 +1350,7 @@ describe('API', function()
       eq({info=info}, meths.get_var("info_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
 
-      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer",
+      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
          pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
@@ -1512,7 +1512,7 @@ describe('API', function()
   it("does not leak memory on incorrect argument types", function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
-    ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+    ok(err:match(': Wrong type for argument 1 when calling nvim_set_current_dir, expecting String') ~= nil)
   end)
 
   describe('nvim_parse_expression', function()
@@ -1885,25 +1885,40 @@ describe('API', function()
   end)
 
   describe('nvim_get_runtime_file', function()
-    it('works', function()
+    local p = helpers.alter_slashes
+    it('can find files', function()
       eq({}, meths.get_runtime_file("bork.borkbork", false))
       eq({}, meths.get_runtime_file("bork.borkbork", true))
       eq(1, #meths.get_runtime_file("autoload/msgpack.vim", false))
       eq(1, #meths.get_runtime_file("autoload/msgpack.vim", true))
       local val = meths.get_runtime_file("autoload/remote/*.vim", true)
       eq(2, #val)
-      local p = helpers.alter_slashes
       if endswith(val[1], "define.vim") then
-        ok(endswith(val[1], p("autoload/remote/define.vim")))
-        ok(endswith(val[2], p("autoload/remote/host.vim")))
+        ok(endswith(val[1], p"autoload/remote/define.vim"))
+        ok(endswith(val[2], p"autoload/remote/host.vim"))
       else
-        ok(endswith(val[1], p("autoload/remote/host.vim")))
-        ok(endswith(val[2], p("autoload/remote/define.vim")))
+        ok(endswith(val[1], p"autoload/remote/host.vim"))
+        ok(endswith(val[2], p"autoload/remote/define.vim"))
       end
       val = meths.get_runtime_file("autoload/remote/*.vim", false)
       eq(1, #val)
-      ok(endswith(val[1], p("autoload/remote/define.vim"))
-         or endswith(val[1], p("autoload/remote/host.vim")))
+      ok(endswith(val[1], p"autoload/remote/define.vim")
+         or endswith(val[1], p"autoload/remote/host.vim"))
+
+      eq({}, meths.get_runtime_file("lua", true))
+      eq({}, meths.get_runtime_file("lua/vim", true))
+    end)
+
+    it('can find directories', function()
+      local val = meths.get_runtime_file("lua/", true)
+      eq(1, #val)
+      ok(endswith(val[1], p"lua/"))
+
+      val = meths.get_runtime_file("lua/vim/", true)
+      eq(1, #val)
+      ok(endswith(val[1], p"lua/vim/"))
+
+      eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
   end)
 end)

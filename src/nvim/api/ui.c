@@ -355,7 +355,7 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
 /// Note that this method is not to be confused with |nvim_ui_pum_set_height()|,
 /// which sets the number of visible items in the popup menu, while this
 /// function sets the bounding box of the popup menu, including visual
-/// decorations such as boarders and sliders. Floats need not use the same font
+/// elements such as borders and sliders. Floats need not use the same font
 /// size, nor be anchored to exact grid corners, so one can set floating-point
 /// numbers to the popup menu geometry.
 ///

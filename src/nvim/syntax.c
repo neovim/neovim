@@ -73,9 +73,9 @@ struct hl_group {
   RgbValue sg_rgb_fg;           ///< RGB foreground color
   RgbValue sg_rgb_bg;           ///< RGB background color
   RgbValue sg_rgb_sp;           ///< RGB special color
-  uint8_t *sg_rgb_fg_name;      ///< RGB foreground color name
-  uint8_t *sg_rgb_bg_name;      ///< RGB background color name
-  uint8_t *sg_rgb_sp_name;      ///< RGB special color name
+  char *sg_rgb_fg_name;         ///< RGB foreground color name
+  char *sg_rgb_bg_name;         ///< RGB background color name
+  char *sg_rgb_sp_name;         ///< RGB special color name
 
   int sg_blend;                 ///< blend level (0-100 inclusive), -1 if unset
 };
@@ -2960,11 +2960,7 @@ static int check_keyword_id(
   char_u *const kwp = line + startcol;
   int kwlen = 0;
   do {
-    if (has_mbyte) {
-      kwlen += (*mb_ptr2len)(kwp + kwlen);
-    } else {
-      kwlen++;
-    }
+    kwlen += utfc_ptr2len(kwp + kwlen);
   } while (vim_iswordp_buf(kwp + kwlen, syn_buf));
 
   if (kwlen > MAXKEYWLEN) {
@@ -3147,7 +3143,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   }
 
   // assume spell checking changed, force a redraw
-  redraw_win_later(curwin, NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
 }
 
 /// Handle ":syntax iskeyword" command.
@@ -3187,7 +3183,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       curbuf->b_p_isk = save_isk;
     }
   }
-  redraw_win_later(curwin, NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
 }
 
 /*
@@ -3509,12 +3505,16 @@ syn_cmd_list(
       syn_match_msg();
       return;
     } else if (!(curwin->w_s->b_syn_sync_flags & SF_MATCH))   {
-      if (curwin->w_s->b_syn_sync_minlines == 0)
+      if (curwin->w_s->b_syn_sync_minlines == 0) {
         MSG_PUTS(_("no syncing"));
-      else {
-        MSG_PUTS(_("syncing starts "));
-        msg_outnum(curwin->w_s->b_syn_sync_minlines);
-        MSG_PUTS(_(" lines before top line"));
+      } else {
+        if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
+          MSG_PUTS(_("syncing starts at the first line"));
+        } else {
+          MSG_PUTS(_("syncing starts "));
+          msg_outnum(curwin->w_s->b_syn_sync_minlines);
+          MSG_PUTS(_(" lines before top line"));
+        }
         syn_match_msg();
       }
       return;
@@ -3570,17 +3570,22 @@ static void syn_lines_msg(void)
   if (curwin->w_s->b_syn_sync_maxlines > 0
       || curwin->w_s->b_syn_sync_minlines > 0) {
     MSG_PUTS("; ");
-    if (curwin->w_s->b_syn_sync_minlines > 0) {
-      MSG_PUTS(_("minimal "));
-      msg_outnum(curwin->w_s->b_syn_sync_minlines);
-      if (curwin->w_s->b_syn_sync_maxlines)
-        MSG_PUTS(", ");
+    if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
+      MSG_PUTS(_("from the first line"));
+    } else {
+      if (curwin->w_s->b_syn_sync_minlines > 0) {
+        MSG_PUTS(_("minimal "));
+        msg_outnum(curwin->w_s->b_syn_sync_minlines);
+        if (curwin->w_s->b_syn_sync_maxlines) {
+          MSG_PUTS(", ");
+        }
+      }
+      if (curwin->w_s->b_syn_sync_maxlines > 0) {
+        MSG_PUTS(_("maximal "));
+        msg_outnum(curwin->w_s->b_syn_sync_maxlines);
+      }
+      MSG_PUTS(_(" lines before top line"));
     }
-    if (curwin->w_s->b_syn_sync_maxlines > 0) {
-      MSG_PUTS(_("maximal "));
-      msg_outnum(curwin->w_s->b_syn_sync_maxlines);
-    }
-    MSG_PUTS(_(" lines before top line"));
   }
 }
 
@@ -4296,8 +4301,9 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   current_syn_inc_tag = ++running_syn_inc_tag;
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
-  if (source ? do_source(eap->arg, false, DOSO_NONE) == FAIL
-             : source_runtime(eap->arg, DIP_ALL) == FAIL) {
+  if (source
+      ? do_source(eap->arg, false, DOSO_NONE) == FAIL
+      : source_in_path(p_rtp, eap->arg, DIP_ALL) == FAIL) {
     EMSG2(_(e_notopen), eap->arg);
   }
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
@@ -6899,7 +6905,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
         }
       } else if (strcmp(key, "GUIFG") == 0)   {
-        char_u **const namep = &HL_TABLE()[idx].sg_rgb_fg_name;
+        char **namep = &HL_TABLE()[idx].sg_rgb_fg_name;
 
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
@@ -6909,8 +6915,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           if (*namep == NULL || STRCMP(*namep, arg) != 0) {
             xfree(*namep);
             if (strcmp(arg, "NONE") != 0) {
-              *namep = (char_u *)xstrdup(arg);
-              HL_TABLE()[idx].sg_rgb_fg = name_to_color((char_u *)arg);
+              *namep = xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_fg = name_to_color(arg);
             } else {
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_fg = -1;
@@ -6923,7 +6929,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           normal_fg = HL_TABLE()[idx].sg_rgb_fg;
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
-        char_u **const namep = &HL_TABLE()[idx].sg_rgb_bg_name;
+        char **const namep = &HL_TABLE()[idx].sg_rgb_bg_name;
 
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
@@ -6933,8 +6939,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           if (*namep == NULL || STRCMP(*namep, arg) != 0) {
             xfree(*namep);
             if (STRCMP(arg, "NONE") != 0) {
-              *namep = (char_u *)xstrdup(arg);
-              HL_TABLE()[idx].sg_rgb_bg = name_to_color((char_u *)arg);
+              *namep = xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_bg = name_to_color(arg);
             } else {
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_bg = -1;
@@ -6947,7 +6953,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
       } else if (strcmp(key, "GUISP") == 0)   {
-        char_u **const namep = &HL_TABLE()[idx].sg_rgb_sp_name;
+        char **const namep = &HL_TABLE()[idx].sg_rgb_sp_name;
 
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
@@ -6957,8 +6963,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           if (*namep == NULL || STRCMP(*namep, arg) != 0) {
             xfree(*namep);
             if (strcmp(arg, "NONE") != 0) {
-              *namep = (char_u *)xstrdup(arg);
-              HL_TABLE()[idx].sg_rgb_sp = name_to_color((char_u *)arg);
+              *namep = xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_sp = name_to_color(arg);
             } else {
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_sp = -1;
@@ -7152,11 +7158,30 @@ static void highlight_list_one(const int id)
     msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
   }
 
-  if (!didh)
-    highlight_list_arg(id, didh, LIST_STRING, 0, (char_u *)"cleared", "");
+  if (!didh) {
+    highlight_list_arg(id, didh, LIST_STRING, 0, "cleared", "");
+  }
   if (p_verbose > 0) {
     last_set_msg(sgp->sg_script_ctx);
   }
+}
+
+Dictionary get_global_hl_defs(void)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+    Dictionary attrs = ARRAY_DICT_INIT;
+    struct hl_group *h = &HL_TABLE()[i - 1];
+    if (h->sg_attr > 0) {
+      attrs = hlattrs2dict(syn_attr2entry(h->sg_attr), true);
+    } else if (h->sg_link > 0) {
+      const char *link = (const char *)HL_TABLE()[h->sg_link - 1].sg_name;
+      PUT(attrs, "link", STRING_OBJ(cstr_to_string(link)));
+    }
+    PUT(rv, (const char *)h->sg_name, DICTIONARY_OBJ(attrs));
+  }
+
+  return rv;
 }
 
 /// Outputs a highlight when doing ":hi MyHighlight"
@@ -7166,15 +7191,15 @@ static void highlight_list_one(const int id)
 /// @param sarg string used if \p type == LIST_STRING
 static bool highlight_list_arg(
     const int id, bool didh, const int type, int iarg,
-    char_u *const sarg, const char *const name)
+    char *const sarg, const char *const name)
 {
-  char_u buf[100];
+  char buf[100];
 
   if (got_int) {
     return false;
   }
   if (type == LIST_STRING ? (sarg != NULL) : (iarg != 0)) {
-    char_u *ts = buf;
+    char *ts = buf;
     if (type == LIST_INT) {
       snprintf((char *)buf, sizeof(buf), "%d", iarg - 1);
     } else if (type == LIST_STRING) {
@@ -7191,15 +7216,15 @@ static bool highlight_list_arg(
       }
     }
 
-    (void)syn_list_header(didh, (int)(vim_strsize(ts) + STRLEN(name) + 1), id,
-                          false);
+    (void)syn_list_header(didh, (int)(vim_strsize((char_u *)ts) + STRLEN(name)
+                                      + 1), id, false);
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
         MSG_PUTS_ATTR(name, HL_ATTR(HLF_D));
         MSG_PUTS_ATTR("=", HL_ATTR(HLF_D));
       }
-      msg_outtrans(ts);
+      msg_outtrans((char_u *)ts);
     }
   }
   return didh;
@@ -7378,7 +7403,7 @@ static void set_hl_attr(int idx)
   at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
   at_en.hl_blend = sgp->sg_blend;
 
-  sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
+  sgp->sg_attr = hl_get_syn_attr(0, idx+1, at_en);
 
   // a cursor style uses this syn_id, make sure its attribute is updated.
   if (cursor_mode_uses_syn_id(idx+1)) {
@@ -7538,12 +7563,17 @@ static void syn_unadd_group(void)
 /// @see syn_attr2entry
 int syn_id2attr(int hl_id)
 {
-  struct hl_group     *sgp;
-
   hl_id = syn_get_final_id(hl_id);
-  sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
+  struct hl_group *sgp = &HL_TABLE()[hl_id - 1];  // index is ID minus one
+
+  int attr = ns_get_hl(-1, hl_id, false, sgp->sg_set);
+  if (attr >= 0) {
+    return attr;
+  }
   return sgp->sg_attr;
 }
+
+
 
 
 /*
@@ -7552,7 +7582,6 @@ int syn_id2attr(int hl_id)
 int syn_get_final_id(int hl_id)
 {
   int count;
-  struct hl_group     *sgp;
 
   if (hl_id > highlight_ga.ga_len || hl_id < 1)
     return 0;                           /* Can be called from eval!! */
@@ -7562,9 +7591,23 @@ int syn_get_final_id(int hl_id)
    * Look out for loops!  Break after 100 links.
    */
   for (count = 100; --count >= 0; ) {
-    sgp = &HL_TABLE()[hl_id - 1];           /* index is ID minus one */
-    if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len)
+    struct hl_group *sgp = &HL_TABLE()[hl_id - 1];  // index is ID minus one
+
+    // ACHTUNG: when using "tmp" attribute (no link) the function might be
+    // called twice. it needs be smart enough to remember attr only to
+    // syn_id2attr time
+    int check = ns_get_hl(-1, hl_id, true, sgp->sg_set);
+    if (check == 0) {
+      return hl_id;  // how dare! it broke the link!
+    } else if (check > 0) {
+      hl_id = check;
+      continue;
+    }
+
+
+    if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len) {
       break;
+    }
     hl_id = sgp->sg_link;
   }
 
@@ -8494,7 +8537,7 @@ color_name_table_T color_name_table[] = {
 ///
 /// @param[in] name string value to convert to RGB
 /// return the hex value or -1 if could not find a correct value
-RgbValue name_to_color(const char_u *name)
+RgbValue name_to_color(const char *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])

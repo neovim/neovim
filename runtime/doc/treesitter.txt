@@ -47,7 +47,7 @@ Whenever you need to access the current syntax tree, parse the buffer: >
 
     tstree = parser:parse()
 
-<This will return an immutable tree that represents the current state of the
+<This will return a table of immutable trees that represent the current state of the
 buffer. When the plugin wants to access the state after a (possible) edit
 it should call `parse()` again. If the buffer wasn't edited, the same tree will
 be returned again without extra work. If the buffer was parsed before,
@@ -59,20 +59,24 @@ shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
 a timer to throttle too frequent updates.
 
-tsparser:set_included_ranges({ranges})			*tsparser:set_included_ranges()*
-	Changes the ranges the parser should consider. This is used for
-	language injection.  {ranges} should be of the form (all zero-based): >
+tsparser:set_included_regions({region_list})			*tsparser:set_included_regions()*
+	Changes the regions the parser should consider. This is used for
+	language injection.  {region_list} should be of the form (all zero-based): >
 	{
-		{start_node, end_node},
+		{node1, node2},
 		...
 	}
 <
-	NOTE: `start_node` and `end_node` are both inclusive.
+	`node1` and `node2` are both considered part of the same region and
+	will be parsed together with the parser in the same context.
 
 Tree methods						*lua-treesitter-tree*
 
 tstree:root()						*tstree:root()*
 	Return the root node of this tree.
+
+tstree:copy()						*tstree:copy()*
+	Returns a copy of the `tstree`.
 
 
 Node methods						*lua-treesitter-node*
@@ -136,6 +140,15 @@ tsnode:has_error()					*tsnode:has_error()*
 tsnode:sexpr()						*tsnode:sexpr()*
 	Get an S-expression representing the node as a string.
 
+tsnode:id()							*tsnode:id()*
+	Get an unique identier for the node inside its own tree.
+
+	No guarantees are made about this identifer's internal representation,
+	except for being a primitive lua type with value equality (so not a table).
+	Presently it is a (non-printable) string.
+
+	NB: the id is not guaranteed to be unique for nodes from different trees.
+
 tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 						*tsnode:descendant_for_range()*
 	Get the smallest node within this node that spans the given range of
@@ -152,10 +165,27 @@ Tree-sitter queries are supported, with some limitations. Currently, the only
 supported match predicate is `eq?` (both comparing a capture against a string
 and two captures against each other).
 
+A `query` consists of one or more patterns. A `pattern` is defined over node
+types in the syntax tree.  A `match` corresponds to specific elements of the
+syntax tree which match a pattern. Patterns may optionally define captures
+and predicates. A `capture` allows you to associate names with a specific
+node in a pattern. A `predicate` adds arbitrary metadata and conditional data
+to a match.
+
 vim.treesitter.parse_query({lang}, {query})
 						*vim.treesitter.parse_query()*
 	Parse {query} as a string. (If the query is in a file, the caller
         should read the contents into a string before calling).
+
+	Returns a `Query` (see |lua-treesitter-query|) object which can be used to
+	search nodes in the syntax tree for the patterns defined in {query}
+	using `iter_*` methods below. Exposes `info` and `captures` with
+	additional information about the {query}.
+	  - `captures` contains the list of unique capture names defined in
+	    {query}.
+	  -` info.captures` also points to `captures`.
+	  - `info.patterns` contains information about predicates.
+
 
 query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
 							*query:iter_captures()*
@@ -224,7 +254,7 @@ Here is a list of built-in predicates :
 	`lua-match?`					*ts-predicate-lua-match?*
 		This will match the same way than |match?| but using lua
 		regexes.
-	
+
 	`contains?`					*ts-predicate-contains?*
 		Will check if any of the following arguments appears in the
 		text corresponding to the node : >

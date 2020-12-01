@@ -987,9 +987,6 @@ msgstr "E143: autocommandが予期せず新しいバッファ %s を削除しま
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: 数ではない引数が :z に渡されました"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvimではシェルコマンドを使えません"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: 正規表現は文字で区切ることができません"
 

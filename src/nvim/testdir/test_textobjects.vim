@@ -301,7 +301,7 @@ func Test_sentence_with_quotes()
   %delete _
 endfunc
 
-func! Test_sentence_with_cursor_on_delimiter()
+func Test_sentence_with_cursor_on_delimiter()
   enew!
   call setline(1, "A '([sentence.])'  A sentence.")
 

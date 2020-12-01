@@ -3608,11 +3608,15 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   }
   if (qf_buf != NULL) {
     // Use the existing quickfix buffer
-    (void)do_ecmd(qf_buf->b_fnum, NULL, NULL, NULL, ECMD_ONE,
-                  ECMD_HIDE + ECMD_OLDBUF, oldwin);
+    if (do_ecmd(qf_buf->b_fnum, NULL, NULL, NULL, ECMD_ONE,
+                ECMD_HIDE + ECMD_OLDBUF, oldwin) == FAIL) {
+      return FAIL;
+    }
   } else {
     // Create a new quickfix buffer
-    (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin);
+    if (do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, oldwin) == FAIL) {
+      return FAIL;
+    }
   }
 
   // Set the options for the quickfix buffer/window (if not already done)
@@ -3707,7 +3711,7 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curwin->w_cursor.coladd = 0;
   curwin->w_curswant = 0;
   update_topline();              // scroll to show the line
-  redraw_later(VALID);
+  redraw_later(curwin, VALID);
   curwin->w_redr_status = true;  // update ruler
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -3975,11 +3979,15 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
      *dirname = NUL;
 
     // Add one line for each error
-    if (old_last == NULL || old_last->qf_next == NULL) {
+    if (old_last == NULL) {
       qfp = qfl->qf_start;
       lnum = 0;
     } else {
-      qfp = old_last->qf_next;
+      if (old_last->qf_next != NULL) {
+        qfp = old_last->qf_next;
+      } else {
+        qfp = old_last;
+      }
       lnum = buf->b_ml.ml_line_count;
     }
     while (lnum < qfl->qf_count) {
@@ -6147,7 +6155,7 @@ static int qf_setprop_items_from_lines(
     qf_free_items(&qi->qf_lists[qf_idx]);
   }
   if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
-                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) >= 0) {
     retval = OK;
   }
 
@@ -6248,8 +6256,11 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
     retval = qf_setprop_curidx(qi, qfl, di);
   }
 
-  if (retval == OK) {
+  if (newlist || retval == OK) {
     qf_list_changed(qfl);
+  }
+  if (newlist) {
+    qf_update_buffer(qi, NULL);
   }
 
   return retval;

@@ -129,6 +129,7 @@ void changed(void)
 void changed_internal(void)
 {
   curbuf->b_changed = true;
+  curbuf->b_changed_invalid = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = true;
@@ -294,7 +295,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
       // change.
       if (wp->w_p_rnu
           || (wp->w_p_cul && lnum <= wp->w_last_cursorline)) {
-        redraw_win_later(wp, SOME_VALID);
+        redraw_later(wp, SOME_VALID);
       }
     }
   }
@@ -348,7 +349,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
             changedOneline(wp->w_buffer, wlnum);
@@ -475,7 +476,7 @@ changed_lines(
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,
@@ -502,6 +503,7 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
+    buf->b_changed_invalid = true;
     ml_setflags(buf);
     if (ff) {
       save_file_ff(buf);
@@ -528,12 +530,8 @@ void ins_bytes_len(char_u *p, size_t len)
 {
   size_t n;
   for (size_t i = 0; i < len; i += n) {
-    if (enc_utf8) {
-      // avoid reading past p[len]
-      n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
-    } else {
-      n = (size_t)(*mb_ptr2len)(p + i);
-    }
+    // avoid reading past p[len]
+    n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
     ins_char_bytes(p + i, n);
   }
 }
@@ -759,7 +757,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
-  if (p_deco && use_delcombine && enc_utf8
+  if (p_deco && use_delcombine
       && utfc_ptr2len(oldp + col) >= count) {
     int cc[MAX_MCO];
     int n;

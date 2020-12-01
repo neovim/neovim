@@ -1178,8 +1178,7 @@ int eval_foldexpr(char_u *arg, int *cp)
 {
   typval_T tv;
   varnumber_T retval;
-  int use_sandbox = was_set_insecurely((char_u *)"foldexpr",
-      OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, (char_u *)"foldexpr", OPT_LOCAL);
 
   ++emsg_off;
   if (use_sandbox)
@@ -1971,7 +1970,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
   typval_T var2;
   int empty1 = FALSE;
   listitem_T  *ni;
-  hashtab_T   *ht;
+  hashtab_T *ht = NULL;
   int quiet = flags & GLV_QUIET;
 
   // Clear everything in "lp".
@@ -2441,7 +2440,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       tv_copy(rettv, lp->ll_tv);
     } else {
       *lp->ll_tv = *rettv;
-      lp->ll_tv->v_lock = 0;
+      lp->ll_tv->v_lock = VAR_UNLOCKED;
       tv_init(rettv);
     }
 
@@ -5458,7 +5457,7 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate,
       }
       item = tv_dict_item_alloc((const char *)key);
       item->di_tv = tv;
-      item->di_tv.v_lock = 0;
+      item->di_tv.v_lock = VAR_UNLOCKED;
       if (tv_dict_add(d, item) == FAIL) {
         tv_dict_item_free(item);
       }
@@ -6128,7 +6127,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
   if (map) {
     // map(): replace the list item value.
     tv_clear(tv);
-    rettv.v_lock = 0;
+    rettv.v_lock = VAR_UNLOCKED;
     *tv = rettv;
   } else {
     bool error = false;
@@ -6433,7 +6432,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
-  tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
+  tv_dict_add_nr(dict, S_LEN("winbar"), 0);
   tv_dict_add_nr(dict, S_LEN("width"), wp->w_width);
   tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
   tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
@@ -7152,7 +7151,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -9078,7 +9077,7 @@ static void set_var_const(const char *name, const size_t name_len,
     tv_copy(tv, &v->di_tv);
   } else {
     v->di_tv = *tv;
-    v->di_tv.v_lock = 0;
+    v->di_tv.v_lock = VAR_UNLOCKED;
     tv_init(tv);
   }
 
@@ -9275,7 +9274,7 @@ int var_item_copy(const vimconv_T *const conv,
       tv_copy(from, to);
     } else {
       to->v_type = VAR_STRING;
-      to->v_lock = 0;
+      to->v_lock = VAR_UNLOCKED;
       if ((to->vval.v_string = string_convert((vimconv_T *)conv,
                                               from->vval.v_string,
                                               NULL))
@@ -9286,7 +9285,7 @@ int var_item_copy(const vimconv_T *const conv,
     break;
   case VAR_LIST:
     to->v_type = VAR_LIST;
-    to->v_lock = 0;
+    to->v_lock = VAR_UNLOCKED;
     if (from->vval.v_list == NULL) {
       to->vval.v_list = NULL;
     } else if (copyID != 0 && tv_list_copyid(from->vval.v_list) == copyID) {
@@ -9302,7 +9301,7 @@ int var_item_copy(const vimconv_T *const conv,
     break;
   case VAR_DICT:
     to->v_type = VAR_DICT;
-    to->v_lock = 0;
+    to->v_lock = VAR_UNLOCKED;
     if (from->vval.v_dict == NULL) {
       to->vval.v_dict = NULL;
     } else if (copyID != 0 && from->vval.v_dict->dv_copyID == copyID) {
@@ -10418,7 +10417,7 @@ Channel *find_job(uint64_t id, bool show_error)
 
 void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -10466,9 +10465,10 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments,
   provider_call_nesting++;
 
   typval_T argvars[3] = {
-    {.v_type = VAR_STRING, .vval.v_string = (uint8_t *)method, .v_lock = 0},
-    {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
-    {.v_type = VAR_UNKNOWN}
+    { .v_type = VAR_STRING, .vval.v_string = (char_u *)method,
+      .v_lock = VAR_UNLOCKED },
+    { .v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = VAR_UNLOCKED },
+    { .v_type = VAR_UNKNOWN }
   };
   typval_T rettv = { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
   tv_list_ref(arguments);

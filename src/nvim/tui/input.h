@@ -32,7 +32,13 @@ typedef struct term_input {
 #endif
 
 #ifdef UNIT_TESTING
-bool ut_handle_background_color(TermInput *input);
+typedef enum {
+  kIncomplete = -1,
+  kNotApplicable = 0,
+  kComplete = 1,
+} HandleState;
+
+HandleState ut_handle_background_color(TermInput *input);
 #endif
 
 #endif  // NVIM_TUI_INPUT_H

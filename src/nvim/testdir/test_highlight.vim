@@ -39,15 +39,15 @@ func Test_highlight()
   call assert_fails("hi Crash term='asdf", "E475:")
 endfunc
 
-function! HighlightArgs(name)
+func HighlightArgs(name)
   return 'hi ' . substitute(split(execute('hi ' . a:name), '\n')[0], '\<xxx\>', '', '')
-endfunction
+endfunc
 
-function! IsColorable()
+func IsColorable()
   return has('gui_running') || str2nr(&t_Co) >= 8
-endfunction
+endfunc
 
-function! HiCursorLine()
+func HiCursorLine()
   let hiCursorLine = HighlightArgs('CursorLine')
   if has('gui_running')
     let guibg = matchstr(hiCursorLine, 'guibg=\w\+')
@@ -58,9 +58,9 @@ function! HiCursorLine()
     let hi_bg = 'hi CursorLine cterm=NONE ctermbg=Gray'
   endif
   return [hiCursorLine, hi_ul, hi_bg]
-endfunction
+endfunc
 
-function! Check_lcs_eol_attrs(attrs, row, col)
+func Check_lcs_eol_attrs(attrs, row, col)
   let save_lcs = &lcs
   set list
 
@@ -68,7 +68,7 @@ function! Check_lcs_eol_attrs(attrs, row, col)
 
   set nolist
   let &lcs = save_lcs
-endfunction
+endfunc
 
 func Test_highlight_eol_with_cursorline()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
@@ -516,7 +516,7 @@ func Test_termguicolors()
   if !exists('+termguicolors')
     return
   endif
-  if has('vtp') && !has('vcon')
+  if has('vtp') && !has('vcon') && !has('gui_running')
     " Win32: 'guicolors' doesn't work without virtual console.
     call assert_fails('set termguicolors', 'E954:')
     return

@@ -487,7 +487,7 @@ endfunction
 
 " Resolves Python executable path by invoking and checking `sys.executable`.
 function! s:python_exepath(invocation) abort
-  return s:normalize_path(system(a:invocation
+  return s:normalize_path(system(fnameescape(a:invocation)
     \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
 endfunction
 
@@ -749,7 +749,7 @@ function! s:check_perl() abort
     call health#report_warn(
           \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
           \ current_cpan, latest_cpan),
-          \ ['Run in shell: cpanm Neovim::Ext'])
+          \ ['Run in shell: cpanm -n Neovim::Ext'])
   else
     call health#report_ok('Latest "Neovim::Ext" cpan module is installed: '. current_cpan)
   endif

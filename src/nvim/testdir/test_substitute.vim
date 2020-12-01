@@ -1,6 +1,6 @@
 " Tests for multi-line regexps with ":s".
 
-function! Test_multiline_subst()
+func Test_multiline_subst()
   enew!
   call append(0, ["1 aa",
 	      \ "bb",
@@ -38,9 +38,9 @@ function! Test_multiline_subst()
   call assert_equal('7x7f', getline(12))
   call assert_equal('xxxxx', getline(13))
   enew!
-endfunction
+endfunc
 
-function! Test_substitute_variants()
+func Test_substitute_variants()
   " Validate that all the 2-/3-letter variants which embed the flags into the
   " command name actually work.
   enew!
@@ -248,9 +248,9 @@ func Test_sub_cmd_4()
 
   " List entry format: [input, cmd, output]
   let tests = [ ['aAa', "s/A/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \ 			['a\a']],
+	      \				['a\a']],
 	      \ ['bBb', "s/B/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \   			['b\b']],
+	      \				['b\b']],
 	      \ ['cCc', "s/C/\\=substitute(submatch(0), '.', '\<C-V>\<C-M>', '')/",
 	      \				["c\<C-V>", 'c']],
 	      \ ['dDd', "s/D/\\=substitute(submatch(0), '.', '\\\<C-V>\<C-M>', '')/",

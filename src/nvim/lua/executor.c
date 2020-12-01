@@ -488,11 +488,27 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   {
     const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@shared.lua")
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/shared.lua")
         || lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5106: Error while creating shared module: %.*s"));
       return 1;
     }
+  }
+
+  {
+    lua_getglobal(lstate, "package");  // [package]
+    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
+
+    const char *code = (char *)&inspect_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/inspect.lua")
+        || lua_pcall(lstate, 0, 1, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, inspect]
+
+    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
+    lua_pop(lstate, 2);  // []
   }
 
   {
@@ -549,27 +565,11 @@ static lua_State *nlua_enter(void)
     // stack: (empty)
     lua_getglobal(lstate, "vim");
     // stack: vim
-    lua_getfield(lstate, -1, "_update_package_paths");
-    // stack: vim, vim._update_package_paths
-    if (lua_pcall(lstate, 0, 0, 0)) {
-      // stack: vim, error
-      nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
-      // stack: vim
-    }
-    // stack: vim
     lua_pop(lstate, 1);
     // stack: (empty)
     last_p_rtp = (const void *)p_rtp;
   }
   return lstate;
-}
-
-/// Force an update of lua's package paths if runtime path has changed.
-bool nlua_update_package_path(void)
-{
-  lua_State *const lstate = nlua_enter();
-
-  return !!lstate;
 }
 
 static void nlua_print_event(void **argv)
@@ -891,6 +891,17 @@ LuaRef nlua_newref(lua_State *lstate, LuaRef original_ref)
   return new_ref;
 }
 
+LuaRef api_new_luaref(LuaRef original_ref)
+{
+  if (original_ref == LUA_NOREF) {
+    return LUA_NOREF;
+  }
+
+  lua_State *const lstate = nlua_enter();
+  return nlua_newref(lstate, original_ref);
+}
+
+
 /// Evaluate lua string
 ///
 /// Used for luaeval().
@@ -954,7 +965,7 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
                             typval_T *const args, int argcount, bool special,
                             typval_T *ret_tv)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     if (ret_tv) {
       ret_tv->v_type = VAR_NUMBER;
       ret_tv->vval.v_number = 0;

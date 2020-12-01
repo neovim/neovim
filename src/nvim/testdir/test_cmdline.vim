@@ -722,7 +722,7 @@ func Test_verbosefile()
 endfunc
 
 func Test_verbose_option()
-  " See test/functional/ui/cmdline_spec.lua
+  " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
 
   let lines =<< trim [SCRIPT]
@@ -796,6 +796,29 @@ func Test_cmdwin_feedkeys()
   call feedkeys("q:\<CR>", 'x')
 endfunc
 
+" Tests for the issues fixed in 7.4.441.
+" When 'cedit' is set to Ctrl-C, opening the command window hangs Vim
+func Test_cmdwin_cedit()
+  exe "set cedit=\<C-c>"
+  normal! :
+  call assert_equal(1, winnr('$'))
+
+  let g:cmd_wintype = ''
+  func CmdWinType()
+      let g:cmd_wintype = getcmdwintype()
+      let g:wintype = win_gettype()
+      return ''
+  endfunc
+
+  call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
+  echo input('')
+  call assert_equal('@', g:cmd_wintype)
+  call assert_equal('command', g:wintype)
+
+  set cedit&vim
+  delfunc CmdWinType
+endfunc
+
 func Test_buffers_lastused()
   " check that buffers are sorted by time when wildmode has lastused
   edit bufc " oldest
@@ -840,6 +863,25 @@ func Test_buffers_lastused()
   bwipeout bufa
   bwipeout bufb
   bwipeout bufc
+endfunc
+
+func Test_cmdlineclear_tabenter()
+  " See test/functional/legacy/cmdline_spec.lua
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    call setline(1, range(30))
+  [SCRIPT]
+
+  call writefile(lines, 'XtestCmdlineClearTabenter')
+  let buf = RunVimInTerminal('-S XtestCmdlineClearTabenter', #{rows: 10})
+  call term_wait(buf, 50)
+  " in one tab make the command line higher with CTRL-W -
+  call term_sendkeys(buf, ":tabnew\<cr>\<C-w>-\<C-w>-gtgt")
+  call VerifyScreenDump(buf, 'Test_cmdlineclear_tabenter', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XtestCmdlineClearTabenter')
 endfunc
 
 " test that ";" works to find a match at the start of the first line

@@ -643,7 +643,7 @@ void diff_redraw(bool dofold)
     if (!wp->w_p_diff) {
       continue;
     }
-    redraw_win_later(wp, SOME_VALID);
+    redraw_later(wp, SOME_VALID);
     if (dofold && foldmethodIsDiff(wp)) {
       foldUpdateAll(wp);
     }
@@ -719,15 +719,12 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     for (s = ml_get_buf(buf, lnum, false); *s != NUL; ) {
       if (diff_flags & DIFF_ICASE) {
-        int c;
-
-        // xdiff doesn't support ignoring case, fold-case the text.
-        int     orig_len;
         char_u  cbuf[MB_MAXBYTES + 1];
 
-        c = PTR2CHAR(s);
+        // xdiff doesn't support ignoring case, fold-case the text.
+        int c = PTR2CHAR(s);
         c = utf_fold(c);
-        orig_len = utfc_ptr2len(s);
+        const int orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, orig_len);
@@ -1415,7 +1412,7 @@ void diff_win_options(win_T *wp, int addbuf)
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
   }
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
 }
 
 /// Set options not to show diffs.  For the current window or all windows.

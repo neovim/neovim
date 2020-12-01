@@ -2,6 +2,22 @@ local api = vim.api
 
 local highlight = {}
 
+--@private
+function highlight.create(higroup, hi_info, default)
+  local options = {}
+  -- TODO: Add validation
+  for k, v in pairs(hi_info) do
+    table.insert(options, string.format("%s=%s", k, v))
+  end
+  vim.cmd(string.format([[highlight %s %s %s]], default and "default" or "", higroup, table.concat(options, " ")))
+end
+
+--@private
+function highlight.link(higroup, link_to, force)
+  vim.cmd(string.format([[highlight%s link %s %s]], force and "!" or " default", higroup, link_to))
+end
+
+
 --- Highlight range between two positions
 ---
 --@param bufnr number of buffer to apply highlighting to

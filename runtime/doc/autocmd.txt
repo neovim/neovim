@@ -253,6 +253,9 @@ BufLeave			Before leaving to another buffer.  Also when
 				new current window is not for the same buffer.
 
 				Not used for ":qa" or ":q" when exiting Vim.
+							*BufModifiedSet*
+BufModifiedSet			After the `'modified'` value of a buffer has
+				been changed.
 							*BufNew*
 BufNew				Just after creating a new buffer.  Also used
 				just after a buffer has been renamed.  When
@@ -515,6 +518,8 @@ DirChanged			After the |current-directory| was changed.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
 				    scope: "global", "tab", "window"
+				    changed_window: v:true if we fired the event
+				                    switching window (or tab)
 				Non-recursive (event cannot trigger itself).
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
@@ -1011,6 +1016,10 @@ WinLeave			Before leaving a window.  If the window to be
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
+							*WinScrolled*
+WinScrolled			After scrolling the viewport of the current
+				window.
+
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{pat}*

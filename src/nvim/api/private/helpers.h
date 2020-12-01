@@ -7,6 +7,7 @@
 #include "nvim/vim.h"
 #include "nvim/getchar.h"
 #include "nvim/memory.h"
+#include "nvim/decoration.h"
 #include "nvim/ex_eval.h"
 #include "nvim/lib/kvec.h"
 
@@ -52,7 +53,8 @@
     .type = kObjectTypeLuaRef, \
     .data.luaref = r })
 
-#define NIL ((Object) {.type = kObjectTypeNil})
+#define NIL ((Object)OBJECT_INIT)
+#define NULL_STRING ((String)STRING_INIT)
 
 #define PUT(dict, k, v) \
   kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))

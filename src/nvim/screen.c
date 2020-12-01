@@ -25,7 +25,7 @@
 //
 // Commands that scroll a window change w_topline and must call
 // check_cursor() to move the cursor into the visible part of the window, and
-// call redraw_later(VALID) to have the window displayed by update_screen()
+// call redraw_later(wp, VALID) to have the window displayed by update_screen()
 // later.
 //
 // Commands that change text in the buffer must call changed_bytes() or
@@ -37,7 +37,7 @@
 //
 // Commands that change how a window is displayed (e.g., setting 'list') or
 // invalidate the contents of a window in another way (e.g., change fold
-// settings), must call redraw_later(NOT_VALID) to have the whole window
+// settings), must call redraw_later(wp, NOT_VALID) to have the whole window
 // redisplayed by update_screen() later.
 //
 // Commands that change how a buffer is displayed (e.g., setting 'tabstop')
@@ -45,11 +45,11 @@
 // buffer redisplayed by update_screen() later.
 //
 // Commands that change highlighting and possibly cause a scroll too must call
-// redraw_later(SOME_VALID) to update the whole window but still use scrolling
-// to avoid redrawing everything.  But the length of displayed lines must not
-// change, use NOT_VALID then.
+// redraw_later(wp, SOME_VALID) to update the whole window but still use
+// scrolling to avoid redrawing everything.  But the length of displayed lines
+// must not change, use NOT_VALID then.
 //
-// Commands that move the window position must call redraw_later(NOT_VALID).
+// Commands that move the window position must call redraw_later(wp, NOT_VALID).
 // TODO(neovim): should minimize redrawing by scrolling when possible.
 //
 // Commands that change everything (e.g., resizing the screen) must call
@@ -88,6 +88,7 @@
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -124,7 +125,7 @@
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
 
-typedef kvec_withinit_t(DecorationProvider *, 4) Providers;
+typedef kvec_withinit_t(DecorProvider *, 4) Providers;
 
 // temporary buffer for rendering a single screenline, so it can be
 // compared with previous contents to calculate smallest delta.
@@ -172,11 +173,13 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   Error err = ERROR_INIT;
 
   textlock++;
+  provider_active = true;
   Object ret = nlua_call_ref(ref, name, args, true, &err);
+  provider_active = false;
   textlock--;
 
   if (!ERROR_SET(&err)
-      && api_coerce_to_bool(ret, "provider %s retval", default_true, &err)) {
+      && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
     return true;
   }
 
@@ -195,17 +198,11 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   return false;
 }
 
-/*
- * Redraw the current window later, with update_screen(type).
- * Set must_redraw only if not already set to a higher value.
- * e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
- */
-void redraw_later(int type)
-{
-  redraw_win_later(curwin, type);
-}
-
-void redraw_win_later(win_T *wp, int type)
+/// Redraw a window later, with update_screen(type).
+///
+/// Set must_redraw only if not already set to a higher value.
+/// e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
+void redraw_later(win_T *wp, int type)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!exiting && wp->w_redr_type < type) {
@@ -223,7 +220,7 @@ void redraw_win_later(win_T *wp, int type)
 void redraw_all_later(int type)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    redraw_win_later(wp, type);
+    redraw_later(wp, type);
   }
   // This may be needed when switching tabs.
   if (must_redraw < type) {
@@ -234,7 +231,7 @@ void redraw_all_later(int type)
 void screen_invalidate_highlights(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    redraw_win_later(wp, NOT_VALID);
+    redraw_later(wp, NOT_VALID);
     wp->w_grid.valid = false;
   }
 }
@@ -251,7 +248,7 @@ void redraw_buf_later(buf_T *buf, int type)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
-      redraw_win_later(wp, type);
+      redraw_later(wp, type);
     }
   }
 }
@@ -277,7 +274,7 @@ void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
       if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
           wp->w_redraw_bot = lastline;
       }
-      redraw_win_later(wp, VALID);
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -305,7 +302,7 @@ redrawWinline(
     if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
         wp->w_redraw_bot = lnum;
     }
-    redraw_win_later(wp, VALID);
+    redraw_later(wp, VALID);
   }
 }
 
@@ -359,7 +356,6 @@ int update_screen(int type)
   /* Postpone the redrawing when it's not needed and when being called
    * recursively. */
   if (!redrawing() || updating_screen) {
-    redraw_later(type);                 /* remember type for next time */
     must_redraw = type;
     if (type > INVERTED_ALL) {
       curwin->w_lines_valid = 0;  // don't use w_lines[].wl_size now
@@ -480,8 +476,8 @@ int update_screen(int type)
 
   Providers providers;
   kvi_init(providers);
-  for (size_t i = 0; i < kv_size(decoration_providers); i++) {
-    DecorationProvider *p = &kv_A(decoration_providers, i);
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
     if (!p->active) {
       continue;
     }
@@ -499,6 +495,12 @@ int update_screen(int type)
     if (active) {
       kvi_push(providers, p);
     }
+  }
+
+  // "start" callback could have changed highlights for global elements
+  if (win_check_ns_hl(NULL)) {
+    redraw_cmdline = true;
+    redraw_tabline = true;
   }
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
@@ -557,16 +559,16 @@ int update_screen(int type)
         buf->b_mod_tick_syn = display_tick;
       }
 
-      if (buf->b_mod_tick_deco < display_tick) {
+      if (buf->b_mod_tick_decor < display_tick) {
         for (size_t i = 0; i < kv_size(providers); i++) {
-          DecorationProvider *p = kv_A(providers, i);
+          DecorProvider *p = kv_A(providers, i);
           if (p && p->redraw_buf != LUA_NOREF) {
             FIXED_TEMP_ARRAY(args, 1);
             args.items[0] = BUFFER_OBJ(buf->handle);
             provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true);
           }
         }
-        buf->b_mod_tick_deco = display_tick;
+        buf->b_mod_tick_decor = display_tick;
       }
     }
   }
@@ -580,8 +582,6 @@ int update_screen(int type)
 
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    redrawn_win = wp;
-
     if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
       grid_invalidate(&wp->w_grid);
       wp->w_redr_type = NOT_VALID;
@@ -599,8 +599,6 @@ int update_screen(int type)
     if (wp->w_redr_status) {
       win_redr_status(wp);
     }
-
-    redrawn_win = NULL;
   }
 
   end_search_hl();
@@ -632,7 +630,7 @@ int update_screen(int type)
   did_intro = TRUE;
 
   for (size_t i = 0; i < kv_size(providers); i++) {
-    DecorationProvider *p = kv_A(providers, i);
+    DecorProvider *p = kv_A(providers, i);
     if (!p->active) {
       continue;
     }
@@ -700,18 +698,6 @@ bool win_cursorline_standout(const win_T *wp)
 {
   return wp->w_p_cul
     || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
-}
-
-static DecorationRedrawState decorations;
-
-void decorations_add_ephemeral(int attr_id,
-                               int start_row, int start_col,
-                               int end_row, int end_col, VirtText *virt_text)
-{
-  kv_push(decorations.active,
-          ((HlRange){ start_row, start_col,
-                      end_row, end_col,
-                      attr_id, virt_text, virt_text != NULL }));
 }
 
 /*
@@ -1307,7 +1293,7 @@ static void win_update(win_T *wp, Providers *providers)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
-  decorations_redraw_reset(buf, &decorations);
+  decor_redraw_reset(buf, &decor_state);
 
   Providers line_providers;
   kvi_init(line_providers);
@@ -1317,7 +1303,7 @@ static void win_update(win_T *wp, Providers *providers)
                        : (wp->w_topline + wp->w_height_inner));
 
   for (size_t k = 0; k < kv_size(*providers); k++) {
-    DecorationProvider *p = kv_A(*providers, k);
+    DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_win != LUA_NOREF) {
       FIXED_TEMP_ARRAY(args, 4);
       args.items[0] = WINDOW_OBJ(wp->handle);
@@ -1330,6 +1316,8 @@ static void win_update(win_T *wp, Providers *providers)
       }
     }
   }
+
+  win_check_ns_hl(wp);
 
 
   for (;; ) {
@@ -1754,6 +1742,7 @@ static void win_update(win_T *wp, Providers *providers)
     }
   }
 
+
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
@@ -2101,7 +2090,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int prev_c1 = 0;                      // first composing char for prev_c
 
   bool search_attr_from_match = false;  // if search_attr is from :match
-  bool has_decorations = false;         // this buffer has decorations
+  bool has_decor = false;               // this buffer has decoration
   bool do_virttext = false;             // draw virtual text for this line
 
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
@@ -2169,26 +2158,28 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
     }
 
-    has_decorations = decorations_redraw_line(wp->w_buffer, lnum-1,
-                                              &decorations);
+    has_decor = decor_redraw_line(wp->w_buffer, lnum-1,
+                                  &decor_state);
 
     for (size_t k = 0; k < kv_size(*providers); k++) {
-      DecorationProvider *p = kv_A(*providers, k);
+      DecorProvider *p = kv_A(*providers, k);
       if (p && p->redraw_line != LUA_NOREF) {
         FIXED_TEMP_ARRAY(args, 3);
         args.items[0] = WINDOW_OBJ(wp->handle);
         args.items[1] = BUFFER_OBJ(buf->handle);
         args.items[2] = INTEGER_OBJ(lnum-1);
         if (provider_invoke(p->ns_id, "line", p->redraw_line, args, true)) {
-          has_decorations = true;
+          has_decor = true;
         } else {
           // return 'false' or error: skip rest of this window
           kv_A(*providers, k) = NULL;
         }
+
+        win_check_ns_hl(wp);
       }
     }
 
-    if (has_decorations) {
+    if (has_decor) {
       extra_check = true;
     }
 
@@ -2205,6 +2196,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (wp->w_p_spell
+        && foldinfo.fi_lines == 0
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
         && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
@@ -2374,7 +2366,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   }
 
   // If this line has a sign with line highlighting set line_attr.
-  // TODO(bfredl, vigoux): this should not take priority over decorations!
+  // TODO(bfredl, vigoux): this should not take priority over decoration!
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL, 0, 1);
   if (v != 0) {
     line_attr = sign_get_attr((int)v, SIGN_LINEHL);
@@ -2558,7 +2550,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
    */
   cur = wp->w_match_head;
   shl_flag = false;
-  while ((cur != NULL || !shl_flag) && !number_only) {
+  while ((cur != NULL || !shl_flag) && !number_only
+         && foldinfo.fi_lines == 0
+         ) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;
@@ -2844,9 +2838,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
            * required when 'linebreak' is also set. */
           if (tocol == vcol)
             tocol += n_extra;
-          /* combine 'showbreak' with 'cursorline' */
+          // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-            char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
+            char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), char_attr);
           }
         }
       }
@@ -3399,9 +3393,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (has_decorations && v > 0) {
-          int extmark_attr = decorations_redraw_col(wp->w_buffer, (colnr_T)v-1,
-                                                    &decorations);
+        if (has_decor && v > 0) {
+          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1,
+                                              &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, extmark_attr);
@@ -3903,8 +3897,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         kv_push(virt_text, ((VirtTextChunk){ .text = err_text,
                                              .hl_id = hl_err }));
         do_virttext = true;
-      } else if (has_decorations) {
-        VirtText *vp = decorations_redraw_virt_text(wp->w_buffer, &decorations);
+      } else if (has_decor) {
+        VirtText *vp = decor_redraw_virt_text(wp->w_buffer, &decor_state);
         if (vp) {
           virt_text = *vp;
           do_virttext = true;
@@ -4649,8 +4643,8 @@ void status_redraw_all(void)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height) {
-      wp->w_redr_status = TRUE;
-      redraw_later(VALID);
+      wp->w_redr_status = true;
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -4667,7 +4661,7 @@ void status_redraw_buf(buf_T *buf)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height != 0 && wp->w_buffer == buf) {
       wp->w_redr_status = true;
-      redraw_later(VALID);
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -5191,8 +5185,8 @@ win_redr_custom (
   char_u buf[MAXPATHL];
   char_u      *stl;
   char_u      *p;
-  struct      stl_hlrec hltab[STL_MAX_ITEM];
-  StlClickRecord tabtab[STL_MAX_ITEM];
+  stl_hlrec_t *hltab;
+  StlClickRecord *tabtab;
   int use_sandbox = false;
   win_T       *ewp;
   int p_crb_save;
@@ -5214,7 +5208,7 @@ win_redr_custom (
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
-    use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
+    use_sandbox = was_set_insecurely(wp, (char_u *)"tabline", 0);
   } else {
     row = W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
@@ -5245,14 +5239,14 @@ win_redr_custom (
         attr = HL_ATTR(HLF_MSG);
       }
 
-      use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
+      use_sandbox = was_set_insecurely(wp, (char_u *)"rulerformat", 0);
     } else {
       if (*wp->w_p_stl != NUL)
         stl = wp->w_p_stl;
       else
         stl = p_stl;
-      use_sandbox = was_set_insecurely((char_u *)"statusline",
-          *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
+      use_sandbox = was_set_insecurely(
+          wp, (char_u *)"statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
     col += wp->w_wincol;
@@ -5270,9 +5264,9 @@ win_redr_custom (
   /* Make a copy, because the statusline may include a function call that
    * might change the option value and free the memory. */
   stl = vim_strsave(stl);
-  width = build_stl_str_hl(ewp, buf, sizeof(buf),
-      stl, use_sandbox,
-      fillchar, maxwidth, hltab, tabtab);
+  width =
+    build_stl_str_hl(ewp, buf, sizeof(buf), stl, use_sandbox,
+                     fillchar, maxwidth, &hltab, &tabtab);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 

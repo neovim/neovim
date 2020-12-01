@@ -2,6 +2,7 @@
 #define NVIM_TYPES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;
@@ -21,7 +22,7 @@ typedef int handle_T;
 // absent callback etc.
 typedef int LuaRef;
 
-typedef uint64_t NS;
+typedef handle_T NS;
 
 typedef struct expand expand_T;
 

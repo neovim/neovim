@@ -15,7 +15,7 @@ print_core() {
     return 0
   fi
   echo "======= Core file $core ======="
-  if test "${TRAVIS_OS_NAME}" = osx ; then
+  if test "${CI_OS_NAME}" = osx ; then
     lldb -Q -o "bt all" -f "${app}" -c "${core}"
   else
     gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
@@ -30,7 +30,7 @@ check_core_dumps() {
   fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
   local cores
-  if test "${TRAVIS_OS_NAME}" = osx ; then
+  if test "${CI_OS_NAME}" = osx ; then
     cores="$(find /cores/ -type f -print)"
     local _sudo='sudo'
   else
