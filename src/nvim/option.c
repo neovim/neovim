@@ -102,6 +102,13 @@
 #define OPT_BUF(x)  (idopt_T)(PV_BUF + (int)(x))
 #define OPT_BOTH(x) (idopt_T)(PV_BOTH + (int)(x))
 
+
+// WV_ and BV_ values get typecasted to this for the "indir" field
+typedef enum {
+  PV_NONE = 0,
+  PV_MAXVAL = 0xffff      // to avoid warnings for value out of range
+} idopt_T;
+
 /*
  * Options local to a window have a value local to a buffer and global to all
  * buffers.  Indicate this by setting "var" to VAR_WIN.
@@ -187,6 +194,20 @@ static int p_et_nopaste;
 static long p_sts_nopaste;
 static long p_tw_nopaste;
 static long p_wm_nopaste;
+
+typedef struct vimoption {
+  char        *fullname;        // full option name
+  char        *shortname;       // permissible abbreviation
+  uint32_t flags;               // see below
+  char_u      *var;             // global option: pointer to variable;
+                                // window-local option: VAR_WIN;
+                                // buffer-local option: global value
+  idopt_T indir;                // global option: PV_NONE;
+                                // local option: indirect option index
+  char_u      *def_val[2];      // default values for variable (vi and vim)
+  LastSet last_set;             // script in which the option was last set
+# define SCTX_INIT , { 0, 0, 0 }
+} vimoption_T;
 
 #define VI_DEFAULT  0       // def_val[VI_DEFAULT] is Vi default value
 #define VIM_DEFAULT 1       // def_val[VIM_DEFAULT] is Vim default value
@@ -330,9 +351,6 @@ void set_init_1(bool clean_arg)
   int opt_idx;
 
   langmap_init();
-
-  // Be nocompatible
-  p_cp = false;
 
   /*
    * Find default value for 'shell' option.
@@ -662,7 +680,7 @@ set_options_default(
 {
   for (int i = 0; options[i].fullname; i++) {
     if (!(options[i].flags & P_NODEFAULT)) {
-      set_option_default(i, opt_flags, p_cp);
+      set_option_default(i, opt_flags, false);
     }
   }
 
@@ -742,7 +760,7 @@ void set_init_2(bool headless)
   // which results in the actual value computed from the window height.
   idx = findoption("scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
-    set_option_default(idx, OPT_LOCAL, p_cp);
+    set_option_default(idx, OPT_LOCAL, false);
   }
   comp_col();
 
@@ -1092,7 +1110,7 @@ int do_set(
 
       if (vim_strchr((char_u *)"?=:!&<", nextchar) != NULL) {
         arg += len;
-        cp_val = p_cp;
+        cp_val = false;
         if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
           if (arg[3] == 'm') {          // "opt&vim": set to Vim default
             cp_val = false;
@@ -4933,7 +4951,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
   if (varp == NULL) {
     return true;            // hidden option is always at default
   }
-  dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
+  dvi = (p->flags & P_VI_DEF) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM) {
     return *(long *)varp == (long)(intptr_t)p->def_val[dvi];
   }
@@ -7158,21 +7176,73 @@ long get_sidescrolloff_value(void)
   return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
 }
 
-vimoption_T get_vimoption(int opt_idx)
+Dictionary get_vimoption(String name, Error *err)
 {
-  return options[opt_idx];
+  int opt_idx = findoption_len((const char *)name.data, name.size);
+  if (opt_idx < 0) {
+    api_set_error(err, kErrorTypeValidation, "no such option %s", name.data);
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+  return vimoption2dict(&options[opt_idx]);
 }
 
-vimoption_T* get_all_vimoptions(void)
+Dictionary get_all_vimoptions(void)
 {
-  return options;
+  Dictionary retval = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < PARAM_COUNT; i++) {
+    Dictionary opt_dict = vimoption2dict(&options[i]);
+    PUT(retval, options[i].fullname, DICTIONARY_OBJ(opt_dict));
+  }
+  return retval;
 }
 
-String get_option_type_string(vimoption_T opt)
+static Dictionary vimoption2dict(vimoption_T *opt)
 {
-  return cstr_to_string(
-          opt.flags & P_BOOL ? "boolean"
-          : opt.flags & P_NUM ? "number"
-          : opt.flags & P_STRING ? "string"
-          : "unknown");
+    Dictionary dict = ARRAY_DICT_INIT;
+
+    PUT(dict, "name", STRING_OBJ(cstr_to_string(opt->fullname)));
+    PUT(dict, "shortname", STRING_OBJ(cstr_to_string(opt->shortname)));
+#define PUT_IF(dict, name, condition) do if (condition) \
+                     { PUT(dict, name, BOOLEAN_OBJ(true)); } while (0)
+    PUT_IF(dict, "win", opt->indir & PV_WIN);
+    PUT_IF(dict, "buf", opt->indir & PV_BUF);
+    // welcome to the jungle
+    PUT_IF(dict, "global_local", opt->indir & PV_BOTH);
+    PUT_IF(dict, "commalist", opt->flags & P_COMMA);
+    PUT_IF(dict, "flaglist", opt->flags & P_FLAGLIST);
+
+    PUT_IF(dict, "was_set", opt->flags & P_WAS_SET);
+
+    PUT(dict, "flag",  INTEGER_OBJ(opt->flags));  // TODO(bfredl): lol tj
+    PUT(dict, "last_set_sid", INTEGER_OBJ(opt->last_set.script_ctx.sc_sid));
+    if (opt->last_set.script_ctx.sc_lnum > 0) {
+      PUT(dict, "last_set_linenr",
+          INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum));
+    }
+    if (opt->last_set.channel_id > 0) {
+      PUT(dict, "last_set_lchan",
+          INTEGER_OBJ((int64_t)opt->last_set.channel_id));
+    }
+
+    const char *type;
+    Object def;
+    // TODO(bfredl): do you even nocp?
+    char_u *def_val = opt->def_val[(opt->flags & P_VI_DEF)
+                                   ? VI_DEFAULT : VIM_DEFAULT];
+    if (opt->flags & P_STRING) {
+      type = "string";
+      def = STRING_OBJ(cstr_to_string(def_val ? (char *)def_val : ""));
+    } else if (opt->flags & P_NUM) {
+      type = "string";
+      def = INTEGER_OBJ((Integer)(intptr_t)def_val);
+    } else if (opt->flags & P_BOOL) {
+      type = "boolean";
+      def = BOOLEAN_OBJ((intptr_t)def_val);
+    } else {
+      type = ""; def = NIL;
+    }
+    PUT(dict, "type", STRING_OBJ(cstr_to_string(type)));
+    PUT(dict, "default", def);
+
+    return dict;
 }
