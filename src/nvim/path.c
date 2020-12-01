@@ -1704,6 +1704,13 @@ int path_with_url(const char *fname)
   return path_is_url(p);
 }
 
+bool path_with_extension(const char *path, const char *extension)
+{
+  const char *last_dot = strrchr(path, '.');
+  if (!last_dot) { return false; }
+  return strcmp(last_dot + 1, extension) == 0;
+}
+
 /*
  * Return TRUE if "name" is a full (absolute) path name or URL.
  */

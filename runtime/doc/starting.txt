@@ -104,7 +104,7 @@ argument.
 --startuptime {fname}					*--startuptime*
 		During startup write timing messages to the file {fname}.
 		This can be used to find out where time is spent while loading
-		your |init.vim|, plugins and opening the first file.
+		your |config|, plugins and opening the first file.
 		When {fname} already exists new messages are appended.
 		(Only available when compiled with the |+startuptime|
 		feature).
@@ -211,7 +211,7 @@ argument.
 		When 'verbose' is set messages are printed to stderr. >
 			echo foo | nvim -V1 -es
 
-<		User |init.vim| is skipped (unless given with |-u|).
+<		User |config| is skipped (unless given with |-u|).
 		Swap file is skipped (like |-n|).
 		User |shada| is loaded (unless "-i NONE" is given).
 
@@ -406,12 +406,14 @@ accordingly.  Vim proceeds in this order:
 	proceeding to load user configuration.
 
 4. Load user config (execute Ex commands from files, environment, …).
-	$VIMINIT environment variable is read as one Ex command line (separate
-	multiple commands with '|' or <NL>).
-					*config* *init.vim* *vimrc* *exrc*
-	A file containing init commands is generically called a "vimrc" or
-	"config".  Each line in such a file is executed as an Ex command.
-	|vimrc-intro| |base-directories|
+	An environment variable (e.g. $VIMINIT) is read as one Ex command
+	line, where multiple commands must be separated with '|' or <NL>.
+					*config* *init.vim* *init.lua* *vimrc* *exrc*
+	A file that contains initialization commands is generically called
+	a "vimrc" or config file.  It can be a Vimscript or Lua file named
+	"init.vim" or "init.lua" respectively.  It is an error to use both at
+	the same time.  Each line in a "init.vim" is executed as an Ex command
+	line.  See also |vimrc-intro| and |base-directories|.
 
 	The Nvim config file is "init.vim", located at:
 		Unix		~/.config/nvim/init.vim
@@ -578,7 +580,7 @@ The extreme flexibility of editors like Vim and Emacs means that any plugin or
 setting can affect the entire editor in ways that are not initially obvious.
 
 To find the cause of a problem in your config, you must "bisect" it:
-1. Remove or disable half of your `init.vim`.
+1. Remove or disable half of your |config|.
 2. Restart Nvim.
 3. If the problem still occurs, goto 1. 
 4. If the problem is gone, restore half of the removed lines.
@@ -597,7 +599,7 @@ to 'shortmess'.
 $VIM and $VIMRUNTIME
 								*$VIM*
 The environment variable "$VIM" is used to locate various user files for Nvim,
-such as the user startup script |init.vim|.  This depends on the system, see
+such as the user |config|.  This depends on the system, see
 |startup|.
 
 Nvim will try to get the value for $VIM in this order:
@@ -709,11 +711,11 @@ can be used with different terminals.
 
 Only global mappings are stored, not mappings local to a buffer.
 
-A common method is to use a default |init.vim| file, make some modifications
+A common method is to use a default |config| file, make some modifications
 with ":map" and ":set" commands and write the modified file.  First read the
 default vimrc in with a command like ":source ~piet/.vimrc.Cprogs", change
 the settings and then save them in the current directory with ":mkvimrc!".  If
-you want to make this file your default |init.vim|, move it to 
+you want to make this file your default |config|, move it to
 $XDG_CONFIG_HOME/nvim.  You could also use autocommands |autocommand| and/or 
 modelines |modeline|.
 
@@ -1065,7 +1067,7 @@ do this.  This can be useful in order to create a second file, say
 "~/.my.shada" which could contain certain settings that you always want when 
 you first start Neovim.  For example, you can preload registers with 
 particular data, or put certain commands in the command line history.  A line 
-in your |init.vim| file like >
+in your |config| file like >
 	:rshada! ~/.my.shada
 can be used to load this information.  You could even have different ShaDa 
 files for different types of files (e.g., C code) and load them based on the 

@@ -927,7 +927,7 @@ void nlua_typval_eval(const String str, typval_T *const arg,
   memcpy(lcmd + sizeof(EVALHEADER) - 1, str.data, str.size);
   lcmd[lcmd_len - 1] = ')';
 #undef EVALHEADER
-  typval_exec_lua(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
+  nlua_typval_exec(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
 
   if (lcmd != (char *)IObuff) {
     xfree(lcmd);
@@ -954,16 +954,16 @@ void nlua_typval_call(const char *str, size_t len, typval_T *const args,
 #undef CALLHEADER
 #undef CALLSUFFIX
 
-  typval_exec_lua(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
+  nlua_typval_exec(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
 
   if (lcmd != (char *)IObuff) {
     xfree(lcmd);
   }
 }
 
-static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
-                            typval_T *const args, int argcount, bool special,
-                            typval_T *ret_tv)
+static void nlua_typval_exec(const char *lcmd, size_t lcmd_len,
+                             const char *name, typval_T *const args,
+                             int argcount, bool special, typval_T *ret_tv)
 {
   if (check_secure()) {
     if (ret_tv) {
@@ -1140,7 +1140,7 @@ void ex_lua(exarg_T *const eap)
     xfree(code);
     return;
   }
-  typval_exec_lua(code, len, ":lua", NULL, 0, false, NULL);
+  nlua_typval_exec(code, len, ":lua", NULL, 0, false, NULL);
 
   xfree(code);
 }
@@ -1231,17 +1231,30 @@ void ex_luado(exarg_T *const eap)
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
+  nlua_exec_file((const char *)eap->arg);
+}
+
+/// execute lua code from a file.
+///
+/// @param  path  path of the file
+///
+/// @return  true if everything ok, false if there was an error (echoed)
+bool nlua_exec_file(const char *path)
+  FUNC_ATTR_NONNULL_ALL
+{
   lua_State *const lstate = nlua_enter();
 
-  if (luaL_loadfile(lstate, (const char *)eap->arg)) {
+  if (luaL_loadfile(lstate, path)) {
     nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
-    return;
+    return false;
   }
 
   if (lua_pcall(lstate, 0, 0, 0)) {
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
-    return;
+    return false;
   }
+
+  return true;
 }
 
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL

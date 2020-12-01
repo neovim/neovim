@@ -432,3 +432,88 @@ describe('clean', function()
   clear('--clean')
   ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) == nil)
 end)
+
+describe('user config init', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local init_lua_path = table.concat({xconfig, 'nvim', 'init.lua'}, pathsep)
+
+  before_each(function()
+    rmdir(xhome)
+
+    -- TODO, make mkdir_p helper
+    mkdir(xhome)
+    mkdir(xconfig)
+    mkdir(xconfig .. pathsep .. 'nvim')
+
+    write_file(init_lua_path, [[
+      vim.g.lua_rc = 1
+    ]])
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads init.lua from XDG config home by default', function()
+    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(1, eval('g:lua_rc'))
+    eq(init_lua_path, eval('$MYVIMRC'))
+  end)
+
+  describe 'with explicitly provided config'(function()
+    local custom_lua_path = table.concat({xhome, 'custom.lua'}, pathsep)
+    before_each(function()
+      write_file(custom_lua_path, [[
+      vim.g.custom_lua_rc = 1
+      ]])
+    end)
+
+    it('loads custom lua config and does not set $MYVIMRC', function()
+      clear{ args={'-u', custom_lua_path }, env={ XDG_CONFIG_HOME=xconfig }}
+      eq(1, eval('g:custom_lua_rc'))
+      eq('', eval('$MYVIMRC'))
+    end)
+  end)
+
+  describe 'VIMRC also exists'(function()
+    before_each(function()
+      write_file(table.concat({xconfig, 'nvim', 'init.vim'}, pathsep), [[
+      let g:vim_rc = 1
+      ]])
+    end)
+
+    it('loads default lua config, but shows an error', function()
+      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+      feed('<cr>') -- TODO check this, test execution is blocked without it
+      eq(1, eval('g:lua_rc'))
+      matches('Conflicting configs', meths.exec('messages', true))
+    end)
+  end)
+end)
+
+describe('user session', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local session_file = table.concat({xhome, 'session.lua'}, pathsep)
+
+  before_each(function()
+    rmdir(xhome)
+
+    mkdir(xhome)
+    write_file(session_file, [[
+      vim.g.lua_session = 1
+    ]])
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads session from the provided lua file', function()
+    clear{ args={'-S', session_file }, env={ HOME=xhome }}
+    eq(1, eval('g:lua_session'))
+  end)
+end)
