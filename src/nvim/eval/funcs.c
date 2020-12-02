@@ -96,6 +96,7 @@ PRAGMA_DIAG_POP
 
 
 static char *e_listarg = N_("E686: Argument of %s must be a List");
+static char *e_listblobarg = N_("E898: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 
 /// Dummy va_list for passing to vim_snprintf
@@ -334,7 +335,7 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    EMSG(_(e_listreq));
+    EMSG(_(e_listblobreq));
   }
 }
 
@@ -2884,7 +2885,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    EMSG2(_(e_listdictarg), "get()");
+    EMSG2(_(e_listdictblobarg), "get()");
   }
 
   if (tv == NULL) {
@@ -4853,7 +4854,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     return;
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    EMSG(_(e_listblobreq));
     return;
   }
   list_T *const l = argvars[0].vval.v_list;
@@ -5013,7 +5014,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     tv_copy(&argvars[0], rettv);
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "insert()");
+    EMSG2(_(e_listblobarg), "insert()");
   } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                              N_("insert() argument"), TV_TRANSLATE)) {
     long before = 0;
@@ -7349,7 +7350,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listdictarg), "remove()");
+    EMSG2(_(e_listdictblobarg), "remove()");
   } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                              arg_errmsg, TV_TRANSLATE)) {
     bool error = false;
@@ -7634,7 +7635,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     tv_blob_set_ret(rettv, b);
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "reverse()");
+    EMSG2(_(e_listblobarg), "reverse()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
     if (!var_check_lock(tv_list_locked(l), N_("reverse() argument"),

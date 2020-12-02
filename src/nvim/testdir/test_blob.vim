@@ -32,6 +32,7 @@ func Test_blob_create()
   call assert_fails('let b = 0z1.1')
   call assert_fails('let b = 0z.')
   call assert_fails('let b = 0z001122.')
+  call assert_fails('call get("", 1)', 'E896:')
 endfunc
 
 " assignment to a blob
@@ -182,6 +183,7 @@ func Test_blob_add()
   call assert_equal(0z00112233, b)
 
   call assert_fails('call add(b, [9])', 'E745:')
+  call assert_fails('call add("", 0x01)', 'E897:')
 endfunc
 
 func Test_blob_empty()
@@ -219,7 +221,7 @@ func Test_blob_func_remove()
   call assert_fails("call remove(b, 5)", 'E979:')
   call assert_fails("call remove(b, 1, 5)", 'E979:')
   call assert_fails("call remove(b, 3, 2)", 'E979:')
-  call assert_fails("call remove(1, 0)", 'E712:')
+  call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(b, b)", 'E974:')
 endfunc
 
@@ -255,7 +257,7 @@ func Test_blob_index()
   call assert_equal(2, index(0z11111111, 0x11, -2))
   call assert_equal(3, index(0z11110111, 0x11, -2))
 
-  call assert_fails('call index("asdf", 0)', 'E714:')
+  call assert_fails('call index("asdf", 0)', 'E897:')
 endfunc
 
 func Test_blob_insert()

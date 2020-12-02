@@ -14,7 +14,7 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 1. Variables						*variables*
 
 1.1 Variable types ~
-							*E712*
+						*E712* *E896* *E897* *E898*
 There are seven types of variables:
 
 							*Number* *Integer*
@@ -610,6 +610,9 @@ Blob creation ~
 
 A Blob can be created with a |blob-literal|: >
 	:let b = 0zFF00ED015DAF
+Dots can be inserted between bytes (pair of hex characters) for readability,
+they don't change the value: >
+	:let b = 0zFF00.ED01.5DAF
 
 A blob can be read from a file with |readfile()| passing the {type} argument
 set to "B", for example: >
@@ -3805,8 +3808,8 @@ escape({string}, {chars})				*escape()*
 							*eval()*
 eval({string})	Evaluate {string} and return the result.  Especially useful to
 		turn the result of |string()| back into the original value.
-		This works for Numbers, Floats, Strings and composites of
-		them.  Also works for |Funcref|s that refer to existing
+		This works for Numbers, Floats, Strings, Blobs and composites
+		of them.  Also works for |Funcref|s that refer to existing
 		functions.
 
 		Can also be used as a |method|: >
@@ -5957,8 +5960,13 @@ items({dict})						*items()*
 		Return a |List| with all the key-value pairs of {dict}.  Each
 		|List| item is a list with two items: the key of a {dict}
 		entry and the value of this entry.  The |List| is in arbitrary
-		order.
-		Can also be used as a |method|: >
+		order.  Also see |keys()| and |values()|.
+		Example: >
+			for [key, value] in items(mydict)
+			   echo key . ': ' . value
+			endfor
+
+<		Can also be used as a |method|: >
 			mydict->items()
 
 isnan({expr})						*isnan()*
@@ -6129,7 +6137,8 @@ json_encode({expr})					*json_encode()*
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
-		arbitrary order.
+		arbitrary order.  Also see |items()| and |values()|.
+
 		Can also be used as a |method|: >
 			mydict->keys()
 
@@ -8970,14 +8979,15 @@ stridx({haystack}, {needle} [, {start}])		*stridx()*
 
 							*string()*
 string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
-		Float, String or a composition of them, then the result can be
-		parsed back with |eval()|.
+		Float, String, Blob or a composition of them, then the result
+		can be parsed back with |eval()|.
 			{expr} type	result ~
 			String		'string'
 			Number		123
 			Float		123.123456 or 1.123456e8 or
 					`str2float('inf')`
 			Funcref		`function('name')`
+			Blob		0z00112233.44556677.8899
 			List		[item, item]
 			Dictionary	{key: value, key: value}
 		Note that in String values the ' character is doubled.
@@ -9735,7 +9745,7 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
-		in arbitrary order.
+		in arbitrary order.  Also see |items()| and |keys()|.
 
 		Can also be used as a |method|: >
 			mydict->values()

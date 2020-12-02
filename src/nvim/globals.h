@@ -946,8 +946,11 @@ EXTERN char_u e_toomanyarg[] INIT(= N_(
 EXTERN char_u e_dictkey[] INIT(= N_(
     "E716: Key not present in Dictionary: \"%s\""));
 EXTERN char_u e_listreq[] INIT(= N_("E714: List required"));
+EXTERN char_u e_listblobreq[] INIT(= N_("E897: List or Blob required"));
 EXTERN char_u e_listdictarg[] INIT(= N_(
     "E712: Argument of %s must be a List or Dictionary"));
+EXTERN char_u e_listdictblobarg[] INIT(= N_(
+    "E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));

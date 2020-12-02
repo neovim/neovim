@@ -322,16 +322,16 @@ describe('execute()', function()
       eq('Vim(call):E731: using Dictionary as a String', ret)
 
       ret = exc_exec('call execute("echo add(1, 1)", "")')
-      eq('Vim(echo):E714: List required', ret)
+      eq('Vim(echo):E897: List or Blob required', ret)
 
       ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "")')
-      eq('Vim(echo):E714: List required', ret)
+      eq('Vim(echo):E897: List or Blob required', ret)
 
       ret = exc_exec('call execute("echo add(1, 1)", "silent")')
-      eq('Vim(echo):E714: List required', ret)
+      eq('Vim(echo):E897: List or Blob required', ret)
 
       ret = exc_exec('call execute(["echon 42", "echo add(1, 1)"], "silent")')
-      eq('Vim(echo):E714: List required', ret)
+      eq('Vim(echo):E897: List or Blob required', ret)
     end)
   end)
 end)
