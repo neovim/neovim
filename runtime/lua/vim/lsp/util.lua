@@ -399,9 +399,25 @@ end
 
 --@private
 --- Get the details of the completion item
-local function get_completion_item_resolve(completion_item)
+function M.get_completion_item_resolve()
+  print('Am I running?')
   local bufnr = api.nvim_get_current_buf()
-  return vim.lsp.buf_request_sync(bufnr, 'completionItem/resolve', completion_item)
+  local completed_item_var = api.nvim_get_vvar('completed_item')
+  local item = completed_item_var.user_data.lsp.completion_item
+  local lnum = item.data.line
+
+  print(vim.inspect(item))
+
+  vim.lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
+    if err or not result then return end
+    if result.additionalTextEdits then
+      local edits = vim.tbl_filter(
+        function(x) return x.range.start.line ~= (lnum - 1) end,
+        result.additionalTextEdits
+      )
+      M.apply_text_edits(edits, bufnr)
+    end
+  end)
 end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
@@ -438,7 +454,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
     end
 
     local word = get_completion_word(completion_item)
-    local lsp_completion_item = get_completion_item_resolve(completion_item) or completion_item
+    -- print(vim.inspect(completion_item))
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
@@ -449,11 +465,11 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       dup = 1,
       empty = 1,
       user_data = {
-        nvim = {
+        -- nvim = {
           lsp = {
-            completion_item = lsp_completion_item
+            completion_item = completion_item
           }
-        }
+        -- }
       },
     })
   end

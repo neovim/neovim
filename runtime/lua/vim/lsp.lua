@@ -940,6 +940,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   if client then
     client._on_attach(bufnr)
   end
+
   return true
 end
 
@@ -1284,6 +1285,9 @@ end
 
 -- Define the LspDiagnostics signs if they're not defined already.
 require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
+
+-- On CompleteDone, let's try to resolve the completion entry detail
+vim.api.nvim_command("autocmd CompleteDone <buffer> lua require'vim.lsp.util'.get_completion_item_resolve()")
 
 return lsp
 -- vim:sw=2 ts=2 et
