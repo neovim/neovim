@@ -161,6 +161,7 @@ describe("'wildmenu'", function()
 
     if not iswin() then
       command('set shell=sh')  -- Need a predictable "$" prompt.
+      command('let $PS1 = "$"')
     end
     command('set laststatus=0')
     command('vsplit')

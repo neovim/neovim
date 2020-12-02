@@ -1297,7 +1297,7 @@ bool check_changed(buf_T *buf, int flags)
     if (flags & CCGD_EXCMD) {
       no_write_message();
     } else {
-      no_write_message_nobang();
+      no_write_message_nobang(curbuf);
     }
     return true;
   }
@@ -1503,8 +1503,10 @@ bool check_changed_any(bool hidden, bool unload)
       msg_col = 0;
       msg_didout = false;
     }
-    if (EMSG2(_("E162: No write since last change for buffer \"%s\""),
-              buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
+    if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
+        ? EMSG2(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
+        : EMSG2(_("E162: No write since last change for buffer \"%s\""),
+                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
       save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
