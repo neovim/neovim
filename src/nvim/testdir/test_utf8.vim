@@ -103,3 +103,14 @@ func Test_list2str_str2list_latin1()
   call assert_equal(l, lres)
   call assert_equal(s, sres)
 endfunc
+
+func Test_print_overlong()
+  " Text with more composing characters than MB_MAXBYTES.
+  new
+  call setline(1, 'axxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+  s/x/\=nr2char(1629)/g
+  print
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
