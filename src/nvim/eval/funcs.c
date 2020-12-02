@@ -96,7 +96,7 @@ PRAGMA_DIAG_POP
 
 
 static char *e_listarg = N_("E686: Argument of %s must be a List");
-static char *e_listblobarg = N_("E898: Argument of %s must be a List or Blob");
+static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 
 /// Dummy va_list for passing to vim_snprintf

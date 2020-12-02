@@ -617,7 +617,7 @@ func Test_reverse_sort_uniq()
   call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
   call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
 
-  call assert_fails('call reverse("")', 'E898:')
+  call assert_fails('call reverse("")', 'E899:')
 endfunc
 
 " splitting a string to a List

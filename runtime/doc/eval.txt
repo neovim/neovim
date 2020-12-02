@@ -14,7 +14,7 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 1. Variables						*variables*
 
 1.1 Variable types ~
-						*E712* *E896* *E897* *E898*
+						*E712* *E896* *E897* *E899*
 There are seven types of variables:
 
 							*Number* *Integer*
