@@ -400,13 +400,10 @@ end
 --@private
 --- Get the details of the completion item
 function M.get_completion_item_resolve()
-  print('Am I running?')
   local bufnr = api.nvim_get_current_buf()
   local completed_item_var = api.nvim_get_vvar('completed_item')
   local item = completed_item_var.user_data.lsp.completion_item
   local lnum = item.data.line
-
-  print(vim.inspect(item))
 
   vim.lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
     if err or not result then return end
