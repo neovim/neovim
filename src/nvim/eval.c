@@ -4089,6 +4089,9 @@ static int eval7(
         if (blob != NULL) {
           ga_append(&blob->bv_ga, (hex2nr(*bp) << 4) + hex2nr(*(bp + 1)));
         }
+        if (bp[2] == '.' && ascii_isxdigit(bp[3])) {
+          bp++;
+        }
       }
       if (blob != NULL) {
         tv_blob_set_ret(rettv, blob);

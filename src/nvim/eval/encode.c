@@ -324,20 +324,22 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       const blob_T *const blob_ = (blob); \
       const int len_ = (len); \
       if (len_ == 0) { \
-        ga_concat(gap, "[]"); \
+        ga_concat(gap, "0z"); \
       } else { \
-        ga_grow(gap, 1 + len_ * 5); \
-        ga_append(gap, '['); \
+        /* Allocate space for "0z", the two hex chars per byte, and a */ \
+        /* "." separator after every eight hex chars. */ \
+        /* Example: "0z00112233.44556677.8899" */ \
+        ga_grow(gap, 2 + 2 * len_ + (len_ - 1) / 4); \
+        ga_concat(gap, "0z"); \
         char numbuf[NUMBUFLEN]; \
         for (int i_ = 0; i_ < len_; i_++) { \
-          if (i_ > 0) { \
-            ga_append(gap, ','); \
+          if (i_ > 0 && (i_ & 3) == 0) { \
+            ga_append(gap, '.'); \
           } \
-          vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "0x%02X", \
+          vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%02X", \
                        (int)tv_blob_get(blob_, i_)); \
           ga_concat(gap, numbuf); \
         } \
-        ga_append(gap, ']'); \
       } \
     } while (0)
 

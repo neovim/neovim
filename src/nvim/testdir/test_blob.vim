@@ -26,6 +26,12 @@ func Test_blob_create()
   call assert_fails('let b = 0z12345', 'E973:')
 
   call assert_equal(0z, v:_null_blob)
+
+  let b = 0z001122.33445566.778899.aabbcc.dd
+  call assert_equal(0z00112233445566778899aabbccdd, b)
+  call assert_fails('let b = 0z1.1')
+  call assert_fails('let b = 0z.')
+  call assert_fails('let b = 0z001122.')
 endfunc
 
 " assignment to a blob
@@ -91,10 +97,13 @@ func Test_blob_get()
 endfunc
 
 func Test_blob_to_string()
-  let b = 0zDEADBEEF
-  call assert_equal('[0xDE,0xAD,0xBE,0xEF]', string(b))
+  let b = 0z00112233445566778899aabbccdd
+  call assert_equal('0z00112233.44556677.8899AABB.CCDD', string(b))
+  call assert_equal(b, eval(string(b)))
+  call remove(b, 4, -1)
+  call assert_equal('0z00112233', string(b))
   call remove(b, 0, 3)
-  call assert_equal('[]', string(b))
+  call assert_equal('0z', string(b))
 endfunc
 
 func Test_blob_compare()
