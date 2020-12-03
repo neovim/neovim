@@ -324,7 +324,7 @@ func Test_completefunc_info()
   set completeopt=menuone
   set completefunc=CompleteTest
   call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': -1, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   bwipe!
   set completeopt&
   set completefunc&

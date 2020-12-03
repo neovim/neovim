@@ -89,7 +89,7 @@ static struct spat spats[2] =
 static int last_idx = 0;        /* index in spats[] for RE_LAST */
 
 static char_u lastc[2] = { NUL, NUL };    // last character searched for
-static int lastcdir = FORWARD;            // last direction of character search
+static Direction lastcdir = FORWARD;      // last direction of character search
 static int last_t_cmd = true;             // last search t_cmd
 static char_u lastc_bytes[MB_MAXBYTES + 1];
 static int lastc_bytelen = 1;             // >1 for multi-byte char
@@ -437,7 +437,7 @@ void set_last_csearch(int c, char_u *s, int len)
     memset(lastc_bytes, 0, sizeof(lastc_bytes));
 }
 
-void set_csearch_direction(int cdir)
+void set_csearch_direction(Direction cdir)
 {
   lastcdir = cdir;
 }
@@ -1430,7 +1430,7 @@ end_do_search:
  * ADDING is set.  If p_ic is set then the pattern must be in lowercase.
  * Return OK for success, or FAIL if no line found.
  */
-int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
+int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
 {
   linenr_T start = 0;
   char_u      *ptr;
@@ -1496,10 +1496,11 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
  * Return FAIL or OK.
  */
 int searchc(cmdarg_T *cap, int t_cmd)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int c = cap->nchar;                   /* char to search for */
-  int dir = cap->arg;                   /* TRUE for searching forward */
-  long count = cap->count1;                     /* repeat count */
+  int c = cap->nchar;                   // char to search for
+  Direction dir = cap->arg;             // TRUE for searching forward
+  long count = cap->count1;             // repeat count
   int col;
   char_u              *p;
   int len;
@@ -4462,7 +4463,7 @@ static void search_stat(int dirc, pos_T *pos,
 void
 find_pattern_in_path(
     char_u *ptr,            // pointer to search pattern
-    int dir,                // direction of expansion
+    Direction dir,          // direction of expansion
     size_t len,             // length of search pattern
     bool whole,             // match whole words only
     bool skip_comments,     // don't match inside comments
