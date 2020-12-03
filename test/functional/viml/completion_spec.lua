@@ -930,9 +930,9 @@ describe('completion', function()
 
     it('provides completion from `getcompletion()`', function()
       eq({'vim'}, meths.call_function('getcompletion', {'vi', 'lua'}))
-      eq({'vim.api'}, meths.call_function('getcompletion', {'vim.ap', 'lua'}))
-      eq({'vim.tbl_filter'}, meths.call_function('getcompletion', {'vim.tbl_fil', 'lua'}))
-      eq({'print(vim'}, meths.call_function('getcompletion', {'print(vi', 'lua'}))
+      eq({'api'}, meths.call_function('getcompletion', {'vim.ap', 'lua'}))
+      eq({'tbl_filter'}, meths.call_function('getcompletion', {'vim.tbl_fil', 'lua'}))
+      eq({'vim'}, meths.call_function('getcompletion', {'print(vi', 'lua'}))
     end)
   end)
 

@@ -1279,8 +1279,6 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
 int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***results)
 {
-  xp->xp_pattern = vim_strsave((char_u *)"vim");
-
   lua_State *const lstate = nlua_enter();
   int ret = OK;
 
@@ -1294,7 +1292,7 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
   // [ vim, vim._log_keystroke, buf ]
   lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
 
-  if (lua_pcall(lstate, 1, 1, 0)) {
+  if (lua_pcall(lstate, 1, 2, 0)) {
     nlua_error(
         lstate,
         _("Error executing vim._expand_pat: %.*s"));
@@ -1305,11 +1303,28 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
   *num_results = 0;
   *results = NULL;
 
-  Array completions = nlua_pop_Array(lstate, &err);
+  Integer prefix_len = nlua_pop_Integer(lstate, &err);
   if (ERROR_SET(&err)) {
     ret = FAIL;
     goto cleanup;
   }
+
+  Array completions = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    ret = FAIL;
+    goto cleanup_array;
+  }
+
+  /* xp->xp_context = EXPAND_LUA; */
+
+  /* ILOG("Prefix Len: %lu", prefix_len); */
+  /* if (prefix_len) { */
+  /*   xp->xp_pattern = pat + prefix_len; */
+  /*   xp->xp_pattern_len = STRLEN(pat) - (unsigned long)prefix_len; */
+  /* } */
+
+  /* xp->xp_pattern = pat + 4; */
+  /* xp->xp_pattern_len = STRLEN(pat) - 4; */
 
   garray_T result_array;
   ga_init(&result_array, (int)sizeof(char *), 80);
@@ -1318,7 +1333,7 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
 
     if (v.type != kObjectTypeString) {
       ret = FAIL;
-      goto cleanup;
+      goto cleanup_array;
     }
 
     GA_APPEND(
@@ -1330,8 +1345,10 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
   *results = result_array.ga_data;
   *num_results = result_array.ga_len;
 
-cleanup:
+cleanup_array:
   api_free_array(completions);
+
+cleanup:
 
   if (ret == FAIL) {
     ga_clear(&result_array);

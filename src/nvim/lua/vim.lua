@@ -593,15 +593,15 @@ function vim._expand_pat(pat, env)
   end
 
   local result = vim.tbl_map(function(v)
-    return prefix_match_pat .. v
-    -- return v
+    -- return prefix_match_pat .. v
+    return v
   end, vim.tbl_filter(function(name)
     return string.find(name, match_pat) ~= nil
   end, vim.tbl_keys(final_env)))
 
   table.sort(result)
 
-  return result
+  return result, #prefix_match_pat
 end
 
 vim._expand_pat_get_parts = function(lua_string)
