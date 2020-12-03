@@ -16,7 +16,11 @@ setlocal noswapfile buftype=nofile bufhidden=hide
 setlocal nomodified readonly nomodifiable
 setlocal noexpandtab tabstop=8 softtabstop=8 shiftwidth=8
 setlocal wrap breakindent linebreak
-setlocal iskeyword+=-
+
+" Parentheses and '-' for references like `git-ls-files(1)`; '@' for systemd
+" pages; ':' for Perl and C++ pages.  Here, I intentionally omit the locale
+" specific characters matched by `@`.
+setlocal iskeyword=@-@,:,a-z,A-Z,48-57,_,.,-,(,)
 
 setlocal nonumber norelativenumber
 setlocal foldcolumn=0 colorcolumn=0 nolist nofoldenable
