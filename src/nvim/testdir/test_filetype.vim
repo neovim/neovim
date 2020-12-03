@@ -471,7 +471,6 @@ let s:filename_checks = {
     \ 'tssgm': ['file.tssgm'],
     \ 'tssop': ['file.tssop'],
     \ 'twig': ['file.twig'],
-    \ 'typescript': ['file.ts'],
     \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf'],
@@ -662,6 +661,23 @@ func Test_hook_file()
   call writefile(['not pacman'], 'Xfile.hook')
   split Xfile.hook
   call assert_notequal('dosini', &filetype)
+  bwipe!
+
+  call delete('Xfile.hook')
+  filetype off
+endfunc
+
+func Test_ts_file()
+  filetype on
+
+  call writefile(['<?xml version="1.0" encoding="utf-8"?>'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('xml', &filetype)
+  bwipe!
+
+  call writefile(['// looks like Typescript'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('typescript', &filetype)
   bwipe!
 
   call delete('Xfile.hook')
