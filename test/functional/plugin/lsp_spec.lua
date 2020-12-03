@@ -323,23 +323,61 @@ describe('LSP', function()
         test_name = "capabilities_for_client_supports_method";
         on_setup = function()
             exec_lua([=[
-              vim.lsp.handlers['textDocument/hover'] = function(err, method)
+              BUFFER = vim.api.nvim_get_current_buf()
+              lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
+              vim.lsp.callbacks['textDocument/typeDefinition'] = function(err, method)
                 vim.lsp._last_lsp_callback = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
                 vim.lsp._last_unsupported_method = method
                 return 'fake-error'
               end
-              vim.lsp.buf.hover()
+              vim.lsp.buf.type_definition()
             ]=])
         end;
         on_init = function(client)
           client.stop()
           local method = exec_lua("return vim.lsp._last_unsupported_method")
-          eq("textDocument/hover", method)
+          eq("textDocument/typeDefinition", method)
           local lsp_cb_call = exec_lua("return vim.lsp._last_lsp_callback")
           eq("fake-error", lsp_cb_call.err)
-          eq("textDocument/hover", lsp_cb_call.method)
+          eq("textDocument/typeDefinition", lsp_cb_call.method)
+          exec_lua [[
+            vim.api.nvim_command(BUFFER.."bwipeout")
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(...)
+          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+
+    it('shouldn\'t call unsupported_method when no client and trying to call an unsupported method', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "capabilities_for_client_supports_method";
+        on_setup = function()
+            exec_lua([=[
+              vim.lsp.callbacks['textDocument/typeDefinition'] = function(err, method)
+                vim.lsp._last_lsp_callback = { err = err; method = method }
+              end
+              vim.lsp._unsupported_method = function(method)
+                vim.lsp._last_unsupported_method = method
+                return 'fake-error'
+              end
+              vim.lsp.buf.type_definition()
+            ]=])
+        end;
+        on_init = function(client)
+          client.stop()
+          eq(NIL, exec_lua("return vim.lsp._last_unsupported_method"))
+          eq(NIL, exec_lua("return vim.lsp._last_lsp_callback"))
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)

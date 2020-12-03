@@ -1032,9 +1032,9 @@ function lsp.buf_request(bufnr, method, params, handler)
     end
   end)
 
-  -- if no clients support the given method, call the handler with the proper
+  -- if has client but no clients support the given method, call the callback with the proper
   -- error message.
-  if not method_supported then
+  if not tbl_isempty(all_buffer_active_clients[resolve_bufnr(bufnr)] or {}) and not method_supported then
     local unsupported_err = lsp._unsupported_method(method)
     handler = handler or lsp.handlers[method]
     if handler then
