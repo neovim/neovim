@@ -397,25 +397,6 @@ function M._get_completion_item_kind_name(completion_item_kind)
   return protocol.CompletionItemKind[completion_item_kind] or "Unknown"
 end
 
---@private
---- Get the details of the completion item
-function M.get_completion_item_resolve()
-  local bufnr = api.nvim_get_current_buf()
-  local completed_item_var = api.nvim_get_vvar('completed_item')
-  local item = completed_item_var.user_data.lsp.completion_item
-  local lnum = item.data.line
-
-  vim.lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
-    if err or not result then return end
-    if result.additionalTextEdits then
-      local edits = vim.tbl_filter(
-        function(x) return x.range.start.line ~= (lnum - 1) end,
-        result.additionalTextEdits
-      )
-      M.apply_text_edits(edits, bufnr)
-    end
-  end)
-end
 
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
@@ -462,11 +443,9 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       dup = 1,
       empty = 1,
       user_data = {
-        -- nvim = {
           lsp = {
             completion_item = completion_item
           }
-        -- }
       },
     })
   end

@@ -911,6 +911,9 @@ function lsp.buf_attach_client(bufnr, client_id)
 
     local uri = vim.uri_from_bufnr(bufnr)
     nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
+
+    -- On CompleteDone, let's try to resolve the completion entry detail
+    nvim_command(string.format("autocmd CompleteDone <buffer=%d> lua vim.lsp._resolve_completion_detail()", bufnr))
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
@@ -1132,6 +1135,26 @@ function lsp.buf_notify(bufnr, method, params)
   return resp
 end
 
+
+--@private
+--- Get the details of the completion item
+function lsp._resolve_completion_detail()
+  local bufnr = resolve_bufnr()
+  local completed_item_var = vim.api.nvim_get_vvar('completed_item')
+  local item = completed_item_var.user_data.lsp.completion_item
+  local lnum = item.data.line
+  lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
+    if err or not result then return end
+    if result.additionalTextEdits then
+      local edits = vim.tbl_filter(
+        function(x) return x.range.start.line ~= (lnum - 1) end,
+        result.additionalTextEdits
+      )
+      util.apply_text_edits(edits, bufnr)
+    end
+  end)
+end
+
 --- Implements 'omnifunc' compatible LSP completion.
 ---
 --@see |complete-functions|
@@ -1285,9 +1308,6 @@ end
 
 -- Define the LspDiagnostics signs if they're not defined already.
 require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
-
--- On CompleteDone, let's try to resolve the completion entry detail
-vim.api.nvim_command("autocmd CompleteDone <buffer> lua require'vim.lsp.util'.get_completion_item_resolve()")
 
 return lsp
 -- vim:sw=2 ts=2 et
