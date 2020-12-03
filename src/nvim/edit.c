@@ -5242,6 +5242,7 @@ static int ins_complete(int c, bool enable_pum)
     } else if (compl_curr_match->cp_next == compl_curr_match->cp_prev) {
       edit_submode_extra = (char_u *)_("The only match");
       edit_submode_highl = HLF_COUNT;
+      compl_curr_match->cp_number = 0;
     } else {
       // Update completion sequence number when needed.
       if (compl_curr_match->cp_number == -1) {
