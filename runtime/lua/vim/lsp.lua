@@ -1140,17 +1140,12 @@ end
 --- Get the details of the completion item
 function lsp._resolve_completion_detail()
   local bufnr = resolve_bufnr()
-  local completed_item_var = vim.api.nvim_get_vvar('completed_item')
+  local completed_item_var = vim.v.completed_item
   local item = completed_item_var.user_data.lsp.completion_item
-  local lnum = item.data.line
   lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
     if err or not result then return end
     if result.additionalTextEdits then
-      local edits = vim.tbl_filter(
-        function(x) return x.range.start.line ~= (lnum - 1) end,
-        result.additionalTextEdits
-      )
-      util.apply_text_edits(edits, bufnr)
+      util.apply_text_edits(result.additionalTextEdits, bufnr)
     end
   end)
 end
