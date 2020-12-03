@@ -308,15 +308,16 @@ end
 
 --- Get all diagnostics for all clients
 ---
----@return Diagnostic[]
+---@return {bufnr: Diagnostic[]}
 function M.get_all()
-  local all_diagnostics = {}
-  for _, buf_diagnostics in pairs(diagnostic_cache) do
+  local diagnostics_by_bufnr = {}
+  for bufnr, buf_diagnostics in pairs(diagnostic_cache) do
+    diagnostics_by_bufnr[bufnr] = {}
     for _, client_diagnostics in pairs(buf_diagnostics) do
-      vim.list_extend(all_diagnostics, client_diagnostics)
+      vim.list_extend(diagnostics_by_bufnr[bufnr], client_diagnostics)
     end
   end
-  return all_diagnostics
+  return diagnostics_by_bufnr
 end
 
 --- Return associated diagnostics for bufnr

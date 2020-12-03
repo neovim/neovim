@@ -1049,7 +1049,7 @@ get_all()                                       *vim.lsp.diagnostic.get_all()*
                 Get all diagnostics for all clients
 
                 Return: ~
-                    Diagnostic[]
+                    {bufnr:Diagnostic[]}
 
                                               *vim.lsp.diagnostic.get_count()*
 get_count({bufnr}, {severity}, {client_id})
