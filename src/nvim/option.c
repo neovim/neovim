@@ -7180,7 +7180,7 @@ Dictionary get_vimoption(String name, Error *err)
 {
   int opt_idx = findoption_len((const char *)name.data, name.size);
   if (opt_idx < 0) {
-    api_set_error(err, kErrorTypeValidation, "no such option %s", name.data);
+    api_set_error(err, kErrorTypeValidation, "no such option: '%s'", name.data);
     return (Dictionary)ARRAY_DICT_INIT;
   }
   return vimoption2dict(&options[opt_idx]);
@@ -7202,27 +7202,30 @@ static Dictionary vimoption2dict(vimoption_T *opt)
 
     PUT(dict, "name", STRING_OBJ(cstr_to_string(opt->fullname)));
     PUT(dict, "shortname", STRING_OBJ(cstr_to_string(opt->shortname)));
-#define PUT_IF(dict, name, condition) do if (condition) \
-                     { PUT(dict, name, BOOLEAN_OBJ(true)); } while (0)
-    PUT_IF(dict, "win", opt->indir & PV_WIN);
-    PUT_IF(dict, "buf", opt->indir & PV_BUF);
+
+#define PUT_BOOL(dict, name, condition) \
+  PUT(dict, name, BOOLEAN_OBJ(condition));
+
+    PUT_BOOL(dict, "win", opt->indir & PV_WIN);
+    PUT_BOOL(dict, "buf", opt->indir & PV_BUF);
+
     // welcome to the jungle
-    PUT_IF(dict, "global_local", opt->indir & PV_BOTH);
-    PUT_IF(dict, "commalist", opt->flags & P_COMMA);
-    PUT_IF(dict, "flaglist", opt->flags & P_FLAGLIST);
+    PUT_BOOL(dict, "global_local", opt->indir & PV_BOTH);
+    PUT_BOOL(dict, "commalist", opt->flags & P_COMMA);
+    PUT_BOOL(dict, "flaglist", opt->flags & P_FLAGLIST);
 
-    PUT_IF(dict, "was_set", opt->flags & P_WAS_SET);
+    PUT_BOOL(dict, "was_set", opt->flags & P_WAS_SET);
+#undef PUT_BOOL
 
-    PUT(dict, "flag",  INTEGER_OBJ(opt->flags));  // TODO(bfredl): lol tj
     PUT(dict, "last_set_sid", INTEGER_OBJ(opt->last_set.script_ctx.sc_sid));
-    if (opt->last_set.script_ctx.sc_lnum > 0) {
-      PUT(dict, "last_set_linenr",
-          INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum));
-    }
-    if (opt->last_set.channel_id > 0) {
-      PUT(dict, "last_set_lchan",
-          INTEGER_OBJ((int64_t)opt->last_set.channel_id));
-    }
+    PUT(dict, "last_set_linenr",
+        opt->last_set.script_ctx.sc_lnum > 0
+        ? INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum)
+        : INTEGER_OBJ(-1));
+    PUT(dict, "last_set_lchan",
+        opt->last_set.channel_id > 0
+        ? INTEGER_OBJ((int64_t)opt->last_set.channel_id)
+        : INTEGER_OBJ(-1));
 
     const char *type;
     Object def;

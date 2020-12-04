@@ -933,6 +933,39 @@ nvim_get_option({name})                                    *nvim_get_option()*
                 Return: ~
                     Option value (global)
 
+nvim_get_option_info({name})                          *nvim_get_option_info()*
+                Gets the option information for one option
+
+                Resulting dictionary has keys:
+                • name (string): Name of the option
+                • shortname (shortname): Shortened name of the option
+                • type (string): Name of the type of option
+                • default (Any): The default value for the option
+
+                Script-Related Keys:
+                • was_set (bool): Whether the option was set.
+                • last_set_sid (int): Last set script id
+                • last_set_linenr (int): Last set script id, -1 if invalid.
+                • last_set_lchan (int): Last set script id, -1 if invalid.
+
+                Flag-Related Keys:
+                • win (bool): Window-local option
+                • buf (bool): Buffer-local option
+                • global_local (bool): Global or Buffer local option
+                • flaglist (bool): List of single char flags
+
+                Parameters: ~
+                    {name}  Option name
+
+                Return: ~
+                    Option Information
+
+nvim_get_options_info()                              *nvim_get_options_info()*
+                Gets the option information for all options.
+
+                Return: ~
+                    Map<option_name, option_info>
+
 nvim_get_proc({pid})                                         *nvim_get_proc()*
                 Gets info describing process `pid` .
 
@@ -950,10 +983,15 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
 
                 'name' can contain wildcards. For example
                 nvim_get_runtime_file("colors/*.vim", true) will return all
-                color scheme files.
+                color scheme files. Always use forward slashes (/) in the
+                search pattern for subdirectories regardless of platform.
 
                 It is not an error to not find any files. An empty array is
                 returned then.
+
+                To find a directory, `name` must end with a forward slash,
+                like "rplugin/python/". Without the slash it would instead
+                look for an ordinary file called "rplugin/python".
 
                 Attributes: ~
                     {fast}
@@ -1535,7 +1573,9 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                     {ns_id}  number of namespace for this highlight
                     {name}   highlight group name, like ErrorMsg
                     {val}    highlight definiton map, like
-                             |nvim_get_hl_by_name|.
+                             |nvim_get_hl_by_name|. in addition the following
+                             keys are also recognized: `default` : don't
+                             override existing definition, like `hi default`
 
 nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
                 Set active namespace for highlights.

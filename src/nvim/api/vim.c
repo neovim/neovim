@@ -970,12 +970,38 @@ Object nvim_get_option(String name, Error *err)
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
 
+/// Gets the option information for all options.
+/// @return Map<option_name, option_info>
 Dictionary nvim_get_options_info(Error *err)
   FUNC_API_SINCE(7)
 {
   return get_all_vimoptions();
 }
 
+/// Gets the option information for one option
+///
+/// Resulting dictionary has keys:
+///     - name (string): Name of the option
+///     - shortname (shortname): Shortened name of the option
+///     - type (string): Name of the type of option
+///     - default (Any): The default value for the option
+///
+///     Script-Related Keys:
+///         - was_set (bool): Whether the option was set.
+///         - last_set_sid (int): Last set script id
+///         - last_set_linenr (int): Last set script id, -1 if invalid.
+///         - last_set_lchan (int): Last set script id, -1 if invalid.
+///
+///     Flag-Related Keys:
+///         - win (bool): Window-local option
+///         - buf (bool): Buffer-local option
+///         - global_local (bool): Global or Buffer local option
+///         - flaglist (bool): List of single char flags
+///
+///
+/// @param          name Option name
+/// @param[out] err Error details, if any
+/// @return         Option Information
 Dictionary nvim_get_option_info(String name, Error *err)
   FUNC_API_SINCE(7)
 {
