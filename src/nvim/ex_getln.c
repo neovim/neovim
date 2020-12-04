@@ -3961,6 +3961,7 @@ nextwild (
     }
   }
 
+
   // TODO(tjdevries) Figure out what the heck this if statement does...
   if (p2 != NULL && !got_int) {
     difflen = (int)STRLEN(p2) - (int)xp->xp_pattern_len;

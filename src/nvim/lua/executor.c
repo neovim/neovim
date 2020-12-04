@@ -1315,16 +1315,10 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
     goto cleanup_array;
   }
 
-  /* xp->xp_context = EXPAND_LUA; */
-
-  /* ILOG("Prefix Len: %lu", prefix_len); */
-  /* if (prefix_len) { */
-  /*   xp->xp_pattern = pat + prefix_len; */
-  /*   xp->xp_pattern_len = STRLEN(pat) - (unsigned long)prefix_len; */
-  /* } */
-
-  /* xp->xp_pattern = pat + 4; */
-  /* xp->xp_pattern_len = STRLEN(pat) - 4; */
+  xp->xp_pattern = xp->xp_pattern + prefix_len;
+  xp->xp_pattern_len = xp->xp_pattern_len - (unsigned long)prefix_len;
+  ILOG("New xp_pattern:     %s", xp->xp_pattern);
+  ILOG("New xp_pattern_len: %lu", xp->xp_pattern_len);
 
   garray_T result_array;
   ga_init(&result_array, (int)sizeof(char *), 80);
