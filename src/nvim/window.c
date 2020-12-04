@@ -3787,6 +3787,7 @@ void free_tabpage(tabpage_T *tp)
 /// @return Was the new tabpage created successfully? FAIL or OK.
 int win_new_tabpage(int after, char_u *filename)
 {
+  tabpage_T   *old_curtab = curtab;
   tabpage_T   *tp = curtab;
   tabpage_T   *newtp;
   int n;
@@ -3830,9 +3831,9 @@ int win_new_tabpage(int after, char_u *filename)
 
     redraw_all_later(NOT_VALID);
 
-    tabpage_check_windows(tp);
+    tabpage_check_windows(old_curtab);
 
-    lastused_tabpage = tp;
+    lastused_tabpage = old_curtab;
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
