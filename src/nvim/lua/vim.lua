@@ -123,7 +123,7 @@ function vim._load_package(name)
     local path = "lua/"..trail:gsub('?',basename)
     local found = vim.api.nvim_get_runtime_file(path, false)
     if #found > 0 then
-      return package.loadlib(found[1])
+      return package.loadlib(found[1], "luaopen_" .. name)
     end
   end
   return nil
