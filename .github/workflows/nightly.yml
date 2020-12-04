@@ -1,0 +1,128 @@
+name: Nightly release
+on:
+  schedule:
+    - cron: '5 5 * * *'
+
+jobs:
+  linux:
+    runs-on: ubuntu-20.04
+    outputs:
+      version: ${{ steps.build.outputs.version }}
+      release: ${{ steps.build.outputs.release }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+      - name: Build nightly
+        id: build
+        run: |
+          make CMAKE_BUILD_TYPE=RelWithDebinfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
+          printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
+          printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1 | sed 's/-.*//')"
+          make DESTDIR="$GITHUB_WORKSPACE/build/nightly/nvim-linux64" install
+          cd "$GITHUB_WORKSPACE/build/nightly"
+          tar cfz nvim-linux64.tar.gz nvim-linux64
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nvim-linux64.tar.gz
+          path: build/nightly/nvim-linux64.tar.gz
+          retention-days: 1
+
+  macOS:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install brew packages
+        run: |
+          brew update >/dev/null
+          brew install automake ninja
+      - name: Build nightly
+        run: |
+          make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
+          make DESTDIR="$GITHUB_WORKSPACE/build/nightly/nvim-osx64" install
+      - name: Create package
+        run: |
+          cd "$GITHUB_WORKSPACE/build/nightly"
+          mkdir -p bundle/nvim/libs
+          mkdir -p bundle/nvim/bin
+          cp nvim-osx64/bin/nvim bundle/nvim/bin/
+          libs=($(otool -L nvim-osx64/bin/nvim | sed 1d | sed -E -e 's|^[[:space:]]*||' -e 's| .*||'))
+          echo "libs:"
+          for lib in "${libs[@]}"; do
+            if echo "$lib" | grep -q -E 'libSystem|CoreFoundation' 2>/dev/null; then
+              echo "  [skipped] $lib"
+            else
+              echo "  $lib"
+              relname="libs/${lib##*/}"
+              cp -L "$lib" "bundle/nvim/$relname"
+              install_name_tool -change "$lib" "@executable_path/../$relname" bundle/nvim/bin/nvim
+            fi
+          done
+          tar cjSf nvim-macos.tar.bz2 -C bundle nvim
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nvim-macos.tar.bz2
+          path: build/nightly/nvim-macos.tar.bz2
+          retention-days: 1
+
+  publish:
+    needs: [linux, macOS]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/download-artifact@v2
+      - uses: actions/create-release@v1
+        id: create_release
+        with:
+          tag_name: nightly
+          release_name: NVIM ${{ needs.linux.outputs.release }}
+          body: |
+            Nvim development (prerelease) build.
+            ```
+            ${{ needs.linux.outputs.version }}
+            ```
+
+            ## Install
+
+            ### Windows
+
+            1. Extract **nvim-win64.zip** (or **nvim-win32.zip**)
+            2. Run `nvim-qt.exe`
+
+            ### macOS
+
+            1. Download **nvim-macos.tar.gz**
+            2. Extract: `tar xzvf nvim-macos.tar.gz`
+            3. Run `./nvim-osx64/bin/nvim`
+
+            ### Linux (x64)
+
+            1. Download **nvim.appimage**
+            2. Run `chmod u+x nvim.appimage && ./nvim.appimage`
+               - If your system does not have FUSE you can [extract the appimage](https://github.com/AppImage/AppImageKit/wiki/FUSE#type-2-appimage):
+                 ```
+                 ./nvim.appimage --appimage-extract
+                 ./squashfs-root/usr/bin/nvim
+                 ```
+
+            ### Other
+
+            - Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+          prerelease: true
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nvim-macos.tar.bz2
+          asset_name: nvim-macos.tar.bz2
+          asset_content_type: application/x-bzip2
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nvim-linux64.tar.gz
+          asset_name: nvim-linux64.tar.gz
+          asset_content_type: application/gzip
