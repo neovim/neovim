@@ -372,7 +372,6 @@ EXTERN long p_cwh;              // 'cmdwinheight'
 EXTERN long p_ch;               // 'cmdheight'
 EXTERN long p_columns;          // 'columns'
 EXTERN int p_confirm;           // 'confirm'
-EXTERN int p_cp;                // 'compatible'
 EXTERN char_u   *p_cot;         // 'completeopt'
 # ifdef BACKSLASH_IN_FILENAME
 EXTERN char_u   *p_csl;         // 'completeslash'
