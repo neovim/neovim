@@ -22,6 +22,10 @@ describe('treesitter API', function()
     matches("Error executing lua: Failed to load parser: uv_dlopen: .+",
        pcall_err(exec_lua, "parser = vim.treesitter.require_language('borklang', 'borkbork.so')"))
 
+    -- Should not throw an error when silent
+    eq(false, exec_lua("return vim.treesitter.require_language('borklang', nil, true)"))
+    eq(false, exec_lua("return vim.treesitter.require_language('borklang', 'borkbork.so', true)"))
+
     eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
   end)
