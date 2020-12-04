@@ -312,6 +312,24 @@ func Test_completefunc_args()
   delfunc CompleteFunc
 endfunc
 
+func CompleteTest(findstart, query)
+  if a:findstart
+    return col('.')
+  endif
+  return ['matched']
+endfunc
+
+func Test_completefunc_info()
+  new
+  set completeopt=menuone
+  set completefunc=CompleteTest
+  call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  bwipe!
+  set completeopt&
+  set completefunc&
+endfunc
+
 " Check that when using feedkeys() typeahead does not interrupt searching for
 " completions.
 func Test_compl_feedkeys()

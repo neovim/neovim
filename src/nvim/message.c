@@ -1711,8 +1711,11 @@ void msg_prt_line(char_u *s, int list)
     } else if ((l = utfc_ptr2len(s)) > 1) {
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
-      if (curwin->w_p_lcs_chars.nbsp != NUL && list
-          && (utf_ptr2char(s) == 160 || utf_ptr2char(s) == 0x202f)) {
+      if (l >= MB_MAXBYTES) {
+        xstrlcpy(buf, "¿", sizeof(buf));
+      } else if (curwin->w_p_lcs_chars.nbsp != NUL && list
+                 && (utf_ptr2char(s) == 160
+                     || utf_ptr2char(s) == 0x202f)) {
         utf_char2bytes(curwin->w_p_lcs_chars.nbsp, (char_u *)buf);
         buf[utfc_ptr2len((char_u *)buf)] = NUL;
       } else {

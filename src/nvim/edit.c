@@ -196,8 +196,8 @@ static int ctrl_x_mode = CTRL_X_NORMAL;
 
 static int compl_matches = 0;
 static char_u     *compl_pattern = NULL;
-static int compl_direction = FORWARD;
-static int compl_shows_dir = FORWARD;
+static Direction compl_direction = FORWARD;
+static Direction compl_shows_dir = FORWARD;
 static int compl_pending = 0;               // > 1 for postponed CTRL-N
 static pos_T compl_startpos;
 static colnr_T compl_col = 0;               /* column where the text starts
@@ -2156,7 +2156,7 @@ static bool ins_compl_accept_char(int c)
 ///
 /// @param[in]  cont_s_ipos  next ^X<> will set initial_pos
 int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
-                            int dir, bool cont_s_ipos)
+                            Direction dir, bool cont_s_ipos)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *str = str_arg;
@@ -2308,7 +2308,7 @@ static int ins_compl_add(char_u *const str, int len,
   FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T     *match;
-  int dir = (cdir == kDirectionNotSet ? compl_direction : cdir);
+  const Direction dir = (cdir == kDirectionNotSet ? compl_direction : cdir);
   int flags = flags_arg;
 
   os_breakcheck();
@@ -2511,7 +2511,7 @@ static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
   FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
-  int dir = compl_direction;
+  Direction dir = compl_direction;
 
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
     if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
@@ -2864,7 +2864,7 @@ ins_compl_dictionaries (
   char_u      **files;
   int count;
   int save_p_scs;
-  int dir = compl_direction;
+  Direction dir = compl_direction;
 
   if (*dict == NUL) {
     /* When 'dictionary' is empty and spell checking is enabled use
@@ -2945,7 +2945,10 @@ theend:
   xfree(buf);
 }
 
-static void ins_compl_files(int count, char_u **files, int thesaurus, int flags, regmatch_T *regmatch, char_u *buf, int *dir)
+static void ins_compl_files(int count, char_u **files, int thesaurus,
+                            int flags, regmatch_T *regmatch, char_u *buf,
+                            Direction *dir)
+  FUNC_ATTR_NONNULL_ARG(2, 7)
 {
   char_u      *ptr;
   int i;
@@ -3137,6 +3140,56 @@ bool ins_compl_active(void)
   return compl_started;
 }
 
+static void ins_compl_update_sequence_numbers(void)
+{
+  int number = 0;
+  compl_T *match;
+
+  if (compl_direction == FORWARD) {
+    // search backwards for the first valid (!= -1) number.
+    // This should normally succeed already at the first loop
+    // cycle, so it's fast!
+    for (match = compl_curr_match->cp_prev;
+         match != NULL && match != compl_first_match;
+         match = match->cp_prev) {
+      if (match->cp_number != -1) {
+        number = match->cp_number;
+        break;
+      }
+    }
+    if (match != NULL) {
+      // go up and assign all numbers which are not assigned yet
+      for (match = match->cp_next;
+           match != NULL && match->cp_number == -1;
+           match = match->cp_next) {
+        match->cp_number = ++number;
+      }
+    }
+  } else {  // BACKWARD
+    assert(compl_direction == BACKWARD);
+    // search forwards (upwards) for the first valid (!= -1)
+    // number.  This should normally succeed already at the
+    // first loop cycle, so it's fast!
+    for (match = compl_curr_match->cp_next;
+         match != NULL && match != compl_first_match;
+         match = match->cp_next) {
+      if (match->cp_number != -1) {
+        number = match->cp_number;
+        break;
+      }
+    }
+    if (match != NULL) {
+      // go down and assign all numbers which are not
+      // assigned yet
+      for (match = match->cp_prev;
+           match && match->cp_number == -1;
+           match = match->cp_prev) {
+        match->cp_number = ++number;
+      }
+    }
+  }
+}
+
 // Get complete information
 void get_complete_info(list_T *what_list, dict_T *retdict)
 {
@@ -3214,6 +3267,9 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
   }
 
   if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
+    if (compl_curr_match != NULL && compl_curr_match->cp_number == -1) {
+      ins_compl_update_sequence_numbers();
+    }
     ret = tv_dict_add_nr(retdict, S_LEN("selected"),
                          (compl_curr_match != NULL)
                          ? compl_curr_match->cp_number - 1 : -1);
@@ -3865,7 +3921,7 @@ theend:
  */
 static void ins_compl_add_list(list_T *const list)
 {
-  int dir = compl_direction;
+  Direction dir = compl_direction;
 
   // Go through the List with matches and add each of them.
   TV_LIST_ITER(list, li, {
@@ -5242,52 +5298,11 @@ static int ins_complete(int c, bool enable_pum)
     } else if (compl_curr_match->cp_next == compl_curr_match->cp_prev) {
       edit_submode_extra = (char_u *)_("The only match");
       edit_submode_highl = HLF_COUNT;
+      compl_curr_match->cp_number = 1;
     } else {
       // Update completion sequence number when needed.
       if (compl_curr_match->cp_number == -1) {
-        int number = 0;
-        compl_T         *match;
-
-        if (compl_direction == FORWARD) {
-          /* search backwards for the first valid (!= -1) number.
-           * This should normally succeed already at the first loop
-           * cycle, so it's fast! */
-          for (match = compl_curr_match->cp_prev; match != NULL
-               && match != compl_first_match;
-               match = match->cp_prev)
-            if (match->cp_number != -1) {
-              number = match->cp_number;
-              break;
-            }
-          if (match != NULL)
-            /* go up and assign all numbers which are not assigned
-             * yet */
-            for (match = match->cp_next;
-                 match != NULL && match->cp_number == -1;
-                 match = match->cp_next)
-              match->cp_number = ++number;
-        } else {  // BACKWARD
-          // search forwards (upwards) for the first valid (!= -1)
-          // number.  This should normally succeed already at the
-          // first loop cycle, so it's fast!
-          for (match = compl_curr_match->cp_next;
-               match != NULL && match != compl_first_match;
-               match = match->cp_next) {
-            if (match->cp_number != -1) {
-              number = match->cp_number;
-              break;
-            }
-          }
-          if (match != NULL) {
-            // go down and assign all numbers which are not
-            // assigned yet
-            for (match = match->cp_prev;
-                 match && match->cp_number == -1;
-                 match = match->cp_prev) {
-              match->cp_number = ++number;
-            }
-          }
-        }
+        ins_compl_update_sequence_numbers();
       }
 
       /* The match should always have a sequence number now, this is

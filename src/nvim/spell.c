@@ -79,7 +79,6 @@
 /* for offsetof() */
 #include <stddef.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/spell.h"
 #include "nvim/buffer.h"
@@ -6653,7 +6652,7 @@ void
 spell_dump_compl (
     char_u *pat,           // leading part of the word
     int ic,                     // ignore case
-    int *dir,           // direction for adding matches
+    Direction *dir,        // direction for adding matches
     int dumpflags_arg              // DUMPFLAG_*
 )
 {
@@ -6820,7 +6819,9 @@ spell_dump_compl (
 
 // Dumps one word: apply case modifications and append a line to the buffer.
 // When "lnum" is zero add insert mode completion.
-static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int dumpflags, int wordflags, linenr_T lnum)
+static void dump_word(slang_T *slang, char_u *word, char_u *pat,
+                      Direction *dir, int dumpflags, int wordflags,
+                      linenr_T lnum)
 {
   bool keepcap = false;
   char_u      *p;
@@ -6906,7 +6907,7 @@ dump_prefixes (
     slang_T *slang,
     char_u *word,          // case-folded word
     char_u *pat,
-    int *dir,
+    Direction *dir,
     int dumpflags,
     int flags,                  // flags with prefix ID
     linenr_T startlnum
