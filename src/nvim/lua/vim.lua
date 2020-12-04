@@ -593,7 +593,10 @@ function vim._expand_pat(pat, env)
   end
 
   local result = vim.tbl_map(function(v)
+    -- Return the whole strinmg
     -- return prefix_match_pat .. v
+
+    -- Return the new matches
     return v
   end, vim.tbl_filter(function(name)
     return string.find(name, match_pat) ~= nil
