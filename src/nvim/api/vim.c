@@ -971,8 +971,12 @@ Object nvim_get_option(String name, Error *err)
 }
 
 /// Gets the option information for all options.
-/// @return Map<option_name, option_info>
-Dictionary nvim_get_options_info(Error *err)
+///
+/// The dictionary has the full option names as keys and option metadata
+/// dictionaries as detailed at |nvim_get_option_info|.
+///
+/// @return dictionary of all options
+Dictionary nvim_get_all_options_info(Error *err)
   FUNC_API_SINCE(7)
 {
   return get_all_vimoptions();
@@ -981,22 +985,21 @@ Dictionary nvim_get_options_info(Error *err)
 /// Gets the option information for one option
 ///
 /// Resulting dictionary has keys:
-///     - name (string): Name of the option
-///     - shortname (shortname): Shortened name of the option
-///     - type (string): Name of the type of option
-///     - default (Any): The default value for the option
+///     - name: Name of the option (like 'filetype')
+///     - shortname: Shortened name of the option (like 'ft')
+///     - type: type of option ("string", "integer" or "boolean")
+///     - default: The default value for the option
+///     - was_set: Whether the option was set.
 ///
-///     Script-Related Keys:
-///         - was_set (bool): Whether the option was set.
-///         - last_set_sid (int): Last set script id
-///         - last_set_linenr (int): Last set script id, -1 if invalid.
-///         - last_set_lchan (int): Last set script id, -1 if invalid.
+///     - last_set_sid: Last set script id (if any)
+///     - last_set_linenr: line number where option was set
+///     - last_set_chan: Channel where option was set (0 for local)
 ///
-///     Flag-Related Keys:
-///         - win (bool): Window-local option
-///         - buf (bool): Buffer-local option
-///         - global_local (bool): Global or Buffer local option
-///         - flaglist (bool): List of single char flags
+///     - scope: one of "global", "win", or "buf"
+///     - global_local: whether win or buf option has a global value
+///
+///     - commalist: List of comma separated values
+///     - flaglist: List of single char flags
 ///
 ///
 /// @param          name Option name

@@ -1922,56 +1922,78 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_get_options_info', function()
+  describe('nvim_get_all_options_info', function()
     it('should have key value pairs of option names', function()
-      local options_info = meths.get_options_info()
+      local options_info = meths.get_all_options_info()
       neq(nil, options_info.listchars)
       neq(nil, options_info.tabstop)
+
+      eq(meths.get_option_info'winhighlight', options_info.winhighlight)
     end)
   end)
 
   describe('nvim_get_option_info', function()
     it('should error for unknown options', function()
-      eq("no such option: 'bogus'",
-        pcall_err(meths.get_option_info, 'bogus'))
+      eq("no such option: 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
     end)
 
     it('should return the same options for short and long name', function()
-      eq(
-        meths.get_option_info('winhl'),
-        meths.get_option_info('winhighlight')
-      )
+      eq(meths.get_option_info'winhl', meths.get_option_info'winhighlight')
     end)
 
     it('should have information about window options', function()
-      local winhl_info = meths.get_option_info('winhl')
-      eq(true, winhl_info.win)
-      eq(false, winhl_info.buf)
-      eq('string', winhl_info.type)
-      eq('winhighlight', winhl_info.name)
-      eq('winhl', winhl_info.shortname)
-      eq('', winhl_info.default)
+      eq({
+        commalist = false;
+        default = "";
+        flaglist = false;
+        global_local = false;
+        last_set_chan = 0;
+        last_set_linenr = 0;
+        last_set_sid = 0;
+        name = "winhighlight";
+        scope = "win";
+        shortname = "winhl";
+        type = "string";
+        was_set = false;
+      }, meths.get_option_info'winhl')
     end)
 
     it('should have information about buffer options', function()
-      local filetype_info = meths.get_option_info('filetype')
-      eq(false, filetype_info.win)
-      eq(true, filetype_info.buf)
-      eq('string', filetype_info.type)
-      eq('filetype', filetype_info.name)
-      eq('ft', filetype_info.shortname)
-      eq('', filetype_info.default)
+      eq({
+        commalist = false,
+        default = "",
+        flaglist = false,
+        global_local = false,
+        last_set_chan = 0,
+        last_set_linenr = 0,
+        last_set_sid = 0,
+        name = "filetype",
+        scope = "buf",
+        shortname = "ft",
+        type = "string",
+        was_set = false
+      }, meths.get_option_info'filetype')
     end)
 
     it('should have information about global options', function()
-      local showcmd_info = meths.get_option_info('showcmd')
-      eq(false, showcmd_info.win)
-      eq(false, showcmd_info.buf)
-      eq(false, showcmd_info.global_local)
-      eq('boolean', showcmd_info.type)
-      eq('showcmd', showcmd_info.name)
-      eq('sc', showcmd_info.shortname)
-      eq(true, showcmd_info.default)
+      -- precondition: the option was changed from its default
+      -- in test setup.
+      eq(false, meths.get_option'showcmd')
+
+      eq({
+        commalist = false,
+        default = true,
+        flaglist = false,
+        global_local = false,
+        last_set_chan = 0,
+        last_set_linenr = 0,
+        last_set_sid = -2,
+        name = "showcmd",
+        scope = "global",
+        shortname = "sc",
+        type = "boolean",
+        was_set = true
+      }, meths.get_option_info'showcmd')
     end)
   end)
 end)

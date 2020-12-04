@@ -7200,32 +7200,30 @@ static Dictionary vimoption2dict(vimoption_T *opt)
 {
     Dictionary dict = ARRAY_DICT_INIT;
 
-    PUT(dict, "name", STRING_OBJ(cstr_to_string(opt->fullname)));
-    PUT(dict, "shortname", STRING_OBJ(cstr_to_string(opt->shortname)));
+    PUT(dict, "name", CSTR_TO_OBJ(opt->fullname));
+    PUT(dict, "shortname", CSTR_TO_OBJ(opt->shortname));
 
-#define PUT_BOOL(dict, name, condition) \
-  PUT(dict, name, BOOLEAN_OBJ(condition));
+    const char *scope;
+    if (opt->indir & PV_BUF) {
+      scope = "buf";
+    } else if (opt->indir & PV_WIN) {
+      scope = "win";
+    } else {
+      scope = "global";
+    }
 
-    PUT_BOOL(dict, "win", opt->indir & PV_WIN);
-    PUT_BOOL(dict, "buf", opt->indir & PV_BUF);
+    PUT(dict, "scope", CSTR_TO_OBJ(scope));
 
     // welcome to the jungle
-    PUT_BOOL(dict, "global_local", opt->indir & PV_BOTH);
-    PUT_BOOL(dict, "commalist", opt->flags & P_COMMA);
-    PUT_BOOL(dict, "flaglist", opt->flags & P_FLAGLIST);
+    PUT(dict, "global_local", BOOL(opt->indir & PV_BOTH));
+    PUT(dict, "commalist", BOOL(opt->flags & P_COMMA));
+    PUT(dict, "flaglist", BOOL(opt->flags & P_FLAGLIST));
 
-    PUT_BOOL(dict, "was_set", opt->flags & P_WAS_SET);
-#undef PUT_BOOL
+    PUT(dict, "was_set", BOOL(opt->flags & P_WAS_SET));
 
     PUT(dict, "last_set_sid", INTEGER_OBJ(opt->last_set.script_ctx.sc_sid));
-    PUT(dict, "last_set_linenr",
-        opt->last_set.script_ctx.sc_lnum > 0
-        ? INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum)
-        : INTEGER_OBJ(-1));
-    PUT(dict, "last_set_lchan",
-        opt->last_set.channel_id > 0
-        ? INTEGER_OBJ((int64_t)opt->last_set.channel_id)
-        : INTEGER_OBJ(-1));
+    PUT(dict, "last_set_linenr", INTEGER_OBJ(opt->last_set.script_ctx.sc_lnum));
+    PUT(dict, "last_set_chan", INTEGER_OBJ((int64_t)opt->last_set.channel_id));
 
     const char *type;
     Object def;
@@ -7234,17 +7232,17 @@ static Dictionary vimoption2dict(vimoption_T *opt)
                                    ? VI_DEFAULT : VIM_DEFAULT];
     if (opt->flags & P_STRING) {
       type = "string";
-      def = STRING_OBJ(cstr_to_string(def_val ? (char *)def_val : ""));
+      def = CSTR_TO_OBJ(def_val ? (char *)def_val : "");
     } else if (opt->flags & P_NUM) {
-      type = "string";
+      type = "number";
       def = INTEGER_OBJ((Integer)(intptr_t)def_val);
     } else if (opt->flags & P_BOOL) {
       type = "boolean";
-      def = BOOLEAN_OBJ((intptr_t)def_val);
+      def = BOOL((intptr_t)def_val);
     } else {
       type = ""; def = NIL;
     }
-    PUT(dict, "type", STRING_OBJ(cstr_to_string(type)));
+    PUT(dict, "type", CSTR_TO_OBJ(type));
     PUT(dict, "default", def);
 
     return dict;
