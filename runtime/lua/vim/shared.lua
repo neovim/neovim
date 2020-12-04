@@ -158,6 +158,19 @@ function vim.tbl_map(func, t)
   return rettab
 end
 
+--- Reduce a table...
+--- hmmm... might want  to write this different
+function vim.tbl_reduce(acc, func, t)
+  for _, v in pairs(t) do
+    local tmp = func(acc, v)
+    if tmp ~= nil then
+      acc = tmp
+    end
+  end
+
+  return acc
+end
+
 --- Filter a table using a predicate function
 ---
 --@param func function or callable table

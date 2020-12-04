@@ -984,7 +984,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 /// Resulting dictionary has keys:
 ///     - name: Name of the option (like 'filetype')
 ///     - shortname: Shortened name of the option (like 'ft')
-///     - type: type of option ("string", "integer" or "boolean")
+///     - type: type of option ("string", "number" or "boolean")
 ///     - default: The default value for the option
 ///     - was_set: Whether the option was set.
 ///
