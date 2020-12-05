@@ -1712,7 +1712,7 @@ void msg_prt_line(char_u *s, int list)
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
       if (l >= MB_MAXBYTES) {
-        xstrlcpy(buf, "¿", sizeof(buf));
+        xstrlcpy(buf, "?", sizeof(buf));
       } else if (curwin->w_p_lcs_chars.nbsp != NUL && list
                  && (utf_ptr2char(s) == 160
                      || utf_ptr2char(s) == 0x202f)) {
