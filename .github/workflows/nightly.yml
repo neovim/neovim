@@ -8,6 +8,9 @@ on:
         description: 'Tag name for release'
         required: false
         default: nightly
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
 
 jobs:
   linux:
@@ -105,6 +108,10 @@ jobs:
         run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
       - if: github.event_name == 'scheduled'
         run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
+      - if: github.event_name == 'push'
+        run: |
+          TAG_NAME=${{ github.ref }}
+          echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
       - if: env.TAG_NAME == 'nightly'
         run: echo 'SUBJECT=Nvim development (prerelease) build' >> $GITHUB_ENV
       - if: env.TAG_NAME != 'nightly'
