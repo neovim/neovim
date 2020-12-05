@@ -3788,7 +3788,6 @@ void free_tabpage(tabpage_T *tp)
 int win_new_tabpage(int after, char_u *filename)
 {
   tabpage_T   *old_curtab = curtab;
-  tabpage_T   *tp = curtab;
   tabpage_T   *newtp;
   int n;
 
@@ -3800,18 +3799,20 @@ int win_new_tabpage(int after, char_u *filename)
     return FAIL;
   }
 
-  newtp->tp_localdir = tp->tp_localdir ? vim_strsave(tp->tp_localdir) : NULL;
+  newtp->tp_localdir = old_curtab->tp_localdir ? vim_strsave(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
 
   /* Create a new empty window. */
-  if (win_alloc_firstwin(tp->tp_curwin) == OK) {
+  if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
     /* Make the new Tab page the new topframe. */
     if (after == 1) {
       /* New tab page becomes the first one. */
       newtp->tp_next = first_tabpage;
       first_tabpage = newtp;
     } else {
+      tabpage_T   *tp = old_curtab;
+
       if (after > 0) {
         /* Put new tab page before tab page "after". */
         n = 2;
