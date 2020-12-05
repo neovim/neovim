@@ -26,7 +26,7 @@ jobs:
           tar cfz nvim-linux64.tar.gz nvim-linux64
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim-linux64.tar.gz
+          name: nvim-linux64
           path: build/nightly/nvim-linux64.tar.gz
           retention-days: 1
 
@@ -44,12 +44,12 @@ jobs:
           make appimage-nightly
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim.appimage
+          name: appimage
           path: build/bin/nvim.appimage
           retention-days: 1
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim.appimage.zsync
+          name: appimage
           path: build/bin/nvim.appimage.zsync
           retention-days: 1
 
@@ -86,7 +86,7 @@ jobs:
           tar cjSf nvim-macos.tar.bz2 -C bundle nvim
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim-macos.tar.bz2
+          name: nvim-macos
           path: build/nightly/nvim-macos.tar.bz2
           retention-days: 1
 
@@ -95,11 +95,20 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
-      - uses: actions/create-release@v1
-        id: create_release
+      - uses: meeDamian/github-release@2.0
         with:
-          tag_name: nightly
-          release_name: NVIM ${{ needs.linux.outputs.release }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: nightly
+          name: ${{ needs.linux.outputs.release }}
+          prerelease: true
+          commitish: ${{ github.sha }}
+          gzip: false
+          allow_override: true
+          files: |
+            nvim-macos.tar.bz2:./nvim-macos/nvim-macos.tar.bz2
+            nvim-linux64.tar.gz:./nvim-linux64/nvim-linux64.tar.gz
+            nvim.appimage:./appimage/nvim.appimage
+            nvim.appimage.zsync:./appimage/nvim.appimage.zsync
           body: |
             Nvim development (prerelease) build.
             ```
@@ -132,36 +141,3 @@ jobs:
             ### Other
 
             - Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
-          prerelease: true
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim-macos.tar.bz2
-          asset_name: nvim-macos.tar.bz2
-          asset_content_type: application/x-bzip2
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim-linux64.tar.gz
-          asset_name: nvim-linux64.tar.gz
-          asset_content_type: application/gzip
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim.appimage
-          asset_name: nvim.appimage
-          asset_content_type: application/x-executable
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim.appimage.zsync
-          asset_name: nvim.appimage.zsync
-          asset_content_type: application/octet-stream
