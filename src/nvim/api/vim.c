@@ -15,6 +15,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/window.h"
+#include "nvim/api/deprecated.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -479,15 +480,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-/// @deprecated
-/// @see nvim_exec
-String nvim_command_output(String command, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(7)
-{
-  return nvim_exec(command, true, err);
-}
-
 /// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
@@ -532,16 +524,6 @@ Object nvim_eval(String expr, Error *err)
   });
 
   return rv;
-}
-
-/// @deprecated Use nvim_exec_lua() instead.
-/// @see nvim_exec_lua
-Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3)
-  FUNC_API_DEPRECATED_SINCE(7)
-  FUNC_API_REMOTE_ONLY
-{
-  return nlua_exec(code, args, err);
 }
 
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
@@ -918,23 +900,6 @@ void nvim_del_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
   dict_set_var(&globvardict, name, NIL, true, false, err);
-}
-
-/// @deprecated
-/// @see nvim_set_var
-/// @warning May return nil if there was no previous value
-///          OR if previous value was `v:null`.
-/// @return Old value or nil if there was no previous value.
-Object vim_set_var(String name, Object value, Error *err)
-{
-  return dict_set_var(&globvardict, name, value, false, true, err);
-}
-
-/// @deprecated
-/// @see nvim_del_var
-Object vim_del_var(String name, Error *err)
-{
-  return dict_set_var(&globvardict, name, NIL, true, true, err);
 }
 
 /// Gets a v: variable.
