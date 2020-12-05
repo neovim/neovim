@@ -11213,6 +11213,13 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "windowsversion()" function
+static void f_windowsversion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char_u *)xstrdup(windowsVersion);
+}
+
 /// "wordcount()" function
 static void f_wordcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
