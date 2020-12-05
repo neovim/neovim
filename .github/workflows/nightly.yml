@@ -2,6 +2,12 @@ name: Nightly release
 on:
   schedule:
     - cron: '5 5 * * *'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release'
+        required: false
+        default: nightly
 
 jobs:
   linux:
@@ -95,25 +101,32 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
+      - if: github.event_name == 'workflow_dispatch'
+        run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+      - if: github.event_name == 'scheduled'
+        run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
+      - if: env.TAG_NAME == 'nightly'
+        run: echo 'SUBJECT=Nvim development (prerelease) build' >> $GITHUB_ENV
+      - if: env.TAG_NAME != 'nightly'
+        run: echo 'SUBJECT=Nvim release build' >> $GITHUB_ENV
       - uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: nightly
+          tag: ${{ env.TAG_NAME }}
           name: ${{ needs.linux.outputs.release }}
-          prerelease: true
+          prerelease: ${{ env.TAG_NAME == 'nightly' }}
           commitish: ${{ github.sha }}
           gzip: false
-          allow_override: true
+          allow_override: ${{ env.TAG_NAME == 'nightly' }}
           files: |
             nvim-macos.tar.bz2:./nvim-macos/nvim-macos.tar.bz2
             nvim-linux64.tar.gz:./nvim-linux64/nvim-linux64.tar.gz
             nvim.appimage:./appimage/nvim.appimage
             nvim.appimage.zsync:./appimage/nvim.appimage.zsync
           body: |
-            Nvim development (prerelease) build.
+            ${{ env.SUBJECT }}
             ```
-            ${{ needs.linux.outputs.version }}
-            ```
+            ${{ needs.linux.outputs.version }}```
 
             ## Install
 
