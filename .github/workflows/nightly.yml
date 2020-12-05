@@ -30,6 +30,29 @@ jobs:
           path: build/nightly/nvim-linux64.tar.gz
           retention-days: 1
 
+  appimage:
+    # Build on the oldest supported image, so we have broader compatibility
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
+      - name: Build appimage
+        run: |
+          make appimage-nightly
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nvim.appimage
+          path: build/bin/nvim.appimage
+          retention-days: 1
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nvim.appimage.zsync
+          path: build/bin/nvim.appimage.zsync
+          retention-days: 1
+
   macOS:
     runs-on: macos-10.15
     steps:
@@ -68,7 +91,7 @@ jobs:
           retention-days: 1
 
   publish:
-    needs: [linux, macOS]
+    needs: [linux, appimage, macOS]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
@@ -126,3 +149,19 @@ jobs:
           asset_path: ./nvim-linux64.tar.gz
           asset_name: nvim-linux64.tar.gz
           asset_content_type: application/gzip
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nvim.appimage
+          asset_name: nvim.appimage
+          asset_content_type: application/x-executable
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nvim.appimage.zsync
+          asset_name: nvim.appimage.zsync
+          asset_content_type: application/octet-stream
