@@ -1,7 +1,16 @@
-name: Nightly release
+name: Release
 on:
   schedule:
     - cron: '5 5 * * *'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release'
+        required: false
+        default: nightly
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
 
 jobs:
   linux:
@@ -15,19 +24,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
-      - name: Build nightly
+      - name: Build release
         id: build
         run: |
           make CMAKE_BUILD_TYPE=RelWithDebinfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
           printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
           printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1 | sed 's/-.*//')"
-          make DESTDIR="$GITHUB_WORKSPACE/build/nightly/nvim-linux64" install
-          cd "$GITHUB_WORKSPACE/build/nightly"
+          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
+          cd "$GITHUB_WORKSPACE/build/release"
           tar cfz nvim-linux64.tar.gz nvim-linux64
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim-linux64.tar.gz
-          path: build/nightly/nvim-linux64.tar.gz
+          name: nvim-linux64
+          path: build/release/nvim-linux64.tar.gz
           retention-days: 1
 
   appimage:
@@ -39,17 +48,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
-      - name: Build appimage
-        run: |
-          make appimage-nightly
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: make appimage-latest
+      - if: github.event_name == 'scheduled' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: make appimage-nightly
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim.appimage
+          name: appimage
           path: build/bin/nvim.appimage
           retention-days: 1
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim.appimage.zsync
+          name: appimage
           path: build/bin/nvim.appimage.zsync
           retention-days: 1
 
@@ -61,13 +71,13 @@ jobs:
         run: |
           brew update >/dev/null
           brew install automake ninja
-      - name: Build nightly
+      - name: Build release
         run: |
           make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
-          make DESTDIR="$GITHUB_WORKSPACE/build/nightly/nvim-osx64" install
+          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-osx64" install
       - name: Create package
         run: |
-          cd "$GITHUB_WORKSPACE/build/nightly"
+          cd "$GITHUB_WORKSPACE/build/release"
           mkdir -p bundle/nvim/libs
           mkdir -p bundle/nvim/bin
           cp nvim-osx64/bin/nvim bundle/nvim/bin/
@@ -86,8 +96,8 @@ jobs:
           tar cjSf nvim-macos.tar.bz2 -C bundle nvim
       - uses: actions/upload-artifact@v2
         with:
-          name: nvim-macos.tar.bz2
-          path: build/nightly/nvim-macos.tar.bz2
+          name: nvim-macos
+          path: build/release/nvim-macos.tar.bz2
           retention-days: 1
 
   publish:
@@ -95,16 +105,36 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
-      - uses: actions/create-release@v1
-        id: create_release
+      - if: github.event_name == 'workflow_dispatch'
+        run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+      - if: github.event_name == 'scheduled'
+        run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
+      - if: github.event_name == 'push'
+        run: |
+          TAG_NAME=${{ github.ref }}
+          echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
+      - if: env.TAG_NAME == 'nightly'
+        run: echo 'SUBJECT=Nvim development (prerelease) build' >> $GITHUB_ENV
+      - if: env.TAG_NAME != 'nightly'
+        run: echo 'SUBJECT=Nvim release build' >> $GITHUB_ENV
+      - uses: meeDamian/github-release@2.0
         with:
-          tag_name: nightly
-          release_name: NVIM ${{ needs.linux.outputs.release }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.TAG_NAME }}
+          name: ${{ needs.linux.outputs.release }}
+          prerelease: ${{ env.TAG_NAME == 'nightly' }}
+          commitish: ${{ github.sha }}
+          gzip: false
+          allow_override: ${{ env.TAG_NAME == 'nightly' }}
+          files: |
+            nvim-macos.tar.bz2:./nvim-macos/nvim-macos.tar.bz2
+            nvim-linux64.tar.gz:./nvim-linux64/nvim-linux64.tar.gz
+            nvim.appimage:./appimage/nvim.appimage
+            nvim.appimage.zsync:./appimage/nvim.appimage.zsync
           body: |
-            Nvim development (prerelease) build.
+            ${{ env.SUBJECT }}
             ```
-            ${{ needs.linux.outputs.version }}
-            ```
+            ${{ needs.linux.outputs.version }}```
 
             ## Install
 
@@ -132,36 +162,3 @@ jobs:
             ### Other
 
             - Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
-          prerelease: true
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim-macos.tar.bz2
-          asset_name: nvim-macos.tar.bz2
-          asset_content_type: application/x-bzip2
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim-linux64.tar.gz
-          asset_name: nvim-linux64.tar.gz
-          asset_content_type: application/gzip
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim.appimage
-          asset_name: nvim.appimage
-          asset_content_type: application/x-executable
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nvim.appimage.zsync
-          asset_name: nvim.appimage.zsync
-          asset_content_type: application/octet-stream
