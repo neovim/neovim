@@ -911,9 +911,6 @@ function lsp.buf_attach_client(bufnr, client_id)
 
     local uri = vim.uri_from_bufnr(bufnr)
     nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
-
-    -- On CompleteDone, let's try to resolve the completion entry detail
-    nvim_command(string.format("autocmd CompleteDone <buffer=%d> lua vim.lsp._resolve_completion_detail()", bufnr))
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
@@ -1141,13 +1138,20 @@ end
 function lsp._resolve_completion_detail()
   local bufnr = resolve_bufnr()
   local completed_item_var = vim.v.completed_item
-  local item = completed_item_var.user_data.lsp.completion_item
-  lsp.buf_request(bufnr, 'completionItem/resolve', item, function(err, _, result)
-    if err or not result then return end
-    if result.additionalTextEdits then
-      util.apply_text_edits(result.additionalTextEdits, bufnr)
-    end
-  end)
+  if
+    completed_item_var and completed_item_var.user_data and completed_item_var.user_data.lsp and
+      completed_item_var.user_data.lsp.completion_item
+   then
+    local item = completed_item_var.user_data.lsp.completion_item
+    lsp.buf_request(bufnr, "completionItem/resolve", item, function(err, _, result)
+      if err or not result then
+        return
+      end
+      if result.additionalTextEdits then
+        util.apply_text_edits(result.additionalTextEdits, bufnr)
+      end
+    end)
+  end
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
