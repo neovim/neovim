@@ -341,6 +341,7 @@ return {
     string={args=1},
     strlen={args=1},
     strpart={args={2, 4}},
+    strptime={args=2},
     strridx={args={2, 3}},
     strtrans={args=1},
     strwidth={args=1},
