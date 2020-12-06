@@ -50,7 +50,7 @@ jobs:
           sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: make appimage-latest
-      - if: github.event_name == 'scheduled' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         run: make appimage-nightly
       - uses: actions/upload-artifact@v2
         with:
@@ -107,7 +107,7 @@ jobs:
       - uses: actions/download-artifact@v2
       - if: github.event_name == 'workflow_dispatch'
         run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
-      - if: github.event_name == 'scheduled'
+      - if: github.event_name == 'schedule'
         run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
       - if: github.event_name == 'push'
         run: |
