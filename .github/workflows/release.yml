@@ -20,6 +20,8 @@ jobs:
       release: ${{ steps.build.outputs.release }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -44,6 +46,8 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -67,6 +71,8 @@ jobs:
     runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install brew packages
         run: |
           brew update >/dev/null
