@@ -223,7 +223,7 @@ func Test_strptime()
   endif
   let $TZ = 'UTC'
 
-  call assert_equal(1484653763, strptime('%Y-%m-%d %X', '2017-01-17 11:49:23'))
+  call assert_equal(1484653763, strptime('%Y-%m-%d %T', '2017-01-17 11:49:23'))
 
   call assert_fails('call strptime()', 'E119:')
   call assert_fails('call strptime("xxx")', 'E119:')
