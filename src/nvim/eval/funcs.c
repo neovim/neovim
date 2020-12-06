@@ -10195,7 +10195,9 @@ static void f_strptime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char fmt_buf[NUMBUFLEN];
   char str_buf[NUMBUFLEN];
 
-  struct tm tmval = { 0 };
+  struct tm tmval = {
+    .tm_isdst = -1,
+  };
   char *fmt = (char *)tv_get_string_buf(&argvars[0], fmt_buf);
   char *str = (char *)tv_get_string_buf(&argvars[1], str_buf);
 
