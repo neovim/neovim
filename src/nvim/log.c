@@ -13,9 +13,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#if !defined(WIN32)
-# include <sys/time.h>  // for gettimeofday()
-#endif
 #include <uv.h>
 
 #include "auto/config.h"
@@ -296,12 +293,10 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   }
 
   int millis = 0;
-#if !defined(WIN32)
-  struct timeval curtime;
-  if (gettimeofday(&curtime, NULL) == 0) {
+  uv_timeval64_t curtime;
+  if (uv_gettimeofday(&curtime) == 0) {
     millis = (int)curtime.tv_usec / 1000;
   }
-#endif
 
   // Print the log message.
   int64_t pid = os_get_pid();
