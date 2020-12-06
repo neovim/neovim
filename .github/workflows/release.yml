@@ -117,6 +117,13 @@ jobs:
         run: echo 'SUBJECT=Nvim development (prerelease) build' >> $GITHUB_ENV
       - if: env.TAG_NAME != 'nightly'
         run: echo 'SUBJECT=Nvim release build' >> $GITHUB_ENV
+      - if: env.TAG_NAME == 'nightly'
+        uses: dev-drprasad/delete-tag-and-release@v0.1.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          delete_release: false
+          tag_name: nightly
       - uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
