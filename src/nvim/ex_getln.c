@@ -4327,7 +4327,8 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 ///                    if true then it escapes for a shell command.
 ///
 /// @return [allocated] escaped file name.
-char *vim_strsave_fnameescape(const char *const fname, const bool shell)
+char *vim_strsave_fnameescape(const char *const fname,
+                              const bool shell FUNC_ATTR_UNUSED)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
