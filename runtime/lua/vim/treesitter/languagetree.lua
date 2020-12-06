@@ -445,7 +445,7 @@ end
 function LanguageTree:language_for_range(range)
   for _, child in pairs(self._children) do
     if child:contains(range) then
-      return child:node_for_range(range)
+      return child:language_for_range(range)
     end
   end
 

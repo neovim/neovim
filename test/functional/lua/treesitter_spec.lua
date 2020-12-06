@@ -919,4 +919,25 @@ local hl_query = [[
     end)
   end)
 
+  describe("when getting the language for a range", function()
+    before_each(function()
+      insert([[
+int x = INT_MAX;
+#define VALUE 123456789
+      ]])
+    end)
+
+    it("should return the correct language tree", function()
+      local result = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c", {
+        queries = { c = "(preproc_def (preproc_arg) @c)"}})
+
+      local sub_tree = parser:language_for_range({1, 18, 1, 19})
+
+      return sub_tree == parser:children().c
+      ]])
+
+      eq(result, true)
+    end)
+  end)
 end)
