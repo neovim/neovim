@@ -242,7 +242,7 @@ if(use_git_version)
   add_custom_target(update_version_stamp ALL
     COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
       ${relbuild}/config/auto/versiondef_git.h
-      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
 else()
