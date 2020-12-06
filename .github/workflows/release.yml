@@ -29,7 +29,7 @@ jobs:
         run: |
           make CMAKE_BUILD_TYPE=RelWithDebinfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
           printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
-          printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1 | sed 's/-.*//')"
+          printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
           cd "$GITHUB_WORKSPACE/build/release"
           tar cfz nvim-linux64.tar.gz nvim-linux64
