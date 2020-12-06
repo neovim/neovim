@@ -120,10 +120,21 @@ function vim._load_package(name)
   end
 
   for _,trail in ipairs(vim._so_trails) do
-    local path = "lua/"..trail:gsub('?',basename)
+    local path = "lua"..trail:gsub('?',basename) -- so_trails contains a leading slash
     local found = vim.api.nvim_get_runtime_file(path, false)
     if #found > 0 then
-      return package.loadlib(found[1], "luaopen_" .. name)
+      -- Get the module name from a path. require('subdir/mymod') -> 'mymod'
+      local modname = name
+      local filename = modname:match('[/\\][^/\\]*$')
+      if filename then
+        modname = filename:sub(2, -1) -- drop leading slash
+      end
+      local dashpos = modname:find('-')
+      if dashpos then
+        modname = modname:sub(dashpos+1, -1)
+      end
+      modname = modname:gsub('%.', '_')
+      return package.loadlib(found[1], "luaopen_" .. modname)
     end
   end
   return nil
