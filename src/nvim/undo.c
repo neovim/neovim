@@ -1255,7 +1255,8 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char *name, char_u *hash, char_u *orig_name)
+void u_read_undo(char *name, const char_u *hash,
+                 const char_u *orig_name FUNC_ATTR_UNUSED)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
@@ -1273,7 +1274,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
     // owner of the text file or equal to the current user.
     FileInfo file_info_orig;
     FileInfo file_info_undo;
-    if (os_fileinfo((char *)orig_name, &file_info_orig)
+    if (os_fileinfo((const char *)orig_name, &file_info_orig)
         && os_fileinfo((char *)file_name, &file_info_undo)
         && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
         && file_info_undo.stat.st_uid != getuid()) {

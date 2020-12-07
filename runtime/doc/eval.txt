@@ -8441,8 +8441,6 @@ strftime({format} [, {time}])				*strftime()*
 		  :echo strftime("%H:%M")	   11:55
 		  :echo strftime("%c", getftime("file.c"))
 						   Show mod time of file.c.
-<		Not available on all systems.  To check use: >
-			:if exists("*strftime")
 
 strgetchar({str}, {index})				*strgetchar()*
 		Get character {index} from {str}.  This uses a character
