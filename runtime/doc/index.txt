@@ -1144,6 +1144,7 @@ tag		command		action ~
 |:bNext|	:bN[ext]	go to previous buffer in the buffer list
 |:ball|		:ba[ll]		open a window for each buffer in the buffer list
 |:badd|		:bad[d]		add buffer to the buffer list
+|:balt|		:balt		like ":badd" but also set the alternate file
 |:bdelete|	:bd[elete]	remove a buffer from the buffer list
 |:behave|	:be[have]	set mouse and selection behavior
 |:belowright|	:bel[owright]	make split window appear right or below

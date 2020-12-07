@@ -2181,6 +2181,8 @@ theend:
 ///                 ECMD_OLDBUF: use existing buffer if it exists
 ///                 ECMD_FORCEIT: ! used for Ex command
 ///                 ECMD_ADDBUF: don't edit, just add to buffer list
+///                 ECMD_ALTBUF: like ECMD_ADDBUF and also set the alternate
+///                 file
 /// @param oldwin   Should be "curwin" when editing a new buffer in the current
 ///                 window, NULL when splitting the window first.  When not NULL
 ///                 info of the previous buffer for "oldwin" is stored.
@@ -2237,8 +2239,10 @@ int do_ecmd(
       path_fix_case(sfname);             // set correct case for sfname
 #endif
 
-    if ((flags & ECMD_ADDBUF) && (ffname == NULL || *ffname == NUL))
+    if ((flags & (ECMD_ADDBUF | ECMD_ALTBUF))
+        && (ffname == NULL || *ffname == NUL)) {
       goto theend;
+    }
 
     if (ffname == NULL)
       other_file = TRUE;
@@ -2268,15 +2272,16 @@ int do_ecmd(
   // If the file was changed we may not be allowed to abandon it:
   // - if we are going to re-edit the same file
   // - or if we are the only window on this file and if ECMD_HIDE is FALSE
-  if (  ((!other_file && !(flags & ECMD_OLDBUF))
-         || (curbuf->b_nwindows == 1
-             && !(flags & (ECMD_HIDE | ECMD_ADDBUF))))
-        && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
-            | (other_file ? 0 : CCGD_MULTWIN)
-            | ((flags & ECMD_FORCEIT) ? CCGD_FORCEIT : 0)
-            | (eap == NULL ? 0 : CCGD_EXCMD))) {
-    if (fnum == 0 && other_file && ffname != NULL)
+  if (((!other_file && !(flags & ECMD_OLDBUF))
+       || (curbuf->b_nwindows == 1
+           && !(flags & (ECMD_HIDE | ECMD_ADDBUF | ECMD_ALTBUF))))
+      && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
+                       | (other_file ? 0 : CCGD_MULTWIN)
+                       | ((flags & ECMD_FORCEIT) ? CCGD_FORCEIT : 0)
+                       | (eap == NULL ? 0 : CCGD_EXCMD))) {
+    if (fnum == 0 && other_file && ffname != NULL) {
       (void)setaltfname(ffname, sfname, newlnum < 0 ? 0 : newlnum);
+    }
     goto theend;
   }
 
@@ -2306,17 +2311,19 @@ int do_ecmd(
    * Otherwise we re-use the current buffer.
    */
   if (other_file) {
-    if (!(flags & ECMD_ADDBUF)) {
-      if (!cmdmod.keepalt)
+    if (!(flags & (ECMD_ADDBUF | ECMD_ALTBUF))) {
+      if (!cmdmod.keepalt) {
         curwin->w_alt_fnum = curbuf->b_fnum;
-      if (oldwin != NULL)
+      }
+      if (oldwin != NULL) {
         buflist_altfpos(oldwin);
+      }
     }
 
     if (fnum) {
       buf = buflist_findnr(fnum);
     } else {
-      if (flags & ECMD_ADDBUF) {
+      if (flags & (ECMD_ADDBUF | ECMD_ALTBUF)) {
         linenr_T tlnum = 1L;
 
         if (command != NULL) {
@@ -2324,7 +2331,11 @@ int do_ecmd(
           if (tlnum <= 0)
             tlnum = 1L;
         }
-        (void)buflist_new(ffname, sfname, tlnum, BLN_LISTED);
+        const buf_T *const newbuf
+            = buflist_new(ffname, sfname, tlnum, BLN_LISTED);
+        if (newbuf != NULL && (flags & ECMD_ALTBUF)) {
+          curwin->w_alt_fnum = newbuf->b_fnum;
+        }
         goto theend;
       }
       buf = buflist_new(ffname, sfname, 0L,
@@ -2470,8 +2481,7 @@ int do_ecmd(
     curwin->w_pcmark.lnum = 1;
     curwin->w_pcmark.col = 0;
   } else {  // !other_file
-    if ((flags & ECMD_ADDBUF)
-        || check_fname() == FAIL) {
+    if ((flags & (ECMD_ADDBUF | ECMD_ALTBUF)) || check_fname() == FAIL) {
       goto theend;
     }
     oldbuf = (flags & ECMD_OLDBUF);

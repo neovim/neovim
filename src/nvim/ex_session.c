@@ -384,6 +384,17 @@ static int put_view(
     xfree(fname_esc);
   }
 
+  if (wp->w_alt_fnum) {
+    buf_T *const alt = buflist_findnr(wp->w_alt_fnum);
+
+    // Set the alternate file.
+    if (alt != NULL && alt->b_fname != NULL && *alt->b_fname != NUL
+        && (fputs("balt ", fd) < 0
+            || ses_fname(fd, alt, flagp, true) == FAIL)) {
+      return FAIL;
+    }
+  }
+
   //
   // Local mappings and abbreviations.
   //
