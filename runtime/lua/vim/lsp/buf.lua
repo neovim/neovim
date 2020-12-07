@@ -149,7 +149,7 @@ end
 --@param options Table with valid `FormattingOptions` entries.
 --@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
---@param start_pos ({number, number}, optional) mark-indexed position.
+--@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
   validate { options = {options, 't', true} }

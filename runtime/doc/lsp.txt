@@ -961,6 +961,9 @@ range_formatting({options}, {start_pos}, {end_pos})
                 Parameters: ~
                     {options}    Table with valid `FormattingOptions` entries.
                     {start_pos}  ({number, number}, optional) mark-indexed
+                                 position. Defaults to the start of the last
+                                 visual selection.
+                    {end_pos}    ({number, number}, optional) mark-indexed
                                  position. Defaults to the end of the last
                                  visual selection.
 
