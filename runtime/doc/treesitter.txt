@@ -280,7 +280,7 @@ This lists the currently available predicates to use in queries.
 Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 
 NOTE: This is a partially implemented feature, and not usable as a default
-solution yet. What is documented here is a temporary interface indented
+solution yet. What is documented here is a temporary interface intended
 for those who want to experiment with this feature and contribute to
 its development.
 
