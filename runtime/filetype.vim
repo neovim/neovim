@@ -1744,6 +1744,9 @@ au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
 " tmux configuration
 au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
 
+" TOML
+au BufNewFile,BufRead *.toml			setf toml
+
 " TPP - Text Presentation Program
 au BufNewFile,BufReadPost *.tpp			setf tpp
 
