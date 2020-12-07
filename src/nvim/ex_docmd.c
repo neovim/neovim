@@ -7345,7 +7345,9 @@ do_exedit(
     else if (eap->cmdidx == CMD_enew)
       readonlymode = FALSE;         /* 'readonly' doesn't make sense in an
                                        empty buffer */
-    setpcmark();
+    if (eap->cmdidx != CMD_balt && eap->cmdidx != CMD_badd) {
+      setpcmark();
+    }
     if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
                 NULL, eap, eap->do_ecmd_lnum,
                 (buf_hide(curbuf) ? ECMD_HIDE : 0)
