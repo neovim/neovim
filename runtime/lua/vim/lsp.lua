@@ -1138,10 +1138,13 @@ function lsp.on_complete_done()
   local bufnr = resolve_bufnr()
   local completed_item_var = vim.v.completed_item
   if
-    completed_item_var and completed_item_var.user_data and completed_item_var.user_data.lsp and
-      completed_item_var.user_data.lsp.completion_item
+    completed_item_var and
+    completed_item_var.user_data and
+    completed_item_var.user_data.nvim and
+    completed_item_var.user_data.nvim.lsp and
+    completed_item_var.user_data.nvim.lsp.completion_item
    then
-    local item = completed_item_var.user_data.lsp.completion_item
+    local item = completed_item_var.user_data.nvim.lsp.completion_item
     lsp.buf_request(bufnr, "completionItem/resolve", item, function(err, _, result)
       if err or not result then
         return
