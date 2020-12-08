@@ -1133,9 +1133,8 @@ function lsp.buf_notify(bufnr, method, params)
 end
 
 
---@private
 --- Get the details of the completion item
-function lsp._resolve_completion_detail()
+function lsp.on_complete_done()
   local bufnr = resolve_bufnr()
   local completed_item_var = vim.v.completed_item
   if
