@@ -67,15 +67,18 @@
 #define FILE1 (FILES | NOSPC)   // 1 file allowed, defaults to current file
 
 // values for cmd_addr_type
-#define ADDR_LINES              0
-#define ADDR_WINDOWS            1
-#define ADDR_ARGUMENTS          2
-#define ADDR_LOADED_BUFFERS     3
-#define ADDR_BUFFERS            4
-#define ADDR_TABS               5
-#define ADDR_TABS_RELATIVE      6   // Tab page that only relative
-#define ADDR_QUICKFIX           7
-#define ADDR_OTHER              99
+typedef enum {
+  ADDR_LINES,           // buffer line numbers
+  ADDR_WINDOWS,         // window number
+  ADDR_ARGUMENTS,       // argument number
+  ADDR_LOADED_BUFFERS,  // buffer number of loaded buffer
+  ADDR_BUFFERS,         // buffer number
+  ADDR_TABS,            // tab page number
+  ADDR_TABS_RELATIVE,   // Tab page that only relative
+  ADDR_QUICKFIX,        // quickfix list entry number
+  ADDR_OTHER,           // something else
+  ADDR_NONE             // no range used
+} cmd_addr_T;
 
 typedef struct exarg exarg_T;
 
@@ -93,7 +96,7 @@ typedef struct cmdname {
   char_u *cmd_name;    ///< Name of the command.
   ex_func_T cmd_func;  ///< Function with implementation of this command.
   uint32_t cmd_argt;     ///< Relevant flags from the declared above.
-  int cmd_addr_type;     ///< Flag for address type
+  cmd_addr_T cmd_addr_type;  ///< Flag for address type
 } CommandDefinition;
 
 // A list used for saving values of "emsg_silent".  Used by ex_try() to save the
