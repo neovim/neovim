@@ -649,13 +649,12 @@ instance.
 	Tell the UI to resize the windows to allocate equal screen estate to
 	all the windows in the current window row or column.
 
-["win_height_set", win, grid, height]
-	Tell the UI to resize the window height to "height". If "height" is
-	equal to 9999, resize to the maximum possible height.
-
-["win_width_set", win, grid, width]
-	Tell the UI to resize the window width to "width". If "width" is
-	equal to 9999, resize to the maximum possible width.
+["win_resize", win, grid, width, height]
+	Tell the UI to resize the window to "width" and "height". If "width" or
+	"height" is equal to 9999, resize to the maximum possible height. The
+	UI is expected to call back `try_resize_grid` with the width and height
+	to inform nvim about the size it finally decides on (which may be same
+	or different that sent with `win_resize`).
 
 The "direction" in the `win_move`, `win_move_cursor`, and `win_split` events
 is sent as an Integer with values:

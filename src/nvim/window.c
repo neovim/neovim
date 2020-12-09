@@ -5249,7 +5249,7 @@ void win_setheight_win(int height, win_T *win)
     msg_col = 0;
     redraw_all_later(NOT_VALID);
   } else {
-    ui_call_win_height_set(win->handle, win->w_grid.handle, height);
+    ui_call_win_resize(win->handle, win->w_grid.handle, win->w_width, height);
   }
 
 }
@@ -5447,7 +5447,7 @@ void win_setwidth_win(int width, win_T *wp)
     (void)win_comp_pos();
     redraw_all_later(NOT_VALID);
   } else {
-    ui_call_win_width_set(wp->handle, wp->w_grid.handle, width);
+    ui_call_win_resize(wp->handle, wp->w_grid.handle, width, wp->w_height);
   }
 }
 
