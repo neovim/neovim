@@ -247,7 +247,7 @@ For |lsp-notification|, each |lsp-handler| has this signature: >
                             of a particular handler.
 
                             For an example, see:
-                                |vim.lsp.diagnostics.on_publish_diagnostics()|
+                                |vim.lsp.diagnostic.on_publish_diagnostics()|
 
                             To configure a particular |lsp-handler|, see:
                                 |lsp-handler-configuration|
@@ -1123,7 +1123,7 @@ get_next({opts})                               *vim.lsp.diagnostic.get_next()*
                 Get the previous diagnostic closest to the cursor_position
 
                 Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostics.goto_next()|
+                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                 Return: ~
                     table Next diagnostic
@@ -1133,7 +1133,7 @@ get_next_pos({opts})                       *vim.lsp.diagnostic.get_next_pos()*
                 current buffer.
 
                 Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostics.goto_next()|
+                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                 Return: ~
                     table Next diagnostic position
@@ -1142,7 +1142,7 @@ get_prev({opts})                               *vim.lsp.diagnostic.get_prev()*
                 Get the previous diagnostic closest to the cursor_position
 
                 Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostics.goto_next()|
+                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                 Return: ~
                     table Previous diagnostic
@@ -1152,7 +1152,7 @@ get_prev_pos({opts})                       *vim.lsp.diagnostic.get_prev_pos()*
                 current buffer.
 
                 Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostics.goto_next()|
+                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                 Return: ~
                     table Previous diagnostic position
@@ -1215,7 +1215,7 @@ goto_prev({opts})                             *vim.lsp.diagnostic.goto_prev()*
                 Move to the previous diagnostic
 
                 Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostics.goto_next()|
+                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
 on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})

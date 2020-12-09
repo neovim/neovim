@@ -1022,7 +1022,7 @@ do
 
   --@deprecated
   function M.buf_diagnostics_signs(bufnr, diagnostics, client_id)
-    warn_once("buf_diagnostics_signs is deprecated. Use 'vim.lsp.diagnostics.set_signs'")
+    warn_once("buf_diagnostics_signs is deprecated. Use 'vim.lsp.diagnostic.set_signs'")
     return vim.lsp.diagnostic.set_signs(diagnostics, bufnr, client_id)
   end
 
