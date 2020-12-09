@@ -39,6 +39,8 @@ typedef struct {
 
 static PMap(uint64_t) *connected_uis = NULL;
 
+static UI *ext_win_ui = NULL;
+
 void remote_ui_init(void)
   FUNC_API_NOEXPORT
 {
@@ -142,7 +144,6 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->msg_set_pos = remote_ui_msg_set_pos;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
-  ui->win_move_cursor = remote_ui_win_move_cursor;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
@@ -155,6 +156,9 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   }
 
   if (ui->ui_ext[kUIWindows]) {
+    if (ext_win_ui == NULL) {
+      ext_win_ui = ui;
+    }
     ui->ui_ext[kUIMultigrid] = true;
   }
 
@@ -789,16 +793,18 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
 }
 
-static void remote_ui_win_move_cursor(UI *ui, Integer direction, Integer count)
+Integer ui_win_move_cursor(Integer direction, Integer count)
 {
+  UI *ui = ext_win_ui;
   Array args = ARRAY_DICT_INIT;
-  UIData *data = ui->data;
+  UIData *data;
   Error error = ERROR_INIT;
   typval_T rettv;
 
-  if (!ui_is_external(kUIWindows)) {
-    return;
+  if (!ui_is_external(kUIWindows) || ui == NULL) {
+    abort();  // this should never happen
   }
+  data = ui->data;
 
   ADD(args, INTEGER_OBJ(direction));
   ADD(args, INTEGER_OBJ(count));
@@ -810,7 +816,7 @@ static void remote_ui_win_move_cursor(UI *ui, Integer direction, Integer count)
     api_set_error(&error, kErrorTypeException, "%s", error.msg);
     api_clear_error(&error);
     api_free_object(result);
-    return;
+    return 0;
   }
 
   if (!object_to_vim(result, &rettv, &error)) {
@@ -818,10 +824,12 @@ static void remote_ui_win_move_cursor(UI *ui, Integer direction, Integer count)
                   "Error converting the call result: %s", error.msg);
     api_clear_error(&error);
     api_free_object(result);
-    return;
+    return 0;
   }
 
   if (rettv.v_type == VAR_NUMBER) {
-    ui_win_goto((Window)rettv.vval.v_number, &error);
+    return (Integer)rettv.vval.v_number;
+  } else {
+    return 0;
   }
 }
