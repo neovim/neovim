@@ -12,9 +12,10 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
 
+# Build on the oldest supported images, so we have broader compatibility
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-16.04
     outputs:
       version: ${{ steps.build.outputs.version }}
       release: ${{ steps.build.outputs.release }}
@@ -42,7 +43,6 @@ jobs:
           retention-days: 1
 
   appimage:
-    # Build on the oldest supported image, so we have broader compatibility
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v2
