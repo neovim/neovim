@@ -6591,6 +6591,22 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
 #endif
 
 theend:
+  // Make sure the end is never before the start.  Can happen when \zs and
+  // \ze are used.
+  if (REG_MULTI) {
+    const lpos_T *const start = &rex.reg_mmatch->startpos[0];
+    const lpos_T *const end = &rex.reg_mmatch->endpos[0];
+
+    if (end->lnum < start->lnum
+        || (end->lnum == start->lnum && end->col < start->col)) {
+      rex.reg_mmatch->endpos[0] = rex.reg_mmatch->startpos[0];
+    }
+  } else {
+    if (rex.reg_match->endp[0] < rex.reg_match->startp[0]) {
+      rex.reg_match->endp[0] = rex.reg_match->startp[0];
+    }
+  }
+
   return retval;
 }
 
