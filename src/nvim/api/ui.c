@@ -142,6 +142,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->msg_set_pos = remote_ui_msg_set_pos;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
+  ui->win_move_cursor = remote_ui_win_move_cursor;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
@@ -786,4 +787,41 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
 {
   UIData *data = ui->data;
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
+}
+
+static void remote_ui_win_move_cursor(UI *ui, Integer direction, Integer count)
+{
+  Array args = ARRAY_DICT_INIT;
+  UIData *data = ui->data;
+  Error error = ERROR_INIT;
+  typval_T rettv;
+
+  if (!ui_is_external(kUIWindows)) {
+    return;
+  }
+
+  ADD(args, INTEGER_OBJ(direction));
+  ADD(args, INTEGER_OBJ(count));
+
+  Object result = rpc_send_call(data->channel_id, "win_move_cursor", args,
+                                &error);
+
+  if (ERROR_SET(&error)) {
+    api_set_error(&error, kErrorTypeException, "%s", error.msg);
+    api_clear_error(&error);
+    api_free_object(result);
+    return;
+  }
+
+  if (!object_to_vim(result, &rettv, &error)) {
+    api_set_error(&error, kErrorTypeValidation,
+                  "Error converting the call result: %s", error.msg);
+    api_clear_error(&error);
+    api_free_object(result);
+    return;
+  }
+
+  if (rettv.v_type == VAR_NUMBER) {
+    ui_win_goto((Window)rettv.vval.v_number, &error);
+  }
 }
