@@ -1104,7 +1104,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int minheight;
   int wmh1;
   bool did_set_fraction = false;
-  int ext_windows = ui_is_external(kUIWindows);
+  int ext_windows = ui_has(kUIWindows);
 
   if (flags & WSP_TOP) {
     oldwin = firstwin;
@@ -1782,7 +1782,7 @@ static void win_exchange(long Prenum)
     return;
   }
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     ui_call_win_exchange(curwin->handle, curwin->w_grid.handle, Prenum);
     return;
   }
@@ -1880,7 +1880,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     ui_call_win_rotate(curwin->handle, curwin->w_grid.handle, upwards, count);
     return;
   }
@@ -1970,7 +1970,7 @@ static void win_totop(int size, int flags)
       ui_call_win_hide(curwin->w_grid.handle);
       win_free_grid(curwin, false);
     }
-  } else if (ui_is_external(kUIWindows)) {
+  } else if (ui_has(kUIWindows)) {
     // TODO(utkarshme): Correct the flags according to the direction in docs
     ui_call_win_move(curwin->handle, curwin->w_grid.handle, UI_WIN_FLAGS(flags));
     return;
@@ -2060,7 +2060,7 @@ void win_equal(
                                    // 'b' for both, 0 for using p_ead
 )
 {
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     ui_call_win_resize_equal();
     return;
   }
@@ -2558,8 +2558,8 @@ int win_close(win_T *win, bool free_buf)
     clear_snapshot(curtab, SNAP_HELP_IDX);
   }
 
-  if (ui_is_external(kUIWindows)) {
-    ui_call_win_close(win->handle, win->w_grid.handle);
+  if (ui_has(kUIWindows)) {
+    ui_call_win_close(win->w_grid.handle);
     // If not handling windows, send the next (or prev) window in the list
     wp = win->w_next == NULL ? win->w_prev : win->w_next;
   } else if (win == curwin) {
@@ -2729,7 +2729,7 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (!was_floating) {
-    if (!curwin->w_floating && !ui_is_external(kUIWindows)
+    if (!curwin->w_floating && !ui_has(kUIWindows)
         && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
       // If the frame of the closed window contains the new current window,
       // only resize that frame.  Otherwise resize all windows.
@@ -2752,13 +2752,13 @@ int win_close(win_T *win, bool free_buf)
    * remove the status line.
    */
   // TODO(utkarshme): This eventually uses frames. Figure it out.
-  if (!ui_is_external(kUIWindows)) {
+  if (!ui_has(kUIWindows)) {
     last_status(FALSE);
   }
 
   /* After closing the help window, try restoring the window layout from
    * before it was opened. */
-  if (!ui_is_external(kUIWindows) && help_window)
+  if (!ui_has(kUIWindows) && help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
 
   // If the window had 'diff' set and now there is only one window left in
@@ -2894,7 +2894,7 @@ static win_T *win_free_mem(
   frame_T     *frp;
   win_T       *wp;
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     // TODO(utkarshme): kUIWindows
     // If not handling windows, send the next (or prev) window in the list
     wp = win->w_next == NULL ? win->w_prev : win->w_next;
@@ -3769,7 +3769,7 @@ static int win_alloc_firstwin(win_T *oldwin)
     RESET_BINDING(curwin);
   }
 
-  if (!ui_is_external(kUIWindows)) {
+  if (!ui_has(kUIWindows)) {
     new_frame(curwin);
     topframe = curwin->w_frame;
     topframe->fr_width = Columns;
@@ -3801,7 +3801,7 @@ void win_init_size(void)
   firstwin->w_width = Columns;
   firstwin->w_width_inner = firstwin->w_width;
 
-  if (!ui_is_external(kUIWindows)) {
+  if (!ui_has(kUIWindows)) {
     topframe->fr_height = ROWS_AVAIL;
     topframe->fr_width = Columns;
   }
@@ -4401,7 +4401,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
   frame_T     *nfr;
   frame_T     *foundfr;
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     handle_T win_handle = ui_win_move_cursor(up, count);
     Error error = ERROR_INIT;
     win_T *win = find_window_by_handle(win_handle, &error);
@@ -4409,7 +4409,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
     if (win != NULL) {
       win_goto(win);
     }
-    return;
+    return win;
   }
 
   foundfr = wp->w_frame;
@@ -4494,7 +4494,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
   frame_T     *nfr;
   frame_T     *foundfr;
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     // "0" and "1" is reserved for top, bottom directions. left, right are 2, 3
     handle_T win_handle = ui_win_move_cursor(2 + left, count);
     Error error = ERROR_INIT;
@@ -4503,7 +4503,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
     if (win != NULL) {
       win_goto(win);
     }
-    return;
+    return win;
   }
 
   foundfr = wp->w_frame;
@@ -5139,7 +5139,7 @@ int win_comp_pos(void)
   int row = tabline_height();
   int col = 0;
 
-  if (!ui_is_external(kUIWindows)) {
+  if (!ui_has(kUIWindows)) {
     frame_comp_pos(topframe, &row, &col);
   }
 
@@ -5233,9 +5233,14 @@ void win_setheight_win(int height, win_T *win)
     win->w_float_config.height = height;
     win_config_float(win, win->w_float_config);
     redraw_later(win, NOT_VALID);
-  } else if (!ui_is_external(kUIWindows)) {
-    frame_setheight(win->w_frame, height + win->w_status_height);
-    win_grid_alloc(win);
+  } else {
+    if (!ui_is_external(kUIWindows)) {
+      frame_setheight(win->w_frame, height + win->w_status_height);
+      win_grid_alloc(win);
+    } else {
+      ui_call_win_resize(win->handle, win->w_grid.handle, win->w_width, height);
+    }
+
     // recompute the window positions
     int row = win_comp_pos();
 
@@ -5248,10 +5253,7 @@ void win_setheight_win(int height, win_T *win)
     msg_row = row;
     msg_col = 0;
     redraw_all_later(NOT_VALID);
-  } else {
-    ui_call_win_resize(win->handle, win->w_grid.handle, win->w_width, height);
   }
-
 }
 
 
@@ -5633,7 +5635,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
 
   fr = dragwin->w_frame;
   curfr = fr;
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     /*win_call_height_inc(dragwin, offset);*/
   } else {
     if (fr != topframe) {         /* more than one window */
@@ -5752,7 +5754,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   int left;             /* if TRUE, drag separator line left, otherwise right */
   int n;
 
-  if (ui_is_external(kUIWindows)) {
+  if (ui_has(kUIWindows)) {
     /*win_call_width_inc(dragwin, offset);*/
   } else {
     fr = dragwin->w_frame;
