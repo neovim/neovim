@@ -2517,7 +2517,7 @@ int win_close(win_T *win, bool free_buf)
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = ui_is_external(kUIWindows) ? NULL :
                        win->w_floating ? NULL :
-                       win->w_frame_fr_parent;
+                       win->w_frame->fr_parent;
   const bool had_diffmode = win->w_p_diff;
 
   if (last_window() && !win->w_floating) {
