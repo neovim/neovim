@@ -2515,7 +2515,7 @@ int win_close(win_T *win, bool free_buf)
   int dir;
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
-  frame_T *win_frame = ui_is_external(kUIWindows) ? NULL :
+  frame_T *win_frame = ui_has(kUIWindows) ? NULL :
                        win->w_floating ? NULL :
                        win->w_frame->fr_parent;
   const bool had_diffmode = win->w_p_diff;
@@ -5234,7 +5234,7 @@ void win_setheight_win(int height, win_T *win)
     win_config_float(win, win->w_float_config);
     redraw_later(win, NOT_VALID);
   } else {
-    if (!ui_is_external(kUIWindows)) {
+    if (!ui_has(kUIWindows)) {
       frame_setheight(win->w_frame, height + win->w_status_height);
       win_grid_alloc(win);
     } else {
@@ -5441,7 +5441,7 @@ void win_setwidth_win(int width, win_T *wp)
     wp->w_float_config.width = width;
     win_config_float(wp, wp->w_float_config);
     redraw_later(wp, NOT_VALID);
-  } else if (!ui_is_external(kUIWindows)) {
+  } else if (!ui_has(kUIWindows)) {
     frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
     win_grid_alloc(wp);
 
