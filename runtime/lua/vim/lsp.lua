@@ -1,3 +1,5 @@
+local if_nil = vim.F.if_nil
+
 local default_handlers = require 'vim.lsp.handlers'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
@@ -226,6 +228,7 @@ local function validate_client_config(config)
     on_init         = { config.on_init, "f", true };
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
+    flags           = { config.flags, "t", true };
   }
 
   -- TODO(remove-callbacks)
@@ -434,6 +437,17 @@ end
 ---
 --@param trace:  "off" | "messages" | "verbose" | nil passed directly to the language
 --- server in the initialize request. Invalid/empty values will default to "off"
+--@param flags: A table with flags for the client. The current (experimental) flags are:
+--- - allow_incremental_sync (bool, default false): Allow using on_line callbacks for lsp
+---
+--- <pre>
+--- -- In attach function for the client, you can do:
+--- local custom_attach = function(client)
+---   if client.config.flags then
+---     client.config.flags.allow_incremental_sync = true
+---   end
+--- end
+--- </pre>
 ---
 --@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
 --- fully initialized. Use `on_init` to do any actions once
@@ -441,6 +455,8 @@ end
 function lsp.start_client(config)
   local cleaned_config = validate_client_config(config)
   local cmd, cmd_args, offset_encoding = cleaned_config.cmd, cleaned_config.cmd_args, cleaned_config.offset_encoding
+
+  config.flags = config.flags or {}
 
   local client_id = next_client_id()
 
@@ -799,6 +815,7 @@ do
       local size_index = encoding_index[client.offset_encoding]
       local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
       local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+
       -- This is necessary because we are specifying the full line including the
       -- newline in range. Therefore, we must replace the newline as well.
       if #lines > 0 then
@@ -820,6 +837,8 @@ do
     end)
     local uri = vim.uri_from_bufnr(bufnr)
     for_each_buffer_client(bufnr, function(client, _client_id)
+      local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
+
       local text_document_did_change = client.resolved_capabilities.text_document_did_change
       local changes
       if text_document_did_change == protocol.TextDocumentSyncKind.None then
@@ -830,7 +849,7 @@ do
       -- is no way to specify the sync capability by the client.
       -- See https://github.com/palantir/python-language-server/commit/cfd6675bc10d5e8dbc50fc50f90e4a37b7178821#diff-f68667852a14e9f761f6ebf07ba02fc8 for an example of pyls handling both.
       --]=]
-      elseif true or text_document_did_change == protocol.TextDocumentSyncKind.Full then
+      elseif not allow_incremental_sync or text_document_did_change == protocol.TextDocumentSyncKind.Full then
         changes = full_changes(client)
       elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
         changes = incremental_changes(client)
