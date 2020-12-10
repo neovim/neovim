@@ -1453,3 +1453,18 @@ describe('lua stdlib', function()
     end)
   end)
 end)
+
+describe('lua: require("mod") from packages', function()
+  before_each(function()
+    command('set rtp+=test/functional/fixtures')
+  end)
+
+  it('propagates syntax error', function()
+    local syntax_error_msg = exec_lua [[
+      local _, err = pcall(require, "syntax_error")
+      return err
+    ]]
+
+    matches("unexpected symbol", syntax_error_msg)
+  end)
+end)

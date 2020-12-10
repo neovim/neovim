@@ -115,7 +115,8 @@ function vim._load_package(name)
   for _,path in ipairs(paths) do
     local found = vim.api.nvim_get_runtime_file(path, false)
     if #found > 0 then
-      return loadfile(found[1])
+      local f, err = loadfile(found[1])
+      return f or error(err)
     end
   end
 
@@ -123,7 +124,8 @@ function vim._load_package(name)
     local path = "lua/"..trail:gsub('?',basename)
     local found = vim.api.nvim_get_runtime_file(path, false)
     if #found > 0 then
-      return package.loadlib(found[1])
+      local f, err = package.loadlib(found[1])
+      return f or error(err)
     end
   end
   return nil
