@@ -16,7 +16,6 @@
 #include "nvim/iconv.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
-#include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
