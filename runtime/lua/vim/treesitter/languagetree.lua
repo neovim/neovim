@@ -121,23 +121,30 @@ function LanguageTree:parse()
   local seen_langs = {}
 
   for lang, injection_ranges in pairs(injections_by_lang) do
-    local child = self._children[lang]
+    local has_lang = language.require_language(lang, nil, true)
 
-    if not child then
-      child = self:add_child(lang)
+    -- Child language trees should just be ignored if not found, since
+    -- they can depend on the text of a node. Intermediate strings
+    -- would cause errors for unknown parsers.
+    if has_lang then
+      local child = self._children[lang]
+
+      if not child then
+        child = self:add_child(lang)
+      end
+
+      child:set_included_regions(injection_ranges)
+
+      local _, child_changes = child:parse()
+
+      -- Propagate any child changes so they are included in the
+      -- the change list for the callback.
+      if child_changes then
+        vim.list_extend(changes, child_changes)
+      end
+
+      seen_langs[lang] = true
     end
-
-    child:set_included_regions(injection_ranges)
-
-    local _, child_changes = child:parse()
-
-    -- Propagate any child changes so they are included in the
-    -- the change list for the callback.
-    if child_changes then
-      vim.list_extend(changes, child_changes)
-    end
-
-    seen_langs[lang] = true
   end
 
   for lang, _ in pairs(self._children) do
