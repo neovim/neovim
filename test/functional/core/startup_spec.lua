@@ -448,6 +448,7 @@ describe('user config init', function()
     mkdir(xconfig .. pathsep .. 'nvim')
 
     write_file(init_lua_path, [[
+      vim.o.exrc = true
       vim.g.lua_rc = 1
     ]])
   end)
@@ -461,6 +462,17 @@ describe('user config init', function()
 
     eq(1, eval('g:lua_rc'))
     eq(init_lua_path, eval('$MYVIMRC'))
+  end)
+
+  it('loads .exrc from cwd', function()
+    local exrc_path = '.exrc'
+    write_file(exrc_path, [[
+      let g:from_exrc = 1
+    ]])
+
+    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+    eq(1, eval('g:from_exrc'))
+    os.remove(exrc_path)
   end)
 
   describe 'with explicitly provided config'(function()

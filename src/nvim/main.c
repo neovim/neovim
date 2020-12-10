@@ -1797,9 +1797,16 @@ static bool do_user_initialization(void)
       EMSG3(_("Conflicting configs: \"%s\" \"%s\""), init_lua_path, vimrc_path);
     }
 
+    do_exrc = p_exrc;
+    if (do_exrc) {
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, init_lua_path,
+                                   false, true)
+                 != kEqualFiles);
+    }
+
     xfree(vimrc_path);
     xfree(init_lua_path);
-    return false;
+    return do_exrc;
   }
   xfree(init_lua_path);
 
