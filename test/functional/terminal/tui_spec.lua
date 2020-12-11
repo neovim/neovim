@@ -1477,7 +1477,7 @@ describe("TUI", function()
 
     retry(nil, 3000, function()  -- Wait for log file to be flushed.
       local log = read_file('Xtest_tui_verbose_log') or ''
-      eq('--- Terminal info --- {{{\n', string.match(log, '--- Terminal.-\n'))
+      eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n'))
       ok(#log > 50)
     end)
   end)
