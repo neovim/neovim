@@ -62,7 +62,7 @@ for _, cmd in ipairs(defs) do
     .cmd_name = (char_u *) "%s",
     .cmd_func = (ex_func_T)&%s,
     .cmd_argt = %uL,
-    .cmd_addr_type = %i
+    .cmd_addr_type = %s
   },
 ]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
 end
