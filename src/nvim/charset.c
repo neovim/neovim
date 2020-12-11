@@ -45,8 +45,6 @@ static bool chartab_initialized = false;
     (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
 #define GET_CHARTAB_TAB(chartab, c) \
     ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
-#define GET_CHARTAB(buf, c) \
-    GET_CHARTAB_TAB((buf)->b_chartab, c)
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];

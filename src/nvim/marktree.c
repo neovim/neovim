@@ -55,7 +55,6 @@
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(mtnode_t)+(2 * T) * sizeof(void *))
-#define key_t SKRAPET
 
 #define RIGHT_GRAVITY (((uint64_t)1) << 63)
 #define ANTIGRAVITY(id) ((id)&(RIGHT_GRAVITY-1))
@@ -64,8 +63,6 @@
 #define PAIRED MARKTREE_PAIRED_FLAG
 #define END_FLAG MARKTREE_END_FLAG
 #define ID_INCR (((uint64_t)1) << 2)
-
-#define PROP_MASK (RIGHT_GRAVITY|PAIRED|END_FLAG)
 
 #define rawkey(itr) (itr->node->key[itr->i])
 
