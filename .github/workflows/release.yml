@@ -68,7 +68,7 @@ jobs:
           retention-days: 1
 
   macOS:
-    runs-on: macos-10.13
+    runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
         with:
