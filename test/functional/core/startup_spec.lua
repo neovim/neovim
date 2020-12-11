@@ -428,9 +428,9 @@ end)
 
 describe('clean', function()
   clear()
-  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) ~= nil)
+  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) ~= nil)
   clear('--clean')
-  ok(string.match(meths.get_option('runtimepath'), funcs.stdpath('config')) == nil)
+  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) == nil)
 end)
 
 describe('user config init', function()
