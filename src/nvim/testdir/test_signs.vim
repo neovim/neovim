@@ -15,14 +15,8 @@ func Test_sign()
   " icon is ignored when not supported.  "(not supported)" is shown after
   " the icon name when listing signs.
   sign define Sign1 text=x
-  try
-    sign define Sign2 text=xy texthl=Title linehl=Error
-		\ icon=../../pixmaps/stock_vim_find_help.png
-  catch /E255:/
-    " Ignore error: E255: Couldn't read in sign data!
-    " This error can happen when running in the GUI.
-    " Some gui like Motif do not support the png icon format.
-  endtry
+
+  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error icon=../../pixmaps/stock_vim_find_help.png')
 
   " Test listing signs.
   let a=execute('sign list')
@@ -104,12 +98,7 @@ func Test_sign()
   edit foo
   call setline(1, ['A', 'B', 'C', 'D'])
 
-  try
-    sign define Sign3 text=y texthl=DoesNotExist linehl=DoesNotExist
-		\ icon=doesnotexist.xpm
-  catch /E255:/
-    " ignore error: E255: it can happens for guis.
-  endtry
+  call Sign_command_ignore_error('sign define Sign3 text=y texthl=DoesNotExist linehl=DoesNotExist icon=doesnotexist.xpm')
 
   let fn = expand('%:p')
   exe 'sign place 43 line=2 name=Sign3 file=' . fn
@@ -378,6 +367,25 @@ func Test_sign_delete_buffer()
   sign undefine Sign
 endfunc
 
+" Ignore error: E255: Couldn't read in sign data!
+" This error can happen when running in the GUI.
+" Some gui like Motif do not support the png icon format.
+func Sign_command_ignore_error(cmd)
+  try
+    exe a:cmd
+  catch /E255:/
+  endtry
+endfunc
+
+" ignore error: E255: Couldn't read in sign data!
+" This error can happen when running in gui.
+func Sign_define_ignore_error(name, attr)
+  try
+    call sign_define(a:name, a:attr)
+  catch /E255:/
+  endtry
+endfunc
+
 " Test for Vim script functions for managing signs
 func Test_sign_funcs()
   " Remove all the signs
@@ -394,12 +402,7 @@ func Test_sign_funcs()
   call sign_define("sign2")
   let attr = {'text' : '!!', 'linehl' : 'DiffAdd', 'texthl' : 'DiffChange',
 	      \ 'icon' : 'sign2.ico'}
-  try
-    call sign_define("sign2", attr)
-  catch /E255:/
-    " ignore error: E255: Couldn't read in sign data!
-    " This error can happen when running in gui.
-  endtry
+  call Sign_define_ignore_error("sign2", attr)
   call assert_equal([{'name' : 'sign2', 'texthl' : 'DiffChange',
 	      \ 'linehl' : 'DiffAdd', 'text' : '!!', 'icon' : 'sign2.ico'}],
 	      \ sign_getdefined("sign2"))
@@ -507,6 +510,16 @@ func Test_sign_funcs()
   call assert_equal([], sign_getdefined("sign1"))
   call assert_fails('call sign_undefine("none")', 'E155:')
   call assert_fails('call sign_undefine([])', 'E730:')
+
+  " Test for using '.' as the line number for sign_place()
+  call Sign_define_ignore_error("sign1", attr)
+  call cursor(22, 1)
+  call assert_equal(15, sign_place(15, '', 'sign1', 'Xsign',
+	      \ {'lnum' : '.'}))
+  call assert_equal([{'bufnr' : bufnr(''), 'signs' :
+	      \ [{'id' : 15, 'group' : '', 'lnum' : 22, 'name' : 'sign1',
+	      \ 'priority' : 10}]}],
+	      \ sign_getplaced('%', {'lnum' : 22}))
 
   call delete("Xsign")
   call sign_unplace('*')
