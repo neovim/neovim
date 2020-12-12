@@ -3,7 +3,7 @@
 source shared.vim
 source check.vim
 
-function! Test_System()
+func Test_System()
   if !executable('echo') || !executable('cat') || !executable('wc')
     return
   endif

@@ -58,7 +58,7 @@ function Test_tabpage()
   q
   "
   "
-  " Test for ":tab drop multi-opend-file" to keep current tabpage and window.
+  " Test for ":tab drop multi-opened-file" to keep current tabpage and window.
   new test1
   tabnew
   new test1

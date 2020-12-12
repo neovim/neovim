@@ -919,9 +919,203 @@ func Test_if_bar_fail()
     call assert_equal('acdfh-acfh', g:test15_result)
 endfunc
 
+"-------------------------------------------------------------------------------
+" Test 16:  Double :else or :elseif after :else				    {{{1
+"
+"	    Multiple :elses or an :elseif after an :else are forbidden.
+"-------------------------------------------------------------------------------
+
+func T16_F() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  else		" aborts function
+    Xpath 'c'
+  endif
+  Xpath 'd'
+endfunc
+
+func T16_G() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  elseif 1		" aborts function
+    Xpath 'c'
+  else
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_H() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  else		" aborts function
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_I() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  elseif 1		" aborts function
+    Xpath 'd'
+  else
+    Xpath 'e'
+  endif
+  Xpath 'f'
+endfunc
+
+func Test_Multi_Else()
+  XpathINIT
+  try
+    call T16_F()
+  catch /E583:/
+    Xpath 'e'
+  endtry
+  call assert_equal('be', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_G()
+  catch /E584:/
+    Xpath 'f'
+  endtry
+  call assert_equal('bf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_H()
+  catch /E583:/
+    Xpath 'f'
+  endtry
+  call assert_equal('cf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_I()
+  catch /E584:/
+    Xpath 'g'
+  endtry
+  call assert_equal('cg', g:Xpath)
+endfunc
 
 "-------------------------------------------------------------------------------
-" Test 16:  Recognizing {} in variable name.			    {{{1
+" Test 17:  Nesting of unmatched :if or :endif inside a :while		    {{{1
+"
+"	    The :while/:endwhile takes precedence in nesting over an unclosed
+"	    :if or an unopened :endif.
+"-------------------------------------------------------------------------------
+
+" While loops inside a function are continued on error.
+func T17_F()
+  let loops = 3
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if (loops == 1)
+      Xpath 'b' . loops
+      continue
+    elseif (loops == 0)
+      Xpath 'c' . loops
+      break
+    elseif 1
+      Xpath 'd' . loops
+    " endif missing!
+  endwhile	" :endwhile after :if 1
+  Xpath 'e'
+endfunc
+
+func T17_G()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+      Xpath 'b' . loops
+    " endif missing
+  endwhile	" :endwhile after :if 0
+endfunc
+
+func T17_H()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    " if missing!
+    endif	" :endif without :if in while
+    Xpath 'b' . loops
+  endwhile
+endfunc
+
+" Error continuation outside a function is at the outermost :endwhile or :endif.
+XpathINIT
+let v:errmsg = ''
+let loops = 2
+while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+	Xpath 'b' . loops
+    " endif missing! Following :endwhile fails.
+endwhile | Xpath 'c'
+Xpath 'd'
+call assert_match('E171:', v:errmsg)
+call assert_equal('a1d', g:Xpath)
+
+func Test_unmatched_if_in_while()
+  XpathINIT
+  call assert_fails('call T17_F()', 'E171:')
+  call assert_equal('a2d2a1b1a0c0e', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_G()', 'E171:')
+  call assert_equal('a1a0', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_H()', 'E580:')
+  call assert_equal('a1b1a0b0', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+" Test 87   using (expr) ? funcref : funcref				    {{{1
+"
+"	    Vim needs to correctly parse the funcref and even when it does
+"	    not execute the funcref, it needs to consume the trailing ()
+"-------------------------------------------------------------------------------
+
+func Add2(x1, x2)
+  return a:x1 + a:x2
+endfu
+
+func GetStr()
+  return "abcdefghijklmnopqrstuvwxyp"
+endfu
+
+func Test_funcref_with_condexpr()
+  call assert_equal(5, function('Add2')(2,3))
+
+  call assert_equal(3, 1 ? function('Add2')(1,2) : function('Add2')(2,3))
+  call assert_equal(5, 0 ? function('Add2')(1,2) : function('Add2')(2,3))
+  " Make sure, GetStr() still works.
+  call assert_equal('abcdefghijk', GetStr()[0:10])
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 90:  Recognizing {} in variable name.			    {{{1
 "-------------------------------------------------------------------------------
 
 func Test_curlies()
@@ -1490,5 +1684,5 @@ endfunc
 
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
-" vim: ts=8 sw=4 tw=80 fdm=marker
+" vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
 "-------------------------------------------------------------------------------
