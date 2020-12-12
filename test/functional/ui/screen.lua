@@ -891,7 +891,7 @@ function Screen:_handle_hl_group_set(name, id)
 end
 
 function Screen:get_hl(val)
-  if self._options.ext_newgrid then
+  if self._options.ext_linegrid then
     return self._attr_table[val][1]
   else
     return val

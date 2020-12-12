@@ -103,7 +103,7 @@ implement |ui-linegrid| instead of |ui-grid-old|.
 
 UIs can optionally choose to take care of window positioning and navigation
 (i.e. `wincmd` functions) if they so choose by setting the `ext_windows`
-option. This would implicitly enable the `ext_multigrid` and `ext_newgrid`
+option. This would implicitly enable the `ext_multigrid` and `ext_linegrid`
 options. See |ui-windows|.
 
 Nvim optionally sends various screen elements "semantically" as structured
@@ -608,7 +608,7 @@ tabs.
 External Window Events						   *ui-windows*
 
 Only sent if `ext_windows` option is set in |ui-options|. Sets `ext_multigrid`
-and `ext_newgrid` implicitly.
+and `ext_linegrid` implicitly.
 
 This option enables UIs to take care of how `wincmd`s are interpretted in nvim
 by delegating the position and navigation handling to them instead of nvim.
