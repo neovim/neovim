@@ -7,7 +7,7 @@
 "		(ss) repaired several quoting and grouping glitches
 "		(ss) fixed regex parsing issue with multiple qualifiers [gi]
 "		(ss) additional factoring of keywords, globals, and members
-" Last Change:	2019 Sep 27
+" Last Change:	2020 May 14
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
 " 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
 
@@ -77,10 +77,10 @@ else
     syn match	javaScriptParens	   "[()]"
 endif
 
-syn sync fromstart
-syn sync maxlines=100
-
 if main_syntax == "javascript"
+  syn sync fromstart
+  syn sync maxlines=100
+
   syn sync ccomment javaScriptComment
 endif
 
