@@ -280,7 +280,7 @@ func Test_omni_dash()
   set omnifunc=Omni
   new
   exe "normal Gofind -\<C-x>\<C-o>"
-  call assert_equal("\n-\nmatch 1 of 2", execute(':2mess'))
+  call assert_equal("find -help", getline('$'))
 
   bwipe!
   delfunc Omni
@@ -468,3 +468,17 @@ func Test_pum_with_folds_two_tabs()
   call StopVimInTerminal(buf)
   call delete('Xpumscript')
 endfunc
+
+" Test to ensure 'Scanning...' messages are not recorded in messages history
+func Test_z1_complete_no_history()
+  new
+  messages clear
+  let currmess = execute('messages')
+  setlocal dictionary=README.txt
+  exe "normal owh\<C-X>\<C-K>"
+  exe "normal owh\<C-N>"
+  call assert_equal(currmess, execute('messages'))
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
