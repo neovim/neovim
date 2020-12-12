@@ -392,6 +392,7 @@ return {
     win_screenpos={args=1},
     winbufnr={args=1},
     wincol={},
+    windowsversion={},
     winheight={args=1},
     winlayout={args={0, 1}},
     winline={},

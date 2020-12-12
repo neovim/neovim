@@ -1052,4 +1052,7 @@ typedef enum {
 #define MIN_CD_SCOPE  kCdScopeWindow
 #define MAX_CD_SCOPE  kCdScopeGlobal
 
+// Only filled for Win32.
+EXTERN char windowsVersion[20] INIT(= { 0 });
+
 #endif  // NVIM_GLOBALS_H

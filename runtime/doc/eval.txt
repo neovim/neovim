@@ -9331,6 +9331,13 @@ wincol()	The result is a Number, which is the virtual column of the
 		cursor in the window.  This is counting screen cells from the
 		left side of the window.  The leftmost column is one.
 
+							*windowsversion()*
+windowsversion()
+		The result is a String.  For MS-Windows it indicates the OS
+		version.  E.g, Windows 10 is "10.0", Windows 8 is "6.2",
+		Windows XP is "5.1".  For non-MS-Windows systems the result is
+		an empty string.
+
 winheight({nr})						*winheight()*
 		The result is a Number, which is the height of window {nr}.
 		{nr} can be the window number or the |window-ID|.
