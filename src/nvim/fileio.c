@@ -15,6 +15,7 @@
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -5082,6 +5083,7 @@ void buf_reload(buf_T *buf, int orig_mode)
         // Mark all undo states as changed.
         u_unchanged(curbuf);
       }
+      buf_updates_unregister_all(curbuf);
     }
   }
   xfree(ea.cmd);
