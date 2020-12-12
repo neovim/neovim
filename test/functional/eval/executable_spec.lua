@@ -11,6 +11,10 @@ describe('executable()', function()
   it('returns 1 for commands in $PATH', function()
     local exe = iswin() and 'ping' or 'ls'
     eq(1, call('executable', exe))
+    command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+    eq(1, call('executable', 'null'))
+    eq(1, call('executable', 'true'))
+    eq(1, call('executable', 'false'))
   end)
 
   it('fails for invalid values', function()
