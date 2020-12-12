@@ -2958,6 +2958,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus,
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
     fp = os_fopen((char *)files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT) {
+      msg_hist_off = true;  // reset in msg_trunc_attr()
       vim_snprintf((char *)IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), (char *)files[i]);
       (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
@@ -4113,6 +4114,7 @@ static int ins_compl_get_exp(pos_T *ini)
           dict = ins_buf->b_fname;
           dict_f = DICT_EXACT;
         }
+        msg_hist_off = true;  // reset in msg_trunc_attr()
         vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
                      ins_buf->b_fname == NULL
                      ? buf_spname(ins_buf)
@@ -4134,11 +4136,12 @@ static int ins_compl_get_exp(pos_T *ini)
             dict = e_cpt;
             dict_f = DICT_FIRST;
           }
-        } else if (*e_cpt == 'i')
+        } else if (*e_cpt == 'i') {
           type = CTRL_X_PATH_PATTERNS;
-        else if (*e_cpt == 'd')
+        } else if (*e_cpt == 'd') {
           type = CTRL_X_PATH_DEFINES;
-        else if (*e_cpt == ']' || *e_cpt == 't') {
+        } else if (*e_cpt == ']' || *e_cpt == 't') {
+          msg_hist_off = true;  // reset in msg_trunc_attr()
           type = CTRL_X_TAGS;
           vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
           (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
@@ -4721,9 +4724,11 @@ ins_compl_next (
           MB_PTR_ADV(s);
         }
       }
+      msg_hist_off = true;
       vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
                    s > compl_shown_match->cp_fname ? "<" : "", s);
       msg(IObuff);
+      msg_hist_off = false;
       redraw_cmdline = false;     // don't overwrite!
     }
   }
@@ -5333,9 +5338,11 @@ static int ins_complete(int c, bool enable_pum)
   if (!shortmess(SHM_COMPLETIONMENU)) {
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
+        msg_hist_off = true;
         msg_attr((const char *)edit_submode_extra,
                  (edit_submode_highl < HLF_COUNT
                   ? HL_ATTR(edit_submode_highl) : 0));
+        msg_hist_off = false;
       }
     } else {
       msg_clr_cmdline();  // necessary for "noshowmode"
