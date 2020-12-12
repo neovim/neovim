@@ -95,7 +95,6 @@ PRAGMA_DIAG_POP
 
 
 static char *e_listarg = N_("E686: Argument of %s must be a List");
-static char *e_stringreq = N_("E928: String required");
 static char *e_invalwindow = N_("E957: Invalid window number");
 
 /// Dummy va_list for passing to vim_snprintf
@@ -1877,10 +1876,12 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *name = tv_get_string(&argvars[0]);
+  if (tv_check_for_string(&argvars[0]) == FAIL) {
+    return;
+  }
 
   // Check in $PATH and also check directly if there is a directory name
-  rettv->vval.v_number = os_can_exe(name, NULL, true);
+  rettv->vval.v_number = os_can_exe(tv_get_string(&argvars[0]), NULL, true);
 }
 
 typedef struct {
@@ -1984,10 +1985,13 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "exepath()" function
 static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *arg = tv_get_string(&argvars[0]);
+  if (tv_check_for_string(&argvars[0]) == FAIL) {
+    return;
+  }
+
   char *path = NULL;
 
-  (void)os_can_exe(arg, &path, true);
+  (void)os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)path;

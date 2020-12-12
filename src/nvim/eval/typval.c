@@ -2953,6 +2953,19 @@ float_T tv_get_float(const typval_T *const tv)
   return 0;
 }
 
+// Give an error and return FAIL unless "tv" is a non-empty string.
+int tv_check_for_string(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (tv->v_type != VAR_STRING
+      || tv->vval.v_string == NULL
+      || *tv->vval.v_string == NUL) {
+    EMSG(_(e_stringreq));
+    return FAIL;
+  }
+  return OK;
+}
+
 /// Get the string value of a "stringish" VimL object.
 ///
 /// @param[in]  tv  Object to get value of.

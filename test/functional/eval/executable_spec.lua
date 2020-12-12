@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, call, iswin, write_file, command =
   helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file,
   helpers.command
+local exc_exec = helpers.exc_exec
 local eval = helpers.eval
 
 describe('executable()', function()
@@ -10,6 +11,20 @@ describe('executable()', function()
   it('returns 1 for commands in $PATH', function()
     local exe = iswin() and 'ping' or 'ls'
     eq(1, call('executable', exe))
+    command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+    eq(1, call('executable', 'null'))
+    eq(1, call('executable', 'true'))
+    eq(1, call('executable', 'false'))
+  end)
+
+  it('fails for invalid values', function()
+    for _, input in ipairs({'""', 'v:null', 'v:true', 'v:false', '{}', '[]'}) do
+      eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
+    end
+    command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+    for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
+      eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
+    end
   end)
 
   it('returns 0 for non-existent files', function()
