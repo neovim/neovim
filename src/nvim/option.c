@@ -206,7 +206,6 @@ typedef struct vimoption {
                                 // local option: indirect option index
   char_u      *def_val[2];      // default values for variable (vi and vim)
   LastSet last_set;             // script in which the option was last set
-# define SCTX_INIT , { 0, 0, 0 }
 } vimoption_T;
 
 #define VI_DEFAULT  0       // def_val[VI_DEFAULT] is Vi default value
