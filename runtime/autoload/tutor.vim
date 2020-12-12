@@ -120,6 +120,12 @@ function! s:Locale()
         let l:lang = v:lang
     elseif $LC_ALL =~ '\a\a'
         let l:lang = $LC_ALL
+    elseif $LC_MESSAGES =~ '\a\a' || $LC_MESSAGES ==# "C"
+      " LC_MESSAGES=C can be used to explicitly ask for English messages while
+      " keeping LANG non-English; don't set l:lang then.
+      if $LC_MESSAGES =~ '\a\a'
+        let l:lang = $LC_MESSAGES
+      endif
     elseif $LANG =~ '\a\a'
         let l:lang = $LANG
     else
