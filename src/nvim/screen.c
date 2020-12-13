@@ -620,7 +620,7 @@ int update_screen(int type)
 
   /* Clear or redraw the command line.  Done last, because scrolling may
    * mess up the command line. */
-  if (clear_cmdline || redraw_cmdline) {
+  if (clear_cmdline || redraw_cmdline || redraw_mode) {
     showmode();
   }
 
@@ -6567,7 +6567,7 @@ bool skip_showmode(void)
       || msg_silent != 0
       || !redrawing()
       || (char_avail() && !KeyTyped)) {
-    redraw_cmdline = true;  // show mode later
+    redraw_mode = true;  // show mode later
     return true;
   }
   return false;
@@ -6578,6 +6578,7 @@ bool skip_showmode(void)
 // If clear_cmdline is TRUE, clear the rest of the cmdline.
 // If clear_cmdline is FALSE there may be a message there that needs to be
 // cleared only if a mode is shown.
+// If redraw_mode is true show or clear the mode.
 // Return the length of the message (0 if no message).
 int showmode(void)
 {
@@ -6724,10 +6725,11 @@ int showmode(void)
       need_clear = true;
     }
 
-    mode_displayed = TRUE;
-    if (need_clear || clear_cmdline)
+    mode_displayed = true;
+    if (need_clear || clear_cmdline || redraw_mode) {
       msg_clr_eos();
-    msg_didout = FALSE;                 /* overwrite this message */
+    }
+    msg_didout = false;  // overwrite this message
     length = msg_col;
     msg_col = 0;
     msg_no_more = false;
@@ -6736,6 +6738,9 @@ int showmode(void)
   } else if (clear_cmdline && msg_silent == 0) {
     // Clear the whole command line.  Will reset "clear_cmdline".
     msg_clr_cmdline();
+  } else if (redraw_mode) {
+    msg_pos_mode();
+    msg_clr_eos();
   }
 
   // NB: also handles clearing the showmode if it was emtpy or disabled
@@ -6752,6 +6757,7 @@ int showmode(void)
     win_redr_ruler(last, true);
   }
   redraw_cmdline = false;
+  redraw_mode = false;
   clear_cmdline = false;
 
   return length;

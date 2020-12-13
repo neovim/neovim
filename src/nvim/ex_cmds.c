@@ -3712,8 +3712,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               redraw_later(curwin, SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
-              if (msg_row == Rows - 1)
-                msg_didout = FALSE;                     /* avoid a scroll-up */
+              if (msg_row == Rows - 1) {
+                msg_didout = false;  // avoid a scroll-up
+              }
               msg_starthere();
               i = msg_scroll;
               msg_scroll = 0;                           /* truncate msg when
@@ -3732,8 +3733,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               typed = plain_vgetc();
               no_mapping--;
 
-              /* clear the question */
-              msg_didout = FALSE;               /* don't scroll up */
+              // clear the question
+              msg_didout = false;  // don't scroll up
               msg_col = 0;
               gotocmdline(TRUE);
 
