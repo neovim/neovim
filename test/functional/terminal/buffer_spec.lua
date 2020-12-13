@@ -149,6 +149,7 @@ describe(':terminal buffer', function()
   end)
 
   it('can be deleted', function()
+    local tbuf = eval('bufnr("%")')
     feed('<c-\\><c-n>:bd!<cr>')
     screen:expect([[
       ^                                                  |
@@ -157,8 +158,10 @@ describe(':terminal buffer', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      :bd!                                              |
+                                                        |
     ]])
+    neq(tbuf, eval('bufnr("%")'))
+    tbuf = eval('bufnr("%")')
     feed_command('bnext')
     screen:expect([[
       ^                                                  |
@@ -169,6 +172,7 @@ describe(':terminal buffer', function()
       {4:~                                                 }|
       :bnext                                            |
     ]])
+    eq(tbuf, eval('bufnr("%")'))
   end)
 
   it('handles loss of focus gracefully', function()

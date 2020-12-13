@@ -50,7 +50,7 @@ describe(':terminal', function()
                                                         |
                                                         |
       ==========                                        |
-      :2split                                           |
+                                                        |
     ]])
     feed_command('wincmd p')
     screen:expect([[
@@ -63,7 +63,7 @@ describe(':terminal', function()
                                                         |
                                                         |
       ==========                                        |
-      :wincmd p                                         |
+                                                        |
     ]])
   end)
 

@@ -4608,6 +4608,10 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
 
   maketitle();
   curwin->w_redr_status = true;
+  if (bt_terminal(wp->w_buffer)) {
+    // terminal is likely in another mode
+    redraw_mode = true;
+  }
   redraw_tabline = true;
   if (restart_edit) {
     redraw_later(curwin, VALID);  // causes status line redraw

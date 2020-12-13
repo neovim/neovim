@@ -1,5 +1,7 @@
 " Tests for window cmd (:wincmd, :split, :vsplit, :resize and etc...)
 
+so check.vim
+
 func Test_window_cmd_ls0_with_split()
   set ls=0
   set splitbelow
@@ -521,6 +523,33 @@ func Test_access_freed_mem()
   all
   au!
   bwipe xxx
+endfunc
+
+func Test_insert_cleared_on_switch_to_term()
+  CheckFeature terminal
+
+  set showmode
+  terminal
+  wincmd p
+
+  call feedkeys("i\<C-O>", 'ntx')
+  redraw
+
+  " The "-- (insert) --" indicator should be visible.
+  let chars = map(range(1, &columns), 'nr2char(screenchar(&lines, v:val))')
+  let str = trim(join(chars, ''))
+  call assert_equal('-- (insert) --', str)
+
+  call feedkeys("\<C-W>p", 'ntx')
+  redraw
+
+  " The "-- (insert) --" indicator should have been cleared.
+  let chars = map(range(1, &columns), 'nr2char(screenchar(&lines, v:val))')
+  let str = trim(join(chars, ''))
+  call assert_equal('', str)
+
+  set showmode&
+  %bw!
 endfunc
 
 func Test_visual_cleared_after_window_split()
