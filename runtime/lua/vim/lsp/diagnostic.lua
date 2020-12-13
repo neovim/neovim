@@ -706,6 +706,8 @@ end
 function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   opts = opts or {}
 
+  local severity_limit = opts.severity_limit
+
   client_id = get_client_id(client_id)
   diagnostic_ns = diagnostic_ns or M._get_diagnostic_namespace(client_id)
 
@@ -721,6 +723,14 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   end
 
   for line, line_diagnostics in pairs(buffer_line_diagnostics) do
+    if severity_limit then
+      local filter_level = to_severity(opts.severity_limit)
+      line_diagnostics = vim.tbl_filter(
+        function(t) return t.severity <= filter_level end,
+        line_diagnostics
+      )
+    end
+
     local virt_texts = M.get_virtual_text_chunks_for_line(bufnr, line, line_diagnostics, opts)
 
     if virt_texts then
