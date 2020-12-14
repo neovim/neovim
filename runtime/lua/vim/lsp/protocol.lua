@@ -292,8 +292,9 @@ local constants = {
 }
 
 for k, v in pairs(constants) do
-  vim.tbl_add_reverse_lookup(v)
-  protocol[k] = v
+  local tbl = vim.deepcopy(v)
+  vim.tbl_add_reverse_lookup(tbl)
+  protocol[k] = tbl
 end
 
 --[=[
@@ -623,7 +624,11 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = vim.tbl_values(protocol.CodeActionKind);
+            valueSet = (function()
+              local res = vim.tbl_values(protocol.CodeActionKind)
+              table.sort(res)
+              return res
+            end)();
           };
         };
       };
@@ -643,7 +648,7 @@ function protocol.make_client_capabilities()
         completionItemKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.CompletionItemKind) do
+            for k in ipairs(protocol.CompletionItemKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -689,7 +694,7 @@ function protocol.make_client_capabilities()
         symbolKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.SymbolKind) do
+            for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -708,7 +713,7 @@ function protocol.make_client_capabilities()
         symbolKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.SymbolKind) do
+            for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
