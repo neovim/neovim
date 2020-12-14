@@ -41,10 +41,27 @@ function! s:check_config() abort
           \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
   endif
 
-  let shadafile = (empty(&shadafile) || &shadafile ==# 'NONE') ? stdpath('data').'/shada/main.shada' : &shadafile
-  if !empty(shadafile) && (!filereadable(shadafile) || !filewritable(shadafile))
+  let writeable = v:true
+  let shadafile = substitute(matchstr(
+        \ split(&shada, ',')[-1], '^n.\+'), '^n', '', '')
+  let shadafile = empty(&shadafile) ? empty(shadafile) ?
+        \ stdpath('data').'/shada/main.shada' : expand(shadafile)
+        \ : &shadafile ==# 'NONE' ? '' : &shadafile
+  if !empty(shadafile) && empty(glob(shadafile))
+    " Since this may be the first time neovim has been run, we will try to
+    " create a shada file
+    try
+      wshada
+    catch /.*/
+      let writeable = v:false
+    endtry
+  endif
+  if !writeable || (!empty(shadafile) &&
+        \ (!filereadable(shadafile) || !filewritable(shadafile)))
     let ok = v:false
-    call health#report_error('shada file is not '.(filereadable(shadafile) ? 'writeable' : 'readable').":\n".shadafile)
+    call health#report_error('shada file is not '.
+          \ ((!writeable || filereadable(shadafile)) ?
+          \ 'writeable' : 'readable').":\n".shadafile)
   endif
 
   if ok
