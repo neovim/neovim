@@ -4,7 +4,6 @@
 /*
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
-
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -275,7 +274,7 @@ static void init_incsearch_state(incsearch_state_T *s)
 // Return true when 'incsearch' highlighting is to be done.
 // Sets search_first_line and search_last_line to the address range.
 static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
-                                      int *skiplen, int *patlen)
+                                      int *skiplen, int *patlen, bool *issub)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u *cmd;
@@ -289,7 +288,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   pos_T save_cursor;
   bool use_last_pat;
   bool retval = false;
-
+  *issub = false;
   *skiplen = 0;
   *patlen = ccline.cmdlen;
 
@@ -338,6 +337,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
     } else if (*cmd == 's' && cmd[1] == 'n') {
       p_magic = false;
     }
+    *issub = true;
   } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
     if (*p == '!') {
@@ -367,11 +367,14 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   } else {
     goto theend;
   }
-
+  
   p = skipwhite(p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
+  //We need to fool the search function if the delim not a backslash.
+  if (*issub && delim == '/'){
+	*issub = false;
+  }
   end = skip_regexp(p, delim, p_magic, NULL);
-
   use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
     goto theend;
@@ -393,7 +396,6 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   // found a non-empty pattern or //
   *skiplen = (int)(p - ccline.cmdbuff);
   *patlen = (int)(end - p);
-
   // parse the address range
   save_cursor = curwin->w_cursor;
   curwin->w_cursor = s->search_start;
@@ -430,12 +432,13 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   int skiplen, patlen;
   char_u next_char;
   char_u use_last_pat;
-
+  bool issub = false;
+  char_u *query;
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen, &issub)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
@@ -489,9 +492,43 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    found = do_search(NULL, firstc == ':' ? '/' : firstc,
-                      ccline.cmdbuff + skiplen, count,
-                      search_flags, &sia);
+   
+    // in the case of substitute searches, '/' does not necessarily act as
+    // a delimiter, copy the search pattern and add a backslash to fool do_search
+    if(issub){
+      
+      // get the count of '/' in the pattern
+      unsigned int fslashc = 0;
+      unsigned int i = 0;
+      unsigned int j = 0;
+      
+      for(i=0; i<strlen((const char*)(ccline.cmdbuff+skiplen)); i++){
+        if (*(ccline.cmdbuff+skiplen+i) == '/'){
+          fslashc+=1;
+        }
+      }
+      
+      // copy the pattern with inserted backslashes
+      query = calloc(strlen((const char*)(ccline.cmdbuff+skiplen)+fslashc), 
+		      	    sizeof(char_u));
+      
+      for(i=0; i<strlen((const char*)(ccline.cmdbuff+skiplen)); i++){
+        if (*(ccline.cmdbuff+skiplen+i) == '/'){
+	  query[j++] = '\\';
+	}
+	query[j++] = *(ccline.cmdbuff+skiplen+i);
+      }
+      
+      found = do_search(NULL, firstc == ':' ? '/' : firstc, query, count,
+                        search_flags, &sia);
+      free(query);
+    }
+    else{
+      found = do_search(NULL, firstc == ':' ? '/' : firstc,
+	                ccline.cmdbuff + skiplen, count,
+			search_flags, &sia);
+    }
+    
     ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;
     if (curwin->w_cursor.lnum < search_first_line
@@ -580,13 +617,13 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
-
+  bool issubdummy = false;
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   // Add a character from under the cursor for 'incsearch'
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen, &issubdummy)) {
     restore_last_search_pattern();
     return FAIL;
   }
@@ -1461,12 +1498,12 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
-
+  bool issubdummy = false;
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen, &issubdummy)) {
     restore_last_search_pattern();
     return OK;
   }

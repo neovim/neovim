@@ -205,6 +205,24 @@ describe('highlight defaults', function()
     [1] = {bold = true}})
   end)
 
+  --Regression Test STASEN TODO
+  it('Substitute with delimiter', function()
+    screen:try_resize(15,4)
+    feed('ihello/world<esc>')
+    feed('gg:%s,lo/.o') 
+    screen:expect([[
+      hel{3:lo/wo}rld    |
+      {1:~              }|
+      {1:~              }|
+      :%s,lo/.o^      |
+    ]], {
+      [1] = {bold=true, foreground=Screen.colors.Blue},
+      [2] = {background = Screen.colors.Yellow}, --search
+      [3] = {reverse = true},
+      [4] = {foreground = Screen.colors.red} --message
+      })
+  end)
+
   it('end of file markers', function()
     screen:try_resize(53, 4)
     screen:expect([[
