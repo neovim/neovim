@@ -205,7 +205,7 @@ describe('highlight defaults', function()
     [1] = {bold = true}})
   end)
 
-  --Regression Test STASEN TODO
+  --Regression Test for issue #13141
   it('Substitute with delimiter', function()
     screen:try_resize(15,4)
     feed('ihello/world<esc>')
