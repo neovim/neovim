@@ -516,7 +516,16 @@ static void may_do_incsearch_highlighting(int firstc, long count,
         if (*(ccline.cmdbuff+skiplen+i) == '/'){
 	  query[j++] = '\\';
 	}
-	query[j++] = *(ccline.cmdbuff+skiplen+i);
+	else if(*(ccline.cmdbuff+skiplen+i) == '\\' &&
+		  i+1 < strlen((const char*)(ccline.cmdbuff+skiplen)) &&
+		*(ccline.cmdbuff+skiplen+i+1) == '/'){
+	  // if the delimiter is already present, skip this one.
+	  query[j++] = '\\';
+	  query[j++] = '/';
+	  i+=1;
+	  continue;
+	}
+        query[j++] = *(ccline.cmdbuff+skiplen+i);
       }
       
       found = do_search(NULL, firstc == ':' ? '/' : firstc, query, count,
