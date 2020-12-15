@@ -121,6 +121,8 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
+///             - preview: also attach to command preview (i.e. 'inccommand')
+///               events.
 /// @param[out] err Error details, if any
 /// @return False if attach failed (invalid parameter, or buffer isn't loaded);
 ///         otherwise True. TODO: LUA_API_NO_EVAL
@@ -176,6 +178,12 @@ Boolean nvim_buf_attach(uint64_t channel_id,
         goto error;
       }
       cb.utf_sizes = v->data.boolean;
+    } else if (is_lua && strequal("preview", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "preview must be boolean");
+        goto error;
+      }
+      cb.preview = v->data.boolean;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;

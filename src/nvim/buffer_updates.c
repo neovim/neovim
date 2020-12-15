@@ -237,7 +237,7 @@ void buf_updates_send_changes(buf_T *buf,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF) {
+    if (cb.on_lines != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
       Array args = ARRAY_DICT_INIT;
       Object items[8];
       args.size = 6;  // may be increased to 8 below
@@ -298,7 +298,7 @@ void buf_updates_send_splice(
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_bytes != LUA_NOREF) {
+    if (cb.on_bytes != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
       FIXED_TEMP_ARRAY(args, 11);
 
       // the first argument is always the buffer handle

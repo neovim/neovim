@@ -25,14 +25,14 @@ local function attach_buffer(evname)
     local evname = ...
     local events = {}
 
-    function test_register(bufnr, id, changedtick, utf_sizes)
+    function test_register(bufnr, id, changedtick, utf_sizes, preview)
       local function callback(...)
         table.insert(events, {id, ...})
         if test_unreg == id then
           return true
         end
       end
-      local opts = {[evname]=callback, on_detach=callback, utf_sizes=utf_sizes}
+      local opts = {[evname]=callback, on_detach=callback, utf_sizes=utf_sizes, preview=preview}
       if changedtick then
         opts.on_changedtick = callback
       end
@@ -290,7 +290,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     if verify then
       meths.buf_get_offset(0, meths.buf_line_count(0))
     end
-    exec_lua("return test_register(...)", 0, "test1",false, nil)
+    exec_lua("return test_register(...)", 0, "test1", false, false, true)
     meths.buf_get_changedtick(0)
 
     local verify_name = "test1"
@@ -492,6 +492,23 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 5, 2, 0, 7, 0, 0, 0, 0, 1, 1 };
       }
 
+    end)
+
+    it('inccomand=nosplit and substitute', function()
+      if verify then pending("Verification can't be done when previewing") end
+
+      local check_events = setup_eventcheck(verify, {"abcde"})
+      meths.set_option('inccommand', 'nosplit')
+
+      feed ':%s/bcd/'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 };
+      }
+
+      feed 'a'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
+      }
     end)
   end
 

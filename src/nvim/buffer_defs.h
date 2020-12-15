@@ -491,9 +491,10 @@ typedef struct {
   LuaRef on_changedtick;
   LuaRef on_detach;
   bool utf_sizes;
+  bool preview;
 } BufUpdateCallbacks;
 #define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                    LUA_NOREF, false }
+                                    LUA_NOREF, false, false }
 
 EXTERN int curbuf_splice_pending INIT(= 0);
 
