@@ -82,6 +82,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#include "auto/config.h"
+
 #include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/change.h"

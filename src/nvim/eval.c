@@ -7,6 +7,8 @@
 
 #include <math.h>
 
+#include "auto/config.h"
+
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
