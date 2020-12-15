@@ -258,15 +258,15 @@ end
 ---
 --@param text_document_edit (table) a `TextDocumentEdit` object
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
-function M.apply_text_document_edit(text_document_edit)
+function M.apply_text_document_edit(text_document_edit, from_list)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
 
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
-  if text_document.version
+  if not from_list and (text_document.version
       and M.buf_versions[bufnr]
-      and M.buf_versions[bufnr] > text_document.version then
+      and M.buf_versions[bufnr] > text_document.version) then
     print("Buffer ", text_document.uri, " newer than edits.")
     return
   end
@@ -459,12 +459,14 @@ end
 -- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
+    local subsequent_applies = false
     for _, change in ipairs(workspace_edit.documentChanges) do
       if change.kind then
         -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
-        M.apply_text_document_edit(change)
+        M.apply_text_document_edit(change, subsequent_applies)
+        subsequent_applies = true
       end
     end
     return
