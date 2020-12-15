@@ -5,6 +5,8 @@
 
 #include <uv.h>
 
+#include "auto/config.h"
+
 #include "nvim/ascii.h"
 #include "nvim/os/os.h"
 #include "nvim/garray.h"
