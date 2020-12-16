@@ -3824,17 +3824,21 @@ static buf_T *qf_find_buf(qf_info_T *qi)
   return NULL;
 }
 
-/// Update the w:quickfix_title variable in the quickfix/location list window
+/// Update the w:quickfix_title variable in the quickfix/location list window in
+/// all the tab pages.
 static void qf_update_win_titlevar(qf_info_T *qi)
+  FUNC_ATTR_NONNULL_ALL
 {
-  win_T *win;
+  qf_list_T *const qfl = qf_get_curlist(qi);
+  win_T *const save_curwin = curwin;
 
-  if ((win = qf_find_win(qi)) != NULL) {
-    win_T *curwin_save = curwin;
-    curwin = win;
-    qf_set_title_var(qf_get_curlist(qi));
-    curwin = curwin_save;
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    if (is_qf_win(win, qi)) {
+      curwin = win;
+      qf_set_title_var(qfl);
+    }
   }
+  curwin = save_curwin;
 }
 
 // Find the quickfix buffer.  If it exists, update the contents.
