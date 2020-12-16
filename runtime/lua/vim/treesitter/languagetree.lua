@@ -289,7 +289,7 @@ function LanguageTree:_get_injections()
     local root_node = tree:root()
     local start_line, _, end_line, _ = root_node:range()
 
-    for pattern, match in self._injection_query:iter_matches(root_node, self._source, start_line, end_line+1) do
+    for pattern, match, metadata in self._injection_query:iter_matches(root_node, self._source, start_line, end_line+1) do
       local lang = nil
       local injection_node = nil
       local combined = false
@@ -298,9 +298,9 @@ function LanguageTree:_get_injections()
       -- using a tag with the language, for example
       -- @javascript
       for id, node in pairs(match) do
+        local data = metadata[id]
         local name = self._injection_query.captures[id]
-        -- TODO add a way to offset the content passed to the parser.
-        -- Needed to shave off leading quotes and things of that nature.
+        local offset_range = data and data.offset
 
         -- Lang should override any other language tag
         if name == "language" then
@@ -308,7 +308,7 @@ function LanguageTree:_get_injections()
         elseif name == "combined" then
           combined = true
         elseif name == "content" then
-          injection_node = node
+          injection_node = offset_range or node
         -- Ignore any tags that start with "_"
         -- Allows for other tags to be used in matches
         elseif string.sub(name, 1, 1) ~= "_" then
@@ -317,7 +317,7 @@ function LanguageTree:_get_injections()
           end
 
           if not injection_node then
-            injection_node = node
+            injection_node = offset_range or node
           end
         end
       end

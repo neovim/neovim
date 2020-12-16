@@ -871,12 +871,12 @@ local hl_query = [[
 
     before_each(function()
       insert([[
-        int x = INT_MAX;
-        #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-        #define READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
-        #define VALUE 0
-        #define VALUE1 1
-        #define VALUE2 2
+int x = INT_MAX;
+#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+#define READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+#define VALUE 123
+#define VALUE1 123
+#define VALUE2 123
       ]])
     end)
 
@@ -891,12 +891,12 @@ local hl_query = [[
         eq("table", exec_lua("return type(parser:children().c)"))
         eq(5, exec_lua("return #parser:children().c:trees()"))
         eq({
-          {0, 2, 7, 0},   -- root tree
-          {3, 16, 3, 17}, -- VALUE 0
-          {4, 17, 4, 18}, -- VALUE1 1
-          {5, 17, 5, 18}, -- VALUE2 2
-          {1, 28, 1, 67}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
-          {2, 31, 2, 70}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+          {0, 0, 7, 0},   -- root tree
+          {3, 14, 3, 17}, -- VALUE 123
+          {4, 15, 4, 18}, -- VALUE1 123
+          {5, 15, 5, 18}, -- VALUE2 123
+          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -912,12 +912,32 @@ local hl_query = [[
         eq("table", exec_lua("return type(parser:children().c)"))
         eq(2, exec_lua("return #parser:children().c:trees()"))
         eq({
-          {0, 2, 7, 0},   -- root tree
-          {3, 16, 5, 18}, -- VALUE 0
-                          -- VALUE1 1
-                          -- VALUE2 2
-          {1, 28, 2, 70}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {0, 0, 7, 0},   -- root tree
+          {3, 14, 5, 18}, -- VALUE 123
+                          -- VALUE1 123
+                          -- VALUE2 123
+          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+        }, get_ranges())
+      end)
+    end)
+
+    describe("when using the offset directive", function()
+      it("should shift the range by the directive amount", function()
+        exec_lua([[
+        parser = vim.treesitter.get_parser(0, "c", {
+          queries = {
+            c = "(preproc_def ((preproc_arg) @c (#offset! @c 0 2 0 -1))) (preproc_function_def value: (preproc_arg) @c)"}})
+        ]])
+
+        eq("table", exec_lua("return type(parser:children().c)"))
+        eq({
+          {0, 0, 7, 0},   -- root tree
+          {3, 15, 3, 16}, -- VALUE 123
+          {4, 16, 4, 17}, -- VALUE1 123
+          {5, 16, 5, 17}, -- VALUE2 123
+          {1, 26, 1, 65}, -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+          {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -942,6 +962,54 @@ int x = INT_MAX;
       ]])
 
       eq(result, true)
+    end)
+  end)
+
+  describe("when getting/setting match data", function()
+    describe("when setting for the whole match", function()
+      it("should set/get the data correctly", function()
+        insert([[
+          int x = 3;
+        ]])
+
+        local result = exec_lua([[
+        local result
+
+        query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! "key" "value"))')
+        parser = vim.treesitter.get_parser(0, "c")
+
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
+          result = metadata.key
+        end
+
+        return result
+        ]])
+
+        eq(result, "value")
+      end)
+    end)
+
+    describe("when setting for a capture match", function()
+      it("should set/get the data correctly", function()
+        insert([[
+          int x = 3;
+        ]])
+
+        local result = exec_lua([[
+        local result
+
+        query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value"))')
+        parser = vim.treesitter.get_parser(0, "c")
+
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
+          result = metadata[pattern].key
+        end
+
+        return result
+        ]])
+
+        eq(result, "value")
+      end)
     end)
   end)
 end)
