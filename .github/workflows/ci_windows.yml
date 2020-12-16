@@ -10,7 +10,7 @@ env:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: windows-2016
     strategy:
       matrix:
         config: [ MINGW_64-gcov, MINGW_32, MSVC_64, MSVC_32 ]
@@ -22,6 +22,19 @@ jobs:
         with:
           path: C:\projects\nvim-deps
           key: ${{ matrix.config }}-${{ hashFiles('third-party\**') }}
+
+      - uses: actions/setup-python@v2
+        with:
+          pyhon-version: '2.7'
+
+      - uses: actions/setup-python@v2
+        with:
+          pyhon-version: '3.5'
+
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
 
       - name: Run CI
         run: powershell ci\build.ps1
