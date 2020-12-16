@@ -50,7 +50,7 @@ function M._create_parser(bufnr, lang, opts)
     end
   end
 
-  a.nvim_buf_attach(self.bufnr, false, {on_bytes=bytes_cb, on_detach=detach_cb})
+  a.nvim_buf_attach(self.bufnr, false, {on_bytes=bytes_cb, on_detach=detach_cb, preview=true})
 
   self:parse()
 
