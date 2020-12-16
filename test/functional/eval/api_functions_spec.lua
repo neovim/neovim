@@ -47,6 +47,10 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
+  it('cannot change texts if textlocked', function()
+    command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
+    eq('Vim(call):E5555: API call: E523: Not allowed here', pcall_err(command, "normal! yy"))
+  end)
 
   it("use buffer numbers and windows ids as handles", function()
     local screen = Screen.new(40, 8)
