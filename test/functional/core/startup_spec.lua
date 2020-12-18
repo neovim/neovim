@@ -464,15 +464,23 @@ describe('user config init', function()
     eq(init_lua_path, eval('$MYVIMRC'))
   end)
 
-  it('loads .exrc from cwd', function()
-    local exrc_path = '.exrc'
-    write_file(exrc_path, [[
-      let g:from_exrc = 1
-    ]])
 
-    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
-    eq(1, eval('g:from_exrc'))
-    os.remove(exrc_path)
+  describe 'with existing .exrc in cwd'(function()
+    local exrc_path = '.exrc'
+    before_each(function()
+      write_file(exrc_path, [[
+        let g:from_exrc = 1
+        ]])
+    end)
+
+    after_each(function()
+      os.remove(exrc_path)
+    end)
+
+    it('loads .exrc', function()
+      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+      eq(1, eval('g:from_exrc'))
+    end)
   end)
 
   describe 'with explicitly provided config'(function()
