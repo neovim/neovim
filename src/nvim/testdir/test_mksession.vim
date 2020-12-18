@@ -223,9 +223,9 @@ endfunc
 func Test_mksession_lcd_multiple_tabs()
   tabnew
   tabnew
-  lcd
+  lcd .
   tabfirst
-  lcd
+  lcd .
   mksession! Xtest_mks.out
   tabonly
   source Xtest_mks.out
