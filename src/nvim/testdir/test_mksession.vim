@@ -220,6 +220,53 @@ func Test_mksession_one_buffer_two_windows()
   call delete('Xtest_mks.out')
 endfunc
 
+func Test_mksession_lcd_multiple_tabs()
+  tabnew
+  tabnew
+  lcd
+  tabfirst
+  lcd
+  mksession! Xtest_mks.out
+  tabonly
+  source Xtest_mks.out
+  call assert_true(haslocaldir(), 'Tab 1 localdir')
+  tabnext 2
+  call assert_true(!haslocaldir(), 'Tab 2 localdir')
+  tabnext 3
+  call assert_true(haslocaldir(), 'Tab 3 localdir')
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_blank_tabs()
+  tabnew
+  tabnew
+  tabnew
+  tabnext 3
+  mksession! Xtest_mks.out
+  tabnew
+  tabnew
+  tabnext 2
+  source Xtest_mks.out
+  call assert_equal(4, tabpagenr('$'), 'session restore should restore number of tabs')
+  call assert_equal(3, tabpagenr(), 'session restore should restore the active tab')
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_blank_windows()
+  split
+  split
+  split
+  3 wincmd w
+  mksession! Xtest_mks.out
+  split
+  split
+  2 wincmd w
+  source Xtest_mks.out
+  call assert_equal(4, winnr('$'), 'session restore should restore number of windows')
+  call assert_equal(3, winnr(), 'session restore should restore the active window')
+  call delete('Xtest_mks.out')
+endfunc
+
 if has('extra_search')
 
 func Test_mksession_hlsearch()
