@@ -613,21 +613,13 @@ static int makeopens(FILE *fd, char_u *dirnow)
   if ((ssop_flags & SSOP_TABPAGES)) {
     // Similar to ses_win_rec() below, populate the tab pages first so
     // later local options won't be copied to the new tabs.
-    for (tabnr = 1;; tabnr++) {
-      const tabpage_T *const tp = find_tabpage(tabnr);
-
-      if (tp == NULL) {  // done all tab pages
-        break;
-      }
-      if (tabnr > 1 && put_line(fd, "tabnew") == FAIL) {
+    FOR_ALL_TABS(tp) {
+      if (tp->tp_next != NULL && put_line(fd, "tabnew") == FAIL) {
         return FAIL;
       }
     }
 
-    const int num_tabs = tabnr - 1;
-    if (num_tabs > 1
-        && (fprintf(fd, "tabnext -%d", num_tabs - 1) < 0
-            || put_eol(fd) == FAIL)) {
+    if (first_tabpage->tp_next != NULL && put_line(fd, "tabrewind") == FAIL) {
       return FAIL;
     }
   }
