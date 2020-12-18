@@ -128,6 +128,7 @@ func Test_mksession()
   call delete('Xtest_mks.out')
   call delete(tmpfile)
   let &wrap = wrap_save
+  set sessionoptions&
 endfunc
 
 func Test_mksession_winheight()
@@ -154,7 +155,7 @@ func Test_mksession_rtp()
     return
   endif
   new
-  set sessionoptions+=options
+  set sessionoptions&vi
   let _rtp=&rtp
   " Make a real long (invalid) runtimepath value,
   " that should exceed PATH_MAX (hopefully)
@@ -174,6 +175,7 @@ func Test_mksession_rtp()
   call assert_equal(expected, li)
 
   call delete('Xtest_mks.out')
+  set sessionoptions&
 endfunc
 
 " Verify that arglist is stored correctly to the session file.
@@ -217,6 +219,25 @@ func Test_mksession_one_buffer_two_windows()
   bwipe!
   call delete('Xtest_mks.out')
 endfunc
+
+if has('extra_search')
+
+func Test_mksession_hlsearch()
+  set sessionoptions&vi
+  set hlsearch
+  mksession! Xtest_mks.out
+  nohlsearch
+  source Xtest_mks.out
+  call assert_equal(1, v:hlsearch, 'session should restore search highlighting state')
+  nohlsearch
+  mksession! Xtest_mks.out
+  source Xtest_mks.out
+  call assert_equal(0, v:hlsearch, 'session should restore search highlighting state')
+  set sessionoptions&
+  call delete('Xtest_mks.out')
+endfunc
+
+endif
 
 " Test :mkview with a file argument.
 func Test_mkview_file()
