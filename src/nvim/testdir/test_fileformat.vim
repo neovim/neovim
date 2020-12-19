@@ -36,9 +36,9 @@ endfunc
 func Test_fileformat_plusplus_read()
   new
   call setline(1, ['one', 'two', 'three'])
-  set ff=unix
   w ++ff=dos Xfile1
   enew!
+  set ff=unix
   " A :read doesn't change the fileformat, but does apply to the read lines.
   r ++fileformat=unix Xfile1
   call assert_equal('unix', &fileformat)
