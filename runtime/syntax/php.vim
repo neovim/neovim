@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language: php PHP 3/4/5/7
-" Maintainer: Jason Woofenden <jason@jasonwoof.com>
-" Last Change: Oct 19, 2019
-" URL: https://jasonwoof.com/gitweb/?p=vim-syntax.git;a=blob;f=php.vim;hb=HEAD
-" Former Maintainers: Peter Hodge <toomuchphp-vim@yahoo.com>
+" Maintainer: Tyson Andre <tysonandre775@hotmail.com>
+" Last Change: May 11, 2020
+" URL: https://github.com/TysonAndre/vim-syntax
+" Former Maintainers: 
+"         Jason Woofenden <jason@jasonwoof.com>
+"         Peter Hodge <toomuchphp-vim@yahoo.com>
 "         Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 "
 " Note: If you are using a colour terminal with dark background, you will
@@ -314,7 +316,7 @@ syn region phpIdentifierComplexP matchgroup=phpParent start="\[" end="]" contain
   " define a cluster to get all interpolation syntaxes for double-quoted strings
   syn cluster phpInterpDouble contains=phpInterpSimple,phpInterpSimpleCurly,phpInterpDollarCurly1,phpInterpDollarCurly2,phpInterpBogusDollarCurley,phpInterpComplex
 
-" Methoden
+" Methods
 syn match phpMethodsVar "->\h\w*" contained contains=phpMethods,phpMemberSelector display
 
 " Include
@@ -328,14 +330,14 @@ syn keyword phpBoolean true false contained
 
 " Float
 " Refer to: https://www.php.net/manual/en/language.types.float.php
-syn match phpFloat "\%(\w\|\.\)\@<!\%(\d\|\.\)*\d\%(\d\|\.\)*\%([eE][+-]\=\%(\d\|\.\)\+\)\=\%(\w\|\.\)\@!" contained contains=phpFloatError display
-syn match phpFloatError "[eE.].*\." contained display
+syn match phpFloat "\%(\w\|\.\)\@<!\%(\d_\?\|\.\)*\d\%(\d\|_\|\.\)*\%([eE][+-]\=\%(\d\|_\|\.\)\+\)\=\%(\w\|\.\)\@!" contained contains=phpFloatError display
+syn match phpFloatError "\%([eE.][0-9._+-]*\.\|__\|_\(\>\|[eE]\)\|\(\>\|[eE]\)_\)" contained display
 
 " Number
-syn match phpNumber "\%(\.\)\@<!\<\%([1-9]\d*\|0\|0[xX]\x\+\)\>\%(\.\)\@!" contained display
+syn match phpNumber "\%(\.\)\@<!\<\%([1-9]\d*\|0\|0[xX]\(\x_\?\)*\x\)\>\%(\.\)\@!" contained display
 syn match phpNumber "\%(\.\)\@<!\<0\d\+\>\%(\.\)\@!" contained contains=phpOctalError display
 syn match phpBinaryError "[2-9]" contained display
-syn match phpNumber "\%(\.\)\@<!\<0[bB]\d\+\>\%(\.\)\@!" contained contains=phpBinaryError display
+syn match phpNumber "\%(\.\)\@<!\<0[bB]\(\d_\?\)*\d\>\%(\.\)\@!" contained contains=phpBinaryError display
 
 " Backslash escapes
 syn case match
@@ -442,6 +444,7 @@ if exists("php_folding") && php_folding==1
 " match one line constructs here and skip them at folding
   syn keyword phpSCKeyword abstract final private protected public static contained
   syn keyword phpFCKeyword function contained
+  syn keyword phpDefine fn contained
   syn keyword phpStorageClass global contained
   syn match phpDefine "\(\s\|^\)\(abstract\s\+\|final\s\+\|private\s\+\|protected\s\+\|public\s\+\|static\s\+\)*function\(\s\+.*[;}]\)\@=" contained contains=phpSCKeyword
   syn match phpStructure "\(\s\|^\)\(abstract\s\+\|final\s\+\)*\(trait\|class\)\(\s\+.*}\)\@=" contained
@@ -459,7 +462,7 @@ if exists("php_folding") && php_folding==1
   syn region phpFoldCatch matchgroup=Exception start="^\z(\s*\)catch\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction contained transparent fold extend
   syn region phpFoldTry matchgroup=Exception start="^\z(\s*\)try\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction contained transparent fold extend
 else
-  syn keyword phpDefine function contained
+  syn keyword phpDefine function fn contained
   syn keyword phpStructure abstract class trait interface contained
   syn keyword phpException catch throw try finally contained
   syn keyword phpStorageClass final global private protected public static contained
