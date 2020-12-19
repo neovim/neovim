@@ -55,6 +55,7 @@ jobs:
       - name: Install brew packages
         if: matrix.os == 'osx'
         run: |
+          rm -f /usr/local/bin/2to3
           brew update >/dev/null
           brew install automake ccache cpanminus ninja
           brew upgrade

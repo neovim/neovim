@@ -3052,57 +3052,57 @@ static bool find_is_eval_item(
   return false;
 }
 
-/*
- * Find the identifier under or to the right of the cursor.
- * "find_type" can have one of three values:
- * FIND_IDENT:   find an identifier (keyword)
- * FIND_STRING:  find any non-white string
- * FIND_IDENT + FIND_STRING: find any non-white string, identifier preferred.
- * FIND_EVAL:	 find text useful for C program debugging
- *
- * There are three steps:
- * 1. Search forward for the start of an identifier/string.  Doesn't move if
- *    already on one.
- * 2. Search backward for the start of this identifier/string.
- *    This doesn't match the real Vi but I like it a little better and it
- *    shouldn't bother anyone.
- * 3. Search forward to the end of this identifier/string.
- *    When FIND_IDENT isn't defined, we backup until a blank.
- *
- * Returns the length of the string, or zero if no string is found.
- * If a string is found, a pointer to the string is put in "*string".  This
- * string is not always NUL terminated.
- */
-size_t find_ident_under_cursor(char_u **string, int find_type)
+// Find the identifier under or to the right of the cursor.
+// "find_type" can have one of three values:
+// FIND_IDENT:   find an identifier (keyword)
+// FIND_STRING:  find any non-white text
+// FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
+// FIND_EVAL:  find text useful for C program debugging
+//
+// There are three steps:
+// 1. Search forward for the start of an identifier/text.  Doesn't move if
+//    already on one.
+// 2. Search backward for the start of this identifier/text.
+//    This doesn't match the real Vi but I like it a little better and it
+//    shouldn't bother anyone.
+// 3. Search forward to the end of this identifier/text.
+//    When FIND_IDENT isn't defined, we backup until a blank.
+//
+// Returns the length of the text, or zero if no text is found.
+// If text is found, a pointer to the text is put in "*text".  This
+// points into the current buffer line and is not always NUL terminated.
+size_t find_ident_under_cursor(char_u **text, int find_type)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return find_ident_at_pos(curwin, curwin->w_cursor.lnum,
-      curwin->w_cursor.col, string, find_type);
+                           curwin->w_cursor.col, text, NULL, find_type);
 }
 
 /*
  * Like find_ident_under_cursor(), but for any window and any position.
  * However: Uses 'iskeyword' from the current window!.
  */
-size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
-                         char_u **string, int find_type)
+size_t find_ident_at_pos(
+    win_T *wp,
+    linenr_T lnum,
+    colnr_T startcol,
+    char_u **text,
+    int *textcol,      // column where "text" starts, can be NULL
+    int find_type)
+  FUNC_ATTR_NONNULL_ARG(1, 4)
 {
-  char_u      *ptr;
-  int col = 0;                      /* init to shut up GCC */
+  int col = 0;         // init to shut up GCC
   int i;
   int this_class = 0;
   int prev_class;
   int prevcol;
   int bn = 0;                       // bracket nesting
 
-  /*
-   * if i == 0: try to find an identifier
-   * if i == 1: try to find any non-white string
-   */
-  ptr = ml_get_buf(wp->w_buffer, lnum, false);
-  for (i = (find_type & FIND_IDENT) ? 0 : 1; i < 2; ++i) {
-    /*
-     * 1. skip to start of identifier/string
-     */
+  // if i == 0: try to find an identifier
+  // if i == 1: try to find any non-white text
+  char_u *ptr = ml_get_buf(wp->w_buffer, lnum, false);
+  for (i = (find_type & FIND_IDENT) ? 0 : 1; i < 2; i++) {
+    // 1. skip to start of identifier/text
     col = startcol;
     while (ptr[col] != NUL) {
       // Stop at a ']' to evaluate "a[x]".
@@ -3120,7 +3120,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
     bn = ptr[col] == ']';
 
     //
-    // 2. Back up to start of identifier/string.
+    // 2. Back up to start of identifier/text.
     //
     // Remember class of character under cursor.
     if ((find_type & FIND_EVAL) && ptr[col] == ']') {
@@ -3143,7 +3143,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
       col = prevcol;
     }
 
-    // If we don't want just any old string, or we've found an
+    // If we don't want just any old text, or we've found an
     // identifier, stop searching.
     if (this_class > 2) {
       this_class = 2;
@@ -3154,7 +3154,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   }
 
   if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
-    // Didn't find an identifier or string.
+    // Didn't find an identifier or text.
     if (find_type & FIND_STRING) {
       EMSG(_("E348: No string under cursor"));
     } else {
@@ -3163,11 +3163,12 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
     return 0;
   }
   ptr += col;
-  *string = ptr;
+  *text = ptr;
+  if (textcol != NULL) {
+    *textcol = col;
+  }
 
-  /*
-   * 3. Find the end if the identifier/string.
-   */
+  // 3. Find the end if the identifier/text.
   bn = 0;
   startcol -= col;
   col = 0;
