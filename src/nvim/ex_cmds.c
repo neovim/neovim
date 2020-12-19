@@ -5248,8 +5248,10 @@ void ex_viusage(exarg_T *eap)
 /// @param tagname  Name of the tags file ("tags" for English, "tags-fr" for
 ///                 French)
 /// @param add_help_tags  Whether to add the "help-tags" tag
-static void helptags_one(char_u *const dir, const char_u *const ext,
-                         const char_u *const tagfname, const bool add_help_tags)
+/// @param ignore_writeerr  ignore write error
+static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
+                         bool add_help_tags, bool ignore_writeerr)
+  FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
   int filecount;
@@ -5293,7 +5295,9 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
 
   FILE *const fd_tags = os_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
-    EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
+    if (!ignore_writeerr) {
+      EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
+    }
     FreeWild(filecount, files);
     return;
   }
@@ -5441,7 +5445,9 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
 }
 
 /// Generate tags in one help directory, taking care of translations.
-static void do_helptags(char_u *dirname, bool add_help_tags)
+static void do_helptags(char_u *dirname, bool add_help_tags,
+                        bool ignore_writeerr)
+  FUNC_ATTR_NONNULL_ALL
 {
   int len;
   garray_T ga;
@@ -5523,17 +5529,17 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
       ext[1] = fname[5];
       ext[2] = fname[6];
     }
-    helptags_one(dirname, ext, fname, add_help_tags);
+    helptags_one(dirname, ext, fname, add_help_tags, ignore_writeerr);
   }
 
   ga_clear(&ga);
   FreeWild(filecount, files);
 }
 
-    static void
-helptags_cb(char_u *fname, void *cookie)
+static void helptags_cb(char_u *fname, void *cookie)
+  FUNC_ATTR_NONNULL_ALL
 {
-    do_helptags(fname, *(bool *)cookie);
+    do_helptags(fname, *(bool *)cookie, true);
 }
 
 /*
@@ -5562,7 +5568,7 @@ void ex_helptags(exarg_T *eap)
     if (dirname == NULL || !os_isdir(dirname)) {
       EMSG2(_("E150: Not a directory: %s"), eap->arg);
     } else {
-      do_helptags(dirname, add_help_tags);
+      do_helptags(dirname, add_help_tags, false);
     }
     xfree(dirname);
   }
