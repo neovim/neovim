@@ -641,7 +641,7 @@ void win_set_minimal_style(win_T *wp)
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
 
-  // foldcolumn: use 'auto'
+  // foldcolumn: use '0'
   if (wp->w_p_fdc[0] != '0') {
     xfree(wp->w_p_fdc);
     wp->w_p_fdc = (char_u *)xstrdup("0");
@@ -700,9 +700,10 @@ int win_fdccol_count(win_T *wp)
   const char *fdc = (const char *)wp->w_p_fdc;
 
   // auto:<NUM>
-  if (strncmp(fdc, "auto:", 5) == 0) {
+  if (strncmp(fdc, "auto", 4) == 0) {
+    const int fdccol = fdc[4] == ':' ? fdc[5] - '0' : 1;
     int needed_fdccols = getDeepestNesting(wp);
-    return MIN(fdc[5] - '0', needed_fdccols);
+    return MIN(fdccol, needed_fdccols);
   } else {
     return fdc[0] - '0';
   }
