@@ -686,3 +686,53 @@ func Test_v_argv()
   call assert_true(idx > 2)
   call assert_equal(['arg1', '--cmd', 'echo v:argv', '--cmd', 'q'']'], list[idx:])
 endfunc
+
+" Test the '-T' argument which sets the 'term' option.
+func Test_T_arg()
+  throw 'skipped: Nvim does not support "-T" argument'
+  CheckNotGui
+  let after =<< trim [CODE]
+    call writefile([&term], "Xtest_T_arg")
+    qall
+  [CODE]
+
+  for t in ['builtin_dumb', 'builtin_ansi']
+    if RunVim([], after, '-T ' .. t)
+      let lines = readfile('Xtest_T_arg')
+      call assert_equal([t], lines)
+    endif
+  endfor
+
+  call delete('Xtest_T_arg')
+endfunc
+
+" Test the '-x' argument to read/write encrypted files.
+func Test_x_arg()
+  CheckRunVimInTerminal
+  CheckFeature cryptv
+
+  " Create an encrypted file Xtest_x_arg.
+  let buf = RunVimInTerminal('-n -x Xtest_x_arg', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^Enter encryption key: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^Enter same key again: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match(' All$', term_getline(buf, 10))})
+  call term_sendkeys(buf, "itest\<Esc>:w\<Enter>")
+  call WaitForAssert({-> assert_match('"Xtest_x_arg" \[New\]\[blowfish2\] 1L, 5B written',
+        \            term_getline(buf, 10))})
+  call StopVimInTerminal(buf)
+
+  " Read the encrypted file and check that it contains the expected content "test"
+  let buf = RunVimInTerminal('-n -x Xtest_x_arg', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^Enter encryption key: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^Enter same key again: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^test', term_getline(buf, 1))})
+  call StopVimInTerminal(buf)
+
+  call delete('Xtest_x_arg')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

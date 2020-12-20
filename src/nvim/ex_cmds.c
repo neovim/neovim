@@ -2066,19 +2066,20 @@ static int check_readonly(int *forceit, buf_T *buf)
   return FALSE;
 }
 
-/*
- * Try to abandon current file and edit a new or existing file.
- * "fnum" is the number of the file, if zero use ffname/sfname.
- * "lnum" is the line number for the cursor in the new file (if non-zero).
- *
- * Return:
- * GETFILE_ERROR for "normal" error,
- * GETFILE_NOT_WRITTEN for "not written" error,
- * GETFILE_SAME_FILE for success
- * GETFILE_OPEN_OTHER for successfully opening another file.
- */
-int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, int forceit)
+// Try to abandon the current file and edit a new or existing file.
+// "fnum" is the number of the file, if zero use "ffname_arg"/"sfname_arg".
+// "lnum" is the line number for the cursor in the new file (if non-zero).
+//
+// Return:
+// GETFILE_ERROR for "normal" error,
+// GETFILE_NOT_WRITTEN for "not written" error,
+// GETFILE_SAME_FILE for success
+// GETFILE_OPEN_OTHER for successfully opening another file.
+int getfile(int fnum, char_u *ffname_arg, char_u *sfname_arg, int setpm,
+            linenr_T lnum, int forceit)
 {
+  char_u *ffname = ffname_arg;
+  char_u *sfname = sfname_arg;
   int other;
   int retval;
   char_u      *free_me = NULL;
