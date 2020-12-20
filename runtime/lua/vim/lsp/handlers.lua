@@ -41,7 +41,6 @@ local function progress_callback(_, _, params, client_id)
         title = val.title,
         message = val.message,
         percentage = val.percentage,
-        -- spinner = 1
       }
     elseif val.kind == 'report' then
       client.messages.progress[token] = {
