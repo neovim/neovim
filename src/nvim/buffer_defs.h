@@ -533,9 +533,11 @@ struct file_buffer {
   // b_fname    is the same as b_sfname, unless ":cd" has been done,
   //            then it is the same as b_ffname (NULL for no name).
   //
-  char_u      *b_ffname;        // full path file name
-  char_u      *b_sfname;        // short file name
-  char_u      *b_fname;         // current file name
+  char_u      *b_ffname;        // full path file name, allocated
+  char_u      *b_sfname;        // short file name, allocated, may be equal to
+                                // b_ffname
+  char_u      *b_fname;         // current file name, points to b_ffname or
+                                // b_sfname
 
   bool file_id_valid;
   FileID file_id;

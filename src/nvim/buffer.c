@@ -602,8 +602,12 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
    * Remove the buffer from the list.
    */
   if (wipe_buf) {
-    xfree(buf->b_ffname);
-    xfree(buf->b_sfname);
+    if (buf->b_sfname != buf->b_ffname) {
+      XFREE_CLEAR(buf->b_sfname);
+    } else {
+      buf->b_sfname = NULL;
+    }
+    XFREE_CLEAR(buf->b_ffname);
     if (buf->b_prev == NULL) {
       firstbuf = buf->b_next;
     } else {
@@ -1693,15 +1697,18 @@ static inline void buf_init_changedtick(buf_T *const buf)
 ///                                 if the buffer already exists.
 /// This is the ONLY way to create a new buffer.
 ///
-/// @param ffname full path of fname or relative
-/// @param sfname short fname or NULL
+/// @param ffname_arg  full path of fname or relative
+/// @param sfname_arg  short fname or NULL
 /// @param lnum   preferred cursor line
 /// @param flags  BLN_ defines
 /// @param bufnr
 ///
 /// @return pointer to the buffer
-buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
+buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
+                   int flags)
 {
+  char_u *ffname = ffname_arg;
+  char_u *sfname = sfname_arg;
   buf_T       *buf;
 
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
@@ -1787,8 +1794,12 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
   if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
+    if (buf->b_sfname != buf->b_ffname) {
+      XFREE_CLEAR(buf->b_sfname);
+    } else {
+      buf->b_sfname = NULL;
+    }
     XFREE_CLEAR(buf->b_ffname);
-    XFREE_CLEAR(buf->b_sfname);
     if (buf != curbuf) {
       free_buffer(buf);
     }
@@ -2778,28 +2789,32 @@ int buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
   return OK;
 }
 
-/*
- * Set the file name for "buf"' to 'ffname', short file name to 'sfname'.
- * The file name with the full path is also remembered, for when :cd is used.
- * Returns FAIL for failure (file name already in use by other buffer)
- *	OK otherwise.
- */
-int
-setfname(
+// Set the file name for "buf" to "ffname_arg", short file name to
+// "sfname_arg".
+// The file name with the full path is also remembered, for when :cd is used.
+// Returns FAIL for failure (file name already in use by other buffer)
+//      OK otherwise.
+int setfname(
     buf_T *buf,
-    char_u *ffname,
-    char_u *sfname,
+    char_u *ffname_arg,
+    char_u *sfname_arg,
     bool message                  // give message when buffer already exists
 )
 {
+  char_u *ffname = ffname_arg;
+  char_u *sfname = sfname_arg;
   buf_T       *obuf = NULL;
   FileID file_id;
   bool file_id_valid = false;
 
   if (ffname == NULL || *ffname == NUL) {
     // Removing the name.
+    if (buf->b_sfname != buf->b_ffname) {
+      XFREE_CLEAR(buf->b_sfname);
+    } else {
+      buf->b_sfname = NULL;
+    }
     XFREE_CLEAR(buf->b_ffname);
-    XFREE_CLEAR(buf->b_sfname);
   } else {
     fname_expand(buf, &ffname, &sfname);    // will allocate ffname
     if (ffname == NULL) {                   // out of memory
@@ -2830,8 +2845,10 @@ setfname(
 #ifdef USE_FNAME_CASE
     path_fix_case(sfname);            // set correct case for short file name
 #endif
+    if (buf->b_sfname != buf->b_ffname) {
+      xfree(buf->b_sfname);
+    }
     xfree(buf->b_ffname);
-    xfree(buf->b_sfname);
     buf->b_ffname = ffname;
     buf->b_sfname = sfname;
   }
@@ -2857,7 +2874,9 @@ void buf_set_name(int fnum, char_u *name)
 
   buf = buflist_findnr(fnum);
   if (buf != NULL) {
-    xfree(buf->b_sfname);
+    if (buf->b_sfname != buf->b_ffname) {
+      xfree(buf->b_sfname);
+    }
     xfree(buf->b_ffname);
     buf->b_ffname = vim_strsave(name);
     buf->b_sfname = NULL;
@@ -4633,16 +4652,18 @@ static bool append_arg_number(win_T *wp, char_u *buf, int buflen, bool add_file)
   return true;
 }
 
-/*
- * Make "ffname" a full file name, set "sfname" to "ffname" if not NULL.
- * "ffname" becomes a pointer to allocated memory (or NULL).
- */
+// Make "*ffname" a full file name, set "*sfname" to "*ffname" if not NULL.
+// "*ffname" becomes a pointer to allocated memory (or NULL).
+// When resolving a link both "*sfname" and "*ffname" will point to the same
+// allocated memory.
+// The "*ffname" and "*sfname" pointer values on call will not be freed.
+// Note that the resulting "*ffname" pointer should be considered not allocaed.
 void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 {
-  if (*ffname == NULL) {        // if no file name given, nothing to do
+  if (*ffname == NULL) {  // no file name given, nothing to do
     return;
   }
-  if (*sfname == NULL) {        // if no short file name given, use ffname
+  if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
   *ffname = (char_u *)fix_fname((char *)(*ffname));     // expand to full path
