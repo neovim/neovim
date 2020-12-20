@@ -3716,7 +3716,7 @@ static bool ins_compl_prep(int c)
         retval = true;
       }
 
-      auto_format(FALSE, TRUE);
+      auto_format(false, true);
 
       // Trigger the CompleteDonePre event to give scripts a chance to
       // act upon the completion before clearing the info, and restore
@@ -6503,7 +6503,7 @@ stop_insert (
           curwin->w_cursor = tpos;
       }
 
-      auto_format(TRUE, FALSE);
+      auto_format(true, false);
 
       if (ascii_iswhite(cc)) {
         if (gchar_cursor() != NUL)

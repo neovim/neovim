@@ -1683,6 +1683,7 @@ int op_delete(oparg_T *oap)
                      (int)oap->line_count-1, n, deleted_bytes,
                      0, 0, 0, kExtmarkUndo);
     }
+    auto_format(false, true);
   }
 
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
