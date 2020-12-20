@@ -161,7 +161,7 @@ void channel_init(void)
 ///
 /// Channel is allocated with refcount 1, which should be decreased
 /// when the underlying stream closes.
-static Channel *channel_alloc(ChannelStreamType type)
+Channel *channel_alloc(ChannelStreamType type)
 {
   Channel *chan = xcalloc(1, sizeof(*chan));
   if (type == kChannelStreamStdio) {
@@ -503,7 +503,7 @@ size_t channel_send(uint64_t id, char *data, size_t len, const char **error)
 {
   Channel *chan = find_channel(id);
   if (!chan) {
-    EMSG(_(e_invchan));
+    *error = _(e_invchan);
     goto err;
   }
 
@@ -516,6 +516,11 @@ size_t channel_send(uint64_t id, char *data, size_t len, const char **error)
     size_t written = fwrite(data, len, 1, stderr);
     xfree(data);
     return len * written;
+  }
+
+  if (chan->streamtype == kChannelStreamInternal && chan->term) {
+    terminal_receive(chan->term, data, len);
+    return len;
   }
 
 
@@ -724,8 +729,8 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
 /// Open terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
-/// and curbuf is assumed to be a new, unmodified buffer.
-void channel_terminal_open(Channel *chan)
+/// and `buf` is assumed to be a new, unmodified buffer.
+void channel_terminal_open(buf_T *buf, Channel *chan)
 {
   TerminalOptions topts;
   topts.data = chan;
@@ -734,8 +739,8 @@ void channel_terminal_open(Channel *chan)
   topts.write_cb = term_write;
   topts.resize_cb = term_resize;
   topts.close_cb = term_close;
-  curbuf->b_p_channel = (long)chan->id;  // 'channel' option
-  Terminal *term = terminal_open(topts);
+  buf->b_p_channel = (long)chan->id;  // 'channel' option
+  Terminal *term = terminal_open(buf, topts);
   chan->term = term;
   channel_incref(chan);
 }

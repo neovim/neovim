@@ -39,6 +39,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/fileio.h"
+#include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
@@ -1244,6 +1245,99 @@ fail:
     api_set_error(err, kErrorTypeException, "Failed to create buffer");
   }
   return 0;
+}
+
+/// Open a terminal instance in a buffer
+///
+/// By default (and currently the only option) the terminal will not be
+/// connected to an external process. Instead, input send on the channel
+/// will be echoed directly by the terminal. This is useful to disply
+/// ANSI terminal sequences returned as part of a rpc message, or similar.
+///
+/// Note: to directly initiate the terminal using the right size, display the
+/// buffer in a configured window before calling this. For instance, for a
+/// floating display, first create an empty buffer using |nvim_create_buf()|,
+/// then display it using |nvim_open_win()|, and then  call this function.
+/// Then |nvim_chan_send()| cal be called immediately to process sequences
+/// in a virtual terminal having the intended size.
+///
+/// @param buffer the buffer to use (expected to be empty)
+/// @param opts   Optional parameters. Reserved for future use.
+/// @param[out] err Error details, if any
+Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  TerminalOptions topts;
+  Channel *chan = channel_alloc(kChannelStreamInternal);
+  topts.data = chan;
+  // NB: overriden in terminal_check_size if a window is already
+  // displaying the buffer
+  topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
+  topts.height = (uint16_t)curwin->w_height_inner;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+  Terminal *term = terminal_open(buf, topts);
+  terminal_check_size(term);
+  chan->term = term;
+  channel_incref(chan);
+  return (Integer)chan->id;
+}
+
+static void term_write(char *buf, size_t size, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_resize(uint16_t width, uint16_t height, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_close(void *data)
+{
+  Channel *chan = data;
+  terminal_destroy(chan->term);
+  chan->term = NULL;
+  channel_decref(chan);
+}
+
+
+/// Send data to channel `id`. For a job, it writes it to the
+/// stdin of the process. For the stdio channel |channel-stdio|,
+/// it writes to Nvim's stdout.  For an internal terminal instance
+/// (|nvim_open_term()|) it writes directly to terimal output.
+/// See |channel-bytes| for more information.
+///
+/// This function writes raw data, not RPC messages.  If the channel
+/// was created with `rpc=true` then the channel expects RPC
+/// messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+///
+/// @param chan id of the channel
+/// @param data data to write. 8-bit clean: can contain NUL bytes.
+/// @param[out] err Error details, if any
+void nvim_chan_send(Integer chan, String data, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
+{
+  const char *error = NULL;
+  if (!data.size) {
+    return;
+  }
+
+  channel_send((uint64_t)chan, data.data, data.size, &error);
+  if (error) {
+    api_set_error(err, kErrorTypeValidation, "%s", error);
+  }
 }
 
 /// Open a new window.
