@@ -4229,17 +4229,11 @@ ExpandOne (
  * Prepare an expand structure for use.
  */
 void ExpandInit(expand_T *xp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  xp->xp_pattern = NULL;
-  xp->xp_pattern_len = 0;
+  CLEAR_POINTER(xp);
   xp->xp_backslash = XP_BS_NONE;
-#ifndef BACKSLASH_IN_FILENAME
-  xp->xp_shell = FALSE;
-#endif
   xp->xp_numfiles = -1;
-  xp->xp_files = NULL;
-  xp->xp_arg = NULL;
-  xp->xp_line = NULL;
 }
 
 /*
@@ -5399,7 +5393,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 }
 
 /// Call "user_expand_func()" to invoke a user defined Vim script function and
-/// return the result (either a string or a List).
+/// return the result (either a string, a List or NULL).
 static void * call_user_expand_func(user_expand_func_T user_expand_func,
                                     expand_T *xp, int *num_file, char_u ***file)
   FUNC_ATTR_NONNULL_ALL
