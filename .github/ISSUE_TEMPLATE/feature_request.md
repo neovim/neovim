@@ -2,7 +2,7 @@
 name: Feature request
 about: Request an enhancement for Nvim
 title: ''
-labels: enhancement
+labels: '0.kind: enhancement'
 
 ---
 

@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a problem in Nvim
 title: ''
-labels: bug
+labels: '0.kind: bug'
 
 ---
 
@@ -12,7 +12,7 @@ labels: bug
 - `vim -u DEFAULTS` (version: ) behaves differently?
 - Operating system/version:
 - Terminal name/version:
-- `$TERM`:
+- `echo $TERM`:
 
 ### Steps to reproduce using `nvim -u NORC`
 

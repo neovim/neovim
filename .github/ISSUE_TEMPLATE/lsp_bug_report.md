@@ -2,7 +2,7 @@
 name: Language server client bug report
 about: Report a built-in lsp problem in Nvim
 title: ''
-labels: bug, lsp
+labels: '0.kind: bug', topic:lsp
 
 ---
 
