@@ -518,10 +518,13 @@ fail:
  * Discard an exception.  "was_finished" is set when the exception has been
  * caught and the catch clause has been ended normally.
  */
-static void discard_exception(except_T *excp, int was_finished)
+static void discard_exception(except_T *excp, bool was_finished)
 {
   char_u              *saved_IObuff;
 
+  if (current_exception == excp) {
+    current_exception = NULL;
+  }
   if (excp == NULL) {
     internal_error("discard_exception()");
     return;
@@ -569,7 +572,6 @@ void discard_current_exception(void)
 {
   if (current_exception != NULL) {
     discard_exception(current_exception, false);
-    current_exception = NULL;
   }
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
@@ -652,8 +654,8 @@ static void finish_exception(except_T *excp)
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
   }
 
-  /* Discard the exception, but use the finish message for 'verbose'. */
-  discard_exception(excp, TRUE);
+  // Discard the exception, but use the finish message for 'verbose'.
+  discard_exception(excp, true);
 }
 
 /*
@@ -1812,11 +1814,12 @@ void leave_cleanup(cleanup_T *csp)
    * made pending by it.  Report this to the user if required by the
    * 'verbose' option or when debugging. */
   if (aborting() || need_rethrow) {
-    if (pending & CSTP_THROW)
-      /* Cancel the pending exception (includes report). */
-      discard_exception(csp->exception, FALSE);
-    else
+    if (pending & CSTP_THROW) {
+      // Cancel the pending exception (includes report).
+      discard_exception(csp->exception, false);
+    } else {
       report_discard_pending(pending, NULL);
+    }
 
     /* If an error was about to be converted to an exception when
      * enter_cleanup() was called, free the message list. */
@@ -1916,15 +1919,13 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
         default:
           if (cstack->cs_flags[idx] & CSF_FINALLY) {
             if (cstack->cs_pending[idx] & CSTP_THROW) {
-              /* Cancel the pending exception.  This is in the
-               * finally clause, so that the stack of the
-               * caught exceptions is not involved. */
-              discard_exception((except_T *)
-                  cstack->cs_exception[idx],
-                  FALSE);
-            } else
-              report_discard_pending(cstack->cs_pending[idx],
-                  NULL);
+              // Cancel the pending exception.  This is in the
+              // finally clause, so that the stack of the
+              // caught exceptions is not involved.
+              discard_exception((except_T *)cstack->cs_exception[idx], false);
+            } else {
+              report_discard_pending(cstack->cs_pending[idx], NULL);
+            }
             cstack->cs_pending[idx] = CSTP_NONE;
           }
           break;
