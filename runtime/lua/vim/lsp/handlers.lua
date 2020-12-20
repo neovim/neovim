@@ -24,6 +24,47 @@ M['workspace/executeCommand'] = function(err, _)
   end
 end
 
+-- @msg of type ProgressParams
+-- Basically a token of type number/string
+local function progress_callback(_, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  if not client then
+    err_message("LSP[", client_id, "] client has shut down after sending the message")
+  end
+  local val = params.value    -- unspecified yet
+  local token = params.token  -- string or number
+
+
+  if val.kind then
+    if val.kind == 'begin' then
+      client.messages.progress[token] = {
+        title = val.title,
+        message = val.message,
+        percentage = val.percentage,
+      }
+    elseif val.kind == 'report' then
+      client.messages.progress[token] = {
+        message = val.message,
+        percentage = val.percentage,
+      }
+    elseif val.kind == 'end' then
+      if client.messages.progress[token] == nil then
+        err_message(
+          'echom "[lsp-status] Received `end` message with no corresponding `begin` from "')
+      else
+        client.messages.progress[token].message = val.message
+        client.messages.progress[token].done = true
+      end
+    end
+  else
+    table.insert(client.messages, {content = val, show_once = true, shown = 0})
+  end
+
+  vim.api.nvim_command("doautocmd User LspProgressUpdate")
+end
+
+M['$/progress'] = progress_callback
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 M['textDocument/codeAction'] = function(_, _, actions)
   if actions == nil or vim.tbl_isempty(actions) then

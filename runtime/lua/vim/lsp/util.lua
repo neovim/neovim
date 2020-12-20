@@ -120,6 +120,63 @@ local function get_line_byte_from_position(bufnr, position)
   return col
 end
 
+--- Process and return progress reports from lsp server
+function M.get_progress_messages()
+
+  local new_messages = {}
+  local msg_remove = {}
+  local progress_remove = {}
+
+  for _, client in ipairs(vim.lsp.get_active_clients()) do
+      local messages = client.messages
+      local data = messages
+      for token, ctx in pairs(data.progress) do
+
+        local new_report = {
+          name = data.name,
+          title = ctx.title or "empty title",
+          message = ctx.message,
+          percentage = ctx.percentage,
+          progress = true,
+        }
+        table.insert(new_messages, new_report)
+
+        if ctx.done then
+          table.insert(progress_remove, {client = client, token = token})
+        end
+      end
+
+      for i, msg in ipairs(data.messages) do
+        if msg.show_once then
+          msg.shown = msg.shown + 1
+          if msg.shown > 1 then
+            table.insert(msg_remove, {client = client, idx = i})
+          end
+        end
+
+        table.insert(new_messages, {name = data.name, content = msg.content})
+      end
+
+      if next(data.status) ~= nil then
+        table.insert(new_messages, {
+          name = data.name,
+          content = data.status.content,
+          uri = data.status.uri,
+          status = true
+        })
+      end
+    for _, item in ipairs(msg_remove) do
+      table.remove(client.messages, item.idx)
+    end
+
+    for _, item in ipairs(progress_remove) do
+      client.messages.progress[item.token] = nil
+    end
+  end
+
+  return new_messages
+end
+
 --- Applies a list of text edits to a buffer.
 --@param text_edits (table) list of `TextEdit` objects
 --@param buf_nr (number) Buffer id
