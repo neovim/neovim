@@ -2438,7 +2438,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'foldcolumn' 'fdc'	string (default "0")
 			local to window
 	When and how to draw the foldcolumn. Valid values are:
-	    "auto":       resize to the maximum amount of folds to display.
+	    "auto":       resize to the minimum amount of folds to display.
 	    "auto:[1-9]": resize to accommodate multiple folds up to the
 			  selected level
             0:            to disable foldcolumn
