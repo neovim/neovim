@@ -222,6 +222,21 @@ func Test_normal05_formatexpr_setopt()
   set formatexpr=
 endfunc
 
+" When 'formatexpr' returns non-zero, internal formatting is used.
+func Test_normal_formatexpr_returns_nonzero()
+  new
+  call setline(1, ['one', 'two'])
+  func! Format()
+    return 1
+  endfunc
+  setlocal formatexpr=Format()
+  normal VGgq
+  call assert_equal(['one two'], getline(1, '$'))
+  setlocal formatexpr=
+  delfunc Format
+  close!
+endfunc
+
 func Test_normal06_formatprg()
   " basic test for formatprg
   " only test on non windows platform
