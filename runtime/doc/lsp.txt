@@ -1120,7 +1120,7 @@ get_line_diagnostics({bufnr}, {line_nr}, {opts}, {client_id})
                     diagnostics.
 
 get_next({opts})                               *vim.lsp.diagnostic.get_next()*
-                Get the previous diagnostic closest to the cursor_position
+                Get the next diagnostic closest to the cursor_position
 
                 Parameters: ~
                     {opts}  table See |vim.lsp.diagnostic.goto_next()|
