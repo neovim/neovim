@@ -1063,7 +1063,7 @@ function M.display(diagnostics, bufnr, client_id, config)
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end
 
-  vim.api.nvim_command("doautocmd User LspDiagnosticsChanged")
+  vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
 end
 -- }}}
 -- Diagnostic User Functions {{{
