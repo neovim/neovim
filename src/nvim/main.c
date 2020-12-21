@@ -662,7 +662,17 @@ void getout(int exitval)
   }
 
   if (v_dying <= 1) {
+    int unblock = 0;
+
+    // deathtrap() blocks autocommands, but we do want to trigger VimLeave.
+    if (is_autocmd_blocked()) {
+      unblock_autocmds();
+      unblock++;
+    }
     apply_autocmds(EVENT_VIMLEAVE, NULL, NULL, false, curbuf);
+    if (unblock) {
+      block_autocmds();
+    }
   }
 
   profile_dump();

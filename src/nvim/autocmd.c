@@ -1106,9 +1106,9 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     win = curwin;
   }
 
-  aco->save_curwin = curwin;
-  aco->save_prevwin = prevwin;
+  aco->save_curwin_handle = curwin->handle;
   aco->save_curbuf = curbuf;
+  aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
   if (win != NULL) {
     // There is a window for "buf" in the current tab page, make it the
     // curwin.  This is preferred, it has the least side effects (esp. if
@@ -1148,7 +1148,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     curwin = aucmd_win;
   }
   curbuf = buf;
-  aco->new_curwin = curwin;
+  aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
 }
 
@@ -1194,14 +1194,14 @@ void aucmd_restbuf(aco_save_T *aco)
 
     unblock_autocmds();
 
-    if (win_valid(aco->save_curwin)) {
-      curwin = aco->save_curwin;
+    win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
+    if (save_curwin != NULL) {
+      curwin = save_curwin;
     } else {
       // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
     }
-    prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
-                                           : firstwin;  // window disappeared?
+    prevwin = win_find_by_handle(aco->save_prevwin_handle);
     vars_clear(&aucmd_win->w_vars->dv_hashtab);         // free all w: variables
     hash_init(&aucmd_win->w_vars->dv_hashtab);          // re-use the hashtab
     curbuf = curwin->w_buffer;
@@ -1216,11 +1216,14 @@ void aucmd_restbuf(aco_save_T *aco)
       curwin->w_topfill = 0;
     }
   } else {
-    // restore curwin
-    if (win_valid(aco->save_curwin)) {
+    // Restore curwin.  Use the window ID, a window may have been closed
+    // and the memory re-used for another one.
+    win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
+    if (save_curwin != NULL) {
       // Restore the buffer which was previously edited by curwin, if it was
       // changed, we are still the same window and the buffer is valid.
-      if (curwin == aco->new_curwin && curbuf != aco->new_curbuf.br_buf
+      if (curwin->handle == aco->new_curwin_handle
+          && curbuf != aco->new_curbuf.br_buf
           && bufref_valid(&aco->new_curbuf)
           && aco->new_curbuf.br_buf->b_ml.ml_mfp != NULL) {
         if (curwin->w_s == &curbuf->b_s) {
@@ -1232,10 +1235,9 @@ void aucmd_restbuf(aco_save_T *aco)
         curbuf->b_nwindows++;
       }
 
-      curwin = aco->save_curwin;
-      prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
-                                             : firstwin;  // window disappeared?
+      curwin = save_curwin;
       curbuf = curwin->w_buffer;
+      prevwin = win_find_by_handle(aco->save_prevwin_handle);
       // In case the autocommand moves the cursor to a position that does not
       // exist in curbuf
       check_cursor();
@@ -1717,7 +1719,8 @@ void unblock_autocmds(void)
   }
 }
 
-static inline bool is_autocmd_blocked(void)
+bool is_autocmd_blocked(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return autocmd_blocked != 0;
 }

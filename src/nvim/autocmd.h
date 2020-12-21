@@ -7,13 +7,13 @@
 // Struct to save values in before executing autocommands for a buffer that is
 // not the current buffer.
 typedef struct {
-  buf_T       *save_curbuf;     ///< saved curbuf
-  int use_aucmd_win;            ///< using aucmd_win
-  win_T       *save_curwin;     ///< saved curwin
-  win_T       *save_prevwin;    ///< saved prevwin
-  win_T       *new_curwin;      ///< new curwin
-  bufref_T     new_curbuf;      ///< new curbuf
-  char_u      *globaldir;       ///< saved value of globaldir
+  buf_T *save_curbuf;             ///< saved curbuf
+  bool use_aucmd_win;             ///< using aucmd_win
+  handle_T save_curwin_handle;    ///< ID of saved curwin
+  handle_T new_curwin_handle;     ///< ID of new curwin
+  handle_T save_prevwin_handle;   ///< ID of saved prevwin
+  bufref_T new_curbuf;            ///< new curbuf
+  char_u *globaldir;              ///< saved value of globaldir
 } aco_save_T;
 
 typedef struct AutoCmd {
