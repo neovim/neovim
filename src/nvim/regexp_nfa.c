@@ -6601,7 +6601,7 @@ theend:
         || (end->lnum == start->lnum && end->col < start->col)) {
       rex.reg_mmatch->endpos[0] = rex.reg_mmatch->startpos[0];
     }
-  } else {
+  } else if (retval > 0) {
     if (rex.reg_match->endp[0] < rex.reg_match->startp[0]) {
       rex.reg_match->endp[0] = rex.reg_match->startp[0];
     }
