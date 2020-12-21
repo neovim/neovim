@@ -1206,13 +1206,18 @@ end
 ---
 --@param symbols DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
-  --@private
-  local function _symbols_to_items(_symbols, _items, _bufnr)
-    for _, symbol in ipairs(_symbols) do
+  local stack = {{1, symbols}}
+  local items = {}
+
+  repeat
+    local from, _symbols = unpack(table.remove(stack, #stack))
+    for i=from, #_symbols, 1 do
+      local symbol = _symbols[i]
+
       if symbol.location then -- SymbolInformation type
         local range = symbol.location.range
         local kind = M._get_symbol_kind_name(symbol.kind)
-        table.insert(_items, {
+        table.insert(items, {
           filename = vim.uri_to_fname(symbol.location.uri),
           lnum = range.start.line + 1,
           col = range.start.character + 1,
@@ -1221,24 +1226,24 @@ function M.symbols_to_items(symbols, bufnr)
         })
       elseif symbol.range then -- DocumentSymbole type
         local kind = M._get_symbol_kind_name(symbol.kind)
-        table.insert(_items, {
-          -- bufnr = _bufnr,
-          filename = vim.api.nvim_buf_get_name(_bufnr),
+        table.insert(items, {
+          -- bufnr = bufnr,
+          filename = vim.api.nvim_buf_get_name(bufnr),
           lnum = symbol.range.start.line + 1,
           col = symbol.range.start.character + 1,
           kind = kind,
           text = '['..kind..'] '..symbol.name
         })
         if symbol.children then
-          for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
-            vim.list_extend(_items, v)
-          end
+          table.insert(stack, {i + 1, _symbols})
+          table.insert(stack, {1, symbol.children})
+          break
         end
       end
     end
-    return _items
-  end
-  return _symbols_to_items(symbols, {}, bufnr)
+  until #stack == 0
+
+  return items
 end
 
 --- Removes empty lines from the beginning and end.
