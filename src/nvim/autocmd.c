@@ -1717,7 +1717,8 @@ void unblock_autocmds(void)
   }
 }
 
-static inline bool is_autocmd_blocked(void)
+bool is_autocmd_blocked(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return autocmd_blocked != 0;
 }
