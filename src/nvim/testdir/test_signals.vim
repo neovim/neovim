@@ -107,8 +107,6 @@ func Test_deadly_signal_TERM()
 
   call assert_false(filereadable('Xsig_TERM'))
   exe 'silent !kill -s TERM '  .. pid_vim
-  call WaitForAssert({-> assert_equal('Vim: Caught deadly signal TERM', term_getline(buf, 1))})
-  call WaitForAssert({-> assert_match('Vim: preserving files\.\.\.$', term_getline(buf, 2))})
   call WaitForAssert({-> assert_true(filereadable('.Xsig_TERM.swp'))})
 
   " Don't call StopVimInTerminal() as it expects job to be still running.
