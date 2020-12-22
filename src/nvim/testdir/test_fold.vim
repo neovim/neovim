@@ -815,4 +815,11 @@ func Test_fold_create_delete_create()
   bwipe!
 endfunc
 
+" this was crashing
+func Test_fold_create_delete()
+  new
+  norm zFzFzdzj
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
