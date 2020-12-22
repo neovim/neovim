@@ -98,8 +98,13 @@ func Test_deadly_signal_TERM()
   if cmd =~ 'valgrind'
     throw 'Skipped: cannot test signal TERM with valgrind'
   endif
+  let lines =<< trim END
+    au VimLeave * call writefile(["VimLeave triggered"], "XautoOut", "a")
+    au VimLeavePre * call writefile(["VimLeavePre triggered"], "XautoOut", "a")
+  END
+  call writefile(lines, 'XsetupAucmd')
 
-  let buf = RunVimInTerminal('Xsig_TERM', {'rows': 6})
+  let buf = RunVimInTerminal('-S XsetupAucmd Xsig_TERM', {'rows': 6})
   let pid_vim = term_getjob(buf)->job_info().process
 
   call term_sendkeys(buf, ":call setline(1, 'foo')\n")
@@ -116,8 +121,14 @@ func Test_deadly_signal_TERM()
   silent recover .Xsig_TERM.swp
   call assert_equal(['foo'], getline(1, '$'))
 
+  let result = readfile('XautoOut')
+  call assert_match('VimLeavePre triggered', result[0])
+  call assert_match('VimLeave triggered', result[1])
+
   %bwipe!
   call delete('.Xsig_TERM.swp')
+  call delete('XsetupAucmd')
+  call delete('XautoOut')
 endfunc
 
 " vim: ts=8 sw=2 sts=2 tw=80 fdm=marker
