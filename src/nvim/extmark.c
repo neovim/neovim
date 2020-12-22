@@ -71,7 +71,7 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      int row, colnr_T col, int end_row, colnr_T end_col,
-                     Decoration *decor, ExtmarkOp op, bool right_gravity)
+                     Decoration *decor, ExtmarkOp op)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   assert(ns != NULL);
@@ -112,7 +112,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                              row, col, true,
                              end_row, end_col, false);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
+    mark = marktree_put(buf->b_marktree, row, col, true);
   }
 
 revised:
@@ -560,6 +560,23 @@ void extmark_adjust(buf_T *buf,
                       new_row, 0, new_byte, undo);
 }
 
+// Adjust extmarks following a text edit.
+//
+// @param buf
+// @param start_row   Start row of the region to be changed
+// @param start_col   Start col of the region to be changed
+// @param old_row     End row of the region to be changed.
+//                      Encoded as an offset to start_row.
+// @param old_col     End col of the region to be changed. Encodes
+//                      an offset from start_col if old_row = 0; otherwise,
+//                      encodes the end column of the old region.
+// @param old_byte    Byte extent of the region to be changed.
+// @param new_row     Row offset of the new region.
+// @param new_col     Col offset of the new region. Encodes an offset from
+//                      start_col if new_row = 0; otherwise, encodes
+//                      the end column of the new region.
+// @param new_byte    Byte extent of the new region.
+// @param undo
 void extmark_splice(buf_T *buf,
                     int start_row, colnr_T start_col,
                     int old_row, colnr_T old_col, bcount_t old_byte,
