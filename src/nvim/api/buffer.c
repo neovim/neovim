@@ -522,7 +522,7 @@ void nvim_buf_set_text(uint64_t channel_id,
                        Error *err)
   FUNC_API_SINCE(7)
 {
-  // TODO: treat [] as [''] for convenience
+  // TODO(chentau): treat [] as [''] for convenience
   assert(replacement.size > 0);
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -577,7 +577,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   } else {
       char_u *line;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
-      for (size_t i = 0; i < (size_t)end_row - start_row; i++){
+      for (size_t i = 0; i < (size_t)(end_row - start_row); i++) {
           int64_t lnum = start_row + (int64_t)i;
 
           if (lnum >= MAXLNUM) {
@@ -1577,8 +1577,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   return (Integer)id;
-  /* id_num = extmark_set(buf, (uint64_t)ns_id, id_num, */
-  /*                      (int)line, (colnr_T)col, kExtmarkUndo, right_gravity); */
 
 error:
   clear_virttext(&virt_text);
