@@ -254,4 +254,15 @@ func Test_ve_blockpaste()
   bwipe!
 endfunc
 
+func Test_insert_small_delete()
+  new
+  call setline(1, ['foo foobar bar'])
+  call cursor(1,1)
+  exe ":norm! ciw'\<C-R>-'"
+  call assert_equal(getline(1), "'foo' foobar bar")
+  exe ":norm! w.w."
+  call assert_equal(getline(1), "'foo' 'foobar' 'bar'")
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
