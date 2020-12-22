@@ -425,22 +425,6 @@ describe('api/buf', function()
       eq({'hello bar'}, get_lines(0,  1, true))
     end)
 
-    pending('uses virtual columns instead of columns', function()
-        insert([[
-        hellØ world!
-        ]])
-
-        eq({'hellØ world!'}, get_lines(0, 1, true))
-
-        -- inserting multibyte
-        set_text(0, 11, 0, 11, {'Ø'})
-        eq({'hellØ worldØ!'}, get_lines(0, 1, true))
-
-        -- deleting multibyte
-        set_text(0, 0, 0, 6, {''})
-        eq({'worldØ!'}, get_lines(0, 1, true))
-    end)
-
     it('works with undo', function()
         insert([[
         hello world!

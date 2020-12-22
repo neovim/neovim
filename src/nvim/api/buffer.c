@@ -591,13 +591,11 @@ void nvim_buf_set_text(uint64_t channel_id,
           line = (char *)ml_get_buf(buf, lnum, false);
           old_byte += (bcount_t)(strlen(line));
       }
-      old_byte += end_col;
+      old_byte += (bcount_t)end_col;
   }
 
   String first_item = replacement.items[0].data.string;
   String last_item = replacement.items[replacement.size-1].data.string;
-
-  new_byte += (bcount_t)(first_item.size);
 
   size_t firstlen = (size_t)start_col+first_item.size;
   size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
@@ -619,6 +617,7 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
   lines[0] = first;
+  new_byte += (bcount_t)(first_item.size);
   for (size_t i = 1; i < new_len-1; i++) {
     const String l = replacement.items[i].data.string;
 
@@ -719,8 +718,8 @@ void nvim_buf_set_text(uint64_t channel_id,
   colnr_T col_extent = (colnr_T)(end_col
                                  - ((end_col > start_col) ? start_col : 0));
   extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
-                 (int)(end_row-start_row), col_extent, (bcount_t)(old_byte),
-                 (int)new_len-1, (colnr_T)last_item.size, (bcount_t)new_byte,
+                 (int)(end_row-start_row), col_extent, old_byte,
+                 (int)new_len-1, (colnr_T)last_item.size, new_byte,
                  kExtmarkUndo);
 
 
