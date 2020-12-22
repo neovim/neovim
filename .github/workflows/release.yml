@@ -75,6 +75,7 @@ jobs:
           fetch-depth: 0
       - name: Install brew packages
         run: |
+          rm -f /usr/local/bin/2to3
           brew update >/dev/null
           brew install automake ninja
       - name: Build release
