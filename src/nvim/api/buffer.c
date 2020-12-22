@@ -309,6 +309,27 @@ end:
   return rv;
 }
 
+static bool check_string_array(Array arr, bool disallow_nl, Error *err)
+{
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "All items in the replacement array must be strings");
+      return false;
+    }
+    // Disallow newlines in the middle of the line.
+    if (disallow_nl) {
+      const String l = arr.items[i].data.string;
+      if (memchr(l.data, NL, l.size)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "String cannot contain newlines");
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 /// Sets (replaces) a line-range in the buffer.
 ///
@@ -519,10 +540,10 @@ void nvim_buf_set_text(uint64_t channel_id,
   }
 
   end_row = normalize_index(buf, end_row, &oob);
-  /* if (oob) { */
-  /*   api_set_error(err, kErrorTypeValidation, "end_row out of bounds"); */
-  /*   return; */
-  /* } */
+  if (oob) {
+    api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
+    return;
+  }
 
   char *str_at_start = (char *)ml_get_buf(buf, start_row, false);
   if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
@@ -547,10 +568,36 @@ void nvim_buf_set_text(uint64_t channel_id,
     return;
   }
 
+  bcount_t new_byte = 0;
+  bcount_t old_byte = 0;
+
+  // calculate byte size of old region before it gets modified/deleted
+  if (start_row == end_row) {
+      old_byte = (bcount_t)end_col - start_col;
+  } else {
+      char_u *line;
+      old_byte += (bcount_t)strlen(str_at_start) - start_col;
+      for (size_t i = 0; i < (bcount_t)end_row - start_row; i++){
+          int64_t lnum = start_row + (int64_t)i;
+
+          if (lnum >= MAXLNUM) {
+            api_set_error(err, kErrorTypeValidation, "Index value is too high");
+            goto end;
+          }
+
+          line = ml_get_buf(buf, lnum, false);
+          old_byte += (bcount_t)(strlen((char *)line));
+      }
+      old_byte += end_col;
+  }
+
   size_t new_len = replacement.size;
 
   String first_item = replacement.items[0].data.string;
   String last_item = replacement.items[replacement.size-1].data.string;
+
+  new_byte += (bcount_t)(first_item.size);
+
   size_t firstlen = (size_t)start_col+first_item.size;
   size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
   if (replacement.size == 1) {
@@ -578,10 +625,11 @@ void nvim_buf_set_text(uint64_t channel_id,
     // NL-used-for-NUL.
     lines[i] = xmemdupz(l.data, l.size);
     memchrsub(lines[i], NUL, NL, l.size);
-    /* lines[i] = replacement.items[i].data.string.data; */
+    new_byte += (bcount_t)(l.size);
   }
   if (replacement.size > 1) {
     lines[replacement.size-1] = last;
+    new_byte += (bcount_t)(last_item.size);
   }
 
   try_start();
@@ -593,7 +641,7 @@ void nvim_buf_set_text(uint64_t channel_id,
     goto end;
   }
 
-  if (u_save((linenr_T)start_row - 1, (linenr_T)end_row) == FAIL) {
+  if (u_save((linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;
   }
@@ -670,8 +718,10 @@ void nvim_buf_set_text(uint64_t channel_id,
   colnr_T col_extent = (colnr_T)(end_col
                                  - ((end_col > start_col) ? start_col : 0));
   extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
-                 (int)(end_row-start_row), col_extent,
-                 (int)new_len-1, (colnr_T)last_item.size, kExtmarkUndo);
+                 (int)(end_row-start_row), col_extent, (bcount_t)(old_byte),
+                 (int)new_len-1, (colnr_T)last_item.size, (bcount_t)new_byte,
+                 kExtmarkUndo);
+
 
   changed_lines((linenr_T)start_row, 0, (linenr_T)end_row, (long)extra, true);
 
