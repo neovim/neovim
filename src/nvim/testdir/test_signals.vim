@@ -4,6 +4,11 @@ if !has('unix')
   finish
 endif
 
+if has('gui_running')
+  " Signals only work for terminals, and won't work for GUI.
+  finish
+endif
+
 source shared.vim
 
 " Test signal WINCH (window resize signal)
