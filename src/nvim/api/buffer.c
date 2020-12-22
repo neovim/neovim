@@ -577,7 +577,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   } else {
       char_u *line;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
-      for (size_t i = 0; i < (bcount_t)end_row - start_row; i++){
+      for (size_t i = 0; i < (size_t)end_row - start_row; i++){
           int64_t lnum = start_row + (int64_t)i;
 
           if (lnum >= MAXLNUM) {
