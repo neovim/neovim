@@ -98,9 +98,15 @@ func Test_deadly_signal_TERM()
   if cmd =~ 'valgrind'
     throw 'Skipped: cannot test signal TERM with valgrind'
   endif
+
+  " If test fails once, it can leave temporary files and trying to rerun
+  " the test would then fail again if they are not deleted first.
+  call delete('.Xsig_TERM.swp')
+  call delete('XsetupAucmd')
+  call delete('XautoOut')
   let lines =<< trim END
-    au VimLeave * call writefile(["VimLeave triggered"], "XautoOut", "a")
-    au VimLeavePre * call writefile(["VimLeavePre triggered"], "XautoOut", "a")
+    au VimLeave * call writefile(["VimLeave triggered"], "XautoOut", "as")
+    au VimLeavePre * call writefile(["VimLeavePre triggered"], "XautoOut", "as")
   END
   call writefile(lines, 'XsetupAucmd')
 
