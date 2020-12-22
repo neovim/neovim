@@ -500,7 +500,8 @@ end:
 /// Indexing is zero-based, end-exclusive.
 ///
 /// To insert text at a given index, set `start` and `end` ranges to the same
-/// index. To delete a range, set `replacement` to an empty array.
+/// index. To delete a range, set `replacement` to an array containing
+/// an empty string.
 ///
 /// Prefer nvim_buf_set_lines when modifying entire lines.
 ///
@@ -568,6 +569,8 @@ void nvim_buf_set_text(uint64_t channel_id,
     return;
   }
 
+  size_t new_len = replacement.size;
+
   bcount_t new_byte = 0;
   bcount_t old_byte = 0;
 
@@ -575,7 +578,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   if (start_row == end_row) {
       old_byte = (bcount_t)end_col - start_col;
   } else {
-      char_u *line;
+      char *line;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
       for (size_t i = 0; i < (size_t)(end_row - start_row); i++) {
           int64_t lnum = start_row + (int64_t)i;
@@ -585,13 +588,11 @@ void nvim_buf_set_text(uint64_t channel_id,
             goto end;
           }
 
-          line = ml_get_buf(buf, lnum, false);
-          old_byte += (bcount_t)(strlen((char *)line));
+          line = (char *)ml_get_buf(buf, lnum, false);
+          old_byte += (bcount_t)(strlen(line));
       }
       old_byte += end_col;
   }
-
-  size_t new_len = replacement.size;
 
   String first_item = replacement.items[0].data.string;
   String last_item = replacement.items[replacement.size-1].data.string;
