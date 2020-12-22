@@ -533,4 +533,15 @@ func Test_search_with_end_offset()
   close!
 endfunc
 
+" Check that "^" matches even when the line starts with a combining char
+func Test_match_start_of_line_combining()
+  new
+  call setline(1, ['', "\u05ae", ''])
+  exe "normal gg/^\<CR>"
+  call assert_equal(2, getcurpos()[1])
+  bwipe!
+endfunc
+
+
+
 " vim: shiftwidth=2 sts=2 expandtab

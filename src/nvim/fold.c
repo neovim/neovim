@@ -902,8 +902,9 @@ int foldMoveTo(
     bool last = false;
     for (;; ) {
       if (!foldFind(gap, curwin->w_cursor.lnum - lnum_off, &fp)) {
-        if (!updown)
+        if (!updown || gap->ga_len == 0) {
           break;
+        }
 
         /* When moving up, consider a fold above the cursor; when
          * moving down consider a fold below the cursor. */
