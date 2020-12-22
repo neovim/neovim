@@ -5243,9 +5243,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       switch (t->state->c) {
       case NFA_MATCH:
       {
-        // If the match ends before a composing characters and
-        // rex.reg_icombine is not set, that is not really a match.
-        if (!rex.reg_icombine && utf_iscomposing(curc)) {
+        // If the match is not at the start of the line, ends before a
+        // composing characters and rex.reg_icombine is not set, that
+        // is not really a match.
+        if (!rex.reg_icombine
+            && rex.input != rex.line
+            && utf_iscomposing(curc)) {
           break;
         }
         nfa_match = true;
