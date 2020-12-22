@@ -1,8 +1,9 @@
 " Test signal handling.
 
-if !has('unix')
-  finish
-endif
+source check.vim
+source term_util.vim
+
+CheckUnix
 
 source shared.vim
 
@@ -76,3 +77,49 @@ func Test_signal_PWR()
   bwipe!
   set updatetime& updatecount&
 endfunc
+
+" Test a deadly signal.
+"
+" There are several deadly signals: SISEGV, SIBUS, SIGTERM...
+" Test uses signal SIGTERM as it does not create a core
+" dump file unlike SIGSEGV, SIGBUS, etc. See "man 7 signals.
+"
+" Vim should exit with a deadly signal and unsaved changes
+" should be recoverable from the swap file preserved as a
+" result of the deadly signal handler.
+func Test_deadly_signal_TERM()
+  if !HasSignal('TERM')
+    throw 'Skipped: TERM signal not supported'
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run vim in terminal'
+  endif
+  let cmd = GetVimCommand()
+  if cmd =~ 'valgrind'
+    throw 'Skipped: cannot test signal TERM with valgrind'
+  endif
+
+  let buf = RunVimInTerminal('Xsig_TERM', {'rows': 6})
+  let pid_vim = term_getjob(buf)->job_info().process
+
+  call term_sendkeys(buf, ":call setline(1, 'foo')\n")
+  call WaitForAssert({-> assert_equal('foo', term_getline(buf, 1))})
+
+  call assert_false(filereadable('Xsig_TERM'))
+  exe 'silent !kill -s TERM '  .. pid_vim
+  call WaitForAssert({-> assert_equal('Vim: Caught deadly signal TERM', term_getline(buf, 1))})
+  call WaitForAssert({-> assert_match('Vim: preserving files\.\.\.$', term_getline(buf, 2))})
+  call WaitForAssert({-> assert_true(filereadable('.Xsig_TERM.swp'))})
+
+  " Don't call StopVimInTerminal() as it expects job to be still running.
+  call WaitForAssert({-> assert_equal("finished", term_getstatus(buf))})
+
+  new
+  silent recover .Xsig_TERM.swp
+  call assert_equal(['foo'], getline(1, '$'))
+
+  %bwipe!
+  call delete('.Xsig_TERM.swp')
+endfunc
+
+" vim: ts=8 sw=2 sts=2 tw=80 fdm=marker
