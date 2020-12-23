@@ -2484,6 +2484,7 @@ errret_2:
   ga_clear_strings(&newlines);
 ret_free:
   xfree(skip_until);
+  xfree(heredoc_trimmed);
   xfree(line_to_free);
   xfree(fudi.fd_newkey);
   xfree(name);

@@ -1197,7 +1197,13 @@ int insert_reg(
       retval = FAIL;
     } else {
       for (size_t i = 0; i < reg->y_size; i++) {
-        stuffescaped((const char *)reg->y_array[i], literally);
+        if (regname == '-') {
+          AppendCharToRedobuff(Ctrl_R);
+          AppendCharToRedobuff(regname);
+          do_put(regname, NULL, BACKWARD, 1L, PUT_CURSEND);
+        } else {
+          stuffescaped((const char *)reg->y_array[i], literally);
+        }
         // Insert a newline between lines and after last line if
         // y_type is kMTLineWise.
         if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
