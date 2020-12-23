@@ -74,6 +74,14 @@ func CheckCanRunGui()
   endif
 endfunc
 
+" Command to check that we are using the GUI
+command CheckGui call CheckGui()
+func CheckGui()
+  if !has('gui_running')
+    throw 'Skipped: only works in the GUI'
+  endif
+endfunc
+
 " Command to check that not currently using the GUI
 command CheckNotGui call CheckNotGui()
 func CheckNotGui()
