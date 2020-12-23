@@ -1487,6 +1487,12 @@ static void ins_redraw(
     do_autocmd_winscrolled(curwin);
   }
 
+  // Trigger Resized if viewport changed.
+  if (ready && has_event(EVENT_WINRESIZED)
+      && win_did_resize(curwin)) {
+    do_autocmd_winresized(curwin);
+  }
+
   // Trigger BufModified if b_changed_invalid is set.
   if (ready && has_event(EVENT_BUFMODIFIEDSET)
       && curbuf->b_changed_invalid == true

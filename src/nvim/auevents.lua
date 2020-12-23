@@ -114,6 +114,7 @@ return {
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinNew',                 -- when entering a new window
+    'WinResized',             -- after a window was resized
     'WinScrolled',            -- after scrolling a window
   },
   aliases = {
@@ -136,6 +137,7 @@ return {
     UIEnter=true,
     UILeave=true,
     WinClosed=true,
+    WinResized=true,
     WinScrolled=true,
   },
 }

@@ -5006,6 +5006,36 @@ void do_autocmd_winscrolled(win_T *wp)
   wp->w_last_height = wp->w_height;
 }
 
+/// Check if "wp" has resized since last time it was checked
+/// @param wp the window to check
+bool win_did_resize(win_T *wp)
+{
+  return (wp->w_last_width != wp->w_width
+          || wp->w_last_height != wp->w_height);
+}
+
+/// Trigger WinResized autocmd
+void do_autocmd_winresized(win_T *wp)
+{
+  // Set the v:event dictionary with information about the resized window
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+
+  tv_dict_add_nr(dict, S_LEN("win"), wp->handle);
+  tv_dict_add_nr(dict, S_LEN("width_old"), wp->w_last_width);
+  tv_dict_add_nr(dict, S_LEN("width_new"), wp->w_width);
+  tv_dict_add_nr(dict, S_LEN("height_old"), wp->w_last_height);
+  tv_dict_add_nr(dict, S_LEN("height_new"), wp->w_height);
+
+  tv_dict_set_keys_readonly(dict);
+  textlock++;
+  apply_autocmds(EVENT_WINRESIZED, NULL, NULL, false, curbuf);
+  textlock--;
+  tv_dict_clear(dict);
+
+  wp->w_last_width = wp->w_width;
+  wp->w_last_height = wp->w_height;
+}
+
 /*
  * Save the size of all windows in "gap".
  */
