@@ -571,7 +571,9 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
   pos_T start_rel = start;
   pos_T end_rel = end;
 
-  if (start.lnum > end.lnum) {
+  if (start.lnum == end.lnum) {
+    return;
+  } else if (start.lnum > end.lnum) {
     // reverse the range
     end = start_rel;
     start = end_rel;
