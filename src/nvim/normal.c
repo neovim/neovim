@@ -4253,12 +4253,13 @@ dozet:
   /* "z+", "z<CR>" and "zt": put cursor at top of screen */
   case '+':
     if (cap->count0 == 0) {
-      /* No count given: put cursor at the line below screen */
-      validate_botline(curwin);               /* make sure w_botline is valid */
-      if (curwin->w_botline > curbuf->b_ml.ml_line_count)
+      // No count given: put cursor at the line below screen
+      validate_botline(curwin);               // make sure w_botline is valid
+      if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      else
+      } else {
         curwin->w_cursor.lnum = curwin->w_botline;
+      }
     }
     FALLTHROUGH;
   case NL:
@@ -5053,7 +5054,7 @@ static void nv_scroll(cmdarg_T *cap)
   setpcmark();
 
   if (cap->cmdchar == 'L') {
-    validate_botline(curwin);             /* make sure curwin->w_botline is valid */
+    validate_botline(curwin);          // make sure curwin->w_botline is valid
     curwin->w_cursor.lnum = curwin->w_botline - 1;
     if (cap->count1 - 1 >= curwin->w_cursor.lnum)
       curwin->w_cursor.lnum = 1;
@@ -6654,15 +6655,14 @@ static void nv_g_cmd(cmdarg_T *cap)
       curwin->w_cursor = tpos;
       check_cursor();
       update_topline(curwin);
-      /*
-       * When called from normal "g" command: start Select mode when
-       * 'selectmode' contains "cmd".  When called for K_SELECT, always
-       * start Select mode.
-       */
-      if (cap->arg)
+      // When called from normal "g" command: start Select mode when
+      // 'selectmode' contains "cmd".  When called for K_SELECT, always
+      // start Select mode.
+      if (cap->arg) {
         VIsual_select = true;
-      else
+      } else {
         may_start_select('c');
+      }
       setmouse();
       redraw_curbuf_later(INVERTED);
       showmode();

@@ -5104,7 +5104,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   curwin->w_cursor = old_cursor;
   check_cursor();
   update_topline(curwin);
-  keep_filetype = FALSE;
+  keep_filetype = false;
 
   /* Update folds unless they are defined manually. */
   FOR_ALL_TAB_WINDOWS(tp, wp) {

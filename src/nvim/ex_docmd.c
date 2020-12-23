@@ -8199,10 +8199,11 @@ static void ex_mark(exarg_T *eap)
  */
 void update_topline_cursor(void)
 {
-  check_cursor();               /* put cursor on valid line */
+  check_cursor();               // put cursor on valid line
   update_topline(curwin);
-  if (!curwin->w_p_wrap)
+  if (!curwin->w_p_wrap) {
     validate_cursor();
+  }
   update_curswant();
 }
 

@@ -5327,8 +5327,9 @@ static int ins_complete(int c, bool enable_pum)
               compl_curr_match->cp_number);
         edit_submode_extra = match_ref;
         edit_submode_highl = HLF_R;
-        if (dollar_vcol >= 0)
+        if (dollar_vcol >= 0) {
           curs_columns(curwin, false);
+        }
       }
     }
   }

@@ -2820,12 +2820,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             n_extra = col + 1;
           } else {
             n_extra = grid->Columns - col;
-            ILOG("n_extra %d vs total widht %d", grid->Columns, col);
           }
           char_attr = win_hl_attr(wp, HLF_DED);
         }
         if (*p_sbr != NUL && need_showbreak) {
-          ILOG("need showbreak %d", need_showbreak);
           /* Draw 'showbreak' at the start of each broken line. */
           p_extra = p_sbr;
           c_extra = NUL;
