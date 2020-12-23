@@ -4706,7 +4706,6 @@ do_arg_all(
     int keep_tabs                 // keep current tabs, for ":tab drop file"
 )
 {
-  int i;
   char_u      *opened;          // Array of weight for which args are open:
                                 //  0: not opened
                                 //  1: opened in other tab
@@ -4715,6 +4714,7 @@ do_arg_all(
 
   int opened_len;               // length of opened[]
   int use_firstwin = false;     // use first window for arglist
+  bool tab_drop_empty_window = false;
   int split_ret = OK;
   bool p_ea_save;
   alist_T     *alist;           // argument list to be used
@@ -4762,6 +4762,7 @@ do_arg_all(
     win_T *wpnext = NULL;
     tpnext = curtab->tp_next;
     for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
+      int i;
       wpnext = wp->w_next;
       buf = wp->w_buffer;
       if (buf->b_ffname == NULL
@@ -4867,14 +4868,15 @@ do_arg_all(
   last_curwin = curwin;
   last_curtab = curtab;
   win_enter(lastwin, false);
-  // ":drop all" should re-use an empty window to avoid "--remote-tab"
+  // ":tab drop file" should re-use an empty window to avoid "--remote-tab"
   // leaving an empty tab page when executed locally.
   if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
       && curbuf->b_ffname == NULL && !curbuf->b_changed) {
     use_firstwin = true;
+    tab_drop_empty_window = true;
   }
 
-  for (i = 0; i < count && i < opened_len && !got_int; i++) {
+  for (int i = 0; i < count && !got_int; i++) {
     if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1) {
       arg_had_last = true;
     }
@@ -4894,6 +4896,10 @@ do_arg_all(
         }
       }
     } else if (split_ret == OK) {
+      // trigger events for tab drop
+      if (tab_drop_empty_window && i == count - 1) {
+        autocmd_no_enter--;
+      }
       if (!use_firstwin) {              // split current window
         p_ea_save = p_ea;
         p_ea = true;                    // use space from all windows
@@ -4919,6 +4925,9 @@ do_arg_all(
                       || bufIsChanged(curwin->w_buffer))
                      ? ECMD_HIDE : 0) + ECMD_OLDBUF,
                     curwin);
+      if (tab_drop_empty_window && i == count - 1) {
+        autocmd_no_enter++;
+      }
       if (use_firstwin) {
         autocmd_no_leave++;
       }

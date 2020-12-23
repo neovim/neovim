@@ -222,6 +222,34 @@ function Test_tabpage_with_autocmd()
   1tabonly!
 endfunction
 
+" Test autocommands on tab drop
+function Test_tabpage_with_autocmd_tab_drop()
+  augroup TestTabpageGroup
+    au!
+    autocmd TabEnter * call add(s:li, 'TabEnter')
+    autocmd WinEnter * call add(s:li, 'WinEnter')
+    autocmd BufEnter * call add(s:li, 'BufEnter')
+    autocmd TabLeave * call add(s:li, 'TabLeave')
+    autocmd WinLeave * call add(s:li, 'WinLeave')
+    autocmd BufLeave * call add(s:li, 'BufLeave')
+  augroup END
+
+  let s:li = []
+  tab drop test1
+  call assert_equal(['BufLeave', 'BufEnter'], s:li)
+
+  let s:li = []
+  tab drop test2 test3
+  call assert_equal([
+        \ 'TabLeave', 'TabEnter', 'TabLeave', 'TabEnter',
+        \ 'TabLeave', 'WinEnter', 'TabEnter', 'BufEnter',
+        \ 'TabLeave', 'WinEnter', 'TabEnter', 'BufEnter'], s:li)
+
+  autocmd! TestTabpageGroup
+  augroup! TestTabpageGroup
+  1tabonly!
+endfunction
+
 function Test_tabpage_with_tab_modifier()
   for n in range(4)
     tabedit
