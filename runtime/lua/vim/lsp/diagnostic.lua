@@ -1044,6 +1044,8 @@ function M.display(diagnostics, bufnr, client_id, config)
 
   diagnostics = diagnostics or M.get(bufnr, client_id)
 
+  vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
+
   if not diagnostics or vim.tbl_isempty(diagnostics) then
     return
   end
@@ -1062,8 +1064,6 @@ function M.display(diagnostics, bufnr, client_id, config)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end
-
-  vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
 end
 -- }}}
 -- Diagnostic User Functions {{{
