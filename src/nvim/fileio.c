@@ -5103,7 +5103,7 @@ void buf_reload(buf_T *buf, int orig_mode)
     curwin->w_topline = old_topline;
   curwin->w_cursor = old_cursor;
   check_cursor();
-  update_topline();
+  update_topline(curwin);
   keep_filetype = FALSE;
 
   /* Update folds unless they are defined manually. */

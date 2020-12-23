@@ -539,7 +539,7 @@ int main(int argc, char **argv)
   // When a startup script or session file setup for diff'ing and
   // scrollbind, sync the scrollbind now.
   if (curwin->w_p_diff && curwin->w_p_scb) {
-    update_topline();
+    update_topline(curwin);
     check_scrollbind((linenr_T)0, 0L);
     TIME_MSG("diff scrollbinding");
   }
