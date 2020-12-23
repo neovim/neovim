@@ -732,7 +732,7 @@ void curs_columns(
 {
   int n;
   int width = 0;
-  colnr_T startcol;
+  colnr_T startcol;  // relative to
   colnr_T endcol;
   colnr_T prev_skipcol;
   long so = get_scrolloff_value(wp);
@@ -757,9 +757,16 @@ void curs_columns(
     // use virtcol or if inside the fold, use the start of the fold
     // assume w_valid_cursor.lnum is valid, TODO store it instead
     bool fold_found = foldFind(&curwin->w_folds, lnum, &fp);
+    assert(fold_found == true);
     // TODO use fp->fd_startcol
 
-    startcol = curwin->w_virtcol = endcol = curwin->w_leftcol;
+    if (fp->fd_startcol <= curwin->w_virtcol) {
+      startcol = fp->fd_startcol;
+      endcol = startcol;
+    } else {
+      startcol = curwin->w_virtcol = endcol = curwin->w_leftcol;
+    }
+
   } else {
     getvvcol(wp, &wp->w_cursor, &startcol, &(wp->w_virtcol), &endcol);
   }
