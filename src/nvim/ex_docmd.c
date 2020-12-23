@@ -7362,7 +7362,7 @@ static void ex_syncbind(exarg_T *eap)
     topline = curwin->w_topline;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_scb && wp->w_buffer) {
-        y = wp->w_buffer->b_ml.ml_line_count - get_scrolloff_value();
+        y = wp->w_buffer->b_ml.ml_line_count - get_scrolloff_value(curwin);
         if (topline > y) {
           topline = y;
         }

@@ -2629,7 +2629,7 @@ do_mouse (
 
   /* Set global flag that we are extending the Visual area with mouse
    * dragging; temporarily minimize 'scrolloff'. */
-  if (VIsual_active && is_drag && get_scrolloff_value()) {
+  if (VIsual_active && is_drag && get_scrolloff_value(curwin)) {
     // In the very first line, allow scrolling one line
     if (mouse_row == 0) {
       mouse_dragging = 2;
@@ -4135,7 +4135,7 @@ void scroll_redraw(int up, long count)
     scrollup(count, true) :
     scrolldown(count, true);
 
-  if (get_scrolloff_value()) {
+  if (get_scrolloff_value(curwin)) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct();
@@ -4185,7 +4185,7 @@ static void nv_zet(cmdarg_T *cap)
   int old_fen = curwin->w_p_fen;
   bool undo = false;
 
-  int l_p_siso = (int)get_sidescrolloff_value();
+  int l_p_siso = (int)get_sidescrolloff_value(curwin);
   assert(l_p_siso <= INT_MAX);
 
   if (ascii_isdigit(nchar)) {

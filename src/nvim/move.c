@@ -368,7 +368,7 @@ static int scrolljump_value(void)
  */
 static bool check_top_offset(void)
 {
-  long so = get_scrolloff_value();
+  long so = get_scrolloff_value(curwin);
   if (curwin->w_cursor.lnum < curwin->w_topline + so
       || hasAnyFolding(curwin)
       ) {
@@ -729,8 +729,8 @@ void curs_columns(
   colnr_T startcol;
   colnr_T endcol;
   colnr_T prev_skipcol;
-  long so = get_scrolloff_value();
-  long siso = get_sidescrolloff_value();
+  long so = get_scrolloff_value(curwin);
+  long siso = get_sidescrolloff_value(curwin);
 
   /*
    * First make sure that w_topline is valid (after moving the cursor).
@@ -1231,7 +1231,7 @@ void scrolldown_clamp(void)
     end_row += curwin->w_cline_height - 1 -
                curwin->w_virtcol / curwin->w_width_inner;
   }
-  if (end_row < curwin->w_height_inner - get_scrolloff_value()) {
+  if (end_row < curwin->w_height_inner - get_scrolloff_value(curwin)) {
     if (can_fill) {
       ++curwin->w_topfill;
       check_topfill(curwin, true);
@@ -1271,7 +1271,7 @@ void scrollup_clamp(void)
     validate_virtcol();
     start_row -= curwin->w_virtcol / curwin->w_width_inner;
   }
-  if (start_row >= get_scrolloff_value()) {
+  if (start_row >= get_scrolloff_value(curwin)) {
     if (curwin->w_topfill > 0) {
       curwin->w_topfill--;
     } else {
@@ -1374,7 +1374,7 @@ void scroll_cursor_top(int min_scroll, int always)
   linenr_T old_topline = curwin->w_topline;
   linenr_T old_topfill = curwin->w_topfill;
   linenr_T new_topline;
-  int off = (int)get_scrolloff_value();
+  int off = (int)get_scrolloff_value(curwin);
 
   if (mouse_dragging > 0)
     off = mouse_dragging - 1;
@@ -1518,7 +1518,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   int      old_valid      = curwin->w_valid;
   int      old_empty_rows = curwin->w_empty_rows;
   linenr_T cln            = curwin->w_cursor.lnum;  // Cursor Line Number
-  long so = get_scrolloff_value();
+  long so = get_scrolloff_value(curwin);
 
   if (set_topbot) {
     used = 0;
@@ -1751,8 +1751,8 @@ void cursor_correct(void)
    * How many lines we would like to have above/below the cursor depends on
    * whether the first/last line of the file is on screen.
    */
-  int above_wanted = (int)get_scrolloff_value();
-  int below_wanted = (int)get_scrolloff_value();
+  int above_wanted = (int)get_scrolloff_value(curwin);
+  int below_wanted = (int)get_scrolloff_value(curwin);
   if (mouse_dragging > 0) {
     above_wanted = mouse_dragging - 1;
     below_wanted = mouse_dragging - 1;
@@ -1848,7 +1848,7 @@ int onepage(Direction dir, long count)
   int retval = OK;
   lineoff_T loff;
   linenr_T old_topline = curwin->w_topline;
-  long so = get_scrolloff_value();
+  long so = get_scrolloff_value(curwin);
 
   if (curbuf->b_ml.ml_line_count == 1) {    /* nothing to do */
     beep_flush();
