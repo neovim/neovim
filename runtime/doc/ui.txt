@@ -213,11 +213,9 @@ the editor.
 
 ["mouse_on"]
 ["mouse_off"]
-	|'mouse'| was enabled/disabled in the current editor mode. Useful for
-	a terminal UI, or other situations where Nvim mouse would conflict
-	with other usages of the mouse. UIs may ignore this and always send
-	mouse input, because 'mouse' decides the behavior of |nvim_input()|
-	implicitly.
+	'mouse' was enabled/disabled in the current editor mode. Useful for
+	a terminal UI, or embedding into an application where Nvim mouse would
+	conflict with other usages of the mouse. Other UI:s may ignore this event.
 
 ["busy_start"]
 ["busy_stop"]

@@ -1880,9 +1880,6 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);                 // Ignore mouse
 
   case K_MIDDLEMOUSE:
-    if (!mouse_has(MOUSE_COMMAND)) {
-      return command_line_not_changed(s);                   // Ignore mouse
-    }
     cmdline_paste(eval_has_provider("clipboard") ? '*' : 0, true, true);
     redrawcmd();
     return command_line_changed(s);
@@ -1904,10 +1901,6 @@ static int command_line_handle_key(CommandLineState *s)
       s->ignore_drag_release = true;
     } else {
       s->ignore_drag_release = false;
-    }
-
-    if (!mouse_has(MOUSE_COMMAND)) {
-      return command_line_not_changed(s);                   // Ignore mouse
     }
 
     ccline.cmdspos = cmd_startcol();
