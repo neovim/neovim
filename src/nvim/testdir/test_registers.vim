@@ -259,9 +259,9 @@ func Test_insert_small_delete()
   call setline(1, ['foo foobar bar'])
   call cursor(1,1)
   exe ":norm! ciw'\<C-R>-'"
-  call assert_equal(getline(1), "'foo' foobar bar")
+  call assert_equal("'foo' foobar bar", getline(1))
   exe ":norm! w.w."
-  call assert_equal(getline(1), "'foo' 'foobar' 'bar'")
+  call assert_equal("'foo' 'foobar' 'bar'", getline(1))
   bwipe!
 endfunc
 
