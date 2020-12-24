@@ -7159,20 +7159,20 @@ dict_T *get_winbuf_options(const int bufopt)
 
 /// Return the effective 'scrolloff' value for the current window, using the
 /// global value when appropriate.
-long get_scrolloff_value(void)
+long get_scrolloff_value(win_T *wp)
 {
   // Disallow scrolloff in terminal-mode. #11915
   if (State & TERM_FOCUS) {
     return 0;
   }
-  return curwin->w_p_so < 0 ? p_so : curwin->w_p_so;
+  return wp->w_p_so < 0 ? p_so : wp->w_p_so;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the
 /// global value when appropriate.
-long get_sidescrolloff_value(void)
+long get_sidescrolloff_value(win_T *wp)
 {
-  return curwin->w_p_siso < 0 ? p_siso : curwin->w_p_siso;
+  return wp->w_p_siso < 0 ? p_siso : wp->w_p_siso;
 }
 
 Dictionary get_vimoption(String name, Error *err)

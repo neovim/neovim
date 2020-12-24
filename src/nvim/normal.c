@@ -1261,7 +1261,7 @@ static void normal_redraw(NormalState *s)
 {
   // Before redrawing, make sure w_topline is correct, and w_leftcol
   // if lines don't wrap, and w_skipcol if lines wrap.
-  update_topline();
+  update_topline(curwin);
   validate_cursor();
 
   // If the cursor moves horizontally when 'concealcursor' is active, then the
@@ -1341,7 +1341,7 @@ static int normal_check(VimState *state)
   } else if (do_redraw || stuff_empty()) {
     // Need to make sure w_topline and w_leftcol are correct before
     // normal_check_window_scrolled() is called.
-    update_topline();
+    update_topline(curwin);
 
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
@@ -2629,7 +2629,7 @@ do_mouse (
 
   /* Set global flag that we are extending the Visual area with mouse
    * dragging; temporarily minimize 'scrolloff'. */
-  if (VIsual_active && is_drag && get_scrolloff_value()) {
+  if (VIsual_active && is_drag && get_scrolloff_value(curwin)) {
     // In the very first line, allow scrolling one line
     if (mouse_row == 0) {
       mouse_dragging = 2;
@@ -4136,7 +4136,7 @@ void scroll_redraw(int up, long count)
     scrollup(count, true) :
     scrolldown(count, true);
 
-  if (get_scrolloff_value()) {
+  if (get_scrolloff_value(curwin)) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct();
@@ -4186,7 +4186,7 @@ static void nv_zet(cmdarg_T *cap)
   int old_fen = curwin->w_p_fen;
   bool undo = false;
 
-  int l_p_siso = (int)get_sidescrolloff_value();
+  int l_p_siso = (int)get_sidescrolloff_value(curwin);
   assert(l_p_siso <= INT_MAX);
 
   if (ascii_isdigit(nchar)) {
@@ -4254,12 +4254,13 @@ dozet:
   /* "z+", "z<CR>" and "zt": put cursor at top of screen */
   case '+':
     if (cap->count0 == 0) {
-      /* No count given: put cursor at the line below screen */
-      validate_botline();               /* make sure w_botline is valid */
-      if (curwin->w_botline > curbuf->b_ml.ml_line_count)
+      // No count given: put cursor at the line below screen
+      validate_botline(curwin);               // make sure w_botline is valid
+      if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      else
+      } else {
         curwin->w_cursor.lnum = curwin->w_botline;
+      }
     }
     FALLTHROUGH;
   case NL:
@@ -5054,7 +5055,7 @@ static void nv_scroll(cmdarg_T *cap)
   setpcmark();
 
   if (cap->cmdchar == 'L') {
-    validate_botline();             /* make sure curwin->w_botline is valid */
+    validate_botline(curwin);          // make sure curwin->w_botline is valid
     curwin->w_cursor.lnum = curwin->w_botline - 1;
     if (cap->count1 - 1 >= curwin->w_cursor.lnum)
       curwin->w_cursor.lnum = 1;
@@ -5075,7 +5076,7 @@ static void nv_scroll(cmdarg_T *cap)
       /* Don't count filler lines above the window. */
       used -= diff_check_fill(curwin, curwin->w_topline)
               - curwin->w_topfill;
-      validate_botline();  // make sure w_empty_rows is valid
+      validate_botline(curwin);  // make sure w_empty_rows is valid
       half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half he number of filler lines to be "below this
@@ -6654,16 +6655,15 @@ static void nv_g_cmd(cmdarg_T *cap)
       VIsual = curwin->w_cursor;
       curwin->w_cursor = tpos;
       check_cursor();
-      update_topline();
-      /*
-       * When called from normal "g" command: start Select mode when
-       * 'selectmode' contains "cmd".  When called for K_SELECT, always
-       * start Select mode.
-       */
-      if (cap->arg)
+      update_topline(curwin);
+      // When called from normal "g" command: start Select mode when
+      // 'selectmode' contains "cmd".  When called for K_SELECT, always
+      // start Select mode.
+      if (cap->arg) {
         VIsual_select = true;
-      else
+      } else {
         may_start_select('c');
+      }
       setmouse();
       redraw_curbuf_later(INVERTED);
       showmode();

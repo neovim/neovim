@@ -2706,7 +2706,7 @@ int do_ecmd(
     if (topline == 0 && command == NULL) {
       *so_ptr = 999;    // force cursor to be vertically centered in the window
     }
-    update_topline();
+    update_topline(curwin);
     curwin->w_scbind_pos = curwin->w_topline;
     *so_ptr = n;
     redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
@@ -3705,7 +3705,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                                     + len_change;
               highlight_match = TRUE;
 
-              update_topline();
+              update_topline(curwin);
               validate_cursor();
               update_screen(SOME_VALID);
               highlight_match = false;
@@ -5740,7 +5740,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   redraw_later(curwin, SOME_VALID);
   win_enter(save_curwin, false);  // Return to original window
-  update_topline();
+  update_topline(curwin);
 
   // Update screen now.
   int save_rd = RedrawingDisabled;

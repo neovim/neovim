@@ -523,7 +523,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   // positioned in the same way as the actual search command
   restore_viewstate(&s->old_viewstate);
   changed_cline_bef_curs();
-  update_topline();
+  update_topline(curwin);
 
   if (found != 0) {
     pos_T save_pos = curwin->w_cursor;
@@ -1546,7 +1546,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
     set_search_match(&s->match_end);
     curwin->w_cursor = s->match_start;
     changed_cline_bef_curs();
-    update_topline();
+    update_topline(curwin);
     validate_cursor();
     highlight_match = true;
     save_viewstate(&s->old_viewstate);
@@ -2242,7 +2242,7 @@ static int command_line_changed(CommandLineState *s)
     // Restore the window "view".
     curwin->w_cursor   = s->is_state.save_cursor;
     restore_viewstate(&s->is_state.old_viewstate);
-    update_topline();
+    update_topline(curwin);
 
     redrawcmdline();
 

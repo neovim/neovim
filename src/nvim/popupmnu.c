@@ -809,7 +809,7 @@ static int pum_set_selected(int n, int repeat)
               no_u_sync++;
               win_enter(curwin_save, true);
               no_u_sync--;
-              update_topline();
+              update_topline(curwin);
             }
 
             // Update the screen before drawing the popup menu.

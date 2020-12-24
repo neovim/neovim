@@ -4540,7 +4540,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
 
   // Might need to scroll the old window before switching, e.g., when the
   // cursor was moved.
-  update_topline();
+  update_topline(curwin);
 
   // may have to copy the buffer options when 'cpo' contains 'S'
   if (wp->w_buffer != curbuf) {
@@ -5873,10 +5873,10 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   if (wp == curwin) {
-    if (get_scrolloff_value()) {
-      update_topline();
+    if (get_scrolloff_value(wp)) {
+      update_topline(wp);
     }
-    curs_columns(false);        // validate w_wrow
+    curs_columns(wp, false);        // validate w_wrow
   }
   if (prev_height > 0) {
     wp->w_prev_fraction_row = wp->w_wrow;
@@ -5932,8 +5932,8 @@ void win_set_inner_size(win_T *wp)
     changed_line_abv_curs_win(wp);
     invalidate_botline_win(wp);
     if (wp == curwin) {
-      update_topline();
-      curs_columns(true);  // validate w_wrow
+      update_topline(wp);
+      curs_columns(wp, true);  // validate w_wrow
     }
     redraw_later(wp, NOT_VALID);
   }

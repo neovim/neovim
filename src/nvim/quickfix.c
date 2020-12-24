@@ -3696,7 +3696,7 @@ void ex_copen(exarg_T *eap)
   curwin->w_cursor.lnum = lnum;
   curwin->w_cursor.col = 0;
   check_cursor();
-  update_topline();             // scroll to show the line
+  update_topline(curwin);             // scroll to show the line
 }
 
 // Move the cursor in the quickfix window to "lnum".
@@ -3710,7 +3710,7 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curwin->w_cursor.col = 0;
   curwin->w_cursor.coladd = 0;
   curwin->w_curswant = 0;
-  update_topline();              // scroll to show the line
+  update_topline(curwin);              // scroll to show the line
   redraw_later(curwin, VALID);
   curwin->w_redr_status = true;  // update ruler
   curwin = old_curwin;

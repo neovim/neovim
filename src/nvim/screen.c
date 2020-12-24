@@ -683,7 +683,7 @@ void conceal_check_cursor_line(void)
     redrawWinline(curwin, curwin->w_cursor.lnum);
     // Need to recompute cursor column, e.g., when starting Visual mode
     // without concealing. */
-    curs_columns(true);
+    curs_columns(curwin, true);
   }
 }
 
@@ -1698,7 +1698,7 @@ static void win_update(win_T *wp, Providers *providers)
       const int new_wcol = wp->w_wcol;
       recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
-      update_topline();  // may invalidate w_botline again
+      update_topline(curwin);  // may invalidate w_botline again
 
       if (old_wcol != new_wcol
           && (wp->w_valid & (VALID_WCOL|VALID_WROW))
@@ -7380,7 +7380,7 @@ void screen_resize(int width, int height)
           cmdline_pum_display(false);
         }
       } else {
-        update_topline();
+        update_topline(curwin);
         if (pum_drawn()) {
           // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
           // For now make sure the nested update_screen(0) won't redraw the
