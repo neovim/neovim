@@ -155,6 +155,8 @@ struct exarg {
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
   cmd_addr_T addr_type;         ///< type of the count/range
+  colnr_T col1;                 ///< the first column number
+  colnr_T col2;                 ///< the last column number
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
