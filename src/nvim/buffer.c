@@ -5479,7 +5479,9 @@ int buf_signcols(buf_T *buf)
             curline = sign->lnum;
             linesum = 0;
           }
-          linesum++;
+          if (sign->has_text_or_icon) {
+            linesum++;
+          }
         }
         if (linesum > buf->b_signcols_max) {
           buf->b_signcols_max = linesum;

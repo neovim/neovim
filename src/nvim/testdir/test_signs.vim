@@ -122,9 +122,9 @@ func Test_sign()
   call assert_fails("sign define Sign4 text=a\e linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\ea linehl=Comment", 'E239:')
 
-  " Only 1 or 2 character text is allowed
+  " Only 0, 1 or 2 character text is allowed
   call assert_fails("sign define Sign4 text=abc linehl=Comment", 'E239:')
-  call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
+  " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
   " define sign with whitespace
@@ -306,7 +306,7 @@ func Test_sign_invalid_commands()
   call assert_fails('sign jump 1 name=', 'E474:')
   call assert_fails('sign jump 1 name=Sign1', 'E474:')
   call assert_fails('sign jump 1 line=100', '474:')
-  call assert_fails('sign define Sign2 text=', 'E239:')
+  " call assert_fails('sign define Sign2 text=', 'E239:')
   " Non-numeric identifier for :sign place
   call assert_fails("sign place abc line=3 name=Sign1 buffer=" . bufnr(''),
 								\ 'E474:')
@@ -415,7 +415,7 @@ func Test_sign_funcs()
 
   " Tests for invalid arguments to sign_define()
   call assert_fails('call sign_define("sign4", {"text" : "===>"})', 'E239:')
-  call assert_fails('call sign_define("sign5", {"text" : ""})', 'E239:')
+  " call assert_fails('call sign_define("sign5", {"text" : ""})', 'E239:')
   call assert_fails('call sign_define([])', 'E730:')
   call assert_fails('call sign_define("sign6", [])', 'E715:')
 
