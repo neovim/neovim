@@ -1,8 +1,8 @@
 " Tests for digraphs
 
-if !has("digraphs")
-  finish
-endif
+source check.vim
+CheckFeature digraphs
+source term_util.vim
 
 func Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars
@@ -485,6 +485,22 @@ func Test_show_digraph_cp1251()
   call assert_equal("\n<\xfa>  <|z>  <M-z>  250,  Hex fa,  Oct 372, Digr ='", execute('ascii'))
   set encoding=utf-8
   bwipe!
+endfunc
+
+" Test for the characters displayed on the screen when entering a digraph
+func Test_entering_digraph()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, "i\<C-K>")
+  call term_wait(buf)
+  call assert_equal('?', term_getline(buf, 1))
+  call term_sendkeys(buf, "1")
+  call term_wait(buf)
+  call assert_equal('1', term_getline(buf, 1))
+  call term_sendkeys(buf, "2")
+  call term_wait(buf)
+  call assert_equal('½', term_getline(buf, 1))
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

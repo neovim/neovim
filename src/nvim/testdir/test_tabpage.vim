@@ -1,6 +1,7 @@
 " Tests for tabpage
 
 source screendump.vim
+source check.vim
 
 function Test_tabpage()
   bw!
@@ -217,6 +218,34 @@ function Test_tabpage_with_autocmd()
   delcommand C
   autocmd! TabDestructive
   augroup! TabDestructive
+  autocmd! TestTabpageGroup
+  augroup! TestTabpageGroup
+  1tabonly!
+endfunction
+
+" Test autocommands on tab drop
+function Test_tabpage_with_autocmd_tab_drop()
+  augroup TestTabpageGroup
+    au!
+    autocmd TabEnter * call add(s:li, 'TabEnter')
+    autocmd WinEnter * call add(s:li, 'WinEnter')
+    autocmd BufEnter * call add(s:li, 'BufEnter')
+    autocmd TabLeave * call add(s:li, 'TabLeave')
+    autocmd WinLeave * call add(s:li, 'WinLeave')
+    autocmd BufLeave * call add(s:li, 'BufLeave')
+  augroup END
+
+  let s:li = []
+  tab drop test1
+  call assert_equal(['BufLeave', 'BufEnter'], s:li)
+
+  let s:li = []
+  tab drop test2 test3
+  call assert_equal([
+        \ 'TabLeave', 'TabEnter', 'TabLeave', 'TabEnter',
+        \ 'TabLeave', 'WinEnter', 'TabEnter', 'BufEnter',
+        \ 'TabLeave', 'WinEnter', 'TabEnter', 'BufEnter'], s:li)
+
   autocmd! TestTabpageGroup
   augroup! TestTabpageGroup
   1tabonly!
@@ -577,6 +606,84 @@ func Test_tabpage_cmdheight()
 
   call StopVimInTerminal(buf)
   call delete('XTest_tabpage_cmdheight')
+endfunc
+
+" Return the terminal key code for selecting a tab page from the tabline. This
+" sequence contains the following codes: a CSI (0x9b), KS_TABLINE (0xf0),
+" KS_FILLER (0x58) and then the tab page number.
+func TabLineSelectPageCode(tabnr)
+  return "\x9b\xf0\x58" ..  nr2char(a:tabnr)
+endfunc
+
+" Return the terminal key code for opening a new tabpage from the tabpage
+" menu. This sequence consists of the following codes: a CSI (0x9b),
+" KS_TABMENU (0xef), KS_FILLER (0x58), the tab page number and
+" TABLINE_MENU_NEW (2).
+func TabMenuNewItemCode(tabnr)
+  return "\x9b\xef\x58" .. nr2char(a:tabnr) .. nr2char(2)
+endfunc
+
+" Return the terminal key code for closing a tabpage from the tabpage menu.
+" This sequence consists of the following codes: a CSI (0x9b), KS_TABMENU
+" (0xef), KS_FILLER (0x58), the tab page number and TABLINE_MENU_CLOSE (1).
+func TabMenuCloseItemCode(tabnr)
+  return "\x9b\xef\x58" .. nr2char(a:tabnr) .. nr2char(1)
+endfunc
+
+" Test for using the tabpage menu from the insert and normal modes
+func Test_tabline_tabmenu()
+  " only works in GUI
+  CheckGui
+
+  %bw!
+  tabnew
+  tabnew
+  call assert_equal(3, tabpagenr())
+
+  " go to tab page 2 in normal mode
+  call feedkeys(TabLineSelectPageCode(2), "Lx!")
+  call assert_equal(2, tabpagenr())
+
+  " close tab page 3 in normal mode
+  call feedkeys(TabMenuCloseItemCode(3), "Lx!")
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(2, tabpagenr())
+
+  " open new tab page before tab page 1 in normal mode
+  call feedkeys(TabMenuNewItemCode(1), "Lx!")
+  call assert_equal(1, tabpagenr())
+  call assert_equal(3, tabpagenr('$'))
+
+  " go to tab page 2 in operator-pending mode (should beep)
+  call assert_beeps('call feedkeys("f" .. TabLineSelectPageCode(2), "Lx!")')
+
+  " open new tab page before tab page 1 in operator-pending mode (should beep)
+  call assert_beeps('call feedkeys("f" .. TabMenuNewItemCode(1), "Lx!")')
+
+  " open new tab page after tab page 3 in normal mode
+  call feedkeys(TabMenuNewItemCode(4), "Lx!")
+  call assert_equal(4, tabpagenr())
+  call assert_equal(4, tabpagenr('$'))
+
+  " go to tab page 2 in insert mode
+  call feedkeys("i" .. TabLineSelectPageCode(2) .. "\<C-C>", "Lx!")
+  call assert_equal(2, tabpagenr())
+
+  " close tab page 2 in insert mode
+  call feedkeys("i" .. TabMenuCloseItemCode(2) .. "\<C-C>", "Lx!")
+  call assert_equal(3, tabpagenr('$'))
+
+  " open new tab page before tab page 3 in insert mode
+  call feedkeys("i" .. TabMenuNewItemCode(3) .. "\<C-C>", "Lx!")
+  call assert_equal(3, tabpagenr())
+  call assert_equal(4, tabpagenr('$'))
+
+  " open new tab page after tab page 4 in insert mode
+  call feedkeys("i" .. TabMenuNewItemCode(5) .. "\<C-C>", "Lx!")
+  call assert_equal(5, tabpagenr())
+  call assert_equal(5, tabpagenr('$'))
+
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
