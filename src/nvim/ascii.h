@@ -89,6 +89,10 @@ static inline bool ascii_iswhite(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
+static inline bool ascii_iswhite_or_nul(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline bool ascii_isdigit(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
@@ -115,6 +119,14 @@ static inline bool ascii_isspace(int)
 static inline bool ascii_iswhite(int c)
 {
   return c == ' ' || c == '\t';
+}
+
+/// Checks if `c` is a space or tab character or NUL.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_iswhite_or_nul(int c)
+{
+  return ascii_iswhite(c) || c == NUL;
 }
 
 /// Check whether character is a decimal digit.

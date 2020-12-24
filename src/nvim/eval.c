@@ -2556,6 +2556,7 @@ void free_for_info(void *fi_void)
 
 
 void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
+  FUNC_ATTR_NONNULL_ALL
 {
   int got_eq = FALSE;
   int c;
@@ -2638,6 +2639,23 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       }
     }
   }
+
+  // ":exe one two" completes "two"
+  if ((cmdidx == CMD_execute
+       || cmdidx == CMD_echo
+       || cmdidx == CMD_echon
+       || cmdidx == CMD_echomsg)
+      && xp->xp_context == EXPAND_EXPRESSION) {
+    for (;;) {
+      char_u *const n = skiptowhite(arg);
+
+      if (n == arg || ascii_iswhite_or_nul(*skipwhite(n))) {
+        break;
+      }
+      arg = skipwhite(n);
+    }
+  }
+
   xp->xp_pattern = arg;
 }
 
