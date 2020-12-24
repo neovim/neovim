@@ -1248,10 +1248,16 @@ fail:
 /// in a virtual terminal having the intended size.
 ///
 /// @param buffer the buffer to use (expected to be empty)
-/// @param opts   Optional parameters. Reserved for future use.
+/// @param opts   Optional parameters.
+///          - on_input: lua callback for input sent, i e keypresses in terminal
+///            mode. Note: keypresses are sent raw as they would be to the pty
+///            master end. For instance, a carriage return is sent
+///            as a "\r", not as a "\n". |textlock| applies. It is possible
+///            to call |nvim_chan_send| directly in the callback however.
+///                 ["input", term, bufnr, data]
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
+Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(7)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -1259,13 +1265,27 @@ Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
     return 0;
   }
 
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
-    return 0;
+  LuaRef cb = LUA_NOREF;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_input", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation,
+                      "%s is not a function", "on_input");
+        return 0;
+      }
+      cb = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+      break;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+    }
   }
 
   TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
+  chan->stream.internal.cb = cb;
   topts.data = chan;
   // NB: overridden in terminal_check_size if a window is already
   // displaying the buffer
@@ -1283,7 +1303,18 @@ Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
 
 static void term_write(char *buf, size_t size, void *data)
 {
-  // TODO(bfredl): lua callback
+  Channel *chan = data;
+  LuaRef cb = chan->stream.internal.cb;
+  if (cb == LUA_NOREF) {
+    return;
+  }
+  FIXED_TEMP_ARRAY(args, 3);
+  args.items[0] = INTEGER_OBJ((Integer)chan->id);
+  args.items[1] = BUFFER_OBJ(terminal_buf(chan->term));
+  args.items[2] = STRING_OBJ(((String){ .data = buf, .size = size }));
+  textlock++;
+  nlua_call_ref(cb, "input", args, false, NULL);
+  textlock--;
 }
 
 static void term_resize(uint16_t width, uint16_t height, void *data)

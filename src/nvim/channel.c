@@ -8,6 +8,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
 #include "nvim/fileio.h"
+#include "nvim/lua/executor.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
@@ -136,6 +137,8 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       *error = (const char *)e_invstream;
       return false;
     }
+    api_free_luaref(chan->stream.internal.cb);
+    chan->stream.internal.cb = LUA_NOREF;
     break;
 
   default:
@@ -420,6 +423,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
       // Create a loopback channel. This avoids deadlock if nvim connects to
       // its own named pipe.
       channel = channel_alloc(kChannelStreamInternal);
+      channel->stream.internal.cb = LUA_NOREF;
       rpc_start(channel);
       goto end;
     }
