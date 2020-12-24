@@ -4206,6 +4206,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = true;
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
+    } else if (STRICMP(name, "clipboard_working") == 0) {
+      n = eval_has_provider("clipboard");
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
       n = eval_has_provider("clipboard");

@@ -1,3 +1,4 @@
+source check.vim
 
 func Test_yank_put_clipboard()
   new
@@ -6,6 +7,16 @@ func Test_yank_put_clipboard()
   g/^/normal yyp
   call assert_equal(['a', 'a', 'b', 'b', 'c', 'c'], getline(1, 6))
 
+  set clipboard&
+  bwipe!
+endfunc
+
+func Test_global_set_clipboard()
+  CheckFeature clipboard_working
+  new
+  set clipboard=unnamedplus
+  let @+='clipboard' | g/^/set cb= | let @" = 'unnamed' | put
+  call assert_equal(['','unnamed'], getline(1, '$'))
   set clipboard&
   bwipe!
 endfunc
