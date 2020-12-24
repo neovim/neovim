@@ -623,6 +623,9 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 " Gedcom
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
+" Gift (Moodle)
+autocmd BufRead,BufNewFile *.gift 		setf gift
+
 " Git
 au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG 	setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,/etc/gitconfig 	setf gitconfig
