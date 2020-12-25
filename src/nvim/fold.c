@@ -52,6 +52,8 @@ typedef struct {
   linenr_T lnum;                /* current line number */
   linenr_T off;                 /* offset between lnum and real line number */
   linenr_T lnum_save;           /* line nr used by foldUpdateIEMSRecurse() */
+  colnr_T startcol;             // starting column of the fold
+  colnr_T endcol;               // end column of the fold
   int lvl;                      /* current level (-1 for undefined) */
   int lvl_next;                 /* level used for next line */
   int start;                    /* number of folds that are forced to start at
@@ -1680,6 +1682,9 @@ static void foldAddMarker(
   line = ml_get_buf(buf, lnum, false);
   size_t line_len = STRLEN(line);
   size_t added = 0;
+  size_t cmslen = STRLEN(line);
+  // size_t lastcms_len =  (size_t)( (p + 2) - buf->b_p_cms);
+  // ILOG("addingmarkers: lastcms_len = %lu", lastcms_len);
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
     // Check if the line ends with an unclosed comment
@@ -1687,25 +1692,37 @@ static void foldAddMarker(
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
     ins_offset = (size_t)pos.col;   // todo invalid for multibyte language
     memcpy(newline, line, ins_offset);
+    ILOG("0. newline: %s", newline);
     // Append the marker to the end of the line
     if (p == NULL || line_is_comment) {
+      ILOG("TODO line is a comment or no commentstring");
       memcpy(&newline[ins_offset], marker, markerlen);
       // STRNCPY(newline + ins_offset, marker, markerlen + 1);
-      STRLCPY(newline + line_len + markerlen + 1, line + ins_offset,
-              line_len - ins_offset);
+      STRLCPY(newline + ins_offset + markerlen, line + ins_offset,
+              line_len - ins_offset + 1);
       added = markerlen;
     } else {
       ILOG("TODO line is not a comment");
-      // todo fix all that
-      STRCPY(newline + line_len, cms);
-      memcpy(newline + line_len + (p - cms), marker, markerlen);
-      STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
-      added = markerlen + STRLEN(cms)-2;
+      // todo fix all that memcpy(dst, src, len)
+      STRNCPY(newline + ins_offset, cms, cmslen);
+      ILOG("1. newline: %s", newline);
+      memcpy(newline + ins_offset + (p-cms), marker, markerlen);
+      ILOG("2. newline: %s", newline);
+      // + (p - cms)
+      // memcpy(newline + ins_offset + (p-cms) , marker, markerlen);
+      // TODO adjust the length
+      STRNCPY(newline + line_len + (p - cms) + markerlen, p + 2, 2);
+      memcpy(newline + line_len + (p - cms) + markerlen +  2, line + ins_offset, line_len - ins_offset);
+
+      // TODO copier le reste de la ligne
+      // STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
+      // TODO adjust
+      added = markerlen + STRLEN(cms)-2 + STRLEN(&line[ins_offset]);
     }
     ILOG("Replacing with newline %s", newline);
     ml_replace_buf(buf, lnum, newline, false);
     if (added) {
-      extmark_splice_cols(buf, (int)lnum-1, (int)line_len,
+      extmark_splice_cols(buf, (int)lnum-1, (int)ins_offset,
                           0, (int)added, kExtmarkUndo);
     }
   }
@@ -2022,6 +2039,8 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
   fline.lvl = 0;
   fline.lvl_next = -1;
   fline.start = 0;
+  fline.startcol = 0;
+  fline.endcol = 0;
   fline.end = MAX_LEVEL + 1;
   fline.had_end = MAX_LEVEL + 1;
 
@@ -2359,6 +2378,8 @@ static linenr_T foldUpdateIEMSRecurse(
                                       (linenr_T)MAXLNUM,
                                       (long)(fp->fd_top - firstlnum));
               }
+              fp->fd_startcol = flp->startcol;
+              fp->fd_endcol = flp->endcol;
               fp->fd_len += fp->fd_top - firstlnum;
               fp->fd_top = firstlnum;
               fold_changed = true;
@@ -2438,6 +2459,9 @@ static linenr_T foldUpdateIEMSRecurse(
            * end earlier. */
           fp->fd_top = firstlnum;
           fp->fd_len = bot - firstlnum + 1;
+          fp->fd_startcol = flp->startcol;
+          fp->fd_endcol = flp->endcol;
+          //
           /* When the containing fold is open, the new fold is open.
            * The new fold is closed if the fold above it is closed.
            * The first fold depends on the containing fold. */
@@ -3103,22 +3127,20 @@ static void parseMarker(win_T *wp)
 }
 
 /* foldlevelMarker() {{{2 */
-/*
- * Low level function to get the foldlevel for the "marker" method.
- * "foldendmarker", "foldstartmarkerlen" and "foldendmarkerlen" must have been
- * set before calling this.
- * Requires that flp->lvl is set to the fold level of the previous line!
- * Careful: This means you can't call this function twice on the same line.
- * Doesn't use any caching.
- * Sets flp->start when a start marker was found.
- */
+/// Low level function to get the foldlevel for the "marker" method.
+/// "foldendmarker", "foldstartmarkerlen" and "foldendmarkerlen" must have been
+/// set before calling this.
+/// Requires that flp->lvl is set to the fold level of the previous line!
+/// \warn This means you can't call this function twice on the same line.
+/// Doesn't use any caching.
+/// \param flp[in,out] Sets flp->start when a start marker was found.
 static void foldlevelMarker(fline_T *flp)
 {
   char_u      *startmarker;
   int cstart;
   int cend;
   int start_lvl = flp->lvl;
-  char_u      *s;
+  char_u      *s, *linestart;
   int n;
 
   /* cache a few values for speed */
@@ -3131,11 +3153,14 @@ static void foldlevelMarker(fline_T *flp)
   flp->start = 0;
   flp->lvl_next = flp->lvl;
 
-  s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, FALSE);
+  linestart = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, FALSE);
+  s = linestart;
   while (*s) {
     if (*s == cstart
         && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {
-      /* found startmarker: set flp->lvl */
+      flp->startcol = (colnr_T)(s - linestart);
+      ILOG("setting startcol to %d", flp->endcol);
+      // found startmarker: set flp->lvl
       s += foldstartmarkerlen;
       if (ascii_isdigit(*s)) {
         n = atoi((char *)s);
@@ -3152,9 +3177,12 @@ static void foldlevelMarker(fline_T *flp)
         ++flp->lvl_next;
         ++flp->start;
       }
+
     } else if (*s == cend && STRNCMP(s + 1, foldendmarker + 1,
                                      foldendmarkerlen - 1) == 0) {
-      /* found endmarker: set flp->lvl_next */
+      flp->endcol = (int)(s - linestart);
+      ILOG("setting endcol to %d", flp->endcol);
+      // found endmarker: set flp->lvl_next
       s += foldendmarkerlen;
       if (ascii_isdigit(*s)) {
         n = atoi((char *)s);
