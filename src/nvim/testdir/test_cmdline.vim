@@ -548,6 +548,13 @@ func Test_cmdline_complete_user_names()
   endif
 endfunc
 
+func Test_cmdline_complete_bang()
+  if executable('whoami')
+    call feedkeys(":!whoam\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_match('^".*\<whoami\>', @:)
+  endif
+endfunc
+
 funct Test_cmdline_complete_languages()
   let lang = substitute(execute('language messages'), '.*"\(.*\)"$', '\1', '')
 
@@ -568,6 +575,17 @@ funct Test_cmdline_complete_languages()
     call feedkeys(":language time \<c-a>\<c-b>\"\<cr>", 'tx')
     call assert_match('^"language .*\<' . lang . '\>', @:)
   endif
+endfunc
+
+func Test_cmdline_complete_expression()
+  let g:SomeVar = 'blah'
+  for cmd in ['exe', 'echo', 'echon', 'echomsg']
+    call feedkeys(":" .. cmd .. " SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
+    call assert_match('"' .. cmd .. ' SomeVar', @:)
+    call feedkeys(":" .. cmd .. " foo SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
+    call assert_match('"' .. cmd .. ' foo SomeVar', @:)
+  endfor
+  unlet g:SomeVar
 endfunc
 
 func Test_cmdline_write_alternatefile()

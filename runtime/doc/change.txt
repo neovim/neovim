@@ -954,9 +954,13 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			delete and yank) ({.%#:} only work with put).
 
 							*:reg* *:registers*
-:reg[isters]		Display the contents of all numbered and named
-			registers.  If a register is written to for |:redir|
-			it will not be listed.
+:reg[isters]		Display the type and contents of all numbered and
+			named registers.  If a register is written to for
+			|:redir| it will not be listed.
+			Type can be one of:
+			"c"	for |characterwise| text
+			"l"	for |linewise| text
+			"b"	for |blockwise-visual| text
 
 
 :reg[isters] {arg}	Display the contents of the numbered and named
