@@ -52,27 +52,27 @@ func Test_display_registers()
     let b = execute('registers')
 
     call assert_equal(a, b)
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '""   a\n'
-          \ .         '"0   ba\n'
-          \ .         '"1   b\n'
-          \ .         '"a   b\n'
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  ""   a\n'
+          \ .         '  c  "0   ba\n'
+          \ .         '  c  "1   b\n'
+          \ .         '  c  "a   b\n'
           \ .         '.*'
-          \ .         '"-   a\n'
+          \ .         '  c  "-   a\n'
           \ .         '.*'
-          \ .         '":   ls\n'
-          \ .         '"%   file2\n'
-          \ .         '"#   file1\n'
-          \ .         '"/   bar\n'
-          \ .         '"=   2\*4', a)
+          \ .         '  c  ":   ls\n'
+          \ .         '  c  "%   file2\n'
+          \ .         '  c  "#   file1\n'
+          \ .         '  c  "/   bar\n'
+          \ .         '  c  "=   2\*4', a)
 
     let a = execute('registers a')
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '"a   b', a)
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  "a   b', a)
 
     let a = execute('registers :')
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '":   ls', a)
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  ":   ls', a)
 
     bwipe!
 endfunc

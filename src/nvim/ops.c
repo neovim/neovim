@@ -3554,15 +3554,21 @@ void ex_display(exarg_T *eap)
   int name;
   char_u *arg = eap->arg;
   int clen;
+  char_u type[2];
 
   if (arg != NULL && *arg == NUL)
     arg = NULL;
   int attr = HL_ATTR(HLF_8);
 
-  /* Highlight title */
-  MSG_PUTS_TITLE(_("\n--- Registers ---"));
+  // Highlight title
+  msg_puts_title(_("\nType Name Content"));
   for (int i = -1; i < NUM_REGISTERS && !got_int; i++) {
     name = get_register_name(i);
+    switch (get_reg_type(name, NULL)) {
+      case kMTLineWise: type[0] = 'l'; break;
+      case kMTCharWise: type[0] = 'c'; break;
+      default: type[0] = 'b'; break;
+    }
 
     if (arg != NULL && vim_strchr(arg, name) == NULL) {
       continue;             /* did not ask for this register */
@@ -3587,11 +3593,14 @@ void ex_display(exarg_T *eap)
 
     if (yb->y_array != NULL) {
       msg_putchar('\n');
+      msg_puts("  ");
+      msg_putchar(type[0]);
+      msg_puts("  ");
       msg_putchar('"');
       msg_putchar(name);
       MSG_PUTS("   ");
 
-      int n = Columns - 6;
+      int n = Columns - 11;
       for (size_t j = 0; j < yb->y_size && n > 1; j++) {
         if (j) {
           MSG_PUTS_ATTR("^J", attr);
@@ -3616,8 +3625,8 @@ void ex_display(exarg_T *eap)
    */
   if ((p = get_last_insert()) != NULL
       && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int) {
-    MSG_PUTS("\n\".   ");
-    dis_msg(p, TRUE);
+    msg_puts("\n  c  \".   ");
+    dis_msg(p, true);
   }
 
   /*
@@ -3625,8 +3634,8 @@ void ex_display(exarg_T *eap)
    */
   if (last_cmdline != NULL && (arg == NULL || vim_strchr(arg, ':') != NULL)
       && !got_int) {
-    MSG_PUTS("\n\":   ");
-    dis_msg(last_cmdline, FALSE);
+    msg_puts("\n  c  \":   ");
+    dis_msg(last_cmdline, false);
   }
 
   /*
@@ -3634,8 +3643,8 @@ void ex_display(exarg_T *eap)
    */
   if (curbuf->b_fname != NULL
       && (arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int) {
-    MSG_PUTS("\n\"%   ");
-    dis_msg(curbuf->b_fname, FALSE);
+    msg_puts("\n  c  \"%   ");
+    dis_msg(curbuf->b_fname, false);
   }
 
   /*
@@ -3646,8 +3655,8 @@ void ex_display(exarg_T *eap)
     linenr_T dummy;
 
     if (buflist_name_nr(0, &fname, &dummy) != FAIL) {
-      MSG_PUTS("\n\"#   ");
-      dis_msg(fname, FALSE);
+      msg_puts("\n  c  \"#   ");
+      dis_msg(fname, false);
     }
   }
 
@@ -3656,8 +3665,8 @@ void ex_display(exarg_T *eap)
    */
   if (last_search_pat() != NULL
       && (arg == NULL || vim_strchr(arg, '/') != NULL) && !got_int) {
-    MSG_PUTS("\n\"/   ");
-    dis_msg(last_search_pat(), FALSE);
+    msg_puts("\n  c  \"/   ");
+    dis_msg(last_search_pat(), false);
   }
 
   /*
@@ -3665,8 +3674,8 @@ void ex_display(exarg_T *eap)
    */
   if (expr_line != NULL && (arg == NULL || vim_strchr(arg, '=') != NULL)
       && !got_int) {
-    MSG_PUTS("\n\"=   ");
-    dis_msg(expr_line, FALSE);
+    msg_puts("\n  c  \"=   ");
+    dis_msg(expr_line, false);
   }
 }
 
@@ -3676,9 +3685,10 @@ void ex_display(exarg_T *eap)
  */
 static void
 dis_msg(
-    char_u *p,
-    int skip_esc                       /* if TRUE, ignore trailing ESC */
+    const char_u *p,
+    bool skip_esc     // if true, ignore trailing ESC
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   int n;
   int l;
