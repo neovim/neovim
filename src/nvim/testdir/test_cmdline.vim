@@ -548,6 +548,13 @@ func Test_cmdline_complete_user_names()
   endif
 endfunc
 
+func Test_cmdline_complete_bang()
+  if executable('whoami')
+    call feedkeys(":!whoam\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_match('^".*\<whoami\>', @:)
+  endif
+endfunc
+
 funct Test_cmdline_complete_languages()
   let lang = substitute(execute('language messages'), '.*"\(.*\)"$', '\1', '')
 
