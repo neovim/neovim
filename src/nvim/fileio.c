@@ -4674,7 +4674,6 @@ check_timestamps(
 )
 {
   int didit = 0;
-  int n;
   bool onfocus = strstr((char *)p_fcnotify, "onfocus") != NULL;
 
   /* Don't check timestamps while system() or another low-level function may

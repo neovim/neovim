@@ -7,13 +7,25 @@ Watcher.__index = Watcher
 local WatcherList = {}
 local check_handle = nil
 
+-- Checks if a buffer should have a watcher attached to it.
+local function valid_buf(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false
+  end
+
+  local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
+  local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
+
+  return buflisted or buftype == '' or buftype == 'acwrite'
+end
+
 -- Callback for the check handle, checks if there are pending notifications
 -- for any watcher, and handles them as per the value of the `fcnotify`
 -- option.
 local function check_notifications()
   for _, watcher in pairs(WatcherList) do
-    if watcher.pending_notifs == true then
-      vim.api.nvim_command('checktime '..watcher.bufnr)
+    if watcher.pending_notifs == true and valid_buf(watcher.bufnr) then
+      vim.api.nvim_command(string.format('checktime %d', watcher.bufnr))
       watcher.pending_notifs = false
     end
   end
@@ -62,18 +74,6 @@ local function set_mechanism(option_type, bufnr)
   if Watcher.start_notifications ~= nil then
     Watcher.start_notifications()
   end
-end
-
--- Checks if a buffer should have a watcher attached to it.
-local function valid_buf(bufnr)
-  if bufnr < 0 then
-    return false
-  end
-
-  local buflisted = vim.api.nvim_buf_get_option(bufnr, 'buflisted')
-  local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
-
-  return buflisted or buftype == '' or buftype == 'acwrite'
 end
 
 --- Creates and initializes a new watcher object with the given filename.
