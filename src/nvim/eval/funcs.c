@@ -2543,18 +2543,22 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   linenr_T    foldstart;
   linenr_T    foldend;
+  colnr_T     colstart;
   char_u      *dashes;
   linenr_T    lnum;
   char_u      *s;
   char_u      *r;
   int         len;
   char        *txt;
+  char_u *line;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
   foldstart = (linenr_T)get_vim_var_nr(VV_FOLDSTART);
   foldend = (linenr_T)get_vim_var_nr(VV_FOLDEND);
+
+  colstart = (colnr_T)get_vim_var_nr(VV_FOLDSTARTCOL);
   dashes = get_vim_var_str(VV_FOLDDASHES);
   if (foldstart > 0 && foldend <= curbuf->b_ml.ml_line_count) {
     // Find first non-empty line in the fold.
@@ -2563,9 +2567,12 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         break;
       }
     }
+    line = ml_get(lnum);
 
+    ILOG("starting at %d", colstart);
+    ILOG("i.e., with text: %s", &line[colstart]);
     // Find interesting text in this line.
-    s = skipwhite(ml_get(lnum));
+    s = skipwhite(&line[colstart]);
     // skip C comment-start
     if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
       s = skipwhite(s + 2);
