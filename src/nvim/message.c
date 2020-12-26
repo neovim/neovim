@@ -1128,11 +1128,11 @@ void wait_return(int redraw)
       if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
-          if (msg_scrolled > Rows)
-            /* scroll back to show older messages */
+          if (msg_scrolled > Rows) {
+            // scroll back to show older messages
             do_more_prompt(c);
-          else {
-            msg_didout = FALSE;
+          } else {
+            msg_didout = false;
             c = K_IGNORE;
             msg_col =
               cmdmsg_rl ? Columns - 1 :
@@ -2097,15 +2097,17 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, true);
     }
 
-    if (*s == '\n') {               /* go to next line */
-      msg_didout = FALSE;           /* remember that line is empty */
-      if (cmdmsg_rl)
+    if (*s == '\n') {             // go to next line
+      msg_didout = false;         // remember that line is empty
+      if (cmdmsg_rl) {
         msg_col = Columns - 1;
-      else
+      } else {
         msg_col = 0;
-      if (++msg_row >= Rows)        /* safety check */
+      }
+      if (++msg_row >= Rows) {    // safety check
         msg_row = Rows - 1;
-    } else if (*s == '\r') {      /* go to column 0 */
+      }
+    } else if (*s == '\r') {      // go to column 0
       msg_col = 0;
     } else if (*s == '\b') {      /* go to previous char */
       if (msg_col)
@@ -2878,10 +2880,10 @@ void repeat_message(void)
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == Rows - 1) {
-      /* Avoid drawing the "hit-enter" prompt below the previous one,
-       * overwrite it.  Esp. useful when regaining focus and a
-       * FocusGained autocmd exists but didn't draw anything. */
-      msg_didout = FALSE;
+      // Avoid drawing the "hit-enter" prompt below the previous one,
+      // overwrite it.  Esp. useful when regaining focus and a
+      // FocusGained autocmd exists but didn't draw anything.
+      msg_didout = false;
       msg_col = 0;
       msg_clr_eos();
     }
