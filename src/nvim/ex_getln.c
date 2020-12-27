@@ -2255,7 +2255,9 @@ static int command_line_changed(CommandLineState *s)
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
-    may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
+    if (s->xpc.xp_context == EXPAND_NOTHING) {
+      may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
+    }
   }
 
   if (cmdmsg_rl || (p_arshape && !p_tbidi)) {
