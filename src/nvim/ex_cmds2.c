@@ -3392,7 +3392,7 @@ void ex_checktime(exarg_T *eap)
   } else {
     buf = buflist_findnr((int)eap->line2);
     if (buf != NULL) {           // cannot happen?
-      (void)buf_check_timestamp(buf, false);
+      (void)buf_check_timestamp(buf);
     }
   }
   no_check_timestamps = save_no_check_timestamps;
@@ -3790,6 +3790,14 @@ void ex_drop(exarg_T   *eap)
       if (wp->w_buffer == buf) {
         goto_tabpage_win(tp, wp);
         curwin->w_arg_idx = 0;
+        if (!bufIsChanged(curbuf)) {
+          const int save_ar = curbuf->b_p_ar;
+
+          // reload the file if it is newer
+          curbuf->b_p_ar = 1;
+          buf_check_timestamp(curbuf);
+          curbuf->b_p_ar = save_ar;
+        }
         return;
       }
     }

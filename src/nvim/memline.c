@@ -975,9 +975,9 @@ void ml_recover(bool checkext)
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
-    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; --p)
-      ;
-    b0_fenc = vim_strnsave(p, (int)(b0p->b0_fname + fnsize - p));
+    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {
+    }
+    b0_fenc = vim_strnsave(p, b0p->b0_fname + fnsize - p);
   }
 
   mf_put(mfp, hp, false, false);        /* release block 0 */

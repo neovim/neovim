@@ -2323,7 +2323,7 @@ int do_ecmd(
       // Existing memfile.
       oldbuf = true;
       set_bufref(&bufref, buf);
-      (void)buf_check_timestamp(buf, false);
+      (void)buf_check_timestamp(buf);
       // Check if autocommands made buffer invalid or changed the current
       // buffer.
       if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf) {
@@ -2796,9 +2796,10 @@ void ex_append(exarg_T *eap)
       p = vim_strchr(eap->nextcmd, NL);
       if (p == NULL)
         p = eap->nextcmd + STRLEN(eap->nextcmd);
-      theline = vim_strnsave(eap->nextcmd, (int)(p - eap->nextcmd));
-      if (*p != NUL)
-        ++p;
+      theline = vim_strnsave(eap->nextcmd, p - eap->nextcmd);
+      if (*p != NUL) {
+        p++;
+      }
       eap->nextcmd = p;
     } else {
       // Set State to avoid the cursor shape to be set to INSERT mode

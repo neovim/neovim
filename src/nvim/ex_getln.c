@@ -1082,6 +1082,7 @@ static int command_line_execute(VimState *state, int key)
     if (s->c == K_DOWN && ccline.cmdpos > 0
         && ccline.cmdbuff[ccline.cmdpos - 1] == '.') {
       s->c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
     } else if (s->c == K_UP) {
       // Hitting <Up>: Remove one submenu name in front of the
       // cursor
@@ -1112,6 +1113,7 @@ static int command_line_execute(VimState *state, int key)
         cmdline_del(i);
       }
       s->c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
       s->xpc.xp_context = EXPAND_NOTHING;
     }
   }
@@ -1134,6 +1136,7 @@ static int command_line_execute(VimState *state, int key)
             || ccline.cmdbuff[ccline.cmdpos - 3] != '.')) {
       // go down a directory
       s->c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
     } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
         && s->c == K_DOWN) {
       // If in a direct ancestor, strip off one ../ to go down
@@ -1154,6 +1157,7 @@ static int command_line_execute(VimState *state, int key)
           && (vim_ispathsep(ccline.cmdbuff[j - 3]) || j == i + 2)) {
         cmdline_del(j - 2);
         s->c = (int)p_wc;
+        KeyTyped = true;  // in case the key was mapped
       }
     } else if (s->c == K_UP) {
       // go up a directory
@@ -2251,7 +2255,9 @@ static int command_line_changed(CommandLineState *s)
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
-    may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
+    if (s->xpc.xp_context == EXPAND_NOTHING) {
+      may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
+    }
   }
 
   if (cmdmsg_rl || (p_arshape && !p_tbidi)) {

@@ -2297,9 +2297,9 @@ void ex_function(exarg_T *eap)
             // Ignore leading white space.
             p = skipwhite(p + 4);
             heredoc_trimmed =
-              vim_strnsave(theline, (int)(skipwhite(theline) - theline));
+              vim_strnsave(theline, skipwhite(theline) - theline);
           }
-          skip_until = vim_strnsave(p, (int)(skiptowhite(p) - p));
+          skip_until = vim_strnsave(p, skiptowhite(p) - p);
           do_concat = false;
           is_heredoc = true;
         }

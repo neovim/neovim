@@ -3724,8 +3724,7 @@ static long regtry(bt_regprog_T *prog,
       } else {
         if (reg_startzp[i] != NULL && reg_endzp[i] != NULL)
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_startzp[i],
-                (int)(reg_endzp[i] - reg_startzp[i]));
+            vim_strnsave(reg_startzp[i], reg_endzp[i] - reg_startzp[i]);
       }
     }
   }
@@ -6565,7 +6564,7 @@ static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv,
     if (s == NULL || rsm.sm_match->endp[i] == NULL) {
       s = NULL;
     } else {
-      s = vim_strnsave(s, (int)(rsm.sm_match->endp[i] - s));
+      s = vim_strnsave(s, rsm.sm_match->endp[i] - s);
     }
     TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
     TV_LIST_ITEM_TV(li)->vval.v_string = s;
@@ -7084,7 +7083,7 @@ char_u *reg_submatch(int no)
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       retval = NULL;
     } else {
-      retval = vim_strnsave(s, (int)(rsm.sm_match->endp[no] - s));
+      retval = vim_strnsave(s, rsm.sm_match->endp[no] - s);
     }
   }
 

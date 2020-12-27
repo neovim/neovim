@@ -5422,7 +5422,7 @@ static int get_literal_key(char_u **arg, typval_T *tv)
   for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {
   }
   tv->v_type = VAR_STRING;
-  tv->vval.v_string = vim_strnsave(*arg, (int)(p - *arg));
+  tv->vval.v_string = vim_strnsave(*arg, p - *arg);
 
   *arg = skipwhite(p);
   return OK;
@@ -10264,9 +10264,6 @@ repeat:
   if (src[*usedlen] == ':'
       && (src[*usedlen + 1] == 's'
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
-    char_u      *str;
-    char_u      *pat;
-    char_u      *sub;
     int sep;
     char_u      *flags;
     int didit = FALSE;
@@ -10283,13 +10280,13 @@ repeat:
       // find end of pattern
       p = vim_strchr(s, sep);
       if (p != NULL) {
-        pat = vim_strnsave(s, (int)(p - s));
+        char_u *const pat = vim_strnsave(s, p - s);
         s = p + 1;
         // find end of substitution
         p = vim_strchr(s, sep);
         if (p != NULL) {
-          sub = vim_strnsave(s, (int)(p - s));
-          str = vim_strnsave(*fnamep, *fnamelen);
+          char_u *const sub = vim_strnsave(s, p - s);
+          char_u *const str = vim_strnsave(*fnamep, *fnamelen);
           *usedlen = (size_t)(p + 1 - src);
           s = do_string_sub(str, pat, sub, NULL, flags);
           *fnamep = s;
