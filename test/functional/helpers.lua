@@ -725,6 +725,25 @@ function module.pending_win32(pending_fn)
   end
 end
 
+function module.has_conpty()
+  return module.eval('has("conpty")') == 1
+end
+
+-- Helper to skip tests. Returns true in a sytem that uses ConPTY.
+-- ConPTY has a problem that can cause a deadlock if execution is terminated
+-- too quickly (#12974). This is why many of the terminal tests fail.
+-- pending_fn is pending() from busted
+function module.pending_conpty(pending_fn)
+  if module.has_conpty() then
+    if pending_fn ~= nil then
+      pending_fn('FIXME: ConPTY', function() end)
+    end
+    return true
+  else
+    return false
+  end
+end
+
 -- Calls pending() and returns `true` if the system is too slow to
 -- run fragile or expensive tests. Else returns `false`.
 function module.skip_fragile(pending_fn, cond)

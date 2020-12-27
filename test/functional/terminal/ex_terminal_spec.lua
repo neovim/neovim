@@ -132,6 +132,8 @@ describe(':terminal (with fake shell)', function()
   end
 
   it('with no argument, acts like termopen()', function()
+    if helpers.pending_conpty(pending) then return end
+
     terminal_with_fake_shell()
     retry(nil, 4 * screen.timeout, function()
     screen:expect([[
@@ -155,6 +157,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+    if helpers.pending_conpty(pending) then return end
+
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     terminal_with_fake_shell()
     screen:expect([[
@@ -166,6 +170,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('executes a given command through the shell', function()
+    if helpers.pending_conpty(pending) then return end
+
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
@@ -177,6 +183,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
+    if helpers.pending_conpty(pending) then return end
+
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
@@ -189,6 +197,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('allows quotes and slashes', function()
+    if helpers.pending_conpty(pending) then return end
+
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
@@ -225,6 +235,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with :find', function()
+    if helpers.pending_conpty(pending) then return end
+
     terminal_with_fake_shell()
     screen:expect([[
       ^ready $                                           |
@@ -243,6 +255,8 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
+    if helpers.pending_conpty(pending) then return end
+
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()

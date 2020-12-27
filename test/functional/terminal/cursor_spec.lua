@@ -84,6 +84,7 @@ describe(':terminal cursor', function()
   end)
 
   describe('when invisible', function()
+    if helpers.pending_conpty(pending) then return end
     it('is not highlighted and is detached from screen cursor', function()
       hide_cursor()
       screen:expect([[
