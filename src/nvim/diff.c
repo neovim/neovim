@@ -1225,8 +1225,7 @@ void ex_diffpatch(exarg_T *eap)
     EMSG(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      newname = vim_strnsave(curbuf->b_fname,
-                             (int)(STRLEN(curbuf->b_fname) + 4));
+      newname = vim_strnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
       STRCAT(newname, ".new");
     }
 

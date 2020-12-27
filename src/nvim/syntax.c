@@ -4186,10 +4186,10 @@ get_syn_options(
         arg = skiptowhite(arg);
         if (gname_start == arg)
           return NULL;
-        gname = vim_strnsave(gname_start, (int)(arg - gname_start));
-        if (STRCMP(gname, "NONE") == 0)
+        gname = vim_strnsave(gname_start, arg - gname_start);
+        if (STRCMP(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
-        else {
+        } else {
           syn_id = syn_name2id(gname);
           int i;
           for (i = curwin->w_s->b_syn_patterns.ga_len; --i >= 0; )
@@ -4587,7 +4587,7 @@ syn_cmd_region(
     while (*key_end && !ascii_iswhite(*key_end) && *key_end != '=')
       ++key_end;
     xfree(key);
-    key = vim_strnsave_up(rest, (int)(key_end - rest));
+    key = vim_strnsave_up(rest, key_end - rest);
     if (STRCMP(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
     } else if (STRCMP(key, "START") == 0) {
@@ -5047,8 +5047,8 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     EMSG2(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
   }
-  /* store the pattern and compiled regexp program */
-  ci->sp_pattern = vim_strnsave(arg + 1, (int)(end - arg - 1));
+  // store the pattern and compiled regexp program
+  ci->sp_pattern = vim_strnsave(arg + 1, end - arg - 1);
 
   /* Make 'cpoptions' empty, to avoid the 'l' flag */
   cpo_save = p_cpo;
@@ -5136,7 +5136,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
     arg_end = skiptowhite(arg_start);
     next_arg = skipwhite(arg_end);
     xfree(key);
-    key = vim_strnsave_up(arg_start, (int)(arg_end - arg_start));
+    key = vim_strnsave_up(arg_start, arg_end - arg_start);
     if (STRCMP(key, "CCOMMENT") == 0) {
       if (!eap->skip)
         curwin->w_s->b_syn_sync_flags |= SF_CCOMMENT;
@@ -5195,7 +5195,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       if (!eap->skip) {
         /* store the pattern and compiled regexp program */
         curwin->w_s->b_syn_linecont_pat =
-          vim_strnsave(next_arg + 1, (int)(arg_end - next_arg - 1));
+          vim_strnsave(next_arg + 1, arg_end - next_arg - 1);
         curwin->w_s->b_syn_linecont_ic = curwin->w_s->b_syn_ic;
 
         /* Make 'cpoptions' empty, to avoid the 'l' flag */
@@ -5555,18 +5555,17 @@ void ex_syntax(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   char_u      *subcmd_end;
-  char_u      *subcmd_name;
-  int i;
 
   syn_cmdlinep = eap->cmdlinep;
 
-  /* isolate subcommand name */
-  for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); ++subcmd_end)
-    ;
-  subcmd_name = vim_strnsave(arg, (int)(subcmd_end - arg));
-  if (eap->skip)              /* skip error messages for all subcommands */
-    ++emsg_skip;
-  for (i = 0;; ++i) {
+  // isolate subcommand name
+  for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); subcmd_end++) {
+  }
+  char_u *const subcmd_name = vim_strnsave(arg, subcmd_end - arg);
+  if (eap->skip) {  // skip error messages for all subcommands
+    emsg_skip++;
+  }
+  for (int i = 0;; i++) {
     if (subcommands[i].name == NULL) {
       EMSG2(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
       break;
@@ -6719,7 +6718,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
       xfree(key);
       key = (char *)vim_strnsave_up((const char_u *)key_start,
-                                    (int)(linep - key_start));
+                                    linep - key_start);
       linep = (const char *)skipwhite((const char_u *)linep);
 
       if (strcmp(key, "NONE") == 0) {

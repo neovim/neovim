@@ -3423,7 +3423,7 @@ static void ins_compl_addleader(int c)
 
   xfree(compl_leader);
   compl_leader = vim_strnsave(get_cursor_line_ptr() + compl_col,
-      (int)(curwin->w_cursor.col - compl_col));
+                              curwin->w_cursor.col - compl_col);
   ins_compl_new_leader();
 }
 

@@ -2032,7 +2032,7 @@ static char_u *next_fenc(char_u **pp, bool *alloced)
     r = enc_canonize(*pp);
     *pp += STRLEN(*pp);
   } else {
-    r = vim_strnsave(*pp, (int)(p - *pp));
+    r = vim_strnsave(*pp, p - *pp);
     *pp = p + 1;
     p = enc_canonize(r);
     xfree(r);
