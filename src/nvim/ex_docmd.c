@@ -3020,6 +3020,15 @@ const char * set_one_cmd_context(
     arg = (const char *)skipwhite((const char_u *)arg);
   }
 
+  // Skip over ++argopt argument
+  if ((ea.argt & ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
+    p = arg;
+    while (*p && !ascii_isspace(*p)) {
+      MB_PTR_ADV(p);
+    }
+    arg = (const char *)skipwhite((const char_u *)p);
+  }
+
   /*
    * Check for '|' to separate commands and '"' to start comments.
    * Don't do this for ":read !cmd" and ":write !cmd".

@@ -955,5 +955,19 @@ func Test_zero_line_search()
   q!
 endfunc
 
+func Test_read_shellcmd()
+  CheckUnix
+  if executable('ls')
+    " There should be ls in the $PATH
+    call feedkeys(":r! l\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_match('^"r! .*\<ls\>', @:)
+  endif
+
+  if executable('rm')
+    call feedkeys(":r! ++enc=utf-8 r\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_notmatch('^"r!.*\<runtest.vim\>', @:)
+    call assert_match('^"r!.*\<rm\>', @:)
+  endif
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab	" vim: shiftwidth=2 sts=2 expandtab
