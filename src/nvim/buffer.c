@@ -1587,7 +1587,7 @@ void enter_buffer(buf_T *buf)
       need_fileinfo = true;             // display file info after redraw
     }
     // check if file changed
-    (void)buf_check_timestamp(curbuf, false);
+    (void)buf_check_timestamp(curbuf);
 
     curwin->w_topline = 1;
     curwin->w_topfill = 0;

@@ -805,7 +805,7 @@ static void diff_try_update(diffio_T    *dio,
     for (idx_new = idx_orig; idx_new < DB_COUNT; idx_new++) {
       buf = curtab->tp_diffbuf[idx_new];
       if (buf_valid(buf)) {
-        buf_check_timestamp(buf, false);
+        buf_check_timestamp(buf);
       }
     }
   }

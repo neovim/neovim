@@ -4675,7 +4675,6 @@ check_timestamps(
 )
 {
   int didit = 0;
-  int n;
 
   /* Don't check timestamps while system() or another low-level function may
    * cause us to lose and gain focus. */
@@ -4703,7 +4702,7 @@ check_timestamps(
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
         set_bufref(&bufref, buf);
-        n = buf_check_timestamp(buf, focus);
+        const int n = buf_check_timestamp(buf);
         if (didit < n) {
           didit = n;
         }
@@ -4773,11 +4772,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
  * return 2 if a message has been displayed.
  * return 0 otherwise.
  */
-int
-buf_check_timestamp(
-    buf_T *buf,
-    int focus               /* called for GUI focus event */
-)
+int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
