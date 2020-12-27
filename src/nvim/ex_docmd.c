@@ -2979,6 +2979,15 @@ const char * set_one_cmd_context(
 
   const char *arg = (const char *)skipwhite((const char_u *)p);
 
+  // Skip over ++argopt argument
+  if ((ea.argt & ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
+    p = arg;
+    while (*p && !ascii_isspace(*p)) {
+      MB_PTR_ADV(p);
+    }
+    arg = (const char *)skipwhite((const char_u *)p);
+  }
+
   if (ea.cmdidx == CMD_write || ea.cmdidx == CMD_update) {
     if (*arg == '>') {  // Append.
       if (*++arg == '>') {
@@ -3018,15 +3027,6 @@ const char * set_one_cmd_context(
 
     // Skip space(s) after +command to get to the real argument.
     arg = (const char *)skipwhite((const char_u *)arg);
-  }
-
-  // Skip over ++argopt argument
-  if ((ea.argt & ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
-    p = arg;
-    while (*p && !ascii_isspace(*p)) {
-      MB_PTR_ADV(p);
-    }
-    arg = (const char *)skipwhite((const char_u *)p);
   }
 
   /*

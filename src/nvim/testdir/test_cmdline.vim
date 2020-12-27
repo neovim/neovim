@@ -967,6 +967,10 @@ func Test_read_shellcmd()
     call feedkeys(":r! ++enc=utf-8 r\<c-a>\<c-b>\"\<cr>", 'tx')
     call assert_notmatch('^"r!.*\<runtest.vim\>', @:)
     call assert_match('^"r!.*\<rm\>', @:)
+
+    call feedkeys(":r ++enc=utf-8 !rm\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_notmatch('^"r.*\<runtest.vim\>', @:)
+    call assert_match('^"r ++enc\S\+ !.*\<rm\>', @:)
   endif
 endfunc
 
