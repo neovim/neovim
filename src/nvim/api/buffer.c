@@ -495,22 +495,24 @@ end:
   try_end(err);
 }
 
-/// Sets (replaces) a range in the buffer.
+/// Sets (replaces) a range in the buffer, retaining any extmarks
+/// that may lie in that range.
 ///
-/// Indexing is zero-based, end-exclusive.
+/// Indexing is zero-based; end_row is inclusive, while end_col is
+/// exclusive.
 ///
 /// To insert text at a given index, set `start` and `end` ranges to the same
 /// index. To delete a range, set `replacement` to an array containing
-/// an empty string.
+/// an empty string, or simply an empty array.
 ///
-/// Prefer nvim_buf_set_lines when modifying entire lines.
+/// Prefer nvim_buf_set_lines when adding or deleting entire lines.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
 /// @param start_column     Last column
-/// @param end_row          Last line index (exclusive)
-/// @param end_column       Last column
+/// @param end_row          Last line index (inclusive)
+/// @param end_column       Last column (exclusive)
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id,
@@ -523,8 +525,12 @@ void nvim_buf_set_text(uint64_t channel_id,
                        Error *err)
   FUNC_API_SINCE(7)
 {
-  // TODO(chentau): treat [] as [''] for convenience
-  assert(replacement.size > 0);
+  if (replacement.size == 0) {
+    String s = {.data = "", .size = 0};
+    ADD(replacement, STRING_OBJ(s));
+    replacement.size = 1;
+  }
+
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
     return;
@@ -541,7 +547,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   }
 
   end_row = normalize_index(buf, end_row, &oob);
-  if (oob) {
+  if (oob || end_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
     return;
   }
@@ -578,18 +584,18 @@ void nvim_buf_set_text(uint64_t channel_id,
   if (start_row == end_row) {
       old_byte = (bcount_t)end_col - start_col;
   } else {
-      char *line;
+      const char *bufline;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
-      for (size_t i = 0; i < (size_t)(end_row - start_row); i++) {
-          int64_t lnum = start_row + (int64_t)i;
+      for (int64_t i = 0; i < end_row - start_row; i++) {
+          int64_t lnum = start_row + i;
 
           if (lnum >= MAXLNUM) {
             api_set_error(err, kErrorTypeValidation, "Index value is too high");
             goto end;
           }
 
-          line = (char *)ml_get_buf(buf, lnum, false);
-          old_byte += (bcount_t)(strlen(line));
+          bufline = (char *)ml_get_buf(buf, lnum, false);
+          old_byte += (bcount_t)(strlen(bufline));
       }
       old_byte += (bcount_t)end_col;
   }
@@ -641,6 +647,8 @@ void nvim_buf_set_text(uint64_t channel_id,
     goto end;
   }
 
+  // Small note about undo states: unlike set_lines, we want to save the
+  // undo state of one past the end_row, since end_row is inclusive.
   if (u_save((linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;
