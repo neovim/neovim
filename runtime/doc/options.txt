@@ -4573,6 +4573,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'quickfixtextfunc'* *'qftf'*
+'quickfixtextfunc' 'qftf'	string (default "")
+			global
+			{only available when compiled with the |+quickfix|
+			feature}
+	This option specifies a function to be used to get the text to display
+	in the quickfix and location list windows.  This can be used to
+	customize the information displayed in the quickfix or location window
+	for each entry in the corresponding quickfix or location list.  See
+	|quickfix-window-function| for an explanation of how to write the
+	function and an example.
+
 						*'quoteescape'* *'qe'*
 'quoteescape' 'qe'	string	(default "\")
 			local to buffer

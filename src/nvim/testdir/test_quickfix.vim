@@ -4567,4 +4567,123 @@ func Test_qfbuf_update()
   call Xqfbuf_update('l')
 endfunc
 
+" Xexpr can't throw an error until patch 8.1.0877
+
+" Test for getting a specific item from a quickfix list
+func Xtest_getqflist_by_idx(cchar)
+  call s:setup_commands(a:cchar)
+  " Empty list
+  call assert_equal([], g:Xgetlist({'idx' : 1, 'items' : 0}).items)
+  Xexpr ['F1:10:L10', 'F1:20:L20']
+  let l = g:Xgetlist({'idx' : 2, 'items' : 0}).items
+  call assert_equal(bufnr('F1'), l[0].bufnr)
+  call assert_equal(20, l[0].lnum)
+  call assert_equal('L20', l[0].text)
+  call assert_equal([], g:Xgetlist({'idx' : -1, 'items' : 0}).items)
+  call assert_equal([], g:Xgetlist({'idx' : 3, 'items' : 0}).items)
+  %bwipe!
+endfunc
+
+func Test_getqflist_by_idx()
+  call Xtest_getqflist_by_idx('c')
+  call Xtest_getqflist_by_idx('l')
+endfunc
+
+" Test for the 'quickfixtextfunc' setting
+func Tqfexpr(info)
+  if a:info.quickfix
+    let qfl = getqflist({'id' : a:info.id, 'idx' : a:info.idx,
+          \ 'items' : 1}).items
+  else
+    let qfl = getloclist(0, {'id' : a:info.id, 'idx' : a:info.idx,
+          \ 'items' : 1}).items
+  endif
+
+  let e = qfl[0]
+  let s = ''
+  if e.bufnr != 0
+    let bname = bufname(e.bufnr)
+    let s ..= fnamemodify(bname, ':.')
+  endif
+  let s ..= '-'
+  let s ..= 'L' .. string(e.lnum) .. 'C' .. string(e.col) .. '-'
+  let s ..= e.text
+
+  return s
+endfunc
+
+func Xtest_qftextfunc(cchar)
+  call s:setup_commands(a:cchar)
+
+  set efm=%f:%l:%c:%m
+  set quickfixtextfunc=Tqfexpr
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal('F1-L10C2-green', getline(1))
+  call assert_equal('F1-L20C4-blue', getline(2))
+  Xclose
+  set quickfixtextfunc&vim
+  Xwindow
+  call assert_equal('F1|10 col 2| green', getline(1))
+  call assert_equal('F1|20 col 4| blue', getline(2))
+  Xclose
+  set efm&
+  set quickfixtextfunc&
+
+  " Test for per list 'quickfixtextfunc' setting
+  func PerQfText(info)
+    if a:info.quickfix
+      let qfl = getqflist({'id' : a:info.id, 'idx' : a:info.idx,
+            \ 'items' : 1}).items
+    else
+      let qfl = getloclist(0, {'id' : a:info.id, 'idx' : a:info.idx,
+            \ 'items' : 1}).items
+    endif
+    if empty(qfl)
+      return ''
+    endif
+    return 'Line ' .. qfl[0].lnum .. ', Col ' .. qfl[0].col
+  endfunc
+  set quickfixtextfunc=Tqfexpr
+  call g:Xsetlist([], ' ', {'quickfixtextfunc' : "PerQfText"})
+  Xaddexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal('Line 10, Col 2', getline(1))
+  call assert_equal('Line 20, Col 4', getline(2))
+  Xclose
+  call g:Xsetlist([], 'r', {'quickfixtextfunc' : ''})
+  set quickfixtextfunc&
+  delfunc PerQfText
+
+  " Non-existing function
+  set quickfixtextfunc=Tabc
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  call assert_fails("Xwindow", 'E117:')
+  Xclose
+  set quickfixtextfunc&
+
+  " set option to a non-function
+  set quickfixtextfunc=[10,\ 20]
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  call assert_fails("Xwindow", 'E117:')
+  Xclose
+  set quickfixtextfunc&
+
+  " set option to a function with different set of arguments
+  func Xqftext(a, b, c)
+    return a:a .. a:b .. a:c
+  endfunc
+  set quickfixtextfunc=Xqftext
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  call assert_fails("Xwindow", 'E119:')
+  Xclose
+  set quickfixtextfunc&
+  delfunc Xqftext
+endfunc
+
+func Test_qftextfunc()
+  call Xtest_qftextfunc('c')
+  call Xtest_qftextfunc('l')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
