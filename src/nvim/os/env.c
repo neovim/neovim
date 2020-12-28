@@ -486,7 +486,7 @@ void init_homedir(void)
 
   // Fall back to current working directory if home is not found
   if ((var == NULL || *var == NUL)
-      && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+      && os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK) {
     var = os_buf;
   }
 
