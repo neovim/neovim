@@ -430,13 +430,12 @@ void init_homedir(void)
     }
     if (homedrive != NULL
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
-      snprintf(os_buf, sizeof(os_buf), "%s%s", homedrive, homepath);
+      snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
         var = os_buf;
       }
     }
   }
-
   if (var == NULL) {
     var = os_homedir();
   }
@@ -451,7 +450,7 @@ void init_homedir(void)
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
-        vim_snprintf(os_buf, sizeof(os_buf), "%s%s", exp, p + 1);
+        vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
         var = os_buf;
       }
     }
@@ -474,9 +473,8 @@ void init_homedir(void)
   if (var != NULL) {
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
-    if (os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK
-        && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, sizeof(IObuff)) == OK) {
+    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
@@ -486,8 +484,9 @@ void init_homedir(void)
   }
 #endif
 
+  // Fall back to current working directory if home is not found
   if ((var == NULL || *var == NUL)
-      && os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK) {
+      && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
     var = os_buf;
   }
 
@@ -499,11 +498,12 @@ static char homedir_buf[MAXPATHL];
 char *os_homedir(void)
 {
   homedir_buf[0] = NUL;
-  size_t homedir_size = sizeof(homedir_buf);
+  size_t homedir_size = MAXPATHL;
   uv_mutex_lock(&mutex);
+  // http://docs.libuv.org/en/v1.x/misc.html#c.uv_os_homedir
   int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
   uv_mutex_unlock(&mutex);
-  if (ret_value == 0 && homedir_size < sizeof(homedir_buf)) {
+  if (ret_value == 0 && homedir_size < MAXPATHL) {
     return homedir_buf;
   } else {
     ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
