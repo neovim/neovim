@@ -526,7 +526,7 @@ void nvim_buf_set_text(uint64_t channel_id,
   FUNC_API_SINCE(7)
 {
   if (replacement.size == 0) {
-    String s = {.data = "", .size = 0};
+    String s = { .data = "", .size = 0 };
     ADD(replacement, STRING_OBJ(s));
     replacement.size = 1;
   }
