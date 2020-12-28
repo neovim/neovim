@@ -267,8 +267,8 @@ else()
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
     -Wmissing-prototypes)
 
-  check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
-  if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+  check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
+  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
     add_compile_options(-Wimplicit-fallthrough)
   endif()
 
@@ -322,10 +322,10 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/sourcehut CI, extra flags will be set" OFF)
+option(CI_BUILD "CI, extra flags will be set" OFF)
 
-if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/sourcehut CI build enabled")
+if(CI_BUILD)
+  message(STATUS "CI build enabled")
   add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
@@ -352,8 +352,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   add_definitions(-D_GNU_SOURCE)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-  # Required for luajit.
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT PREFER_LUA AND LUAJIT_VERSION LESS "2.1.0-beta3")
+  # Required for luajit < 2.1.0-beta3.
   set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} -pagezero_size 10000 -image_base 100000000")
   set(CMAKE_SHARED_LINKER_FLAGS
@@ -373,6 +373,9 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
 find_package(LibLUV 1.30.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
+
+find_package(TreeSitter REQUIRED)
+include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
 
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
@@ -656,7 +659,7 @@ endif()
 
 if(LUACHECK_PRG)
   add_custom_target(lualint
-    COMMAND ${LUACHECK_PRG} -q runtime/ src/ test/
+    COMMAND ${LUACHECK_PRG} -q runtime/ src/ test/ --exclude-files test/functional/fixtures/lua/syntax_error.lua
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 else()
   add_custom_target(lualint false

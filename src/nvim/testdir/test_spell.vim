@@ -79,6 +79,11 @@ func Test_spellbadword()
   call assert_equal(['bycycle', 'bad'],  spellbadword('My bycycle.'))
   call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
 
+  call assert_equal(['TheCamelWord', 'bad'], spellbadword('TheCamelWord asdf'))
+  set spelloptions=camel
+  call assert_equal(['asdf', 'bad'], spellbadword('TheCamelWord asdf'))
+  set spelloptions=
+
   set spelllang=en
   call assert_equal(['', ''],            spellbadword('centre'))
   call assert_equal(['', ''],            spellbadword('center'))
@@ -111,6 +116,43 @@ foobar/?
   call delete('Xwords')
   set spelllang&
   set spell&
+endfunc
+
+func Test_spelllang_inv_region()
+  set spell spelllang=en_xx
+  let messages = GetMessages()
+  call assert_equal('Warning: region xx not supported', messages[-1])
+  set spell& spelllang&
+endfunc
+
+func Test_compl_with_CTRL_X_CTRL_K_using_spell()
+  " When spell checking is enabled and 'dictionary' is empty,
+  " CTRL-X CTRL-K in insert mode completes using the spelling dictionary.
+  new
+  set spell spelllang=en dictionary=
+
+  set ignorecase
+  call feedkeys("Senglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+  call feedkeys("SEnglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+
+  set noignorecase
+  call feedkeys("Senglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['englis'], getline(1, '$'))
+  call feedkeys("SEnglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+
+  set spelllang=en_us
+  call feedkeys("Stheat\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['theater'], getline(1, '$'))
+  set spelllang=en_gb
+  call feedkeys("Stheat\<c-x>\<c-k>\<esc>", 'tnx')
+  " FIXME: commented out, expected theatre bug got theater. See issue #7025.
+  " call assert_equal(['theatre'], getline(1, '$'))
+
+  bwipe!
+  set spell& spelllang& dictionary& ignorecase&
 endfunc
 
 func Test_spellreall()

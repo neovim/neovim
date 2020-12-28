@@ -22,17 +22,17 @@ func Test_strchars()
 endfunc
 
 " Test for customlist completion
-function! CustomComplete1(lead, line, pos)
+func CustomComplete1(lead, line, pos)
 	return ['あ', 'い']
-endfunction
+endfunc
 
-function! CustomComplete2(lead, line, pos)
+func CustomComplete2(lead, line, pos)
 	return ['あたし', 'あたま', 'あたりめ']
-endfunction
+endfunc
 
-function! CustomComplete3(lead, line, pos)
+func CustomComplete3(lead, line, pos)
 	return ['Nこ', 'Nん', 'Nぶ']
-endfunction
+endfunc
 
 func Test_customlist_completion()
   command -nargs=1 -complete=customlist,CustomComplete1 Test1 echo
@@ -103,3 +103,14 @@ func Test_list2str_str2list_latin1()
   call assert_equal(l, lres)
   call assert_equal(s, sres)
 endfunc
+
+func Test_print_overlong()
+  " Text with more composing characters than MB_MAXBYTES.
+  new
+  call setline(1, 'axxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+  s/x/\=nr2char(1629)/g
+  print
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

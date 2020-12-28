@@ -82,6 +82,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#include "auto/config.h"
+
 #include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/change.h"
@@ -878,7 +880,12 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0 || len == EOF) {
+    if (len == EOF) {
+      corruption_error("truncated", file_name);
+      u_free_uhp(uhp);
+      return NULL;
+    }
+    if (len == 0) {
       break;
     }
     int what = undo_read_byte(bi);
@@ -1250,7 +1257,8 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char *name, char_u *hash, char_u *orig_name)
+void u_read_undo(char *name, const char_u *hash,
+                 const char_u *orig_name FUNC_ATTR_UNUSED)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
@@ -1268,7 +1276,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
     // owner of the text file or equal to the current user.
     FileInfo file_info_orig;
     FileInfo file_info_undo;
-    if (os_fileinfo((char *)orig_name, &file_info_orig)
+    if (os_fileinfo((const char *)orig_name, &file_info_orig)
         && os_fileinfo((char *)file_name, &file_info_undo)
         && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
         && file_info_undo.stat.st_uid != getuid()) {
@@ -2450,7 +2458,7 @@ static void u_undo_end(
   {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == curbuf && wp->w_p_cole > 0) {
-        redraw_win_later(wp, NOT_VALID);
+        redraw_later(wp, NOT_VALID);
       }
     }
   }
@@ -3029,8 +3037,6 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
     curbuf = buf;
     // Args are tricky: this means replace empty range by empty range..
     u_savecommon(0, 1, 1, true);
-    curbuf = save_curbuf;
-
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
@@ -3038,6 +3044,7 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
         abort();
       }
     }
+    curbuf = save_curbuf;
   }
   return uhp;
 }

@@ -2,6 +2,7 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
 let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let g:setting = ''
@@ -734,25 +735,76 @@ func Test_popup_and_preview_autocommand()
 endfunc
 
 func Test_popup_and_previewwindow_dump()
-  if !CanRunVimInTerminal()
-    return
-  endif
-  call writefile([
-    \ 'set previewheight=9',
-    \ 'silent! pedit',
-    \ 'call setline(1, map(repeat(["ab"], 10), "v:val. v:key"))',
-    \ 'exec "norm! G\<C-E>\<C-E>"',
-	\ ], 'Xscript')
+  CheckScreendump
+  CheckFeature quickfix
+
+  let lines =<< trim END
+    set previewheight=9
+    silent! pedit
+    call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+    exec "norm! G\<C-E>\<C-E>"
+  END
+  call writefile(lines, 'Xscript')
   let buf = RunVimInTerminal('-S Xscript', {})
 
+  " wait for the script to finish
+  call term_wait(buf)
+
   " Test that popup and previewwindow do not overlap.
-  call term_sendkeys(buf, "o\<C-X>\<C-N>")
-  sleep 100m
+  call term_sendkeys(buf, "o")
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
   call VerifyScreenDump(buf, 'Test_popup_and_previewwindow_01', {})
 
   call term_sendkeys(buf, "\<Esc>u")
   call StopVimInTerminal(buf)
   call delete('Xscript')
+endfunc
+
+func Test_balloon_split()
+  CheckFunction balloon_split
+
+  call assert_equal([
+        \ 'tempname: 0x555555e380a0 "/home/mool/.viminfz.tmp"',
+        \ ], balloon_split(
+        \ 'tempname: 0x555555e380a0 "/home/mool/.viminfz.tmp"'))
+  call assert_equal([
+        \ 'one two three four one two three four one two thre',
+        \ 'e four',
+        \ ], balloon_split(
+        \ 'one two three four one two three four one two three four'))
+
+  eval 'struct = {one = 1, two = 2, three = 3}'
+        \ ->balloon_split()
+        \ ->assert_equal([
+        \   'struct = {',
+        \   '  one = 1,',
+        \   '  two = 2,',
+        \   '  three = 3}',
+        \ ])
+
+  call assert_equal([
+        \ 'struct = {',
+        \ '  one = 1,',
+        \ '  nested = {',
+        \ '    n1 = "yes",',
+        \ '    n2 = "no"}',
+        \ '  two = 2}',
+        \ ], balloon_split(
+        \ 'struct = {one = 1, nested = {n1 = "yes", n2 = "no"} two = 2}'))
+  call assert_equal([
+        \ 'struct = 0x234 {',
+        \ '  long = 2343 "\\"some long string that will be wr',
+        \ 'apped in two\\"",',
+        \ '  next = 123}',
+        \ ], balloon_split(
+        \ 'struct = 0x234 {long = 2343 "\\"some long string that will be wrapped in two\\"", next = 123}'))
+  call assert_equal([
+        \ 'Some comment',
+        \ '',
+        \ 'typedef this that;',
+        \ ], balloon_split(
+        \ "Some comment\n\ntypedef this that;"))
 endfunc
 
 func Test_popup_position()

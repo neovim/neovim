@@ -10,10 +10,6 @@ function Test_edit()
 endfunction
 
 func Test_edit_bad()
-  if !has('multi_byte')
-    finish
-  endif
-
   " Test loading a utf8 file with bad utf8 sequences.
   call writefile(["[\xff][\xc0][\xe2\x89\xf0][\xc2\xc2]"], "Xfile")
   new

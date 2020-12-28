@@ -980,9 +980,6 @@ msgstr "E143: Autokommandoer slettede uventede ny buffer %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: ikke-numerisk argument til :z"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Skalkommandoer er ikke tilladt i rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Regulære udtryk kan ikke afgrænses af bogstaver"
 

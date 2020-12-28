@@ -1,6 +1,7 @@
 #ifndef NVIM_SIGN_DEFS_H
 #define NVIM_SIGN_DEFS_H
 
+#include <stdbool.h>
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
@@ -22,13 +23,14 @@ typedef struct signlist signlist_T;
 
 struct signlist
 {
-    int id;              // unique identifier for each placed sign
-    linenr_T lnum;       // line number which has this sign
-    int typenr;          // typenr of sign
-    signgroup_T *group;  // sign group
-    int priority;        // priority for highlighting
-    signlist_T *next;    // next signlist entry
-    signlist_T *prev;    // previous entry -- for easy reordering
+    int id;                 // unique identifier for each placed sign
+    linenr_T lnum;          // line number which has this sign
+    int typenr;             // typenr of sign
+    bool has_text_or_icon;  // has text or icon
+    signgroup_T *group;     // sign group
+    int priority;           // priority for highlighting
+    signlist_T *next;       // next signlist entry
+    signlist_T *prev;       // previous entry -- for easy reordering
 };
 
 // Default sign priority for highlighting

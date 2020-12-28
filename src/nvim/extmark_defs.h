@@ -1,25 +1,19 @@
 #ifndef NVIM_EXTMARK_DEFS_H
 #define NVIM_EXTMARK_DEFS_H
 
-#include "nvim/pos.h"  // for colnr_T
+#include "nvim/types.h"
 #include "nvim/lib/kvec.h"
 
-typedef struct {
-  char *text;
-  int hl_id;
-} VirtTextChunk;
-
-typedef kvec_t(VirtTextChunk) VirtText;
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
+typedef struct Decoration Decoration;
 
 typedef struct
 {
   uint64_t ns_id;
   uint64_t mark_id;
-  int hl_id;  // highlight group
-  // TODO(bfredl): virt_text is pretty larger than the rest,
-  // pointer indirection?
-  VirtText virt_text;
+  // TODO(bfredl): a lot of small allocations. Should probably use
+  // kvec_t(Decoration) as an arena. Alternatively, store ns_id/mark_id
+  // _inline_ in MarkTree and use the map only for decorations.
+  Decoration *decor;
 } ExtmarkItem;
 
 typedef struct undo_object ExtmarkUndoObject;

@@ -449,19 +449,19 @@ describe('API', function()
     end)
 
     it('reports errors', function()
-      eq([[Error loading lua: [string "<nvim>"]:1: '=' expected near '+']],
+      eq([[Error loading lua: [string "<nvim>"]:0: '=' expected near '+']],
         pcall_err(meths.exec_lua, 'a+*b', {}))
 
-      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol near '1']],
+      eq([[Error loading lua: [string "<nvim>"]:0: unexpected symbol near '1']],
         pcall_err(meths.exec_lua, '1+2', {}))
 
-      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol]],
+      eq([[Error loading lua: [string "<nvim>"]:0: unexpected symbol]],
         pcall_err(meths.exec_lua, 'aa=bb\0', {}))
 
-      eq([[Error executing lua: [string "<nvim>"]:1: attempt to call global 'bork' (a nil value)]],
+      eq([[Error executing lua: [string "<nvim>"]:0: attempt to call global 'bork' (a nil value)]],
         pcall_err(meths.exec_lua, 'bork()', {}))
 
-      eq('Error executing lua: [string "<nvim>"]:1: did\nthe\nfail',
+      eq('Error executing lua: [string "<nvim>"]:0: did\nthe\nfail',
         pcall_err(meths.exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
@@ -605,7 +605,7 @@ describe('API', function()
     end)
     it('vim.paste() failure', function()
       nvim('exec_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
-      eq([[Error executing lua: [string "<nvim>"]:1: fake fail]],
+      eq([[Error executing lua: [string "<nvim>"]:0: fake fail]],
         pcall_err(request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1))
     end)
   end)
@@ -1252,7 +1252,7 @@ describe('API', function()
         {0:~                                       }|
         {1:very fail}                               |
       ]])
-      helpers.wait()
+      helpers.poke_eventloop()
 
       -- shows up to &cmdheight lines
       nvim_async('err_write', 'more fail\ntoo fail\n')
@@ -1350,7 +1350,7 @@ describe('API', function()
       eq({info=info}, meths.get_var("info_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
 
-      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer",
+      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
          pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
@@ -1512,7 +1512,7 @@ describe('API', function()
   it("does not leak memory on incorrect argument types", function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
-    ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+    ok(err:match(': Wrong type for argument 1 when calling nvim_set_current_dir, expecting String') ~= nil)
   end)
 
   describe('nvim_parse_expression', function()
@@ -1885,25 +1885,115 @@ describe('API', function()
   end)
 
   describe('nvim_get_runtime_file', function()
-    it('works', function()
+    local p = helpers.alter_slashes
+    it('can find files', function()
       eq({}, meths.get_runtime_file("bork.borkbork", false))
       eq({}, meths.get_runtime_file("bork.borkbork", true))
       eq(1, #meths.get_runtime_file("autoload/msgpack.vim", false))
       eq(1, #meths.get_runtime_file("autoload/msgpack.vim", true))
       local val = meths.get_runtime_file("autoload/remote/*.vim", true)
       eq(2, #val)
-      local p = helpers.alter_slashes
       if endswith(val[1], "define.vim") then
-        ok(endswith(val[1], p("autoload/remote/define.vim")))
-        ok(endswith(val[2], p("autoload/remote/host.vim")))
+        ok(endswith(val[1], p"autoload/remote/define.vim"))
+        ok(endswith(val[2], p"autoload/remote/host.vim"))
       else
-        ok(endswith(val[1], p("autoload/remote/host.vim")))
-        ok(endswith(val[2], p("autoload/remote/define.vim")))
+        ok(endswith(val[1], p"autoload/remote/host.vim"))
+        ok(endswith(val[2], p"autoload/remote/define.vim"))
       end
       val = meths.get_runtime_file("autoload/remote/*.vim", false)
       eq(1, #val)
-      ok(endswith(val[1], p("autoload/remote/define.vim"))
-         or endswith(val[1], p("autoload/remote/host.vim")))
+      ok(endswith(val[1], p"autoload/remote/define.vim")
+         or endswith(val[1], p"autoload/remote/host.vim"))
+
+      eq({}, meths.get_runtime_file("lua", true))
+      eq({}, meths.get_runtime_file("lua/vim", true))
+    end)
+
+    it('can find directories', function()
+      local val = meths.get_runtime_file("lua/", true)
+      eq(1, #val)
+      ok(endswith(val[1], p"lua/"))
+
+      val = meths.get_runtime_file("lua/vim/", true)
+      eq(1, #val)
+      ok(endswith(val[1], p"lua/vim/"))
+
+      eq({}, meths.get_runtime_file("foobarlang/", true))
+    end)
+  end)
+
+  describe('nvim_get_all_options_info', function()
+    it('should have key value pairs of option names', function()
+      local options_info = meths.get_all_options_info()
+      neq(nil, options_info.listchars)
+      neq(nil, options_info.tabstop)
+
+      eq(meths.get_option_info'winhighlight', options_info.winhighlight)
+    end)
+  end)
+
+  describe('nvim_get_option_info', function()
+    it('should error for unknown options', function()
+      eq("no such option: 'bogus'", pcall_err(meths.get_option_info, 'bogus'))
+    end)
+
+    it('should return the same options for short and long name', function()
+      eq(meths.get_option_info'winhl', meths.get_option_info'winhighlight')
+    end)
+
+    it('should have information about window options', function()
+      eq({
+        commalist = false;
+        default = "";
+        flaglist = false;
+        global_local = false;
+        last_set_chan = 0;
+        last_set_linenr = 0;
+        last_set_sid = 0;
+        name = "winhighlight";
+        scope = "win";
+        shortname = "winhl";
+        type = "string";
+        was_set = false;
+      }, meths.get_option_info'winhl')
+    end)
+
+    it('should have information about buffer options', function()
+      eq({
+        commalist = false,
+        default = "",
+        flaglist = false,
+        global_local = false,
+        last_set_chan = 0,
+        last_set_linenr = 0,
+        last_set_sid = 0,
+        name = "filetype",
+        scope = "buf",
+        shortname = "ft",
+        type = "string",
+        was_set = false
+      }, meths.get_option_info'filetype')
+    end)
+
+    it('should have information about global options', function()
+      -- precondition: the option was changed from its default
+      -- in test setup.
+      eq(false, meths.get_option'showcmd')
+
+      eq({
+        commalist = false,
+        default = true,
+        flaglist = false,
+        global_local = false,
+        last_set_chan = 0,
+        last_set_linenr = 0,
+        last_set_sid = -2,
+        name = "showcmd",
+        scope = "global",
+        shortname = "sc",
+        type = "boolean",
+        was_set = true
+      }, meths.get_option_info'showcmd')
     end)
   end)
 end)

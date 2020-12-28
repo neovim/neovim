@@ -935,6 +935,21 @@ void ex_pydo3(exarg_T *eap)
   script_host_do_range("python3", eap);
 }
 
+void ex_perl(exarg_T *eap)
+{
+  script_host_execute("perl", eap);
+}
+
+void ex_perlfile(exarg_T *eap)
+{
+  script_host_execute_file("perl", eap);
+}
+
+void ex_perldo(exarg_T *eap)
+{
+  script_host_do_range("perl", eap);
+}
+
 // Command line expansion for :profile.
 static enum {
   PEXP_SUBCMD,          ///< expand :profile sub-commands
@@ -1282,7 +1297,7 @@ bool check_changed(buf_T *buf, int flags)
     if (flags & CCGD_EXCMD) {
       no_write_message();
     } else {
-      no_write_message_nobang();
+      no_write_message_nobang(curbuf);
     }
     return true;
   }
@@ -1488,8 +1503,10 @@ bool check_changed_any(bool hidden, bool unload)
       msg_col = 0;
       msg_didout = false;
     }
-    if (EMSG2(_("E162: No write since last change for buffer \"%s\""),
-              buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
+    if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
+        ? EMSG2(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
+        : EMSG2(_("E162: No write since last change for buffer \"%s\""),
+                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
       save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
@@ -1984,9 +2001,16 @@ void ex_argadd(exarg_T *eap)
 /// ":argdelete"
 void ex_argdelete(exarg_T *eap)
 {
-  if (eap->addr_count > 0) {
-    // ":1,4argdel": Delete all arguments in the range.
-    if (eap->line2 > ARGCOUNT) {
+  if (eap->addr_count > 0 || *eap->arg == NUL) {
+    // ":argdel" works like ":.argdel"
+    if (eap->addr_count == 0) {
+      if (curwin->w_arg_idx >= ARGCOUNT) {
+        EMSG(_("E610: No argument to delete"));
+        return;
+      }
+      eap->line1 = eap->line2 = curwin->w_arg_idx + 1;
+    } else if (eap->line2 > ARGCOUNT) {
+      // ":1,4argdel": Delete all arguments in the range.
       eap->line2 = ARGCOUNT;
     }
     linenr_T n = eap->line2 - eap->line1 + 1;
@@ -2016,8 +2040,6 @@ void ex_argdelete(exarg_T *eap)
           curwin->w_arg_idx = ARGCOUNT - 1;
       }
     }
-  } else if (*eap->arg == NUL) {
-    EMSG(_(e_argreq));
   } else {
     do_arglist(eap->arg, AL_DEL, 0);
   }
@@ -2038,6 +2060,10 @@ void ex_listdo(exarg_T *eap)
     // Don't do syntax HL autocommands.  Skipping the syntax file is a
     // great speed improvement.
     save_ei = au_event_disable(",Syntax");
+
+    FOR_ALL_BUFFERS(buf) {
+      buf->b_flags &= ~BF_SYN_SET;
+    }
   }
 
   if (eap->cmdidx == CMD_windo
@@ -2232,9 +2258,32 @@ void ex_listdo(exarg_T *eap)
   }
 
   if (save_ei != NULL) {
+    buf_T *bnext;
+    aco_save_T aco;
+
     au_event_restore(save_ei);
-    apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
-                   curbuf->b_fname, true, curbuf);
+
+    for (buf_T *buf = firstbuf; buf != NULL; buf = bnext) {
+      bnext = buf->b_next;
+      if (buf->b_nwindows > 0 && (buf->b_flags & BF_SYN_SET)) {
+        buf->b_flags &= ~BF_SYN_SET;
+
+        // buffer was opened while Syntax autocommands were disabled,
+        // need to trigger them now.
+        if (buf == curbuf) {
+          apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
+                         curbuf->b_fname, true, curbuf);
+        } else {
+          aucmd_prepbuf(&aco, buf);
+          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn,
+                         buf->b_fname, true, buf);
+          aucmd_restbuf(&aco);
+        }
+
+        // start over, in case autocommands messed things up.
+        bnext = firstbuf;
+      }
+    }
   }
 }
 
@@ -2316,7 +2365,7 @@ void ex_compiler(exarg_T *eap)
     do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
-    if (source_runtime(buf, DIP_ALL) == FAIL) {
+    if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
       EMSG2(_("E666: compiler not supported: %s"), eap->arg);
     }
     xfree(buf);
@@ -2342,486 +2391,6 @@ void ex_compiler(exarg_T *eap)
   }
 }
 
-/// ":runtime [what] {name}"
-void ex_runtime(exarg_T *eap)
-{
-  char_u *arg = eap->arg;
-  char_u *p = skiptowhite(arg);
-  ptrdiff_t len = p - arg;
-  int flags = eap->forceit ? DIP_ALL : 0;
-
-  if (STRNCMP(arg, "START", len) == 0) {
-    flags += DIP_START + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (STRNCMP(arg, "OPT", len) == 0) {
-    flags += DIP_OPT + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (STRNCMP(arg, "PACK", len) == 0) {
-    flags += DIP_START + DIP_OPT + DIP_NORTP;
-    arg = skipwhite(arg + len);
-  } else if (STRNCMP(arg, "ALL", len) == 0) {
-    flags += DIP_START + DIP_OPT;
-    arg = skipwhite(arg + len);
-  }
-
-  source_runtime(arg, flags);
-}
-
-
-static void source_callback(char_u *fname, void *cookie)
-{
-  (void)do_source(fname, false, DOSO_NONE);
-}
-
-/// Find the file "name" in all directories in "path" and invoke
-/// "callback(fname, cookie)".
-/// "name" can contain wildcards.
-/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
-/// When "flags" has DIP_DIR: find directories instead of files.
-/// When "flags" has DIP_ERR: give an error message if there is no match.
-///
-/// return FAIL when no file could be sourced, OK otherwise.
-int do_in_path(char_u *path, char_u *name, int flags,
-               DoInRuntimepathCB callback, void *cookie)
-{
-  char_u      *tail;
-  int num_files;
-  char_u      **files;
-  int i;
-  bool did_one = false;
-
-  // Make a copy of 'runtimepath'.  Invoking the callback may change the
-  // value.
-  char_u *rtp_copy = vim_strsave(path);
-  char_u *buf = xmallocz(MAXPATHL);
-  {
-    if (p_verbose > 10 && name != NULL) {
-      verbose_enter();
-      smsg(_("Searching for \"%s\" in \"%s\""),
-           (char *)name, (char *)path);
-      verbose_leave();
-    }
-
-    // Loop over all entries in 'runtimepath'.
-    char_u *rtp = rtp_copy;
-    while (*rtp != NUL && ((flags & DIP_ALL) || !did_one)) {
-      // Copy the path from 'runtimepath' to buf[].
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
-      size_t buflen = STRLEN(buf);
-
-      // Skip after or non-after directories.
-      if (flags & (DIP_NOAFTER | DIP_AFTER)) {
-        bool is_after = buflen >= 5
-          && STRCMP(buf + buflen - 5, "after") == 0;
-
-        if ((is_after && (flags & DIP_NOAFTER))
-            || (!is_after && (flags & DIP_AFTER))) {
-          continue;
-        }
-      }
-
-      if (name == NULL) {
-        (*callback)(buf, (void *)&cookie);
-        if (!did_one) {
-          did_one = (cookie == NULL);
-        }
-      } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep((char *)buf);
-        tail = buf + STRLEN(buf);
-
-        // Loop over all patterns in "name"
-        char_u *np = name;
-        while (*np != NUL && ((flags & DIP_ALL) || !did_one)) {
-          // Append the pattern from "name" to buf[].
-          assert(MAXPATHL >= (tail - buf));
-          copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
-                           "\t ");
-
-          if (p_verbose > 10) {
-            verbose_enter();
-            smsg(_("Searching for \"%s\""), buf);
-            verbose_leave();
-          }
-
-          // Expand wildcards, invoke the callback for each match.
-          if (gen_expand_wildcards(1, &buf, &num_files, &files,
-                                   (flags & DIP_DIR) ? EW_DIR
-                                                     : EW_FILE) == OK) {
-            for (i = 0; i < num_files; i++) {
-              (*callback)(files[i], cookie);
-              did_one = true;
-              if (!(flags & DIP_ALL)) {
-                break;
-              }
-            }
-            FreeWild(num_files, files);
-          }
-        }
-      }
-    }
-  }
-  xfree(buf);
-  xfree(rtp_copy);
-  if (!did_one && name != NULL) {
-    char *basepath = path == p_rtp ? "runtimepath" : "packpath";
-
-    if (flags & DIP_ERR) {
-      EMSG3(_(e_dirnotf), basepath, name);
-    } else if (p_verbose > 0) {
-      verbose_enter();
-      smsg(_("not found in '%s': \"%s\""), basepath, name);
-      verbose_leave();
-    }
-  }
-
-
-  return did_one ? OK : FAIL;
-}
-
-/// Find "name" in "path".  When found, invoke the callback function for
-/// it: callback(fname, "cookie")
-/// When "flags" has DIP_ALL repeat for all matches, otherwise only the first
-/// one is used.
-/// Returns OK when at least one match found, FAIL otherwise.
-/// If "name" is NULL calls callback for each entry in "path". Cookie is
-/// passed by reference in this case, setting it to NULL indicates that callback
-/// has done its job.
-int do_in_path_and_pp(char_u *path, char_u *name, int flags,
-                      DoInRuntimepathCB callback, void *cookie)
-{
-  int done = FAIL;
-
-  if ((flags & DIP_NORTP) == 0) {
-    done = do_in_path(path, name, flags, callback, cookie);
-  }
-
-  if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s";  // NOLINT
-    size_t len = STRLEN(start_dir) + STRLEN(name);
-    char_u *s = xmallocz(len);
-
-    vim_snprintf((char *)s, len, start_dir, name);
-    done = do_in_path(p_pp, s, flags, callback, cookie);
-
-    xfree(s);
-  }
-
-  if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
-    char *opt_dir = "pack/*/opt/*/%s";  // NOLINT
-    size_t len = STRLEN(opt_dir) + STRLEN(name);
-    char_u *s = xmallocz(len);
-
-    vim_snprintf((char *)s, len, opt_dir, name);
-    done = do_in_path(p_pp, s, flags, callback, cookie);
-
-    xfree(s);
-  }
-
-  return done;
-}
-
-/// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
-int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
-                      void *cookie)
-{
-  return do_in_path_and_pp(p_rtp, name, flags, callback, cookie);
-}
-
-/// Source the file "name" from all directories in 'runtimepath'.
-/// "name" can contain wildcards.
-/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
-///
-/// return FAIL when no file could be sourced, OK otherwise.
-int source_runtime(char_u *name, int flags)
-{
-  return source_in_path(p_rtp, name, flags);
-}
-
-/// Just like source_runtime(), but use "path" instead of 'runtimepath'.
-int source_in_path(char_u *path, char_u *name, int flags)
-{
-  return do_in_path_and_pp(path, name, flags, source_callback, NULL);
-}
-
-// Expand wildcards in "pat" and invoke do_source() for each match.
-static void source_all_matches(char_u *pat)
-{
-  int num_files;
-  char_u **files;
-
-  if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) == OK) {
-    for (int i = 0; i < num_files; i++) {
-      (void)do_source(files[i], false, DOSO_NONE);
-    }
-    FreeWild(num_files, files);
-  }
-}
-
-/// Add the package directory to 'runtimepath'
-static int add_pack_dir_to_rtp(char_u *fname)
-{
-  char_u *p4, *p3, *p2, *p1, *p;
-  char_u *buf = NULL;
-  char *afterdir = NULL;
-  int retval = FAIL;
-
-  p4 = p3 = p2 = p1 = get_past_head(fname);
-  for (p = p1; *p; MB_PTR_ADV(p)) {
-    if (vim_ispathsep_nocolon(*p)) {
-      p4 = p3; p3 = p2; p2 = p1; p1 = p;
-    }
-  }
-
-  // now we have:
-  // rtp/pack/name/start/name
-  //    p4   p3   p2   p1
-  //
-  // find the part up to "pack" in 'runtimepath'
-  p4++;  // append pathsep in order to expand symlink
-  char_u c = *p4;
-  *p4 = NUL;
-  char *const ffname = fix_fname((char *)fname);
-  *p4 = c;
-
-  if (ffname == NULL) {
-    return FAIL;
-  }
-
-  // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-  // Also stop at the first "after" directory
-  size_t fname_len = strlen(ffname);
-  buf = try_malloc(MAXPATHL);
-  if (buf == NULL) {
-    goto theend;
-  }
-  const char *insp = NULL;
-  const char *after_insp = NULL;
-  for (const char *entry = (const char *)p_rtp; *entry != NUL; ) {
-    const char *cur_entry = entry;
-
-    copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
-    if (insp == NULL) {
-      add_pathsep((char *)buf);
-      char *const rtp_ffname = fix_fname((char *)buf);
-      if (rtp_ffname == NULL) {
-        goto theend;
-      }
-      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
-      xfree(rtp_ffname);
-      if (match) {
-        // Insert "ffname" after this entry (and comma).
-        insp = entry;
-      }
-    }
-
-    if ((p = (char_u *)strstr((char *)buf, "after")) != NULL
-        && p > buf
-        && vim_ispathsep(p[-1])
-        && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',')) {
-      if (insp == NULL) {
-        // Did not find "ffname" before the first "after" directory,
-        // insert it before this entry.
-        insp = cur_entry;
-      }
-      after_insp = cur_entry;
-      break;
-    }
-  }
-
-  if (insp == NULL) {
-    // Both "fname" and "after" not found, append at the end.
-    insp = (const char *)p_rtp + STRLEN(p_rtp);
-  }
-
-  // check if rtp/pack/name/start/name/after exists
-  afterdir = concat_fnames((char *)fname, "after", true);
-  size_t afterlen = 0;
-  if (os_isdir((char_u *)afterdir)) {
-    afterlen = strlen(afterdir) + 1;  // add one for comma
-  }
-
-  const size_t oldlen = STRLEN(p_rtp);
-  const size_t addlen = STRLEN(fname) + 1;  // add one for comma
-  const size_t new_rtp_capacity = oldlen + addlen + afterlen + 1;
-  // add one for NUL ------------------------------------------^
-  char *const new_rtp = try_malloc(new_rtp_capacity);
-  if (new_rtp == NULL) {
-    goto theend;
-  }
-
-  // We now have 'rtp' parts: {keep}{keep_after}{rest}.
-  // Create new_rtp, first: {keep},{fname}
-  size_t keep = (size_t)(insp - (const char *)p_rtp);
-  memmove(new_rtp, p_rtp, keep);
-  size_t new_rtp_len = keep;
-  if (*insp == NUL) {
-    new_rtp[new_rtp_len++] = ',';  // add comma before
-  }
-  memmove(new_rtp + new_rtp_len, fname, addlen - 1);
-  new_rtp_len += addlen - 1;
-  if (*insp != NUL) {
-    new_rtp[new_rtp_len++] = ',';  // add comma after
-  }
-
-  if (afterlen > 0 && after_insp != NULL) {
-    size_t keep_after = (size_t)(after_insp - (const char *)p_rtp);
-
-    // Add to new_rtp: {keep},{fname}{keep_after},{afterdir}
-    memmove(new_rtp + new_rtp_len, p_rtp + keep, keep_after - keep);
-    new_rtp_len += keep_after - keep;
-    memmove(new_rtp + new_rtp_len, afterdir, afterlen - 1);
-    new_rtp_len += afterlen - 1;
-    new_rtp[new_rtp_len++] = ',';
-    keep = keep_after;
-  }
-
-  if (p_rtp[keep] != NUL) {
-    // Append rest: {keep},{fname}{keep_after},{afterdir}{rest}
-    memmove(new_rtp + new_rtp_len, p_rtp + keep, oldlen - keep + 1);
-  } else {
-    new_rtp[new_rtp_len] = NUL;
-  }
-
-  if (afterlen > 0 && after_insp == NULL) {
-    // Append afterdir when "after" was not found:
-    // {keep},{fname}{rest},{afterdir}
-    xstrlcat(new_rtp, ",", new_rtp_capacity);
-    xstrlcat(new_rtp, afterdir, new_rtp_capacity);
-  }
-
-  set_option_value("rtp", 0L, new_rtp, 0);
-  xfree(new_rtp);
-  retval = OK;
-
-theend:
-  xfree(buf);
-  xfree(ffname);
-  xfree(afterdir);
-  return retval;
-}
-
-/// Load scripts in "plugin" and "ftdetect" directories of the package.
-static int load_pack_plugin(char_u *fname)
-{
-  static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
-  static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
-
-  int retval = FAIL;
-  char *const ffname = fix_fname((char *)fname);
-  size_t len = strlen(ffname) + STRLEN(ftpat);
-  char_u *pat = try_malloc(len + 1);
-  if (pat == NULL) {
-    goto theend;
-  }
-  vim_snprintf((char *)pat, len, plugpat, ffname);
-  source_all_matches(pat);
-
-  char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
-
-  // If runtime/filetype.vim wasn't loaded yet, the scripts will be
-  // found when it loads.
-  if (eval_to_number(cmd) > 0) {
-    do_cmdline_cmd("augroup filetypedetect");
-    vim_snprintf((char *)pat, len, ftpat, ffname);
-    source_all_matches(pat);
-    do_cmdline_cmd("augroup END");
-  }
-  xfree(cmd);
-  xfree(pat);
-  retval = OK;
-
-theend:
-  xfree(ffname);
-
-  return retval;
-}
-
-// used for "cookie" of add_pack_plugin()
-static int APP_ADD_DIR;
-static int APP_LOAD;
-static int APP_BOTH;
-
-static void add_pack_plugin(char_u *fname, void *cookie)
-{
-  if (cookie != &APP_LOAD) {
-    char *buf = xmalloc(MAXPATHL);
-    bool found = false;
-
-    const char *p = (const char *)p_rtp;
-    while (*p != NUL) {
-      copy_option_part((char_u **)&p, (char_u *)buf, MAXPATHL, ",");
-      if (path_fnamecmp(buf, (char *)fname) == 0) {
-        found = true;
-        break;
-      }
-    }
-    xfree(buf);
-    if (!found) {
-      // directory is not yet in 'runtimepath', add it
-      if (add_pack_dir_to_rtp(fname) == FAIL) {
-        return;
-      }
-    }
-  }
-
-  if (cookie != &APP_ADD_DIR) {
-    load_pack_plugin(fname);
-  }
-}
-
-/// Add all packages in the "start" directory to 'runtimepath'.
-void add_pack_start_dirs(void)
-{
-  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_ADD_DIR);
-}
-
-/// Load plugins from all packages in the "start" directory.
-void load_start_packages(void)
-{
-  did_source_packages = true;
-  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_LOAD);
-}
-
-// ":packloadall"
-// Find plugins in the package directories and source them.
-void ex_packloadall(exarg_T *eap)
-{
-  if (!did_source_packages || eap->forceit) {
-    // First do a round to add all directories to 'runtimepath', then load
-    // the plugins. This allows for plugins to use an autoload directory
-    // of another plugin.
-    add_pack_start_dirs();
-    load_start_packages();
-  }
-}
-
-/// ":packadd[!] {name}"
-void ex_packadd(exarg_T *eap)
-{
-  static const char *plugpat = "pack/*/%s/%s";    // NOLINT
-  int res = OK;
-
-  // Round 1: use "start", round 2: use "opt".
-  for (int round = 1; round <= 2; round++) {
-    // Only look under "start" when loading packages wasn't done yet.
-    if (round == 1 && did_source_packages) {
-      continue;
-    }
-
-    const size_t len = STRLEN(plugpat) + STRLEN(eap->arg) + 5;
-    char *pat = xmallocz(len);
-    vim_snprintf(pat, len, plugpat, round == 1 ? "start" : "opt", eap->arg);
-    // The first round don't give a "not found" error, in the second round
-    // only when nothing was found in the first round.
-    res = do_in_path(p_pp, (char_u *)pat,
-                     DIP_ALL + DIP_DIR
-                     + (round == 2 && res == FAIL ? DIP_ERR : 0),
-                     add_pack_plugin, eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
-    xfree(pat);
-  }
-}
 
 /// ":options"
 void ex_options(exarg_T *eap)
@@ -3823,7 +3392,7 @@ void ex_checktime(exarg_T *eap)
   } else {
     buf = buflist_findnr((int)eap->line2);
     if (buf != NULL) {           // cannot happen?
-      (void)buf_check_timestamp(buf, false);
+      (void)buf_check_timestamp(buf);
     }
   }
   no_check_timestamps = save_no_check_timestamps;
@@ -4152,31 +3721,35 @@ static void script_host_execute(char *name, exarg_T *eap)
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
 
-    (void)eval_call_provider(name, "execute", args);
+    (void)eval_call_provider(name, "execute", args, true);
   }
 }
 
 static void script_host_execute_file(char *name, exarg_T *eap)
 {
-  uint8_t buffer[MAXPATHL];
-  vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
+  if (!eap->skip) {
+    uint8_t buffer[MAXPATHL];
+    vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
-  list_T *args = tv_list_alloc(3);
-  // filename
-  tv_list_append_string(args, (const char *)buffer, -1);
-  // current range
-  tv_list_append_number(args, (int)eap->line1);
-  tv_list_append_number(args, (int)eap->line2);
-  (void)eval_call_provider(name, "execute_file", args);
+    list_T *args = tv_list_alloc(3);
+    // filename
+    tv_list_append_string(args, (const char *)buffer, -1);
+    // current range
+    tv_list_append_number(args, (int)eap->line1);
+    tv_list_append_number(args, (int)eap->line2);
+    (void)eval_call_provider(name, "execute_file", args, true);
+  }
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
-  list_T *args = tv_list_alloc(3);
-  tv_list_append_number(args, (int)eap->line1);
-  tv_list_append_number(args, (int)eap->line2);
-  tv_list_append_string(args, (const char *)eap->arg, -1);
-  (void)eval_call_provider(name, "do_range", args);
+  if (!eap->skip) {
+    list_T *args = tv_list_alloc(3);
+    tv_list_append_number(args, (int)eap->line1);
+    tv_list_append_number(args, (int)eap->line2);
+    tv_list_append_string(args, (const char *)eap->arg, -1);
+    (void)eval_call_provider(name, "do_range", args, true);
+  }
 }
 
 /// ":drop"
@@ -4217,6 +3790,14 @@ void ex_drop(exarg_T   *eap)
       if (wp->w_buffer == buf) {
         goto_tabpage_win(tp, wp);
         curwin->w_arg_idx = 0;
+        if (!bufIsChanged(curbuf)) {
+          const int save_ar = curbuf->b_p_ar;
+
+          // reload the file if it is newer
+          curbuf->b_p_ar = 1;
+          buf_check_timestamp(curbuf);
+          curbuf->b_p_ar = save_ar;
+        }
         return;
       }
     }

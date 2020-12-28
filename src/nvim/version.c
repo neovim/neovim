@@ -16,7 +16,6 @@
 #include "nvim/iconv.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
-#include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -144,7 +143,7 @@ static const int included_patches[] = {
   1777,
   1776,
   1775,
-  // 1774,
+  1774,
   1773,
   1772,
   1771,
@@ -171,9 +170,9 @@ static const int included_patches[] = {
   1750,
   1749,
   1748,
-  // 1747,
+  1747,
   1746,
-  // 1745,
+  1745,
   // 1744,
   // 1743,
   1742,
@@ -206,7 +205,7 @@ static const int included_patches[] = {
   1715,
   1714,
   1713,
-  // 1712,
+  1712,
   1711,
   1710,
   1709,
@@ -327,9 +326,9 @@ static const int included_patches[] = {
   1594,
   1593,
   // 1592,
-  // 1591,
+  1591,
   1590,
-  // 1589,
+  1589,
   // 1588,
   1587,
   1586,
@@ -374,7 +373,7 @@ static const int included_patches[] = {
   1547,
   1546,
   1545,
-  // 1544,
+  1544,
   1543,
   1542,
   1541,
@@ -387,7 +386,7 @@ static const int included_patches[] = {
   1534,
   1533,
   1532,
-  // 1531,
+  1531,
   1530,
   1529,
   1528,
@@ -464,7 +463,7 @@ static const int included_patches[] = {
   1457,
   1456,
   // 1455,
-  // 1454,
+  1454,
   1453,
   1452,
   1451,
@@ -1970,10 +1969,20 @@ bool has_nvim_version(const char *const version_str)
 ///
 /// @return true if patch `n` has been included.
 bool has_vim_patch(int n)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (int i = 0; included_patches[i] != 0; i++) {
-    if (included_patches[i] == n) {
+  // Perform a binary search.
+  int l = 0;
+  int h = (int)(ARRAY_SIZE(included_patches)) - 1;
+  while (l < h) {
+    const int m = (l + h) / 2;
+    if (included_patches[m] == n) {
       return true;
+    }
+    if (included_patches[m] < n) {
+      h = m;
+    } else {
+      l = m + 1;
     }
   }
   return false;
@@ -2119,13 +2128,13 @@ void list_in_columns(char_u **items, int size, int current)
 
 void list_lua_version(void)
 {
-  typval_T luaver_tv;
-  typval_T arg = { .v_type = VAR_UNKNOWN };  // No args.
-  char *luaver_expr = "((jit and jit.version) and jit.version or _VERSION)";
-  executor_eval_lua(cstr_as_string(luaver_expr), &arg, &luaver_tv);
-  assert(luaver_tv.v_type == VAR_STRING);
-  MSG(luaver_tv.vval.v_string);
-  xfree(luaver_tv.vval.v_string);
+  char *code = "return ((jit and jit.version) and jit.version or _VERSION)";
+  Error err = ERROR_INIT;
+  Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
+  assert(!ERROR_SET(&err));
+  assert(ret.type == kObjectTypeString);
+  MSG(ret.data.string.data);
+  api_free_object(ret);
 }
 
 void list_version(void)
@@ -2291,14 +2300,11 @@ static void do_intro_line(long row, char_u *mesg, int attr)
   for (p = mesg; *p != NUL; p += l) {
     clen = 0;
 
-    for (l = 0; p[l] != NUL
-         && (l == 0 || (p[l] != '<' && p[l - 1] != '>')); ++l) {
-      if (has_mbyte) {
-        clen += ptr2cells(p + l);
-        l += (*mb_ptr2len)(p + l) - 1;
-      } else {
-        clen += byte2cells(p[l]);
-      }
+    for (l = 0;
+         p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
+         l++) {
+      clen += ptr2cells(p + l);
+      l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
     grid_puts_len(&default_grid, p, l, (int)row, (int)col,

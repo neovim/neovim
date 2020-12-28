@@ -15,6 +15,8 @@
 #include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/charset.h"
+#include "nvim/syntax.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -25,6 +27,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
@@ -1198,7 +1201,7 @@ void api_free_object(Object value)
       break;
 
     case kObjectTypeLuaRef:
-      executor_free_luaref(value.data.luaref);
+      api_free_luaref(value.data.luaref);
       break;
 
     default:
@@ -1578,4 +1581,101 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
                   "Position must be a mark id Integer or position Array");
     return false;
   }
+}
+
+VirtText parse_virt_text(Array chunks, Error *err)
+{
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  return virt_text;
+
+free_exit:
+  clear_virttext(&virt_text);
+  return virt_text;
+}
+
+/// Force obj to bool.
+/// If it fails, returns false and sets err
+/// @param obj          The object to coerce to a boolean
+/// @param what         The name of the object, used for error message
+/// @param nil_value    What to return if the type is nil.
+/// @param err          Set if there was an error in converting to a bool
+bool api_object_to_bool(Object obj, const char *what,
+                        bool nil_value, Error *err)
+{
+  if (obj.type == kObjectTypeBoolean) {
+    return obj.data.boolean;
+  } else if (obj.type == kObjectTypeInteger) {
+    return obj.data.integer;  // C semantics: non-zero int is true
+  } else if (obj.type == kObjectTypeNil) {
+    return nil_value;  // caller decides what NIL (missing retval in lua) means
+  } else {
+    api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
+    return false;
+  }
+}
+
+const char *describe_ns(NS ns_id)
+{
+  String name;
+  handle_T id;
+  map_foreach(namespace_ids, name, id, {
+    if ((NS)id == ns_id && name.size) {
+      return name.data;
+    }
+  })
+  return "(UNKNOWN PLUGIN)";
+}
+
+DecorProvider *get_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decor_providers, (size_t)j+1);
+    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+  }
+  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
 }

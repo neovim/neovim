@@ -232,20 +232,53 @@ describe("shell command :!", function()
   if has_powershell() then
     it('powershell supports literal strings', function()
       set_shell_powershell()
-      local screen = Screen.new(30, 4)
+      local screen = Screen.new(45, 4)
       screen:attach()
       feed_command([[!'Write-Output $a']])
-      screen:expect{any='\nWrite%-Output %$a', timeout=10000}
+      screen:expect([[
+        :!'Write-Output $a'                          |
+        Write-Output $a                              |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
       feed_command([[!$a = 1; Write-Output '$a']])
-      screen:expect{any='\n%$a', timeout=10000}
+      screen:expect([[
+        :!$a = 1; Write-Output '$a'                  |
+        $a                                           |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
       feed_command([[!"Write-Output $a"]])
-      screen:expect{any='\nWrite%-Output', timeout=10000}
+      screen:expect([[
+        :!"Write-Output $a"                          |
+        Write-Output                                 |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
       feed_command([[!$a = 1; Write-Output "$a"]])
-      screen:expect{any='\n1', timeout=10000}
-      feed_command(iswin()
-        and [[!& 'C:\\Windows\\system32\\cmd.exe' /c 'echo $a']]
-        or  [[!& '/bin/sh' -c 'echo ''$a''']])
-      screen:expect{any='\n%$a', timeout=10000}
+      screen:expect([[
+        :!$a = 1; Write-Output "$a"                  |
+        1                                            |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
+      if iswin() then
+        feed_command([[!& 'cmd.exe' /c 'echo $a']])
+        screen:expect([[
+          :!& 'cmd.exe' /c 'echo $a'                   |
+          $a                                           |
+                                                       |
+          Press ENTER or type command to continue^      |
+        ]])
+      else
+        feed_command([[!& '/bin/sh' -c 'echo ''$a''']])
+        screen:expect([[
+          :!& '/bin/sh' -c 'echo ''$a'''               |
+          $a                                           |
+                                                       |
+          Press ENTER or type command to continue^      |
+        ]])
+      end
     end)
   end
 end)

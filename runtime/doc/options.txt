@@ -118,8 +118,7 @@ A few special texts:
 		Option was set with command line argument |-c|, +, |-S| or
 		|-q|.
 	Last set from environment variable ~
-		Option was set from an environment variable, $VIMINIT,
-		$GVIMINIT or $EXINIT.
+		Option was set from $VIMINIT.
 	Last set from error handler ~
 		Option was cleared when evaluating it resulted in an error.
 
@@ -1387,6 +1386,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'completeslash'* *'csl'*
+'completeslash' 'csl'	string	(default: "")
+			local to buffer
+			{not in Vi}  {only for MS-Windows}
+	When this option is set it overrules 'shellslash' for completion:
+	- When this option is set to "slash", a forward slash is used for path
+	  completion in insert mode. This is useful when editing HTML tag, or
+	  Makefile with 'noshellslash' on Windows.
+	- When this option is set to "backslash", backslash is used. This is
+	  useful when editing a batch file with 'shellslash' set on Windows.
+	- When this option is empty, same character is used as for
+	  'shellslash'.
+	For Insert mode completion the buffer-local value is used.  For
+	command line completion the global value is used.
+
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	string	(default: "menu,preview")
 			global
@@ -2424,7 +2438,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'foldcolumn' 'fdc'	string (default "0")
 			local to window
 	When and how to draw the foldcolumn. Valid values are:
-	    "auto":       resize to the maximum amount of folds to display.
+	    "auto":       resize to the minimum amount of folds to display.
 	    "auto:[1-9]": resize to accommodate multiple folds up to the
 			  selected level
             0:            to disable foldcolumn
@@ -2739,21 +2753,26 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor{N}	horizontal bar, {N} percent of the character height
 		ver{N}	vertical bar, {N} percent of the character width
 		block	block cursor, fills the whole character
-			[only one of the above three should be present]
+			- Only one of the above three should be present.
+			- Default is "block" for each mode.
 		blinkwait{N}				*cursor-blinking*
 		blinkon{N}
 		blinkoff{N}
 			blink times for cursor: blinkwait is the delay before
 			the cursor starts blinking, blinkon is the time that
 			the cursor is shown and blinkoff is the time that the
-			cursor is not shown.  The times are in msec.  When one
-			of the numbers is zero, there is no blinking. E.g.: >
+			cursor is not shown.  Times are in msec.  When one of
+			the numbers is zero, there is no blinking. E.g.: >
 				:set guicursor=n:blinkon0
-<		{group-name}
-			Highlight group name that sets the color and font for
-			the cursor. |inverse|/reverse and no group-name are
-			interpreted as "the host terminal default cursor
-			colors" which usually invert bg and fg colors.
+<			- Default is "blinkon0" for each mode.
+		{group-name}
+			Highlight group that decides the color and font of the
+			cursor.
+			In the |TUI|:
+			- |inverse|/reverse and no group-name are interpreted
+			  as "host-terminal default cursor colors" which
+			  typically means "inverted bg and fg colors".
+			- |ctermfg| and |guifg| are ignored.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
@@ -2795,9 +2814,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the font cannot be found you will get an error message.  To try other
 	font names a list can be specified, font names separated with commas.
 	The first valid font is used.
-
-	On systems where 'guifontset' is supported (X11) and 'guifontset' is
-	not empty, then 'guifont' is not used.
 
 	Spaces after a comma are ignored.  To include a comma in a font name
 	precede it with a backslash.  Setting an option requires an extra
@@ -2850,45 +2866,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set guifont=courier_new:h12:w5:b:cRUSSIAN
 	    :set guifont=Andale_Mono:h7.5:w4.5
 <
-
-					*'guifontset'* *'gfs'*
-					*E250* *E252* *E234* *E597* *E598*
-'guifontset' 'gfs'	string	(default "")
-			global
-	When not empty, specifies two (or more) fonts to be used.  The first
-	one for normal English, the second one for your special language.  See
-	|xfontset|.
-	Setting this option also means that all font names will be handled as
-	a fontset name.  Also the ones used for the "font" argument of the
-	|:highlight| command.
-	The fonts must match with the current locale.  If fonts for the
-	character sets that the current locale uses are not included, setting
-	'guifontset' will fail.
-	Note the difference between 'guifont' and 'guifontset': In 'guifont'
-	the comma-separated names are alternative names, one of which will be
-	used.  In 'guifontset' the whole string is one fontset name,
-	including the commas.  It is not possible to specify alternative
-	fontset names.
-	This example works on many X11 systems: >
-		:set guifontset=-*-*-medium-r-normal--16-*-*-*-c-*-*-*
-<
 				*'guifontwide'* *'gfw'* *E231* *E533* *E534*
 'guifontwide' 'gfw'	string	(default "")
 			global
-	When not empty, specifies a comma-separated list of fonts to be used
-	for double-width characters.  The first font that can be loaded is
-	used.
+	Comma-separated list of fonts to be used for double-width characters.
+	The first font that can be loaded is used.
 	Note: The size of these fonts must be exactly twice as wide as the one
 	specified with 'guifont' and the same height.
 
-	'guifontwide' is only used when 'guifontset' is empty or invalid.
-	When 'guifont' is set and a valid font is found in it and
-	'guifontwide' is empty Vim will attempt to find a matching
-	double-width font and set 'guifontwide' to it.
-
-	Windows +multibyte only:		*guifontwide_win_mbyte*
-
-	If set and valid, 'guifontwide' is used for IME instead of 'guifont'.
+	When 'guifont' has a valid font and 'guifontwide' is empty Vim will
+	attempt to set 'guifontwide' to a matching double-width font.
 
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))
@@ -2931,6 +2918,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*'go-c'*
 	  'c'	Use console dialogs instead of popup dialogs for simple
 		choices.
+								*'go-d'*
+	  'd'	Use dark theme variant if available.
 								*'go-e'*
 	  'e'	Add tab pages when indicated with 'showtabline'.
 		'guitablabel' can be used to change the text in the labels.
@@ -4055,7 +4044,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'mousefocus'* *'mousef'* *'nomousefocus'* *'nomousef'*
 'mousefocus' 'mousef'	boolean	(default off)
 			global
-			{only works in the GUI}
 	The window that the mouse pointer is on is automatically activated.
 	When changing the window layout or window focus in another way, the
 	mouse pointer is moved to the window with keyboard focus.  Off is the
@@ -5028,24 +5016,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 			will become the current directory (useful with
 			projects accessed over a network from different
 			systems)
-	   slash	backslashes in file names replaced with forward
-			slashes
 	   tabpages	all tab pages; without this only the current tab page
 			is restored, so that you can make a session for each
 			tab page separately
 	   terminal	include terminal windows where the command can be
 			restored
-	   unix		with Unix end-of-line format (single <NL>), even when
-			on Windows or DOS
 	   winpos	position of the whole Vim window
 	   winsize	window sizes
+	   slash	|deprecated| Always enabled. Uses "/" in filenames.
+	   unix		|deprecated| Always enabled. Uses "\n" line endings.
 
-	Don't include both "curdir" and "sesdir".
-	When neither "curdir" nor "sesdir" is included, file names are stored
-	with absolute paths.
-	"slash" and "unix" are useful on Windows when sharing session files
-	with Unix.  The Unix version of Vim cannot source dos format scripts,
-	but the Windows version of Vim can source unix format scripts.
+	Don't include both "curdir" and "sesdir". When neither is included
+	filenames are stored as absolute paths.
 
 				*'shada'* *'sd'* *E526* *E527* *E528*
 'shada' 'sd'		string	(Vim default for
@@ -5184,6 +5166,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It is allowed to give an argument to the command, e.g.  "csh -f".
 	See |option-backslash| about including spaces and backslashes.
 	Environment variables are expanded |:set_env|.
+
 	If the name of the shell contains a space, you might need to enclose
 	it in quotes.  Example: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
@@ -5324,7 +5307,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'shellslash' only works when a backslash can be used as a path
 	separator.  To test if this is so use: >
 		if exists('+shellslash')
-<
+<	Also see 'completeslash'.
+
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
 'shelltemp' 'stmp'	boolean	(Vim default on, Vi default off)
 			global
@@ -5707,6 +5691,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	up to the first character that is not an ASCII letter or number and
 	not a dash.  Also see |set-spc-auto|.
 
+						*'spelloptions'* *'spo'*
+'spelloptions' 'spo'	string	(default "")
+			local to buffer
+	A comma separated list of options for spell checking:
+	   camel	When a word is CamelCased, assume "Cased" is a
+			separate word: every upper-case character in a word
+			that comes after a lower case character indicates the
+			start of a new word.
 
 						*'spellsuggest'* *'sps'*
 'spellsuggest' 'sps'	string	(default "best")
@@ -5806,7 +5798,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	normal text.  Each status line item is of the form:
 	  %-0{minwid}.{maxwid}{item}
 	All fields except the {item} are optional.  A single percent sign can
-	be given as "%%".  Up to 80 items can be specified.  *E541*
+	be given as "%%".
 
 	When the option starts with "%!" then it is used as an expression,
 	evaluated and the result is used as the option value.  Example: >
@@ -6532,7 +6524,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	>= 12	Every executed function.
 	>= 13	When an exception is thrown, caught, finished, or discarded.
 	>= 14	Anything pending in a ":finally" clause.
-	>= 15	Every executed Ex command (truncated at 200 characters).
+	>= 15	Every executed Ex command from a script (truncated at 200
+		characters).
+	>= 16	Every executed Ex command
 
 	This option can also be set with the "-V" argument.  See |-V|.
 	This option is also set by the |:verbose| command.
@@ -6571,14 +6565,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   options	options and mappings local to a window or buffer (not
 			global values for local options)
 	   localoptions same as "options"
-	   slash	backslashes in file names replaced with forward
-			slashes
-	   unix		with Unix end-of-line format (single <NL>), even when
-			on Windows or DOS
-
-	"slash" and "unix" are useful on Windows when sharing view files
-	with Unix.  The Unix version of Vim cannot source dos format scripts,
-	but the Windows version of Vim can source unix format scripts.
+	   slash	|deprecated| Always enabled. Uses "/" in filenames.
+	   unix		|deprecated| Always enabled. Uses "\n" line endings.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")

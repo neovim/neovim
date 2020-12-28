@@ -129,9 +129,13 @@ To use the RVM "system" Ruby installation: >
 ==============================================================================
 Perl integration				*provider-perl*
 
-Nvim supports Perl |remote-plugin|s.
+Nvim supports Perl |remote-plugin|s on Unix platforms. Support for polling STDIN
+on MS-Windows is currently lacking from all known event loop implementations.
+The Vim legacy |perl-vim| interface is also supported (which is itself
+implemented as a Nvim remote-plugin).
 https://github.com/jacquesg/p5-Neovim-Ext
 
+Note: Only perl versions from 5.22 onward are supported.
 
 PERL QUICKSTART~
 
@@ -212,12 +216,12 @@ For example this configuration integrates the tmux clipboard: >
     let g:clipboard = {
           \   'name': 'myClipboard',
           \   'copy': {
-          \      '+': 'tmux load-buffer -',
-          \      '*': 'tmux load-buffer -',
+          \      '+': ['tmux', 'load-buffer', '-'],
+          \      '*': ['tmux', 'load-buffer', '-'],
           \    },
           \   'paste': {
-          \      '+': 'tmux save-buffer -',
-          \      '*': 'tmux save-buffer -',
+          \      '+': ['tmux', 'save-buffer', '-'],
+          \      '*': ['tmux', 'save-buffer', '-'],
           \   },
           \   'cache_enabled': 1,
           \ }

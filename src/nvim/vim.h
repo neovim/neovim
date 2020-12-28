@@ -208,6 +208,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 // Size in bytes of the hash used in the undo file.
 #define UNDO_HASH_SIZE 32
 
+#define CLEAR_POINTER(ptr)  memset((ptr), 0, sizeof(*(ptr)))
 
 // defines to avoid typecasts from (char_u *) to (char *) and back
 // (vim_strchr() is now in strings.c)
@@ -259,7 +260,6 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
-#define STL_MAX_ITEM 80                 // max nr of %<flag> in statusline
 
 #include "nvim/path.h"
 
@@ -316,7 +316,8 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #define LOWEST_WIN_ID 1000
 
 // BSD is supposed to cover FreeBSD and similar systems.
-#if (defined(BSD) || defined(__FreeBSD_kernel__)) && defined(S_ISCHR)
+#if (defined(BSD) || defined(__FreeBSD_kernel__)) \
+    && (defined(S_ISCHR) || defined(S_IFCHR))
 # define OPEN_CHR_FILES
 #endif
 

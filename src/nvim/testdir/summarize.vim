@@ -1,3 +1,4 @@
+set cpo&vim
 if 1
   " This is executed only with the eval feature
   set nocompatible

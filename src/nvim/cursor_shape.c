@@ -13,6 +13,10 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ui.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "cursor_shape.c.generated.h"
+#endif
+
 /// Handling of cursor and mouse pointer shapes in various modes.
 cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 {
@@ -77,7 +81,9 @@ Array mode_style_array(void)
   return all;
 }
 
-/// Parse the 'guicursor' option
+/// Parses the 'guicursor' option.
+///
+/// Clears `shape_table` if 'guicursor' is empty.
 ///
 /// @param what SHAPE_CURSOR or SHAPE_MOUSE ('mouseshape')
 ///
@@ -99,11 +105,17 @@ char_u *parse_shape_opt(int what)
 
   // First round: check for errors; second round: do it for real.
   for (round = 1; round <= 2; round++) {
+    if (round == 2 || *p_guicursor == NUL) {
+      // Set all entries to default (block, blinkon0, default color).
+      // This is the default for anything that is not set.
+      clear_shape_table();
+      if (*p_guicursor == NUL) {
+        ui_mode_info_set();
+        return NULL;
+      }
+    }
     // Repeat for all comma separated parts.
     modep = p_guicursor;
-    if (*p_guicursor == NUL) {
-      modep = (char_u *)"a:block-blinkon0";
-    }
     while (modep != NULL && *modep != NUL) {
       colonp = vim_strchr(modep, ':');
       commap = vim_strchr(modep, ',');
@@ -144,14 +156,6 @@ char_u *parse_shape_opt(int what)
 
         if (all_idx >= 0) {
           idx = all_idx--;
-        } else if (round == 2) {
-          {
-            // Set the defaults, for the missing parts
-            shape_table[idx].shape = SHAPE_BLOCK;
-            shape_table[idx].blinkwait = 0L;
-            shape_table[idx].blinkon = 0L;
-            shape_table[idx].blinkoff = 0L;
-          }
         }
 
         /* Parse the part after the colon */
@@ -328,5 +332,18 @@ int cursor_get_mode_idx(void)
     }
   } else {
     return SHAPE_IDX_N;
+  }
+}
+
+/// Clears all entries in shape_table to block, blinkon0, and default color.
+static void clear_shape_table(void)
+{
+  for (int idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
+    shape_table[idx].shape = SHAPE_BLOCK;
+    shape_table[idx].blinkwait = 0L;
+    shape_table[idx].blinkon = 0L;
+    shape_table[idx].blinkoff = 0L;
+    shape_table[idx].id = 0;
+    shape_table[idx].id_lm = 0;
   }
 }

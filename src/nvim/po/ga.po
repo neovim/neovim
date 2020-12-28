@@ -967,9 +967,6 @@ msgstr "E143: Scrios na huathorduithe maolán nua %s go tobann"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: argóint neamhuimhriúil chun :z"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Ní cheadaítear orduithe blaoisce i rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr ""
 "E146: Ní cheadaítear litreacha mar theormharcóirí ar shloinn ionadaíochta"

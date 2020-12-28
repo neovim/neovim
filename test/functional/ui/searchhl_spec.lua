@@ -20,6 +20,7 @@ describe('search highlighting', function()
       [2] = {background = colors.Yellow}, -- Search
       [3] = {reverse = true},
       [4] = {foreground = colors.Red}, -- Message
+      [5] = {bold = true, reverse = true},
     })
   end)
 
@@ -158,8 +159,16 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
-    helpers.wait()
-    screen:expect_unchanged()
+    helpers.poke_eventloop()
+    screen:expect{grid=[[
+        {3:foo} bar baz       {3:│}                   |
+        bar baz {2:foo}       {3:│}                   |
+        bar {2:foo} baz       {3:│}                   |
+                          {3:│}                   |
+      {1:~                   }{3:│}                   |
+      {5:[No Name] [+]        }{3:term               }|
+      /foo^                                    |
+    ]]}
   end)
 
   it('works with incsearch', function()

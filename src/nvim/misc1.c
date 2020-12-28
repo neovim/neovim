@@ -983,7 +983,7 @@ void preserve_exit(void)
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      mch_errmsg((uint8_t *)"Vim: preserving files...\n");
+      mch_errmsg("Vim: preserving files...\r\n");
       ui_flush();
       ml_sync_all(false, false, true);  // preserve all swap files
       break;
@@ -992,7 +992,7 @@ void preserve_exit(void)
 
   ml_close_all(false);              // close all memfiles, without deleting
 
-  mch_errmsg("Vim: Finished.\n");
+  mch_errmsg("Vim: Finished.\r\n");
 
   getout(1);
 }
@@ -1091,8 +1091,9 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
 {
   char_u *buffer = NULL;
 
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return NULL;
+  }
 
   // get a name for the temp file
   char_u *tempname = vim_tempname();

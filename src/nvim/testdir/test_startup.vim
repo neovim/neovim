@@ -2,6 +2,8 @@
 
 source shared.vim
 source screendump.vim
+source term_util.vim
+source check.vim
 
 " Check that loading startup.vim works.
 func Test_startup_script()
@@ -278,6 +280,68 @@ func Test_V_arg()
    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
+" Test the '-q [errorfile]' argument.
+func Test_q_arg()
+  CheckFeature quickfix
+
+  let lines =<< trim END
+    /* some file with an error */
+    main() {
+      functionCall(arg; arg, arg);
+      return 666
+    }
+  END
+  call writefile(lines, 'Xbadfile.c')
+
+  let after =<< trim [CODE]
+    call writefile([&errorfile, string(getpos("."))], "Xtestout")
+    copen
+    w >> Xtestout
+    qall
+  [CODE]
+
+  " Test with default argument '-q'.
+  call assert_equal('errors.err', &errorfile)
+  call writefile(["Xbadfile.c:4:12: error: expected ';' before '}' token"], 'errors.err')
+  if RunVim([], after, '-q')
+    let lines = readfile('Xtestout')
+    call assert_equal(['errors.err',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+  call delete('errors.err')
+
+  " Test with explicit argument '-q Xerrors' (with space).
+  call writefile(["Xbadfile.c:4:12: error: expected ';' before '}' token"], 'Xerrors')
+  if RunVim([], after, '-q Xerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+  call delete('Xtestout')
+
+  " Test with explicit argument '-qXerrors' (without space).
+  if RunVim([], after, '-qXerrors')
+    let lines = readfile('Xtestout')
+    call assert_equal(['Xerrors',
+	\              '[0, 4, 12, 0]',
+	\              "Xbadfile.c|4 col 12| error: expected ';' before '}' token"],
+	\             lines)
+  endif
+
+  " Test with a non-existing error file (exits with value 3)
+  let out = system(GetVimCommand() .. ' -q xyz.err')
+  call assert_equal(3, v:shell_error)
+
+  call delete('Xbadfile.c')
+  call delete('Xtestout')
+  call delete('Xerrors')
+endfunc
+
 " Test the -V[N]{filename} argument to set the 'verbose' option to N
 " and set 'verbosefile' to filename.
 func Test_V_file_arg()
@@ -369,12 +433,11 @@ func Test_invalid_args()
   endfor
 
   if has('clientserver')
-    " FIXME: need to add --servername to this list
-    " but it causes vim-8.1.1282 to crash!
     for opt in ['--remote', '--remote-send', '--remote-silent', '--remote-expr',
           \     '--remote-tab', '--remote-tab-wait',
           \     '--remote-tab-wait-silent', '--remote-tab-silent',
           \     '--remote-wait', '--remote-wait-silent',
+          \     '--servername',
           \    ]
       let out = split(system(GetVimCommand() .. ' '  .. opt), "\n")
       call assert_equal(1, v:shell_error)
@@ -384,14 +447,21 @@ func Test_invalid_args()
     endfor
   endif
 
-  " FIXME: commented out as this causes vim-8.1.1282 to crash!
-  "if has('clipboard')
-  "  let out = split(system(GetVimCommand() .. ' --display'), "\n")
-  "  call assert_equal(1, v:shell_error)
-  "  call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
-  "  call assert_equal('Argument missing after: "--display"', out[1])
-  "  call assert_equal('More info with: "vim -h"',            out[2])
-  "endif
+  if has('gui_gtk')
+    let out = split(system(GetVimCommand() .. ' --display'), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
+    call assert_equal('Argument missing after: "--display"', out[1])
+    call assert_equal('More info with: "vim -h"',            out[2])
+  endif
+
+  if has('xterm_clipboard')
+    let out = split(system(GetVimCommand() .. ' -display'), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
+    call assert_equal('Argument missing after: "-display"', out[1])
+    call assert_equal('More info with: "vim -h"',            out[2])
+  endif
 
   let out = split(system(GetVimCommand() .. ' -ix'), "\n")
   call assert_equal(1, v:shell_error)
@@ -402,13 +472,15 @@ func Test_invalid_args()
   let out = split(system(GetVimCommand() .. ' - xxx -cq'), "\n")
   call assert_equal(0, v:shell_error)
 
-  " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
-  for opt in ['-t', '-q']
-    let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
-    call assert_equal(1, v:shell_error)
-    call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
-    call assert_equal('More info with "nvim -h"',                       out[1])
-  endfor
+  if has('quickfix')
+    " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+    for opt in ['-t', '-q']
+      let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
+      call assert_equal('More info with "nvim -h"',                       out[1])
+    endfor
+  endif
 
   for opt in [' -cq', ' --cmd q', ' +', ' -S foo']
     let out = split(system(GetVimCommand() .. repeat(opt, 11)), "\n")
@@ -509,6 +581,27 @@ func Test_read_stdin()
   call delete('Xtestout')
 endfunc
 
+func Test_set_shell()
+  let after =<< trim [CODE]
+    call writefile([&shell], "Xtestout")
+    quit!
+  [CODE]
+
+  if has('win32')
+    let $SHELL = 'C:\with space\cmd.exe'
+    let expected = '"C:\with space\cmd.exe"'
+  else
+    let $SHELL = '/bin/with space/sh'
+    let expected = '"/bin/with space/sh"'
+  endif
+
+  if RunVimPiped([], after, '', '')
+    let lines = readfile('Xtestout')
+    call assert_equal(expected, lines[0])
+  endif
+  call delete('Xtestout')
+endfunc
+
 func Test_progpath()
   " Tests normally run with "./vim" or "../vim", these must have been expanded
   " to a full path.
@@ -593,3 +686,53 @@ func Test_v_argv()
   call assert_true(idx > 2)
   call assert_equal(['arg1', '--cmd', 'echo v:argv', '--cmd', 'q'']'], list[idx:])
 endfunc
+
+" Test the '-T' argument which sets the 'term' option.
+func Test_T_arg()
+  throw 'skipped: Nvim does not support "-T" argument'
+  CheckNotGui
+  let after =<< trim [CODE]
+    call writefile([&term], "Xtest_T_arg")
+    qall
+  [CODE]
+
+  for t in ['builtin_dumb', 'builtin_ansi']
+    if RunVim([], after, '-T ' .. t)
+      let lines = readfile('Xtest_T_arg')
+      call assert_equal([t], lines)
+    endif
+  endfor
+
+  call delete('Xtest_T_arg')
+endfunc
+
+" Test the '-x' argument to read/write encrypted files.
+func Test_x_arg()
+  CheckRunVimInTerminal
+  CheckFeature cryptv
+
+  " Create an encrypted file Xtest_x_arg.
+  let buf = RunVimInTerminal('-n -x Xtest_x_arg', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^Enter encryption key: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^Enter same key again: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match(' All$', term_getline(buf, 10))})
+  call term_sendkeys(buf, "itest\<Esc>:w\<Enter>")
+  call WaitForAssert({-> assert_match('"Xtest_x_arg" \[New\]\[blowfish2\] 1L, 5B written',
+        \            term_getline(buf, 10))})
+  call StopVimInTerminal(buf)
+
+  " Read the encrypted file and check that it contains the expected content "test"
+  let buf = RunVimInTerminal('-n -x Xtest_x_arg', #{rows: 10, wait_for_ruler: 0})
+  call WaitForAssert({-> assert_match('^Enter encryption key: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^Enter same key again: ', term_getline(buf, 10))})
+  call term_sendkeys(buf, "foo\n")
+  call WaitForAssert({-> assert_match('^test', term_getline(buf, 1))})
+  call StopVimInTerminal(buf)
+
+  call delete('Xtest_x_arg')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

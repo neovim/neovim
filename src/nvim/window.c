@@ -606,7 +606,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
 
   win_config_float(wp, fconfig);
   wp->w_pos_changed = true;
-  redraw_win_later(wp, VALID);
+  redraw_later(wp, VALID);
   return wp;
 }
 
@@ -641,7 +641,7 @@ void win_set_minimal_style(win_T *wp)
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
 
-  // foldcolumn: use 'auto'
+  // foldcolumn: use '0'
   if (wp->w_p_fdc[0] != '0') {
     xfree(wp->w_p_fdc);
     wp->w_p_fdc = (char_u *)xstrdup("0");
@@ -679,7 +679,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   wp->w_pos_changed = true;
   if (change_external) {
     wp->w_hl_needs_update = true;
-    redraw_win_later(wp, NOT_VALID);
+    redraw_later(wp, NOT_VALID);
   }
 }
 
@@ -700,9 +700,10 @@ int win_fdccol_count(win_T *wp)
   const char *fdc = (const char *)wp->w_p_fdc;
 
   // auto:<NUM>
-  if (strncmp(fdc, "auto:", 5) == 0) {
+  if (strncmp(fdc, "auto", 4) == 0) {
+    const int fdccol = fdc[4] == ':' ? fdc[5] - '0' : 1;
     int needed_fdccols = getDeepestNesting(wp);
-    return MIN(fdc[5] - '0', needed_fdccols);
+    return MIN(fdccol, needed_fdccols);
   } else {
     return fdc[0] - '0';
   }
@@ -764,7 +765,7 @@ static void ui_ext_win_position(win_T *wp)
       wp->w_grid.focusable = wp->w_float_config.focusable;
       if (!valid) {
         wp->w_grid.valid = false;
-        redraw_win_later(wp, NOT_VALID);
+        redraw_later(wp, NOT_VALID);
       }
     }
   } else {
@@ -1112,8 +1113,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   // add a status line when p_ls == 1 and splitting the first window
   if (one_nonfloat() && p_ls == 1 && oldwin->w_status_height == 0) {
-    if ((oldwin->w_height + oldwin->w_winbar_height) <= p_wmh
-        && new_in_layout) {
+    if (oldwin->w_height <= p_wmh && new_in_layout) {
       EMSG(_(e_noroom));
       return FAIL;
     }
@@ -1210,7 +1210,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * height.
      */
     // Current window requires at least 1 space.
-    wmh1 = (p_wmh == 0 ? 1 : p_wmh) + curwin->w_winbar_height;
+    wmh1 = p_wmh == 0 ? 1 : p_wmh;
     needed = wmh1 + STATUS_HEIGHT;
     if (flags & WSP_ROOM) {
       needed += p_wh - wmh1;
@@ -1408,12 +1408,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & (WSP_TOP | WSP_BOT)) {
       /* set height and row of new window to full height */
       wp->w_winrow = tabline_height();
-      win_new_height(wp, curfrp->fr_height - (p_ls > 0) - wp->w_winbar_height);
+      win_new_height(wp, curfrp->fr_height - (p_ls > 0));
       wp->w_status_height = (p_ls > 0);
     } else {
       /* height and row of new window is same as current window */
       wp->w_winrow = oldwin->w_winrow;
-      win_new_height(wp, oldwin->w_height + oldwin->w_winbar_height);
+      win_new_height(wp, oldwin->w_height);
       wp->w_status_height = oldwin->w_status_height;
     }
     frp->fr_height = curfrp->fr_height;
@@ -1460,7 +1460,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * one row for the status line */
     win_new_height(wp, new_size);
     if (flags & (WSP_TOP | WSP_BOT)) {
-      int new_fr_height = curfrp->fr_height - new_size + wp->w_winbar_height;
+      int new_fr_height = curfrp->fr_height - new_size;
 
       if (!((flags & WSP_BOT) && p_ls == 0)) {
         new_fr_height -= STATUS_HEIGHT;
@@ -1474,8 +1474,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       wp->w_status_height = STATUS_HEIGHT;
       oldwin->w_winrow += wp->w_height + STATUS_HEIGHT;
     } else {            // new window below current one
-      wp->w_winrow = oldwin->w_winrow + oldwin->w_height
-        + STATUS_HEIGHT + oldwin->w_winbar_height;
+      wp->w_winrow = oldwin->w_winrow + oldwin->w_height + STATUS_HEIGHT;
       wp->w_status_height = oldwin->w_status_height;
       if (!(flags & WSP_BOT)) {
         oldwin->w_status_height = STATUS_HEIGHT;
@@ -1490,13 +1489,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   if (flags & (WSP_TOP | WSP_BOT))
     (void)win_comp_pos();
 
-  /*
-   * Both windows need redrawing
-   */
-  redraw_win_later(wp, NOT_VALID);
-  wp->w_redr_status = TRUE;
-  redraw_win_later(oldwin, NOT_VALID);
-  oldwin->w_redr_status = TRUE;
+  // Both windows need redrawing.  Update all status lines, in case they
+  // show something related to the window count or position.
+  redraw_later(wp, NOT_VALID);
+  redraw_later(oldwin, NOT_VALID);
+  status_redraw_all();
 
   if (need_status) {
     msg_row = Rows - 1;
@@ -1640,6 +1637,19 @@ bool win_valid(const win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return false;
 }
 
+// Find window "handle" in the current tab page.
+// Return NULL if not found.
+win_T *win_find_by_handle(handle_T handle)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->handle == handle) {
+      return wp;
+    }
+  }
+  return NULL;
+}
+
 /// Check if "win" is a pointer to an existing window in any tabpage.
 ///
 /// @param  win  window to check
@@ -1692,7 +1702,7 @@ make_windows (
                 - (p_wiw - p_wmw)) / (p_wmw + 1);
   } else {
     // Each window needs at least 'winminheight' lines and a status line.
-    maxcount = (curwin->w_height + curwin->w_winbar_height
+    maxcount = (curwin->w_height
                 + curwin->w_status_height
                 - (p_wh - p_wmh)) / (p_wmh + STATUS_HEIGHT);
   }
@@ -1825,8 +1835,8 @@ static void win_exchange(long Prenum)
   (void)win_comp_pos();                 /* recompute window positions */
 
   win_enter(wp, true);
-  redraw_later(NOT_VALID);
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
 }
 
 // rotate windows: if upwards true the second window becomes the first one
@@ -1998,8 +2008,8 @@ void win_move_after(win_T *win1, win_T *win2)
     win_append(win2, win1);
     frame_append(win2->w_frame, win1->w_frame);
 
-    (void)win_comp_pos();       /* recompute w_winrow for all windows */
-    redraw_later(NOT_VALID);
+    (void)win_comp_pos();  // recompute w_winrow for all windows
+    redraw_later(curwin, NOT_VALID);
   }
   win_enter(win1, false);
 
@@ -2580,9 +2590,10 @@ int win_close(win_T *win, bool free_buf)
     return OK;
   }
 
-  /* Free independent synblock before the buffer is freed. */
-  if (win->w_buffer != NULL)
+  // Free independent synblock before the buffer is freed.
+  if (win->w_buffer != NULL) {
     reset_synblock(win);
+  }
 
   /*
    * Close the link to the buffer.
@@ -3156,9 +3167,7 @@ frame_new_height (
   if (topfrp->fr_win != NULL) {
     // Simple case: just one window.
     win_new_height(topfrp->fr_win,
-                   height
-                   - topfrp->fr_win->w_status_height
-                   - topfrp->fr_win->w_winbar_height);
+                   height - topfrp->fr_win->w_status_height);
   } else if (topfrp->fr_layout == FR_ROW) {
     do {
       // All frames in this row get the same new height.
@@ -3465,8 +3474,7 @@ static void frame_fix_width(win_T *wp)
 static void frame_fix_height(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  wp->w_frame->fr_height =
-    wp->w_height + wp->w_status_height + wp->w_winbar_height;
+  wp->w_frame->fr_height = wp->w_height + wp->w_status_height;
 }
 
 /*
@@ -3489,11 +3497,10 @@ static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
       // window: minimal height of the window plus status line
       m = p_wmh + topfrp->fr_win->w_status_height;
       if (topfrp->fr_win == curwin && next_curwin == NULL) {
-        // Current window is minimal one line high and WinBar is visible.
+        // Current window is minimal one line high.
         if (p_wmh == 0) {
           m++;
         }
-        m += curwin->w_winbar_height;
       }
     }
   } else if (topfrp->fr_layout == FR_ROW) {
@@ -3636,7 +3643,7 @@ void curwin_init(void)
 
 void win_init_empty(win_T *wp)
 {
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
   wp->w_lines_valid = 0;
   wp->w_cursor.lnum = 1;
   wp->w_curswant = wp->w_cursor.col = 0;
@@ -3794,32 +3801,35 @@ void free_tabpage(tabpage_T *tp)
 /// @return Was the new tabpage created successfully? FAIL or OK.
 int win_new_tabpage(int after, char_u *filename)
 {
-  tabpage_T   *tp = curtab;
+  tabpage_T   *old_curtab = curtab;
   tabpage_T   *newtp;
   int n;
 
   newtp = alloc_tabpage();
 
-  /* Remember the current windows in this Tab page. */
-  if (leave_tabpage(curbuf, TRUE) == FAIL) {
+  // Remember the current windows in this Tab page.
+  if (leave_tabpage(curbuf, true) == FAIL) {
     xfree(newtp);
     return FAIL;
   }
 
-  newtp->tp_localdir = tp->tp_localdir ? vim_strsave(tp->tp_localdir) : NULL;
+  newtp->tp_localdir = old_curtab->tp_localdir
+    ? vim_strsave(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
 
-  /* Create a new empty window. */
-  if (win_alloc_firstwin(tp->tp_curwin) == OK) {
-    /* Make the new Tab page the new topframe. */
+  // Create a new empty window.
+  if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
+    // Make the new Tab page the new topframe.
     if (after == 1) {
-      /* New tab page becomes the first one. */
+      // New tab page becomes the first one.
       newtp->tp_next = first_tabpage;
       first_tabpage = newtp;
     } else {
+      tabpage_T   *tp = old_curtab;
+
       if (after > 0) {
-        /* Put new tab page before tab page "after". */
+        // Put new tab page before tab page "after".
         n = 2;
         for (tp = first_tabpage; tp->tp_next != NULL
              && n < after; tp = tp->tp_next)
@@ -3833,13 +3843,13 @@ int win_new_tabpage(int after, char_u *filename)
     win_comp_scroll(curwin);
 
     newtp->tp_topframe = topframe;
-    last_status(FALSE);
+    last_status(false);
 
     redraw_all_later(NOT_VALID);
 
-    tabpage_check_windows(tp);
+    tabpage_check_windows(old_curtab);
 
-    lastused_tabpage = tp;
+    lastused_tabpage = old_curtab;
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
@@ -3849,8 +3859,8 @@ int win_new_tabpage(int after, char_u *filename)
     return OK;
   }
 
-  /* Failed, get back the previous Tab page */
-  enter_tabpage(curtab, curbuf, TRUE, TRUE);
+  // Failed, get back the previous Tab page
+  enter_tabpage(curtab, curbuf, true, true);
   return FAIL;
 }
 
@@ -4050,7 +4060,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   prevwin = next_prevwin;
 
   last_status(false);  // status line may appear or disappear
-  (void)win_comp_pos();  // recompute w_winrow for all windows
+  const int row = win_comp_pos();  // recompute w_winrow for all windows
   diff_need_scrollbind = true;
 
   /* The tabpage line may have appeared or disappeared, may need to resize
@@ -4061,11 +4071,20 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
     clear_cmdline = true;
   }
   p_ch = curtab->tp_ch_used;
-  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow
-                                      ))
+
+  // When cmdheight is changed in a tab page with '<C-w>-', cmdline_row is
+  // changed but p_ch and tp_ch_used are not changed. Thus we also need to
+  // check cmdline_row.
+  if ((row < cmdline_row) && (cmdline_row <= Rows - p_ch)) {
+    clear_cmdline = true;
+  }
+
+  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow)) {
     shell_new_rows();
-  if (curtab->tp_old_Columns != Columns && starting == 0)
-    shell_new_columns();        /* update window widths */
+  }
+  if (curtab->tp_old_Columns != Columns && starting == 0) {
+    shell_new_columns();  // update window widths
+  }
 
   lastused_tabpage = old_curtab;
 
@@ -4521,7 +4540,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
 
   // Might need to scroll the old window before switching, e.g., when the
   // cursor was moved.
-  update_topline();
+  update_topline(curwin);
 
   // may have to copy the buffer options when 'cpo' contains 'S'
   if (wp->w_buffer != curbuf) {
@@ -4559,7 +4578,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     if (os_chdir(new_dir) == 0) {
       if (!p_acd && !strequal(new_dir, cwd)) {
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTab);
+                              ? kCdScopeWindow : kCdScopeTab, true);
       }
       shorten_fnames(true);
     }
@@ -4568,7 +4587,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     // directory: Change to the global directory.
     if (os_chdir((char *)globaldir) == 0) {
       if (!p_acd && !strequal((char *)globaldir, cwd)) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal);
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, true);
       }
     }
     XFREE_CLEAR(globaldir);
@@ -4588,10 +4607,11 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   }
 
   maketitle();
-  curwin->w_redr_status = TRUE;
-  redraw_tabline = TRUE;
-  if (restart_edit)
-    redraw_later(VALID);        /* causes status line redraw */
+  curwin->w_redr_status = true;
+  redraw_tabline = true;
+  if (restart_edit) {
+    redraw_later(curwin, VALID);  // causes status line redraw
+  }
 
   if (HL_ATTR(HLF_INACTIVE)
       || (prevwin && prevwin->w_hl_ids[HLF_INACTIVE])
@@ -4599,11 +4619,12 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     redraw_all_later(NOT_VALID);
   }
 
-  /* set window height to desired minimal value */
-  if (curwin->w_height < p_wh && !curwin->w_p_wfh)
+  // set window height to desired minimal value
+  if (curwin->w_height < p_wh && !curwin->w_p_wfh && !curwin->w_floating) {
     win_setheight((int)p_wh);
-  else if (curwin->w_height == 0)
+  } else if (curwin->w_height == 0) {
     win_setheight(1);
+  }
 
   // set window width to desired minimal value
   if (curwin->w_width < p_wiw && !curwin->w_p_wfw && !wp->w_floating) {
@@ -4794,8 +4815,6 @@ win_free (
 
   qf_free_all(wp);
 
-  remove_winbar(wp);
-
   xfree(wp->w_p_cc_cols);
 
   win_free_grid(wp, false);
@@ -4966,6 +4985,27 @@ void shell_new_columns(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
+/// Check if "wp" has scrolled since last time it was checked
+/// @param wp the window to check
+bool win_did_scroll(win_T *wp)
+{
+  return (curwin->w_last_topline != curwin->w_topline
+          || curwin->w_last_leftcol != curwin->w_leftcol
+          || curwin->w_last_width != curwin->w_width
+          || curwin->w_last_height != curwin->w_height);
+}
+
+/// Trigger WinScrolled autocmd
+void do_autocmd_winscrolled(win_T *wp)
+{
+  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, curbuf);
+
+  wp->w_last_topline = wp->w_topline;
+  wp->w_last_leftcol = wp->w_leftcol;
+  wp->w_last_width = wp->w_width;
+  wp->w_last_height = wp->w_height;
+}
+
 /*
  * Save the size of all windows in "gap".
  */
@@ -4973,7 +5013,10 @@ void win_size_save(garray_T *gap)
 
 {
   ga_init(gap, (int)sizeof(int), 1);
-  ga_grow(gap, win_count() * 2);
+  ga_grow(gap, win_count() * 2 + 1);
+  // first entry is value of 'lines'
+  ((int *)gap->ga_data)[gap->ga_len++] = Rows;
+
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ((int *)gap->ga_data)[gap->ga_len++] =
       wp->w_width + wp->w_vsep_width;
@@ -4981,18 +5024,18 @@ void win_size_save(garray_T *gap)
   }
 }
 
-/*
- * Restore window sizes, but only if the number of windows is still the same.
- * Does not free the growarray.
- */
+// Restore window sizes, but only if the number of windows is still the same
+// and 'lines' didn't change.
+// Does not free the growarray.
 void win_size_restore(garray_T *gap)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (win_count() * 2 == gap->ga_len) {
-    /* The order matters, because frames contain other frames, but it's
-     * difficult to get right. The easy way out is to do it twice. */
-    for (int j = 0; j < 2; ++j)
-    {
-      int i = 0;
+  if (win_count() * 2 + 1 == gap->ga_len
+      && ((int *)gap->ga_data)[0] == Rows) {
+    // The order matters, because frames contain other frames, but it's
+    // difficult to get right. The easy way out is to do it twice.
+    for (int j = 0; j < 2; j++) {
+      int i = 1;
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         int width = ((int *)gap->ga_data)[i++];
         int height = ((int *)gap->ga_data)[i++];
@@ -5057,12 +5100,11 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       /* position changed, redraw */
       wp->w_winrow = *row;
       wp->w_wincol = *col;
-      redraw_win_later(wp, NOT_VALID);
+      redraw_later(wp, NOT_VALID);
       wp->w_redr_status = true;
       wp->w_pos_changed = true;
     }
-    // WinBar will not show if the window height is zero
-    const int h = wp->w_height + wp->w_winbar_height + wp->w_status_height;
+    const int h = wp->w_height + wp->w_status_height;
     *row += h > topfrp->fr_height ? topfrp->fr_height : h;
     *col += wp->w_width + wp->w_vsep_width;
   } else {
@@ -5104,13 +5146,12 @@ void win_setheight_win(int height, win_T *win)
     if (height == 0) {
       height = 1;
     }
-    height += curwin->w_winbar_height;
   }
 
   if (win->w_floating) {
     win->w_float_config.height = height;
     win_config_float(win, win->w_float_config);
-    redraw_win_later(win, NOT_VALID);
+    redraw_later(win, NOT_VALID);
   } else {
     frame_setheight(win->w_frame, height + win->w_status_height);
 
@@ -5200,9 +5241,8 @@ static void frame_setheight(frame_T *curfrp, int height)
         room_cmdline = 0;
       } else {
         win_T *wp = lastwin_nofloating();
-        room_cmdline = Rows - p_ch - (wp->w_winrow
-                                      + wp->w_height + wp->w_winbar_height +
-                                      wp->w_status_height);
+        room_cmdline = Rows - p_ch
+          - (wp->w_winrow + wp->w_height + wp->w_status_height);
         if (room_cmdline < 0) {
           room_cmdline = 0;
         }
@@ -5313,7 +5353,7 @@ void win_setwidth_win(int width, win_T *wp)
   if (wp->w_floating) {
     wp->w_float_config.width = width;
     win_config_float(wp, wp->w_float_config);
-    redraw_win_later(wp, NOT_VALID);
+    redraw_later(wp, NOT_VALID);
   } else {
     frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
 
@@ -5836,18 +5876,18 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   if (wp == curwin) {
-    if (get_scrolloff_value()) {
-      update_topline();
+    if (get_scrolloff_value(wp)) {
+      update_topline(wp);
     }
-    curs_columns(false);        // validate w_wrow
+    curs_columns(wp, false);        // validate w_wrow
   }
   if (prev_height > 0) {
     wp->w_prev_fraction_row = wp->w_wrow;
   }
 
   win_comp_scroll(wp);
-  redraw_win_later(wp, SOME_VALID);
-  wp->w_redr_status = TRUE;
+  redraw_later(wp, SOME_VALID);
+  wp->w_redr_status = true;
   invalidate_botline_win(wp);
 }
 
@@ -5886,7 +5926,7 @@ void win_set_inner_size(win_T *wp)
     if (!exiting) {
       scroll_to_fraction(wp, prev_height);
     }
-    redraw_win_later(wp, NOT_VALID);  // SOME_VALID??
+    redraw_later(wp, NOT_VALID);  // SOME_VALID??
   }
 
   if (width != wp->w_width_inner) {
@@ -5895,10 +5935,10 @@ void win_set_inner_size(win_T *wp)
     changed_line_abv_curs_win(wp);
     invalidate_botline_win(wp);
     if (wp == curwin) {
-      update_topline();
-      curs_columns(true);  // validate w_wrow
+      update_topline(wp);
+      curs_columns(wp, true);  // validate w_wrow
     }
-    redraw_win_later(wp, NOT_VALID);
+    redraw_later(wp, NOT_VALID);
   }
 
   if (wp->w_buffer->terminal) {
@@ -6019,6 +6059,12 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
     char_u  *ptr;
     if (get_visual_text(NULL, &ptr, &len) == FAIL)
       return NULL;
+    // Only recognize ":123" here
+    if (file_lnum != NULL && ptr[len] == ':' && isdigit(ptr[len + 1])) {
+      char_u *p = ptr + len + 1;
+
+      *file_lnum = getdigits_long(&p, false, 0);
+    }
     return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }
   return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
@@ -6115,11 +6161,7 @@ file_name_in_line (
       // Skip over the "\" in "\ ".
       ++len;
     }
-    if (has_mbyte) {
-      len += (size_t)(*mb_ptr2len)(ptr + len);
-    } else {
-      ++len;
-    }
+    len += (size_t)(utfc_ptr2len(ptr + len));
   }
 
   /*
@@ -6736,7 +6778,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
     prev->next = m;
   m->next = cur;
 
-  redraw_win_later(wp, rtype);
+  redraw_later(wp, rtype);
   return id;
 
 fail:
@@ -6794,7 +6836,7 @@ int match_delete(win_T *wp, int id, int perr)
     rtype = VALID;
   }
   xfree(cur);
-  redraw_win_later(wp, rtype);
+  redraw_later(wp, rtype);
   return 0;
 }
 
@@ -6812,7 +6854,7 @@ void clear_matches(win_T *wp)
     xfree(wp->w_match_head);
     wp->w_match_head = m;
   }
-  redraw_win_later(wp, SOME_VALID);
+  redraw_later(wp, SOME_VALID);
 }
 
 /*
@@ -6986,7 +7028,7 @@ void win_findbuf(typval_T *argvars, list_T *list)
   int bufnr = tv_get_number(&argvars[0]);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_buffer->b_fnum == bufnr) {
+    if (!wp->w_closing && wp->w_buffer->b_fnum == bufnr) {
       tv_list_append_number(list, wp->handle);
     }
   }

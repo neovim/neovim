@@ -129,6 +129,7 @@ void changed(void)
 void changed_internal(void)
 {
   curbuf->b_changed = true;
+  curbuf->b_changed_invalid = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = true;
@@ -142,7 +143,6 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
                            long xtra)
 {
   int i;
-  int cols;
   pos_T       *p;
   int add;
 
@@ -170,7 +170,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
         if (p->lnum != lnum) {
             add = true;
         } else {
-          cols = comp_textwidth(false);
+          int cols = comp_textwidth(false);
           if (cols == 0) {
               cols = 79;
           }
@@ -295,7 +295,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
       // change.
       if (wp->w_p_rnu
           || (wp->w_p_cul && lnum <= wp->w_last_cursorline)) {
-        redraw_win_later(wp, SOME_VALID);
+        redraw_later(wp, SOME_VALID);
       }
     }
   }
@@ -349,7 +349,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
             changedOneline(wp->w_buffer, wlnum);
@@ -362,11 +362,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 /// insert/delete bytes at column
 ///
 /// Like changed_bytes() but also adjust extmark for "new" bytes.
-/// When "new" is negative text was deleted.
-static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
+void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice(curbuf, (int)lnum-1, col, 0, old, 0, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum-1, col, old, new, kExtmarkUndo);
   }
 
   changed_bytes(lnum, col);
@@ -477,7 +476,7 @@ changed_lines(
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
+        redraw_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,
@@ -504,6 +503,7 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
+    buf->b_changed_invalid = true;
     ml_setflags(buf);
     if (ff) {
       save_file_ff(buf);
@@ -530,12 +530,8 @@ void ins_bytes_len(char_u *p, size_t len)
 {
   size_t n;
   for (size_t i = 0; i < len; i += n) {
-    if (enc_utf8) {
-      // avoid reading past p[len]
-      n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
-    } else {
-      n = (size_t)(*mb_ptr2len)(p + i);
-    }
+    // avoid reading past p[len]
+    n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
     ins_char_bytes(p + i, n);
   }
 }
@@ -761,7 +757,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
-  if (p_deco && use_delcombine && enc_utf8
+  if (p_deco && use_delcombine
       && utfc_ptr2len(oldp + col) >= count) {
     int cc[MAX_MCO];
     int n;
@@ -1597,7 +1593,7 @@ int open_line(
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
         || curwin->w_p_diff) {
       mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L,
-                  kExtmarkUndo);
+                  kExtmarkNOOP);
     }
     did_append = true;
   } else {
@@ -1611,6 +1607,7 @@ int open_line(
     }
     ml_replace(curwin->w_cursor.lnum, p_extra, true);
     changed_bytes(curwin->w_cursor.lnum, 0);
+    // TODO(vigoux): extmark_splice_cols here??
     curwin->w_cursor.lnum--;
     did_append = false;
   }
@@ -1676,6 +1673,16 @@ int open_line(
         truncate_spaces(saved_line);
       }
       ml_replace(curwin->w_cursor.lnum, saved_line, false);
+
+      int new_len = (int)STRLEN(saved_line);
+
+      // TODO(vigoux): maybe there is issues there with expandtabs ?
+      if (new_len < curwin->w_cursor.col) {
+        extmark_splice_cols(
+            curbuf, (int)curwin->w_cursor.lnum,
+            new_len, curwin->w_cursor.col - new_len, 0, kExtmarkUndo);
+      }
+
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
@@ -1691,8 +1698,9 @@ int open_line(
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
         int cols_added = mincol-1+less_cols_off-less_cols;
-        extmark_splice(curbuf, (int)lnum-1, mincol-1, 0, less_cols_off,
-                       1, cols_added, kExtmarkUndo);
+        extmark_splice(curbuf, (int)lnum-1, mincol-1,
+                       0, less_cols_off, less_cols_off,
+                       1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
@@ -1704,8 +1712,10 @@ int open_line(
   }
   if (did_append) {
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
-    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1,
-                   0, 0, 0, 1, 0, kExtmarkUndo);
+    // bail out and just get the final lenght of the line we just manipulated
+    bcount_t extra = (bcount_t)STRLEN(ml_get(curwin->w_cursor.lnum));
+    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, 0,
+                   0, 0, 0, 1, 0, 1+extra, kExtmarkUndo);
   }
   curbuf_splice_pending--;
 

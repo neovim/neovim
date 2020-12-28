@@ -424,7 +424,7 @@ msgstr "Опција 'dictionary' је празна"
 msgid "'thesaurus' option is empty"
 msgstr "Опција 'thesaurus' је празна"
 
-#, c-format 
+#, c-format
 msgid "Scanning dictionary: %s"
 msgstr "Скенирање речника: %s"
 
@@ -702,7 +702,7 @@ msgstr "E785: complete() може да се користи само у режи�
 msgid "&Ok"
 msgstr "&Ок"
 
-#, c-format 
+#, c-format
 msgid "+-%s%3ld line: "
 msgid_plural "+-%s%3ld lines: "
 msgstr[0] "+-%s%3ld линија: "
@@ -810,7 +810,7 @@ msgstr "E677: Грешка при упису temp датотеке"
 msgid "E921: Invalid callback argument"
 msgstr "E921: Неисправан callback аргумент"
 
-#, c-format 
+#, c-format
 msgid "<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"
 msgstr "<%s>%s%s  %d,  Хекс %02x,  Окт %03o, Дигр %s"
 
@@ -818,11 +818,11 @@ msgstr "<%s>%s%s  %d,  Хекс %02x,  Окт %03o, Дигр %s"
 msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
 msgstr "<%s>%s%s  %d,  Хекс %02x,  Октално %03o"
 
-#, c-format 
+#, c-format
 msgid "> %d, Hex %04x, Oct %o, Digr %s"
 msgstr "> %d, Хекс %04x, Окт %o, Дигр %s"
 
-#, c-format 
+#, c-format
 msgid "> %d, Hex %08x, Oct %o, Digr %s"
 msgstr "> %d, Хекс %08x, Окт %o, Дигр %s"
 
@@ -980,9 +980,6 @@ msgstr "E143: Аутокоманде су неочекивано обрисал�
 
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: ненумерички аргумент за :z"
-
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Shell команде нису дозвољене у rvim"
 
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Регуларни изрази не могу да се раздвајају словима"

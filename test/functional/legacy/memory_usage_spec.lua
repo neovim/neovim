@@ -7,7 +7,7 @@ local iswin = helpers.iswin
 local retry = helpers.retry
 local ok = helpers.ok
 local source = helpers.source
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local uname = helpers.uname
 local load_adjust = helpers.load_adjust
 
@@ -102,7 +102,7 @@ describe('memory usage', function()
         call s:f(0)
       endfor
     ]])
-    wait()
+    poke_eventloop()
     local after = monitor_memory_usage(pid)
     -- Estimate the limit of max usage as 2x initial usage.
     -- The lower limit can fluctuate a bit, use 97%.
@@ -147,11 +147,11 @@ describe('memory usage', function()
         call s:f()
       endfor
     ]])
-    wait()
+    poke_eventloop()
     local after = monitor_memory_usage(pid)
     for _ = 1, 3 do
       feed_command('so '..fname)
-      wait()
+      poke_eventloop()
     end
     local last = monitor_memory_usage(pid)
     -- The usage may be a bit less than the last value, use 80%.

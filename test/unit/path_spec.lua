@@ -603,4 +603,21 @@ describe('path.c', function()
       eq(FAIL, path_is_absolute('not/in/my/home~/directory'))
     end)
   end)
+
+  describe('path_with_extension', function()
+    local function path_with_extension(filename, extension)
+      local c_filename = to_cstr(filename)
+      local c_extension = to_cstr(extension)
+      return cimp.path_with_extension(c_filename, c_extension)
+    end
+
+    itp('returns true if filename includes a provided extension', function()
+      eq(true, path_with_extension('/some/path/file.lua', 'lua'))
+    end)
+
+    itp('returns false if filename does not include a provided extension', function()
+      eq(false, path_with_extension('/some/path/file.vim', 'lua'))
+      eq(false, path_with_extension('/some/path/file', 'lua'))
+    end)
+  end)
 end)

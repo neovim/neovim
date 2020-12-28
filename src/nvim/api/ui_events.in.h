@@ -1,7 +1,7 @@
 #ifndef NVIM_API_UI_EVENTS_IN_H
 #define NVIM_API_UI_EVENTS_IN_H
 
-// This file is not compiled, just parsed for definitons
+// This file is not compiled, just parsed for definitions
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # error "don't include this file, include nvim/ui.h"
 #endif
@@ -36,13 +36,15 @@ void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void screenshot(String path)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_IMPL;
 void option_set(String name, Object value)
   FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
 
-// First revison of the grid protocol, used by default
+// First revision of the grid protocol, used by default
 void update_fg(Integer fg)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void update_bg(Integer bg)
@@ -66,7 +68,7 @@ void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)
 void scroll(Integer count)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-// Second revison of the grid protocol, used with ext_linegrid ui option
+// Second revision of the grid protocol, used with ext_linegrid ui option
 void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
                         Integer cterm_fg, Integer cterm_bg)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_IMPL;
@@ -89,7 +91,7 @@ void grid_scroll(Integer grid, Integer top, Integer bot,
 void grid_destroy(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
-// For perfomance and simplicity, we use the dense screen representation
+// For performance and simplicity, we use the dense screen representation
 // in internal code, such as compositor and TUI. The remote_ui module will
 // translate this in to the public grid_line format.
 void raw_line(Integer grid, Integer row, Integer startcol,

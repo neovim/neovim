@@ -73,8 +73,9 @@ let s:filename_checks = {
     \ 'autoit': ['file.au3'],
     \ 'automake': ['GNUmakefile.am'],
     \ 'ave': ['file.ave'],
-    \ 'awk': ['file.awk'],
+    \ 'awk': ['file.awk', 'file.gawk'],
     \ 'b': ['file.mch', 'file.ref', 'file.imp'],
+    \ 'bzl': ['file.bazel', 'file.bzl', 'WORKSPACE'],
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
     \ 'bib': ['file.bib'],
@@ -85,6 +86,8 @@ let s:filename_checks = {
     \ 'bzr': ['bzr_log.any'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c'],
     \ 'cabal': ['file.cabal'],
+    \ 'cabalconfig': ['cabal.config'],
+    \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
     \ 'calendar': ['calendar'],
     \ 'catalog': ['catalog', 'sgml.catalogfile'],
     \ 'cdl': ['file.cdl'],
@@ -108,7 +111,7 @@ let s:filename_checks = {
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master'],
     \ 'config': ['configure.in', 'configure.ac', 'Pipfile'],
-    \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi'],
+    \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
     \ 'cpp': ['file.cxx', 'file.c++', 'file.hh', 'file.hxx', 'file.hpp', 'file.ipp', 'file.moc', 'file.tcc', 'file.inl', 'file.tlh'],
     \ 'crm': ['file.crm'],
     \ 'cs': ['file.cs'],
@@ -127,6 +130,7 @@ let s:filename_checks = {
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
+    \ 'debchangelog': ['changelog.Debian', 'changelog.dch', 'NEWS.Debian', 'NEWS.dch', '/debian/changelog'],
     \ 'debcontrol': ['/debian/control'],
     \ 'debsources': ['/etc/apt/sources.list', '/etc/apt/sources.list.d/file.list'],
     \ 'def': ['file.def'],
@@ -140,7 +144,7 @@ let s:filename_checks = {
     \ 'dnsmasq': ['/etc/dnsmasq.conf'],
     \ 'dockerfile': ['Dockerfile', 'file.Dockerfile'],
     \ 'dosbatch': ['file.bat', 'file.sys'],
-    \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini'],
+    \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5'],
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe'],
     \ 'dsl': ['file.dsl'],
@@ -177,6 +181,7 @@ let s:filename_checks = {
     \ 'gdb': ['.gdbinit'],
     \ 'gdmo': ['file.mo', 'file.gdmo'],
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt'],
+    \ 'gift': ['file.gift'],
     \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG'],
     \ 'gitconfig': ['file.git/config', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig'],
     \ 'gitolite': ['gitolite.conf'],
@@ -196,8 +201,8 @@ let s:filename_checks = {
     \ 'gsp': ['file.gsp'],
     \ 'gtkrc': ['.gtkrc', 'gtkrc'],
     \ 'haml': ['file.haml'],
-    \ 'hamster': ['file.hsc', 'file.hsm'],
-    \ 'haskell': ['file.hs', 'file.hs-boot'],
+    \ 'hamster': ['file.hsm'],
+    \ 'haskell': ['file.hs', 'file.hsc', 'file.hs-boot'],
     \ 'haste': ['file.ht'],
     \ 'hastepreproc': ['file.htpp'],
     \ 'hb': ['file.hb'],
@@ -325,8 +330,9 @@ let s:filename_checks = {
     \ 'pamconf': ['/etc/pam.conf'],
     \ 'pamenv': ['/etc/security/pam_env.conf', '/home/user/.pam_environment'],
     \ 'papp': ['file.papp', 'file.pxml', 'file.pxsl'],
-    \ 'pascal': ['file.pas', 'file.dpr'],
+    \ 'pascal': ['file.pas', 'file.pp', 'file.dpr', 'file.lpr'],
     \ 'passwd': ['any/etc/passwd', 'any/etc/passwd-', 'any/etc/passwd.edit', 'any/etc/shadow', 'any/etc/shadow-', 'any/etc/shadow.edit', 'any/var/backups/passwd.bak', 'any/var/backups/shadow.bak'],
+    \ 'pbtxt': ['file.pbtxt'],
     \ 'pccts': ['file.g'],
     \ 'pdf': ['file.pdf'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
@@ -454,10 +460,11 @@ let s:filename_checks = {
     \ 'texmf': ['texmf.cnf'],
     \ 'text': ['file.text', 'README'],
     \ 'tf': ['file.tf', '.tfrc', 'tfrc'],
-    \ 'tidy': ['.tidyrc', 'tidyrc'],
+    \ 'tidy': ['.tidyrc', 'tidyrc', 'tidy.conf'],
     \ 'tilde': ['file.t.html'],
     \ 'tli': ['file.tli'],
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf'],
+    \ 'toml': ['file.toml'],
     \ 'tpp': ['file.tpp'],
     \ 'treetop': ['file.treetop'],
     \ 'trustees': ['trustees.conf'],
@@ -466,11 +473,11 @@ let s:filename_checks = {
     \ 'tssgm': ['file.tssgm'],
     \ 'tssop': ['file.tssop'],
     \ 'twig': ['file.twig'],
-    \ 'typescript': ['file.ts'],
     \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf'],
     \ 'udevperm': ['/etc/udev/permissions.d/file.permissions'],
+    \ 'udevrules': ['/etc/udev/rules.d/file.rules', '/usr/lib/udev/rules.d/file.rules', '/lib/udev/rules.d/file.rules'],
     \ 'uil': ['file.uit', 'file.uil'],
     \ 'updatedb': ['/etc/updatedb.conf'],
     \ 'upstart': ['/usr/share/upstart/file.conf', '/usr/share/upstart/file.override', '/etc/init/file.conf', '/etc/init/file.override', '/.init/file.conf', '/.init/file.override', '/.config/upstart/file.conf', '/.config/upstart/file.override'],
@@ -525,9 +532,11 @@ let s:filename_checks = {
 
 let s:filename_case_checks = {
     \ 'modula2': ['file.DEF', 'file.MOD'],
+    \ 'bzl': ['file.BUILD', 'BUILD'],
     \ }
 
 func CheckItems(checks)
+  set noswapfile
   for [ft, names] in items(a:checks)
     for i in range(0, len(names) - 1)
       new
@@ -544,6 +553,7 @@ func CheckItems(checks)
       bwipe!
     endfor
   endfor
+  set swapfile&
 endfunc
 
 func Test_filetype_detection()
@@ -596,7 +606,8 @@ let s:script_checks = {
       \ 'bc': [['#!/path/bc']],
       \ 'sed': [['#!/path/sed']],
       \ 'ocaml': [['#!/path/ocaml']],
-      \ 'awk': [['#!/path/awk']],
+      \ 'awk': [['#!/path/awk'],
+      \         ['#!/path/gawk']],
       \ 'wml': [['#!/path/wml']],
       \ 'scheme': [['#!/path/scheme']],
       \ 'cfengine': [['#!/path/cfengine']],
@@ -652,6 +663,23 @@ func Test_hook_file()
   call writefile(['not pacman'], 'Xfile.hook')
   split Xfile.hook
   call assert_notequal('dosini', &filetype)
+  bwipe!
+
+  call delete('Xfile.hook')
+  filetype off
+endfunc
+
+func Test_ts_file()
+  filetype on
+
+  call writefile(['<?xml version="1.0" encoding="utf-8"?>'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('xml', &filetype)
+  bwipe!
+
+  call writefile(['// looks like Typescript'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('typescript', &filetype)
   bwipe!
 
   call delete('Xfile.hook')

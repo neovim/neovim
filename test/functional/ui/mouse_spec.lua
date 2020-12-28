@@ -546,7 +546,7 @@ describe('ui/mouse/input', function()
       :tabprevious             |
     ]])
     feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
-    helpers.wait()
+    helpers.poke_eventloop()
     feed('<LeftMouse><0,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|

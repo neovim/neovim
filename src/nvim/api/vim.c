@@ -15,6 +15,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/window.h"
+#include "nvim/api/deprecated.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -41,7 +42,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
-#include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -199,14 +200,80 @@ Integer nvim_get_hl_id_by_name(String name)
   return syn_check_group((const char_u *)name.data, (int)name.size);
 }
 
+Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
+{
+  if (ns_id == 0) {
+    return get_global_hl_defs();
+  }
+  abort();
+}
+
+/// Set a highlight group.
+///
+/// @param ns_id number of namespace for this highlight
+/// @param name highlight group name, like ErrorMsg
+/// @param val highlight definiton map, like |nvim_get_hl_by_name|.
+///            in addition the following keys are also recognized:
+///              `default`: don't override existing definition,
+///                         like `hi default`
+/// @param[out] err Error details, if any
+///
+/// TODO: ns_id = 0, should modify :highlight namespace
+/// TODO val should take update vs reset flag
+void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
+  FUNC_API_SINCE(7)
+{
+  int hl_id = syn_check_group( (char_u *)(name.data), (int)name.size);
+  int link_id = -1;
+
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
+  if (!ERROR_SET(err)) {
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id);
+  }
+}
+
+/// Set active namespace for highlights.
+///
+/// NB: this function can be called from async contexts, but the
+/// semantics are not yet well-defined. To start with
+/// |nvim_set_decoration_provider| on_win and on_line callbacks
+/// are explicitly allowed to change the namespace during a redraw cycle.
+///
+/// @param ns_id the namespace to activate
+/// @param[out] err Error details, if any
+void nvim_set_hl_ns(Integer ns_id, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_FAST
+{
+  if (ns_id >= 0) {
+    ns_hl_active = (NS)ns_id;
+  }
+
+  // TODO(bfredl): this is a little bit hackish.  Eventually we want a standard
+  // event path for redraws caused by "fast" events. This could tie in with
+  // better throttling of async events causing redraws, such as non-batched
+  // nvim_buf_set_extmark calls from async contexts.
+  if (!provider_active && !ns_hl_changed) {
+    multiqueue_put(main_loop.events, on_redraw_event, 0);
+  }
+  ns_hl_changed = true;
+}
+
+static void on_redraw_event(void **argv)
+  FUNC_API_NOEXPORT
+{
+  redraw_all_later(NOT_VALID);
+}
+
+
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
 /// flags. This is a blocking call, unlike |nvim_input()|.
 ///
 /// On execution error: does not fail, but updates v:errmsg.
-//
-//  If you need to input sequences like <C-o> use nvim_replace_termcodes
-//  to replace the termcodes and then pass the resulting string to
-//  nvim_feedkeys. You'll also want to enable escape_csi.
+///
+/// If you need to input sequences like <C-o> use |nvim_replace_termcodes| to
+/// replace the termcodes and then pass the resulting string to nvim_feedkeys.
+/// You'll also want to enable escape_csi.
 ///
 /// Example:
 /// <pre>
@@ -413,15 +480,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-/// @deprecated
-/// @see nvim_exec
-String nvim_command_output(String command, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(7)
-{
-  return nvim_exec(command, true, err);
-}
-
 /// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
@@ -468,16 +526,6 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// @deprecated Use nvim_exec_lua() instead.
-/// @see nvim_exec_lua
-Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3)
-  FUNC_API_DEPRECATED_SINCE(7)
-  FUNC_API_REMOTE_ONLY
-{
-  return executor_exec_lua_api(code, args, err);
-}
-
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -494,7 +542,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return executor_exec_lua_api(code, args, err);
+  return nlua_exec(code, args, err);
 }
 
 /// Calls a VimL function.
@@ -678,7 +726,11 @@ Integer nvim_strwidth(String text, Error *err)
 ArrayOf(String) nvim_list_runtime_paths(void)
   FUNC_API_SINCE(1)
 {
+  // TODO(bfredl): this should just work:
+  // return nvim_get_runtime_file(NULL_STRING, true);
+
   Array rv = ARRAY_DICT_INIT;
+
   char_u *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -718,29 +770,41 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 ///
 /// 'name' can contain wildcards. For example
 /// nvim_get_runtime_file("colors/*.vim", true) will return all color
-/// scheme files.
+/// scheme files. Always use forward slashes (/) in the search pattern for
+/// subdirectories regardless of platform.
 ///
 /// It is not an error to not find any files. An empty array is returned then.
+///
+/// To find a directory, `name` must end with a forward slash, like
+/// "rplugin/python/". Without the slash it would instead look for an ordinary
+/// file called "rplugin/python".
 ///
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim_get_runtime_file(String name, Boolean all)
+ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_FAST
 {
   Array rv = ARRAY_DICT_INIT;
-  if (!name.data) {
-    return rv;
-  }
+
   int flags = DIP_START | (all ? DIP_ALL : 0);
-  do_in_runtimepath((char_u *)name.data, flags, find_runtime_cb, &rv);
+
+  if (name.size == 0 || name.data[name.size-1] == '/') {
+    flags |= DIP_DIR;
+  }
+
+  do_in_runtimepath((char_u *)(name.size ? name.data : ""),
+                    flags, find_runtime_cb, &rv);
   return rv;
 }
 
 static void find_runtime_cb(char_u *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
-  ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  if (fname != NULL) {
+    ADD(*rv, STRING_OBJ(cstr_to_string((char *)fname)));
+  }
 }
 
 String nvim__get_lib_dir(void)
@@ -793,6 +857,7 @@ String nvim_get_current_line(Error *err)
 /// @param[out] err Error details, if any
 void nvim_set_current_line(String line, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
@@ -802,6 +867,7 @@ void nvim_set_current_line(String line, Error *err)
 /// @param[out] err Error details, if any
 void nvim_del_current_line(Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
@@ -838,23 +904,6 @@ void nvim_del_var(String name, Error *err)
   dict_set_var(&globvardict, name, NIL, true, false, err);
 }
 
-/// @deprecated
-/// @see nvim_set_var
-/// @warning May return nil if there was no previous value
-///          OR if previous value was `v:null`.
-/// @return Old value or nil if there was no previous value.
-Object vim_set_var(String name, Object value, Error *err)
-{
-  return dict_set_var(&globvardict, name, value, false, true, err);
-}
-
-/// @deprecated
-/// @see nvim_del_var
-Object vim_del_var(String name, Error *err)
-{
-  return dict_set_var(&globvardict, name, NIL, true, true, err);
-}
-
 /// Gets a v: variable.
 ///
 /// @param name     Variable name
@@ -886,6 +935,47 @@ Object nvim_get_option(String name, Error *err)
   FUNC_API_SINCE(1)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
+}
+
+/// Gets the option information for all options.
+///
+/// The dictionary has the full option names as keys and option metadata
+/// dictionaries as detailed at |nvim_get_option_info|.
+///
+/// @return dictionary of all options
+Dictionary nvim_get_all_options_info(Error *err)
+  FUNC_API_SINCE(7)
+{
+  return get_all_vimoptions();
+}
+
+/// Gets the option information for one option
+///
+/// Resulting dictionary has keys:
+///     - name: Name of the option (like 'filetype')
+///     - shortname: Shortened name of the option (like 'ft')
+///     - type: type of option ("string", "integer" or "boolean")
+///     - default: The default value for the option
+///     - was_set: Whether the option was set.
+///
+///     - last_set_sid: Last set script id (if any)
+///     - last_set_linenr: line number where option was set
+///     - last_set_chan: Channel where option was set (0 for local)
+///
+///     - scope: one of "global", "win", or "buf"
+///     - global_local: whether win or buf option has a global value
+///
+///     - commalist: List of comma separated values
+///     - flaglist: List of single char flags
+///
+///
+/// @param          name Option name
+/// @param[out] err Error details, if any
+/// @return         Option Information
+Dictionary nvim_get_option_info(String name, Error *err)
+  FUNC_API_SINCE(7)
+{
+  return get_vimoption(name, err);
 }
 
 /// Sets an option value.
@@ -972,6 +1062,7 @@ Buffer nvim_get_current_buf(void)
 /// @param[out] err Error details, if any
 void nvim_set_current_buf(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -1026,6 +1117,7 @@ Window nvim_get_current_win(void)
 /// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -1175,6 +1267,7 @@ fail:
 Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
                      Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
   if (!parse_float_config(config, &fconfig, false, err)) {
@@ -1239,6 +1332,7 @@ Tabpage nvim_get_current_tabpage(void)
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   tabpage_T *tp = find_tab_by_handle(tabpage, err);
 
@@ -1323,6 +1417,7 @@ Dictionary nvim_get_namespaces(void)
 ///     - false: Client must cancel the paste.
 Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   static bool draining = false;
   bool cancel = false;
@@ -1395,6 +1490,7 @@ theend:
 void nvim_put(ArrayOf(String) lines, String type, Boolean after,
               Boolean follow, Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
@@ -1477,7 +1573,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
-  return name_to_color((char_u *)name.data);
+  return name_to_color(name.data);
 }
 
 /// Returns a map of color names and RGB values.
@@ -2477,7 +2573,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
     String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
-    Object o = nvim_exec_lua(s, a, err);
+    Object o = nlua_exec(s, a, err);
     api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
@@ -2523,7 +2619,7 @@ Object nvim_get_proc(Integer pid, Error *err)
   Array a = ARRAY_DICT_INIT;
   ADD(a, INTEGER_OBJ(pid));
   String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
-  Object o = nvim_exec_lua(s, a, err);
+  Object o = nlua_exec(s, a, err);
   api_free_string(s);
   api_free_array(a);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {
@@ -2604,26 +2700,112 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   return ret;
 }
 
-/// Set attrs in nvim__buf_set_lua_hl callbacks
-///
-/// TODO(bfredl): This is rather pedestrian. The final
-/// interface should probably be derived from a reformed
-/// bufhl/virttext interface with full support for multi-line
-/// ranges etc
-void nvim__put_attr(Integer id, Integer start_row, Integer start_col,
-                    Integer end_row, Integer end_col)
-  FUNC_API_LUA_ONLY
+void nvim__screenshot(String path)
+  FUNC_API_FAST
 {
-  if (!lua_attr_active) {
+  ui_call_screenshot(path);
+}
+
+static void clear_provider(DecorProvider *p)
+{
+  if (p == NULL) {
     return;
   }
-  if (id == 0 || syn_get_final_id((int)id) == 0) {
-    return;
+  NLUA_CLEAR_REF(p->redraw_start);
+  NLUA_CLEAR_REF(p->redraw_buf);
+  NLUA_CLEAR_REF(p->redraw_win);
+  NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_end);
+  p->active = false;
+}
+
+/// Set or change decoration provider for a namespace
+///
+/// This is a very general purpose interface for having lua callbacks
+/// being triggered during the redraw code.
+///
+/// The expected usage is to set extmarks for the currently
+/// redrawn buffer. |nvim_buf_set_extmark| can be called to add marks
+/// on a per-window or per-lines basis. Use the `ephemeral` key to only
+/// use the mark for the current screen redraw (the callback will be called
+/// again for the next redraw ).
+///
+/// Note: this function should not be called often. Rather, the callbacks
+/// themselves can be used to throttle unneeded callbacks. the `on_start`
+/// callback can return `false` to disable the provider until the next redraw.
+/// Similarily, return `false` in `on_win` will skip the `on_lines` calls
+/// for that window (but any extmarks set in `on_win` will still be used).
+/// A plugin managing multiple sources of decoration should ideally only set
+/// one provider, and merge the sources internally. You can use multiple `ns_id`
+/// for the extmarks set/modified inside the callback anyway.
+///
+/// Note: doing anything other than setting extmarks is considered experimental.
+/// Doing things like changing options are not expliticly forbidden, but is
+/// likely to have unexpected consequences (such as 100% CPU consumption).
+/// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
+/// for the moment.
+///
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param opts   Callbacks invoked during redraw:
+///             - on_start: called first on each screen redraw
+///                 ["start", tick]
+///             - on_buf: called for each buffer being redrawn (before window
+///                 callbacks)
+///                 ["buf", bufnr, tick]
+///             - on_win: called when starting to redraw a specific window.
+///                 ["win", winid, bufnr, topline, botline_guess]
+///             - on_line: called for each buffer line being redrawn. (The
+///                 interation with fold lines is subject to change)
+///                 ["win", winid, bufnr, row]
+///             - on_end: called at the end of a redraw cycle
+///                 ["end", tick]
+void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
+                                  Error *err)
+  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
+{
+  DecorProvider *p = get_provider((NS)ns_id, true);
+  clear_provider(p);
+
+  // regardless of what happens, it seems good idea to redraw
+  redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
+
+  struct {
+    const char *name;
+    LuaRef *dest;
+  } cbs[] = {
+    { "on_start", &p->redraw_start },
+    { "on_buf", &p->redraw_buf },
+    { "on_win", &p->redraw_win },
+    { "on_line", &p->redraw_line },
+    { "on_end", &p->redraw_end },
+    { "_on_hl_def", &p->hl_def },
+    { NULL, NULL },
+  };
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    size_t j;
+    for (j = 0; cbs[j].name; j++) {
+      if (strequal(cbs[j].name, k.data)) {
+        if (v->type != kObjectTypeLuaRef) {
+          api_set_error(err, kErrorTypeValidation,
+                        "%s is not a function", cbs[j].name);
+          goto error;
+        }
+        *(cbs[j].dest) = v->data.luaref;
+        v->data.luaref = LUA_NOREF;
+        break;
+      }
+    }
+    if (!cbs[j].name) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
   }
-  int attr = syn_id2attr((int)id);
-  if (attr == 0) {
-    return;
-  }
-  decorations_add_luahl_attr(attr, (int)start_row, (colnr_T)start_col,
-                             (int)end_row, (colnr_T)end_col);
+
+  p->active = true;
+  return;
+error:
+  clear_provider(p);
 }

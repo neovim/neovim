@@ -73,7 +73,7 @@ function class(BaseClass, ClassInitialiser)
     local newInstance = {}
     setmetatable(newInstance,newClass)
     --if init then
-    --	init(newInstance,...)
+    --  init(newInstance,...)
     if class_tbl.init then
       class_tbl.init(newInstance,...)
     else 
@@ -214,7 +214,7 @@ TStream_Read = class()
 --! \brief get contents of file
 --! 
 --! \param Filename name of file to read (or nil == stdin)
-function 	TStream_Read.getContents(this,Filename)
+function    TStream_Read.getContents(this,Filename)
   -- get lines from file
   local filecontents
   if Filename then
@@ -365,7 +365,7 @@ end
 --! \brief check comment for fn
 local function checkComment4fn(Fn_magic,MagicLines)
   local fn_magic = Fn_magic
-  --	TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
+  --    TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
 
   local magicLines = string_split(MagicLines,'\n')
 
@@ -375,7 +375,7 @@ local function checkComment4fn(Fn_magic,MagicLines)
     macro,tail = getMagicDirective(line)
     if macro == 'fn' then
       fn_magic = tail
-      --	TCore_IO_writeln('// found fn "' .. fn_magic .. '"')
+      --    TCore_IO_writeln('// found fn "' .. fn_magic .. '"')
     else
       --TCore_IO_writeln('// not found fn "' .. line .. '"')
     end
@@ -401,15 +401,23 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
     outStream:writelnTail('// #######################')
     outStream:writelnTail()
 
-    local state = ''
+    local state, offset = '', 0
     while not (err or inStream:eof()) do
       line = string_trim(inStream:getLine())
-      -- 			TCore_Debug_show_var('inStream',inStream)
-      -- 			TCore_Debug_show_var('line',line )
-      if string.sub(line,1,2)=='--' then -- it's a comment
-        if string.sub(line,3,3)=='@' then -- it's a magic comment
+      --            TCore_Debug_show_var('inStream',inStream)
+      --            TCore_Debug_show_var('line',line )
+      if string.sub(line,1,2) == '--' then -- it's a comment
+        -- Allow people to write style similar to EmmyLua (since they are basically the same)
+        -- instead of silently skipping things that start with ---
+        if string.sub(line, 3, 3) == '@' then -- it's a magic comment
+          offset = 0
+        elseif string.sub(line, 1, 4) == '---@' then -- it's a magic comment
+          offset = 1
+        end
+
+        if string.sub(line, 3, 3) == '@' or string.sub(line, 1, 4) == '---@' then -- it's a magic comment
           state = 'in_magic_comment'
-          local magic = string.sub(line,4)
+          local magic = string.sub(line, 4 + offset)
           outStream:writeln('/// @' .. magic)
           fn_magic = checkComment4fn(fn_magic,magic)
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment
@@ -450,7 +458,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           outStream:writeln('// zz:"' .. line .. '"')
           fn_magic = nil
         end
-      elseif string.find(line,'^function') or string.find(line,'^local%s+function') then
+      elseif string.find(line, '^function') or string.find(line, '^local%s+function') then
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
@@ -490,6 +498,13 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           this:warning(inStream:getLineNo(),'something weird here')
         end
         fn_magic = nil -- mustn't indavertently use it again
+
+      -- TODO: If we can make this learn how to generate these, that would be helpful.
+      -- elseif string.find(line, "^M%['.*'%] = function") then
+      --   state = 'in_function'  -- it's a function
+      --   outStream:writeln("function textDocument/publishDiagnostics(...){}")
+
+      --   fn_magic = nil -- mustn't indavertently use it again
       else
         state = ''  -- unknown
         if #line>0 then  -- we don't know what this line means, so just comment it out

@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 
 language: c
 
@@ -17,6 +17,7 @@ env:
     #   4. Undo changes to .travis.yml
     - secure: hd0qn2u8ABbJg5Bx4pBRcUQbKYFmcSHoecyHIPTCnGJT+NI41Bvm/IkN/N5DhBF+LbD3Q2nmR/dzI5H/dqS7RxMFvEx1DuFLendFHHX3MYf0AuKpXYY3gwgMTmqx8p/v6srlU7RBGWNGzHCWqksAem+EIWCe3I7WvfdKo1/DV/Y=
 
+    - PATH="$HOME/.local/bin:$PATH"
     # Set "false" to force rebuild of third-party dependencies.
     - CACHE_ENABLE=true
     # Build directory for Neovim.
@@ -30,7 +31,7 @@ env:
     # Nvim log file.
     - NVIM_LOG_FILE="$BUILD_DIR/.nvimlog"
     # Default CMake flags.
-    - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
+    - CMAKE_FLAGS="-DCI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DBUSTED_OUTPUT_TYPE=nvim
@@ -45,7 +46,7 @@ env:
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
     - CACHE_NVIM_DEPS_DIR="$HOME/.cache/nvim-deps"
     # If this file exists, the cache is valid (compile was successful).
-    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.travis_cache_marker"
+    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.ci_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
@@ -53,8 +54,7 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_SLOPPINESS=time_macros,file_macro
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
-    # Default since 3.3, but Travis (Xenial) has 3.2.4; required with newer gcc/clang.
-    - CCACHE_CPP2=1
+    - CI_OS_NAME="$TRAVIS_OS_NAME"
 
 anchors:
   envs: &common-job-env
@@ -99,12 +99,21 @@ jobs:
     - stage: baseline
       name: clang-asan
       os: linux
-      compiler: clang
+      compiler: clang-11
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env:
         - CLANG_SANITIZER=ASAN_UBSAN
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        - SYMBOLIZER=asan_symbolize-11
         - *common-job-env
+      addons:
+        apt:
+          sources:
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - *common-apt-packages
+            - clang-11
     - name: gcc-coverage (gcc 9)
       os: linux
       compiler: gcc-9
@@ -116,15 +125,15 @@ jobs:
         - BUSTED_ARGS="--coverage"
         - *common-job-env
       addons:
+        snaps:
+          - name: powershell
+            confinement: classic
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            - sourceline: 'deb [arch=amd64] https://packages.microsoft.com/ubuntu/16.04/prod xenial main'
-              key_url: 'https://packages.microsoft.com/keys/microsoft.asc'
           packages:
             - *common-apt-packages
             - gcc-9
-            - powershell
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint
       os: linux
@@ -193,6 +202,7 @@ jobs:
         - LANG: C.UTF-8
         - SNAPCRAFT_ENABLE_SILENT_REPORT: y
         - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
+        - SNAPCRAFT_BUILD_ENVIRONMENT: lxd
       addons:
         snaps:
           - name: snapcraft
@@ -221,6 +231,7 @@ jobs:
       - LANG: C.UTF-8
       - SNAPCRAFT_ENABLE_SILENT_REPORT: y
       - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
+      - SNAPCRAFT_BUILD_ENVIRONMENT: lxd
   fast_finish: true
 
 before_install: ci/before_install.sh

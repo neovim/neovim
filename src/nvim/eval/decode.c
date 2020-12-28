@@ -586,7 +586,7 @@ parse_json_number_check:
   if (p == ints) {
     emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
-  } else if (p == fracs || exps_s == fracs + 1) {
+  } else if (p == fracs || (fracs != NULL && exps_s == fracs + 1)) {
     emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   } else if (p == exps) {

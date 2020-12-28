@@ -493,7 +493,8 @@ static int put_view(
 
 /// Writes commands for restoring the current buffers, for :mksession.
 ///
-/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
+/// Legacy 'sessionoptions'/'viewoptions' flags SSOP_UNIX, SSOP_SLASH are
+/// always enabled.
 ///
 /// @param dirnow  Current directory name
 /// @param fd  File descriptor to write to
@@ -822,9 +823,9 @@ void ex_loadview(exarg_T *eap)
 
 /// ":mkexrc", ":mkvimrc", ":mkview", ":mksession".
 ///
-/// Legacy 'sessionoptions' flags SSOP_UNIX, SSOP_SLASH are always enabled.
-///   - SSOP_UNIX: line-endings are always LF
-///   - SSOP_SLASH: filenames are always written with "/" slash
+/// Legacy 'sessionoptions'/'viewoptions' flags are always enabled:
+///   - SSOP_UNIX: line-endings are LF
+///   - SSOP_SLASH: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
   FILE        *fd;
@@ -892,12 +893,15 @@ void ex_mkrc(exarg_T *eap)
                           && (*flagp & SSOP_OPTIONS))) {
       failed |= (makemap(fd, NULL) == FAIL
                  || makeset(fd, OPT_GLOBAL, false) == FAIL);
+      if (p_hls && fprintf(fd, "%s", "set hlsearch\n") < 0) {
+        failed = true;
+      }
     }
 
     if (!failed && view_session) {
       if (put_line(fd,
-                   "let s:so_save = &so | let s:siso_save = &siso"
-                   " | set so=0 siso=0") == FAIL) {
+                   "let s:so_save = &g:so | let s:siso_save = &g:siso"
+                   " | setg so=0 siso=0 | setl so=-1 siso=-1") == FAIL) {
         failed = true;
       }
       if (eap->cmdidx == CMD_mksession) {
@@ -948,9 +952,14 @@ void ex_mkrc(exarg_T *eap)
       }
       if (fprintf(fd,
                   "%s",
-                  "let &so = s:so_save | let &siso = s:siso_save\n"
-                  "doautoall SessionLoadPost\n")
+                  "let &g:so = s:so_save | let &g:siso = s:siso_save\n")
           < 0) {
+        failed = true;
+      }
+      if (no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
+        failed = true;
+      }
+      if (fprintf(fd, "%s", "doautoall SessionLoadPost\n") < 0) {
         failed = true;
       }
       if (eap->cmdidx == CMD_mksession) {

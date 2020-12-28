@@ -214,7 +214,7 @@ func Test_strftime()
   endif
 endfunc
 
-func Test_resolve()
+func Test_resolve_unix()
   if !has('unix')
     return
   endif
@@ -258,6 +258,8 @@ func Test_resolve()
   call assert_equal('Xlink2', resolve('Xlink1'))
   call assert_equal('./Xlink2', resolve('./Xlink1'))
   call delete('Xlink1')
+
+  call assert_equal('/', resolve('/'))
 endfunc
 
 func Test_simplify()
@@ -334,6 +336,10 @@ func Test_strpart()
 
   call assert_equal('lép', strpart('éléphant', 2, 4))
   call assert_equal('léphant', strpart('éléphant', 2))
+
+  call assert_equal('é', strpart('éléphant', 0, 1, 1))
+  call assert_equal('ép', strpart('éléphant', 3, 2, v:true))
+  call assert_equal('ó', strpart('cómposed', 1, 1, 1))
 endfunc
 
 func Test_tolower()
@@ -1079,6 +1085,12 @@ func Test_trim()
   call assert_equal("", trim("", ""))
   call assert_equal("a", trim("a", ""))
   call assert_equal("", trim("", "a"))
+  call assert_equal("vim", trim("  vim  ", " ", 0))
+  call assert_equal("vim  ", trim("  vim  ", " ", 1))
+  call assert_equal("  vim", trim("  vim  ", " ", 2))
+  call assert_fails('call trim("  vim  ", " ", [])', 'E745:')
+  call assert_fails('call trim("  vim  ", " ", -1)', 'E475:')
+  call assert_fails('call trim("  vim  ", " ", 3)', 'E475:')
 
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> nr2char(n)}), '')
   call assert_equal("x", trim(chars . "x" . chars))
@@ -1217,6 +1229,24 @@ func Test_reg_executing_and_recording()
   unlet s:reg_stat
 endfunc
 
+func Test_getchar()
+  call feedkeys('a', '')
+  call assert_equal(char2nr('a'), getchar())
+
+  " call test_setmouse(1, 3)
+  " let v:mouse_win = 9
+  " let v:mouse_winid = 9
+  " let v:mouse_lnum = 9
+  " let v:mouse_col = 9
+  " call feedkeys("\<S-LeftMouse>", '')
+  call nvim_input_mouse('left', 'press', 'S', 0, 0, 2)
+  call assert_equal("\<S-LeftMouse>", getchar())
+  call assert_equal(1, v:mouse_win)
+  call assert_equal(win_getid(1), v:mouse_winid)
+  call assert_equal(1, v:mouse_lnum)
+  call assert_equal(3, v:mouse_col)
+endfunc
+
 func Test_libcall_libcallnr()
   if !has('libcall')
     return
@@ -1337,3 +1367,22 @@ func Test_readdir()
 
   call delete('Xdir', 'rf')
 endfunc
+
+" Test for the eval() function
+func Test_eval()
+  call assert_fails("call eval('5 a')", 'E488:')
+endfunc
+
+" Test for the nr2char() function
+func Test_nr2char()
+  " set encoding=latin1
+  call assert_equal('@', nr2char(64))
+  set encoding=utf8
+  call assert_equal('a', nr2char(97, 1))
+  call assert_equal('a', nr2char(97, 0))
+
+  call assert_equal("\x80\xfc\b\xf4\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x100000) .. '>"'))
+  call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

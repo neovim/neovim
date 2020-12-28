@@ -113,9 +113,9 @@ func Test_function_in_dict()
   call OuterCall()
 endfunc
 
-function! s:cache_clear() dict
+func s:cache_clear() dict
   return self.name
-endfunction
+endfunc
 
 func Test_script_function_in_dict()
   let s:obj = {'name': 'foo'}
@@ -135,10 +135,10 @@ func Test_script_function_in_dict()
   call assert_equal('bar', B())
 endfunc
 
-function! s:cache_arg(arg) dict
+func s:cache_arg(arg) dict
   let s:result = self.name . '/' . a:arg
   return s:result
-endfunction
+endfunc
 
 func Test_script_function_in_dict_arg()
   let s:obj = {'name': 'foo'}

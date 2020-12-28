@@ -1,6 +1,8 @@
 #ifndef NVIM_MACROS_H
 #define NVIM_MACROS_H
 
+#include "auto/config.h"
+
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.
 #ifndef EXTERN
@@ -96,9 +98,6 @@
 
 # define UTF_COMPOSINGLIKE(p1, p2)  utf_composinglike((p1), (p2))
 
-// Whether to draw the vertical bar on the right side of the cell.
-# define CURSOR_BAR_RIGHT (curwin->w_p_rl && (!(State & CMDLINE) || cmdmsg_rl))
-
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed.
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
@@ -149,6 +148,12 @@
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
+
+#ifndef __has_include
+# define NVIM_HAS_INCLUDE(x) 0
+#else
+# define NVIM_HAS_INCLUDE __has_include
+#endif
 
 #ifndef __has_attribute
 # define NVIM_HAS_ATTRIBUTE(x) 0
@@ -203,16 +208,33 @@
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
+# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("clang diagnostic push") \
+    _Pragma("clang diagnostic ignored \"-Wimplicit-fallthrough\"")
+# else
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("clang diagnostic push")
+# endif
 # define PRAGMA_DIAG_POP \
     _Pragma("clang diagnostic pop")
 #elif defined(__GNUC__)
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
+# else
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("GCC diagnostic push")
+# endif
 # define PRAGMA_DIAG_POP \
   _Pragma("GCC diagnostic pop")
 #else
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+# define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
 # define PRAGMA_DIAG_POP
 #endif
 

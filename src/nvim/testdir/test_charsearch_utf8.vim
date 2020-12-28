@@ -14,6 +14,6 @@ function! Test_search_cmds()
   normal! ,
   call assert_equal([0, 1, 28, 0], getpos('.'))
   bw!
-endfunction
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

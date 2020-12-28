@@ -9,6 +9,7 @@ local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
+local eval = helpers.eval
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -1213,10 +1214,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {n:word           }{1:                 }|
-      {n:choice         }{1:                 }|
-      {n:text           }{1:                 }|
-      {n:thing          }{1:                 }|
+      {1:~                        }{n: word  }|
+      {1:~                        }{n: choice}|
+      {1:~                        }{n: text  }|
+      {1:~                        }{n: thing }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1261,10 +1262,10 @@ describe('builtin popupmenu', function()
     feed('<c-p>')
     screen:expect([[
       some long prefix before the text|
-      {n:^word           }{1:                 }|
-      {n:choice         }{1:                 }|
-      {s:text           }{1:                 }|
-      {n:thing          }{1:                 }|
+      {1:^~                        }{n: word  }|
+      {1:~                        }{n: choice}|
+      {1:~                        }{s: text  }|
+      {1:~                        }{n: thing }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1341,10 +1342,10 @@ describe('builtin popupmenu', function()
     screen:expect([[
       some long prefix    |
       before the text^     |
-      {1:~         }{n: word     }|
-      {1:~         }{n: choice   }|
-      {1:~         }{s: text     }|
-      {1:~         }{n: thing    }|
+      {1:~         }{n: word    }{1: }|
+      {1:~         }{n: choice  }{1: }|
+      {1:~         }{s: text    }{1: }|
+      {1:~         }{n: thing   }{1: }|
       {1:~                   }|
       {2:-- INSERT --}        |
     ]])
@@ -1358,10 +1359,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {n:word           }{1:                 }|
-      {n:choice         }{1:                 }|
-      {n:text           }{1:                 }|
-      {n:thing          }{1:                 }|
+      {1:~                        }{n: word  }|
+      {1:~                        }{n: choice}|
+      {1:~                        }{n: text  }|
+      {1:~                        }{n: thing }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -2168,8 +2169,8 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {n:word           }{c: }{1:                }|
-      {n:choice         }{s: }{1:                }|
+      {1:~                       }{n: word  }{c: }|
+      {1:~                       }{n: choice}{s: }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -2187,13 +2188,29 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {n:word    }{1:                        }|
-      {n:choice  }{1:                        }|
-      {n:text    }{1:                        }|
-      {n:thing   }{1:                        }|
+      {1:~                        }{n: word  }|
+      {1:~                        }{n: choice}|
+      {1:~                        }{n: text  }|
+      {1:~                        }{n: thing }|
       {1:~                               }|
       {1:~                               }|
       {2:-- INSERT --}                    |
     ]])
+  end)
+
+  it('does not crash when displayed in the last column with rightleft (#12032)', function()
+    local col = 30
+    local items = {'word', 'choice', 'text', 'thing'}
+    local max_len = 0
+    for _, v in ipairs(items) do
+      max_len = max_len < #v and #v or max_len
+    end
+    screen:try_resize(col, 8)
+    command('set rightleft')
+    command('call setline(1, repeat(" ", &columns - '..max_len..'))')
+    feed('$i')
+    funcs.complete(col - max_len, items)
+    feed('<c-y>')
+    eq(2, eval('1+1'))
   end)
 end)

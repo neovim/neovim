@@ -124,8 +124,7 @@ maintainer of the translation and ask him to update it.  You can find the
 name and e-mail address of the translator in
 "$VIMRUNTIME/lang/menu_<lang>.vim".
 
-To set the font (or fontset) to use for the menus, use the |:highlight|
-command.  Example: >
+To set the font to use for the menus, use the |:highlight| command.  Example: >
 
 	:highlight Menu font=k12,r12
 

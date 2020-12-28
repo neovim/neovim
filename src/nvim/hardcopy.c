@@ -546,7 +546,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum,
     curwin->w_botline = lnum + 63;
     printer_page_num = pagenum;
 
-    use_sandbox = was_set_insecurely((char_u *)"printheader", 0);
+    use_sandbox = was_set_insecurely(curwin, (char_u *)"printheader", 0);
     build_stl_str_hl(curwin, tbuf, (size_t)width + IOSIZE,
         p_header, use_sandbox,
         ' ', width, NULL, NULL);
@@ -964,7 +964,6 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 
 #define PRT_PS_DEFAULT_DPI          (72)    // Default user space resolution
 #define PRT_PS_DEFAULT_FONTSIZE     (10)
-#define PRT_PS_DEFAULT_BUFFER_SIZE  (80)
 
 #define PRT_MEDIASIZE_LEN  (sizeof(prt_mediasize) / \
                             sizeof(struct prt_mediasize_S))

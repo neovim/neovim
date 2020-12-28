@@ -459,7 +459,7 @@ staterr:
 
   int i;
   // if filename is a directory, append the cscope database name to it
-  if ((file_info.stat.st_mode & S_IFMT) == S_IFDIR) {
+  if (S_ISDIR(file_info.stat.st_mode)) {
     fname2 = (char *)xmalloc(strlen(CSCOPE_DBFILE) + strlen(fname) + 2);
 
     while (fname[strlen(fname)-1] == '/'

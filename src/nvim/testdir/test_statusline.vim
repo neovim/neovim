@@ -354,6 +354,21 @@ func Test_statusline()
   delfunc GetNested
   delfunc GetStatusLine
 
+  " Test statusline works with 80+ items
+  function! StatusLabel()
+    redrawstatus
+    return '[label]'	
+  endfunc
+  let statusline = '%{StatusLabel()}'
+  for i in range(150)
+    let statusline .= '%#TabLine' . (i % 2 == 0 ? 'Fill' : 'Sel') . '#' . string(i)[0]
+  endfor
+  let &statusline = statusline
+  redrawstatus
+  set statusline&
+  delfunc StatusLabel
+
+
   " Check statusline in current and non-current window
   " with the 'fillchars' option.
   set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
@@ -412,3 +427,22 @@ func Test_statusline_removed_group()
   call StopVimInTerminal(buf)
   call delete('XTest_statusline')
 endfunc
+
+func Test_statusline_after_split_vsplit()
+  only
+
+  " Make the status line of each window show the window number.
+  set ls=2 stl=%{winnr()}
+
+  split | redraw
+  vsplit | redraw
+
+  " The status line of the third window should read '3' here.
+  call assert_equal('3', nr2char(screenchar(&lines - 1, 1)))
+
+  only
+  set ls& stl&
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

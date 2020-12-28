@@ -87,17 +87,16 @@
  */
 static int cause_abort = FALSE;
 
-/*
- * Return TRUE when immediately aborting on error, or when an interrupt
- * occurred or an exception was thrown but not caught.  Use for ":{range}call"
- * to check whether an aborted function that does not handle a range itself
- * should be called again for the next line in the range.  Also used for
- * cancelling expression evaluation after a function call caused an immediate
- * abort.  Note that the first emsg() call temporarily resets "force_abort"
- * until the throw point for error messages has been reached.  That is, during
- * cancellation of an expression evaluation after an aborting function call or
- * due to a parsing error, aborting() always returns the same value.
- */
+// Return true when immediately aborting on error, or when an interrupt
+// occurred or an exception was thrown but not caught.  Use for ":{range}call"
+// to check whether an aborted function that does not handle a range itself
+// should be called again for the next line in the range.  Also used for
+// cancelling expression evaluation after a function call caused an immediate
+// abort.  Note that the first emsg() call temporarily resets "force_abort"
+// until the throw point for error messages has been reached.  That is, during
+// cancellation of an expression evaluation after an aborting function call or
+// due to a parsing error, aborting() always returns the same value.
+// "got_int" is also set by calling interrupt().
 int aborting(void)
 {
   return (did_emsg && force_abort) || got_int || current_exception;
@@ -139,16 +138,15 @@ int aborted_in_try(void)
   return force_abort;
 }
 
-/*
- * cause_errthrow(): Cause a throw of an error exception if appropriate.
- * Return TRUE if the error message should not be displayed by emsg().
- * Sets "ignore", if the emsg() call should be ignored completely.
- *
- * When several messages appear in the same command, the first is usually the
- * most specific one and used as the exception value.  The "severe" flag can be
- * set to TRUE, if a later but severer message should be used instead.
- */
-int cause_errthrow(char_u *mesg, int severe, int *ignore)
+// cause_errthrow(): Cause a throw of an error exception if appropriate.
+// Return true if the error message should not be displayed by emsg().
+// Sets "ignore", if the emsg() call should be ignored completely.
+//
+// When several messages appear in the same command, the first is usually the
+// most specific one and used as the exception value.  The "severe" flag can be
+// set to true, if a later but severer message should be used instead.
+bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
+  FUNC_ATTR_NONNULL_ALL
 {
   struct msglist *elem;
   struct msglist **plist;
@@ -159,8 +157,9 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    * level.  Also when no exception can be thrown.  The message will be
    * displayed by emsg().
    */
-  if (suppress_errthrow)
-    return FALSE;
+  if (suppress_errthrow) {
+    return false;
+  }
 
   /*
    * If emsg() has not been called previously, temporarily reset
@@ -196,8 +195,8 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    * not replaced by an interrupt message error exception.
    */
   if (mesg == (char_u *)_(e_interr)) {
-    *ignore = TRUE;
-    return TRUE;
+    *ignore = true;
+    return true;
   }
 
   /*
@@ -232,8 +231,8 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
      * catch clause; just finally clauses are executed before the script
      * is terminated.
      */
-    return FALSE;
-  } else
+    return false;
+  } else  // NOLINT(readability/braces)
 #endif
   {
     /*
@@ -272,7 +271,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
           (*msg_list)->throw_msg = tmsg;
       }
     }
-    return TRUE;
+    return true;
   }
 }
 
@@ -519,10 +518,13 @@ fail:
  * Discard an exception.  "was_finished" is set when the exception has been
  * caught and the catch clause has been ended normally.
  */
-static void discard_exception(except_T *excp, int was_finished)
+static void discard_exception(except_T *excp, bool was_finished)
 {
   char_u              *saved_IObuff;
 
+  if (current_exception == excp) {
+    current_exception = NULL;
+  }
   if (excp == NULL) {
     internal_error("discard_exception()");
     return;
@@ -570,7 +572,6 @@ void discard_current_exception(void)
 {
   if (current_exception != NULL) {
     discard_exception(current_exception, false);
-    current_exception = NULL;
   }
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
@@ -653,8 +654,8 @@ static void finish_exception(except_T *excp)
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
   }
 
-  /* Discard the exception, but use the finish message for 'verbose'. */
-  discard_exception(excp, TRUE);
+  // Discard the exception, but use the finish message for 'verbose'.
+  discard_exception(excp, true);
 }
 
 /*
@@ -1813,11 +1814,12 @@ void leave_cleanup(cleanup_T *csp)
    * made pending by it.  Report this to the user if required by the
    * 'verbose' option or when debugging. */
   if (aborting() || need_rethrow) {
-    if (pending & CSTP_THROW)
-      /* Cancel the pending exception (includes report). */
-      discard_exception(csp->exception, FALSE);
-    else
+    if (pending & CSTP_THROW) {
+      // Cancel the pending exception (includes report).
+      discard_exception(csp->exception, false);
+    } else {
       report_discard_pending(pending, NULL);
+    }
 
     /* If an error was about to be converted to an exception when
      * enter_cleanup() was called, free the message list. */
@@ -1917,15 +1919,13 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
         default:
           if (cstack->cs_flags[idx] & CSF_FINALLY) {
             if (cstack->cs_pending[idx] & CSTP_THROW) {
-              /* Cancel the pending exception.  This is in the
-               * finally clause, so that the stack of the
-               * caught exceptions is not involved. */
-              discard_exception((except_T *)
-                  cstack->cs_exception[idx],
-                  FALSE);
-            } else
-              report_discard_pending(cstack->cs_pending[idx],
-                  NULL);
+              // Cancel the pending exception.  This is in the
+              // finally clause, so that the stack of the
+              // caught exceptions is not involved.
+              discard_exception((except_T *)cstack->cs_exception[idx], false);
+            } else {
+              report_discard_pending(cstack->cs_pending[idx], NULL);
+            }
             cstack->cs_pending[idx] = CSTP_NONE;
           }
           break;

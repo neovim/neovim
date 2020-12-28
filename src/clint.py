@@ -350,7 +350,7 @@ def IsErrorInSuppressedErrorsList(category, linenum):
       category: str, the category of the error.
       linenum: int, the current line number.
     Returns:
-      bool, True iff the error should be suppressed due to presense in
+      bool, True iff the error should be suppressed due to presence in
             suppressions file.
     """
     return (category, linenum) in _error_suppressions_2

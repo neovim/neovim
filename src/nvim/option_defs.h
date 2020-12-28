@@ -77,12 +77,13 @@
 #define FO_ONE_LETTER   '1'
 #define FO_WHITE_PAR    'w'     // trailing white space continues paragr.
 #define FO_AUTO         'a'     // automatic formatting
+#define FO_RIGOROUS_TW  ']'     // respect textwidth rigorously
 #define FO_REMOVE_COMS  'j'     // remove comment leaders when joining lines
 #define FO_PERIOD_ABBR  'p'     // don't break a single space after a period
 
 #define DFLT_FO_VI      "vt"
 #define DFLT_FO_VIM     "tcqj"
-#define FO_ALL          "tcroq2vlb1mMBn,awjp"   // for do_set()
+#define FO_ALL          "tcroq2vlb1mMBn,aw]jp"   // for do_set()
 
 // characters for the p_cpo option:
 #define CPO_ALTREAD     'a'     // ":read" sets alternate file name
@@ -187,6 +188,7 @@ enum {
 #define GO_ASELML       'A'             // autoselect modeless selection
 #define GO_BOT          'b'             // use bottom scrollbar
 #define GO_CONDIALOG    'c'             // use console dialog
+#define GO_DARKTHEME    'd'             // use dark theme variant
 #define GO_TABLINE      'e'             // may show tabline
 #define GO_FORG         'f'             // start GUI in foreground
 #define GO_GREY         'g'             // use grey menu items
@@ -204,7 +206,7 @@ enum {
 #define GO_FOOTER       'F'             // add footer
 #define GO_VERTICAL     'v'             // arrange dialog buttons vertically
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
-#define GO_ALL          "aAbcefFghilmMprTvk"  // all possible flags for 'go'
+#define GO_ALL "aAbcdefFghilmMprTvk"    // all possible flags for 'go'
 
 // flags for 'comments' option
 #define COM_NEST        'n'             // comments strings nest
@@ -370,8 +372,10 @@ EXTERN long p_cwh;              // 'cmdwinheight'
 EXTERN long p_ch;               // 'cmdheight'
 EXTERN long p_columns;          // 'columns'
 EXTERN int p_confirm;           // 'confirm'
-EXTERN int p_cp;                // 'compatible'
 EXTERN char_u   *p_cot;         // 'completeopt'
+# ifdef BACKSLASH_IN_FILENAME
+EXTERN char_u   *p_csl;         // 'completeslash'
+# endif
 EXTERN long p_pb;               // 'pumblend'
 EXTERN long p_ph;               // 'pumheight'
 EXTERN long p_pw;               // 'pumwidth'
@@ -453,7 +457,6 @@ EXTERN char_u   *p_header;      // 'printheader'
 EXTERN int p_prompt;            // 'prompt'
 EXTERN char_u   *p_guicursor;   // 'guicursor'
 EXTERN char_u   *p_guifont;     // 'guifont'
-EXTERN char_u   *p_guifontset;  // 'guifontset'
 EXTERN char_u   *p_guifontwide;  // 'guifontwide'
 EXTERN char_u   *p_hf;          // 'helpfile'
 EXTERN long p_hh;               // 'helpheight'
@@ -513,6 +516,7 @@ EXTERN long p_mle;              // 'modelineexpr'
 EXTERN long p_mls;              // 'modelines'
 EXTERN char_u   *p_mouse;       // 'mouse'
 EXTERN char_u   *p_mousem;      // 'mousemodel'
+EXTERN long p_mousef;           // 'mousefocus'
 EXTERN long p_mouset;           // 'mousetime'
 EXTERN int p_more;              // 'more'
 EXTERN char_u   *p_opfunc;      // 'operatorfunc'
@@ -743,6 +747,7 @@ enum {
   , BV_CPT
   , BV_DICT
   , BV_TSR
+  , BV_CSL
   , BV_CFU
   , BV_DEF
   , BV_INC
@@ -787,6 +792,7 @@ enum {
   , BV_SPC
   , BV_SPF
   , BV_SPL
+  , BV_SPO
   , BV_STS
   , BV_SUA
   , BV_SW

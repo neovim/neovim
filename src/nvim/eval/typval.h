@@ -301,7 +301,8 @@ struct funccall_S {
   int dbg_tick;  ///< Debug_tick when breakpoint was set.
   int level;  ///< Top nesting level of executed function.
   proftime_T prof_child;  ///< Time spent in a child.
-  funccall_T *caller;  ///< Calling function or NULL.
+  funccall_T *caller;  ///< Calling function or NULL; or next funccal in
+                       ///< list pointed to by previous_funccal.
   int fc_refcount;  ///< Number of user functions that reference this funccall.
   int fc_copyID;  ///< CopyID used for garbage collection.
   garray_T fc_funcs;  ///< List of ufunc_T* which keep a reference to "func".
@@ -491,7 +492,7 @@ static inline void tv_list_ref(list_T *const l)
 static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
 
-/// Set a list as the return value
+/// Set a list as the return value.  Increments the reference count.
 ///
 /// @param[out]  tv  Object to receive the list
 /// @param[in,out]  l  List to pass to the object

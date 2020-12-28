@@ -5,15 +5,25 @@ endif
 let s:loaded_perl_provider = 1
 
 function! provider#perl#Detect() abort
-  " use g:perl_host_prof if set or check if perl is on the path
+  " use g:perl_host_prog if set or check if perl is on the path
   let prog = exepath(get(g:, 'perl_host_prog', 'perl'))
   if empty(prog)
-    return ''
+    return ['', '']
+  endif
+
+  " if perl is available, make sure we have 5.22+
+  call system([prog, '-e', 'use v5.22'])
+  if v:shell_error
+    return ['', 'Perl version is too old, 5.22+ required']
   endif
 
   " if perl is available, make sure the required module is available
   call system([prog, '-W', '-MNeovim::Ext', '-e', ''])
-  return v:shell_error ? '' : prog
+  if v:shell_error
+    return ['', '"Neovim::Ext" cpan module is not installed']
+  endif
+
+  return [prog, '']
 endfunction
 
 function! provider#perl#Prog() abort
@@ -46,7 +56,7 @@ function! provider#perl#Call(method, args) abort
 
   if !exists('s:host')
     try
-      let s:host = remote#host#Require('perl')
+      let s:host = remote#host#Require('legacy-perl-provider')
     catch
       let s:err = v:exception
       echohl WarningMsg
@@ -58,12 +68,16 @@ function! provider#perl#Call(method, args) abort
   return call('rpcrequest', insert(insert(a:args, 'perl_'.a:method), s:host))
 endfunction
 
-let s:err = ''
-let s:prog = provider#perl#Detect()
+let [s:prog, s:err] = provider#perl#Detect()
 let g:loaded_perl_provider = empty(s:prog) ? 1 : 2
 
 if g:loaded_perl_provider != 2
   let s:err = 'Cannot find perl or the required perl module'
 endif
 
-call remote#host#RegisterPlugin('perl-provider', 'perl', [])
+
+" The perl provider plugin will run in a separate instance of the perl
+" host.
+call remote#host#RegisterClone('legacy-perl-provider', 'perl')
+call remote#host#RegisterPlugin('legacy-perl-provider', 'ScriptHost.pm', [])
+

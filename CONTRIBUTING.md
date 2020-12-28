@@ -110,7 +110,7 @@ and [AppVeyor].
       # To get a full backtrace:
       #   1. Rebuild with debug info.
       rm -rf nvim.core build
-      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
+      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
       #   2. Run the failing test to generate a new core file.
       TEST_FILE=test/functional/foo.lua gmake functionaltest
       lldb build/bin/nvim -c nvim.core

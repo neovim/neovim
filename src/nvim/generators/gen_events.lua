@@ -41,22 +41,27 @@ names_tgt:write('\n  {0, NULL, (event_T)0},')
 enum_tgt:write('\n} event_T;\n')
 names_tgt:write('\n};\n')
 
-names_tgt:write('\nstatic AutoPat *first_autopat[NUM_EVENTS] = {\n ')
-local line_len = 1
-for _ = 1,((#events) - 1) do
-  line_len = line_len + #(' NULL,')
-  if line_len > 80 then
-    names_tgt:write('\n ')
-    line_len = 1 + #(' NULL,')
+local gen_autopat_events = function(name)
+  names_tgt:write(string.format('\nstatic AutoPat *%s[NUM_EVENTS] = {\n ', name))
+  local line_len = 1
+  for _ = 1,((#events) - 1) do
+    line_len = line_len + #(' NULL,')
+    if line_len > 80 then
+      names_tgt:write('\n ')
+      line_len = 1 + #(' NULL,')
+    end
+    names_tgt:write(' NULL,')
   end
-  names_tgt:write(' NULL,')
+  if line_len + #(' NULL') > 80 then
+    names_tgt:write('\n  NULL')
+  else
+    names_tgt:write(' NULL')
+  end
+  names_tgt:write('\n};\n')
 end
-if line_len + #(' NULL') > 80 then
-  names_tgt:write('\n  NULL')
-else
-  names_tgt:write(' NULL')
-end
-names_tgt:write('\n};\n')
+
+gen_autopat_events("first_autopat")
+gen_autopat_events("last_autopat")
 
 enum_tgt:close()
 names_tgt:close()

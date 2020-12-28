@@ -487,7 +487,7 @@ endfunction
 
 " Resolves Python executable path by invoking and checking `sys.executable`.
 function! s:python_exepath(invocation) abort
-  return s:normalize_path(system(a:invocation
+  return s:normalize_path(system(fnameescape(a:invocation)
     \ . ' -c "import sys; sys.stdout.write(sys.executable)"'))
 endfunction
 
@@ -573,7 +573,7 @@ function! s:check_ruby() abort
   endif
   call health#report_info('Ruby: '. s:system('ruby -v'))
 
-  let host = provider#ruby#Detect()
+  let [host, err] = provider#ruby#Detect()
   if empty(host)
     call health#report_warn('`neovim-ruby-host` not found.',
           \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
@@ -636,7 +636,7 @@ function! s:check_node() abort
     call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
   endif
 
-  let host = provider#node#Detect()
+  let [host, err] = provider#node#Detect()
   if empty(host)
     call health#report_warn('Missing "neovim" npm (or yarn) package.',
           \ ['Run in shell: npm install -g neovim',
@@ -689,29 +689,31 @@ function! s:check_perl() abort
     return
   endif
 
-  if !executable('perl') || !executable('cpanm')
-    call health#report_warn(
-          \ '`perl` and `cpanm` must be in $PATH.',
-          \ ['Install Perl and cpanminus and verify that `perl` and `cpanm` commands work.'])
-    return
+  let [perl_exec, perl_errors] = provider#perl#Detect()
+  if empty(perl_exec)
+    if !empty(perl_errors)
+      call health#report_error('perl provider error:', perl_errors)
+	else
+      call health#report_warn('No usable perl executable found')
+    endif
+	return
   endif
-  let perl_v = get(split(s:system(['perl', '-W', '-e', 'print $^V']), "\n"), 0, '')
-  call health#report_info('Perl: '. perl_v)
+
+  call health#report_info('perl executable: '. perl_exec)
+
+  " we cannot use cpanm that is on the path, as it may not be for the perl
+  " set with g:perl_host_prog
+  call s:system([perl_exec, '-W', '-MApp::cpanminus', '-e', ''])
   if s:shell_error
-    call health#report_warn('Nvim perl host does not support '.perl_v)
-    " Skip further checks, they are nonsense if perl is too old.
-    return
+    return [perl_exec, '"App::cpanminus" module is not installed']
   endif
 
-  let host = provider#perl#Detect()
-  if empty(host)
-    call health#report_warn('Missing "Neovim::Ext" cpan module.',
-          \ ['Run in shell: cpanm Neovim::Ext'])
-    return
-  endif
-  call health#report_info('Nvim perl host: '. host)
+  let latest_cpan_cmd = [perl_exec,
+			  \ '-MApp::cpanminus::fatscript', '-e',
+			  \ 'my $app = App::cpanminus::script->new;
+			  \ $app->parse_options ("--info", "-q", "Neovim::Ext");
+			  \ exit $app->doit']
 
-  let latest_cpan_cmd = 'cpanm --info -q Neovim::Ext'
   let latest_cpan = s:system(latest_cpan_cmd)
   if s:shell_error || empty(latest_cpan)
     call health#report_error('Failed to run: '. latest_cpan_cmd,
@@ -735,7 +737,7 @@ function! s:check_perl() abort
     return
   endif
 
-  let current_cpan_cmd = [host, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
+  let current_cpan_cmd = [perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
   let current_cpan = s:system(current_cpan_cmd)
   if s:shell_error
     call health#report_error('Failed to run: '. string(current_cpan_cmd),
@@ -747,7 +749,7 @@ function! s:check_perl() abort
     call health#report_warn(
           \ printf('Module "Neovim::Ext" is out-of-date. Installed: %s, latest: %s',
           \ current_cpan, latest_cpan),
-          \ ['Run in shell: cpanm Neovim::Ext'])
+          \ ['Run in shell: cpanm -n Neovim::Ext'])
   else
     call health#report_ok('Latest "Neovim::Ext" cpan module is installed: '. current_cpan)
   endif

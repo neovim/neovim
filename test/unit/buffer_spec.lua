@@ -212,7 +212,7 @@ describe('buffer functions', function()
 
   describe('build_stl_str_hl', function()
     local buffer_byte_size = 100
-    local STL_MAX_ITEM = 80
+    local STL_INITIAL_ITEMS = 20
     local output_buffer = ''
 
     -- This function builds the statusline
@@ -431,31 +431,23 @@ describe('buffer functions', function()
       'aaaa%=b%=c%=d%=e%=fg%=hi%=jk%=lmnop%=qrstuv%=wxyz',
       'aaaa  b  c  d  e  fg  hi  jk  lmnop  qrstuv   wxyz')
 
-    -- maximum stl item testing
-    statusline_test('should handle a much larger amount of = than buffer locations', 20,
-      ('%='):rep(STL_MAX_ITEM - 1),
-      '                    ') -- Should be fine, because within limit
-    statusline_test('should handle a much larger amount of = than stl max item', 20,
-      ('%='):rep(STL_MAX_ITEM + 1),
-      '                E541') -- Should show the VIM error
+    -- stl item testing
+    local tabline = ''
+    for i= 1, 1000 do
+      tabline = tabline .. (i % 2 == 0 and '%#TabLineSel#' or '%#TabLineFill#') .. tostring(i % 2)
+    end
+    statusline_test('should handle a large amount of any items', 20,
+      tabline,
+      '<1010101010101010101') -- Should not show any error
+    statusline_test('should handle a larger amount of = than stl initial item', 20,
+      ('%='):rep(STL_INITIAL_ITEMS * 5),
+      '                    ') -- Should not show any error
     statusline_test('should handle many extra characters', 20,
-      'a' .. ('a'):rep(STL_MAX_ITEM * 4),
-      '<aaaaaaaaaaaaaaaaaaa') -- Does not show the error because there are no items
-    statusline_test('should handle almost maximum of characters and flags', 20,
-      'a' .. ('%=a'):rep(STL_MAX_ITEM - 1),
-      'a<aaaaaaaaaaaaaaaaaa') -- Should not show the VIM error
+      'a' .. ('a'):rep(STL_INITIAL_ITEMS * 5),
+      '<aaaaaaaaaaaaaaaaaaa') -- Does not show any error
     statusline_test('should handle many extra characters and flags', 20,
-      'a' .. ('%=a'):rep(STL_MAX_ITEM),
-      'a<aaaaaaaaaaaaa E541') -- Should show the VIM error
-    statusline_test('should handle many extra characters and flags', 20,
-      'a' .. ('%=a'):rep(STL_MAX_ITEM * 2),
-      'a<aaaaaaaaaaaaa E541') -- Should show the VIM error
-    statusline_test('should handle many extra characters and flags with truncation', 20,
-      'aaa%<' .. ('%=a'):rep(STL_MAX_ITEM),
-      'aaa<aaaaaaaaaaa E541') -- Should show the VIM error
-    statusline_test('should handle many characters and flags before and after truncation', 20,
-      'a%=a%=a%<' .. ('%=a'):rep(STL_MAX_ITEM),
-      'aaa<aaaaaaaaaaa E541') -- Should show the VIM error
+      'a' .. ('%=a'):rep(STL_INITIAL_ITEMS * 2),
+      'a<aaaaaaaaaaaaaaaaaa') -- Should not show any error
 
 
     -- multi-byte testing

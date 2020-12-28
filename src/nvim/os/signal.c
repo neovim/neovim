@@ -161,8 +161,8 @@ static void deadly_signal(int signum)
 
   WLOG("got signal %d (%s)", signum, signal_name(signum));
 
-  snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\n",
-      signal_name(signum));
+  snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\r\n",
+           signal_name(signum));
 
   // Preserve files and exit.
   preserve_exit();

@@ -262,11 +262,9 @@ static void parse_msgpack(Channel *channel)
         call_set_error(channel, buf, ERROR_LOG_LEVEL);
       }
       msgpack_unpacked_destroy(&unpacked);
-      // Bail out from this event loop iteration
-      return;
+    } else {
+      handle_request(channel, &unpacked.data);
     }
-
-    handle_request(channel, &unpacked.data);
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
@@ -379,6 +377,10 @@ static void request_event(void **argv)
   Channel *channel = e->channel;
   MsgpackRpcRequestHandler handler = e->handler;
   Error error = ERROR_INIT;
+  if (channel->rpc.closed) {
+    // channel was closed, abort any pending requests
+    goto free_ret;
+  }
   Object result = handler.fn(channel->id, e->args, &error);
   if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.
@@ -393,6 +395,8 @@ static void request_event(void **argv)
   } else {
     api_free_object(result);
   }
+
+free_ret:
   api_free_array(e->args);
   channel_decref(channel);
   xfree(e);

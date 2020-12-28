@@ -724,10 +724,140 @@ func Test_diff_lastline()
   bwipe!
 endfunc
 
+func Test_diff_screen()
+  CheckScreendump
+  CheckFeature menu
+
+  " clean up already existing swap files, just in case
+  call delete('.Xfile1.swp')
+  call delete('.Xfile2.swp')
+
+  " Test 1: Add a line in beginning of file 2
+  call WriteDiffFiles(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  let buf = RunVimInTerminal('-d Xfile1 Xfile2', {})
+  " Set autoread mode, so that Vim won't complain once we re-write the test
+  " files
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  call VerifyBoth(buf, 'Test_diff_01', '')
+
+  " Test 2: Add a line in beginning of file 1
+  call WriteDiffFiles(buf, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  call VerifyBoth(buf, 'Test_diff_02', '')
+
+  " Test 3: Add a line at the end of file 2
+  call WriteDiffFiles(buf, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+  call VerifyBoth(buf, 'Test_diff_03', '')
+
+  " Test 4: Add a line at the end of file 1
+  call WriteDiffFiles(buf, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  call VerifyBoth(buf, 'Test_diff_04', '')
+
+  " Test 5: Add a line in the middle of file 2, remove on at the end of file 1
+  call WriteDiffFiles(buf, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10])
+  call VerifyBoth(buf, 'Test_diff_05', '')
+
+  " Test 6: Add a line in the middle of file 1, remove on at the end of file 2
+  call WriteDiffFiles(buf, [1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+  call VerifyBoth(buf, 'Test_diff_06', '')
+
+  " Variants on test 6 with different context settings
+  call term_sendkeys(buf, ":set diffopt+=context:2\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_06.2', {})
+  call term_sendkeys(buf, ":set diffopt-=context:2\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=context:1\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_06.1', {})
+  call term_sendkeys(buf, ":set diffopt-=context:1\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=context:0\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_06.0', {})
+  call term_sendkeys(buf, ":set diffopt-=context:0\<cr>")
+
+  " Test 7 - 9: Test normal/patience/histogram diff algorithm
+  call WriteDiffFiles(buf, ['#include <stdio.h>', '', '// Frobs foo heartily', 'int frobnitz(int foo)', '{',
+      \ '    int i;', '    for(i = 0; i < 10; i++)', '    {', '        printf("Your answer is: ");',
+      \ '        printf("%d\n", foo);', '    }', '}', '', 'int fact(int n)', '{', '    if(n > 1)', '    {',
+      \ '        return fact(n-1) * n;', '    }', '    return 1;', '}', '', 'int main(int argc, char **argv)',
+      \ '{', '    frobnitz(fact(10));', '}'],
+      \ ['#include <stdio.h>', '', 'int fib(int n)', '{', '    if(n > 2)', '    {',
+      \ '        return fib(n-1) + fib(n-2);', '    }', '    return 1;', '}', '', '// Frobs foo heartily',
+      \ 'int frobnitz(int foo)', '{', '    int i;', '    for(i = 0; i < 10; i++)', '    {',
+      \ '        printf("%d\n", foo);', '    }', '}', '',
+      \ 'int main(int argc, char **argv)', '{', '    frobnitz(fib(10));', '}'])
+  call term_sendkeys(buf, ":diffupdate!\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=internal\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_07', {})
+
+  call term_sendkeys(buf, ":set diffopt+=algorithm:patience\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_08', {})
+
+  call term_sendkeys(buf, ":set diffopt+=algorithm:histogram\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_09', {})
+
+  " Test 10-11: normal/indent-heuristic
+  call term_sendkeys(buf, ":set diffopt&vim\<cr>")
+  call WriteDiffFiles(buf, ['', '  def finalize(values)', '', '    values.each do |v|', '      v.finalize', '    end'],
+      \ ['', '  def finalize(values)', '', '    values.each do |v|', '      v.prepare', '    end', '',
+      \ '    values.each do |v|', '      v.finalize', '    end'])
+  call term_sendkeys(buf, ":diffupdate!\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=internal\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_10', {})
+
+  " Leave trailing : at commandline!
+  call term_sendkeys(buf, ":set diffopt+=indent-heuristic\<cr>:\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_11', {}, 'one')
+  " shouldn't matter, if indent-algorithm comes before or after the algorithm
+  call term_sendkeys(buf, ":set diffopt&\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=indent-heuristic,algorithm:patience\<cr>:\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_11', {}, 'two')
+  call term_sendkeys(buf, ":set diffopt&\<cr>")
+  call term_sendkeys(buf, ":set diffopt+=algorithm:patience,indent-heuristic\<cr>:\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_11', {}, 'three')
+
+  " Test 12: diff the same file
+  call WriteDiffFiles(buf, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  call VerifyBoth(buf, 'Test_diff_12', '')
+
+  " Test 13: diff an empty file
+  call WriteDiffFiles(buf, [], [])
+  call VerifyBoth(buf, 'Test_diff_13', '')
+
+  " Test 14: test diffopt+=icase
+  call WriteDiffFiles(buf, ['a', 'b', 'cd'], ['A', 'b', 'cDe'])
+  call VerifyBoth(buf, 'Test_diff_14', " diffopt+=filler diffopt+=icase")
+
+  " Test 15-16: test diffopt+=iwhite
+  call WriteDiffFiles(buf, ['int main()', '{', '   printf("Hello, World!");', '   return 0;', '}'],
+      \ ['int main()', '{', '   if (0)', '   {', '      printf("Hello, World!");', '      return 0;', '   }', '}'])
+  call term_sendkeys(buf, ":diffupdate!\<cr>")
+  call term_sendkeys(buf, ":set diffopt&vim diffopt+=filler diffopt+=iwhite\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_15', {})
+  call term_sendkeys(buf, ":set diffopt+=internal\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_16', {})
+
+  " Test 17: test diffopt+=iblank
+  call WriteDiffFiles(buf, ['a', ' ', 'cd', 'ef', 'xxx'], ['a', 'cd', '', 'ef', 'yyy'])
+  call VerifyInternal(buf, 'Test_diff_17', " diffopt+=iblank")
+
+  " Test 18: test diffopt+=iblank,iwhite / iwhiteall / iwhiteeol
+  call VerifyInternal(buf, 'Test_diff_18', " diffopt+=iblank,iwhite")
+  call VerifyInternal(buf, 'Test_diff_18', " diffopt+=iblank,iwhiteall")
+  call VerifyInternal(buf, 'Test_diff_18', " diffopt+=iblank,iwhiteeol")
+
+  " Test 19: test diffopt+=iwhiteeol
+  call WriteDiffFiles(buf, ['a ', 'x', 'cd', 'ef', 'xx  xx', 'foo', 'bar'], ['a', 'x', 'c d', ' ef', 'xx xx', 'foo', '', 'bar'])
+  call VerifyInternal(buf, 'Test_diff_19', " diffopt+=iwhiteeol")
+
+  " Test 19: test diffopt+=iwhiteall
+  call VerifyInternal(buf, 'Test_diff_20', " diffopt+=iwhiteall")
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xfile1')
+  call delete('Xfile2')
+endfunc
+
 func Test_diff_with_cursorline()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run Vim in a terminal window'
-  endif
+  CheckScreendump
 
   call writefile([
 	\ 'hi CursorLine ctermbg=red ctermfg=white',
@@ -751,13 +881,45 @@ func Test_diff_with_cursorline()
   call delete('Xtest_diff_cursorline')
 endfunc
 
+func Test_diff_with_syntax()
+  CheckScreendump
+
+  let lines =<< trim END
+  	void doNothing() {
+	   int x = 0;
+	   char *s = "hello";
+	   return 5;
+	}
+  END
+  call writefile(lines, 'Xprogram1.c')
+  let lines =<< trim END
+  	void doSomething() {
+	   int x = 0;
+	   char *s = "there";
+	   return 5;
+	}
+  END
+  call writefile(lines, 'Xprogram2.c')
+
+  let lines =<< trim END
+  	edit Xprogram1.c
+	diffsplit Xprogram2.c
+  END
+  call writefile(lines, 'Xtest_diff_syntax')
+  let buf = RunVimInTerminal('-S Xtest_diff_syntax', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_syntax_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_syntax')
+  call delete('Xprogram1.c')
+  call delete('Xprogram2.c')
+endfunc
+
 func Test_diff_of_diff()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run Vim in a terminal window'
-  endif
-  if !has("rightleft")
-    throw 'Skipped: rightleft not supported'
-  endif
+  CheckScreendump
+  CheckFeature rightleft
 
   call writefile([
 	\ 'call setline(1, ["aa","bb","cc","@@ -3,2 +5,7 @@","dd","ee","ff"])',

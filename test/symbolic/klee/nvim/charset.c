@@ -69,7 +69,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
              && !STRING_ENDED(ptr + 1)
              && ptr[0] == '0' && ptr[1] != '8' && ptr[1] != '9') {
     pre = ptr[1];
-    // Detect hexadecimal: 0x or 0X follwed by hex digit
+    // Detect hexadecimal: 0x or 0X followed by hex digit
     if ((what & STR2NR_HEX)
         && !STRING_ENDED(ptr + 2)
         && (pre == 'X' || pre == 'x')
@@ -77,7 +77,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr += 2;
       goto vim_str2nr_hex;
     }
-    // Detect binary: 0b or 0B follwed by 0 or 1
+    // Detect binary: 0b or 0B followed by 0 or 1
     if ((what & STR2NR_BIN)
         && !STRING_ENDED(ptr + 2)
         && (pre == 'B' || pre == 'b')

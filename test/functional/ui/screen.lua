@@ -807,7 +807,9 @@ function Screen:_handle_mouse_off()
 end
 
 function Screen:_handle_mode_change(mode, idx)
-  assert(mode == self._mode_info[idx+1].name)
+  if self._mode_info ~= nil then
+    assert(mode == self._mode_info[idx+1].name)
+  end
   self.mode = mode
 end
 
@@ -1289,7 +1291,7 @@ local function fmt_ext_state(name, state)
     for k,v in pairs(state) do
       str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
              ..v.topline..", botline = "..v.botline..", curline = "..v.curline
-             ..", curcol = "..v.curcol.."},\n")
+             ..", curcol = "..v.curcol.."};\n")
     end
     return str .. "}"
   else
@@ -1316,7 +1318,7 @@ function Screen:print_snapshot(attrs, ignore)
         dict = "{"..self:_pprint_attrs(a).."}"
       end
       local keyval = (type(i) == "number") and "["..tostring(i).."]" or i
-      table.insert(attrstrs, "  "..keyval.." = "..dict..",")
+      table.insert(attrstrs, "  "..keyval.." = "..dict..";")
     end
     attrstr = (", attr_ids={\n"..table.concat(attrstrs, "\n").."\n}")
   end

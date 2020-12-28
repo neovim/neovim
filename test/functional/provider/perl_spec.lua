@@ -5,6 +5,10 @@ local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
 local retry = helpers.retry
+local curbufmeths = helpers.curbufmeths
+local insert = helpers.insert
+local expect = helpers.expect
+local feed = helpers.feed
 
 do
   clear()
@@ -19,7 +23,51 @@ before_each(function()
   clear()
 end)
 
-describe('perl host', function()
+describe('legacy perl provider', function()
+  if helpers.pending_win32(pending) then return end
+
+  it('feature test', function()
+    eq(1, eval('has("perl")'))
+  end)
+
+  it(':perl command', function()
+    command('perl $vim->vars->{set_by_perl} = [100, 0];')
+    eq({100, 0}, eval('g:set_by_perl'))
+  end)
+
+  it(':perlfile command', function()
+    local fname = 'perlfile.pl'
+    write_file(fname, '$vim->command("let set_by_perlfile = 123")')
+    command('perlfile perlfile.pl')
+    eq(123, eval('g:set_by_perlfile'))
+    os.remove(fname)
+  end)
+
+  it(':perldo command', function()
+    -- :perldo 1; doesn't change $_,
+    -- the buffer should not be changed
+    command('normal :perldo 1;')
+    eq(false, curbufmeths.get_option('modified'))
+    -- insert some text
+    insert('abc\ndef\nghi')
+    expect([[
+      abc
+      def
+      ghi]])
+    -- go to top and select and replace the first two lines
+    feed('ggvj:perldo $_ = reverse ($_)."$linenr"<CR>')
+    expect([[
+      cba1
+      fed2
+      ghi]])
+  end)
+
+  it('perleval()', function()
+    eq({1, 2, {['key'] = 'val'}}, eval([[perleval('[1, 2, {"key" => "val"}]')]]))
+  end)
+end)
+
+describe('perl provider', function()
   if helpers.pending_win32(pending) then return end
   teardown(function ()
     os.remove('Xtest-perl-hello.pl')

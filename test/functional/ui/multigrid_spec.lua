@@ -4,7 +4,7 @@ local clear = helpers.clear
 local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
 local meths = helpers.meths
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 
 describe('ext_multigrid', function()
@@ -1562,6 +1562,77 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
     ]]}
 
+    command('tabnext')
+    command('$tabnew')
+    screen:expect{grid=[[
+    ## grid 1
+      {16: }{17:2}{16: [No Name]  }{17:2}{16: [No Name] }{7: [No Name] }{12:               }{16:X}|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      [7:-----------------------------------------------------]|
+      {11:[No Name]                                            }|
+      [3:-----------------------------------------------------]|
+    ## grid 2 (hidden)
+                                |
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+    ## grid 3
+                                                           |
+    ## grid 4 (hidden)
+                                |
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+      {1:~                         }|
+    ## grid 5 (hidden)
+                                                           |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ## grid 6 (hidden)
+                                                           |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ## grid 7
+      ^                                                     |
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                    }|
+    ]]}
+
+    command('tabclose')
     command('tabclose')
     screen:expect{grid=[[
     ## grid 1
@@ -1846,8 +1917,8 @@ describe('ext_multigrid', function()
     meths.input_mouse('left', 'press', '', 1,6, 20)
     -- TODO(bfredl): "batching" input_mouse is formally not supported yet.
     -- Normally it should work fine in async context when nvim is not blocked,
-    -- but add a wait be sure.
-    wait()
+    -- but add a poke_eventloop be sure.
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 4, 20)
     screen:expect{grid=[[
     ## grid 1
@@ -1921,7 +1992,7 @@ describe('ext_multigrid', function()
     ]]}
 
     meths.input_mouse('left', 'press', '', 1,8, 26)
-    wait()
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 1, 6, 30)
     screen:expect{grid=[[
     ## grid 1

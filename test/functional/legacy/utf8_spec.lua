@@ -5,7 +5,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 local source = helpers.source
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('utf8', function()
   before_each(clear)
@@ -18,7 +18,7 @@ describe('utf8', function()
 
     -- Visual block Insert adjusts for multi-byte char
     feed('gg0l<C-V>jjIx<Esc>')
-    wait()
+    poke_eventloop()
 
     command('let r = getline(1, "$")')
     command('bwipeout!')

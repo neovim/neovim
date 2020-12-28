@@ -1515,10 +1515,6 @@ msgstr "E143: Autocommand poisti uuden puskurin odotuksen vastaisesti %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z:n argumentti ei ole numero"
 
-#, fuzzy
-#~ msgid "E145: Shell commands not allowed in restricted mode"
-#~ msgstr "E145: Kuoren komennot eivät toimi rvimissä"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Säännöllistä ilmausta ei voi rajata kirjaimilla"
 

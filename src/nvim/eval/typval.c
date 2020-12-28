@@ -725,7 +725,7 @@ int tv_list_concat(list_T *const l1, list_T *const l2, typval_T *const tv)
   list_T *l;
 
   tv->v_type = VAR_LIST;
-
+  tv->v_lock = VAR_UNLOCKED;
   if (l1 == NULL && l2 == NULL) {
     l = NULL;
   } else if (l1 == NULL) {
@@ -1358,7 +1358,8 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 
 //{{{2 Alloc/free
 
-/// Allocate an empty dictionary
+/// Allocate an empty dictionary.
+/// Caller should take care of the reference count.
 ///
 /// @return [allocated] new dictionary.
 dict_T *tv_dict_alloc(void)
@@ -2950,6 +2951,19 @@ float_T tv_get_float(const typval_T *const tv)
     }
   }
   return 0;
+}
+
+// Give an error and return FAIL unless "tv" is a non-empty string.
+int tv_check_for_string(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (tv->v_type != VAR_STRING
+      || tv->vval.v_string == NULL
+      || *tv->vval.v_string == NUL) {
+    EMSG(_(e_stringreq));
+    return FAIL;
+  }
+  return OK;
 }
 
 /// Get the string value of a "stringish" VimL object.

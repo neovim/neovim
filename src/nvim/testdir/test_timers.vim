@@ -233,16 +233,17 @@ func Test_timer_catch_error()
 endfunc
 
 func FeedAndPeek(timer)
-  call test_feedinput('a')
+  " call test_feedinput('a')
+  call nvim_input('a')
   call getchar(1)
 endfunc
 
 func Interrupt(timer)
-  call test_feedinput("\<C-C>")
+  " call test_feedinput("\<C-C>")
+  call nvim_input("\<C-C>")
 endfunc
 
 func Test_peek_and_get_char()
-  throw 'skipped: Nvim does not support test_feedinput()'
   if !has('unix') && !has('gui_running')
     return
   endif
@@ -337,6 +338,41 @@ func Test_nocatch_garbage_collect()
   call test_override('no_wait_return', 1)
   delfunc CauseAnError
   delfunc FeedChar
+endfunc
+
+func Test_error_in_timer_callback()
+  if !has('terminal') || (has('win32') && has('gui_running'))
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim [CODE]
+  func Func(timer)
+    " fail to create list
+    let x = [
+  endfunc
+  set updatetime=50
+  call timer_start(1, 'Func')
+  [CODE]
+  call writefile(lines, 'Xtest.vim')
+
+  let buf = term_start(GetVimCommandCleanTerm() .. ' -S Xtest.vim', {'term_rows': 8})
+  let job = term_getjob(buf)
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
+
+  " GC must not run during timer callback, which can make Vim crash.
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<CR>")
+  call term_wait(buf, 100)
+  call assert_equal('run', job_status(job))
+
+  call term_sendkeys(buf, ":qall!\<CR>")
+  call WaitFor({-> job_status(job) ==# 'dead'})
+  if has('unix')
+    call assert_equal('', job_info(job).termsig)
+  endif
+
+  call delete('Xtest.vim')
+  exe buf .. 'bwipe!'
 endfunc
 
 func Test_timer_invalid_callback()

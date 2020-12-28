@@ -56,6 +56,8 @@ uint64_t os_now(void)
 
 /// Sleeps for `ms` milliseconds.
 ///
+/// @see uv_sleep() (libuv v1.34.0)
+///
 /// @param ms          Number of milliseconds to sleep
 /// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t ms, bool ignoreinput)
@@ -71,6 +73,8 @@ void os_delay(uint64_t ms, bool ignoreinput)
 }
 
 /// Sleeps for `us` microseconds.
+///
+/// @see uv_sleep() (libuv v1.34.0)
 ///
 /// @param us          Number of microseconds to sleep.
 /// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
@@ -172,10 +176,11 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result,
   struct tm *clock_local_ptr = os_localtime_r(clock, &clock_local);
   // MSVC returns NULL for an invalid value of seconds.
   if (clock_local_ptr == NULL) {
-    snprintf(result, result_len, "%s\n", _("(Invalid)"));
+    xstrlcpy(result, _("(Invalid)"), result_len);
   } else {
-    strftime(result, result_len, "%a %b %d %H:%M:%S %Y\n", clock_local_ptr);
+    strftime(result, result_len, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr);
   }
+  xstrlcat(result, "\n", result_len);
   return result;
 }
 

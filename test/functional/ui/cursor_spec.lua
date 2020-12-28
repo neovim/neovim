@@ -286,6 +286,21 @@ describe('ui/cursor', function()
       eq(173, named.normal.blinkon)
       eq(42, named.showmatch.cell_percentage)
     end)
+
+    -- If there is no setting for guicursor, it becomes the default setting.
+    meths.set_option('guicursor', 'n:ver35-blinkwait171-blinkoff172-blinkon173-Cursor/lCursor')
+    screen:expect(function()
+      for _,m in ipairs(screen._mode_info) do
+        if m.name ~= 'normal' then
+          eq('block', m.cursor_shape or 'block')
+          eq(0, m.blinkon or 0)
+          eq(0, m.blinkoff or 0)
+          eq(0, m.blinkwait or 0)
+          eq(0, m.hl_id or 0)
+          eq(0, m.id_lm or 0)
+        end
+      end
+    end)
   end)
 
   it("empty 'guicursor' sets cursor_shape=block in all modes", function()
@@ -297,6 +312,8 @@ describe('ui/cursor', function()
         if m['cursor_shape'] ~= nil then
           eq('block', m.cursor_shape)
           eq(0, m.blinkon)
+          eq(0, m.hl_id)
+          eq(0, m.id_lm)
         end
       end
     end)

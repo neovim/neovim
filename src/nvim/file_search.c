@@ -1565,7 +1565,7 @@ theend:
   return file_name;
 }
 
-void do_autocmd_dirchanged(char *new_dir, CdScope scope)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
 {
   static bool recursive = false;
 
@@ -1601,6 +1601,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
 
   tv_dict_add_str(dict, S_LEN("scope"), buf);  // -V614
   tv_dict_add_str(dict, S_LEN("cwd"),   new_dir);
+  tv_dict_add_bool(dict, S_LEN("changed_window"), changed_window);
   tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
@@ -1633,7 +1634,7 @@ int vim_chdirfile(char_u *fname)
   slash_adjust((char_u *)dir);
 #endif
   if (!strequal(dir, (char *)NameBuff)) {
-    do_autocmd_dirchanged(dir, kCdScopeWindow);
+    do_autocmd_dirchanged(dir, kCdScopeWindow, false);
   }
 
   return OK;

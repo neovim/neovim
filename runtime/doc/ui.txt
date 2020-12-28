@@ -183,9 +183,9 @@ the editor.
 	'ambiwidth'
 	'emoji'
 	'guifont'
-	'guifontset'
 	'guifontwide'
 	'linespace'
+	'mousefocus'
 	'pumblend'
 	'showtabline'
 	'termguicolors'
@@ -719,7 +719,7 @@ events, which the UI must handle.
 
 	kind
 	    Name indicating the message kind:
-		"" (empty)	Unknown, report a |feature-request|
+		"" (empty)	Unknown (consider a feature-request: |bugs|)
 		"confirm"	|confirm()| or |:confirm| dialog
 		"confirm_sub"	|:substitute| confirm dialog |:s_c|
 		"emsg"		Error (|errors|, internal error, |:throw|, …)

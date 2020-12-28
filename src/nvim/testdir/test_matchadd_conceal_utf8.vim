@@ -36,4 +36,4 @@ function! Test_match_using_multibyte_conceal_char()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc

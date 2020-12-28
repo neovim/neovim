@@ -22,6 +22,7 @@ local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local write_file = global_helpers.write_file
+local fail = global_helpers.fail
 
 local module = {
   NIL = mpack.NIL,
@@ -441,6 +442,7 @@ function module.new_argv(...)
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
+        'XDG_DATA_DIRS',
         'TMPDIR',
       }) do
         if not env_tbl[k] then
@@ -553,9 +555,9 @@ function module.curbuf(method, ...)
   return module.buffer(method, 0, ...)
 end
 
-function module.wait()
-  -- Execute 'nvim_eval' (a deferred function) to block
-  -- until all pending input is processed.
+function module.poke_eventloop()
+  -- Execute 'nvim_eval' (a deferred function) to
+  -- force at least one main_loop iteration
   session:request('nvim_eval', '1')
 end
 
@@ -565,7 +567,7 @@ end
 
 --@see buf_lines()
 function module.curbuf_contents()
-  module.wait()  -- Before inspecting the buffer, process all input.
+  module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
 end
 
@@ -590,6 +592,24 @@ end
 function module.expect_any(contents)
   contents = dedent(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
+end
+
+function module.expect_events(expected, received, kind)
+  local inspect = require'vim.inspect'
+  if not pcall(eq, expected, received) then
+    local msg = 'unexpected '..kind..' received.\n\n'
+
+    msg = msg .. 'received events:\n'
+    for _, e in ipairs(received) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    msg = msg .. '\nexpected events:\n'
+    for _, e in ipairs(expected) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    fail(msg)
+  end
+  return received
 end
 
 -- Checks that the Nvim session did not terminate.
@@ -732,6 +752,14 @@ module.curbufmeths = module.create_callindex(module.curbuf)
 module.curwinmeths = module.create_callindex(module.curwin)
 module.curtabmeths = module.create_callindex(module.curtab)
 
+function module.exec(code)
+  return module.meths.exec(code, false)
+end
+
+function module.exec_capture(code)
+  return module.meths.exec(code, true)
+end
+
 function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
 end
@@ -769,14 +797,14 @@ end
 
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
-    local prog = module.funcs['provider#' .. provider .. '#Detect']()
-    return prog == '' and (provider .. ' not detected') or false
+    local e = module.funcs['provider#'..provider..'#Detect']()[2]
+    return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local errors = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
-    return errors ~= '' and errors or false
+    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    return e ~= '' and e or false
   else
-    assert(false, 'Unknown provider: ' .. provider)
+    assert(false, 'Unknown provider: '..provider)
   end
 end
 

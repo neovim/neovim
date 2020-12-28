@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/buffer_updates.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
@@ -157,7 +158,7 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      executor_exec_lua_cb(cb.on_detach, "detach", args, false, NULL);
+      nlua_call_ref(cb.on_detach, "detach", args, false, NULL);
       textlock--;
     }
     free_update_callbacks(cb);
@@ -236,7 +237,7 @@ void buf_updates_send_changes(buf_T *buf,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF) {
+    if (cb.on_lines != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
       Array args = ARRAY_DICT_INIT;
       Object items[8];
       args.size = 6;  // may be increased to 8 below
@@ -265,7 +266,7 @@ void buf_updates_send_changes(buf_T *buf,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_lines, "lines", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -281,12 +282,14 @@ void buf_updates_send_changes(buf_T *buf,
   kv_size(buf->update_callbacks) = j;
 }
 
-void buf_updates_send_splice(buf_T *buf,
-                             linenr_T start_line, colnr_T start_col,
-                             linenr_T oldextent_line, colnr_T oldextent_col,
-                             linenr_T newextent_line, colnr_T newextent_col)
+void buf_updates_send_splice(
+    buf_T *buf,
+    int start_row, colnr_T start_col, bcount_t start_byte,
+    int old_row, colnr_T old_col, bcount_t old_byte,
+    int new_row, colnr_T new_col, bcount_t new_byte)
 {
-  if (!buf_updates_active(buf)) {
+  if (!buf_updates_active(buf)
+      || (old_byte == 0 && new_byte == 0)) {
     return;
   }
 
@@ -295,8 +298,8 @@ void buf_updates_send_splice(buf_T *buf,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_bytes != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 8);
+    if (cb.on_bytes != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
+      FIXED_TEMP_ARRAY(args, 11);
 
       // the first argument is always the buffer handle
       args.items[0] = BUFFER_OBJ(buf->handle);
@@ -304,15 +307,18 @@ void buf_updates_send_splice(buf_T *buf,
       // next argument is b:changedtick
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
-      args.items[2] = INTEGER_OBJ(start_line);
+      args.items[2] = INTEGER_OBJ(start_row);
       args.items[3] = INTEGER_OBJ(start_col);
-      args.items[4] = INTEGER_OBJ(oldextent_line);
-      args.items[5] = INTEGER_OBJ(oldextent_col);
-      args.items[6] = INTEGER_OBJ(newextent_line);
-      args.items[7] = INTEGER_OBJ(newextent_col);
+      args.items[4] = INTEGER_OBJ(start_byte);
+      args.items[5] = INTEGER_OBJ(old_row);
+      args.items[6] = INTEGER_OBJ(old_col);
+      args.items[7] = INTEGER_OBJ(old_byte);
+      args.items[8] = INTEGER_OBJ(new_row);
+      args.items[9] = INTEGER_OBJ(new_col);
+      args.items[10] = INTEGER_OBJ(new_byte);
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_bytes, "bytes", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -347,8 +353,8 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
-                                        args, true, NULL);
+      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
+                                 args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -382,6 +388,6 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 
 static void free_update_callbacks(BufUpdateCallbacks cb)
 {
-  executor_free_luaref(cb.on_lines);
-  executor_free_luaref(cb.on_changedtick);
+  api_free_luaref(cb.on_lines);
+  api_free_luaref(cb.on_changedtick);
 }
