@@ -35,7 +35,7 @@ syn match msmtpWrongOption /\<timeout \(off$\|\d\+$\)\@!.*$/
 " Option protocol accepts smtp and lmtp.
 syn match msmtpWrongOption /\<protocol \(smtp$\|lmtp$\)\@!.*$/
 " Option auth accepts on, off and the method.
-syn match msmtpWrongOption /\<auth \(on$\|off$\|plain$\|cram-md5$\|digest-md5$\|scram-sha-1$\|gssapi$\|external$\|login$\|ntlm$\|oauthbearer\)\@!.*$/
+syn match msmtpWrongOption /\<auth \(on$\|off$\|plain$\|cram-md5$\|digest-md5$\|scram-sha-1$\|scram-sha-256$\|gssapi$\|external$\|login$\|ntlm$\|oauthbearer\|xoauth2\)\@!.*$/
 " Option syslog accepts on, off and the facility.
 syn match msmtpWrongOption /\<syslog \(on$\|off$\|LOG_USER$\|LOG_MAIL$\|LOG_LOCAL\d$\)\@!.*$/
 
