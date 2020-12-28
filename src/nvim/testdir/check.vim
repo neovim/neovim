@@ -12,6 +12,9 @@ endfunc
 " Command to check for the presence of a working option.
 command -nargs=1 CheckOption call CheckOption(<f-args>)
 func CheckOption(name)
+  if !exists('&' .. a:name)
+    throw 'Checking for non-existent option ' .. a:name
+  endif
   if !exists('+' .. a:name)
     throw 'Skipped: ' .. a:name .. ' option not supported'
   endif
