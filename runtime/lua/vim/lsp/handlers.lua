@@ -253,9 +253,8 @@ M['textDocument/signatureHelp'] = function(_, method, result)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
-M['textDocument/documentHighlight'] = function(_, _, result, _)
+M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
   if not result then return end
-  local bufnr = api.nvim_get_current_buf()
   util.buf_highlight_references(bufnr, result)
 end
 
