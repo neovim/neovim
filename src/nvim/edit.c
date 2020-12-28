@@ -3810,10 +3810,10 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
  */
 static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
 {
-  static win_T *wp;
+  static win_T *wp = NULL;
 
   if (flag == 'w') {            // just windows
-    if (buf == curbuf) {        // first call for this flag/expansion
+    if (buf == curbuf || wp == NULL) {  // first call for this flag/expansion
       wp = curwin;
     }
     assert(wp);

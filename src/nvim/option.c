@@ -4338,6 +4338,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     char buf_old[NUMBUFLEN];
     char buf_new[NUMBUFLEN];
     char buf_type[7];
+
     vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%ld", old_value);
     vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%ld", value);
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
