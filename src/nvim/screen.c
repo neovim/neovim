@@ -2013,6 +2013,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              // end-of-line
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
+  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines >= 0;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra = 0;
@@ -2196,7 +2197,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (wp->w_p_spell
-        && foldinfo.fi_lines == 0
+        && !has_fold
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
         && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
@@ -2299,6 +2300,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     // handle 'incsearch' and ":s///c" highlighting
     } else if (highlight_match
                && wp == curwin
+               && !has_fold
                && lnum >= curwin->w_cursor.lnum
                && lnum <= curwin->w_cursor.lnum + search_match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
@@ -2551,7 +2553,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   cur = wp->w_match_head;
   shl_flag = false;
   while ((cur != NULL || !shl_flag) && !number_only
-         && foldinfo.fi_lines == 0
+         && !has_fold
          ) {
     if (!shl_flag) {
       shl = &search_hl;

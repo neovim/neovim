@@ -21,6 +21,7 @@ describe('search highlighting', function()
       [3] = {reverse = true},
       [4] = {foreground = colors.Red}, -- Message
       [5] = {bold = true, reverse = true},
+      [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
 
@@ -36,6 +37,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       {1:~                                       }|
       /text                                   |
+    ]])
+  end)
+
+  it('is disabled in folded text', function()
+    insert("some text\nmore text")
+    feed_command('1,2fold')
+    feed("gg/text")
+    screen:expect([[
+      {6:+--  2 lines: some text·················}|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /text^                                   |
     ]])
   end)
 
