@@ -8492,13 +8492,14 @@ void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 {
   // Stuff the argument into the typeahead buffer.
   ins_typebuf(cmd, remap, 0, true, silent);
-  exec_normal(false);
+  exec_normal(false, false);
 }
 
 /// Execute normal_cmd() until there is no typeahead left.
 ///
 /// @param was_typed whether or not something was typed
-void exec_normal(bool was_typed)
+/// @param use_vpeekc use vpeekc() to check for available chars
+void exec_normal(bool was_typed, bool use_vpeekc)
 {
   oparg_T oa;
 
@@ -8506,7 +8507,8 @@ void exec_normal(bool was_typed)
   finish_op = false;
   while ((!stuff_empty()
           || ((was_typed || !typebuf_typed())
-              && typebuf.tb_len > 0))
+              && typebuf.tb_len > 0)
+          || (use_vpeekc && vpeekc() != NUL))
          && !got_int) {
     update_topline_cursor();
     normal_cmd(&oa, true);      // execute a Normal mode cmd
