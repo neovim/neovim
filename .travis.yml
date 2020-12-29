@@ -96,24 +96,6 @@ addons:
 
 jobs:
   include:
-    - stage: baseline
-      name: clang-asan
-      os: linux
-      compiler: clang-11
-      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
-      env:
-        - CLANG_SANITIZER=ASAN_UBSAN
-        - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        - SYMBOLIZER=asan_symbolize-11
-        - *common-job-env
-      addons:
-        apt:
-          sources:
-            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
-              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-          packages:
-            - *common-apt-packages
-            - clang-11
     - name: gcc-coverage (gcc 9)
       os: linux
       compiler: gcc-9
@@ -134,20 +116,6 @@ jobs:
           packages:
             - *common-apt-packages
             - gcc-9
-    - if: branch = master AND commit_message !~ /\[skip.lint\]/
-      name: lint
-      os: linux
-      env:
-        - CI_TARGET=lint
-        - *common-job-env
-
-    - stage: second stage
-      name: "macOS: clang"
-      os: osx
-      compiler: clang
-      osx_image: xcode10.2  # macOS 10.14
-      env:
-        - *common-job-env
     - name: gcc-functionaltest-lua
       os: linux
       compiler: gcc
@@ -188,12 +156,6 @@ jobs:
             - python3-setuptools
             - python-dev
             - python3-dev
-    - name: clang-tsan
-      os: linux
-      compiler: clang
-      env:
-        - CLANG_SANITIZER=TSAN
-        - *common-job-env
     - if: type != pull_request
       name: snap
       os: linux
