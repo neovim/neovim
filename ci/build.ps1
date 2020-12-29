@@ -3,7 +3,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
 $compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
@@ -29,27 +28,9 @@ function exitIfFailed() {
   }
 }
 
-# https://github.com/lukesampson/scoop#installation
-$scoop = (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-& {
-  Set-StrictMode -Off
-  Invoke-Expression $scoop
-}
-
-scoop install perl
-perl --version
-cpanm.bat --version
-
 if (-not $NoTests) {
-  scoop install nodejs-lts
   node --version
   npm.cmd --version
-
-  cpanm.bat -n Neovim::Ext
-  if ($LastExitCode -ne 0) {
-    Get-Content -Path "$env:USERPROFILE\.cpanm\build.log"
-  }
-  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'; exitIfFailed
 }
 
 if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
@@ -91,14 +72,7 @@ if ($compiler -eq 'MINGW') {
   & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -U msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz" ; exitIfFailed
-  # If there are still processes using msys-2.0.dll, after the base system update is finished, it will wait for input from the user.
-  # To prevent this, we will terminate all processes that use msys-2.0.dll.
-  Get-Process | Where-Object { $_.path -like 'C:\msys64*' } | Stop-Process
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
@@ -113,16 +87,16 @@ elseif ($compiler -eq 'MSVC') {
 
 if (-not $NoTests) {
   # Setup python (use AppVeyor system python)
-  C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
-  C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
+
+  C:\hostedtoolcache\windows\Python\2.7.18\x64\python.exe -m pip install pynvim ; exitIfFailed
+  C:\hostedtoolcache\windows\Python\3.5.4\x64\python.exe -m pip install pynvim ; exitIfFailed
   # Disambiguate python3
-  move c:\Python35\python.exe c:\Python35\python3.exe
-  $env:PATH = "C:\Python35;C:\Python27;$env:PATH"
+  move C:\hostedtoolcache\windows\Python\3.5.4\x64\python.exe C:\hostedtoolcache\windows\Python\3.5.4\x64\python3.exe
+  $env:PATH = "C:\hostedtoolcache\windows\Python\3.5.4\x64;C:\hostedtoolcache\windows\Python\2.7.18\x64;$env:PATH"
   # Sanity check
   python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
   python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
-  $env:PATH = "C:\Ruby24\bin;$env:PATH"
   gem.cmd install --pre neovim
   Get-Command -CommandType Application neovim-ruby-host.bat
 
