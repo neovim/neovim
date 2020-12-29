@@ -9,6 +9,8 @@ jobs:
   unixish:
     name: ${{ matrix.os }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
+      fail-fast: false
+      max-parallel: 2
       matrix:
         include:
           - flavor: asan
@@ -90,6 +92,8 @@ jobs:
       DEPS_PREFIX: "C:/projects/nvim-deps/usr"
 
     strategy:
+      fail-fast: false
+      max-parallel: 1
       matrix:
         config: [ MINGW_64-gcov, MINGW_32, MSVC_64, MSVC_32 ]
     name: windows (${{ matrix.config }})
