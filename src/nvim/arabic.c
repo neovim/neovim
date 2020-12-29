@@ -719,9 +719,7 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
   // half-shape current and previous character
   int shape_c = half_shape(prev_c);
 
-  // Save away current character
-  int curr_c = c;
-
+  int curr_c;
   int curr_laa = A_firstc_laa(c, *c1p);
   int prev_laa = A_firstc_laa(prev_c, prev_c1);
 

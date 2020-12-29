@@ -168,7 +168,7 @@ static const struct nv_cmd {
   { NL,        nv_down,        0,                      false },
   { Ctrl_K,    nv_error,       0,                      0 },
   { Ctrl_L,    nv_clear,       0,                      0 },
-  { Ctrl_M,    nv_down,        0,                      true },
+  { CAR,       nv_down,        0,                      true },
   { Ctrl_N,    nv_down,        NV_STS,                 false },
   { Ctrl_O,    nv_ctrlo,       0,                      0 },
   { Ctrl_P,    nv_up,          NV_STS,                 false },

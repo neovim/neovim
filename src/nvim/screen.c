@@ -3885,8 +3885,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       /* check if line ends before left margin */
       if (vcol < v + col - win_col_off(wp))
         vcol = v + col - win_col_off(wp);
-      /* Get rid of the boguscols now, we want to draw until the right
-       * edge for 'cursorcolumn'. */
+      // Get rid of the boguscols now, we want to draw until the right
+      // edge for 'cursorcolumn'.
       col -= boguscols;
       // boguscols = 0;  // Disabled because value never read after this
 
