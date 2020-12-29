@@ -12,6 +12,8 @@ local feed = helpers.feed
 local deepcopy = helpers.deepcopy
 local expect_events = helpers.expect_events
 
+local inspect = require 'vim.inspect'
+
 local origlines = {"original line 1",
                    "original line 2",
                    "original line 3",
@@ -288,7 +290,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
     -- TODO: while we are brewing the real strong coffe,
     -- verify should check buf_get_offset after every check_events
     if verify then
-      meths.buf_get_offset(0, meths.buf_line_count(0))
+      eq(meths.buf_get_offset(0, meths.buf_line_count(0)), string.len(shadowbytes))
     end
     exec_lua("return test_register(...)", 0, "test1", false, false, true)
     meths.buf_get_changedtick(0)
@@ -311,12 +313,18 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
         if event[1] == verify_name and event[2] == "bytes" then
           local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
+          print("FURR", string.len(shadowbytes))
+          print("BURRMURR", old_byte, new_byte)
           local before = string.sub(shadowbytes, 1, start_byte)
           -- no text in the tests will contain 0xff bytes (invalid UTF-8)
           -- so we can use it as marker for unknown bytes
           local unknown = string.rep('\255', new_byte)
           local after = string.sub(shadowbytes, start_byte + old_byte + 1)
+          print("auur", string.len(before))
+          print("nurr", string.len(unknown))
+          print("durr", string.len(after))
           shadowbytes = before .. unknown .. after
+          print("rororo", string.len(shadowbytes))
         end
       end
 
@@ -324,6 +332,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local bytes = table.concat(text, '\n') .. '\n'
 
       eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
+      print("HURRR", string.len(bytes))
       for i = 1, string.len(shadowbytes) do
         local shadowbyte = string.sub(shadowbytes, i, i)
         if shadowbyte ~= '\255' then
@@ -509,6 +518,54 @@ describe('lua: nvim_buf_attach on_bytes', function()
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
       }
+    end)
+
+    it('nvim_buf_set_text insert', function()
+      local check_events = setup_eventcheck(verify, {"bastext"})
+      meths.buf_set_text(0, 0, 3, 0, 3, {"fiol","kontra"})
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 0, 0, 0, 1, 6, 11 };
+      }
+
+      meths.buf_set_text(0, 1, 6, 1, 6, {"punkt","syntgitarr","övnings"})
+      check_events {
+        { "test1", "bytes", 1, 4, 1, 6, 14, 0, 0, 0, 2, 8, 25 };
+      }
+
+      eq({ "basfiol", "kontrapunkt", "syntgitarr", "övningstext" },
+         meths.buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('nvim_buf_set_text replace', function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      meths.buf_set_text(0, 2, 3, 2, 8, {"very text"})
+      check_events {
+        { "test1", "bytes", 1, 3, 2, 3, 35, 0, 5, 5, 0, 9, 9 };
+      }
+
+      meths.buf_set_text(0, 3, 5, 3, 7, {" splitty","line "})
+      check_events {
+        { "test1", "bytes", 1, 4, 3, 5, 57, 0, 2, 2, 1, 5, 14 };
+      }
+
+      meths.buf_set_text(0, 0, 8, 1, 2, {"JOINY"})
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 8, 8, 1, 2, 10, 0, 5, 5 };
+      }
+      print(inspect(meths.buf_get_lines(0, 0, -1, true)))
+
+      meths.buf_set_text(0, 4, 0, 6, 0, {"was 5,6",""})
+      print(inspect(meths.buf_get_lines(0, 0, -1, true)))
+      check_events {
+        { "test1", "bytes", 1, 6, 4, 0, 75, 2, 0, 32, 1, 0, 8 };
+      }
+
+
+      eq({ "originalJOINYiginal line 2", "orivery text line 3", "origi splitty",
+           "line l line 4", "was 5,6", "    indented line" },
+         meths.buf_get_lines(0, 0, -1, true))
+
     end)
   end
 
