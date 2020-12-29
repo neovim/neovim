@@ -31,9 +31,9 @@ describe('jobs', function()
     nvim('set_var', 'channel', channel)
     source([[
     function! Normalize(data) abort
-      " Windows: remove ^M
+      " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
