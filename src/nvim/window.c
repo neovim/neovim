@@ -5349,6 +5349,8 @@ void win_setwidth_win(int width, win_T *wp)
       width = p_wmw;
     if (width == 0)
       width = 1;
+  } else if (width < 0) {
+    width = 0;
   }
   if (wp->w_floating) {
     wp->w_float_config.width = width;

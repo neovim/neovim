@@ -850,6 +850,14 @@ func Test_window_resize()
   exe other_winnr .. 'resize +1'
   call assert_equal(12, winheight(other_winnr))
   call assert_equal(&lines - 10 - 3 -2, winheight(0))
+  close
+
+  vsplit
+  wincmd l
+  let other_winnr = winnr('h')
+  call assert_notequal(winnr(), other_winnr)
+  exe 'vert ' .. other_winnr .. 'resize -100'
+  call assert_equal(0, winwidth(other_winnr))
 
   %bwipe!
 endfunc
