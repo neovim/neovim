@@ -63,6 +63,7 @@ describe('jobs', function()
 
   it('append environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
@@ -77,6 +78,7 @@ describe('jobs', function()
 
   it('append environment with pty #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
@@ -91,6 +93,7 @@ describe('jobs', function()
 
   it('replace environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     nvim('command', "let g:job_opts.clear_env = 1")
 
