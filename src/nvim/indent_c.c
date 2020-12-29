@@ -461,6 +461,9 @@ cin_iscase (
   if (cin_starts_with(s, "case")) {
     for (s += 4; *s; ++s) {
       s = cin_skipcomment(s);
+      if (*s == NUL) {
+        break;
+      }
       if (*s == ':') {
         if (s[1] == ':')                /* skip over "::" for C++ */
           ++s;
@@ -1673,6 +1676,9 @@ void parse_cino(buf_T *buf)
   // Handle C++ extern "C" or "C++"
   buf->b_ind_cpp_extern_c = 0;
 
+  // Handle C #pragma directives
+  buf->b_ind_pragma = 0;
+
   for (p = buf->b_p_cino; *p; ) {
     l = p++;
     if (*p == '-') {
@@ -1744,6 +1750,7 @@ void parse_cino(buf_T *buf)
     case 'N': buf->b_ind_cpp_namespace = n; break;
     case 'k': buf->b_ind_if_for_while = n; break;
     case 'E': buf->b_ind_cpp_extern_c = n; break;
+    case 'P': buf->b_ind_pragma = n; break;
     }
     if (*p == ',')
       ++p;
@@ -1855,12 +1862,14 @@ int get_c_indent(void)
     goto laterend;
   }
 
-  /*
-   * #defines and so on always go at the left when included in 'cinkeys'.
-   */
+  // #defines and so on go at the left when included in 'cinkeys',
+  // exluding pragmas when customized in 'cinoptions'
   if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', true))) {
-    amount = curbuf->b_ind_hash_comment;
-    goto theend;
+    const char_u *const directive = skipwhite(theline + 1);
+    if (curbuf->b_ind_pragma == 0 || STRNCMP(directive, "pragma", 6) != 0) {
+      amount = curbuf->b_ind_hash_comment;
+      goto theend;
+    }
   }
 
   /*
@@ -3369,11 +3378,9 @@ term_again:
       continue;
     }
 
-    /*
-     * Are we at the start of a cpp base class declaration or
-     * constructor initialization?
-     */						    /* XXX */
-    n = false;
+    // Are we at the start of a cpp base class declaration or
+    // constructor initialization?  XXX
+    n = 0;
     if (curbuf->b_ind_cpp_baseclass != 0 && theline[0] != '{') {
       n = cin_is_cpp_baseclass(&cache_cpp_baseclass);
       l = get_cursor_line_ptr();
@@ -3406,7 +3413,6 @@ term_again:
      * } foo,
      *   bar;
      */
-    n = 0;
     if (cin_ends_in(l, (char_u *)",", NULL)
         || (*l != NUL && (n = l[STRLEN(l) - 1]) == '\\')) {
       /* take us back to opening paren */

@@ -304,9 +304,6 @@
 static char *e_spell_trunc = N_("E758: Truncated spell file");
 static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
 static char *e_affname = N_("Affix name too long in %s line %d: %s");
-static char *e_affform = N_("E761: Format error in affix file FOL, LOW or UPP");
-static char *e_affrange = N_(
-    "E762: Character in FOL, LOW or UPP is out of range");
 static char *msg_compressing = N_("Compressing word tree...");
 
 #define MAXLINELEN  500         // Maximum length in bytes of a line in a .aff
@@ -625,12 +622,13 @@ spell_load_file (
   switch (scms_ret) {
     case SP_FORMERROR:
     case SP_TRUNCERROR: {
-      emsgf(_("E757: This does not look like a spell file"));
+      emsgf("%s", _("E757: This does not look like a spell file"));
       goto endFAIL;
     }
     case SP_OTHERERROR: {
       emsgf(_("E5042: Failed to read spell file %s: %s"),
             fname, strerror(ferror(fd)));
+      goto endFAIL;
     }
     case 0: {
       break;
@@ -766,20 +764,24 @@ truncerr:
   }
 
   // <LWORDTREE>
-  res = spell_read_tree(fd, &lp->sl_fbyts, &lp->sl_fidxs, false, 0);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_fbyts, &lp->sl_fbyts_len,
+                        &lp->sl_fidxs, false, 0);
+  if (res != 0) {
     goto someerror;
+  }
 
   // <KWORDTREE>
-  res = spell_read_tree(fd, &lp->sl_kbyts, &lp->sl_kidxs, false, 0);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_kbyts, NULL, &lp->sl_kidxs, false, 0);
+  if (res != 0) {
     goto someerror;
+  }
 
   // <PREFIXTREE>
-  res = spell_read_tree(fd, &lp->sl_pbyts, &lp->sl_pidxs, true,
-      lp->sl_prefixcnt);
-  if (res != 0)
+  res = spell_read_tree(fd, &lp->sl_pbyts, NULL, &lp->sl_pidxs, true,
+                        lp->sl_prefixcnt);
+  if (res != 0) {
     goto someerror;
+  }
 
   // For a new file link it in the list of spell files.
   if (old_lp == NULL && lang != NULL) {
@@ -922,8 +924,8 @@ void suggest_load_files(void)
 
       // <SUGWORDTREE>: <wordtree>
       // Read the trie with the soundfolded words.
-      if (spell_read_tree(fd, &slang->sl_sbyts, &slang->sl_sidxs,
-              false, 0) != 0) {
+      if (spell_read_tree(fd, &slang->sl_sbyts, NULL, &slang->sl_sidxs,
+                          false, 0) != 0) {
 someerror:
         EMSG2(_("E782: error while reading .sug file: %s"),
             slang->sl_fname);
@@ -986,15 +988,17 @@ nextone:
 static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
 {
   int cnt = 0;
-  int i;
   char_u      *str;
 
   // read the length bytes, MSB first
-  for (i = 0; i < cnt_bytes; ++i)
-    cnt = (cnt << 8) + getc(fd);
-  if (cnt < 0) {
-    *cntp = SP_TRUNCERROR;
-    return NULL;
+  for (int i = 0; i < cnt_bytes; i++) {
+    const int c = getc(fd);
+
+    if (c == EOF) {
+      *cntp = SP_TRUNCERROR;
+      return NULL;
+    }
+    cnt = (cnt << 8) + (unsigned)c;
   }
   *cntp = cnt;
   if (cnt == 0)
@@ -1137,7 +1141,6 @@ static int read_sal_section(FILE *fd, slang_T *slang)
   salitem_T   *smp;
   int ccnt;
   char_u      *p;
-  int c = NUL;
 
   slang->sl_sofo = false;
 
@@ -1161,7 +1164,9 @@ static int read_sal_section(FILE *fd, slang_T *slang)
   ga_grow(gap, cnt + 1);
 
   // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
-  for (; gap->ga_len < cnt; ++gap->ga_len) {
+  for (; gap->ga_len < cnt; gap->ga_len++) {
+    int c = NUL;
+
     smp = &((salitem_T *)gap->ga_data)[gap->ga_len];
     ccnt = getc(fd);                            // <salfromlen>
     if (ccnt < 0)
@@ -1216,18 +1221,18 @@ static int read_sal_section(FILE *fd, slang_T *slang)
       return ccnt;
     }
 
-    if (has_mbyte) {
-      // convert the multi-byte strings to wide char strings
-      smp->sm_lead_w = mb_str2wide(smp->sm_lead);
-      smp->sm_leadlen = mb_charlen(smp->sm_lead);
-      if (smp->sm_oneof == NULL)
-        smp->sm_oneof_w = NULL;
-      else
-        smp->sm_oneof_w = mb_str2wide(smp->sm_oneof);
-      if (smp->sm_to == NULL)
-        smp->sm_to_w = NULL;
-      else
-        smp->sm_to_w = mb_str2wide(smp->sm_to);
+    // convert the multi-byte strings to wide char strings
+    smp->sm_lead_w = mb_str2wide(smp->sm_lead);
+    smp->sm_leadlen = mb_charlen(smp->sm_lead);
+    if (smp->sm_oneof == NULL) {
+      smp->sm_oneof_w = NULL;
+    } else {
+      smp->sm_oneof_w = mb_str2wide(smp->sm_oneof);
+    }
+    if (smp->sm_to == NULL) {
+      smp->sm_to_w = NULL;
+    } else {
+      smp->sm_to_w = mb_str2wide(smp->sm_to);
     }
   }
 
@@ -1238,17 +1243,14 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     p = xmalloc(1);
     p[0] = NUL;
     smp->sm_lead = p;
+    smp->sm_lead_w = mb_str2wide(smp->sm_lead);
     smp->sm_leadlen = 0;
     smp->sm_oneof = NULL;
+    smp->sm_oneof_w = NULL;
     smp->sm_rules = p;
     smp->sm_to = NULL;
-    if (has_mbyte) {
-      smp->sm_lead_w = mb_str2wide(smp->sm_lead);
-      smp->sm_leadlen = 0;
-      smp->sm_oneof_w = NULL;
-      smp->sm_to_w = NULL;
-    }
-    ++gap->ga_len;
+    smp->sm_to_w = NULL;
+    gap->ga_len++;
   }
 
   // Fill the first-index table.
@@ -1389,8 +1391,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   // Inserting backslashes may double the length, "^\(\)$<Nul>" is 7 bytes.
   // Conversion to utf-8 may double the size.
   c = todo * 2 + 7;
-  if (enc_utf8)
-    c += todo * 2;
+  c += todo * 2;
   pat = xmalloc(c);
 
   // We also need a list of all flags that can appear at the start and one
@@ -1487,72 +1488,61 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
 // Returns SP_*ERROR flags when there is something wrong.
 static int set_sofo(slang_T *lp, char_u *from, char_u *to)
 {
-  int i;
-
-  garray_T    *gap;
   char_u      *s;
   char_u      *p;
-  int c;
-  int         *inp;
 
-  if (has_mbyte) {
-    // Use "sl_sal" as an array with 256 pointers to a list of wide
-    // characters.  The index is the low byte of the character.
-    // The list contains from-to pairs with a terminating NUL.
-    // sl_sal_first[] is used for latin1 "from" characters.
-    gap = &lp->sl_sal;
-    ga_init(gap, sizeof(int *), 1);
-    ga_grow(gap, 256);
-    memset(gap->ga_data, 0, sizeof(int *) * 256);
-    gap->ga_len = 256;
+  // Use "sl_sal" as an array with 256 pointers to a list of wide
+  // characters.  The index is the low byte of the character.
+  // The list contains from-to pairs with a terminating NUL.
+  // sl_sal_first[] is used for latin1 "from" characters.
+  garray_T *gap = &lp->sl_sal;
+  ga_init(gap, sizeof(int *), 1);
+  ga_grow(gap, 256);
+  memset(gap->ga_data, 0, sizeof(int *) * 256);
+  gap->ga_len = 256;
 
-    // First count the number of items for each list.  Temporarily use
-    // sl_sal_first[] for this.
-    for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv((const char_u **)&p);
-      MB_CPTR_ADV(s);
-      if (c >= 256) {
-        lp->sl_sal_first[c & 0xff]++;
-      }
+  // First count the number of items for each list.  Temporarily use
+  // sl_sal_first[] for this.
+  for (p = from, s = to; *p != NUL && *s != NUL; ) {
+    const int c = mb_cptr2char_adv((const char_u **)&p);
+    MB_CPTR_ADV(s);
+    if (c >= 256) {
+      lp->sl_sal_first[c & 0xff]++;
     }
-    if (*p != NUL || *s != NUL)             // lengths differ
-      return SP_FORMERROR;
+  }
+  if (*p != NUL || *s != NUL) {  // lengths differ
+    return SP_FORMERROR;
+  }
 
-    // Allocate the lists.
-    for (i = 0; i < 256; ++i)
-      if (lp->sl_sal_first[i] > 0) {
-        p = xmalloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
-        ((int **)gap->ga_data)[i] = (int *)p;
-        *(int *)p = 0;
-      }
-
-    // Put the characters up to 255 in sl_sal_first[] the rest in a sl_sal
-    // list.
-    memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
-    for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv((const char_u **)&p);
-      i = mb_cptr2char_adv((const char_u **)&s);
-      if (c >= 256) {
-        // Append the from-to chars at the end of the list with
-        // the low byte.
-        inp = ((int **)gap->ga_data)[c & 0xff];
-        while (*inp != 0)
-          ++inp;
-        *inp++ = c;                     // from char
-        *inp++ = i;                     // to char
-        *inp++ = NUL;                   // NUL at the end
-      } else
-        // mapping byte to char is done in sl_sal_first[]
-        lp->sl_sal_first[c] = i;
+  // Allocate the lists.
+  for (int i = 0; i < 256; i++) {
+    if (lp->sl_sal_first[i] > 0) {
+      p = xmalloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
+      ((int **)gap->ga_data)[i] = (int *)p;
+      *(int *)p = 0;
     }
-  } else {
-    // mapping bytes to bytes is done in sl_sal_first[]
-    if (STRLEN(from) != STRLEN(to))
-      return SP_FORMERROR;
+  }
 
-    for (i = 0; to[i] != NUL; ++i)
-      lp->sl_sal_first[from[i]] = to[i];
-    lp->sl_sal.ga_len = 1;              // indicates we have soundfolding
+  // Put the characters up to 255 in sl_sal_first[] the rest in a sl_sal
+  // list.
+  memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
+  for (p = from, s = to; *p != NUL && *s != NUL; ) {
+    const int c = mb_cptr2char_adv((const char_u **)&p);
+    const int i = mb_cptr2char_adv((const char_u **)&s);
+    if (c >= 256) {
+      // Append the from-to chars at the end of the list with
+      // the low byte.
+      int *inp = ((int **)gap->ga_data)[c & 0xff];
+      while (*inp != 0) {
+        inp++;
+      }
+      *inp++ = c;                     // from char
+      *inp++ = i;                     // to char
+      *inp++ = NUL;                   // NUL at the end
+    } else {
+      // mapping byte to char is done in sl_sal_first[]
+      lp->sl_sal_first[c] = i;
+    }
   }
 
   return 0;
@@ -1571,40 +1561,35 @@ static void set_sal_first(slang_T *lp)
     sfirst[i] = -1;
   }
   smp = (salitem_T *)gap->ga_data;
-  for (int i = 0; i < gap->ga_len; ++i) {
-    if (has_mbyte)
-      // Use the lowest byte of the first character.  For latin1 it's
-      // the character, for other encodings it should differ for most
-      // characters.
-      c = *smp[i].sm_lead_w & 0xff;
-    else
-      c = *smp[i].sm_lead;
+  for (int i = 0; i < gap->ga_len; i++) {
+    // Use the lowest byte of the first character.  For latin1 it's
+    // the character, for other encodings it should differ for most
+    // characters.
+    c = *smp[i].sm_lead_w & 0xff;
     if (sfirst[c] == -1) {
       sfirst[c] = i;
-      if (has_mbyte) {
-        int n;
 
-        // Make sure all entries with this byte are following each
-        // other.  Move the ones that are in the wrong position.  Do
-        // keep the same ordering!
-        while (i + 1 < gap->ga_len
-               && (*smp[i + 1].sm_lead_w & 0xff) == c)
-          // Skip over entry with same index byte.
-          ++i;
+      // Make sure all entries with this byte are following each
+      // other.  Move the ones that are in the wrong position.  Do
+      // keep the same ordering!
+      while (i + 1 < gap->ga_len
+             && (*smp[i + 1].sm_lead_w & 0xff) == c) {
+        // Skip over entry with same index byte.
+        i++;
+      }
 
-        for (n = 1; i + n < gap->ga_len; ++n)
-          if ((*smp[i + n].sm_lead_w & 0xff) == c) {
-            salitem_T tsal;
+      for (int n = 1; i + n < gap->ga_len; n++) {
+        if ((*smp[i + n].sm_lead_w & 0xff) == c) {
+          salitem_T tsal;
 
-            // Move entry with same index byte after the entries
-            // we already found.
-            ++i;
-            --n;
-            tsal = smp[i + n];
-            memmove(smp + i + 1, smp + i,
-                sizeof(salitem_T) * n);
-            smp[i] = tsal;
-          }
+          // Move entry with same index byte after the entries
+          // we already found.
+          i++;
+          n--;
+          tsal = smp[i + n];
+          memmove(smp + i + 1, smp + i, sizeof(salitem_T) * n);
+          smp[i] = tsal;
+        }
       }
     }
   }
@@ -1633,10 +1618,12 @@ static int
 spell_read_tree (
     FILE *fd,
     char_u **bytsp,
+    long *bytsp_len,
     idx_T **idxsp,
     bool prefixtree,               // true for the prefix tree
     int prefixcnt                  // when "prefixtree" is true: prefix count
 )
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int idx;
   char_u      *bp;
@@ -1656,6 +1643,9 @@ spell_read_tree (
     // Allocate the byte array.
     bp = xmalloc(len);
     *bytsp = bp;
+    if (bytsp_len != NULL) {
+      *bytsp_len = len;
+    }
 
     // Allocate the index array.
     ip = xcalloc(len, sizeof(*ip));
@@ -1713,7 +1703,6 @@ read_tree_node (
       if (c == BY_NOFLAGS && !prefixtree) {
         // No flags, all regions.
         idxs[idx] = 0;
-        c = 0;
       } else if (c != BY_INDEX) {
         if (prefixtree) {
           // Read the optional pflags byte, the prefix ID and the
@@ -1818,7 +1807,8 @@ spell_reload_one (
 #define CONDIT_SUF      4       // add a suffix for matching flags
 #define CONDIT_AFF      8       // word already has an affix
 
-// Tunable parameters for when the tree is compressed.  See 'mkspellmem'.
+// Tunable parameters for when the tree is compressed.  Filled from the
+// 'mkspellmem' option.
 static long compress_start = 30000;     // memory / SBLOCKSIZE
 static long compress_inc = 100;         // memory / SBLOCKSIZE
 static long compress_added = 500000;    // word count
@@ -2448,12 +2438,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                   // upper-case letter.
                   if (aff_entry->ae_cond != NULL) {
                     char_u buf[MAXLINELEN];
-                    if (has_mbyte) {
-                      onecap_copy(items[4], buf, true);
-                      aff_entry->ae_cond = getroom_save(
-                          spin, buf);
-                    } else
-                      *aff_entry->ae_cond = c_up;
+                    onecap_copy(items[4], buf, true);
+                    aff_entry->ae_cond = getroom_save(spin, buf);
                     if (aff_entry->ae_cond != NULL) {
                       sprintf((char *)buf, "^%s",
                           aff_entry->ae_cond);
@@ -2628,19 +2614,6 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       spin->si_clear_chartab = false;
     }
 
-    // Don't write a word table for an ASCII file, so that we don't check
-    // for conflicts with a word table that matches 'encoding'.
-    // Don't write one for utf-8 either, we use utf_*() and
-    // mb_get_class(), the list of chars in the file will be incomplete.
-    if (!spin->si_ascii
-        && !enc_utf8
-        ) {
-      if (fol == NULL || low == NULL || upp == NULL)
-        smsg(_("Missing FOL/LOW/UPP line in %s"), fname);
-      else
-        (void)set_spell_chartab(fol, low, upp);
-    }
-
     xfree(fol);
     xfree(low);
     xfree(upp);
@@ -2658,8 +2631,9 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   }
 
   if (compsylmax != 0) {
-    if (syllable == NULL)
-      smsg(_("COMPOUNDSYLMAX used without SYLLABLE"));
+    if (syllable == NULL) {
+      smsg("%s", _("COMPOUNDSYLMAX used without SYLLABLE"));
+    }
     aff_check_number(spin->si_compsylmax, compsylmax, "COMPOUNDSYLMAX");
     spin->si_compsylmax = compsylmax;
   }
@@ -3035,6 +3009,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   char_u message[MAXLINELEN + MAXWLEN];
   int flags;
   int duplicate = 0;
+  Timestamp last_msg_time = 0;
 
   // Open the file.
   fd = os_fopen((char *)fname, "r");
@@ -3054,9 +3029,9 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   spin->si_msg_count = 999999;
 
   // Read and ignore the first line: word count.
-  (void)vim_fgets(line, MAXLINELEN, fd);
-  if (!ascii_isdigit(*skipwhite(line)))
+  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite(line))) {
     EMSG2(_("E760: No word count in %s"), fname);
+  }
 
   // Read all the lines in the file one by one.
   // The words are converted to 'encoding' here, before being added to
@@ -3110,18 +3085,22 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
       continue;
     }
 
-    // This takes time, print a message every 10000 words.
+    // This takes time, print a message every 10000 words, but not more
+    // often than once per second.
     if (spin->si_verbose && spin->si_msg_count > 10000) {
       spin->si_msg_count = 0;
-      vim_snprintf((char *)message, sizeof(message),
-                   _("line %6d, word %6ld - %s"),
-                   lnum, spin->si_foldwcount + spin->si_keepwcount, w);
-      msg_start();
-      msg_puts_long_attr(message, 0);
-      msg_clr_eos();
-      msg_didout = FALSE;
-      msg_col = 0;
-      ui_flush();
+      if (os_time() > last_msg_time) {
+        last_msg_time = os_time();
+        vim_snprintf((char *)message, sizeof(message),
+                     _("line %6d, word %6ld - %s"),
+                     lnum, spin->si_foldwcount + spin->si_keepwcount, w);
+        msg_start();
+        msg_puts_long_attr(message, 0);
+        msg_clr_eos();
+        msg_didout = false;
+        msg_col = 0;
+        ui_flush();
+      }
     }
 
     // Store the word in the hashtable to be able to find duplicates.
@@ -3374,13 +3353,9 @@ store_aff_word (
               p = word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
-                if (has_mbyte) {
-                  i = mb_charlen(ae->ae_chop);
-                  for (; i > 0; i--) {
-                    MB_PTR_ADV(p);
-                  }
-                } else {
-                  p += STRLEN(ae->ae_chop);
+                i = mb_charlen(ae->ae_chop);
+                for (; i > 0; i--) {
+                  MB_PTR_ADV(p);
                 }
               }
               STRCAT(newword, p);
@@ -3934,9 +3909,10 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
   ++spin->si_msg_count;
 
   if (spin->si_compress_cnt > 1) {
-    if (--spin->si_compress_cnt == 1)
+    if (--spin->si_compress_cnt == 1) {
       // Did enough words to lower the block count limit.
       spin->si_blocks_cnt += compress_inc;
+    }
   }
 
   // When we have allocated lots of memory we need to compress the word tree
@@ -3966,7 +3942,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
       msg_start();
       msg_puts(_(msg_compressing));
       msg_clr_eos();
-      msg_didout = FALSE;
+      msg_didout = false;
       msg_col = 0;
       ui_flush();
     }
@@ -3975,9 +3951,10 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
     // compression useful, or one of them is small, which means
     // compression goes fast.  But when filling the soundfold word tree
     // there is no keep-case tree.
-    wordtree_compress(spin, spin->si_foldroot);
-    if (affixID >= 0)
-      wordtree_compress(spin, spin->si_keeproot);
+    wordtree_compress(spin, spin->si_foldroot, "case-folded");
+    if (affixID >= 0) {
+      wordtree_compress(spin, spin->si_keeproot, "keep-case");
+    }
   }
 
   return OK;
@@ -4010,6 +3987,7 @@ static wordnode_T *get_wordnode(spellinfo_T *spin)
 // siblings.
 // Returns the number of nodes actually freed.
 static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
+  FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T  *np;
   int cnt = 0;
@@ -4029,6 +4007,7 @@ static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
 // Free a wordnode_T for re-use later.
 // Only the "wn_child" field becomes invalid.
 static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
+  FUNC_ATTR_NONNULL_ALL
 {
   n->wn_child = spin->si_first_free;
   spin->si_first_free = n;
@@ -4036,18 +4015,19 @@ static void free_wordnode(spellinfo_T *spin, wordnode_T *n)
 }
 
 // Compress a tree: find tails that are identical and can be shared.
-static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
+static void wordtree_compress(spellinfo_T *spin, wordnode_T *root,
+                              const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   hashtab_T ht;
-  int n;
-  int tot = 0;
-  int perc;
+  long tot = 0;
+  long perc;
 
   // Skip the root itself, it's not actually used.  The first sibling is the
   // start of the tree.
   if (root->wn_sibling != NULL) {
     hash_init(&ht);
-    n = node_compress(spin, root->wn_sibling, &ht, &tot);
+    const long n = node_compress(spin, root->wn_sibling, &ht, &tot);
 
 #ifndef SPELL_PRINTTREE
     if (spin->si_verbose || p_verbose > 2)
@@ -4060,8 +4040,8 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
       else
         perc = (tot - n) * 100 / tot;
       vim_snprintf((char *)IObuff, IOSIZE,
-          _("Compressed %d of %d nodes; %d (%d%%) remaining"),
-          n, tot, tot - n, perc);
+                   _("Compressed %s of %ld nodes; %ld (%ld%%) remaining"),
+                   name, tot, tot - n, perc);
       spell_message(spin, IObuff);
     }
 #ifdef SPELL_PRINTTREE
@@ -4073,23 +4053,23 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root)
 
 // Compress a node, its siblings and its children, depth first.
 // Returns the number of compressed nodes.
-static int
-node_compress (
+static long node_compress(
     spellinfo_T *spin,
     wordnode_T *node,
     hashtab_T *ht,
-    int *tot            // total count of nodes before compressing,
+    long *tot           // total count of nodes before compressing,
                         // incremented while going through the tree
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T  *np;
   wordnode_T  *tp;
   wordnode_T  *child;
   hash_T hash;
   hashitem_T  *hi;
-  int len = 0;
+  long len = 0;
   unsigned nr, n;
-  int compressed = 0;
+  long compressed = 0;
 
   // Go through the list of siblings.  Compress each child and then try
   // finding an identical child to replace it.
@@ -4162,7 +4142,7 @@ node_compress (
   node->wn_u1.hashkey[5] = NUL;
 
   // Check for CTRL-C pressed now and then.
-  fast_breakcheck();
+  veryfast_breakcheck();
 
   return compressed;
 }
@@ -4769,7 +4749,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
 
   // Compress the soundfold trie.
   spell_message(spin, (char_u *)_(msg_compressing));
-  wordtree_compress(spin, spin->si_foldroot);
+  wordtree_compress(spin, spin->si_foldroot, "case-folded");
 
   // Write the .sug file.
   // Make the file name by changing ".spl" to ".sug".
@@ -4855,10 +4835,10 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         spin->si_blocks_cnt = 0;
 
         // Skip over any other NUL bytes (same word with different
-        // flags).
-        while (byts[n + 1] == 0) {
-          ++n;
-          ++curi[depth];
+        // flags).  But don't go over the end.
+        while (n + 1 < slang->sl_fbyts_len && byts[n + 1] == 0) {
+          n++;
+          curi[depth]++;
         }
       } else {
         // Normal char, go one level deeper.
@@ -5115,7 +5095,8 @@ mkspell (
   spin.si_newcompID = 127;      // start compound ID at first maximum
 
   // default: fnames[0] is output file, following are input files
-  innames = &fnames[1];
+  // When "fcount" is 1 there is only one file.
+  innames = &fnames[fcount == 1 ? 0 : 1];
   incount = fcount - 1;
 
   wfname = xmalloc(MAXPATHL);
@@ -5125,12 +5106,10 @@ mkspell (
     if (fcount == 1 && len > 4 && STRCMP(fnames[0] + len - 4, ".add") == 0) {
       // For ":mkspell path/en.latin1.add" output file is
       // "path/en.latin1.add.spl".
-      innames = &fnames[0];
       incount = 1;
       vim_snprintf((char *)wfname, MAXPATHL, "%s.spl", fnames[0]);
     } else if (fcount == 1)   {
       // For ":mkspell path/vim" output file is "path/vim.latin1.spl".
-      innames = &fnames[0];
       incount = 1;
       vim_snprintf((char *)wfname, MAXPATHL, SPL_FNAME_TMPL,
           fnames[0], spin.si_ascii ? (char_u *)"ascii" : spell_enc());
@@ -5240,9 +5219,9 @@ mkspell (
     if (!error && !got_int) {
       // Combine tails in the tree.
       spell_message(&spin, (char_u *)_(msg_compressing));
-      wordtree_compress(&spin, spin.si_foldroot);
-      wordtree_compress(&spin, spin.si_keeproot);
-      wordtree_compress(&spin, spin.si_prefroot);
+      wordtree_compress(&spin, spin.si_foldroot, "case-folded");
+      wordtree_compress(&spin, spin.si_keeproot, "keep-case");
+      wordtree_compress(&spin, spin.si_prefroot, "prefixes");
     }
 
     if (!error && !got_int) {
@@ -5294,7 +5273,8 @@ theend:
 
 // Display a message for spell file processing when 'verbose' is set or using
 // ":mkspell".  "str" can be IObuff.
-static void spell_message(spellinfo_T *spin, char_u *str)
+static void spell_message(const spellinfo_T *spin, char_u *str)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (spin->si_verbose || p_verbose > 2) {
     if (!spin->si_verbose)
@@ -5534,65 +5514,6 @@ static void init_spellfile(void)
 
     xfree(buf);
   }
-}
-
-// Set the spell character tables from strings in the affix file.
-static int set_spell_chartab(char_u *fol, char_u *low, char_u *upp)
-{
-  // We build the new tables here first, so that we can compare with the
-  // previous one.
-  spelltab_T new_st;
-  char_u      *pf = fol, *pl = low, *pu = upp;
-  int f, l, u;
-
-  clear_spell_chartab(&new_st);
-
-  while (*pf != NUL) {
-    if (*pl == NUL || *pu == NUL) {
-      EMSG(_(e_affform));
-      return FAIL;
-    }
-    f = mb_ptr2char_adv((const char_u **)&pf);
-    l = mb_ptr2char_adv((const char_u **)&pl);
-    u = mb_ptr2char_adv((const char_u **)&pu);
-    // Every character that appears is a word character.
-    if (f < 256)
-      new_st.st_isw[f] = true;
-    if (l < 256)
-      new_st.st_isw[l] = true;
-    if (u < 256)
-      new_st.st_isw[u] = true;
-
-    // if "LOW" and "FOL" are not the same the "LOW" char needs
-    // case-folding
-    if (l < 256 && l != f) {
-      if (f >= 256) {
-        EMSG(_(e_affrange));
-        return FAIL;
-      }
-      new_st.st_fold[l] = f;
-    }
-
-    // if "UPP" and "FOL" are not the same the "UPP" char needs
-    // case-folding, it's upper case and the "UPP" is the upper case of
-    // "FOL" .
-    if (u < 256 && u != f) {
-      if (f >= 256) {
-        EMSG(_(e_affrange));
-        return FAIL;
-      }
-      new_st.st_fold[u] = f;
-      new_st.st_isu[u] = true;
-      new_st.st_upper[f] = u;
-    }
-  }
-
-  if (*pl != NUL || *pu != NUL) {
-    EMSG(_(e_affform));
-    return FAIL;
-  }
-
-  return set_spell_finish(&new_st);
 }
 
 // Set the spell character tables from strings in the .spl file.

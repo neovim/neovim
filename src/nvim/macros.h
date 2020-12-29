@@ -1,6 +1,8 @@
 #ifndef NVIM_MACROS_H
 #define NVIM_MACROS_H
 
+#include "auto/config.h"
+
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.
 #ifndef EXTERN
@@ -36,38 +38,34 @@
 #define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
                     NUL)
 
-/*
- * toupper() and tolower() that use the current locale.
- * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
- * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
- * Note: It is often better to use mb_tolower() and mb_toupper(), because many
- * toupper() and tolower() implementations only work for ASCII.
- */
+// toupper() and tolower() that use the current locale.
+// Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
+// range 0 - 255.  toupper()/tolower() on some systems can't handle others.
+// Note: It is often better to use mb_tolower() and mb_toupper(), because many
+// toupper() and tolower() implementations only work for ASCII.
 #define TOUPPER_LOC toupper
 #define TOLOWER_LOC tolower
 
-/* toupper() and tolower() for ASCII only and ignore the current locale. */
+// toupper() and tolower() for ASCII only and ignore the current locale.
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
 # define TOLOWER_ASC(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) + ('a' - 'A'))
 
-/* Like isalpha() but reject non-ASCII characters.  Can't be used with a
- * special key (negative value). */
+// Like isalpha() but reject non-ASCII characters.  Can't be used with a
+// special key (negative value).
 # define ASCII_ISLOWER(c) ((unsigned)(c) >= 'a' && (unsigned)(c) <= 'z')
 # define ASCII_ISUPPER(c) ((unsigned)(c) >= 'A' && (unsigned)(c) <= 'Z')
 # define ASCII_ISALPHA(c) (ASCII_ISUPPER(c) || ASCII_ISLOWER(c))
 # define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
-/* Returns empty string if it is NULL. */
+// Returns empty string if it is NULL.
 #define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
 
-/*
- * Adjust chars in a language according to 'langmap' option.
- * NOTE that there is no noticeable overhead if 'langmap' is not set.
- * When set the overhead for characters < 256 is small.
- * Don't apply 'langmap' if the character comes from the Stuff buffer or from a
- * mapping and the langnoremap option was set.
- * The do-while is just to ignore a ';' after the macro.
- */
+// Adjust chars in a language according to 'langmap' option.
+// NOTE that there is no noticeable overhead if 'langmap' is not set.
+// When set the overhead for characters < 256 is small.
+// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
+// mapping and the langnoremap option was set.
+// The do-while is just to ignore a ';' after the macro.
 #  define LANGMAP_ADJUST(c, condition) \
   do { \
     if (*p_langmap \
@@ -83,12 +81,12 @@
     } \
   } while (0)
 
-#define WRITEBIN   "wb"        /* no CR-LF translation */
+#define WRITEBIN   "wb"        // no CR-LF translation
 #define READBIN    "rb"
 #define APPENDBIN  "ab"
 
-/* mch_open_rw(): invoke os_open() with third argument for user R/W. */
-#if defined(UNIX)  /* open in rw------- mode */
+// mch_open_rw(): invoke os_open() with third argument for user R/W.
+#if defined(UNIX)  // open in rw------- mode
 # define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
 #elif defined(WIN32)
 # define mch_open_rw(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
@@ -99,9 +97,6 @@
 # define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
 
 # define UTF_COMPOSINGLIKE(p1, p2)  utf_composinglike((p1), (p2))
-
-/* Whether to draw the vertical bar on the right side of the cell. */
-# define CURSOR_BAR_RIGHT (curwin->w_p_rl && (!(State & CMDLINE) || cmdmsg_rl))
 
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed.
@@ -153,6 +148,12 @@
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
+
+#ifndef __has_include
+# define NVIM_HAS_INCLUDE(x) 0
+#else
+# define NVIM_HAS_INCLUDE __has_include
+#endif
 
 #ifndef __has_attribute
 # define NVIM_HAS_ATTRIBUTE(x) 0
@@ -207,16 +208,33 @@
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
+# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("clang diagnostic push") \
+    _Pragma("clang diagnostic ignored \"-Wimplicit-fallthrough\"")
+# else
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("clang diagnostic push")
+# endif
 # define PRAGMA_DIAG_POP \
     _Pragma("clang diagnostic pop")
 #elif defined(__GNUC__)
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
   _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
+# else
+#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
+    _Pragma("GCC diagnostic push")
+# endif
 # define PRAGMA_DIAG_POP \
   _Pragma("GCC diagnostic pop")
 #else
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+# define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
 # define PRAGMA_DIAG_POP
 #endif
 

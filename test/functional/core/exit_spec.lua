@@ -8,7 +8,7 @@ local run = helpers.run
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local redir_exec = helpers.redir_exec
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('v:exiting', function()
   local cid
@@ -52,7 +52,7 @@ describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
       eq('\n' .. redir_msg, redir_exec(cmdline))
-      wait()
+      poke_eventloop()
       eq(2, eval("1+1"))  -- Still alive?
     else
       funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})

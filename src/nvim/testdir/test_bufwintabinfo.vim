@@ -139,3 +139,20 @@ function Test_get_win_options()
     set foldlevel=0
   endif
 endfunc
+
+func Test_getbufinfo_lines()
+  new Xfoo
+  call setline(1, ['a', 'bc', 'd'])
+  let bn = bufnr('%')
+  hide
+  call assert_equal(3, getbufinfo(bn)[0]["linecount"])
+  edit Xfoo
+  bw!
+endfunc
+
+function Test_getbufinfo_lastused()
+  new Xfoo
+  let info = getbufinfo('Xfoo')[0]
+  call assert_equal(has_key(info, 'lastused'), 1)
+  call assert_equal(type(info.lastused), type(0))
+endfunc

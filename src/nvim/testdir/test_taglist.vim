@@ -7,6 +7,7 @@ func Test_taglist()
 	\ "BFoo\tXbar\t1",
 	\ "BBar\tXbar\t2",
 	\ "Kindly\tXbar\t3;\"\tv\tfile:",
+	\ "Lambda\tXbar\t3;\"\tλ\tfile:",
 	\ "Command\tXbar\tcall cursor(3, 4)|;\"\td",
 	\ ], 'Xtags')
   set tags=Xtags
@@ -17,12 +18,16 @@ func Test_taglist()
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xfoo"), {i, v -> v.name}))
   call assert_equal(['BFoo', 'FFoo'], map(taglist("Foo", "Xbar"), {i, v -> v.name}))
 
-  let kind = taglist("Kindly")
-  call assert_equal(1, len(kind))
-  call assert_equal('v', kind[0]['kind'])
-  call assert_equal('3', kind[0]['cmd'])
-  call assert_equal(1, kind[0]['static'])
-  call assert_equal('Xbar', kind[0]['filename'])
+  let kindly = taglist("Kindly")
+  call assert_equal(1, len(kindly))
+  call assert_equal('v', kindly[0]['kind'])
+  call assert_equal('3', kindly[0]['cmd'])
+  call assert_equal(1, kindly[0]['static'])
+  call assert_equal('Xbar', kindly[0]['filename'])
+
+  let lambda = taglist("Lambda")
+  call assert_equal(1, len(lambda))
+  call assert_equal('λ', lambda[0]['kind'])
 
   let cmd = taglist("Command")
   call assert_equal(1, len(cmd))

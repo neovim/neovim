@@ -28,11 +28,13 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   // Can't do anything with a Funcref, a Dict or special value on the right.
-  if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT) {
+  if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT
+      && tv2->v_type != VAR_BOOL && tv2->v_type != VAR_SPECIAL) {
     switch (tv1->v_type) {
       case VAR_DICT:
       case VAR_FUNC:
       case VAR_PARTIAL:
+      case VAR_BOOL:
       case VAR_SPECIAL: {
         break;
       }

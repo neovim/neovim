@@ -3,9 +3,11 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
 local command = helpers.command
+local ok = helpers.ok
 local eq = helpers.eq
 local matches = helpers.matches
 local eval = helpers.eval
+local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
 local mkdir = helpers.mkdir
@@ -17,6 +19,7 @@ local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local iswin = helpers.iswin
 local write_file = helpers.write_file
+local meths = helpers.meths
 
 describe('startup', function()
   before_each(function()
@@ -277,6 +280,72 @@ describe('startup', function()
         [4] = {bold = true, foreground = Screen.colors.Blue1},
     }})
   end)
+
+  it('fixed hang issue with --headless (#11386)', function()
+    local expected = ''
+    local period = 100
+    for i = 1, period - 1 do
+      expected = expected .. i .. '\r\n'
+    end
+    expected = expected .. period
+    eq(
+      expected,
+      -- FIXME(codehex): We should really set a timeout for the system function.
+      -- If this test fails, there will be a waiting input state.
+      funcs.system({nvim_prog, '-u', 'NONE', '-c',
+        'for i in range(1, 100) | echo i | endfor | quit',
+        '--headless'
+      })
+    )
+  end)
+
+  it("get command line arguments from v:argv", function()
+    local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+                               '--cmd', nvim_set,
+                               '-c', [[echo v:argv[-1:] len(v:argv) > 1]],
+                               '+q' })
+    eq('[\'+q\'] 1', out)
+  end)
+
+  local function pack_clear(cmd)
+    clear('--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd)
+  end
+
+
+  it("handles &packpath during startup", function()
+    pack_clear [[
+      let g:x = bar#test()
+      let g:y = leftpad#pad("heyya")
+    ]]
+    eq(-3, eval 'g:x')
+    eq("  heyya", eval 'g:y')
+
+    pack_clear [[ lua _G.y = require'bar'.doit() _G.z = require'leftpad''howdy' ]]
+    eq({9003, '\thowdy'}, exec_lua [[ return { _G.y, _G.z } ]])
+  end)
+
+  it("handles :packadd during startup", function()
+    -- control group: opt/bonus is not availabe by default
+    pack_clear [[
+      try
+        let g:x = bonus#secret()
+      catch
+        let g:err = v:exception
+      endtry
+    ]]
+    eq('Vim(let):E117: Unknown function: bonus#secret', eval 'g:err')
+
+    pack_clear [[ lua _G.test = {pcall(function() require'bonus'.launch() end)} ]]
+    eq({false, [[[string ":lua"]:1: module 'bonus' not found:]]},
+       exec_lua [[ _G.test[2] = string.gsub(_G.test[2], '[\r\n].*', '') return _G.test ]])
+
+    -- ok, time to launch the nukes:
+    pack_clear [[ packadd! bonus | let g:x = bonus#secret() ]]
+    eq('halloj', eval 'g:x')
+
+    pack_clear [[ packadd! bonus | lua _G.y = require'bonus'.launch() ]]
+    eq('CPE 1704 TKS', exec_lua [[ return _G.y ]])
+  end)
 end)
 
 describe('sysinit', function()
@@ -329,5 +398,122 @@ describe('sysinit', function()
                 VIM=vimdir }}
     eq('loaded 1 xdg 0 vim 1',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
+  end)
+
+  it('fixed hang issue with -D (#12647)', function()
+    local screen
+    screen = Screen.new(60, 6)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    screen:expect([[
+      ^                                                            |
+      Entering Debug mode.  Type "cont" to continue.              |
+      cmd: augroup nvim_terminal                                  |
+      >                                                           |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+    command([[call chansend(g:id, "cont\n")]])
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+                                                                  |
+    ]])
+  end)
+end)
+
+describe('clean', function()
+  clear()
+  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) ~= nil)
+  clear('--clean')
+  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) == nil)
+end)
+
+describe('user config init', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local init_lua_path = table.concat({xconfig, 'nvim', 'init.lua'}, pathsep)
+
+  before_each(function()
+    rmdir(xhome)
+
+    -- TODO, make mkdir_p helper
+    mkdir(xhome)
+    mkdir(xconfig)
+    mkdir(xconfig .. pathsep .. 'nvim')
+
+    write_file(init_lua_path, [[
+      vim.g.lua_rc = 1
+    ]])
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads init.lua from XDG config home by default', function()
+    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(1, eval('g:lua_rc'))
+    eq(init_lua_path, eval('$MYVIMRC'))
+  end)
+
+  describe 'with explicitly provided config'(function()
+    local custom_lua_path = table.concat({xhome, 'custom.lua'}, pathsep)
+    before_each(function()
+      write_file(custom_lua_path, [[
+      vim.g.custom_lua_rc = 1
+      ]])
+    end)
+
+    it('loads custom lua config and does not set $MYVIMRC', function()
+      clear{ args={'-u', custom_lua_path }, env={ XDG_CONFIG_HOME=xconfig }}
+      eq(1, eval('g:custom_lua_rc'))
+      eq('', eval('$MYVIMRC'))
+    end)
+  end)
+
+  describe 'VIMRC also exists'(function()
+    before_each(function()
+      write_file(table.concat({xconfig, 'nvim', 'init.vim'}, pathsep), [[
+      let g:vim_rc = 1
+      ]])
+    end)
+
+    it('loads default lua config, but shows an error', function()
+      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+      feed('<cr>') -- TODO check this, test execution is blocked without it
+      eq(1, eval('g:lua_rc'))
+      matches('Conflicting configs', meths.exec('messages', true))
+    end)
+  end)
+end)
+
+describe('user session', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local session_file = table.concat({xhome, 'session.lua'}, pathsep)
+
+  before_each(function()
+    rmdir(xhome)
+
+    mkdir(xhome)
+    write_file(session_file, [[
+      vim.g.lua_session = 1
+    ]])
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads session from the provided lua file', function()
+    clear{ args={'-S', session_file }, env={ HOME=xhome }}
+    eq(1, eval('g:lua_session'))
   end)
 end)

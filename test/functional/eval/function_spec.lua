@@ -2,7 +2,10 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
+local matches = helpers.matches
 local exc_exec = helpers.exc_exec
+local iswin = helpers.iswin
+local eval = helpers.eval
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   local max_func_args = 20  -- from eval.h
@@ -26,4 +29,9 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     ret = exc_exec('call rpcnotify(0, "foo", 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
     eq('Vim(call):E740: Too many arguments for function rpcnotify', ret)
   end)
+end)
+
+it('windowsversion()', function()
+  clear()
+  matches(iswin() and '^%d+%.%d+$' or '^$', eval('windowsversion()'))
 end)

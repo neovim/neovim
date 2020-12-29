@@ -38,6 +38,9 @@ describe('assert function:', function()
         call assert_equal(4, n)
         let l = [1, 2, 3]
         call assert_equal([1, 2, 3], l)
+        call assert_equal(v:_null_list, v:_null_list)
+        call assert_equal(v:_null_list, [])
+        call assert_equal([], v:_null_list)
         fu Func()
         endfu
         let F1 = function('Func')
@@ -91,6 +94,11 @@ describe('assert function:', function()
     it('can specify a message and get a message about what failed', function()
       call('assert_equal', 'foo', 'bar', 'testing')
       expected_errors({"testing: Expected 'foo' but got 'bar'"})
+    end)
+
+    it('should shorten a long message', function()
+      call ('assert_equal', 'XxxxxxxxxxxxxxxxxxxxxxX', 'XyyyyyyyyyyyyyyyyyyyyyyyyyX')
+      expected_errors({"Expected 'X\\[x occurs 21 times]X' but got 'X\\[y occurs 25 times]X'"})
     end)
   end)
 

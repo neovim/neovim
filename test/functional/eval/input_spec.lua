@@ -462,7 +462,7 @@ describe('confirm()', function()
     -- With shortmess-=F
     command('set shortmess-=F')
     feed(':edit foo<cr>')
-    check_and_clear('"foo" [New File]         |\n')
+    check_and_clear('"foo" [New]              |\n')
 
     -- With shortmess+=F
     command('set shortmess+=F')

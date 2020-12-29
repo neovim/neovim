@@ -1348,10 +1348,6 @@ msgstr "E143: Outobevele het nuwe buffer %s onverwags geskrap"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nie-numeriese parameter vir :z"
 
-#, fuzzy
-#~ msgid "E145: Shell commands not allowed in restricted mode"
-#~ msgstr "E145: Dop bevele nie toegelaat in rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Patrone kan nie deur letters afgebaken word nie"
 

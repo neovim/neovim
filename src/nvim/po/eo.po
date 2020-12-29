@@ -969,9 +969,6 @@ msgstr "E143: Aŭtokomandoj neatendite forviŝis novan bufron %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nenumera argumento de :z"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Ŝelkomandoj nepermeseblaj en rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Ne eblas limigi regulesprimon per literoj"
 

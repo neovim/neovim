@@ -59,7 +59,7 @@ describe('floatwin', function()
   end)
 
   it('closed immediately by autocmd #11383', function()
-    eq('Error executing lua: [string "<nvim>"]:4: Window was closed immediately',
+    eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
       pcall_err(exec_lua, [[
         local a = vim.api
         local function crashes(contents)
@@ -81,6 +81,50 @@ describe('floatwin', function()
         crashes{'bar'}
     ]]))
     assert_alive()
+  end)
+
+  it('opened with correct height', function()
+    local height = exec_lua([[
+      vim.api.nvim_set_option("winheight", 20)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        height = 10,
+        col = 5,
+        row = 1,
+        relative = 'editor',
+        style = 'minimal',
+        width = 15
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+
+      return vim.api.nvim_win_get_height(win_id)
+    ]])
+
+    eq(10, height)
+  end)
+
+  it('opened with correct width', function()
+    local width = exec_lua([[
+      vim.api.nvim_set_option("winwidth", 20)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        height = 10,
+        col = 5,
+        row = 1,
+        relative = 'editor',
+        style = 'minimal',
+        width = 10
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+
+      return vim.api.nvim_win_get_width(win_id)
+    ]])
+
+    eq(10, width)
   end)
 
   local function with_ext_multigrid(multigrid)
@@ -976,6 +1020,28 @@ describe('floatwin', function()
           {2:~                   }|
         ]], float_pos={
           [5] = {{id = 1002}, "NE", 4, 0, 50, true}
+        }, win_viewport = {
+          [2] = {
+              topline = 0,
+              botline = 3,
+              curline = 0,
+              curcol = 3,
+              win = { id = 1000 }
+          },
+          [4] = {
+              topline = 0,
+              botline = 3,
+              curline = 0,
+              curcol = 3,
+              win = { id = 1001 }
+          },
+          [5] = {
+            topline = 0,
+            botline = 2,
+            curline = 0,
+            curcol = 0,
+            win = { id = 1002 }
+          }
         }}
       else
         screen:expect([[
@@ -2032,10 +2098,10 @@ describe('floatwin', function()
         screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|
-            [2:----------------------------------------]|
-            [2:----------------------------------------]|
-            [2:----------------------------------------]|
-            [2:----------------------------------------]|
+            {5:[No Name]                               }|
+            [5:----------------------------------------]|
+            [5:----------------------------------------]|
+            [5:----------------------------------------]|
             {5:[Preview]                               }|
             [3:----------------------------------------]|
           ## grid 2
@@ -2046,6 +2112,10 @@ describe('floatwin', function()
             {17:f}{1:oo                           }|
             {17:b}{1:ar                           }|
             {1:                              }|
+          ## grid 5
+            |1| {17:f}oo                                 |
+            |2| {17:b}ar                                 |
+            {0:~                                       }|
         ]], float_pos=expected_pos}
       else
         screen:expect([[
@@ -5274,6 +5344,45 @@ describe('floatwin', function()
       -- at least. Also check invisible EndOfBuffer region blends correctly.
       meths.buf_set_lines(buf, 0, -1, true, {" x x  x   xx", "  x x  x   x"})
       win = meths.open_win(buf, false, {relative='editor', width=12, height=3, row=0, col=11, style='minimal'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          # TODO: 测试字典信息的准确性            |
+          # FIXME: 测试字典信息的准确^性           |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 6
+          {1: x x  x   xx}|
+          {1:  x x  x   x}|
+          {1:            }|
+        ]], float_pos={
+          [6] = { {
+              id = 1003
+            }, "NW", 1, 0, 11, true }
+        }}
+      else
+        screen:expect{grid=[[
+          # TODO: 测 {1: x x  x   xx} 确性            |
+          # FIXME: 测{1:  x x  x   x}准确^性           |
+          {0:~          }{1:            }{0:                 }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+      end
       meths.win_set_option(win, 'winblend', 30)
       screen:set_default_attr_ids({
         [1] = {foreground = tonumber('0xb282b2'), background = tonumber('0xffcfff')},
@@ -5311,7 +5420,7 @@ describe('floatwin', function()
             }, "NW", 1, 0, 11, true }
         }}
       else
-        screen:expect([[
+        screen:expect{grid=[[
           # TODO: 测 {2: x x  x}{1:息}{2: xx} 确性            |
           # FIXME: 测{1:试}{2:x x  x}{1:息}{2: x}准确^性           |
           {3:~          }{4:            }{3:                 }|
@@ -5319,7 +5428,7 @@ describe('floatwin', function()
           {3:~                                       }|
           {3:~                                       }|
                                                   |
-        ]])
+        ]]}
       end
 
       meths.win_set_config(win, {relative='editor', row=0, col=12})

@@ -153,6 +153,16 @@ describe('clipboard', function()
     eq('', eval('provider#clipboard#Error()'))
   end)
 
+  it('g:clipboard using lists', function()
+    source([[let g:clipboard = {
+            \  'name': 'custom',
+            \  'copy': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \  'paste': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \}]])
+    eq('custom', eval('provider#clipboard#Executable()'))
+    eq('', eval('provider#clipboard#Error()'))
+  end)
+
   it('g:clipboard using VimL functions', function()
     -- Implements a fake clipboard provider. cache_enabled is meaningless here.
     source([[let g:clipboard = {
@@ -595,10 +605,10 @@ describe('clipboard (with fake clipboard.vim)', function()
       {0:~                                                           }|
       {4:                                                            }|
       :registers                                                  |
-      {1:--- Registers ---}                                           |
-      "*   some{2:^J}star data{2:^J}                                      |
-      "+   such{2:^J}plus{2:^J}stuff                                      |
-      ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']       |
+      {1:Type Name Content}                                           |
+        l  "*   some{2:^J}star data{2:^J}                                 |
+        c  "+   such{2:^J}plus{2:^J}stuff                                 |
+        c  ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']  |
       {3:Press ENTER or type command to continue}^                     |
     ]], {
       [0] = {bold = true, foreground = Screen.colors.Blue},

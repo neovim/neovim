@@ -11,7 +11,7 @@ local os_kill = helpers.os_kill
 local retry = helpers.retry
 local meths = helpers.meths
 local NIL = helpers.NIL
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
@@ -93,6 +93,7 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
       })
     else
+      nvim('command', "set shell=/bin/sh")
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
       expect_msg_seq({
         {'notification', 'stdout', {0, {'hello world', ''}}}
@@ -185,11 +186,10 @@ describe('jobs', function()
       return eval([[jobstart('')]])
     end
     local executable_jobid = new_job()
-    local nonexecutable_jobid = eval("jobstart(['"..(iswin()
-      and './test/functional/fixtures'
-      or  './test/functional/fixtures/non_executable.txt').."'])")
-    eq(-1, nonexecutable_jobid)
-    -- Should _not_ throw an error.
+
+    local exe = iswin() and './test/functional/fixtures' or './test/functional/fixtures/non_executable.txt'
+    eq("Vim:E475: Invalid value for argument cmd: '"..exe.."' is not executable",
+      pcall_err(eval, "jobstart(['"..exe.."'])"))
     eq("", eval("v:errmsg"))
     -- Non-executable job should not increment the job ids. #5465
     eq(executable_jobid + 1, new_job())
@@ -307,16 +307,16 @@ describe('jobs', function()
     end))
   end)
 
-  it('disallows jobsend/stop on a non-existent job', function()
+  it('disallows jobsend on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
-    eq(false, pcall(eval, "jobstop(-1)"))
+    eq(0, eval('jobstop(-1)'))
   end)
 
-  it('disallows jobstop twice on the same job', function()
+  it('jobstop twice on the stopped or exited job return 0', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
-    eq(true, pcall(eval, "jobstop(j)"))
-    eq(false, pcall(eval, "jobstop(j)"))
+    eq(1, eval("jobstop(j)"))
+    eq(0, eval("jobstop(j)"))
   end)
 
   it('will not leak memory if we leave a job running', function()
@@ -428,7 +428,7 @@ describe('jobs', function()
       \ }
       let job = jobstart(['cat', '-'], g:callbacks)
     ]])
-    wait()
+    poke_eventloop()
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -918,6 +918,13 @@ describe('jobs', function()
         eq(NIL, meths.get_proc(child_pid))
       end
     end)
+  end)
+
+  it('jobstop on same id before stopped', function()
+    nvim('command', 'let j = jobstart(["cat", "-"], g:job_opts)')
+    neq(0, eval('j'))
+
+    eq({1, 0}, eval('[jobstop(j), jobstop(j)]'))
   end)
 
   describe('running tty-test program', function()

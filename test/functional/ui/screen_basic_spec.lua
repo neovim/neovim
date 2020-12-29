@@ -987,7 +987,7 @@ describe('Screen default colors', function()
   it('can be set to light', function()
     startup(true, false)
     screen:expect{condition=function()
-      eq({rgb_bg=Screen.colors.White, rgb_fg=0, rgb_sp=Screen.colors.Red,
+      eq({rgb_fg=Screen.colors.White, rgb_bg=0, rgb_sp=Screen.colors.Red,
           cterm_bg=0, cterm_fg=0}, screen.default_colors)
     end}
   end)

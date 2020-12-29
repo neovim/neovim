@@ -14,12 +14,14 @@ describe('UI receives option updates', function()
       arabicshape=true,
       emoji=true,
       guifont='',
-      guifontset='',
       guifontwide='',
       linespace=0,
       pumblend=0,
+      mousefocus=false,
       showtabline=1,
       termguicolors=false,
+      ttimeout=true,
+      ttimeoutlen=50,
       ext_cmdline=false,
       ext_popupmenu=false,
       ext_tabline=false,
@@ -104,6 +106,24 @@ describe('UI receives option updates', function()
 
     command("set linespace=-11")
     expected.linespace = -11
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
+    command("set mousefocus")
+    expected.mousefocus = true
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
+    command("set nottimeout")
+    expected.ttimeout = false
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
+    command("set ttimeoutlen=100")
+    expected.ttimeoutlen = 100
     screen:expect(function()
       eq(expected, screen.options)
     end)

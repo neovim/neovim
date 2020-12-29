@@ -8,6 +8,7 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
 local os_kill = helpers.os_kill
+local pcall_err = helpers.pcall_err
 
 local Screen = require('test.functional.ui.screen')
 
@@ -32,8 +33,9 @@ describe('system()', function()
       return nvim_dir..'/printargs-test' .. (iswin() and '.exe' or '')
     end
 
-    it('sets v:shell_error if cmd[0] is not executable', function()
-      call('system', { 'this-should-not-exist' })
+    it('throws error if cmd[0] is not executable', function()
+      eq("Vim:E475: Invalid value for argument cmd: 'this-should-not-exist' is not executable",
+        pcall_err(call, 'system', { 'this-should-not-exist' }))
       eq(-1, eval('v:shell_error'))
     end)
 
@@ -48,7 +50,8 @@ describe('system()', function()
       eq(0, eval('v:shell_error'))
 
       -- Provoke a non-zero v:shell_error.
-      call('system', { 'this-should-not-exist' })
+      eq("Vim:E475: Invalid value for argument cmd: 'this-should-not-exist' is not executable",
+        pcall_err(call, 'system', { 'this-should-not-exist' }))
       local old_val = eval('v:shell_error')
       eq(-1, old_val)
 

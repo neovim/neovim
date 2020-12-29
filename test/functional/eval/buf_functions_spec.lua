@@ -31,10 +31,12 @@ for _, func in ipairs({'bufname(%s)', 'bufnr(%s)', 'bufwinnr(%s)',
     it('errors out when receives v:true/v:false/v:null', function()
       -- Not compatible with Vim: in Vim it always results in buffer not found
       -- without any error messages.
-      for _, var in ipairs({'v:true', 'v:false', 'v:null'}) do
-        eq('Vim(call):E5300: Expected a Number or a String',
+      for _, var in ipairs({'v:true', 'v:false'}) do
+        eq('Vim(call):E5299: Expected a Number or a String, Boolean found',
            exc_exec('call ' .. func:format(var)))
       end
+      eq('Vim(call):E5300: Expected a Number or a String',
+         exc_exec('call ' .. func:format('v:null')))
     end)
     it('errors out when receives invalid argument', function()
       eq('Vim(call):E745: Expected a Number or a String, List found',

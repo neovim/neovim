@@ -12,7 +12,7 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
-if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-Microsoft")
+if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-(Microsoft|microsoft-standard)")
   # Windows Subsystem for Linux
   set(HAVE_WSL 1)
 endif()
@@ -32,6 +32,7 @@ endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(termios.h HAVE_TERMIOS_H)
 check_include_files(sys/uio.h HAVE_SYS_UIO_H)
+check_include_files(sys/sdt.h HAVE_SYS_SDT_H)
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)

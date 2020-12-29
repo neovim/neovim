@@ -82,6 +82,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#include "auto/config.h"
+
 #include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/change.h"
@@ -93,7 +95,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/pos.h"  // MAXLNUM
 #include "nvim/mark.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -878,7 +880,12 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0 || len == EOF) {
+    if (len == EOF) {
+      corruption_error("truncated", file_name);
+      u_free_uhp(uhp);
+      return NULL;
+    }
+    if (len == 0) {
       break;
     }
     int what = undo_read_byte(bi);
@@ -1057,7 +1064,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     if (file_name == NULL) {
       if (p_verbose > 0) {
         verbose_enter();
-        smsg(_("Cannot write undo file in any directory in 'undodir'"));
+        smsg("%s", _("Cannot write undo file in any directory in 'undodir'"));
         verbose_leave();
       }
       return;
@@ -1250,7 +1257,8 @@ theend:
 /// a bit more verbose.
 /// Otherwise use curbuf->b_ffname to generate the undo file name.
 /// "hash[UNDO_HASH_SIZE]" must be the hash value of the buffer text.
-void u_read_undo(char *name, char_u *hash, char_u *orig_name)
+void u_read_undo(char *name, const char_u *hash,
+                 const char_u *orig_name FUNC_ATTR_UNUSED)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   u_header_T **uhp_table = NULL;
@@ -1268,7 +1276,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
     // owner of the text file or equal to the current user.
     FileInfo file_info_orig;
     FileInfo file_info_undo;
-    if (os_fileinfo((char *)orig_name, &file_info_orig)
+    if (os_fileinfo((const char *)orig_name, &file_info_orig)
         && os_fileinfo((char *)file_name, &file_info_undo)
         && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
         && file_info_undo.stat.st_uid != getuid()) {
@@ -2244,7 +2252,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     // Adjust marks
     if (oldsize != newsize) {
       mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-                  (long)newsize - (long)oldsize, false, kExtmarkNOOP);
+                  (long)newsize - (long)oldsize, kExtmarkNOOP);
       if (curbuf->b_op_start.lnum > top + oldsize) {
         curbuf->b_op_start.lnum += newsize - oldsize;
       }
@@ -2441,15 +2449,16 @@ static void u_undo_end(
     uhp = curbuf->b_u_newhead;
   }
 
-  if (uhp == NULL)
+  if (uhp == NULL) {
     *msgbuf = NUL;
-  else
-    u_add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
+  } else {
+    add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
+  }
 
   {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == curbuf && wp->w_p_cole > 0) {
-        redraw_win_later(wp, NOT_VALID);
+        redraw_later(wp, NOT_VALID);
       }
     }
   }
@@ -2509,8 +2518,8 @@ void ex_undolist(exarg_T *eap)
         && uhp->uh_walk != mark) {
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ",
                    uhp->uh_seq, changes);
-      u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
-          uhp->uh_time);
+      add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
+               uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (STRLEN(IObuff) < 33)
           STRCAT(IObuff, " ");
@@ -2571,30 +2580,6 @@ void ex_undolist(exarg_T *eap)
     msg_end();
 
     ga_clear_strings(&ga);
-  }
-}
-
-/*
- * Put the timestamp of an undo header in "buf[buflen]" in a nice format.
- */
-static void u_add_time(char_u *buf, size_t buflen, time_t tt)
-{
-  struct tm curtime;
-
-  if (time(NULL) - tt >= 100) {
-    os_localtime_r(&tt, &curtime);
-    if (time(NULL) - tt < (60L * 60L * 12L))
-      /* within 12 hours */
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
-    else
-      /* longer ago */
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-  } else {
-    int64_t seconds = time(NULL) - tt;
-    vim_snprintf((char *)buf, buflen,
-                 NGETTEXT("%" PRId64 " second ago",
-                          "%" PRId64 " seconds ago", (uint32_t)seconds),
-                 seconds);
   }
 }
 
@@ -2971,7 +2956,10 @@ static char_u *u_save_line(linenr_T lnum)
 bool bufIsChanged(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return !bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true));
+  // In a "prompt" buffer we do respect 'modified', so that we can control
+  // closing the window by setting or resetting that option.
+  return  (!bt_dontwrite(buf) || bt_prompt(buf))
+    && (buf->b_changed || file_ff_differs(buf, true));
 }
 
 // Return true if any buffer has changes.  Also buffers that are not written.
@@ -3049,8 +3037,6 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
     curbuf = buf;
     // Args are tricky: this means replace empty range by empty range..
     u_savecommon(0, 1, 1, true);
-    curbuf = save_curbuf;
-
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
@@ -3058,6 +3044,7 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
         abort();
       }
     }
+    curbuf = save_curbuf;
   }
   return uhp;
 }

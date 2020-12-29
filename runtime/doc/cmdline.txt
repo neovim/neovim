@@ -215,6 +215,9 @@ CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
+							*c_CTRL-Z*
+CTRL-Z		Trigger 'wildmode'. Same as 'wildcharm', but always available.
+
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
 
@@ -224,6 +227,10 @@ CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 		present in 'cpoptions', start entered command.
 		Note: If your <Esc> key is hard to hit on your keyboard, train
 		yourself to use CTRL-[.
+						*c_META* *c_ALT*
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have a
+		command-line mode mapping.
 							*c_CTRL-C*
 CTRL-C		quit command-line without executing
 
@@ -556,6 +563,7 @@ followed by another Vim command:
     :lfdo
     :make
     :normal
+    :perlfile
     :promptfind
     :promptrepl
     :pyfile
@@ -968,7 +976,7 @@ name).  This is included for backwards compatibility with version 3.0, the
 
 Note: Where a file name is expected wildcards expansion is done.  On Unix the
 shell is used for this, unless it can be done internally (for speed).
-Unless in |restricted-mode|, backticks work also, like in >
+Backticks work also, like in >
 	:n `echo *.c`
 But expansion is only done if there are any wildcards before expanding the
 '%', '#', etc..  This avoids expanding wildcards inside a file name.  If you

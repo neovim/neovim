@@ -266,10 +266,8 @@ void os_copy_fullenv(char **env, size_t env_size)
   extern char         **environ;
 # endif
 
-  size_t i = 0;
-  while (environ[i] != NULL && i < env_size) {
+  for (size_t i = 0; i < env_size && environ[i] != NULL; i++) {
     env[i] = xstrdup(environ[i]);
-    i++;
   }
 #endif
 }
@@ -849,6 +847,20 @@ const void *vim_env_iter_rev(const char delim,
   }
 }
 
+
+/// @param[out] exe_name should be at least MAXPATHL in size
+void vim_get_prefix_from_exepath(char *exe_name)
+{
+  // TODO(bfredl): param could have been written as "char exe_name[MAXPATHL]"
+  // but c_grammar.lua does not recognize it (yet).
+  xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
+           MAXPATHL * sizeof(*exe_name));
+  char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+  *path_end = '\0';  // remove the trailing "nvim.exe"
+  path_end = (char *)path_tail((char_u *)exe_name);
+  *path_end = '\0';  // remove the trailing "bin/"
+}
+
 /// Vim getenv() wrapper with special handling of $HOME, $VIM, $VIMRUNTIME,
 /// allowing the user to override the Nvim runtime directory at runtime.
 /// Result must be freed by the caller.
@@ -904,12 +916,7 @@ char *vim_getenv(const char *name)
     char exe_name[MAXPATHL];
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
-      xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
-               sizeof(exe_name));
-      char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
-      *path_end = '\0';  // remove the trailing "nvim.exe"
-      path_end = (char *)path_tail((char_u *)exe_name);
-      *path_end = '\0';  // remove the trailing "bin/"
+      vim_get_prefix_from_exepath(exe_name);
       if (append_path(
           exe_name,
           "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
@@ -1169,7 +1176,9 @@ bool os_setenv_append_path(const char *fname)
       temp[0] = NUL;
     } else {
       xstrlcpy(temp, path, newlen);
-      xstrlcat(temp, ENV_SEPSTR, newlen);
+      if (ENV_SEPCHAR != path[pathlen - 1]) {
+        xstrlcat(temp, ENV_SEPSTR, newlen);
+      }
     }
     xstrlcat(temp, os_buf, newlen);
     os_setenv("PATH", temp, 1);

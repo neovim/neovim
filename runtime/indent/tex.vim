@@ -64,14 +64,17 @@
 "                   style) is supported.  Thanks Miles Wheeler for reporting.
 "               2018/02/07 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Make indentation more smart in the normal mode
+"               2020/04/26 by Yichao Zhou <broken.zhou AT gmail.com>
+"               (*) Fix a bug related to \[ & \].  Thanks Manuel Boni for
+"               reporting.
 "
 " }}}
 
 " Document: {{{
 "
-" To set the following options (ok, currently it's just one), add a line like
-"   let g:tex_indent_items = 1
-" to your ~/.vimrc.
+" For proper latex experience, please put
+"         let g:tex_flavor = "latex"
+" into your vimrc.
 "
 " * g:tex_indent_brace
 "
@@ -184,13 +187,18 @@ function! GetTeXIndent() " {{{
     let line = substitute(getline(lnum), '\s*%.*', '','g')     " last line
     let cline = substitute(getline(v:lnum), '\s*%.*', '', 'g') " current line
 
+    let ccol = 1
+    while cline[ccol] =~ '\s'
+        let ccol += 1
+    endwhile
+
     "  We are in verbatim, so do what our user what.
-    if synIDattr(synID(v:lnum, indent(v:lnum), 1), "name") == "texZone"
+    if synIDattr(synID(v:lnum, ccol, 1), "name") == "texZone"
         if empty(cline)
             return indent(lnum)
         else
             return indent(v:lnum)
-        end
+        endif
     endif
 
     if lnum == 0
@@ -253,13 +261,13 @@ function! GetTeXIndent() " {{{
             let stay = 0
         endif
 
-        if cline =~ '^\s*\\\?[\]}]' && s:CheckPairedIsLastCharacter(v:lnum, indent(v:lnum))
+        if cline =~ '^\s*\\\?[\]}]' && s:CheckPairedIsLastCharacter(v:lnum, ccol)
             let ind -= shiftwidth()
             let stay = 0
         endif
 
         if line !~ '^\s*\\\?[\]}]'
-            for i in range(indent(lnum)+1, strlen(line)-1)
+            for i in range(1, strlen(line)-1)
                 let char = line[i]
                 if char == ']' || char == '}'
                     if s:CheckPairedIsLastCharacter(lnum, i)

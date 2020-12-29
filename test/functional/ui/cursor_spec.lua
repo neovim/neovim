@@ -245,6 +245,25 @@ describe('ui/cursor', function()
       eq('normal', screen.mode)
     end)
 
+    -- update the highlight again to hide cursor
+    helpers.command('hi Cursor blend=100')
+
+    for _, m in ipairs(expected_mode_info) do
+      if m.hl_id then
+          m.attr = {background = Screen.colors.Red, blend = 100}
+      end
+    end
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      test                     |
+    ]], condition=function()
+      eq(expected_mode_info, screen._mode_info)
+    end
+    }
+
     -- Another cursor style.
     meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173'
       ..',ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42')
@@ -267,6 +286,21 @@ describe('ui/cursor', function()
       eq(173, named.normal.blinkon)
       eq(42, named.showmatch.cell_percentage)
     end)
+
+    -- If there is no setting for guicursor, it becomes the default setting.
+    meths.set_option('guicursor', 'n:ver35-blinkwait171-blinkoff172-blinkon173-Cursor/lCursor')
+    screen:expect(function()
+      for _,m in ipairs(screen._mode_info) do
+        if m.name ~= 'normal' then
+          eq('block', m.cursor_shape or 'block')
+          eq(0, m.blinkon or 0)
+          eq(0, m.blinkoff or 0)
+          eq(0, m.blinkwait or 0)
+          eq(0, m.hl_id or 0)
+          eq(0, m.id_lm or 0)
+        end
+      end
+    end)
   end)
 
   it("empty 'guicursor' sets cursor_shape=block in all modes", function()
@@ -278,6 +312,8 @@ describe('ui/cursor', function()
         if m['cursor_shape'] ~= nil then
           eq('block', m.cursor_shape)
           eq(0, m.blinkon)
+          eq(0, m.hl_id)
+          eq(0, m.id_lm)
         end
       end
     end)

@@ -4,7 +4,7 @@ local command = helpers.command
 local meths = helpers.meths
 local clear = helpers.clear
 local sleep = helpers.sleep
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 local eq = helpers.eq
 
@@ -39,7 +39,7 @@ describe('List support code', function()
     feed(':let t_rt = reltime()<CR>:let t_bl = copy(bl)<CR>')
     sleep(min_dur / 16 * 1000)
     feed('<C-c>')
-    wait()
+    poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
     local t_dur = tonumber(meths.get_var('t_dur'))
     if t_dur >= dur / 8 then
@@ -50,7 +50,7 @@ describe('List support code', function()
     feed(':let t_rt = reltime()<CR>:let t_j = join(bl)<CR>')
     sleep(min_dur / 16 * 1000)
     feed('<C-c>')
-    wait()
+    poke_eventloop()
     command('let t_dur = reltimestr(reltime(t_rt))')
     local t_dur = tonumber(meths.get_var('t_dur'))
     print(('t_dur: %g'):format(t_dur))

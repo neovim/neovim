@@ -36,6 +36,9 @@
 local vim = vim
 assert(vim)
 
+vim.inspect = package.loaded['vim.inspect']
+assert(vim.inspect)
+
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
@@ -92,66 +95,45 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
---{{{1 package.path updater function
--- Last inserted paths. Used to clear out items from package.[c]path when they
--- are no longer in &runtimepath.
-local last_nvim_paths = {}
-function vim._update_package_paths()
-  local cur_nvim_paths = {}
-  local rtps = vim.api.nvim_list_runtime_paths()
-  local sep = package.config:sub(1, 1)
-  for _, key in ipairs({'path', 'cpath'}) do
-    local orig_str = package[key] .. ';'
-    local pathtrails_ordered = {}
-    local orig = {}
-    -- Note: ignores trailing item without trailing `;`. Not using something
-    -- simpler in order to preserve empty items (stand for default path).
-    for s in orig_str:gmatch('[^;]*;') do
-      s = s:sub(1, -2)  -- Strip trailing semicolon
-      orig[#orig + 1] = s
-    end
-    if key == 'path' then
-      -- /?.lua and /?/init.lua
-      pathtrails_ordered = {sep .. '?.lua', sep .. '?' .. sep .. 'init.lua'}
-    else
-      local pathtrails = {}
-      for _, s in ipairs(orig) do
-        -- Find out path patterns. pathtrail should contain something like
-        -- /?.so, \?.dll. This allows not to bother determining what correct
-        -- suffixes are.
-        local pathtrail = s:match('[/\\][^/\\]*%?.*$')
-        if pathtrail and not pathtrails[pathtrail] then
-          pathtrails[pathtrail] = true
-          pathtrails_ordered[#pathtrails_ordered + 1] = pathtrail
-        end
-      end
-    end
-    local new = {}
-    for _, rtp in ipairs(rtps) do
-      if not rtp:match(';') then
-        for _, pathtrail in pairs(pathtrails_ordered) do
-          local new_path = rtp .. sep .. 'lua' .. pathtrail
-          -- Always keep paths from &runtimepath at the start:
-          -- append them here disregarding orig possibly containing one of them.
-          new[#new + 1] = new_path
-          cur_nvim_paths[new_path] = true
-        end
-      end
-    end
-    for _, orig_path in ipairs(orig) do
-      -- Handle removing obsolete paths originating from &runtimepath: such
-      -- paths either belong to cur_nvim_paths and were already added above or
-      -- to last_nvim_paths and should not be added at all if corresponding
-      -- entry was removed from &runtimepath list.
-      if not (cur_nvim_paths[orig_path] or last_nvim_paths[orig_path]) then
-        new[#new + 1] = orig_path
-      end
-    end
-    package[key] = table.concat(new, ';')
+local pathtrails = {}
+vim._so_trails = {}
+for s in  (package.cpath..';'):gmatch('[^;]*;') do
+    s = s:sub(1, -2)  -- Strip trailing semicolon
+  -- Find out path patterns. pathtrail should contain something like
+  -- /?.so, \?.dll. This allows not to bother determining what correct
+  -- suffixes are.
+  local pathtrail = s:match('[/\\][^/\\]*%?.*$')
+  if pathtrail and not pathtrails[pathtrail] then
+    pathtrails[pathtrail] = true
+    table.insert(vim._so_trails, pathtrail)
   end
-  last_nvim_paths = cur_nvim_paths
 end
+
+function vim._load_package(name)
+  local basename = name:gsub('%.', '/')
+  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
+  for _,path in ipairs(paths) do
+    local found = vim.api.nvim_get_runtime_file(path, false)
+    if #found > 0 then
+      local f, err = loadfile(found[1])
+      return f or error(err)
+    end
+  end
+
+  for _,trail in ipairs(vim._so_trails) do
+    local path = "lua/"..trail:gsub('?',basename)
+    local found = vim.api.nvim_get_runtime_file(path, false)
+    if #found > 0 then
+      local f, err = package.loadlib(found[1])
+      return f or error(err)
+    end
+  end
+  return nil
+end
+
+table.insert(package.loaders, 1, vim._load_package)
+
+-- TODO(ZyX-I): Create compatibility layer.
 
 --- Return a human-readable representation of the given object.
 ---
@@ -212,6 +194,18 @@ do
         vim.api.nvim_put(lines, 'c', true, true)
         -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
         vim.api.nvim_command('normal! a')
+      elseif phase < 2 and mode == 'R' then
+        local nchars = 0
+        for _, line in ipairs(lines) do
+            nchars = nchars + line:len()
+        end
+        local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+        local bufline = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
+        local firstline = lines[1]
+        firstline = bufline:sub(1, col)..firstline
+        lines[1] = firstline
+        lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
+        vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
       else
         vim.api.nvim_put(lines, 'c', false, true)
       end
@@ -243,6 +237,12 @@ function vim.schedule_wrap(cb)
   end)
 end
 
+--- <Docs described in |vim.empty_dict()| >
+--@private
+function vim.empty_dict()
+  return setmetatable({}, vim._empty_dict_mt)
+end
+
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
   __index = function(t, key)
@@ -254,13 +254,14 @@ vim.fn = setmetatable({}, {
   end
 })
 
+vim.funcref = function(viml_func_name)
+  return vim.fn[viml_func_name]
+end
+
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 local function __index(t, key)
-  if key == 'inspect' then
-    t.inspect = require('vim.inspect')
-    return t.inspect
-  elseif key == 'treesitter' then
+  if key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
     return t.treesitter
   elseif require('vim.uri')[key] ~= nil then
@@ -270,6 +271,12 @@ local function __index(t, key)
   elseif key == 'lsp' then
     t.lsp = require('vim.lsp')
     return t.lsp
+  elseif key == 'highlight' then
+    t.highlight = require('vim.highlight')
+    return t.highlight
+  elseif key == 'F' then
+    t.F = require('vim.F')
+    return t.F
   end
 end
 
@@ -316,9 +323,26 @@ do
       return pcall_ret(pcall(fn, ...))
     end
   end
+
+  vim.b = make_meta_accessor(
+    nil_wrap(function(v) return a.nvim_buf_get_var(0, v) end),
+    function(v, k) return a.nvim_buf_set_var(0, v, k) end,
+    function(v) return a.nvim_buf_del_var(0, v) end
+  )
+  vim.w = make_meta_accessor(
+    nil_wrap(function(v) return a.nvim_win_get_var(0, v) end),
+    function(v, k) return a.nvim_win_set_var(0, v, k) end,
+    function(v) return a.nvim_win_del_var(0, v) end
+  )
+  vim.t = make_meta_accessor(
+    nil_wrap(function(v) return a.nvim_tabpage_get_var(0, v) end),
+    function(v, k) return a.nvim_tabpage_set_var(0, v, k) end,
+    function(v) return a.nvim_tabpage_del_var(0, v) end
+  )
   vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
+
   local function getenv(k)
     local v = vim.fn.getenv(k)
     if v == vim.NIL then
@@ -380,6 +404,127 @@ do
     return make_meta_accessor(get, set)
   end
   vim.wo = new_win_opt_accessor(nil)
+end
+
+--- Get a table of lines with start, end columns for a region marked by two points
+---
+--@param bufnr number of buffer
+--@param pos1 (line, column) tuple marking beginning of region
+--@param pos2 (line, column) tuple marking end of region
+--@param regtype type of selection (:help setreg)
+--@param inclusive boolean indicating whether the selection is end-inclusive
+--@return region lua table of the form {linenr = {startcol,endcol}}
+function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    vim.fn.bufload(bufnr)
+  end
+
+  -- in case of block selection, columns need to be adjusted for non-ASCII characters
+  -- TODO: handle double-width characters
+  local bufline
+  if regtype:byte() == 22 then
+    bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    pos1[2] = vim.str_utfindex(bufline, pos1[2])
+  end
+
+  local region = {}
+  for l = pos1[1], pos2[1] do
+    local c1, c2
+    if regtype:byte() == 22 then  -- block selection: take width from regtype
+      c1 = pos1[2]
+      c2 = c1 + regtype:sub(2)
+      -- and adjust for non-ASCII characters
+      bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      if c1 < #bufline then
+        c1 = vim.str_byteindex(bufline, c1)
+      end
+      if c2 < #bufline then
+        c2 = vim.str_byteindex(bufline, c2)
+      end
+    else
+      c1 = (l == pos1[1]) and (pos1[2]) or 0
+      c2 = (l == pos2[1]) and (pos2[2] + (inclusive and 1 or 0)) or -1
+    end
+    table.insert(region, l, {c1, c2})
+  end
+  return region
+end
+
+--- Defers calling `fn` until `timeout` ms passes.
+---
+--- Use to do a one-shot timer that calls `fn`
+--- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
+--- safe to call.
+--@param fn Callback to call once `timeout` expires
+--@param timeout Number of milliseconds to wait before calling `fn`
+--@return timer luv timer object
+function vim.defer_fn(fn, timeout)
+  vim.validate { fn = { fn, 'c', true}; }
+  local timer = vim.loop.new_timer()
+  timer:start(timeout, 0, vim.schedule_wrap(function()
+    timer:stop()
+    timer:close()
+
+    fn()
+  end))
+
+  return timer
+end
+
+local on_keystroke_callbacks = {}
+
+--- Register a lua {fn} with an {id} to be run after every keystroke.
+---
+--@param fn function: Function to call. It should take one argument, which is a string.
+---                   The string will contain the literal keys typed.
+---                   See |i_CTRL-V|
+---
+---                   If {fn} is nil, it removes the callback for the associated {ns_id}
+--@param ns_id number? Namespace ID. If not passed or 0, will generate and return a new
+---                    namespace ID from |nvim_create_namesapce()|
+---
+--@return number Namespace ID associated with {fn}
+---
+--@note {fn} will be automatically removed if an error occurs while calling.
+---     This is to prevent the annoying situation of every keystroke erroring
+---     while trying to remove a broken callback.
+--@note {fn} will not be cleared from |nvim_buf_clear_namespace()|
+--@note {fn} will receive the keystrokes after mappings have been evaluated
+function vim.register_keystroke_callback(fn, ns_id)
+  vim.validate {
+    fn = { fn, 'c', true},
+    ns_id = { ns_id, 'n', true }
+  }
+
+  if ns_id == nil or ns_id == 0 then
+    ns_id = vim.api.nvim_create_namespace('')
+  end
+
+  on_keystroke_callbacks[ns_id] = fn
+  return ns_id
+end
+
+--- Function that executes the keystroke callbacks.
+--@private
+function vim._log_keystroke(char)
+  local failed_ns_ids = {}
+  local failed_messages = {}
+  for k, v in pairs(on_keystroke_callbacks) do
+    local ok, err_msg = pcall(v, char)
+    if not ok then
+      vim.register_keystroke_callback(nil, k)
+
+      table.insert(failed_ns_ids, k)
+      table.insert(failed_messages, err_msg)
+    end
+  end
+
+  if failed_ns_ids[1] then
+    error(string.format(
+      "Error executing 'on_keystroke' with ns_ids of '%s'\n    With messages: %s",
+      table.concat(failed_ns_ids, ", "),
+      table.concat(failed_messages, "\n")))
+  end
 end
 
 return module

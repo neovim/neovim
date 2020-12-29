@@ -176,9 +176,9 @@ See |sign_place()| for the equivalent Vim script function.
 
 		By default, the sign is assigned a default priority of 10. To
 		assign a different priority value, use "priority={prio}" to
-		specify a value. The priority is used to determine the
-		highlight group used when multiple signs are placed on the
-		same line.
+		specify a value.  The priority is used to determine the sign
+		that is displayed when multiple signs are placed on the same
+		line.
 
 		Examples: >
 			:sign place 5 line=3 name=sign1 file=a.py
@@ -198,7 +198,9 @@ See |sign_place()| for the equivalent Vim script function.
 		it (e.g., when the debugger has stopped at a breakpoint).
 
 		The optional "group={group}" attribute can be used before
-		"file=" to select a sign in a particular group.
+		"file=" to select a sign in a particular group.  The optional
+		"priority={prio}" attribute can be used to change the priority
+		of an existing sign.
 
 :sign place {id} name={name} [buffer={nr}]
 		Same, but use buffer {nr}.  If the buffer argument is not

@@ -7,6 +7,9 @@
 local uri_decode
 do
   local schar = string.char
+
+  --- Convert hex to char
+  --@private
   local function hex_to_char(hex)
     return schar(tonumber(hex, 16))
   end
@@ -34,6 +37,8 @@ do
   else
     tohex = function(b) return string.format("%02x", b) end
   end
+
+  --@private
   local function percent_encode_char(char)
     return "%"..tohex(sbyte(char), 2)
   end
@@ -45,10 +50,14 @@ do
 end
 
 
+--@private
 local function is_windows_file_uri(uri)
   return uri:match('^file:///[a-zA-Z]:') ~= nil
 end
 
+--- Get a URI from a file path.
+--@param path (string): Path to file
+--@return URI
 local function uri_from_fname(path)
   local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
   local is_windows = volume_path ~= nil
@@ -65,11 +74,30 @@ local function uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
+local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*)://.*'
+
+--- Get a URI from a bufnr
+--@param bufnr (number): Buffer number
+--@return URI
 local function uri_from_bufnr(bufnr)
-  return uri_from_fname(vim.api.nvim_buf_get_name(bufnr))
+  local fname = vim.api.nvim_buf_get_name(bufnr)
+  local scheme = fname:match(URI_SCHEME_PATTERN)
+  if scheme then
+    return fname
+  else
+    return uri_from_fname(fname)
+  end
 end
 
+--- Get a filename from a URI
+--@param uri (string): The URI
+--@return Filename
 local function uri_to_fname(uri)
+  local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
+  if scheme ~= 'file' then
+    return uri
+  end
+  uri = uri_decode(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:///', '')
@@ -77,12 +105,20 @@ local function uri_to_fname(uri)
   else
     uri = uri:gsub('^file://', '')
   end
-  return uri_decode(uri)
+  return uri
 end
 
--- Return or create a buffer for a uri.
+--- Return or create a buffer for a uri.
+--@param uri (string): The URI
+--@return bufnr.
+--@note Creates buffer but does not load it
 local function uri_to_bufnr(uri)
-  return vim.fn.bufadd((uri_to_fname(uri)))
+  local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
+  if scheme == 'file' then
+    return vim.fn.bufadd(uri_to_fname(uri))
+  else
+    return vim.fn.bufadd(uri)
+  end
 end
 
 return {

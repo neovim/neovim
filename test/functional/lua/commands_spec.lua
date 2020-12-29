@@ -43,11 +43,11 @@ describe(':lua command', function()
     eq({'', 'ETTS', 'TTSE', 'STTE'}, curbufmeths.get_lines(0, 100, false))
   end)
   it('throws catchable errors', function()
-    eq([[Vim(lua):E5107: Error loading lua [string ":lua"]:1: unexpected symbol near ')']],
+    eq([[Vim(lua):E5107: Error loading lua [string ":lua"]:0: unexpected symbol near ')']],
        pcall_err(command, 'lua ()'))
     eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: TEST]],
        exc_exec('lua error("TEST")'))
-    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id]],
+    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id: -10]],
        exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     eq({''}, curbufmeths.get_lines(0, 100, false))
   end)

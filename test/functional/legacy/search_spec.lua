@@ -6,7 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('search cmdline', function()
   local screen
@@ -21,6 +21,7 @@ describe('search cmdline', function()
       err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       more = { bold = true, foreground = Screen.colors.SeaGreen4 },
       tilde = { bold = true, foreground = Screen.colors.Blue1 },
+      hl = { background = Screen.colors.Yellow },
     })
   end)
 
@@ -482,9 +483,9 @@ describe('search cmdline', function()
     -- "interactive".  This mimics Vim's test_override("char_avail").
     -- (See legacy test: test_search.vim)
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -495,11 +496,11 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 ^the first                           |
@@ -510,13 +511,13 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<c-g>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -527,9 +528,9 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 ^the first                           |
@@ -540,11 +541,11 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -555,13 +556,13 @@ describe('search cmdline', function()
 
     command('$')
     feed('?the')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<c-t>')
-    wait()
+    poke_eventloop()
     feed('<cr>')
     screen:expect([[
         1 the first                           |
@@ -569,5 +570,73 @@ describe('search cmdline', function()
         3 the third                           |
       ?the                                    |
     ]])
+  end)
+
+  it('incsearch works with :sort', function()
+    -- oldtest: Test_incsearch_sort_dump().
+    screen:try_resize(20, 4)
+    command('set incsearch hlsearch scrolloff=0')
+    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+
+    feed(':sort ni u /on')
+    screen:expect([[
+      another {inc:on}e 2       |
+      that {hl:on}e 3          |
+      the {hl:on}e 1           |
+      :sort ni u /on^      |
+    ]])
+    feed('<esc>')
+  end)
+
+  it('incsearch works with :vimgrep family', function()
+    -- oldtest: Test_incsearch_vimgrep_dump().
+    screen:try_resize(30, 4)
+    command('set incsearch hlsearch scrolloff=0')
+    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+
+    feed(':vimgrep on')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimgrep on^                   |
+    ]])
+    feed('<esc>')
+
+    feed(':vimg /on/ *.txt')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimg /on/ *.txt^              |
+    ]])
+    feed('<esc>')
+
+    feed(':vimgrepadd "\\<LT>on')
+    screen:expect([[
+      another {inc:on}e 2                 |
+      that {hl:on}e 3                    |
+      the {hl:on}e 1                     |
+      :vimgrepadd "\<on^             |
+    ]])
+    feed('<esc>')
+
+    feed(':lv "tha')
+    screen:expect([[
+      another one 2                 |
+      {inc:tha}t one 3                    |
+      the one 1                     |
+      :lv "tha^                      |
+    ]])
+    feed('<esc>')
+
+    feed(':lvimgrepa "the" **/*.txt')
+    screen:expect([[
+      ano{inc:the}r one 2                 |
+      that one 3                    |
+      {hl:the} one 1                     |
+      :lvimgrepa "the" **/*.txt^     |
+    ]])
+    feed('<esc>')
   end)
 end)

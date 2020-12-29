@@ -71,24 +71,15 @@ If you are working in a terminal (emulator) you must make sure it accepts
 UTF-8, the encoding which Vim is working with. Otherwise only ASCII can
 be displayed and edited correctly.
 
-For the GUI you must select fonts that work with UTF-8.  This
-is the difficult part.  It depends on the system you are using, the locale and
-a few other things.
-
-For X11 you can set the 'guifontset' option to a list of fonts that together
-cover the characters that are used.  Example for Korean: >
-
-	:set guifontset=k12,r12
-
-Alternatively, you can set 'guifont' and 'guifontwide'.  'guifont' is used for
-the single-width characters, 'guifontwide' for the double-width characters.
-Thus the 'guifontwide' font must be exactly twice as wide as 'guifont'.
-Example for UTF-8: >
+For the GUI you must select fonts that work with UTF-8.  You can set 'guifont'
+and 'guifontwide'.  'guifont' is used for the single-width characters,
+'guifontwide' for the double-width characters. Thus the 'guifontwide' font
+must be exactly twice as wide as 'guifont'. Example for UTF-8: >
 
 	:set guifont=-misc-fixed-medium-r-normal-*-18-120-100-100-c-90-iso10646-1
 	:set guifontwide=-misc-fixed-medium-r-normal-*-18-120-100-100-c-180-iso10646-1
 
-You can also set 'guifont' alone, Vim will try to find a matching
+You can also set 'guifont' alone, the Nvim GUI will try to find a matching
 'guifontwide' for you.
 
 
@@ -267,16 +258,16 @@ Recognized 'fileencoding' values include:		*encoding-values*
 1   cp1258	Vietnamese
 1   cp{number}	MS-Windows: any installed single-byte codepage
 2   cp932	Japanese (Windows only)
-2   euc-jp	Japanese (Unix only)
-2   sjis	Japanese (Unix only)
-2   cp949	Korean (Unix and Windows)
-2   euc-kr	Korean (Unix only)
+2   euc-jp	Japanese
+2   sjis	Japanese
+2   cp949	Korean
+2   euc-kr	Korean
 2   cp936	simplified Chinese (Windows only)
-2   euc-cn	simplified Chinese (Unix only)
-2   cp950	traditional Chinese (on Unix alias for big5)
-2   big5	traditional Chinese (on Windows alias for cp950)
-2   euc-tw	traditional Chinese (Unix only)
-2   2byte-{name} Unix: any double-byte encoding (Vim specific name)
+2   euc-cn	simplified Chinese
+2   cp950	traditional Chinese (alias for big5)
+2   big5	traditional Chinese (alias for cp950)
+2   euc-tw	traditional Chinese
+2   2byte-{name} any double-byte encoding (Vim-specific name)
 2   cp{number}	MS-Windows: any installed double-byte codepage
 u   utf-8	32 bit UTF-8 encoded Unicode (ISO/IEC 10646-1)
 u   ucs-2	16 bit UCS-2 encoded Unicode (ISO/IEC 10646-1)
@@ -298,14 +289,14 @@ the same encoding is used and it's called latin1.  'isprint' can be used to
 display the characters 0x80 - 0xA0 or not.
 
 Several aliases can be used, they are translated to one of the names above.
-An incomplete list:
+Incomplete list:
 
 1   ansi	same as latin1 (obsolete, for backward compatibility)
-2   japan	Japanese: on Unix "euc-jp", on MS-Windows cp932
-2   korea	Korean: on Unix "euc-kr", on MS-Windows cp949
-2   prc		simplified Chinese: on Unix "euc-cn", on MS-Windows cp936
+2   japan	Japanese: "euc-jp"
+2   korea	Korean: "euc-kr"
+2   prc		simplified Chinese: "euc-cn"
 2   chinese     same as "prc"
-2   taiwan	traditional Chinese: on Unix "euc-tw", on MS-Windows cp950
+2   taiwan	traditional Chinese: "euc-tw"
 u   utf8	same as utf-8
 u   unicode	same as ucs-2
 u   ucs2be	same as ucs-2 (big endian)
@@ -393,148 +384,6 @@ conversion needs to be done.  These conversions are supported:
 	Old versions of GNU iconv() may cause the conversion to fail (they
 	request a very large buffer, more than Vim is willing to provide).
 	Try getting another iconv() implementation.
-
-							*iconv-dynamic*
-On MS-Windows Vim can be compiled with the |+iconv/dyn| feature.  This means
-Vim will search for the "iconv.dll" and "libiconv.dll" libraries.  When
-neither of them can be found Vim will still work but some conversions won't be
-possible.
-
-==============================================================================
-Fonts on X11						*mbyte-fonts-X11*
-
-Unfortunately, using fonts in X11 is complicated.  The name of a single-byte
-font is a long string.  For multi-byte fonts we need several of these...
-
-First of all, Vim only accepts fixed-width fonts for displaying text.  You
-cannot use proportionally spaced fonts.  This excludes many of the available
-(and nicer looking) fonts.  However, for menus and tooltips any font can be
-used.
-
-Note that Display and Input are independent.  It is possible to see your
-language even though you have no input method for it.
-
-You should get a default font for menus and tooltips that works, but it might
-be ugly.  Read the following to find out how to select a better font.
-
-
-X LOGICAL FONT DESCRIPTION (XLFD)
-							*XLFD*
-XLFD is the X font name and contains the information about the font size,
-charset, etc.  The name is in this format:
-
-FOUNDRY-FAMILY-WEIGHT-SLANT-WIDTH-STYLE-PIXEL-POINT-X-Y-SPACE-AVE-CR-CE
-
-Each field means:
-
-- FOUNDRY:  FOUNDRY field.  The company that created the font.
-- FAMILY:   FAMILY_NAME field.  Basic font family name.  (helvetica, gothic,
-	    times, etc)
-- WEIGHT:   WEIGHT_NAME field.  How thick the letters are.  (light, medium,
-	    bold, etc)
-- SLANT:    SLANT field.
-		r:  Roman (no slant)
-		i:  Italic
-		o:  Oblique
-		ri: Reverse Italic
-		ro: Reverse Oblique
-		ot: Other
-		number:	Scaled font
-- WIDTH:    SETWIDTH_NAME field.  Width of characters.  (normal, condensed,
-	    narrow, double wide)
-- STYLE:    ADD_STYLE_NAME field.  Extra info to describe font.  (Serif, Sans
-	    Serif, Informal, Decorated, etc)
-- PIXEL:    PIXEL_SIZE field.  Height, in pixels, of characters.
-- POINT:    POINT_SIZE field.  Ten times height of characters in points.
-- X:	    RESOLUTION_X field.  X resolution (dots per inch).
-- Y:	    RESOLUTION_Y field.  Y resolution (dots per inch).
-- SPACE:    SPACING field.
-		p:  Proportional
-		m:  Monospaced
-		c:  CharCell
-- AVE:	    AVERAGE_WIDTH field.  Ten times average width in pixels.
-- CR:	    CHARSET_REGISTRY field.  The name of the charset group.
-- CE:	    CHARSET_ENCODING field.  The rest of the charset name.  For some
-	    charsets, such as JIS X 0208, if this field is 0, code points has
-	    the same value as GL, and GR if 1.
-
-For example, in case of a 16 dots font corresponding to JIS X 0208, it is
-written like:
-    -misc-fixed-medium-r-normal--16-110-100-100-c-160-jisx0208.1990-0
-
-
-X FONTSET
-						*fontset* *xfontset*
-A single-byte charset is typically associated with one font.  For multi-byte
-charsets a combination of fonts is often used.  This means that one group of
-characters are used from one font and another group from another font (which
-might be double wide).  This collection of fonts is called a fontset.
-
-Which fonts are required in a fontset depends on the current locale.  X
-windows maintains a table of which groups of characters are required for a
-locale.  You have to specify all the fonts that a locale requires in the
-'guifontset' option.
-
-NOTE: The fontset always uses the current locale, even though 'encoding' may
-be set to use a different charset.  In that situation you might want to use
-'guifont' and 'guifontwide' instead of 'guifontset'.
-
-Example:
-    |charset| language		    "groups of characters" ~
-    GB2312    Chinese (simplified)  ISO-8859-1 and GB 2312
-    Big5      Chinese (traditional) ISO-8859-1 and Big5
-    CNS-11643 Chinese (traditional) ISO-8859-1, CNS 11643-1 and CNS 11643-2
-    EUC-JP    Japanese		    JIS X 0201 and JIS X 0208
-    EUC-KR    Korean		    ISO-8859-1 and KS C 5601 (KS X 1001)
-
-You can search for fonts using the xlsfonts command.  For example, when you're
-searching for a font for KS C 5601: >
-    xlsfonts | grep ksc5601
-
-This is complicated and confusing.  You might want to consult the X-Windows
-documentation if there is something you don't understand.
-
-						*base_font_name_list*
-When you have found the names of the fonts you want to use, you need to set
-the 'guifontset' option.  You specify the list by concatenating the font names
-and putting a comma in between them.
-
-For example, when you use the ja_JP.eucJP locale, this requires JIS X 0201
-and JIS X 0208.  You could supply a list of fonts that explicitly specifies
-the charsets, like: >
-
- :set guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140-jisx0208.1983-0,
-	\-misc-fixed-medium-r-normal--14-130-75-75-c-70-jisx0201.1976-0
-
-Alternatively, you can supply a base font name list that omits the charset
-name, letting X-Windows select font characters required for the locale.  For
-example: >
-
- :set guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140,
-	\-misc-fixed-medium-r-normal--14-130-75-75-c-70
-
-Alternatively, you can supply a single base font name that allows X-Windows to
-select from all available fonts.  For example: >
-
- :set guifontset=-misc-fixed-medium-r-normal--14-*
-
-Alternatively, you can specify alias names.  See the fonts.alias file in the
-fonts directory (e.g., /usr/X11R6/lib/X11/fonts/).  For example: >
-
- :set guifontset=k14,r14
-<
-							*E253*
-Note that in East Asian fonts, the standard character cell is square.  When
-mixing a Latin font and an East Asian font, the East Asian font width should
-be twice the Latin font width.
-
-If 'guifontset' is not empty, the "font" argument of the |:highlight| command
-is also interpreted as a fontset.  For example, you should use for
-highlighting: >
-	:hi Comment font=english_font,your_font
-If you use a wrong "font" argument you will get an error message.
-Also make sure that you set 'guifontset' before setting fonts for highlight
-groups.
 
 ==============================================================================
 Input on X11					*mbyte-XIM*
@@ -646,10 +495,6 @@ USING XIM			*multibyte-input* *E284* *E286* *E287* *E288*
 Note that Display and Input are independent.  It is possible to see your
 language even though you have no input method for it.  But when your Display
 method doesn't match your Input method, the text will be displayed wrong.
-
-	Note: You can not use IM unless you specify 'guifontset'.
-	      Therefore, Latin users, you have to also use 'guifontset'
-	      if you use IM.
 
 To input your language you should run the |IM-server| which supports your
 language and |conversion-server| if needed.
@@ -962,9 +807,9 @@ Vim has comprehensive UTF-8 support.  It works well in:
 - MS-Windows GUI
 - several other platforms
 
-Double-width characters are supported.  This works best with 'guifontwide' or
-'guifontset'.  When using only 'guifont' the wide characters are drawn in the
-normal width and a space to fill the gap.
+Double-width characters are supported.  Works best with 'guifontwide'.  When
+using only 'guifont' the wide characters are drawn in the normal width and
+a space to fill the gap.
 
 							*bom-bytes*
 When reading a file a BOM (Byte Order Mark) can be used to recognize the
@@ -1031,7 +876,6 @@ this:
 
 1. Set 'guifont' and let Vim find a matching 'guifontwide'
 2. Set 'guifont' and 'guifontwide'
-3. Set 'guifontset'
 
 See the documentation for each option for details.  Example: >
 
@@ -1077,10 +921,7 @@ not everybody is able to type a composing character.
 ==============================================================================
 Overview of options					*mbyte-options*
 
-These options are relevant for editing multi-byte files.  Check the help in
-options.txt for detailed information.
-
-'encoding'	Internal text encoding, always "utf-8".
+These options are relevant for editing multi-byte files.
 
 'fileencoding'	Encoding of a file.  When it's different from "utf-8"
 		conversion is done when reading or writing the file.
@@ -1095,9 +936,6 @@ options.txt for detailed information.
 		at a multibyte character of 256 or higher.  Thus is useful for
 		languages where a sequence of characters can be broken
 		anywhere.
-
-'guifontset'	The list of font names used for a multi-byte encoding.  When
-		this option is not empty, it replaces 'guifont'.
 
 'keymap'	Specify the name of a keyboard mapping.
 

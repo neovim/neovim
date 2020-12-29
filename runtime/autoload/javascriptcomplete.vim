@@ -1,7 +1,9 @@
 " Vim completion script
 " Language:	Java Script
-" Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2017 Mar 04
+" Maintainer:	Jay Sitter (jay@jaysitter.com)
+" URL: https://github.com/jsit/javascriptcomplete.vim/
+" Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
+" Last Change:	2020 Jul 30
 
 function! javascriptcomplete#CompleteJS(findstart, base)
   if a:findstart
@@ -154,12 +156,30 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 					\ 'text', 'vLink']
 		let bodys = bodyprop
 		" Document - document.
-		let docuprop = ['anchors', 'applets', 'childNodes', 'embeds', 'forms', 'images', 'links', 'stylesheets',
-					\ 'body', 'cookie', 'documentElement', 'domain', 'lastModified', 'referrer', 'title', 'URL']
-		let documeth = ['close', 'createAttribute', 'createElement', 'createTextNode', 'focus', 'getElementById',
-					\ 'getElementsByName', 'getElementsByTagName', 'open', 'write', 'writeln',
-					\ 'onClick', 'onDblClick', 'onFocus', 'onKeyDown', 'onKeyPress', 'onKeyUp',
-					\ 'onMouseDown', 'onMouseMove', 'onMouseOut', 'onMouseOver', 'onMouseUp', 'onResize']
+		let docuprop = ['anchors', 'body', 'characterSet', 'doctype',
+					\ 'documentElement', 'documentURI', 'embeds', 'fonts', 'forms',
+					\ 'head', 'hidden', 'images', 'implementation', 'lastStyleSheetSet',
+					\ 'links', 'plugins', 'preferredStyleSheetSet', 'scripts',
+					\ 'scrollingElement', 'selectedStyleSheetSet', 'styleSheetSets',
+					\ 'timeline', 'visibilityState', 'cookie', 'defaultView',
+					\ 'designMode', 'dir', 'domain', 'lastModified', 'location',
+					\ 'readyState', 'referrer', 'title', 'URL', 'activeElement',
+					\ 'fullscreenElement', 'styleSheets']
+		let documeth = ['adoptNode', 'close', 'createAttribute',
+					\ 'createAttributeNS', 'createCDATASection', 'createComment',
+					\ 'createDocumentFragment', 'createElement', 'createElementNS',
+					\ 'createEvent', 'createExpression', 'createNSResolver',
+					\ 'createNodeIterator', 'createProcessingInstruction', 'createRange',
+					\ 'createTextNode', 'createTouchList', 'createTreeWalker',
+					\ 'enableStyleSheetsForSet', 'evaluate', 'focus', 'getElementById',
+					\ 'getElementById', 'getElementsByClassName', 'getElementsByName',
+					\ 'getElementsByTagName', 'getElementsByTagNameNS',
+					\ 'hasStorageAccess', 'importNode', 'onClick', 'onDblClick',
+					\ 'onFocus', 'onKeyDown', 'onKeyPress', 'onKeyUp', 'onMouseDown',
+					\ 'onMouseMove', 'onMouseOut', 'onMouseOver', 'onMouseUp',
+					\ 'onResize', 'open', 'querySelector', 'querySelectorAll',
+					\ 'requestStorageAccess', 'write', 'writeln']
+
 		call map(documeth, 'v:val."("')
 		let docuxprop = ['attributes', 'childNodes', 'doctype', 'documentElement', 'firstChild',
 					\ 'implementation', 'namespaceURI', 'nextSibling', 'nodeName', 'nodeType',
@@ -368,9 +388,11 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		let xdomelemprop = ['attributes', 'childNodes', 'firstChild', 'lastChild', 
 					\ 'namespaceURI', 'nextSibling', 'nodeName', 'nodeType', 'nodeValue',
 					\ 'ownerDocument', 'parentNode', 'prefix', 'previousSibling', 'tagName']
-		let xdomelemmeth = ['appendChild', 'cloneNode', 'getAttribute', 'getAttributeNode',
-					\ 'getElementsByTagName', 'hasChildNodes', 'insertBefore', 'normalize',
-					\ 'removeAttribute', 'removeAttributeNode', 'removeChild', 'replaceChild',
+		let xdomelemmeth = ['appendChild', 'addEventListener', 'cloneNode',
+					\ 'dispatchEvent', 'getAttribute', 'getAttributeNode',
+					\ 'getElementsByTagName', 'hasChildNodes', 'insertBefore',
+					\ 'normalize', 'removeAttribute', 'removeAttributeNode',
+					\ 'removeChild', 'removeEventListener', 'replaceChild',
 					\ 'setAttribute', 'setAttributeNode']
 		call map(xdomelemmeth, 'v:val."("')
 		let xdomelems = xdomelemprop + xdomelemmeth

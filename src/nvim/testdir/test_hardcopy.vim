@@ -1,39 +1,137 @@
 " Test :hardcopy
 
-func Test_printoptions_parsing()
-  " Only test that this doesn't throw an error.
-  set printoptions=left:5in,right:10pt,top:8mm,bottom:2pc
-  set printoptions=left:2in,top:30pt,right:16mm,bottom:3pc
-  set printoptions=header:3,syntax:y,number:7,wrap:n
-  set printoptions=duplex:short,collate:n,jobsplit:y,portrait:n
-  set printoptions=paper:10x14
-  set printoptions=paper:A3
-  set printoptions=paper:A4
-  set printoptions=paper:A5
-  set printoptions=paper:B4
-  set printoptions=paper:B5
-  set printoptions=paper:executive
-  set printoptions=paper:folio
-  set printoptions=paper:ledger
-  set printoptions=paper:legal
-  set printoptions=paper:letter
-  set printoptions=paper:quarto
-  set printoptions=paper:statement
-  set printoptions=paper:tabloid
-  set printoptions=formfeed:y
-  set printoptions=
-  set printoptions&
+func Test_printoptions()
+  edit test_hardcopy.vim
+  syn on
+
+  for opt in ['left:5in,right:10pt,top:8mm,bottom:2pc',
+        \     'left:2in,top:30pt,right:16mm,bottom:3pc',
+        \     'header:3,syntax:y,number:y,wrap:n',
+        \     'header:3,syntax:n,number:y,wrap:y',
+        \     'duplex:short,collate:n,jobsplit:y,portrait:n',
+        \     'duplex:long,collate:y,jobsplit:n,portrait:y',
+        \     'paper:10x14',
+        \     'paper:A3',
+        \     'paper:A4',
+        \     'paper:A5',
+        \     'paper:B4',
+        \     'paper:B5',
+        \     'paper:executive',
+        \     'paper:folio',
+        \     'paper:ledger',
+        \     'paper:legal',
+        \     'paper:letter',
+        \     'paper:quarto',
+        \     'paper:statement',
+        \     'paper:tabloid',
+        \     'formfeed:y',
+        \     '']
+    exe 'set printoptions=' .. opt
+    if has('postscript')
+      hardcopy > Xhardcopy_printoptions
+      let lines = readfile('Xhardcopy_printoptions')
+      call assert_true(len(lines) > 20, opt)
+      call assert_true(lines[0] =~ 'PS-Adobe', opt)
+      call delete('Xhardcopy_printoptions')
+    endif
+  endfor
 
   call assert_fails('set printoptions=paper', 'E550:')
   call assert_fails('set printoptions=shredder:on', 'E551:')
   call assert_fails('set printoptions=left:no', 'E552:')
+  set printoptions&
+  bwipe
 endfunc
 
-func Test_printmbfont_parsing()
-  " Only test that this doesn't throw an error.
-  set printmbfont=r:WadaMin-Regular,b:WadaMin-Bold,i:WadaMin-Italic,o:WadaMin-Bold-Italic,c:yes,a:no
-  set printmbfont=
+func Test_printmbfont()
+  " Print a small help page which contains tabs to cover code that expands tabs to spaces.
+  help help
+  syn on
+
+  for opt in [':WadaMin-Regular,b:WadaMin-Bold,i:WadaMin-Italic,o:WadaMin-Bold-Italic,c:yes,a:no',
+        \     '']
+    exe 'set printmbfont=' .. opt
+    if has('postscript')
+      hardcopy > Xhardcopy_printmbfont
+      let lines = readfile('Xhardcopy_printmbfont')
+      call assert_true(len(lines) > 20, opt)
+      call assert_true(lines[0] =~ 'PS-Adobe', opt)
+      call delete('Xhardcopy_printmbfont')
+    endif
+  endfor
   set printmbfont&
+  bwipe
+endfunc
+
+func Test_printexpr()
+  if !has('unix')
+    return
+  endif
+
+  " Not a very useful printexpr value, but enough to test
+  " hardcopy with 'printexpr'.
+  function PrintFile(fname)
+    call writefile(['Test printexpr: ' .. v:cmdarg],
+    \              'Xhardcopy_printexpr')
+    call delete(a:fname)
+    return 0
+  endfunc
+  set printexpr=PrintFile(v:fname_in)
+
+  help help
+  hardcopy dummy args
+  call assert_equal(['Test printexpr: dummy args'],
+  \                 readfile('Xhardcopy_printexpr'))
+  call delete('Xhardcopy_printexpr')
+
+  " Function return 1 to test print failure.
+  function PrintFails(fname)
+    call delete(a:fname)
+    return 1
+  endfunc
+  set printexpr=PrintFails(v:fname_in)
+  call assert_fails('hardcopy', 'E365:')
+
+  set printexpr&
+  bwipe
+endfunc
+
+func Test_errors()
+  " FIXME: Windows fails differently than Unix.
+  if has('unix')
+    edit test_hardcopy.vim
+    call assert_fails('hardcopy >', 'E324:')
+    bwipe
+  endif
+endfunc
+
+func Test_dark_background()
+  edit test_hardcopy.vim
+  syn on
+
+  for bg in ['dark', 'light']
+    exe 'set background=' .. bg
+
+    if has('postscript')
+      hardcopy > Xhardcopy_dark_background
+      let lines = readfile('Xhardcopy_dark_background')
+      call assert_true(len(lines) > 20)
+      call assert_true(lines[0] =~ 'PS-Adobe')
+      call delete('Xhardcopy_dark_background')
+    endif
+  endfor
+
+  set background&
+  bwipe
+endfun
+
+func Test_empty_buffer()
+  " FIXME: Unclear why this fails on Windows.
+  if has('unix')
+    new
+    call assert_equal("\nNo text to be printed", execute('hardcopy'))
+    bwipe
+  endif
 endfunc
 
 func Test_printheader_parsing()
@@ -44,22 +142,6 @@ func Test_printheader_parsing()
   set printheader=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
   set printheader=
   set printheader&
-endfunc
-
-" Test that :hardcopy produces a non-empty file.
-" We don't check much of the contents.
-func Test_with_syntax()
-  if has('postscript')
-    edit test_hardcopy.vim
-    set printoptions=syntax:y
-    syn on
-    hardcopy > Xhardcopy
-    let lines = readfile('Xhardcopy')
-    call assert_true(len(lines) > 20)
-    call assert_true(lines[0] =~ 'PS-Adobe')
-    call delete('Xhardcopy')
-    set printoptions&
-  endif
 endfunc
 
 func Test_fname_with_spaces()
@@ -86,4 +168,3 @@ func Test_illegal_byte()
   bwipe!
   call delete('Xpstest')
 endfunc
-

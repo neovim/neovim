@@ -275,7 +275,7 @@ Note that the last one is the value of $VIMRUNTIME which has been expanded.
 
 Note that when using a plugin manager or |packages| many directories will be
 added to 'runtimepath'.  These plugins each require their own directory, don't
-put them directly in ~/.vim/plugin.
+put them directly in ~/.config/nvim/plugin.
 
 What if it looks like your plugin is not being loaded?  You can find out what
 happens when Vim starts up by using the |-V| argument: >

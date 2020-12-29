@@ -954,9 +954,13 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			delete and yank) ({.%#:} only work with put).
 
 							*:reg* *:registers*
-:reg[isters]		Display the contents of all numbered and named
-			registers.  If a register is written to for |:redir|
-			it will not be listed.
+:reg[isters]		Display the type and contents of all numbered and
+			named registers.  If a register is written to for
+			|:redir| it will not be listed.
+			Type can be one of:
+			"c"	for |characterwise| text
+			"l"	for |linewise| text
+			"b"	for |blockwise-visual| text
 
 
 :reg[isters] {arg}	Display the contents of the numbered and named
@@ -1615,6 +1619,10 @@ B	When joining lines, don't insert a space between two multi-byte
 	characters.  Overruled by the 'M' flag.
 1	Don't break a line after a one-letter word.  It's broken before it
 	instead (if possible).
+]	Respect textwidth rigorously. With this flag set, no line can be
+	longer than textwidth, unless line-break-prohibition rules make this
+	impossible.  Mainly for CJK scripts and works only if 'encoding' is
+	"utf-8".
 j	Where it makes sense, remove a comment leader when joining lines.  For
 	example, joining:
 		int i;   // the index ~

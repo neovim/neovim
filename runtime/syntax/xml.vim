@@ -1,11 +1,15 @@
 " Vim syntax file
-" Language:	XML
-" Maintainer:	Johannes Zellner <johannes@zellner.org>
-"		Author and previous maintainer:
-"		Paul Siegmann <pauls@euronet.nl>
-" Last Change:	2013 Jun 07
+" Language: XML
+" Maintainer: Christian Brabandt <cb@256bit.org>
+" Repository: https://github.com/chrisbra/vim-xml-ftplugin
+" Previous Maintainer: Johannes Zellner <johannes@zellner.org>
+" Author: Paul Siegmann <pauls@euronet.nl>
+" Last Changed:	Nov 03, 2019
 " Filenames:	*.xml
-" $Id: xml.vim,v 1.3 2006/04/11 21:32:00 vimboss Exp $
+" Last Change:
+" 20190923 - Fix xmlEndTag to match xmlTag (vim/vim#884)
+" 20190924 - Fix xmlAttribute property (amadeus/vim-xml@d8ce1c946)
+" 20191103 - Enable spell checking globally
 
 " CONFIGURATION:
 "   syntax folding can be turned on by
@@ -49,6 +53,12 @@ set cpo&vim
 
 syn case match
 
+" Allow spell checking in tag values,
+" there is no syntax region for that,
+" so enable spell checking in top-level elements
+" <tag>This text is spell checked</tag>
+syn spell toplevel
+
 " mark illegal characters
 syn match xmlError "[<&]"
 
@@ -81,7 +91,7 @@ syn match   xmlEqual +=+ display
 "      ^^^^^^^^^^^^^
 "
 syn match   xmlAttrib
-    \ +[-'"<]\@1<!\<[a-zA-Z:_][-.0-9a-zA-Z:_]*\>\%(['">]\@!\|$\)+
+    \ +[-'"<]\@1<!\<[a-zA-Z:_][-.0-9a-zA-Z:_]*\>\%(['"]\@!\|$\)+
     \ contained
     \ contains=xmlAttribPunct,@xmlAttribHook
     \ display
@@ -122,7 +132,7 @@ endif
 "  ^^^
 "
 syn match   xmlTagName
-    \ +<\@1<=[^ /!?<>"']\++
+    \ +\%(<\|</\)\@2<=[^ /!?<>"']\++
     \ contained
     \ contains=xmlNamespace,xmlAttribPunct,@xmlTagHook
     \ display
@@ -157,11 +167,11 @@ if exists('g:xml_syntax_folding')
     " </tag>
     " ^^^^^^
     "
-    syn match   xmlEndTag
-	\ +</[^ /!?<>"']\+>+
+    syn region   xmlEndTag
+	\ matchgroup=xmlTag start=+</[^ /!?<>"']\@=+
+	\ matchgroup=xmlTag end=+>+
 	\ contained
-	\ contains=xmlNamespace,xmlAttribPunct,@xmlTagHook
-
+	\ contains=xmlTagName,xmlNamespace,xmlAttribPunct,@xmlTagHook
 
     " tag elements with syntax-folding.
     " NOTE: NO HIGHLIGHTING -- highlighting is done by contained elements
@@ -181,7 +191,7 @@ if exists('g:xml_syntax_folding')
 	\ start=+<\z([^ /!?<>"']\+\)+
 	\ skip=+<!--\_.\{-}-->+
 	\ end=+</\z1\_\s\{-}>+
-	\ matchgroup=xmlEndTag end=+/>+
+	\ end=+/>+
 	\ fold
 	\ contains=xmlTag,xmlEndTag,xmlCdata,xmlRegion,xmlComment,xmlEntity,xmlProcessing,@xmlRegionHook,@Spell
 	\ keepend
@@ -198,9 +208,10 @@ else
 	\ matchgroup=xmlTag end=+>+
 	\ contains=xmlError,xmlTagName,xmlAttrib,xmlEqual,xmlString,@xmlStartTagHook
 
-    syn match   xmlEndTag
-	\ +</[^ /!?<>"']\+>+
-	\ contains=xmlNamespace,xmlAttribPunct,@xmlTagHook
+    syn region   xmlEndTag
+	\ matchgroup=xmlTag start=+</[^ /!?<>"']\@=+
+	\ matchgroup=xmlTag end=+>+
+	\ contains=xmlTagName,xmlNamespace,xmlAttribPunct,@xmlTagHook
 
 endif
 

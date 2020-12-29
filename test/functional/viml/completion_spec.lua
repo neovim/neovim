@@ -6,7 +6,7 @@ local feed_command, source, expect = helpers.feed_command, helpers.source, helpe
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local meths = helpers.meths
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('completion', function()
   local screen
@@ -737,8 +737,8 @@ describe('completion', function()
     -- Does not indent when "ind" is typed.
     feed("in<C-X><C-N>")
     -- Completion list is generated incorrectly if we send everything at once
-    -- via nvim_input().  So wait() before sending <BS>. #8480
-    wait()
+    -- via nvim_input().  So poke_eventloop() before sending <BS>. #8480
+    poke_eventloop()
     feed("<BS>d")
 
     screen:expect([[
@@ -778,7 +778,7 @@ describe('completion', function()
     ]])
     -- Works for unindenting too.
     feed("ounin<C-X><C-N>")
-    helpers.wait()
+    helpers.poke_eventloop()
     feed("<BS>d")
     screen:expect([[
       inc uninc indent unindent                                   |
@@ -1000,65 +1000,65 @@ describe('completion', function()
 
     command('let g:foo = []')
     feed('o')
-    wait()
+    poke_eventloop()
     feed('<esc>')
     eq({'I'}, eval('g:foo'))
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     eq({'I', 'I'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
     eq({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')

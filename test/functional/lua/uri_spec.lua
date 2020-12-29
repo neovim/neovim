@@ -85,6 +85,15 @@ describe('URI methods', function()
         eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
       end)
 
+      it('file path includes only ascii charactors with encoded colon character', function()
+        local test_case = [[
+        local uri = 'file:///C%3A/Foo/Bar/Baz.txt'
+        return vim.uri_to_fname(uri)
+        ]]
+
+        eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
+      end)
+
       it('file path including white space', function()
         local test_case = [[
         local uri = 'file:///C:/Foo%20/Bar/Baz.txt'
@@ -102,6 +111,40 @@ describe('URI methods', function()
 
         eq('C:\\xy\\åäö\\ɧ\\汉语\\↥\\🤦\\🦄\\å\\بِيَّ.txt', exec_lua(test_case))
       end)
+    end)
+
+    describe('decode non-file URI', function()
+      it('uri_to_fname returns non-file URI unchanged', function()
+        eq('jdt1.23+x-z://content/%5C/', exec_lua [[
+          return vim.uri_to_fname('jdt1.23+x-z://content/%5C/')
+        ]])
+      end)
+
+      it('uri_to_fname returns non-file upper-case scheme URI unchanged', function()
+        eq('JDT://content/%5C/', exec_lua [[
+          return vim.uri_to_fname('JDT://content/%5C/')
+        ]])
+      end)
+    end)
+
+    describe('decode URI without scheme', function()
+      it('fails because URI must have a scheme', function()
+        eq(false, exec_lua [[
+          return pcall(vim.uri_to_fname, 'not_an_uri.txt')
+        ]])
+      end)
+    end)
+
+  end)
+
+  describe('uri to bufnr', function()
+    it('uri_to_bufnr & uri_from_bufnr returns original uri for non-file uris', function()
+      local uri = 'jdt://contents/java.base/java.util/List.class?=sql/%5C/home%5C/user%5C/.jabba%5C/jdk%5C/openjdk%5C@1.14.0%5C/lib%5C/jrt-fs.jar%60java.base=/javadoc_location=/https:%5C/%5C/docs.oracle.com%5C/en%5C/java%5C/javase%5C/14%5C/docs%5C/api%5C/=/%3Cjava.util(List.class'
+      local test_case = string.format([[
+        local uri = '%s'
+        return vim.uri_from_bufnr(vim.uri_to_bufnr(uri))
+      ]], uri)
+      eq(uri, exec_lua(test_case))
     end)
   end)
 end)

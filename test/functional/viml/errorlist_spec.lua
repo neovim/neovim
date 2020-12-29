@@ -27,7 +27,7 @@ describe('setqflist()', function()
     setqflist({''}, 'r', 'foo')
     command('copen')
     eq('foo', get_cur_win_var('quickfix_title'))
-    setqflist({''}, 'r', {['title'] = 'qf_title'})
+    setqflist({}, 'r', {['title'] = 'qf_title'})
     eq('qf_title', get_cur_win_var('quickfix_title'))
   end)
 

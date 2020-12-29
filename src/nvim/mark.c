@@ -20,6 +20,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/extmark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -179,8 +180,8 @@ void setpcmark(void)
   }
 
   if (jop_flags & JOP_STACK) {
-    // If we're somewhere in the middle of the jumplist discard everything
-    // after the current index.
+    // jumpoptions=stack: if we're somewhere in the middle of the jumplist
+    // discard everything after the current index.
     if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
       // Discard the rest of the jumplist by cutting the length down to
       // contain nothing beyond the current index.
@@ -631,6 +632,7 @@ void ex_marks(exarg_T *eap)
   char_u      *arg = eap->arg;
   int i;
   char_u      *name;
+  pos_T       *posp, *startp, *endp;
 
   if (arg != NULL && *arg == NUL)
     arg = NULL;
@@ -656,8 +658,18 @@ void ex_marks(exarg_T *eap)
   show_one_mark(']', arg, &curbuf->b_op_end, NULL, true);
   show_one_mark('^', arg, &curbuf->b_last_insert.mark, NULL, true);
   show_one_mark('.', arg, &curbuf->b_last_change.mark, NULL, true);
-  show_one_mark('<', arg, &curbuf->b_visual.vi_start, NULL, true);
-  show_one_mark('>', arg, &curbuf->b_visual.vi_end, NULL, true);
+
+  // Show the marks as where they will jump to.
+  startp = &curbuf->b_visual.vi_start;
+  endp = &curbuf->b_visual.vi_end;
+  if ((lt(*startp, *endp) || endp->lnum == 0) && startp->lnum != 0) {
+    posp = startp;
+  } else {
+    posp = endp;
+  }
+  show_one_mark('<', arg, posp, NULL, true);
+  show_one_mark('>', arg, posp == startp ? endp : startp, NULL, true);
+
   show_one_mark(-1, arg, NULL, NULL, false);
 }
 
@@ -915,10 +927,9 @@ void mark_adjust(linenr_T line1,
                  linenr_T line2,
                  long amount,
                  long amount_after,
-                 bool end_temp,
                  ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp, op);
+  mark_adjust_internal(line1, line2, amount, amount_after, true, op);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -927,15 +938,15 @@ void mark_adjust(linenr_T line1,
 // calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
 // for an example of why this may be necessary, see do_move().
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount,
-                        long amount_after, bool end_temp,
+                        long amount_after,
                         ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp, op);
+  mark_adjust_internal(line1, line2, amount, amount_after, false, op);
 }
 
 static void mark_adjust_internal(linenr_T line1, linenr_T line2,
                                  long amount, long amount_after,
-                                 bool adjust_folds, bool end_temp,
+                                 bool adjust_folds,
                                  ExtmarkOp op)
 {
   int i;
@@ -991,9 +1002,8 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
-    bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after, end_temp);
     if (op != kExtmarkNOOP) {
-      extmark_adjust(curbuf, line1, line2, amount, amount_after, op, end_temp);
+      extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
     }
   }
 
@@ -1106,7 +1116,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
 // cursor is inside them.
 void mark_col_adjust(
     linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount,
-    int spaces_removed,  ExtmarkOp op)
+    int spaces_removed)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1124,13 +1134,6 @@ void mark_col_adjust(
   for (i = NMARKS; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum == fnum)
       col_adjust(&(namedfm[i].fmark.mark));
-  }
-
-  // Extmarks
-  if (op != kExtmarkNOOP) {
-    // TODO(timeyyy): consider spaces_removed? (behave like a delete)
-    extmark_col_adjust(curbuf, lnum, mincol, lnum_amount, col_amount,
-                       kExtmarkUndo);
   }
 
   /* last Insert position */
@@ -1214,14 +1217,14 @@ void cleanup_jumplist(win_T *wp, bool checktail)
         break;
       }
     }
+
     bool mustfree;
-    if (i >= wp->w_jumplistlen) {  // not duplicate
+    if (i >= wp->w_jumplistlen) {   // not duplicate
       mustfree = false;
-    } else if (i > from + 1) {  // non-adjacent duplicate
-      // When the jump options include "stack", duplicates are only removed from
-      // the jumplist when they are adjacent.
+    } else if (i > from + 1) {      // non-adjacent duplicate
+      // jumpoptions=stack: remove duplicates only when adjacent.
       mustfree = !(jop_flags & JOP_STACK);
-    } else {  // adjacent duplicate
+    } else {                        // adjacent duplicate
       mustfree = true;
     }
 

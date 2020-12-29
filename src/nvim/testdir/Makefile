@@ -15,7 +15,6 @@ export TMPDIR := $(abspath Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
 	test42.out             \
-	test64.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
@@ -87,7 +86,7 @@ nongui: nolog $(FIXFF) $(SCRIPTS) newtests report
 	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
-	$(RUN_VIMTEST) $(NO_INITS) -u NONE -S summarize.vim messages
+	$(NVIM_PRG) -u NONE $(NO_INITS) -S summarize.vim messages
 	@echo
 	@echo 'Test results:'
 	@cat test_result.log

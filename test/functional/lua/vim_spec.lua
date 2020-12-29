@@ -4,9 +4,11 @@ local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
 local meths = helpers.meths
+local dedent = helpers.dedent
 local command = helpers.command
 local clear = helpers.clear
 local eq = helpers.eq
+local ok = helpers.ok
 local eval = helpers.eval
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
@@ -117,6 +119,11 @@ describe('lua stdlib', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
   end)
 
+  -- for brevity, match only the error header (not the traceback)
+  local function pcall_header(...)
+    return string.gsub(string.gsub(pcall_err(exec_lua, ...), '[\r\n].*', ''), '^Error executing lua: ', '')
+  end
+
   it('vim.startswith', function()
     eq(true, funcs.luaeval('vim.startswith("123", "1")'))
     eq(true, funcs.luaeval('vim.startswith("123", "")'))
@@ -127,8 +134,8 @@ describe('lua stdlib', function()
     eq(false, funcs.luaeval('vim.startswith("123", "2")'))
     eq(false, funcs.luaeval('vim.startswith("123", "1234")'))
 
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith("123", nil)')))
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith(nil, "123")')))
+    eq("vim/shared.lua:0: prefix: expected string, got nil", pcall_header 'return vim.startswith("123", nil)')
+    eq("vim/shared.lua:0: s: expected string, got nil", pcall_header 'return vim.startswith(nil, "123")')
   end)
 
   it('vim.endswith', function()
@@ -141,8 +148,8 @@ describe('lua stdlib', function()
     eq(false, funcs.luaeval('vim.endswith("123", "2")'))
     eq(false, funcs.luaeval('vim.endswith("123", "1234")'))
 
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith("123", nil)')))
-    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith(nil, "123")')))
+    eq("vim/shared.lua:0: suffix: expected string, got nil", pcall_header 'return vim.endswith("123", nil)')
+    eq("vim/shared.lua:0: s: expected string, got nil", pcall_header 'return vim.endswith(nil, "123")')
   end)
 
   it("vim.str_utfindex/str_byteindex", function()
@@ -242,6 +249,8 @@ describe('lua stdlib', function()
       { "here be dragons", " ", false, { "here", "be", "dragons"} },
       { "axaby", "ab?", false, { '', 'x', 'y' } },
       { "f v2v v3v w2w ", "([vw])2%1", false, { 'f ', ' v3v ', ' ' } },
+      { "", "", false, {} },
+      { "", "a", false, { '' } },
       { "x*yz*oo*l", "*", true, { 'x', 'yz', 'oo', 'l' } },
     }
 
@@ -254,16 +263,28 @@ describe('lua stdlib', function()
     }
 
     for _, t in ipairs(loops) do
-      matches(".*Infinite loop detected", pcall_err(split, t[1], t[2]))
+      eq("Error executing lua: vim/shared.lua:0: Infinite loop detected", pcall_err(split, t[1], t[2]))
     end
 
     -- Validates args.
     eq(true, pcall(split, 'string', 'string'))
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: s: expected string, got number
+        stack traceback:
+            vim/shared.lua:0: in function 'gsplit'
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 1, 'string'))
-    eq('Error executing lua: .../shared.lua: sep: expected string, got number',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: sep: expected string, got number
+        stack traceback:
+            vim/shared.lua:0: in function 'gsplit'
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 1))
-    eq('Error executing lua: .../shared.lua: plain: expected boolean, got number',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: plain: expected boolean, got number
+        stack traceback:
+            vim/shared.lua:0: in function 'gsplit'
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 'string', 1))
   end)
 
@@ -284,7 +305,10 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: s: expected string, got number
+        stack traceback:
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(trim, 2))
   end)
 
@@ -310,18 +334,52 @@ describe('lua stdlib', function()
   end)
 
   it("vim.deepcopy", function()
-    local is_dc = exec_lua([[
+    ok(exec_lua([[
       local a = { x = { 1, 2 }, y = 5}
       local b = vim.deepcopy(a)
 
-      local count = 0
-      for _ in pairs(b) do count = count + 1 end
-
-      return b.x[1] == 1 and b.x[2] == 2 and b.y == 5 and count == 2
+      return b.x[1] == 1 and b.x[2] == 2 and b.y == 5 and vim.tbl_count(b) == 2
              and tostring(a) ~= tostring(b)
-    ]])
+    ]]))
 
-    assert(is_dc)
+    ok(exec_lua([[
+      local a = {}
+      local b = vim.deepcopy(a)
+
+      return vim.tbl_islist(b) and vim.tbl_count(b) == 0 and tostring(a) ~= tostring(b)
+    ]]))
+
+    ok(exec_lua([[
+      local a = vim.empty_dict()
+      local b = vim.deepcopy(a)
+
+      return not vim.tbl_islist(b) and vim.tbl_count(b) == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = vim.empty_dict(), y = {}}
+      local b = vim.deepcopy(a)
+
+      return not vim.tbl_islist(b.x) and vim.tbl_islist(b.y)
+        and vim.tbl_count(b) == 2
+        and tostring(a) ~= tostring(b)
+    ]]))
+
+    ok(exec_lua([[
+      local f1 = function() return 1 end
+      local f2 = function() return 2 end
+      local t1 = {f = f1}
+      local t2 = vim.deepcopy(t1)
+      t1.f = f2
+      return t1.f() ~= t2.f()
+    ]]))
+
+    eq('Error executing lua: vim/shared.lua:0: Cannot deepcopy object of type thread',
+      pcall_err(exec_lua, [[
+        local thread = coroutine.create(function () return 0 end)
+        local t = {thr = thread}
+        vim.deepcopy(t)
+      ]]))
   end)
 
   it('vim.pesc', function()
@@ -329,7 +387,10 @@ describe('lua stdlib', function()
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: s: expected string, got number',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: s: expected string, got number
+        stack traceback:
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
@@ -353,8 +414,33 @@ describe('lua stdlib', function()
     end
   end)
 
+  it('vim.tbl_map', function()
+    eq({}, exec_lua([[
+      return vim.tbl_map(function(v) return v * 2 end, {})
+    ]]))
+    eq({2, 4, 6}, exec_lua([[
+      return vim.tbl_map(function(v) return v * 2 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}, {i=4}, {i=6}}, exec_lua([[
+      return vim.tbl_map(function(v) return { i = v.i * 2 } end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+  end)
+
+  it('vim.tbl_filter', function()
+    eq({}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {})
+    ]]))
+    eq({2}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}}, exec_lua([[
+      return vim.tbl_filter(function(v) return (v.i % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+  end)
+
   it('vim.tbl_islist', function()
-    eq(NIL, exec_lua("return vim.tbl_islist({})"))
+    eq(true, exec_lua("return vim.tbl_islist({})"))
+    eq(false, exec_lua("return vim.tbl_islist(vim.empty_dict())"))
     eq(true, exec_lua("return vim.tbl_islist({'a', 'b', 'c'})"))
     eq(false, exec_lua("return vim.tbl_islist({'a', '32', a='hello', b='baz'})"))
     eq(false, exec_lua("return vim.tbl_islist({1, a='hello', b='baz'})"))
@@ -366,6 +452,187 @@ describe('lua stdlib', function()
     eq(true, exec_lua("return vim.tbl_isempty({})"))
     eq(false, exec_lua("return vim.tbl_isempty({ 1, 2, 3 })"))
     eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
+  end)
+
+  it('vim.tbl_extend', function()
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {y = 2}
+      local c = vim.tbl_extend("keep", a, b)
+
+      return c.x == 1 and b.y == 2 and vim.tbl_count(c) == 2
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {y = 2}
+      local c = {z = 3}
+      local d = vim.tbl_extend("keep", a, b, c)
+
+      return d.x == 1 and d.y == 2 and d.z == 3 and vim.tbl_count(d) == 3
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {x = 3}
+      local c = vim.tbl_extend("keep", a, b)
+
+      return c.x == 1 and vim.tbl_count(c) == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = 1}
+      local b = {x = 3}
+      local c = vim.tbl_extend("force", a, b)
+
+      return c.x == 3 and vim.tbl_count(c) == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = vim.empty_dict()
+      local b = {}
+      local c = vim.tbl_extend("keep", a, b)
+
+      return not vim.tbl_islist(c) and vim.tbl_count(c) == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {}
+      local b = vim.empty_dict()
+      local c = vim.tbl_extend("keep", a, b)
+
+      return vim.tbl_islist(c) and vim.tbl_count(c) == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 1 and c.x.b == 2 and c.x.c == nil and count == 1
+    ]]))
+
+    eq('Error executing lua: vim/shared.lua:0: invalid "behavior": nil',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend()
+      ]])
+    )
+
+    eq('Error executing lua: vim/shared.lua:0: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend("keep")
+      ]])
+    )
+
+    eq('Error executing lua: vim/shared.lua:0: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_extend("keep", {})
+      ]])
+    )
+  end)
+
+  it('vim.tbl_deep_extend', function()
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 1 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = vim.tbl_deep_extend("force", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return c.x.a == 2 and c.x.b == 2 and c.x.c.y == 3 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = {x = {c = 4, d = {y = 4}}}
+      local d = vim.tbl_deep_extend("keep", a, b, c)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return d.x.a == 1 and d.x.b == 2 and d.x.c.y == 3 and d.x.d.y == 4 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = {x = {c = 4, d = {y = 4}}}
+      local d = vim.tbl_deep_extend("force", a, b, c)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return d.x.a == 2 and d.x.b == 2 and d.x.c == 4 and d.x.d.y == 4 and count == 1
+    ]]))
+
+    ok(exec_lua([[
+      local a = vim.empty_dict()
+      local b = {}
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return not vim.tbl_islist(c) and count == 0
+    ]]))
+
+    ok(exec_lua([[
+      local a = {}
+      local b = vim.empty_dict()
+      local c = vim.tbl_deep_extend("keep", a, b)
+
+      local count = 0
+      for _ in pairs(c) do count = count + 1 end
+
+      return vim.tbl_islist(c) and count == 0
+    ]]))
+
+    eq('Error executing lua: vim/shared.lua:0: invalid "behavior": nil',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend()
+      ]])
+    )
+
+    eq('Error executing lua: vim/shared.lua:0: wrong number of arguments (given 1, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend("keep")
+      ]])
+    )
+
+    eq('Error executing lua: vim/shared.lua:0: wrong number of arguments (given 2, expected at least 3)',
+      pcall_err(exec_lua, [[
+        return vim.tbl_deep_extend("keep", {})
+      ]])
+    )
+  end)
+
+  it('vim.tbl_count', function()
+    eq(0, exec_lua [[ return vim.tbl_count({}) ]])
+    eq(0, exec_lua [[ return vim.tbl_count(vim.empty_dict()) ]])
+    eq(0, exec_lua [[ return vim.tbl_count({nil}) ]])
+    eq(0, exec_lua [[ return vim.tbl_count({a=nil}) ]])
+    eq(1, exec_lua [[ return vim.tbl_count({1}) ]])
+    eq(2, exec_lua [[ return vim.tbl_count({1, 2}) ]])
+    eq(2, exec_lua [[ return vim.tbl_count({1, nil, 3}) ]])
+    eq(1, exec_lua [[ return vim.tbl_count({a=1}) ]])
+    eq(2, exec_lua [[ return vim.tbl_count({a=1, b=2}) ]])
+    eq(2, exec_lua [[ return vim.tbl_count({a=1, b=nil, c=3}) ]])
   end)
 
   it('vim.deep_equal', function()
@@ -381,7 +648,10 @@ describe('lua stdlib', function()
 
   it('vim.list_extend', function()
     eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
-    eq('Error executing lua: .../shared.lua: src: expected table, got nil',
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: src: expected table, got nil
+        stack traceback:
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
     eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
     eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
@@ -405,7 +675,7 @@ describe('lua stdlib', function()
     assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
     vim.tbl_add_reverse_lookup(a)
     ]]
-    matches('Error executing lua: .../shared.lua: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"',
+    matches('^Error executing lua: vim/shared%.lua:0: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"$',
       pcall_err(exec_lua, code))
   end)
 
@@ -458,6 +728,19 @@ describe('lua stdlib', function()
     ]]))
     eq({3, 'aa', true, NIL}, exec_lua([[return ret]]))
 
+    eq({{}, {}, false, true}, exec_lua([[
+      vim.rpcrequest(chan, 'nvim_exec', 'let xx = {}\nlet yy = []', false)
+      local dict = vim.rpcrequest(chan, 'nvim_eval', 'xx')
+      local list = vim.rpcrequest(chan, 'nvim_eval', 'yy')
+      return {dict, list, vim.tbl_islist(dict), vim.tbl_islist(list)}
+     ]]))
+
+     exec_lua([[
+       vim.rpcrequest(chan, 'nvim_set_var', 'aa', {})
+       vim.rpcrequest(chan, 'nvim_set_var', 'bb', vim.empty_dict())
+     ]])
+     eq({1, 1}, eval('[type(g:aa) == type([]), type(g:bb) == type({})]'))
+
     -- error handling
     eq({false, 'Invalid channel: 23'},
        exec_lua([[return {pcall(vim.rpcrequest, 23, 'foo')}]]))
@@ -486,7 +769,7 @@ describe('lua stdlib', function()
     })
     screen:attach()
     exec_lua([[
-      local timer = vim.loop.new_timer()
+      timer = vim.loop.new_timer()
       timer:start(20, 0, function ()
         -- notify ok (executed later when safe)
         vim.rpcnotify(chan, 'nvim_set_var', 'yy', {3, vim.NIL})
@@ -505,6 +788,34 @@ describe('lua stdlib', function()
     ]]}
     feed('<cr>')
     eq({3, NIL}, meths.get_var('yy'))
+
+    exec_lua([[timer:close()]])
+  end)
+
+  it('vim.empty_dict()', function()
+    eq({true, false, true, true}, exec_lua([[
+      vim.api.nvim_set_var('listy', {})
+      vim.api.nvim_set_var('dicty', vim.empty_dict())
+      local listy = vim.fn.eval("listy")
+      local dicty = vim.fn.eval("dicty")
+      return {vim.tbl_islist(listy), vim.tbl_islist(dicty), next(listy) == nil, next(dicty) == nil}
+    ]]))
+
+    -- vim.empty_dict() gives new value each time
+    -- equality is not overriden (still by ref)
+    -- non-empty table uses the usual heuristics (ignores the tag)
+    eq({false, {"foo"}, {namey="bar"}}, exec_lua([[
+      local aa = vim.empty_dict()
+      local bb = vim.empty_dict()
+      local equally = (aa == bb)
+      aa[1] = "foo"
+      bb["namey"] = "bar"
+      return {equally, aa, bb}
+    ]]))
+
+    eq("{ {}, vim.empty_dict() }", exec_lua("return vim.inspect({{}, vim.empty_dict()})"))
+    eq('{}', exec_lua([[ return vim.fn.json_encode(vim.empty_dict()) ]]))
+    eq('{"a": {}, "b": []}', exec_lua([[ return vim.fn.json_encode({a=vim.empty_dict(), b={}}) ]]))
   end)
 
   it('vim.validate', function()
@@ -536,34 +847,77 @@ describe('lua stdlib', function()
     exec_lua("vim.validate{arg1={{}, 't' }, arg2={ 'foo', 's' }}")
     exec_lua("vim.validate{arg1={2, function(a) return (a % 2) == 0  end, 'even number' }}")
 
-    eq("Error executing lua: .../shared.lua: 1: expected table, got number",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: opt[1]: expected table, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
-    eq("Error executing lua: .../shared.lua: invalid type name: x",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: invalid type name: x
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: 1",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: invalid type name: 1
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ arg1={ 1, 1 }}"))
-    eq("Error executing lua: .../shared.lua: invalid type name: nil",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: invalid type name: nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ arg1={ 1 }}"))
 
     -- Validated parameters are required by default.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's' }}"))
     -- Explicitly required.
-    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's', false }}"))
 
-    eq("Error executing lua: .../shared.lua: arg1: expected table, got number",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected table, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={1, 't'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got number",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg2: expected string, got number
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg2: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg2: expected string, got nil
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected even number, got 3",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected even number, got 3
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
-    eq("Error executing lua: .../shared.lua: arg1: expected ?, got 3",
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected ?, got 3
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
+
+    -- Pass an additional message back.
+    eq(dedent([[
+        Error executing lua: [string "<nvim>"]:0: arg1: expected ?, got 3. Info: TEST_MSG
+        stack traceback:
+            [string "<nvim>"]:0: in main chunk]]),
+      pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1, 'TEST_MSG' end}}"))
   end)
 
   it('vim.is_callable', function()
@@ -586,10 +940,96 @@ describe('lua stdlib', function()
     exec_lua [[
     vim.api.nvim_set_var("testing", "hi")
     vim.api.nvim_set_var("other", 123)
+    vim.api.nvim_set_var("to_delete", {hello="world"})
     ]]
+
     eq('hi', funcs.luaeval "vim.g.testing")
     eq(123, funcs.luaeval "vim.g.other")
     eq(NIL, funcs.luaeval "vim.g.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
+    exec_lua [[
+    vim.g.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.g.to_delete")
+  end)
+
+  it('vim.b', function()
+    exec_lua [[
+    vim.api.nvim_buf_set_var(0, "testing", "hi")
+    vim.api.nvim_buf_set_var(0, "other", 123)
+    vim.api.nvim_buf_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.b.testing")
+    eq(123, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.b.to_delete")
+    exec_lua [[
+    vim.b.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.b.to_delete")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.b.testing")
+    eq(NIL, funcs.luaeval "vim.b.other")
+    eq(NIL, funcs.luaeval "vim.b.nonexistant")
+  end)
+
+  it('vim.w', function()
+    exec_lua [[
+    vim.api.nvim_win_set_var(0, "testing", "hi")
+    vim.api.nvim_win_set_var(0, "other", 123)
+    vim.api.nvim_win_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.w.testing")
+    eq(123, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.w.to_delete")
+    exec_lua [[
+    vim.w.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.w.to_delete")
+
+    exec_lua [[
+    vim.cmd "vnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.w.testing")
+    eq(NIL, funcs.luaeval "vim.w.other")
+    eq(NIL, funcs.luaeval "vim.w.nonexistant")
+  end)
+
+  it('vim.t', function()
+    exec_lua [[
+    vim.api.nvim_tabpage_set_var(0, "testing", "hi")
+    vim.api.nvim_tabpage_set_var(0, "other", 123)
+    vim.api.nvim_tabpage_set_var(0, "to_delete", {hello="world"})
+    ]]
+
+    eq('hi', funcs.luaeval "vim.t.testing")
+    eq(123, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
+
+    eq({hello="world"}, funcs.luaeval "vim.t.to_delete")
+    exec_lua [[
+    vim.t.to_delete = nil
+    ]]
+    eq(NIL, funcs.luaeval "vim.t.to_delete")
+
+    exec_lua [[
+    vim.cmd "tabnew"
+    ]]
+
+    eq(NIL, funcs.luaeval "vim.t.testing")
+    eq(NIL, funcs.luaeval "vim.t.other")
+    eq(NIL, funcs.luaeval "vim.t.nonexistant")
   end)
 
   it('vim.env', function()
@@ -659,5 +1099,372 @@ describe('lua stdlib', function()
     ]]
     eq('2', funcs.luaeval "BUF")
     eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
+  end)
+
+  it('vim.regex', function()
+    exec_lua [[
+      re1 = vim.regex"ab\\+c"
+      vim.cmd "set nomagic ignorecase"
+      re2 = vim.regex"xYz"
+    ]]
+    eq({}, exec_lua[[return {re1:match_str("x ac")}]])
+    eq({3,7}, exec_lua[[return {re1:match_str("ac abbc")}]])
+
+    meths.buf_set_lines(0, 0, -1, true, {"yy", "abc abbc"})
+    eq({}, exec_lua[[return {re1:match_line(0, 0)}]])
+    eq({0,3}, exec_lua[[return {re1:match_line(0, 1)}]])
+    eq({3,7}, exec_lua[[return {re1:match_line(0, 1, 1)}]])
+    eq({3,7}, exec_lua[[return {re1:match_line(0, 1, 1, 8)}]])
+    eq({}, exec_lua[[return {re1:match_line(0, 1, 1, 7)}]])
+    eq({0,3}, exec_lua[[return {re1:match_line(0, 1, 0, 7)}]])
+  end)
+
+  it('vim.defer_fn', function()
+    eq(false, exec_lua [[
+      vim.g.test = false
+      vim.defer_fn(function() vim.g.test = true end, 150)
+      return vim.g.test
+    ]])
+    exec_lua [[vim.wait(1000, function() return vim.g.test end)]]
+    eq(true, exec_lua[[return vim.g.test]])
+  end)
+
+  it('vim.region', function()
+    helpers.insert(helpers.dedent( [[
+    text tααt tααt text
+    text tαxt txtα tex
+    text tαxt tαxt
+    ]]))
+    eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
+  end)
+
+  describe('vim.execute_on_keystroke', function()
+    it('should keep track of keystrokes', function()
+      helpers.insert([[hello world ]])
+
+      exec_lua [[
+        KeysPressed = {}
+
+        vim.register_keystroke_callback(function(buf)
+          if buf:byte() == 27 then
+            buf = "<ESC>"
+          end
+
+          table.insert(KeysPressed, buf)
+        end)
+      ]]
+
+      helpers.insert([[next 🤦 lines å ]])
+
+      -- It has escape in the keys pressed
+      eq('inext 🤦 lines å <ESC>', exec_lua [[return table.concat(KeysPressed, '')]])
+    end)
+
+    it('should allow removing trackers.', function()
+      helpers.insert([[hello world]])
+
+      exec_lua [[
+        KeysPressed = {}
+
+        return vim.register_keystroke_callback(function(buf)
+          if buf:byte() == 27 then
+            buf = "<ESC>"
+          end
+
+          table.insert(KeysPressed, buf)
+        end, vim.api.nvim_create_namespace("logger"))
+      ]]
+
+      helpers.insert([[next lines]])
+
+      exec_lua("vim.register_keystroke_callback(nil, vim.api.nvim_create_namespace('logger'))")
+
+      helpers.insert([[more lines]])
+
+      -- It has escape in the keys pressed
+      eq('inext lines<ESC>', exec_lua [[return table.concat(KeysPressed, '')]])
+    end)
+
+    it('should not call functions that error again.', function()
+      helpers.insert([[hello world]])
+
+      exec_lua [[
+        KeysPressed = {}
+
+        return vim.register_keystroke_callback(function(buf)
+          if buf:byte() == 27 then
+            buf = "<ESC>"
+          end
+
+          table.insert(KeysPressed, buf)
+
+          if buf == 'l' then
+            error("Dumb Error")
+          end
+        end)
+      ]]
+
+      helpers.insert([[next lines]])
+      helpers.insert([[more lines]])
+
+      -- Only the first letter gets added. After that we remove the callback
+      eq('inext l', exec_lua [[ return table.concat(KeysPressed, '') ]])
+    end)
+
+    it('should process mapped keys, not unmapped keys', function()
+      exec_lua [[
+        KeysPressed = {}
+
+        vim.cmd("inoremap hello world")
+
+        vim.register_keystroke_callback(function(buf)
+          if buf:byte() == 27 then
+            buf = "<ESC>"
+          end
+
+          table.insert(KeysPressed, buf)
+        end)
+      ]]
+
+      helpers.insert("hello")
+
+      local next_status = exec_lua [[
+        return table.concat(KeysPressed, '')
+      ]]
+
+      eq("iworld<ESC>", next_status)
+    end)
+  end)
+
+  describe('vim.wait', function()
+    before_each(function()
+      exec_lua[[
+        -- high precision timer
+        get_time = function()
+          return vim.fn.reltimefloat(vim.fn.reltime())
+        end
+      ]]
+    end)
+
+    it('should run from lua', function()
+      exec_lua[[vim.wait(100, function() return true end)]]
+    end)
+
+    it('should wait the expected time if false', function()
+      eq({time = true, wait_result = {false, -1}}, exec_lua[[
+        start_time = get_time()
+        wait_succeed, wait_fail_val = vim.wait(200, function() return false end)
+
+        return {
+          -- 150ms waiting or more results in true. Flaky tests are bad.
+          time = (start_time + 0.15) < get_time(),
+          wait_result = {wait_succeed, wait_fail_val}
+        }
+      ]])
+    end)
+
+
+    it('should not block other events', function()
+      eq({time = true, wait_result = true}, exec_lua[[
+        start_time = get_time()
+
+        vim.g.timer_result = false
+        timer = vim.loop.new_timer()
+        timer:start(100, 0, vim.schedule_wrap(function()
+          vim.g.timer_result = true
+        end))
+
+        -- Would wait ten seconds if results blocked.
+        wait_result = vim.wait(10000, function() return vim.g.timer_result end)
+
+        return {
+          time = (start_time + 5) > get_time(),
+          wait_result = wait_result,
+        }
+      ]])
+    end)
+
+    it('should not process non-fast events when commanded', function()
+      eq({wait_result = false}, exec_lua[[
+        start_time = get_time()
+
+        vim.g.timer_result = false
+        timer = vim.loop.new_timer()
+        timer:start(100, 0, vim.schedule_wrap(function()
+          vim.g.timer_result = true
+        end))
+
+        wait_result = vim.wait(300, function() return vim.g.timer_result end, nil, true)
+
+        return {
+          wait_result = wait_result,
+        }
+      ]])
+    end)
+    it('should work with vim.defer_fn', function()
+      eq({time = true, wait_result = true}, exec_lua[[
+        start_time = get_time()
+
+        vim.defer_fn(function() vim.g.timer_result = true end, 100)
+        wait_result = vim.wait(10000, function() return vim.g.timer_result end)
+
+        return {
+          time = (start_time + 5) > get_time(),
+          wait_result = wait_result,
+        }
+      ]])
+    end)
+
+    it('should not crash when callback errors', function()
+      eq({false, '[string "<nvim>"]:1: As Expected'}, exec_lua [[
+        return {pcall(function() vim.wait(1000, function() error("As Expected") end) end)}
+      ]])
+    end)
+
+    it('if callback is passed, it must be a function', function()
+      eq({false, 'vim.wait: if passed, condition must be a function'}, exec_lua [[
+        return {pcall(function() vim.wait(1000, 13) end)}
+      ]])
+    end)
+
+    it('should allow waiting with no callback, explicit', function()
+      eq(true, exec_lua [[
+        local start_time = vim.loop.hrtime()
+        vim.wait(50, nil)
+        return vim.loop.hrtime() - start_time > 25000
+      ]])
+    end)
+
+    it('should allow waiting with no callback, implicit', function()
+      eq(true, exec_lua [[
+        local start_time = vim.loop.hrtime()
+        vim.wait(50)
+        return vim.loop.hrtime() - start_time > 25000
+      ]])
+    end)
+
+    it('should call callbacks exactly once if they return true immediately', function()
+      eq(true, exec_lua [[
+        vim.g.wait_count = 0
+        vim.wait(1000, function()
+          vim.g.wait_count = vim.g.wait_count + 1
+          return true
+        end, 20)
+        return vim.g.wait_count == 1
+      ]])
+    end)
+
+    it('should call callbacks few times with large `interval`', function()
+      eq(true, exec_lua [[
+        vim.g.wait_count = 0
+        vim.wait(50, function() vim.g.wait_count = vim.g.wait_count + 1 end, 200)
+        return vim.g.wait_count < 5
+      ]])
+    end)
+
+    it('should play nice with `not` when fails', function()
+      eq(true, exec_lua [[
+        if not vim.wait(50, function() end) then
+          return true
+        end
+
+        return false
+      ]])
+    end)
+
+    it('should play nice with `if` when success', function()
+      eq(true, exec_lua [[
+        if vim.wait(50, function() return true end) then
+          return true
+        end
+
+        return false
+      ]])
+    end)
+
+    it('should return immediately with false if timeout is 0', function()
+      eq({false, -1}, exec_lua [[
+        return {
+          vim.wait(0, function() return false end)
+        }
+      ]])
+    end)
+
+    it('should work with tables with __call', function()
+      eq(true, exec_lua [[
+        local t = setmetatable({}, {__call = function(...) return true end})
+        return vim.wait(100, t, 10)
+      ]])
+    end)
+
+    it('should work with tables with __call that change', function()
+      eq(true, exec_lua [[
+        local t = {count = 0}
+        setmetatable(t, {
+          __call = function()
+            t.count = t.count + 1
+            return t.count > 3
+          end
+        })
+
+        return vim.wait(1000, t, 10)
+      ]])
+    end)
+
+    it('should not work with negative intervals', function()
+      local pcall_result = exec_lua [[
+        return pcall(function() vim.wait(1000, function() return false end, -1) end)
+      ]]
+
+      eq(false, pcall_result)
+    end)
+
+    it('should not work with weird intervals', function()
+      local pcall_result = exec_lua [[
+        return pcall(function() vim.wait(1000, function() return false end, 'a string value') end)
+      ]]
+
+      eq(false, pcall_result)
+    end)
+  end)
+
+  describe('vim.api.nvim_buf_call', function()
+    it('can access buf options', function()
+      local buf1 = meths.get_current_buf()
+      local buf2 = exec_lua [[
+        buf2 = vim.api.nvim_create_buf(false, true)
+        return buf2
+      ]]
+
+      eq(false, meths.buf_get_option(buf1, 'autoindent'))
+      eq(false, meths.buf_get_option(buf2, 'autoindent'))
+
+      local val = exec_lua [[
+        return vim.api.nvim_buf_call(buf2, function()
+          vim.cmd "set autoindent"
+          return vim.api.nvim_get_current_buf()
+        end)
+      ]]
+
+      eq(false, meths.buf_get_option(buf1, 'autoindent'))
+      eq(true, meths.buf_get_option(buf2, 'autoindent'))
+      eq(buf1, meths.get_current_buf())
+      eq(buf2, val)
+    end)
+  end)
+end)
+
+describe('lua: require("mod") from packages', function()
+  before_each(function()
+    command('set rtp+=test/functional/fixtures')
+  end)
+
+  it('propagates syntax error', function()
+    local syntax_error_msg = exec_lua [[
+      local _, err = pcall(require, "syntax_error")
+      return err
+    ]]
+
+    matches("unexpected symbol", syntax_error_msg)
   end)
 end)

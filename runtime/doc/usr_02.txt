@@ -652,7 +652,7 @@ Summary: 					*help-summary*  >
 22) Autocommand events can be found by their name: >
      	:help BufWinLeave
 <    To see all possible events: >
-	:help autocommand-events
+	:help events
 
 23) Command-line switches always start with "-".  So for the help of the -f
     command switch of Vim use: >

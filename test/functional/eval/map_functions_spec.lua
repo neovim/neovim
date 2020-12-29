@@ -13,6 +13,7 @@ describe('maparg()', function()
 
   local foo_bar_map_table = {
       lhs='foo',
+      script=0,
       silent=0,
       rhs='bar',
       expr=0,
@@ -147,6 +148,7 @@ describe('maparg()', function()
         mode = 'n',
         noremap = 1,
         nowait = 0,
+        script=0,
         sid = 0,
         silent = 0,
         lnum = 0,

@@ -1,3 +1,5 @@
+source screendump.vim
+source check.vim
 
 " Test for insert expansion
 func Test_ins_complete()
@@ -98,6 +100,15 @@ func Test_ins_complete()
   call delete('Xdir', 'rf')
 endfunc
 
+func s:CompleteDone_CompleteFuncNone( findstart, base )
+  throw 'skipped: Nvim does not support v:none'
+  if a:findstart
+    return 0
+  endif
+
+  return v:none
+endfunc
+
 function! s:CompleteDone_CompleteFuncDict( findstart, base )
   if a:findstart
     return 0
@@ -111,32 +122,58 @@ function! s:CompleteDone_CompleteFuncDict( findstart, base )
               \ 'menu': 'extra text',
               \ 'info': 'words are cool',
               \ 'kind': 'W',
-              \ 'user_data': 'test'
+              \ 'user_data': ['one', 'two']
             \ }
           \ ]
         \ }
 endfunction
 
-function! s:CompleteDone_CheckCompletedItemDict()
+func s:CompleteDone_CheckCompletedItemNone()
+  let s:called_completedone = 1
+endfunc
+
+func s:CompleteDone_CheckCompletedItemDict(pre)
   call assert_equal( 'aword',          v:completed_item[ 'word' ] )
   call assert_equal( 'wrd',            v:completed_item[ 'abbr' ] )
   call assert_equal( 'extra text',     v:completed_item[ 'menu' ] )
   call assert_equal( 'words are cool', v:completed_item[ 'info' ] )
   call assert_equal( 'W',              v:completed_item[ 'kind' ] )
-  call assert_equal( 'test',           v:completed_item[ 'user_data' ] )
+  call assert_equal( ['one', 'two'],   v:completed_item[ 'user_data' ] )
+
+  if a:pre
+    call assert_equal('function', complete_info().mode)
+  endif
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneDict()
-  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDict()
+func Test_CompleteDoneNone()
+  throw 'skipped: Nvim does not support v:none'
+  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemNone()
+  let oldline = join(map(range(&columns), 'nr2char(screenchar(&lines-1, v:val+1))'), '')
+
+  set completefunc=<SID>CompleteDone_CompleteFuncNone
+  execute "normal a\<C-X>\<C-U>\<C-Y>"
+  set completefunc&
+  let newline = join(map(range(&columns), 'nr2char(screenchar(&lines-1, v:val+1))'), '')
+
+  call assert_true(s:called_completedone)
+  call assert_equal(oldline, newline)
+
+  let s:called_completedone = 0
+  au! CompleteDone
+endfunc
+
+func Test_CompleteDoneDict()
+  au CompleteDonePre * :call <SID>CompleteDone_CheckCompletedItemDict(1)
+  au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDict(0)
 
   set completefunc=<SID>CompleteDone_CompleteFuncDict
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( 'test', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal(['one', 'two'], v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
@@ -155,7 +192,7 @@ func Test_CompleteDone_undo()
   au! CompleteDone
 endfunc
 
-function! s:CompleteDone_CompleteFuncDictNoUserData( findstart, base )
+func s:CompleteDone_CompleteFuncDictNoUserData(findstart, base)
   if a:findstart
     return 0
   endif
@@ -171,9 +208,9 @@ function! s:CompleteDone_CompleteFuncDictNoUserData( findstart, base )
             \ }
           \ ]
         \ }
-endfunction
+endfunc
 
-function! s:CompleteDone_CheckCompletedItemDictNoUserData()
+func s:CompleteDone_CheckCompletedItemDictNoUserData()
   call assert_equal( 'aword',          v:completed_item[ 'word' ] )
   call assert_equal( 'wrd',            v:completed_item[ 'abbr' ] )
   call assert_equal( 'extra text',     v:completed_item[ 'menu' ] )
@@ -182,31 +219,31 @@ function! s:CompleteDone_CheckCompletedItemDictNoUserData()
   call assert_equal( '',               v:completed_item[ 'user_data' ] )
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneDictNoUserData()
+func Test_CompleteDoneDictNoUserData()
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDictNoUserData()
 
   set completefunc=<SID>CompleteDone_CompleteFuncDictNoUserData
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( '', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal('', v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
 endfunc
 
-function! s:CompleteDone_CompleteFuncList( findstart, base )
+func s:CompleteDone_CompleteFuncList(findstart, base)
   if a:findstart
     return 0
   endif
 
   return [ 'aword' ]
-endfunction
+endfunc
 
-function! s:CompleteDone_CheckCompletedItemList()
+func s:CompleteDone_CheckCompletedItemList()
   call assert_equal( 'aword', v:completed_item[ 'word' ] )
   call assert_equal( '',      v:completed_item[ 'abbr' ] )
   call assert_equal( '',      v:completed_item[ 'menu' ] )
@@ -215,17 +252,17 @@ function! s:CompleteDone_CheckCompletedItemList()
   call assert_equal( '',      v:completed_item[ 'user_data' ] )
 
   let s:called_completedone = 1
-endfunction
+endfunc
 
-function Test_CompleteDoneList()
+func Test_CompleteDoneList()
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemList()
 
   set completefunc=<SID>CompleteDone_CompleteFuncList
   execute "normal a\<C-X>\<C-U>\<C-Y>"
   set completefunc&
 
-  call assert_equal( '', v:completed_item[ 'user_data' ] )
-  call assert_true( s:called_completedone )
+  call assert_equal('', v:completed_item[ 'user_data' ])
+  call assert_true(s:called_completedone)
 
   let s:called_completedone = 0
   au! CompleteDone
@@ -243,7 +280,7 @@ func Test_omni_dash()
   set omnifunc=Omni
   new
   exe "normal Gofind -\<C-x>\<C-o>"
-  call assert_equal("\n-\nmatch 1 of 2", execute(':2mess'))
+  call assert_equal("find -help", getline('$'))
 
   bwipe!
   delfunc Omni
@@ -275,6 +312,24 @@ func Test_completefunc_args()
   delfunc CompleteFunc
 endfunc
 
+func CompleteTest(findstart, query)
+  if a:findstart
+    return col('.')
+  endif
+  return ['matched']
+endfunc
+
+func Test_completefunc_info()
+  new
+  set completeopt=menuone
+  set completefunc=CompleteTest
+  call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  bwipe!
+  set completeopt&
+  set completefunc&
+endfunc
+
 " Check that when using feedkeys() typeahead does not interrupt searching for
 " completions.
 func Test_compl_feedkeys()
@@ -290,7 +345,10 @@ func Test_compl_in_cmdwin()
   set wildmenu wildchar=<Tab>
   com! -nargs=1 -complete=command GetInput let input = <q-args>
   com! -buffer TestCommand echo 'TestCommand'
+  let w:test_winvar = 'winvar'
+  let b:test_bufvar = 'bufvar'
 
+  " User-defined commands
   let input = ''
   call feedkeys("q:iGetInput T\<C-x>\<C-v>\<CR>", 'tx!')
   call assert_equal('TestCommand', input)
@@ -299,7 +357,128 @@ func Test_compl_in_cmdwin()
   call feedkeys("q::GetInput T\<Tab>\<CR>:q\<CR>", 'tx!')
   call assert_equal('T', input)
 
+  com! -nargs=1 -complete=var GetInput let input = <q-args>
+  " Window-local variables
+  let input = ''
+  call feedkeys("q:iGetInput w:test_\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('w:test_winvar', input)
+
+  let input = ''
+  call feedkeys("q::GetInput w:test_\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('w:test_', input)
+
+  " Buffer-local variables
+  let input = ''
+  call feedkeys("q:iGetInput b:test_\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('b:test_bufvar', input)
+
+  let input = ''
+  call feedkeys("q::GetInput b:test_\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('b:test_', input)
+
   delcom TestCommand
   delcom GetInput
+  unlet w:test_winvar
+  unlet b:test_bufvar
   set wildmenu& wildchar&
 endfunc
+
+" Test for insert path completion with completeslash option
+func Test_ins_completeslash()
+  CheckMSWindows
+
+  call mkdir('Xdir')
+
+  let orig_shellslash = &shellslash
+  set cpt&
+
+  new
+
+  set noshellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set shellslash
+
+  set completeslash=
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+
+  set completeslash=backslash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir\', getline('.'))
+
+  set completeslash=slash
+  exe "normal oXd\<C-X>\<C-F>"
+  call assert_equal('Xdir/', getline('.'))
+  %bw!
+  call delete('Xdir', 'rf')
+
+  set noshellslash
+  set completeslash=slash
+  call assert_true(stridx(globpath(&rtp, 'syntax/*.vim', 1, 1)[0], '\') != -1)
+
+  let &shellslash = orig_shellslash
+  set completeslash=
+endfunc
+
+func Test_issue_7021()
+  CheckMSWindows
+
+  let orig_shellslash = &shellslash
+  set noshellslash
+
+  set completeslash=slash
+  call assert_false(expand('~') =~ '/')
+
+  let &shellslash = orig_shellslash
+  set completeslash=
+endfunc
+
+func Test_pum_with_folds_two_tabs()
+  CheckScreendump
+
+  let lines =<< trim END
+    set fdm=marker
+    call setline(1, ['" x {{{1', '" a some text'])
+    call setline(3, range(&lines)->map({_, val -> '" a' .. val}))
+    norm! zm
+    tab sp
+    call feedkeys('2Gzv', 'xt')
+    call feedkeys("0fa", 'xt')
+  END
+
+  call writefile(lines, 'Xpumscript')
+  let buf = RunVimInTerminal('-S Xpumscript', #{rows: 10})
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "a\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_with_folds_two_tabs', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xpumscript')
+endfunc
+
+" Test to ensure 'Scanning...' messages are not recorded in messages history
+func Test_z1_complete_no_history()
+  new
+  messages clear
+  let currmess = execute('messages')
+  setlocal dictionary=README.txt
+  exe "normal owh\<C-X>\<C-K>"
+  exe "normal owh\<C-N>"
+  call assert_equal(currmess, execute('messages'))
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

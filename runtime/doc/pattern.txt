@@ -1111,6 +1111,9 @@ x	A single character, with no special meaning, matches itself
 *[:tab:]*	  [:tab:]		the <Tab> character
 *[:escape:]*	  [:escape:]		the <Esc> character
 *[:backspace:]*	  [:backspace:]		the <BS> character
+*[:ident:]*	  [:ident:]		identifier character (same as "\i")
+*[:keyword:]*	  [:keyword:]		keyword character (same as "\k")
+*[:fname:]*	  [:fname:]		file name character (same as "\f")
 	  The brackets in character class expressions are additional to the
 	  brackets delimiting a collection.  For example, the following is a
 	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,

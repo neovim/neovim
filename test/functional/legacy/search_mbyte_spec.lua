@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local clear = helpers.clear
 local insert = helpers.insert
 local expect = helpers.expect
@@ -15,7 +15,7 @@ describe('search_mbyte', function()
 
       Test bce:
       Ａ]=])
-    wait()
+    poke_eventloop()
 
     command('/^Test bce:/+1')
     command([[$put =search('Ａ', 'bce', line('.'))]])

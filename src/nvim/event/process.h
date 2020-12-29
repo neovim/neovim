@@ -27,7 +27,7 @@ struct process {
   Stream in, out, err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, detach;
+  bool closed, detach, overlapped;
   MultiQueue *events;
 };
 

@@ -76,6 +76,28 @@ describe('Signs', function()
       ]])
     end)
 
+    it('allows signs with no text', function()
+      feed('ia<cr>b<cr><esc>')
+      command('sign define piet1 text= texthl=Search')
+      command('sign place 1 line=1 name=piet1 buffer=1')
+      screen:expect([[
+        a                                                    |
+        b                                                    |
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
     it('can be called right after :split', function()
       feed('ia<cr>b<cr>c<cr><esc>gg')
       -- This used to cause a crash due to :sign using a special redraw
@@ -242,6 +264,50 @@ describe('Signs', function()
         {0:~                                                    }|
                                                              |
       ]]}
+    end)
+
+    it('ignores signs with no icon and text when calculting the signcolumn width', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number')
+      command('set signcolumn=auto:2')
+      command('sign define pietSearch text=>> texthl=Search')
+      command('sign define pietError text= texthl=Error')
+      command('sign place 2 line=1 name=pietError buffer=1')
+      -- no signcolumn with only empty sign
+      screen:expect([[
+        {6:  1 }a                                                |
+        {6:  2 }b                                                |
+        {6:  3 }c                                                |
+        {6:  4 }^                                                 |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      -- single column with 1 sign with text and one sign without
+      command('sign place 1 line=1 name=pietSearch buffer=1')
+      screen:expect([[
+        {1:>>}{6:  1 }a                                              |
+        {2:  }{6:  2 }b                                              |
+        {2:  }{6:  3 }c                                              |
+        {2:  }{6:  ^4 }                                               |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
     end)
 
     it('can have 32bit sign IDs', function()

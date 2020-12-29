@@ -2,9 +2,6 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <time.h>
 #include <limits.h>
 
 #include <uv.h>
@@ -13,7 +10,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
-#include "nvim/vim.h"
+#include "nvim/os/os.h"
 #include "nvim/main.h"
 
 static uv_mutex_t delay_mutex;
@@ -59,6 +56,8 @@ uint64_t os_now(void)
 
 /// Sleeps for `ms` milliseconds.
 ///
+/// @see uv_sleep() (libuv v1.34.0)
+///
 /// @param ms          Number of milliseconds to sleep
 /// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t ms, bool ignoreinput)
@@ -74,6 +73,8 @@ void os_delay(uint64_t ms, bool ignoreinput)
 }
 
 /// Sleeps for `us` microseconds.
+///
+/// @see uv_sleep() (libuv v1.34.0)
 ///
 /// @param us          Number of microseconds to sleep.
 /// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
@@ -112,6 +113,10 @@ void os_microdelay(uint64_t us, bool ignoreinput)
   uv_mutex_unlock(&delay_mutex);
 }
 
+// Cache of the current timezone name as retrieved from TZ, or an empty string
+// where unset, up to 64 octets long including trailing null byte.
+static char tz_cache[64];
+
 /// Portable version of POSIX localtime_r()
 ///
 /// @return NULL in case of error
@@ -120,6 +125,19 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 {
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
+  //
+  // Check to see if the environment variable TZ has changed since the last run.
+  // Call tzset(3) to update the global timezone variables if it has.
+  // POSIX standard doesn't require localtime_r() implementations to do that
+  // as it does with localtime(), and we don't want to call tzset() every time.
+  const char *tz = os_getenv("TZ");
+  if (tz == NULL) {
+    tz = "";
+  }
+  if (strncmp(tz_cache, tz, sizeof(tz_cache) - 1) != 0) {
+    tzset();
+    xstrlcpy(tz_cache, tz, sizeof(tz_cache));
+  }
   return localtime_r(clock, result);  // NOLINT(runtime/threadsafe_fn)
 #else
   // Windows version of localtime() is thread-safe.
@@ -142,6 +160,40 @@ struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
+}
+
+/// Portable version of POSIX ctime_r()
+///
+/// @param clock[in]
+/// @param result[out] Pointer to a 'char' where the result should be placed
+/// @param result_len length of result buffer
+/// @return human-readable string of current local time
+char *os_ctime_r(const time_t *restrict clock, char *restrict result,
+                 size_t result_len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  struct tm clock_local;
+  struct tm *clock_local_ptr = os_localtime_r(clock, &clock_local);
+  // MSVC returns NULL for an invalid value of seconds.
+  if (clock_local_ptr == NULL) {
+    xstrlcpy(result, _("(Invalid)"), result_len);
+  } else {
+    strftime(result, result_len, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr);
+  }
+  xstrlcat(result, "\n", result_len);
+  return result;
+}
+
+/// Gets the current Unix timestamp and adjusts it to local time.
+///
+/// @param result[out] Pointer to a 'char' where the result should be placed
+/// @param result_len length of result buffer
+/// @return human-readable string of current local time
+char *os_ctime(char *result, size_t result_len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  time_t rawtime = time(NULL);
+  return os_ctime_r(&rawtime, result, result_len);
 }
 
 /// Obtains the current Unix timestamp.

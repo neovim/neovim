@@ -1,6 +1,7 @@
 " Test for folding
 
 source view_util.vim
+source screendump.vim
 
 func PrepIndent(arg)
   return [a:arg] + repeat(["\t".a:arg], 5)
@@ -769,3 +770,56 @@ func Test_fold_delete_with_marker_and_whichwrap()
   set fdm& ww&
   bwipe!
 endfunc
+
+func Test_fold_delete_first_line()
+  new
+  call setline(1, [
+	\ '" x {{{1',
+	\ '" a',
+	\ '" aa',
+	\ '" x {{{1',
+	\ '" b',
+	\ '" bb',
+	\ '" x {{{1',
+	\ '" c',
+	\ '" cc',
+	\ ])
+  set foldmethod=marker
+  1
+  normal dj
+  call assert_equal([
+	\ '" x {{{1',
+	\ '" c',
+	\ '" cc',
+	\ ], getline(1,'$'))
+  bwipe!
+  set foldmethod&
+endfunc
+
+" this was crashing
+func Test_move_no_folds()
+  new
+  fold
+  setlocal fdm=expr
+  normal zj
+  bwipe!
+endfunc
+
+" this was crashing
+func Test_fold_create_delete_create()
+  new
+  fold
+  fold
+  normal zd
+  fold
+  bwipe!
+endfunc
+
+" this was crashing
+func Test_fold_create_delete()
+  new
+  norm zFzFzdzj
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

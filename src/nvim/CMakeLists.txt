@@ -23,6 +23,7 @@ endif()
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
+set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
@@ -54,6 +55,7 @@ set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
+set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -85,10 +87,6 @@ file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
-
-file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
-file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
-list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
 
 foreach(subdir
         os
@@ -134,6 +132,12 @@ foreach(sfile ${NVIM_SOURCES})
   if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_conpty_win.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(os_win_console.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
@@ -143,6 +147,8 @@ set(CONV_SOURCES
   diff.c
   edit.c
   eval.c
+  eval/funcs.c
+  eval/userfunc.c
   ex_cmds.c
   ex_docmd.c
   fileio.c
@@ -173,14 +179,11 @@ if(NOT MSVC)
   check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
   if(HAS_WSTATIC_IN_INLINE)
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
   else()
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
   endif()
-
-  # tree-sitter: inlined external project, we don't maintain it. #10124
-  set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -212,7 +215,7 @@ set(gen_cflags ${gen_cflags} ${C_FLAGS_${build_type}_ARRAY} ${C_FLAGS_ARRAY})
 
 function(get_preproc_output varname iname)
   if(MSVC)
-    set(${varname} /P /Fi${iname} PARENT_SCOPE)
+    set(${varname} /P /Fi${iname} /nologo PARENT_SCOPE)
   else()
     set(${varname} -E -o ${iname} PARENT_SCOPE)
   endif()
@@ -239,7 +242,7 @@ if(use_git_version)
   add_custom_target(update_version_stamp ALL
     COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
       ${relbuild}/config/auto/versiondef_git.h
-      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
 else()
@@ -321,10 +324,12 @@ add_custom_command(
   COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
       ${LUA_VIM_MODULE_SOURCE} vim_module
       ${LUA_SHARED_MODULE_SOURCE} shared_module
+      ${LUA_INSPECT_MODULE_SOURCE} inspect_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_VIM_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
+    ${LUA_INSPECT_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -440,6 +445,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${UTF8PROC_LIBRARIES}
+  ${TreeSitter_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -459,7 +465,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -540,21 +546,37 @@ else()
 endif()
 set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
+file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
+
+# install treesitter parser if bundled
+if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
+  file(COPY ${DEPS_PREFIX}/lib/nvim/parser DESTINATION ${BINARY_LIB_DIR})
+endif()
+
+install(DIRECTORY ${BINARY_LIB_DIR}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/
+  USE_SOURCE_PERMISSIONS)
+
 add_library(
   libnvim
   STATIC
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+if(MSVC)
+  set(LIBNVIM_NAME libnvim)
+else()
+  set(LIBNVIM_NAME nvim)
+endif()
 set_target_properties(
   libnvim
   PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME nvim
+    OUTPUT_NAME ${LIBNVIM_NAME}
 )
 set_property(
   TARGET libnvim
@@ -571,7 +593,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
@@ -595,9 +617,19 @@ if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
   if(SANITIZE_RECOVER_ALL)
-    set(SANITIZE_RECOVER -fno-sanitize-recover=all)     # Clang 3.6+
+    if(CI_BUILD)
+      # Try to recover from all sanitize issues so we get reports about all failures
+      set(SANITIZE_RECOVER -fsanitize-recover=all)     # Clang 3.6+
+    else()
+      set(SANITIZE_RECOVER -fno-sanitize-recover=all)  # Clang 3.6+
+    endif()
   else()
-    set(SANITIZE_RECOVER -fno-sanitize-recover)         # Clang 3.5-
+    if(CI_BUILD)
+      # Try to recover from all sanitize issues so we get reports about all failures
+      set(SANITIZE_RECOVER -fsanitize-recover)         # Clang 3.5-
+    else()
+      set(SANITIZE_RECOVER -fno-sanitize-recover)      # Clang 3.5-
+    endif()
   endif()
   set_property(TARGET nvim APPEND PROPERTY COMPILE_DEFINITIONS EXITFREE)
   set_property(TARGET nvim APPEND PROPERTY COMPILE_OPTIONS ${SANITIZE_RECOVER} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize=undefined -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/src/.asan-blacklist)
@@ -637,6 +669,8 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   os/pty_process_win.h
+  os/pty_conpty_win.h
+  os/os_win_console.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)

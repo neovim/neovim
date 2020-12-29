@@ -172,39 +172,6 @@ func Test_window_split_edit_bufnr()
   %bw!
 endfunc
 
-func Test_window_preview()
-  " Open a preview window
-  pedit Xa
-  call assert_equal(2, winnr('$'))
-  call assert_equal(0, &previewwindow)
-
-  " Go to the preview window
-  wincmd P
-  call assert_equal(1, &previewwindow)
-
-  " Close preview window
-  wincmd z
-  call assert_equal(1, winnr('$'))
-  call assert_equal(0, &previewwindow)
-
-  call assert_fails('wincmd P', 'E441:')
-endfunc
-
-func Test_window_preview_from_help()
-  filetype on
-  call writefile(['/* some C code */'], 'Xpreview.c')
-  help
-  pedit Xpreview.c
-  wincmd P
-  call assert_equal(1, &previewwindow)
-  call assert_equal('c', &filetype)
-  wincmd z
-
-  filetype off
-  close
-  call delete('Xpreview.c')
-endfunc
-
 func Test_window_exchange()
   e Xa
 
@@ -839,6 +806,52 @@ func Test_winnr()
   call assert_equal(6, tabpagewinnr(1, 'l'))
 
   only | tabonly
+endfunc
+
+func Test_window_resize()
+  " Vertical :resize (absolute, relative, min and max size).
+  vsplit
+  vert resize 8
+  call assert_equal(8, winwidth(0))
+  vert resize +2
+  call assert_equal(10, winwidth(0))
+  vert resize -2
+  call assert_equal(8, winwidth(0))
+  vert resize
+  call assert_equal(&columns - 2, winwidth(0))
+  vert resize 0
+  call assert_equal(1, winwidth(0))
+  vert resize 99999
+  call assert_equal(&columns - 2, winwidth(0))
+
+  %bwipe!
+
+  " Horizontal :resize (with absolute, relative size, min and max size).
+  split
+  resize 8
+  call assert_equal(8, winheight(0))
+  resize +2
+  call assert_equal(10, winheight(0))
+  resize -2
+  call assert_equal(8, winheight(0))
+  resize
+  call assert_equal(&lines - 4, winheight(0))
+  resize 0
+  call assert_equal(1, winheight(0))
+  resize 99999
+  call assert_equal(&lines - 4, winheight(0))
+
+  " :resize with explicit window number.
+  let other_winnr = winnr('j')
+  exe other_winnr .. 'resize 10'
+  call assert_equal(10, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3, winheight(0))
+  exe other_winnr .. 'resize +1'
+  exe other_winnr .. 'resize +1'
+  call assert_equal(12, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3 -2, winheight(0))
+
+  %bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

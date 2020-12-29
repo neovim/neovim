@@ -66,6 +66,7 @@ func Test_curswant_with_cursorline()
 endfunc
 
 func Test_screenpos()
+  throw 'skipped: TODO: '
   rightbelow new
   rightbelow 20vsplit
   call setline(1, ["\tsome text", "long wrapping line here", "next line"])
@@ -89,6 +90,21 @@ func Test_screenpos()
     \ 'col': wincol + 9,
     \ 'curscol': wincol + 9,
     \ 'endcol': wincol + 9}, screenpos(winid, 2, 22))
+  close
+  bwipe!
+endfunc
+
+func Test_screenpos_number()
+  rightbelow new
+  rightbelow 73vsplit
+  call setline (1, repeat('x', 66))
+  setlocal number
+  redraw
+  let winid = win_getid()
+  let [winrow, wincol] = win_screenpos(winid)
+  let pos = screenpos(winid, 1, 66)
+  call assert_equal(winrow, pos.row)
+  call assert_equal(wincol + 66 + 3, pos.col)
   close
   bwipe!
 endfunc

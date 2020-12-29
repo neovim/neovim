@@ -75,4 +75,19 @@ describe(':let', function()
     command(cmd_get_child_env)
     eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
   end)
+
+  it("release of list assigned to l: variable does not trigger assertion #12387, #12430", function()
+    source([[
+      func! s:f()
+        let l:x = [1]
+        let g:x = l:
+      endfunc
+      for _ in range(2)
+        call s:f()
+      endfor
+      call garbagecollect()
+      call feedkeys('i', 't')
+    ]])
+    eq(1, eval('1'))
+  end)
 end)

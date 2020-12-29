@@ -1,6 +1,7 @@
 " Tests for ":highlight" and highlighting.
 
 source view_util.vim
+source screendump.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash
@@ -38,15 +39,15 @@ func Test_highlight()
   call assert_fails("hi Crash term='asdf", "E475:")
 endfunc
 
-function! HighlightArgs(name)
+func HighlightArgs(name)
   return 'hi ' . substitute(split(execute('hi ' . a:name), '\n')[0], '\<xxx\>', '', '')
-endfunction
+endfunc
 
-function! IsColorable()
+func IsColorable()
   return has('gui_running') || str2nr(&t_Co) >= 8
-endfunction
+endfunc
 
-function! HiCursorLine()
+func HiCursorLine()
   let hiCursorLine = HighlightArgs('CursorLine')
   if has('gui_running')
     let guibg = matchstr(hiCursorLine, 'guibg=\w\+')
@@ -57,9 +58,9 @@ function! HiCursorLine()
     let hi_bg = 'hi CursorLine cterm=NONE ctermbg=Gray'
   endif
   return [hiCursorLine, hi_ul, hi_bg]
-endfunction
+endfunc
 
-function! Check_lcs_eol_attrs(attrs, row, col)
+func Check_lcs_eol_attrs(attrs, row, col)
   let save_lcs = &lcs
   set list
 
@@ -67,7 +68,7 @@ function! Check_lcs_eol_attrs(attrs, row, col)
 
   set nolist
   let &lcs = save_lcs
-endfunction
+endfunc
 
 func Test_highlight_eol_with_cursorline()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
@@ -515,7 +516,7 @@ func Test_termguicolors()
   if !exists('+termguicolors')
     return
   endif
-  if has('vtp') && !has('vcon')
+  if has('vtp') && !has('vcon') && !has('gui_running')
     " Win32: 'guicolors' doesn't work without virtual console.
     call assert_fails('set termguicolors', 'E954:')
     return
@@ -590,4 +591,22 @@ func Test_cursorline_with_visualmode()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_cursorline_with_visualmode')
+endfunc
+
+" This test must come before the Test_cursorline test, as it appears this
+" defines the Normal highlighting group anyway.
+func Test_1_highlight_Normalgroup_exists()
+  let hlNormal = HighlightArgs('Normal')
+  if !has('gui_running')
+    call assert_match('hi Normal\s*clear', hlNormal)
+  elseif has('gui_gtk2') || has('gui_gnome') || has('gui_gtk3')
+    " expect is DEFAULT_FONT of gui_gtk_x11.c
+    call assert_match('hi Normal\s*font=Monospace 10', hlNormal)
+  elseif has('gui_motif') || has('gui_athena')
+    " expect is DEFAULT_FONT of gui_x11.c
+    call assert_match('hi Normal\s*font=7x13', hlNormal)
+  elseif has('win32')
+    " expect any font
+    call assert_match('hi Normal\s*font=.*', hlNormal)
+  endif
 endfunc

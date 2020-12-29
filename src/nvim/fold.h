@@ -18,6 +18,7 @@ typedef struct foldinfo {
                                    other fields are invalid */
   int fi_low_level;             /* lowest fold level that starts in the same
                                    line */
+  long fi_lines;
 } foldinfo_T;
 
 

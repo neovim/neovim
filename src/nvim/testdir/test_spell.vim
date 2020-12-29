@@ -1,9 +1,12 @@
 " Test spell checking
 " Note: this file uses latin1 encoding, but is used with utf-8 encoding.
 
+source check.vim
 if !has('spell')
   finish
 endif
+
+source screendump.vim
 
 func TearDown()
   set nospell
@@ -76,6 +79,11 @@ func Test_spellbadword()
   call assert_equal(['bycycle', 'bad'],  spellbadword('My bycycle.'))
   call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
 
+  call assert_equal(['TheCamelWord', 'bad'], spellbadword('TheCamelWord asdf'))
+  set spelloptions=camel
+  call assert_equal(['asdf', 'bad'], spellbadword('TheCamelWord asdf'))
+  set spelloptions=
+
   set spelllang=en
   call assert_equal(['', ''],            spellbadword('centre'))
   call assert_equal(['', ''],            spellbadword('center'))
@@ -110,6 +118,43 @@ foobar/?
   set spell&
 endfunc
 
+func Test_spelllang_inv_region()
+  set spell spelllang=en_xx
+  let messages = GetMessages()
+  call assert_equal('Warning: region xx not supported', messages[-1])
+  set spell& spelllang&
+endfunc
+
+func Test_compl_with_CTRL_X_CTRL_K_using_spell()
+  " When spell checking is enabled and 'dictionary' is empty,
+  " CTRL-X CTRL-K in insert mode completes using the spelling dictionary.
+  new
+  set spell spelllang=en dictionary=
+
+  set ignorecase
+  call feedkeys("Senglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+  call feedkeys("SEnglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+
+  set noignorecase
+  call feedkeys("Senglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['englis'], getline(1, '$'))
+  call feedkeys("SEnglis\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['English'], getline(1, '$'))
+
+  set spelllang=en_us
+  call feedkeys("Stheat\<c-x>\<c-k>\<esc>", 'tnx')
+  call assert_equal(['theater'], getline(1, '$'))
+  set spelllang=en_gb
+  call feedkeys("Stheat\<c-x>\<c-k>\<esc>", 'tnx')
+  " FIXME: commented out, expected theatre bug got theater. See issue #7025.
+  " call assert_equal(['theatre'], getline(1, '$'))
+
+  bwipe!
+  set spell& spelllang& dictionary& ignorecase&
+endfunc
+
 func Test_spellreall()
   new
   set spell
@@ -130,26 +175,33 @@ endfunc
 func Test_spellinfo()
   throw 'skipped: Nvim does not support enc=latin1'
   new
+  let runtime = substitute($VIMRUNTIME, '\\', '/', 'g')
 
   set enc=latin1 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.latin1.spl\n$", execute('spellinfo'))
 
   set enc=cp1250 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.ascii.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.ascii.spl\n$", execute('spellinfo'))
 
   set enc=utf-8 spell spelllang=en
-  call assert_match("^\nfile: .*/runtime/spell/en.utf-8.spl\n$", execute('spellinfo'))
+  call assert_match("^\nfile: " .. runtime .. "/spell/en.utf-8.spl\n$", execute('spellinfo'))
 
   set enc=latin1 spell spelllang=en_us,en_nz
   call assert_match("^\n" .
-                 \  "file: .*/runtime/spell/en.latin1.spl\n" .
-                 \  "file: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+                 \  "file: " .. runtime .. "/spell/en.latin1.spl\n" .
+                 \  "file: " .. runtime .. "/spell/en.latin1.spl\n$", execute('spellinfo'))
 
   set spell spelllang=
   call assert_fails('spellinfo', 'E756:')
 
   set nospell spelllang=en
   call assert_fails('spellinfo', 'E756:')
+
+  call assert_fails('set spelllang=foo/bar', 'E474:')
+  call assert_fails('set spelllang=foo\ bar', 'E474:')
+  call assert_fails("set spelllang=foo\\\nbar", 'E474:')
+  call assert_fails("set spelllang=foo\\\rbar", 'E474:')
+  call assert_fails("set spelllang=foo+bar", 'E474:')
 
   set enc& spell& spelllang&
   bwipe
@@ -386,6 +438,11 @@ func Test_zz_sal_and_addition()
   call assert_equal("elekwint", SecondSpellWord())
 endfunc
 
+func Test_spellfile_value()
+  set spellfile=Xdir/Xtest.latin1.add
+  set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
+endfunc
+
 func Test_region_error()
   messages clear
   call writefile(["/regions=usgbnz", "elequint/0"], "Xtest.latin1.add")
@@ -463,6 +520,44 @@ func RunGoodBad(good, bad, expected_words, expected_bad_words)
   let bad_words = TestGoodBadBase()
   call assert_equal(a:expected_bad_words, bad_words)
   bwipe!
+endfunc
+
+func Test_spell_screendump()
+  CheckScreendump
+
+  let lines =<< trim END
+       call setline(1, [
+             \ "This is some text without any spell errors.  Everything",
+             \ "should just be black, nothing wrong here.",
+             \ "",
+             \ "This line has a sepll error. and missing caps.",
+             \ "And and this is the the duplication.",
+             \ "with missing caps here.",
+             \ ])
+       set spell spelllang=en_nz
+  END
+  call writefile(lines, 'XtestSpell')
+  let buf = RunVimInTerminal('-S XtestSpell', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_spell_1', {})
+
+  let lines =<< trim END
+       call setline(1, [
+             \ "This is some text without any spell errors.  Everything",
+             \ "should just be black, nothing wrong here.",
+             \ "",
+             \ "This line has a sepll error. and missing caps.",
+             \ "And and this is the the duplication.",
+             \ "with missing caps here.",
+             \ ])
+       set spell spelllang=en_nz
+  END
+  call writefile(lines, 'XtestSpell')
+  let buf = RunVimInTerminal('-S XtestSpell', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_spell_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestSpell')
 endfunc
 
 let g:test_data_aff1 = [

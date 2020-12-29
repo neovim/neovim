@@ -192,7 +192,7 @@ end
 -- the real API.
 for i = 1, #functions do
   local fn = functions[i]
-  if fn.impl_name == nil then
+  if fn.impl_name == nil and not fn.lua_only then
     local args = {}
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
@@ -237,6 +237,12 @@ for i = 1, #functions do
             (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
+        if rt:match('^Float$') then
+          -- accept integers for Floats
+          output:write('\n  } else if (args.items['..
+            (j - 1)..'].type == kObjectTypeInteger) {')
+          output:write('\n    '..converted..' = (Float)args.items['..(j - 1)..'].data.integer;')
+        end
         -- accept empty lua tables as empty dictionarys
         if rt:match('^Dictionary') then
           output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
@@ -244,7 +250,7 @@ for i = 1, #functions do
         end
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, \
-          "Wrong type for argument '..j..', expecting '..param[1]..'");')
+          "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
@@ -252,6 +258,13 @@ for i = 1, #functions do
       end
 
       args[#args + 1] = converted
+    end
+
+    if fn.check_textlock then
+      output:write('\n  if (textlock != 0) {')
+      output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_secure);')
+      output:write('\n    goto cleanup;')
+      output:write('\n  }\n')
     end
 
     -- function call
@@ -310,12 +323,13 @@ void msgpack_rpc_init_method_table(void)
 
 for i = 1, #functions do
   local fn = functions[i]
-  output:write('  msgpack_rpc_add_method_handler('..
-               '(String) {.data = "'..fn.name..'", '..
-               '.size = sizeof("'..fn.name..'") - 1}, '..
-               '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .fast = '..tostring(fn.fast)..'});\n')
-
+  if not fn.lua_only then
+      output:write('  msgpack_rpc_add_method_handler('..
+                   '(String) {.data = "'..fn.name..'", '..
+                   '.size = sizeof("'..fn.name..'") - 1}, '..
+                   '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
+                   ', .fast = '..tostring(fn.fast)..'});\n')
+  end
 end
 
 output:write('\n}\n\n')
@@ -386,6 +400,16 @@ local function process_function(fn)
     }
     ]], fn.name))
   end
+
+  if fn.check_textlock then
+    write_shifted_output(output, [[
+    if (textlock != 0) {
+      api_set_error(&err, kErrorTypeException, "%s", e_secure);
+      goto exit_0;
+    }
+    ]])
+  end
+
   local cparams = ''
   local free_code = {}
   for j = #fn.parameters,1,-1 do

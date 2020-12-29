@@ -4,7 +4,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('maparg()', function()
   setup(clear)
@@ -25,7 +25,7 @@ describe('maparg()', function()
     command('map abc y<S-char-114>y')
     command([[call append('$', maparg('abc'))]])
     feed('Go<esc>:<cr>')
-    wait()
+    poke_eventloop()
 
     -- Outside of the range, minimum
     command('inoremap <Char-0x1040> a')
@@ -49,9 +49,9 @@ describe('maparg()', function()
     -- Assert buffer contents.
     expect([[
       is<F4>foo
-      {'lnum': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo<C-V>', 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'is<F4>foo', 'buffer': 0}
-      {'lnum': 0, 'silent': 1, 'noremap': 1, 'lhs': 'bar', 'mode': 'v', 'nowait': 0, 'expr': 1, 'sid': 0, 'rhs': 'isbar', 'buffer': 1}
-      {'lnum': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': ' ', 'nowait': 1, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 1}
+      {'lnum': 0, 'script': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo<C-V>', 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'is<F4>foo', 'buffer': 0}
+      {'lnum': 0, 'script': 1, 'silent': 1, 'noremap': 1, 'lhs': 'bar', 'mode': 'v', 'nowait': 0, 'expr': 1, 'sid': 0, 'rhs': 'isbar', 'buffer': 1}
+      {'lnum': 0, 'script': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': ' ', 'nowait': 1, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 1}
       xrx
       yRy
       abcd]])

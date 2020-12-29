@@ -54,9 +54,9 @@ xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 	xdchange_t *xch, *xchp, *lxch;
 	long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
 	long max_ignorable = xecfg->ctxlen;
-	unsigned long ignored = 0; /* number of ignored blank lines */
+	unsigned long ignored = 0; // number of ignored blank lines
 
-	/* remove ignorable changes that are too far before other changes */
+	// remove ignorable changes that are too far before other changes
 	for (xchp = *xscr; xchp && xchp->ignore; xchp = xchp->next) {
 		xch = xchp->next;
 
@@ -99,9 +99,9 @@ xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 static long def_ff(const char *rec, long len, char *buf, long sz, void *priv UNUSED)
 {
 	if (len > 0 &&
-			(isalpha((unsigned char)*rec) || /* identifier? */
-			 *rec == '_' || /* also identifier? */
-			 *rec == '$')) { /* identifiers from VMS and other esoterico */
+			(isalpha((unsigned char)*rec) || // identifier?
+			 *rec == '_' || // also identifier?
+			 *rec == '$')) { // identifiers from VMS and other esoterico
 		if (len > sz)
 			len = sz;
 		while (0 < len && isspace((unsigned char)rec[len - 1]))
@@ -197,7 +197,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
 			long fs1, i1 = xch->i1;
 
-			/* Appended chunk? */
+			// Appended chunk?
 			if (i1 >= xe->xdf1.nrec) {
 				long i2 = xch->i2;
 

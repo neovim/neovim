@@ -130,12 +130,12 @@ describe('timers', function()
     nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem', {'repeat': -1})")
 
     screen:expect([[
-      ITEM 1                                  |
+      ^ITEM 1                                  |
       ITEM 2                                  |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
-      ^                                        |
+                                              |
     ]])
     nvim_async("command", "let g:cont = 1")
 
@@ -215,8 +215,8 @@ describe('timers', function()
       endfunc
     ]])
     command("call timer_start(5, 'MyHandler', {'repeat': 1})")
-    run(nil, nil, nil, load_adjust(10))
-    retry(nil, load_adjust(100), function()
+    run(nil, nil, nil, load_adjust(20))
+    retry(nil, load_adjust(150), function()
       eq(1, eval("g:val"))
     end)
   end)
