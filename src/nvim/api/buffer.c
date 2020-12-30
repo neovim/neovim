@@ -586,18 +586,13 @@ void nvim_buf_set_text(uint64_t channel_id,
   } else {
       const char *bufline;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
-      for (int64_t i = 0; i < end_row - start_row; i++) {
+      for (int64_t i = 1; i < end_row - start_row; i++) {
           int64_t lnum = start_row + i;
 
-          if (lnum >= MAXLNUM) {
-            api_set_error(err, kErrorTypeValidation, "Index value is too high");
-            goto end;
-          }
-
           bufline = (char *)ml_get_buf(buf, lnum, false);
-          old_byte += (bcount_t)(strlen(bufline));
+          old_byte += (bcount_t)(strlen(bufline))+1;
       }
-      old_byte += (bcount_t)end_col;
+      old_byte += (bcount_t)end_col+1;
   }
 
   String first_item = replacement.items[0].data.string;
@@ -631,11 +626,11 @@ void nvim_buf_set_text(uint64_t channel_id,
     // NL-used-for-NUL.
     lines[i] = xmemdupz(l.data, l.size);
     memchrsub(lines[i], NUL, NL, l.size);
-    new_byte += (bcount_t)(l.size);
+    new_byte += (bcount_t)(l.size)+1;
   }
   if (replacement.size > 1) {
     lines[replacement.size-1] = last;
-    new_byte += (bcount_t)(last_item.size);
+    new_byte += (bcount_t)(last_item.size)+1;
   }
 
   try_start();
@@ -724,7 +719,7 @@ void nvim_buf_set_text(uint64_t channel_id,
               kExtmarkNOOP);
 
   colnr_T col_extent = (colnr_T)(end_col
-                                 - ((end_col > start_col) ? start_col : 0));
+                                 - ((end_row == start_row) ? start_col : 0));
   extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
                  (int)(end_row-start_row), col_extent, old_byte,
                  (int)new_len-1, (colnr_T)last_item.size, new_byte,
