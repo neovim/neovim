@@ -76,9 +76,6 @@ static char_u * const namespace_char = (char_u *)"abglstvw";
 /// Variable used for g:
 static ScopeDictDictItem globvars_var;
 
-/// g: value
-#define globvarht globvardict.dv_hashtab
-
 /*
  * Old Vim variables such as "v:version" are also available without the "v:".
  * Also in functions.  We need a special hashtable for them.
