@@ -526,8 +526,12 @@ static int makeopens(FILE *fd, char_u *dirnow)
     }
   }
 
-  // Close all windows but one.
+  // Close all windows and tabs but one.
   PUTLINE_FAIL("silent only");
+  if ((ssop_flags & SSOP_TABPAGES)
+      && put_line(fd, "silent tabonly") == FAIL) {
+    return FAIL;
+  }
 
   //
   // Now a :cd command to the session directory or the current directory
@@ -606,13 +610,26 @@ static int makeopens(FILE *fd, char_u *dirnow)
   //
   tab_firstwin = firstwin;      // First window in tab page "tabnr".
   tab_topframe = topframe;
+  if ((ssop_flags & SSOP_TABPAGES)) {
+    // Similar to ses_win_rec() below, populate the tab pages first so
+    // later local options won't be copied to the new tabs.
+    FOR_ALL_TABS(tp) {
+      if (tp->tp_next != NULL && put_line(fd, "tabnew") == FAIL) {
+        return FAIL;
+      }
+    }
+
+    if (first_tabpage->tp_next != NULL && put_line(fd, "tabrewind") == FAIL) {
+      return FAIL;
+    }
+  }
   for (tabnr = 1;; tabnr++) {
     tabpage_T *tp = find_tabpage(tabnr);
     if (tp == NULL) {
       break;  // done all tab pages
     }
 
-    int need_tabnew = false;
+    bool need_tabnext = false;
     int cnr = 1;
 
     if ((ssop_flags & SSOP_TABPAGES)) {
@@ -624,7 +641,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
         tab_topframe = tp->tp_topframe;
       }
       if (tabnr > 1) {
-        need_tabnew = true;
+        need_tabnext = true;
       }
     }
 
@@ -639,11 +656,15 @@ static int makeopens(FILE *fd, char_u *dirnow)
           && !bt_help(wp->w_buffer)
           && !bt_nofile(wp->w_buffer)
           ) {
-        if (fputs(need_tabnew ? "tabedit " : "edit ", fd) < 0
+        if (need_tabnext && put_line(fd, "tabnext") == FAIL) {
+          return FAIL;
+        }
+        need_tabnext = false;
+
+        if (fputs("edit ", fd) < 0
             || ses_fname(fd, wp->w_buffer, &ssop_flags, true) == FAIL) {
           return FAIL;
         }
-        need_tabnew = false;
         if (!wp->w_arg_idx_invalid) {
           edited_win = wp;
         }
@@ -652,7 +673,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     }
 
     // If no file got edited create an empty tab page.
-    if (need_tabnew && put_line(fd, "tabnew") == FAIL) {
+    if (need_tabnext && put_line(fd, "tabnext") == FAIL) {
       return FAIL;
     }
 
@@ -775,6 +796,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   //
   if (fprintf(fd, "%s",
               "if exists('s:wipebuf') "
+              "&& len(win_findbuf(s:wipebuf)) == 0"
               "&& getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'\n"
               "  silent exe 'bwipe ' . s:wipebuf\n"
               "endif\n"

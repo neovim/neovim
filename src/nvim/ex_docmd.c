@@ -4769,10 +4769,8 @@ static void ex_abclear(exarg_T *eap)
 
 static void ex_autocmd(exarg_T *eap)
 {
-  /*
-   * Disallow auto commands from .exrc and .vimrc in current
-   * directory for security reasons.
-   */
+  // Disallow autocommands from .exrc and .vimrc in current
+  // directory for security reasons.
   if (secure) {
     secure = 2;
     eap->errmsg = e_curdir;
