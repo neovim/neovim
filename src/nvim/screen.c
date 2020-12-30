@@ -2013,7 +2013,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              // end-of-line
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
-  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines >= 0;
+  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra = 0;
