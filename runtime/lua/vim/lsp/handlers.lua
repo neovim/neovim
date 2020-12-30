@@ -63,7 +63,19 @@ local function progress_callback(_, _, params, client_id)
   vim.api.nvim_command("doautocmd <nomodeline> User LspProgressUpdate")
 end
 
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
 M['$/progress'] = progress_callback
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
+M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  local token = params.token  -- string or number
+  if not client then
+    err_message("LSP[", client_id, "] client has shut down after sending the message")
+  end
+  client.messages.progress[token] = {}
+  return vim.NIL
+end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 M['textDocument/codeAction'] = function(_, _, actions)
