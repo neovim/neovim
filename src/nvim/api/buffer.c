@@ -710,8 +710,6 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  // Only adjust marks if we managed to switch to a window that holds
-  // the buffer, otherwise line numbers will be invalid.
   mark_adjust((linenr_T)start_row,
               (linenr_T)end_row,
               MAXLNUM,
