@@ -33,7 +33,7 @@ local lsp = {
 }
 
 -- maps request name to the required resolved_capability in the client.
-lsp._request_name_to_capability = {
+lsp._request_name_to_server_capability = {
   ['textDocument/hover'] = 'hover';
   ['textDocument/signatureHelp'] = 'signature_help';
   ['textDocument/definition'] = 'goto_definition';
@@ -53,6 +53,9 @@ lsp._request_name_to_capability = {
   ['textDocument/documentHighlight'] = 'document_highlight';
 }
 
+lsp._request_name_to_notification_request = {
+  ['workspace/didChangeConfiguration'] = 'workspace_did_change_configuration';
+}
 -- TODO improve handling of scratch buffers with LSP attached.
 
 --@private
@@ -270,7 +273,7 @@ end
 --@param bufnr (Number) Number of the buffer, or 0 for current
 --@param client Client object
 local function text_document_did_open_handler(bufnr, client)
-  if not client.resolved_capabilities.text_document_open_close then
+  if not client.resolved_server_capabilities.text_document_open_close then
     return
   end
   if not vim.api.nvim_buf_is_loaded(bufnr) then
@@ -352,7 +355,7 @@ end
 ---  - {server_capabilities} (table): Response from the server sent on
 ---    `initialize` describing the server's capabilities.
 ---
----  - {resolved_capabilities} (table): Normalized table of
+---  - {resolved_server_capabilities} (table): Normalized table of
 ---    capabilities that we have detected based on the initialize
 ---    response from the server in `server_capabilities`.
 function lsp.client()
@@ -569,6 +572,7 @@ function lsp.start_client(config)
     -- TODO(remove-callbacks)
     callbacks = handlers;
     handlers = handlers;
+    notification_requests = {};
     -- for $/progress report
     messages = { name = name, messages = {}, progress = {}, status = {} }
   }
@@ -635,15 +639,14 @@ function lsp.start_client(config)
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
-      client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+      client.resolved_server_capabilities = protocol.resolve_server_capabilities(client.server_capabilities)
       client.supports_method = function(method)
-        local required_capability = lsp._request_name_to_capability[method]
+        local required_capability = lsp._request_name_to_server_capability[method]
         -- if we don't know about the method, assume that the client supports it.
         if not required_capability then
           return true
         end
-
-        return client.resolved_capabilities[required_capability]
+        return client.resolved_server_capabilities[required_capability]
       end
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
@@ -652,7 +655,7 @@ function lsp.start_client(config)
         end
       end
       local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
-      local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
+      local _ = log.info() and log.info(log_prefix, "initialized", { resolved_server_capabilities = client.resolved_server_capabilities })
 
       -- Only assign after initialized.
       active_clients[client_id] = client
@@ -841,7 +844,7 @@ do
     for_each_buffer_client(bufnr, function(client, _client_id)
       local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
 
-      local text_document_did_change = client.resolved_capabilities.text_document_did_change
+      local text_document_did_change = client.resolved_server_capabilities.text_document_did_change
       local changes
       if text_document_did_change == protocol.TextDocumentSyncKind.None then
         return
@@ -875,9 +878,9 @@ function lsp._text_document_did_save_handler(bufnr)
     return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
   end)
   for_each_buffer_client(bufnr, function(client, _client_id)
-    if client.resolved_capabilities.text_document_save then
+    if client.resolved_server_capabilities.text_document_save then
       local included_text
-      if client.resolved_capabilities.text_document_save_include_text then
+      if client.resolved_server_capabilities.text_document_save_include_text then
         included_text = text()
       end
       client.notify('textDocument/didSave', {
@@ -917,7 +920,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _client_id)
-          if client.resolved_capabilities.text_document_open_close then
+          if client.resolved_server_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
         end)

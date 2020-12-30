@@ -100,6 +100,30 @@ M['window/showMessageRequest'] = function(_, _, params)
   end
 end
 
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
+M['client/registerCapability'] = function(_, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  local registrations = params['registrations']
+  for _, registration in pairs(registrations) do
+    local method = registration.method
+    local server_capability = vim.lsp._request_name_to_server_capability[method]
+    if server_capability then
+      client.resolved_server_capabilities[server_capability] = true;
+    end
+    local notification_request = vim.lsp._request_name_to_notification_request[method]
+    if notification_request then
+      table.insert(client.notification_requests, notification_request);
+    end
+    if not ( server_capability or notification_request ) then
+      log.warn(string.format( [[
+        The language server [%s] incorrectly triggers a registerCapability handler
+        [%s] for which dynamicRegistration is not supported client-side. Please report upstream.
+      ]] , client.config.name, method))
+    end
+  end
+  return vim.NIL
+end
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 M['textDocument/codeAction'] = function(_, _, actions)
   if actions == nil or vim.tbl_isempty(actions) then

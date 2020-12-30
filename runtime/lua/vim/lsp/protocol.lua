@@ -620,7 +620,7 @@ function protocol.make_client_capabilities()
         didSave = true;
       };
       codeAction = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
 
         codeActionLiteralSupport = {
           codeActionKind = {
@@ -633,7 +633,7 @@ function protocol.make_client_capabilities()
         };
       };
       completion = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         completionItem = {
           -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
           -- this should be disabled out of the box.
@@ -659,23 +659,27 @@ function protocol.make_client_capabilities()
         contextSupport = false;
       };
       declaration = {
+        dynamicRegistration = true;
         linkSupport = true;
       };
       definition = {
+        dynamicRegistration = true;
         linkSupport = true;
       };
       implementation = {
+        dynamicRegistration = true;
         linkSupport = true;
       };
       typeDefinition = {
+        dynamicRegistration = true;
         linkSupport = true;
       };
       hover = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         contentFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
       };
       signatureHelp = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         signatureInformation = {
           documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
           -- parameterInformation = {
@@ -684,13 +688,13 @@ function protocol.make_client_capabilities()
         };
       };
       references = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
       };
       documentHighlight = {
-        dynamicRegistration = false
+        dynamicRegistration = true
       };
       documentSymbol = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         symbolKind = {
           valueSet = (function()
             local res = {}
@@ -702,14 +706,20 @@ function protocol.make_client_capabilities()
         };
         hierarchicalDocumentSymbolSupport = true;
       };
+      formatting = {
+        dynamicRegistration = true;
+      };
+      rangeFormatting = {
+        dynamicRegistration = true;
+      };
       rename = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         prepareSupport = true;
       };
     };
     workspace = {
       symbol = {
-        dynamicRegistration = false;
+        dynamicRegistration = true;
         symbolKind = {
           valueSet = (function()
             local res = {}
@@ -721,11 +731,17 @@ function protocol.make_client_capabilities()
         };
         hierarchicalWorkspaceSymbolSupport = true;
       };
+      executeCommand = {
+        dynamicRegistration = true;
+      };
+      didChangeConfiguration = {
+        dynamicRegistration = true;
+      };
       workspaceFolders = true;
       applyEdit = true;
     };
     callHierarchy = {
-      dynamicRegistration = false;
+      dynamicRegistration = true;
     };
     experimental = nil;
     window = {
@@ -885,7 +901,10 @@ interface ServerCapabilities {
 --]]
 
 --- Creates a normalized object describing LSP server capabilities.
-function protocol.resolve_capabilities(server_capabilities)
+---
+--@param server_capabilities (table) list of capabilities reported by the server to
+--@returns (table) processed table consisting of keys (server_capability) and values (boolean)
+function protocol.resolve_server_capabilities(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties
   do

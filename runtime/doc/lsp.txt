@@ -639,7 +639,7 @@ client()                                                      *vim.lsp.client*
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server
                     sent on `initialize` describing the server's capabilities.
-                  • {resolved_capabilities} (table): Normalized table of
+                  • {resolved_server_capabilities} (table): Normalized table of
                     capabilities that we have detected based on the initialize
                     response from the server in `server_capabilities` .
 
@@ -1917,8 +1917,8 @@ make_client_capabilities()
                 Gets a new ClientCapabilities object describing the LSP client
                 capabilities.
 
-                                     *vim.lsp.protocol.resolve_capabilities()*
-resolve_capabilities({server_capabilities})
+                              *vim.lsp.protocol.resolve_server_capabilities()*
+resolve_server_capabilities({server_capabilities})
                 `*` to match one or more characters in a path segment `?` to
                 match on one character in a path segment `**` to match any
                 number of path segments, including none `{}` to group
