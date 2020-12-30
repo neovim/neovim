@@ -118,7 +118,7 @@ FAQ                                                     *lsp-faq*
 <
                                                            *vim.lsp.callbacks*
 - Q: What happened to `vim.lsp.callbacks`?
-  A: After better defining the interface of |lsp-hander|s, we thought it best
+  A: After better defining the interface of |lsp-handler|s, we thought it best
      to remove the generic usage of `callbacks` and transform to `handlers`.
      Due to this, `vim.lsp.callbacks` was renamed to |vim.lsp.handlers|.
 
@@ -257,7 +257,7 @@ For |lsp-notification|, each |lsp-handler| has this signature: >
 
                                                    *lsp-handler-configuration*
 
-To configure the behavior of a builtin |lsp-handler|, the conenvience method
+To configure the behavior of a builtin |lsp-handler|, the convenient method
 |vim.lsp.with()| is provided for users.
 
   To configure the behavior of |vim.lsp.diagnostic.on_publish_diagnostics()|,
