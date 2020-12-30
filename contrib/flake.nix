@@ -44,7 +44,7 @@
         pythonEnv = legacyPkgs.python3;
         luacheck = legacyPkgs.luaPackages.luacheck;
       in
-        neovim-debug.overrideAttrs(oa: {
+        (neovim-debug.override({doCheck = true;})).overrideAttrs(oa: {
           cmakeFlags = oa.cmakeFlags ++ [
             "-DLUACHECK_PRG=${luacheck}/bin/luacheck"
             "-DMIN_LOG_LEVEL=0"
