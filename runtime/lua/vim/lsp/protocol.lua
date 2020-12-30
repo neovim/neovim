@@ -730,7 +730,15 @@ function protocol.make_client_capabilities()
     experimental = nil;
     window = {
       workDoneProgress = true;
-    }
+      showMessage = {
+        messageActionItem = {
+          additionalPropertiesSupport = false;
+        };
+      };
+      showDocument = {
+        support = false;
+      };
+    };
   }
 end
 
