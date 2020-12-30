@@ -77,6 +77,30 @@ M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
   return vim.NIL
 end
 
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
+M['window/showMessageRequest'] = function(_, _, params)
+
+  local actions = params.actions
+  print(params.message)
+  local option_strings = {params.message, "\nRequest Actions:"}
+  for i, action in ipairs(actions) do
+    local title = action.title:gsub('\r\n', '\\r\\n')
+    title = title:gsub('\n', '\\n')
+    table.insert(option_strings, string.format("%d. %s", i, title))
+  end
+
+  -- window/showMessageRequest can return either MessageActionItem[] or null.
+  local choice = vim.fn.inputlist(option_strings)
+  if choice < 1 or choice > #actions then
+      return vim.NIL
+  else
+    local action_chosen = actions[choice]
+    return {
+      title = action_chosen;
+    }
+  end
+end
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 M['textDocument/codeAction'] = function(_, _, actions)
   if actions == nil or vim.tbl_isempty(actions) then
