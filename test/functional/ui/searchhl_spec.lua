@@ -480,6 +480,11 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
+    -- check hilights work also in folds
+    feed("zf4j")
+    command("%foldopen")
+    screen:expect_unchanged()
+
     feed_command("call clearmatches()")
     screen:expect([[
         very spec{2:^ial te}xt                     |
