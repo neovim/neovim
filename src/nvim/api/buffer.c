@@ -495,40 +495,38 @@ end:
   try_end(err);
 }
 
-/// Sets (replaces) a range in the buffer, retaining any extmarks
-/// that may lie in that range.
+/// Sets (replaces) a range in the buffer
 ///
-/// Indexing is zero-based; end_row is inclusive, while end_col is
-/// exclusive.
+/// This is recommended over nvim_buf_set_lines when only modifying parts of a
+/// line, as extmarks will be preserved on non-modified parts of the touched
+/// lines.
+///
+/// Indexing is zero-based and end-exclusive.
 ///
 /// To insert text at a given index, set `start` and `end` ranges to the same
 /// index. To delete a range, set `replacement` to an array containing
 /// an empty string, or simply an empty array.
 ///
-/// Prefer nvim_buf_set_lines when adding or deleting entire lines.
+/// Prefer nvim_buf_set_lines when adding or deleting entire lines only.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
 /// @param start_column     Last column
-/// @param end_row          Last line index (inclusive)
-/// @param end_column       Last column (exclusive)
+/// @param end_row          Last line index
+/// @param end_column       Last column
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
-void nvim_buf_set_text(uint64_t channel_id,
-                       Buffer buffer,
-                       Integer start_row,
-                       Integer start_col,
-                       Integer end_row,
-                       Integer end_col,
-                       ArrayOf(String) replacement,
-                       Error *err)
+void nvim_buf_set_text(uint64_t channel_id, Buffer buffer,
+                       Integer start_row, Integer start_col,
+                       Integer end_row, Integer end_col,
+                       ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(7)
 {
+  FIXED_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {
-    String s = { .data = "", .size = 0 };
-    ADD(replacement, STRING_OBJ(s));
-    replacement.size = 1;
+    scratch.items[0] = STRING_OBJ(STATIC_CSTR_AS_STRING(""));
+    replacement = scratch;
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -586,18 +584,13 @@ void nvim_buf_set_text(uint64_t channel_id,
   } else {
       const char *bufline;
       old_byte += (bcount_t)strlen(str_at_start) - start_col;
-      for (int64_t i = 0; i < end_row - start_row; i++) {
+      for (int64_t i = 1; i < end_row - start_row; i++) {
           int64_t lnum = start_row + i;
 
-          if (lnum >= MAXLNUM) {
-            api_set_error(err, kErrorTypeValidation, "Index value is too high");
-            goto end;
-          }
-
           bufline = (char *)ml_get_buf(buf, lnum, false);
-          old_byte += (bcount_t)(strlen(bufline));
+          old_byte += (bcount_t)(strlen(bufline))+1;
       }
-      old_byte += (bcount_t)end_col;
+      old_byte += (bcount_t)end_col+1;
   }
 
   String first_item = replacement.items[0].data.string;
@@ -631,11 +624,11 @@ void nvim_buf_set_text(uint64_t channel_id,
     // NL-used-for-NUL.
     lines[i] = xmemdupz(l.data, l.size);
     memchrsub(lines[i], NUL, NL, l.size);
-    new_byte += (bcount_t)(l.size);
+    new_byte += (bcount_t)(l.size)+1;
   }
   if (replacement.size > 1) {
     lines[replacement.size-1] = last;
-    new_byte += (bcount_t)(last_item.size);
+    new_byte += (bcount_t)(last_item.size)+1;
   }
 
   try_start();
@@ -715,8 +708,6 @@ void nvim_buf_set_text(uint64_t channel_id,
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  // Only adjust marks if we managed to switch to a window that holds
-  // the buffer, otherwise line numbers will be invalid.
   mark_adjust((linenr_T)start_row,
               (linenr_T)end_row,
               MAXLNUM,
@@ -724,7 +715,7 @@ void nvim_buf_set_text(uint64_t channel_id,
               kExtmarkNOOP);
 
   colnr_T col_extent = (colnr_T)(end_col
-                                 - ((end_col > start_col) ? start_col : 0));
+                                 - ((end_row == start_row) ? start_col : 0));
   extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
                  (int)(end_row-start_row), col_extent, old_byte,
                  (int)new_len-1, (colnr_T)last_item.size, new_byte,
