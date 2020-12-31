@@ -149,6 +149,31 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
   }
 end
 
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
+M['workspace/configuration'] = function(err, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  if not client then
+    err_message("LSP[id=", client_id, "] client has shut down after sending the message")
+  end
+  if err then error(vim.inspect(err)) end
+  if not params.items then
+    return {}
+  end
+
+  local result = {}
+  for _, item in ipairs(params.items) do
+    if item.section then
+      local value = util.lookup_section(client.config.settings, item.section) or vim.NIL
+      -- For empty sections with no explicit '' key, return settings as is
+      if value == vim.NIL and item.section == '' then
+        value = client.config.settings or vim.NIL
+      end
+      table.insert(result, value)
+    end
+  end
+  return result
+end
+
 M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end

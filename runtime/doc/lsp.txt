@@ -755,6 +755,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                          array.
                     {handlers}         Map of language server method names to
                                        |lsp-handler|
+                    {settings}         Map with language server specific
+                                       settings. These are returned to the language server if
+                                       requested via `workspace/configuration`. Keys are
+                                       case-sensitive.
                     {init_options}     Values to pass in the initialization
                                        request as `initializationOptions` .
                                        See `initialize` in the LSP spec.
