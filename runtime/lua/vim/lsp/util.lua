@@ -1422,6 +1422,21 @@ function M.character_offset(buf, row, col)
   return str_utfindex(line, col)
 end
 
+--- Helper function to return nested values in language server settings
+---
+--@param settings a table of language server settings
+--@param section  a string indicating the field of the settings table
+--@returns (table or string) The value of settings accessed via section
+function M.lookup_section(settings, section)
+  for part in vim.gsplit(section, '.', true) do
+    settings = settings[part]
+    if not settings then
+      return
+    end
+  end
+  return settings
+end
+
 M._get_line_byte_from_position = get_line_byte_from_position
 M._warn_once = warn_once
 
