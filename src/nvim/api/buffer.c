@@ -495,34 +495,32 @@ end:
   try_end(err);
 }
 
-/// Sets (replaces) a range in the buffer, retaining any extmarks
-/// that may lie in that range.
+/// Sets (replaces) a range in the buffer
 ///
-/// Indexing is zero-based; end_row is inclusive, while end_col is
-/// exclusive.
+/// This is recommended over nvim_buf_set_lines when only modifying parts of a
+/// line, as extmarks will be preserved on non-modified parts of the touched
+/// lines.
+///
+/// Indexing is zero-based and end-exclusive.
 ///
 /// To insert text at a given index, set `start` and `end` ranges to the same
 /// index. To delete a range, set `replacement` to an array containing
 /// an empty string, or simply an empty array.
 ///
-/// Prefer nvim_buf_set_lines when adding or deleting entire lines.
+/// Prefer nvim_buf_set_lines when adding or deleting entire lines only.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
 /// @param start_column     Last column
-/// @param end_row          Last line index (inclusive)
-/// @param end_column       Last column (exclusive)
+/// @param end_row          Last line index
+/// @param end_column       Last column
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
-void nvim_buf_set_text(uint64_t channel_id,
-                       Buffer buffer,
-                       Integer start_row,
-                       Integer start_col,
-                       Integer end_row,
-                       Integer end_col,
-                       ArrayOf(String) replacement,
-                       Error *err)
+void nvim_buf_set_text(uint64_t channel_id, Buffer buffer,
+                       Integer start_row, Integer start_col,
+                       Integer end_row, Integer end_col,
+                       ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(7)
 {
   if (replacement.size == 0) {
