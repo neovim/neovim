@@ -315,6 +315,12 @@ M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
   util.buf_highlight_references(bufnr, result)
 end
 
+M['textDocument/documentColor'] = function(_, _, result, _, bufnr, _)
+  print("===========================")
+  print(vim.inspect(result))
+  print("===========================")
+end
+
 --@private
 ---
 --- Displays call hierarchy in the quickfix window.

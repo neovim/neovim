@@ -330,6 +330,13 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+function M.document_color()
+  local params = {
+    textDocument = util.make_text_document_params()
+  }
+  request('textDocument/documentColor', params)
+end
+
 --- Selects a code action from the input list that is available at the current
 --- cursor position.
 --

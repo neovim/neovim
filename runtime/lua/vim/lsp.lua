@@ -51,6 +51,7 @@ lsp._request_name_to_capability = {
   ['textDocument/formatting'] = 'document_formatting';
   ['textDocument/completion'] = 'completion';
   ['textDocument/documentHighlight'] = 'document_highlight';
+  ['textDocument/documentColor'] = 'document_color';
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
