@@ -28,8 +28,9 @@ end
 -- Basically a token of type number/string
 local function progress_callback(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_id, "] client has shut down after sending the message")
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
   local val = params.value    -- unspecified yet
   local token = params.token  -- string or number
@@ -43,14 +44,11 @@ local function progress_callback(_, _, params, client_id)
         percentage = val.percentage,
       }
     elseif val.kind == 'report' then
-      client.messages.progress[token] = {
-        message = val.message,
-        percentage = val.percentage,
-      }
+      client.messages.progress[token].message = val.message;
+      client.messages.progress[token].percentage = val.percentage;
     elseif val.kind == 'end' then
       if client.messages.progress[token] == nil then
-        err_message(
-          'echom "[lsp-status] Received `end` message with no corresponding `begin` from "')
+        err_message("LSP[", client_name, "] received `end` message with no corresponding `begin`")
       else
         client.messages.progress[token].message = val.message
         client.messages.progress[token].done = true
@@ -70,8 +68,9 @@ M['$/progress'] = progress_callback
 M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local token = params.token  -- string or number
+  local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_id, "] client has shut down after sending the message")
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
   client.messages.progress[token] = {}
   return vim.NIL
