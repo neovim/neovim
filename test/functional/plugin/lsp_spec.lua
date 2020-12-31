@@ -262,6 +262,48 @@ describe('LSP', function()
       }
     end)
 
+    it('client should return settings via workspace/configuration handler', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "workspace/configuration", { items = {
+              { section = "testSetting1" };
+              { section = "testSetting2" };
+          }}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_workspace_configuration";
+        on_init = function(_client)
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'start' then
+            exec_lua([=[
+              local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
+              client.config.settings = {
+                testSetting1 = true;
+                testSetting2 = false;
+            }]=])
+          end
+          if method == 'workspace/configuration' then
+            local result = exec_lua([=[
+              local method, params = ...
+              return require'vim.lsp.handlers'['workspace/configuration'](err, method, params, TEST_RPC_CLIENT_ID)]=], method, params)
+            client.notify('workspace/configuration', result)
+          end
+          if method == 'shutdown' then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
     it('should verify capabilities sent', function()
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1};

@@ -109,6 +109,23 @@ function tests.basic_init()
   }
 end
 
+function tests.check_workspace_configuration()
+  skeleton {
+    on_init = function(_params)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify('workspace/configuration', { items = {
+              { section = "testSetting1" };
+              { section = "testSetting2" };
+          } })
+      expect_notification('workspace/configuration', { true; vim.NIL})
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.basic_check_capabilities()
   skeleton {
     on_init = function(params)
