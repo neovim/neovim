@@ -89,65 +89,6 @@ func Test_echoerr()
   call test_ignore_error('RESET')
 endfunc
 
-func Test_mode_message_at_leaving_insert_by_ctrl_c()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
-
-  " Set custom statusline built by user-defined function.
-  let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'func StatusLine() abort',
-        \ '  return ""',
-        \ 'endfunc',
-        \ 'set statusline=%!StatusLine()',
-        \ 'set laststatus=2',
-        \ ], testfile)
-
-  let rows = 10
-  let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
-  call term_wait(buf, 200)
-  call assert_equal('run', job_status(term_getjob(buf)))
-
-  call term_sendkeys(buf, "i")
-  call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, rows))})
-  call term_sendkeys(buf, "\<C-C>")
-  call WaitForAssert({-> assert_match('^\s*$', term_getline(buf, rows))})
-
-  call term_sendkeys(buf, ":qall!\<CR>")
-  call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
-  exe buf . 'bwipe!'
-  call delete(testfile)
-endfunc
-
-func Test_mode_message_at_leaving_insert_with_esc_mapped()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
-
-  " Set custom statusline built by user-defined function.
-  let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'set laststatus=2',
-        \ 'inoremap <Esc> <Esc>00',
-        \ ], testfile)
-
-  let rows = 10
-  let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
-  call term_wait(buf, 200)
-  call assert_equal('run', job_status(term_getjob(buf)))
-
-  call term_sendkeys(buf, "i")
-  call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, rows))})
-  call term_sendkeys(buf, "\<Esc>")
-  call WaitForAssert({-> assert_match('^\s*$', term_getline(buf, rows))})
-
-  call term_sendkeys(buf, ":qall!\<CR>")
-  call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
-  exe buf . 'bwipe!'
-  call delete(testfile)
-endfunc
-
 func Test_echospace()
   set noruler noshowcmd laststatus=1
   call assert_equal(&columns - 1, v:echospace)

@@ -2746,8 +2746,8 @@ redraw:
 
   no_mapping--;
 
-  // make following messages go to the next line
-  msg_didout = false;
+  /* make following messages go to the next line */
+  msg_didout = FALSE;
   msg_col = 0;
   if (msg_row < Rows - 1) {
     msg_row++;

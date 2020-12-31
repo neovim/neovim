@@ -130,12 +130,12 @@ describe('timers', function()
     nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem', {'repeat': -1})")
 
     screen:expect([[
-      ^ITEM 1                                  |
+      ITEM 1                                  |
       ITEM 2                                  |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
-                                              |
+      ^                                        |
     ]])
     nvim_async("command", "let g:cont = 1")
 
