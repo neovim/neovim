@@ -553,19 +553,35 @@ describe('lua: nvim_buf_attach on_bytes', function()
       check_events {
         { "test1", "bytes", 1, 5, 0, 8, 8, 1, 2, 10, 0, 5, 5 };
       }
-      print(inspect(meths.buf_get_lines(0, 0, -1, true)))
 
       meths.buf_set_text(0, 4, 0, 6, 0, {"was 5,6",""})
-      print(inspect(meths.buf_get_lines(0, 0, -1, true)))
       check_events {
         { "test1", "bytes", 1, 6, 4, 0, 75, 2, 0, 32, 1, 0, 8 };
       }
-
 
       eq({ "originalJOINYiginal line 2", "orivery text line 3", "origi splitty",
            "line l line 4", "was 5,6", "    indented line" },
          meths.buf_get_lines(0, 0, -1, true))
 
+    end)
+
+    it('nvim_buf_set_text delete', function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      -- really {""} but accepts {} as a shorthand
+      meths.buf_set_text(0, 0, 0, 1, 0, {})
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 16, 0, 0, 0 };
+      }
+
+      -- TODO(bfredl): this works but is not as convenient as set_lines
+      meths.buf_set_text(0, 4, 15, 5, 17, {""})
+      check_events {
+        { "test1", "bytes", 1, 4, 4, 15, 79, 1, 17, 18, 0, 0, 0 };
+      }
+      eq({ "original line 2", "original line 3", "original line 4",
+           "original line 5", "original line 6" },
+         meths.buf_get_lines(0, 0, -1, true))
     end)
   end
 
