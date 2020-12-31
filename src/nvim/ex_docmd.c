@@ -8069,8 +8069,8 @@ static void ex_redraw(exarg_T *eap)
   RedrawingDisabled = r;
   p_lz = p;
 
-  // Reset msg_didout, so that a message that's there is overwritten.
-  msg_didout = false;
+  /* Reset msg_didout, so that a message that's there is overwritten. */
+  msg_didout = FALSE;
   msg_col = 0;
 
   /* No need to wait after an intentional redraw. */

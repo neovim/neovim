@@ -2006,7 +2006,7 @@ static void version(void)
   info_message = TRUE;  // use mch_msg(), not mch_errmsg()
   list_version();
   msg_putchar('\n');
-  msg_didout = false;
+  msg_didout = FALSE;
 }
 
 /// Prints help message for "nvim -h" or "nvim --help".
