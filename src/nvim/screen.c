@@ -6559,21 +6559,6 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   return;
 }
 
-// Return true when postponing displaying the mode message: when not redrawing
-// or inside a mapping.
-bool skip_showmode(void)
-{
-  // Call char_avail() only when we are going to show something, because it
-  // takes a bit of time.  redrawing() may also call char_avail_avail().
-  if (global_busy
-      || msg_silent != 0
-      || !redrawing()
-      || (char_avail() && !KeyTyped)) {
-    redraw_cmdline = true;  // show mode later
-    return true;
-  }
-  return false;
-}
 
 // Show the current mode and ruler.
 //
@@ -6605,8 +6590,12 @@ int showmode(void)
                  || restart_edit
                  || VIsual_active));
   if (do_mode || reg_recording != 0) {
-    if (skip_showmode()) {
-      return 0;  // show mode later
+    // Don't show mode right now, when not redrawing or inside a mapping.
+    // Call char_avail() only when we are going to show something, because
+    // it takes a bit of time.
+    if (!redrawing() || (char_avail() && !KeyTyped) || msg_silent != 0) {
+      redraw_cmdline = TRUE;                    /* show mode later */
+      return 0;
     }
 
     nwr_save = need_wait_return;
