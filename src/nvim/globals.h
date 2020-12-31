@@ -216,6 +216,8 @@ EXTERN bool emsg_severe INIT(= false);      // use message of next of several
 EXTERN int did_endif INIT(= false);         // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
+/// g: value
+#define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // set by emsg() when the message
                                             // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called

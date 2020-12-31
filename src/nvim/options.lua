@@ -2313,6 +2313,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       secure=true,
+      expand=true,
       varname='p_shadafile',
       defaults={if_true={vi=""}}
     },
