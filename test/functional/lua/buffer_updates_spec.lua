@@ -290,7 +290,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
     -- TODO: while we are brewing the real strong coffe,
     -- verify should check buf_get_offset after every check_events
     if verify then
-      eq(meths.buf_get_offset(0, meths.buf_line_count(0)), string.len(shadowbytes))
+      local len = meths.buf_get_offset(0, meths.buf_line_count(0))
+      eq(len == -1 and 1 or len, string.len(shadowbytes))
     end
     exec_lua("return test_register(...)", 0, "test1", false, false, true)
     meths.buf_get_changedtick(0)
@@ -313,18 +314,12 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
         if event[1] == verify_name and event[2] == "bytes" then
           local _, _, _, _, _, _, start_byte, _, _, old_byte, _, _, new_byte = unpack(event)
-          print("FURR", string.len(shadowbytes))
-          print("BURRMURR", old_byte, new_byte)
           local before = string.sub(shadowbytes, 1, start_byte)
           -- no text in the tests will contain 0xff bytes (invalid UTF-8)
           -- so we can use it as marker for unknown bytes
           local unknown = string.rep('\255', new_byte)
           local after = string.sub(shadowbytes, start_byte + old_byte + 1)
-          print("auur", string.len(before))
-          print("nurr", string.len(unknown))
-          print("durr", string.len(after))
           shadowbytes = before .. unknown .. after
-          print("rororo", string.len(shadowbytes))
         end
       end
 
@@ -332,7 +327,6 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local bytes = table.concat(text, '\n') .. '\n'
 
       eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
-      print("HURRR", string.len(bytes))
       for i = 1, string.len(shadowbytes) do
         local shadowbyte = string.sub(shadowbytes, i, i)
         if shadowbyte ~= '\255' then
