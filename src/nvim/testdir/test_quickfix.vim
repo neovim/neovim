@@ -264,6 +264,9 @@ func XwindowTests(cchar)
 	\ winheight('.') == 7 &&
 	\ getline('.') ==# '|| non-error 1')
 
+  " :cnext in quickfix window should move to the next entry
+  Xnext
+  call assert_equal(2, g:Xgetlist({'idx' : 0}).idx)
 
   " Calling cwindow should close the quickfix window with no valid errors
   Xwindow
@@ -435,13 +438,19 @@ func Xtest_browse(cchar)
   " result in failure
   if a:cchar == 'c'
     let err = 'E42:'
+    let cmd = '$cc'
   else
     let err = 'E776:'
+    let cmd = '$ll'
   endif
   call assert_fails('Xnext', err)
   call assert_fails('Xprev', err)
   call assert_fails('Xnfile', err)
   call assert_fails('Xpfile', err)
+  call assert_fails(cmd, err)
+
+  Xexpr ''
+  call assert_fails(cmd, 'E42:')
 
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
@@ -1814,14 +1823,27 @@ func s:test_xgrep(cchar)
   enew! | only
   set makeef&vim
   silent Xgrep Grep_Test_Text: test_quickfix.vim
-  call assert_true(len(g:Xgetlist()) == 3)
+  call assert_true(len(g:Xgetlist()) == 5)
   Xopen
   call assert_true(w:quickfix_title =~ '^:grep')
   Xclose
   enew
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
-  call assert_true(len(g:Xgetlist()) == 6)
+
+  " Try with 'grepprg' set to 'internal'
+  set grepprg=internal
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 9)
+  set grepprg&vim
+
+   call writefile(['Vim'], 'XtestTempFile')
+   set makeef=XtestTempFile
+   silent Xgrep Grep_Test_Text: test_quickfix.vim
+   call assert_equal(5, len(g:Xgetlist()))
+   call assert_false(filereadable('XtestTempFile'))
+   set makeef&vim
 endfunc
 
 func Test_grep()
@@ -2383,14 +2405,28 @@ func Test_Autocmd()
     silent grepadd GrepAdd_Autocmd_Text test_quickfix.vim
     silent grep abc123def Xtest
     silent grepadd abc123def Xtest
+    set grepprg=internal
+    silent grep Grep_Autocmd_Text test_quickfix.vim
+    silent grepadd GrepAdd_Autocmd_Text test_quickfix.vim
+    silent lgrep Grep_Autocmd_Text test_quickfix.vim
+    silent lgrepadd GrepAdd_Autocmd_Text test_quickfix.vim
+    set grepprg&vim
     let l = ['pregrep',
-          \ 'postgrep',
-          \ 'pregrepadd',
-          \ 'postgrepadd',
-          \ 'pregrep',
-          \ 'postgrep',
-          \ 'pregrepadd',
-          \ 'postgrepadd']
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'pregrep',
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'pregrep',
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'prelgrep',
+		\ 'postlgrep',
+		\ 'prelgrepadd',
+		\ 'postlgrepadd']
     call assert_equal(l, g:acmds)
   endif
 
@@ -2508,6 +2544,19 @@ func Test_cwindow_jump()
   cnext
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
+
+  " Jumping to a file from the location list window should find a usuable
+  " window by wrapping around the window list.
+  enew | only
+  call setloclist(0, [], 'f')
+  new | new
+  lgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  lopen
+  1close
+  call assert_equal(0, getloclist(3, {'id' : 0}).id)
+  lnext
+  call assert_equal(3, winnr())
+  call assert_equal(getloclist(1, {'id' : 0}).id, getloclist(3, {'id' : 0}).id)
 
   enew | only
   set efm&vim
