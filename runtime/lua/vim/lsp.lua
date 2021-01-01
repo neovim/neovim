@@ -412,6 +412,13 @@ end
 --@param init_options Values to pass in the initialization request
 --- as `initializationOptions`. See `initialize` in the LSP spec.
 ---
+--@param settings Optional map with language server specific settings.
+--- These are returned to the language server if requested via
+--- `workspace/configuration`. Keys are case-sensitive.  If they are
+--- not `nil`, then the client will also send an initial
+--- `workspace/didChangeConfiguration` notification to the server after
+--- `on_init`.
+---
 --@param name (string, default=client-id) Name in log messages.
 ---
 --@param get_language_id function(bufnr, filetype) -> language ID as string.
@@ -669,6 +676,14 @@ function lsp.start_client(config)
         if not status then
           pcall(handlers.on_error, lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
         end
+      end
+      if config.settings then
+        if vim.tbl_isempty(config.settings) then
+          config.settings = vim.empty_dict() -- ensure it's sent as dict, not as array.
+        end
+        client.notify('workspace/didChangeConfiguration', {
+          settings = config.settings;
+        })
       end
       local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
       local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
