@@ -1032,14 +1032,15 @@ void free_prev_shellcmd(void)
  * Bangs in the argument are replaced with the previously entered command.
  * Remember the argument.
  */
-void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
+void do_bang(int addr_count, exarg_T *eap, bool forceit,
+             bool do_in, bool do_out)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u              *arg = eap->arg;          /* command */
-  linenr_T line1 = eap->line1;                  /* start of range */
-  linenr_T line2 = eap->line2;                  /* end of range */
-  char_u              *newcmd = NULL;           /* the new command */
-  int free_newcmd = FALSE;                      /* need to free() newcmd */
-  int ins_prevcmd;
+  char_u *arg = eap->arg;             // command
+  linenr_T line1 = eap->line1;        // start of range
+  linenr_T line2 = eap->line2;        // end of range
+  char_u *newcmd = NULL;              // the new command
+  bool free_newcmd = false;           // need to free() newcmd
   char_u              *t;
   char_u              *p;
   char_u              *trailarg;
@@ -1064,7 +1065,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
    * Try to find an embedded bang, like in :!<cmd> ! [args]
    * (:!! is indicated by the 'forceit' variable)
    */
-  ins_prevcmd = forceit;
+  bool ins_prevcmd = forceit;
   trailarg = arg;
   do {
     len = (int)STRLEN(trailarg) + 1;
@@ -1101,7 +1102,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
         else {
           trailarg = p;
           *trailarg++ = NUL;
-          ins_prevcmd = TRUE;
+          ins_prevcmd = true;
           break;
         }
       }
@@ -1131,7 +1132,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
     STRCPY(newcmd, p_shq);
     STRCAT(newcmd, prevcmd);
     STRCAT(newcmd, p_shq);
-    free_newcmd = TRUE;
+    free_newcmd = true;
   }
   if (addr_count == 0) {                /* :! */
     /* echo the command */
@@ -1164,15 +1165,15 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
 // do this.
 // Alternatively, if on Unix and redirecting input or output, but not both,
 // and the 'shelltemp' option isn't set, use pipes.
-// We use input redirection if do_in is TRUE.
-// We use output redirection if do_out is TRUE.
+// We use input redirection if do_in is true.
+// We use output redirection if do_out is true.
 static void do_filter(
     linenr_T line1,
     linenr_T line2,
     exarg_T *eap,               /* for forced 'ff' and 'fenc' */
     char_u *cmd,
-    int do_in,
-    int do_out)
+    bool do_in,
+    bool do_out)
 {
   char_u      *itmp = NULL;
   char_u      *otmp = NULL;
@@ -1669,10 +1670,17 @@ void ex_update(exarg_T *eap)
  */
 void ex_write(exarg_T *eap)
 {
-  if (eap->usefilter)           /* input lines to shell command */
-    do_bang(1, eap, FALSE, TRUE, FALSE);
-  else
+  if (eap->cmdidx == CMD_saveas) {
+    // :saveas does not take a range, uses all lines.
+    eap->line1 = 1;
+    eap->line2 = curbuf->b_ml.ml_line_count;
+  }
+
+  if (eap->usefilter) {  // input lines to shell command
+    do_bang(1, eap, false, true, false);
+  } else {
     (void)do_write(eap);
+  }
 }
 
 /*

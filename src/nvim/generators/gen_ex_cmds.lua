@@ -22,7 +22,10 @@ local defsfname = autodir .. '/ex_cmds_defs.generated.h'
 local enumfile = io.open(enumfname, 'w')
 local defsfile = io.open(defsfname, 'w')
 
-local defs = require('ex_cmds')
+local bit = require 'bit'
+local ex_cmds = require('ex_cmds')
+local defs = ex_cmds.cmds
+local flags = ex_cmds.flags
 
 local byte_a = string.byte('a')
 local byte_z = string.byte('z')
@@ -51,6 +54,17 @@ static CommandDefinition cmdnames[%u] = {
 ]], #defs, #defs))
 local cmds, cmdidxs1, cmdidxs2 = {}, {}, {}
 for _, cmd in ipairs(defs) do
+  if bit.band(cmd.flags, flags.RANGE) == flags.RANGE then
+    assert(cmd.addr_type ~= 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Using RANGE with ADDR_NONE\n', cmd.command))
+  else
+    assert(cmd.addr_type == 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Missing ADDR_NONE\n', cmd.command))
+  end
+  if bit.band(cmd.flags, flags.DFLALL) == flags.DFLALL then
+    assert(cmd.addr_type ~= 'ADDR_OTHER' and cmd.addr_type ~= 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Missing misplaced DFLALL\n', cmd.command))
+  end
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   local byte_cmd = cmd.command:sub(1, 1):byte()
   if byte_a <= byte_cmd and byte_cmd <= byte_z then

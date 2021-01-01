@@ -51,17 +51,16 @@
 #define NOTRLCOM        0x800   // no trailing comment allowed
 #define ZEROR          0x1000   // zero line number allowed
 #define USECTRLV       0x2000   // do not remove CTRL-V from argument
-#define NOTADR         0x4000   // number before command is not an address
-#define EDITCMD        0x8000   // allow "+command" argument
-#define BUFNAME       0x10000   // accepts buffer name
-#define BUFUNL        0x20000   // accepts unlisted buffer too
-#define ARGOPT        0x40000   // allow "++opt=val" argument
-#define SBOXOK        0x80000   // allowed in the sandbox
-#define CMDWIN       0x100000   // allowed in cmdline window; when missing
+#define EDITCMD        0x4000   // allow "+command" argument
+#define BUFNAME        0x8000   // accepts buffer name
+#define BUFUNL        0x10000L  // accepts unlisted buffer too
+#define ARGOPT        0x20000L  // allow "++opt=val" argument
+#define SBOXOK        0x40000L  // allowed in the sandbox
+#define CMDWIN        0x80000L  // allowed in cmdline window; when missing
                                 // disallows editing another buffer when
                                 // curbuf_lock is set
-#define MODIFY       0x200000   // forbidden in non-'modifiable' buffer
-#define EXFLAGS      0x400000   // allow flags after count in argument
+#define MODIFY       0x100000L  // forbidden in non-'modifiable' buffer
+#define EXFLAGS      0x200000L  // allow flags after count in argument
 #define FILES (XFILE | EXTRA)   // multiple extra files allowed
 #define WORD1 (EXTRA | NOSPC)   // one extra word allowed
 #define FILE1 (FILES | NOSPC)   // 1 file allowed, defaults to current file
@@ -75,8 +74,10 @@ typedef enum {
   ADDR_BUFFERS,         // buffer number
   ADDR_TABS,            // tab page number
   ADDR_TABS_RELATIVE,   // Tab page that only relative
+  ADDR_QUICKFIX_VALID,  // quickfix list valid entry number
   ADDR_QUICKFIX,        // quickfix list entry number
-  ADDR_OTHER,           // something else
+  ADDR_UNSIGNED,        // positive count or zero, defaults to 1
+  ADDR_OTHER,           // something else, use line number for '$', '%', etc.
   ADDR_NONE             // no range used
 } cmd_addr_T;
 
@@ -153,7 +154,7 @@ struct exarg {
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
-  int addr_type;                ///< type of the count/range
+  cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file

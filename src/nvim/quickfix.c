@@ -3300,6 +3300,24 @@ void qf_history(exarg_T *eap)
   qf_info_T *qi = qf_cmd_get_stack(eap, false);
   int i;
 
+  if (eap->addr_count > 0) {
+    if (qi == NULL) {
+      EMSG(_(e_loclist));
+      return;
+    }
+
+    // Jump to the specified quickfix list
+    if (eap->line2 > 0 && eap->line2 <= qi->qf_listcount) {
+      qi->qf_curlist = (int)(eap->line2 - 1);
+      qf_msg(qi, qi->qf_curlist, "");
+      qf_update_buffer(qi, NULL);
+    } else {
+      EMSG(_(e_invrange));
+    }
+
+    return;
+  }
+
   if (qf_stack_empty(qi)) {
     MSG(_("No entries"));
   } else {
@@ -3622,7 +3640,7 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   // Set the options for the quickfix buffer/window (if not already done)
   // Do this even if the quickfix buffer was already present, as an autocmd
   // might have previously deleted (:bdelete) the quickfix buffer.
-  if (curbuf->b_p_bt[0] != 'q') {
+  if (!bt_quickfix(curbuf)) {
     qf_set_cwindow_options();
   }
 
@@ -4269,9 +4287,20 @@ static char_u *get_mef_name(void)
   return name;
 }
 
-/// Returns the number of valid entries in the current quickfix/location list.
+/// Returns the number of entries in the current quickfix/location list.
 size_t qf_get_size(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
+{
+  qf_info_T *qi;
+
+  if ((qi = qf_cmd_get_stack(eap, false)) == NULL) {
+    return 0;
+  }
+  return (size_t)qf_get_curlist(qi)->qf_count;
+}
+
+/// Returns the number of valid entries in the current quickfix/location list.
+size_t qf_get_valid_size(exarg_T *eap)
 {
   qf_info_T *qi;
   qf_list_T *qfl;
@@ -4562,74 +4591,150 @@ static qfline_T * qf_find_last_entry_on_line(qfline_T *entry, int *errornr)
   return entry;
 }
 
-/// Find the first quickfix entry below line 'lnum' in buffer 'bnr'.
+// Returns true if the specified quickfix entry is
+// after the given line (linewise is true)
+// or after the line and column.
+static bool qf_entry_after_pos(const qfline_T *qfp, const pos_T *pos,
+                               bool linewise)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (linewise) {
+    return qfp->qf_lnum > pos->lnum;
+  }
+  return qfp->qf_lnum > pos->lnum
+    || (qfp->qf_lnum == pos->lnum && qfp->qf_col > pos->col);
+}
+
+// Returns true if the specified quickfix entry is
+// before the given line (linewise is true)
+// or before the line and column.
+static bool qf_entry_before_pos(const qfline_T *qfp, const pos_T *pos,
+                                bool linewise)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (linewise) {
+    return qfp->qf_lnum < pos->lnum;
+  }
+  return qfp->qf_lnum < pos->lnum
+    || (qfp->qf_lnum == pos->lnum && qfp->qf_col < pos->col);
+}
+
+// Returns true if the specified quickfix entry is
+// on or after the given line (linewise is true)
+// or on or after the line and column.
+static bool qf_entry_on_or_after_pos(const qfline_T *qfp, const pos_T *pos,
+                                     bool linewise)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (linewise) {
+    return qfp->qf_lnum >= pos->lnum;
+  }
+  return qfp->qf_lnum > pos->lnum
+    || (qfp->qf_lnum == pos->lnum && qfp->qf_col >= pos->col);
+}
+
+// Returns true if the specified quickfix entry is
+// on or before the given line (linewise is true)
+// or on or before the line and column.
+static bool qf_entry_on_or_before_pos(const qfline_T *qfp, const pos_T *pos,
+                                      bool linewise)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (linewise) {
+    return qfp->qf_lnum <= pos->lnum;
+  }
+  return qfp->qf_lnum < pos->lnum
+    || (qfp->qf_lnum == pos->lnum && qfp->qf_col <= pos->col);
+}
+
+/// Find the first quickfix entry after position 'pos' in buffer 'bnr'.
+/// If 'linewise' is true, returns the entry after the specified line and treats
+/// multiple entries on a single line as one. Otherwise returns the entry after
+/// the specified line and column.
 /// 'qfp' points to the very first entry in the buffer and 'errornr' is the
 /// index of the very first entry in the quickfix list.
-/// Returns NULL if an entry is not found after 'lnum'.
-static qfline_T *qf_find_entry_on_next_line(int bnr,
-                                            linenr_T lnum,
-                                            qfline_T *qfp,
-                                            int *errornr)
+/// Returns NULL if an entry is not found after 'pos'.
+static qfline_T *qf_find_entry_after_pos(
+    int bnr,
+    const pos_T *pos,
+    bool linewise,
+    qfline_T *qfp,
+    int *errornr
+)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (qfp->qf_lnum > lnum) {
-    // First entry is after line 'lnum'
+  if (qf_entry_after_pos(qfp, pos, linewise)) {
+    // First entry is after postion 'pos'
     return qfp;
   }
 
-  // Find the entry just before or at the line 'lnum'
+  // Find the entry just before or at the position 'pos'
   while (qfp->qf_next != NULL
          && qfp->qf_next->qf_fnum == bnr
-         && qfp->qf_next->qf_lnum <= lnum) {
+         && qf_entry_on_or_before_pos(qfp->qf_next, pos, linewise)) {
     qfp = qfp->qf_next;
     (*errornr)++;
   }
 
   if (qfp->qf_next == NULL || qfp->qf_next->qf_fnum != bnr) {
-    // No entries found after 'lnum'
+    // No entries found after position 'pos'
     return NULL;
   }
 
-  // Use the entry just after line 'lnum'
+  // Use the entry just after position 'pos'
   qfp = qfp->qf_next;
   (*errornr)++;
 
   return qfp;
 }
 
-/// Find the first quickfix entry before line 'lnum' in buffer 'bnr'.
+/// Find the first quickfix entry before position 'pos' in buffer 'bnr'.
+/// If 'linewise' is true, returns the entry before the specified line and
+/// treats multiple entries on a single line as one. Otherwise returns the entry
+/// before the specified line and column.
 /// 'qfp' points to the very first entry in the buffer and 'errornr' is the
 /// index of the very first entry in the quickfix list.
-/// Returns NULL if an entry is not found before 'lnum'.
-static qfline_T *qf_find_entry_on_prev_line(int bnr,
-                                            linenr_T lnum,
-                                            qfline_T *qfp,
-                                            int *errornr)
+/// Returns NULL if an entry is not found before 'pos'.
+static qfline_T *qf_find_entry_before_pos(
+    int bnr,
+    const pos_T *pos,
+    bool linewise,
+    qfline_T *qfp,
+    int *errornr
+)
+  FUNC_ATTR_NONNULL_ALL
 {
-  // Find the entry just before the line 'lnum'
+  // Find the entry just before the position 'pos'
   while (qfp->qf_next != NULL
          && qfp->qf_next->qf_fnum == bnr
-         && qfp->qf_next->qf_lnum < lnum) {
+         && qf_entry_before_pos(qfp->qf_next, pos, linewise)) {
     qfp = qfp->qf_next;
     (*errornr)++;
   }
 
-  if (qfp->qf_lnum >= lnum) {  // entry is after 'lnum'
+  if (qf_entry_on_or_after_pos(qfp, pos, linewise)) {
     return NULL;
   }
 
-  // If multiple entries are on the same line, then use the first entry
-  qfp = qf_find_first_entry_on_line(qfp, errornr);
+  if (linewise) {
+    // If multiple entries are on the same line, then use the first entry
+    qfp = qf_find_first_entry_on_line(qfp, errornr);
+  }
 
   return qfp;
 }
 
-/// Find a quickfix entry in 'qfl' closest to line 'lnum' in buffer 'bnr' in
+/// Find a quickfix entry in 'qfl' closest to position 'pos' in buffer 'bnr' in
 /// the direction 'dir'.
-static qfline_T *qf_find_closest_entry(qf_list_T *qfl,
-                                       int bnr,
-                                       linenr_T lnum,
-                                       int dir,
-                                       int *errornr)
+static qfline_T *qf_find_closest_entry(
+    qf_list_T *qfl,
+    int bnr,
+    const pos_T *pos,
+    Direction dir,
+    bool linewise,
+    int *errornr
+)
+  FUNC_ATTR_NONNULL_ALL
 {
   qfline_T *qfp;
 
@@ -4642,33 +4747,38 @@ static qfline_T *qf_find_closest_entry(qf_list_T *qfl,
   }
 
   if (dir == FORWARD) {
-    qfp = qf_find_entry_on_next_line(bnr, lnum, qfp, errornr);
+    qfp = qf_find_entry_after_pos(bnr, pos, linewise, qfp, errornr);
   } else {
-    qfp = qf_find_entry_on_prev_line(bnr, lnum, qfp, errornr);
+    qfp = qf_find_entry_before_pos(bnr, pos, linewise, qfp, errornr);
   }
 
   return qfp;
 }
 
-/// Get the nth quickfix entry below the specified entry treating multiple
-/// entries on a single line as one. Searches forward in the list.
-static void qf_get_nth_below_entry(qfline_T *entry,
-                                   int *errornr,
-                                   linenr_T n)
+/// Get the nth quickfix entry below the specified entry.  Searches forward in
+/// the list. If linewise is true, then treat multiple entries on a single line
+/// as one.
+static void qf_get_nth_below_entry(qfline_T *entry, linenr_T n,
+                                   bool linewise, int *errornr)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (n-- > 0 && !got_int) {
     // qfline_T *first_entry = entry;
     int first_errornr = *errornr;
 
-    // Treat all the entries on the same line in this file as one
-    entry = qf_find_last_entry_on_line(entry, errornr);
+    if (linewise) {
+      // Treat all the entries on the same line in this file as one
+      entry = qf_find_last_entry_on_line(entry, errornr);
+    }
 
     if (entry->qf_next == NULL
         || entry->qf_next->qf_fnum != entry->qf_fnum) {
-      // If multiple entries are on the same line, then use the first
-      // entry
-      // entry = first_entry;
-      *errornr = first_errornr;
+      if (linewise) {
+        // If multiple entries are on the same line, then use the first
+        // entry
+        // entry = first_entry;
+        *errornr = first_errornr;
+      }
       break;
     }
 
@@ -4677,11 +4787,12 @@ static void qf_get_nth_below_entry(qfline_T *entry,
   }
 }
 
-/// Get the nth quickfix entry above the specified entry treating multiple
-/// entries on a single line as one. Searches backwards in the list.
-static void qf_get_nth_above_entry(qfline_T *entry,
-                                   int *errornr,
-                                   linenr_T n)
+/// Get the nth quickfix entry above the specified entry.  Searches backwards in
+/// the list. If linewise is TRUE, then treat multiple entries on a single line
+/// as one.
+static void qf_get_nth_above_entry(qfline_T *entry, linenr_T n,
+                                   bool linewise, int *errornr)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (n-- > 0 && !got_int) {
     if (entry->qf_prev == NULL
@@ -4692,25 +4803,30 @@ static void qf_get_nth_above_entry(qfline_T *entry,
     entry = entry->qf_prev;
     (*errornr)--;
 
-    // If multiple entries are on the same line, then use the first entry
-    entry = qf_find_first_entry_on_line(entry, errornr);
+    if (linewise) {
+      entry = qf_find_first_entry_on_line(entry, errornr);
+    }
   }
 }
 
-/// Find the n'th quickfix entry adjacent to line 'lnum' in buffer 'bnr' in the
-/// specified direction.
-/// Returns the error number in the quickfix list or 0 if an entry is not found.
-static int qf_find_nth_adj_entry(qf_list_T *qfl,
-                                 int bnr,
-                                 linenr_T lnum,
-                                 linenr_T n,
-                                 int dir)
+/// Find the n'th quickfix entry adjacent to position 'pos' in buffer 'bnr' in
+/// the specified direction.  Returns the error number in the quickfix list or 0
+/// if an entry is not found.
+static int qf_find_nth_adj_entry(
+    qf_list_T *qfl,
+    int bnr,
+    pos_T *pos,
+    linenr_T n,
+    Direction dir,
+    bool linewise
+)
+  FUNC_ATTR_NONNULL_ALL
 {
-  qfline_T *adj_entry;
   int errornr;
 
-  // Find an entry closest to the specified line
-  adj_entry = qf_find_closest_entry(qfl, bnr, lnum, dir, &errornr);
+  // Find an entry closest to the specified position
+  qfline_T *const adj_entry = qf_find_closest_entry(qfl, bnr, pos, dir,
+                                                    linewise, &errornr);
   if (adj_entry == NULL) {
     return 0;
   }
@@ -4718,24 +4834,25 @@ static int qf_find_nth_adj_entry(qf_list_T *qfl,
   if (--n > 0) {
     // Go to the n'th entry in the current buffer
     if (dir == FORWARD) {
-      qf_get_nth_below_entry(adj_entry, &errornr, n);
+      qf_get_nth_below_entry(adj_entry, n, linewise, &errornr);
     } else {
-      qf_get_nth_above_entry(adj_entry, &errornr, n);
+      qf_get_nth_above_entry(adj_entry, n, linewise, &errornr);
     }
   }
 
   return errornr;
 }
 
-/// Jump to a quickfix entry in the current file nearest to the current line.
-/// ":cabove", ":cbelow", ":labove" and ":lbelow" commands
+/// Jump to a quickfix entry in the current file nearest to the current line or
+/// current line/col.
+/// ":cabove", ":cbelow", ":labove", ":lbelow", ":cafter", ":cbefore",
+/// ":lafter" and ":lbefore" commands
 void ex_cbelow(exarg_T *eap)
 {
   qf_info_T *qi;
   qf_list_T *qfl;
   int dir;
   int buf_has_flag;
-  int errornr = 0;
 
   if (eap->addr_count > 0 && eap->line2 <= 0) {
     EMSG(_(e_invrange));
@@ -4743,7 +4860,8 @@ void ex_cbelow(exarg_T *eap)
   }
 
   // Check whether the current buffer has any quickfix entries
-  if (eap->cmdidx == CMD_cabove || eap->cmdidx == CMD_cbelow) {
+  if (eap->cmdidx == CMD_cabove || eap->cmdidx == CMD_cbelow
+      || eap->cmdidx == CMD_cbefore || eap->cmdidx == CMD_cafter) {
     buf_has_flag = BUF_HAS_QF_ENTRY;
   } else {
     buf_has_flag = BUF_HAS_LL_ENTRY;
@@ -4764,14 +4882,30 @@ void ex_cbelow(exarg_T *eap)
     return;
   }
 
-  if (eap->cmdidx == CMD_cbelow || eap->cmdidx == CMD_lbelow) {
+  if (eap->cmdidx == CMD_cbelow
+      || eap->cmdidx == CMD_lbelow
+      || eap->cmdidx == CMD_cafter
+      || eap->cmdidx == CMD_lafter) {
+    // Forward motion commands
     dir = FORWARD;
   } else {
     dir = BACKWARD;
   }
 
-  errornr = qf_find_nth_adj_entry(qfl, curbuf->b_fnum, curwin->w_cursor.lnum,
-                                  eap->addr_count > 0 ? eap->line2 : 0, dir);
+  pos_T pos = curwin->w_cursor;
+  // A quickfix entry column number is 1 based whereas cursor column
+  // number is 0 based. Adjust the column number.
+  pos.col++;
+  const int errornr = qf_find_nth_adj_entry(
+      qfl,
+      curbuf->b_fnum,
+      &pos,
+      eap->addr_count > 0 ? eap->line2 : 0,
+      dir,
+      eap->cmdidx == CMD_cbelow
+      || eap->cmdidx == CMD_lbelow
+      || eap->cmdidx == CMD_cabove
+      || eap->cmdidx == CMD_labove);
 
   if (errornr > 0) {
     qf_jump(qi, 0, errornr, false);
@@ -6818,8 +6952,9 @@ void ex_helpgrep(exarg_T *eap)
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
                    curbuf->b_fname, true, curbuf);
-    if (!new_qi && IS_LL_STACK(qi) && qf_find_buf(qi) == NULL) {
-      // autocommands made "qi" invalid
+    // When adding a location list to an existing location list stack,
+    // if the autocmd made the stack invalid, then just return.
+    if (!new_qi && IS_LL_STACK(qi) && qf_find_win_with_loclist(qi) == NULL) {
       decr_quickfix_busy();
       return;
     }

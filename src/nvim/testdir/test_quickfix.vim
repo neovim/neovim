@@ -29,7 +29,7 @@ func s:setup_commands(cchar)
     command! -count -nargs=* -bang Xprev <mods><count>cprev<bang> <args>
     command! -nargs=* -bang Xfirst <mods>cfirst<bang> <args>
     command! -nargs=* -bang Xlast <mods>clast<bang> <args>
-    command! -nargs=* -bang -range Xnfile <mods><count>cnfile<bang> <args>
+    command! -count -nargs=* -bang Xnfile <mods><count>cnfile<bang> <args>
     command! -nargs=* -bang Xpfile <mods>cpfile<bang> <args>
     command! -nargs=* Xexpr <mods>cexpr <args>
     command! -range -nargs=* Xvimgrep <mods><count>vimgrep <args>
@@ -40,6 +40,8 @@ func s:setup_commands(cchar)
     command! -nargs=0 -count Xcc <count>cc
     command! -count=1 -nargs=0 Xbelow <mods><count>cbelow
     command! -count=1 -nargs=0 Xabove <mods><count>cabove
+    command! -count=1 -nargs=0 Xbefore <mods><count>cbefore
+    command! -count=1 -nargs=0 Xafter <mods><count>cafter
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
     call setqflist([], 'f')
@@ -64,7 +66,7 @@ func s:setup_commands(cchar)
     command! -count -nargs=* -bang Xprev <mods><count>lprev<bang> <args>
     command! -nargs=* -bang Xfirst <mods>lfirst<bang> <args>
     command! -nargs=* -bang Xlast <mods>llast<bang> <args>
-    command! -nargs=* -bang -range Xnfile <mods><count>lnfile<bang> <args>
+    command! -count -nargs=* -bang Xnfile <mods><count>lnfile<bang> <args>
     command! -nargs=* -bang Xpfile <mods>lpfile<bang> <args>
     command! -nargs=* Xexpr <mods>lexpr <args>
     command! -range -nargs=* Xvimgrep <mods><count>lvimgrep <args>
@@ -75,6 +77,8 @@ func s:setup_commands(cchar)
     command! -nargs=0 -count Xcc <count>ll
     command! -count=1 -nargs=0 Xbelow <mods><count>lbelow
     command! -count=1 -nargs=0 Xabove <mods><count>labove
+    command! -count=1 -nargs=0 Xbefore <mods><count>lbefore
+    command! -count=1 -nargs=0 Xafter <mods><count>lafter
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
     call setloclist(0, [], 'f')
@@ -260,6 +264,9 @@ func XwindowTests(cchar)
 	\ winheight('.') == 7 &&
 	\ getline('.') ==# '|| non-error 1')
 
+  " :cnext in quickfix window should move to the next entry
+  Xnext
+  call assert_equal(2, g:Xgetlist({'idx' : 0}).idx)
 
   " Calling cwindow should close the quickfix window with no valid errors
   Xwindow
@@ -431,13 +438,19 @@ func Xtest_browse(cchar)
   " result in failure
   if a:cchar == 'c'
     let err = 'E42:'
+    let cmd = '$cc'
   else
     let err = 'E776:'
+    let cmd = '$ll'
   endif
   call assert_fails('Xnext', err)
   call assert_fails('Xprev', err)
   call assert_fails('Xnfile', err)
   call assert_fails('Xpfile', err)
+  call assert_fails(cmd, err)
+
+  Xexpr ''
+  call assert_fails(cmd, 'E42:')
 
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
@@ -1810,14 +1823,27 @@ func s:test_xgrep(cchar)
   enew! | only
   set makeef&vim
   silent Xgrep Grep_Test_Text: test_quickfix.vim
-  call assert_true(len(g:Xgetlist()) == 3)
+  call assert_true(len(g:Xgetlist()) == 5)
   Xopen
   call assert_true(w:quickfix_title =~ '^:grep')
   Xclose
   enew
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
-  call assert_true(len(g:Xgetlist()) == 6)
+
+  " Try with 'grepprg' set to 'internal'
+  set grepprg=internal
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 9)
+  set grepprg&vim
+
+   call writefile(['Vim'], 'XtestTempFile')
+   set makeef=XtestTempFile
+   silent Xgrep Grep_Test_Text: test_quickfix.vim
+   call assert_equal(5, len(g:Xgetlist()))
+   call assert_false(filereadable('XtestTempFile'))
+   set makeef&vim
 endfunc
 
 func Test_grep()
@@ -1914,9 +1940,23 @@ func HistoryTest(cchar)
   call assert_equal('  error list 2 of 3; 2 ' . common, res[1])
   call assert_equal('> error list 3 of 3; 3 ' . common, res[2])
 
+  " Test for changing the quickfix lists
+  call assert_equal(3, g:Xgetlist({'nr' : 0}).nr)
+  exe '1' . a:cchar . 'hist'
+  call assert_equal(1, g:Xgetlist({'nr' : 0}).nr)
+  exe '3' . a:cchar . 'hist'
+  call assert_equal(3, g:Xgetlist({'nr' : 0}).nr)
+  call assert_fails('-2' . a:cchar . 'hist', 'E16:')
+  call assert_fails('4' . a:cchar . 'hist', 'E16:')
+
   call g:Xsetlist([], 'f')
   let l = split(execute(a:cchar . 'hist'), "\n")
   call assert_equal('No entries', l[0])
+  if a:cchar == 'c'
+    call assert_fails('4chist', 'E16:')
+  else
+    call assert_fails('4lhist', 'E776:')
+  endif
 
   " An empty list should still show the stack history
   call g:Xsetlist([])
@@ -2365,14 +2405,28 @@ func Test_Autocmd()
     silent grepadd GrepAdd_Autocmd_Text test_quickfix.vim
     silent grep abc123def Xtest
     silent grepadd abc123def Xtest
+    set grepprg=internal
+    silent grep Grep_Autocmd_Text test_quickfix.vim
+    silent grepadd GrepAdd_Autocmd_Text test_quickfix.vim
+    silent lgrep Grep_Autocmd_Text test_quickfix.vim
+    silent lgrepadd GrepAdd_Autocmd_Text test_quickfix.vim
+    set grepprg&vim
     let l = ['pregrep',
-          \ 'postgrep',
-          \ 'pregrepadd',
-          \ 'postgrepadd',
-          \ 'pregrep',
-          \ 'postgrep',
-          \ 'pregrepadd',
-          \ 'postgrepadd']
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'pregrep',
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'pregrep',
+		\ 'postgrep',
+		\ 'pregrepadd',
+		\ 'postgrepadd',
+		\ 'prelgrep',
+		\ 'postlgrep',
+		\ 'prelgrepadd',
+		\ 'postlgrepadd']
     call assert_equal(l, g:acmds)
   endif
 
@@ -2490,6 +2544,19 @@ func Test_cwindow_jump()
   cnext
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
+
+  " Jumping to a file from the location list window should find a usuable
+  " window by wrapping around the window list.
+  enew | only
+  call setloclist(0, [], 'f')
+  new | new
+  lgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  lopen
+  1close
+  call assert_equal(0, getloclist(3, {'id' : 0}).id)
+  lnext
+  call assert_equal(3, winnr())
+  call assert_equal(getloclist(1, {'id' : 0}).id, getloclist(3, {'id' : 0}).id)
 
   enew | only
   set efm&vim
@@ -4201,17 +4268,22 @@ func Test_empty_qfbuf()
 endfunc
 
 " Test for the :cbelow, :cabove, :lbelow and :labove commands.
+" And for the :cafter, :cbefore, :lafter and :lbefore commands.
 func Xtest_below(cchar)
   call s:setup_commands(a:cchar)
 
   " No quickfix/location list
   call assert_fails('Xbelow', 'E42:')
   call assert_fails('Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
 
   " Empty quickfix/location list
   call g:Xsetlist([])
   call assert_fails('Xbelow', 'E42:')
   call assert_fails('Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
 
   call s:create_test_file('X1')
   call s:create_test_file('X2')
@@ -4225,39 +4297,74 @@ func Xtest_below(cchar)
   call assert_fails('Xabove', 'E42:')
   call assert_fails('3Xbelow', 'E42:')
   call assert_fails('4Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
+  call assert_fails('3Xbefore', 'E42:')
+  call assert_fails('4Xafter', 'E42:')
 
   " Test the commands with various arguments
-  Xexpr ["X1:5:L5", "X2:5:L5", "X2:10:L10", "X2:15:L15", "X3:3:L3"]
+  Xexpr ["X1:5:3:L5", "X2:5:2:L5", "X2:10:3:L10", "X2:15:4:L15", "X3:3:5:L3"]
   edit +7 X2
   Xabove
   call assert_equal(['X2', 5], [bufname(''), line('.')])
   call assert_fails('Xabove', 'E553:')
+  normal 7G
+  Xbefore
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xbefore', 'E553:')
+
   normal 2j
   Xbelow
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal 7G
+  Xafter
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   " Last error in this file
   Xbelow 99
   call assert_equal(['X2', 15], [bufname(''), line('.')])
   call assert_fails('Xbelow', 'E553:')
+  normal gg
+  Xafter 99
+  call assert_equal(['X2', 15, 4], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xafter', 'E553:')
+
   " First error in this file
   Xabove 99
   call assert_equal(['X2', 5], [bufname(''), line('.')])
   call assert_fails('Xabove', 'E553:')
+  normal G
+  Xbefore 99
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xbefore', 'E553:')
+
   normal gg
   Xbelow 2
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal gg
+  Xafter 2
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   normal G
   Xabove 2
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal G
+  Xbefore 2
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   edit X4
   call assert_fails('Xabove', 'E42:')
   call assert_fails('Xbelow', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
   if a:cchar == 'l'
     " If a buffer has location list entries from some other window but not
     " from the current window, then the commands should fail.
     edit X1 | split | call setloclist(0, [], 'f')
     call assert_fails('Xabove', 'E776:')
     call assert_fails('Xbelow', 'E776:')
+    call assert_fails('Xbefore', 'E776:')
+    call assert_fails('Xafter', 'E776:')
     close
   endif
 
@@ -4268,31 +4375,52 @@ func Xtest_below(cchar)
   edit +1 X2
   Xbelow 2
   call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  normal 1G
+  Xafter 2
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+
   normal gg
   Xbelow 99
   call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  normal gg
+  Xafter 99
+  call assert_equal(['X2', 15, 3], [bufname(''), line('.'), col('.')])
+
   normal G
   Xabove 2
   call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
   normal G
+  Xbefore 2
+  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+
+  normal G
   Xabove 99
   call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  normal G
+  Xbefore 99
+  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+
   normal 10G
   Xabove
   call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  normal 10G$
+  2Xbefore
+  call assert_equal(['X2', 10, 2], [bufname(''), line('.'), col('.')])
+
   normal 10G
   Xbelow
   call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  normal 9G
+  5Xafter
+  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
 
   " Invalid range
   if a:cchar == 'c'
-    call assert_fails('-2cbelow', 'E553:')
-    " TODO: should go to first error in the current line?
-    0cabove
+    call assert_fails('-2cbelow', 'E16:')
+    call assert_fails('-2cafter', 'E16:')
   else
-    call assert_fails('-2lbelow', 'E553:')
-    " TODO: should go to first error in the current line?
-    0labove
+    call assert_fails('-2lbelow', 'E16:')
+    call assert_fails('-2lafter', 'E16:')
   endif
 
   call delete('X1')
@@ -4304,6 +4432,42 @@ endfunc
 func Test_cbelow()
   call Xtest_below('c')
   call Xtest_below('l')
+endfunc
+
+func Test_quickfix_count()
+  let commands = [
+	\ 'cNext',
+	\ 'cNfile',
+	\ 'cabove',
+	\ 'cbelow',
+	\ 'cfirst',
+	\ 'clast',
+	\ 'cnewer',
+	\ 'cnext',
+	\ 'cnfile',
+	\ 'colder',
+	\ 'cprevious',
+	\ 'crewind',
+	\
+	\ 'lNext',
+	\ 'lNfile',
+	\ 'labove',
+	\ 'lbelow',
+	\ 'lfirst',
+	\ 'llast',
+	\ 'lnewer',
+	\ 'lnext',
+	\ 'lnfile',
+	\ 'lolder',
+	\ 'lprevious',
+	\ 'lrewind',
+	\ ]
+  for cmd in commands
+    call assert_fails('-1' .. cmd, 'E16:')
+    call assert_fails('.' .. cmd, 'E16:')
+    call assert_fails('%' .. cmd, 'E16:')
+    call assert_fails('$' .. cmd, 'E16:')
+  endfor
 endfunc
 
 " Test for aborting quickfix commands using QuickFixCmdPre
@@ -4459,6 +4623,24 @@ func Test_cquit()
 
   " Exit Vim with negative value
   call assert_fails('-3cquit', 'E16:')
+endfunc
+
+" Running :lhelpgrep command more than once in a help window, doesn't jump to
+" the help topic
+func Test_lhelpgrep_from_help_window()
+  call mkdir('Xtestdir/doc', 'p')
+  call writefile(['window'], 'Xtestdir/doc/a.txt')
+  call writefile(['buffer'], 'Xtestdir/doc/b.txt')
+  let save_rtp = &rtp
+  let &rtp = 'Xtestdir'
+  lhelpgrep window
+  lhelpgrep buffer
+  call assert_equal('b.txt', fnamemodify(@%, ":p:t"))
+  lhelpgrep window
+  call assert_equal('a.txt', fnamemodify(@%, ":p:t"))
+  let &rtp = save_rtp
+  call delete('Xtestdir', 'rf')
+  new | only!
 endfunc
 
 " Test for adding an invalid entry with the quickfix window open and making
