@@ -6952,8 +6952,9 @@ void ex_helpgrep(exarg_T *eap)
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
                    curbuf->b_fname, true, curbuf);
-    if (!new_qi && IS_LL_STACK(qi) && qf_find_buf(qi) == NULL) {
-      // autocommands made "qi" invalid
+    // When adding a location list to an existing location list stack,
+    // if the autocmd made the stack invalid, then just return.
+    if (!new_qi && IS_LL_STACK(qi) && qf_find_win_with_loclist(qi) == NULL) {
       decr_quickfix_busy();
       return;
     }

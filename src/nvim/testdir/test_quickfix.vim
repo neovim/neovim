@@ -4625,6 +4625,24 @@ func Test_cquit()
   call assert_fails('-3cquit', 'E16:')
 endfunc
 
+" Running :lhelpgrep command more than once in a help window, doesn't jump to
+" the help topic
+func Test_lhelpgrep_from_help_window()
+  call mkdir('Xtestdir/doc', 'p')
+  call writefile(['window'], 'Xtestdir/doc/a.txt')
+  call writefile(['buffer'], 'Xtestdir/doc/b.txt')
+  let save_rtp = &rtp
+  let &rtp = 'Xtestdir'
+  lhelpgrep window
+  lhelpgrep buffer
+  call assert_equal('b.txt', fnamemodify(@%, ":p:t"))
+  lhelpgrep window
+  call assert_equal('a.txt', fnamemodify(@%, ":p:t"))
+  let &rtp = save_rtp
+  call delete('Xtestdir', 'rf')
+  new | only!
+endfunc
+
 " Test for adding an invalid entry with the quickfix window open and making
 " sure that the window contents are not changed
 func Test_add_invalid_entry_with_qf_window()
