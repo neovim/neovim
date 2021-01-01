@@ -45,13 +45,33 @@ describe('ui/mouse/input', function()
 
   it('single left click moves cursor', function()
     feed('<LeftMouse><2,1>')
-    screen:expect([[
+    screen:expect{grid=[[
       testing                  |
       mo^use                    |
       support and selection    |
       {0:~                        }|
                                |
+    ]], mouse_enabled=true}
+    feed('<LeftMouse><0,0>')
+    screen:expect([[
+      ^testing                  |
+      mouse                    |
+      support and selection    |
+      {0:~                        }|
+                               |
     ]])
+  end)
+
+  it("in external ui works with unset 'mouse'", function()
+    meths.set_option('mouse', '')
+    feed('<LeftMouse><2,1>')
+    screen:expect{grid=[[
+      testing                  |
+      mo^use                    |
+      support and selection    |
+      {0:~                        }|
+                               |
+    ]], mouse_enabled=false}
     feed('<LeftMouse><0,0>')
     screen:expect([[
       ^testing                  |

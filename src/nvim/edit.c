@@ -8329,9 +8329,6 @@ static void ins_mouse(int c)
   pos_T tpos;
   win_T       *old_curwin = curwin;
 
-  if (!mouse_has(MOUSE_INSERT))
-    return;
-
   undisplay_dollar();
   tpos = curwin->w_cursor;
   if (do_mouse(NULL, c, BACKWARD, 1, 0)) {

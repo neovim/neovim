@@ -526,53 +526,9 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 void setmouse(void)
 {
   ui_cursor_shape();
-
-  // Be quick when mouse is off.
-  if (*p_mouse == NUL) {
-    return;
-  }
-
-  int checkfor = MOUSE_NORMAL;  // assume normal mode
-  if (VIsual_active) {
-    checkfor = MOUSE_VISUAL;
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
-    checkfor = MOUSE_RETURN;
-  } else if (State & INSERT) {
-    checkfor = MOUSE_INSERT;
-  } else if (State & CMDLINE) {
-    checkfor = MOUSE_COMMAND;
-  } else if (State == CONFIRM || State == EXTERNCMD) {
-    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
-  }
-
-  if (mouse_has(checkfor)) {
-    ui_call_mouse_on();
-  } else {
-    ui_call_mouse_off();
-  }
+  ui_check_mouse();
 }
 
-/*
- * Return true if
- * - "c" is in 'mouse', or
- * - 'a' is in 'mouse' and "c" is in MOUSE_A, or
- * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
- *   normal editing mode (not at hit-return message).
- */
-int mouse_has(int c)
-{
-  for (char_u *p = p_mouse; *p; ++p)
-    switch (*p) {
-    case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
-        return true;
-      break;
-    case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
-        return true;
-      break;
-    default: if (c == *p) return true; break;
-    }
-  return false;
-}
 
 // Set orig_topline.  Used when jumping to another window, so that a double
 // click still works.

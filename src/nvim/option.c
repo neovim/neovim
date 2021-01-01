@@ -3210,11 +3210,7 @@ ambw_end:
   }
 
   if (varp == &p_mouse) {
-    if (*p_mouse == NUL) {
-      ui_call_mouse_off();
-    } else {
-      setmouse();  // in case 'mouse' changed
-    }
+    setmouse();  // in case 'mouse' changed
   }
 
   if (curwin->w_curswant != MAXCOL
@@ -4984,11 +4980,7 @@ void ui_refresh_options(void)
     ui_call_option_set(name, value);
   }
   if (p_mouse != NULL) {
-    if (*p_mouse == NUL) {
-      ui_call_mouse_off();
-    } else {
-      setmouse();
-    }
+    setmouse();
   }
 }
 

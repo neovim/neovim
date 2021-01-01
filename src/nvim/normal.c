@@ -2375,10 +2375,10 @@ do_mouse (
      * Also paste at the cursor if the current mode isn't in 'mouse' (only
      * happens for the GUI).
      */
-    if ((State & INSERT) || !mouse_has(MOUSE_NORMAL)) {
-      if (regname == '.')
+    if ((State & INSERT)) {
+      if (regname == '.') {
         insert_reg(regname, true);
-      else {
+      } else {
         if (regname == 0 && eval_has_provider("clipboard")) {
           regname = '*';
         }
@@ -2558,8 +2558,9 @@ do_mouse (
          * on a status line */
         if (VIsual_active)
           jump_flags |= MOUSE_MAY_STOP_VIS;
-      } else if (mouse_has(MOUSE_VISUAL))
+      } else {
         jump_flags |= MOUSE_MAY_VIS;
+      }
     } else if (which_button == MOUSE_RIGHT) {
       if (is_click && VIsual_active) {
         /*
@@ -2575,8 +2576,7 @@ do_mouse (
         }
       }
       jump_flags |= MOUSE_FOCUS;
-      if (mouse_has(MOUSE_VISUAL))
-        jump_flags |= MOUSE_MAY_VIS;
+      jump_flags |= MOUSE_MAY_VIS;
     }
   }
 
@@ -2790,8 +2790,7 @@ do_mouse (
   /* Handle double clicks, unless on status line */
   else if (in_status_line) {
   } else if (in_sep_line) {
-  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (NORMAL | INSERT))
-             && mouse_has(MOUSE_VISUAL)) {
+  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (NORMAL | INSERT))) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
         orig_cursor = VIsual;

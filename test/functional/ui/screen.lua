@@ -170,7 +170,7 @@ function Screen.new(width, height)
     ruler = {},
     hl_groups = {},
     _default_attr_ids = nil,
-    _mouse_enabled = true,
+    mouse_enabled = true,
     _attrs = {},
     _hl_info = {[0]={}},
     _attr_table = {[0]={{},{}}},
@@ -318,7 +318,7 @@ function Screen:expect(expected, attr_ids, ...)
   assert(next({...}) == nil, "invalid args to expect()")
   if type(expected) == "table" then
     assert(not (attr_ids ~= nil))
-    local is_key = {grid=true, attr_ids=true, condition=true,
+    local is_key = {grid=true, attr_ids=true, condition=true, mouse_enabled=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
                     reset=true, timeout=true, request_cb=true, hl_groups=true}
     for _, v in ipairs(ext_keys) do
@@ -422,12 +422,15 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     if expected.mode ~= nil then
       extstate.mode = self.mode
     end
+    if expected.mouse_enabled ~= nil then
+      extstate.mouse_enabled = self.mouse_enabled
+    end
     if expected.win_viewport == nil then
       extstate.win_viewport = nil
     end
 
     -- Convert assertion errors into invalid screen state descriptions.
-    for _, k in ipairs(concat_tables(ext_keys, {'mode'})) do
+    for _, k in ipairs(concat_tables(ext_keys, {'mode', 'mouse_enabled'})) do
       -- Empty states are considered the default and need not be mentioned.
       if (not (expected[k] == nil and isempty(extstate[k]))) then
         local status, res = pcall(eq, expected[k], extstate[k], k)
@@ -799,11 +802,11 @@ function Screen:_handle_busy_stop()
 end
 
 function Screen:_handle_mouse_on()
-  self._mouse_enabled = true
+  self.mouse_enabled = true
 end
 
 function Screen:_handle_mouse_off()
-  self._mouse_enabled = false
+  self.mouse_enabled = false
 end
 
 function Screen:_handle_mode_change(mode, idx)
