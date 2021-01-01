@@ -1,5 +1,7 @@
 " Test :hardcopy
 
+source check.vim
+
 func Test_printoptions()
   edit test_hardcopy.vim
   syn on
@@ -28,7 +30,7 @@ func Test_printoptions()
         \     '']
     exe 'set printoptions=' .. opt
     if has('postscript')
-      hardcopy > Xhardcopy_printoptions
+      1,50hardcopy > Xhardcopy_printoptions
       let lines = readfile('Xhardcopy_printoptions')
       call assert_true(len(lines) > 20, opt)
       call assert_true(lines[0] =~ 'PS-Adobe', opt)
@@ -63,10 +65,34 @@ func Test_printmbfont()
   bwipe
 endfunc
 
+func Test_printmbcharset()
+  CheckFeature postscript
+
+  " digraph.txt has plenty of non-latin1 characters.
+  help digraph.txt
+  set printmbcharset=ISO10646 printencoding=utf-8 printmbfont=r:WadaMin-Regular
+
+  hardcopy > Xhardcopy_printmbcharset
+  let lines = readfile('Xhardcopy_printmbcharset')
+  call assert_true(len(lines) > 20)
+  call assert_true(lines[0] =~ 'PS-Adobe')
+
+  set printmbcharset=does-not-exist printencoding=utf-8 printmbfont=r:WadaMin-Regular
+  call assert_fails('hardcopy > Xhardcopy_printmbcharset', 'E456:')
+
+  set printmbcharset=GB_2312-80 printencoding=utf-8 printmbfont=r:WadaMin-Regular
+  call assert_fails('hardcopy > Xhardcopy_printmbcharset', 'E673:')
+
+  set printmbcharset=ISO10646 printencoding=utf-8 printmbfont=
+  call assert_fails('hardcopy > Xhardcopy_printmbcharset', 'E675:')
+
+  call delete('Xhardcopy_printmbcharset')
+  set printmbcharset& printencoding& printmbfont&
+  bwipe
+endfunc
+
 func Test_printexpr()
-  if !has('unix')
-    return
-  endif
+  CheckFeature postscript
 
   " Not a very useful printexpr value, but enough to test
   " hardcopy with 'printexpr'.
@@ -84,7 +110,7 @@ func Test_printexpr()
   \                 readfile('Xhardcopy_printexpr'))
   call delete('Xhardcopy_printexpr')
 
-  " Function return 1 to test print failure.
+  " Function returns 1 to test print failure.
   function PrintFails(fname)
     call delete(a:fname)
     return 1
@@ -97,12 +123,11 @@ func Test_printexpr()
 endfunc
 
 func Test_errors()
-  " FIXME: Windows fails differently than Unix.
-  if has('unix')
-    edit test_hardcopy.vim
-    call assert_fails('hardcopy >', 'E324:')
-    bwipe
-  endif
+  CheckFeature postscript
+
+  edit test_hardcopy.vim
+  call assert_fails('hardcopy >', 'E324:')
+  bwipe
 endfunc
 
 func Test_dark_background()
@@ -126,12 +151,11 @@ func Test_dark_background()
 endfun
 
 func Test_empty_buffer()
-  " FIXME: Unclear why this fails on Windows.
-  if has('unix')
-    new
-    call assert_equal("\nNo text to be printed", execute('hardcopy'))
-    bwipe
-  endif
+  CheckFeature postscript
+
+  new
+  call assert_equal("\nNo text to be printed", execute('hardcopy'))
+  bwipe
 endfunc
 
 func Test_printheader_parsing()
@@ -145,9 +169,8 @@ func Test_printheader_parsing()
 endfunc
 
 func Test_fname_with_spaces()
-  if !has('postscript')
-    return
-  endif
+  CheckFeature postscript
+
   split t\ e\ s\ t.txt
   call setline(1, ['just', 'some', 'text'])
   hardcopy > %.ps
@@ -157,9 +180,11 @@ func Test_fname_with_spaces()
 endfunc
 
 func Test_illegal_byte()
-  if !has('postscript') || &enc != 'utf-8'
+  CheckFeature postscript
+  if &enc != 'utf-8'
     return
   endif
+
   new
   " conversion of 0xff will fail, this used to cause a crash
   call setline(1, "\xff")
@@ -168,3 +193,5 @@ func Test_illegal_byte()
   bwipe!
   call delete('Xpstest')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
