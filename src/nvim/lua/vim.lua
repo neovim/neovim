@@ -277,6 +277,9 @@ local function __index(t, key)
   elseif key == 'F' then
     t.F = require('vim.F')
     return t.F
+  elseif key == 'color' then
+    t.color = require('vim.color')
+    return t.color
   end
 end
 

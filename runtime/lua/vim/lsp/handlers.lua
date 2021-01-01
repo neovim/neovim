@@ -316,9 +316,8 @@ M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
 end
 
 M['textDocument/documentColor'] = function(_, _, result, _, bufnr, _)
-  print("===========================")
-  print(vim.inspect(result))
-  print("===========================")
+  if not result then return end
+  util.buf_highlight_colors(bufnr, result)
 end
 
 --@private

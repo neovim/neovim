@@ -4,6 +4,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
+local color = require 'vim.color'
 
 local npcall = vim.F.npcall
 local split = vim.split
@@ -1118,6 +1119,18 @@ do --[[ References ]]
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
       highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
+    end
+  end
+
+  -- TODO(RRethy) Documentation
+  function M.buf_highlight_colors(bufnr, color_infos)
+    validate { bufnr = {bufnr, 'n', true} }
+    for _, color_info in ipairs(color_infos) do
+      local rgba, range = color_info['color'], color_info['range']
+      local hex = color.rgba_to_hex(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
+
+      -- TODO(RRethy) Show the hex
+      print(hex)
     end
   end
 end
