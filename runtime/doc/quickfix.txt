@@ -836,14 +836,19 @@ lists.  They set one of the existing error lists as the current one.
 			the current window instead of the quickfix list.
 
 						*:chistory* *:chi*
-:chi[story]		Show the list of error lists.  The current list is
+:[count]chi[story]	Show the list of error lists.  The current list is
 			marked with ">".  The output looks like:
 				  error list 1 of 3; 43 errors ~
 				> error list 2 of 3; 0 errors ~
 				  error list 3 of 3; 15 errors ~
 
+			When [count] is given, then the count'th quickfix
+			list is made the current list. Example: >
+				" Make the 4th quickfix list current
+				:4chistory
+<
 						*:lhistory* *:lhi*
-:lhi[story]		Show the list of location lists, otherwise like
+:[count]lhi[story]	Show the list of location lists, otherwise like
 			`:chistory`.
 
 When adding a new error list, it becomes the current list.

@@ -490,8 +490,8 @@ module.cmds = {
   },
   {
     command='chistory',
-    flags=bit.bor(TRLBAR),
-    addr_type='ADDR_NONE',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='qf_history',
   },
   {
@@ -1470,8 +1470,8 @@ module.cmds = {
   },
   {
     command='lhistory',
-    flags=bit.bor(TRLBAR),
-    addr_type='ADDR_NONE',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
     func='qf_history',
   },
   {
