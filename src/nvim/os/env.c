@@ -395,9 +395,16 @@ void os_get_hostname(char *hostname, size_t size)
 
 /// To get the "real" home directory:
 ///   - get value of $HOME
+/// For Windows:
+///   - assemble homedir using HOMEDRIVE and HOMEPATH
+///   - try os_homedir()
+///   - resolve references
+///   - guess C drive
 /// For Unix:
+///   - try os_homedir()
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
+///   - as a last resort, get the current directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
@@ -430,7 +437,7 @@ void init_homedir(void)
     }
   }
   if (var == NULL) {
-    var = os_getenv("USERPROFILE");
+    var = os_homedir();
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -458,8 +465,12 @@ void init_homedir(void)
   }
 #endif
 
-  if (var != NULL) {
 #ifdef UNIX
+  if (var == NULL) {
+    var = os_homedir();
+  }
+
+  if (var != NULL) {
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
@@ -470,9 +481,35 @@ void init_homedir(void)
         EMSG(_(e_prev_dir));
       }
     }
-#endif
-    homedir = xstrdup(var);
   }
+#endif
+
+  // Fall back to current working directory if home is not found
+  if ((var == NULL || *var == NUL)
+      && os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK) {
+    var = os_buf;
+  }
+
+  homedir = xstrdup(var);
+}
+
+static char homedir_buf[MAXPATHL];
+
+char *os_homedir(void)
+{
+  homedir_buf[0] = NUL;
+  size_t homedir_size = MAXPATHL;
+  uv_mutex_lock(&mutex);
+  // http://docs.libuv.org/en/v1.x/misc.html#c.uv_os_homedir
+  int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
+  uv_mutex_unlock(&mutex);
+  if (ret_value == 0 && homedir_size < MAXPATHL) {
+    return homedir_buf;
+  } else {
+    ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
+  }
+  homedir_buf[0] = NUL;
+  return NULL;
 }
 
 #if defined(EXITFREE)
