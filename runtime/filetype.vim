@@ -495,6 +495,9 @@ au BufNewFile,BufRead *.com			call dist#ft#BindzoneCheck('dcl')
 " DOT
 au BufNewFile,BufRead *.dot,*.gv		setf dot
 
+" Dune
+au BufNewFile,BufRead jbuild,dune,dune-project,dune-workspace setf dune
+
 " Dylan - lid files
 au BufNewFile,BufRead *.lid			setf dylanlid
 
@@ -1121,14 +1124,17 @@ au BufNewFile,BufRead *.nse			setf lua
 " NSIS
 au BufNewFile,BufRead *.nsi,*.nsh		setf nsis
 
-" OCAML
-au BufNewFile,BufRead *.ml,*.mli,*.mll,*.mly,.ocamlinit	setf ocaml
+" OCaml
+au BufNewFile,BufRead *.ml,*.mli,*.mll,*.mly,.ocamlinit,*.mlt,*.mlp,*.mlip,*.mli.cppo,*.ml.cppo setf ocaml
 
 " Occam
 au BufNewFile,BufRead *.occ			setf occam
 
 " Omnimark
 au BufNewFile,BufRead *.xom,*.xin		setf omnimark
+
+" OPAM
+au BufNewFile,BufRead opam,*.opam,*.opam.template setf opam
 
 " OpenROAD
 au BufNewFile,BufRead *.or			setf openroad
@@ -1548,6 +1554,9 @@ au BufNewFile,BufRead *.scm,*.ss,*.rkt		setf scheme
 
 " Screen RC
 au BufNewFile,BufRead .screenrc,screenrc	setf screen
+
+" Sexplib
+au BufNewFile,BufRead *.sexp setf sexplib
 
 " Simula
 au BufNewFile,BufRead *.sim			setf simula
