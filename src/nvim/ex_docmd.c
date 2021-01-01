@@ -1086,7 +1086,10 @@ static int compute_buffer_local_count(int addr_type, int lnum, int offset)
   return buf->b_fnum;
 }
 
-static int current_win_nr(win_T *win)
+// Return the window number of "win".
+// When "win" is NULL return the number of windows.
+static int current_win_nr(const win_T *win)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int nr = 0;
 
@@ -1163,7 +1166,7 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
     case 'd':
     case Ctrl_D:
       // window size or any count
-      eap->addr_type = ADDR_LINES;     // -V1037
+      eap->addr_type = ADDR_OTHER;  // -V1037
       break;
 
     case Ctrl_HAT:
@@ -1199,7 +1202,7 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
     case '=':
     case CAR:
       // no count
-      eap->addr_type = 0;
+      eap->addr_type = ADDR_NONE;
       break;
   }
 }
@@ -1490,9 +1493,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.forceit = false;
   }
 
-  /*
-   * 6. Parse arguments.
-   */
+  // 6. Parse arguments.  Then check for errors.
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
     ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
   }
@@ -1547,12 +1548,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Don't complain about the range if it is not used
    * (could happen if line_count is accidentally set to 0).
    */
-  if (!ea.skip && !ni) {
-    /*
-     * If the range is backwards, ask for confirmation and, if given, swap
-     * ea.line1 & ea.line2 so it's forwards again.
-     * When global command is busy, don't ask, will fail below.
-     */
+  if (!ea.skip && !ni && (ea.argt & RANGE)) {
+    // If the range is backwards, ask for confirmation and, if given, swap
+    // ea.line1 & ea.line2 so it's forwards again.
+    // When global command is busy, don't ask, will fail below.
     if (!global_busy && ea.line1 > ea.line2) {
       if (msg_silent == 0) {
         if ((flags & DOCMD_VERBOSE) || exmode_active) {
@@ -1571,8 +1570,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
   }
 
-  if ((ea.argt & NOTADR) && ea.addr_count == 0)   /* default is 1, not cursor */
+  if ((ea.addr_type == ADDR_OTHER) && ea.addr_count == 0) {
+    // default is 1, not cursor
     ea.line2 = 1;
+  }
 
   correct_range(&ea);
 
@@ -1694,6 +1695,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.line1 = 1;
     switch (ea.addr_type) {
       case ADDR_LINES:
+      case ADDR_OTHER:
         ea.line2 = curbuf->b_ml.ml_line_count;
         break;
       case ADDR_LOADED_BUFFERS:
@@ -1771,7 +1773,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_(e_zerocount);
       goto doend;
     }
-    if (ea.argt & NOTADR) {     /* e.g. :buffer 2, :sleep 3 */
+    if (ea.addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
       ea.line2 = n;
       if (ea.addr_count == 0)
         ea.addr_count = 1;
@@ -1780,8 +1782,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       ea.line2 += n - 1;
       ++ea.addr_count;
       // Be vi compatible: no error message for out of range.
-      if (ea.addr_type == ADDR_LINES
-          && ea.line2 > curbuf->b_ml.ml_line_count) {
+      if (ea.line2 > curbuf->b_ml.ml_line_count) {
         ea.line2 = curbuf->b_ml.ml_line_count;
       }
     }
@@ -2325,6 +2326,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
     eap->line1 = eap->line2;
     switch (eap->addr_type) {
       case ADDR_LINES:
+      case ADDR_OTHER:
         // default is current line number
         eap->line2 = curwin->w_cursor.lnum;
         break;
@@ -2365,6 +2367,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
         eap->cmd++;
         switch (eap->addr_type) {
           case ADDR_LINES:
+          case ADDR_OTHER:
             eap->line1 = 1;
             eap->line2 = curbuf->b_ml.ml_line_count;
             break;
@@ -2400,7 +2403,6 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
             }
             break;
           case ADDR_TABS_RELATIVE:
-          case ADDR_OTHER:
             *errormsg = (char_u *)_(e_invrange);
             return FAIL;
           case ADDR_ARGUMENTS:
@@ -3723,7 +3725,7 @@ static linenr_T get_address(exarg_T *eap,
                             int address_count)  // 1 for first, >1 after comma
   FUNC_ATTR_NONNULL_ALL
 {
-  const int addr_type = addr_type_arg;
+  const cmd_addr_T addr_type = addr_type_arg;
   int c;
   int i;
   long n;
@@ -3741,6 +3743,7 @@ static linenr_T get_address(exarg_T *eap,
       ++cmd;
       switch (addr_type) {
         case ADDR_LINES:
+        case ADDR_OTHER:
           lnum = curwin->w_cursor.lnum;
           break;
         case ADDR_WINDOWS:
@@ -3772,6 +3775,7 @@ static linenr_T get_address(exarg_T *eap,
       ++cmd;
       switch (addr_type) {
         case ADDR_LINES:
+        case ADDR_OTHER:
           lnum = curbuf->b_ml.ml_line_count;
           break;
         case ADDR_WINDOWS:
@@ -3939,7 +3943,9 @@ static linenr_T get_address(exarg_T *eap,
       if (lnum == MAXLNUM) {
         switch (addr_type) {
           case ADDR_LINES:
-            lnum = curwin->w_cursor.lnum; /* "+1" is same as ".+1" */
+          case ADDR_OTHER:
+            // "+1" is same as ".+1"
+            lnum = curwin->w_cursor.lnum;
             break;
           case ADDR_WINDOWS:
             lnum = CURRENT_WIN_NR;
@@ -4052,11 +4058,10 @@ static char_u *invalid_range(exarg_T *eap)
   }
 
   if (eap->argt & RANGE) {
-    switch(eap->addr_type) {
+    switch (eap->addr_type) {
       case ADDR_LINES:
-        if (!(eap->argt & NOTADR)
-            && eap->line2 > curbuf->b_ml.ml_line_count
-               + (eap->cmdidx == CMD_diffget)) {
+        if (eap->line2 > (curbuf->b_ml.ml_line_count
+                          + (eap->cmdidx == CMD_diffget))) {
           return (char_u *)_(e_invrange);
         }
         break;
@@ -4105,7 +4110,8 @@ static char_u *invalid_range(exarg_T *eap)
         }
         break;
       case ADDR_TABS_RELATIVE:
-        // Do nothing
+      case ADDR_OTHER:
+        // Any range is OK.
         break;
       case ADDR_QUICKFIX:
         assert(eap->line2 >= 0);
@@ -5376,7 +5382,7 @@ two_count:
         }
 
         *def = getdigits_long(&p, true, 0);
-        *argt |= (ZEROR | NOTADR);
+        *argt |= ZEROR;
 
         if (p != val + vallen || vallen == 0) {
 invalid_count:
@@ -5384,8 +5390,16 @@ invalid_count:
           return FAIL;
         }
       }
+      // default for -range is using buffer lines
+      if (*addr_type_arg == ADDR_NONE) {
+        *addr_type_arg = ADDR_LINES;
+      }
     } else if (STRNICMP(attr, "count", attrlen) == 0) {
-      *argt |= (COUNT | ZEROR | RANGE | NOTADR);
+      *argt |= (COUNT | ZEROR | RANGE);
+      // default for -count is using any number
+      if (*addr_type_arg == ADDR_NONE) {
+        *addr_type_arg = ADDR_OTHER;
+      }
 
       if (val != NULL) {
         p = val;
@@ -5416,11 +5430,11 @@ invalid_count:
         EMSG(_("E179: argument required for -addr"));
         return FAIL;
       }
-      if (parse_addr_type_arg(val, (int)vallen, argt, addr_type_arg) == FAIL) {
+      if (parse_addr_type_arg(val, (int)vallen, addr_type_arg) == FAIL) {
         return FAIL;
       }
       if (*addr_type_arg != ADDR_LINES) {
-        *argt |= (ZEROR | NOTADR);
+        *argt |= ZEROR;
       }
     } else {
       char_u ch = attr[len];
@@ -5447,7 +5461,7 @@ static void ex_command(exarg_T *eap)
   int flags = 0;
   int     compl = EXPAND_NOTHING;
   char_u  *compl_arg = NULL;
-  cmd_addr_T addr_type_arg = ADDR_LINES;
+  cmd_addr_T addr_type_arg = ADDR_NONE;
   int has_attr = (eap->arg[0] == '-');
   int name_len;
 
@@ -6105,8 +6119,7 @@ char_u *get_user_cmd_complete(expand_T *xp, int idx)
 /*
  * Parse address type argument
  */
-int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
-                        cmd_addr_T *addr_type_arg)
+int parse_addr_type_arg(char_u *value, int vallen, cmd_addr_T *addr_type_arg)
   FUNC_ATTR_NONNULL_ALL
 {
   int i, a, b;
@@ -6128,9 +6141,6 @@ int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
     EMSG2(_("E180: Invalid address type value: %s"), err);
     return FAIL;
   }
-
-  if (*addr_type_arg != ADDR_LINES)
-    *argt |= NOTADR;
 
   return OK;
 }
@@ -7423,11 +7433,12 @@ static void ex_read(exarg_T *eap)
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
   linenr_T lnum;
 
-  if (eap->usefilter)                   /* :r!cmd */
-    do_bang(1, eap, FALSE, FALSE, TRUE);
-  else {
-    if (u_save(eap->line2, (linenr_T)(eap->line2 + 1)) == FAIL)
+  if (eap->usefilter) {  // :r!cmd
+    do_bang(1, eap, false, false, true);
+  } else {
+    if (u_save(eap->line2, (linenr_T)(eap->line2 + 1)) == FAIL) {
       return;
+    }
 
     if (*eap->arg == NUL) {
       if (check_fname() == FAIL)        /* check for no file name */
@@ -7897,7 +7908,7 @@ static void ex_at(exarg_T *eap)
  */
 static void ex_bang(exarg_T *eap)
 {
-  do_bang(eap->addr_count, eap, eap->forceit, TRUE, TRUE);
+  do_bang(eap->addr_count, eap, eap->forceit, true, true);
 }
 
 /*
