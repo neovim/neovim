@@ -1804,6 +1804,8 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                    • utf_sizes: include UTF-32 and UTF-16 size
                                      of the replaced region, as args to
                                      `on_lines` .
+                                   • preview: also attach to command preview
+                                     (i.e. 'inccommand') events.
 
                 Return: ~
                     False if attach failed (invalid parameter, or buffer isn't
@@ -2207,6 +2209,32 @@ nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
                     {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Option name
                     {value}   Option value
+
+                                                         *nvim_buf_set_text()*
+nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
+                  {replacement})
+                Sets (replaces) a range in the buffer
+
+                This is recommended over nvim_buf_set_lines when only
+                modifying parts of a line, as extmarks will be preserved on
+                non-modified parts of the touched lines.
+
+                Indexing is zero-based and end-exclusive.
+
+                To insert text at a given index, set `start` and `end` ranges
+                to the same index. To delete a range, set `replacement` to an
+                array containing an empty string, or simply an empty array.
+
+                Prefer nvim_buf_set_lines when adding or deleting entire lines
+                only.
+
+                Parameters: ~
+                    {buffer}        Buffer handle, or 0 for current buffer
+                    {start_row}     First line index
+                    {start_column}  Last column
+                    {end_row}       Last line index
+                    {end_column}    Last column
+                    {replacement}   Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
