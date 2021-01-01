@@ -31,6 +31,36 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
+function M.add_hook_after(func, new_fn)
+  if func then
+    return function(...)
+      -- TODO which result?
+      func(...)
+      return new_fn(...)
+    end
+  else
+    return new_fn
+  end
+end
+
+function M.wrap_on_init(config)
+  return M.add_hook_after(config.on_init,
+    function(client, _result)
+      function client.workspace_did_change_configuration(settings)
+        if not settings then return end
+        if vim.tbl_isempty(settings) then
+          settings = {[vim.type_idx]=vim.types.dictionary}
+        end
+        return client.notify('workspace/didChangeConfiguration', {
+          settings = settings;
+        })
+      end
+      if not vim.tbl_isempty(config.settings) then
+        client.workspace_did_change_configuration(config.settings)
+      end
+    end)
+end
+
 --- Replaces text in a range with new text.
 ---
 --- CAUTION: Changes in-place!
