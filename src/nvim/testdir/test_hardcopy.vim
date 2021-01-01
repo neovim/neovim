@@ -10,8 +10,10 @@ func Test_printoptions()
         \     'left:2in,top:30pt,right:16mm,bottom:3pc',
         \     'header:3,syntax:y,number:y,wrap:n',
         \     'header:3,syntax:n,number:y,wrap:y',
+        \     'header:0,syntax:a,number:y,wrap:y',
         \     'duplex:short,collate:n,jobsplit:y,portrait:n',
         \     'duplex:long,collate:y,jobsplit:n,portrait:y',
+        \     'duplex:off,collate:y,jobsplit:y,portrait:y',
         \     'paper:10x14',
         \     'paper:A3',
         \     'paper:A4',
@@ -46,8 +48,8 @@ func Test_printoptions()
 endfunc
 
 func Test_printmbfont()
-  " Print a small help page which contains tabs to cover code that expands tabs to spaces.
-  help help
+  " Print a help page which contains tabs, underlines (etc) to recover more code.
+  help syntax.txt
   syn on
 
   for opt in [':WadaMin-Regular,b:WadaMin-Bold,i:WadaMin-Italic,o:WadaMin-Bold-Italic,c:yes,a:no',
@@ -70,12 +72,17 @@ func Test_printmbcharset()
 
   " digraph.txt has plenty of non-latin1 characters.
   help digraph.txt
-  set printmbcharset=ISO10646 printencoding=utf-8 printmbfont=r:WadaMin-Regular
-
-  hardcopy > Xhardcopy_printmbcharset
-  let lines = readfile('Xhardcopy_printmbcharset')
-  call assert_true(len(lines) > 20)
-  call assert_true(lines[0] =~ 'PS-Adobe')
+  set printmbcharset=ISO10646 printencoding=utf-8
+  for courier in ['yes', 'no']
+    for ascii in ['yes', 'no']
+      exe 'set printmbfont=r:WadaMin-Regular,b:WadaMin-Bold,i:WadaMin-Italic,o:WadaMin-BoldItalic'
+      \   .. ',c:' .. courier .. ',a:' .. ascii
+      hardcopy > Xhardcopy_printmbcharset
+      let lines = readfile('Xhardcopy_printmbcharset')
+      call assert_true(len(lines) > 20)
+      call assert_true(lines[0] =~ 'PS-Adobe')
+    endfor
+  endfor
 
   set printmbcharset=does-not-exist printencoding=utf-8 printmbfont=r:WadaMin-Regular
   call assert_fails('hardcopy > Xhardcopy_printmbcharset', 'E456:')
