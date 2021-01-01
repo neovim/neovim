@@ -12,8 +12,6 @@ local feed = helpers.feed
 local deepcopy = helpers.deepcopy
 local expect_events = helpers.expect_events
 
-local inspect = require 'vim.inspect'
-
 local origlines = {"original line 1",
                    "original line 2",
                    "original line 3",

@@ -523,10 +523,10 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer,
                        ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(7)
 {
+  FIXED_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {
-    String s = { .data = "", .size = 0 };
-    ADD(replacement, STRING_OBJ(s));
-    replacement.size = 1;
+    scratch.items[0] = STRING_OBJ(STATIC_CSTR_AS_STRING(""));
+    replacement = scratch;
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
