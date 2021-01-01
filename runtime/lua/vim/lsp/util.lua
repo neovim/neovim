@@ -1121,6 +1121,18 @@ do --[[ References ]]
       highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
     end
   end
+end
+
+do --[[ documentColor ]]
+  local document_color_ns = api.nvim_create_namespace("vim_lsp_documentColor")
+
+  --- Removes document color highlights from a buffer.
+  ---
+  --@param bufnr buffer id
+  function M.buf_clear_document_color(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
+  end
 
   -- TODO(RRethy) Documentation
   function M.buf_highlight_colors(bufnr, color_infos)
@@ -1128,9 +1140,12 @@ do --[[ References ]]
     for _, color_info in ipairs(color_infos) do
       local rgba, range = color_info['color'], color_info['range']
       local hex = color.rgba_to_hex(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
+      local hlname = string.format('LspDocumentColor%s', hex)
+      api.nvim_command(string.format('highlight %s guibg=#%s', hlname, hex))
 
-      -- TODO(RRethy) Show the hex
-      print(hex)
+      local start_pos = {range["start"]["line"], range["start"]["character"]}
+      local end_pos = {range["end"]["line"], range["end"]["character"]}
+      highlight.range(bufnr, document_color_ns, hlname, start_pos, end_pos)
     end
   end
 end

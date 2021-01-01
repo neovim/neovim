@@ -317,6 +317,7 @@ end
 
 M['textDocument/documentColor'] = function(_, _, result, _, bufnr, _)
   if not result then return end
+  util.buf_clear_document_color(bufnr)
   util.buf_highlight_colors(bufnr, result)
 end
 
