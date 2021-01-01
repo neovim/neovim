@@ -343,6 +343,12 @@ module.cmds = {
     func='ex_cfile',
   },
   {
+    command='cafter',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
+    func='ex_cbelow',
+  },
+  {
     command='call',
     flags=bit.bor(RANGE, NEEDARG, EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
     addr_type='ADDR_LINES',
@@ -359,6 +365,12 @@ module.cmds = {
     flags=bit.bor(BANG, RANGE, WORD1, TRLBAR),
     addr_type='ADDR_OTHER',
     func='ex_cbuffer',
+  },
+  {
+    command='cbefore',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
+    func='ex_cbelow',
   },
   {
     command='cbelow',
@@ -1311,6 +1323,12 @@ module.cmds = {
     func='ex_cfile',
   },
   {
+    command='lafter',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
+    func='ex_cbelow',
+  },
+  {
     command='later',
     flags=bit.bor(TRLBAR, EXTRA, NOSPC, CMDWIN),
     addr_type='ADDR_NONE',
@@ -1321,6 +1339,12 @@ module.cmds = {
     flags=bit.bor(BANG, RANGE, WORD1, TRLBAR),
     addr_type='ADDR_OTHER',
     func='ex_cbuffer',
+  },
+  {
+    command='lbefore',
+    flags=bit.bor(RANGE, COUNT, TRLBAR),
+    addr_type='ADDR_UNSIGNED',
+    func='ex_cbelow',
   },
   {
     command='lbelow',

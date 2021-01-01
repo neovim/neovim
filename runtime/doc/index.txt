@@ -1173,9 +1173,11 @@ tag		command		action ~
 |:caddbuffer|	:cad[dbuffer]	add errors from buffer
 |:caddexpr|	:cadde[xpr]	add errors from expr
 |:caddfile|	:caddf[ile]	add error message to current quickfix list
+|:cafter|	:caf[ter]	go to error after current cursor
 |:call|		:cal[l]		call a function
 |:catch|	:cat[ch]	part of a :try command
-|:cbelow|	:cbe[low]	go to error below current line
+|:cbefore|	:cbef[ore]	go to error before current cursor
+|:cbelow|	:cbel[ow]	go to error below current line
 |:cbottom|	:cbo[ttom]	scroll to the bottom of the quickfix window
 |:cbuffer|	:cb[uffer]	parse error messages and jump to first error
 |:cc|		:cc		go to specific error
@@ -1336,10 +1338,12 @@ tag		command		action ~
 |:laddexpr|	:lad[dexpr]	add locations from expr
 |:laddbuffer|	:laddb[uffer]	add locations from buffer
 |:laddfile|	:laddf[ile]	add locations to current location list
+|:lafter|	:laf[ter]	go to location after current cursor
 |:last|		:la[st]		go to the last file in the argument list
 |:language|	:lan[guage]	set the language (locale)
 |:later|	:lat[er]	go to newer change, redo
-|:lbelow|	:lbe[low]	go to location below current line
+|:lbefore|	:lbef[ore]	go to location before current cursor
+|:lbelow|	:lbel[ow]	go to location below current line
 |:lbottom|	:lbo[ttom]	scroll to the bottom of the location window
 |:lbuffer|	:lb[uffer]	parse locations and jump to first location
 |:lcd|		:lc[d]		change directory locally

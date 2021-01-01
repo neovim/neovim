@@ -128,8 +128,8 @@ processing a quickfix or location list command, it will be aborted.
 :[count]lab[ove]	Same as ":cabove", except the location list for the
 			current window is used instead of the quickfix list.
 
-							*:cbe* *:cbelow*
-:[count]cbe[low]	Go to the [count] error below the current line in the
+							*:cbel* *:cbelow*
+:[count]cbel[ow]	Go to the [count] error below the current line in the
 			current buffer.  If [count] is omitted, then 1 is
 			used.  If there are no errors, then an error message
 			is displayed.  Assumes that the entries in a quickfix
@@ -139,8 +139,36 @@ processing a quickfix or location list command, it will be aborted.
 			exceeds the number of entries below the current line,
 			then the last error in the file is selected.
 
-							*:lbe* *:lbelow*
-:[count]lbe[low]	Same as ":cbelow", except the location list for the
+							*:lbel* *:lbelow*
+:[count]lbel[ow]	Same as ":cbelow", except the location list for the
+			current window is used instead of the quickfix list.
+
+							*:cbe* *:cbefore*
+:[count]cbe[fore]	Go to the [count] error before the current cursor
+			position in the current buffer.  If [count] is
+			omitted, then 1 is used.  If there are no errors, then
+			an error message is displayed.  Assumes that the
+			entries in a quickfix list are sorted by their buffer,
+			line and column numbers.  If [count] exceeds the
+			number of entries before the current position, then
+			the first error in the file is selected.
+
+							*:lbe* *:lbefore*
+:[count]lbe[fore]	Same as ":cbefore", except the location list for the
+			current window is used instead of the quickfix list.
+
+							*:caf* *:cafter*
+:[count]caf[ter]	Go to the [count] error after the current cursor
+			position in the current buffer.  If [count] is
+			omitted, then 1 is used.  If there are no errors, then
+			an error message is displayed.  Assumes that the
+			entries in a quickfix list are sorted by their buffer,
+			line and column numbers.  If [count] exceeds the
+			number of entries after the current position, then
+			the last error in the file is selected.
+
+							*:laf* *:lafter*
+:[count]laf[ter]	Same as ":cafter", except the location list for the
 			current window is used instead of the quickfix list.
 
 							*:cnf* *:cnfile*

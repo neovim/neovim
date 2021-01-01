@@ -40,6 +40,8 @@ func s:setup_commands(cchar)
     command! -nargs=0 -count Xcc <count>cc
     command! -count=1 -nargs=0 Xbelow <mods><count>cbelow
     command! -count=1 -nargs=0 Xabove <mods><count>cabove
+    command! -count=1 -nargs=0 Xbefore <mods><count>cbefore
+    command! -count=1 -nargs=0 Xafter <mods><count>cafter
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
     call setqflist([], 'f')
@@ -75,6 +77,8 @@ func s:setup_commands(cchar)
     command! -nargs=0 -count Xcc <count>ll
     command! -count=1 -nargs=0 Xbelow <mods><count>lbelow
     command! -count=1 -nargs=0 Xabove <mods><count>labove
+    command! -count=1 -nargs=0 Xbefore <mods><count>lbefore
+    command! -count=1 -nargs=0 Xafter <mods><count>lafter
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
     call setloclist(0, [], 'f')
@@ -4201,17 +4205,22 @@ func Test_empty_qfbuf()
 endfunc
 
 " Test for the :cbelow, :cabove, :lbelow and :labove commands.
+" And for the :cafter, :cbefore, :lafter and :lbefore commands.
 func Xtest_below(cchar)
   call s:setup_commands(a:cchar)
 
   " No quickfix/location list
   call assert_fails('Xbelow', 'E42:')
   call assert_fails('Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
 
   " Empty quickfix/location list
   call g:Xsetlist([])
   call assert_fails('Xbelow', 'E42:')
   call assert_fails('Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
 
   call s:create_test_file('X1')
   call s:create_test_file('X2')
@@ -4225,39 +4234,74 @@ func Xtest_below(cchar)
   call assert_fails('Xabove', 'E42:')
   call assert_fails('3Xbelow', 'E42:')
   call assert_fails('4Xabove', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
+  call assert_fails('3Xbefore', 'E42:')
+  call assert_fails('4Xafter', 'E42:')
 
   " Test the commands with various arguments
-  Xexpr ["X1:5:L5", "X2:5:L5", "X2:10:L10", "X2:15:L15", "X3:3:L3"]
+  Xexpr ["X1:5:3:L5", "X2:5:2:L5", "X2:10:3:L10", "X2:15:4:L15", "X3:3:5:L3"]
   edit +7 X2
   Xabove
   call assert_equal(['X2', 5], [bufname(''), line('.')])
   call assert_fails('Xabove', 'E553:')
+  normal 7G
+  Xbefore
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xbefore', 'E553:')
+
   normal 2j
   Xbelow
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal 7G
+  Xafter
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   " Last error in this file
   Xbelow 99
   call assert_equal(['X2', 15], [bufname(''), line('.')])
   call assert_fails('Xbelow', 'E553:')
+  normal gg
+  Xafter 99
+  call assert_equal(['X2', 15, 4], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xafter', 'E553:')
+
   " First error in this file
   Xabove 99
   call assert_equal(['X2', 5], [bufname(''), line('.')])
   call assert_fails('Xabove', 'E553:')
+  normal G
+  Xbefore 99
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_fails('Xbefore', 'E553:')
+
   normal gg
   Xbelow 2
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal gg
+  Xafter 2
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   normal G
   Xabove 2
   call assert_equal(['X2', 10], [bufname(''), line('.')])
+  normal G
+  Xbefore 2
+  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+
   edit X4
   call assert_fails('Xabove', 'E42:')
   call assert_fails('Xbelow', 'E42:')
+  call assert_fails('Xbefore', 'E42:')
+  call assert_fails('Xafter', 'E42:')
   if a:cchar == 'l'
     " If a buffer has location list entries from some other window but not
     " from the current window, then the commands should fail.
     edit X1 | split | call setloclist(0, [], 'f')
     call assert_fails('Xabove', 'E776:')
     call assert_fails('Xbelow', 'E776:')
+    call assert_fails('Xbefore', 'E776:')
+    call assert_fails('Xafter', 'E776:')
     close
   endif
 
@@ -4268,27 +4312,52 @@ func Xtest_below(cchar)
   edit +1 X2
   Xbelow 2
   call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  normal 1G
+  Xafter 2
+  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+
   normal gg
   Xbelow 99
   call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  normal gg
+  Xafter 99
+  call assert_equal(['X2', 15, 3], [bufname(''), line('.'), col('.')])
+
   normal G
   Xabove 2
   call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
   normal G
+  Xbefore 2
+  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+
+  normal G
   Xabove 99
   call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  normal G
+  Xbefore 99
+  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+
   normal 10G
   Xabove
   call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  normal 10G$
+  2Xbefore
+  call assert_equal(['X2', 10, 2], [bufname(''), line('.'), col('.')])
+
   normal 10G
   Xbelow
   call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  normal 9G
+  5Xafter
+  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
 
   " Invalid range
   if a:cchar == 'c'
     call assert_fails('-2cbelow', 'E16:')
+    call assert_fails('-2cafter', 'E16:')
   else
     call assert_fails('-2lbelow', 'E16:')
+    call assert_fails('-2lafter', 'E16:')
   endif
 
   call delete('X1')
