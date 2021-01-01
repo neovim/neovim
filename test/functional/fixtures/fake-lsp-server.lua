@@ -163,6 +163,17 @@ function tests.capabilities_for_client_supports_method()
   }
 end
 
+function tests.basic_check_settings()
+  skeleton {
+    on_init = function(_params)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_notification("workspace/didChangeConfiguration", { settings = { testSetting = true }} )
+      notify('shutdown')
+    end;
+  }
+end
 function tests.basic_finish()
   skeleton {
     on_init = function(params)
