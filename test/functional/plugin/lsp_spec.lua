@@ -357,6 +357,57 @@ describe('LSP', function()
       }
     end)
 
+        it('client should update resolved_server_capabilities in response to client/registerCapability', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "client/registerCapability", { registrations = {
+              { id = 1; method = "textDocument/completion"; registerOptions = {}; };
+              { id = 2; method = "textDocument/hover"; registerOptions = {}; };
+          }}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_register_capability";
+        on_init = function(_client)
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'start' then
+            local capabilities = exec_lua([=[
+              local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
+              return {
+                client.resolved_server_capabilities['completion'],
+                client.resolved_server_capabilities['hover'],
+                }]=])
+            eq(capabilities, {false; false;})
+          end
+          if method == 'client/registerCapability' then
+            exec_lua([=[
+              local method, params = ...
+              return require'vim.lsp.handlers'['client/registerCapability'](err, method, params, TEST_RPC_CLIENT_ID)]=], method, params)
+            -- this should send vim.NIL
+            client.notify('client/registerCapability', nil)
+          end
+          if method == 'shutdown' then
+            local capabilities = exec_lua([=[
+              local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
+              return {
+                client.resolved_server_capabilities['completion'],
+                client.resolved_server_capabilities['hover'],
+                }]=])
+            eq(capabilities, {true; true;})
+            client.stop()
+          end
+        end;
+      }
+    end)
+
     it('should call unsupported_method when trying to call an unsupported method', function()
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1};
