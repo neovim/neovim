@@ -856,7 +856,7 @@ func Test_window_resize()
   wincmd l
   let other_winnr = winnr('h')
   call assert_notequal(winnr(), other_winnr)
-  exe 'vert ' .. other_winnr .. 'resize -100'
+  exe 'vert ' .. other_winnr .. 'resize -' .. &columns
   call assert_equal(0, winwidth(other_winnr))
 
   %bwipe!
