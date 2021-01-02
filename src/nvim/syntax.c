@@ -4275,7 +4275,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
    * Everything that's left, up to the next command, should be the
    * filename to include.
    */
-  eap->argt |= (XFILE | NOSPC);
+  eap->argt |= (EX_XFILE | EX_NOSPC);
   separate_nextcmd(eap);
   if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute(eap->arg)) {
     // For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the

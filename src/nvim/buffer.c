@@ -2159,10 +2159,11 @@ static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
 int buflist_findpat(
     const char_u *pattern,
     const char_u *pattern_end,  // pointer to first char after pattern
-    int unlisted,               // find unlisted buffers
-    int diffmode,               // find diff-mode buffers only
-    int curtab_only             // find buffers in current tab only
+    bool unlisted,              // find unlisted buffers
+    bool diffmode,              // find diff-mode buffers only
+    bool curtab_only            // find buffers in current tab only
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int match = -1;
   int find_listed;
