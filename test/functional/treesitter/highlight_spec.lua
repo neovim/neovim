@@ -270,6 +270,81 @@ describe('treesitter highlighting', function()
     ]]}
   end)
 
+  it('is updated with :sort', function()
+    if pending_c_parser(pending) then return end
+
+    insert(test_text)
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
+    ]]
+    screen:expect{grid=[[
+        {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
+        {3:bool} ext_widgets[kUIExtCount];                                 |
+        {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
+          ext_widgets[i] = true;                                       |
+        }                                                              |
+                                                                       |
+        {3:bool} inclusive = ui_override();                                |
+        {4:for} ({3:size_t} i = {5:0}; i < ui_count; i++) {                        |
+          {3:UI} *ui = uis[i];                                             |
+          width = {5:MIN}(ui->width, width);                               |
+          height = {5:MIN}(ui->height, height);                            |
+          foo = {5:BAR}(ui->bazaar, bazaar);                               |
+          {4:for} ({3:UIExtension} j = {5:0}; ({3:int})j < kUIExtCount; j++) {         |
+            ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+          }                                                            |
+        }                                                              |
+      ^}                                                                |
+                                                                       |
+    ]]}
+
+    feed ":sort<cr>"
+    screen:expect{grid=[[
+      ^                                                                 |
+            ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+          {3:UI} *ui = uis[i];                                             |
+          ext_widgets[i] = true;                                       |
+          foo = {5:BAR}(ui->bazaar, bazaar);                               |
+          {4:for} ({3:UIExtension} j = {5:0}; ({3:int})j < kUIExtCount; j++) {         |
+          height = {5:MIN}(ui->height, height);                            |
+          width = {5:MIN}(ui->width, width);                               |
+          }                                                            |
+        {3:bool} ext_widgets[kUIExtCount];                                 |
+        {3:bool} inclusive = ui_override();                                |
+        {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
+        {4:for} ({3:size_t} i = {5:0}; i < ui_count; i++) {                        |
+        {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
+        }                                                              |
+        }                                                              |
+      {3:void} ui_refresh({3:void})                                            |
+      :sort                                                            |
+    ]]}
+
+    feed "u"
+
+    screen:expect{grid=[[
+        {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
+        {3:bool} ext_widgets[kUIExtCount];                                 |
+        {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
+          ext_widgets[i] = true;                                       |
+        }                                                              |
+                                                                       |
+        {3:bool} inclusive = ui_override();                                |
+        {4:for} ({3:size_t} i = {5:0}; i < ui_count; i++) {                        |
+          {3:UI} *ui = uis[i];                                             |
+          width = {5:MIN}(ui->width, width);                               |
+          height = {5:MIN}(ui->height, height);                            |
+          foo = {5:BAR}(ui->bazaar, bazaar);                               |
+          {4:for} ({3:UIExtension} j = {5:0}; ({3:int})j < kUIExtCount; j++) {         |
+            ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
+          }                                                            |
+        }                                                              |
+      ^}                                                                |
+      19 changes; before #2  {MATCH:.*}|
+    ]]}
+  end)
+
   it("supports with custom parser", function()
     if pending_c_parser(pending) then return end
 
