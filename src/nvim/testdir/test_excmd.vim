@@ -111,7 +111,7 @@ func Test_confirm_cmd_cancel()
   call WaitForAssert({-> assert_match('^\[Y\]es, (N)o, (C)ancel: *$',
         \ term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, "C")
-  call term_wait(buf, 50)
+  call WaitForAssert({-> assert_equal('', term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, ":confirm close\n")
   call WaitForAssert({-> assert_match('^\[Y\]es, (N)o, (C)ancel: *$',
         \ term_getline(buf, 20))}, 1000)
