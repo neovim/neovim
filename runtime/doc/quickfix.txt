@@ -1330,7 +1330,11 @@ Basic items
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))
-	%t		error type (finds a single character)
+	%t		error type (finds a single character):
+			    e - error message
+			    w - warning message
+			    i - info message
+			    n - note message
 	%n		error number (finds a number)
 	%m		error message (finds a string)
 	%r		matches the "rest" of a single-line file message %O/P/Q
@@ -1401,6 +1405,7 @@ prefixes are:
 	%E		start of a multi-line error message
 	%W		start of a multi-line warning message
 	%I		start of a multi-line informational message
+	%N		start of a multi-line note message
 	%A		start of a multi-line message (unspecified type)
 	%>		for next line start with current pattern again |efm-%>|
 	%C		continuation of a multi-line message
