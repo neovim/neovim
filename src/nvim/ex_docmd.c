@@ -3729,6 +3729,15 @@ char_u *skip_range(
   return (char_u *)cmd;
 }
 
+static void addr_error(cmd_addr_T addr_type)
+{
+  if (addr_type == ADDR_NONE) {
+    EMSG(_(e_norange));
+  } else {
+    EMSG(_(e_invrange));
+  }
+}
+
 // Get a single EX address
 //
 // Set ptr to the next character after the part that was interpreted.
@@ -3778,10 +3787,10 @@ static linenr_T get_address(exarg_T *eap,
         case ADDR_TABS:
           lnum = CURRENT_TAB_NR;
           break;
-        case ADDR_TABS_RELATIVE:
         case ADDR_NONE:
+        case ADDR_TABS_RELATIVE:
         case ADDR_UNSIGNED:
-          EMSG(_(e_invrange));
+          addr_error(addr_type);
           cmd = NULL;
           goto error;
           break;
@@ -3823,10 +3832,10 @@ static linenr_T get_address(exarg_T *eap,
         case ADDR_TABS:
           lnum = LAST_TAB_NR;
           break;
-        case ADDR_TABS_RELATIVE:
         case ADDR_NONE:
+        case ADDR_TABS_RELATIVE:
         case ADDR_UNSIGNED:
-          EMSG(_(e_invrange));
+          addr_error(addr_type);
           cmd = NULL;
           goto error;
           break;
@@ -3851,7 +3860,7 @@ static linenr_T get_address(exarg_T *eap,
         goto error;
       }
       if (addr_type != ADDR_LINES) {
-        EMSG(_(e_invaddr));
+        addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -3879,7 +3888,7 @@ static linenr_T get_address(exarg_T *eap,
     case '?':                           /* '/' or '?' - search */
       c = *cmd++;
       if (addr_type != ADDR_LINES) {
-        EMSG(_(e_invaddr));
+        addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -3926,7 +3935,7 @@ static linenr_T get_address(exarg_T *eap,
     case '\\':                      /* "\?", "\/" or "\&", repeat search */
       ++cmd;
       if (addr_type != ADDR_LINES) {
-        EMSG(_(e_invaddr));
+        addr_error(addr_type);
         cmd = NULL;
         goto error;
       }
@@ -7863,7 +7872,7 @@ static void ex_copymove(exarg_T *eap)
    * move or copy lines from 'eap->line1'-'eap->line2' to below line 'n'
    */
   if (n == MAXLNUM || n < 0 || n > curbuf->b_ml.ml_line_count) {
-    EMSG(_(e_invaddr));
+    EMSG(_(e_invrange));
     return;
   }
 
