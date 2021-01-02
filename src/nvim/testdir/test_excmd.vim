@@ -116,5 +116,7 @@ func Test_confirm_cmd_cancel()
   call WaitForAssert({-> assert_match('^\[Y\]es, (N)o, (C)ancel: *$',
         \ term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, "N")
+  call WaitForAssert({-> assert_match('^ *0,0-1         All$',
+        \ term_getline(buf, 20))}, 1000)
   call StopVimInTerminal(buf)
 endfunc
