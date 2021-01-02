@@ -971,7 +971,7 @@ module.cmds = {
   },
   {
     command='find',
-    flags=bit.bor(RANGE, BANG, FILE1, CMDARG, ARGOPT, TRLBAR),
+    flags=bit.bor(RANGE, BANG, FILE1, CMDARG, ARGOPT, TRLBAR, NEEDARG),
     addr_type='ADDR_OTHER',
     func='ex_find',
   },
@@ -2425,7 +2425,7 @@ module.cmds = {
   },
   {
     command='sfind',
-    flags=bit.bor(BANG, FILE1, RANGE, CMDARG, ARGOPT, TRLBAR),
+    flags=bit.bor(BANG, FILE1, RANGE, CMDARG, ARGOPT, TRLBAR, NEEDARG),
     addr_type='ADDR_OTHER',
     func='ex_splitview',
   },
