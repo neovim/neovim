@@ -201,3 +201,28 @@ func Test_mark_error()
   call assert_fails('mark xx', 'E488:')
   call assert_fails('mark _', 'E191:')
 endfunc
+
+" Test for the getmarklist() function
+func Test_getmarklist()
+  new
+  " global marks
+  delmarks A-Z 0-9 \" ^.[]
+  call assert_equal([], getmarklist())
+  call setline(1, ['one', 'two', 'three'])
+  mark A
+  call cursor(3, 5)
+  normal mN
+  call assert_equal([{'file' : '', 'mark' : "'A", 'pos' : [bufnr(), 1, 1, 0]},
+        \ {'file' : '', 'mark' : "'N", 'pos' : [bufnr(), 3, 5, 0]}],
+        \ getmarklist())
+  " buffer local marks
+  delmarks!
+  call assert_equal([{'mark' : "''", 'pos' : [bufnr(), 1, 1, 0]},
+        \ {'mark' : "'\"", 'pos' : [bufnr(), 1, 1, 0]}], getmarklist(bufnr()))
+  call cursor(2, 2)
+  normal mr
+  call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 2, 0]},
+        \ getmarklist(bufnr())[0])
+  call assert_equal([], getmarklist({}))
+  close!
+endfunc
