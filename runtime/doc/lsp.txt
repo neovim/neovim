@@ -176,6 +176,7 @@ specification. These LSP requests/notifications are defined by default:
     textDocument/typeDefinition*
     window/logMessage
     window/showMessage
+    window/showMessageRequest
     workspace/applyEdit
     workspace/symbol
 
