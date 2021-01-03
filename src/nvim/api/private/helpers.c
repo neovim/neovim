@@ -820,6 +820,10 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
   }
   buf_T *target_buf = find_buffer_by_handle(buffer, err);
 
+  if (!target_buf) {
+    return;
+  }
+
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
   if (parse_keymap_opts(opts, &parsed_args, err)) {
