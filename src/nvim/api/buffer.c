@@ -1400,6 +1400,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                   callbacks. The mark will only be used for the current
 ///                   redraw cycle, and not be permantently stored in the
 ///                   buffer.
+///               - gravity : the direction the extmark will be shifted in
+///                   when new text is inserted. Must be either 'left' or
+///                   'right'.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
@@ -1440,6 +1443,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   DecorPriority priority = DECOR_PRIORITY_BASE;
   colnr_T col2 = 0;
   VirtText virt_text = KV_INITIAL_VALUE;
+  bool right_gravity = true;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
@@ -1522,6 +1526,19 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
       priority = (DecorPriority)v->data.integer;
+    } else if (strequal("gravity", k.data)) {
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "gravity must be a string");
+        goto error;
+      }
+      if (strequal("left", v->data.string.data)) {
+        right_gravity = false;
+      } else if (!strequal("right", v->data.string.data)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "invalid option for gravity: must be 'left' or 'right'");
+        goto error;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1572,7 +1589,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, decor, kExtmarkNoUndo);
+                     line2, col2, decor, right_gravity, kExtmarkNoUndo);
   }
 
   return (Integer)id;
@@ -1687,7 +1704,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   extmark_set(buf, ns_id, 0,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              decor_hl(hl_id), kExtmarkNoUndo);
+              decor_hl(hl_id), true, kExtmarkNoUndo);
   return src_id;
 }
 
@@ -1796,7 +1813,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->virt_text = virt_text;
 
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkNoUndo);
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true, kExtmarkNoUndo);
   return src_id;
 }
 
