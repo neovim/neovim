@@ -454,6 +454,7 @@ void init_homedir(void)
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
         var = os_buf;
+      }
     }
   }
 
