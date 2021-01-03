@@ -1260,6 +1260,36 @@ func Test_efm2()
   let &efm = save_efm
 endfunc
 
+" Test for '%t' (error type) field in 'efm'
+func Test_efm_error_type()
+  let save_efm = &efm
+
+  " error type
+  set efm=%f:%l:%t:%m
+  cexpr ["Xfile1:10:E:msg1", "Xfile1:20:W:msg2", "Xfile1:30:I:msg3",
+        \ "Xfile1:40:N:msg4", "Xfile1:50:R:msg5"]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:10 error: msg1',
+        \ ' 2 Xfile1:20 warning: msg2',
+        \ ' 3 Xfile1:30 info: msg3',
+        \ ' 4 Xfile1:40 note: msg4',
+        \ ' 5 Xfile1:50 R: msg5'], output)
+
+  " error type and a error number
+  set efm=%f:%l:%t:%n:%m
+  cexpr ["Xfile1:10:E:2:msg1", "Xfile1:20:W:4:msg2", "Xfile1:30:I:6:msg3",
+        \ "Xfile1:40:N:8:msg4", "Xfile1:50:R:3:msg5"]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:10 error   2: msg1',
+        \ ' 2 Xfile1:20 warning   4: msg2',
+        \ ' 3 Xfile1:30 info   6: msg3',
+        \ ' 4 Xfile1:40 note   8: msg4',
+        \ ' 5 Xfile1:50 R   3: msg5'], output)
+  let &efm = save_efm
+endfunc
+
 func XquickfixChangedByAutocmd(cchar)
   call s:setup_commands(a:cchar)
   if a:cchar == 'c'

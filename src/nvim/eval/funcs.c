@@ -726,7 +726,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   p_cpo = (char_u *)"";
 
   buf = buflist_findnr(buflist_findpat(name, name + STRLEN(name),
-                                       TRUE, FALSE, curtab_only));
+                                       true, false, curtab_only));
 
   p_magic = save_magic;
   p_cpo = save_cpo;
@@ -2165,7 +2165,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     .nextcmd = NULL,
     .cmdidx = CMD_USER,
   };
-  eap.argt |= NOSPC;
+  eap.argt |= EX_NOSPC;
 
   expand_filename(&eap, &cmdstr, &errormsg);
   if (errormsg != NULL && *errormsg != NUL) {
