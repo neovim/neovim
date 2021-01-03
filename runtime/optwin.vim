@@ -1070,7 +1070,7 @@ call <SID>BinOptionG("warn", &warn)
 
 
 if has("quickfix")
-  call <SID>Header("running make and jumping to errors")
+  call <SID>Header("running make and jumping to errors (quickfix)")
   call append("$", "errorfile\tname of the file that contains error messages")
   call <SID>OptionG("ef", &ef)
   call append("$", "errorformat\tlist of formats for error messages")

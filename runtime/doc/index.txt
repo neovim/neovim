@@ -203,9 +203,9 @@ tag		char	      note action in Normal mode	~
 |CTRL-N|	CTRL-N		1  same as "j"
 |CTRL-O|	CTRL-O		1  go to N older entry in jump list
 |CTRL-P|	CTRL-P		1  same as "k"
-		CTRL-Q		   (used for terminal control flow)
+		CTRL-Q		   not used, or used for terminal control flow
 |CTRL-R|	CTRL-R		2  redo changes which were undone with 'u'
-		CTRL-S		   (used for terminal control flow)
+		CTRL-S		   not used, or used for terminal control flow
 |CTRL-T|	CTRL-T		   jump to N older Tag in tag list
 |CTRL-U|	CTRL-U		   scroll N lines Upwards (default: half a
 				   screen)
@@ -1044,7 +1044,7 @@ tag		command		action in Command-line editing mode	~
 |c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
 				insert the contents of a register or object
 				under the cursor literally
-		CTRL-S		(used for terminal control flow)
+		CTRL-S		not used, or used for terminal control flow
 |c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
 |c_CTRL-U|	CTRL-U		remove all characters
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
