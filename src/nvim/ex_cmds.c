@@ -629,6 +629,8 @@ void ex_sort(exarg_T *eap)
   if (sort_abort)
     goto sortend;
 
+  bcount_t old_count = 0, new_count = 0;
+
   // Insert the lines in the sorted order below the last one.
   lnum = eap->line2;
   for (i = 0; i < count; i++) {
@@ -641,6 +643,8 @@ void ex_sort(exarg_T *eap)
     }
 
     s = ml_get(get_lnum);
+    size_t bytelen = STRLEN(s) + 1;  // include EOL in bytelen
+    old_count += bytelen;
     if (!unique || i == 0
         || (sort_ic ? STRICMP(s, sortbuf1) : STRCMP(s, sortbuf1)) != 0) {
       // Copy the line into a buffer, it may become invalid in
@@ -649,6 +653,7 @@ void ex_sort(exarg_T *eap)
       if (ml_append(lnum++, sortbuf1, (colnr_T)0, false) == FAIL) {
         break;
       }
+      new_count += bytelen;
     }
     fast_breakcheck();
     if (got_int)
@@ -668,11 +673,16 @@ void ex_sort(exarg_T *eap)
   deleted = (long)(count - (lnum - eap->line2));
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
-                kExtmarkUndo);
+                kExtmarkNOOP);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkUndo);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
   }
+
+  extmark_splice(curbuf, eap->line1-1, 0,
+                 count, 0, old_count,
+                 lnum - eap->line2, 0, new_count, kExtmarkUndo);
+
   if (change_occurred || deleted != 0) {
     changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
   }
