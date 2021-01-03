@@ -1555,7 +1555,9 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 
 
 // Add information about mark 'mname' to list 'l'
-static int add_mark(list_T *l, char *mname, pos_T *pos, int bufnr, char *fname)
+static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr,
+                    const char *fname)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   if (pos->lnum <= 0) {
     return OK;
@@ -1585,7 +1587,8 @@ static int add_mark(list_T *l, char *mname, pos_T *pos, int bufnr, char *fname)
 ///
 /// @param[in] buf  Buffer to get the marks from
 /// @param[out] l   List to store marks
-void get_buf_local_marks(buf_T *buf, list_T *l)
+void get_buf_local_marks(const buf_T *buf, list_T *l)
+  FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
 
@@ -1596,21 +1599,22 @@ void get_buf_local_marks(buf_T *buf, list_T *l)
   }
 
   // Mark '' is a window local mark and not a buffer local mark
-  add_mark(l, (char *)"''", &curwin->w_pcmark, curbuf->b_fnum, NULL);
+  add_mark(l, "''", &curwin->w_pcmark, curbuf->b_fnum, NULL);
 
-  add_mark(l, (char *)"'\"", &buf->b_last_cursor.mark, buf->b_fnum, NULL);
-  add_mark(l, (char *)"'[", &buf->b_op_start, buf->b_fnum, NULL);
-  add_mark(l, (char *)"']", &buf->b_op_end, buf->b_fnum, NULL);
-  add_mark(l, (char *)"'^", &buf->b_last_insert.mark, buf->b_fnum, NULL);
-  add_mark(l, (char *)"'.", &buf->b_last_change.mark, buf->b_fnum, NULL);
-  add_mark(l, (char *)"'<", &buf->b_visual.vi_start, buf->b_fnum, NULL);
-  add_mark(l, (char *)"'>", &buf->b_visual.vi_end, buf->b_fnum, NULL);
+  add_mark(l, "'\"", &buf->b_last_cursor.mark, buf->b_fnum, NULL);
+  add_mark(l, "'[", &buf->b_op_start, buf->b_fnum, NULL);
+  add_mark(l, "']", &buf->b_op_end, buf->b_fnum, NULL);
+  add_mark(l, "'^", &buf->b_last_insert.mark, buf->b_fnum, NULL);
+  add_mark(l, "'.", &buf->b_last_change.mark, buf->b_fnum, NULL);
+  add_mark(l, "'<", &buf->b_visual.vi_start, buf->b_fnum, NULL);
+  add_mark(l, "'>", &buf->b_visual.vi_end, buf->b_fnum, NULL);
 }
 
 /// Get information about global marks ('A' to 'Z' and '0' to '9')
 ///
 /// @param[out] l  List to store global marks
 void get_global_marks(list_T *l)
+  FUNC_ATTR_NONNULL_ALL
 {
   char mname[3] = "' ";
   char *name;
