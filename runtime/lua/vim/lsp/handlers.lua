@@ -93,10 +93,7 @@ M['window/showMessageRequest'] = function(_, _, params)
   if choice < 1 or choice > #actions then
       return vim.NIL
   else
-    local action_chosen = actions[choice]
-    return {
-      title = action_chosen;
-    }
+    return actions[choice]
   end
 end
 
