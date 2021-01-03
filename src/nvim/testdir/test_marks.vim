@@ -212,16 +212,16 @@ func Test_getmarklist()
   mark A
   call cursor(3, 5)
   normal mN
-  call assert_equal([{'file' : '', 'mark' : "'A", 'pos' : [bufnr(), 1, 0, 0]},
-        \ {'file' : '', 'mark' : "'N", 'pos' : [bufnr(), 3, 4, 0]}],
+  call assert_equal([{'file' : '', 'mark' : "'A", 'pos' : [bufnr(), 1, 1, 0]},
+        \ {'file' : '', 'mark' : "'N", 'pos' : [bufnr(), 3, 5, 0]}],
         \ getmarklist())
   " buffer local marks
   delmarks!
-  call assert_equal([{'mark' : "''", 'pos' : [bufnr(), 1, 0, 0]},
-        \ {'mark' : "'\"", 'pos' : [bufnr(), 1, 0, 0]}], getmarklist(bufnr()))
+  call assert_equal([{'mark' : "''", 'pos' : [bufnr(), 1, 1, 0]},
+        \ {'mark' : "'\"", 'pos' : [bufnr(), 1, 1, 0]}], getmarklist(bufnr()))
   call cursor(2, 2)
   normal mr
-  call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 1, 0]},
+  call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 2, 0]},
         \ getmarklist(bufnr())[0])
   call assert_equal([], getmarklist({}))
   close!
