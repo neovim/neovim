@@ -4,8 +4,7 @@ local rshift, band = bit.rshift, bit.band
 
 local M = {}
 
--- TODO(RRethy) Documentation
-function M.rgb_with_alpha(r, g, b, a)
+function M.rgba_to_rgb(r, g, b, a)
   validate {
     r = {r, 'n', false};
     g = {g, 'n', false};
@@ -44,7 +43,26 @@ function M.rgba_to_hex(r, g, b, a)
     a = {a, 'n', true};
   }
 
-  return M.rgb_to_hex(M.rgb_with_alpha(r, g, b, a))
+  return M.rgb_to_hex(M.rgba_to_rgb(r, g, b, a))
+end
+
+-- https://stackoverflow.com/a/56678483
+function M.perceived_lightness(r, g, b)
+  function gamma_encode(v)
+    return v / 255
+  end
+  function linearize(v)
+    return v <= 0.04045 and v / 12.92 or math.pow((v + 0.055) / 1.055, 2.4)
+  end
+
+  r = linearize(gamma_encode(r))
+  g = linearize(gamma_encode(g))
+  b = linearize(gamma_encode(b))
+
+  -- calculate luminance
+  local L = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+  return L <= (216/24389) and L * (24389/27) or math.pow(L, 1/3)*116-16
 end
 
 return M

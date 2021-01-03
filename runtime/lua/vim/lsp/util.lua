@@ -1134,14 +1134,16 @@ do --[[ documentColor ]]
     api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
   end
 
-  -- TODO(RRethy) Documentation
   function M.buf_highlight_colors(bufnr, color_infos)
     validate { bufnr = {bufnr, 'n', true} }
     for _, color_info in ipairs(color_infos) do
       local rgba, range = color_info['color'], color_info['range']
-      local hex = color.rgba_to_hex(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
-      local hlname = string.format('LspDocumentColor%s', hex)
-      api.nvim_command(string.format('highlight %s guibg=#%s', hlname, hex))
+      local r, g, b = color.rgba_to_rgb(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
+      local color_hex = color.rgb_to_hex(r, g, b)
+      local fghex = color.perceived_lightness(r, g, b) < 50 and 'ffffff' or '000000'
+
+      local hlname = string.format('LspDocumentColor%s', color_hex)
+      api.nvim_command(string.format('highlight %s guibg=#%s guifg=#%s', hlname, color_hex, fghex))
 
       local start_pos = {range["start"]["line"], range["start"]["character"]}
       local end_pos = {range["end"]["line"], range["end"]["character"]}
