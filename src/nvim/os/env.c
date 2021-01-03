@@ -404,8 +404,8 @@ void os_get_hostname(char *hostname, size_t size)
 /// For Unix:
 ///   1. try os_homedir()
 ///   2. go to that directory
-///       This also works with mounts and links.
-///       Don't do this for Windows, it will change the "current dir" for a drive.
+///     This also works with mounts and links.
+///     Don't do this for Windows, it will change the "current dir" for a drive.
 ///   3. fall back to current working directory as a last resort
 static char *homedir = NULL;
 static char *os_homedir(void);
