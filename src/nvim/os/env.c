@@ -491,7 +491,9 @@ void init_homedir(void)
     var = os_buf;
   }
 #endif
-  homedir = xstrdup(var);
+  if (var != NULL) {
+    homedir = xstrdup(var);
+  }
 }
 
 static char homedir_buf[MAXPATHL];
