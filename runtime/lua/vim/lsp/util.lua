@@ -1134,10 +1134,15 @@ do --[[ documentColor ]]
     api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
   end
 
+  --- Shows a list of document colors for a certain buffer.
+  ---
+  --@param bufnr buffer id
+  --@param color_infos List of `ColorInformation` objects to highlight
   function M.buf_highlight_colors(bufnr, color_infos)
     validate { bufnr = {bufnr, 'n', true} }
     for _, color_info in ipairs(color_infos) do
       local rgba, range = color_info['color'], color_info['range']
+
       local r, g, b = color.rgba_to_rgb(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
       local color_hex = color.rgb_to_hex(r, g, b)
       local fghex = color.perceived_lightness(r, g, b) < 50 and 'ffffff' or '000000'

@@ -330,11 +330,24 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+--- Send request to server to resolve document colors for the
+--- current text document position. This request can be associated
+--- to key mapping or to events such as `TextChanged` and `InsertLeave`, eg:
+---
+--- <pre>
+--- vim.api.nvim_command [[autocmd TextChanged,InsertLeave <buffer> lua vim.lsp.buf.document_color()]]
+--- </pre>
 function M.document_color()
   local params = {
     textDocument = util.make_text_document_params()
   }
   request('textDocument/documentColor', params)
+end
+
+--- Removes document color highlights from current buffer.
+---
+function M.clear_document_color()
+  util.buf_clear_document_color()
 end
 
 --- Selects a code action from the input list that is available at the current

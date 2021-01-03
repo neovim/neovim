@@ -4,6 +4,13 @@ local rshift, band = bit.rshift, bit.band
 
 local M = {}
 
+--- Returns an rgb for a given rgba by blending it with the background.
+---
+--@param r number for red value in [0,255]
+--@param g number for green value in [0,255]
+--@param b number for blue value in [0,255]
+--@param a alpha value in [0,1]
+--@returns (number, number, number) red, green, blue values
 function M.rgba_to_rgb(r, g, b, a)
   validate {
     r = {r, 'n', false};
@@ -26,6 +33,12 @@ function M.rgba_to_rgb(r, g, b, a)
   return r, g, b
 end
 
+--- Returns a string containing the hex for a given rgb
+---
+--@param r number for red value in [0,255]
+--@param g number for green value in [0,255]
+--@param b number for blue value in [0,255]
+--@returns (string) 6 digit hex representing the rgb params
 function M.rgb_to_hex(r, g, b)
   validate {
     r = {r, 'n', false};
@@ -35,6 +48,13 @@ function M.rgb_to_hex(r, g, b)
   return bit.tohex(bit.bor(bit.lshift(r, 16), bit.lshift(g, 8), b), 6)
 end
 
+--- Returns a string containing the hex for a given rgba
+---
+--@param r number for red value in [0,255]
+--@param g number for green value in [0,255]
+--@param b number for blue value in [0,255]
+--@param a alpha value in [0,1]
+--@returns (string) 6 digit hex representing the rgba params
 function M.rgba_to_hex(r, g, b, a)
   validate {
     r = {r, 'n', false};
@@ -46,7 +66,14 @@ function M.rgba_to_hex(r, g, b, a)
   return M.rgb_to_hex(M.rgba_to_rgb(r, g, b, a))
 end
 
--- https://stackoverflow.com/a/56678483
+--- Returns the perceived lightness of the rgb value. Calculated using -
+--- the formula from https://stackoverflow.com/a/56678483. Can be used to
+--- determine which colors have similar lightness.
+---
+--@param r number for red value in [0,255]
+--@param g number for green value in [0,255]
+--@param b number for blue value in [0,255]
+--@returns (number) lightness in the range [0,100]
 function M.perceived_lightness(r, g, b)
   function gamma_encode(v)
     return v / 255
