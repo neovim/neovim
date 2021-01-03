@@ -394,20 +394,21 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
-///   - get value of $HOME
+///   1. get value of $HOME
+///   2. if $HOME is not set, try the following
 /// For Windows:
-///   - assemble homedir using HOMEDRIVE and HOMEPATH
-///   - try os_homedir()
-///   - resolve references
-///   - guess C drive
+///   1. assemble homedir using HOMEDRIVE and HOMEPATH
+///   2. try os_homedir()
+///   3. resolve a direct reference to another system variable
+///   4. guess C drive
 /// For Unix:
-///   - try os_homedir()
-///   - go to that directory
-///   - do os_dirname() to get the real name of that directory.
-///   - as a last resort, get the current directory.
-/// This also works with mounts and links.
-/// Don't do this for Windows, it will change the "current dir" for a drive.
+///   1. try os_homedir()
+///   2. go to that directory
+///       This also works with mounts and links.
+///       Don't do this for Windows, it will change the "current dir" for a drive.
+///   3. fall back to current working directory as a last resort
 static char *homedir = NULL;
+static char *os_homedir(void);
 
 void init_homedir(void)
 {
@@ -447,12 +448,12 @@ void init_homedir(void)
     const char *p = strchr(var + 1, '%');
     if (p != NULL) {
       vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
+      var = NULL;
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
         var = os_buf;
-      }
     }
   }
 
@@ -482,20 +483,19 @@ void init_homedir(void)
       }
     }
   }
-#endif
 
   // Fall back to current working directory if home is not found
   if ((var == NULL || *var == NUL)
       && os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK) {
     var = os_buf;
   }
-
+#endif
   homedir = xstrdup(var);
 }
 
 static char homedir_buf[MAXPATHL];
 
-char *os_homedir(void)
+static char *os_homedir(void)
 {
   homedir_buf[0] = NUL;
   size_t homedir_size = MAXPATHL;
@@ -505,9 +505,8 @@ char *os_homedir(void)
   uv_mutex_unlock(&mutex);
   if (ret_value == 0 && homedir_size < MAXPATHL) {
     return homedir_buf;
-  } else {
-    ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
   }
+  ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
   homedir_buf[0] = NUL;
   return NULL;
 }
