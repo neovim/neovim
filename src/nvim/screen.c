@@ -2665,7 +2665,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
       }
 
-      //sign column
+      // sign column, this is hit until sign_idx reaches count
       if (draw_state == WL_SIGN - 1 && n_extra == 0) {
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
@@ -4347,6 +4347,10 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
+//
+// @param count max number of signs
+// @param[out] n_extrap number of characters from pp_extra to display
+// @param[in, out] sign_idxp Index of the displayed sign
 static void get_sign_display_info(
     bool nrcol,
     win_T *wp,
@@ -4423,6 +4427,8 @@ static void get_sign_display_info(
   (*sign_idxp)++;
   if (*sign_idxp < count) {
     *draw_statep = WL_SIGN - 1;
+  } else {
+    *sign_idxp = 0;
   }
 }
 
