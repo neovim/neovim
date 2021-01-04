@@ -5361,9 +5361,8 @@ input({opts})
 		prompt        ""       Same as {prompt} in the first form.
 		default       ""       Same as {text} in the first form.
 		completion    nothing  Same as {completion} in the first form.
-		cancelreturn  ""       Same as {cancelreturn} from
-		                       |inputdialog()|. Also works with
-		                       input().
+		cancelreturn  ""       The value returned when the dialog is
+		                       cancelled.
 		highlight     nothing  Highlight handler: |Funcref|.
 
 		The highlighting set with |:echohl| is used for the prompt.
