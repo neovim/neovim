@@ -136,12 +136,13 @@ end
 --@param timeout_ms (number) Request timeout
 function M.formatting_sync(options, timeout_ms)
   local params = util.make_formatting_params(options)
-  local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
-  if not result or vim.tbl_isempty(result) then return end
-  local _, formatting_result = next(result)
-  result = formatting_result.result
-  if not result then return end
-  vim.lsp.util.apply_text_edits(result)
+  local results = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
+  if not results or vim.tbl_isempty(results) then return end
+  for _, result in ipairs(results) do
+    if result and not vim.tbl_isempty(result) then
+      vim.lsp.util.apply_text_edits(result.result)
+    end
+  end
 end
 
 --- Formats a given range.
