@@ -3029,10 +3029,11 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (argvars[0].v_type == VAR_UNKNOWN) {
       // getchar(): blocking wait.
+      // TODO(bfredl): deduplicate shared logic with state_enter ?
       if (!(char_avail() || using_script() || input_available())) {
         (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
         if (!multiqueue_empty(main_loop.events)) {
-          multiqueue_process_events(main_loop.events);
+          state_handle_k_event();
           continue;
         }
       }
