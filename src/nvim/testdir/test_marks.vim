@@ -171,6 +171,11 @@ func Test_delmarks()
   " Deleting an already deleted mark should not fail.
   delmarks x
 
+  " getpos() should return all zeros after deleting a filemark.
+  norm mA
+  delmarks A
+  call assert_equal([0, 0, 0, 0], getpos("'A"))
+
   " Test deleting a range of marks.
   norm ma
   norm mb

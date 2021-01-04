@@ -777,6 +777,7 @@ void ex_delmarks(exarg_T *eap)
               n = i - 'A';
             }
             namedfm[n].fmark.mark.lnum = 0;
+            namedfm[n].fmark.fnum = 0;
             XFREE_CLEAR(namedfm[n].fname);
           }
         }
