@@ -972,6 +972,12 @@ describe('API', function()
       nvim("input", "gu")
       eq({mode='no', blocking=false}, nvim("get_mode"))
     end)
+
+    it("at '-- More --' prompt returns blocking=true #11899", function()
+      command('set more')
+      feed(':digraphs<cr>')
+      eq({mode='rm', blocking=true}, nvim("get_mode"))
+    end)
   end)
 
   describe('RPC (K_EVENT) #6166', function()

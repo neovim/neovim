@@ -393,7 +393,7 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0) && events == NULL && !input_eof) {
+  if ((ms == - 1 || ms > 0) && events != main_loop.events && !input_eof) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
