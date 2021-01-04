@@ -124,7 +124,7 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 :[N]sp[lit] [++opt] [+cmd] [file]			*:sp* *:split*
 		Split current window in two.  The result is two viewports on
 		the same file.
-		
+
 		Make the new window N high (default is to use half the height
 		of the current window).  Reduces the current window height to
 		create room (and others, if the 'equalalways' option is set,

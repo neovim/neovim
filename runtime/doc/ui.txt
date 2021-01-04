@@ -170,7 +170,7 @@ the editor.
 	`mouse_shape`:	(To be implemented.)
 
 	Some keys are missing in some modes.
-	
+
 	The following keys are deprecated:
 
 	`hl_id`:	Use `attr_id` instead.
@@ -460,7 +460,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 
 ["set_scroll_region", top, bot, left, right]
 	Define the scroll region used by `scroll` below.
-	
+
 	Note: ranges are end-inclusive, which is inconsistent with API
 	conventions.
 
