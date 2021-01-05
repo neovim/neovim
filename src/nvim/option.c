@@ -306,7 +306,7 @@ static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };
-static char *(p_bs_values[]) =        { "indent", "eol", "start", NULL };
+static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
@@ -1365,6 +1365,10 @@ int do_set(
                 case 2:
                   *(char_u **)varp = vim_strsave(
                       (char_u *)"indent,eol,start");
+                  break;
+                case 3:
+                  *(char_u **)varp = vim_strsave(
+                      (char_u *)"indent,eol,nostop");
                   break;
                 }
                 xfree(oldval);
@@ -2939,7 +2943,7 @@ ambw_end:
     }
   } else if (varp == &p_bs) {  // 'backspace'
     if (ascii_isdigit(*p_bs)) {
-      if (*p_bs >'2' || p_bs[1] != NUL) {
+      if (*p_bs > '3' || p_bs[1] != NUL) {
         errmsg = e_invarg;
       }
     } else if (check_opt_strings(p_bs, p_bs_values, true) != OK) {
@@ -6801,15 +6805,15 @@ static int check_opt_wim(void)
 }
 
 /// Check if backspacing over something is allowed.
-/// The parameter what is one of the following: whatBS_INDENT, BS_EOL
-/// or BS_START
+/// @param  what  BS_INDENT, BS_EOL, BS_START, or BS_NOSTOP
 bool can_bs(int what)
 {
   if (what == BS_START && bt_prompt(curbuf)) {
     return false;
   }
   switch (*p_bs) {
-    case '2':       return true;
+    case '3':       return true;
+    case '2':       return what != BS_NOSTOP;
     case '1':       return what != BS_START;
     case '0':       return false;
   }

@@ -19,6 +19,8 @@ func Test_backspace_option()
   call assert_equal('eol', &backspace)
   set backspace=start
   call assert_equal('start', &backspace)
+  set backspace=nostop
+  call assert_equal('nostop', &backspace)
   " Add the value
   set backspace=
   set backspace=indent
@@ -27,7 +29,11 @@ func Test_backspace_option()
   call assert_equal('indent,eol', &backspace)
   set backspace+=start
   call assert_equal('indent,eol,start', &backspace)
+  set backspace+=nostop
+  call assert_equal('indent,eol,start,nostop', &backspace)
   " Delete the value
+  set backspace-=nostop
+  call assert_equal('indent,eol,start', &backspace)
   set backspace-=indent
   call assert_equal('eol,start', &backspace)
   set backspace-=start
@@ -47,7 +53,9 @@ func Test_backspace_option()
   call assert_equal('1', &backspace)
   set backspace=2
   call assert_equal('2', &backspace)
-  call assert_false(match(Exec('set backspace=3'), '.*E474'))
+  set backspace=3
+  call assert_equal('3', &backspace)
+  call assert_false(match(Exec('set backspace=4'), '.*E474'))
   call assert_false(match(Exec('set backspace=10'), '.*E474'))
 
   " Cleared when 'compatible' is set
@@ -101,6 +109,39 @@ func Test_backspace_ctrl_u()
         \ "8 this shouldn't be deleted (not touched yet) vim7",
         \ ""], getline(1, '$'))
 
+  " Reset values
+  set compatible&vim
+  set visualbell&vim
+  set backspace&vim
+
+  " Test new nostop option
+  %d_
+  let expected = "foo bar foobar"
+  call setline(1, expected)
+  call cursor(1, 8)
+  exe ":norm! ianotherone\<c-u>"
+  call assert_equal(expected, getline(1))
+  call cursor(1, 8)
+  exe ":norm! ianothertwo\<c-w>"
+  call assert_equal(expected, getline(1))
+
+  let content = getline(1)
+  for value in ['indent,nostop', 'eol,nostop', 'indent,eol,nostop', 'indent,eol,start,nostop']
+    exe ":set bs=".. value
+    %d _
+    call setline(1, content)
+    let expected = " foobar"
+    call cursor(1, 8)
+    exe ":norm! ianotherone\<c-u>"
+    call assert_equal(expected, getline(1), 'CTRL-U backspace value: '.. &bs)
+    let expected = "foo  foobar"
+    call setline(1, content)
+    call cursor(1, 8)
+    exe ":norm! ianothertwo\<c-w>"
+    call assert_equal(expected, getline(1), 'CTRL-W backspace value: '.. &bs)
+  endfor
+
+  " Reset options
   set compatible&vim
   set visualbell&vim
   set backspace&vim
