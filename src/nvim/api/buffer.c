@@ -1400,9 +1400,13 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                   callbacks. The mark will only be used for the current
 ///                   redraw cycle, and not be permantently stored in the
 ///                   buffer.
-///               - gravity : the direction the extmark will be shifted in
-///                   when new text is inserted. Must be either 'left' or
-///                   'right'.
+///               - right_gravity : boolean that indicates the direction
+///                   the extmark will be shifted in when new text is inserted
+///                   (true for right, false for left).  defaults to true.
+///               - end_right_gravity : boolean that indicates the direction
+///                   the extmark end position (if it exists) will be shifted
+///                   in when new text is inserted (true for right, false
+///                   for left). Defaults to false.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
@@ -1444,6 +1448,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   colnr_T col2 = 0;
   VirtText virt_text = KV_INITIAL_VALUE;
   bool right_gravity = true;
+  bool end_right_gravity = false;
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
@@ -1526,19 +1532,20 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
       priority = (DecorPriority)v->data.integer;
-    } else if (strequal("gravity", k.data)) {
-      if (v->type != kObjectTypeString) {
+    } else if (strequal("right_gravity", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation,
-                      "gravity must be a string");
+                      "right_gravity must be a boolean");
         goto error;
       }
-      if (strequal("left", v->data.string.data)) {
-        right_gravity = false;
-      } else if (!strequal("right", v->data.string.data)) {
+      right_gravity = v->data.boolean;
+    } else if (strequal("end_right_gravity", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation,
-                      "invalid option for gravity: must be 'left' or 'right'");
+                      "end_right_gravity must be a boolean");
         goto error;
       }
+      end_right_gravity = v->data.boolean;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1561,6 +1568,14 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
   } else if (line2 >= 0) {
     col2 = 0;
+  }
+
+  // Only error out if they try to set end_right_gravity to true without
+  // setting end_col or end_line
+  if (line2 == 0 && col2 == 0 && end_right_gravity) {
+    api_set_error(err, kErrorTypeValidation,
+                  "cannot set end_right_gravity to true "
+                  "without setting end_line and end_col");
   }
 
   // TODO(bfredl): synergize these two branches even more
@@ -1589,7 +1604,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, decor, right_gravity, kExtmarkNoUndo);
+                     line2, col2, decor, right_gravity,
+                     end_right_gravity, kExtmarkNoUndo);
   }
 
   return (Integer)id;
@@ -1704,7 +1720,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   extmark_set(buf, ns_id, 0,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              decor_hl(hl_id), true, kExtmarkNoUndo);
+              decor_hl(hl_id), true, false, kExtmarkNoUndo);
   return src_id;
 }
 
@@ -1813,7 +1829,8 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->virt_text = virt_text;
 
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true, kExtmarkNoUndo);
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true,
+              false, kExtmarkNoUndo);
   return src_id;
 }
 
