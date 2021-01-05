@@ -2609,7 +2609,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when internal formatting is used.  Make sure the cursor is kept in the
 	same spot relative to the text then!  The |mode()| function will
 	return "i" or "R" in this situation.
-	
+
 	When the expression evaluates to non-zero Vim will fall back to using
 	the internal format mechanism.
 
@@ -3184,7 +3184,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'inccommand'* *'icm'*
 'inccommand' 'icm'	string	(default "")
 			global
-			
+
 	"nosplit": Shows the effects of a command incrementally, as you type.
 	"split"	 : Also shows partial off-screen results in a preview window.
 
@@ -6838,7 +6838,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	a built-in |highlight-groups| item to be overridden by {hl} group in
 	the window.  Only built-in |highlight-groups| are supported, not
 	syntax highlighting (use |:ownsyntax| for that).
-	
+
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The 'tabline' highlight of a tabpage is
 	decided by the last-focused window of the tabpage.  Highlights of

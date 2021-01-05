@@ -46,26 +46,26 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 ga			Print the ascii value of the character under the
 			cursor in decimal, hexadecimal and octal.
 			Mnemonic: Get Ascii value.
-			
+
 			For example, when the cursor is on a 'R':
 				<R>  82,  Hex 52,  Octal 122 ~
 			When the character is a non-standard ASCII character,
 			but printable according to the 'isprint' option, the
 			non-printable version is also given.
-			
+
 			When the character is larger than 127, the <M-x> form
 			is also printed.  For example:
 				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
 				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
 			(where <p> is a special character)
-			
+
 			The <Nul> character in a file is stored internally as
 			<NL>, but it will be shown as:
 				<^@>  0,  Hex 00,  Octal 000 ~
-				
+
 			If the character has composing characters these are
 			also shown.  The value of 'maxcombine' doesn't matter.
-			
+
 			If the character can be inserted as a digraph, also
 			output the two characters that can be used to create
 			the character:
@@ -317,11 +317,11 @@ g8			Print the hex values of the bytes used in the
 			optional.
 :redi[r] @{a-z}>>	Append messages to register {a-z}.
 
-:redi[r] @*>		
+:redi[r] @*>
 :redi[r] @+>		Redirect messages to the selection or clipboard. For
 			backward compatibility, the ">" after the register
 			name can be omitted. See |quotestar| and |quoteplus|.
-:redi[r] @*>>		
+:redi[r] @*>>
 :redi[r] @+>>		Append messages to the selection or clipboard.
 
 :redi[r] @">		Redirect messages to the unnamed register. For

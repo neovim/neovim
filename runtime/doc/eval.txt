@@ -1600,7 +1600,7 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 			regtype		Type of register as returned by
 					|getregtype()|.
 			visual		Selection is visual (as opposed to,
-					e.g., via motion).	
+					e.g., via motion).
 			completed_item    Current selected complete item on
 					|CompleteChanged|, Is `{}` when no complete
 					item selected.
@@ -1783,7 +1783,7 @@ v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
 		of msgpack types, use |is| operator.
 
 					*v:null* *null-variable*
-v:null		Special value used to put "null" in JSON and NIL in msgpack. 
+v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		See |json_encode()|.  This value is converted to "v:null" when
 		used as a String (e.g. in |expr5| with string concatenation
 		operator) and to zero when used as a Number (e.g. in |expr5|
@@ -4150,7 +4150,7 @@ function({name} [, {arglist}] [, {dict}])
 garbagecollect([{atexit}])				*garbagecollect()*
 		Cleanup unused |Lists| and |Dictionaries| that have circular
 		references.
-		
+
 		There is hardly ever a need to invoke this function, as it is
 		automatically done when Vim runs out of memory or is waiting
 		for the user to press a key after 'updatetime'.  Items without
@@ -4934,7 +4934,7 @@ getwininfo([{winid}])					*getwininfo()*
 			quickfix	1 if quickfix or location list window
 			terminal	1 if a terminal window
 			tabnr		tab page number
-			topline		first displayed buffer line 
+			topline		first displayed buffer line
 			variables	a reference to the dictionary with
 					window-local variables
 			width		window width
@@ -5074,7 +5074,7 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 
 		Vim's compile-time feature-names (prefixed with "+") are not
 		recognized because Nvim is always compiled with all possible
-		features. |feature-compile| 
+		features. |feature-compile|
 
 		Feature names can be:
 		1.  Nvim version. For example the "nvim-0.2.1" feature means
@@ -5099,7 +5099,7 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			ttyin		input is a terminal (tty)
 			ttyout		output is a terminal (tty)
 			unix		Unix system.
-			*vim_starting*	True during |startup|. 
+			*vim_starting*	True during |startup|.
 			win32		Windows system (32 or 64 bit).
 			win64		Windows system (64 bit).
 			wsl		WSL (Windows Subsystem for Linux) system
@@ -5684,7 +5684,7 @@ json_encode({expr})					*json_encode()*
 		|msgpack-special-dict|), values with self-referencing
 		containers, strings which contain non-UTF-8 characters,
 		pseudo-UTF-8 strings which contain codepoints reserved for
-		surrogate pairs (such strings are not valid UTF-8 strings). 
+		surrogate pairs (such strings are not valid UTF-8 strings).
 		Non-printable characters are converted into "\u1234" escapes
 		or special escapes like "\t", other are dumped as-is.
 
@@ -5847,7 +5847,7 @@ map({expr1}, {expr2})					*map()*
 		{expr1} must be a |List| or a |Dictionary|.
 		Replace each item in {expr1} with the result of evaluating
 		{expr2}. {expr2} must be a |string| or |Funcref|.
-		
+
 		If {expr2} is a |string|, inside {expr2} |v:val| has the value
 		of the current item. For a |Dictionary| |v:key| has the key
 		of the current item and for a |List| |v:key| has the index of
@@ -6114,8 +6114,8 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		- A list with three numbers, e.g., [23, 11, 3]. As above, but
 		  the third number gives the length of the highlight in bytes.
 
-		Entries with zero and negative line numbers are silently 
-		ignored, as well as entries with negative column numbers and 
+		Entries with zero and negative line numbers are silently
+		ignored, as well as entries with negative column numbers and
 		lengths.
 
 		The maximum number of positions is 8.
@@ -7608,7 +7608,7 @@ setpos({expr}, {list})
 
 setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		Create or replace or add to the quickfix list.
-		
+
 		When {what} is not present, use the items in {list}.  Each
 		item must be a dictionary.  Non-dictionary items in {list} are
 		ignored.  Each dictionary item can contain the following
@@ -7649,12 +7649,12 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		'a'	The items from {list} are added to the existing
 			quickfix list. If there is no existing list, then a
 			new list is created.
-		
+
 		'r'	The items from the current quickfix list are replaced
 			with the items from {list}.  This can also be used to
 			clear the list: >
 				:call setqflist([], 'r')
-<	
+<
 		'f'	All the quickfix lists in the quickfix stack are
 			freed.
 
@@ -8023,7 +8023,7 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 		empty string.  {group} functions as a namespace for {id}, thus
 		two groups can use the same IDs. Refer to |sign-identifier|
 		for more information.
-		
+
 		{name} refers to a defined sign.
 		{expr} refers to a buffer name or number. For the accepted
 		values, see |bufname()|.
@@ -8803,7 +8803,7 @@ system({cmd} [, {input}])				*system()* *E677*
 
 		Note: Use |shellescape()| or |::S| with |expand()| or
 		|fnamemodify()| to escape special characters in a command
-		argument.  Newlines in {cmd} may cause the command to fail. 
+		argument.  Newlines in {cmd} may cause the command to fail.
 		The characters in 'shellquote' and 'shellxquote' may also
 		cause trouble.
 
