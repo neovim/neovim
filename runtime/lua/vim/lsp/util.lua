@@ -121,50 +121,61 @@ local function get_line_byte_from_position(bufnr, position)
 end
 
 --- Process and return progress reports from lsp server
-function M.get_progress_messages()
+function M.get_progress_messages(bufnr)
 
   local new_messages = {}
   local msg_remove = {}
   local progress_remove = {}
 
+  local uri = vim.uri_from_bufnr(bufnr)
+
+  -- TODO: add function argument to specify a client id
   for _, client in ipairs(vim.lsp.get_active_clients()) do
-      local messages = client.messages
-      local data = messages
-      for token, ctx in pairs(data.progress) do
+    local messages = client.messages
+    local data = messages
 
-        local new_report = {
-          name = data.name,
-          title = ctx.title or "empty title",
-          message = ctx.message,
-          percentage = ctx.percentage,
-          progress = true,
-        }
-        table.insert(new_messages, new_report)
+    for token, ctx in pairs(data.progress) do
+      local new_report = {
+        name = client.name,
+        id = client.id,
+        title = ctx.title or "empty title",
+        message = ctx.message,
+        percentage = ctx.percentage,
+        progress = true,
+        done = ctx.done,
+      }
+      table.insert(new_messages, new_report)
 
-        if ctx.done then
-          table.insert(progress_remove, {client = client, token = token})
+      if ctx.done then
+        table.insert(progress_remove, {client = client, token = token})
+      end
+    end
+
+    if data.status[uri] then
+      table.insert(new_messages, {
+        name = client.name,
+        id = client.id,
+        content = data.status[uri].content,
+        uri = uri,
+        status = true
+      })
+    end
+
+    for i, msg in ipairs(data.messages) do
+      if msg.show_once then
+        msg.shown = msg.shown + 1
+        if msg.shown > 1 then
+          table.insert(msg_remove, {client = client, idx = i})
         end
       end
 
-      for i, msg in ipairs(data.messages) do
-        if msg.show_once then
-          msg.shown = msg.shown + 1
-          if msg.shown > 1 then
-            table.insert(msg_remove, {client = client, idx = i})
-          end
-        end
+      table.insert(new_messages, {
+        name = client.name,
+        id = client.id,
+        content = msg.content
+      })
+    end
 
-        table.insert(new_messages, {name = data.name, content = msg.content})
-      end
-
-      if next(data.status) ~= nil then
-        table.insert(new_messages, {
-          name = data.name,
-          content = data.status.content,
-          uri = data.status.uri,
-          status = true
-        })
-      end
     for _, item in ipairs(msg_remove) do
       table.remove(client.messages, item.idx)
     end

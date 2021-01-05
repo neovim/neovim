@@ -355,6 +355,9 @@ end
 ---  - {resolved_capabilities} (table): Normalized table of
 ---    capabilities that we have detected based on the initialize
 ---    response from the server in `server_capabilities`.
+---
+---  - {messages} (table): Current progress information from $/progress and
+--     buffer-specific status messages from the server.
 function lsp.client()
   error()
 end
@@ -569,8 +572,9 @@ function lsp.start_client(config)
     -- TODO(remove-callbacks)
     callbacks = handlers;
     handlers = handlers;
-    -- for $/progress report
-    messages = { name = name, messages = {}, progress = {}, status = {} }
+
+    -- for $/progress report and buffer status messages
+    messages = { messages = {}, progress = {}, status = {} };
   }
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
@@ -919,6 +923,9 @@ function lsp.buf_attach_client(bufnr, client_id)
         for_each_buffer_client(bufnr, function(client, _client_id)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
+          end
+          if client.messages.status[uri] then
+            client.messages.status[uri] = nil
           end
         end)
         util.buf_versions[bufnr] = nil
