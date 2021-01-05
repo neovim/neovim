@@ -3486,7 +3486,7 @@ int build_stl_str_hl(
     stl_items = xmalloc(sizeof(stl_item_t) * stl_items_len);
     stl_groupitems = xmalloc(sizeof(int) * stl_items_len);
     stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * stl_items_len);
-    stl_tabtab = xmalloc(sizeof(stl_hlrec_t) * stl_items_len);
+    stl_tabtab = xmalloc(sizeof(StlClickRecord) * stl_items_len);
     stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
