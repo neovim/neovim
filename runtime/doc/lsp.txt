@@ -639,8 +639,9 @@ client()                                                      *vim.lsp.client*
                     automatically escalate and force shutdown.
                   • is_stopped() Checks whether a client is stopped. Returns:
                     true if the client is fully stopped.
-                  • on_attach(client, bufnr) Runs the on_attach function from the
-                    client's config if it was defined. Useful for buffer-local setup.
+                  • on_attach(client, bufnr) Runs the on_attach function from
+                    the client's config if it was defined. Useful for
+                    buffer-local setup.
 
                 • Members
                   • {id} (number): The id allocated to the client.
@@ -776,8 +777,9 @@ start_client({config})                                *vim.lsp.start_client()*
                     {handlers}         Map of language server method names to
                                        |lsp-handler|
                     {settings}         Map with language server specific
-                                       settings. These are returned to the language server if
-                                       requested via `workspace/configuration`. Keys are
+                                       settings. These are returned to the
+                                       language server if requested via
+                                       `workspace/configuration` . Keys are
                                        case-sensitive.
                     {init_options}     Values to pass in the initialization
                                        request as `initializationOptions` .
@@ -815,7 +817,14 @@ start_client({config})                                *vim.lsp.start_client()*
                                        `capabilities.offsetEncoding` was sent
                                        to it. You can only modify the
                                        `client.offset_encoding` here before
-                                       any notifications are sent.
+                                       any notifications are sent. Most
+                                       language servers expect to be sent
+                                       client specified settings after
+                                       initialization. Neovim does not make
+                                       this assumption. A
+                                       `workspace/didChangeConfiguration`
+                                       notification should be sent to the
+                                       server during on_init.
                     {on_exit}          Callback (code, signal, client_id)
                                        invoked on client exit.
                                        • code: exit code of the process
@@ -1342,6 +1351,10 @@ set_signs({diagnostics}, {bufnr}, {client_id}, {sign_ns}, {opts})
                     {sign_ns}      number|nil
                     {opts}         table Configuration for signs. Keys:
                                    • priority: Set the priority of the signs.
+                                   • severity_limit (DiagnosticSeverity):
+                                     • Limit severity of diagnostics found.
+                                       E.g. "Warning" means { "Error",
+                                       "Warning" } will be valid.
 
                                           *vim.lsp.diagnostic.set_underline()*
 set_underline({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
@@ -1420,7 +1433,16 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
                     {client_id}  number|nil the client id
 
                 Return: ~
-                    {popup_bufnr, win_id}
+                    table {popup_bufnr, win_id}
+
+
+==============================================================================
+Lua module: vim.lsp.handlers                                    *lsp-handlers*
+
+                                        *vim.lsp.handlers.progress_callback()*
+progress_callback({_}, {_}, {params}, {client_id})
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
 
 ==============================================================================
@@ -1615,6 +1637,9 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                 See also: ~
                     |softtabstop|
 
+get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
+                TODO: Documentation
+
 jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
                 Jumps to a location.
 
@@ -1635,6 +1660,19 @@ locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
 
                 Return: ~
                     (table) list of items
+
+lookup_section({settings}, {section})          *vim.lsp.util.lookup_section()*
+                Helper function to return nested values in language server
+                settings
+
+                Parameters: ~
+                    {settings}  a table of language server settings
+                    {section}   a string indicating the field of the settings
+                                table
+
+                Return: ~
+                    (table or string) The value of settings accessed via
+                    section
 
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})

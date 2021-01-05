@@ -226,6 +226,7 @@ local function validate_client_config(config)
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
     on_init         = { config.on_init, "f", true };
+    settings        = { config.settings, "t", true };
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
@@ -399,6 +400,10 @@ end
 ---
 --@param handlers Map of language server method names to |lsp-handler|
 ---
+--@param settings Map with language server specific settings. These are
+--- returned to the language server if requested via `workspace/configuration`.
+--- Keys are case-sensitive.
+---
 --@param init_options Values to pass in the initialization request
 --- as `initializationOptions`. See `initialize` in the LSP spec.
 ---
@@ -425,7 +430,10 @@ end
 --- the server may send. For example, clangd sends
 --- `initialize_result.offsetEncoding` if `capabilities.offsetEncoding` was
 --- sent to it. You can only modify the `client.offset_encoding` here before
---- any notifications are sent.
+--- any notifications are sent. Most language servers expect to be sent client specified settings after
+--- initialization. Neovim does not make this assumption. A
+--- `workspace/didChangeConfiguration` notification should be sent
+---  to the server during on_init.
 ---
 --@param on_exit Callback (code, signal, client_id) invoked on client
 --- exit.
