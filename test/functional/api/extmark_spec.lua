@@ -1393,8 +1393,8 @@ describe('API/extmarks', function()
   it('works with left and right gravity', function()
     -- right gravity should move with inserted text, while
     -- left gravity should stay in place.
-    curbufmeths.set_extmark(ns, 0, 5, {gravity = 'left'})
-    curbufmeths.set_extmark(ns, 0, 5, {gravity = 'right'})
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = false})
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = true})
     feed([[Aasdfasdf]])
 
     eq({ {1, 0, 5}, {2, 0, 13} },
