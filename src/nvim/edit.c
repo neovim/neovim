@@ -8282,8 +8282,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         }
       } while (revins_on
                || (curwin->w_cursor.col > mincol
-                   && (curwin->w_cursor.lnum != Insstart_orig.lnum
-                       || curwin->w_cursor.col != Insstart_orig.col)));
+                   && (can_bs(BS_NOSTOP)
+                       || (curwin->w_cursor.lnum != Insstart_orig.lnum
+                           || curwin->w_cursor.col != Insstart_orig.col))));
     }
     did_backspace = true;
   }
