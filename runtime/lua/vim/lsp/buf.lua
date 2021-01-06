@@ -344,12 +344,6 @@ function M.document_color()
   request('textDocument/documentColor', params)
 end
 
---- Removes document color highlights from current buffer.
----
-function M.clear_document_color()
-  util.buf_clear_document_color()
-end
-
 --- Selects a code action from the input list that is available at the current
 --- cursor position.
 --
