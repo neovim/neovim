@@ -905,6 +905,16 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 <
 
+document_color()                        *vim.lsp.buf.document_color()*
+                Send request to server to resolve document colors for the
+                current buffer. This request can be associated to key mapping
+                or to events such as `TextChanged` , eg:
+>
+    vim.api.nvim_command [[ autocmd TextChanged,InsertLeave * lua vim.lsp.buf.document_color() ]]
+<
+                Note:
+                    Many servers do not implement this method.
+
 document_symbol()                              *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
                 window.
@@ -1044,6 +1054,76 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
 
                 Parameters: ~
                     {query}  (string, optional)
+
+
+==============================================================================
+Lua module: vim.lsp.color                                     *lsp-color*
+
+                                                   *vim.lsp.color.buf_color()*
+buf_color({client_id}, {bufnr}, {color_infos}, {config})
+
+                Show the colors in the buffer.
+
+                Parameters: ~
+		  {client_id}   number See |vim.lsp.client|.
+                  {bufnr}       number Buffer number.
+                  {color_infos} table ColorInformation table
+                  {config}      table See |vim.lsp.color.on_document_color()|
+
+                                                        *vim.lsp.color.buf_()*
+buf_clear_color({client_id}, {bufnr})
+
+                Clear the colors shown in the buffer.
+
+                Parameters: ~
+		  {client_id}   number See |vim.lsp.client|.
+                  {bufnr}       number Buffer number.
+
+                                           *vim.lsp.color.on_document_color()*
+on_document_color({_}, {_}, {result}, {client_id}, {bufnr}, {config})
+
+                |lsp-handler| for the method "textDocument/documentColor"
+>
+                 vim.lsp.handlers["textDocument/documentColor"] = vim.lsp.with(
+                   vim.lsp.color.on_document_color, {
+                     -- Change the color of the background of the text
+                     background = false,
+                     -- Change the color of the text itself
+                     foreground = false,
+                     -- Show the color as virtual text
+                     virtual_text = false,
+                     -- The text to color when using virtual_text
+                     virtual_text_str = '■',
+                     -- The background color to use when applying an alpha
+                     background_color = {r=255, g=255, b=255},
+                   }
+                 )
+<
+                Parameters: ~
+                  {result}    table ColorInformation table
+		  {client_id} number See |vim.lsp.client|.
+                  {bufnr}     number Buffer number.
+                  {config}    table Configuration table.
+                              • background: (default=false)
+                                • Show color in text background.
+
+                              • foreground: (default=false)
+                                • Show color in text foreground.
+
+                              • virtual_text: (default=false)
+                                • Show color as virtual text.
+
+                              • virtual_text_str: (default='■')
+                                • String to show as virtual text.
+
+                              • background_color: (default=vim.color.decode_24bit_rgb(vim.api.nvim_get_hl_by_name('Normal', true)['background']))
+                                • Background color to use when applying an
+                                alpha. By default the |highlight-guibg| of
+                                |hl-Normal| is used. This option has to be a
+                                table with three keys: r, g, b.
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specification#textDocument_documentColor
 
 
 ==============================================================================

@@ -1296,6 +1296,99 @@ validate({opt})                                               *vim.validate()*
                                 fails
 
 
+
+==============================================================================
+Lua module: color                                                    *lua-vim*
+
+rgba_to_rgb({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
+
+                Returns the RGB after having applied the alpha.
+
+                Parameters: ~
+                   {rgba}   (table): RGBA values.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+                              • a: Red color in [0,1]
+                   {bg_rgb} (table): RGB values for the background when
+                            applying the alpha to {rgba}.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+
+                Return: ~
+                   (table): RGB value.
+			• r: Red color in [0,255]
+			• g: Green color in [0,255]
+			• b: Blue color in [0,255]
+			• a: Red color in [0,1]
+
+
+rgb_to_hex({rgb})                                    *vim.color.rgba_to_rgb()*
+
+                Returns a 6-digit string containing the hex version of {rgba}.
+
+                Parameters: ~
+                   {rgba}   (table): RGBA values.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+
+                Return: ~
+                    (string) 6-digit hex
+
+
+rgba_to_hex({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
+
+
+                Returns a 6-digit string containing the hex version of {rgba}.
+
+                Parameters: ~
+                   {rgba}   (table): RGBA values.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+                              • a: Red color in [0,1]
+                   {bg_rgb} (table): RGB values for the background when
+                            applying the alpha to {rgba}.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+
+                Return: ~
+                    (string) 6-digit hex
+
+decode_24_bit_rgb({rgb_24bit})                       *vim.color.rgba_to_rgb()*
+
+                Returns individual RGB values for a given 24-bit RGB value.
+
+                Parameters: ~
+                    {rgb_24bit}  (number): 24-bit RGB value.
+
+                Return: ~
+                    (table) RGB values.
+			• r: Red color in [0,255]
+			• g: Green color in [0,255]
+			• b: Blue color in [0,255]
+
+
+perceived_lightness({rgb})                           *vim.color.rgba_to_rgb()*
+
+		Returns the perceived lightness of {rgb} where white is 100
+		and black is 0.
+
+		Note: See https://stackoverflow.com/a/56678483.
+
+                Parameters: ~
+                   {rgba}   (table): RGBA values.
+                              • r: Red color in [0,255]
+                              • g: Green color in [0,255]
+                              • b: Blue color in [0,255]
+                              • a: Red color in [0,1]
+
+                Return: ~
+                    (number) lightness in [0,100].
+
 ==============================================================================
 Lua module: uri                                                      *lua-uri*
 
