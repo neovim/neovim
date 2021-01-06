@@ -247,6 +247,10 @@ function! s:check_terminal() abort
   let kdch1_entry = matchstr(out, 'key_dc=[^,[:space:]]*')
 
   if v:shell_error
+        \ && (!has('win32')
+        \ || empty(matchstr(out,
+        \                   'infocmp: couldn''t open terminfo file .\+'
+        \                   ..'\%(conemu\|vtpcon\|win32con\)')))
     call health#report_error('command failed: '.cmd."\n".out)
   else
     call health#report_info('key_backspace (kbs) terminfo entry: '
