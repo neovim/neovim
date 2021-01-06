@@ -42,7 +42,7 @@ function! s:check_config() abort
   endif
 
   let writeable = v:true
-  let shadafile = substitute(matchstr(
+  let shadafile = empty(&shada) ? &shada : substitute(matchstr(
         \ split(&shada, ',')[-1], '^n.\+'), '^n', '', '')
   let shadafile = empty(&shadafile) ? empty(shadafile) ?
         \ stdpath('data').'/shada/main.shada' : expand(shadafile)
