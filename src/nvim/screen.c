@@ -1987,9 +1987,20 @@ fill_foldcolumn(
 ///                            or explicitly return `false`.
 ///
 /// @return             the number of last row the line occupies.
-static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
-                    bool nochange, bool number_only, foldinfo_T foldinfo,
-                    Providers *providers)
+static int win_line(
+    win_T *wp, linenr_T lnum, int startrow, int endrow,
+    bool nochange, bool number_only, foldinfo_T foldinfo,
+    Providers *providers
+)
+{
+  win_line2()
+}
+
+static int win_line2(
+    win_T *wp, linenr_T lnum, int startrow, int endrow,
+    bool nochange, bool number_only, foldinfo_T foldinfo,
+    Providers *providers
+)
 {
   int c = 0;                          // init for GCC
   long vcol = 0;                      // virtual column (for tabs)

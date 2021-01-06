@@ -3004,6 +3004,7 @@ static void foldlevelIndent(fline_T *flp)
       flp->lvl = -1;
   } else {
     flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(buf);
+    flp->startcol = flp->lvl;
   }
   if (flp->lvl > flp->wp->w_p_fdn) {
     flp->lvl = (int) MAX(0, flp->wp->w_p_fdn);
