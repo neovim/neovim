@@ -1324,7 +1324,7 @@ rgba_to_rgb({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
 			• a: Red color in [0,1]
 
 
-rgb_to_hex({rgb})                                    *vim.color.rgba_to_rgb()*
+rgb_to_hex({rgb})                                     *vim.color.rgb_to_hex()*
 
                 Returns a 6-digit string containing the hex version of {rgba}.
 
@@ -1338,7 +1338,7 @@ rgb_to_hex({rgb})                                    *vim.color.rgba_to_rgb()*
                     (string) 6-digit hex
 
 
-rgba_to_hex({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
+rgba_to_hex({rgba}, {bg_rgb})                        *vim.color.rgba_to_hex()*
 
 
                 Returns a 6-digit string containing the hex version of {rgba}.
@@ -1358,7 +1358,7 @@ rgba_to_hex({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
                 Return: ~
                     (string) 6-digit hex
 
-decode_24_bit_rgb({rgb_24bit})                       *vim.color.rgba_to_rgb()*
+decode_24_bit_rgb({rgb_24bit})                 *vim.color.decode_24_bit_rgb()*
 
                 Returns individual RGB values for a given 24-bit RGB value.
 
@@ -1372,7 +1372,7 @@ decode_24_bit_rgb({rgb_24bit})                       *vim.color.rgba_to_rgb()*
 			• b: Blue color in [0,255]
 
 
-perceived_lightness({rgb})                           *vim.color.rgba_to_rgb()*
+perceived_lightness({rgb})                   *vim.color.perceived_lightness()*
 
 		Returns the perceived lightness of {rgb} where white is 100
 		and black is 0.
