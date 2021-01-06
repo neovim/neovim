@@ -316,10 +316,8 @@ M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specification#textDocument_documentColor
-M['textDocument/documentColor'] = function(_, _, result, _, bufnr, _)
-  if not result then return end
-  util.buf_clear_document_color(bufnr)
-  util.buf_highlight_colors(bufnr, result)
+M['textDocument/documentColor'] = function(...)
+  return require('vim.lsp.color').on_document_color(...)
 end
 
 --@private

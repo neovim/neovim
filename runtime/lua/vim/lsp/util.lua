@@ -4,7 +4,6 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
-local color = require 'vim.color'
 
 local npcall = vim.F.npcall
 local split = vim.split
@@ -1119,40 +1118,6 @@ do --[[ References ]]
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
       highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
-    end
-  end
-end
-
-do --[[ documentColor ]]
-  local document_color_ns = api.nvim_create_namespace("vim_lsp_documentColor")
-
-  --- Removes document color highlights from a buffer.
-  ---
-  --@param bufnr buffer id
-  function M.buf_clear_document_color(bufnr)
-    validate { bufnr = {bufnr, 'n', true} }
-    api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
-  end
-
-  --- Shows a list of document colors for a certain buffer.
-  ---
-  --@param bufnr buffer id
-  --@param color_infos List of `ColorInformation` objects to highlight
-  function M.buf_highlight_colors(bufnr, color_infos)
-    validate { bufnr = {bufnr, 'n', true} }
-    for _, color_info in ipairs(color_infos) do
-      local rgba, range = color_info['color'], color_info['range']
-
-      local r, g, b = color.rgba_to_rgb(rgba['red']*255, rgba['green']*255, rgba['blue']*255, rgba['alpha'])
-      local color_hex = color.rgb_to_hex(r, g, b)
-      local fghex = color.perceived_lightness(r, g, b) < 50 and 'ffffff' or '000000'
-
-      local hlname = string.format('LspDocumentColor%s', color_hex)
-      api.nvim_command(string.format('highlight %s guibg=#%s guifg=#%s', hlname, color_hex, fghex))
-
-      local start_pos = {range["start"]["line"], range["start"]["character"]}
-      local end_pos = {range["end"]["line"], range["end"]["character"]}
-      highlight.range(bufnr, document_color_ns, hlname, start_pos, end_pos)
     end
   end
 end

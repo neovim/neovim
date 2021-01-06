@@ -23,6 +23,7 @@ local lsp = {
 
   buf = require'vim.lsp.buf';
   diagnostic = require'vim.lsp.diagnostic';
+  color = require'vim.lsp.color';
   util = util;
 
   -- Allow raw RPC access.
