@@ -229,6 +229,7 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
+    settings        = { config.settings, "t", true };
   }
 
   -- TODO(remove-callbacks)
@@ -458,6 +459,7 @@ function lsp.start_client(config)
   local cmd, cmd_args, offset_encoding = cleaned_config.cmd, cleaned_config.cmd_args, cleaned_config.offset_encoding
 
   config.flags = config.flags or {}
+  config.settings = config.settings or {}
 
   local client_id = next_client_id()
 

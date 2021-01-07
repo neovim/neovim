@@ -162,6 +162,7 @@ M['workspace/configuration'] = function(err, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
     err_message("LSP[id=", client_id, "] client has shut down after sending the message")
+    return
   end
   if err then error(vim.inspect(err)) end
   if not params.items then
