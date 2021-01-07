@@ -1298,7 +1298,7 @@ validate({opt})                                               *vim.validate()*
 
 
 ==============================================================================
-Lua module: color                                                    *lua-vim*
+Lua module: color                                                  *lua-color*
 
 rgba_to_rgb({rgba}, {bg_rgb})                        *vim.color.rgba_to_rgb()*
 

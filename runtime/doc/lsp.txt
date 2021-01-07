@@ -905,7 +905,7 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 <
 
-document_color()                        *vim.lsp.buf.document_color()*
+document_color()                                *vim.lsp.buf.document_color()*
                 Send request to server to resolve document colors for the
                 current buffer. This request can be associated to key mapping
                 or to events such as `TextChanged` , eg:
@@ -1059,7 +1059,7 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.color                                     *lsp-color*
 
-                                                   *vim.lsp.color.buf_color()*
+                                                    *vim.lsp.color.buf_color()*
 buf_color({client_id}, {bufnr}, {color_infos}, {config})
 
                 Show the colors in the buffer.
@@ -1070,7 +1070,7 @@ buf_color({client_id}, {bufnr}, {color_infos}, {config})
                   {color_infos} table ColorInformation table
                   {config}      table See |vim.lsp.color.on_document_color()|
 
-                                                        *vim.lsp.color.buf_()*
+                                              *vim.lsp.color.buf_clear_color()*
 buf_clear_color({client_id}, {bufnr})
 
                 Clear the colors shown in the buffer.
