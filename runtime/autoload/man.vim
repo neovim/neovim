@@ -7,7 +7,6 @@ let s:loaded_man = 1
 
 let s:find_arg = '-w'
 let s:localfile_arg = v:true  " Always use -l if possible. #6683
-let s:section_arg = '-S'
 
 function! man#init() abort
   try
@@ -216,16 +215,38 @@ endfunction
 
 function! s:get_path(sect, name) abort
   " Some man implementations (OpenBSD) return all available paths from the
-  " search command, so we get() the first one. #8341
-  if empty(a:sect)
-    return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
+  " search command. Previously, this function would simply select the first one.
+  "
+  " However, some searches will report matches that are incorrect:
+  " man -w strlen may return string.3 followed by strlen.3, and therefore
+  " selecting the first would get us the wrong page. Thus, we must find the
+  " first matching one.
+  "
+  " There's yet another special case here. Consider the following:
+  " If you run man -w strlen and string.3 comes up first, this is a problem. We
+  " should search for a matching named one in the results list.
+  " However, if you search for man -w clock_gettime, you will *only* get
+  " clock_getres.2, which is the right page. Searching the resuls for
+  " clock_gettime will no longer work. In this case, we should just use the
+  " first one that was found in the correct section.
+  "
+  " Finally, we can avoid relying on -S or -s here since they are very
+  " inconsistently supported. Instead, call -w with a section and a name.
+  let results = split(s:system(['man', s:find_arg, a:sect, a:name]))
+
+  if empty(results)
+    return ''
   endif
-  " '-s' flag handles:
-  "   - tokens like 'printf(echo)'
-  "   - sections starting with '-'
-  "   - 3pcap section (found on macOS)
-  "   - commas between sections (for section priority)
-  return substitute(get(split(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])), 0, ''), '\n\+$', '', '')
+
+  " find any that match the specified name
+  let namematches = filter(copy(results), 'fnamemodify(v:val, ":t") =~ a:name')
+  let sectmatches = []
+
+  if !empty(namematches) && !empty(a:sect)
+    let sectmatches = filter(copy(namematches), 'fnamemodify(v:val, ":e") == a:sect')
+  endif
+
+  return substitute(get(sectmatches, 0, get(namematches, 0, results[0])), '\n\+$', '', '')
 endfunction
 
 " s:verify_exists attempts to find the path to a manpage
@@ -243,40 +264,72 @@ endfunction
 " then we don't do it again in step 2.
 function! s:verify_exists(sect, name) abort
   let sect = a:sect
+
   if empty(sect)
-    let sect = get(b:, 'man_default_sects', '')
+    " no section specified, so search with b:man_default_sects
+    if exists('b:man_default_sects')
+      let sects = split(b:man_default_sects, ',')
+      for sec in sects
+        try
+          let res = s:get_path(sec, a:name)
+          if !empty(res)
+            return res
+          endif
+        catch /^command error (/
+        endtry
+      endfor
+    endif
+  else
+    " try with specified section
+    try
+      let res = s:get_path(sect, a:name)
+      if !empty(res)
+        return res
+      endif
+    catch /^command error (/
+    endtry
+
+    " try again with b:man_default_sects
+    if exists('b:man_default_sects')
+      let sects = split(b:man_default_sects, ',')
+      for sec in sects
+        try
+          let res = s:get_path(sec, a:name)
+          if !empty(res)
+            return res
+          endif
+        catch /^command error (/
+        endtry
+      endfor
+    endif
   endif
 
+  " if none of the above worked, we will try with no section
   try
-    return s:get_path(sect, a:name)
+    let res = s:get_path('', a:name)
+    if !empty(res)
+      return res
+    endif
   catch /^command error (/
   endtry
 
-  if !empty(get(b:, 'man_default_sects', '')) && sect !=# b:man_default_sects
-    try
-      return s:get_path(b:man_default_sects, a:name)
-    catch /^command error (/
-    endtry
-  endif
-
-  if !empty(sect)
-    try
-      return s:get_path('', a:name)
-    catch /^command error (/
-    endtry
-  endif
-
+  " if that still didn't work, we will check for $MANSECT and try again with it
+  " unset
   if !empty($MANSECT)
     try
       let MANSECT = $MANSECT
       call setenv('MANSECT', v:null)
-      return s:get_path('', a:name)
+      let res = s:get_path('', a:name)
+      if !empty(res)
+        return res
+      endif
     catch /^command error (/
     finally
       call setenv('MANSECT', MANSECT)
     endtry
   endif
 
+  " finally, if that didn't work, there is no hope
   throw 'no manual entry for ' . a:name
 endfunction
 
