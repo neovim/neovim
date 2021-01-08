@@ -1652,8 +1652,8 @@ describe('LSP', function()
 
       local expected = { {
         bufnr = 2,
-        col = 5,
-        lnum = 4,
+        col = 4,
+        lnum = 1,
         module = "",
         nr = 0,
         pattern = "",
@@ -1724,8 +1724,8 @@ describe('LSP', function()
 
       local expected = { {
         bufnr = 2,
-        col = 5,
-        lnum = 4,
+        col = 4,
+        lnum = 3,
         module = "",
         nr = 0,
         pattern = "",
