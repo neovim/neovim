@@ -1993,7 +1993,8 @@ static int win_line(
     Providers *providers
 )
 {
-  win_line2()
+  return win_line2(wp, lnum, startrow, endrow, nochange, number_only, foldinfo,
+            providers);
 }
 
 static int win_line2(
