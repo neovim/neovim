@@ -19,6 +19,56 @@
 #include "nvim/window.h"
 #include "nvim/screen.h"
 #include "nvim/move.h"
+#include "nvim/fold.h"
+
+/// Create a fold from line "start" to line "end" (inclusive) in the current
+/// window.
+///
+/// @param window   Window handle, or 0 for current window
+/// @param start    Starting line index
+/// @param end      End line index
+/// @param[out] err Error details, if any
+void nvim_win_add_fold(
+    Window window,
+    Integer lstart,
+    Integer lend,
+    // optionals ?
+    Integer colstart,
+    Integer colend,
+    Error *err
+)
+  FUNC_API_SINCE(7)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  pos_T start  = { .lnum = (linenr_T)lstart, .col = (colnr_T)colstart };
+  pos_T end = { (linenr_T)lend, (colnr_T)colend, 0};
+  foldCreate(win, start, end);
+}
+
+/// Delete a fold at line "start" in the current window.
+///
+/// @param window
+/// @param start delete all folds from start to end when not 0
+/// @param end delete all folds from start to end when not 0
+/// @param recursive delete recursively if true
+/// @param[out] err Error details, if any
+void nvim_win_del_fold(
+    Window window, Integer start, Integer end, Boolean recursive, Error *err)
+  FUNC_API_SINCE(7)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  deleteFold(win, (linenr_T)start, (linenr_T)end, recursive, false);
+}
 
 /// Gets the current buffer in a window
 ///
