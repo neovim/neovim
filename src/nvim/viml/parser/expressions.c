@@ -2080,11 +2080,13 @@ viml_pexpr_parse_process_token:
       case kExprLexEOC: {
         assert(false);
       }
+        FALLTHROUGH;
       case kExprLexInvalid: {
         ERROR_FROM_TOKEN(cur_token);
         tok_type = cur_token.data.err.type;
         goto viml_pexpr_parse_process_token;
       }
+        FALLTHROUGH;
       case kExprLexRegister: {
         if (want_node == kENodeOperator) {
           // Register in operator position: e.g. @a @a
@@ -3030,6 +3032,7 @@ viml_pexpr_parse_end:
           // this.
           assert(false);
         }
+        FALLTHROUGH;
         case kExprNodeInteger:
         case kExprNodeFloat:
         case kExprNodeSingleQuotedString:
@@ -3044,6 +3047,7 @@ viml_pexpr_parse_end:
           // unconditionally popped at the start.
           assert(false);
         }
+        FALLTHROUGH;
         case kExprNodeComma:
         case kExprNodeColon:
         case kExprNodeArrow: {
