@@ -327,8 +327,9 @@ end
 ---     Checks whether a client is stopped.
 ---     Returns: true if the client is fully stopped.
 ---
----  - on_attach(bufnr)
+---  - on_attach(client, bufnr)
 ---     Runs the on_attach function from the client's config if it was defined.
+---     Useful for buffer-local setup.
 ---
 --- - Members
 ---  - {id} (number): The id allocated to the client.

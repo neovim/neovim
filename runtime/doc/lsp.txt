@@ -639,8 +639,8 @@ client()                                                      *vim.lsp.client*
                     automatically escalate and force shutdown.
                   • is_stopped() Checks whether a client is stopped. Returns:
                     true if the client is fully stopped.
-                  • on_attach(bufnr) Runs the on_attach function from the
-                    client's config if it was defined.
+                  • on_attach(client, bufnr) Runs the on_attach function from the
+                    client's config if it was defined. Useful for buffer-local setup.
 
                 • Members
                   • {id} (number): The id allocated to the client.
@@ -1716,7 +1716,7 @@ make_workspace_params({added}, {removed})
                 Create the workspace params
 
                 Parameters: ~
-                    {added}    
+                    {added}
                     {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
