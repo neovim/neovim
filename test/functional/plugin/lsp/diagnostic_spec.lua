@@ -332,6 +332,29 @@ describe('vim.lsp.diagnostic', function()
     end)
   end)
 
+  describe('vim.lsp.diagnostic.get_virtual_text_chunks_for_line', function()
+    it('should correctly return the full message if no new lines are present', function()
+      local virtual_texts = exec_lua [[
+      local diags = { make_error('Simple diagnostic message', 2, 2, 2) }
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      ]]
+      eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
+    end)
+    it('should correctly return truncated on new line', function()
+      local virtual_texts = exec_lua [[
+      local diags = { make_error('Simple diagnostic message\nSecond line with more details', 2, 2, 2) }
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      ]]
+      eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
+    end)
+    it('should correctly return truncated on new line, even on windows!', function()
+      local virtual_texts = exec_lua [[
+      local diags = { make_error('Simple diagnostic message\n\rSecond line with more details', 2, 2, 2) }
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      ]]
+      eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
+    end)
+  end)
   describe("vim.lsp.diagnostic.get_line_diagnostics", function()
     it('should return an empty table when no diagnostics are present', function()
       eq({}, exec_lua [[return vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)]])

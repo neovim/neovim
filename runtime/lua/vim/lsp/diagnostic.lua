@@ -757,10 +757,19 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
   -- TODO(tjdevries): Display server name associated with these?
   if last.message then
+    local stripped_msg = last.message:gsub("\r", "")
+    local newline_index, _ = string.find(stripped_msg, "\n")
+    local diagnostic_msg
+    if newline_index then
+      diagnostic_msg = string.sub(stripped_msg, 1, newline_index - 1)
+    else
+      diagnostic_msg = stripped_msg
+    end
+
     table.insert(
       virt_texts,
       {
-        string.format("%s %s", prefix, last.message:gsub("\r", ""):gsub("\n", "  ")),
+        string.format("%s %s", prefix, diagnostic_msg),
         virtual_text_highlight_map[last.severity]
       }
     )
