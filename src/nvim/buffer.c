@@ -4482,22 +4482,15 @@ int build_stl_str_hl(
     int num_separators = 0;
     for (int i = 0; i < itemcnt; i++) {
       if (stl_items[i].type == Separate) {
+        // Create an array of the start location for each
+        // separator mark.
+        stl_separator_locations[num_separators] = i;
         num_separators++;
       }
     }
 
     // If we have separated groups, then we deal with it now
     if (num_separators) {
-      // Create an array of the start location for each
-      // separator mark.
-      int index = 0;
-      for (int i = 0; i < itemcnt; i++) {
-        if (stl_items[i].type == Separate) {
-          stl_separator_locations[index] = i;
-          index++;
-        }
-      }
-
       int standard_spaces = (maxwidth - width) / num_separators;
       int final_spaces = (maxwidth - width) -
         standard_spaces * (num_separators - 1);
