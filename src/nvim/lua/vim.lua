@@ -277,9 +277,6 @@ local function __index(t, key)
   elseif key == 'F' then
     t.F = require('vim.F')
     return t.F
-  elseif key == 'keymap' then
-    t.keymap = require('vim.keymap')
-    return t.keymap
   end
 end
 
