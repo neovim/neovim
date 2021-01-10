@@ -1,7 +1,7 @@
 return setmetatable({}, {
     __index = function(t, key)
       local mode = string.sub(key, 1, 1)
-      local noremap = string.find(key, 'noremap')
+      local noremap = string.sub(key, 2, 8) == 'noremap'
       t[key] = function(lhs, rhs, args)
         local opts = {noremap=noremap}
         if args then
