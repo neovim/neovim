@@ -290,6 +290,62 @@ setmetatable(vim, {
 -- An easier alias for commands.
 vim.cmd = vim.api.nvim_command
 
+-- These are the keymap functions for:
+-- vim.map|nmap|tmap|TODO
+do
+  local function make_map_function(mode, noremap)
+    vim.validate {
+      mode = {mode, 's', false},
+      noremap = {noremap, 'b', false},
+    }
+    return function(lhs, rhs, args)
+      vim.validate {
+        lhs = {lhs, 's', false},
+        rhs = {rhs, 's', false},
+        args = {args, 't', true},
+      }
+      local opts = {noremap=noremap}
+      local buffer = false
+      if args then
+        for _, arg in pairs(args) do
+          if arg == 'buffer' then
+            buffer = true
+          else
+            opts[arg] = true
+          end
+        end
+      end
+      if buffer then
+        vim.api.nvim_buf_set_keymap(0, mode, lhs, rhs, opts)
+      else
+        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
+      end
+    end
+  end
+  vim.map = make_map_function('', false)
+  vim.nmap = make_map_function('n', false)
+  vim.vmap = make_map_function('v', false)
+  vim.xmap = make_map_function('x', false)
+  vim.smap = make_map_function('s', false)
+  vim.omap = make_map_function('o', false)
+  vim.MAP = make_map_function('!', false)
+  vim.imap = make_map_function('i', false)
+  vim.lmap = make_map_function('l', false)
+  vim.cmap = make_map_function('c', false)
+  vim.tmap = make_map_function('t', false)
+  vim.noremap = make_map_function('', true)
+  vim.nnoremap = make_map_function('n', true)
+  vim.vnoremap = make_map_function('v', true)
+  vim.xnoremap = make_map_function('x', true)
+  vim.snoremap = make_map_function('s', true)
+  vim.onoremap = make_map_function('o', true)
+  vim.NOREMAP = make_map_function('!', true)
+  vim.inoremap = make_map_function('i', true)
+  vim.lnoremap = make_map_function('l', true)
+  vim.cnoremap = make_map_function('c', true)
+  vim.tnoremap = make_map_function('t', true)
+end
+
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   local a = vim.api
