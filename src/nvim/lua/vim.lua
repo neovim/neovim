@@ -291,7 +291,9 @@ setmetatable(vim, {
 vim.cmd = vim.api.nvim_command
 
 -- These are the keymap functions for:
--- vim.map|nmap|tmap|TODO
+-- vim.map|nmap|vmap|xmap|smap|omap|MAP|imap|lmap|cmap|tmap
+--   |noremap|nnoremap|vnoremap|xnoremap|snoremap|onoremap
+--   |NOREMAP|inoremap|lnoremap|cnoremap|tnoremap|
 do
   local function make_map_function(mode, noremap)
     vim.validate {

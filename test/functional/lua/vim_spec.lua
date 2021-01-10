@@ -1452,6 +1452,246 @@ describe('lua stdlib', function()
       eq(buf2, val)
     end)
   end)
+
+  it('vim.map', function()
+    exec_lua [[vim.map('lhs', 'rhs')]]
+    local nmaps = meths.get_keymap('n')
+    local vmaps = meths.get_keymap('v')
+    local omaps = meths.get_keymap('o')
+    eq(1, #nmaps)
+    eq('lhs', nmaps[1].lhs)
+    eq('rhs', nmaps[1].rhs)
+    eq(1, #vmaps)
+    eq('lhs', vmaps[1].lhs)
+    eq('rhs', vmaps[1].rhs)
+    eq(1, #omaps)
+    eq('lhs', omaps[1].lhs)
+    eq('rhs', omaps[1].rhs)
+  end)
+
+  it('vim.nmap', function()
+    exec_lua [[vim.nmap('lhs', 'rhs')]]
+    local nmaps = meths.get_keymap('n')
+    eq(1, #nmaps)
+    eq('lhs', nmaps[1].lhs)
+    eq('rhs', nmaps[1].rhs)
+  end)
+
+  it('vim.vmap', function()
+    exec_lua [[vim.vmap('lhs', 'rhs')]]
+    local vmaps = meths.get_keymap('v')
+    eq(1, #vmaps)
+    eq('lhs', vmaps[1].lhs)
+    eq('rhs', vmaps[1].rhs)
+  end)
+
+  it('vim.xmap', function()
+    exec_lua [[vim.xmap('lhs', 'rhs')]]
+    local xmaps = meths.get_keymap('x')
+    eq(1, #xmaps)
+    eq('lhs', xmaps[1].lhs)
+    eq('rhs', xmaps[1].rhs)
+  end)
+
+  it('vim.smap', function()
+    exec_lua [[vim.smap('lhs', 'rhs')]]
+    local smaps = meths.get_keymap('s')
+    eq(1, #smaps)
+    eq('lhs', smaps[1].lhs)
+    eq('rhs', smaps[1].rhs)
+  end)
+
+  it('vim.omap', function()
+    exec_lua [[vim.omap('lhs', 'rhs')]]
+    local omaps = meths.get_keymap('o')
+    eq(1, #omaps)
+    eq('lhs', omaps[1].lhs)
+    eq('rhs', omaps[1].rhs)
+  end)
+
+  it('vim.MAP', function()
+    exec_lua [[vim.MAP('lhs', 'rhs')]]
+    local imaps = meths.get_keymap('i')
+    local cmaps = meths.get_keymap('c')
+    eq(1, #imaps)
+    eq('lhs', imaps[1].lhs)
+    eq('rhs', imaps[1].rhs)
+    eq(1, #cmaps)
+    eq('lhs', cmaps[1].lhs)
+    eq('rhs', cmaps[1].rhs)
+  end)
+
+  it('vim.imap', function()
+    exec_lua [[vim.imap('lhs', 'rhs')]]
+    local imaps = meths.get_keymap('i')
+    eq(1, #imaps)
+    eq('lhs', imaps[1].lhs)
+    eq('rhs', imaps[1].rhs)
+  end)
+
+  it('vim.lmap', function()
+    exec_lua [[vim.lmap('lhs', 'rhs')]]
+    local lmaps = meths.get_keymap('l')
+    eq(1, #lmaps)
+    eq('lhs', lmaps[1].lhs)
+    eq('rhs', lmaps[1].rhs)
+  end)
+
+  it('vim.cmap', function()
+    exec_lua [[vim.cmap('lhs', 'rhs')]]
+    local cmaps = meths.get_keymap('c')
+    eq(1, #cmaps)
+    eq('lhs', cmaps[1].lhs)
+    eq('rhs', cmaps[1].rhs)
+  end)
+
+  it('vim.tmap', function()
+    exec_lua [[vim.tmap('lhs', 'rhs')]]
+    local tmaps = meths.get_keymap('t')
+    eq(1, #tmaps)
+    eq('lhs', tmaps[1].lhs)
+    eq('rhs', tmaps[1].rhs)
+  end)
+
+  it('vim.noremap', function()
+    exec_lua [[vim.noremap('lhs', 'rhs')]]
+    local nmaps = meths.get_keymap('n')
+    local vmaps = meths.get_keymap('v')
+    local omaps = meths.get_keymap('o')
+    eq(1, #nmaps)
+    eq('lhs', nmaps[1].lhs)
+    eq('rhs', nmaps[1].rhs)
+    eq(1, nmaps[1].noremap)
+    eq(1, #vmaps)
+    eq('lhs', vmaps[1].lhs)
+    eq('rhs', vmaps[1].rhs)
+    eq(1, vmaps[1].noremap)
+    eq(1, #omaps)
+    eq('lhs', omaps[1].lhs)
+    eq('rhs', omaps[1].rhs)
+    eq(1, omaps[1].noremap)
+  end)
+
+  it('vim.nnoremap', function()
+    exec_lua [[vim.nnoremap('lhs', 'rhs')]]
+    local nmaps = meths.get_keymap('n')
+    eq(1, #nmaps)
+    eq('lhs', nmaps[1].lhs)
+    eq('rhs', nmaps[1].rhs)
+    eq(1, nmaps[1].noremap)
+  end)
+
+  it('vim.vnoremap', function()
+    exec_lua [[vim.vnoremap('lhs', 'rhs')]]
+    local vmaps = meths.get_keymap('v')
+    eq(1, #vmaps)
+    eq('lhs', vmaps[1].lhs)
+    eq('rhs', vmaps[1].rhs)
+    eq(1, vmaps[1].noremap)
+  end)
+
+  it('vim.xnoremap', function()
+    exec_lua [[vim.xnoremap('lhs', 'rhs')]]
+    local xmaps = meths.get_keymap('x')
+    eq(1, #xmaps)
+    eq('lhs', xmaps[1].lhs)
+    eq('rhs', xmaps[1].rhs)
+    eq(1, xmaps[1].noremap)
+  end)
+
+  it('vim.snoremap', function()
+    exec_lua [[vim.snoremap('lhs', 'rhs')]]
+    local smaps = meths.get_keymap('s')
+    eq(1, #smaps)
+    eq('lhs', smaps[1].lhs)
+    eq('rhs', smaps[1].rhs)
+    eq(1, smaps[1].noremap)
+  end)
+
+  it('vim.onoremap', function()
+    exec_lua [[vim.onoremap('lhs', 'rhs')]]
+    local omaps = meths.get_keymap('o')
+    eq(1, #omaps)
+    eq('lhs', omaps[1].lhs)
+    eq('rhs', omaps[1].rhs)
+    eq(1, omaps[1].noremap)
+  end)
+
+  it('vim.NOREMAP', function()
+    exec_lua [[vim.NOREMAP('lhs', 'rhs')]]
+    local imaps = meths.get_keymap('i')
+    local cmaps = meths.get_keymap('c')
+    eq(1, #imaps)
+    eq('lhs', imaps[1].lhs)
+    eq('rhs', imaps[1].rhs)
+    eq(1, imaps[1].noremap)
+    eq(1, #cmaps)
+    eq('lhs', cmaps[1].lhs)
+    eq('rhs', cmaps[1].rhs)
+    eq(1, cmaps[1].noremap)
+  end)
+
+  it('vim.inoremap', function()
+    exec_lua [[vim.inoremap('lhs', 'rhs')]]
+    local imaps = meths.get_keymap('i')
+    eq(1, #imaps)
+    eq('lhs', imaps[1].lhs)
+    eq('rhs', imaps[1].rhs)
+    eq(1, imaps[1].noremap)
+  end)
+
+  it('vim.lnoremap', function()
+    exec_lua [[vim.lnoremap('lhs', 'rhs')]]
+    local lmaps = meths.get_keymap('l')
+    eq(1, #lmaps)
+    eq('lhs', lmaps[1].lhs)
+    eq('rhs', lmaps[1].rhs)
+    eq(1, lmaps[1].noremap)
+  end)
+
+  it('vim.cnoremap', function()
+    exec_lua [[vim.cnoremap('lhs', 'rhs')]]
+    local cmaps = meths.get_keymap('c')
+    eq(1, #cmaps)
+    eq('lhs', cmaps[1].lhs)
+    eq('rhs', cmaps[1].rhs)
+    eq(1, cmaps[1].noremap)
+  end)
+
+  it('vim.tnoremap', function()
+    exec_lua [[vim.tnoremap('lhs', 'rhs')]]
+    local tmaps = meths.get_keymap('t')
+    eq(1, #tmaps)
+    eq('lhs', tmaps[1].lhs)
+    eq('rhs', tmaps[1].rhs)
+    eq(1, tmaps[1].noremap)
+  end)
+
+  it('vim.map and friends handles :map-arguments', function()
+    exec_lua [[vim.map('lhs', 'rhs', {'nowait', 'silent', 'script', 'expr'})]]
+    local maps = meths.get_keymap('n')
+    eq(1, maps[1].nowait)
+    eq(1, maps[1].silent)
+    eq(1, maps[1].script)
+    eq(1, maps[1].expr)
+
+    exec_lua [[vim.map('lhs', 'rhs', {})]]
+    maps = meths.get_keymap('n')
+    eq(0, maps[1].nowait)
+    eq(0, maps[1].silent)
+    eq(0, maps[1].script)
+    eq(0, maps[1].expr)
+  end)
+
+  it('vim.map and friends can map to current buffer', function()
+    exec_lua [[vim.map('lhs', 'rhs', {'buffer'})]]
+    local maps = meths.get_keymap('n')
+    eq(0, #maps)
+    local bufmaps = meths.buf_get_keymap(0, 'n')
+    eq(1, #bufmaps)
+    eq('lhs', bufmaps[1].lhs)
+    eq('rhs', bufmaps[1].rhs)
+  end)
 end)
 
 describe('lua: require("mod") from packages', function()
