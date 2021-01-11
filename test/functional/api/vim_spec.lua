@@ -2002,4 +2002,63 @@ describe('API', function()
       }, meths.get_option_info'showcmd')
     end)
   end)
+
+  describe('nvim_echo', function()
+    local screen
+
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, reverse = true},
+        [3] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
+        [4] = {foreground = Screen.colors.SlateBlue}, -- Special
+      })
+      command('highlight Statement gui=bold guifg=Brown')
+      command('highlight Special guifg=SlateBlue')
+    end)
+
+    it('can show highlighted line', function()
+      nvim_async("echo", {{"msg_a"}, {"msg_b", "Statement"}, {"msg_c", "Special"}}, true, {})
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        msg_a{3:msg_b}{4:msg_c}                         |
+      ]]}
+    end)
+
+    it('can show highlighted multiline', function()
+      nvim_async("echo", {{"msg_a\nmsg_a", "Statement"}, {"msg_b", "Special"}}, true, {})
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        {3:msg_a}                                   |
+        {3:msg_a}{4:msg_b}                              |
+        {1:Press ENTER or type command to continue}^ |
+      ]]}
+    end)
+
+    it('can save message history', function()
+      nvim('command', 'set cmdheight=2') -- suppress Press ENTER
+      nvim("echo", {{"msg\nmsg"}, {"msg"}}, true, {})
+      eq("msg\nmsgmsg", meths.exec('messages', true))
+    end)
+
+    it('can disable saving message history', function()
+      nvim('command', 'set cmdheight=2') -- suppress Press ENTER
+      nvim_async("echo", {{"msg\nmsg"}, {"msg"}}, false, {})
+      eq("", meths.exec("messages", true))
+    end)
+  end)
 end)

@@ -890,6 +890,40 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
+void clear_hl_msg(HlMessage *hl_msg)
+{
+  for (size_t i = 0; i < kv_size(*hl_msg); i++) {
+    xfree(kv_A(*hl_msg, i).text.data);
+  }
+  kv_destroy(*hl_msg);
+  *hl_msg = (HlMessage)KV_INITIAL_VALUE;
+}
+
+#define LINE_BUFFER_SIZE 4096
+
+void add_hl_msg_hist(HlMessage hl_msg)
+{
+  // TODO(notomo): support multi highlighted message history
+  size_t pos = 0;
+  char buf[LINE_BUFFER_SIZE];
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    for (uint32_t j = 0; j < chunk.text.size; j++) {
+      if (pos == LINE_BUFFER_SIZE - 1) {
+        buf[pos] = NUL;
+        add_msg_hist((const char *)buf, -1, MSG_HIST, true);
+        pos = 0;
+        continue;
+      }
+      buf[pos++] = chunk.text.data[j];
+    }
+  }
+  if (pos != 0) {
+    buf[pos] = NUL;
+    add_msg_hist((const char *)buf, -1, MSG_HIST, true);
+  }
+}
+
 /// @param[in]  len  Length of s or -1.
 static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 {
