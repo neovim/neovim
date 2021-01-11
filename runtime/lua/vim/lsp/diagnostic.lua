@@ -542,7 +542,7 @@ function M.goto_prev(opts)
   )
 end
 
---- Get the previous diagnostic closest to the cursor_position
+--- Get the next diagnostic closest to the cursor_position
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Next diagnostic
 function M.get_next(opts)
@@ -703,6 +703,8 @@ end
 ---@param opts table Options on how to display virtual text. Keys:
 ---             - prefix (string): Prefix to display before virtual text on line
 ---             - spacing (number): Number of spaces to insert before virtual text
+---             - severity_limit (DiagnosticSeverity): 
+---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
 function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   opts = opts or {}
 

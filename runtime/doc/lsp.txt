@@ -1370,6 +1370,10 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                        before virtual text on line
                                      • spacing (number): Number of spaces to
                                        insert before virtual text
+                                     • severity_limit (DiagnosticSeverity):
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
 
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})

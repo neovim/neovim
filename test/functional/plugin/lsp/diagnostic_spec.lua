@@ -640,6 +640,36 @@ describe('vim.lsp.diagnostic', function()
 
       eq(expected_spacing, #spacing)
     end)
+
+    it('allows filtering via severity limit', function()
+      local get_extmark_count_with_severity = function(severity_limit)
+        return exec_lua([[
+          PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+            underline = false,
+            virtual_text = {
+              severity_limit = ...
+            },
+          })
+
+          PublishDiagnostics(nil, nil, {
+              uri = fake_uri,
+              diagnostics = {
+                make_warning('Delayed Diagnostic', 4, 4, 4, 4),
+              }
+            }, 1
+          )
+
+          return count_of_extmarks_for_client(diagnostic_bufnr, 1)
+        ]], severity_limit)
+      end
+
+      -- No messages with Error or higher
+      eq(0, get_extmark_count_with_severity("Error"))
+
+      -- But now we don't filter it
+      eq(1, get_extmark_count_with_severity("Warning"))
+      eq(1, get_extmark_count_with_severity("Hint"))
+    end)
   end)
 
   describe('lsp.util.show_line_diagnostics', function()
