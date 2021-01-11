@@ -77,6 +77,7 @@ jobs:
         run: |
           rm -f /usr/local/bin/2to3
           brew update >/dev/null
+          brew upgrade
           brew install automake ninja
       - name: Build release
         run: |
