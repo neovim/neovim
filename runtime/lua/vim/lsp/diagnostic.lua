@@ -730,8 +730,6 @@ end
 function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   opts = opts or {}
 
-  local severity_limit = opts.severity_limit
-
   client_id = get_client_id(client_id)
   diagnostic_ns = diagnostic_ns or M._get_diagnostic_namespace(client_id)
 
