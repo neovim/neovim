@@ -1045,7 +1045,7 @@ describe('LSP', function()
       return {
         edits = {
           make_edit(0, 0, 0, 3, "First ↥ 🤦 🦄")
-      },
+        },
         textDocument = {
           uri = "file://fake/uri";
           version = editVersion
@@ -1086,7 +1086,7 @@ describe('LSP', function()
           local args = {...}
           local versionedBuf = args[2]
           vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
-          vim.lsp.util.apply_text_document_edit(...)
+          vim.lsp.util.apply_text_document_edit(args[1])
         ]], edit, versionedBuf)
       end
 
@@ -1109,6 +1109,7 @@ describe('LSP', function()
       }, buf_lines(target_bufnr))
     end)
   end)
+
   describe('workspace_apply_edit', function()
     it('workspace/applyEdit returns ApplyWorkspaceEditResponse', function()
       local expected = {
@@ -1124,6 +1125,106 @@ describe('LSP', function()
       ]])
     end)
   end)
+
+  describe('apply_workspace_edit', function()
+    local replace_line_edit = function(row, new_line, editVersion)
+      return {
+        edits = {
+          -- NOTE: This is a hack if you have a line longer than 1000 it won't replace it
+          make_edit(row, 0, row, 1000, new_line)
+        },
+        textDocument = {
+          uri = "file://fake/uri";
+          version = editVersion
+        }
+      }
+    end
+
+    -- Some servers send all the edits separately, but with the same version.
+    -- We should not stop applying the edits
+    local make_workspace_edit = function(changes)
+      return {
+        documentChanges = changes
+      }
+    end
+
+    local target_bufnr, changedtick = nil, nil
+
+    before_each(function()
+      local ret = exec_lua [[
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {
+          "Original Line #1",
+          "Original Line #2"
+        }
+
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+        local update_changed_tick = function()
+          vim.lsp.util.buf_versions[bufnr] = vim.api.nvim_buf_get_var(bufnr, 'changedtick')
+        end
+
+        update_changed_tick()
+        vim.api.nvim_buf_attach(bufnr, false, {
+          on_changedtick = function()
+            update_changed_tick()
+          end
+        })
+
+        return {bufnr, vim.api.nvim_buf_get_var(bufnr, 'changedtick')}
+      ]]
+
+      target_bufnr = ret[1]
+      changedtick = ret[2]
+    end)
+
+    it('apply_workspace_edit applies a single edit', function()
+      local new_lines = {
+        "First Line",
+      }
+
+      local edits = {}
+      for row, line in ipairs(new_lines) do
+        table.insert(edits, replace_line_edit(row - 1, line, changedtick))
+      end
+
+      eq({
+        "First Line",
+        "Original Line #2",
+      }, exec_lua([[
+        local args = {...}
+        local workspace_edits = args[1]
+        local target_bufnr = args[2]
+
+        vim.lsp.util.apply_workspace_edit(workspace_edits)
+
+        return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
+      ]], make_workspace_edit(edits), target_bufnr))
+    end)
+
+    it('apply_workspace_edit applies multiple edits', function()
+      local new_lines = {
+        "First Line",
+        "Second Line",
+      }
+
+      local edits = {}
+      for row, line in ipairs(new_lines) do
+        table.insert(edits, replace_line_edit(row - 1, line, changedtick))
+      end
+
+      eq(new_lines, exec_lua([[
+        local args = {...}
+        local workspace_edits = args[1]
+        local target_bufnr = args[2]
+
+        vim.lsp.util.apply_workspace_edit(workspace_edits)
+
+        return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
+      ]], make_workspace_edit(edits), target_bufnr))
+    end)
+  end)
+
   describe('completion_list_to_complete_items', function()
     -- Completion option precedence:
     -- textEdit.newText > insertText > label
