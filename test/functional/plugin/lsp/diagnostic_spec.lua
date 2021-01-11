@@ -12,41 +12,41 @@ describe('vim.lsp.diagnostic', function()
     clear()
 
     exec_lua [[
-    require('vim.lsp')
+      require('vim.lsp')
 
-    make_range = function(x1, y1, x2, y2)
-      return { start = { line = x1, character = y1 }, ['end'] = { line = x2, character = y2 } }
-    end
+      make_range = function(x1, y1, x2, y2)
+        return { start = { line = x1, character = y1 }, ['end'] = { line = x2, character = y2 } }
+      end
 
-    make_error = function(msg, x1, y1, x2, y2)
-      return {
-        range = make_range(x1, y1, x2, y2),
-        message = msg,
-        severity = 1,
-      }
-    end
+      make_error = function(msg, x1, y1, x2, y2)
+        return {
+          range = make_range(x1, y1, x2, y2),
+          message = msg,
+          severity = 1,
+        }
+      end
 
-    make_warning = function(msg, x1, y1, x2, y2)
-      return {
-        range = make_range(x1, y1, x2, y2),
-        message = msg,
-        severity = 2,
-      }
-    end
+      make_warning = function(msg, x1, y1, x2, y2)
+        return {
+          range = make_range(x1, y1, x2, y2),
+          message = msg,
+          severity = 2,
+        }
+      end
 
-    make_information = function(msg, x1, y1, x2, y2)
-      return {
-        range = make_range(x1, y1, x2, y2),
-        message = msg,
-        severity = 3,
-      }
-    end
+      make_information = function(msg, x1, y1, x2, y2)
+        return {
+          range = make_range(x1, y1, x2, y2),
+          message = msg,
+          severity = 3,
+        }
+      end
 
-    count_of_extmarks_for_client = function(bufnr, client_id)
-      return #vim.api.nvim_buf_get_extmarks(
-        bufnr, vim.lsp.diagnostic._get_diagnostic_namespace(client_id), 0, -1, {}
-      )
-    end
+      count_of_extmarks_for_client = function(bufnr, client_id)
+        return #vim.api.nvim_buf_get_extmarks(
+          bufnr, vim.lsp.diagnostic._get_diagnostic_namespace(client_id), 0, -1, {}
+        )
+      end
     ]]
 
     fake_uri = "file://fake/uri"
