@@ -920,7 +920,47 @@ vim.wo                                                  *vim.wo*
         Example: >
             vim.wo.cursorcolumn = true
             print(vim.wo.foldmarker)
+<
 
+                                                        *lua-vim-mapping*
+
+From Lua you can create key mappings to change the meaning of typed keys.
+
+vim.map({lhs}, {rhs}, {args})          |:map|           *vim.map*
+vim.nmap({lhs}, {rhs}, {args})         |:nmap|          *vim.nmap*
+vim.vmap({lhs}, {rhs}, {args})         |:vmap|          *vim.vmap*
+vim.xmap({lhs}, {rhs}, {args})         |:xmap|          *vim.xmap*
+vim.smap({lhs}, {rhs}, {args})         |:smap|          *vim.smap*
+vim.omap({lhs}, {rhs}, {args})         |:omap|          *vim.omap*
+vim.MAP({lhs}, {rhs}, {args})          |:map!|          *vim.MAP*
+vim.imap({lhs}, {rhs}, {args})         |:imap|          *vim.imap*
+vim.lmap({lhs}, {rhs}, {args})         |:lmap|          *vim.lmap*
+vim.cmap({lhs}, {rhs}, {args})         |:cmap|          *vim.cmap*
+vim.tmap({lhs}, {rhs}, {args})         |:tmap|          *vim.tmap*
+vim.noremap({lhs}, {rhs}, {args})      |:noremap|       *vim.noremap*
+vim.nnoremap({lhs}, {rhs}, {args})     |:nnoremap|      *vim.nnoremap*
+vim.vnoremap({lhs}, {rhs}, {args})     |:vnoremap|      *vim.vnoremap*
+vim.xnoremap({lhs}, {rhs}, {args})     |:xnoremap|      *vim.xnoremap*
+vim.snoremap({lhs}, {rhs}, {args})     |:snoremap|      *vim.snoremap*
+vim.onoremap({lhs}, {rhs}, {args})     |:onoremap|      *vim.onoremap*
+vim.NOREMAP({lhs}, {rhs}, {args})      |:noremap!|      *vim.NOREMAP*
+vim.inoremap({lhs}, {rhs}, {args})     |:inoremap|      *vim.inoremap*
+vim.lnoremap({lhs}, {rhs}, {args})     |:lnoremap|      *vim.lnoremap*
+vim.cnoremap({lhs}, {rhs}, {args})     |:cnoremap|      *vim.cnoremap*
+vim.tnoremap({lhs}, {rhs}, {args})     |:tnoremap|      *vim.tnoremap*
+
+        Parameters:~
+                {lhs} (string) See |{lhs}|.
+                {rhs} (string) See |{rhs}|.
+                {args} (table) Optional Lua array of string that
+                       correspond to |:map-arguments|. For example,
+                       `{'nowait', 'silent', 'script', 'expr', 'unique', 'buffer'}`
+
+        Example:~
+>
+                vim.nnoremap('x', '<cmd>echo "Hello, World!"<cr>')
+                vim.cnoremap('%%', 'expand("%:h")', {'expr'})
+<
 
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
