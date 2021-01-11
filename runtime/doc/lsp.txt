@@ -1400,9 +1400,15 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
 Lua module: vim.lsp.util                                            *lsp-util*
 
                                      *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit})
+apply_text_document_edit({text_document_edit}, {index})
+                Applies a `TextDocumentEdit` , which is a list of changes to a
+                single document.
+
                 Parameters: ~
-                    {text_document_edit}  (table) a `TextDocumentEdit` object
+                    {text_document_edit}  table: a `TextDocumentEdit` object
+                    {index}               number: Optional index of the edit,
+                                          if from a list of edits (or nil, if
+                                          not from a list)
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
