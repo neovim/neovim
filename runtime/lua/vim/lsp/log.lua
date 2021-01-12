@@ -28,7 +28,7 @@ do
   local function path_join(...)
     return table.concat(vim.tbl_flatten{...}, path_sep)
   end
-  local logfilename = path_join(vim.fn.stdpath('data'), 'lsp.log')
+  local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
 
   --- Returns the log filename.
   --@returns (string) log filename
@@ -36,7 +36,7 @@ do
     return logfilename
   end
 
-  vim.fn.mkdir(vim.fn.stdpath('data'), "p")
+  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.

@@ -1342,7 +1342,7 @@ LOG FILE					*$NVIM_LOG_FILE*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE
-Usually the file is ~/.local/share/nvim/log unless that path is inaccessible
+Usually the file is ~/.cache/nvim/log unless that path is inaccessible
 or if $NVIM_LOG_FILE was set before |startup|.
 
 

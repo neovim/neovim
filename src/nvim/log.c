@@ -51,7 +51,7 @@ static bool log_try_create(char *fname)
 
 /// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
 ///
-/// Tries $NVIM_LOG_FILE, or falls back to $XDG_DATA_HOME/nvim/log. Path to log
+/// Tries $NVIM_LOG_FILE, or falls back to $XDG_CACHE_HOME/nvim/log. Path to log
 /// file is cached, so only the first call has effect, unless first call was not
 /// successful. Failed initialization indicates either a bug in expand_env()
 /// or both $NVIM_LOG_FILE and $HOME environment variables are undefined.
@@ -70,7 +70,7 @@ static bool log_path_init(void)
       || os_isdir((char_u *)log_file_path)
       || !log_try_create(log_file_path)) {
     // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.
-    char *defaultpath = stdpaths_user_data_subpath("log", 0, true);
+    char *defaultpath = stdpaths_user_cache_subpath("log");
     size_t len = xstrlcpy(log_file_path, defaultpath, size);
     xfree(defaultpath);
     // Fall back to .nvimlog
