@@ -1001,14 +1001,18 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
     signs = true,
     underline = true,
     virtual_text = true,
-    show_diagnostic_autocmds = { "InsertLeave", "CursorHoldI" },
+    show_diagnostic_autocmds = false,
   }, config)
 
   _bufs_waiting_to_update[bufnr][client_id] = config
 
-  local key = make_augroup_key(bufnr, client_id)
-  if not registered[key] then
-      M._schedule_display(bufnr, client_id, config)
+  if config.show_diagnostic_autocmds then
+    local key = make_augroup_key(bufnr, client_id)
+    if not registered[key] then
+        M._schedule_display(bufnr, client_id, config)
+    end
+  else
+    M.display(diagnostics, bufnr, client_id, config)
   end
 
 end
