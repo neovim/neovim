@@ -1340,10 +1340,14 @@ set_underline({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
 
                 Parameters: ~
                     {diagnostics}    Diagnostic []
-                    {bufnr}          number The buffer number
-                    {client_id}      number the client id
-                    {diagnostic_ns}  number|nil
-                    {opts}           table Currently unused.
+                    {bufnr}          number: The buffer number
+                    {client_id}      number: The client id
+                    {diagnostic_ns}  number|nil: The namespace
+                    {opts}           table: Configuration table:
+                                     • severity_limit (DiagnosticSeverity):
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
 
                                        *vim.lsp.diagnostic.set_virtual_text()*
 set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
@@ -1370,6 +1374,10 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                        before virtual text on line
                                      • spacing (number): Number of spaces to
                                        insert before virtual text
+                                     • severity_limit (DiagnosticSeverity):
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
 
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
