@@ -1883,7 +1883,7 @@ check_overwrite(
            && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
        || (buf->b_flags & BF_READERR))
       && !p_wa
-      && !bt_nofile(buf)
+      && (!bt_nofile(buf) || bt_terminal(buf)) // check if buffer is terminal
       && os_path_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
