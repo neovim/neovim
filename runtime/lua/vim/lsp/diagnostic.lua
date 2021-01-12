@@ -833,15 +833,16 @@ end
 --- Used to handle
 --@private
 function M._execute_scheduled_display(bufnr, client_id)
-  local args = _bufs_waiting_to_update[bufnr][client_id]
-  if not args then
+  local config = _bufs_waiting_to_update[bufnr][client_id]
+  if not config then
     return
   end
+
+  M.display(nil, bufnr, client_id, config)
 
   -- Clear the args so we don't display unnecessarily.
   _bufs_waiting_to_update[bufnr][client_id] = nil
 
-  M.display(nil, bufnr, client_id, args)
 end
 
 local registered = {}
@@ -850,23 +851,18 @@ local make_augroup_key = function(bufnr, client_id)
   return string.format("LspDiagnosticInsertLeave:%s:%s", bufnr, client_id)
 end
 
---- Table of autocmd events to fire the update for displaying new diagnostic information
-M.insert_leave_auto_cmds = { "InsertLeave", "CursorHoldI" }
-
---- Used to schedule diagnostic updates upon leaving insert mode.
+--- Used to schedule diagnostic update on user supplied autocmds
 ---
 --- For parameter description, see |M.display()|
-function M._schedule_display(bufnr, client_id, args)
-  _bufs_waiting_to_update[bufnr][client_id] = args
-
+function M._schedule_display(bufnr, client_id, config)
   local key = make_augroup_key(bufnr, client_id)
-  if not registered[key] then
+  if not registered[key] and ( #config.show_diagnostic_autocmds > 0 ) then
     vim.cmd(string.format("augroup %s", key))
     vim.cmd("  au!")
     vim.cmd(
       string.format(
         [[autocmd %s <buffer=%s> :lua vim.lsp.diagnostic._execute_scheduled_display(%s, %s)]],
-        table.concat(M.insert_leave_auto_cmds, ","),
+        table.concat(config.show_diagnostic_autocmds, ","),
         bufnr,
         bufnr,
         client_id
@@ -877,23 +873,6 @@ function M._schedule_display(bufnr, client_id, args)
     registered[key] = true
   end
 end
-
-
---- Used in tandem with
----
---- For parameter description, see |M.display()|
-function M._clear_scheduled_display(bufnr, client_id)
-  local key = make_augroup_key(bufnr, client_id)
-
-  if registered[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd("augroup END")
-
-    registered[key] = nil
-  end
-end
--- }}}
 
 -- Diagnostic Private Highlight Utilies {{{
 --- Get the severity highlight name
@@ -973,8 +952,9 @@ end
 ---     signs = function(bufnr, client_id)
 ---       return vim.bo[bufnr].show_signs == false
 ---     end,
----     -- Disable a feature
----     update_in_insert = false,
+---     -- Override on which autocommands diagnostics are displayed.
+---     -- Default: { "InsertLeave", "CursorHoldI" },
+---     show_diagnostic_autocmds = { "BufWritePost" },
 ---   }
 --- )
 --- </pre>
@@ -1017,53 +997,49 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
     return
   end
 
-  M.display(diagnostics, bufnr, client_id, config)
+  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
+    signs = true,
+    underline = true,
+    virtual_text = true,
+    show_diagnostic_autocmds = { "InsertLeave", "CursorHoldI" },
+  }, config)
+
+  _bufs_waiting_to_update[bufnr][client_id] = config
+
+  local key = make_augroup_key(bufnr, client_id)
+  if not registered[key] then
+      M._schedule_display(bufnr, client_id, config)
+  end
+
+end
+
+-- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
+--    It seems like we would probably want to do this more often as we expose more of them.
+--    It provides a very nice functional interface for people to override configuration.
+local resolve_optional_value = function(option, bufnr, client_id)
+  local enabled_val = {}
+
+  if not option then
+    return false
+  elseif option == true then
+    return enabled_val
+  elseif type(option) == 'function' then
+    local val = option(bufnr, client_id)
+    if val == true then
+      return enabled_val
+    else
+      return val
+    end
+  elseif type(option) == 'table' then
+    return option
+  else
+    error("Unexpected option type: " .. vim.inspect(option))
+  end
 end
 
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
-  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
-    signs = true,
-    underline = true,
-    virtual_text = true,
-    update_in_insert = false,
-  }, config)
-
-  -- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
-  --    It seems like we would probably want to do this more often as we expose more of them.
-  --    It provides a very nice functional interface for people to override configuration.
-  local resolve_optional_value = function(option)
-    local enabled_val = {}
-
-    if not option then
-      return false
-    elseif option == true then
-      return enabled_val
-    elseif type(option) == 'function' then
-      local val = option(bufnr, client_id)
-      if val == true then
-        return enabled_val
-      else
-        return val
-      end
-    elseif type(option) == 'table' then
-      return option
-    else
-      error("Unexpected option type: " .. vim.inspect(option))
-    end
-  end
-
-  if resolve_optional_value(config.update_in_insert) then
-    M._clear_scheduled_display(bufnr, client_id)
-  else
-    local mode = vim.api.nvim_get_mode()
-
-    if string.sub(mode.mode, 1, 1) == 'i' then
-      M._schedule_display(bufnr, client_id, config)
-      return
-    end
-  end
 
   M.clear(bufnr, client_id)
 
@@ -1075,17 +1051,17 @@ function M.display(diagnostics, bufnr, client_id, config)
     return
   end
 
-  local underline_opts = resolve_optional_value(config.underline)
+  local underline_opts = resolve_optional_value(config.underline, bufnr, client_id)
   if underline_opts then
     M.set_underline(diagnostics, bufnr, client_id, nil, underline_opts)
   end
 
-  local virtual_text_opts = resolve_optional_value(config.virtual_text)
+  local virtual_text_opts = resolve_optional_value(config.virtual_text, bufnr, client_id)
   if virtual_text_opts then
     M.set_virtual_text(diagnostics, bufnr, client_id, nil, virtual_text_opts)
   end
 
-  local signs_opts = resolve_optional_value(config.signs)
+  local signs_opts = resolve_optional_value(config.signs, bufnr, client_id)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end

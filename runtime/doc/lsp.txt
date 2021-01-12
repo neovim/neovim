@@ -1247,8 +1247,9 @@ on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
                      signs = function(bufnr, client_id)
                        return vim.bo[bufnr].show_signs == false
                      end,
-                     -- Disable a feature
-                     update_in_insert = false,
+                     -- Override on which autocommands diagnostics are displayed.
+                     -- Default: { "InsertLeave", "CursorHoldI" },
+                     show_diagnostic_autocmds = { "BufWritePost" },
                    }
                  )
 <
