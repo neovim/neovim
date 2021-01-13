@@ -131,15 +131,17 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
   msg_scroll_save = msg_scroll;
-  if (shortmess(SHM_OVERALL) && !exiting && p_verbose == 0)
-    msg_scroll = FALSE;
-  if (!msg_scroll)      /* wait a bit when overwriting an error msg */
-    check_for_delay(FALSE);
+  if (shortmess(SHM_OVERALL) && !exiting && p_verbose <= 1) {
+    msg_scroll = false;
+  }
+  if (!msg_scroll) {  // Wait a bit when overwriting an error msg.
+    check_for_delay(false);
+  }
   msg_start();
   msg_scroll = msg_scroll_save;
-  msg_scrolled_ign = TRUE;
-  /* may truncate the message to avoid a hit-return prompt */
-  msg_outtrans_attr(msg_may_trunc(FALSE, IObuff), attr);
+  msg_scrolled_ign = true;
+  // May truncate the message to avoid a hit-return prompt.
+  msg_outtrans_attr(msg_may_trunc(false, IObuff), attr);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = FALSE;
@@ -346,10 +348,11 @@ readfile(
     curbuf->b_op_start = pos;
   }
 
-  if ((shortmess(SHM_OVER) || curbuf->b_help) && p_verbose == 0)
-    msg_scroll = FALSE;         /* overwrite previous file message */
-  else
-    msg_scroll = TRUE;          /* don't overwrite previous file message */
+  if ((shortmess(SHM_OVER) || curbuf->b_help) && p_verbose <= 1) {
+    msg_scroll = false;         // Overwrite previous file message.
+  } else {
+    msg_scroll = true;          // Don't overwrite previous file message.
+  }
 
   // If the name is too long we might crash further on, quit here.
   if (fname != NULL && *fname != NUL) {

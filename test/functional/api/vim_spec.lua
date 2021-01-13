@@ -1285,7 +1285,13 @@ describe('API', function()
       stream = 'stdio',
       id = 1,
       mode = 'rpc',
-      client = {},
+      client = {
+        attributes = {},
+        methods = {},
+        name = 'testclient',
+        type = 'remote',
+        version = { major = 0 }
+      }
     }
     local stderr = {
       stream = 'stderr',

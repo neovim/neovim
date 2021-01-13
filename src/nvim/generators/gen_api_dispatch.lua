@@ -198,7 +198,7 @@ for i = 1, #functions do
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
     output:write('\n{')
     output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL')
-    output:write('\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "ch %" PRIu64 ": invoke '
+    output:write('\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, false, 0, true, "ch %" PRIu64 ": invoke '
                  ..fn.name..'", channel_id);')
     output:write('\n#endif')
     output:write('\n  Object ret = NIL;')

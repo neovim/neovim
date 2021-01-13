@@ -762,7 +762,8 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={{
-      content = {{"Error invoking 'test_method' on channel 1:\ncomplete\nerror\n\nmessage", 2}},
+      content = {{"Error invoking 'test_method' on channel 1 (testclient):"..
+                  "\ncomplete\nerror\n\nmessage", 2}},
       kind = "rpc_error"
     }}, request_cb=function (name)
       if name == "test_method" then
@@ -821,7 +822,7 @@ describe('ui/builtin messages', function()
 
     screen:expect{grid=[[
       {3:                                                            }|
-      {2:Error invoking 'test_method' on channel 1:}                  |
+      {2:Error invoking 'test_method' on channel 1 (testclient):}     |
       {2:complete}                                                    |
       {2:error}                                                       |
                                                                   |
