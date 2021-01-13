@@ -27,9 +27,9 @@ Follow these steps to get LSP features:
   1. Install the nvim-lspconfig plugin.  It provides common configuration for
      various servers so you can get started quickly.
      https://github.com/neovim/nvim-lspconfig
-  2. Install a language server.  Try ":LspInstall <tab>" or use your system
-     package manager to install the relevant language server:
+  2. Install a language server. A list of language servers can be found here:
      https://microsoft.github.io/language-server-protocol/implementors/servers/
+     See individual server documentation for installation instructions.
   3. Add `lua require('lspconfig').xx.setup{…}` to your init.vim, where "xx" is
      the name of the relevant config. See the nvim-lspconfig README for details.
      NOTE: Make sure to restart nvim after installing and configuring.
@@ -62,20 +62,39 @@ Example config (in init.vim): >
       vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
       -- For plugins with an `on_attach` callback, call them here. For example:
-      -- require('completion').on_attach(client)
+      -- require('completion').on_attach()
     end
 
     -- An example of configuring for `sumneko_lua`,
     --  a language server for Lua.
-    -- First, you must run `:LspInstall sumneko_lua` for this to work.
+
+    -- set the path to the sumneko installation
+    local system_name = "Linux" -- (Linux, macOS, or Windows)
+    local sumneko_root_path = '/path/to/lua-language-server'
+    local sumneko_binary = sumneko_root_path.."/bin/"..system_name.."/lua-language-server"
+
     require('lspconfig').sumneko_lua.setup({
+      cmd = {sumneko_binary, "-E", sumneko_root_path .. "/main.lua"};
       -- An example of settings for an LSP server.
       --    For more options, see nvim-lspconfig
       settings = {
         Lua = {
+          runtime = {
+            -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+            version = 'LuaJIT',
+            -- Setup your lua path
+            path = vim.split(package.path, ';'),
+          },
           diagnostics = {
-            enable = true,
-            globals = { "vim" },
+            -- Get the language server to recognize the `vim` global
+            globals = {'vim'},
+          },
+          workspace = {
+            -- Make the server aware of Neovim runtime files
+            library = {
+              [vim.fn.expand('$VIMRUNTIME/lua')] = true,
+              [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true,
+            },
           },
         }
       },
@@ -620,8 +639,8 @@ client()                                                      *vim.lsp.client*
                     automatically escalate and force shutdown.
                   • is_stopped() Checks whether a client is stopped. Returns:
                     true if the client is fully stopped.
-                  • on_attach(bufnr) Runs the on_attach function from the
-                    client's config if it was defined.
+                  • on_attach(client, bufnr) Runs the on_attach function from the
+                    client's config if it was defined. Useful for buffer-local setup.
 
                 • Members
                   • {id} (number): The id allocated to the client.
@@ -1340,10 +1359,14 @@ set_underline({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
 
                 Parameters: ~
                     {diagnostics}    Diagnostic []
-                    {bufnr}          number The buffer number
-                    {client_id}      number the client id
-                    {diagnostic_ns}  number|nil
-                    {opts}           table Currently unused.
+                    {bufnr}          number: The buffer number
+                    {client_id}      number: The client id
+                    {diagnostic_ns}  number|nil: The namespace
+                    {opts}           table: Configuration table:
+                                     • severity_limit (DiagnosticSeverity):
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
 
                                        *vim.lsp.diagnostic.set_virtual_text()*
 set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
@@ -1370,6 +1393,10 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                        before virtual text on line
                                      • spacing (number): Number of spaces to
                                        insert before virtual text
+                                     • severity_limit (DiagnosticSeverity):
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
 
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
@@ -1400,9 +1427,15 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
 Lua module: vim.lsp.util                                            *lsp-util*
 
                                      *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit})
+apply_text_document_edit({text_document_edit}, {index})
+                Applies a `TextDocumentEdit` , which is a list of changes to a
+                single document.
+
                 Parameters: ~
-                    {text_document_edit}  (table) a `TextDocumentEdit` object
+                    {text_document_edit}  table: a `TextDocumentEdit` object
+                    {index}               number: Optional index of the edit,
+                                          if from a list of edits (or nil, if
+                                          not from a list)
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
@@ -1683,7 +1716,7 @@ make_workspace_params({added}, {removed})
                 Create the workspace params
 
                 Parameters: ~
-                    {added}    
+                    {added}
                     {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
