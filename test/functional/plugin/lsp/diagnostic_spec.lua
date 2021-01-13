@@ -333,24 +333,31 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe('vim.lsp.diagnostic.get_virtual_text_chunks_for_line', function()
-    it('should correctly return the full message if no new lines are present', function()
+    it('should correctly return the full message with newlines as spaces if not truncated', function()
+      local virtual_texts = exec_lua [[
+      local diags = { make_error('Simple diagnostic message\nHere is line two', 2, 2, 2) }
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      ]]
+      eq('■ Simple diagnostic message Here is line two', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
+    end)
+    it('should correctly return the full message if no new lines are present and truncated set', function()
       local virtual_texts = exec_lua [[
       local diags = { make_error('Simple diagnostic message', 2, 2, 2) }
-      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags, {truncated = true})
       ]]
       eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
     end)
-    it('should correctly return truncated on new line', function()
+    it('should correctly return truncated on new line if truncated is set', function()
       local virtual_texts = exec_lua [[
       local diags = { make_error('Simple diagnostic message\nSecond line with more details', 2, 2, 2) }
-      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags, {truncated = true})
       ]]
       eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
     end)
-    it('should correctly return truncated on new line, even on windows!', function()
+    it('should correctly return truncated on newline if truncated is set, even on windows!', function()
       local virtual_texts = exec_lua [[
       local diags = { make_error('Simple diagnostic message\n\rSecond line with more details', 2, 2, 2) }
-      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags)
+      return vim.lsp.diagnostic.get_virtual_text_chunks_for_line(diagnostic_bufnr, 2, diags, {truncated = true})
       ]]
       eq('■ Simple diagnostic message', virtual_texts[2][1]) -- [2] to skip the '    ' and [1] target the msg of the chunk
     end)

@@ -1397,6 +1397,9 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                        • Limit severity of diagnostics found.
                                          E.g. "Warning" means { "Error",
                                          "Warning" } will be valid.
+                                     • truncated (boolean): Whether virtual
+                                       text should be truncated on newline.
+
 
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})

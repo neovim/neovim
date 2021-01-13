@@ -727,6 +727,7 @@ end
 ---             - spacing (number): Number of spaces to insert before virtual text
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+--              - truncated (boolean): Whether to truncate virtual text on newline.
 function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   opts = opts or {}
 
@@ -786,7 +787,11 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
     local newline_index, _ = string.find(stripped_msg, "\n")
     local diagnostic_msg
     if newline_index then
-      diagnostic_msg = string.sub(stripped_msg, 1, newline_index - 1)
+      if opts.truncated then
+        diagnostic_msg = string.sub(stripped_msg, 1, newline_index - 1)
+      else
+        diagnostic_msg = stripped_msg:gsub("\n", " ")
+      end
     else
       diagnostic_msg = stripped_msg
     end
