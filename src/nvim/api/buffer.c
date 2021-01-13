@@ -1449,6 +1449,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   VirtText virt_text = KV_INITIAL_VALUE;
   bool right_gravity = true;
   bool end_right_gravity = false;
+  bool end_gravity_set = false;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
@@ -1546,10 +1547,19 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         goto error;
       }
       end_right_gravity = v->data.boolean;
+      end_gravity_set = true;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
+  }
+
+  // Only error out if they try to set end_right_gravity without
+  // setting end_col or end_line
+  if (line2 == -1 && col2 == 0 && end_gravity_set) {
+    api_set_error(err, kErrorTypeValidation,
+                  "cannot set end_right_gravity "
+                  "without setting end_line or end_col");
   }
 
   if (col2 >= 0) {
@@ -1568,14 +1578,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
   } else if (line2 >= 0) {
     col2 = 0;
-  }
-
-  // Only error out if they try to set end_right_gravity to true without
-  // setting end_col or end_line
-  if (line2 == 0 && col2 == 0 && end_right_gravity) {
-    api_set_error(err, kErrorTypeValidation,
-                  "cannot set end_right_gravity to true "
-                  "without setting end_line and end_col");
   }
 
   // TODO(bfredl): synergize these two branches even more
