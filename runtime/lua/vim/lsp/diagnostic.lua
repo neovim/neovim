@@ -206,8 +206,6 @@ local diagnostic_cache = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
 
-local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
-
 --- Store Diagnostic[] by line
 ---
 ---@param diagnostics Diagnostic[]
@@ -826,74 +824,6 @@ function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
   api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
 end
 -- }}}
--- Diagnostic Insert Leave Handler {{{
-
---- Callback scheduled for after leaving insert mode
----
---- Used to handle
---@private
-function M._execute_scheduled_display(bufnr, client_id)
-  local args = _bufs_waiting_to_update[bufnr][client_id]
-  if not args then
-    return
-  end
-
-  -- Clear the args so we don't display unnecessarily.
-  _bufs_waiting_to_update[bufnr][client_id] = nil
-
-  M.display(nil, bufnr, client_id, args)
-end
-
-local registered = {}
-
-local make_augroup_key = function(bufnr, client_id)
-  return string.format("LspDiagnosticInsertLeave:%s:%s", bufnr, client_id)
-end
-
---- Table of autocmd events to fire the update for displaying new diagnostic information
-M.insert_leave_auto_cmds = { "InsertLeave", "CursorHoldI" }
-
---- Used to schedule diagnostic updates upon leaving insert mode.
----
---- For parameter description, see |M.display()|
-function M._schedule_display(bufnr, client_id, args)
-  _bufs_waiting_to_update[bufnr][client_id] = args
-
-  local key = make_augroup_key(bufnr, client_id)
-  if not registered[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd(
-      string.format(
-        [[autocmd %s <buffer=%s> :lua vim.lsp.diagnostic._execute_scheduled_display(%s, %s)]],
-        table.concat(M.insert_leave_auto_cmds, ","),
-        bufnr,
-        bufnr,
-        client_id
-      )
-    )
-    vim.cmd("augroup END")
-
-    registered[key] = true
-  end
-end
-
-
---- Used in tandem with
----
---- For parameter description, see |M.display()|
-function M._clear_scheduled_display(bufnr, client_id)
-  local key = make_augroup_key(bufnr, client_id)
-
-  if registered[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd("augroup END")
-
-    registered[key] = nil
-  end
-end
--- }}}
 
 -- Diagnostic Private Highlight Utilies {{{
 --- Get the severity highlight name
@@ -1017,54 +947,42 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
     return
   end
 
-  M.display(diagnostics, bufnr, client_id, config)
+  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
+    signs = true,
+    underline = true,
+    virtual_text = true,
+    display_diagnostics = true,
+  }, config)
+
+  if config.display_diagnostics then
+    M.display(diagnostics, bufnr, client_id, config)
+  end
+end
+
+local resolve_optional_value = function(option, bufnr, client_id)
+  local enabled_val = {}
+
+  if not option then
+    return false
+  elseif option == true then
+    return enabled_val
+  elseif type(option) == 'function' then
+    local val = option(bufnr, client_id)
+    if val == true then
+      return enabled_val
+    else
+      return val
+    end
+  elseif type(option) == 'table' then
+    return option
+  else
+    error("Unexpected option type: " .. vim.inspect(option))
+  end
 end
 
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
-  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
-    signs = true,
-    underline = true,
-    virtual_text = true,
-    update_in_insert = false,
-  }, config)
-
-  -- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
-  --    It seems like we would probably want to do this more often as we expose more of them.
-  --    It provides a very nice functional interface for people to override configuration.
-  local resolve_optional_value = function(option)
-    local enabled_val = {}
-
-    if not option then
-      return false
-    elseif option == true then
-      return enabled_val
-    elseif type(option) == 'function' then
-      local val = option(bufnr, client_id)
-      if val == true then
-        return enabled_val
-      else
-        return val
-      end
-    elseif type(option) == 'table' then
-      return option
-    else
-      error("Unexpected option type: " .. vim.inspect(option))
-    end
-  end
-
-  if resolve_optional_value(config.update_in_insert) then
-    M._clear_scheduled_display(bufnr, client_id)
-  else
-    local mode = vim.api.nvim_get_mode()
-
-    if string.sub(mode.mode, 1, 1) == 'i' then
-      M._schedule_display(bufnr, client_id, config)
-      return
-    end
-  end
-
   M.clear(bufnr, client_id)
 
   diagnostics = diagnostics or M.get(bufnr, client_id)
@@ -1149,6 +1067,35 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   end
 
   return popup_bufnr, winnr
+end
+
+--- Show diagnostics in the provided buffer
+---
+---@param bufnr number The buffer number
+---@param client_id table|nil the list of client_ids to show diagnostics for
+--- if nil will show all diagnostics for clients attached to the buffer
+---@param config table Configuration table
+---     - signs (boolean, default true): show signs
+---     - underline (boolean, default true): show underline
+---     - virtual_text (boolean, default true): show virtual_text
+---@return table {popup_bufnr, win_id}
+function M.show_buffer_diagnostics(bufnr, client_ids, config)
+  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
+    signs = true,
+    underline = true,
+    virtual_text = true,
+  }, config)
+  bufnr = bufnr or api.nvim_get_current_buf()
+
+  client_ids = client_ids or vim.lsp.get_active_clients()
+
+  for _, client in ipairs(client_ids) do
+    local client_id = client.id
+    if vim.lsp.buf_is_attached(bufnr, client_id) then
+      local buffer_diags = M.get(bufnr, client_id)
+      M.display(buffer_diags, bufnr, client_id, config)
+    end
+  end
 end
 
 local loclist_type_map = {
