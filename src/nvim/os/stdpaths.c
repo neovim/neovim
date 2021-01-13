@@ -108,6 +108,17 @@ char *get_xdg_home(const XDGVarType idx)
   return dir;
 }
 
+/// Return subpath of $XDG_CACHE_HOME
+///
+/// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_CACHE_HOME/nvim/{fname}`
+char *stdpaths_user_cache_subpath(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return concat_fnames_realloc(get_xdg_home(kXDGCacheHome), fname, true);
+}
+
 /// Return subpath of $XDG_CONFIG_HOME
 ///
 /// @param[in]  fname  New component of the path.
