@@ -883,6 +883,7 @@ function M.fancy_floating_markdown(contents, opts)
   vim.api.nvim_set_current_win(winnr)
 
   vim.cmd("ownsyntax markdown")
+  vim.cmd("syntax clear mkdLineBreak")
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
