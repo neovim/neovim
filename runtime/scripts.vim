@@ -182,6 +182,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'clojure'
     set ft=clojure
 
+    " Free Pascal
+  elseif s:name =~# 'instantfpc\>'
+    set ft=pascal
+
   endif
   unlet s:name
 
