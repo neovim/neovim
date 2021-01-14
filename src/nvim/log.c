@@ -22,6 +22,7 @@
 #include "nvim/os/time.h"
 
 #define LOG_FILE_ENV "NVIM_LOG_FILE"
+#define LOGERR "E5010: "
 
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
@@ -69,6 +70,19 @@ static bool log_path_init(void)
       || log_file_path[0] == '\0'
       || os_isdir((char_u *)log_file_path)
       || !log_try_create(log_file_path)) {
+    // Make kXDGCacheHome if it does not exist.
+    char *cachehome = get_xdg_home(kXDGCacheHome);
+    char *failed_dir = NULL;
+    if (!os_isdir((char_u *)cachehome)) {
+        int ret;
+        if ((ret = os_mkdir_recurse(cachehome, 0700, &failed_dir)) != 0) {
+          EMSG3(_(LOGERR "Failed to create directory %s "
+                  "for writing logs: %s"),
+                failed_dir, os_strerror(ret));
+        }
+    }
+    XFREE_CLEAR(failed_dir);
+    XFREE_CLEAR(cachehome);
     // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.
     char *defaultpath = stdpaths_user_cache_subpath("log");
     size_t len = xstrlcpy(log_file_path, defaultpath, size);
