@@ -288,6 +288,16 @@ function Inspector:putTable(t)
   end
 end
 
+function Inspector:putFunction(f)
+  local info = debug.getinfo(f)
+  self:puts(
+    '<',
+    'function ', self:getId(f), ': ',
+    info.source, ':', info.linedefined,
+    '>'
+  )
+end
+
 function Inspector:putValue(v)
   local tv = type(v)
 
@@ -298,6 +308,8 @@ function Inspector:putValue(v)
     self:puts(tostring(v))
   elseif tv == 'table' then
     self:putTable(v)
+  elseif tv == 'function' then
+    self:putFunction(v)
   else
     self:puts('<', tv, ' ', self:getId(v), '>')
   end
