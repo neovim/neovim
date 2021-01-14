@@ -588,6 +588,12 @@ function lsp.start_client(config)
       -- process is not alive then the server should exit (see exit notification)
       -- its process.
       processId = uv.getpid();
+      -- Information about the client
+      -- since 3.15.0
+      clientInfo = {
+        name = "Neovim",
+        version = vim.fn.matchstr(vim.fn.execute("version"), [[NVIM \zs[^\n]\+]]) or vim.Nil
+      };
       -- The rootPath of the workspace. Is null if no folder is open.
       --
       -- @deprecated in favour of rootUri.
