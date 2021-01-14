@@ -206,6 +206,8 @@ local diagnostic_cache = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
 
+local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
+
 --- Store Diagnostic[] by line
 ---
 ---@param diagnostics Diagnostic[]
@@ -954,6 +956,7 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
     display_diagnostics = true,
   }, config)
 
+  _bufs_waiting_to_update[bufnr][client_id] = true
   if config.display_diagnostics then
     M.display(diagnostics, bufnr, client_id, config)
   end
@@ -983,6 +986,11 @@ end
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
+
+  if not _bufs_waiting_to_update[bufnr][client_id] then
+    return
+  end
+
   M.clear(bufnr, client_id)
 
   diagnostics = diagnostics or M.get(bufnr, client_id)
@@ -1007,6 +1015,9 @@ function M.display(diagnostics, bufnr, client_id, config)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end
+
+  _bufs_waiting_to_update[bufnr][client_id] = nil
+
 end
 -- }}}
 -- Diagnostic User Functions {{{
