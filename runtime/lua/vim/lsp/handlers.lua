@@ -6,14 +6,28 @@ local api = vim.api
 local buf = require 'vim.lsp.buf'
 
 local M = {}
+local disabled_errors = {}
 
+local client_errors  = {
+  ServerReported = 1;
+}
 -- FIXME: DOC: Expose in vimdocs
 
 --@private
 --- Writes to error buffer.
 --@param ... (table of strings) Will be concatenated before being written
-local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+local function err_message(message, client_id, error_type)
+  if client_id and error_type then
+    if disabled_errors[client_id] then
+      if disabled_errors[client_id][error_type] then
+        return
+      end
+      disabled_errors[client_id][error_type] = true
+    else
+      disabled_errors[client_id] = { error_type = true }
+    end
+  end
+  api.nvim_err_writeln(table.concat(vim.tbl_flatten{message}))
   api.nvim_command("redraw")
 end
 
@@ -30,7 +44,7 @@ local function progress_callback(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_name, "] client has shut down after sending the message")
+    err_message({"LSP[", client_name, "] client has shut down after sending the message"})
   end
   local val = params.value    -- unspecified yet
   local token = params.token  -- string or number
@@ -48,7 +62,7 @@ local function progress_callback(_, _, params, client_id)
       client.messages.progress[token].percentage = val.percentage;
     elseif val.kind == 'end' then
       if client.messages.progress[token] == nil then
-        err_message("LSP[", client_name, "] received `end` message with no corresponding `begin`")
+        err_message({"LSP[", client_name, "] received `end` message with no corresponding `begin`"})
       else
         client.messages.progress[token].message = val.message
         client.messages.progress[token].done = true
@@ -70,7 +84,7 @@ M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
   local token = params.token  -- string or number
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_name, "] client has shut down after sending the message")
+    err_message({"LSP[", client_name, "] client has shut down after sending the message"})
   end
   client.messages.progress[token] = {}
   return vim.NIL
@@ -149,7 +163,7 @@ end
 M['workspace/configuration'] = function(err, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
-    err_message("LSP[id=", client_id, "] client has shut down after sending the message")
+    err_message({"LSP[id=", client_id, "] client has shut down after sending the message"})
   end
   if err then error(vim.inspect(err)) end
   if not params.items then
@@ -356,7 +370,7 @@ M['window/logMessage'] = function(_, _, result, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_name, "] client has shut down after sending the message")
+    err_message({"LSP[", client_name, "] client has shut down after sending the message"})
   end
   if message_type == protocol.MessageType.Error then
     log.error(message)
@@ -377,10 +391,10 @@ M['window/showMessage'] = function(_, _, result, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_name, "] client has shut down after sending the message")
+    err_message({"LSP[", client_name, "] client has shut down after sending the message"})
   end
   if message_type == protocol.MessageType.Error then
-    err_message("LSP[", client_name, "] ", message)
+    err_message({"LSP[", client_name, "] ", message }, client_id, client_errors.ServerReported)
   else
     local message_type_name = protocol.MessageType[message_type]
     api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
