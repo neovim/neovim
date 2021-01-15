@@ -245,7 +245,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, 1) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid,node in pairs(match) do
@@ -289,7 +289,7 @@ void ui_refresh(void)
     local query = query.parse_query("c", ...)
 
     local nodes = {}
-    for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
       table.insert(nodes, {node:range()})
     end
 
@@ -365,7 +365,7 @@ void ui_refresh(void)
     query = vim.treesitter.parse_query("c", "(declaration) @decl")
 
     local nodes = {}
-    for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
       table.insert(nodes, node)
     end
 
@@ -412,13 +412,36 @@ void ui_refresh(void)
     local nodes = {}
     local query = vim.treesitter.parse_query("c", '((identifier) @id (eq? @id "foo"))')
 
-    for _, node in query:iter_captures(parser:parse()[1]:root(), str, 0, 2) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), str) do
       table.insert(nodes, { node:range() })
     end
 
     return nodes]], txt)
 
     eq({ {0, 10, 0, 13} }, ret)
+  end)
+
+  it("should use node range when omitted", function()
+    local txt = [[
+      int foo = 42;
+      int bar = 13;
+    ]]
+
+    local ret = exec_lua([[
+    local str = ...
+    local parser = vim.treesitter.get_string_parser(str, "c")
+
+    local nodes = {}
+    local query = vim.treesitter.parse_query("c", '((identifier) @foo)')
+    local first_child = parser:parse()[1]:root():child(1)
+
+    for _, node in query:iter_captures(first_child, str) do
+      table.insert(nodes, { node:range() })
+    end
+
+    return nodes]], txt)
+
+    eq({ {1, 10, 1, 13} }, ret)
   end)
 
   describe("when creating a language tree", function()
@@ -539,7 +562,7 @@ int x = INT_MAX;
         query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! "key" "value"))')
         parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
           result = metadata.key
         end
 
@@ -562,7 +585,7 @@ int x = INT_MAX;
         query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value"))')
         parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
           result = metadata[pattern].key
         end
 

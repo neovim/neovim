@@ -353,6 +353,12 @@ function Query:iter_captures(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
+
+  if start == nil and stop == nil then
+    start, _, stop, _ = node:range()
+    stop = stop + 1 -- Make stop inclusive
+  end
+
   local raw_iter = node:_rawquery(self.query, true, start, stop)
   local function iter()
     local capture, captured_node, match = raw_iter()
@@ -385,6 +391,12 @@ function Query:iter_matches(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
+
+  if start == nil and stop == nil then
+    start, _, stop, _ = node:range()
+    stop = stop + 1 -- Make stop inclusive
+  end
+
   local raw_iter = node:_rawquery(self.query, false, start, stop)
   local function iter()
     local pattern, match = raw_iter()
