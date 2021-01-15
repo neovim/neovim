@@ -332,7 +332,7 @@ let s:filename_checks = {
     \ 'pamconf': ['/etc/pam.conf'],
     \ 'pamenv': ['/etc/security/pam_env.conf', '/home/user/.pam_environment'],
     \ 'papp': ['file.papp', 'file.pxml', 'file.pxsl'],
-    \ 'pascal': ['file.pas', 'file.pp', 'file.dpr', 'file.lpr'],
+    \ 'pascal': ['file.pas', 'file.dpr', 'file.lpr'],
     \ 'passwd': ['any/etc/passwd', 'any/etc/passwd-', 'any/etc/passwd.edit', 'any/etc/shadow', 'any/etc/shadow-', 'any/etc/shadow.edit', 'any/var/backups/passwd.bak', 'any/var/backups/shadow.bak'],
     \ 'pbtxt': ['file.pbtxt'],
     \ 'pccts': ['file.g'],
@@ -368,6 +368,7 @@ let s:filename_checks = {
     \ 'proto': ['file.proto'],
     \ 'protocols': ['/etc/protocols'],
     \ 'psf': ['file.psf'],
+    \ 'puppet': ['file.pp'],
     \ 'pyrex': ['file.pyx', 'file.pxd'],
     \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi', 'SConstruct'],
     \ 'quake': ['anybaseq2/file.cfg', 'anyid1/file.cfg', 'quake3/file.cfg'],
@@ -619,6 +620,7 @@ let s:script_checks = {
       \ 'cpp': [['// Standard iostream objects -*- C++ -*-'],
       \         ['// -*- C++ -*-']],
       \ 'yaml': [['%YAML 1.2']],
+      \ 'pascal': [['#!/path/instantfpc']],
       \ }
 
 " Various forms of "env" optional arguments.
@@ -686,6 +688,34 @@ func Test_ts_file()
   bwipe!
 
   call delete('Xfile.hook')
+  filetype off
+endfunc
+
+func Test_pp_file()
+  filetype on
+
+  call writefile(['looks like puppet'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('puppet', &filetype)
+  bwipe!
+
+  let g:filetype_pp = 'pascal'
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTpp()
+  call writefile(['{ pascal comment'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  call writefile(['procedure pascal'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  call delete('Xfile.ts')
   filetype off
 endfunc
 

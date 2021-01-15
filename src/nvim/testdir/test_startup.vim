@@ -735,4 +735,82 @@ func Test_x_arg()
   call delete('Xtest_x_arg')
 endfunc
 
+" Test starting vim with various names: vim, ex, view, evim, etc.
+func Test_progname()
+  CheckUnix
+
+  call mkdir('Xprogname', 'p')
+  call writefile(['silent !date',
+  \               'call writefile([mode(1), '
+  \               .. '&insertmode, &diff, &readonly, &updatecount, '
+  \               .. 'join(split(execute("message"), "\n")[1:])], "Xprogname_out")',
+  \               'qall'], 'Xprogname_after')
+
+  "  +---------------------------------------------- progname
+  "  |            +--------------------------------- mode(1)
+  "  |            |     +--------------------------- &insertmode
+  "  |            |     |    +---------------------- &diff
+  "  |            |     |    |    +----------------- &readonly
+  "  |            |     |    |    |        +-------- &updatecount
+  "  |            |     |    |    |        |    +--- :messages
+  "  |            |     |    |    |        |    |
+  " let expectations = {
+  " \ 'vim':      ['n',  '0', '0', '0',   '200', ''],
+  " \ 'gvim':     ['n',  '0', '0', '0',   '200', ''],
+  " \ 'ex':       ['ce', '0', '0', '0',   '200', ''],
+  " \ 'exim':     ['cv', '0', '0', '0',   '200', ''],
+  " \ 'view':     ['n',  '0', '0', '1', '10000', ''],
+  " \ 'gview':    ['n',  '0', '0', '1', '10000', ''],
+  " \ 'evim':     ['n',  '1', '0', '0',   '200', ''],
+  " \ 'eview':    ['n',  '1', '0', '1', '10000', ''],
+  " \ 'rvim':     ['n',  '0', '0', '0',   '200', 'line    1: E145: Shell commands and some functionality not allowed in rvim'],
+  " \ 'rgvim':    ['n',  '0', '0', '0',   '200', 'line    1: E145: Shell commands and some functionality not allowed in rvim'],
+  " \ 'rview':    ['n',  '0', '0', '1', '10000', 'line    1: E145: Shell commands and some functionality not allowed in rvim'],
+  " \ 'rgview':   ['n',  '0', '0', '1', '10000', 'line    1: E145: Shell commands and some functionality not allowed in rvim'],
+  " \ 'vimdiff':  ['n',  '0', '1', '0',   '200', ''],
+  " \ 'gvimdiff': ['n',  '0', '1', '0',   '200', '']}
+  let expectations = {'nvim': ['n',  '0', '0', '0',   '200', '']}
+
+  " let prognames = ['vim', 'gvim', 'ex', 'exim', 'view', 'gview',
+  " \                'evim', 'eview', 'rvim', 'rgvim', 'rview', 'rgview',
+  " \                'vimdiff', 'gvimdiff']
+  let prognames = ['nvim']
+
+  for progname in prognames
+    if empty($DISPLAY)
+      if progname =~# 'g'
+        " Can't run gvim, gview (etc.) if $DISPLAY is not setup.
+        continue
+      endif
+      if has('gui') && (progname ==# 'evim' || progname ==# 'eview')
+        " evim or eview will start the GUI if there is gui support.
+        " So don't try to start them either if $DISPLAY is not setup.
+        continue
+      endif
+    endif
+
+    exe 'silent !ln -s -f ' ..exepath(GetVimProg()) .. ' Xprogname/' .. progname
+
+    let stdout_stderr = ''
+    if progname =~# 'g'
+      let stdout_stderr = system('Xprogname/'..progname..' -f --clean --not-a-term -S Xprogname_after')
+    else
+      exe 'sil !Xprogname/'..progname..' -f --clean -S Xprogname_after'
+    endif
+
+    if progname =~# 'g' && !has('gui')
+      call assert_equal("E25: GUI cannot be used: Not enabled at compile time\n", stdout_stderr, progname)
+    else
+      call assert_equal('', stdout_stderr, progname)
+      call assert_equal(expectations[progname], readfile('Xprogname_out'), progname)
+    endif
+
+    call delete('Xprogname/' .. progname)
+    call delete('Xprogname_out')
+  endfor
+
+  call delete('Xprogname_after')
+  call delete('Xprogname', 'd')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
