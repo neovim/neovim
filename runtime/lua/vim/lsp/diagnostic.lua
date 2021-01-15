@@ -627,6 +627,7 @@ end
 ---             - priority: Set the priority of the signs.
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---             - minimal (boolean): Only output one sign per severity for each line.
 function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   opts = opts or {}
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
@@ -644,15 +645,25 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
 
   local ok = true
   for _, diagnostic in ipairs(diagnostics) do
+    local start_line = diagnostic.range.start.line + 1
+
+    local sign_id
+    if opts.minimal then
+      -- Concatenate the severity and the line number to construct the ID. This
+      -- prevents cluttering the sign column if there are multiple similar
+      -- diagnostics on the same line.
+      -- e.g. error on line 54 has id 541
+      sign_id = start_line*10 + diagnostic.severity
+    end
 
     ok = ok and pcall(vim.fn.sign_place,
-      0,
+      sign_id or 0,
       sign_ns,
       sign_highlight_map[diagnostic.severity],
       bufnr,
       {
         priority = opts.priority,
-        lnum = diagnostic.range.start.line + 1
+        lnum = start_line
       }
     )
   end

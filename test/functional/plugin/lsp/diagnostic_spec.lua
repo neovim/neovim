@@ -728,37 +728,57 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe('set_signs', function()
-    -- TODO(tjdevries): Find out why signs are not displayed when set from Lua...??
-    pending('sets signs by default', function()
-      exec_lua [[
-        PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-          update_in_insert = true,
-          signs = true,
-        })
-
-        local diagnostics = {
-          make_error('Delayed Diagnostic', 1, 1, 1, 2),
-          make_error('Delayed Diagnostic', 3, 3, 3, 3),
-        }
-
-        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+    it('sets signs by default', function()
+      local signs = exec_lua [[
         vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
             uri = fake_uri,
-            diagnostics = diagnostics
+            diagnostics = {
+              make_error('Delayed Diagnostic', 1, 1, 1, 2),
+              make_warning('Delayed Diagnostic', 3, 3, 3, 3),
+              make_error('Delayed Diagnostic', 5, 5, 5, 5),
+            }
           }, 1
         )
 
-        vim.lsp.diagnostic.set_signs(diagnostics, diagnostic_bufnr, 1)
-        -- return vim.fn.sign_getplaced()
+        vim.lsp.diagnostic.set_signs(diagnostics, diagnostic_bufnr, 1, '')
+        return vim.fn.sign_getplaced()[1].signs
       ]]
 
-      nvim("input", "o")
-      nvim("input", "<esc>")
+      eq({
+        {group = '', id = 1, lnum = 2, name = 'LspDiagnosticsSignError', priority = 10 },
+        {group = '', id = 2, lnum = 4, name = 'LspDiagnosticsSignWarning', priority = 10 },
+        {group = '', id = 3, lnum = 6, name = 'LspDiagnosticsSignError', priority = 10 },
+      }, signs)
+    end)
 
-      -- TODO(tjdevries): Find a way to get the signs to display in the test...
-      eq(nil, exec_lua [[
-        return im.fn.sign_getplaced()[1].signs
-      ]])
+    it('sets minimal signs', function()
+      local signs = exec_lua [[
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+            uri = fake_uri,
+            diagnostics = {
+              -- Diagnostics of the same severity on the same line should only
+              -- issue one sign
+              make_error('Delayed Diagnostic', 1, 1, 1, 2),
+              make_error('Delayed Diagnostic', 1, 1, 1, 2),
+              make_error('Delayed Diagnostic', 1, 1, 1, 2),
+
+              make_warning('Delayed Diagnostic', 3, 3, 3, 3),
+              make_warning('Delayed Diagnostic', 3, 3, 3, 3),
+
+              make_error('Delayed Diagnostic', 5, 5, 5, 5),
+            }
+          }, 1
+        )
+
+        vim.lsp.diagnostic.set_signs(diagnostics, diagnostic_bufnr, 1, '', { minimal = true })
+        return vim.fn.sign_getplaced()[1].signs
+      ]]
+
+      eq({
+        {group = '', id = 21, lnum = 2, name = 'LspDiagnosticsSignError', priority = 10 },
+        {group = '', id = 42, lnum = 4, name = 'LspDiagnosticsSignWarning', priority = 10 },
+        {group = '', id = 61, lnum = 6, name = 'LspDiagnosticsSignError', priority = 10 },
+      }, signs)
     end)
   end)
 
