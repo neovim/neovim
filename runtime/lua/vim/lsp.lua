@@ -582,6 +582,7 @@ function lsp.start_client(config)
     local valid_traces = {
       off = 'off'; messages = 'messages'; verbose = 'verbose';
     }
+    local version = vim.fn.api_info().version
     local initialize_params = {
       -- The process Id of the parent process that started the server. Is null if
       -- the process has not been started by another process.  If the parent
@@ -592,7 +593,7 @@ function lsp.start_client(config)
       -- since 3.15.0
       clientInfo = {
         name = "Neovim",
-        version = vim.fn.matchstr(vim.fn.execute("version"), [[NVIM \zs[^\n]\+]]) or vim.Nil
+        version = string.format("%s.%s.%s", version.major, version.minor, version.patch)
       };
       -- The rootPath of the workspace. Is null if no folder is open.
       --
