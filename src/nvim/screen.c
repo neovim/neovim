@@ -173,7 +173,9 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   Error err = ERROR_INIT;
 
   textlock++;
+  provider_active = true;
   Object ret = nlua_call_ref(ref, name, args, true, &err);
+  provider_active = false;
   textlock--;
 
   if (!ERROR_SET(&err)
@@ -681,7 +683,7 @@ void conceal_check_cursor_line(void)
     redrawWinline(curwin, curwin->w_cursor.lnum);
     // Need to recompute cursor column, e.g., when starting Visual mode
     // without concealing. */
-    curs_columns(true);
+    curs_columns(curwin, true);
   }
 }
 
@@ -1696,7 +1698,7 @@ static void win_update(win_T *wp, Providers *providers)
       const int new_wcol = wp->w_wcol;
       recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
-      update_topline();  // may invalidate w_botline again
+      update_topline(curwin);  // may invalidate w_botline again
 
       if (old_wcol != new_wcol
           && (wp->w_valid & (VALID_WCOL|VALID_WROW))
@@ -2011,6 +2013,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              // end-of-line
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
+  bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra = 0;
@@ -2194,6 +2197,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (wp->w_p_spell
+        && !has_fold
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
         && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
@@ -2296,6 +2300,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     // handle 'incsearch' and ":s///c" highlighting
     } else if (highlight_match
                && wp == curwin
+               && !has_fold
                && lnum >= curwin->w_cursor.lnum
                && lnum <= curwin->w_cursor.lnum + search_match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
@@ -2412,8 +2417,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
   }
 
-  if (wp->w_p_list) {
-    if (curwin->w_p_lcs_chars.space
+  if (wp->w_p_list && !has_fold) {
+    if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.trail
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
@@ -2547,7 +2552,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
    */
   cur = wp->w_match_head;
   shl_flag = false;
-  while ((cur != NULL || !shl_flag) && !number_only) {
+  while ((cur != NULL || !shl_flag) && !number_only
+         && !has_fold
+         ) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;
@@ -2658,7 +2665,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
       }
 
-      //sign column
+      // sign column, this is hit until sign_idx reaches count
       if (draw_state == WL_SIGN - 1 && n_extra == 0) {
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
@@ -2833,9 +2840,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
            * required when 'linebreak' is also set. */
           if (tocol == vcol)
             tocol += n_extra;
-          /* combine 'showbreak' with 'cursorline' */
+          // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-            char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
+            char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), char_attr);
           }
         }
       }
@@ -2876,8 +2883,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (draw_state == WL_LINE
-        && foldinfo.fi_level != 0
-        && foldinfo.fi_lines > 0
+        && has_fold
         && vcol == 0
         && n_extra == 0
         && row == startrow) {
@@ -2898,8 +2904,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (draw_state == WL_LINE
-        && foldinfo.fi_level != 0
-        && foldinfo.fi_lines > 0
+        && has_fold
         && col < grid->Columns
         && n_extra == 0
         && row == startrow) {
@@ -2911,8 +2916,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
 
     if (draw_state == WL_LINE
-        && foldinfo.fi_level != 0
-        && foldinfo.fi_lines > 0
+        && has_fold
         && col >= grid->Columns
         && n_extra != 0
         && row == startrow) {
@@ -3080,7 +3084,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                   || vcol < fromcol || vcol_prev < fromcol_prev
                                   || vcol >= tocol)) {
         char_attr = line_attr;
-    } else {
+      } else {
         attr_pri = false;
         if (has_syntax) {
           char_attr = syntax_attr;
@@ -3735,7 +3739,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
       wp->w_wrow = row;
       did_wcol = true;
-      curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+      wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
     }
 
     // Don't override visual selection highlighting.
@@ -3828,9 +3832,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // Add a blank character to highlight.
           schar_from_ascii(linebuf_char[off], ' ');
         }
-        if (area_attr == 0) {
-          /* Use attributes from match with highest priority among
-           * 'search_hl' and the match list. */
+        if (area_attr == 0 && !has_fold) {
+          // Use attributes from match with highest priority among
+          // 'search_hl' and the match list.
           char_attr = search_hl.attr;
           cur = wp->w_match_head;
           shl_flag = FALSE;
@@ -3878,8 +3882,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       /* check if line ends before left margin */
       if (vcol < v + col - win_col_off(wp))
         vcol = v + col - win_col_off(wp);
-      /* Get rid of the boguscols now, we want to draw until the right
-       * edge for 'cursorcolumn'. */
+      // Get rid of the boguscols now, we want to draw until the right
+      // edge for 'cursorcolumn'.
       col -= boguscols;
       // boguscols = 0;  // Disabled because value never read after this
 
@@ -4046,6 +4050,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         && !wp->w_p_wrap
         && filler_todo <= 0
         && (wp->w_p_rl ? col == 0 : col == grid->Columns - 1)
+        && !has_fold
         && (*ptr != NUL
             || lcs_eol_one > 0
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
@@ -4340,6 +4345,10 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
+//
+// @param count max number of signs
+// @param[out] n_extrap number of characters from pp_extra to display
+// @param[in, out] sign_idxp Index of the displayed sign
 static void get_sign_display_info(
     bool nrcol,
     win_T *wp,
@@ -4416,6 +4425,8 @@ static void get_sign_display_info(
   (*sign_idxp)++;
   if (*sign_idxp < count) {
     *draw_statep = WL_SIGN - 1;
+  } else {
+    *sign_idxp = 0;
   }
 }
 
@@ -5203,7 +5214,7 @@ win_redr_custom (
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
-    use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
+    use_sandbox = was_set_insecurely(wp, (char_u *)"tabline", 0);
   } else {
     row = W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
@@ -5234,14 +5245,14 @@ win_redr_custom (
         attr = HL_ATTR(HLF_MSG);
       }
 
-      use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
+      use_sandbox = was_set_insecurely(wp, (char_u *)"rulerformat", 0);
     } else {
       if (*wp->w_p_stl != NUL)
         stl = wp->w_p_stl;
       else
         stl = p_stl;
-      use_sandbox = was_set_insecurely((char_u *)"statusline",
-          *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
+      use_sandbox = was_set_insecurely(
+          wp, (char_u *)"statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
     col += wp->w_wincol;
@@ -7375,7 +7386,7 @@ void screen_resize(int width, int height)
           cmdline_pum_display(false);
         }
       } else {
-        update_topline();
+        update_topline(curwin);
         if (pum_drawn()) {
           // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
           // For now make sure the nested update_screen(0) won't redraw the

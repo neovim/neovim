@@ -89,7 +89,7 @@ static struct spat spats[2] =
 static int last_idx = 0;        /* index in spats[] for RE_LAST */
 
 static char_u lastc[2] = { NUL, NUL };    // last character searched for
-static int lastcdir = FORWARD;            // last direction of character search
+static Direction lastcdir = FORWARD;      // last direction of character search
 static int last_t_cmd = true;             // last search t_cmd
 static char_u lastc_bytes[MB_MAXBYTES + 1];
 static int lastc_bytelen = 1;             // >1 for multi-byte char
@@ -218,14 +218,11 @@ char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
   size_t len = STRLEN(s);
   char_u *rev = xmalloc(len + 1);
   size_t rev_i = len;
-  for (size_t s_i = 0; s_i < len; ++s_i) {
-    if (has_mbyte) {
-      int mb_len = (*mb_ptr2len)(s + s_i);
-      rev_i -= mb_len;
-      memmove(rev + rev_i, s + s_i, mb_len);
-      s_i += mb_len - 1;
-    } else
-      rev[--rev_i] = s[s_i];
+  for (size_t s_i = 0; s_i < len; s_i++) {
+    const int mb_len = utfc_ptr2len(s + s_i);
+    rev_i -= mb_len;
+    memmove(rev + rev_i, s + s_i, mb_len);
+    s_i += mb_len - 1;
   }
   rev[len] = NUL;
 
@@ -440,7 +437,7 @@ void set_last_csearch(int c, char_u *s, int len)
     memset(lastc_bytes, 0, sizeof(lastc_bytes));
 }
 
-void set_csearch_direction(int cdir)
+void set_csearch_direction(Direction cdir)
 {
   lastcdir = cdir;
 }
@@ -594,8 +591,8 @@ int searchit(
     // is zero.
     if (pos->col == MAXCOL) {
       start_char_len = 0;
-    } else if (has_mbyte
-               && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
+    } else if (pos->lnum >= 1
+               && pos->lnum <= buf->b_ml.ml_line_count
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
       ptr = ml_get_buf(buf, pos->lnum, false);
@@ -1433,7 +1430,7 @@ end_do_search:
  * ADDING is set.  If p_ic is set then the pattern must be in lowercase.
  * Return OK for success, or FAIL if no line found.
  */
-int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
+int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
 {
   linenr_T start = 0;
   char_u      *ptr;
@@ -1499,10 +1496,11 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
  * Return FAIL or OK.
  */
 int searchc(cmdarg_T *cap, int t_cmd)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int c = cap->nchar;                   /* char to search for */
-  int dir = cap->arg;                   /* TRUE for searching forward */
-  long count = cap->count1;                     /* repeat count */
+  int c = cap->nchar;                   // char to search for
+  Direction dir = cap->arg;             // TRUE for searching forward
+  long count = cap->count1;             // repeat count
   int col;
   char_u              *p;
   int len;
@@ -1553,34 +1551,26 @@ int searchc(cmdarg_T *cap, int t_cmd)
   len = (int)STRLEN(p);
 
   while (count--) {
-    if (has_mbyte) {
-      for (;; ) {
-        if (dir > 0) {
-          col += (*mb_ptr2len)(p + col);
-          if (col >= len)
-            return FAIL;
-        } else {
-          if (col == 0)
-            return FAIL;
-          col -= utf_head_off(p, p + col - 1) + 1;
-        }
-        if (lastc_bytelen == 1) {
-          if (p[col] == c && stop) {
-            break;
-          }
-        } else if (STRNCMP(p + col, lastc_bytes, lastc_bytelen) == 0 && stop) {
-            break;
-        }
-        stop = true;
-      }
-    } else {
-      for (;; ) {
-        if ((col += dir) < 0 || col >= len)
+    for (;; ) {
+      if (dir > 0) {
+        col += utfc_ptr2len(p + col);
+        if (col >= len) {
           return FAIL;
-        if (p[col] == c && stop)
-          break;
-        stop = TRUE;
+        }
+      } else {
+        if (col == 0) {
+          return FAIL;
+        }
+        col -= utf_head_off(p, p + col - 1) + 1;
       }
+      if (lastc_bytelen == 1) {
+        if (p[col] == c && stop) {
+          break;
+        }
+      } else if (STRNCMP(p + col, lastc_bytes, lastc_bytelen) == 0 && stop) {
+        break;
+      }
+      stop = true;
     }
   }
 
@@ -1669,6 +1659,48 @@ static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
   return found;
 }
 
+/// Check matchpairs option for "*initc".
+/// If there is a match set "*initc" to the matching character and "*findc" to
+/// the opposite character.  Set "*backwards" to the direction.
+/// When "switchit" is true swap the direction.
+static void find_mps_values(int *initc, int *findc, bool *backwards,
+                            bool switchit)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char_u *ptr = curbuf->b_p_mps;
+
+  while (*ptr != NUL) {
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = true;
+      } else {
+        *findc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = false;
+      }
+      return;
+    }
+    char_u *prev = ptr;
+    ptr += utfc_ptr2len(ptr) + 1;
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(prev);
+        *backwards = false;
+      } else {
+        *findc = utf_ptr2char(prev);
+        *backwards = true;
+      }
+      return;
+    }
+    ptr += utfc_ptr2len(ptr);
+    if (*ptr == ',') {
+      ptr++;
+    }
+  }
+}
+
 /*
  * findmatchlimit -- find the matching paren or brace, if it exists within
  * maxtravel lines of the cursor.  A maxtravel of 0 means search until falling
@@ -1695,7 +1727,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   static pos_T pos;                     // current search position
   int findc = 0;                        // matching brace
   int count = 0;                        // cumulative number of braces
-  int backwards = false;                // init for gcc
+  bool backwards = false;               // init for gcc
   bool raw_string = false;              // search for raw string
   bool inquote = false;                 // true when inside quotes
   char_u      *ptr;
@@ -1740,9 +1772,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     raw_string = (initc == 'R');
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
-    find_mps_values(&initc, &findc, &backwards, TRUE);
-    if (findc == NUL)
+    find_mps_values(&initc, &findc, &backwards, true);
+    if (findc == NUL) {
       return NULL;
+    }
   } else {
     /*
      * Either initc is '#', or no initc was given and we need to look
@@ -1770,20 +1803,20 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         else if (linep[pos.col] == '/') {
           if (linep[pos.col + 1] == '*') {
             comment_dir = FORWARD;
-            backwards = FALSE;
+            backwards = false;
             pos.col++;
           } else if (pos.col > 0 && linep[pos.col - 1] == '*') {
             comment_dir = BACKWARD;
-            backwards = TRUE;
+            backwards = true;
             pos.col--;
           }
         } else if (linep[pos.col] == '*') {
           if (linep[pos.col + 1] == '/') {
             comment_dir = BACKWARD;
-            backwards = TRUE;
+            backwards = true;
           } else if (pos.col > 0 && linep[pos.col - 1] == '/') {
             comment_dir = FORWARD;
-            backwards = FALSE;
+            backwards = false;
           }
         }
       }
@@ -1805,9 +1838,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           if (initc == NUL)
             break;
 
-          find_mps_values(&initc, &findc, &backwards, FALSE);
-          if (findc)
+          find_mps_values(&initc, &findc, &backwards, false);
+          if (findc) {
             break;
+          }
           pos.col += utfc_ptr2len(linep + pos.col);
         }
         if (!findc) {
@@ -1964,10 +1998,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         if (lisp)           /* find comment pos in new line */
           comment_col = check_linecomment(linep);
       } else {
-        if (has_mbyte)
-          pos.col += (*mb_ptr2len)(linep + pos.col);
-        else
-          ++pos.col;
+        pos.col += utfc_ptr2len(linep + pos.col);
       }
     }
 
@@ -4432,7 +4463,7 @@ static void search_stat(int dirc, pos_T *pos,
 void
 find_pattern_in_path(
     char_u *ptr,            // pointer to search pattern
-    int dir,                // direction of expansion
+    Direction dir,          // direction of expansion
     size_t len,             // length of search pattern
     bool whole,             // match whole words only
     bool skip_comments,     // don't match inside comments

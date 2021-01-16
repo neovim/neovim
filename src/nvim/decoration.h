@@ -15,11 +15,15 @@ typedef struct {
 typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
+typedef uint16_t DecorPriority;
+#define DECOR_PRIORITY_BASE 0x1000
+
 struct Decoration
 {
   int hl_id;  // highlight group
   VirtText virt_text;
   // TODO(bfredl): style, signs, etc
+  DecorPriority priority;
   bool shared;  // shared decoration, don't free
 };
 
@@ -29,6 +33,7 @@ typedef struct {
   int end_row;
   int end_col;
   int attr_id;
+  DecorPriority priority;
   VirtText *virt_text;
   bool virt_text_owned;
 } HlRange;
@@ -58,6 +63,7 @@ typedef struct {
 
 EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
 EXTERN DecorState decor_state INIT(= { 0 });
+EXTERN bool provider_active INIT(= false);
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
                                  { ns_id, false, LUA_NOREF, LUA_NOREF, \

@@ -16,6 +16,7 @@
 #define BOOLEAN_OBJ(b) ((Object) { \
     .type = kObjectTypeBoolean, \
     .data.boolean = b })
+#define BOOL(b) BOOLEAN_OBJ(b)
 
 #define INTEGER_OBJ(i) ((Object) { \
     .type = kObjectTypeInteger, \
@@ -28,6 +29,8 @@
 #define STRING_OBJ(s) ((Object) { \
     .type = kObjectTypeString, \
     .data.string = s })
+
+#define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
 
 #define BUFFER_OBJ(s) ((Object) { \
     .type = kObjectTypeBuffer, \
@@ -58,6 +61,8 @@
 
 #define PUT(dict, k, v) \
   kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
+
+#define PUT_BOOL(dict, name, condition) PUT(dict, name, BOOLEAN_OBJ(condition));
 
 #define ADD(array, item) \
   kv_push(array, item)

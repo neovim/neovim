@@ -55,7 +55,7 @@ end
 vimcmd_start = 'syn keyword vimCommand contained '
 w(vimcmd_start)
 local prev_cmd = nil
-for _, cmd_desc in ipairs(ex_cmds) do
+for _, cmd_desc in ipairs(ex_cmds.cmds) do
   if lld.line_length > 850 then
     w('\n' .. vimcmd_start)
   end

@@ -270,7 +270,7 @@ func Test_search_cmdline2()
   " nor "/foo\<c-u>\<cr>" works to delete the commandline.
   " In that case Vim should return "E35 no previous regular expression",
   " but it looks like Vim still sees /foo and therefore the test fails.
-  " Therefore, disableing this test
+  " Therefore, disabling this test
   "call assert_fails(feedkeys("/foo\<c-w>\<cr>", 'tx'), 'E35')
   "call assert_equal({'lnum': 1, 'leftcol': 0, 'col': 0, 'topfill': 0, 'topline': 1, 'coladd': 0, 'skipcol': 0, 'curswant': 0}, winsaveview())
 
@@ -508,7 +508,7 @@ endfunc
 
 func Test_search_cmdline7()
   throw 'skipped: Nvim does not support test_override()'
-  " Test that an pressing <c-g> in an empty command line
+  " Test that pressing <c-g> in an empty command line
   " does not move the cursor
   if !exists('+incsearch')
     return
@@ -1053,7 +1053,7 @@ func Test_search_Ctrl_L_combining()
     " ' ̇' U+0307 Dec:775 COMBINING DOT ABOVE &#x307; /\%u307\Z "\u0307"
     " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323" 
   " Those should also appear on the commandline
-  if !has('multi_byte') || !exists('+incsearch')
+  if !exists('+incsearch')
     return
   endif
   call Cmdline3_prep()
@@ -1172,3 +1172,24 @@ func Test_search_special()
   set t_PE=
   exe "norm /\x80PS"
 endfunc
+
+" Test 'smartcase' with utf-8.
+func Test_search_smartcase_utf8()
+  new
+  let save_enc = &encoding
+  set encoding=utf8 ignorecase smartcase
+
+  call setline(1, 'Café cafÉ')
+  1s/café/x/g
+  call assert_equal('x x', getline(1))
+
+  call setline(1, 'Café cafÉ')
+  1s/cafÉ/x/g
+  call assert_equal('Café x', getline(1))
+
+  set ignorecase& smartcase&
+  let &encoding = save_enc
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

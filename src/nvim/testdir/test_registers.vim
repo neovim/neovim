@@ -2,6 +2,9 @@
 " Tests for register operations
 "
 
+source check.vim
+source view_util.vim
+
 " This test must be executed first to check for empty and unset registers.
 func Test_aaa_empty_reg_test()
   call assert_fails('normal @@', 'E748:')
@@ -52,29 +55,42 @@ func Test_display_registers()
     let b = execute('registers')
 
     call assert_equal(a, b)
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '""   a\n'
-          \ .         '"0   ba\n'
-          \ .         '"1   b\n'
-          \ .         '"a   b\n'
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  ""   a\n'
+          \ .         '  c  "0   ba\n'
+          \ .         '  c  "1   b\n'
+          \ .         '  c  "a   b\n'
           \ .         '.*'
-          \ .         '"-   a\n'
+          \ .         '  c  "-   a\n'
           \ .         '.*'
-          \ .         '":   ls\n'
-          \ .         '"%   file2\n'
-          \ .         '"#   file1\n'
-          \ .         '"/   bar\n'
-          \ .         '"=   2\*4', a)
+          \ .         '  c  ":   ls\n'
+          \ .         '  c  "%   file2\n'
+          \ .         '  c  "#   file1\n'
+          \ .         '  c  "/   bar\n'
+          \ .         '  c  "=   2\*4', a)
 
     let a = execute('registers a')
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '"a   b', a)
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  "a   b', a)
 
     let a = execute('registers :')
-    call assert_match('^\n--- Registers ---\n'
-          \ .         '":   ls', a)
+    call assert_match('^\nType Name Content\n'
+          \ .         '  c  ":   ls', a)
 
     bwipe!
+endfunc
+
+func Test_recording_status_in_ex_line()
+  norm qx
+  redraw!
+  call assert_equal('recording @x', Screenline(&lines))
+  set shortmess=q
+  redraw!
+  call assert_equal('recording', Screenline(&lines))
+  set shortmess&
+  norm q
+  redraw!
+  call assert_equal('', Screenline(&lines))
 endfunc
 
 " Check that replaying a typed sequence does not use an Esc and following
@@ -251,6 +267,17 @@ func Test_ve_blockpaste()
   call assert_equal(5, col('.'))
   call assert_equal(getline(1, 2), ['TZ  QWER', 'GH  ASDF'])
   set ve&vim
+  bwipe!
+endfunc
+
+func Test_insert_small_delete()
+  new
+  call setline(1, ['foo foobar bar'])
+  call cursor(1,1)
+  exe ":norm! ciw'\<C-R>-'"
+  call assert_equal("'foo' foobar bar", getline(1))
+  exe ":norm! w.w."
+  call assert_equal("'foo' 'foobar' 'bar'", getline(1))
   bwipe!
 endfunc
 

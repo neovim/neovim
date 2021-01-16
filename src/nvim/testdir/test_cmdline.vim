@@ -51,6 +51,22 @@ func Test_complete_wildmenu()
   call feedkeys(":e Xdir1/\<Tab>\<Down>\<Up>\<Right>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
 
+  " this fails in some Unix GUIs, not sure why
+  if !has('unix') || !has('gui_running')
+    " <C-J>/<C-K> mappings to go up/down directories when 'wildcharm' is
+    " different than 'wildchar'.
+    set wildcharm=<C-Z>
+    cnoremap <C-J> <Down><C-Z>
+    cnoremap <C-K> <Up><C-Z>
+    call feedkeys(":e Xdir1/\<Tab>\<C-J>\<CR>", 'tx')
+    call assert_equal('testfile3', getline(1))
+    call feedkeys(":e Xdir1/\<Tab>\<C-J>\<C-K>\<CR>", 'tx')
+    call assert_equal('testfile1', getline(1))
+    set wildcharm=0
+    cunmap <C-J>
+    cunmap <C-K>
+  endif
+
   " cleanup
   %bwipe
   call delete('Xdir1/Xdir2/Xtestfile4')
@@ -60,6 +76,33 @@ func Test_complete_wildmenu()
   call delete('Xdir1/Xdir2', 'd')
   call delete('Xdir1', 'd')
   set nowildmenu
+endfunc
+
+func Test_wildmenu_screendump()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    set wildmenu hlsearch
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildmenu')
+
+  let buf = RunVimInTerminal('-S XTest_wildmenu', {'rows': 8})
+  call term_sendkeys(buf, ":vim\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_1', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_2', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_3', {})
+
+  call term_sendkeys(buf, "\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_4', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_wildmenu')
 endfunc
 
 func Test_map_completion()
@@ -548,6 +591,13 @@ func Test_cmdline_complete_user_names()
   endif
 endfunc
 
+func Test_cmdline_complete_bang()
+  if executable('whoami')
+    call feedkeys(":!whoam\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_match('^".*\<whoami\>', @:)
+  endif
+endfunc
+
 funct Test_cmdline_complete_languages()
   let lang = substitute(execute('language messages'), '.*"\(.*\)"$', '\1', '')
 
@@ -568,6 +618,17 @@ funct Test_cmdline_complete_languages()
     call feedkeys(":language time \<c-a>\<c-b>\"\<cr>", 'tx')
     call assert_match('^"language .*\<' . lang . '\>', @:)
   endif
+endfunc
+
+func Test_cmdline_complete_expression()
+  let g:SomeVar = 'blah'
+  for cmd in ['exe', 'echo', 'echon', 'echomsg']
+    call feedkeys(":" .. cmd .. " SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
+    call assert_match('"' .. cmd .. ' SomeVar', @:)
+    call feedkeys(":" .. cmd .. " foo SomeV\<Tab>\<C-B>\"\<CR>", 'tx')
+    call assert_match('"' .. cmd .. ' foo SomeVar', @:)
+  endfor
+  unlet g:SomeVar
 endfunc
 
 func Test_cmdline_write_alternatefile()
@@ -796,6 +857,59 @@ func Test_cmdwin_feedkeys()
   call feedkeys("q:\<CR>", 'x')
 endfunc
 
+" Tests for the issues fixed in 7.4.441.
+" When 'cedit' is set to Ctrl-C, opening the command window hangs Vim
+func Test_cmdwin_cedit()
+  exe "set cedit=\<C-c>"
+  normal! :
+  call assert_equal(1, winnr('$'))
+
+  let g:cmd_wintype = ''
+  func CmdWinType()
+      let g:cmd_wintype = getcmdwintype()
+      let g:wintype = win_gettype()
+      return ''
+  endfunc
+
+  call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
+  echo input('')
+  call assert_equal('@', g:cmd_wintype)
+  call assert_equal('command', g:wintype)
+
+  set cedit&vim
+  delfunc CmdWinType
+endfunc
+
+func Test_cmdwin_restore()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    call setline(1, range(30))
+    2split
+  [SCRIPT]
+  call writefile(lines, 'XTest_restore')
+
+  let buf = RunVimInTerminal('-S XTest_restore', {'rows': 12})
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "q:")
+  call VerifyScreenDump(buf, 'Test_cmdwin_restore_1', {})
+
+  " normal restore
+  call term_sendkeys(buf, ":q\<CR>")
+  call VerifyScreenDump(buf, 'Test_cmdwin_restore_2', {})
+
+  " restore after setting 'lines' with one window
+  call term_sendkeys(buf, ":close\<CR>")
+  call term_sendkeys(buf, "q:")
+  call term_sendkeys(buf, ":set lines=18\<CR>")
+  call term_sendkeys(buf, ":q\<CR>")
+  call VerifyScreenDump(buf, 'Test_cmdwin_restore_3', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_restore')
+endfunc
+
 func Test_buffers_lastused()
   " check that buffers are sorted by time when wildmode has lastused
   edit bufc " oldest
@@ -871,5 +985,23 @@ func Test_zero_line_search()
   q!
 endfunc
 
+func Test_read_shellcmd()
+  CheckUnix
+  if executable('ls')
+    " There should be ls in the $PATH
+    call feedkeys(":r! l\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_match('^"r! .*\<ls\>', @:)
+  endif
 
-" vim: shiftwidth=2 sts=2 expandtab	" vim: shiftwidth=2 sts=2 expandtab
+  if executable('rm')
+    call feedkeys(":r! ++enc=utf-8 r\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_notmatch('^"r!.*\<runtest.vim\>', @:)
+    call assert_match('^"r!.*\<rm\>', @:)
+
+    call feedkeys(":r ++enc=utf-8 !rm\<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_notmatch('^"r.*\<runtest.vim\>', @:)
+    call assert_match('^"r ++enc\S\+ !.*\<rm\>', @:)
+  endif
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -61,6 +61,15 @@ func Test_client_server()
 
   call assert_fails('call remote_send("XXX", ":let testvar = ''yes''\<CR>")', 'E241')
 
+  call writefile(['one'], 'Xclientfile')
+  let cmd = GetVimProg() .. ' --servername ' .. name .. ' --remote Xclientfile'
+  call system(cmd)
+  call WaitForAssert({-> assert_equal('Xclientfile', remote_expr(name, "bufname()", "", 2))})
+  call WaitForAssert({-> assert_equal('one', remote_expr(name, "getline(1)", "", 2))})
+  call writefile(['one', 'two'], 'Xclientfile')
+  call system(cmd)
+  call WaitForAssert({-> assert_equal('two', remote_expr(name, "getline(2)", "", 2))})
+
   " Expression evaluated locally.
   if v:servername == ''
     call remote_startserver('MYSELF')

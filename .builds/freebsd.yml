@@ -20,7 +20,7 @@ sources:
 environment:
   SOURCEHUT: 1
   LANG: en_US.UTF-8
-  CMAKE_EXTRA_FLAGS: -DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3
+  CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON -DMIN_LOG_LEVEL=3
 
 tasks:
 - build-deps: |

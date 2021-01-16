@@ -44,6 +44,7 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -288,48 +289,6 @@ void nvim_win_del_var(Window window, String name, Error *err)
   dict_set_var(win->w_vars, name, NIL, true, false, err);
 }
 
-/// Sets a window-scoped (w:) variable
-///
-/// @deprecated
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     Variable name
-/// @param value    Variable value
-/// @param[out] err Error details, if any
-/// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object window_set_var(Window window, String name, Object value, Error *err)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(win->w_vars, name, value, false, true, err);
-}
-
-/// Removes a window-scoped (w:) variable
-///
-/// @deprecated
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     variable name
-/// @param[out] err Error details, if any
-/// @return Old value
-Object window_del_var(Window window, String name, Error *err)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(win->w_vars, name, NIL, true, true, err);
-}
-
 /// Gets a window option value
 ///
 /// @param window   Window handle, or 0 for current window
@@ -542,6 +501,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {

@@ -242,7 +242,7 @@ if(use_git_version)
   add_custom_target(update_version_stamp ALL
     COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
       ${relbuild}/config/auto/versiondef_git.h
-      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
 else()
@@ -445,7 +445,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${UTF8PROC_LIBRARIES}
-  ${TREESITTER_LIBRARIES}
+  ${TreeSitter_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -617,14 +617,14 @@ if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
   if(SANITIZE_RECOVER_ALL)
-    if(TRAVIS_CI_BUILD)
+    if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
       set(SANITIZE_RECOVER -fsanitize-recover=all)     # Clang 3.6+
     else()
       set(SANITIZE_RECOVER -fno-sanitize-recover=all)  # Clang 3.6+
     endif()
   else()
-    if(TRAVIS_CI_BUILD)
+    if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
       set(SANITIZE_RECOVER -fsanitize-recover)         # Clang 3.5-
     else()

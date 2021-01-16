@@ -734,6 +734,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	eol	allow backspacing over line breaks (join lines)
 	start	allow backspacing over the start of insert; CTRL-W and CTRL-U
 		stop once at the start of insert.
+	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
+		insert.
 
 	When the value is empty, Vi compatible backspacing is used.
 
@@ -742,6 +744,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  0	same as ":set backspace=" (Vi compatible)
 	  1	same as ":set backspace=indent,eol"
 	  2	same as ":set backspace=indent,eol,start"
+	  3	same as ":set backspace=indent,eol,nostop"
 
 				*'backup'* *'bk'* *'nobackup'* *'nobk'*
 'backup' 'bk'		boolean	(default off)
@@ -2438,7 +2441,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'foldcolumn' 'fdc'	string (default "0")
 			local to window
 	When and how to draw the foldcolumn. Valid values are:
-	    "auto":       resize to the maximum amount of folds to display.
+	    "auto":       resize to the minimum amount of folds to display.
 	    "auto:[1-9]": resize to accommodate multiple folds up to the
 			  selected level
             0:            to disable foldcolumn
@@ -2609,7 +2612,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when internal formatting is used.  Make sure the cursor is kept in the
 	same spot relative to the text then!  The |mode()| function will
 	return "i" or "R" in this situation.
-	
+
 	When the expression evaluates to non-zero Vim will fall back to using
 	the internal format mechanism.
 
@@ -3184,7 +3187,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'inccommand'* *'icm'*
 'inccommand' 'icm'	string	(default "")
 			global
-			
+
 	"nosplit": Shows the effects of a command incrementally, as you type.
 	"split"	 : Also shows partial off-screen results in a preview window.
 
@@ -5166,6 +5169,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It is allowed to give an argument to the command, e.g.  "csh -f".
 	See |option-backslash| about including spaces and backslashes.
 	Environment variables are expanded |:set_env|.
+
 	If the name of the shell contains a space, you might need to enclose
 	it in quotes.  Example: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
@@ -6837,7 +6841,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	a built-in |highlight-groups| item to be overridden by {hl} group in
 	the window.  Only built-in |highlight-groups| are supported, not
 	syntax highlighting (use |:ownsyntax| for that).
-	
+
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The 'tabline' highlight of a tabpage is
 	decided by the last-focused window of the tabpage.  Highlights of

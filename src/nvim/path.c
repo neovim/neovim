@@ -260,13 +260,13 @@ char_u *shorten_dir(char_u *str)
       *d++ = *s;
       skip = false;
     } else if (!skip) {
-      *d++ = *s;                    /* copy next char */
-      if (*s != '~' && *s != '.')       /* and leading "~" and "." */
+      *d++ = *s;                     // copy next char
+      if (*s != '~' && *s != '.') {  // and leading "~" and "."
         skip = true;
-      if (has_mbyte) {
-        int l = mb_ptr2len(s);
-        while (--l > 0)
-          *d++ = *++s;
+      }
+      int l = utfc_ptr2len(s);
+      while (--l > 0) {
+        *d++ = *++s;
       }
     }
   }
@@ -608,13 +608,10 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     )) {
       e = p;
     }
-    if (has_mbyte) {
-      len = (size_t)(*mb_ptr2len)(path_end);
-      memcpy(p, path_end, len);
-      p += len;
-      path_end += len;
-    } else
-      *p++ = *path_end++;
+    len = (size_t)(utfc_ptr2len(path_end));
+    memcpy(p, path_end, len);
+    p += len;
+    path_end += len;
   }
   e = p;
   *e = NUL;
@@ -1613,10 +1610,10 @@ void simplify_filename(char_u *filename)
 
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
-  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t) len);
-  char *res = (char *) eval_to_string_safe(
-      curbuf->b_p_inex, NULL, was_set_insecurely((char_u *)"includeexpr",
-                                                 OPT_LOCAL));
+  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
+  char *res = (char *)eval_to_string_safe(
+      curbuf->b_p_inex, NULL,
+      was_set_insecurely(curwin, (char_u *)"includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
 }
@@ -1705,6 +1702,13 @@ int path_with_url(const char *fname)
   const char *p;
   for (p = fname; isalpha(*p); p++) {}
   return path_is_url(p);
+}
+
+bool path_with_extension(const char *path, const char *extension)
+{
+  const char *last_dot = strrchr(path, '.');
+  if (!last_dot) { return false; }
+  return strcmp(last_dot + 1, extension) == 0;
 }
 
 /*

@@ -616,7 +616,11 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
         break;
       }
     }
-    i = (int)(fp - (fold_T *)gap->ga_data);
+    if (gap->ga_len == 0) {
+      i = 0;
+    } else {
+      i = (int)(fp - (fold_T *)gap->ga_data);
+    }
   }
 
   ga_grow(gap, 1);
@@ -898,8 +902,9 @@ int foldMoveTo(
     bool last = false;
     for (;; ) {
       if (!foldFind(gap, curwin->w_cursor.lnum - lnum_off, &fp)) {
-        if (!updown)
+        if (!updown || gap->ga_len == 0) {
           break;
+        }
 
         /* When moving up, consider a fold above the cursor; when
          * moving down consider a fold below the cursor. */
@@ -1033,11 +1038,11 @@ void foldAdjustVisual(void)
   if (hasFolding(end->lnum, NULL, &end->lnum)) {
     ptr = ml_get(end->lnum);
     end->col = (colnr_T)STRLEN(ptr);
-    if (end->col > 0 && *p_sel == 'o')
-      --end->col;
-    /* prevent cursor from moving on the trail byte */
-    if (has_mbyte)
-      mb_adjust_cursor();
+    if (end->col > 0 && *p_sel == 'o') {
+      end->col--;
+    }
+    // prevent cursor from moving on the trail byte
+    mb_adjust_cursor();
   }
 }
 
@@ -1831,10 +1836,11 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
       curwin = wp;
       curbuf = wp->w_buffer;
 
-      ++emsg_silent;       /* handle exceptions, but don't display errors */
-      text = eval_to_string_safe(wp->w_p_fdt, NULL,
-          was_set_insecurely((char_u *)"foldtext", OPT_LOCAL));
-      --emsg_silent;
+      emsg_silent++;       // handle exceptions, but don't display errors
+      text = eval_to_string_safe(
+          wp->w_p_fdt, NULL,
+          was_set_insecurely(wp, (char_u *)"foldtext", OPT_LOCAL));
+      emsg_silent--;
 
       if (text == NULL || did_emsg)
         got_fdt_error = TRUE;

@@ -1205,10 +1205,6 @@ msgstr "E143: Автокоманды неожиданно убили новый 
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: Параметр команды :z должен быть числом"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Использование команд оболочки не допускается в rvim."
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Регулярные выражения не могут разделяться буквами"

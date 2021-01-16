@@ -12,6 +12,9 @@ endfunc
 " Command to check for the presence of a working option.
 command -nargs=1 CheckOption call CheckOption(<f-args>)
 func CheckOption(name)
+  if !exists('&' .. a:name)
+    throw 'Checking for non-existent option ' .. a:name
+  endif
   if !exists('+' .. a:name)
     throw 'Skipped: ' .. a:name .. ' option not supported'
   endif
@@ -71,6 +74,14 @@ command CheckCanRunGui call CheckCanRunGui()
 func CheckCanRunGui()
   if !has('gui') || ($DISPLAY == "" && !has('gui_running'))
     throw 'Skipped: cannot start the GUI'
+  endif
+endfunc
+
+" Command to check that we are using the GUI
+command CheckGui call CheckGui()
+func CheckGui()
+  if !has('gui_running')
+    throw 'Skipped: only works in the GUI'
   endif
 endfunc
 

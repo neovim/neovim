@@ -410,6 +410,7 @@ describe("'scrollback' option", function()
       command([[let $PROMPT='$$']])
       screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
+      command('let $PS1 = "$"')
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 

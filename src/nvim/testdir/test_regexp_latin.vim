@@ -755,6 +755,13 @@ func Test_start_end_of_buffer_match()
   bwipe!
 endfunc
 
+func Test_ze_before_zs()
+  call assert_equal('', matchstr(' ', '\%#=1\ze \zs'))
+  call assert_equal('', matchstr(' ', '\%#=2\ze \zs'))
+  call assert_equal(repeat([''], 10), matchlist(' ', '\%#=1\ze \zs'))
+  call assert_equal(repeat([''], 10), matchlist(' ', '\%#=2\ze \zs'))
+endfunc
+
 " Check for detecting error
 func Test_regexp_error()
   set regexpengine=2

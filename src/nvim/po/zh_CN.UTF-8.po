@@ -1222,10 +1222,6 @@ msgstr "E143: 自动命令意外地删除了新缓冲区 %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z 不接受非数字的参数"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvim 中禁止使用 shell 命令"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: 正则表达式不能用字母作分界"

@@ -60,7 +60,6 @@ int jump_to_mouse(int flags,
 {
   static int on_status_line = 0;        // #lines below bottom of window
   static int on_sep_line = 0;           // on separator right of window
-  static bool in_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
   static win_T *dragwin = NULL;         // window being dragged
@@ -75,6 +74,7 @@ int jump_to_mouse(int flags,
   int grid = mouse_grid;
   int mouse_char;
   int fdc = 0;
+  ScreenGrid *gp = &default_grid;
 
   mouse_past_bottom = false;
   mouse_past_eol = false;
@@ -100,18 +100,6 @@ retnomove:
     if (on_sep_line) {
       return IN_SEP_LINE;
     }
-    if (in_winbar) {
-      // A quick second click may arrive as a double-click, but we use it
-      // as a second click in the WinBar.
-      if ((mod_mask & MOD_MASK_MULTI_CLICK) && !(flags & MOUSE_RELEASED)) {
-        wp = mouse_find_win(&grid, &row, &col);
-        if (wp == NULL) {
-          return IN_UNKNOWN;
-        }
-        winbar_click(wp, col);
-      }
-      return IN_OTHER_WIN | MOUSE_WINBAR;
-    }
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -124,16 +112,6 @@ retnomove:
 
   if (flags & MOUSE_SETPOS)
     goto retnomove;                             // ugly goto...
-
-  // Remember the character under the mouse, might be one of foldclose or
-  // foldopen fillchars in the fold column.
-  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && default_grid.chars != NULL) {
-     mouse_char = utf_ptr2char(default_grid.chars[default_grid.line_offset[row]
-                                                  + (unsigned)col]);
-  } else {
-    mouse_char = ' ';
-  }
 
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;
@@ -151,13 +129,8 @@ retnomove:
     dragwin = NULL;
 
     if (row == -1) {
-      // A click in the window toolbar does not enter another window or
-      // change Visual highlighting.
-      winbar_click(wp, col);
-      in_winbar = true;
-      return IN_OTHER_WIN | MOUSE_WINBAR;
+      return IN_OTHER_WIN;
     }
-    in_winbar = false;
 
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
@@ -248,9 +221,6 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         // Cursor didn't move
-  } else if (in_winbar) {
-    // After a click on the window toolbar don't start Visual mode.
-    return IN_OTHER_WIN | MOUSE_WINBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode
@@ -331,6 +301,19 @@ retnomove:
         curwin->w_valid &= ~(VALID_TOPLINE);
       }
     }
+  }
+
+  // Remember the character under the mouse, might be one of foldclose or
+  // foldopen fillchars in the fold column.
+  if (ui_has(kUIMultigrid)) {
+    gp = &curwin->w_grid;
+  }
+  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
+      && gp->chars != NULL) {
+    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
+                                        + (unsigned)col]);
+  } else {
+    mouse_char = ' ';
   }
 
   // Check for position outside of the fold column.
@@ -499,7 +482,6 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
-      *rowp -= wp->w_winbar_height;
       return wp;
     }
   }
@@ -544,53 +526,9 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 void setmouse(void)
 {
   ui_cursor_shape();
-
-  // Be quick when mouse is off.
-  if (*p_mouse == NUL) {
-    return;
-  }
-
-  int checkfor = MOUSE_NORMAL;  // assume normal mode
-  if (VIsual_active) {
-    checkfor = MOUSE_VISUAL;
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
-    checkfor = MOUSE_RETURN;
-  } else if (State & INSERT) {
-    checkfor = MOUSE_INSERT;
-  } else if (State & CMDLINE) {
-    checkfor = MOUSE_COMMAND;
-  } else if (State == CONFIRM || State == EXTERNCMD) {
-    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
-  }
-
-  if (mouse_has(checkfor)) {
-    ui_call_mouse_on();
-  } else {
-    ui_call_mouse_off();
-  }
+  ui_check_mouse();
 }
 
-/*
- * Return true if
- * - "c" is in 'mouse', or
- * - 'a' is in 'mouse' and "c" is in MOUSE_A, or
- * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
- *   normal editing mode (not at hit-return message).
- */
-int mouse_has(int c)
-{
-  for (char_u *p = p_mouse; *p; ++p)
-    switch (*p) {
-    case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
-        return true;
-      break;
-    case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
-        return true;
-      break;
-    default: if (c == *p) return true; break;
-    }
-  return false;
-}
 
 // Set orig_topline.  Used when jumping to another window, so that a double
 // click still works.

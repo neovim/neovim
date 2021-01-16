@@ -95,7 +95,6 @@ PRAGMA_DIAG_POP
 
 
 static char *e_listarg = N_("E686: Argument of %s must be a List");
-static char *e_stringreq = N_("E928: String required");
 static char *e_invalwindow = N_("E957: Invalid window number");
 
 /// Dummy va_list for passing to vim_snprintf
@@ -205,7 +204,7 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -727,7 +726,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   p_cpo = (char_u *)"";
 
   buf = buflist_findnr(buflist_findpat(name, name + STRLEN(name),
-                                       TRUE, FALSE, curtab_only));
+                                       true, false, curtab_only));
 
   p_magic = save_magic;
   p_cpo = save_cpo;
@@ -783,10 +782,10 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
     if (*t == NUL) {  // EOL reached.
       return;
     }
-    if (enc_utf8 && comp) {
+    if (comp) {
       t += utf_ptr2len((const char_u *)t);
     } else {
-      t += (*mb_ptr2len)((const char_u *)t);
+      t += utfc_ptr2len((const char_u *)t);
     }
   }
   rettv->vval.v_number = (varnumber_T)(t - str);
@@ -862,7 +861,7 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -901,7 +900,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1427,9 +1426,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Make sure the cursor is in a valid position.
   check_cursor();
   // Correct cursor for multi-byte character.
-  if (has_mbyte) {
-    mb_adjust_cursor();
-  }
+  mb_adjust_cursor();
 
   curwin->w_set_curswant = set_curswant;
   rettv->vval.v_number = 0;
@@ -1480,7 +1477,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1515,7 +1512,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // dictwatcheradd(dict, key, funcref) function
 static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1553,7 +1550,7 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // dictwatcherdel(dict, key, funcref) function
 static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -1879,10 +1876,12 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *name = tv_get_string(&argvars[0]);
+  if (tv_check_for_string(&argvars[0]) == FAIL) {
+    return;
+  }
 
   // Check in $PATH and also check directly if there is a directory name
-  rettv->vval.v_number = os_can_exe(name, NULL, true);
+  rettv->vval.v_number = os_can_exe(tv_get_string(&argvars[0]), NULL, true);
 }
 
 typedef struct {
@@ -1986,10 +1985,13 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "exepath()" function
 static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *arg = tv_get_string(&argvars[0]);
+  if (tv_check_for_string(&argvars[0]) == FAIL) {
+    return;
+  }
+
   char *path = NULL;
 
-  (void)os_can_exe(arg, &path, true);
+  (void)os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)path;
@@ -2163,7 +2165,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     .nextcmd = NULL,
     .cmdidx = CMD_USER,
   };
-  eap.argt |= NOSPC;
+  eap.argt |= EX_NOSPC;
 
   expand_filename(&eap, &cmdstr, &errormsg);
   if (errormsg != NULL && *errormsg != NUL) {
@@ -2461,7 +2463,7 @@ static void f_fnameescape(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *fbuf = NULL;
-  size_t len;
+  size_t len = 0;
   char buf[NUMBUFLEN];
   const char *fname = tv_get_string_chk(&argvars[0]);
   const char *const mods = tv_get_string_buf_chk(&argvars[1], buf);
@@ -2470,8 +2472,10 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     len = strlen(fname);
     size_t usedlen = 0;
-    (void)modify_fname((char_u *)mods, false, &usedlen,
-                       (char_u **)&fname, &fbuf, &len);
+    if (mods != NULL && *mods != NUL) {
+      (void)modify_fname((char_u *)mods, false, &usedlen,
+                         (char_u **)&fname, &fbuf, &len);
+    }
   }
 
   rettv->v_type = VAR_STRING;
@@ -2989,11 +2993,12 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // illegal argument or getchar(0) and no char avail: return zero
       n = 0;
     } else {
-      // getchar(0) and char avail: return char
+      // getchar(0) and char avail() != NUL: get a character.
+      // Note that vpeekc_any() returns K_SPECIAL for K_IGNORE.
       n = safe_vgetc();
     }
 
-    if (n == K_IGNORE) {
+    if (n == K_IGNORE || n == K_VER_SCROLLBAR || n == K_HOR_SCROLLBAR) {
       continue;
     }
     break;
@@ -3476,6 +3481,25 @@ static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   get_qf_loc_list(false, wp, &argvars[1], rettv);
+}
+
+
+/// "getmarklist()" function
+static void f_getmarklist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    get_global_marks(rettv->vval.v_list);
+    return;
+  }
+
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    return;
+  }
+
+  get_buf_local_marks(buf, rettv->vval.v_list);
 }
 
 /*
@@ -4048,7 +4072,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #if defined(WIN32)
     "win32",
 #endif
-#if defined(WIN64) || defined(_WIN64)
+#ifdef _WIN64
     "win64",
 #endif
     "fname_case",
@@ -4198,9 +4222,11 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else if (STRICMP(name, "ttyout") == 0) {
       n = stdout_isatty;
     } else if (STRICMP(name, "multi_byte_encoding") == 0) {
-      n = has_mbyte != 0;
+      n = true;
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
+    } else if (STRICMP(name, "clipboard_working") == 0) {
+      n = eval_has_provider("clipboard");
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
       n = eval_has_provider("clipboard");
@@ -4798,7 +4824,7 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4822,7 +4848,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4855,7 +4881,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -4988,7 +5014,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -5021,7 +5047,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
   if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
@@ -5239,7 +5265,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
     rettv->vval.v_string = NULL;
   }
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -5942,8 +5968,9 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int prot = 0755;  // -V536
 
   rettv->vval.v_number = FAIL;
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return;
+  }
 
   char buf[NUMBUFLEN];
   const char *const dir = tv_get_string_buf(&argvars[0], buf);
@@ -6545,7 +6572,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
         if (prevlen == 0) {
           assert(len < INT_MAX);
-          s = vim_strnsave(start, (int)len);
+          s = vim_strnsave(start, len);
         } else {
           /* Change "prev" buffer to be the right size.  This way
            * the bytes are only copied once, and very long lines are
@@ -6832,7 +6859,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_rename(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     rettv->vval.v_number = -1;
   } else {
     char buf[NUMBUFLEN];
@@ -7044,7 +7071,8 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     xfree(buf);
   }
 # else
-  rettv->vval.v_string = (char_u *)xstrdup(p);
+  char *v = os_realpath(fname, NULL);
+  rettv->vval.v_string = (char_u *)(v == NULL ? xstrdup(fname) : v);
 # endif
 #endif
 
@@ -7230,7 +7258,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7266,7 +7294,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 0;
   const int l_provider_call_nesting = provider_call_nesting;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7363,7 +7391,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7429,7 +7457,7 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7891,7 +7919,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;  // Address of the new server
 
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -7933,7 +7961,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "serverstop()" function
 static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -8024,14 +8052,9 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if ((d = argvars[0].vval.v_dict) != NULL) {
     char_u *const csearch = (char_u *)tv_dict_get_string(d, "char", false);
     if (csearch != NULL) {
-      if (enc_utf8) {
-        int pcc[MAX_MCO];
-        int c = utfc_ptr2char(csearch, pcc);
-        set_last_csearch(c, csearch, utfc_ptr2len(csearch));
-      }
-      else
-        set_last_csearch(PTR2CHAR(csearch),
-                         csearch, utfc_ptr2len(csearch));
+      int pcc[MAX_MCO];
+      const int c = utfc_ptr2char(csearch, pcc);
+      set_last_csearch(c, csearch, utfc_ptr2len(csearch));
     }
 
     di = tv_dict_find(d, S_LEN("forward"));
@@ -10466,7 +10489,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "termopen(cmd[, cwd])" function
 static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 
@@ -10710,72 +10733,54 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
 
-  if (!has_mbyte) {
-    // Not multi-byte: fromstr and tostr must be the same length.
-    if (strlen(fromstr) != strlen(tostr)) {
-      goto error;
-    }
-  }
-
   // fromstr and tostr have to contain the same number of chars.
   bool first = true;
   while (*in_str != NUL) {
-    if (has_mbyte) {
-      const char *cpstr = in_str;
-      const int inlen = (*mb_ptr2len)((const char_u *)in_str);
-      int cplen = inlen;
-      int idx = 0;
-      int fromlen;
-      for (const char *p = fromstr; *p != NUL; p += fromlen) {
-        fromlen = (*mb_ptr2len)((const char_u *)p);
-        if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
-          int tolen;
-          for (p = tostr; *p != NUL; p += tolen) {
-            tolen = (*mb_ptr2len)((const char_u *)p);
-            if (idx-- == 0) {
-              cplen = tolen;
-              cpstr = (char *)p;
-              break;
-            }
-          }
-          if (*p == NUL) {  // tostr is shorter than fromstr.
-            goto error;
-          }
-          break;
-        }
-        idx++;
-      }
-
-      if (first && cpstr == in_str) {
-        // Check that fromstr and tostr have the same number of
-        // (multi-byte) characters.  Done only once when a character
-        // of in_str doesn't appear in fromstr.
-        first = false;
+    const char *cpstr = in_str;
+    const int inlen = utfc_ptr2len((const char_u *)in_str);
+    int cplen = inlen;
+    int idx = 0;
+    int fromlen;
+    for (const char *p = fromstr; *p != NUL; p += fromlen) {
+      fromlen = utfc_ptr2len((const char_u *)p);
+      if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
         int tolen;
-        for (const char *p = tostr; *p != NUL; p += tolen) {
-          tolen = (*mb_ptr2len)((const char_u *)p);
-          idx--;
+        for (p = tostr; *p != NUL; p += tolen) {
+          tolen = utfc_ptr2len((const char_u *)p);
+          if (idx-- == 0) {
+            cplen = tolen;
+            cpstr = (char *)p;
+            break;
+          }
         }
-        if (idx != 0) {
+        if (*p == NUL) {  // tostr is shorter than fromstr.
           goto error;
         }
+        break;
       }
-
-      ga_grow(&ga, cplen);
-      memmove((char *)ga.ga_data + ga.ga_len, cpstr, (size_t)cplen);
-      ga.ga_len += cplen;
-
-      in_str += inlen;
-    } else {
-      // When not using multi-byte chars we can do it faster.
-      const char *const p = strchr(fromstr, *in_str);
-      if (p != NULL) {
-        ga_append(&ga, tostr[p - fromstr]);
-      } else {
-        ga_append(&ga, *in_str);
-      }
-      in_str++;
+      idx++;
     }
+
+    if (first && cpstr == in_str) {
+      // Check that fromstr and tostr have the same number of
+      // (multi-byte) characters.  Done only once when a character
+      // of in_str doesn't appear in fromstr.
+      first = false;
+      int tolen;
+      for (const char *p = tostr; *p != NUL; p += tolen) {
+        tolen = utfc_ptr2len((const char_u *)p);
+        idx--;
+      }
+      if (idx != 0) {
+        goto error;
+      }
+    }
+
+    ga_grow(&ga, cplen);
+    memmove((char *)ga.ga_data + ga.ga_len, cpstr, (size_t)cplen);
+    ga.ga_len += cplen;
+
+    in_str += inlen;
   }
 
   // add a terminating NUL
@@ -10869,7 +10874,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   }
-  rettv->vval.v_string = vim_strnsave(head, (int)(tail - head));
+  rettv->vval.v_string = vim_strnsave(head, tail - head);
 }
 
 /*
@@ -11013,6 +11018,31 @@ static void f_win_findbuf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_win_getid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = win_getid(argvars);
+}
+
+/// "win_gettype(nr)" function
+static void f_win_gettype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wp = curwin;
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    wp = find_win_by_nr_or_id(&argvars[0]);
+    if (wp == NULL) {
+      rettv->vval.v_string = vim_strsave((char_u *)"unknown");
+      return;
+    }
+  }
+  if (wp == aucmd_win) {
+    rettv->vval.v_string = vim_strsave((char_u *)"autocmd");
+  } else if (wp->w_p_pvw) {
+    rettv->vval.v_string = vim_strsave((char_u *)"preview");
+  } else if (wp->w_floating) {
+    rettv->vval.v_string = vim_strsave((char_u *)"popup");
+  } else if (wp == curwin && cmdwin_type != 0) {
+    rettv->vval.v_string = vim_strsave((char_u *)"command");
+  }
 }
 
 /// "win_gotoid()" function
@@ -11208,6 +11238,13 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     rettv->vval.v_number = wp->w_width;
   }
+}
+
+// "windowsversion()" function
+static void f_windowsversion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char_u *)xstrdup(windowsVersion);
 }
 
 /// "wordcount()" function

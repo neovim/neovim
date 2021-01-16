@@ -30,9 +30,7 @@ end
 ---
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param callback (optional, functionnil) Handler
---  `function(err, method, params, client_id)` for this request. Defaults
---  to the client callback in `client.callbacks`. See |lsp-callbacks|.
+--@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 --@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
@@ -40,12 +38,12 @@ end
 ---    iterate all clients and call their `cancel_request()` methods.
 ---
 --@see |vim.lsp.buf_request()|
-local function request(method, params, callback)
+local function request(method, params, handler)
   validate {
     method = {method, 's'};
-    callback = {callback, 'f', true};
+    handler = {handler, 'f', true};
   }
-  return vim.lsp.buf_request(0, method, params, callback)
+  return vim.lsp.buf_request(0, method, params, handler)
 end
 
 --- Checks whether the language servers attached to the current buffer are
@@ -64,6 +62,7 @@ function M.hover()
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
+--@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
 function M.declaration()
   local params = util.make_position_params()
@@ -138,8 +137,9 @@ end
 function M.formatting_sync(options, timeout_ms)
   local params = util.make_formatting_params(options)
   local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
-  if not result then return end
-  result = result[1].result
+  if not result or vim.tbl_isempty(result) then return end
+  local _, formatting_result = next(result)
+  result = formatting_result.result
   if not result then return end
   vim.lsp.util.apply_text_edits(result)
 end
@@ -149,7 +149,7 @@ end
 --@param options Table with valid `FormattingOptions` entries.
 --@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
---@param start_pos ({number, number}, optional) mark-indexed position.
+--@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
   validate { options = {options, 't', true} }
@@ -238,6 +238,65 @@ function M.outgoing_calls()
   end)
 end
 
+--- List workspace folders.
+---
+function M.list_workspace_folders()
+  local workspace_folders = {}
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    for _, folder in ipairs(client.workspaceFolders) do
+      table.insert(workspace_folders, folder.name)
+    end
+  end
+  return workspace_folders
+end
+
+--- Add the folder at path to the workspace folders. If {path} is
+--- not provided, the user will be prompted for a path using |input()|.
+function M.add_workspace_folder(workspace_folder)
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  vim.api.nvim_command("redraw")
+  if not (workspace_folder and #workspace_folder > 0) then return end
+  if vim.fn.isdirectory(workspace_folder) == 0 then
+    print(workspace_folder, " is not a valid directory")
+    return
+  end
+  local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    local found = false
+    for _, folder in ipairs(client.workspaceFolders) do
+      if folder.name == workspace_folder then
+        found = true
+        print(workspace_folder, "is already part of this workspace")
+        break
+      end
+    end
+    if not found then
+      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      table.insert(client.workspaceFolders, params.event.added[1])
+    end
+  end
+end
+
+--- Remove the folder at path from the workspace folders. If
+--- {path} is not provided, the user will be prompted for
+--- a path using |input()|.
+function M.remove_workspace_folder(workspace_folder)
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  vim.api.nvim_command("redraw")
+  if not (workspace_folder and #workspace_folder > 0) then return end
+  local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
+  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+    for idx, folder in ipairs(client.workspaceFolders) do
+      if folder.name == workspace_folder then
+        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+        client.workspaceFolders[idx] = nil
+        return
+      end
+    end
+  end
+  print(workspace_folder,  "is not currently part of the workspace")
+end
+
 --- Lists all symbols in the current workspace in the quickfix window.
 ---
 --- The list is filtered against {query}; if the argument is omitted from the
@@ -278,7 +337,7 @@ end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(context)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = util.get_line_diagnostics() }
+  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_range_params()
   params.context = context
   request('textDocument/codeAction', params)
@@ -293,7 +352,7 @@ end
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = util.get_line_diagnostics() }
+  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
   request('textDocument/codeAction', params)

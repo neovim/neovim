@@ -1217,10 +1217,6 @@ msgstr "E143: 'Autocommands' hebben het nieuwe buffer %s onverwacht verwijderd"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: niet-numeriek argument voor :z"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: in rvim zijn shell-opdrachten zijn niet toegestaan"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: reguliere expressies kunnen niet begrensd worden door letters"

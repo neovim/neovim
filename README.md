@@ -4,8 +4,7 @@
 [Chat](https://gitter.im/neovim/neovim) |
 [Twitter](https://twitter.com/Neovim)
 
-[![Travis build status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
+[![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3A%22CI%22)
 [![Codecov coverage](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)

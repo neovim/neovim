@@ -491,9 +491,10 @@ typedef struct {
   LuaRef on_changedtick;
   LuaRef on_detach;
   bool utf_sizes;
+  bool preview;
 } BufUpdateCallbacks;
 #define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                    LUA_NOREF, false }
+                                    LUA_NOREF, false, false }
 
 EXTERN int curbuf_splice_pending INIT(= 0);
 
@@ -532,15 +533,20 @@ struct file_buffer {
   // b_fname    is the same as b_sfname, unless ":cd" has been done,
   //            then it is the same as b_ffname (NULL for no name).
   //
-  char_u      *b_ffname;        // full path file name
-  char_u      *b_sfname;        // short file name
-  char_u      *b_fname;         // current file name
+  char_u      *b_ffname;        // full path file name, allocated
+  char_u      *b_sfname;        // short file name, allocated, may be equal to
+                                // b_ffname
+  char_u      *b_fname;         // current file name, points to b_ffname or
+                                // b_sfname
 
   bool file_id_valid;
   FileID file_id;
 
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
+  bool b_changed_invalid;       // Set if BufModified autocmd has not been
+                                // triggered since the last time b_changed was
+                                // modified.
 
   /// Change-identifier incremented for each change, including undo.
   ///
@@ -1129,12 +1135,6 @@ struct VimMenu {
   vimmenu_T   *next;                 ///< Next item in menu
 };
 
-typedef struct {
-  int wb_startcol;
-  int wb_endcol;
-  vimmenu_T *wb_menu;
-} winbar_item_T;
-
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1351,10 +1351,6 @@ struct window_S {
 
   char_u      *w_localdir;          /* absolute path of local directory or
                                        NULL */
-  vimmenu_T *w_winbar;            // The root of the WinBar menu hierarchy.
-  winbar_item_T *w_winbar_items;  // list of items in the WinBar
-  int w_winbar_height;            // 1 if there is a window toolbar
-
   // Options local to a window.
   // They are local because they influence the layout of the window or
   // depend on the window layout.

@@ -376,6 +376,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
     // the positioning.  Limit this to two times, when there is not much
     // room the window size will keep changing.
   } while (pum_set_selected(selected, redo_count) && (++redo_count <= 2));
+
+  pum_redraw();
 }
 
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
@@ -534,7 +536,17 @@ void pum_redraw(void)
               xfree(st);
               col -= width;
             } else {
-              grid_puts_len(&pum_grid, st, (int)STRLEN(st), row, col, attr);
+              int size = (int)STRLEN(st);
+              int cells = (int)mb_string2cells(st);
+
+              // only draw the text that fits
+              while (size > 0 && col + cells > pum_width + pum_col) {
+                size--;
+                size -= utf_head_off(st, st + size);
+                cells -= utf_ptr2cells(st + size);
+              }
+
+              grid_puts_len(&pum_grid, st, size, row, col, attr);
               xfree(st);
               col += width;
             }
@@ -730,6 +742,7 @@ static int pum_set_selected(int n, int repeat)
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
             set_option_value("swf", 0L, NULL, OPT_LOCAL);
+            set_option_value("bl", 0L, NULL, OPT_LOCAL);
             set_option_value("bt", 0L, "nofile", OPT_LOCAL);
             set_option_value("bh", 0L, "wipe", OPT_LOCAL);
             set_option_value("diff", 0L, NULL, OPT_LOCAL);
@@ -796,7 +809,7 @@ static int pum_set_selected(int n, int repeat)
               no_u_sync++;
               win_enter(curwin_save, true);
               no_u_sync--;
-              update_topline();
+              update_topline(curwin);
             }
 
             // Update the screen before drawing the popup menu.
@@ -822,10 +835,6 @@ static int pum_set_selected(int n, int repeat)
         }
       }
     }
-  }
-
-  if (!resized) {
-    pum_redraw();
   }
 
   return resized;

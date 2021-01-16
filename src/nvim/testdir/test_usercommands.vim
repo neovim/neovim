@@ -393,9 +393,13 @@ func Test_addr_all()
   call assert_equal(len(gettabinfo()), g:a2)
   bwipe
 
-  command! -addr=other DoSomething echo 'nothing'
+  command! -addr=other DoSomething  let g:a1 = <line1> | let g:a2 = <line2>
   DoSomething
-  call assert_fails('%DoSomething')
+  call assert_equal(line('.'), g:a1)
+  call assert_equal(line('.'), g:a2)
+  %DoSomething
+  call assert_equal(1, g:a1)
+  call assert_equal(line('$'), g:a2)
 
   delcommand DoSomething
 endfunc
@@ -421,7 +425,7 @@ func Test_command_list()
         \           execute('command DoCmd'))
   command! -count=2 DoCmd :
   call assert_equal("\n    Name              Args Address Complete    Definition"
-        \        .. "\n    DoCmd             0    2c                  :",
+        \        .. "\n    DoCmd             0    2c ?                :",
         \           execute('command DoCmd'))
 
   " Test with various -addr= argument values.

@@ -162,7 +162,7 @@ struct slang_S {
   bool sl_collapse;             // SAL collapse_result
   bool sl_rem_accents;          // SAL remove_accents
   bool sl_sofo;                 // SOFOFROM and SOFOTO instead of SAL items:
-                                // "sl_sal_first" maps chars, when has_mbyte
+                                // "sl_sal_first" maps chars
                                 // "sl_sal" is a list of wide char lists.
   garray_T sl_repsal;           // list of fromto_T entries from REPSAL lines
   int16_t sl_repsal_first[256];    // sl_rep_first for REPSAL lines

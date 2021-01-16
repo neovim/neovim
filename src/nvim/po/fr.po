@@ -1117,12 +1117,6 @@ msgstr "E143: Une autocommande a effacé le nouveau tampon %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: L'argument de :z n'est pas numérique"
 
-# AB - La version française fera peut-être mieux passer l'amère pilule.
-#      La consultation de l'aide donnera l'explication complète à ceux qui
-#      ne comprendraient pas à quoi ce message est dû.
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Les commandes externes sont indisponibles dans rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr ""
 "E146: Les expressions régulières ne peuvent pas être délimitées par des "

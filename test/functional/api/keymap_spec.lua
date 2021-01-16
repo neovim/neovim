@@ -751,7 +751,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   end
 
   it('rejects negative bufnr values', function()
-    eq('Wrong type for argument 1, expecting Buffer',
+    eq('Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
       pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {}))
   end)
 
@@ -808,5 +808,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     switch_to_buf(first)
     command('normal lhs')
     eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it("does not crash when setting keymap in a non-existing buffer #13541", function()
+    pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
+    helpers.assert_alive()
   end)
 end)

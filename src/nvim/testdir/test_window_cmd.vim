@@ -172,39 +172,6 @@ func Test_window_split_edit_bufnr()
   %bw!
 endfunc
 
-func Test_window_preview()
-  " Open a preview window
-  pedit Xa
-  call assert_equal(2, winnr('$'))
-  call assert_equal(0, &previewwindow)
-
-  " Go to the preview window
-  wincmd P
-  call assert_equal(1, &previewwindow)
-
-  " Close preview window
-  wincmd z
-  call assert_equal(1, winnr('$'))
-  call assert_equal(0, &previewwindow)
-
-  call assert_fails('wincmd P', 'E441:')
-endfunc
-
-func Test_window_preview_from_help()
-  filetype on
-  call writefile(['/* some C code */'], 'Xpreview.c')
-  help
-  pedit Xpreview.c
-  wincmd P
-  call assert_equal(1, &previewwindow)
-  call assert_equal('c', &filetype)
-  wincmd z
-
-  filetype off
-  close
-  call delete('Xpreview.c')
-endfunc
-
 func Test_window_exchange()
   e Xa
 
@@ -883,6 +850,14 @@ func Test_window_resize()
   exe other_winnr .. 'resize +1'
   call assert_equal(12, winheight(other_winnr))
   call assert_equal(&lines - 10 - 3 -2, winheight(0))
+  close
+
+  vsplit
+  wincmd l
+  let other_winnr = winnr('h')
+  call assert_notequal(winnr(), other_winnr)
+  exe 'vert ' .. other_winnr .. 'resize -' .. &columns
+  call assert_equal(0, winwidth(other_winnr))
 
   %bwipe!
 endfunc

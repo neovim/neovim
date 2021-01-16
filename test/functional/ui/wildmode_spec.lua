@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin = helpers.iswin
 local funcs = helpers.funcs
+local meths = helpers.meths
 local eq = helpers.eq
 local eval = helpers.eval
 local retry = helpers.retry
@@ -160,6 +161,7 @@ describe("'wildmenu'", function()
 
     if not iswin() then
       command('set shell=sh')  -- Need a predictable "$" prompt.
+      command('let $PS1 = "$"')
     end
     command('set laststatus=0')
     command('vsplit')
@@ -395,6 +397,64 @@ describe("'wildmenu'", function()
       [No Name]                |
                                |
     ]])
+  end)
+
+  it('works with c_CTRL_Z standard mapping', function()
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Blue1};
+      [2] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow};
+      [3] = {bold = true, reverse = true};
+    }
+
+    -- Wildcharm? where we are going we aint't no need no wildcharm.
+    eq(0, meths.get_option'wildcharm')
+    -- Don't mess the defaults yet (neovim is about backwards compatibility)
+    eq(9, meths.get_option'wildchar')
+    -- Lol what is cnoremap? Some say it can define mappings.
+    command 'set wildchar=0'
+    eq(0, meths.get_option'wildchar')
+
+    command 'cnoremap <f2> <c-z>'
+    feed(':syntax <f2>')
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {2:case}{3:  clear  cluster  >  }|
+      :syntax case^             |
+    ]]}
+    feed '<esc>'
+
+    command 'set wildmode=longest:full,full'
+    -- this will get cleaner once we have native lua expr mappings:
+    command [[cnoremap <expr> <tab> luaeval("not rawset(_G, 'coin', not coin).coin") ? "<c-z>" : "c"]]
+
+    feed ':syntax <tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      :syntax c^                |
+    ]]}
+
+    feed '<tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {3:case  clear  cluster  >  }|
+      :syntax c^                |
+    ]]}
+
+    feed '<tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      :syntax cc^               |
+    ]]}
   end)
 end)
 

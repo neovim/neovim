@@ -280,7 +280,7 @@ func Test_omni_dash()
   set omnifunc=Omni
   new
   exe "normal Gofind -\<C-x>\<C-o>"
-  call assert_equal("\n-\nmatch 1 of 2", execute(':2mess'))
+  call assert_equal("find -help", getline('$'))
 
   bwipe!
   delfunc Omni
@@ -310,6 +310,24 @@ func Test_completefunc_args()
   bwipe!
   unlet s:args
   delfunc CompleteFunc
+endfunc
+
+func CompleteTest(findstart, query)
+  if a:findstart
+    return col('.')
+  endif
+  return ['matched']
+endfunc
+
+func Test_completefunc_info()
+  new
+  set completeopt=menuone
+  set completefunc=CompleteTest
+  call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
+  call assert_equal("matched{'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  bwipe!
+  set completeopt&
+  set completefunc&
 endfunc
 
 " Check that when using feedkeys() typeahead does not interrupt searching for
@@ -450,3 +468,17 @@ func Test_pum_with_folds_two_tabs()
   call StopVimInTerminal(buf)
   call delete('Xpumscript')
 endfunc
+
+" Test to ensure 'Scanning...' messages are not recorded in messages history
+func Test_z1_complete_no_history()
+  new
+  messages clear
+  let currmess = execute('messages')
+  setlocal dictionary=README.txt
+  exe "normal owh\<C-X>\<C-K>"
+  exe "normal owh\<C-N>"
+  call assert_equal(currmess, execute('messages'))
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

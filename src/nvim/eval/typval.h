@@ -492,7 +492,7 @@ static inline void tv_list_ref(list_T *const l)
 static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
 
-/// Set a list as the return value
+/// Set a list as the return value.  Increments the reference count.
 ///
 /// @param[out]  tv  Object to receive the list
 /// @param[in,out]  l  List to pass to the object

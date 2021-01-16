@@ -35,18 +35,22 @@ describe('eval-API', function()
     eq('Vim(call):E119: Not enough arguments for function: nvim_set_option', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
-    eq('Vim(call):E5555: API call: Wrong type for argument 4, expecting Boolean', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean', err)
 
     err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq('Vim(call):E5555: API call: Wrong type for argument 5, expecting ArrayOf(String)', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)', err)
 
     err = exc_exec('call nvim_buf_get_number("0")')
-    eq('Vim(call):E5555: API call: Wrong type for argument 1, expecting Buffer', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 1 when calling nvim_buf_get_number, expecting Buffer', err)
 
     err = exc_exec('call nvim_buf_line_count(17)')
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
+  it('cannot change texts if textlocked', function()
+    command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
+    eq('Vim(call):E5555: API call: E523: Not allowed here', pcall_err(command, "normal! yy"))
+  end)
 
   it("use buffer numbers and windows ids as handles", function()
     local screen = Screen.new(40, 8)

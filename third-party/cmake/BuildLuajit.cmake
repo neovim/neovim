@@ -64,9 +64,12 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
 
 if(UNIX)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    # Set MACOSX_DEPLOYMENT_TARGET (else luajit defaults to 10.4). #9050
-    # https://github.com/LuaJIT/LuaJIT/blob/b025b01c5b9d23f6218c7d72b7aafa3f1ab1e08a/src/Makefile#L301-L303
-    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    if(CMAKE_OSX_DEPLOYMENT_TARGET)
+      set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    else()
+      # Use the same target as our nightly builds
+      set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=10.11")
+    endif()
   else()
     set(DEPLOYMENT_TARGET "")
   endif()

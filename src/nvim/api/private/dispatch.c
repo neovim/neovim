@@ -19,6 +19,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/window.h"
+#include "nvim/api/deprecated.h"
 
 static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 

@@ -1,10 +1,14 @@
 local a = vim.api
+local query = require"vim.treesitter.query"
 
 -- support reload for quick experimentation
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
 
 TSHighlighter.active = TSHighlighter.active or {}
+
+local TSHighlighterQuery = {}
+TSHighlighterQuery.__index = TSHighlighterQuery
 
 local ns = a.nvim_create_namespace("treesitter/highlighter")
 
@@ -56,46 +60,38 @@ TSHighlighter.hl_map = {
     ["include"] = "Include",
 }
 
-function TSHighlighter.new(parser, query)
-  local self = setmetatable({}, TSHighlighter)
-
-  self.parser = parser
-  parser:register_cbs {
-    on_changedtree = function(...) self:on_changedtree(...) end
-  }
-
-  self:set_query(query)
-  self.edit_count = 0
-  self.redraw_count = 0
-  self.line_count = {}
-  self.root = self.parser:parse():root()
-  a.nvim_buf_set_option(self.buf, "syntax", "")
-
-  -- TODO(bfredl): can has multiple highlighters per buffer????
-  if not TSHighlighter.active[parser.bufnr] then
-    TSHighlighter.active[parser.bufnr] = {}
-  end
-
-  TSHighlighter.active[parser.bufnr][parser.lang] = self
-
-  -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
-  -- but use synload.vim rather than syntax.vim to not enable
-  -- syntax FileType autocmds. Later on we should integrate with the
-  -- `:syntax` and `set syntax=...` machinery properly.
-  if vim.g.syntax_on ~= 1 then
-    vim.api.nvim_command("runtime! syntax/synload.vim")
-  end
-  return self
-end
-
 local function is_highlight_name(capture_name)
   local firstc = string.sub(capture_name, 1, 1)
   return firstc ~= string.lower(firstc)
 end
 
-function TSHighlighter:get_hl_from_capture(capture)
+function TSHighlighterQuery.new(lang, query_string)
+  local self = setmetatable({}, { __index = TSHighlighterQuery })
 
-  local name = self.query.captures[capture]
+  self.hl_cache = setmetatable({}, {
+    __index = function(table, capture)
+      local hl = self:get_hl_from_capture(capture)
+      rawset(table, capture, hl)
+
+      return hl
+    end
+  })
+
+  if query_string then
+    self._query = query.parse_query(lang, query_string)
+  else
+    self._query = query.get_query(lang, "highlights")
+  end
+
+  return self
+end
+
+function TSHighlighterQuery:query()
+  return self._query
+end
+
+function TSHighlighterQuery:get_hl_from_capture(capture)
+  local name = self._query.captures[capture]
 
   if is_highlight_name(name) then
     -- From "Normal.left" only keep "Normal"
@@ -107,97 +103,155 @@ function TSHighlighter:get_hl_from_capture(capture)
   end
 end
 
+function TSHighlighter.new(tree, opts)
+  local self = setmetatable({}, TSHighlighter)
+
+  if type(tree:source()) ~= "number" then
+    error("TSHighlighter can not be used with a string parser source.")
+  end
+
+  opts = opts or {}
+  self.tree = tree
+  tree:register_cbs {
+    on_changedtree = function(...) self:on_changedtree(...) end,
+    on_bytes = function(...) self:on_bytes(...) end
+  }
+
+  self.bufnr = tree:source()
+  self.edit_count = 0
+  self.redraw_count = 0
+  self.line_count = {}
+  -- A map of highlight states.
+  -- This state is kept during rendering across each line update.
+  self._highlight_states = {}
+  self._queries = {}
+
+  -- Queries for a specific language can be overridden by a custom
+  -- string query... if one is not provided it will be looked up by file.
+  if opts.queries then
+    for lang, query_string in pairs(opts.queries) do
+      self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+    end
+  end
+
+  a.nvim_buf_set_option(self.bufnr, "syntax", "")
+
+  TSHighlighter.active[self.bufnr] = self
+
+  -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
+  -- but use synload.vim rather than syntax.vim to not enable
+  -- syntax FileType autocmds. Later on we should integrate with the
+  -- `:syntax` and `set syntax=...` machinery properly.
+  if vim.g.syntax_on ~= 1 then
+    vim.api.nvim_command("runtime! syntax/synload.vim")
+  end
+
+  self.tree:parse()
+
+  return self
+end
+
+function TSHighlighter:destroy()
+  if TSHighlighter.active[self.bufnr] then
+    TSHighlighter.active[self.bufnr] = nil
+  end
+end
+
+function TSHighlighter:get_highlight_state(tstree)
+  if not self._highlight_states[tstree] then
+    self._highlight_states[tstree] = {
+      next_row = 0,
+      iter = nil
+    }
+  end
+
+  return self._highlight_states[tstree]
+end
+
+function TSHighlighter:reset_highlight_state()
+  self._highlight_states = {}
+end
+
+function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
+  a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
+end
+
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
-    a.nvim__buf_redraw_range(self.buf, ch[1], ch[3]+1)
+    a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3]+1)
   end
 end
 
-function TSHighlighter:set_query(query)
-  if type(query) == "string" then
-    query = vim.treesitter.parse_query(self.parser.lang, query)
+function TSHighlighter:get_query(lang)
+  if not self._queries[lang] then
+    self._queries[lang] = TSHighlighterQuery.new(lang)
   end
 
-  self.query = query
-
-  self.hl_cache = setmetatable({}, {
-    __index = function(table, capture)
-      local hl = self:get_hl_from_capture(capture)
-      rawset(table, capture, hl)
-
-      return hl
-    end
-  })
-
-  a.nvim__buf_redraw_range(self.parser.bufnr, 0, a.nvim_buf_line_count(self.parser.bufnr))
-end
-
-local function iter_active_tshl(buf, fn)
-  for _, hl in pairs(TSHighlighter.active[buf] or {}) do
-    fn(hl)
-  end
+  return self._queries[lang]
 end
 
 local function on_line_impl(self, buf, line)
-  if self.root == nil then
-    return -- parser bought the farm already
-  end
+  self.tree:for_each_tree(function(tstree, tree)
+    if not tstree then return end
 
-  if self.iter == nil then
-    self.iter = self.query:iter_captures(self.root,buf,line,self.botline)
-  end
-  while line >= self.nextrow do
-    local capture, node = self.iter()
-    if capture == nil then
-      break
+    local root_node = tstree:root()
+    local root_start_row, _, root_end_row, _ = root_node:range()
+
+    -- Only worry about trees within the line range
+    if root_start_row > line or root_end_row < line then return end
+
+    local state = self:get_highlight_state(tstree)
+    local highlighter_query = self:get_query(tree:lang())
+
+    if state.iter == nil then
+      state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
-    local start_row, start_col, end_row, end_col = node:range()
-    local hl = self.hl_cache[capture]
-    if hl and end_row >= line then
-      a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
-                             { end_line = end_row, end_col = end_col,
-                               hl_group = hl,
-                               ephemeral = true,
-                              })
+
+    while line >= state.next_row do
+      local capture, node = state.iter()
+
+      if capture == nil then break end
+
+      local start_row, start_col, end_row, end_col = node:range()
+      local hl = highlighter_query.hl_cache[capture]
+
+      if hl and end_row >= line then
+        a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
+                               { end_line = end_row, end_col = end_col,
+                                 hl_group = hl,
+                                 ephemeral = true,
+                                 priority = 100 -- Low but leaves room below
+                                })
+      end
+      if start_row > line then
+        state.next_row = start_row
+      end
     end
-    if start_row > line then
-      self.nextrow = start_row
-    end
-  end
+  end, true)
 end
 
-function TSHighlighter._on_line(_, _win, buf, line, highlighter)
-  -- on_line is only called when this is non-nil
-  if highlighter then
-    on_line_impl(highlighter, buf, line)
-  else
-    iter_active_tshl(buf, function(self)
-      on_line_impl(self, buf, line)
-    end)
-  end
+function TSHighlighter._on_line(_, _win, buf, line, _)
+  local self = TSHighlighter.active[buf]
+  if not self then return end
+
+  on_line_impl(self, buf, line)
 end
 
 function TSHighlighter._on_buf(_, buf)
-  iter_active_tshl(buf, function(self)
-    if self then
-      local tree = self.parser:parse()
-      self.root = (tree and tree:root()) or nil
-    end
-  end)
+  local self = TSHighlighter.active[buf]
+  if self then
+    self.tree:parse()
+  end
 end
 
-function TSHighlighter._on_win(_, _win, buf, _topline, botline)
-  iter_active_tshl(buf, function(self)
-    if not self then
-      return false
-    end
+function TSHighlighter._on_win(_, _win, buf, _topline)
+  local self = TSHighlighter.active[buf]
+  if not self then
+    return false
+  end
 
-    self.iter = nil
-    self.nextrow = 0
-    self.botline = botline
-    self.redraw_count = self.redraw_count + 1
-    return true
-  end)
+  self:reset_highlight_state()
+  self.redraw_count = self.redraw_count + 1
   return true
 end
 

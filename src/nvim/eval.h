@@ -233,6 +233,8 @@ typedef enum {
   kDictListItems,  ///< List dictionary contents: [keys, values].
 } DictListType;
 
+typedef int (*ex_unletlock_callback)(lval_T *, char_u *, exarg_T *, int);
+
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 

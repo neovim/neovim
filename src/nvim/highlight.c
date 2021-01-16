@@ -149,22 +149,22 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
   }
 }
 
-static ColorKey colored_key(NS ns_id, int syn_id)
-{
-  return (ColorKey){ .ns_id = (int)ns_id, .syn_id = syn_id };
-}
-
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
   DecorProvider *p = get_provider(ns_id, true);
+  if ((attrs.rgb_ae_attr & HL_DEFAULT)
+      && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
+    return;
+  }
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
   ColorItem it = { .attr_id = attr_id,
                    .link_id = link_id,
-                   .version = p->hl_valid };
-  map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
+                   .version = p->hl_valid,
+                   .is_default = (attrs.rgb_ae_attr & HL_DEFAULT) };
+  map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
 }
 
-int ns_get_hl(NS ns_id, int hl_id, bool link)
+int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
 {
   static int recursive = 0;
 
@@ -176,7 +176,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link)
   }
 
   DecorProvider *p = get_provider(ns_id, true);
-  ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id));
+  ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;
 
@@ -218,11 +218,16 @@ int ns_get_hl(NS ns_id, int hl_id, bool link)
 
     it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
     it.version = p->hl_valid-tmp;
-    map_put(ColorKey, ColorItem)(ns_hl, colored_key(ns_id, hl_id), it);
+    it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
+    map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
+  }
+
+  if (it.is_default && nodefault) {
+    return -1;
   }
 
   if (link) {
-    return it.attr_id >= 0 ? -1 : it.link_id;
+    return it.attr_id >= 0 ? 0 : it.link_id;
   } else {
     return it.attr_id;
   }
@@ -307,7 +312,7 @@ void update_window_hl(win_T *wp, bool invalid)
   //
   // haha, theme engine go brrr
   int normality = syn_check_group((const char_u *)S_LEN("Normal"));
-  int ns_attr = ns_get_hl(-1, normality, false);
+  int ns_attr = ns_get_hl(-1, normality, false, false);
   if (ns_attr > 0) {
     // TODO(bfredl): hantera NormalNC and so on
     wp->w_hl_attr_normal = ns_attr;
@@ -793,6 +798,8 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       { "undercurl", HL_UNDERCURL },
       { "italic", HL_ITALIC },
       { "reverse", HL_INVERSE },
+      { "default", HL_DEFAULT },
+      { "global", HL_GLOBAL },
       { NULL, 0 },
     };
 

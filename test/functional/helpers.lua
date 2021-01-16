@@ -442,6 +442,7 @@ function module.new_argv(...)
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
+        'XDG_DATA_DIRS',
         'TMPDIR',
       }) do
         if not env_tbl[k] then
@@ -722,6 +723,19 @@ function module.pending_win32(pending_fn)
   else
     return false
   end
+end
+
+function module.pending_c_parser(pending_fn)
+  local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
+  if not status then
+    if module.isCI() then
+      error("treesitter C parser not found, required on CI: " .. msg)
+    else
+      pending_fn 'no C parser, skipping'
+      return true
+    end
+  end
+  return false
 end
 
 -- Calls pending() and returns `true` if the system is too slow to

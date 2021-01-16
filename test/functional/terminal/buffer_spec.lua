@@ -6,6 +6,7 @@ local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.s
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 local command= helpers.command
+local exc_exec = helpers.exc_exec
 
 describe(':terminal buffer', function()
   local screen
@@ -252,6 +253,10 @@ describe(':terminal buffer', function()
       {3:-- TERMINAL --}                                    |
     ]])
     command('bdelete!')
+  end)
+
+  it('handles wqall', function()
+    eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
   end)
 end)
 

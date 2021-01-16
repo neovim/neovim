@@ -215,6 +215,8 @@ EXTERN bool emsg_severe INIT(= false);      // use message of next of several
 EXTERN int did_endif INIT(= false);         // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
+/// g: value
+#define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // set by emsg() when the message
                                             // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
@@ -491,9 +493,6 @@ EXTERN int stdout_isatty INIT(= true);
 // volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
 
-// When started in restricted mode (-Z).
-EXTERN int restricted INIT(= false);
-
 /// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
 /// .vimrc in current directory.
 EXTERN int secure INIT(= false);
@@ -587,8 +586,8 @@ EXTERN int vr_lines_changed INIT(= 0);      // #Lines changed by "gR" so far
 EXTERN int inhibit_delete_count INIT(= 0);
 
 // These flags are set based upon 'fileencoding'.
-// Note that "enc_utf8" is also set for "unicode", because the characters are
-// internally stored as UTF-8 (to avoid trouble with NUL bytes).
+// The characters are internally stored as UTF-8
+// to avoid trouble with NUL bytes.
 # define DBCS_JPN       932     // japan
 # define DBCS_JPNU      9932    // euc-jp
 # define DBCS_KOR       949     // korea
@@ -599,12 +598,6 @@ EXTERN int inhibit_delete_count INIT(= 0);
 # define DBCS_CHTU      9950    // euc-tw
 # define DBCS_2BYTE     1       // 2byte-
 # define DBCS_DEBUG     -1
-
-// mbyte flags that used to depend on 'encoding'. These are now deprecated, as
-// 'encoding' is always "utf-8". Code that use them can be refactored to
-// remove dead code.
-#define enc_utf8 true
-#define has_mbyte true
 
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
@@ -872,7 +865,6 @@ EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
 EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
-EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
 EXTERN char_u e_invarg2[] INIT(= N_("E475: Invalid argument: %s"));
 EXTERN char_u e_invargval[] INIT(= N_("E475: Invalid value for argument %s"));
@@ -943,6 +935,7 @@ EXTERN char_u e_readonly[] INIT(= N_(
     "E45: 'readonly' option is set (add ! to override)"));
 EXTERN char_u e_readonlyvar[] INIT(= N_(
     "E46: Cannot change read-only variable \"%.*s\""));
+EXTERN char_u e_stringreq[] INIT(= N_("E928: String required"));
 EXTERN char_u e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN char_u e_toomanyarg[] INIT(= N_(
     "E118: Too many arguments for function: %s"));
@@ -1059,5 +1052,8 @@ typedef enum {
 
 #define MIN_CD_SCOPE  kCdScopeWindow
 #define MAX_CD_SCOPE  kCdScopeGlobal
+
+// Only filled for Win32.
+EXTERN char windowsVersion[20] INIT(= { 0 });
 
 #endif  // NVIM_GLOBALS_H

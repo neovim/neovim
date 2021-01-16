@@ -55,16 +55,10 @@ static bool menu_is_winbar(const char_u *const name)
   return (STRNCMP(name, "WinBar", 6) == 0);
 }
 
-int winbar_height(const win_T *const wp)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  return wp->w_winbar != NULL && wp->w_winbar->children != NULL ? 1 : 0;
-}
-
 static vimmenu_T **get_root_menu(const char_u *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return menu_is_winbar(name) ? &curwin->w_winbar : &root_menu;
+  return &root_menu;
 }
 
 /// Do the :menu command and relatives.
@@ -191,10 +185,6 @@ ex_menu(exarg_T *eap)
   }
 
   vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
-  if (root_menu_ptr == &curwin->w_winbar) {
-    // Assume the window toolbar menu will change.
-    redraw_later(curwin, NOT_VALID);
-  }
 
   if (enable != kNone) {
     // Change sensitivity of the menu.
@@ -268,19 +258,6 @@ ex_menu(exarg_T *eap)
     }
 
     xfree(map_buf);
-  }
-
-  if (root_menu_ptr == &curwin->w_winbar) {
-    const int h = winbar_height(curwin);
-
-    if (h != curwin->w_winbar_height) {
-      if (h == 0) {
-        curwin->w_height++;
-      } else if (curwin->w_height > 0) {
-        curwin->w_height--;
-      }
-      curwin->w_winbar_height = h;
-    }
   }
 
   ui_call_update_menu();
@@ -661,14 +638,6 @@ remove_menu (
   return OK;
 }
 
-// Remove the WinBar menu from window "wp".
-void remove_winbar(win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
-{
-  remove_menu(&wp->w_winbar, (char_u *)"", MENU_ALL_MODES, true);
-  xfree(wp->w_winbar_items);
-}
-
 /*
  * Free the given menu structure and remove it from the linked list.
  */
@@ -937,7 +906,6 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  * Used when expanding menu names.
  */
 static vimmenu_T        *expand_menu = NULL;
-static vimmenu_T *expand_menu_alt = NULL;
 static int expand_modes = 0x0;
 static int expand_emenu;                /* TRUE for ":emenu" command */
 
@@ -992,8 +960,6 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
     return NULL;  // TODO(vim): check for next command?
   }
   if (*p == NUL) {  // Complete the menu name
-    bool try_alt_menu = true;
-
     // With :unmenu, you only want to match menus for the appropriate mode.
     // With :menu though you might want to add a menu with the same name as
     // one in another mode, so match menus from other modes too.
@@ -1025,10 +991,6 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
           break;
         }
         menu = menu->next;
-        if (menu == NULL && try_alt_menu) {
-          menu = curwin->w_winbar;
-          try_alt_menu = false;
-        }
       }
       if (menu == NULL) {
         /* No menu found with the name we were looking for */
@@ -1037,18 +999,12 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
       }
       name = p;
       menu = menu->children;
-      try_alt_menu = false;
     }
     xfree(path_name);
 
     xp->xp_context = expand_menus ? EXPAND_MENUNAMES : EXPAND_MENUS;
     xp->xp_pattern = after_dot;
     expand_menu = menu;
-    if (expand_menu == root_menu) {
-      expand_menu_alt = curwin->w_winbar;
-    } else {
-      expand_menu_alt = NULL;
-    }
   } else {                      // We're in the mapping part
     xp->xp_context = EXPAND_NOTHING;
   }
@@ -1062,13 +1018,11 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 char_u *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
-  static bool did_alt_menu = false;
   char_u              *str;
   static int should_advance = FALSE;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    did_alt_menu = false;
     should_advance = false;
   }
 
@@ -1077,10 +1031,6 @@ char_u *get_menu_name(expand_T *xp, int idx)
                           || menu_is_separator(menu->dname)
                           || menu->children == NULL)) {
     menu = menu->next;
-    if (menu == NULL && !did_alt_menu) {
-      menu = expand_menu_alt;
-      did_alt_menu = true;
-    }
   }
 
   if (menu == NULL)         /* at end of linked list */
@@ -1100,10 +1050,6 @@ char_u *get_menu_name(expand_T *xp, int idx)
   if (should_advance) {
     // Advance to next menu entry.
     menu = menu->next;
-    if (menu == NULL && !did_alt_menu) {
-      menu = expand_menu_alt;
-      did_alt_menu = true;
-    }
   }
 
   should_advance = !should_advance;
@@ -1118,7 +1064,6 @@ char_u *get_menu_name(expand_T *xp, int idx)
 char_u *get_menu_names(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
-  static bool did_alt_menu = false;
 #define TBUFFER_LEN 256
   static char_u tbuffer[TBUFFER_LEN];         /*hack*/
   char_u              *str;
@@ -1126,7 +1071,6 @@ char_u *get_menu_names(expand_T *xp, int idx)
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
-    did_alt_menu = false;
     should_advance = false;
   }
 
@@ -1136,10 +1080,6 @@ char_u *get_menu_names(expand_T *xp, int idx)
              || (expand_emenu && menu_is_separator(menu->dname))
              || menu->dname[STRLEN(menu->dname) - 1] == '.')) {
     menu = menu->next;
-    if (menu == NULL && !did_alt_menu) {
-      menu = expand_menu_alt;
-      did_alt_menu = true;
-    }
   }
 
   if (menu == NULL)         /* at end of linked list */
@@ -1173,10 +1113,6 @@ char_u *get_menu_names(expand_T *xp, int idx)
   if (should_advance) {
     // Advance to next menu entry.
     menu = menu->next;
-    if (menu == NULL && !did_alt_menu) {
-      menu = expand_menu_alt;
-      did_alt_menu = true;
-    }
   }
 
   should_advance = !should_advance;
@@ -1470,7 +1406,6 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
     }
   }
 
-  // For the WinBar menu always use the Normal mode menu.
   if (idx == -1 || eap == NULL) {
     mode = (char_u *)"Normal";
     idx = MENU_INDEX_NORMAL;
@@ -1538,53 +1473,6 @@ void ex_emenu(exarg_T *eap)
 
   // Found the menu, so execute.
   execute_menu(eap, menu);
-}
-
-// Handle a click in the window toolbar of "wp" at column "col".
-void winbar_click(win_T *wp, int col)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (wp->w_winbar_items == NULL) {
-    return;
-  }
-  for (int idx = 0; wp->w_winbar_items[idx].wb_menu != NULL; idx++) {
-    winbar_item_T *item = &wp->w_winbar_items[idx];
-
-    if (col >= item->wb_startcol && col <= item->wb_endcol) {
-      win_T *save_curwin = NULL;
-      const pos_T save_visual = VIsual;
-      const int save_visual_active = VIsual_active;
-      const int save_visual_select = VIsual_select;
-      const int save_visual_reselect = VIsual_reselect;
-      const int save_visual_mode = VIsual_mode;
-
-      if (wp != curwin) {
-        // Clicking in the window toolbar of a not-current window.
-        // Make that window the current one and save Visual mode.
-        save_curwin = curwin;
-        VIsual_active = false;
-        curwin = wp;
-        curbuf = curwin->w_buffer;
-        check_cursor();
-      }
-
-      // Note: the command might close the current window.
-      execute_menu(NULL, item->wb_menu);
-
-      if (save_curwin != NULL && win_valid(save_curwin)) {
-        curwin = save_curwin;
-        curbuf = curwin->w_buffer;
-        VIsual = save_visual;
-        VIsual_active = save_visual_active;
-        VIsual_select = save_visual_select;
-        VIsual_reselect = save_visual_reselect;
-        VIsual_mode = save_visual_mode;
-      }
-      if (!win_valid(wp)) {
-        break;
-      }
-    }
-  }
 }
 
 /*
