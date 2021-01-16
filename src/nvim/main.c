@@ -2044,7 +2044,6 @@ static void usage(void)
   mch_msg(_("  -u <config>           Use this config file\n"));
   mch_msg(_("  -v, --version         Print version information\n"));
   mch_msg(_("  -V[N][file]           Verbose [level][file]\n"));
-  mch_msg(_("  -Z                    Restricted mode\n"));
   mch_msg("\n");
   mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
