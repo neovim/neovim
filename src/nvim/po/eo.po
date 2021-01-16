@@ -2989,9 +2989,6 @@ msgstr "-y\t\t\tFacila reĝimo (kiel \"evim\", senreĝima)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tNurlegebla reĝimo (kiel \"view\")"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tLimigita reĝimo (kiel \"rvim\")"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tŜanĝoj (skribo al dosieroj) nepermeseblaj"
 

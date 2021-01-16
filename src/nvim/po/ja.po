@@ -3024,9 +3024,6 @@ msgstr "-y\t\t\tイージーモード (\"evim\" と同じ、モード無)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\t読込専用モード (\"view\" と同じ)"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\t制限モード (\"rvim\" と同じ)"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\t変更 (ファイル保存時) をできないようにする"
 

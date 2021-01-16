@@ -3450,10 +3450,6 @@ msgstr "-y\t\t\tJednoduchý mód (rovnaké ako \"evim\", bezmódový)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tMód iba pre èítanie (ako \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tObmedzený mód (rovnaké ako \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tZmeny (ukladanie súborov) zakázané"

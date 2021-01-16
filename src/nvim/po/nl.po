@@ -3449,10 +3449,6 @@ msgstr "-y\t\t\tEenvoudige modus (zoals \"evim\", zonder modus)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tAlleen-lezen modus (zoals \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tBeperkte modus (zoals \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tAanpassingen (bestanden opslaan) niet toegestaan"

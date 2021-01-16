@@ -3547,10 +3547,6 @@ msgstr "-v\t\t\tSnadný re¾im (stejné jako \"evim\", ¾ádné módy )"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tRe¾im pouze_pro_ètení (jako \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tOmezený re¾im (stejné jako \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tZmìny (ukládání souborù) zakázány"

@@ -3022,9 +3022,6 @@ msgstr "-y\t\t\tMód éasca (mar \"evim\", gan mhóid)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tMód inléite amháin (mar \"view\")"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tMód srianta (mar \"rvim\")"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tNí cheadaítear athruithe (.i. scríobh na gcomhad)"
 

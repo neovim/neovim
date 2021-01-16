@@ -5735,10 +5735,6 @@ msgstr "-y\t\t\tLätt läge (som \"evim\", lägeslös)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tSkrivskyddat läge (som \"view\")"
 
-#: ../main.c:2186
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tBegränsat läge (som \"rvim\")"
-
 #: ../main.c:2187
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tModifieringar (skriva filer) inte tillåtet"

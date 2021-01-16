@@ -3249,10 +3249,6 @@ msgstr ""
 #~ msgstr "                              kahta tilaa varten "
 
 #, fuzzy
-#~ msgid "  -Z                    Restricted mode\n"
-#~ msgstr "                              kahta tilaa varten "
-
-#, fuzzy
 #~ msgid "  -m                    Modifications (writing files) not allowed\n"
 #~ msgstr "-m\t\t\tMuokkaukset (kirjoittaminen tiedostoon) pois käytöstä"
 
@@ -6960,9 +6956,6 @@ msgstr "Lista tai luku tarvitaan"
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinääritila"
-
-#~ msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-#~ msgstr "-Z\t\t\tRajoitettu tila (kuten rvimillä)"
 
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tKirjoitussuojattu tila (kuten view'lla)"
