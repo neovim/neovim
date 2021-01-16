@@ -233,13 +233,6 @@ describe('startup defaults', function()
       }})
       eq(xdgcachedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
-    it('defaults to .nvimlog if stdpath("cache") is invalid', function()
-      clear({env={
-        XDG_CACHE_HOME='Xtest-missing-xdg-dir',
-        NVIM_LOG_FILE='.',  -- Any directory is invalid.
-      }})
-      eq('.nvimlog', eval('$NVIM_LOG_FILE'))
-    end)
   end)
 end)
 
