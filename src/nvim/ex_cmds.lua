@@ -2455,7 +2455,7 @@ module.cmds = {
   },
   {
     command='sleep',
-    flags=bit.bor(RANGE, COUNT, EXTRA, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, RANGE, COUNT, EXTRA, TRLBAR, CMDWIN),
     addr_type='ADDR_OTHER',
     func='ex_sleep',
   },
