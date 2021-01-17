@@ -3828,7 +3828,7 @@ static void cmd_cursor_goto(int row, int col)
   ui_grid_cursor_goto(grid->handle, row, col);
 }
 
-void gotocmdline(int clr)
+void gotocmdline(bool clr)
 {
   if (ui_has(kUICmdline)) {
     return;
