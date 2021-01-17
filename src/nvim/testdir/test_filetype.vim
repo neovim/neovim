@@ -429,6 +429,7 @@ let s:filename_checks = {
     \ 'smith': ['file.smt', 'file.smith'],
     \ 'sml': ['file.sml'],
     \ 'snobol4': ['file.sno', 'file.spt'],
+    \ 'sparql': ['file.rq', 'file.sparql'],
     \ 'spec': ['file.spec'],
     \ 'spice': ['file.sp', 'file.spice'],
     \ 'spup': ['file.speedup', 'file.spdata', 'file.spd'],
