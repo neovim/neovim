@@ -489,12 +489,12 @@ gO			Show a filetype-specific, navigable "outline" of the
 			Currently works in |help| and |:Man| buffers.
 
 [N]gs							*gs* *:sl* *:sleep*
-:[N]sl[eep] [N]	[m]	Do nothing for [N] seconds, or [N] milliseconds if [m]
+:[N]sl[eep] [N][m]	Do nothing for [N] seconds, or [N] milliseconds if [m]
 			was given.  "gs" always uses seconds.
 			Default is one second. >
 			     :sleep	     "sleep for one second
 			     :5sleep	     "sleep for five seconds
-			     :sleep 100m     "sleep for a hundred milliseconds
+			     :sleep 100m     "sleep for 100 milliseconds
 			     10gs	     "sleep for ten seconds
 <			Can be interrupted with CTRL-C.
 			"gs" stands for "goto sleep".

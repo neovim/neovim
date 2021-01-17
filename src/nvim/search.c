@@ -4497,9 +4497,9 @@ find_pattern_in_path(
   regmatch_T regmatch;
   regmatch_T incl_regmatch;
   regmatch_T def_regmatch;
-  int matched = FALSE;
-  int did_show = FALSE;
-  int found = FALSE;
+  bool matched = false;
+  bool did_show = false;
+  bool found = false;
   int i;
   char_u      *already = NULL;
   char_u      *startp = NULL;
@@ -4611,7 +4611,7 @@ find_pattern_in_path(
           }
           MSG_PUTS_TITLE(_("in path ---\n"));
         }
-        did_show = TRUE;
+        did_show = true;
         while (depth_displayed < depth && !got_int) {
           ++depth_displayed;
           for (i = 0; i < depth_displayed; i++)
@@ -4761,10 +4761,10 @@ search_line:
             matched = !STRNCMP(startp, ptr, len);
           if (matched && define_matched && whole
               && vim_iswordc(startp[len]))
-            matched = FALSE;
+            matched = false;
         } else if (regmatch.regprog != NULL
                    && vim_regexec(&regmatch, line, (colnr_T)(p - line))) {
-          matched = TRUE;
+          matched = true;
           startp = regmatch.startp[0];
           // Check if the line is not a comment line (unless we are
           // looking for a define).  A line starting with "# define"
@@ -4789,15 +4789,16 @@ search_line:
                 if (matched
                     && p[0] == '/'
                     && (p[1] == '*' || p[1] == '/')) {
-                  matched = FALSE;
-                  /* After "//" all text is comment */
-                  if (p[1] == '/')
+                  matched = false;
+                  // After "//" all text is comment
+                  if (p[1] == '/') {
                     break;
-                  ++p;
+                  }
+                  p++;
                 } else if (!matched && p[0] == '*' && p[1] == '/') {
-                  /* Can find match after "* /". */
-                  matched = TRUE;
-                  ++p;
+                  // Can find match after "* /".
+                  matched = true;
+                  p++;
                 }
               }
           }
@@ -4811,7 +4812,7 @@ search_line:
 
         if (depth == -1 && lnum == curwin->w_cursor.lnum)
           break;
-        found = TRUE;
+        found = true;
         aux = p = startp;
         if (compl_cont_status & CONT_ADDING) {
           p += compl_length;
@@ -4879,9 +4880,10 @@ search_line:
           break;
         }
       } else if (action == ACTION_SHOW_ALL) {
-        found = TRUE;
-        if (!did_show)
-          gotocmdline(TRUE);                    /* cursor at status line */
+        found = true;
+        if (!did_show) {
+          gotocmdline(true);                    // cursor at status line
+        }
         if (curr_fname != prev_fname) {
           if (did_show)
             msg_putchar('\n');                  /* cursor below last one */
@@ -4890,28 +4892,28 @@ search_line:
             msg_home_replace_hl(curr_fname);
           prev_fname = curr_fname;
         }
-        did_show = TRUE;
-        if (!got_int)
-          show_pat_in_path(line, type, TRUE, action,
-              (depth == -1) ? NULL : files[depth].fp,
-              (depth == -1) ? &lnum : &files[depth].lnum,
-              match_count++);
+        did_show = true;
+        if (!got_int) {
+          show_pat_in_path(line, type, true, action,
+                           (depth == -1) ? NULL : files[depth].fp,
+                           (depth == -1) ? &lnum : &files[depth].lnum,
+                           match_count++);
+        }
 
         /* Set matched flag for this file and all the ones that
          * include it */
         for (i = 0; i <= depth; ++i)
           files[i].matched = TRUE;
       } else if (--count <= 0) {
-        found = TRUE;
+        found = true;
         if (depth == -1 && lnum == curwin->w_cursor.lnum
-            && l_g_do_tagpreview == 0
-            )
+            && l_g_do_tagpreview == 0) {
           EMSG(_("E387: Match is on current line"));
-        else if (action == ACTION_SHOW) {
+        } else if (action == ACTION_SHOW) {
           show_pat_in_path(line, type, did_show, action,
-              (depth == -1) ? NULL : files[depth].fp,
-              (depth == -1) ? &lnum : &files[depth].lnum, 1L);
-          did_show = TRUE;
+                           (depth == -1) ? NULL : files[depth].fp,
+                           (depth == -1) ? &lnum : &files[depth].lnum, 1L);
+          did_show = true;
         } else {
           /* ":psearch" uses the preview window */
           if (l_g_do_tagpreview != 0) {
@@ -4960,15 +4962,16 @@ search_line:
         break;
       }
 exit_matched:
-      matched = FALSE;
-      /* look for other matches in the rest of the line if we
-       * are not at the end of it already */
+      matched = false;
+      // look for other matches in the rest of the line if we
+      // are not at the end of it already
       if (def_regmatch.regprog == NULL
           && action == ACTION_EXPAND
           && !(compl_cont_status & CONT_SOL)
           && *startp != NUL
-          && *(p = startp + utfc_ptr2len(startp)) != NUL)
+          && *(p = startp + utfc_ptr2len(startp)) != NUL) {
         goto search_line;
+      }
     }
     line_breakcheck();
     if (action == ACTION_EXPAND)
@@ -5046,16 +5049,20 @@ fpip_end:
   vim_regfree(def_regmatch.regprog);
 }
 
-static void show_pat_in_path(char_u *line, int type, int did_show, int action, FILE *fp, linenr_T *lnum, long count)
+static void show_pat_in_path(char_u *line, int type, bool did_show, int action,
+                             FILE *fp, linenr_T *lnum, long count)
+  FUNC_ATTR_NONNULL_ARG(1, 6)
 {
   char_u  *p;
 
-  if (did_show)
-    msg_putchar('\n');          /* cursor below last one */
-  else if (!msg_silent)
-    gotocmdline(TRUE);          /* cursor at status line */
-  if (got_int)                  /* 'q' typed at "--more--" message */
+  if (did_show) {
+    msg_putchar('\n');          // cursor below last one
+  } else if (!msg_silent) {
+    gotocmdline(true);          // cursor at status line
+  }
+  if (got_int) {                // 'q' typed at "--more--" message
     return;
+  }
   for (;; ) {
     p = line + STRLEN(line) - 1;
     if (fp != NULL) {

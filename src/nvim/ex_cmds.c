@@ -3693,6 +3693,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
             } else {
               char_u *orig_line = NULL;
               int len_change = 0;
+              const bool save_p_lz = p_lz;
               int save_p_fen = curwin->w_p_fen;
 
               curwin->w_p_fen = FALSE;
@@ -3700,6 +3701,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                * Remove the inversion afterwards. */
               int temp = RedrawingDisabled;
               RedrawingDisabled = 0;
+
+              // avoid calling update_screen() in vgetorpeek()
+              p_lz = false;
 
               if (new_start != NULL) {
                 /* There already was a substitution, we would
@@ -3754,7 +3758,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               /* clear the question */
               msg_didout = FALSE;               /* don't scroll up */
               msg_col = 0;
-              gotocmdline(TRUE);
+              gotocmdline(true);
+              p_lz = save_p_lz;
 
               // restore the line
               if (orig_line != NULL) {
