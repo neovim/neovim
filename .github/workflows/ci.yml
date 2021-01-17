@@ -61,7 +61,7 @@ jobs:
           brew unlink gcc@8 gcc@9
           brew update >/dev/null
           brew upgrade
-          brew install automake ccache cpanminus ninja
+          brew install automake ccache perl cpanminus ninja
 
       - name: Setup interpreter packages
         run: |
