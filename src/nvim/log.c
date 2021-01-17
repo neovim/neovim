@@ -75,11 +75,7 @@ static bool log_path_init(void)
     char *failed_dir = NULL;
     if (!os_isdir((char_u *)cachehome)) {
         int ret;
-        if ((ret = os_mkdir_recurse(cachehome, 0700, &failed_dir)) != 0) {
-          EMSG3(_(LOGERR "Failed to create directory %s "
-                  "for writing logs: %s"),
-                failed_dir, os_strerror(ret));
-        }
+        ret = os_mkdir_recurse(cachehome, 0700, &failed_dir);
     }
     XFREE_CLEAR(failed_dir);
     XFREE_CLEAR(cachehome);
