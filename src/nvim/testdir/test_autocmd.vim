@@ -1110,14 +1110,14 @@ func Test_BufReadCmd()
 endfunc
 
 func SetChangeMarks(start, end)
-  exe a:start. 'mark ['
-  exe a:end. 'mark ]'
+  exe a:start .. 'mark ['
+  exe a:end .. 'mark ]'
 endfunc
 
 " Verify the effects of autocmds on '[ and ']
 func Test_change_mark_in_autocmds()
   edit! Xtest
-  call feedkeys("ia\<CR>b\<CR>c\<CR>d\<C-g>u", 'xtn')
+  call feedkeys("ia\<CR>b\<CR>c\<CR>d\<C-g>u\<Esc>", 'xtn')
 
   call SetChangeMarks(2, 3)
   write
