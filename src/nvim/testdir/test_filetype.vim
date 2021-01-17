@@ -716,7 +716,7 @@ func Test_pp_file()
   call assert_equal('pascal', &filetype)
   bwipe!
 
-  call delete('Xfile.ts')
+  call delete('Xfile.pp')
   filetype off
 endfunc
 
