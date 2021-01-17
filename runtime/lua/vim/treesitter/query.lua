@@ -8,10 +8,23 @@ Query.__index = Query
 
 local M = {}
 
+local function dedupe_files(files)
+  local result = {}
+  local seen = {}
+
+  for _, path in ipairs(files) do
+    if not seen[path] then
+      table.insert(result, path)
+      seen[path] = true
+    end
+  end
+
+  return result
+end
 
 function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
-  local lang_files = a.nvim_get_runtime_file(query_path, true)
+  local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
 
   if #lang_files == 0 then return {} end
 
