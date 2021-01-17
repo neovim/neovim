@@ -248,7 +248,7 @@ describe('LSP', function()
       test_rpc_server {
         test_name = "basic_init";
         on_init = function(client)
-          eq(0, client.resolved_capabilities().text_document_did_change)
+          eq(0, client.resolved_server_capabilities().text_document_did_change)
           client.request('shutdown')
           client.notify('exit')
         end;
@@ -313,7 +313,7 @@ describe('LSP', function()
         on_init = function(client)
           client.stop()
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
@@ -334,11 +334,11 @@ describe('LSP', function()
         on_init = function(client)
           client.stop()
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().completion)
-          eq(true, client.resolved_capabilities().hover)
-          eq(false, client.resolved_capabilities().goto_definition)
-          eq(false, client.resolved_capabilities().rename)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().completion)
+          eq(true, client.resolved_server_capabilities().hover)
+          eq(false, client.resolved_server_capabilities().goto_definition)
+          eq(false, client.resolved_server_capabilities().rename)
 
           -- known methods for resolved capabilities
           eq(true, client.supports_method("textDocument/hover"))
@@ -353,6 +353,57 @@ describe('LSP', function()
         end;
         on_callback = function(...)
           eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+
+        it('client should update resolved_server_capabilities in response to client/registerCapability', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "client/registerCapability", { registrations = {
+              { id = 1; method = "textDocument/completion"; registerOptions = {}; };
+              { id = 2; method = "textDocument/hover"; registerOptions = {}; };
+          }}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_register_capability";
+        on_init = function(_client)
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_callback = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'start' then
+            local capabilities = exec_lua([=[
+              local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
+              return {
+                client.resolved_server_capabilities['completion'],
+                client.resolved_server_capabilities['hover'],
+                }]=])
+            eq(capabilities, {false; false;})
+          end
+          if method == 'client/registerCapability' then
+            exec_lua([=[
+              local method, params = ...
+              return require'vim.lsp.handlers'['client/registerCapability'](err, method, params, TEST_RPC_CLIENT_ID)]=], method, params)
+            -- this should send vim.NIL
+            client.notify('client/registerCapability', nil)
+          end
+          if method == 'shutdown' then
+            local capabilities = exec_lua([=[
+              local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
+              return {
+                client.resolved_server_capabilities['completion'],
+                client.resolved_server_capabilities['hover'],
+                }]=])
+            eq(capabilities, {true; true;})
+            client.stop()
+          end
         end;
       }
     end)
@@ -457,8 +508,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           client.notify('finish')
         end;
         on_exit = function(code, signal)
@@ -498,8 +549,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(not lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID), "Shouldn't attach twice")
           ]]
@@ -541,8 +592,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -584,8 +635,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -633,8 +684,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(full_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -682,8 +733,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
-          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(sync_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -731,8 +782,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
-          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(sync_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -775,8 +826,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(sync_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -826,8 +877,8 @@ describe('LSP', function()
         on_init = function(_client)
           client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
-          eq(true, client.resolved_capabilities().text_document_open_close)
+          eq(sync_kind, client.resolved_server_capabilities().text_document_did_change)
+          eq(true, client.resolved_server_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]

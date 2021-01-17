@@ -142,6 +142,29 @@ function tests.basic_check_capabilities()
   }
 end
 
+function tests.check_register_capability()
+  skeleton {
+    on_init = function(_params)
+      return {
+        capabilities = {
+          completionProvider = nil;
+          hoverProvider = nil;
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      notify('client/registerCapability', { registrations = {
+              { id = 1; method = "textDocument/completion"; registerOptions = {}; };
+              { id = 2; method = "textDocument/hover"; registerOptions = {}; };
+          }})
+      -- this should receive vim.NIL
+      expect_notification('client/registerCapability', nil)
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.capabilities_for_client_supports_method()
   skeleton {
     on_init = function(params)
