@@ -1200,8 +1200,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
-///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
+///          - details: Whether to include the details dict
 /// @param[out] err   Error details, if any
 /// @return (row, col) tuple or empty list () if extmark id was absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
