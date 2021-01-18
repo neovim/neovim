@@ -582,7 +582,7 @@ function lsp.start_client(config)
     local valid_traces = {
       off = 'off'; messages = 'messages'; verbose = 'verbose';
     }
-    local version = vim.fn.api_info().version
+    local version = vim.version()
     local initialize_params = {
       -- The process Id of the parent process that started the server. Is null if
       -- the process has not been started by another process.  If the parent
