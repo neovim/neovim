@@ -121,6 +121,9 @@ local active_clients = {}
 local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
+-- Tracks all buffers attached to a client.
+local all_client_active_buffers = {}
+
 --@private
 --- Invokes a function for each LSP client attached to the buffer {bufnr}.
 ---
@@ -933,7 +936,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_lines = text_document_did_change_handler;
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
-        for_each_buffer_client(bufnr, function(client, _client_id)
+        for_each_buffer_client(bufnr, function(client, _)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
@@ -947,6 +950,13 @@ function lsp.buf_attach_client(bufnr, client_id)
       utf_sizes = true;
     })
   end
+
+  if not all_client_active_buffers[client_id] then
+    all_client_active_buffers[client_id] = {}
+  end
+
+  table.insert(all_client_active_buffers[client_id], bufnr)
+
   if buffer_client_ids[client_id] then return end
   -- This is our first time attaching this client to this buffer.
   buffer_client_ids[client_id] = true
@@ -978,6 +988,19 @@ function lsp.get_client_by_id(client_id)
   return active_clients[client_id] or uninitialized_clients[client_id]
 end
 
+--- Returns list of buffers attached to client_id.
+--
+--@param client_id client id
+--@returns list of buffer ids
+function lsp.get_buffers_by_client_id(client_id)
+  local active_client_buffers = all_client_active_buffers[client_id]
+  if active_client_buffers then
+    return active_client_buffers
+  else
+    return {}
+  end
+end
+
 --- Stops a client(s).
 ---
 --- You can also use the `stop()` function on a |vim.lsp.client| object.
@@ -995,12 +1018,23 @@ end
 function lsp.stop_client(client_id, force)
   local ids = type(client_id) == 'table' and client_id or {client_id}
   for _, id in ipairs(ids) do
+    local resolved_client_id
     if type(id) == 'table' and id.stop ~= nil then
       id.stop(force)
+      resolved_client_id = id.id
     elseif active_clients[id] then
       active_clients[id].stop(force)
+      resolved_client_id = id
     elseif uninitialized_clients[id] then
       uninitialized_clients[id].stop(true)
+      resolved_client_id = id
+    end
+    if resolved_client_id then
+      local client_buffers = lsp.get_buffers_by_client_id(resolved_client_id)
+      for idx = 1, #client_buffers do
+        lsp.diagnostic.clear(client_buffers[idx], resolved_client_id)
+      end
+      all_client_active_buffers[resolved_client_id] = nil
     end
   end
 end
