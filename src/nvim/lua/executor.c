@@ -5,6 +5,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/getchar.h"
 #include "nvim/garray.h"
@@ -76,6 +77,17 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   emsgf_multiline(msg, (int)len, str);
 
   lua_pop(lstate, 1);
+}
+
+/// Return version of current neovim build
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  Dictionary version = version_dict();
+  nlua_push_Dictionary(lstate, version, true);
+  api_free_dictionary(version);
+  return 1;
 }
 
 /// Compare two strings, ignoring case
@@ -420,6 +432,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // str_byteindex
   lua_pushcfunction(lstate, &nlua_str_byteindex);
   lua_setfield(lstate, -2, "str_byteindex");
+  // neovim version
+  lua_pushcfunction(lstate, &nlua_nvim_version);
+  lua_setfield(lstate, -2, "version");
   // schedule
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");

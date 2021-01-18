@@ -622,6 +622,9 @@ vim.api.{func}({...})					*vim.api*
         Example: call the "nvim_get_current_line()" API function: >
             print(tostring(vim.api.nvim_get_current_line()))
 
+vim.version()    					*vim.version*
+        Returns the version of the current neovim build.
+
 vim.in_fast_event()					*vim.in_fast_event()*
         Returns true if the code is executing as part of a "fast" event
         handler, where most of the API is disabled. These are low-level events
