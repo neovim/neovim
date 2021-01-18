@@ -303,6 +303,21 @@ describe('LSP', function()
         end;
       }
     end)
+    it('workspace/configuration returns NIL per section if client was started without config.settings', function()
+      fake_lsp_server_setup('workspace/configuration no settings')
+      eq({
+        NIL,
+        NIL,
+      }, exec_lua [[
+        local params = {
+          items = {
+            {section = 'foo'},
+            {section = 'bar'},
+          }
+        }
+        return vim.lsp.handlers['workspace/configuration'](nil, nil, params, TEST_RPC_CLIENT_ID)
+      ]])
+    end)
 
     it('should verify capabilities sent', function()
       local expected_callbacks = {
