@@ -3028,9 +3028,6 @@ msgstr "-y\t\t\tEasy режим (као \"evim\", безрежимни)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tReadonly режим (као \"view\")"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tRestricted режим (као \"rvim\")"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tИзмене (уписивање датотека) нису дозвољене"
 

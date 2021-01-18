@@ -3290,10 +3290,6 @@ msgstr "-o[N]\t\tMaak N vensters oop (verstek: een vir elke lêer)"
 #~ msgid "  -V[N][file]           Verbose [level][file]\n"
 #~ msgstr ""
 
-#, fuzzy
-#~ msgid "  -Z                    Restricted mode\n"
-#~ msgstr "                              vir twee modusse   "
-
 #~ msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
 #~ msgstr ""
 
@@ -7472,9 +7468,6 @@ msgstr "E446: Geen lêernaam onder loper"
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinêre modus"
-
-#~ msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-#~ msgstr "-Z\t\t\tBeperkte modus (soos \"rvim\")"
 
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tLeesalleen modus (soos \"view\")"

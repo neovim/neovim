@@ -3015,9 +3015,6 @@ msgstr "-y\t\t\tEasy-tilstand (ligesom \"evim\", tilstandsløs)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tSkrivebeskyttet tilstand (ligesom \"view\")"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tRestriktiv tilstand (ligesom \"rvim\")"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tÆndringer (skrivning af filer) ikke tilladt"
 

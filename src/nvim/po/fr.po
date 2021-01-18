@@ -3231,9 +3231,6 @@ msgstr "-y\t\tMode facile (comme \"evim\", vim sans modes)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\tMode lecture seule (comme \"view\")"
 
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\tMode restreint (comme \"rvim\")"
-
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\tInterdire l'enregistrement des fichiers"
 

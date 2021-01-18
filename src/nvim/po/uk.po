@@ -3367,9 +3367,6 @@ msgstr "  -v, --version         Надрукувати інформацію пр
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr "  -V[N][файл]           Більше повідомлень [рівень][файл]\n"
 
-msgid "  -Z                    Restricted mode\n"
-msgstr "  -Z                    Обмежений режим\n"
-
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
 msgstr ""
 "  --api-info            Записати метадані API, серіалізовані у msgpack, у "
