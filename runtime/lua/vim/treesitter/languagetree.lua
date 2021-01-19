@@ -425,23 +425,21 @@ function LanguageTree:register_cbs(cbs)
   end
 end
 
-local function region_contains(region, range)
-  for _, node in ipairs(region) do
-    local start_row, start_col, end_row, end_col = node:range()
-    local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
-    local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
+local function tree_contains(tree, range)
+  local start_row, start_col, end_row, end_col = tree:root():range()
+  local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
+  local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
 
-    if start_fits and end_fits then
-      return true
-    end
+  if start_fits and end_fits then
+    return true
   end
 
   return false
 end
 
 function LanguageTree:contains(range)
-  for _, region in pairs(self._regions) do
-    if region_contains(region, range) then
+  for _, tree in pairs(self._trees) do
+    if tree_contains(tree, range) then
       return true
     end
   end
