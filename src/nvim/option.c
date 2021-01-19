@@ -318,6 +318,14 @@ static char *(p_csl_values[]) =       { "slash", "backslash", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
+  "auto:1-2", "auto:1-3", "auto:1-4", "auto:1-5", "auto:1-6", "auto:1-7", "auto:1-8", "auto:1-9",
+  "auto:2-3", "auto:2-4", "auto:2-5", "auto:2-6", "auto:2-7", "auto:2-8", "auto:2-9",
+  "auto:3-4", "auto:3-5", "auto:3-6", "auto:3-7", "auto:3-8", "auto:3-9",
+  "auto:4-5", "auto:4-6", "auto:4-7", "auto:4-8", "auto:4-9",
+  "auto:5-6", "auto:5-7", "auto:5-8", "auto:5-9",
+  "auto:6-7", "auto:6-8", "auto:6-9",
+  "auto:7-8", "auto:7-9",
+  "auto:8-9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
   "yes:9", "number", NULL };
 static char *(p_fdc_values[]) =       { "auto", "auto:1", "auto:2",
@@ -7095,7 +7103,7 @@ int csh_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
-  int maximum = 1, needed_signcols;
+  int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
   // Note: It checks "no" or "number" in 'signcolumn' option
@@ -7119,9 +7127,14 @@ int win_signcol_count(win_T *wp)
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';
+    // auto:<NUM>-<NUM>
+    if (strlen(scl) == 8 && *(scl + 6) == '-') {
+      minimum = maximum;
+      maximum = scl[7] - '0';
+    }
   }
 
-  return MIN(maximum, needed_signcols);
+  return MAX(minimum, MIN(maximum, needed_signcols));
 }
 
 /// Get window or buffer local options
