@@ -289,7 +289,7 @@ function Inspector:putTable(t)
 end
 
 function Inspector:putFunction(f)
-  local info = debug.getinfo(f)
+  local info = debug.getinfo(f, 'S')
   self:puts(
     '<',
     'function ', self:getId(f), ': ',
