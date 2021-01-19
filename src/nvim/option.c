@@ -3245,10 +3245,15 @@ int check_signcolumn(char_u *val)
   // check for 'auto:<NUMBER>-<NUMBER>'
   if (STRLEN(val) == 8
       && !STRNCMP(val, "auto:", 5)
-      && ascii_isdigit(*(val + 5))
-      && *(val + 6) == '-'
-      && ascii_isdigit(*(val + 7))
+      && ascii_isdigit(val[5])
+      && val[6] == '-'
+      && ascii_isdigit(val[7])
       ) {
+    int min = val[5] - '0';
+    int max = val[7] - '0';
+    if (min < 1 || max < 2 || min > 8 || max > 9 || min >= max) {
+      return FAIL;
+    }
     return OK;
   }
 
