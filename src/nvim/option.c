@@ -318,14 +318,6 @@ static char *(p_csl_values[]) =       { "slash", "backslash", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
-  "auto:1-2", "auto:1-3", "auto:1-4", "auto:1-5", "auto:1-6", "auto:1-7", "auto:1-8", "auto:1-9",
-  "auto:2-3", "auto:2-4", "auto:2-5", "auto:2-6", "auto:2-7", "auto:2-8", "auto:2-9",
-  "auto:3-4", "auto:3-5", "auto:3-6", "auto:3-7", "auto:3-8", "auto:3-9",
-  "auto:4-5", "auto:4-6", "auto:4-7", "auto:4-8", "auto:4-9",
-  "auto:5-6", "auto:5-7", "auto:5-8", "auto:5-9",
-  "auto:6-7", "auto:6-8", "auto:6-9",
-  "auto:7-8", "auto:7-9",
-  "auto:8-9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
   "yes:9", "number", NULL };
 static char *(p_fdc_values[]) =       { "auto", "auto:1", "auto:2",
@@ -2921,7 +2913,7 @@ ambw_end:
 #endif
   } else if (varp == &curwin->w_p_scl) {
     // 'signcolumn'
-    if (check_opt_strings(*varp, p_scl_values, false) != OK) {
+    if (check_signcolumn(*varp) != OK) {
       errmsg = e_invarg;
     }
     // When changing the 'signcolumn' to or from 'number', recompute the
@@ -3238,6 +3230,29 @@ ambw_end:
 static int int_cmp(const void *a, const void *b)
 {
   return *(const int *)a - *(const int *)b;
+}
+
+/// Handle setting 'signcolumn' for value 'val'
+///
+/// @return OK when the value is valid, FAIL otherwise
+int check_signcolumn(char_u *val)
+{
+  // check for basic match
+  if (check_opt_strings(val, p_scl_values, false) == OK) {     
+    return OK;
+  }
+
+  // check for 'auto:<NUMBER>-<NUMBER>'
+  if (STRLEN(val) == 8
+      && !STRNCMP(val, "auto:", 5)
+      && ascii_isdigit(*(val + 5))
+      && *(val + 6) == '-'
+      && ascii_isdigit(*(val + 7))
+      ) {
+    return OK;
+  }
+
+  return FAIL;
 }
 
 /// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
