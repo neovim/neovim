@@ -230,7 +230,6 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
-    settings        = { config.settings, "t", true };
   }
 
   -- TODO(remove-callbacks)
