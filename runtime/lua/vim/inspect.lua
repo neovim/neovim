@@ -290,12 +290,19 @@ end
 
 function Inspector:putFunction(f)
   local info = debug.getinfo(f, 'S')
-  self:puts(
-    '<',
-    'function ', self:getId(f), ': ',
-    info.source, ':', info.linedefined,
-    '>'
-  )
+  local source, line = info.source, info.linedefined
+
+  local contents = {'<function ', self:getId(f)}
+  if vim.startswith(source, '@') or vim.startswith(source, '=') then
+    source = source:sub(2)
+  end
+  vim.list_extend(contents, {': ', source})
+  if line >= 0 then
+    vim.list_extend(contents, {':', line})
+  end
+  contents[#contents+1] = '>'
+
+  self:puts(unpack(contents))
 end
 
 function Inspector:putValue(v)
