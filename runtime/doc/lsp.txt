@@ -929,23 +929,20 @@ definition()                                        *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
-                Send a request to the server to resolve document highlights
-                for the current text document position. This request can be
-                triggered by a key mapping or by events such as `CursorHold`,
+                Send request to the server to resolve document highlights for
+                the current text document position. This request can be
+                triggered by a key mapping or by events such as `CursorHold` ,
                 eg:
 >
     vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
     vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
     vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 <
-                Note:
-                    Usage of |vim.lsp.buf.document_highlight()| requires the
-                    following highlight groups to be defined or you won't be
-                    able to see the actual highlights.
 
-                    |LspReferenceText|
-                    |LspReferenceRead|
-                    |LspReferenceWrite|
+                Note: Usage of |vim.lsp.buf.document_highlight()| requires the
+                following highlight groups to be defined or you won't be able
+                to see the actual highlights. |LspReferenceText|
+                |LspReferenceRead| |LspReferenceWrite|
 
 document_symbol()                              *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
@@ -1768,7 +1765,7 @@ make_workspace_params({added}, {removed})
                 Create the workspace params
 
                 Parameters: ~
-                    {added}
+                    {added}    
                     {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
