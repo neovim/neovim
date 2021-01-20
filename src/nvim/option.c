@@ -3238,7 +3238,7 @@ static int int_cmp(const void *a, const void *b)
 int check_signcolumn(char_u *val)
 {
   // check for basic match
-  if (check_opt_strings(val, p_scl_values, false) == OK) {     
+  if (check_opt_strings(val, p_scl_values, false) == OK) {
     return OK;
   }
 
