@@ -18,6 +18,7 @@ setlocal noundofile
 
 setlocal keywordprg=:help
 setlocal iskeyword=@,-,_
+setlocal signcolumn=auto:1
 
 " The user will have to enable the folds himself, but we provide the foldexpr
 " function.
