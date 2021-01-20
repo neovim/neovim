@@ -990,6 +990,47 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
 
+/// Echo a message.
+///
+/// @param chunks  A list of [text, hl_group] arrays, each representing a
+///                text chunk with specified highlight. `hl_group` element
+///                can be omitted for no highlight.
+/// @param history  if true, add to |message-history|.
+/// @param opts  Optional parameters. Reserved for future use.
+void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  HlMessage hl_msg = parse_hl_msg(chunks, err);
+  if (ERROR_SET(err)) {
+    goto error;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    goto error;
+  }
+
+  no_wait_return++;
+  bool need_clear = true;
+  msg_start();
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
+                       false, &need_clear);
+  }
+  if (history) {
+    msg_ext_set_kind("echomsg");
+    add_hl_msg_hist(hl_msg);
+  } else {
+    msg_ext_set_kind("echo");
+  }
+  no_wait_return--;
+  msg_end();
+
+error:
+  clear_hl_msg(&hl_msg);
+}
+
 /// Writes a message to the Vim output buffer. Does not append "\n", the
 /// message is buffered (won't display) until a linefeed is written.
 ///

@@ -8,6 +8,8 @@
 #include "nvim/macros.h"
 #include "nvim/types.h"
 #include "nvim/grid_defs.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/lib/kvec.h"
 
 /*
  * Types of dialogs passed to do_dialog().
@@ -74,6 +76,13 @@
 
 /// Like #MSG_PUTS_ATTR, but if middle part of long messages will be replaced
 #define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
+
+typedef struct {
+  String text;
+  int attr;
+} HlMessageChunk;
+
+typedef kvec_t(HlMessageChunk) HlMessage;
 
 /// Message history for `:messages`
 typedef struct msg_hist {

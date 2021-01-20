@@ -1645,6 +1645,43 @@ bool api_object_to_bool(Object obj, const char *what,
   }
 }
 
+HlMessage parse_hl_msg(Array chunks, Error *err)
+{
+  HlMessage hl_msg = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = copy_string(chunk.items[0].data.string);
+
+    int attr = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+        attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+      }
+    }
+    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .attr = attr }));
+  }
+
+  return hl_msg;
+
+free_exit:
+  clear_hl_msg(&hl_msg);
+  return hl_msg;
+}
+
 const char *describe_ns(NS ns_id)
 {
   String name;
