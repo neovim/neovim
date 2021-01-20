@@ -2073,6 +2073,13 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='qfonlyexisting', abbreviation='qfoe',
+      short_desc=N_("ignore quickfix entries whose file is not readable"),
+      type='bool', scope={'global'},
+      varname='p_qfonlyexisting',
+      vi_def=true
+    },
+    {
       full_name='quoteescape', abbreviation='qe',
       short_desc=N_("escape characters used in a string"),
       type='string', scope={'buffer'},

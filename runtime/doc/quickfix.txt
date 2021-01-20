@@ -1345,7 +1345,8 @@ Basic items
 	%s		search text (finds a string)
 
 The "%f" conversion may depend on the current 'isfname' setting.  "~/" is
-expanded to the home directory and environment variables are expanded.
+expanded to the home directory and environment variables are expanded. If
+'qfonlyexisting' is set, "%f" will not match files that don't exist.
 
 The "%f" and "%m" conversions have to detect the end of the string.  This
 normally happens by matching following characters and items.  When nothing is

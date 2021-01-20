@@ -4576,6 +4576,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'qfonlyexisting'* *'qfoe'*
+'qfonlyexisting' 'qfoe'	boolean (default off)
+			global
+	When this option is set, quickfix ignores the lines of compiler output
+	which have matched some 'errorformat' entry but whose filename (%f) is
+	not readable. Useful if you have lines on which errorformats misfire
+	and open garbage buffers.
+
 						*'quoteescape'* *'qe'*
 'quoteescape' 'qe'	string	(default "\")
 			local to buffer
