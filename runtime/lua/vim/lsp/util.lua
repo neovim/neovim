@@ -506,7 +506,9 @@ function M.convert_input_to_markdown_lines(input, contents)
 
       -- Some servers send input.value as empty, so let's ignore this :(
       -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value or ''))
+      local stripped_message = string.gsub(input.value or '', "(\\)(.)", "%2")
+      stripped_message = string.gsub(stripped_message, "&nbsp;", " ")
+      list_extend(contents, split_lines(stripped_message))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
