@@ -125,6 +125,8 @@ static size_t msg_ext_cur_len = 0;
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
 static int msg_ext_visible = 0;  ///< number of messages currently visible
 
+static bool msg_ext_history_visible = false;
+
 /// Shouldn't clear message after leaving cmdline
 static bool msg_ext_keep_after_cmdline = false;
 
@@ -1025,6 +1027,9 @@ void ex_messages(void *const eap_p)
 
   // Display what was not skipped.
   if (ui_has(kUIMessages)) {
+    if (msg_silent) {
+      return;
+    }
     Array entries = ARRAY_DICT_INIT;
     for (; p != NULL; p = p->next) {
       if (p->msg != NULL && p->msg[0] != NUL) {
@@ -1040,6 +1045,8 @@ void ex_messages(void *const eap_p)
       }
     }
     ui_call_msg_history_show(entries);
+    msg_ext_history_visible = true;
+    wait_return(false);
   } else {
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
@@ -3125,6 +3132,10 @@ void msg_ext_clear(bool force)
     ui_call_msg_clear();
     msg_ext_visible = 0;
     msg_ext_overwrite = false;  // nothing to overwrite
+  }
+  if (msg_ext_history_visible) {
+    ui_call_msg_history_clear();
+    msg_ext_history_visible = false;
   }
 
   // Only keep once.

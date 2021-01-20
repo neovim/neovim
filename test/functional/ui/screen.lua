@@ -242,7 +242,7 @@ end
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
   'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
-  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
+  'messages', 'msg_history', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
 }
 
 -- Asserts that the screen state eventually matches an expected state.
@@ -1083,6 +1083,10 @@ function Screen:_handle_msg_history_show(entries)
   self.msg_history = entries
 end
 
+function Screen:_handle_msg_history_clear()
+  self.msg_history = {}
+end
+
 function Screen:_clear_block(grid, top, bot, left, right)
   for i = top, bot do
     self:_clear_row_section(grid, i, left, right)
@@ -1171,7 +1175,7 @@ function Screen:_extstate_repr(attr_state)
 
   local msg_history = {}
   for i, entry in ipairs(self.msg_history) do
-    messages[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
+    msg_history[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
   end
 
   local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
