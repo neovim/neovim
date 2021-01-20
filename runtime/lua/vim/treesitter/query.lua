@@ -340,6 +340,19 @@ function Query:apply_directives(match, pattern, source, metadata)
   end
 end
 
+
+--- Returns the start and stop value if set else the node's range.
+-- When the node's range is used, the stop is incremented by 1
+-- to make the search inclusive.
+local function value_or_node_range(start, stop, node)
+  if start == nil and stop == nil then
+    local node_start, _, node_stop, _ = node:range()
+    return node_start, node_stop + 1 -- Make stop inclusive
+  end
+
+  return start, stop
+end
+
 --- Iterates of the captures of self on a given range.
 --
 -- @param node The node under witch the search will occur
@@ -353,6 +366,9 @@ function Query:iter_captures(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
+
+  start, stop = value_or_node_range(start, stop, node)
+
   local raw_iter = node:_rawquery(self.query, true, start, stop)
   local function iter()
     local capture, captured_node, match = raw_iter()
@@ -385,6 +401,9 @@ function Query:iter_matches(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
+
+  start, stop = value_or_node_range(start, stop, node)
+
   local raw_iter = node:_rawquery(self.query, false, start, stop)
   local function iter()
     local pattern, match = raw_iter()

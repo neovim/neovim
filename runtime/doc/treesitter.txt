@@ -195,7 +195,8 @@ query:iter_captures({node}, {bufnr}, {start_row}, {end_row})
 	text of the buffer. {start_row} and {end_row} can be used to limit
 	matches inside a row range (this is typically used with root node
 	as the node, i e to get syntax highlight matches in the current
-	viewport)
+	viewport). When omitted the start and end row values are used from
+        the given node.
 
 	The iterator returns three values, a numeric id identifying the capture,
 	the captured node, and metadata from any directives processing the match.
