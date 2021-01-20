@@ -266,6 +266,111 @@ describe('Signs', function()
       ]]}
     end)
 
+    it('auto-resize sign column with minimum size (#13783)', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number')
+      -- sign column should always accommodate at the minimum size
+      command('set signcolumn=auto:1-3')
+      screen:expect([[
+        {2:  }{6:  1 }a                                              |
+        {2:  }{6:  2 }b                                              |
+        {2:  }{6:  3 }c                                              |
+        {2:  }{6:  4 }^                                               |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      -- should support up to 8 signs at minimum
+      command('set signcolumn=auto:8-9')
+      screen:expect([[
+        {2:                }{6:  1 }a                                |
+        {2:                }{6:  2 }b                                |
+        {2:                }{6:  3 }c                                |
+        {2:                }{6:  4 }^                                 |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      -- should keep the same sign size when signs are not exceeding
+      -- the minimum
+      command('set signcolumn=auto:2-5')
+      command('sign define pietSearch text=>> texthl=Search')
+      command('sign place 1 line=1 name=pietSearch buffer=1')
+      screen:expect([[
+        {1:>>}{2:  }{6:  1 }a                                            |
+        {2:    }{6:  2 }b                                            |
+        {2:    }{6:  3 }c                                            |
+        {2:    }{6:  4 }^                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      -- should resize itself when signs are exceeding minimum but
+      -- not over the maximum
+      command('sign place 2 line=1 name=pietSearch buffer=1')
+      command('sign place 3 line=1 name=pietSearch buffer=1')
+      command('sign place 4 line=1 name=pietSearch buffer=1')
+      screen:expect([[
+        {1:>>>>>>>>}{6:  1 }a                                        |
+        {2:        }{6:  2 }b                                        |
+        {2:        }{6:  3 }c                                        |
+        {2:        }{6:^  4 }                                         |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      -- should keep the column at maximum size when signs are
+      -- exceeding the maximum
+      command('sign place 5 line=1 name=pietSearch buffer=1')
+      command('sign place 6 line=1 name=pietSearch buffer=1')
+      command('sign place 7 line=1 name=pietSearch buffer=1')
+      command('sign place 8 line=1 name=pietSearch buffer=1')
+      screen:expect([[
+        {1:>>>>>>>>>>}{6:  1 }a                                      |
+        {2:          }{6:  2 }b                                      |
+        {2:          }{6:  3 }c                                      |
+        {2:        ^  }{6:  4 }                                       |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
     it('ignores signs with no icon and text when calculting the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('set number')
