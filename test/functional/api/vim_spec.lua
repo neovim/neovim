@@ -2021,6 +2021,20 @@ describe('API', function()
       command('highlight Special guifg=SlateBlue')
     end)
 
+    it('should clear cmdline message before echo', function()
+      feed(':call nvim_echo([["msg"]], v:false, {})<CR>')
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        msg                                     |
+      ]]}
+    end)
+
     it('can show highlighted line', function()
       nvim_async("echo", {{"msg_a"}, {"msg_b", "Statement"}, {"msg_c", "Special"}}, true, {})
       screen:expect{grid=[[

@@ -1011,8 +1011,9 @@ void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
   }
 
   no_wait_return++;
-  bool need_clear = true;
   msg_start();
+  msg_clr_eos();
+  bool need_clear = false;
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
