@@ -718,6 +718,9 @@ au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
 
+" Idris
+au BufNewFile,BufRead *.idr			setf idris
+
 " Hollywood
 au BufRead,BufNewFile *.hws			setf hollywood
 
