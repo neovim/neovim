@@ -1733,8 +1733,13 @@ au BufNewFile,BufRead *.tli			setf tli
 " Telix Salt
 au BufNewFile,BufRead *.slt			setf tsalt
 
-" Tera Term Language
-au BufRead,BufNewFile *.ttl			setf teraterm
+" Tera Term Language or Turtle
+au BufRead,BufNewFile *.ttl
+	\ if getline(1) =~ '^@\?\(prefix\|base\)' |
+	\   setf turtle |
+	\ else |
+	\   setf teraterm |
+	\ endif
 
 " Terminfo
 au BufNewFile,BufRead *.ti			setf terminfo

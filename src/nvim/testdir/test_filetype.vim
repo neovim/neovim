@@ -692,6 +692,23 @@ func Test_ts_file()
   filetype off
 endfunc
 
+func Test_ttl_file()
+  filetype on
+
+  call writefile(['@base <http://example.org/> .'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('turtle', &filetype)
+  bwipe!
+
+  call writefile(['looks like Tera Term Language'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('teraterm', &filetype)
+  bwipe!
+
+  call delete('Xfile.ttl')
+  filetype off
+endfunc
+
 func Test_pp_file()
   filetype on
 
