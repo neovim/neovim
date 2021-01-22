@@ -121,10 +121,17 @@ function vim._load_package(name)
   end
 
   for _,trail in ipairs(vim._so_trails) do
-    local path = "lua/"..trail:gsub('?',basename)
+    local path = "lua"..trail:gsub('?', basename) -- so_trails contains a leading slash
     local found = vim.api.nvim_get_runtime_file(path, false)
     if #found > 0 then
-      local f, err = package.loadlib(found[1])
+      -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
+      -- a) strip prefix up to and including the first dash, if any
+      -- b) replace all dots by underscores
+      -- c) prepend "luaopen_"
+      -- So "foo-bar.baz" should result in "luaopen_bar_baz"
+      local dash = name:find("-", 1, true)
+      local modname = dash and name:sub(dash + 1) or name
+      local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
       return f or error(err)
     end
   end
