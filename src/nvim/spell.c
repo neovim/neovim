@@ -3123,6 +3123,7 @@ spell_find_suggest (
   static bool expr_busy = false;
   int c;
   langp_T     *lp;
+  bool did_intern = false;
 
   // Set the info in "*su".
   memset(su, 0, sizeof(suginfo_T));
@@ -3206,14 +3207,16 @@ spell_find_suggest (
         spell_suggest_expr(su, buf + 5);
         expr_busy = false;
       }
-    } else if (STRNCMP(buf, "file:", 5) == 0)
+    } else if (STRNCMP(buf, "file:", 5) == 0) {
       // Use list of suggestions in a file.
       spell_suggest_file(su, buf + 5);
-    else {
-      // Use internal method.
+    } else if (!did_intern) {
+      // Use internal method once.
       spell_suggest_intern(su, interactive);
-      if (sps_flags & SPS_DOUBLE)
+      if (sps_flags & SPS_DOUBLE) {
         do_combine = true;
+      }
+      did_intern = true;
     }
   }
 

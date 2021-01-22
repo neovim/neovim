@@ -2,6 +2,7 @@
 
 source view_util.vim
 source screendump.vim
+source check.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash
@@ -610,3 +611,16 @@ func Test_1_highlight_Normalgroup_exists()
     call assert_match('hi Normal\s*font=.*', hlNormal)
   endif
 endfunc
+
+" Test for using RGB color values in a highlight group
+func Test_xxlast_highlight_RGB_color()
+  CheckCanRunGui
+  gui -f
+  hi MySearch guifg=#110000 guibg=#001100 guisp=#000011
+  call assert_equal('#110000', synIDattr(synIDtrans(hlID('MySearch')), 'fg#'))
+  call assert_equal('#001100', synIDattr(synIDtrans(hlID('MySearch')), 'bg#'))
+  call assert_equal('#000011', synIDattr(synIDtrans(hlID('MySearch')), 'sp#'))
+  hi clear
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
