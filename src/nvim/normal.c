@@ -3978,16 +3978,19 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           curwin->w_curswant -= width2;
         } else {
           // to previous line
+
+          // Move to the start of a closed fold.  Don't do that when
+          // 'foldopen' contains "all": it will open in a moment.
+          if (!(fdo_flags & FDO_ALL)) {
+            (void)hasFolding(curwin->w_cursor.lnum,
+                             &curwin->w_cursor.lnum, NULL);
+          }
           if (curwin->w_cursor.lnum == 1) {
             retval = false;
             break;
           }
-          --curwin->w_cursor.lnum;
-          /* Move to the start of a closed fold.  Don't do that when
-           * 'foldopen' contains "all": it will open in a moment. */
-          if (!(fdo_flags & FDO_ALL))
-            (void)hasFolding(curwin->w_cursor.lnum,
-                &curwin->w_cursor.lnum, NULL);
+          curwin->w_cursor.lnum--;
+
           linelen = linetabsize(get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
@@ -6708,11 +6711,8 @@ static void nv_g_cmd(cmdarg_T *cap)
    */
   case 'j':
   case K_DOWN:
-    /* with 'nowrap' it works just like the normal "j" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "j" command.
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
     } else
@@ -6723,11 +6723,8 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   case 'k':
   case K_UP:
-    /* with 'nowrap' it works just like the normal "k" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "k" command.
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else

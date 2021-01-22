@@ -822,4 +822,39 @@ func Test_fold_create_delete()
   bwipe!
 endfunc
 
+func Test_fold_relative_move()
+  enew!
+  set fdm=indent sw=2 wrap tw=80
+
+  let content = [ '  foo', '  bar', '  baz',
+              \   repeat('x', 100),
+              \   '  foo', '  bar', '  baz'
+              \ ]
+  call append(0, content)
+
+  normal zM
+
+  call cursor(3, 1)
+  call assert_true(foldclosed(line('.')))
+  normal gj
+  call assert_equal(2, winline())
+
+  call cursor(2, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gj
+  call assert_equal(3, winline())
+
+  call cursor(5, 1)
+  call assert_true(foldclosed(line('.')))
+  normal gk
+  call assert_equal(3, winline())
+
+  call cursor(6, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gk
+  call assert_equal(2, winline())
+
+  set fdm& sw& wrap& tw&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
