@@ -310,7 +310,6 @@ describe('LSP', function()
       }
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
-      clear()
       fake_lsp_server_setup('workspace/configuration no settings')
       eq({ NIL, NIL, }, exec_lua [[
         local params = {
