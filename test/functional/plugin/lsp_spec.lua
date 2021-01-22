@@ -195,7 +195,6 @@ describe('LSP', function()
   describe('basic_init test', function()
      after_each(function()
       stop()
-      exec_lua("lsp.stop_client(lsp.get_active_clients())")
       exec_lua("lsp._vim_exit_handler()")
     end)
 
